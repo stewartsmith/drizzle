@@ -29,8 +29,8 @@
   Most function are just inline wrappers around library calls
 */
 
-#ifndef my_decimal_h
-#define my_decimal_h
+#ifndef DRIZZLED_MY_DECIMAL_H
+#define DRIZZLED_MY_DECIMAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -390,5 +390,5 @@ int my_decimal_intg(const my_decimal *a)
 void my_decimal_trim(uint32_t *precision, uint32_t *scale);
 
 
-#endif /*my_decimal_h*/
+#endif /* DRIZZLED_MY_DECIMAL_H */
 

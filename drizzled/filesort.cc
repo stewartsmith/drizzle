@@ -454,13 +454,13 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   Table *sort_form;
   Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
-  handler *file;
+  Cursor *file;
   MyBitmap *save_read_set, *save_write_set;
 
   idx=indexpos=0;
   error=quick_select=0;
   sort_form=param->sort_form;
-  file=sort_form->file;
+  file= sort_form->file;
   ref_length=param->ref_length;
   ref_pos= ref_buff;
   quick_select=select && select->quick;
@@ -1323,7 +1323,7 @@ static uint32_t suffix_length(uint32_t string_length)
 /**
   Calculate length of sort key.
 
-  @param session			  Thread handler
+  @param session			  Thread Cursor
   @param sortorder		  Order of items to sort
   @param s_length	          Number of items to sort
   @param[out] multi_byte_charset Set to 1 if we are using multi-byte charset

@@ -17,7 +17,7 @@
   Rename a table
 */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 #include <string.h>
 
 int heap_rename(const char *old_name, const char *new_name)

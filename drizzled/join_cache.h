@@ -20,8 +20,6 @@
 #ifndef DRIZZLED_JOIN_CACHE_H
 #define DRIZZLED_JOIN_CACHE_H
 
-#include "drizzled/server_includes.h"
-
 class Field_blob;
 typedef JoinTable JoinTable;
 

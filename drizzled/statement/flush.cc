@@ -24,7 +24,8 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Flush::execute()
 {
@@ -96,4 +97,6 @@ bool statement::Flush::reloadCache()
   }
 
  return result;
+}
+
 }

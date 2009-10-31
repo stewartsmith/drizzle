@@ -26,7 +26,8 @@
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 static bool stat_print(Session *session, const char *type, uint32_t type_len,
                        const char *file, uint32_t file_len,
@@ -68,7 +69,7 @@ bool statement::ShowEngineStatus::execute()
 {
   drizzled::plugin::StorageEngine *engine;
 
-  if ((engine= plugin::StorageEngine::findByName(session, engine_name)))
+  if ((engine= plugin::StorageEngine::findByName(*session, engine_name)))
   {
     bool res= show_status(session, 
                           engine,
@@ -80,3 +81,6 @@ bool statement::ShowEngineStatus::execute()
 
   return true;
 }
+
+} /* namespace drizzled */
+

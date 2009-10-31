@@ -3,7 +3,7 @@
 #
 select table_name
 from information_schema.tables
-where table_name like '%memcached%';
+where table_name like '%memcached%' ORDER BY table_name;
 
 #
 # verify the structure of these I_S tables.

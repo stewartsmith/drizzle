@@ -24,7 +24,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/replace.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Replace::execute()
 {
@@ -58,3 +59,6 @@ bool statement::Replace::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
+} /* namespace drizzled */
+

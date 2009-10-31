@@ -99,8 +99,6 @@ extern int read_history ();
     /* no history */
 #endif /* HAVE_READLINE_HISTORY */
 
-#define DRIZZLE_DEFAULT_INPUT_LINE 65536
-
 /**
  Make the old readline interface look like the new one.
 */

@@ -16,7 +16,7 @@
 
 sbin_PROGRAMS= drizzled
 
-DTRACEFILES = handler.o \
+DTRACEFILES = cursor.o \
 	      filesort.o \
 	      drizzled.o \
 	      session.o \
@@ -46,7 +46,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		cost_vect.h \
 		create_field.h \
-		crc32.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -190,7 +189,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function_hash.h \
 		ha_statistics.h \
 		ha_trx_info.h \
-		handler.h \
+		cursor.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -249,8 +248,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_symbol.h \
 		lock.h \
 		lookup_symbol.h \
+		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
+		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
@@ -265,9 +266,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin/authentication.h \
 		plugin/client.h \
-		plugin/command_applier.h \
-		plugin/command_reader.h \
-		plugin/command_replicator.h \
 		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
@@ -283,9 +281,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/registry.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
+		plugin/transaction_applier.h \
+		plugin/transaction_reader.h \
+		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
-		registry.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -398,6 +398,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
+		 $(top_builddir)/drizzled/hash/libhash.la \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
@@ -421,7 +422,6 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
-		crc32.cc \
 		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
@@ -446,6 +446,7 @@ drizzled_SOURCES = \
 		field/varstring.cc \
 		field_conv.cc \
 		field_iterator.cc \
+		file_exchange.cc \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
@@ -602,6 +603,7 @@ drizzled_SOURCES = \
 		key_map.cc \
 		lock.cc \
 		lookup_symbol.cc \
+		memory/multi_malloc.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
@@ -610,8 +612,6 @@ drizzled_SOURCES = \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
 		plugin/client.cc \
-		plugin/command_applier.cc \
-		plugin/command_replicator.cc \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \
@@ -623,6 +623,8 @@ drizzled_SOURCES = \
 		plugin/query_cache.cc \
 		plugin/registry.cc \
 		plugin/scheduler.cc \
+		plugin/transaction_applier.cc \
+		plugin/transaction_replicator.cc \
 		query_id.cc \
 		records.cc \
 		replication_services.cc \
@@ -707,7 +709,7 @@ drizzled_SOURCES = \
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
-libhandler_la_SOURCES = handler.cc plugin/storage_engine.cc
+libhandler_la_SOURCES = cursor.cc plugin/storage_engine.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 

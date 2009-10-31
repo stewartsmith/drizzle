@@ -20,7 +20,7 @@
    to open other files during the time we flush the cache and close this file
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 int mi_close(MI_INFO *info)
 {

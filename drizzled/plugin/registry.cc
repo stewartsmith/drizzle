@@ -22,7 +22,7 @@
 
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
-#include "drizzled/handler.h"
+#include "drizzled/cursor.h"
 
 #include <string>
 #include <vector>

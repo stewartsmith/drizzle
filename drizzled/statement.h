@@ -21,7 +21,6 @@
 #ifndef DRIZZLED_STATEMENT_H
 #define DRIZZLED_STATEMENT_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_parse.h>

@@ -26,7 +26,9 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
+
+#include "mysys/cached_directory.h"
 
 #include <bitset>
 #include <string>
@@ -35,7 +37,7 @@
 class TableList;
 class Session;
 class XID;
-class handler;
+class Cursor;
 
 class TableShare;
 typedef struct st_mysql_lex_string LEX_STRING;
@@ -54,6 +56,7 @@ enum engine_flag_bits {
   HTON_BIT_TEMPORARY_ONLY,
   HTON_BIT_FILE_BASED, // use for check_lowercase_names
   HTON_BIT_HAS_DATA_DICTIONARY,
+  HTON_BIT_DOES_TRANSACTIONS,
   HTON_BIT_SIZE
 };
 
@@ -67,6 +70,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_B
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
 static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DOES_TRANSACTIONS(1 << HTON_BIT_DOES_TRANSACTIONS);
 
 class Table;
 
@@ -76,12 +80,14 @@ namespace plugin
 {
 
 const std::string UNKNOWN_STRING("UNKNOWN");
+const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
+const unsigned int MAX_STORAGE_ENGINE_FILE_EXT= 4;
+    
 
-class TableNameIteratorImplementation;
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
-  "global" level (unlike handler class that works on a per-table basis)
+  "global" level (unlike Cursor class that works on a per-table basis)
 
   usually StorageEngine instance is defined statically in ha_xxx.cc as
 
@@ -97,7 +103,7 @@ class StorageEngine : public Plugin
   const bool two_phase_commit;
   bool enabled;
 
-  const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+  const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
   /*
     to store per-savepoint data storage engine is provided with an area
     of a requested size (0 is ok here).
@@ -110,9 +116,26 @@ class StorageEngine : public Plugin
   size_t savepoint_offset;
   size_t orig_savepoint_offset;
 
-  void setTransactionReadWrite(Session* session);
+  void setTransactionReadWrite(Session& session);
 
 protected:
+  std::string table_definition_ext;
+
+public:
+  const std::string& getTableDefinitionExt()
+  {
+    return table_definition_ext;
+  }
+
+protected:
+
+  /**
+    @brief
+    Used as a protobuf storage currently by TEMP only engines.
+  */
+  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
+  ProtoCache proto_cache;
+  pthread_mutex_t proto_cache_mutex;
 
   /**
    * Implementing classes should override these to provide savepoint
@@ -133,13 +156,22 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int getTableProtoImplementation(const char* path,
-                                          drizzled::message::Table *table_proto)
-    {
-      (void)path;
-      (void)table_proto;
-      return ENOENT;
-    }
+  virtual int doGetTableDefinition(Session& session,
+                                   const char *path,
+                                   const char *db,
+                                   const char *table_name,
+                                   const bool is_tmp,
+                                   drizzled::message::Table *table_proto)
+  {
+    (void)session;
+    (void)path;
+    (void)db;
+    (void)table_name;
+    (void)is_tmp;
+    (void)table_proto;
+
+    return ENOENT;
+  }
 
   /*
     each storage engine has it's own memory area (actually a pointer)
@@ -237,7 +269,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual handler *create(TableShare *, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare *, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -255,7 +287,7 @@ public:
   /**
     If frm_error() is called then we will use this to find out what file
     extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
+    rename_table and delete_table method in Cursor.cc.
 
     For engines that have two file name extentions (separate meta/index file
     and data file), the order of elements is relevant. First element of engine
@@ -266,65 +298,45 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int createTableImplementation(Session *session,
-                                        const char *table_name,
-                                        Table *table_arg,
-                                        HA_CREATE_INFO *create_info,
-                                        drizzled::message::Table* proto)= 0;
+  virtual int doCreateTable(Session *session,
+                            const char *table_name,
+                            Table& table_arg,
+                            HA_CREATE_INFO& create_info,
+                            drizzled::message::Table& proto)= 0;
 
-  virtual int renameTableImplementation(Session* session,
-                                        const char *from, const char *to);
+  virtual int doRenameTable(Session* session,
+                            const char *from, const char *to);
 
-  virtual int deleteTableImplementation(Session* session,
-                                        const std::string table_path);
 
 public:
-  int doCreateTable(Session *session, const char *path, 
-                  Table *table_arg,
-                  HA_CREATE_INFO *create_info,
-                  drizzled::message::Table *proto) 
-  {
-    char name_buff[FN_REFLEN];
-    const char *table_name;
-
-    table_name= checkLowercaseNames(path, name_buff);
-
-    setTransactionReadWrite(session);
-
-    return createTableImplementation(session, table_name, table_arg,
-                                     create_info, proto);
-  }
 
   int renameTable(Session *session, const char *from, const char *to) 
   {
-    setTransactionReadWrite(session);
+    setTransactionReadWrite(*session);
 
-    return renameTableImplementation(session, from, to);
+    return doRenameTable(session, from, to);
   }
 
-  int doDeleteTable(Session* session, const std::string table_path) 
-  {
-    setTransactionReadWrite(session);
-
-    return deleteTableImplementation(session, table_path);
-  }
+  // TODO: move these to protected
+  virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
+  virtual int doDropTable(Session& session,
+                          const std::string table_path)= 0;
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
-
-  virtual TableNameIteratorImplementation* tableNameIterator(const std::string &database)
-  {
-    (void)database;
-    return NULL;
-  }
-
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableProto(const char* path, message::Table *table_proto);
+  static int getTableDefinition(Session& session,
+                                const char* path, 
+                                const char *db,
+                                const char *table_name,
+                                const bool is_tmp,
+                                message::Table *table_proto= NULL);
 
-  static plugin::StorageEngine *findByName(Session *session,
+  static plugin::StorageEngine *findByName(std::string find_str);
+  static plugin::StorageEngine *findByName(Session& session,
                                            std::string find_str);
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
@@ -333,64 +345,26 @@ public:
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int recover(HASH *commit_list);
   static int startConsistentSnapshot(Session *session);
-  static int deleteTable(Session *session, const char *path, const char *db,
-                         const char *alias, bool generate_warning);
+  static int dropTable(Session& session, const char *path, const char *db,
+                       const char *alias, bool generate_warning);
+  static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
+
   static inline const std::string &resolveName(const StorageEngine *engine)
   {
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session *session, const char *path,
+  static int createTable(Session& session, const char *path,
                          const char *db, const char *table_name,
-                         HA_CREATE_INFO *create_info,
+                         HA_CREATE_INFO& create_info,
                          bool update_create_info,
-                         drizzled::message::Table *table_proto);
+                         drizzled::message::Table& table_proto,
+                         bool used= true);
+
+  Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
 };
-
-class TableNameIteratorImplementation
-{
-protected:
-  std::string db;
-public:
-  TableNameIteratorImplementation(const std::string &database) : db(database)
-    {};
-  virtual ~TableNameIteratorImplementation() {};
-
-  virtual int next(std::string *name)= 0;
-
-};
-
-class TableNameIterator
-{
-private:
-  ::drizzled::Registry<plugin::StorageEngine *>::iterator engine_iter;
-  plugin::TableNameIteratorImplementation *current_implementation;
-  plugin::TableNameIteratorImplementation *default_implementation;
-  std::string database;
-public:
-  TableNameIterator(const std::string &db);
-  ~TableNameIterator();
-
-  int next(std::string *name);
-};
-
 
 } /* namespace plugin */
 } /* namespace drizzled */
-
-/* lookups */
-/**
-  Return the default storage engine plugin::StorageEngine for thread
-
-  @param ha_default_storage_engine(session)
-  @param session         current thread
-
-  @return
-    pointer to plugin::StorageEngine
-*/
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session);
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *db_type);
 
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

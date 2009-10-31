@@ -675,6 +675,7 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  po/Makefile.in dnl
+ drizzled/hash/Makefile dnl
  drizzled/message/Makefile dnl
  drizzled/Makefile dnl
  support-files/Makefile dnl

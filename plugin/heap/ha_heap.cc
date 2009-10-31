@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "heap_priv.h"
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -23,7 +23,6 @@
 
 #include "heap.h"
 #include "ha_heap.h"
-#include "heapdef.h"
 
 #include <string>
 
@@ -47,7 +46,7 @@ public:
     addAlias("HEAP");
   }
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_heap(this, table);
@@ -57,31 +56,76 @@ public:
     return ha_heap_exts;
   }
 
-  int createTableImplementation(Session *session, const char *table_name,
-                                Table *table_arg, HA_CREATE_INFO *create_info,
-                                drizzled::message::Table*);
+  int doCreateTable(Session *session, 
+                    const char *table_name,
+                    Table& table_arg, 
+                    HA_CREATE_INFO& create_info,
+                    drizzled::message::Table&);
 
-  /* For whatever reason, internal tables can be created by handler::open()
+  /* For whatever reason, internal tables can be created by Cursor::open()
      for HEAP.
      Instead of diving down a rat hole, let's just cry ourselves to sleep
      at night with this odd hackish workaround.
    */
   int heap_create_table(Session *session, const char *table_name,
-                        Table *table_arg, HA_CREATE_INFO *create_info,
+                        Table *table_arg, HA_CREATE_INFO& create_info,
                         bool internal_table,
                         HP_SHARE **internal_share);
 
-  int renameTableImplementation(Session*, const char * from, const char * to);
+  int doRenameTable(Session*, const char * from, const char * to);
 
-  int deleteTableImplementation(Session *, const string table_path);
+  int doDropTable(Session&, const string table_path);
+
+  int doGetTableDefinition(Session& session,
+                           const char* path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
+
+  /* Temp only engine, so do not return values. */
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+
 };
 
+int HeapEngine::doGetTableDefinition(Session&,
+                                     const char* path,
+                                     const char *,
+                                     const char *,
+                                     const bool,
+                                     drizzled::message::Table *table_proto)
+{
+  int error= 1;
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(path);
+
+  if (iter!= proto_cache.end())
+  {
+    if (table_proto)
+      table_proto->CopyFrom(((*iter).second));
+    error= EEXIST;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return error;
+}
 /*
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::deleteTableImplementation(Session*, const string table_path)
+int HeapEngine::doDropTable(Session&, const string table_path)
 {
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(table_path.c_str());
+
+  if (iter!= proto_cache.end())
+    proto_cache.erase(iter);
+  pthread_mutex_unlock(&proto_cache_mutex);
+
   return heap_delete_table(table_path.c_str());
 }
 
@@ -115,7 +159,7 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 
 ha_heap::ha_heap(drizzled::plugin::StorageEngine *engine_arg,
                  TableShare *table_arg)
-  :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
+  :Cursor(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
 
@@ -142,7 +186,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     file= 0;
     HP_SHARE *internal_share= NULL;
     if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
-                                                &create_info,
+                                                create_info,
                                                 internal_table,&internal_share))
     {
         file= internal_table ?
@@ -192,9 +236,10 @@ int ha_heap::close(void)
     with '\'-delimited path.
 */
 
-handler *ha_heap::clone(MEM_ROOT *mem_root)
+Cursor *ha_heap::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
+  Cursor *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
+
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -486,12 +531,6 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(Session *, int)
-{
-  return 0;					// No external locking
-}
-
-
 /*
   Disable indexes.
 
@@ -550,7 +589,7 @@ int ha_heap::disable_indexes(uint32_t mode)
     The indexes might have been disabled by disable_index() before.
     The function works only if both data and indexes are empty,
     since the heap storage engine cannot repair the indexes.
-    To be sure, call handler::delete_all_rows() before.
+    To be sure, call Cursor::delete_all_rows() before.
 
   IMPLEMENTATION
     HA_KEY_SWITCH_NONUNIQ       is not implemented.
@@ -616,8 +655,8 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::renameTableImplementation(Session*,
-                                          const char *from, const char *to)
+int HeapEngine::doRenameTable(Session*,
+                              const char *from, const char *to)
 {
   return heap_rename(from,to);
 }
@@ -645,20 +684,31 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
   return key->rec_per_key[key->key_parts-1];
 }
 
-int HeapEngine::createTableImplementation(Session *session,
-                                          const char *table_name,
-                                          Table *table_arg,
-                                          HA_CREATE_INFO *create_info,
-                                          drizzled::message::Table*)
+int HeapEngine::doCreateTable(Session *session,
+                              const char *table_name,
+                              Table& table_arg,
+                              HA_CREATE_INFO& create_info,
+                              drizzled::message::Table& create_proto)
 {
+  int error;
   HP_SHARE *internal_share;
-  return heap_create_table(session, table_name, table_arg, create_info,
+
+  error= heap_create_table(session, table_name, &table_arg, create_info,
                            false, &internal_share);
+
+  if (error == 0)
+  {
+    pthread_mutex_lock(&proto_cache_mutex);
+    proto_cache.insert(make_pair(table_name, create_proto));
+    pthread_mutex_unlock(&proto_cache_mutex);
+  }
+
+  return error;
 }
 
 
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
-                             Table *table_arg, HA_CREATE_INFO *create_info,
+                             Table *table_arg, HA_CREATE_INFO& create_info,
                              bool internal_table, HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
@@ -828,8 +878,8 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   HP_CREATE_INFO hp_create_info;
   hp_create_info.auto_key= auto_key;
   hp_create_info.auto_key_type= auto_key_type;
-  hp_create_info.auto_increment= (create_info->auto_increment_value ?
-				  create_info->auto_increment_value - 1 : 0);
+  hp_create_info.auto_increment= (create_info.auto_increment_value ?
+				  create_info.auto_increment_value - 1 : 0);
   hp_create_info.max_table_size=session->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;

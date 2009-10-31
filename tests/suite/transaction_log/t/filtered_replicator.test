@@ -1,0 +1,36 @@
+# 
+# Holistic aggregate test case for the filtered replicator
+# plugin integration with the transaction_log module
+#
+# This file runs the tests in various .inc files. The
+# portions of the results that are non deterministic
+# are then removed for making a comparision to a 
+# result file.
+#
+#
+
+# Filter all statements involving tables called "t2"
+set global filtered_replicator_filteredtables=t2;
+
+--source suite/transaction_log/t/insert.inc
+--source suite/transaction_log/t/insert_multi.inc
+--source suite/transaction_log/t/insert_select.inc
+--source suite/transaction_log/t/alter.inc
+--source suite/transaction_log/t/database.inc
+--source suite/transaction_log/t/rename.inc
+--source suite/transaction_log/t/delete.inc
+--source suite/transaction_log/t/update.inc
+#--source suite/transaction_log/t/auto_commit.inc
+#--source suite/transaction_log/t/temp_tables.inc
+
+# MySQL Bug 36763
+#--source suite/transaction_log/t/truncate.inc
+# Needs fixing
+#--source suite/transaction_log/t/rand.inc
+
+# Read in the transaction.log.
+
+--exec ../drizzled/message/transaction_reader var/master-data/transaction.log
+
+# Truncate the log file to reset for the next test
+--source suite/transaction_log/t/truncate_log.inc

@@ -116,7 +116,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
  * @brief
  *   Find subdirectories (schemas) in a given directory (datadir).
  *
- * @param[in]  session    Thread handler
+ * @param[in]  session    Thread Cursor
  * @param[out] files      Put found entries in this list
  * @param[in]  path       Path to database
  * @param[in]  wild       Filter for found entries
@@ -136,7 +136,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
   {
     my_errno= directory.getError();
     my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
-    return(true);
+
+    return true;
   }
 
   CachedDirectory::Entries entries= directory.getEntries();
@@ -185,7 +186,7 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
     ++entry_iter;
   }
 
-  return(false);
+  return false;
 }
 
 
@@ -442,7 +443,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   uint32_t primary_key;
   KEY *key_info;
   Table *table= table_list->table;
-  handler *file= table->file;
+  Cursor *file= table->file;
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
@@ -649,10 +650,10 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
-    if (table->s->key_block_size)
+    if (table->s->hasKeyBlockSize())
     {
       packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-      buff= to_string(table->s->key_block_size);
+      buff= to_string(table->s->getKeyBlockSize());
       packet->append(buff.c_str(), buff.length());
     }
     if (share->block_size)
@@ -684,7 +685,7 @@ static void store_key_options(String *packet, Table *table, KEY *key_info)
     packet->append(STRING_WITH_LEN(" USING HASH"));
 
   if ((key_info->flags & HA_USES_BLOCK_SIZE) &&
-      table->s->key_block_size != key_info->block_size)
+      table->s->getKeyBlockSize() != key_info->block_size)
   {
     packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
     end= int64_t10_to_str(key_info->block_size, buff, 10);
@@ -1022,7 +1023,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 
   SYNOPSIS
     schema_table_store_record()
-    session                   thread handler
+    session                   thread Cursor
     table                 Information schema table to be updated
 
   RETURN
@@ -1065,7 +1066,7 @@ static int make_table_list(Session *session, Select_Lex *sel,
            fill appropriate lookup_field_vals struct field
            with this value.
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      item_func             part of WHERE condition
   @param[in]      table                 I_S table
   @param[in, out] lookup_field_vals     Struct which holds lookup values
@@ -1147,7 +1148,7 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
            from 'WHERE' condition if it's possible and
            fill lookup_field_vals struct fields with these values.
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      cond                  WHERE condition
   @param[in]      table                 I_S table
   @param[in, out] lookup_field_vals     Struct which holds lookup values
@@ -1295,7 +1296,7 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
            from LEX struct and fill lookup_field_vals struct field
            with these values.
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      cond                  WHERE condition
   @param[in]      tables                I_S table
   @param[in, out] lookup_field_values   Struct which holds lookup values
@@ -1357,7 +1358,7 @@ static bool lex_string_sort(const LEX_STRING *a, const LEX_STRING *b)
  * @brief
  *   Create db names list. Information schema name always is first in list
  *
- * @param[in]  session          Thread handler
+ * @param[in]  session          Thread Cursor
  * @param[out] files            List of db names
  * @param[in]  wild             Wild string
  * @param[in]  idx_field_vals   idx_field_vals->db_name contains db name or
@@ -1446,7 +1447,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
   @details        The function creates the list of table names in
                   database
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      table_names           List of table names in database
   @param[in]      lex                   pointer to LEX struct
   @param[in]      lookup_field_vals     pointer to LOOKUP_FIELD_VALUE struct
@@ -1460,13 +1461,15 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
 */
 
 static int
-make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *lex,
+make_table_name_list(Session *session, vector<LEX_STRING*> &table_names,
                      LOOKUP_FIELD_VALUES *lookup_field_vals,
                      bool with_i_schema, LEX_STRING *db_name)
 {
   char path[FN_REFLEN];
+  set<string> set_of_names;
 
   build_table_filename(path, sizeof(path), db_name->str, "", false);
+
   if (!lookup_field_vals->wild_table_value &&
       lookup_field_vals->table_value.str)
   {
@@ -1484,44 +1487,29 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
     return 0;
   }
 
-  /*
-    This call will add all matching the wildcards (if specified) IS tables
-    to the list
-  */
-  if (with_i_schema)
-    return plugin::InfoSchemaTable::addTableToList(session, table_names,
-                                      lookup_field_vals->table_value.str);
-
   string db(db_name->str);
+  plugin::StorageEngine::getTableNames(db, set_of_names);
 
-  plugin::TableNameIterator tniter(db);
-  int err= 0;
-  string table_name;
+  /*  
+    New I_S engine will make this go away, so ignore lack of foreach() usage.
 
-  do {
-    err= tniter.next(&table_name);
+    Notice how bad this design is... sure we created a set... but then we
+    are just pushing to another set. --
+    Also... callback design won't work, so we need to rewrite this to
+    feed (which means new I_S). For the moment we will not optimize this.
 
-    if (err == 0)
-    {
-      LEX_STRING *file_name= NULL;
-      file_name= session->make_lex_string(file_name, table_name.c_str(),
-                                          table_name.length(), true);
-      const char* wild= lookup_field_vals->table_value.str;
-      if (wild && wild_compare(table_name.c_str(), wild, 0))
-        continue;
-      table_names.push_back(file_name);
-    }
-
-  } while (err == 0);
-
-  if (err > 0)
+  */
+  for (set<string>::iterator it= set_of_names.begin(); it != set_of_names.end(); it++)
   {
-    /* who knows what this error condition really does...
-       anyway, we're keeping behaviour from days of yore */
-    if (lex->sql_command != SQLCOM_SELECT)
-      return 1;
-    session->clear_error();
-    return 2;
+    LEX_STRING *file_name= NULL;
+    
+    file_name= session->make_lex_string(file_name, (*it).c_str(),
+                                        (*it).length(), true);
+    const char* wild= lookup_field_vals->table_value.str;
+    if (wild && wild_compare((*it).c_str(), wild, 0))
+      continue;
+
+    table_names.push_back(file_name);
   }
 
   return 0;
@@ -1531,7 +1519,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 /**
   @brief          Fill I_S table for SHOW COLUMNS|INDEX commands
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      tables                   TableList for I_S table
   @param[in]      schema_table             pointer to I_S structure
   @param[in]      open_tables_state_backup pointer to Open_tables_state object
@@ -1606,7 +1594,7 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
 /**
   @brief          Fill I_S table for SHOW Table NAMES commands
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      table                    Table struct for I_S table
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
@@ -1688,7 +1676,7 @@ static uint32_t get_table_open_method(TableList *tables,
 /**
   @brief          Fill I_S table with data from FRM file only
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      table                    Table struct for I_S table
   @param[in]      schema_table             I_S table struct
   @param[in]      db_name                  database name
@@ -1758,7 +1746,7 @@ err:
                   from frm files and storage engine are filled by the function
                   plugin::InfoSchemaMethods::fillTable().
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      tables                   I_S table
   @param[in]      cond                     'WHERE' condition
 
@@ -1855,7 +1843,7 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, CO
   {
     session->no_warnings_for_error= 1;
     table_names.clear();
-    int res= make_table_name_list(session, table_names, lex,
+    int res= make_table_name_list(session, table_names,
                                   &lookup_field_vals,
                                   with_i_schema, *db_name);
 
@@ -2319,7 +2307,7 @@ Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList 
 
   SYNOPSIS
     plugin::InfoSchemaMethods::oldFormat()
-    session			thread handler
+    session			thread Cursor
     schema_table        pointer to 'schema_tables' element
 
   RETURN
@@ -2362,7 +2350,7 @@ int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchemaTab
 
   SYNOPSIS
   mysql_schema_table()
-    session                thread handler
+    session                thread Cursor
     lex                pointer to LEX
     table_list         pointer to table_list
 
@@ -2403,7 +2391,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 
   SYNOPSIS
     make_schema_select()
-    session                  thread handler
+    session                  thread Cursor
     sel                  pointer to Select_Lex
     schema_table_name    name of 'schema_tables' element
 

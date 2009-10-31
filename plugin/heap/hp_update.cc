@@ -15,7 +15,7 @@
 
 /* Update current record in heap-database */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned char *new_record)
 {

@@ -21,15 +21,12 @@
 
 /**
  * @TODO Name this file something better and split it out if necessary.
- * base.h isn't descriptive, especially compared to global.h
  *
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
 
-#ifndef DRIZZLE_SERVER_BASE_H
-#define DRIZZLE_SERVER_BASE_H
-
-#define CHSIZE_USED
+#ifndef DRIZZLED_BASE_H
+#define DRIZZLED_BASE_H
 
 /* The following is bits in the flag parameter to ha_open() */
 
@@ -177,9 +174,6 @@ enum ha_extra_function {
   HA_EXTRA_PREPARE_FOR_RENAME
 };
 
-/* Compatible option, to be deleted in 6.0 */
-#define HA_EXTRA_PREPARE_FOR_DELETE HA_EXTRA_PREPARE_FOR_DROP
-
 	/* The following is parameter to ha_panic() */
 
 enum ha_panic_function {
@@ -259,9 +253,6 @@ enum ha_base_keytype {
 #define HA_OPTION_COMPRESS_RECORD	4
 #define HA_OPTION_TMP_TABLE		16
 #define HA_OPTION_NO_PACK_KEYS		128  /* Reserved for MySQL */
-#define HA_OPTION_CREATE_FROM_ENGINE    256
-#define HA_OPTION_NULL_FIELDS		1024
-#define HA_OPTION_PAGE_CHECKSUM		2048
 #define HA_OPTION_TEMP_COMPRESS_RECORD	((uint32_t) 16384)	/* set by isamchk */
 #define HA_OPTION_READ_ONLY_DATA	((uint32_t) 32768)	/* Set by isamchk */
 
@@ -403,7 +394,6 @@ enum ha_base_keytype {
 
 	/* Other constants */
 
-#define HA_NAMELEN 64			/* Max length of saved filename */
 #define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
 
 typedef ulong key_part_map;
@@ -530,4 +520,4 @@ typedef uint64_t	ha_rows;
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
 
-#endif /* DRIZZLE_SERVER_BASE_H */
+#endif /* DRIZZLED_BASE_H */

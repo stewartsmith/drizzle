@@ -17,9 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _drizzled_sql_state_h
-#define _drizzled_sql_state_h
+#ifndef DRIZZLED_SQL_STATE_H
+#define DRIZZLED_SQL_STATE_H
 
 const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno);
 
-#endif
+#endif /* DRIZZLED_SQL_STATE_H */

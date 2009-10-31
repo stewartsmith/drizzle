@@ -69,7 +69,8 @@ insert into t2 values(0, 10), (1, 20), (2, 30);
 commit;
 set autocommit=0;
 select * from t2;
-update t2 set a=100 where b=(SELECT x from t1 where id = b FOR UPDATE);
+select x from t1 where id=0 FOR UPDATE;
+update t2 set a=100 where b=(SELECT x from t1 where id = b);
 select * from t2;
 select * from t1;
 

@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_BLOB
-#define DRIZZLE_SERVER_FIELD_BLOB
+#ifndef DRIZZLED_FIELD_BLOB_H
+#define DRIZZLED_FIELD_BLOB_H
 
 #include <drizzled/field/str.h>
 
@@ -176,7 +176,7 @@ public:
       memcpy(ptr,length,packlength);
       memcpy(ptr+packlength,&data,sizeof(char*));
     }
-  void set_ptr_offset(my_ptrdiff_t ptr_diff, uint32_t length, unsigned char *data)
+  void set_ptr_offset(ptrdiff_t ptr_diff, uint32_t length, unsigned char *data)
     {
       unsigned char *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,unsigned char*);
       store_length(ptr_ofs, packlength, length);
@@ -222,5 +222,5 @@ private:
   int do_save_field_metadata(unsigned char *first_byte);
 };
 
-#endif
+#endif /* DRIZZLED_FIELD_BLOB_H */
 

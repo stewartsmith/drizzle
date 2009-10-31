@@ -13,6 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef PLUGIN_CSV_TRANSPARENT_FILE_H
+#define PLUGIN_CSV_TRANSPARENT_FILE_H
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -38,3 +41,5 @@ public:
   char get_value (off_t offset);
   off_t read_next();
 };
+
+#endif /* PLUGIN_CSV_TRANSPARENT_FILE_H */

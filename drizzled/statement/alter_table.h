@@ -24,9 +24,16 @@
 #include <drizzled/statement/create_table.h>
 
 class Session;
+class TableList;
 
 namespace drizzled
 {
+
+namespace message
+{
+  class Table;
+}
+
 namespace statement
 {
 
@@ -41,25 +48,20 @@ public:
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
 
-class Session;
-class TableList;
-
-namespace drizzled
-{
-  namespace message
-  {
-    class Table;
-  }
-}
-
+bool alter_table(Session *session, char *new_db, char *new_name,
+                 HA_CREATE_INFO *create_info,
+                 message::Table *create_proto,
+                 TableList *table_list,
+                 AlterInfo *alter_info,
+                 uint32_t order_num, order_st *order, bool ignore);
 /** @TODO This should die with I_S engine work from Padraig */
-bool mysql_create_like_schema_frm(Session* session,
-                                  TableList* schema_table,
-                                  HA_CREATE_INFO *create_info,
-                                  drizzled::message::Table* table_proto);
+bool create_like_schema_frm(Session* session,
+                            TableList* schema_table,
+                            HA_CREATE_INFO *create_info,
+                            message::Table* table_proto);
 
+} /* namespace drizzled */
 #endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */

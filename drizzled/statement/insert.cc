@@ -25,7 +25,8 @@
 #include <drizzled/probes.h>
 #include <drizzled/statement/insert.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Insert::execute()
 {
@@ -61,3 +62,5 @@ bool statement::Insert::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
+} /* namespace drizzled */

@@ -35,7 +35,7 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 
-#include "drizzled/statement/alter_table.h" /* for mysql_create_like_schema_frm, which will die soon */
+#include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
 
 #include <algorithm>
 
@@ -340,9 +340,9 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
   string built_query;
 
   if (if_exists)
-    built_query.append("DROP Table IF EXISTS ");
+    built_query.append("DROP TABLE IF EXISTS ");
   else
-    built_query.append("DROP Table ");
+    built_query.append("DROP TABLE ");
 
   built_query.append("`");
   if (session->db == NULL || strcmp(db_name ,session->db) != 0)
@@ -420,13 +420,13 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   SYNOPSIS
     mysql_rm_table_part2()
-    session			Thread handler
+    session			Thread Cursor
     tables		Tables to drop
     if_exists		If set, don't give an error if table doesn't exists.
 			In this case we give an warning of level 'NOTE'
     drop_temporary	Only drop temporary tables
     dont_log_query	Don't write query to log files. This will also not
-			generate warnings if the handler files doesn't exists
+			generate warnings if the Cursor files doesn't exists
 
   TODO:
     When logging to the binary log, we should log
@@ -524,7 +524,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     if (drop_temporary ||
         ((table_type == NULL
-          && (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST))))
+          && (plugin::StorageEngine::getTableDefinition(*session, 
+                                                        path, 
+                                                        db, 
+                                                        table->table_name, 
+                                                        table->internal_tmp_table) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -536,7 +540,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     else
     {
-      error= plugin::StorageEngine::deleteTable(session, path, db,
+      error= plugin::StorageEngine::dropTable(*session, path, db,
                                                 table->table_name,
                                                 ! dont_log_query);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
@@ -605,7 +609,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(plugin::StorageEngine *, const char *db,
+bool quick_rm_table(Session& session, const char *db,
                     const char *table_name, bool is_tmp)
 {
   char path[FN_REFLEN];
@@ -613,8 +617,8 @@ bool quick_rm_table(plugin::StorageEngine *, const char *db,
 
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
 
-  return (plugin::StorageEngine::deleteTable(current_session, path, db,
-                                             table_name, 0)
+  return (plugin::StorageEngine::dropTable(session, path, db,
+                                           table_name, 0)
           || error);
 }
 
@@ -828,10 +832,11 @@ int prepare_create_field(CreateField *sql_field,
 
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
-                               handler *file,
+                               Cursor *file,
                                KEY **key_info_buffer,
                                uint32_t *key_count,
                                int select_field_count)
@@ -1245,7 +1250,7 @@ int mysql_prepare_create_table(Session *session,
     */
     key_info->block_size= (key->key_create_info.block_size ?
                            key->key_create_info.block_size :
-                           create_info->key_block_size);
+                           create_proto->options().key_block_size());
 
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
@@ -1597,7 +1602,7 @@ bool mysql_create_table_no_lock(Session *session,
   uint32_t          path_length;
   uint		db_options, key_count;
   KEY		*key_info_buffer;
-  handler	*file;
+  Cursor	*file;
   bool		error= true;
   /* Check for duplicate fields and check type of table to create */
   if (!alter_info->create_list.elements)
@@ -1612,16 +1617,15 @@ bool mysql_create_table_no_lock(Session *session,
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
-  if (!(file= get_new_handler((TableShare*) 0, session->mem_root,
-                              create_info->db_type)))
+  if (!(file= create_info->db_type->getCursor((TableShare*) 0, session->mem_root)))
   {
-    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
+    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Cursor));
     return true;
   }
 
   set_table_default_charset(create_info, (char*) db);
 
-  if (mysql_prepare_create_table(session, create_info, alter_info,
+  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, file,
                                  &key_info_buffer, &key_count,
@@ -1666,7 +1670,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (plugin::StorageEngine::getTableProto(path, NULL)==EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session, path, db, table_name, internal_tmp_table)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1716,7 +1720,7 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             db, table_name, false);
 
-    int retcode= plugin::StorageEngine::getTableProto(table_path, NULL);
+    int retcode= plugin::StorageEngine::getTableDefinition(*session, table_path, db, table_name, false);
     switch (retcode)
     {
       case ENOENT:
@@ -1923,7 +1927,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
   build_table_filename(to, sizeof(to), new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
-  if (!(error=base->renameTable(session, from_base, to_base)))
+  if (!(error= base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
        && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
@@ -1947,7 +1951,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
 
   SYNOPSIS
     wait_while_table_is_used()
-    session			Thread handler
+    session			Thread Cursor
     table		Table to remove from cache
     function            HA_EXTRA_PREPARE_FOR_DROP if table is to be deleted
                         HA_EXTRA_FORCE_REOPEN if table is not be used
@@ -1982,7 +1986,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   SYNOPSIS
     close_cached_table()
-    session			Thread handler
+    session			Thread Cursor
     table		Table to remove from cache
 
   NOTES
@@ -2026,7 +2030,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                               uint32_t extra_open_options,
                               int (*prepare_func)(Session *, TableList *,
                                                   HA_CHECK_OPT *),
-                              int (handler::*operator_func)(Session *,
+                              int (Cursor::*operator_func)(Session *,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
@@ -2156,7 +2160,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    if (table->table->s->crashed && operator_func == &handler::ha_check)
+    if (table->table->s->crashed && operator_func == &Cursor::ha_check)
     {
       session->client->store(table_name);
       session->client->store(operator_name);
@@ -2351,7 +2355,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 {
   return(mysql_admin_table(session, tables, check_opt,
                            "optimize", TL_WRITE, 1,0,0,0,
-                           &handler::ha_optimize));
+                           &Cursor::ha_optimize));
 }
 
 /*
@@ -2387,10 +2391,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     By opening source table we guarantee that it exists and no concurrent
     DDL operation will mess with it. Later we also take an exclusive
     name-lock on target table name, which makes copying of .frm file,
-    call to StorageEngine::createTable() and binlogging atomic against concurrent DML
-    and DDL operations on target table. Thus by holding both these "locks"
-    we ensure that our statement is properly isolated from all concurrent
-    operations which matter.
+    call to plugin::StorageEngine::createTable() and binlogging atomic
+    against concurrent DML and DDL operations on target table.
+    Thus by holding both these "locks" we ensure that our statement is
+    properly isolated from all concurrent operations which matter.
   */
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
@@ -2416,7 +2420,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (plugin::StorageEngine::getTableProto(dst_path, NULL) == EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session, dst_path, db, table_name, false) == EEXIST)
       goto table_exists;
   }
 
@@ -2425,13 +2429,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     Altough exclusive name-lock on target table protects us from concurrent
     DML and DDL operations on it we still want to wrap .FRM creation and call
-    to StorageEngine::createTable() in critical section protected by LOCK_open in order
-    to provide minimal atomicity against operations which disregard name-locks,
-    like I_S implementation, for example. This is a temporary and should not
-    be copied. Instead we should fix our code to always honor name-locks.
+    to plugin::StorageEngine::createTable() in critical section protected by
+    LOCK_open in order to provide minimal atomicity against operations which
+    disregard name-locks, like I_S implementation, for example. This is a
+    temporary and should not be copied. Instead we should fix our code to
+    always honor name-locks.
 
     Also some engines (e.g. NDB cluster) require that LOCK_open should be held
-    during the call to StorageEngine::createTable(). See bug #28614 for more info.
+    during the call to plugin::StorageEngine::createTable().
+    See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
   {
@@ -2439,8 +2445,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
-      if (mysql_create_like_schema_frm(session, src_table, create_info,
-                                       &src_proto))
+      if (create_like_schema_frm(session, src_table, create_info, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
         goto err;
@@ -2448,7 +2453,12 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     }
     else
     {
-      protoerr= plugin::StorageEngine::getTableProto(src_path, &src_proto);
+      protoerr= plugin::StorageEngine::getTableDefinition(*session,
+                                                          src_path,
+                                                          db,
+                                                          table_name,
+                                                          false,
+                                                          &src_proto);
     }
 
     message::Table new_proto(src_proto);
@@ -2468,7 +2478,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr == EEXIST)
     {
-      plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
+      plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
                                                                        new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
@@ -2492,8 +2502,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       creation, instead create the table directly (for both normal
       and temporary tables).
     */
-    err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
-                                            true, &new_proto);
+    err= plugin::StorageEngine::createTable(*session, dst_path, db, table_name, *create_info, 
+                                            true, new_proto);
   }
   pthread_mutex_unlock(&LOCK_open);
 
@@ -2507,7 +2517,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else if (err)
   {
-    (void) quick_rm_table(create_info->db_type, db,
+    (void) quick_rm_table(*session, db,
 			  table_name, false);
     goto err;
   }
@@ -2598,7 +2608,7 @@ bool mysql_analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* chec
 
   return(mysql_admin_table(session, tables, check_opt,
 				"analyze", lock_type, 1, 0, 0, 0,
-				&handler::ha_analyze));
+				&Cursor::ha_analyze));
 }
 
 
@@ -2609,19 +2619,19 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
   return(mysql_admin_table(session, tables, check_opt,
 				"check", lock_type,
 				0, 0, HA_OPEN_FOR_REPAIR, 0,
-				&handler::ha_check));
+				&Cursor::ha_check));
 }
 
 /*
-  Recreates tables by calling mysql_alter_table().
+  Recreates tables by calling drizzled::alter_table().
 
   SYNOPSIS
     mysql_recreate_table()
-    session			Thread handler
+    session			Thread Cursor
     tables		Tables to recreate
 
  RETURN
-    Like mysql_alter_table().
+    Like drizzled::alter_table().
 */
 bool mysql_recreate_table(Session *session, TableList *table_list)
 {
@@ -2642,9 +2652,9 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   /* Force alter table to recreate table */
   alter_info.flags.set(ALTER_CHANGE_COLUMN);
   alter_info.flags.set(ALTER_RECREATE);
-  return(mysql_alter_table(session, NULL, NULL, &create_info, &table_proto,
-                           table_list, &alter_info, 0,
-                           (order_st *) 0, 0));
+  return(alter_table(session, NULL, NULL, &create_info, &table_proto,
+                     table_list, &alter_info, 0,
+                     (order_st *) 0, 0));
 }
 
 

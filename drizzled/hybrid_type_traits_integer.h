@@ -52,4 +52,4 @@ public:
   Hybrid_type_traits_integer();
 };
 
-#endif /* HYBRID_TYPE_TRAITS_INTEGER_H */
+#endif /* DRIZZLED_HYBRID_TYPE_TRAITS_INTEGER_H */

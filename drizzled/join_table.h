@@ -25,8 +25,8 @@
  * used in the nested loops join implementation.
  */
 
-#ifndef DRIZZLED_JOINTABLE_H
-#define DRIZZLED_JOINTABLE_H
+#ifndef DRIZZLED_JOIN_TABLE_H
+#define DRIZZLED_JOIN_TABLE_H
 
 #include <drizzled/enum_nested_loop_state.h>
 #include <drizzled/table_reference.h>
@@ -195,4 +195,4 @@ public:
   void readCachedRecord();
 };
 
-#endif /* DRIZZLED_JOINTABLE_H */
+#endif /* DRIZZLED_JOIN_TABLE_H */

@@ -19,8 +19,8 @@
 
 /* This is the include file that should be included 'first' in every C file. */
 
-#ifndef DRIZZLE_SERVER_GLOBAL_H
-#define DRIZZLE_SERVER_GLOBAL_H
+#ifndef DRIZZLED_GLOBAL_H
+#define DRIZZLED_GLOBAL_H
 
 #if defined(i386) && !defined(__i386__)
 #define __i386__
@@ -122,10 +122,14 @@
 #include <unistd.h>
 #endif
 
-
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 
 /* Declared in int2str() */
 extern char _dig_vec_upper[];
@@ -169,10 +173,6 @@ template <class T> void set_if_smaller(T &a, const T &b)
 /* Some types that is different between systems */
 
 typedef int  File;    /* File descriptor */
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 
 
 #ifndef FN_LIBCHAR
@@ -258,8 +258,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
   Max size that must be added to a so that we know Size to make
   adressable obj.
 */
-typedef ptrdiff_t my_ptrdiff_t;
-
 #define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
 #define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
 /* Size to make adressable obj. */
@@ -267,7 +265,7 @@ typedef ptrdiff_t my_ptrdiff_t;
 /* Offset of field f in structure t */
 #define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
 #define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
-#define PTR_BYTE_DIFF(A,B) (my_ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
+#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
 
 #define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
 #define MY_ALIGNED_BYTE_ARRAY(N, S, T) T N[MY_DIV_UP(S, sizeof(T))]
@@ -293,16 +291,6 @@ typedef uint64_t my_off_t;
 /* Defines for time function */
 #define SCALE_SEC  100
 #define SCALE_USEC  10000
-#define MY_HOW_OFTEN_TO_ALARM  2  /* How often we want info on screen */
-#define MY_HOW_OFTEN_TO_WRITE  1000  /* How often we want info on screen */
-
-
-#include <dlfcn.h>
-
-/* FreeBSD 2.2.2 does not define RTLD_NOW) */
-#ifndef RTLD_NOW
-#define RTLD_NOW 1
-#endif
 
 #define DRIZZLE_SERVER
 
@@ -373,4 +361,4 @@ typedef uint64_t my_off_t;
 # define _DTRACE_VERSION 0
 #endif
 
-#endif /* DRIZZLE_SERVER_GLOBAL_H */
+#endif /* DRIZZLED_GLOBAL_H */

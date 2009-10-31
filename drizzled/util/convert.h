@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_UTIL_CONVERT
-#define DRIZZLE_SERVER_UTIL_CONVERT
+#ifndef DRIZZLED_UTIL_CONVERT_H
+#define DRIZZLED_UTIL_CONVERT_H
 
 #include <string>
 #include <iostream>
@@ -48,4 +48,4 @@ extern "C"
                                   uint64_t from_size);
 }
 
-#endif
+#endif /* DRIZZLED_UTIL_CONVERT_H */

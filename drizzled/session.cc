@@ -40,6 +40,7 @@
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/probes.h"
+#include "drizzled/table_proto.h"
 
 #include <algorithm>
 
@@ -199,7 +200,9 @@ Session::Session(plugin::Client *client_arg)
   derived_tables_processing(false),
   tablespace_op(false),
   m_lip(NULL),
-  cached_table(0)
+  cached_table(0),
+  transaction_message(NULL),
+  statement_message(NULL)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
@@ -1962,8 +1965,6 @@ void Session::refresh_status()
   pthread_mutex_unlock(&LOCK_status);
 }
 
-#define extra_size sizeof(double)
-
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
 {
   user_var_entry *entry= NULL;
@@ -2157,7 +2158,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
   if (delete_table_proto_file(path))
     error=1;
 
-  if (base->doDeleteTable(this, path))
+  if (base->doDropTable(*this, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

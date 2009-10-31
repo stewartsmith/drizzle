@@ -20,7 +20,7 @@
   isamdatabase.
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_ctype.h>
 #include <mysys/my_tree.h>
 #include <drizzled/util/test.h>

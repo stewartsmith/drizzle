@@ -29,7 +29,10 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
 
-using namespace drizzled;
+using namespace std;
+
+namespace drizzled
+{
 
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<CreateField> &create,
@@ -65,7 +68,7 @@ bool statement::AlterTable::execute()
   {
 
     create_info.db_type= 
-      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+      plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
     if (create_info.db_type == NULL)
     {
@@ -90,16 +93,16 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  bool res= mysql_alter_table(session, 
-                              select_lex->db, 
-                              session->lex->name.str,
-                              &create_info,
-                              &create_table_proto,
-                              first_table,
-                              &alter_info,
-                              select_lex->order_list.elements,
-                              (order_st *) select_lex->order_list.first,
-                              session->lex->ignore);
+  bool res= alter_table(session, 
+                        select_lex->db, 
+                        session->lex->name.str,
+                        &create_info,
+                        &create_table_proto,
+                        first_table,
+                        &alter_info,
+                        select_lex->order_list.elements,
+                        (order_st *) select_lex->order_list.first,
+                        session->lex->ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
@@ -107,6 +110,7 @@ bool statement::AlterTable::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
 
 /**
   Prepare column and key definitions for CREATE TABLE in ALTER Table.
@@ -184,8 +188,13 @@ static bool mysql_prepare_alter_table(Session *session,
     table->file->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->file->stats.auto_increment_value;
   }
-  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE))
-    create_info->key_block_size= table->s->key_block_size;
+  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+      && table->s->hasKeyBlockSize())
+    table_options->set_key_block_size(table->s->getKeyBlockSize());
+
+  if ((used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+      && table_options->key_block_size() == 0)
+    table_options->clear_key_block_size();
 
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
@@ -606,7 +615,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   Alter table
 
   SYNOPSIS
-    mysql_alter_table()
+    alter_table()
       session              Thread handle
       new_db           If there is a RENAME clause
       new_name         If there is a RENAME clause
@@ -627,7 +636,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     When the ALTER Table statement just does a RENAME or ENABLE|DISABLE KEYS,
     or both, then this function short cuts its operation by renaming
     the table and/or enabling/disabling the keys. In this case, the FRM is
-    not changed, directly by mysql_alter_table. However, if there is a
+    not changed, directly by alter_table. However, if there is a
     RENAME + change of a field, or an index, the short cut is not used.
     See how `create_list` is used to generate the new FRM regarding the
     structure of the fields. The same is done for the indices of the table.
@@ -643,16 +652,16 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     false  OK
     true   Error
 */
-bool mysql_alter_table(Session *session,
-                       char *new_db,
-                       char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       message::Table *create_proto,
-                       TableList *table_list,
-                       AlterInfo *alter_info,
-                       uint32_t order_num,
-                       order_st *order,
-                       bool ignore)
+bool alter_table(Session *session,
+                 char *new_db,
+                 char *new_name,
+                 HA_CREATE_INFO *create_info,
+                 message::Table *create_proto,
+                 TableList *table_list,
+                 AlterInfo *alter_info,
+                 uint32_t order_num,
+                 order_st *order,
+                 bool ignore)
 {
   Table *table;
   Table *new_table= NULL;
@@ -769,7 +778,7 @@ bool mysql_alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        if (plugin::StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
+        if (plugin::StorageEngine::getTableDefinition(*session, new_name_buff, new_db, new_name_buff, false) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -896,7 +905,7 @@ bool mysql_alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (plugin::StorageEngine::getTableProto(new_name, NULL) == EEXIST)
+      if (plugin::StorageEngine::getTableDefinition(*session, new_name, db, table_name, false) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;
@@ -1054,7 +1063,7 @@ bool mysql_alter_table(Session *session,
   
   if (error)
   {
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
+    quick_rm_table(*session, new_db, tmp_name, true);
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
@@ -1103,7 +1112,7 @@ bool mysql_alter_table(Session *session,
   if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
     error= 1;
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
+    quick_rm_table(*session, new_db, tmp_name, true);
   }
   else
   {
@@ -1111,8 +1120,8 @@ bool mysql_alter_table(Session *session,
     {
       /* Try to get everything back. */
       error= 1;
-      quick_rm_table(new_db_type, new_db, new_alias, false);
-      quick_rm_table(new_db_type, new_db, tmp_name, true);
+      quick_rm_table(*session, new_db, new_alias, false);
+      quick_rm_table(*session, new_db, tmp_name, true);
       mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
     }
   }
@@ -1123,7 +1132,7 @@ bool mysql_alter_table(Session *session,
     goto err_with_placeholders;
   }
 
-  quick_rm_table(old_db_type, db, old_name, true);
+  quick_rm_table(*session, db, old_name, true);
 
   pthread_mutex_unlock(&LOCK_open);
 
@@ -1182,7 +1191,7 @@ err1:
     session->close_temporary_table(new_table, true, true);
   }
   else
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
+    quick_rm_table(*session, new_db, tmp_name, true);
 
 err:
   /*
@@ -1236,7 +1245,7 @@ err_with_placeholders:
   pthread_mutex_unlock(&LOCK_open);
   return true;
 }
-/* mysql_alter_table */
+/* alter_table */
 
 static int
 copy_data_between_tables(Table *from,Table *to,
@@ -1468,16 +1477,16 @@ create_temporary_table(Session *session,
   protoengine->set_name(new_db_type->getName());
 
   error= mysql_create_table(session, new_db, tmp_name,
-                            create_info, create_proto, alter_info, 1, 0);
+                            create_info, create_proto, alter_info, true, 0);
 
   return(error);
 }
 
 /** @TODO This will soon die. */
-bool mysql_create_like_schema_frm(Session* session,
-                                  TableList* schema_table,
-                                  HA_CREATE_INFO *create_info,
-                                  message::Table* table_proto)
+bool create_like_schema_frm(Session* session,
+                            TableList* schema_table,
+                            HA_CREATE_INFO *create_info,
+                            message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   AlterInfo alter_info;
@@ -1502,7 +1511,8 @@ bool mysql_create_like_schema_frm(Session* session,
   table_options= table_proto->mutable_options();
   table_options->clear_max_rows();
 
-  if (mysql_prepare_create_table(session, &local_create_info, &alter_info,
+  if (mysql_prepare_create_table(session, &local_create_info, table_proto,
+                                 &alter_info,
                                  tmp_table, &db_options,
                                  schema_table->table->file,
                                  &schema_table->table->s->key_info, &keys, 0))
@@ -1530,3 +1540,5 @@ bool mysql_create_like_schema_frm(Session* session,
 
   return false;
 }
+
+} /* namespace drizzled */

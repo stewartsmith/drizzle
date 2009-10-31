@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_RESULT_H
 #define DRIZZLED_SELECT_RESULT_H
 
+class JOIN;
+
 class select_result :public Sql_alloc {
 protected:
   Session *session;

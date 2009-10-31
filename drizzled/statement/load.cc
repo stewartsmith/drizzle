@@ -24,7 +24,8 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/statement/load.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Load::execute()
 {
@@ -41,3 +42,6 @@ bool statement::Load::execute()
                        session->lex->ignore);
   return res;
 }
+
+} /* namespace drizzled */
+

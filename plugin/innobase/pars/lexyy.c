@@ -700,7 +700,7 @@ static int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "pars0lex.l"
-/******************************************************
+/**************************************************//**
 SQL parser lexical analyzer: input file for the GNU Flex lexer generator
 
 (c) 1997 Innobase Oy
@@ -744,13 +744,13 @@ Linux.
 static ulint	stringbuf_len_alloc = 0; /* Allocated length */
 static ulint	stringbuf_len = 0; /* Current length */
 static char*	stringbuf; /* Start of buffer */
-/* Appends a string to the buffer. */
+/** Appends a string to the buffer. */
 static
 void
 string_append(
 /*==========*/
-	const char*	str,	/* in: string to be appended */
-	ulint		len)	/* in: length of the string */
+	const char*	str,	/*!< in: string to be appended */
+	ulint		len)	/*!< in: length of the string */
 {
 	if (stringbuf == NULL) {
 		stringbuf = malloc(1);

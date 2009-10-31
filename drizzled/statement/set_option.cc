@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/set_option.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::SetOption::execute()
 {
@@ -54,3 +55,5 @@ bool statement::SetOption::execute()
 
   return res;
 }
+
+} /* namespace drizzled */

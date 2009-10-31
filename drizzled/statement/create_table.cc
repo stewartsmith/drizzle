@@ -24,7 +24,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::CreateTable::execute()
 {
@@ -41,7 +42,7 @@ bool statement::CreateTable::execute()
   {
 
     create_info.db_type= 
-      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+      plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
     if (create_info.db_type == NULL)
     {
@@ -53,7 +54,7 @@ bool statement::CreateTable::execute()
   }
   else /* We now get the default, place it in create_info, and put the engine name in table proto */
   {
-    create_info.db_type= ha_default_storage_engine(session);
+    create_info.db_type= session->getDefaultStorageEngine();
   }
 
 
@@ -211,3 +212,6 @@ bool statement::CreateTable::execute()
 
   return res;
 }
+
+} /* namespace drizzled */
+

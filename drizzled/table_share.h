@@ -23,8 +23,12 @@
   instance of table share per one table in the database.
 */
 
+#ifndef DRIZZLED_TABLE_SHARE_H
+#define DRIZZLED_TABLE_SHARE_H
+
 #include <string>
 
+#include "drizzled/message/table.pb.h"
 
 class TableShare
 {
@@ -111,12 +115,22 @@ public:
 
   inline const char *getComment()
   {
-    return (table_proto) ?  table_proto->options().comment().c_str() : NULL; 
+    return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
   }
 
   inline uint32_t getCommentLength()
   {
     return (table_proto) ? table_proto->options().comment().length() : 0; 
+  }
+
+  inline bool hasKeyBlockSize()
+  {
+    return (table_proto) ? table_proto->options().has_key_block_size() : false;
+  }
+
+  inline uint32_t getKeyBlockSize()
+  {
+    return (table_proto) ? table_proto->options().key_block_size() : 0;
   }
 
   inline uint64_t getMaxRows()
@@ -137,7 +151,6 @@ public:
   enum tmp_table_type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t key_block_size;			/* create key_block_size, if used */
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
@@ -153,8 +166,17 @@ public:
   uint32_t db_options_in_use;		/* Options in use */
   uint32_t db_record_offset;		/* if HA_REC_IN_SEQ */
   uint32_t rowid_field_offset;		/* Field_nr +1 to rowid field */
-  /* Index of auto-updated TIMESTAMP field in field array */
+  /**
+   * @TODO 
+   *
+   * Currently the replication services component uses
+   * the primary_key member to determine which field is the table's
+   * primary key.  However, as it exists, because this member is scalar, it
+   * only supports a single-column primary key. Is there a better way
+   * to ask for the fields which are in a primary key?
+   */
   uint32_t primary_key;
+  /* Index of auto-updated TIMESTAMP field in field array */
   uint32_t next_number_index;               /* autoincrement key number */
   uint32_t next_number_key_offset;          /* autoinc keypart offset in a key */
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */
@@ -387,3 +409,5 @@ public:
                               TableList *table_list, char *key,
                               uint32_t key_length, uint32_t, int *error);
 };
+
+#endif /* DRIZZLED_TABLE_SHARE_H */

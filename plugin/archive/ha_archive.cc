@@ -109,7 +109,7 @@ std::map<const char *, ArchiveShare *> archive_open_tables;
 static unsigned int global_version;
 
 /* The file extension */
-#define ARZ ".ARZ"               // The data file
+#define ARZ ".arz"               // The data file
 #define ARN ".ARN"               // Files used during an optimize call
 
 
@@ -134,95 +134,18 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
-class ArchiveTableNameIterator: public drizzled::plugin::TableNameIteratorImplementation
-{
-private:
-  MY_DIR *dirp;
-  uint32_t current_entry;
-
-public:
-  ArchiveTableNameIterator(const std::string &database)
-    : drizzled::plugin::TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
-    {};
-
-  ~ArchiveTableNameIterator();
-
-  int next(std::string *name);
-
-};
-
-ArchiveTableNameIterator::~ArchiveTableNameIterator()
-{
-  if (dirp)
-    my_dirend(dirp);
-}
-
-int ArchiveTableNameIterator::next(string *name)
-{
-  char uname[NAME_LEN + 1];
-  FILEINFO *file;
-  char *ext;
-  uint32_t file_name_len;
-  const char *wild= NULL;
-
-  if (dirp == NULL)
-  {
-    bool dir= false;
-    char path[FN_REFLEN];
-
-    build_table_filename(path, sizeof(path), db.c_str(), "", false);
-    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
-    if (dirp == NULL)
-    {
-      if (my_errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
-      return(ENOENT);
-    }
-    current_entry= -1;
-  }
-
-  while(true)
-  {
-    current_entry++;
-
-    if (current_entry == dirp->number_off_files)
-    {
-      my_dirend(dirp);
-      dirp= NULL;
-      return -1;
-    }
-
-    file= dirp->dir_entry + current_entry;
-
-    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
-
-    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
-
-    uname[file_name_len]= '\0';
-
-    if (wild && wild_compare(uname, wild, 0))
-      continue;
-    if (name)
-      name->assign(uname);
-
-    return 0;
-  }
-}
-
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
 public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) {}
+                                      | HTON_HAS_DATA_DICTIONARY) 
+  {
+    table_definition_ext= ARZ;
+  }
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_archive(this, table);
@@ -232,21 +155,81 @@ public:
     return ha_archive_exts;
   }
 
-  int createTableImplementation(Session *session, const char *table_name,
-                                Table *table_arg, HA_CREATE_INFO *create_info,
-                                drizzled::message::Table* proto);
+  int doCreateTable(Session *session, const char *table_name,
+                    Table& table_arg, HA_CREATE_INFO& create_info,
+                    drizzled::message::Table& proto);
 
-  int getTableProtoImplementation(const char* path,
-                                  drizzled::message::Table *table_proto);
+  int doGetTableDefinition(Session& session,
+                           const char* path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
 
-  drizzled::plugin::TableNameIteratorImplementation* tableNameIterator(const std::string &database)
-  {
-    return new ArchiveTableNameIterator(database);
-  }
+  void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
+
+  int doDropTable(Session&, const string table_path);
 };
 
-int ArchiveEngine::getTableProtoImplementation(const char* path,
-                                         drizzled::message::Table *table_proto)
+
+void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
+                                    string&, 
+                                    set<string>& set_of_names)
+{
+  CachedDirectory::Entries entries= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    CachedDirectory::Entry *entry= *entry_iter;
+    string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
+        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+    {  }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names.insert(uname);
+    }
+  }
+}
+
+
+int ArchiveEngine::doDropTable(Session&,
+                               const string table_path)
+{
+  int error= 0;
+  char buff[FN_REFLEN];
+
+  fn_format(buff, table_path.c_str(), "", ARZ,
+            MY_UNPACK_FILENAME|MY_APPEND_EXT);
+  if (my_delete_with_symlink(buff, MYF(0)))
+  {
+    if (my_errno != ENOENT)
+    {
+      error= my_errno;
+    }
+  }
+
+  return error;
+}
+
+int ArchiveEngine::doGetTableDefinition(Session&,
+                                        const char* path,
+                                        const char *,
+                                        const char *,
+                                        const bool,
+                                        drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
   int error= 0;
@@ -289,7 +272,7 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
 static ArchiveEngine *archive_engine= NULL;
 
 /*
-  Initialize the archive handler.
+  Initialize the archive Cursor.
 
   SYNOPSIS
     archive_db_init()
@@ -314,7 +297,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 }
 
 /*
-  Release the archive handler.
+  Release the archive Cursor.
 
   SYNOPSIS
     archive_db_done()
@@ -337,7 +320,7 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 
 ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
                        TableShare *table_arg)
-  :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
+  :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);
@@ -516,7 +499,7 @@ int ha_archive::init_archive_writer()
 
 
 /*
-  No locks are required because it is associated with just one handler instance
+  No locks are required because it is associated with just one Cursor instance
 */
 int ha_archive::init_archive_reader()
 {
@@ -640,11 +623,11 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImplementation(Session *,
-                                             const char *table_name,
-                                             Table *table_arg,
-                                             HA_CREATE_INFO *create_info,
-                                             drizzled::message::Table *proto)
+int ArchiveEngine::doCreateTable(Session *,
+                                 const char *table_name,
+                                 Table& table_arg,
+                                 HA_CREATE_INFO& create_info,
+                                 drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
   int error= 0;
@@ -652,11 +635,11 @@ int ArchiveEngine::createTableImplementation(Session *,
   uint64_t auto_increment_value;
   string serialized_proto;
 
-  auto_increment_value= create_info->auto_increment_value;
+  auto_increment_value= create_info.auto_increment_value;
 
-  for (uint32_t key= 0; key < table_arg->sizeKeys(); key++)
+  for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KEY *pos= table_arg->key_info+key;
+    KEY *pos= table_arg.key_info+key;
     KEY_PART_INFO *key_part=     pos->key_part;
     KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
 
@@ -686,19 +669,19 @@ int ArchiveEngine::createTableImplementation(Session *,
     goto error2;
   }
 
-  proto->SerializeToString(&serialized_proto);
+  proto.SerializeToString(&serialized_proto);
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
     goto error2;
 
-  if (proto->options().has_comment())
+  if (proto.options().has_comment())
   {
     int write_length;
 
     write_length= azwrite_comment(&create_stream,
-                                  proto->options().comment().c_str(),
-                                  proto->options().comment().length());
+                                  proto.options().comment().c_str(),
+                                  proto.options().comment().length());
 
     if (write_length < 0)
     {
