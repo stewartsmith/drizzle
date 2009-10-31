@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-27 19:47+0000\n"
-"Last-Translator: Hector Louzao <os390l@gmail.com>\n"
+"PO-Revision-Date: 2009-10-30 14:35+0000\n"
+"Last-Translator: Cristóbal Iván Rivera Macías <ivan.rvm@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-28 08:28+0000\n"
+"X-Launchpad-Export-Date: 2009-10-31 08:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -3695,7 +3695,7 @@ msgstr "longitud de Parte clave \"%-.192s' no puede ser 0"
 
 #: drizzled/error.cc:818
 msgid "View text checksum failed"
-msgstr ""
+msgstr "Ver texto checksum falló"
 
 #: drizzled/error.cc:820
 #, c-format
@@ -5275,12 +5275,12 @@ msgstr "tablespace '%-.192s'  no existe"
 #: drizzled/error.cc:1370
 #, c-format
 msgid "Unexpected master's heartbeat data: %s"
-msgstr ""
+msgstr "Señal de datos del maestro inesperada: %s"
 
 #: drizzled/error.cc:1372
 #, c-format
 msgid "The requested value for the heartbeat period %s %s"
-msgstr ""
+msgstr "La petición del valor para el período de la señal %s %s"
 
 #: drizzled/error.cc:1374
 #, c-format
@@ -5442,6 +5442,8 @@ msgid ""
 "Could not read entire transaction. Read %<PRIu64> bytes instead of %<PRIu64> "
 "bytes.\n"
 msgstr ""
+"No se pudo leer la transacción completa. Leer %<PRIu64> bytes en lugar de "
+"%<PRIu64> bytes.\n"
 
 #: drizzled/message/command_reader.cc:126
 #, c-format
@@ -5458,6 +5460,8 @@ msgstr "MEM:% s\n"
 msgid ""
 "Could not read entire checksum. Read %<PRIu64> bytes instead of 4 bytes.\n"
 msgstr ""
+"No se pudo leer el checksum completo. Leer %<PRIu64> bytes en lugar de 4 "
+"bytes.\n"
 
 #: drizzled/plugin/listen_tcp.cc:47
 #, c-format
@@ -6125,6 +6129,8 @@ msgstr "Comando de registro de mensajes"
 #, c-format
 msgid "Failed to read length header at offset %<PRId64>.  Got error: %s\n"
 msgstr ""
+"Falló al leer la longitud del la cabecera en el desplazamiento %<PRId64>. "
+"Error obtenido: %s\n"
 
 #: plugin/command_log/command_log_reader.cc:137
 #, c-format
