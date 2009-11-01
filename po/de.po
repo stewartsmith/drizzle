@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-14 21:46+0000\n"
-"Last-Translator: Erkan Yanar <erkan.yanar@linsenraum.de>\n"
+"PO-Revision-Date: 2009-10-31 14:16+0000\n"
+"Last-Translator: Joachim Spalink <J.Spalink@gmx.de>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-15 06:51+0000\n"
+"X-Launchpad-Export-Date: 2009-11-01 08:21+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -883,7 +883,7 @@ msgstr ""
 
 #: client/drizzledump.cc:2411 client/drizzledump.cc:2525
 msgid "when doing refresh"
-msgstr ""
+msgstr "bei Aktualisierung"
 
 #: client/drizzledump.cc:2497
 msgid "alloc_root failure."
@@ -900,6 +900,8 @@ msgstr "Tabelle \"%s\" konnte nicht gefunden werden"
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
+"Achtung: Konnte Schlüssel von Tabelle %s nicht lesen; Einträge sind NICHT "
+"sortiert (%s)\n"
 
 #: client/drizzledump.cc:2837
 #, c-format
