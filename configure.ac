@@ -30,8 +30,6 @@ PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-
 AC_DEFINE([DRIZZLE_VERSION_ID],RELEASE_ID,
 	  [Version ID that can be easily used for numeric comparison])
 
-AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
-
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
@@ -59,7 +57,12 @@ fi
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
 
+dnl We need to turn on our CXXFLAGS to make sure it shows up correctly
+save_CXXFLAGS="${CXXFLAGS}"
+CXXFLAGS="${CXXFLAGS} ${AM_CXXFLAGS}"
 AC_CXX_STL_HASH
+CXXFLAGS="${save_CXXFLAGS}"
+
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
 
