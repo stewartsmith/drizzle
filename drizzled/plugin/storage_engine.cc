@@ -55,9 +55,9 @@ namespace drizzled
 {
 
 NameMap<plugin::StorageEngine *> engine_names;
-static std::vector<plugin::StorageEngine *> all_engines;
-static std::vector<plugin::StorageEngine *> transactional_engines;
-static std::set<std::string> table_definition_file_extensions;
+static vector<plugin::StorageEngine *> all_engines;
+static vector<plugin::StorageEngine *> transactional_engines;
+static set<string> table_definition_file_extensions;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
