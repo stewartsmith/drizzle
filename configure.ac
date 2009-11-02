@@ -452,10 +452,7 @@ AC_CHECK_FUNCS( \
   localtime_r log log2 gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
-  pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
-  pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
-  pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
-  pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
+  readlink \
   realpath rename rwlock_init setupterm \
   sigaction \
   sigthreadmask \

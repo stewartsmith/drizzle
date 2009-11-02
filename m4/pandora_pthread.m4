@@ -53,6 +53,12 @@ AC_DEFUN([PANDORA_PTHREAD_YIELD],[
               [pthread_yield function with one argument])
   ])
 
+  AC_CHECK_FUNCS(pthread_attr_getstacksize pthread_attr_setprio \
+    pthread_attr_setschedparam \
+    pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
+    pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
+    pthread_setprio_np pthread_setschedparam pthread_sigmask)
+
   CFLAGS="${save_CFLAGS}"
   CXXFLAGS="${save_CXXFLAGS}"
 ])
