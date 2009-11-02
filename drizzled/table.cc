@@ -65,35 +65,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 }
 
 
-/*
-  Returns pointer to '.frm' extension of the file name.
-
-  SYNOPSIS
-    fn_rext()
-    name       file name
-
-  DESCRIPTION
-    Checks file name part starting with the rightmost '.' character,
-    and returns it if it is equal to '.dfe'.
-
-  TODO
-    It is a good idea to get rid of this function modifying the code
-    to garantee that the functions presently calling fn_rext() always
-    get arguments in the same format: either with '.frm' or without '.frm'.
-
-  RETURN VALUES
-    Pointer to the '.frm' extension. If there is no extension,
-    or extension is not '.frm', pointer at the end of file name.
-*/
-
-const char *fn_rext(const char *name)
-{
-  const char *res= strrchr(name, '.');
-  if (res && !strcmp(res, ".dfe"))
-    return res;
-  return name + strlen(name);
-}
-
 static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);

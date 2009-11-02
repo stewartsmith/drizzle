@@ -54,10 +54,10 @@ using namespace std;
 namespace drizzled
 {
 
-NameMap<plugin::StorageEngine *> all_engines;
-static std::vector<plugin::StorageEngine *> vector_of_engines;
-static std::vector<plugin::StorageEngine *> vector_of_transactional_engines;
-static std::set<std::string> set_of_table_definition_ext;
+NameMap<plugin::StorageEngine *> engine_names;
+static std::vector<plugin::StorageEngine *> all_engines;
+static std::vector<plugin::StorageEngine *> transactional_engines;
+static std::set<std::string> table_definition_file_extensions;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
@@ -191,22 +191,22 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 
 bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 {
-  if (all_engines.add(engine))
+  if (engine_names.add(engine))
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("Couldn't add StorageEngine"));
     return true;
   }
 
-  vector_of_engines.push_back(engine);
+  all_engines.push_back(engine);
 
   if (engine->check_flag(HTON_BIT_DOES_TRANSACTIONS))
-    vector_of_transactional_engines.push_back(engine);
+    transactional_engines.push_back(engine);
 
   if (engine->getTableDefinitionExt().length())
   {
     assert(engine->getTableDefinitionExt().length() == MAX_STORAGE_ENGINE_FILE_EXT);
-    set_of_table_definition_ext.insert(engine->getTableDefinitionExt());
+    table_definition_file_extensions.insert(engine->getTableDefinitionExt());
   }
 
   return false;
@@ -214,9 +214,9 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 
 void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)
 {
-  all_engines.remove(engine);
-  vector_of_engines.clear();
-  vector_of_transactional_engines.clear();
+  engine_names.remove(engine);
+  all_engines.erase(find(all_engines.begin(), all_engines.end(), engine));
+  transactional_engines.erase(find(all_engines.begin(), all_engines.end(), engine));
 }
 
 plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
@@ -224,7 +224,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
 
-  plugin::StorageEngine *engine= all_engines.find(find_str);
+  plugin::StorageEngine *engine= engine_names.find(find_str);
 
   if (engine && engine->is_user_selectable())
     return engine;
@@ -242,7 +242,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
   if (find_str.compare("default") == 0)
     return session.getDefaultStorageEngine();
 
-  plugin::StorageEngine *engine= all_engines.find(find_str);
+  plugin::StorageEngine *engine= engine_names.find(find_str);
 
   if (engine && engine->is_user_selectable())
     return engine;
@@ -274,13 +274,13 @@ public:
 */
 void plugin::StorageEngine::closeConnection(Session* session)
 {
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(all_engines.begin(), all_engines.end(),
            StorageEngineCloseConnection(session));
 }
 
 void plugin::StorageEngine::dropDatabase(char* path)
 {
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(all_engines.begin(), all_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::drop_database),path));
 }
 
@@ -321,7 +321,7 @@ int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
 */
 int plugin::StorageEngine::releaseTemporaryLatches(Session *session)
 {
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
+  for_each(transactional_engines.begin(), transactional_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::release_temporary_latches),session));
   return 0;
 }
@@ -473,7 +473,7 @@ int plugin::StorageEngine::recover(HASH *commit_list)
 
 
   XARecover recover_func(trans_list, trans_len, commit_list, dry_run);
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
+  for_each(transactional_engines.begin(), transactional_engines.end(),
            recover_func);
   free(trans_list);
  
@@ -500,7 +500,7 @@ int plugin::StorageEngine::recover(HASH *commit_list)
 
 int plugin::StorageEngine::startConsistentSnapshot(Session *session)
 {
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(all_engines.begin(), all_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::start_consistent_snapshot),
                    session));
   return 0;
@@ -585,10 +585,10 @@ int plugin::StorageEngine::getTableDefinition(Session& session,
   int err= ENOENT;
 
   vector<plugin::StorageEngine *>::iterator iter=
-    find_if(vector_of_engines.begin(), vector_of_engines.end(),
+    find_if(all_engines.begin(), all_engines.end(),
             StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_proto, &err));
 
-  if (iter == vector_of_engines.end())
+  if (iter == all_engines.end())
   {
     string proto_path(path);
     string file_ext(".dfe");
@@ -818,7 +818,7 @@ Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
 /**
   TODO -> Remove this to force all engines to implement their own file. Solves the "we only looked at dfe" problem.
 */
-void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& out_table_names)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -843,7 +843,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
       file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(".dfe") + 1]= '\0'; // Subtract ending, place NULL 
-      set_of_names.insert(uname);
+      out_table_names.insert(uname);
     }
   }
 }
@@ -853,30 +853,30 @@ class AddTableName :
 {
   string db;
   CachedDirectory& directory;
-  set<string>& set_of_names;
+  set<string>& table_names;
 
 public:
 
-  AddTableName(CachedDirectory& directory_arg, string& database_name, set<string>& of_names) :
+  AddTableName(CachedDirectory& directory_arg, string& database_name, set<string>& in_table_names) :
     directory(directory_arg),
-    set_of_names(of_names)
+    table_names(in_table_names)
   {
     db= database_name;
   }
 
   result_type operator() (argument_type engine)
   {
-    engine->doGetTableNames(directory, db, set_of_names);
+    engine->doGetTableNames(directory, db, table_names);
   }
 };
 
-void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
+void plugin::StorageEngine::getTableNames(string& db, set<string>& out_table_names)
 {
   char tmp_path[FN_REFLEN];
 
   build_table_filename(tmp_path, sizeof(tmp_path), db.c_str(), "", false);
 
-  CachedDirectory directory(tmp_path, set_of_table_definition_ext);
+  CachedDirectory directory(tmp_path, table_definition_file_extensions);
 
   if (db.compare("information_schema"))
   {
@@ -891,8 +891,8 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
     }
   }
 
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
+  for_each(all_engines.begin(), all_engines.end(),
+           AddTableName(directory, db, out_table_names));
 }
 
 
