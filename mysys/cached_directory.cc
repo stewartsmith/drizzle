@@ -46,11 +46,11 @@ CachedDirectory::CachedDirectory(const string &in_path) :
 }
 
 
-CachedDirectory::CachedDirectory(const string& in_path, set<string>& exts) :
+CachedDirectory::CachedDirectory(const string& in_path, set<string>& allowed_exts) :
   error(0)
 {
   // TODO: Toss future exception
-  (void) open(in_path, exts, true);
+  (void) open(in_path, allowed_exts);
 }
 
 
@@ -64,15 +64,14 @@ CachedDirectory::~CachedDirectory()
   entries.clear();
 }
 
-
 bool CachedDirectory::open(const string &in_path)
 {
   set<string> empty;
 
-  return open(in_path, empty, false);
+  return open(in_path, empty);
 }
 
-bool CachedDirectory::open(const string &in_path, set<string> exts, bool honor_exts)
+bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
 {
   DIR *dirp= opendir(in_path.c_str());
 
@@ -83,9 +82,6 @@ bool CachedDirectory::open(const string &in_path, set<string> exts, bool honor_e
   }
 
   path= in_path;
-
-  if (exts.size() == 0 && honor_exts)
-    return true;
 
   union {
     dirent entry;
@@ -107,16 +103,16 @@ bool CachedDirectory::open(const string &in_path, set<string> exts, bool honor_e
   while ((retcode= readdir_r(dirp, &buffer.entry, &result)) == 0 &&
          result != NULL)
   {
-    if (exts.size())
+    if (! allowed_exts.empty())
     {
       char *ptr= rindex(result->d_name, '.');
 
       if (ptr)
       {
         set<string>::iterator it;
-        it= exts.find(ptr);
+        it= allowed_exts.find(ptr);
 
-        if (it != exts.end())
+        if (it != allowed_exts.end())
         {
           entries.push_back(new Entry(result->d_name));
         }

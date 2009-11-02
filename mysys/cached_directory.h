@@ -45,8 +45,6 @@
  */
 class CachedDirectory
 {
-  std::string path;
-
 public:
   class Entry
   {
@@ -57,14 +55,8 @@ public:
     {}
   };
   typedef std::vector<Entry *> Entries;
-private:
-  int error; ///< Error code stored from various syscalls
-  Entries entries; ///< Entries in the directory
-
-public:
   /**
-   * Emptry Constructor.
-   *
+   * Empty Constructor.
    */
   CachedDirectory();
       
@@ -72,14 +64,21 @@ public:
    * Constructor taking full directory path as sole parameter.
    *
    * @param[in] Path to the directory to open
-   * @param[in] File extensions to mask against.
+   * @param[in] File extensions to allow
    */
- CachedDirectory(const std::string& in_path); 
- CachedDirectory(const std::string& in_path, std::set<std::string>& exts);
+  CachedDirectory(const std::string& in_path); 
 
- /**
-  * Destructor.  Cleans up any resources we've taken 
-  */
+  /**
+   * Constructor taking full directory path as sole parameter.
+   *
+   * @param[in] Path to the directory to open
+   * @param[in] File extensions to allow
+   */
+  CachedDirectory(const std::string& in_path, std::set<std::string>& allowed_exts);
+
+  /**
+   * Destructor.  Cleans up any resources we've taken 
+   */
   ~CachedDirectory();
 
   /**
@@ -117,17 +116,31 @@ public:
   {
     return entries;
   }
+private:
+  std::string path; ///< Path to the directory
+  int error; ///< Error code stored from various syscalls
+  Entries entries; ///< Entries in the directory
 
   /**
    * Encapsulate the logic to open the directory.
-   * @param[in] dirPath The path to the directory to open and read.
-   * @param[in] File extensions to mask against.
+   * @param[in] The path to the directory to open and read
+   *
    * @retval true Success
    * @retval false Failure
    */
-  bool open(const std::string &dirPath);
-  bool open(const std::string &in_path, std::set<std::string> exts, bool honor_exts= true);
+  bool open(const std::string &in_path);
 
+  /**
+   * Encapsulate the logic to open the directory with a set of allowed
+   * file extensions to filter for.
+   *
+   * @param[in] The path to the directory to open and read
+   * @param[in] File extensions to allow
+   *
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
 };
 
 #endif /* MYSYS_CACHED_DIRECTORY_H */
