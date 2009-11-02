@@ -228,11 +228,6 @@ bool CreateField::init(Session *,
 
   switch (fld_type) 
   {
-    case DRIZZLE_TYPE_TINY:
-      if (!fld_length)
-        length= MAX_TINYINT_WIDTH+sign_len;
-      allowed_type_modifier= AUTO_INCREMENT_FLAG;
-      break;
     case DRIZZLE_TYPE_LONG:
       if (!fld_length)
         length= MAX_INT_WIDTH+sign_len;
