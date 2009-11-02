@@ -135,6 +135,7 @@ public:
   virtual bool haveMoreData(void)= 0;
   virtual bool haveError(void)= 0;
   virtual bool wasAborted(void)= 0;
+
 };
 
 } /* end namespace drizzled::plugin */

@@ -24,7 +24,7 @@
 #include <drizzled/xid.h>
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/library.h>
-#include <drizzled/plugin/handle.h>
+#include <drizzled/plugin/module.h>
 
 class Session;
 class Item;

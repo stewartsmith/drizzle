@@ -33,38 +33,38 @@ using namespace std;
 namespace drizzled
 {
 
-plugin::Handle *plugin::Registry::find(const LEX_STRING *name)
+plugin::Module *plugin::Registry::find(const LEX_STRING *name)
 {
   string find_str(name->str,name->length);
   transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
-  map<string, plugin::Handle *>::iterator map_iter;
-  map_iter= handle_map.find(find_str);
-  if (map_iter != handle_map.end())
+  map<string, plugin::Module *>::iterator map_iter;
+  map_iter= module_map.find(find_str);
+  if (map_iter != module_map.end())
     return (*map_iter).second;
   return(0);
 }
 
-void plugin::Registry::add(plugin::Handle *handle)
+void plugin::Registry::add(plugin::Module *handle)
 {
   string add_str(handle->getName());
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
-  handle_map[add_str]= handle;
+  module_map[add_str]= handle;
 }
 
 
-vector<plugin::Handle *> plugin::Registry::getList(bool active)
+vector<plugin::Module *> plugin::Registry::getList(bool active)
 {
-  plugin::Handle *plugin= NULL;
+  plugin::Module *plugin= NULL;
 
-  vector <plugin::Handle *> plugins;
-  plugins.reserve(handle_map.size());
+  vector <plugin::Module *> plugins;
+  plugins.reserve(module_map.size());
 
-  map<string, plugin::Handle *>::iterator map_iter;
-  for (map_iter= handle_map.begin();
-       map_iter != handle_map.end();
+  map<string, plugin::Module *>::iterator map_iter;
+  for (map_iter= module_map.begin();
+       map_iter != module_map.end();
        map_iter++)
   {
     plugin= (*map_iter).second;

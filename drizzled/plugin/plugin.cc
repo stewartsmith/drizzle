@@ -19,15 +19,22 @@
 
 #include "drizzled/global.h"
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/plugin/module.h"
 
 namespace drizzled
 {
 
-plugin::Plugin::Plugin(std::string in_name)
+plugin::Plugin::Plugin(std::string in_name, std::string in_type_name)
   : name(in_name),
     aliases(),
     is_active(true),
-    handle(NULL)
+    module(NULL),
+    type_name(in_type_name)
 { }
+
+const std::string& plugin::Plugin::getModuleName() const
+{
+  return module->getName();
+}
 
 } /* namespace drizzled */

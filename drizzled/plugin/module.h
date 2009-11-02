@@ -17,11 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_HANDLE_H
-#define DRIZZLED_PLUGIN_HANDLE_H
+#ifndef DRIZZLED_PLUGIN_MODULE_H
+#define DRIZZLED_PLUGIN_MODULE_H
 
 #include <drizzled/lex_string.h>
 #include <mysys/my_alloc.h>
+#include "drizzled/plugin/manifest.h"
 
 class sys_var;
 
@@ -30,11 +31,10 @@ namespace drizzled
 namespace plugin
 {
 
-class Manifest;
 class Library;
 
-/* A handle of a plugin */
-class Handle
+/* A plugin module */
+class Module
 {
   const std::string name;
   Manifest *manifest;
@@ -43,11 +43,11 @@ public:
   bool isInited;
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
-  Handle(Manifest *manifest_arg, Library *library_arg)
+  Module(Manifest *manifest_arg, Library *library_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
       mem_root(), system_vars(NULL) {}
       
-  Handle(Manifest *manifest_arg)
+  Module(Manifest *manifest_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
       mem_root(), system_vars(NULL) {}
       
@@ -65,4 +65,4 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_HANDLE_H */
+#endif /* DRIZZLED_PLUGIN_MODULE_H */

@@ -42,7 +42,7 @@ class Scheduler : public Plugin
   Scheduler& operator=(const Scheduler &);
 public:
   explicit Scheduler(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "Scheduler")
   {}
   virtual ~Scheduler() {}
 
