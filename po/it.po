@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-27 21:19+0000\n"
-"Last-Translator: Davide Bagarotti <Unknown>\n"
+"PO-Revision-Date: 2009-11-02 18:57+0000\n"
+"Last-Translator: Pristan <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-28 08:28+0000\n"
+"X-Launchpad-Export-Date: 2009-11-03 08:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -28,7 +28,7 @@ msgstr "Comando per la pulizia."
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Riconnette al server. Db ed host sono argomenti opzionali."
+msgstr "Riconnessione al server. Db e host sono argomenti opzionali"
 
 #: client/drizzle.cc:278
 msgid ""
@@ -60,7 +60,7 @@ msgstr "Disabilita la paginazione, stampa su stdout."
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
-msgstr "Evita la scrittura nel file esterno."
+msgstr "Non scrivere su un file esterno."
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -6760,11 +6760,11 @@ msgstr "Dati troncati"
 
 #: plugin/oldlibdrizzle/errmsg.cc:61
 msgid "No parameters exist in the statement"
-msgstr "Non esistono parametri nello statement"
+msgstr "Non esistono paramentri nell' istruzione"
 
 #: plugin/oldlibdrizzle/errmsg.cc:62
 msgid "Invalid parameter number"
-msgstr "Numero parametri incongruente"
+msgstr "Numero parametri invalido"
 
 #: plugin/oldlibdrizzle/errmsg.cc:63
 #, c-format
@@ -6802,7 +6802,9 @@ msgstr ""
 
 #: plugin/oldlibdrizzle/errmsg.cc:80
 msgid "Row retrieval was canceled by drizzle_stmt_close() call"
-msgstr "Recupero di righe cancellato da chiamata a drizzle_stmt_close()"
+msgstr ""
+"Il recupero delle righe è stato cancellato dalla chiamata "
+"drizzle_stmt_close()"
 
 #: plugin/oldlibdrizzle/errmsg.cc:81
 msgid "Attempt to read column without prior row fetch"
@@ -6831,7 +6833,7 @@ msgid ""
 "Lost connection to Drizzle server while waiting for initial communication "
 "packet, system error: %d"
 msgstr ""
-"Connessione al server Drizzle fallita in attesa del pacchetto iniziale di "
+"Connessione al server Drizzle persa in attesa del pacchetto iniziale di "
 "comunicazione, errore del sistema: '%d'"
 
 #: plugin/oldlibdrizzle/errmsg.cc:88
