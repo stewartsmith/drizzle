@@ -115,8 +115,7 @@ class ModulesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**

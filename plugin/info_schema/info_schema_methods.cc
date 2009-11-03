@@ -577,7 +577,7 @@ public:
   }
 };
 
-int ModulesISMethods::fillTable(Session *session, TableList *tables, COND *)
+int ModulesISMethods::fillTable(Session *session, TableList *tables)
 {
   Table *table= tables->table;
 
