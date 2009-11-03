@@ -154,32 +154,6 @@ enum TransformSqlError
 transformInsertHeaderToSql(const InsertHeader &header,
                            std::string *destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
-/**
- * This function looks at a supplied UpdateHeader
- * and UpdateData message and constructs a correctly-formatted SQL
- * statement to the supplied destination string.
- *
- * @note
- *
- * This function constructs a <strong>single SQL statement</strong>
- * that contains all the update keys represented in all records in 
- * the UpdateData message.
- *
- * @param UpdateHeader message to transform
- * @param UpdateData message to transform
- * @param Destination string to append SQL to
- * @param Variation of SQL to generate
- *
- * @retval
- *  NONE if successful transformation
- * @retval
- *  Error code (see enum TransformSqlError definition) if failure
- */
-enum TransformSqlError
-transformUpdateStatementToSql(const UpdateHeader &header,
-                              const UpdateData &data,
-                              std::string *destination,
-                              enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * Helper function to construct the header portion of an UPDATE
