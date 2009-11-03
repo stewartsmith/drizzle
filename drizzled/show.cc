@@ -1748,13 +1748,12 @@ err:
 
   @param[in]      session                      thread Cursor
   @param[in]      tables                   I_S table
-  @param[in]      cond                     'WHERE' condition
 
   @return         Operation status
     @retval       0                        success
     @retval       1                        error
 */
-int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
+int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
@@ -1766,6 +1765,8 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, CO
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
   vector<LEX_STRING*> db_names, table_names;
+  /* the WHERE clause */
+  COND *cond= table->reginfo.join_tab->select_cond;
   COND *partial_cond= 0;
   uint32_t derived_tables= lex->derived_tables;
   int error= 1;
@@ -2492,8 +2493,7 @@ bool get_schema_tables_result(JOIN *join,
       else
         table_list->table->file->stats.records= 0;
 
-      if (table_list->schema_table->fillTable(session, table_list,
-                                               tab->select_cond))
+      if (table_list->schema_table->fillTable(session, table_list))
       {
         result= 1;
         join->error= 1;
