@@ -64,36 +64,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
   return (unsigned char*) (*buff)->field_name;
 }
 
-
-/*
-  Returns pointer to '.frm' extension of the file name.
-
-  SYNOPSIS
-    fn_rext()
-    name       file name
-
-  DESCRIPTION
-    Checks file name part starting with the rightmost '.' character,
-    and returns it if it is equal to '.dfe'.
-
-  TODO
-    It is a good idea to get rid of this function modifying the code
-    to garantee that the functions presently calling fn_rext() always
-    get arguments in the same format: either with '.frm' or without '.frm'.
-
-  RETURN VALUES
-    Pointer to the '.frm' extension. If there is no extension,
-    or extension is not '.frm', pointer at the end of file name.
-*/
-
-const char *fn_rext(const char *name)
-{
-  const char *res= strrchr(name, '.');
-  if (res && !strcmp(res, ".dfe"))
-    return res;
-  return name + strlen(name);
-}
-
 static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);
@@ -200,7 +170,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
-    field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
+    field_type= DRIZZLE_TYPE_LONG; /* Set value to kill GCC warning */
     assert(1);
   }
 
@@ -222,7 +192,6 @@ static Item *default_value_item(enum_field_types field_type,
 
   switch(field_type)
   {
-  case DRIZZLE_TYPE_TINY:
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
     default_item= new Item_int(default_value->c_str(),

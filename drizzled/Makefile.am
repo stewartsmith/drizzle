@@ -268,13 +268,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/client.h \
 		plugin/error_message.h \
 		plugin/function.h \
-		plugin/handle.h \
 		plugin/info_schema_table.h \
 		plugin/library.h \
 		plugin/listen.h \
 		plugin/listen_tcp.h \
 		plugin/logging.h \
 		plugin/manifest.h \
+		plugin/module.h \
 		plugin/null_client.h \
 		plugin/plugin.h \
 		plugin/query_cache.h \
@@ -410,6 +410,7 @@ drizzled_LDFLAGS =
 
 
 noinst_HEADERS = \
+		hash.h \
 		gettext.h \
 		global.h \
 		server_includes.h \

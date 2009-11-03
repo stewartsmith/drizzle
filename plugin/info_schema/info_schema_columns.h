@@ -94,6 +94,16 @@ bool createOpenTabColumns(std::vector<const drizzled::plugin::ColumnInfo *>& col
 bool createPluginsColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
+ * Create the various columns for the MODULES
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createModulesColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
+
+/**
  * Create the various volumns for the PROCESSLIST I_S table and add them
  * to the std::vector of columns for the PROCESSLIST table.
  *

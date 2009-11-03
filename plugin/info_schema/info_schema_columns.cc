@@ -743,75 +743,94 @@ bool createOpenTabColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
   return false;
 }
 
-bool createPluginsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
+bool createModulesColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_NAME",
-                                                       NAME_CHAR_LEN,
-                                                       DRIZZLE_TYPE_VARCHAR,
-                                                       0,
-                                                       0,
-                                                       "Name",
-                                                       SKIP_OPEN_TABLE);
+  const drizzled::plugin::ColumnInfo *name=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_NAME",
+                                                    NAME_CHAR_LEN,
+                                                    DRIZZLE_TYPE_VARCHAR,
+                                                    0,
+                                                    0,
+                                                    "Name",
+                                                    SKIP_OPEN_TABLE);
   if (name == NULL)
   {
     return true;
   }
 
-  const drizzled::plugin::ColumnInfo *ver= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_VERSION",
-                                                      20,
-                                                      DRIZZLE_TYPE_VARCHAR,
-                                                      0,
-                                                      0,
-                                                      "",
-                                                      SKIP_OPEN_TABLE);
+  const drizzled::plugin::ColumnInfo *ver=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_VERSION",
+                                                   20,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   0,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
   if (ver == NULL)
   {
     return true;
   }
 
-  const drizzled::plugin::ColumnInfo *stat= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_STATUS",
-                                                       10,
-                                                       DRIZZLE_TYPE_VARCHAR,
-                                                       0,
-                                                       0,
-                                                       "Status",
-                                                       SKIP_OPEN_TABLE);
-  if (stat == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *aut= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_AUTHOR",
-                                                      NAME_CHAR_LEN,
-                                                      DRIZZLE_TYPE_VARCHAR,
-                                                      0,
-                                                      1,
-                                                      "",
-                                                      SKIP_OPEN_TABLE);
+  const drizzled::plugin::ColumnInfo *aut=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_AUTHOR",
+                                                   NAME_CHAR_LEN,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   1,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
   if (aut == NULL)
   {
     return true;
   }
 
-  const drizzled::plugin::ColumnInfo *descrip= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_DESCRIPTION",
-                                                          65535,
-                                                          DRIZZLE_TYPE_VARCHAR,
-                                                          0,
-                                                          1,
-                                                          "",
-                                                          SKIP_OPEN_TABLE);
+  const drizzled::plugin::ColumnInfo *is_builtin=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("IS_BUILTIN",
+                                                   3,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   0,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
+  if (is_builtin == NULL)
+  {
+    return true;
+  }
+
+  const drizzled::plugin::ColumnInfo *library=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_LIBRARY",
+                                                   65535,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   1,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
+  if (library == NULL)
+  {
+    return true;
+  }
+
+  const drizzled::plugin::ColumnInfo *descrip=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_DESCRIPTION",
+                                                   65535,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   1,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
   if (descrip == NULL)
   {
     return true;
   }
 
-  const drizzled::plugin::ColumnInfo *lic= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_LICENSE",
-                                                      80,
-                                                      DRIZZLE_TYPE_VARCHAR,
-                                                      0,
-                                                      1,
-                                                      "License",
-                                                      SKIP_OPEN_TABLE);
+  const drizzled::plugin::ColumnInfo *lic=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_LICENSE",
+                                                   80,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   1,
+                                                   "License",
+                                                   SKIP_OPEN_TABLE);
   if (lic == NULL)
   {
     return true;
@@ -819,13 +838,76 @@ bool createPluginsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 
   cols.push_back(name);
   cols.push_back(ver);
-  cols.push_back(stat);
   cols.push_back(aut);
+  cols.push_back(is_builtin);
+  cols.push_back(library);
   cols.push_back(descrip);
   cols.push_back(lic);
 
   return false;
 }
+
+bool createPluginsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
+{
+  const drizzled::plugin::ColumnInfo *name=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_NAME",
+                                                   NAME_CHAR_LEN,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   0,
+                                                   "Name",
+                                                   SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const drizzled::plugin::ColumnInfo *ptype=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_TYPE",
+                                                   NAME_CHAR_LEN,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   0,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const drizzled::plugin::ColumnInfo *is_active=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("IS_ACTIVE",
+                                                   3,
+                                                   DRIZZLE_TYPE_VARCHAR,
+                                                   0,
+                                                   0,
+                                                   "",
+                                                   SKIP_OPEN_TABLE);
+  if (is_active == NULL)
+  {
+    return true;
+  }
+
+  const drizzled::plugin::ColumnInfo *mod_name=
+    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_NAME",
+                                                    NAME_CHAR_LEN,
+                                                    DRIZZLE_TYPE_VARCHAR,
+                                                    0,
+                                                    0,
+                                                    "Name",
+                                                    SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+  cols.push_back(name);
+  cols.push_back(ptype);
+  cols.push_back(is_active);
+  cols.push_back(mod_name);
+
+  return false;
+}
+
 
 bool createProcessListColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {

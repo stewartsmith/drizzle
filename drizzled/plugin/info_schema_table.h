@@ -288,7 +288,7 @@ public:
                   uint32_t req_object,
                   InfoSchemaMethods *in_methods)
     :
-      Plugin(tab_name),
+      Plugin(tab_name, "InfoSchemaTable"),
       hidden(in_hidden),
       is_opt_possible(in_opt_possible),
       first_column_index(idx_col1),
@@ -301,7 +301,7 @@ public:
 
   explicit InfoSchemaTable(const std::string& tab_name)
     :
-      Plugin(tab_name),
+      Plugin(tab_name, "InfoSchemaTable"),
       hidden(false),
       is_opt_possible(false),
       first_column_index(0),

@@ -106,6 +106,20 @@ public:
 };
 
 /**
+ * @class ModulesISMethods
+ * @brief
+ *   Class which implements any methods that the MODULES
+ *   I_S table needs besides the default methods
+ */
+class ModulesISMethods : public drizzled::plugin::InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
  * @class PluginsISMethods
  * @brief
  *   Class which implements any methods that the PLUGINS

@@ -37,7 +37,7 @@ class ErrorMessage : public Plugin
   ErrorMessage& operator=(const ErrorMessage &);
 public:
   explicit ErrorMessage(std::string name_arg)
-   : Plugin(name_arg)
+   : Plugin(name_arg, "ErrorMessage")
   {}
   virtual ~ErrorMessage() {}
 
