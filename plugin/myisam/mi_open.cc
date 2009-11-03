@@ -15,13 +15,16 @@
 
 /* open a isam-database */
 
-#include "myisamdef.h"
-#include <mystrings/m_ctype.h>
-#include <mystrings/m_string.h>
-#include <drizzled/util/test.h>
+#include "myisam_priv.h"
 
 #include <string.h>
 #include <algorithm>
+
+#include "mystrings/m_ctype.h"
+#include "mystrings/m_string.h"
+#include "drizzled/util/test.h"
+#include "drizzled/memory/multi_malloc.h"
+
 
 using namespace std;
 
@@ -229,26 +232,24 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* Add space for node pointer */
     share->base.max_key_length+= share->base.key_reflength;
 
-    if (!my_multi_malloc(MY_WME,
-			 &share,sizeof(*share),
-			 &share->state.rec_per_key_part,sizeof(long)*key_parts,
-			 &share->keyinfo,keys*sizeof(MI_KEYDEF),
-			 &share->uniqueinfo,uniques*sizeof(MI_UNIQUEDEF),
-			 &share->keyparts,
-			 (key_parts+unique_key_parts+keys+uniques) *
-			 sizeof(HA_KEYSEG),
-			 &share->rec,
-			 (share->base.fields+1)*sizeof(MI_COLUMNDEF),
-			 &share->blobs,sizeof(MI_BLOB)*share->base.blobs,
-			 &share->unique_file_name,strlen(name_buff)+1,
-			 &share->index_file_name,strlen(index_name)+1,
-			 &share->data_file_name,strlen(data_name)+1,
-			 &share->state.key_root,keys*sizeof(my_off_t),
-			 &share->state.key_del,
-			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
-			 &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
-			 &share->mmap_lock,sizeof(pthread_rwlock_t),
-			 NULL))
+    if (!drizzled::memory::multi_malloc(false,
+           &share,sizeof(*share),
+           &share->state.rec_per_key_part,sizeof(long)*key_parts,
+           &share->keyinfo,keys*sizeof(MI_KEYDEF),
+           &share->uniqueinfo,uniques*sizeof(MI_UNIQUEDEF),
+           &share->keyparts,
+           (key_parts+unique_key_parts+keys+uniques) * sizeof(HA_KEYSEG),
+           &share->rec, (share->base.fields+1)*sizeof(MI_COLUMNDEF),
+           &share->blobs,sizeof(MI_BLOB)*share->base.blobs,
+           &share->unique_file_name,strlen(name_buff)+1,
+           &share->index_file_name,strlen(index_name)+1,
+           &share->data_file_name,strlen(data_name)+1,
+           &share->state.key_root,keys*sizeof(uint64_t),
+           &share->state.key_del,
+           (share->state.header.max_block_size_index*sizeof(uint64_t)),
+           &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
+           &share->mmap_lock,sizeof(pthread_rwlock_t),
+           NULL))
       goto err;
     errpos=4;
     *share=share_buff;
@@ -430,16 +431,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   }
 
   /* alloc and set up private structure parts */
-  if (!my_multi_malloc(MY_WME,
-		       &m_info,sizeof(MI_INFO),
-		       &info.blobs,sizeof(MI_BLOB)*share->base.blobs,
-		       &info.buff,(share->base.max_key_block_length*2+
-				   share->base.max_key_length),
-		       &info.lastkey,share->base.max_key_length*3+1,
-		       &info.first_mbr_key, share->base.max_key_length,
-		       &info.filename,strlen(name)+1,
-		       &info.rtree_recursion_state,have_rtree ? 1024 : 0,
-		       NULL))
+  if (!drizzled::memory::multi_malloc(MY_WME,
+         &m_info,sizeof(MI_INFO),
+         &info.blobs,sizeof(MI_BLOB)*share->base.blobs,
+         &info.buff,(share->base.max_key_block_length*2+
+                     share->base.max_key_length),
+         &info.lastkey,share->base.max_key_length*3+1,
+         &info.first_mbr_key, share->base.max_key_length,
+         &info.filename,strlen(name)+1,
+         &info.rtree_recursion_state,have_rtree ? 1024 : 0,
+         NULL))
     goto err;
   errpos=6;
 

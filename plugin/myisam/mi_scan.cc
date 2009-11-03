@@ -15,7 +15,7 @@
 
 /* Read through all rows sequntially */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 int mi_scan_init(register MI_INFO *info)
 {

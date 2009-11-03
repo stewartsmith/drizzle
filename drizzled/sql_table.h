@@ -23,8 +23,8 @@
   Routines to drop, repair, optimize, analyze, and check a schema table
 
 */
-#ifndef DRIZZLE_SERVER_SQL_TABLE_H
-#define DRIZZLE_SERVER_SQL_TABLE_H
+#ifndef DRIZZLED_SQL_TABLE_H
+#define DRIZZLED_SQL_TABLE_H
 
 class Session;
 class TableList;
@@ -44,12 +44,6 @@ void close_cached_table(Session *session, Table *table);
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
-                       TableList *table_list,
-                       AlterInfo *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_checksum_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
@@ -93,6 +87,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
 */
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               drizzled::message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
@@ -101,4 +96,4 @@ int mysql_prepare_create_table(Session *session,
                                uint32_t *key_count,
                                int select_field_count);
 
-#endif /* DRIZZLE_SERVER_SQL_TABLE_H */
+#endif /* DRIZZLED_SQL_TABLE_H */

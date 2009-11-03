@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FILESORT_INFO_ST_H
-#define DRIZZLED_FILESORT_INFO_ST_H
+#ifndef DRIZZLED_FILESORT_INFO_H
+#define DRIZZLED_FILESORT_INFO_H
 
 /* Information on state of filesort */
 struct filesort_info_st
@@ -35,4 +35,4 @@ struct filesort_info_st
   ha_rows   found_records;      /* How many records in sort */
 };
 
-#endif /* DRIZZLED_FILESORT_INFO_ST_H */
+#endif /* DRIZZLED_FILESORT_INFO_H */

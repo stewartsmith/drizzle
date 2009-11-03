@@ -48,6 +48,7 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/return_int.h>
 #include <drizzled/plugin/client.h>
 
+using namespace std;
 using namespace drizzled;
 
 /*

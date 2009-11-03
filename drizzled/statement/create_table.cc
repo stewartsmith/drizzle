@@ -24,7 +24,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::CreateTable::execute()
 {
@@ -211,3 +212,6 @@ bool statement::CreateTable::execute()
 
   return res;
 }
+
+} /* namespace drizzled */
+

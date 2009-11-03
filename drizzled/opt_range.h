@@ -790,4 +790,4 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                              ha_rows records);
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
-#endif
+#endif /* DRIZZLED_OPT_RANGE_H */

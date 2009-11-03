@@ -25,7 +25,8 @@
 
 using namespace std;
 
-using namespace drizzled;
+namespace drizzled
+{
 
 vector<plugin::Scheduler *> all_schedulers;
 
@@ -99,3 +100,5 @@ plugin::Scheduler *plugin::Scheduler::getScheduler()
 {
   return scheduler;
 }
+
+} /* namespace drizzled */

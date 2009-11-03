@@ -13,10 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _my_getopt_h
-#define _my_getopt_h
+#ifndef MYSYS_MY_GETOPT_H
+#define MYSYS_MY_GETOPT_H
 
-#include <mysys/my_sys.h>
+#include "mysys/my_sys.h"
 
 #define GET_NO_ARG     1
 #define GET_BOOL       2
@@ -90,5 +90,5 @@ bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 }
 #endif
 
-#endif /* _my_getopt_h */
+#endif /* MYSYS_MY_GETOPT_H */
 

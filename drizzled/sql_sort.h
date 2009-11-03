@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _DRIZZLED_SQL_SORT_H
-#define _DRIZZLED_SQL_SORT_H
+#ifndef DRIZZLED_SQL_SORT_H
+#define DRIZZLED_SQL_SORT_H
 
 typedef struct st_sort_field SORT_FIELD;
 
@@ -96,4 +96,4 @@ int merge_buffers(SORTPARAM *param,IO_CACHE *from_file,
 		  BUFFPEK *lastbuff,BUFFPEK *Fb,
 		  BUFFPEK *Tb,int flag);
 
-#endif
+#endif /* DRIZZLED_SQL_SORT_H */

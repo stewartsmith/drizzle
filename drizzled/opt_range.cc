@@ -118,7 +118,10 @@
 #include <vector>
 #include <algorithm>
 
+#include "drizzled/memory/multi_malloc.h"
+
 using namespace std;
+using namespace drizzled;
 
 #define HA_END_SPACE_KEY 0
 
@@ -7225,7 +7228,7 @@ int QUICK_RANGE_SELECT::reset()
   if (mrr_buf_size && !mrr_buf_desc)
   {
     buf_size= mrr_buf_size;
-    while (buf_size && !my_multi_malloc(MYF(MY_WME),
+    while (buf_size && ! memory::multi_malloc(false,
                                         &mrr_buf_desc, sizeof(*mrr_buf_desc),
                                         &mrange_buff, buf_size,
                                         NULL))

@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "heap_priv.h"
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -23,7 +23,6 @@
 
 #include "heap.h"
 #include "ha_heap.h"
-#include "heapdef.h"
 
 #include <string>
 
@@ -240,6 +239,7 @@ int ha_heap::close(void)
 Cursor *ha_heap::clone(MEM_ROOT *mem_root)
 {
   Cursor *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
+
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;

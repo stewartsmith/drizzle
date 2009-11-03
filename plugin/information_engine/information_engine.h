@@ -14,8 +14,8 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef PLUGIN_INFORMATION_ENGINE_HA_INFORMATION_ENGINE_H
-#define PLUGIN_INFORMATION_ENGINE_HA_INFORMATION_ENGINE_H
+#ifndef PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H
+#define PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/cursor.h>
@@ -66,7 +66,7 @@ static const char *InformationEngine_exts[] = {
 class InformationEngine : public drizzled::plugin::StorageEngine
 {
 public:
-  InformationEngine(const string &name_arg)
+  InformationEngine(const std::string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_FILE_BASED
                                       | HTON_HAS_DATA_DICTIONARY) 
@@ -81,7 +81,7 @@ public:
     return 1;
   }
 
-  int doDropTable(Session&, const string) 
+  int doDropTable(Session&, const std::string) 
   { 
     return 0; 
   }
@@ -95,7 +95,7 @@ public:
     return InformationEngine_exts;
   }
 
-  void doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names);
+  void doGetTableNames(CachedDirectory&, std::string& db, std::set<std::string>& set_of_names);
 };
 
-#endif /* PLUGIN_INFORMATION_ENGINE_HA_INFORMATION_ENGINE_H */
+#endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H */

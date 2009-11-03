@@ -17,8 +17,8 @@
    Data structures for mysys/my_alloc.c (root memory allocator)
 */
 
-#ifndef _my_alloc_h
-#define _my_alloc_h
+#ifndef MYSYS_MY_ALLOC_H
+#define MYSYS_MY_ALLOC_H
 
 #include <stddef.h>
 #include <drizzled/definitions.h>
@@ -71,4 +71,4 @@ void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
 #if defined(__cplusplus)
 }
 #endif
-#endif
+#endif /* MYSYS_MY_ALLOC_H */

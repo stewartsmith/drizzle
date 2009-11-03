@@ -28,8 +28,8 @@
   LC_COLLATE category + Level information
 */
 
-#ifndef _t_ctype_h
-#define _t_ctype_h
+#ifndef MYSTRINGS_T_CTYPE_H
+#define MYSTRINGS_T_CTYPE_H
 
 typedef unsigned char tchar;
 
@@ -230,8 +230,6 @@ enum level_symbols {
 #define _tdig			16384
 #define _rearvowel		(_fllwvowel | _uprvowel | _lwrvowel)
 #define _diacrt			(_diacrt1 | _diacrt2)
-#define levelof(c)		( _is(c) & _level )
-#define isthai(c)		( (c) >= 128 )
 #define istalpha(c)		( _is(c) & (_consnt|_ldvowel|_rearvowel|\
                          _tone|_diacrt1|_diacrt2) )
 #define isconsnt(c)		( _is(c) & _consnt )
@@ -255,4 +253,4 @@ enum level_symbols {
 /* Function prototype called by sql/field.cc */
 void ThNormalize(unsigned char* ptr, uint32_t field_length, const unsigned char* from, uint32_t length);
 
-#endif
+#endif /* MYSTRINGS_T_CTYPE_H */

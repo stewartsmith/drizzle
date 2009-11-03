@@ -28,7 +28,6 @@ noinst_PROGRAMS = \
 		table_raw_reader \
 		table_writer \
 		transaction_reader \
-		command_reader \
 		transaction_writer \
 		master_list_reader \
 		master_list_writer \
@@ -42,22 +41,22 @@ noinst_LTLIBRARIES = libdrizzledmessage.la
 
 libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
 
-libdrizzledmessage_la_SOURCES = command_transform.cc statement_transform.cc
+libdrizzledmessage_la_SOURCES = statement_transform.cc
 
 messageincludedir= ${includedir}/drizzled/message
-messageinclude_HEADERS= command_transform.h statement_transform.h
+messageinclude_HEADERS= statement_transform.h
 
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
-		replication.pb.cc \
+		transaction.pb.cc \
 		schema.pb.cc \
 		table.pb.cc
 
 nodist_noinst_HEADERS= \
 		binary_log.pb.h \
 		master_list.pb.h \
-		replication.pb.h \
+		transaction.pb.h \
 		schema.pb.h \
 		table.pb.h 
 
@@ -85,14 +84,13 @@ master_list_writer_SOURCES =  master_list_writer.cc
 master_list_reader_SOURCES =  master_list_reader.cc
 
 transaction_writer_SOURCES =  transaction_writer.cc transaction.pb.cc
+transaction_writer_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
 
 transaction_reader_SOURCES =  transaction_reader.cc transaction.pb.cc
+transaction_reader_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
 
-# @TODO: Remove this when Jay's branch hits replacing replication.pb fully
 transaction_writer_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
 transaction_reader_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
-
-command_reader_SOURCES =  command_reader.cc
 
 length_SOURCES = length.cc
 
@@ -101,7 +99,6 @@ EXTRA_DIST = \
 		table.proto \
 		binary_log.proto \
 		master_list.proto \
-		replication.proto \
 		transaction.proto \
 		check_length.sh
 
@@ -109,7 +106,6 @@ BUILT_SOURCES = \
 		schema.pb.h \
 		table.pb.h \
 		binary_log.pb.h \
-		replication.pb.h \
 		transaction.pb.h \
 		master_list.pb.h
 
@@ -120,8 +116,6 @@ CLEANFILES = \
 		schema.pb.cc \
 		table.pb.h \
 		table.pb.cc \
-		replication.pb.h \
-		replication.pb.cc \
 		transaction.pb.h \
 		transaction.pb.cc \
 		master_list.pb.h \

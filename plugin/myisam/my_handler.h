@@ -15,8 +15,8 @@
    Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA 02111-1307, USA */
 
-#ifndef _my_handler_h
-#define _my_handler_h
+#ifndef PLUGIN_MYISAM_MY_HANDLER_H
+#define PLUGIN_MYISAM_MY_HANDLER_H
 
 #include <mystrings/m_ctype.h>
 #include <plugin/myisam/myisampack.h>
@@ -125,4 +125,4 @@ extern int ha_key_cmp(HA_KEYSEG *keyseg, unsigned char *a,unsigned char *b,
 }
 #endif
 
-#endif /* _my_handler_h */
+#endif /* PLUGIN_MYISAM_MY_HANDLER_H */

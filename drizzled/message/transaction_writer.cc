@@ -21,8 +21,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/gettext.h>
+#include "drizzled/global.h"
+#include "drizzled/hash/crc32.h"
+#include "drizzled/gettext.h"
+#include "drizzled/replication_services.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -33,6 +36,8 @@
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#include "drizzled/gettext.h"
 
 /** 
  * @file Example script for writing transactions to a log file.
@@ -274,7 +279,6 @@ static void doMultiKeyUpdate(message::Transaction &transaction)
   record1->add_key_value("1");
   record2->add_key_value("2");
 
-
   statement->set_end_timestamp(getNanoTimestamp());
 }
 
@@ -286,8 +290,10 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
 
   size_t length= buffer.length();
 
-  output->WriteLittleEndian64(static_cast<uint64_t>(length));
+  output->WriteLittleEndian32(static_cast<uint32_t>(ReplicationServices::TRANSACTION));
+  output->WriteLittleEndian32(static_cast<uint32_t>(length));
   output->WriteString(buffer);
+  output->WriteLittleEndian32(drizzled::hash::crc32(buffer.c_str(), length)); /* checksum */
 }
 
 int main(int argc, char* argv[])

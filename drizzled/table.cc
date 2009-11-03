@@ -39,7 +39,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 
-#include <drizzled/table_proto.h>
+#include "drizzled/table_proto.h"
 
 #include <string>
 #include <vector>
@@ -272,9 +272,9 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share)
+int drizzled::parse_table_proto(Session& session,
+                                message::Table &table,
+                                TableShare *share)
 {
   int error= 0;
   Cursor *handler_file= NULL;
@@ -493,9 +493,6 @@ int parse_table_proto(Session& session,
 
   share->keys_for_keyread.reset();
   set_prefix(share->keys_in_use, share->keys);
-
-  share->key_block_size= table_options.has_key_block_size() ?
-    table_options.key_block_size() : 0;
 
   share->fields= table.field_size();
 
@@ -1494,14 +1491,20 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   return (error);
 }
 
-/*
-  Free information allocated by openfrm
-
-  SYNOPSIS
-    closefrm()
-    table		Table object to free
-    free_share		Is 1 if we also want to free table_share
-*/
+bool Table::fill_item_list(List<Item> *item_list) const
+{
+  /*
+    All Item_field's created using a direct pointer to a field
+    are fixed in Item_field constructor.
+  */
+  for (Field **ptr= field; *ptr; ptr++)
+  {
+    Item_field *item= new Item_field(*ptr);
+    if (!item || item_list->push_back(item))
+      return true;
+  }
+  return false;
+}
 
 int Table::closefrm(bool free_share)
 {
@@ -2692,10 +2695,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
          inherit the default value that is defined for the field referred
          by the Item_field object from which 'field' has been created.
       */
-      my_ptrdiff_t diff;
+      ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (my_ptrdiff_t) (orig_field->table->s->default_values-
+      diff= (ptrdiff_t) (orig_field->table->s->default_values-
                             orig_field->table->record[0]);
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())

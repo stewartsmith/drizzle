@@ -47,6 +47,7 @@ TODO:
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/memory/multi_malloc.h"
 
 #include "ha_tina.h"
 
@@ -254,7 +255,7 @@ static TINA_SHARE *get_share(const char *table_name, Table *)
                                         (unsigned char*) table_name,
                                        length)))
   {
-    if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
+    if (!drizzled::memory::multi_malloc(true,
                          &share, sizeof(*share),
                          &tmp_name, length+1,
                          NULL))

@@ -31,6 +31,7 @@
 #include "drizzled/sql_string.h"
 #include "drizzled/session.h"
 #include "drizzled/index_hint.h"
+#include "drizzled/sql_table.h"
 
 /*
  * Names of the index hints (for error messages). Keep in sync with

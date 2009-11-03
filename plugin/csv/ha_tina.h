@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef STORAGE_CSV_HA_TINA_H
-#define STORAGE_CSV_HA_TINA_H
+#ifndef PLUGIN_CSV_HA_TINA_H
+#define PLUGIN_CSV_HA_TINA_H
 
 #include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
@@ -165,4 +165,4 @@ public:
   int chain_append();
 };
 
-#endif /* STORAGE_CSV_HA_TINA_H */
+#endif /* PLUGIN_CSV_HA_TINA_H */

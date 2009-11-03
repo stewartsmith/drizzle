@@ -77,6 +77,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/memory/multi_malloc.h"
 
 /** @file ha_innodb.cc */
 
@@ -936,11 +937,22 @@ void
 innobase_mysql_print_thd(
 /*=====================*/
 	FILE*	f,		/*!< in: output stream */
-	void*	,		/*!< in: pointer to a Drizzle Session object */
+	void * in_session,	/*!< in: pointer to a Drizzle Session object */
 	uint	)		/*!< in: max query length to print, or 0 to
 				   use the default max length */
 {
-	fputs("Unknown thread accessing table", f);
+  Session *session= reinterpret_cast<Session *>(in_session);
+  fprintf(f,
+          "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
+          static_cast<uint64_t>(session_get_thread_id( session)),
+          static_cast<uint64_t>(session->getQueryId()),
+          glob_hostname,
+          session->security_ctx.ip.c_str(),
+          session->security_ctx.user.c_str()
+  );
+  fprintf(f,
+          "\n%s", session->getQueryString()
+  );
 	putc('\n', f);
 }
 
@@ -2721,7 +2733,7 @@ ha_innobase::open(
 				table->s->stored_rec_length
 				+ table->s->max_key_length
 				+ MAX_REF_PARTS * 3;
-	if (!(unsigned char*) my_multi_malloc(MYF(MY_WME),
+	if (!(unsigned char*) drizzled::memory::multi_malloc(false,
 			&upd_buff, upd_and_key_val_buff_len,
 			&key_val_buff, upd_and_key_val_buff_len,
 			NULL)) {
@@ -5364,9 +5376,10 @@ ibool
 create_options_are_valid(
 /*=====================*/
 	Session*	session,	/*!< in: connection thread. */
-	Table*		form,		/*!< in: information on table
+	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO& create_info)	/*!< in: create info. */
+	HA_CREATE_INFO& create_info,
+        drizzled::message::Table& create_proto)
 {
 	ibool	kbs_specified	= FALSE;
 	ibool	ret		= TRUE;
@@ -5379,15 +5392,11 @@ create_options_are_valid(
 		return(TRUE);
 	}
 
-	ut_ad(form != NULL);
-	ut_ad(create_info != NULL);
-
 	/* First check if KEY_BLOCK_SIZE was specified. */
-	if (create_info.key_block_size
-	    || (create_info.used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
+	if (create_proto.options().has_key_block_size()) {
 
 		kbs_specified = TRUE;
-		switch (create_info.key_block_size) {
+		switch (create_proto.options().key_block_size()) {
 		case 1:
 		case 2:
 		case 4:
@@ -5402,7 +5411,7 @@ create_options_are_valid(
 					    " KEY_BLOCK_SIZE = %lu."
 					    " Valid values are"
 					    " [1, 2, 4, 8, 16]",
-					    create_info.key_block_size);
+					    create_proto.options().key_block_size());
 			ret = FALSE;
 		}
 	}
@@ -5428,12 +5437,12 @@ create_options_are_valid(
 
 	/* Now check for ROW_FORMAT specifier. */
 	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
-		switch (form->s->row_type) {
+		switch (form.s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_COMPRESSED:
 		case ROW_TYPE_DYNAMIC:
 			row_format_name
-				= form->s->row_type == ROW_TYPE_COMPRESSED
+				= form.s->row_type == ROW_TYPE_COMPRESSED
 				? "COMPRESSED"
 				: "DYNAMIC";
 
@@ -5468,7 +5477,7 @@ create_options_are_valid(
 			However, we do allow COMPRESSED to be
 			specified with KEY_BLOCK_SIZE. */
 			if (kbs_specified
-			    && form->s->row_type == ROW_TYPE_DYNAMIC) {
+			    && form.s->row_type == ROW_TYPE_DYNAMIC) {
 				push_warning_printf(
 					session,
 					DRIZZLE_ERROR::WARN_LEVEL_ERROR,
@@ -5486,7 +5495,7 @@ create_options_are_valid(
 		case ROW_TYPE_DEFAULT:
 			/* Default is COMPACT. */
 			row_format_name
-				= form->s->row_type == ROW_TYPE_REDUNDANT
+				= form.s->row_type == ROW_TYPE_REDUNDANT
 				? "REDUNDANT"
 				: "COMPACT";
 
@@ -5532,7 +5541,7 @@ InnobaseEngine::doCreateTable(
 	HA_CREATE_INFO& create_info,	/*!< in: more information of the
 					created table, contains also the
 					create statement string */
-        drizzled::message::Table&)
+        drizzled::message::Table& create_proto)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5608,18 +5617,17 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (!create_options_are_valid(session, &form, create_info)) {
+	if (!create_options_are_valid(session, form, create_info, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
 
-	if (create_info.key_block_size
-	    || (create_info.used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
+	if (create_proto.options().has_key_block_size()) {
 		/* Determine the page_zip.ssize corresponding to the
 		requested page size (key_block_size) in kilobytes. */
 
 		ulint	ssize, ksize;
-		ulint	key_block_size = create_info.key_block_size;
+		ulint	key_block_size = create_proto.options().key_block_size();
 
 		for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
 		     ssize++, ksize <<= 1) {
@@ -5654,7 +5662,7 @@ InnobaseEngine::doCreateTable(
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
 					    " KEY_BLOCK_SIZE=%lu.",
-					    create_info.key_block_size);
+					    create_proto.options().key_block_size());
 		}
 	}
 
@@ -5674,7 +5682,7 @@ InnobaseEngine::doCreateTable(
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
 					" unless ROW_FORMAT=COMPRESSED.",
-					create_info.key_block_size);
+					create_proto.options().key_block_size());
 				iflags = 0;
 			}
 		} else {

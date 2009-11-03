@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_PACK_H
-#define LIBDRIZZLECLIENT_PACK_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_PACK_H
+#define PLUGIN_OLDLIBDRIZZLE_PACK_H
 
 #include <stdint.h>
 
@@ -36,4 +36,4 @@ extern "C" {
 }
 #endif
 
-#endif /* LIBDRIZZLECLIENT_PACK_H */
+#endif /* PLUGIN_OLDLIBDRIZZLE_PACK_H */

@@ -33,13 +33,12 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifndef __AZIO_H__
-#define __AZIO_H__
+#ifndef PLUGIN_ARCHIVE_AZIO_H
+#define PLUGIN_ARCHIVE_AZIO_H
 
 /* We currently allow this on all platforms */
 #define AZIO_AIO
 
-#include <drizzled/global.h>
 #include <drizzled/common.h>
 #include <mysys/my_sys.h>
 
@@ -368,4 +367,4 @@ extern int azread_comment (azio_stream *s, char *blob);
 }
 #endif
 
-#endif /* AZIO_H */
+#endif /* PLUGIN_ARCHIVE_AZIO_H */

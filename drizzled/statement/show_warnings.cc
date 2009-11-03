@@ -26,7 +26,9 @@
 #include <bitset>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 bool statement::ShowWarnings::execute()
 {
@@ -37,3 +39,6 @@ bool statement::ShowWarnings::execute()
   bool res= mysqld_show_warnings(session, warning_levels);
   return res;
 }
+
+} /* namespace drizzled */
+

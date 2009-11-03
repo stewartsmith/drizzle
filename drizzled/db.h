@@ -18,8 +18,8 @@
  */
 
 
-#ifndef DRIZZLE_SERVER_DB_H
-#define DRIZZLE_SERVER_DB_H
+#ifndef DRIZZLED_DB_H
+#define DRIZZLED_DB_H
 
 namespace drizzled { namespace message { class Schema; } }
 
@@ -37,4 +37,4 @@ const CHARSET_INFO *get_default_db_collation(const char *db_name);
 extern int creating_database; // How many database locks are made
 extern int creating_table;    // How many mysql_create_table() are running
 
-#endif
+#endif /* DRIZZLED_DB_H */

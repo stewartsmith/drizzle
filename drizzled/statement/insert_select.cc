@@ -25,7 +25,8 @@
 #include <drizzled/probes.h>
 #include <drizzled/statement/insert_select.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::InsertSelect::execute()
 {
@@ -102,3 +103,5 @@ bool statement::InsertSelect::execute()
 
   return res;
 }
+
+} /* namespace drizzled */

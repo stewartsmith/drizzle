@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HANDLER_H
-#define DRIZZLED_HANDLER_H
+#ifndef DRIZZLED_CURSOR_H
+#define DRIZZLED_CURSOR_H
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
@@ -952,4 +952,4 @@ Field *
 find_field_in_table_sef(Table *table, const char *name);
 
 
-#endif /* DRIZZLED_HANDLER_H */
+#endif /* DRIZZLED_CURSOR_H */

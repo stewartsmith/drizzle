@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/optimize.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Optimize::execute()
 {
@@ -38,3 +39,6 @@ bool statement::Optimize::execute()
   session->lex->query_tables= all_tables;
   return res;
 }
+
+} /* namespace drizzled */
+

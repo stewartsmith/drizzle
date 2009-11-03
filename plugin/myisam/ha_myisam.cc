@@ -19,14 +19,17 @@
 #include <mysys/my_bit.h>
 #include "myisampack.h"
 #include "ha_myisam.h"
-#include "myisamdef.h"
-#include <drizzled/util/test.h>
-#include <drizzled/error.h>
-#include <drizzled/errmsg_print.h>
-#include <drizzled/gettext.h>
-#include <drizzled/session.h>
-#include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
+#include "myisam_priv.h"
+#include "mysys/my_bit.h"
+#include "drizzled/util/test.h"
+#include "drizzled/error.h"
+#include "drizzled/errmsg_print.h"
+#include "drizzled/gettext.h"
+#include "drizzled/session.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/table.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/memory/multi_malloc.h"
 
 #include <string>
 #include <map>
@@ -36,7 +39,6 @@ using namespace std;
 
 static const string engine_name("MyISAM");
 
-ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t repair_threads;
@@ -148,7 +150,7 @@ static void mi_check_print_msg(MI_CHECK *,	const char* ,
     table conformance in merge engine.
 
     The caller needs to free *recinfo_out after use. Since *recinfo_out
-    and *keydef_out are allocated with a my_multi_malloc, *keydef_out
+    and *keydef_out are allocated with a multi_malloc, *keydef_out
     is freed automatically when *recinfo_out is freed.
 
   RETURN VALUE
@@ -168,11 +170,10 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   HA_KEYSEG *keyseg;
   TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
-  if (!(my_multi_malloc(MYF(MY_WME),
+  if (!(drizzled::memory::multi_malloc(false,
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
           keydef_out, share->keys * sizeof(MI_KEYDEF),
-          &keyseg,
-          (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
+          &keyseg, (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
           NULL)))
     return(HA_ERR_OUT_OF_MEM);
   keydef= *keydef_out;
@@ -594,7 +595,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   this->close();
  end:
   /*
-    Both recinfo and keydef are allocated by my_multi_malloc(), thus only
+    Both recinfo and keydef are allocated by multi_malloc(), thus only
     recinfo must be freed.
   */
   if (recinfo)

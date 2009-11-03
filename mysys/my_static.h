@@ -18,6 +18,9 @@
   a shared library
 */
 
+#ifndef MYSYS_MY_STATIC_H
+#define MYSYS_MY_STATIC_H
+
 #include <signal.h>
 
 #define MAX_SIGNALS	10		/* Max signals under a dont-allow */
@@ -70,3 +73,4 @@ extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
 }
 #endif
 
+#endif /* MYSYS_MY_STATIC_H */

@@ -35,7 +35,7 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 
-#include "drizzled/statement/alter_table.h" /* for mysql_create_like_schema_frm, which will die soon */
+#include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
 
 #include <algorithm>
 
@@ -340,9 +340,9 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
   string built_query;
 
   if (if_exists)
-    built_query.append("DROP Table IF EXISTS ");
+    built_query.append("DROP TABLE IF EXISTS ");
   else
-    built_query.append("DROP Table ");
+    built_query.append("DROP TABLE ");
 
   built_query.append("`");
   if (session->db == NULL || strcmp(db_name ,session->db) != 0)
@@ -832,6 +832,7 @@ int prepare_create_field(CreateField *sql_field,
 
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
@@ -1249,7 +1250,7 @@ int mysql_prepare_create_table(Session *session,
     */
     key_info->block_size= (key->key_create_info.block_size ?
                            key->key_create_info.block_size :
-                           create_info->key_block_size);
+                           create_proto->options().key_block_size());
 
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
@@ -1624,7 +1625,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   set_table_default_charset(create_info, (char*) db);
 
-  if (mysql_prepare_create_table(session, create_info, alter_info,
+  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, file,
                                  &key_info_buffer, &key_count,
@@ -2390,10 +2391,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     By opening source table we guarantee that it exists and no concurrent
     DDL operation will mess with it. Later we also take an exclusive
     name-lock on target table name, which makes copying of .frm file,
-    call to StorageEngine::createTable() and binlogging atomic against concurrent DML
-    and DDL operations on target table. Thus by holding both these "locks"
-    we ensure that our statement is properly isolated from all concurrent
-    operations which matter.
+    call to plugin::StorageEngine::createTable() and binlogging atomic
+    against concurrent DML and DDL operations on target table.
+    Thus by holding both these "locks" we ensure that our statement is
+    properly isolated from all concurrent operations which matter.
   */
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
@@ -2428,13 +2429,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     Altough exclusive name-lock on target table protects us from concurrent
     DML and DDL operations on it we still want to wrap .FRM creation and call
-    to StorageEngine::createTable() in critical section protected by LOCK_open in order
-    to provide minimal atomicity against operations which disregard name-locks,
-    like I_S implementation, for example. This is a temporary and should not
-    be copied. Instead we should fix our code to always honor name-locks.
+    to plugin::StorageEngine::createTable() in critical section protected by
+    LOCK_open in order to provide minimal atomicity against operations which
+    disregard name-locks, like I_S implementation, for example. This is a
+    temporary and should not be copied. Instead we should fix our code to
+    always honor name-locks.
 
     Also some engines (e.g. NDB cluster) require that LOCK_open should be held
-    during the call to StorageEngine::createTable(). See bug #28614 for more info.
+    during the call to plugin::StorageEngine::createTable().
+    See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
   {
@@ -2442,8 +2445,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
-      if (mysql_create_like_schema_frm(session, src_table, create_info,
-                                       &src_proto))
+      if (create_like_schema_frm(session, src_table, create_info, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
         goto err;
@@ -2621,7 +2623,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 }
 
 /*
-  Recreates tables by calling mysql_alter_table().
+  Recreates tables by calling drizzled::alter_table().
 
   SYNOPSIS
     mysql_recreate_table()
@@ -2629,7 +2631,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
     tables		Tables to recreate
 
  RETURN
-    Like mysql_alter_table().
+    Like drizzled::alter_table().
 */
 bool mysql_recreate_table(Session *session, TableList *table_list)
 {
@@ -2650,9 +2652,9 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   /* Force alter table to recreate table */
   alter_info.flags.set(ALTER_CHANGE_COLUMN);
   alter_info.flags.set(ALTER_RECREATE);
-  return(mysql_alter_table(session, NULL, NULL, &create_info, &table_proto,
-                           table_list, &alter_info, 0,
-                           (order_st *) 0, 0));
+  return(alter_table(session, NULL, NULL, &create_info, &table_proto,
+                     table_list, &alter_info, 0,
+                     (order_st *) 0, 0));
 }
 
 

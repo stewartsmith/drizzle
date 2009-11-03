@@ -23,24 +23,22 @@
  *
  * Defines the API of a simple filtered replicator.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/transaction_replicator.h
+ * @see drizzled/plugin/transaction_applier.h
  */
 
-#ifndef DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
-#define DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
+#ifndef PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
+#define PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
-#include <drizzled/plugin/command_replicator.h>
-#include <drizzled/plugin/command_applier.h>
+#include <drizzled/plugin/transaction_replicator.h>
 
 #include PCRE_HEADER
 
 #include <vector>
 #include <string>
 
-class FilteredReplicator: public drizzled::plugin::CommandReplicator
+class FilteredReplicator: public drizzled::plugin::TransactionReplicator
 {
 public:
   FilteredReplicator(std::string name_arg,
@@ -68,13 +66,13 @@ public:
   /**
    * Returns whether the replicator is active
    */
-  virtual bool isActive() const;
+  virtual bool isEnabled() const;
 
-  virtual void activate();
-  virtual void deactivate();
+  virtual void enable();
+  virtual void disable();
 
   /**
-   * Replicate a Command message to an Applier.
+   * Replicate a Transaction message to an Applier.
    *
    * @note
    *
@@ -86,10 +84,10 @@ public:
    * the supplied message to their own controlled memory storage
    * area.
    *
-   * @param Command message to be replicated
+   * @param Transaction message to be replicated
    */
-  void replicate(drizzled::plugin::CommandApplier *in_applier, 
-                 drizzled::message::Command &to_replicate);
+  void replicate(drizzled::plugin::TransactionApplier *in_applier, 
+                 drizzled::message::Transaction &to_replicate);
   
   /**
    * Populate the vector of schemas to filter from the
@@ -165,7 +163,7 @@ private:
   /**
    * Search the vector of schemas to filter to determine whether
    * the given schema should be filtered or not. The parameter
-   * is obtained from the Command message passed to the replicator.
+   * is obtained from the Transaction message passed to the replicator.
    *
    * @param[in] schema_name name of schema to search for
    * @return true if the given schema should be filtered; false otherwise
@@ -175,12 +173,25 @@ private:
   /**
    * Search the vector of tables to filter to determine whether
    * the given table should be filtered or not. The parameter
-   * is obtained from the Command message passed to the replicator.
+   * is obtained from the Transaction message passed to the replicator.
    *
    * @param[in] table_name name of table to search for
    * @return true if the given table should be filtered; false otherwise
    */
   bool isTableFiltered(const std::string &table_name);
+  
+  /**
+   * Given a supplied Statement message, parse out the table
+   * and schema name from the various metadata and header 
+   * pieces for the different Statement types.
+   *
+   * @param[in] Statement to parse
+   * @param[out] Schema name to fill
+   * @param[out] Table name to fill
+   */
+  void parseStatementTableMetadata(const drizzled::message::Statement &in_statement,
+                                   std::string &in_schema_name,
+                                   std::string &in_table_name) const;
 
   /**
    * If the command message consists of raw SQL, this method parses
@@ -235,4 +246,4 @@ private:
   pcre *tab_re;
 };
 
-#endif /* DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H */
+#endif /* PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H */

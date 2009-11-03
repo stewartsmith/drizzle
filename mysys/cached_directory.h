@@ -130,4 +130,4 @@ public:
 
 };
 
-#endif  /* MYSYS_CACHED_DIRECTORY_H */
+#endif /* MYSYS_CACHED_DIRECTORY_H */

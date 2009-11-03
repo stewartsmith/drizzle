@@ -14,11 +14,13 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef PLUGIN_INFORMATION_ENGINE_INFORMATION_SOURCE_H
-#define PLUGIN_INFORMATION_ENGINE_INFORMATION_SOURCE_H
+#ifndef PLUGIN_INFORMATION_ENGINE_INFORMATION_SHARE_H
+#define PLUGIN_INFORMATION_ENGINE_INFORMATION_SHARE_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin/info_schema_table.h>
+
+#include <string>
 
 /*
   Shared class for correct LOCK operation
@@ -32,7 +34,7 @@ class InformationCursor;
 class InformationShare 
 {
   uint32_t count;
-  string name;
+  std::string name;
   drizzled::plugin::InfoSchemaTable *i_s_table;
 
 public:
@@ -70,4 +72,4 @@ public:
   THR_LOCK lock;
 };
 
-#endif /* STORAGE_INFORMATION_ENGINE_INFORMATION_SOURCE_H */
+#endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_SHARE_H */

@@ -445,7 +445,7 @@ bool mysql_truncate(Session& session, TableList *table_list, bool dont_send_ok)
     assert(share->storage_engine);
     engine->set_name(share->db_type()->getName());
     plugin::StorageEngine::createTable(session, share->normalized_path.str,
-                                       share->db.str, share->table_name.str, create_info,
+                                       share->db.str, share->table_name.str, create_info, 
                                        true, tmp_table, false);
     // We don't need to call invalidate() because this table is not in cache
     if ((error= (int) !(session.open_temporary_table(share->path.str,

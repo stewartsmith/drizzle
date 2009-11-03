@@ -18,8 +18,8 @@
  * Purpose: include file for Vio that will work with C and C++
  */
 
-#ifndef LIBDRIZZLECLIENT_VIO_H
-#define	LIBDRIZZLECLIENT_VIO_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_VIO_H
+#define	PLUGIN_OLDLIBDRIZZLE_VIO_H
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -34,7 +34,6 @@ enum enum_vio_type
 
 typedef struct st_vio Vio;
 
-#define VIO_LOCALHOST 1                         /* a localhost connection */
 #define VIO_BUFFERED_READ 2                     /* use buffered read */
 #define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
 
@@ -134,4 +133,4 @@ struct st_vio
   char                  *read_buffer;   /* buffer for drizzleclient_vio_read_buff */
 };
 
-#endif /* LIBDRIZZLECLIENT_VIO_H */
+#endif /* PLUGIN_OLDLIBDRIZZLE_VIO_H */

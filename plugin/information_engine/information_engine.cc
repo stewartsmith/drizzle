@@ -13,7 +13,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/table.h>
+#include <plugin/information_engine/information_engine.h>
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/session.h>
 

@@ -40,11 +40,11 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
-#include <drizzled/plugin/registry.h>
+#include "drizzled/name_map.h"
 #include "drizzled/xid.h"
 
 #include <drizzled/table_proto.h>
@@ -54,7 +54,7 @@ using namespace std;
 namespace drizzled
 {
 
-Registry<plugin::StorageEngine *> all_engines;
+NameMap<plugin::StorageEngine *> all_engines;
 static std::vector<plugin::StorageEngine *> vector_of_engines;
 static std::vector<plugin::StorageEngine *> vector_of_transactional_engines;
 static std::set<std::string> set_of_table_definition_ext;
@@ -203,10 +203,10 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
   if (engine->check_flag(HTON_BIT_DOES_TRANSACTIONS))
     vector_of_transactional_engines.push_back(engine);
 
-  if (engine->getTableDefinotionExt().length())
+  if (engine->getTableDefinitionExt().length())
   {
-    assert(engine->getTableDefinotionExt().length() == MAX_STORAGE_ENGINE_FILE_EXT);
-    set_of_table_definition_ext.insert(engine->getTableDefinotionExt());
+    assert(engine->getTableDefinitionExt().length() == MAX_STORAGE_ENGINE_FILE_EXT);
+    set_of_table_definition_ext.insert(engine->getTableDefinitionExt());
   }
 
   return false;
@@ -506,7 +506,7 @@ int plugin::StorageEngine::startConsistentSnapshot(Session *session)
   return 0;
 }
 
-class StorageEngineGetTableDefition: public unary_function<plugin::StorageEngine *,bool>
+class StorageEngineGetTableDefinition: public unary_function<plugin::StorageEngine *,bool>
 {
   Session& session;
   const char* path;
@@ -517,13 +517,13 @@ class StorageEngineGetTableDefition: public unary_function<plugin::StorageEngine
   int *err;
 
 public:
-  StorageEngineGetTableDefition(Session& session_arg,
-                                const char* path_arg,
-                                const char *db_arg,
-                                const char *table_name_arg,
-                                const bool is_tmp_arg,
-                                message::Table *table_proto_arg,
-                                int *err_arg) :
+  StorageEngineGetTableDefinition(Session& session_arg,
+                                  const char* path_arg,
+                                  const char *db_arg,
+                                  const char *table_name_arg,
+                                  const bool is_tmp_arg,
+                                  message::Table *table_proto_arg,
+                                  int *err_arg) :
     session(session_arg), 
     path(path_arg), 
     db(db_arg),
@@ -586,7 +586,7 @@ int plugin::StorageEngine::getTableDefinition(Session& session,
 
   vector<plugin::StorageEngine *>::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefition(session, path, NULL, NULL, true, table_proto, &err));
+            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_proto, &err));
 
   if (iter == vector_of_engines.end())
   {
@@ -760,7 +760,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
   int error= 1;
   Table table;
   TableShare share(db, 0, table_name, path);
-  drizzled::message::Table tmp_proto;
+  message::Table tmp_proto;
 
   if (proto_used)
   {
@@ -815,6 +815,9 @@ Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
   return file;
 }
 
+/**
+  TODO -> Remove this to force all engines to implement their own file. Solves the "we only looked at dfe" problem.
+*/
 void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
 {
   CachedDirectory::Entries entries= directory.getEntries();
@@ -829,7 +832,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
 
     const char *ext= strchr(filename->c_str(), '.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, ".dfe") ||
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_DEFINITION_FILE_EXT.c_str()) ||
         is_prefix(filename->c_str(), TMP_FILE_PREFIX))
     { }
     else
@@ -894,4 +897,3 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
 
 
 } /* namespace drizzled */
-

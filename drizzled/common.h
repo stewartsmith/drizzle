@@ -21,8 +21,8 @@
 ** Common definition between mysql server & client
 */
 
-#ifndef DRIZZLED_DRIZZLE_COMMON_H
-#define DRIZZLED_DRIZZLE_COMMON_H
+#ifndef DRIZZLED_COMMON_H
+#define DRIZZLED_COMMON_H
 
 #include <unistd.h>
 #include <stdint.h>
@@ -126,7 +126,6 @@
 #define USER_HOST_BUFF_SIZE HOSTNAME_LENGTH + USERNAME_LENGTH + 2
 
 #define LOCAL_HOST	"localhost"
-#define LOCAL_HOST_NAMEDPIPE "."
 
 /*
   You should add new commands to the end of this list, otherwise old
@@ -154,10 +153,6 @@ enum enum_server_command
 */
 #define SCRAMBLE_LENGTH 20
 #define SCRAMBLE_LENGTH_323 8
-/* length of password stored in the db: new passwords are preceeded with '*' */
-#define SCRAMBLED_PASSWORD_CHAR_LENGTH (SCRAMBLE_LENGTH*2+1)
-#define SCRAMBLED_PASSWORD_CHAR_LENGTH_323 (SCRAMBLE_LENGTH_323*2)
-
 
 #define NOT_NULL_FLAG	1		/* Field can't be NULL */
 #define PRI_KEY_FLAG	2		/* Field is part of a primary key */
@@ -299,4 +294,4 @@ typedef struct st_udf_init
 #define NET_HEADER_SIZE 4		/* standard header size */
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
-#endif
+#endif /* DRIZZLED_COMMON_H */

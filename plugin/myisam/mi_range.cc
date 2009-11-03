@@ -18,7 +18,7 @@
   Used when optimizing querries.
  */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 static ha_rows _mi_record_pos(MI_INFO *, const unsigned char *, key_part_map,
                               enum ha_rkey_function);

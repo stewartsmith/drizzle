@@ -19,7 +19,7 @@
   database remains open.
 */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 static void hp_clear_keys(HP_SHARE *info);
 

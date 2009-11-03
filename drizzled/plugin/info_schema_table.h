@@ -18,10 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_PLUGIN_INFO_SCHEMA_TABLE_H
-#define DRIZZLE_PLUGIN_INFO_SCHEMA_TABLE_H
+#ifndef DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
+#define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
 #include <string>
+#include <set>
 
 namespace drizzled
 {
@@ -429,7 +430,7 @@ public:
   /**
    * @return the names of the I_S tables.
    */
-  static void getTableNames(set<string>& tables_names);
+  static void getTableNames(std::set<std::string>& tables_names);
 
   /**
    * @return true if this I_S table is hidden; false otherwise.
@@ -572,4 +573,5 @@ public:
 
 } /* namespace plugin */
 } /* namespace drizzled */
-#endif /* DRIZZLE_PLUGIN_INFO_SCHEMA_TABLE_H */
+
+#endif /* DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H */

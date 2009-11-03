@@ -26,7 +26,7 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 
 #include "mysys/cached_directory.h"
 
@@ -122,7 +122,7 @@ protected:
   std::string table_definition_ext;
 
 public:
-  const std::string& getTableDefinotionExt()
+  const std::string& getTableDefinitionExt()
   {
     return table_definition_ext;
   }

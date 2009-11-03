@@ -175,4 +175,4 @@ inline uint64_t __sync_val_compare_and_swap(volatile uint64_t* ptr,
 }
 #endif /* defined(_KERNEL) || defined(_INT64_TYPE) */
 
-#endif /* DRIZZLED_ATOMIC_SOLARIS_H */
+#endif /* DRIZZLED_ATOMIC_SUN_STUDIO_H */

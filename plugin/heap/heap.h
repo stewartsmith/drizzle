@@ -16,8 +16,9 @@
 /* This file should be included when using heap_database_functions */
 /* Author: Michael Widenius */
 
-#ifndef _heap_h
-#define _heap_h
+#ifndef PLUGIN_HEAP_HEAP_H
+#define PLUGIN_HEAP_HEAP_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -268,4 +269,5 @@ typedef unsigned char *HEAP_PTR;
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* PLUGIN_HEAP_HEAP_H */

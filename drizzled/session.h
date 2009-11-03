@@ -50,6 +50,11 @@ namespace plugin
 class Client;
 class Scheduler;
 }
+namespace message
+{
+class Transaction;
+class Statement;
+}
 }
 
 class Lex_input_stream;
@@ -751,70 +756,6 @@ public:
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
   Table *cached_table;
 
-#ifdef NOT_COMPLETED
-  /**
-    @brief
-    Used as a protobuf storage currently by TEMP only engines.
-  */
-  ProtoCache proto_cache;
-  
-  bool getProto(const char *path)
-  {
-    ProtoCache::iterator iter;
-
-    iter= proto_cache.find(path);
-
-    if (iter!= proto_cache.end())
-      return true;
-
-    return false;
-  }
-
-  bool getProto(const char *path, drizzled::message::Table& proto)
-  {
-    ProtoCache::iterator iter;
-
-    iter= proto_cache.find(path);
-
-    if (iter!= proto_cache.end())
-    {
-      proto.CopyFrom(((*iter).second));
-      return true;
-    }
-
-    return false;
-  }
-
-  bool dropProto(const std::string path)
-  {
-    ProtoCache::iterator iter;
-
-    iter= proto_cache.find(path);
-
-    if (iter!= proto_cache.end())
-    {
-      proto_cache.erase(iter);
-      return true;
-    }
-
-    return false;
-  }
-
-  bool createProto(const char *path, drizzled::message::Table& create_proto)
-  {
-    ProtoCache::iterator iter;
-
-    iter= proto_cache.find(path);
-
-    if (iter!= proto_cache.end())
-      proto_cache.erase(iter);
-    proto_cache.insert(make_pair(path, create_proto));
-
-    return true;
-  }
-#endif
-
-
   /**
     Points to info-string that we show in SHOW PROCESSLIST
     You are supposed to call Session_SET_PROC_INFO only if you have coded
@@ -1304,7 +1245,50 @@ public:
     return connect_microseconds;
   }
 
+  /**
+   * Returns a pointer to the active Transaction message for this
+   * Session being managed by the ReplicationServices component, or
+   * NULL if no active message.
+   */
+  drizzled::message::Transaction *getTransactionMessage() const
+  {
+    return transaction_message;
+  }
+
+  /**
+   * Returns a pointer to the active Statement message for this
+   * Session, or NULL if no active message.
+   */
+  drizzled::message::Statement *getStatementMessage() const
+  {
+    return statement_message;
+  }
+
+  /**
+   * Sets the active transaction message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setTransactionMessage(drizzled::message::Transaction *in_message)
+  {
+    transaction_message= in_message;
+  }
+
+  /**
+   * Sets the active statement message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setStatementMessage(drizzled::message::Statement *in_message)
+  {
+    statement_message= in_message;
+  }
 private:
+  /** Pointers to memory managed by the ReplicationServices component */
+  drizzled::message::Transaction *transaction_message;
+  drizzled::message::Statement *statement_message;
   /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;

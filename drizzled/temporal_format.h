@@ -28,8 +28,8 @@
  * Defines the API for matching datetime formats.
  */
 
-#ifndef DRIZZLED_TEMPORAL_FORMAT_MATCH_H
-#define DRIZZLED_TEMPORAL_FORMAT_MATCH_H
+#ifndef DRIZZLED_TEMPORAL_FORMAT_H
+#define DRIZZLED_TEMPORAL_FORMAT_H
 
 #include PCRE_HEADER
 
@@ -150,4 +150,4 @@ bool init_temporal_formats();
  */
 void deinit_temporal_formats();
 
-#endif /* DRIZZLED_TEMPORAL_FORMAT_MATCH_H */
+#endif /* DRIZZLED_TEMPORAL_FORMAT_H */

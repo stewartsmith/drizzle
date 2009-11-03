@@ -16,8 +16,6 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/field/null.h>
 #include <assert.h>
 
 #include <signal.h>
@@ -46,6 +44,9 @@
 #include <drizzled/lock.h>
 #include <drizzled/plugin/listen.h>
 #include <mysys/cached_directory.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/null.h>
+#include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
 using namespace drizzled;
@@ -978,14 +979,14 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
 
   /*
     Create a table entry with the right key and with an old refresh version
-    Note that we must use my_multi_malloc() here as this is freed by the
+    Note that we must use multi_malloc() here as this is freed by the
     table cache
   */
-  if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                       &table, sizeof(*table),
-                       &share, sizeof(*share),
-                       &key_buff, key_length,
-                       NULL))
+  if (! memory::multi_malloc(true,
+                             &table, sizeof(*table),
+                             &share, sizeof(*share),
+                             &key_buff, key_length,
+                             NULL))
     return NULL;
 
   table->s= share;

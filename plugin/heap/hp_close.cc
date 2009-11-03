@@ -15,7 +15,7 @@
 
 /* close a heap-database */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 using namespace std;
 

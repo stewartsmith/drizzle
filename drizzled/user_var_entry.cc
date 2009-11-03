@@ -158,8 +158,6 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
     true    failure
 */
 
-#define extra_size sizeof(double)
-
 bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
                                  Item_result arg_type, const CHARSET_INFO * const cs, Derivation dv,
                                  bool unsigned_arg)

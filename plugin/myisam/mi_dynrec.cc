@@ -23,7 +23,7 @@
   of blocks.  For the differnet block types, look at _mi_get_block_info()
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 #ifdef HAVE_SYS_TYPES
 #include <sys/types.h>

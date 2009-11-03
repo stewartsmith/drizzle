@@ -14,8 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef STORAGE_MYISAM_HA_MYISAM_H
-#define STORAGE_MYISAM_HA_MYISAM_H
+#ifndef PLUGIN_MYISAM_HA_MYISAM_H
+#define PLUGIN_MYISAM_HA_MYISAM_H
 
 #include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
@@ -23,12 +23,6 @@
 /* class for the the myisam Cursor */
 
 #include <plugin/myisam/myisam.h>
-
-#define HA_RECOVER_NONE		0	/* No automatic recover */
-#define HA_RECOVER_DEFAULT	1	/* Automatic recover active */
-#define HA_RECOVER_BACKUP	2	/* Make a backupfile on recover */
-#define HA_RECOVER_FORCE	4	/* Recover even if we loose rows */
-#define HA_RECOVER_QUICK	8	/* Don't check rows in data file */
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,4 +104,4 @@ private:
   key_map keys_with_parts;
 };
 
-#endif /* STORAGE_MYISAM_HA_MYISAM_H */
+#endif /* PLUGIN_MYISAM_HA_MYISAM_H */
