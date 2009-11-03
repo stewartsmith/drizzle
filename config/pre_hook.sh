@@ -61,5 +61,3 @@ then
 else
   touch po/POTFILES.in
 fi
-
-run python config/register_plugins.py || die  "Can't execute register_plugins"

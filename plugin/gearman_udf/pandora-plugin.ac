@@ -1,0 +1,28 @@
+dnl Generated file, run make to rebuild
+dnl Config for Gearman Client UDFs
+
+AC_ARG_WITH([gearman-udf-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-gearman-udf-plugin],[Build Gearman Client UDFs and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-gearman-udf-plugin],[Disable building Gearman Client UDFs])
+  ],
+  [with_gearman_udf_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_gearman_udf_plugin=yes],
+         [with_gearman_udf_plugin=yes])])
+m4_sinclude([plugin/gearman_udf/plugin.ac])
+
+AS_IF([test "x${ac_cv_libgearman}" = "xyes"],
+      [with_gearman_udf_plugin=yes],
+      [with_gearman_udf_plugin=no])
+  
+AM_CONDITIONAL([BUILD_GEARMAN_UDF_PLUGIN],
+               [test "x${ac_cv_libgearman}" = "xyes"])
+AS_IF([test "x$with_gearman_udf_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="gearman_udf,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_gearman_udf_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libgearman_udf_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

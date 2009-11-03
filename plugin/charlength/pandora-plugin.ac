@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for UDF Plugin for CharLength
+
+AC_ARG_WITH([charlength-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-charlength-plugin],[Build UDF Plugin for CharLength and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-charlength-plugin],[Disable building UDF Plugin for CharLength])
+  ],
+  [with_charlength_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_charlength_plugin=yes],
+         [with_charlength_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_CHARLENGTH_PLUGIN],
+               [test "x${with_charlength_plugin}" = "xyes"])
+AS_IF([test "x$with_charlength_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="charlength,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_charlength_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libcharlength_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

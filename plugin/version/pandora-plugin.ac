@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for version UDF
+
+AC_ARG_WITH([version-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-version-plugin],[Build version UDF and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-version-plugin],[Disable building version UDF])
+  ],
+  [with_version_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_version_plugin=yes],
+         [with_version_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_VERSION_PLUGIN],
+               [test "x${with_version_plugin}" = "xyes"])
+AS_IF([test "x$with_version_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="version,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_version_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libversion_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

@@ -1,0 +1,24 @@
+dnl Generated file, run make to rebuild
+dnl Config for InnoDB Storage Engine
+
+AC_ARG_WITH([innobase-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-innobase-plugin],[Build InnoDB Storage Engine and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-innobase-plugin],[Disable building InnoDB Storage Engine])
+  ],
+  [with_innobase_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_innobase_plugin=yes],
+         [with_innobase_plugin=yes])])
+m4_sinclude([plugin/innobase/plugin.ac])
+
+AM_CONDITIONAL([BUILD_INNOBASE_PLUGIN],
+               [test "x${with_innobase_plugin}" = "xyes"])
+AS_IF([test "x$with_innobase_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="innobase,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_innobase_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libinnobase_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} \${top_builddir}/plugin/innobase/libinnobase.la \${top_builddir}/plugin/innobase/libpars.la"
+      ])

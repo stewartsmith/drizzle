@@ -1,0 +1,30 @@
+dnl Generated file, run make to rebuild
+dnl Config for UDF Plugin for MD5
+
+AC_ARG_WITH([md5-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-md5-plugin],[Build UDF Plugin for MD5 and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-md5-plugin],[Disable building UDF Plugin for MD5])
+  ],
+  [with_md5_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_md5_plugin=yes],
+         [with_md5_plugin=yes])])
+m4_sinclude([plugin/md5/plugin.ac])
+
+AS_IF([test "${ac_cv_build_md5}" = "yes"],
+      [with_md5_plugin=yes],
+      [with_md5_plugin=no])
+  
+AM_CONDITIONAL([BUILD_MD5_PLUGIN],
+               [test "${ac_cv_build_md5}" = "yes"])
+AS_IF([test "x$with_md5_plugin" = "xyes"],
+      [
+  
+        pandora_plugin_test_list="md5,${pandora_plugin_test_list}"
+    
+        pandora_default_plugin_list="md5,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_md5_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libmd5_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

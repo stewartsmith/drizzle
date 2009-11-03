@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for I_S Plugin
+
+AC_ARG_WITH([info-schema-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-info-schema-plugin],[Build I_S Plugin and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-info-schema-plugin],[Disable building I_S Plugin])
+  ],
+  [with_info_schema_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_info_schema_plugin=yes],
+         [with_info_schema_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_INFO_SCHEMA_PLUGIN],
+               [test "x${with_info_schema_plugin}" = "xyes"])
+AS_IF([test "x$with_info_schema_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="info_schema,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_info_schema_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libinfo_schema_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

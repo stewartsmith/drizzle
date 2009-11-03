@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for Memory Storage Engine
+
+AC_ARG_WITH([heap-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-heap-plugin],[Build Memory Storage Engine and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-heap-plugin],[Disable building Memory Storage Engine])
+  ],
+  [with_heap_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_heap_plugin=yes],
+         [with_heap_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_HEAP_PLUGIN],
+               [test "x${with_heap_plugin}" = "xyes"])
+AS_IF([test "x$with_heap_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="heap,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_heap_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libheap_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} \${top_builddir}/plugin/heap/libheap.la \${top_builddir}/mysys/libmysys.la \${top_builddir}/mystrings/libmystrings.la"
+      ])

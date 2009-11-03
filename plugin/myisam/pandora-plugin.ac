@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for MyISAM Storage Engine
+
+AC_ARG_WITH([myisam-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-myisam-plugin],[Build MyISAM Storage Engine and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-myisam-plugin],[Disable building MyISAM Storage Engine])
+  ],
+  [with_myisam_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_myisam_plugin=yes],
+         [with_myisam_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_MYISAM_PLUGIN],
+               [test "x${with_myisam_plugin}" = "xyes"])
+AS_IF([test "x$with_myisam_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="myisam,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_myisam_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libmyisam_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} \${top_builddir}/plugin/myisam/libmyisam.la"
+      ])

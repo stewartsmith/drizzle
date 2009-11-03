@@ -1,0 +1,28 @@
+dnl Generated file, run make to rebuild
+dnl Config for Pool of Threads Scheduler
+
+AC_ARG_WITH([pool-of-threads-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-pool-of-threads-plugin],[Build Pool of Threads Scheduler and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-pool-of-threads-plugin],[Disable building Pool of Threads Scheduler])
+  ],
+  [with_pool_of_threads_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_pool_of_threads_plugin=yes],
+         [with_pool_of_threads_plugin=yes])])
+m4_sinclude([plugin/pool_of_threads/plugin.ac])
+
+AS_IF([test "x$ac_cv_libevent" = "xyes"],
+      [with_pool_of_threads_plugin=yes],
+      [with_pool_of_threads_plugin=no])
+  
+AM_CONDITIONAL([BUILD_POOL_OF_THREADS_PLUGIN],
+               [test "x$ac_cv_libevent" = "xyes"])
+AS_IF([test "x$with_pool_of_threads_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="pool_of_threads,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_pool_of_threads_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libpool_of_threads_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

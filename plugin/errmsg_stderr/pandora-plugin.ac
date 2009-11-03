@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for Error Message Plugin
+
+AC_ARG_WITH([errmsg-stderr-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-errmsg-stderr-plugin],[Build Error Message Plugin and enable it. @<:@default=no@:>@])
+AS_HELP_STRING([--without-errmsg-stderr-plugin],[Disable building Error Message Plugin])
+  ],
+  [with_errmsg_stderr_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_errmsg_stderr_plugin=yes],
+         [with_errmsg_stderr_plugin=no])])
+
+AM_CONDITIONAL([BUILD_ERRMSG_STDERR_PLUGIN],
+               [test "x${with_errmsg_stderr_plugin}" = "xyes"])
+AS_IF([test "x$with_errmsg_stderr_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="errmsg_stderr,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_errmsg_stderr_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/liberrmsg_stderr_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for UDF Plugin for ASCII
+
+AC_ARG_WITH([ascii-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-ascii-plugin],[Build UDF Plugin for ASCII and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-ascii-plugin],[Disable building UDF Plugin for ASCII])
+  ],
+  [with_ascii_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_ascii_plugin=yes],
+         [with_ascii_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_ASCII_PLUGIN],
+               [test "x${with_ascii_plugin}" = "xyes"])
+AS_IF([test "x$with_ascii_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="ascii,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_ascii_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libascii_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

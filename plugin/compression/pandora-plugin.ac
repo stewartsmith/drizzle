@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for compression UDFs
+
+AC_ARG_WITH([compression-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-compression-plugin],[Build compression UDFs and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-compression-plugin],[Disable building compression UDFs])
+  ],
+  [with_compression_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_compression_plugin=yes],
+         [with_compression_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_COMPRESSION_PLUGIN],
+               [test "x${with_compression_plugin}" = "xyes"])
+AS_IF([test "x$with_compression_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="compression,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_compression_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libcompression_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

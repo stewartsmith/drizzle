@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for UDF Plugin for Benchmark
+
+AC_ARG_WITH([benchmark-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-benchmark-plugin],[Build UDF Plugin for Benchmark and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-benchmark-plugin],[Disable building UDF Plugin for Benchmark])
+  ],
+  [with_benchmark_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_benchmark_plugin=yes],
+         [with_benchmark_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_BENCHMARK_PLUGIN],
+               [test "x${with_benchmark_plugin}" = "xyes"])
+AS_IF([test "x$with_benchmark_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="benchmark,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_benchmark_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libbenchmark_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

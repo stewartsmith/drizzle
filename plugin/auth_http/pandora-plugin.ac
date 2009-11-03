@@ -1,0 +1,28 @@
+dnl Generated file, run make to rebuild
+dnl Config for HTTP Authentication Plugin
+
+AC_ARG_WITH([auth-http-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-auth-http-plugin],[Build HTTP Authentication Plugin and enable it. @<:@default=no@:>@])
+AS_HELP_STRING([--without-auth-http-plugin],[Disable building HTTP Authentication Plugin])
+  ],
+  [with_auth_http_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_auth_http_plugin=yes],
+         [with_auth_http_plugin=no])])
+m4_sinclude([plugin/auth_http/plugin.ac])
+
+AS_IF([test "${ac_cv_libcurl}" = "yes"],
+      [with_auth_http_plugin=yes],
+      [with_auth_http_plugin=no])
+  
+AM_CONDITIONAL([BUILD_AUTH_HTTP_PLUGIN],
+               [test "${ac_cv_libcurl}" = "yes"])
+AS_IF([test "x$with_auth_http_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="auth_http,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_auth_http_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libauth_http_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

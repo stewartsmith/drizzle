@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for Console Client
+
+AC_ARG_WITH([console-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-console-plugin],[Build Console Client and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-console-plugin],[Disable building Console Client])
+  ],
+  [with_console_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_console_plugin=yes],
+         [with_console_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_CONSOLE_PLUGIN],
+               [test "x${with_console_plugin}" = "xyes"])
+AS_IF([test "x$with_console_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="console,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_console_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libconsole_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

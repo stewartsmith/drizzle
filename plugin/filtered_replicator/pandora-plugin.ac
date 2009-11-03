@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for Filtered Replicator
+
+AC_ARG_WITH([filtered-replicator-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-filtered-replicator-plugin],[Build Filtered Replicator and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-filtered-replicator-plugin],[Disable building Filtered Replicator])
+  ],
+  [with_filtered_replicator_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_filtered_replicator_plugin=yes],
+         [with_filtered_replicator_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_FILTERED_REPLICATOR_PLUGIN],
+               [test "x${with_filtered_replicator_plugin}" = "xyes"])
+AS_IF([test "x$with_filtered_replicator_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="filtered_replicator,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_filtered_replicator_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libfiltered_replicator_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

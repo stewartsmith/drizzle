@@ -1,0 +1,28 @@
+dnl Generated file, run make to rebuild
+dnl Config for Gearman Logging Plugin
+
+AC_ARG_WITH([logging-gearman-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-logging-gearman-plugin],[Build Gearman Logging Plugin and enable it. @<:@default=no@:>@])
+AS_HELP_STRING([--without-logging-gearman-plugin],[Disable building Gearman Logging Plugin])
+  ],
+  [with_logging_gearman_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_logging_gearman_plugin=yes],
+         [with_logging_gearman_plugin=no])])
+m4_sinclude([plugin/logging_gearman/plugin.ac])
+
+AS_IF([test "${ac_cv_libgearman}" = "yes"],
+      [with_logging_gearman_plugin=yes],
+      [with_logging_gearman_plugin=no])
+  
+AM_CONDITIONAL([BUILD_LOGGING_GEARMAN_PLUGIN],
+               [test "${ac_cv_libgearman}" = "yes"])
+AS_IF([test "x$with_logging_gearman_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="logging_gearman,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_logging_gearman_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/liblogging_gearman_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

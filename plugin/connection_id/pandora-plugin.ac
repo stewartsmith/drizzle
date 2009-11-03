@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for Connection ID UDF
+
+AC_ARG_WITH([connection-id-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-connection-id-plugin],[Build Connection ID UDF and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-connection-id-plugin],[Disable building Connection ID UDF])
+  ],
+  [with_connection_id_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_connection_id_plugin=yes],
+         [with_connection_id_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_CONNECTION_ID_PLUGIN],
+               [test "x${with_connection_id_plugin}" = "xyes"])
+AS_IF([test "x$with_connection_id_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="connection_id,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_connection_id_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/libconnection_id_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])

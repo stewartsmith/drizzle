@@ -18,20 +18,18 @@
 
 # Find plugins in the tree and add them to the build system 
 
-import os, ConfigParser, sys
+import ConfigParser, os, sys
 
 top_srcdir='.'
-top_builddir='.'
 plugin_ini_fname='plugin.ini'
 plugin_list=[]
-autogen_header="This file is generated, re-run %s to rebuild\n" % sys.argv[0]
 
 class ChangeProtectedFile(object):
 
   def __init__(self, fname):
     self.real_fname= fname
     self.new_fname= "%s.new" % fname
-    self.new_file= open(self.new_fname,'w')
+    self.new_file= open(self.new_fname,'w+')
 
   def write(self, text):
     self.new_file.write(text)
@@ -40,127 +38,54 @@ class ChangeProtectedFile(object):
   # over the old ones if they are different, so that we don't cause 
   # unnecessary recompiles
   def close(self):
+    """Return True if the file had changed."""
+    self.new_file.seek(0)
+    new_content = self.new_file.read()
     self.new_file.close()
-    if os.system('diff %s %s >/dev/null 2>&1' % (self.new_fname,self.real_fname)):
-      try:
-        os.unlink(self.real_fname)
-      except:
-        pass
-      os.rename(self.new_fname, self.real_fname)
     try:
-      os.unlink(self.new_fname)
-    except:
-      pass
-
-if len(sys.argv)>1:
-  top_srcdir=sys.argv[1]
-  top_builddir=top_srcdir
-if len(sys.argv)>2:
-  top_builddir=sys.argv[2]
-
-plugin_ac=ChangeProtectedFile(os.path.join(top_builddir,'config','plugin.ac'))
-plugin_am=ChangeProtectedFile(os.path.join(top_srcdir,'config','plugin.am'))
-
-plugin_ac.write("dnl %s" % autogen_header)
-plugin_am.write("# %s" % autogen_header)
-plugin_am.write("PANDORA_DYNAMIC_LDADDS=\n")
-
-def accumulate_plugins(arg, dirname, fnames):
-  if plugin_ini_fname in fnames:
-    arg.append(dirname)
+        old_file = file(self.real_fname, 'r')
+        old_content = old_file.read()
+        old_file.close()
+    except IOError:
+        old_content = None
+    if new_content != old_content:
+      if old_content != None:
+        os.unlink(self.real_fname)
+      os.rename(self.new_fname, self.real_fname)
+      return True
+    else:
+        try:
+          os.unlink(self.new_fname)
+        except:
+          pass
 
 
-os.path.walk(os.path.join(top_srcdir,"plugin"),accumulate_plugins,plugin_list)
-plugin_list.sort()
+def write_plugin(plugin_dir):
+  """Return True if the plugin had changed."""
+  plugin = read_plugin_ini(plugin_dir)
+  expand_plugin_ini(plugin, plugin_dir)
+  plugin_file = ChangeProtectedFile(os.path.join(plugin_dir, 'pandora-plugin.ac'))
+  write_plugin_ac(plugin, plugin_file)
+  result = plugin_file.close()
+  plugin_file = ChangeProtectedFile(os.path.join(plugin_dir, 'pandora-plugin.am'))
+  write_plugin_am(plugin, plugin_file)
+  result = plugin_file.close() or result
+  return result
 
-for plugin_dir in plugin_list:
-  plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
-  parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags="", testsuite=""))
-  parser.read(plugin_file)
-  plugin=dict(parser.items('plugin'))
-  plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
-  # TODO: determine path to plugin dir relative to top_srcdir... append it
-  # to source files if they don't already have it
-  if plugin['sources'] == "":
-    plugin['sources']="%s.cc" % plugin['name']
-  new_sources=""
-  for src in plugin['sources'].split():
-    if not src.startswith(plugin['rel_path']):
-      src= os.path.join(plugin['rel_path'], src)
-      new_sources= "%s %s" % (new_sources, src)
-  plugin['sources']= new_sources
-
-  new_headers=""
-  for header in plugin['headers'].split():
-    if not header.startswith(plugin['rel_path']):
-      header= os.path.join(plugin['rel_path'], header)
-      new_headers= "%s %s" % (new_headers, header)
-  plugin['headers']= new_headers
-
-  if plugin.has_key('load_by_default'):
-    plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
-  else:
-    plugin['load_by_default']=False
-  # Make a yes/no version for autoconf help messages
-  if plugin['load_by_default']:
-    plugin['default_yesno']="yes"
-  else:
-    plugin['default_yesno']="no"
-
+def write_plugin_ac(plugin, plugin_ac):
+  #
+  # Write plugin config instructions into plugin.ac file.
+  #
   plugin_ac_file=os.path.join(plugin['rel_path'],'plugin.ac')
-  plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
   plugin_m4_dir=os.path.join(plugin['rel_path'],'m4')
-
   plugin_m4_files=[]
   if os.path.exists(plugin_m4_dir) and os.path.isdir(plugin_m4_dir):
     for m4_file in os.listdir(plugin_m4_dir):
       if os.path.splitext(m4_file)[-1] == '.m4':
         plugin_m4_files.append(os.path.join(plugin['rel_path'], m4_file))
-
-  plugin['build_conditional_tag']= "BUILD_%s_PLUGIN" % plugin['name'].upper()
-  plugin['name_with_dashes']= plugin['name'].replace('_','-')
-  if plugin.has_key('build_conditional'):
-    plugin['has_build_conditional']=True
-  else:
-    plugin['has_build_conditional']=False
-    plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
-
-  # Turn this on later plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN %(cppflags)s
-
-  #
-  # Write plugin build instructions into plugin.am file.
-  #
-  if plugin['headers'] != "":
-    plugin_am.write("noinst_HEADERS += %(headers)s\n" % plugin)
-  plugin_am.write("""
-plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
-EXTRA_DIST += %(rel_path)s/plugin.ini
-if %(build_conditional_tag)s
-  noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
-  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-  plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s
-  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) %(cppflags)s
-  plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
-  plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
-
-  plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
-  PANDORA_DYNAMIC_LDADDS+=${top_builddir}/plugin/lib%(name)s_plugin.la
-endif
+  plugin_ac.write("""dnl Generated file, run make to rebuild
+dnl Config for %(title)s
 """ % plugin)
-  # Add this once we're actually doing dlopen (and remove -avoid-version if
-  # we move to ltdl
-  #pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(libs)s
-
-
-  if os.path.exists(plugin_am_file):
-    plugin_am.write('include %s\n' % plugin_am_file)
-
-  #
-  # Write plugin config instructions into plugin.am file.
-  #
-  plugin_ac.write("\n\ndnl Config for %(title)s\n" % plugin)
   for m4_file in plugin_m4_files:
     plugin_ac.write('m4_sinclude([%s])\n' % m4_file)
 
@@ -208,6 +133,135 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       ])
 """ % plugin)
 
-plugin_ac.close()
-plugin_am.close()
 
+def expand_plugin_ini(plugin, plugin_dir):
+    plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
+    # TODO: determine path to plugin dir relative to top_srcdir... append it to
+    # source files if they don't already have it
+    if plugin['sources'] == "":
+      plugin['sources']="%s.cc" % plugin['name']
+    new_sources=""
+    for src in plugin['sources'].split():
+      if not src.startswith(plugin['rel_path']):
+        src= os.path.join(plugin['rel_path'], src)
+        new_sources= "%s %s" % (new_sources, src)
+    plugin['sources']= new_sources
+    
+    new_headers=""
+    for header in plugin['headers'].split():
+      if not header.startswith(plugin['rel_path']):
+        header= os.path.join(plugin['rel_path'], header)
+        new_headers= "%s %s" % (new_headers, header)
+    plugin['headers']= new_headers
+    
+    # Make a yes/no version for autoconf help messages
+    if plugin['load_by_default']:
+      plugin['default_yesno']="yes"
+    else:
+      plugin['default_yesno']="no"
+    
+    plugin['build_conditional_tag']= "BUILD_%s_PLUGIN" % plugin['name'].upper()
+    plugin['name_with_dashes']= plugin['name'].replace('_','-')
+    if plugin.has_key('build_conditional'):
+      plugin['has_build_conditional']=True
+    else:
+      plugin['has_build_conditional']=False
+      plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
+    
+    # Turn this on later plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN %(cppflags)s
+
+def read_plugin_ini(plugin_dir):
+    plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
+    parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags="", testsuite=""))
+    parser.read(plugin_file)
+    plugin=dict(parser.items('plugin'))
+    if plugin.has_key('load_by_default'):
+      plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
+    else:
+      plugin['load_by_default']=False
+    return plugin
+
+
+def write_plugin_am(plugin, plugin_am):
+  """Write an automake fragment for this plugin.
+  
+  :param plugin: The plugin dict.
+  :param plugin_am: The file to write to.
+  """
+  # The .plugin.ini.stamp avoids changing the datestamp on plugin.ini which can
+  # confuse VCS systems.
+  plugin_am.write("""## Generated by register_plugins.py
+EXTRA_DIST += %(rel_path)s/pandora-plugin.ac
+
+${top_srcdir}/%(rel_path)s/pandora-plugin.am: ${top_srcdir}/config/register_plugins.py %(rel_path)s/.plugin.ini.stamp
+
+${top_srcdir}/%(rel_path)s/pandora-plugin.ac: ${top_srcdir}/config/register_plugins.py %(rel_path)s/.plugin.ini.stamp
+
+configure: ${top_srcdir}/%(rel_path)s/pandora-plugin.ac
+
+# Prevent errors when a plugin dir is removed
+%(rel_path)s/plugin.ini:
+
+# Failures to update the plugin.ini are ignored to permit plugins to be deleted
+# cleanly.
+${top_srcdir}/%(rel_path)s/.plugin.ini.stamp: %(rel_path)s/plugin.ini
+	@if [ ! -e ${top_srcdir}/%(rel_path)s/plugin.ini ]; then \\
+	    echo "%(rel_path)s/plugin.ini is missing"; \\
+	else \\
+	    cmp -s $< $@; \\
+	    if [ $$? -ne 0 ]; then \\
+	      echo 'cd ${srcdir} && python config/register_plugins.py ${top_srcdir} %(rel_path)s'; \\
+	      unchanged=`cd ${srcdir} && python config/register_plugins.py ${top_srcdir} %(rel_path)s` ;\\
+	      if [ $$? -ne 0 ]; then \\
+	        echo "**** register_plugins failed ****"; \\
+	        false; \\
+	      fi && \\
+	      for plugin_dir in $$unchanged; do \\
+	        echo "plugin $$plugin_dir unchanged." ; \\
+	        touch -r $$plugin_dir/pandora-plugin.am $$plugin_dir/.plugin.ini.stamp; \\
+	      done && \\
+              cp -a $< $@ || echo "Failed to update $@"; \\
+	    fi; \\
+	fi
+
+plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
+EXTRA_DIST += %(rel_path)s/plugin.ini
+if %(build_conditional_tag)s
+  noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
+  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
+  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
+  plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s
+  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) %(cppflags)s
+  plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
+  plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
+
+  plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
+  PANDORA_DYNAMIC_LDADDS+=${top_builddir}/plugin/lib%(name)s_plugin.la
+endif
+""" % plugin)
+  if plugin['headers'] != "":
+    plugin_am.write("noinst_HEADERS += %(headers)s\n" % plugin)
+  # Add this once we're actually doing dlopen (and remove -avoid-version if
+  # we move to ltdl
+  #pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
+  #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(libs)s
+  plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
+  if os.path.exists(plugin_am_file):
+    plugin_am.write('include %s\n' % plugin_am_file)
+
+
+if len(sys.argv)>1:
+  top_srcdir=sys.argv[1]
+if len(sys.argv)>2:
+    plugin_list = [top_srcdir + '/' + plugin_name for plugin_name in sys.argv[2:]]
+else:
+    def accumulate_plugins(arg, dirname, fnames):
+      # plugin_ini_fname is a name in dirname indicating dirname is a plugin.
+      if plugin_ini_fname in fnames:
+        arg.append(dirname)
+    os.path.walk(os.path.join(top_srcdir,"plugin"),accumulate_plugins,plugin_list)
+
+plugin_list.sort()
+for plugin_dir in plugin_list:
+    if not write_plugin(plugin_dir):
+        print plugin_dir

@@ -1,0 +1,23 @@
+dnl Generated file, run make to rebuild
+dnl Config for UDF Plugin for Length
+
+AC_ARG_WITH([length-plugin],[
+dnl indented werid to make the help output correct
+AS_HELP_STRING([--with-length-plugin],[Build UDF Plugin for Length and enable it. @<:@default=yes@:>@])
+AS_HELP_STRING([--without-length-plugin],[Disable building UDF Plugin for Length])
+  ],
+  [with_length_plugin="$withval"],
+  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+         [with_length_plugin=yes],
+         [with_length_plugin=yes])])
+
+AM_CONDITIONAL([BUILD_LENGTH_PLUGIN],
+               [test "x${with_length_plugin}" = "xyes"])
+AS_IF([test "x$with_length_plugin" = "xyes"],
+      [
+  
+        pandora_default_plugin_list="length,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_length_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/liblength_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} "
+      ])
