@@ -368,6 +368,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		structs.h \
 		symbol_hash.h \
 		table.h \
+		table_definition_cache.h \
 		table_ident.h \
 		table_list.h \
 		table_map_iterator.h \
@@ -693,6 +694,7 @@ drizzled_SOURCES = \
 		statement/update.cc \
 		strfunc.cc \
 		table.cc \
+		table_definition_cache.cc \
 		table_list.cc \
 		table_map_iterator.cc \
 		table_share.cc \

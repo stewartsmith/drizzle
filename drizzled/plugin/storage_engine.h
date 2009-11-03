@@ -122,20 +122,12 @@ protected:
   std::string table_definition_ext;
 
 public:
+  typedef drizzled::message::Table TableDefinition;
+  typedef std::map <std::string, TableDefinition> TableDefinitions;
   const std::string& getTableDefinitionExt()
   {
     return table_definition_ext;
   }
-
-protected:
-
-  /**
-    @brief
-    Used as a protobuf storage currently by TEMP only engines.
-  */
-  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
-  ProtoCache proto_cache;
-  pthread_mutex_t proto_cache_mutex;
 
   /**
    * Implementing classes should override these to provide savepoint

@@ -20,6 +20,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
+#include <drizzled/table_definition_cache.h>
 
 #include "heap.h"
 #include "ha_heap.h"
@@ -36,7 +37,8 @@ static const char *ha_heap_exts[] = {
   NULL
 };
 
-class HeapEngine : public drizzled::plugin::StorageEngine
+class HeapEngine :  public drizzled::plugin::StorageEngine,
+                    private drizzled::TableDefinitionCache
 {
 public:
   HeapEngine(string name_arg)
@@ -96,18 +98,9 @@ int HeapEngine::doGetTableDefinition(Session&,
                                      drizzled::message::Table *table_proto)
 {
   int error= 1;
-  ProtoCache::iterator iter;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
-
-  if (iter!= proto_cache.end())
-  {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+  if (fillTableDefinitionFromCache(table_proto, string(path)))
     error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
 
   return error;
 }
@@ -117,14 +110,7 @@ int HeapEngine::doGetTableDefinition(Session&,
 */
 int HeapEngine::doDropTable(Session&, const string table_path)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  removeTableDefinitionFromCache(table_path);
 
   return heap_delete_table(table_path.c_str());
 }
@@ -698,9 +684,7 @@ int HeapEngine::doCreateTable(Session *session,
 
   if (error == 0)
   {
-    pthread_mutex_lock(&proto_cache_mutex);
-    proto_cache.insert(make_pair(table_name, create_proto));
-    pthread_mutex_unlock(&proto_cache_mutex);
+    addTableDefinitionToCache(create_proto, string(table_name));
   }
 
   return error;

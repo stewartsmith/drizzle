@@ -48,6 +48,7 @@ TODO:
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include "drizzled/memory/multi_malloc.h"
+#include <drizzled/table_definition_cache.h>
 
 #include "ha_tina.h"
 
@@ -117,7 +118,8 @@ static const char *ha_tina_exts[] = {
   NULL
 };
 
-class Tina : public drizzled::plugin::StorageEngine
+class Tina :        public drizzled::plugin::StorageEngine,
+                    private drizzled::TableDefinitionCache
 {
 public:
   Tina(const string& name_arg)
@@ -172,12 +174,7 @@ int Tina::doDropTable(Session&,
     error= enoent_or_zero;
   }
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  removeTableDefinitionFromCache(table_path);
 
   return error;
 }
@@ -190,18 +187,9 @@ int Tina::doGetTableDefinition(Session&,
                                drizzled::message::Table *table_proto)
 {
   int error= 1;
-  ProtoCache::iterator iter;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
-
-  if (iter!= proto_cache.end())
-  {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+  if (fillTableDefinitionFromCache(table_proto, string(path)))
     error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
 
   return error;
 }
@@ -1560,9 +1548,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
 
   my_close(create_file, MYF(0));
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  addTableDefinitionToCache(create_proto, string(table_name));
 
   return 0;
 }

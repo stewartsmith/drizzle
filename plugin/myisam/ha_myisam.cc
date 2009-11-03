@@ -30,6 +30,7 @@
 #include "drizzled/table.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"
+#include <drizzled/table_definition_cache.h>
 
 #include <string>
 #include <map>
@@ -56,7 +57,8 @@ static const char *ha_myisam_exts[] = {
   NULL
 };
 
-class MyisamEngine : public drizzled::plugin::StorageEngine
+class MyisamEngine :  public drizzled::plugin::StorageEngine,
+                      private drizzled::TableDefinitionCache
 {
 public:
   MyisamEngine(string name_arg)
@@ -108,18 +110,9 @@ int MyisamEngine::doGetTableDefinition(Session&,
                                        drizzled::message::Table *table_proto)
 {
   int error= 1;
-  ProtoCache::iterator iter;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
-
-  if (iter!= proto_cache.end())
-  {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+  if (fillTableDefinitionFromCache(table_proto, string(path)))
     error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
 
   return error;
 }
@@ -1320,15 +1313,7 @@ int ha_myisam::delete_all_rows()
 
 int MyisamEngine::doDropTable(Session&, const string table_path)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-
-  pthread_mutex_unlock(&proto_cache_mutex);
+  removeTableDefinitionFromCache(table_path);
 
   return mi_delete_table(table_path.c_str());
 }
@@ -1397,9 +1382,7 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  addTableDefinitionToCache(create_proto, string(table_name));
 
   return error;
 }
