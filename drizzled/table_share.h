@@ -115,12 +115,22 @@ public:
 
   inline const char *getComment()
   {
-    return (table_proto) ?  table_proto->options().comment().c_str() : NULL; 
+    return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
   }
 
   inline uint32_t getCommentLength()
   {
     return (table_proto) ? table_proto->options().comment().length() : 0; 
+  }
+
+  inline bool hasKeyBlockSize()
+  {
+    return (table_proto) ? table_proto->options().has_key_block_size() : false;
+  }
+
+  inline uint32_t getKeyBlockSize()
+  {
+    return (table_proto) ? table_proto->options().key_block_size() : 0;
   }
 
   inline uint64_t getMaxRows()
@@ -141,7 +151,6 @@ public:
   enum tmp_table_type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t key_block_size;			/* create key_block_size, if used */
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */

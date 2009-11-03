@@ -51,6 +51,9 @@ innobase_convert_string(
                                        during the conversion */
 
 #endif /* DRIZZLE */
+/* Prototypes for global functions in ha_innodb.cc that are called by
+InnoDB's C-code. */
+
 
 /*******************************************************************//**
 Formats the raw data in "data" (in InnoDB on-disk format) that is of

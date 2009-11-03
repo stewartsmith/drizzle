@@ -360,9 +360,6 @@ int fill_table_proto(message::Table *table_proto,
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
-  if (create_info->key_block_size)
-    table_options->set_key_block_size(create_info->key_block_size);
-
   for (unsigned int i= 0; i < keys; i++)
   {
     message::Table::Index *idx;
@@ -557,8 +554,8 @@ int rea_create_table(Session *session, const char *path,
 
   int err= 0;
 
-  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
-                                            table_proto->engine().name());
+  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
+                                                                   table_proto->engine().name());
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
     err= drizzle_write_proto_file(new_path, table_proto);
 
@@ -572,8 +569,8 @@ int rea_create_table(Session *session, const char *path,
     goto err_handler;
   }
 
-  if (plugin::StorageEngine::createTable(session, path, db, table_name,
-                                         create_info, false, table_proto))
+  if (plugin::StorageEngine::createTable(*session, path, db, table_name,
+                                         *create_info, false, *table_proto))
     goto err_handler;
   return 0;
 

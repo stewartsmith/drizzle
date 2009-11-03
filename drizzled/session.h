@@ -37,6 +37,7 @@
 #include <drizzled/xid.h>
 
 #include <netdb.h>
+#include <map>
 #include <string>
 #include <bitset>
 
@@ -68,6 +69,14 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
+
+/**
+  @brief
+  Local storage for proto that are tmp table. This should be enlarged
+  to hande the entire table-share for a local table. Once Hash is done,
+  we should consider exchanging the map for it.
+*/
+typedef std::map <std::string, drizzled::message::Table> ProtoCache;
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
@@ -743,6 +752,7 @@ public:
   
   /** Place to store various things */
   void *session_marker;
+
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
   Table *cached_table;
 
