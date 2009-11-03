@@ -18,17 +18,17 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
-AC_INIT([drizzle],[RELEASE_VERSION],[http://bugs.launchpad.net/drizzle])
+dnl Version from the AC_INIT call below is overridden later
+dnl So don't update it here
+AC_INIT([drizzle],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
+PANDORA_VC_VERSION
 
-# Version with no dots
-AC_DEFINE([DRIZZLE_VERSION_ID],RELEASE_ID,
-	  [Version ID that can be easily used for numeric comparison])
 
 AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
 
@@ -682,7 +682,7 @@ done
 AC_OUTPUT
 
 echo "---"
-echo "Configuration summary for $PACKAGE_NAME version $VERSION RELEASE_COMMENT"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION $PANDORA_RELEASE_COMMENT"
 echo ""
 echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $host_vendor-$host_os"
