@@ -23,6 +23,7 @@
 
 #include <string>
 #include <set>
+#include <algorithm>
 
 namespace drizzled
 {
@@ -314,9 +315,9 @@ public:
 
   virtual ~InfoSchemaTable()
   {
-    for_each(rows.begin(),
-             rows.end(),
-             DeleteRows());
+    std::for_each(rows.begin(),
+                  rows.end(),
+                  DeleteRows());
     rows.clear();
   }
 
@@ -489,9 +490,9 @@ public:
 
   void clearRows()
   {
-    for_each(rows.begin(),
-             rows.end(),
-             DeleteRows());
+    std::for_each(rows.begin(),
+                  rows.end(),
+                  DeleteRows());
     rows.clear();
   }
 
