@@ -734,8 +734,7 @@ int
 TrxISMethods::fillTable(
 /*======================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		)	/*!< in: condition (not used) */
+	TableList*	tables)	/*!< in/out: tables to fill */
 {
 	const char*		table_name;
 	int			ret;
@@ -883,7 +882,6 @@ i_s_cmp_fill_low(
 /*=============*/
 	Session*	session,/*!< in: thread */
 	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		,	/*!< in: condition (ignored) */
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
 	Table*	table	= (Table *) tables->table;
@@ -931,10 +929,9 @@ int
 CmpISMethods::fillTable(
 /*=========*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		cond)	/*!< in: condition (ignored) */
+	TableList*	tables)	/*!< in/out: tables to fill */
 {
-	return(i_s_cmp_fill_low(session, tables, cond, FALSE));
+	return(i_s_cmp_fill_low(session, tables, FALSE));
 }
 
 /*******************************************************************//**
@@ -944,10 +941,9 @@ int
 CmpResetISMethods::fillTable(
 /*===============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		cond)	/*!< in: condition (ignored) */
+	TableList*	tables)	/*!< in/out: tables to fill */
 {
-	return(i_s_cmp_fill_low(session, tables, cond, TRUE));
+	return(i_s_cmp_fill_low(session, tables, TRUE));
 }
 
 /*******************************************************************//**
@@ -1042,7 +1038,6 @@ i_s_cmpmem_fill_low(
 /*================*/
 	Session*	session,/*!< in: thread */
 	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		,	/*!< in: condition (ignored) */
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
 	Table*	table	= (Table *) tables->table;
@@ -1087,10 +1082,9 @@ int
 CmpmemISMethods::fillTable(
 /*============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		cond)	/*!< in: condition (ignored) */
+	TableList*	tables)	/*!< in/out: tables to fill */
 {
-	return(i_s_cmpmem_fill_low(session, tables, cond, FALSE));
+	return(i_s_cmpmem_fill_low(session, tables, FALSE));
 }
 
 /*******************************************************************//**
@@ -1100,10 +1094,9 @@ int
 CmpmemResetISMethods::fillTable(
 /*==================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
-	COND*		cond)	/*!< in: condition (ignored) */
+	TableList*	tables)	/*!< in/out: tables to fill */
 {
-	return(i_s_cmpmem_fill_low(session, tables, cond, TRUE));
+	return(i_s_cmpmem_fill_low(session, tables, TRUE));
 }
 
 /*******************************************************************//**

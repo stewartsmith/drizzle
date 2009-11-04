@@ -30,6 +30,7 @@ class InformationCursor: public Cursor
 {
   THR_LOCK_DATA lock;      /* MySQL lock */
   InformationShare *share;
+  drizzled::plugin::InfoSchemaTable::Rows::iterator iter;
 
 public:
   InformationCursor(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
