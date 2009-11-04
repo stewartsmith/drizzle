@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-31 11:09+0000\n"
-"Last-Translator: DiegoJ <diegojromerolopez@gmail.com>\n"
+"PO-Revision-Date: 2009-11-03 14:22+0000\n"
+"Last-Translator: Cristóbal Iván Rivera Macías <ivan.rvm@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-11-01 08:22+0000\n"
+"X-Launchpad-Export-Date: 2009-11-04 08:29+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -3682,7 +3682,7 @@ msgstr "No puede asignar el archivo: %-.200s, Error: %d"
 #: drizzled/error.cc:812
 #, c-format
 msgid "Wrong magic in %-.64s"
-msgstr ""
+msgstr "Mágia erronea en %-.64s"
 
 #: drizzled/error.cc:814
 msgid "Prepared statement contains too many placeholders"
