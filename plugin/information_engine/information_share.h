@@ -40,48 +40,78 @@ public:
     lock()
   {
     thr_lock_init(&lock);
-  };
+  }
 
   ~InformationShare() 
   {
     thr_lock_delete(&lock);
   }
 
+  /**
+   * Increment the counter which tracks how many instances of this share are
+   * currently open.
+   * @return the new counter value
+   */
   void incUseCount(void) 
   { 
-    count++; 
+    return ++count; 
   }
 
+  /**
+   * Decrement the count which tracks how many instances of this share are
+   * currently open.
+   * @return the new counter value
+   */
   uint32_t decUseCount(void) 
   { 
     return --count; 
   }
 
+  /**
+   * @ return the value of the use counter for this share
+   */
   uint32_t getUseCount() const
   {
     return count;
   }
 
+  /**
+   * @return the table name associated with this share.
+   */
   const std::string &getName() const
   {
     return i_s_table->getTableName();
   }
 
+  /**
+   * Set the I_S table associated with this share
+   *
+   * @param[in] in_name name of the I_S table for this share
+   */
   void setInfoSchemaTable(const std::string &in_name)
   {
     i_s_table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
   }
 
+  /**
+   * @return the I_S table associated with this share.
+   */
   drizzled::plugin::InfoSchemaTable *getInfoSchemaTable()
   {
     return i_s_table;
   }
 
+  /**
+   * Initialize the thread lock for this share.
+   */
   void initThreadLock()
   {
     thr_lock_init(&lock);
   }
 
+  /**
+   * @return the thread lock for this share.
+   */
   THR_LOCK *getThreadLock()
   {
     return &lock;

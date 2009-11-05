@@ -39,14 +39,24 @@ class OpenTables
 {
 public:
 
+  /**
+   * Instantiate the singleton object.
+   */
   static OpenTables &singleton()
   {
     static OpenTables open_tabs;
     return open_tabs;
   }
 
+  /**
+   * @param[in] name the name of the table share to retrieve
+   * @return the corresponding table share
+   */
   InformationShare *getShare(const std::string &name);
 
+  /**
+   * Free the share that is currently open.
+   */
   void freeShare();
 
 private:
