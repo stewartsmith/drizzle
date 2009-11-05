@@ -29,20 +29,15 @@
   engine as well (should we just hide the share detail?)
 */
 
-class InformationCursor;
-
 class InformationShare 
 {
-  uint32_t count;
-  std::string name;
-  drizzled::plugin::InfoSchemaTable *i_s_table;
 
 public:
 
-  InformationShare(const char *arg) :
+  InformationShare() :
     count(1),
-    name(arg),
-    i_s_table(NULL)
+    i_s_table(NULL),
+    lock()
   {
     thr_lock_init(&lock);
   };
@@ -52,8 +47,25 @@ public:
     thr_lock_delete(&lock);
   }
 
-  void inc(void) { count++; }
-  uint32_t dec(void) { return --count; }
+  void incUseCount(void) 
+  { 
+    count++; 
+  }
+
+  uint32_t decUseCount(void) 
+  { 
+    return --count; 
+  }
+
+  uint32_t getUseCount() const
+  {
+    return count;
+  }
+
+  const std::string &getName() const
+  {
+    return i_s_table->getTableName();
+  }
 
   void setInfoSchemaTable(const std::string &in_name)
   {
@@ -65,11 +77,22 @@ public:
     return i_s_table;
   }
 
-  static InformationShare *get(const char *table_name);
-  static void free(InformationShare *share);
-  static void start(void);
-  static void stop(void);
+  void initThreadLock()
+  {
+    thr_lock_init(&lock);
+  }
+
+  THR_LOCK *getThreadLock()
+  {
+    return &lock;
+  }
+
+private:
+
+  uint32_t count;
+  drizzled::plugin::InfoSchemaTable *i_s_table;
   THR_LOCK lock;
+
 };
 
 #endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_SHARE_H */

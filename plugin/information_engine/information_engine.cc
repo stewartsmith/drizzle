@@ -26,41 +26,6 @@ using namespace drizzled;
 
 static const string engine_name("INFORMATION_ENGINE");
 
-/*****************************************************************************
-** INFORMATION_ENGINE tables
-*****************************************************************************/
-
-InformationCursor::InformationCursor(plugin::StorageEngine *engine_arg,
-                                     TableShare *table_arg) :
-  Cursor(engine_arg, table_arg)
-{}
-
-uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
-{
-  return 0;
-}
-
-int InformationCursor::open(const char *name, int, uint32_t)
-{
-  InformationShare *shareable= InformationShare::get(name);
-
-  if (! shareable)
-  {
-    return HA_ERR_OUT_OF_MEM;
-  }
-
-  thr_lock_data_init(&shareable->lock, &lock, NULL);
-
-  return 0;
-}
-
-int InformationCursor::close(void)
-{
-  InformationShare::free(share);
-
-  return 0;
-}
-
 int InformationEngine::doGetTableDefinition(Session &,
                                             const char *,
                                             const char *,
@@ -178,7 +143,9 @@ int InformationEngine::doGetTableDefinition(Session &,
 }
 
 
-void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names)
+void InformationEngine::doGetTableNames(CachedDirectory&, 
+                                        string &db, 
+                                        set<string> &set_of_names)
 {
   if (db.compare("information_schema"))
     return;
@@ -187,107 +154,18 @@ void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string
 }
 
 
-
-int InformationCursor::rnd_init(bool)
-{
-  TableList *tmp= table->pos_in_table_list;
-  plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
-  if (sch_table)
-  {
-    sch_table->fillTable(ha_session(),
-                         tmp);
-    iter= sch_table->getRows().begin();
-  }
-  return 0;
-}
-
-
-int InformationCursor::rnd_next(unsigned char *buf)
-{
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-  plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
-
-  if (iter != sch_table->getRows().end() &&
-      ! sch_table->getRows().empty())
-  {
-    (*iter)->copyRecordInto(buf);
-    ++iter;
-    return 0;
-  }
-
-  sch_table->clearRows();
-
-  return HA_ERR_END_OF_FILE;
-}
-
-
-int InformationCursor::rnd_pos(unsigned char *, unsigned char *)
-{
-  assert(1);
-
-  return 0;
-}
-
-
-void InformationCursor::position(const unsigned char *)
-{
-  assert(1);
-}
-
-
-int InformationCursor::info(uint32_t flag)
-{
-  memset(&stats, 0, sizeof(stats));
-  if (flag & HA_STATUS_AUTO)
-    stats.auto_increment_value= 1;
-  return(0);
-}
-
-
-THR_LOCK_DATA **InformationCursor::store_lock(Session *session,
-                                         THR_LOCK_DATA **to,
-                                         enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type= lock_type;
-  }
-  *to++= &lock;
-
-  return to;
-}
-
 static plugin::StorageEngine *information_engine= NULL;
 
 static int init(plugin::Registry &registry)
 {
-  information_engine= new InformationEngine(engine_name);
+  information_engine= new(std::nothrow) InformationEngine(engine_name);
+  if (! information_engine)
+  {
+    return 1;
+  }
+
   registry.add(information_engine);
   
-  InformationShare::start();
-
   return 0;
 }
 
@@ -295,8 +173,6 @@ static int finalize(plugin::Registry &registry)
 {
   registry.remove(information_engine);
   delete information_engine;
-
-  InformationShare::stop();
 
   return 0;
 }
