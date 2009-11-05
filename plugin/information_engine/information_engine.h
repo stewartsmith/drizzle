@@ -96,6 +96,14 @@ public:
   }
 
   void doGetTableNames(CachedDirectory&, std::string& db, std::set<std::string>& set_of_names);
+
+  int doGetTableDefinition(Session &session,
+                           const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
+
 };
 
 #endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H */

@@ -61,6 +61,123 @@ int InformationCursor::close(void)
   return 0;
 }
 
+int InformationEngine::doGetTableDefinition(Session &,
+                                            const char *,
+                                            const char *,
+                                            const char *table_name,
+                                            const bool,
+                                            message::Table *table_proto)
+{
+  if (! table_proto)
+  {
+    return EEXIST;
+  }
+
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(table_name);
+
+  if (! schema_table)
+  {
+    return ENOENT;
+  }
+
+  table_proto->set_name(table_name);
+  table_proto->set_type(message::Table::STANDARD);
+
+  message::Table::StorageEngine *protoengine= table_proto->mutable_engine();
+  protoengine->set_name(engine_name);
+
+  message::Table::TableOptions *table_options= table_proto->mutable_options();
+  table_options->set_collation_id(default_charset_info->number);
+  table_options->set_collation(default_charset_info->name);
+
+  const plugin::InfoSchemaTable::Columns &columns= schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+
+  while (iter != columns.end())
+  {
+    const plugin::ColumnInfo *column= *iter;
+    /* get the various proto variables we need */
+    message::Table::Field *proto_field= table_proto->add_field();
+    message::Table::Field::FieldOptions *field_options=
+      proto_field->mutable_options();
+    message::Table::Field::FieldConstraints *field_constraints=
+      proto_field->mutable_constraints();
+
+    proto_field->set_name(column->getName());
+    field_options->set_default_value("0");
+
+    if (column->getFlags() & MY_I_S_MAYBE_NULL)
+    {
+      field_options->set_default_null(true);
+      field_constraints->set_is_nullable(true);
+    }
+
+    if (column->getFlags() & MY_I_S_UNSIGNED)
+    {
+      field_constraints->set_is_unsigned(true);
+    }
+
+    switch(column->getType())
+    {
+    case DRIZZLE_TYPE_LONG:
+      proto_field->set_type(message::Table::Field::INTEGER);
+      field_options->set_length(MAX_INT_WIDTH);
+      break;
+    case DRIZZLE_TYPE_DOUBLE:
+      proto_field->set_type(message::Table::Field::DOUBLE);
+      break;
+    case DRIZZLE_TYPE_NULL:
+      assert(true);
+      break;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      proto_field->set_type(message::Table::Field::TIMESTAMP);
+      field_options->set_default_value("NOW()");
+      break;
+    case DRIZZLE_TYPE_LONGLONG:
+      proto_field->set_type(message::Table::Field::BIGINT);
+      field_options->set_length(MAX_BIGINT_WIDTH);
+      break;
+    case DRIZZLE_TYPE_DATETIME:
+      proto_field->set_type(message::Table::Field::DATETIME);
+      field_options->set_default_value("NOW()");
+      break;
+    case DRIZZLE_TYPE_DATE:
+      proto_field->set_type(message::Table::Field::DATE);
+      field_options->set_default_value("NOW()");
+      break;
+    case DRIZZLE_TYPE_VARCHAR:
+    {
+      message::Table::Field::StringFieldOptions *str_field_options=
+        proto_field->mutable_string_options();
+      proto_field->set_type(message::Table::Field::VARCHAR);
+      str_field_options->set_length(column->getLength());
+      field_options->set_length(column->getLength() * 4);
+      field_options->set_default_value("");
+      str_field_options->set_collation_id(default_charset_info->number);
+      str_field_options->set_collation(default_charset_info->name);
+      break;
+    }
+    case DRIZZLE_TYPE_NEWDECIMAL:
+    {
+      message::Table::Field::NumericFieldOptions *num_field_options=
+        proto_field->mutable_numeric_options();
+      proto_field->set_type(message::Table::Field::DECIMAL);
+      num_field_options->set_precision(column->getLength());
+      num_field_options->set_scale(column->getLength() % 10);
+      break;
+    }
+    default:
+      assert(true);
+      break;
+    }
+
+    ++iter;
+  }
+
+  return EEXIST;
+}
+
+
 void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names)
 {
   if (db.compare("information_schema"))
