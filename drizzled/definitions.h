@@ -454,7 +454,11 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
-#define DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
+enum start_transaction_option_t
+{
+  START_TRANS_NO_OPTIONS,
+  START_TRANS_OPT_WITH_CONS_SNAPSHOT
+};
 
 /* Flags for method is_fatal_error */
 #define HA_CHECK_DUP_KEY 1
