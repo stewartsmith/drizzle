@@ -28,7 +28,7 @@ pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 InformationShare *InformationShare::get(const char *table_name)
 {
-  InformationShare *share;
+  InformationShare *share= NULL;
   mapType::iterator iter;
   uint32_t length;
 

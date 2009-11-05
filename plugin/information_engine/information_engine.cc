@@ -30,7 +30,7 @@ static const string engine_name("INFORMATION_ENGINE");
 ** INFORMATION_ENGINE tables
 *****************************************************************************/
 
-InformationCursor::InformationCursor(drizzled::plugin::StorageEngine *engine_arg,
+InformationCursor::InformationCursor(plugin::StorageEngine *engine_arg,
                                      TableShare *table_arg) :
   Cursor(engine_arg, table_arg)
 {}
@@ -42,10 +42,12 @@ uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
 
 int InformationCursor::open(const char *name, int, uint32_t)
 {
-  InformationShare *shareable;
+  InformationShare *shareable= InformationShare::get(name);
 
-  if (! (shareable= InformationShare::get(name)))
+  if (! shareable)
+  {
     return HA_ERR_OUT_OF_MEM;
+  }
 
   thr_lock_data_init(&shareable->lock, &lock, NULL);
 
@@ -64,7 +66,7 @@ void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string
   if (db.compare("information_schema"))
     return;
 
-  drizzled::plugin::InfoSchemaTable::getTableNames(set_of_names);
+  plugin::InfoSchemaTable::getTableNames(set_of_names);
 }
 
 
@@ -160,9 +162,9 @@ THR_LOCK_DATA **InformationCursor::store_lock(Session *session,
   return to;
 }
 
-static drizzled::plugin::StorageEngine *information_engine= NULL;
+static plugin::StorageEngine *information_engine= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(plugin::Registry &registry)
 {
   information_engine= new InformationEngine(engine_name);
   registry.add(information_engine);
@@ -172,7 +174,7 @@ static int init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(plugin::Registry &registry)
 {
   registry.remove(information_engine);
   delete information_engine;
@@ -186,7 +188,7 @@ drizzle_declare_plugin(information_engine)
 {
   "INFORMATION_ENGINE",
   "1.0",
-  "Sun Microsystems ala Brian Aker",
+  "Sun Microsystems ala Brian Aker with some input from Padraig",
   "Engine which provides information schema tables",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
