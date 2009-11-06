@@ -959,7 +959,7 @@ public:
    */
   bool endTransaction(enum enum_mysql_completiontype completion);
   bool endActiveTransaction();
-  bool startTransaction();
+  bool startTransaction(start_transaction_option_t opt= START_TRANS_NO_OPTIONS);
 
   /**
    * Authenticates users, with error reporting.

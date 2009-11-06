@@ -54,7 +54,7 @@ class TransactionApplier : public Plugin
   atomic<bool> is_enabled;
 public:
   explicit TransactionApplier(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "TransactionApplier")
   {
     is_enabled= true;
   }

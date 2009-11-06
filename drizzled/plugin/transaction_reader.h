@@ -49,7 +49,8 @@ class TransactionReader : public Plugin
   TransactionReader(const TransactionReader &);
   TransactionReader& operator=(const TransactionReader &);
 public:
-  explicit TransactionReader(std::string name_arg) : Plugin(name_arg) {}
+  explicit TransactionReader(std::string name_arg)
+   : Plugin(name_arg, "TransactionReader") {}
   virtual ~TransactionReader() {}
   /**
    * Read and fill a Transaction message with the supplied

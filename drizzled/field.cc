@@ -54,37 +54,8 @@ template class List_iterator<CreateField>;
 static enum_field_types
 field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
 {
-  /* DRIZZLE_TYPE_TINY -> */
-  {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_TINY,
-    //DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_LONG,
-    //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_DOUBLE,
-    //DRIZZLE_TYPE_NULL
-    DRIZZLE_TYPE_TINY,
-    //DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_LONGLONG,
-    //DRIZZLE_TYPE_DATETIME
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_DATE
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
-    DRIZZLE_TYPE_NEWDECIMAL,
-    //DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  },
   /* DRIZZLE_TYPE_LONG -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_LONG,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_LONG,
     //DRIZZLE_TYPE_DOUBLE
@@ -110,8 +81,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_DOUBLE -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_DOUBLE,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_DOUBLE,
     //DRIZZLE_TYPE_DOUBLE
@@ -137,8 +106,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_NULL -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_TINY,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_LONG,
     //DRIZZLE_TYPE_DOUBLE
@@ -164,8 +131,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_TIMESTAMP -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DOUBLE
@@ -191,8 +156,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_LONGLONG -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_LONGLONG,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_LONGLONG,
     //DRIZZLE_TYPE_DOUBLE
@@ -217,8 +180,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_DATETIME -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DOUBLE
@@ -244,8 +205,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_DATE -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DOUBLE
@@ -271,8 +230,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_VARCHAR -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DOUBLE
@@ -298,8 +255,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_NEWDECIMAL -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_NEWDECIMAL,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_NEWDECIMAL,
     //DRIZZLE_TYPE_DOUBLE
@@ -325,8 +280,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_ENUM -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DOUBLE
@@ -352,8 +305,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
   /* DRIZZLE_TYPE_BLOB -> */
   {
-    //DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_LONG
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_DOUBLE
@@ -381,8 +332,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
 
 static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
 {
-  //DRIZZLE_TYPE_TINY
-  INT_RESULT,
   //DRIZZLE_TYPE_LONG
   INT_RESULT,
   //DRIZZLE_TYPE_DOUBLE
@@ -986,7 +935,6 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR: return (length + (length < 256 ? 1: 2));
-  case DRIZZLE_TYPE_TINY: return 1;
   case DRIZZLE_TYPE_DATE: return 3;
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_LONG: return 4;
@@ -1109,8 +1057,6 @@ Field *make_field(TableShare *share,
                                    decimals,
                                    false,
                                    false /* is_unsigned */);
-  case DRIZZLE_TYPE_TINY:
-    assert(0);
   case DRIZZLE_TYPE_LONG:
     return new (root) Field_long(ptr,
                                  field_length,

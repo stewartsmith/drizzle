@@ -19,6 +19,7 @@
 #include <utility>
 
 using namespace std;
+using namespace drizzled;
 
 typedef map<const char *, InformationShare* > mapType;
 static mapType open_tables;
@@ -44,6 +45,7 @@ InformationShare *InformationShare::get(const char *table_name)
   }
 
   share= new (nothrow) InformationShare(table_name);
+  share->setInfoSchemaTable(table_name);
 
   pthread_mutex_unlock(&share_mutex);
 
