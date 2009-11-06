@@ -52,7 +52,7 @@ public:
    * currently open.
    * @return the new counter value
    */
-  void incUseCount(void) 
+  uint32_t incUseCount(void) 
   { 
     return ++count; 
   }

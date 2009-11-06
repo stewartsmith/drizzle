@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_PLUGIN_INFORMATION_ENGINE_OPEN_TABLES_H
-#define DRIZZLE_PLUGIN_INFORMATION_ENGINE_OPEN_TABLES_H
+#ifndef PLUGIN_INFORMATION_ENGINE_OPEN_TABLES_H
+#define PLUGIN_INFORMATION_ENGINE_OPEN_TABLES_H
 
 #include "information_cursor.h"
 #include "information_share.h"
@@ -85,4 +85,4 @@ private:
   OpenTables(const OpenTables&);
 };
 
-#endif /* DRIZZLE_PLUGIN_INFORMATION_ENGINE_OPEN_TABLES_H */
+#endif /* PLUGIN_INFORMATION_ENGINE_OPEN_TABLES_H */

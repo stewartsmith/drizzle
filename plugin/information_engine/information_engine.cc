@@ -33,6 +33,11 @@ int InformationEngine::doGetTableDefinition(Session &,
                                             const bool,
                                             message::Table *table_proto)
 {
+  if (! table_name)
+  {
+    return ENOENT;
+  }
+
   if (! table_proto)
   {
     return EEXIST;
