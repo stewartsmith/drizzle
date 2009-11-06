@@ -43,26 +43,47 @@ using namespace std;
 using namespace drizzled;
 using namespace google;
 
+static const char *replace_with_spaces= "\n\r";
+
 static void printStatement(const message::Statement &statement)
 {
   vector<string> sql_strings;
 
   message::transformStatementToSql(statement, sql_strings, message::DRIZZLE);
 
-  vector<string>::iterator sql_string_iter= sql_strings.begin();
-  const std::string newline= "\n";
-  while (sql_string_iter != sql_strings.end())
+  for (vector<string>::iterator sql_string_iter= sql_strings.begin();
+       sql_string_iter != sql_strings.end();
+       ++sql_string_iter)
   {
     string &sql= *sql_string_iter;
+
     /* 
-     * Replace \n with spaces so that SQL statements 
+     * Replace \n and \r with spaces so that SQL statements 
      * are always on a single line 
      */
-    while (sql.find(newline) != std::string::npos)
-      sql.replace(sql.find(newline), 1, " ");
+    {
+      string::size_type found= sql.find_first_of(replace_with_spaces);
+      while (found != string::npos)
+      {
+        sql[found]= ' ';
+        found= sql.find_first_of(replace_with_spaces, found);
+      }
+    }
+
+    /*
+     * Embedded NUL characters are a pain in the ass.
+     */
+    {
+      string::size_type found= sql.find_first_of('\0');
+      while (found != string::npos)
+      {
+        sql[found]= '\\';
+        sql.insert(found + 1, 1, '0');
+        found= sql.find_first_of('\0', found);
+      }
+    }
 
     cout << sql << ';' << endl;
-    ++sql_string_iter;
   }
 }
 

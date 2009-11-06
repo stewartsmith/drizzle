@@ -376,7 +376,7 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
   while ((current_field= *table_fields++) != NULL) 
   {
     string_value= current_field->val_str(string_value);
-    record->add_insert_value(string_value->c_ptr());
+    record->add_insert_value(string_value->c_ptr(), string_value->length());
     string_value->free();
   }
 }
@@ -527,7 +527,7 @@ void ReplicationServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      record->add_after_value(string_value->c_ptr());
+      record->add_after_value(string_value->c_ptr(), string_value->length());
       string_value->free();
     }
 
@@ -539,7 +539,7 @@ void ReplicationServices::updateRecord(Session *in_session,
     if (current_field->isReadSet())
     {
       string_value= current_field->val_str(string_value);
-      record->add_key_value(string_value->c_ptr());
+      record->add_key_value(string_value->c_ptr(), string_value->length());
       /**
        * @TODO Store optional old record value in the before data member
        */
@@ -637,7 +637,7 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
     if (in_table->s->primary_key == current_field->field_index)
     {
       string_value= current_field->val_str(string_value);
-      record->add_key_value(string_value->c_ptr());
+      record->add_key_value(string_value->c_ptr(), string_value->length());
       /**
        * @TODO Store optional old record value in the before data member
        */
@@ -730,6 +730,10 @@ static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum e
       return message::Table::Field::TIMESTAMP;
     case DRIZZLE_TYPE_VARCHAR:
       return message::Table::Field::VARCHAR;
+    case DRIZZLE_TYPE_BLOB:
+      return message::Table::Field::BLOB;
+    case DRIZZLE_TYPE_ENUM:
+      return message::Table::Field::ENUM;
     default:
       return message::Table::Field::VARCHAR;
   }
