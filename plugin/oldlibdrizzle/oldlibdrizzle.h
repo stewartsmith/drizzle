@@ -28,16 +28,12 @@
 class ListenOldLibdrizzle: public drizzled::plugin::ListenTcp
 {
 private:
-  bool mysql;
+  bool using_mysql41_protocol;
 
 public:
-  ListenOldLibdrizzle(std::string name_arg):
+  ListenOldLibdrizzle(std::string name_arg, bool using_mysql41_protocol_arg):
    drizzled::plugin::ListenTcp(name_arg),
-   mysql(false)
-  { }
-  ListenOldLibdrizzle(std::string name_arg, bool mysql_arg):
-   drizzled::plugin::ListenTcp(name_arg),
-   mysql(mysql_arg)
+   using_mysql41_protocol(using_mysql41_protocol_arg)
   { }
   virtual const char* getHost(void) const;
   virtual in_port_t getPort(void) const;
@@ -50,14 +46,14 @@ private:
   NET net;
   String packet;
   uint32_t client_capabilities;
-  bool mysql;
+  bool using_mysql41_protocol;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
 
 public:
-  ClientOldLibdrizzle(int fd, bool mysql_arg);
+  ClientOldLibdrizzle(int fd, bool using_mysql41_protocol_arg);
   virtual ~ClientOldLibdrizzle();
 
   virtual int getFileDescriptor(void);

@@ -55,7 +55,7 @@ in_port_t ListenOldLibdrizzle::getPort(void) const
   struct servent *serv_ptr;
   char *env;
 
-  if (mysql)
+  if (using_mysql41_protocol)
     return (in_port_t) mysql_port;
 
   if (port == 0)
@@ -84,11 +84,11 @@ plugin::Client *ListenOldLibdrizzle::getClient(int fd)
   if (new_fd == -1)
     return NULL;
 
-  return new (nothrow) ClientOldLibdrizzle(new_fd, mysql);
+  return new (nothrow) ClientOldLibdrizzle(new_fd, using_mysql41_protocol);
 }
 
-ClientOldLibdrizzle::ClientOldLibdrizzle(int fd, bool mysql_arg):
-  mysql(mysql_arg)
+ClientOldLibdrizzle::ClientOldLibdrizzle(int fd, bool using_mysql41_protocol_arg):
+  using_mysql41_protocol(using_mysql41_protocol_arg)
 {
   net.vio= 0;
 
@@ -226,7 +226,7 @@ bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
     (*l_packet)[0]= (unsigned char) COM_SLEEP;
     *packet_length= 1;
   }
-  else if (mysql)
+  else if (using_mysql41_protocol)
   {
     /* Map from MySQL commands to Drizzle commands. */
     switch ((int)(*l_packet)[0])
@@ -474,7 +474,7 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
 
-    if (mysql)
+    if (using_mysql41_protocol)
     {
       /* Switch to MySQL field numbering. */
       switch (field.type)
@@ -655,7 +655,7 @@ bool ClientOldLibdrizzle::checkConnection(void)
 
     server_capabilites= CLIENT_BASIC_FLAGS;
 
-    if (mysql)
+    if (using_mysql41_protocol)
       server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
 
 #ifdef HAVE_COMPRESS
@@ -816,7 +816,7 @@ static ListenOldLibdrizzle *listen_obj_mysql= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  listen_obj= new ListenOldLibdrizzle("oldlibdrizzle");
+  listen_obj= new ListenOldLibdrizzle("oldlibdrizzle", false);
   listen_obj_mysql= new ListenOldLibdrizzle("oldlibdrizzle_mysql", true);
   registry.add(listen_obj); 
   registry.add(listen_obj_mysql); 
