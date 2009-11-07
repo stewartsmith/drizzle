@@ -2449,8 +2449,11 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--pid-file=%s", $prefix,
 	      $mysqld->{'path_pid'});
 
-  mtr_add_arg($args, "%s--port=%d", $prefix,
+  mtr_add_arg($args, "%s--oldlibdrizzle-port=%d", $prefix,
                 $mysqld->{'port'});
+
+  mtr_add_arg($args, "%s--oldlibdrizzle-mysql-port=%d", $prefix,
+                $mysqld->{'port'} + 50);
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});

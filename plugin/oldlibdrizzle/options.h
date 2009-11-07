@@ -87,7 +87,7 @@ struct st_drizzleclient_options {
 #define CLIENT_COMPRESS         32      /* Can use compression protocol */
 #define CLIENT_ODBC             64      /* Odbc client */
 #define CLIENT_IGNORE_SPACE     256     /* Ignore spaces before '(' */
-#define UNUSED_CLIENT_PROTOCOL_41       512     /* New 4.1 protocol */
+#define CLIENT_PROTOCOL_MYSQL41 512     /* New 4.1 protocol */
 #define CLIENT_SSL              2048    /* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
 #define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */

@@ -35,9 +35,9 @@ using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
-extern uint32_t drizzled_tcp_port;
-
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
+static uint32_t port;
+static uint32_t mysql_port;
 static uint32_t connect_timeout;
 static uint32_t read_timeout;
 static uint32_t write_timeout;
@@ -52,7 +52,29 @@ const char* ListenOldLibdrizzle::getHost(void) const
 
 in_port_t ListenOldLibdrizzle::getPort(void) const
 {
-  return (in_port_t) drizzled_tcp_port;
+  struct servent *serv_ptr;
+  char *env;
+
+  if (mysql)
+    return (in_port_t) mysql_port;
+
+  if (port == 0)
+  {
+    port= DRIZZLE_TCP_PORT;
+
+    if (DRIZZLE_TCP_PORT_DEFAULT == 0)
+    {
+      if ((serv_ptr= getservbyname("drizzle", "tcp")))
+        port= ntohs((u_short) serv_ptr->s_port);
+    }
+
+    if ((env = getenv("DRIZZLE_TCP_PORT")))
+      port= (uint32_t) atoi(env);
+
+    assert(port != 0);
+  }
+
+  return (in_port_t) port;
 }
 
 plugin::Client *ListenOldLibdrizzle::getClient(int fd)
@@ -62,10 +84,11 @@ plugin::Client *ListenOldLibdrizzle::getClient(int fd)
   if (new_fd == -1)
     return NULL;
 
-  return new (nothrow) ClientOldLibdrizzle(new_fd);
+  return new (nothrow) ClientOldLibdrizzle(new_fd, mysql);
 }
 
-ClientOldLibdrizzle::ClientOldLibdrizzle(int fd)
+ClientOldLibdrizzle::ClientOldLibdrizzle(int fd, bool mysql_arg):
+  mysql(mysql_arg)
 {
   net.vio= 0;
 
@@ -203,6 +226,34 @@ bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
     (*l_packet)[0]= (unsigned char) COM_SLEEP;
     *packet_length= 1;
   }
+  else if (mysql)
+  {
+    /* Map from MySQL commands to Drizzle commands. */
+    switch ((int)(*l_packet)[0])
+    {
+    case 0: /* SLEEP */
+    case 1: /* QUIT */
+    case 2: /* INIT_DB */
+    case 3: /* QUERY */
+      break;
+
+    case 8: /* SHUTDOWN */
+      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      break;
+
+    case 14: /* PING */
+      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      break;
+
+
+    default:
+      /* Just drop connection for MySQL commands we don't support. */
+      (*l_packet)[0]= (unsigned char) COM_QUIT;
+      *packet_length= 1;
+      break;
+    }
+  }
+
   /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
   (*l_packet)[*packet_length]= '\0';                  /* safety */
 
@@ -422,8 +473,63 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
     /* No conversion */
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
-    /* Add one to compensate for tinyint removal from enum. */
-    pos[6]= field.type + 1;
+
+    if (mysql)
+    {
+      /* Switch to MySQL field numbering. */
+      switch (field.type)
+      {
+      case DRIZZLE_TYPE_LONG:
+        pos[6]= 3;
+        break;
+
+      case DRIZZLE_TYPE_DOUBLE:
+        pos[6]= 5;
+        break;
+
+      case DRIZZLE_TYPE_NULL:
+        pos[6]= 6;
+        break;
+
+      case DRIZZLE_TYPE_TIMESTAMP:
+        pos[6]= 7;
+        break;
+
+      case DRIZZLE_TYPE_LONGLONG:
+        pos[6]= 8;
+        break;
+
+      case DRIZZLE_TYPE_DATETIME:
+        pos[6]= 12;
+        break;
+
+      case DRIZZLE_TYPE_DATE:
+        pos[6]= 14;
+        break;
+
+      case DRIZZLE_TYPE_VARCHAR:
+        pos[6]= 15;
+        break;
+
+      case DRIZZLE_TYPE_NEWDECIMAL:
+        pos[6]= (char)246;
+        break;
+
+      case DRIZZLE_TYPE_ENUM:
+        pos[6]= (char)247;
+        break;
+
+      case DRIZZLE_TYPE_BLOB:
+        pos[6]= (char)252;
+        break;
+      }
+    }
+    else
+    {
+      /* Add one to compensate for tinyint removal from enum. */
+      pos[6]= field.type + 1;
+    }
+
     int2store(pos+7,field.flags);
     pos[9]= (char) field.decimals;
     pos[10]= 0;                // For the future
@@ -530,9 +636,9 @@ bool ClientOldLibdrizzle::checkConnection(void)
   // TCP/IP connection
   {
     char ip[NI_MAXHOST];
-    uint16_t port;
+    uint16_t peer_port;
 
-    if (drizzleclient_net_peer_addr(&net, ip, &port, NI_MAXHOST))
+    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
       return false;
@@ -548,6 +654,9 @@ bool ClientOldLibdrizzle::checkConnection(void)
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
 
     server_capabilites= CLIENT_BASIC_FLAGS;
+
+    if (mysql)
+      server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
 
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
@@ -703,21 +812,35 @@ void ClientOldLibdrizzle::writeEOFPacket(uint32_t server_status,
 }
 
 static ListenOldLibdrizzle *listen_obj= NULL;
+static ListenOldLibdrizzle *listen_obj_mysql= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
   listen_obj= new ListenOldLibdrizzle("oldlibdrizzle");
+  listen_obj_mysql= new ListenOldLibdrizzle("oldlibdrizzle_mysql", true);
   registry.add(listen_obj); 
+  registry.add(listen_obj_mysql); 
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(listen_obj);
+  registry.remove(listen_obj_mysql);
   delete listen_obj;
+  delete listen_obj_mysql;
   return 0;
 }
 
+static DRIZZLE_SYSVAR_UINT(port, port, PLUGIN_VAR_RQCMDARG,
+                           N_("Port number to use for connection or 0 for default to, in order of "
+                              "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
+                              STRINGIFY_ARG(DRIZZLE_TCP_PORT) ")."),
+                           NULL, NULL, 0, 0, 65535, 0);
+static DRIZZLE_SYSVAR_UINT(mysql_port, mysql_port, PLUGIN_VAR_RQCMDARG,
+                           N_("Port number to use for connection or 0 for default to with MySQL "
+                              "protocol."),
+                           NULL, NULL, 3306, 0, 65535, 0);
 static DRIZZLE_SYSVAR_UINT(connect_timeout, connect_timeout,
                            PLUGIN_VAR_RQCMDARG, N_("Connect Timeout."),
                            NULL, NULL, 10, 1, 300, 0);
@@ -734,6 +857,8 @@ static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
                           N_("Address to bind to."), NULL, NULL, NULL);
 
 static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(port),
+  DRIZZLE_SYSVAR(mysql_port),
   DRIZZLE_SYSVAR(connect_timeout),
   DRIZZLE_SYSVAR(read_timeout),
   DRIZZLE_SYSVAR(write_timeout),
