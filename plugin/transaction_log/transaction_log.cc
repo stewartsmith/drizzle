@@ -132,15 +132,15 @@ TransactionLog::TransactionLog(string name_arg,
   }
 
   /* For convenience, grab the log file name from the path */
+  if (log_file_path.find_first_of('/') != string::npos)
   {
+    /* Strip to last / */
     string tmp;
-    if (log_file_path.find_first_of('/') != string::npos)
-    {
-      /* Strip to last / */
-      tmp= log_file_path.substr(log_file_path.find_last_of('/') + 1);
-    }
+    tmp= log_file_path.substr(log_file_path.find_last_of('/') + 1);
     log_file_name.assign(tmp);
   }
+  else
+    log_file_name.assign(log_file_path);
 
   /* 
    * The offset of the next write is the current position of the log
