@@ -68,14 +68,15 @@ public:
     WRITING
   };
 private:
-  int log_file; /**< Handle for our log file */
-  enum Status state; /**< The state the log is in */
+  int log_file; ///< Handle for our log file
+  enum Status state; ///< The state the log is in
   drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
-  const char *log_file_path; /**< Full path to the log file */
-  drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
+  const std::string log_file_path; ///< Full path to the log file
+  std::string log_file_name; ///< Name of the log file
+  drizzled::atomic<off_t> log_offset; ///< Offset in log file where log will write next command
 public:
   TransactionLog(std::string name_arg,
-                 const char *in_log_file_path,
+                 const std::string &in_log_file_path,
                  bool in_do_checksum);
 
   /** Destructor */
@@ -97,6 +98,29 @@ public:
    * @param Transaction message to be replicated
    */
   void apply(const drizzled::message::Transaction &to_apply);
+
+  /**
+   * Returns the current offset into the log
+   */
+  inline off_t getLogOffset()
+  {
+    return log_offset;
+  }
+
+  /**
+   * Returns the filename of the transaction log
+   */
+  const std::string &getLogFilename();
+
+  /**
+   * Returns the filename of the transaction log
+   */
+  const std::string &getLogFilepath();
+
+  /**
+   * Returns the file descriptor of the transaction log
+   */
+  int getLogFileDescriptor();
   
   /**
    * Returns the state that the log is in

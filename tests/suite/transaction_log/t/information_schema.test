@@ -1,0 +1,16 @@
+#
+# Tests the INFORMATION_SCHEMA views which come with the transaction
+# log
+#
+
+# Populate log with some records...
+--source suite/transaction_log/t/insert.inc
+
+# Query the INFORMATION_SCHEMA views and verify
+# that the information contained in them matches
+# the transaction log.
+
+SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG;
+
+# Truncate the log file to reset for the next test
+--source suite/transaction_log/t/truncate_log.inc
