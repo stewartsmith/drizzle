@@ -344,74 +344,74 @@ static bool initTables()
 {
 
   char_set_table= new(nothrow) plugin::InfoSchemaTable("CHARACTER_SETS",
-                                                    char_set_columns,
-                                                    -1, -1, false, false, 0,
-                                                    char_set_methods);
+                                                       char_set_columns,
+                                                       -1, -1, false, false, 0,
+                                                       char_set_methods);
   if (char_set_table == NULL)
   {
     return true;
   }
 
   collation_table= new(nothrow) plugin::InfoSchemaTable("COLLATIONS",
-                                                     collation_columns,
-                                                     -1, -1, false, false, 0,
-                                                     collation_methods);
+                                                        collation_columns,
+                                                        -1, -1, false, false, 0,
+                                                        collation_methods);
   if (collation_table == NULL)
   {
     return true;
   }
 
   coll_char_set_table= new(nothrow) plugin::InfoSchemaTable("COLLATION_CHARACTER_SET_APPLICABILITY",
-                                                         coll_char_columns,
-                                                         -1, -1, false, false, 0,
-                                                         coll_char_methods);
+                                                            coll_char_columns,
+                                                            -1, -1, false, false, 0,
+                                                            coll_char_methods);
   if (coll_char_set_table == NULL)
   {
     return true;
   }
 
   columns_table= new(nothrow) plugin::InfoSchemaTable("COLUMNS",
-                                                   col_columns,
-                                                   1, 2, false, true,
-                                                   OPTIMIZE_I_S_TABLE,
-                                                   columns_methods);
+                                                      col_columns,
+                                                      1, 2, false, true,
+                                                      OPTIMIZE_I_S_TABLE,
+                                                      columns_methods);
   if (columns_table == NULL)
   {
     return true;
   }
 
   key_col_usage_table= new(nothrow) plugin::InfoSchemaTable("KEY_COLUMN_USAGE",
-                                                         key_col_usage_columns,
-                                                         4, 5, false, true,
-                                                         OPEN_TABLE_ONLY,
-                                                         key_col_usage_methods);
+                                                            key_col_usage_columns,
+                                                            4, 5, false, true,
+                                                            OPEN_TABLE_ONLY,
+                                                            key_col_usage_methods);
   if (key_col_usage_table == NULL)
   {
     return true;
   }
 
   global_stat_table= new(nothrow) plugin::InfoSchemaTable("GLOBAL_STATUS",
-                                                       status_columns,
-                                                       -1, -1, false, false,
-                                                       0, status_methods);
+                                                          status_columns,
+                                                          -1, -1, false, false,
+                                                          0, status_methods);
   if (global_stat_table == NULL)
   {
     return true;
   }
 
   global_var_table= new(nothrow) plugin::InfoSchemaTable("GLOBAL_VARIABLES",
-                                                      status_columns,
-                                                      -1, -1, false, false,
-                                                      0, variables_methods);
+                                                         status_columns,
+                                                         -1, -1, false, false,
+                                                         0, variables_methods);
   if (global_var_table == NULL)
   {
     return true;
   }
-  
+
   open_tab_table= new(nothrow) plugin::InfoSchemaTable("OPEN_TABLES",
-                                                    open_tab_columns,
-                                                    -1, -1, true, false, 0,
-                                                    open_tab_methods);
+                                                       open_tab_columns,
+                                                       -1, -1, true, false, 0,
+                                                       open_tab_methods);
   if (open_tab_table == NULL)
   {
     return true;
@@ -436,103 +436,103 @@ static bool initTables()
   }
 
   processlist_table= new(nothrow) plugin::InfoSchemaTable("PROCESSLIST",
-                                                       processlist_columns,
-                                                       -1, -1, false, false, 0,
-                                                       processlist_methods);
+                                                          processlist_columns,
+                                                          -1, -1, false, false, 0,
+                                                          processlist_methods);
   if (processlist_table == NULL)
   {
     return true;
   }
 
   ref_constraint_table= new(nothrow) plugin::InfoSchemaTable("REFERENTIAL_CONSTRAINTS",
-                                                          ref_constraint_columns,
-                                                          1, 9, false, true,
-                                                          OPEN_TABLE_ONLY,
-                                                          ref_constraint_methods);
+                                                             ref_constraint_columns,
+                                                             1, 9, false, true,
+                                                             OPEN_TABLE_ONLY,
+                                                             ref_constraint_methods);
   if (ref_constraint_table == NULL)
   {
     return true;
   }
 
   schemata_table= new(nothrow) plugin::InfoSchemaTable("SCHEMATA",
-                                                    schemata_columns,
-                                                    1, -1, false, false, 0,
-                                                    schemata_methods);
+                                                       schemata_columns,
+                                                       1, -1, false, false, 0,
+                                                       schemata_methods);
   if (schemata_table == NULL)
   {
     return true;
   }
 
   sess_stat_table= new(nothrow) plugin::InfoSchemaTable("SESSION_STATUS",
-                                                     status_columns,
-                                                     -1, -1, false, false,
-                                                     0, status_methods);
+                                                        status_columns,
+                                                        -1, -1, false, false,
+                                                        0, status_methods);
   if (sess_stat_table == NULL)
   {
     return true;
   }
 
   sess_var_table= new(nothrow) plugin::InfoSchemaTable("SESSION_VARIABLES",
-                                                    status_columns,
-                                                    -1, -1, false, false, 0,
-                                                    variables_methods);
+                                                       status_columns,
+                                                       -1, -1, false, false, 0,
+                                                       variables_methods);
   if (sess_var_table == NULL)
   {
     return true;
   }
 
   stats_table= new(nothrow) plugin::InfoSchemaTable("STATISTICS",
-                                                 stats_columns,
-                                                 1, 2, false, true,
-                                                 OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
-                                                 stats_methods);
+                                                    stats_columns,
+                                                    1, 2, false, true,
+                                                    OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
+                                                    stats_methods);
   if (stats_table == NULL)
   {
     return true;
   }
 
   status_table= new(nothrow) plugin::InfoSchemaTable("STATUS",
-                                                  status_columns,
-                                                  -1, -1, true, false, 0,
-                                                  status_methods);
+                                                     status_columns,
+                                                     -1, -1, true, false, 0,
+                                                     status_methods);
   if (status_table == NULL)
   {
     return true;
   }
 
   tab_constraints_table= new(nothrow) plugin::InfoSchemaTable("TABLE_CONSTRAINTS",
-                                                           tab_constraints_columns,
-                                                           3, 4, false, true,
-                                                           OPEN_TABLE_ONLY,
-                                                           tab_constraints_methods);
+                                                              tab_constraints_columns,
+                                                              3, 4, false, true,
+                                                              OPEN_TABLE_ONLY,
+                                                              tab_constraints_methods);
   if (tab_constraints_table == NULL)
   {
     return true;
   }
 
   tables_table= new(nothrow) plugin::InfoSchemaTable("TABLES",
-                                                  tables_columns,
-                                                  1, 2, false, true,
-                                                  OPTIMIZE_I_S_TABLE,
-                                                  tables_methods);
+                                                     tables_columns,
+                                                     1, 2, false, true,
+                                                     OPTIMIZE_I_S_TABLE,
+                                                     tables_methods);
   if (tables_table == NULL)
   {
     return true;
   }
 
   tab_names_table= new(nothrow) plugin::InfoSchemaTable("TABLE_NAMES",
-                                                     tab_names_columns,
-                                                     1, 2, true, true, 0,
-                                                     tab_names_methods);
+                                                        tab_names_columns,
+                                                        1, 2, true, true, 0,
+                                                        tab_names_methods);
   if (tab_names_table == NULL)
   {
     return true;
   }
 
   var_table= new(nothrow) plugin::InfoSchemaTable("VARIABLES",
-                                               status_columns,
-                                               -1, -1, true, false, 0,
-                                               variables_methods);
+                                                  status_columns,
+                                                  -1, -1, true, false, 0,
+                                                  variables_methods);
   if (var_table == NULL)
   {
     return true;
@@ -555,6 +555,7 @@ static void cleanupTables()
   delete global_var_table;
   delete open_tab_table;
   delete plugins_table;
+  delete modules_table;
   delete processlist_table;
   delete ref_constraint_table;
   delete schemata_table;

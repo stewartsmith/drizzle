@@ -23,6 +23,7 @@
 
 #include <string>
 #include <set>
+#include <algorithm>
 
 namespace drizzled
 {
@@ -196,13 +197,72 @@ public:
   virtual Table *createSchemaTable(Session *session,
                                    TableList *table_list) const;
   virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
   virtual int processTable(Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
                            LEX_STRING *table_name) const;
   virtual int oldFormat(Session *session, 
                         InfoSchemaTable *schema_table) const;
+};
+
+/**
+ * @class InfoSchemaRecord
+ * @brief represents a row in an I_S table
+ */
+class InfoSchemaRecord
+{
+public:
+  InfoSchemaRecord()
+    :
+      record(NULL),
+      rec_len(0)
+  {}
+
+  InfoSchemaRecord(unsigned char *buf,
+                   size_t in_len)
+    :
+      record(buf),
+      rec_len(in_len)
+  {}
+
+  InfoSchemaRecord(const InfoSchemaRecord &rhs)
+    :
+      record(NULL),
+      rec_len(rhs.rec_len)
+  {
+    record= new(std::nothrow) unsigned char[rec_len];
+    memcpy(record, rhs.record, rec_len);
+  }
+
+  ~InfoSchemaRecord()
+  {
+    if (record)
+    {
+      delete [] record;
+    }
+  }
+
+  void copyRecordInto(unsigned char *buf)
+  {
+    memcpy(buf, record, rec_len);
+  }
+
+private:
+
+  unsigned char *record;
+
+  size_t rec_len;
+
+};
+
+class DeleteRows
+{
+public:
+  template<typename T>
+  inline void operator()(const T *ptr) const
+  {
+    delete ptr;
+  }
 };
 
 /**
@@ -218,6 +278,7 @@ class InfoSchemaTable : public Plugin
 public:
 
   typedef std::vector<const ColumnInfo *> Columns;
+  typedef std::vector<InfoSchemaRecord *> Rows;
   
   InfoSchemaTable(const std::string& tab_name,
                   Columns& in_column_info,
@@ -235,6 +296,7 @@ public:
       second_column_index(idx_col2),
       requested_object(req_object),
       column_info(in_column_info),
+      rows(),
       i_s_methods(in_methods)
   {}
 
@@ -247,11 +309,17 @@ public:
       second_column_index(0),
       requested_object(0),
       column_info(),
+      rows(),
       i_s_methods(NULL)
   {}
 
   virtual ~InfoSchemaTable()
-  {}
+  {
+    std::for_each(rows.begin(),
+                  rows.end(),
+                  DeleteRows());
+    rows.clear();
+  }
 
   /**
    * Set the methods available on this I_S table.
@@ -282,12 +350,11 @@ public:
    *
    * @param[in] session a session handler
    * @param[in] tables I_S table
-   * @param[in] cond 'WHERE' condition
    * @return 0 on success; 1 on error
    */
-  int fillTable(Session *session, TableList *tables, COND *cond)
+  int fillTable(Session *session, TableList *tables)
   {
-    int retval= i_s_methods->fillTable(session, tables, cond);
+    int retval= i_s_methods->fillTable(session, tables);
     return retval;
   }
 
@@ -416,6 +483,25 @@ public:
     return column_info;
   }
 
+  Rows &getRows()
+  {
+    return rows;
+  }
+
+  void clearRows()
+  {
+    std::for_each(rows.begin(),
+                  rows.end(),
+                  DeleteRows());
+    rows.clear();
+  }
+
+  void addRow(unsigned char *buf, size_t len)
+  {
+    InfoSchemaRecord *record= new InfoSchemaRecord(buf, len);
+    rows.push_back(record);
+  }
+
   /**
    * @param[in] index the index of this column
    * @return the name for the column at the given index
@@ -469,6 +555,8 @@ private:
    * The columns for this I_S table.
    */
   Columns column_info;
+
+  Rows rows;
 
   /**
    * Contains the methods available on this I_S table.

@@ -830,9 +830,6 @@ public:
   };
   enum enum_var_type option_type;
 
-  /* Options used in START TRANSACTION statement */
-  uint32_t start_transaction_opt;
-
   int nest_level;
   uint8_t describe;
   /*
