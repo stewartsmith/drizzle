@@ -37,7 +37,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
                     bool drop_temporary);
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary, bool log_query);
-bool quick_rm_table(drizzled::plugin::StorageEngine *, const char *db,
+bool quick_rm_table(Session& session, const char *db,
                     const char *table_name, bool is_tmp);
 void close_cached_table(Session *session, Table *table);
 
@@ -87,6 +87,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
 */
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               drizzled::message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,

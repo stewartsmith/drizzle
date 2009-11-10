@@ -340,9 +340,9 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
   string built_query;
 
   if (if_exists)
-    built_query.append("DROP Table IF EXISTS ");
+    built_query.append("DROP TABLE IF EXISTS ");
   else
-    built_query.append("DROP Table ");
+    built_query.append("DROP TABLE ");
 
   built_query.append("`");
   if (session->db == NULL || strcmp(db_name ,session->db) != 0)
@@ -524,7 +524,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     if (drop_temporary ||
         ((table_type == NULL
-          && (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST))))
+          && (plugin::StorageEngine::getTableDefinition(*session, 
+                                                        path, 
+                                                        db, 
+                                                        table->table_name, 
+                                                        table->internal_tmp_table) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -536,7 +540,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     else
     {
-      error= plugin::StorageEngine::deleteTable(session, path, db,
+      error= plugin::StorageEngine::dropTable(*session, path, db,
                                                 table->table_name,
                                                 ! dont_log_query);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
@@ -605,7 +609,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(plugin::StorageEngine *, const char *db,
+bool quick_rm_table(Session& session, const char *db,
                     const char *table_name, bool is_tmp)
 {
   char path[FN_REFLEN];
@@ -613,8 +617,8 @@ bool quick_rm_table(plugin::StorageEngine *, const char *db,
 
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
 
-  return (plugin::StorageEngine::deleteTable(current_session, path, db,
-                                             table_name, 0)
+  return (plugin::StorageEngine::dropTable(session, path, db,
+                                           table_name, 0)
           || error);
 }
 
@@ -828,6 +832,7 @@ int prepare_create_field(CreateField *sql_field,
 
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
@@ -1245,7 +1250,7 @@ int mysql_prepare_create_table(Session *session,
     */
     key_info->block_size= (key->key_create_info.block_size ?
                            key->key_create_info.block_size :
-                           create_info->key_block_size);
+                           create_proto->options().key_block_size());
 
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
@@ -1620,7 +1625,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   set_table_default_charset(create_info, (char*) db);
 
-  if (mysql_prepare_create_table(session, create_info, alter_info,
+  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, file,
                                  &key_info_buffer, &key_count,
@@ -1665,7 +1670,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (plugin::StorageEngine::getTableProto(path, NULL)==EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session, path, db, table_name, internal_tmp_table)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1715,7 +1720,7 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             db, table_name, false);
 
-    int retcode= plugin::StorageEngine::getTableProto(table_path, NULL);
+    int retcode= plugin::StorageEngine::getTableDefinition(*session, table_path, db, table_name, false);
     switch (retcode)
     {
       case ENOENT:
@@ -1922,7 +1927,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
   build_table_filename(to, sizeof(to), new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
-  if (!(error=base->renameTable(session, from_base, to_base)))
+  if (!(error= base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
        && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
@@ -2415,7 +2420,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (plugin::StorageEngine::getTableProto(dst_path, NULL) == EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session, dst_path, db, table_name, false) == EEXIST)
       goto table_exists;
   }
 
@@ -2448,7 +2453,12 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     }
     else
     {
-      protoerr= plugin::StorageEngine::getTableProto(src_path, &src_proto);
+      protoerr= plugin::StorageEngine::getTableDefinition(*session,
+                                                          src_path,
+                                                          db,
+                                                          table_name,
+                                                          false,
+                                                          &src_proto);
     }
 
     message::Table new_proto(src_proto);
@@ -2468,7 +2478,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr == EEXIST)
     {
-      plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
+      plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
                                                                        new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
@@ -2492,8 +2502,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       creation, instead create the table directly (for both normal
       and temporary tables).
     */
-    err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
-                                            true, &new_proto);
+    err= plugin::StorageEngine::createTable(*session, dst_path, db, table_name, *create_info, 
+                                            true, new_proto);
   }
   pthread_mutex_unlock(&LOCK_open);
 
@@ -2507,7 +2517,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else if (err)
   {
-    (void) quick_rm_table(create_info->db_type, db,
+    (void) quick_rm_table(*session, db,
 			  table_name, false);
     goto err;
   }

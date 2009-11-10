@@ -26,7 +26,7 @@ namespace drizzled {
 int drizzle_write_proto_file(const std::string file_name,
                              message::Table *table_proto);
 
-int parse_table_proto(Session *session,
+int parse_table_proto(Session& session,
                       message::Table &table,
                       TableShare *share);
 

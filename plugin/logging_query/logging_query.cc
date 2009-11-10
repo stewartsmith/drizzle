@@ -412,7 +412,7 @@ static struct st_mysql_sys_var* logging_query_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(logging_query)
+drizzle_declare_plugin
 {
   "logging_query",
   "0.2",

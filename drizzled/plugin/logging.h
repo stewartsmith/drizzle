@@ -36,7 +36,7 @@ class Logging : public Plugin
   Logging& operator=(const Logging &);
 public:
   explicit Logging(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "Logging")
   {}
   virtual ~Logging() {}
 

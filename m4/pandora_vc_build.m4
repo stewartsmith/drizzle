@@ -84,9 +84,9 @@ AC_DEFUN([PANDORA_VC_VERSION],[
   AS_IF([test "${ac_cv_building_from_bzr}" = "yes"],[
 dnl  echo "Grabbing changelog and version information from bzr"
 dnl  bzr log --short > ChangeLog || touch ChangeLog
-    BZR_REVNO=`bzr revno`
-    AS_IF([test "x$BZR_REVNO" != "${PANDORA_VC_REVNO}"],[
-      PANDORA_VC_REVNO="${BZR_REVNO}"
+    PANDORA_BZR_REVNO=`bzr revno`
+    AS_IF([test "x$PANDORA_BZR_REVNO" != "${PANDORA_VC_REVNO}"],[
+      PANDORA_VC_REVNO="${PANDORA_BZR_REVNO}"
       PANDORA_VC_REVID=`bzr log -r-1 --show-ids | grep revision-id | awk '{print $[]2}' | head -1`
       PANDORA_VC_BRANCH=`bzr nick`
       AS_IF([test "x${PANDORA_VC_BRANCH}" != "${PACKAGE}"],[
@@ -96,7 +96,8 @@ dnl  bzr log --short > ChangeLog || touch ChangeLog
       ])
     ])
   ])
-  cat > "${srcdir}/config/bzr_revinfo" <<EOF
+  AS_IF([! test -d config],[mkdir -p config])
+  cat > "config/bzr_revinfo" <<EOF
 PANDORA_VC_REVNO=${PANDORA_VC_REVNO}
 PANDORA_VC_REVID=${PANDORA_VC_REVID}
 PANDORA_VC_BRANCH=${PANDORA_VC_BRANCH}
@@ -109,6 +110,8 @@ EOF
   PANDORA_RELEASE_ID="${PANDORA_RELEASE_NODOTS_DATE}${PANDORA_VC_REVNO}"
 
   VERSION="${PANDORA_RELEASE_VERSION}"
+  AC_DEFINE_UNQUOTED([PANDORA_RELEASE_VERSION],["${PANDORA_RELEASE_VERSION}"],
+                     [The real version of the software])
   AC_SUBST(PANDORA_VC_REVNO)
   AC_SUBST(PANDORA_VC_REVID)
   AC_SUBST(PANDORA_VC_BRANCH)

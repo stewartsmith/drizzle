@@ -37,6 +37,7 @@
 #include <drizzled/xid.h>
 
 #include <netdb.h>
+#include <map>
 #include <string>
 #include <bitset>
 
@@ -48,6 +49,11 @@ namespace plugin
 {
 class Client;
 class Scheduler;
+}
+namespace message
+{
+class Transaction;
+class Statement;
 }
 }
 
@@ -63,6 +69,14 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
+
+/**
+  @brief
+  Local storage for proto that are tmp table. This should be enlarged
+  to hande the entire table-share for a local table. Once Hash is done,
+  we should consider exchanging the map for it.
+*/
+typedef std::map <std::string, drizzled::message::Table> ProtoCache;
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
@@ -738,6 +752,7 @@ public:
   
   /** Place to store various things */
   void *session_marker;
+
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
   Table *cached_table;
 
@@ -1230,7 +1245,50 @@ public:
     return connect_microseconds;
   }
 
+  /**
+   * Returns a pointer to the active Transaction message for this
+   * Session being managed by the ReplicationServices component, or
+   * NULL if no active message.
+   */
+  drizzled::message::Transaction *getTransactionMessage() const
+  {
+    return transaction_message;
+  }
+
+  /**
+   * Returns a pointer to the active Statement message for this
+   * Session, or NULL if no active message.
+   */
+  drizzled::message::Statement *getStatementMessage() const
+  {
+    return statement_message;
+  }
+
+  /**
+   * Sets the active transaction message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setTransactionMessage(drizzled::message::Transaction *in_message)
+  {
+    transaction_message= in_message;
+  }
+
+  /**
+   * Sets the active statement message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setStatementMessage(drizzled::message::Statement *in_message)
+  {
+    statement_message= in_message;
+  }
 private:
+  /** Pointers to memory managed by the ReplicationServices component */
+  drizzled::message::Transaction *transaction_message;
+  drizzled::message::Statement *statement_message;
   /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;

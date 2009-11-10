@@ -364,7 +364,8 @@ message InsertData
 message UpdateRecord
 {
   repeated bytes key_value = 1; /* The value of keys of updated records (unique or primary key) */
-  repeated bytes before_value = 2; /* The value of the record before the update (optional) */
+  repeated bytes after_value = 2; /* The value of the field after the update */
+  repeated bytes before_value = 3; /* The value of the field before the update (optional) */
 }
 
 /*
@@ -372,6 +373,7 @@ message UpdateRecord
  *
  * INSERT ... ON DUPLICATE KEY UPDATE
  * UPDATE
+ * REPLACE INTO when the UPDATE optimization occurs.
  *
  * The statement is composed of a header (UpdateHeader) containing
  * metadata about affected tables and fields, as well as one or more data
@@ -388,7 +390,6 @@ message UpdateHeader
   required TableMetadata table_metadata = 1; /* Minimal metadata about the table affected */
   repeated FieldMetadata key_field_metadata = 2; /* Collection of metadata about key fields */
   repeated FieldMetadata set_field_metadata = 3; /* Collection of metadata about fields affected */
-  repeated bytes set_value = 4; /* The value of the field after the update */
 }
 
 message UpdateData

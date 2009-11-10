@@ -23,26 +23,20 @@
  *
  * Defines the implementation of the default replicator.
  *
- * @see drizzled/plugin/command_replicator.h
- * @see drizzled/plugin/command_applier.h
+ * @see drizzled/plugin/transaction_replicator.h
+ * @see drizzled/plugin/transaction_applier.h
  *
  * @details
  *
  * This is a very simple implementation.  All we do is pass along the 
  * event to the supplier.  This is meant as a skeleton replicator only.
- *
- * @todo
- *
- * Want a neat project?  Take this skeleton replicator and make a
- * simple filtered replicator which allows the user to filter out
- * events based on a schema or table name...
  */
 
 #include <drizzled/server_includes.h>
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
-#include <drizzled/message/replication.pb.h>
+#include <drizzled/plugin/transaction_applier.h>
 
 #include <vector>
 #include <string>
@@ -67,11 +61,11 @@ void DefaultReplicator::disable()
   sysvar_default_replicator_enable= false;
 }
 
-void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::Command &to_replicate)
+void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, message::Transaction &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
-   * along the supplied Command.  Yep, told you it was simple...
+   * along the supplied Transaction.  Yep, told you it was simple...
    */
   in_applier->apply(to_replicate);
 }
@@ -109,7 +103,7 @@ static struct st_mysql_sys_var* default_replicator_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(default_replicator)
+drizzle_declare_plugin
 {
   "default_replicator",
   "0.1",

@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.67])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.70])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl Force dependency tracking on for Sun Studio builds
@@ -58,7 +58,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   
   AC_CANONICAL_TARGET
   
-  AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects)
+  AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects foreign)
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
   m4_if(PCT_USE_GNULIB,yes,[ gl_EARLY ])
@@ -121,10 +121,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   PANDORA_OPTIMIZE
 
   dnl We need to inject error into the cflags to test if visibility works or not
-  save_CFLAGS="${CFLAGS}"
-  CFLAGS="${CFLAGS} -Werror"
-  gl_VISIBILITY
-  CFLAGS="${save_CFLAGS}"
+  dnl save_CFLAGS="${CFLAGS}"
+  dnl CFLAGS="${CFLAGS} -Werror"
+  dnl gl_VISIBILITY
+  dnl CFLAGS="${save_CFLAGS}"
 
   PANDORA_HEADER_ASSERT
 

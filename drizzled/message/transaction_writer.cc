@@ -22,6 +22,9 @@
  */
 
 #include "drizzled/global.h"
+#include "drizzled/hash/crc32.h"
+#include "drizzled/gettext.h"
+#include "drizzled/replication_services.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -224,8 +227,6 @@ static void doSimpleUpdate(message::Transaction &transaction)
   sf_meta->set_name("a");
   sf_meta->set_type(message::Table::Field::VARCHAR);
 
-  header->add_set_value("5");
-
   /* Add new values... */
   message::UpdateData *data= statement->mutable_update_data();
   data->set_segment_id(1);
@@ -233,6 +234,7 @@ static void doSimpleUpdate(message::Transaction &transaction)
 
   message::UpdateRecord *record1= data->add_record();
 
+  record1->add_after_value("5");
   record1->add_key_value("1");
 
   statement->set_end_timestamp(getNanoTimestamp());
@@ -263,8 +265,6 @@ static void doMultiKeyUpdate(message::Transaction &transaction)
   sf_meta->set_name("a");
   sf_meta->set_type(message::Table::Field::VARCHAR);
 
-  header->add_set_value("5");
-
   /* Add new values... */
   message::UpdateData *data= statement->mutable_update_data();
   data->set_segment_id(1);
@@ -273,9 +273,10 @@ static void doMultiKeyUpdate(message::Transaction &transaction)
   message::UpdateRecord *record1= data->add_record();
   message::UpdateRecord *record2= data->add_record();
 
+  record1->add_after_value("5");
   record1->add_key_value("1");
+  record2->add_after_value("5");
   record2->add_key_value("2");
-
 
   statement->set_end_timestamp(getNanoTimestamp());
 }
@@ -288,8 +289,10 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
 
   size_t length= buffer.length();
 
-  output->WriteLittleEndian64(static_cast<uint64_t>(length));
+  output->WriteLittleEndian32(static_cast<uint32_t>(ReplicationServices::TRANSACTION));
+  output->WriteLittleEndian32(static_cast<uint32_t>(length));
   output->WriteString(buffer);
+  output->WriteLittleEndian32(drizzled::hash::crc32(buffer.c_str(), length)); /* checksum */
 }
 
 int main(int argc, char* argv[])

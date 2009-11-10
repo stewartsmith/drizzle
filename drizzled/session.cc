@@ -200,7 +200,9 @@ Session::Session(plugin::Client *client_arg)
   derived_tables_processing(false),
   tablespace_op(false),
   m_lip(NULL),
-  cached_table(0)
+  cached_table(0),
+  transaction_message(NULL),
+  statement_message(NULL)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
@@ -2156,7 +2158,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
   if (delete_table_proto_file(path))
     error=1;
 
-  if (base->doDeleteTable(this, path))
+  if (base->doDropTable(*this, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

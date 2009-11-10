@@ -276,3 +276,4 @@ drizzled/message/command_reader
 TAGS
 *replication.pb.*
 drizzled/message/table_raw_reader
+.plugin.ini.stamp

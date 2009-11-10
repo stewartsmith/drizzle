@@ -225,7 +225,7 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str	sys_version(&vars, "version", VERSION);
+static sys_var_const_str	sys_version(&vars, "version", PANDORA_RELEASE_VERSION);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
@@ -2056,7 +2056,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     {
       const std::string engine_name(res->ptr());
       plugin::StorageEngine *engine;
-      var->save_result.storage_engine= plugin::StorageEngine::findByName(session, engine_name);
+      var->save_result.storage_engine= plugin::StorageEngine::findByName(*session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();

@@ -30,8 +30,6 @@ PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-
 PANDORA_VC_VERSION
 
 
-AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
-
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
@@ -49,24 +47,21 @@ AS_IF([test "x$YACC" = "x" -a "$ac_cv_building_from_bzr" = "yes"],[
 ])
 
 
-AM_GNU_GETTEXT(external, need-formatstring-macros)
-if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
-then
-  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
-    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
-  MSGMERGE="${GMSGMERGE}"
-fi
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
+PANDORA_WITH_GETTEXT
 
-
+dnl We need to turn on our CXXFLAGS to make sure it shows up correctly
+save_CXXFLAGS="${CXXFLAGS}"
+CXXFLAGS="${CXXFLAGS} ${AM_CXXFLAGS}"
 AC_CXX_STL_HASH
+CXXFLAGS="${save_CXXFLAGS}"
+
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
 
 PANDORA_REQUIRE_PTHREAD
 
 PANDORA_REQUIRE_LIBPROTOBUF
-PANDORA_PROTOBUF_REQUIRE_VERSION([2.0.3])
+PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
 PANDORA_REQUIRE_PROTOC
 
 #--------------------------------------------------------------------
@@ -361,7 +356,7 @@ if test "$with_comment" != "no"
 then
   COMPILATION_COMMENT=$with_comment
 else
-  COMPILATION_COMMENT="Source distribution (RELEASE_COMMENT)"
+  COMPILATION_COMMENT="Source distribution (${PANDORA_RELEASE_COMMENT})"
 fi
 AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
                    [Comment about compilation environment])
@@ -654,6 +649,7 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  po/Makefile.in dnl
+ drizzled/hash/Makefile dnl
  drizzled/message/Makefile dnl
  drizzled/Makefile dnl
  support-files/Makefile dnl

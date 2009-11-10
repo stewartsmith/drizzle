@@ -26,6 +26,7 @@ TESTS= ${top_srcdir}/extra/run_cpplint.sh
 
 SUBDIRS = ${po} \
 	  gnulib \
+	  drizzled/hash \
 	  drizzled/message \
 	  . \
 	  drizzled \
@@ -34,7 +35,6 @@ SUBDIRS = ${po} \
 
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
-			config/plugin.ac config/plugin.am \
 			config/autorun.sh Doxyfile \
 			config/bzr_revinfo \
 			extra/run_cpplint.sh  \
@@ -43,7 +43,7 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 
 
 CLEANFILES=		${BUILT_SOURCES}
-DISTCLEANFILES=		ac_available_languages_fragment
+DISTCLEANFILES=		ac_available_languages_fragment .plugin.scan
 MAINTAINERCLEANFILES=	autom4te.cache
 
 CLIENT_LDADD=		mysys/libmysys.la \
@@ -196,7 +196,7 @@ client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
 
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
-include config/plugin.am
+include config/pandora-plugin.am
 
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= \

@@ -25,30 +25,54 @@
  *   Implementation of CachedDirectory class.
  */
 
+#include <strings.h>
 #include "drizzled/global.h"
 #include "cached_directory.h"
 
 using namespace std;
 
 
-CachedDirectory::CachedDirectory(const string &in_path)
-  : error(0)
+CachedDirectory::CachedDirectory() : 
+  error(0)
 {
+}
+
+
+CachedDirectory::CachedDirectory(const string &in_path) :
+  error(0)
+{
+  // TODO: Toss future exception
   (void) open(in_path);
 }
 
+
+CachedDirectory::CachedDirectory(const string& in_path, set<string>& exts) :
+  error(0)
+{
+  // TODO: Toss future exception
+  (void) open(in_path, exts, true);
+}
+
+
 CachedDirectory::~CachedDirectory()
 {
-  Entries::iterator p= entries.begin();
-  while (p != entries.end())
+  for (Entries::iterator p= entries.begin(); p != entries.end(); ++p)
   {
     if (*p)
       delete *p;
-    ++p;
   }
+  entries.clear();
 }
 
+
 bool CachedDirectory::open(const string &in_path)
+{
+  set<string> empty;
+
+  return open(in_path, empty, false);
+}
+
+bool CachedDirectory::open(const string &in_path, set<string> exts, bool honor_exts)
 {
   DIR *dirp= opendir(in_path.c_str());
 
@@ -57,6 +81,11 @@ bool CachedDirectory::open(const string &in_path)
     error= errno;
     return false;
   }
+
+  path= in_path;
+
+  if (exts.size() == 0 && honor_exts)
+    return true;
 
   union {
     dirent entry;
@@ -77,7 +106,27 @@ bool CachedDirectory::open(const string &in_path)
 
   while ((retcode= readdir_r(dirp, &buffer.entry, &result)) == 0 &&
          result != NULL)
-    entries.push_back(new Entry(result->d_name));
+  {
+    if (exts.size())
+    {
+      char *ptr= rindex(result->d_name, '.');
+
+      if (ptr)
+      {
+        set<string>::iterator it;
+        it= exts.find(ptr);
+
+        if (it != exts.end())
+        {
+          entries.push_back(new Entry(result->d_name));
+        }
+      }
+    }
+    else
+    {
+      entries.push_back(new Entry(result->d_name));
+    }
+  }
     
   closedir(dirp);
   error= retcode;

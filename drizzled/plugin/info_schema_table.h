@@ -22,6 +22,7 @@
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
 #include <string>
+#include <set>
 
 namespace drizzled
 {
@@ -227,7 +228,7 @@ public:
                   uint32_t req_object,
                   InfoSchemaMethods *in_methods)
     :
-      Plugin(tab_name),
+      Plugin(tab_name, "InfoSchemaTable"),
       hidden(in_hidden),
       is_opt_possible(in_opt_possible),
       first_column_index(idx_col1),
@@ -239,7 +240,7 @@ public:
 
   explicit InfoSchemaTable(const std::string& tab_name)
     :
-      Plugin(tab_name),
+      Plugin(tab_name, "InfoSchemaTable"),
       hidden(false),
       is_opt_possible(false),
       first_column_index(0),
@@ -359,6 +360,11 @@ public:
   {
     return getName();
   }
+
+  /**
+   * @return the names of the I_S tables.
+   */
+  static void getTableNames(std::set<std::string>& tables_names);
 
   /**
    * @return true if this I_S table is hidden; false otherwise.

@@ -46,7 +46,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		cost_vect.h \
 		create_field.h \
-		crc32.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -267,24 +266,24 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin/authentication.h \
 		plugin/client.h \
-		plugin/command_applier.h \
-		plugin/command_reader.h \
-		plugin/command_replicator.h \
 		plugin/error_message.h \
 		plugin/function.h \
-		plugin/handle.h \
 		plugin/info_schema_table.h \
 		plugin/library.h \
 		plugin/listen.h \
 		plugin/listen_tcp.h \
 		plugin/logging.h \
 		plugin/manifest.h \
+		plugin/module.h \
 		plugin/null_client.h \
 		plugin/plugin.h \
 		plugin/query_cache.h \
 		plugin/registry.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
+		plugin/transaction_applier.h \
+		plugin/transaction_reader.h \
+		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
 		replication_services.h \
@@ -399,6 +398,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
+		 $(top_builddir)/drizzled/hash/libhash.la \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
@@ -410,6 +410,7 @@ drizzled_LDFLAGS =
 
 
 noinst_HEADERS = \
+		hash.h \
 		gettext.h \
 		global.h \
 		server_includes.h \
@@ -422,7 +423,6 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
-		crc32.cc \
 		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
@@ -613,8 +613,6 @@ drizzled_SOURCES = \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
 		plugin/client.cc \
-		plugin/command_applier.cc \
-		plugin/command_replicator.cc \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \
@@ -626,6 +624,8 @@ drizzled_SOURCES = \
 		plugin/query_cache.cc \
 		plugin/registry.cc \
 		plugin/scheduler.cc \
+		plugin/transaction_applier.cc \
+		plugin/transaction_replicator.cc \
 		query_id.cc \
 		records.cc \
 		replication_services.cc \

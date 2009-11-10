@@ -422,7 +422,8 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
     /* No conversion */
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
-    pos[6]= field.type;
+    /* Add one to compensate for tinyint removal from enum. */
+    pos[6]= field.type + 1;
     int2store(pos+7,field.flags);
     pos[9]= (char) field.decimals;
     pos[10]= 0;                // For the future
@@ -742,7 +743,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(oldlibdrizzle)
+drizzle_declare_plugin
 {
   "oldlibdrizzle",
   "0.1",

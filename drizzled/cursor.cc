@@ -690,6 +690,18 @@ int ha_commit_one_phase(Session *session, bool all)
       session->transaction.cleanup();
     }
   }
+  if (error == 0)
+  {
+    if (is_real_trans)
+    {
+      /* 
+        * We commit the normal transaction by finalizing the transaction message
+        * and propogating the message to all registered replicators.
+        */
+      ReplicationServices &replication_services= ReplicationServices::singleton();
+      replication_services.commitNormalTransaction(session);
+    }
+  }
   return error;
 }
 
@@ -1589,7 +1601,7 @@ void Cursor::print_keydup_error(uint32_t key_nr, const char *msg)
 */
 void Cursor::print_error(int error, myf errflag)
 {
-  int textno=ER_GET_ERRNO;
+  int textno= ER_GET_ERRNO;
   switch (error) {
   case EACCES:
     textno=ER_OPEN_AS_READONLY;
@@ -1747,8 +1759,10 @@ void Cursor::print_error(int error, myf errflag)
     return;
   default:
     {
-      /* The error was "unknown" to this function.
-	 Ask Cursor if it has got a message for this error */
+      /* 
+        The error was "unknown" to this function.
+        Ask Cursor if it has got a message for this error 
+      */
       bool temporary= false;
       String str;
       temporary= get_error_message(error, &str);
@@ -2519,29 +2533,71 @@ int Cursor::index_read_idx_map(unsigned char * buf, uint32_t index,
   Check if the conditions for row-based binlogging is correct for the table.
 
   A row in the given table should be replicated if:
-  - Row-based replication is enabled in the current thread
-  - The binlog is enabled
   - It is not a temporary table
-  - The binary log is open
-  - The database the table resides in shall be binlogged (binlog_*_db rules)
-  - table is not mysql.event
 */
 
 static bool log_row_for_replication(Table* table,
-                           const unsigned char *before_record,
-                           const unsigned char *after_record)
+                                    const unsigned char *before_record,
+                                    const unsigned char *after_record)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
+  if (table->s->tmp_table || ! replication_services.isActive())
+    return false;
+
   switch (session->lex->sql_command)
   {
   case SQLCOM_REPLACE:
-  case SQLCOM_INSERT:
   case SQLCOM_REPLACE_SELECT:
+    /*
+     * This is a total hack because of the code that is
+     * in write_record() in sql_insert.cc. During
+     * a REPLACE statement, a call to ha_write_row() is
+     * called.  If it fails, then a call to ha_delete_row()
+     * is called, followed by a repeat of the original
+     * call to ha_write_row().  So, log_row_for_replication
+     * could be called either once or twice for a REPLACE
+     * statement.  The below looks at the values of before_record
+     * and after_record to determine which call to this
+     * function is for the delete or the insert, since NULL
+     * is passed for after_record for the delete and NULL is
+     * passed for before_record for the insert...
+     *
+     * In addition, there is an optimization that allows an
+     * engine to convert the above delete + insert into an
+     * update, so we must also check for this case below...
+     */
+    if (after_record == NULL)
+    {
+      replication_services.deleteRecord(session, table);
+      /* 
+       * We set the "current" statement message to NULL.  This triggers
+       * the replication services component to generate a new statement
+       * message for the inserted record which will come next.
+       */
+      replication_services.finalizeStatement(*session->getStatementMessage(), session);
+    }
+    else
+    {
+      if (before_record == NULL)
+        replication_services.insertRecord(session, table);
+      else
+        replication_services.updateRecord(session, table, before_record, after_record);
+    }
+    break;
+  case SQLCOM_INSERT:
   case SQLCOM_INSERT_SELECT:
-  case SQLCOM_CREATE_TABLE:
-    replication_services.insertRecord(session, table);
+    /*
+     * The else block below represents an 
+     * INSERT ... ON DUPLICATE KEY UPDATE that
+     * has hit a key conflict and actually done
+     * an update.
+     */
+    if (before_record == NULL)
+      replication_services.insertRecord(session, table);
+    else
+      replication_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_UPDATE:
@@ -2551,15 +2607,11 @@ static bool log_row_for_replication(Table* table,
   case SQLCOM_DELETE:
     replication_services.deleteRecord(session, table);
     break;
-
-    /*
-      For everything else we ignore the event (since it just involves a temp table)
-    */
   default:
     break;
   }
 
-  return false; //error;
+  return false;
 }
 
 int Cursor::ha_external_lock(Session *session, int lock_type)
@@ -2625,7 +2677,7 @@ int Cursor::ha_write_row(unsigned char *buf)
     return error;
   }
 
-  if (unlikely(log_row_for_replication(table, 0, buf)))
+  if (unlikely(log_row_for_replication(table, NULL, buf)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
@@ -2664,7 +2716,7 @@ int Cursor::ha_delete_row(const unsigned char *buf)
   if (unlikely(error= delete_row(buf)))
     return error;
 
-  if (unlikely(log_row_for_replication(table, buf, 0)))
+  if (unlikely(log_row_for_replication(table, buf, NULL)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;

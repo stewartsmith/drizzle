@@ -639,7 +639,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL,
 };
 
-drizzle_declare_plugin(pool_of_threads)
+drizzle_declare_plugin
 {
   "pool_of_threads",
   "0.1",

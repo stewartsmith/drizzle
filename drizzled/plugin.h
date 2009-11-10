@@ -24,7 +24,7 @@
 #include <drizzled/xid.h>
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/library.h>
-#include <drizzled/plugin/handle.h>
+#include <drizzled/plugin/module.h>
 
 class Session;
 class Item;
@@ -39,6 +39,7 @@ class sys_var;
 typedef struct st_mysql_lex_string LEX_STRING;
 struct my_option;
 
+extern char *opt_plugin_add;
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
@@ -52,17 +53,16 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
 */
 
 
-#ifndef PANDORA_DYNAMIC_PLUGIN
-#define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-drizzled::plugin::Manifest DECLS[]= {
+#if defined(PANDORA_DYNAMIC_PLUGIN)
+# define drizzle_declare_plugin \
+    drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
 #else
-#define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
+# define PANDORA_BUILTIN_NAME(x) builtin_ ## x ## _plugin
+# define PANDORA_NAME(x) PANDORA_BUILTIN_NAME(x)
+# define drizzle_declare_plugin \
+           drizzled::plugin::Manifest PANDORA_NAME(PANDORA_MODULE_NAME)[]= {
 #endif
 
-#define drizzle_declare_plugin(NAME) \
-__DRIZZLE_DECLARE_PLUGIN(NAME, \
-                 builtin_ ## NAME ## _plugin)
 
 #define drizzle_declare_plugin_end ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
 

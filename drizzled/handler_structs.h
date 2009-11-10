@@ -90,7 +90,6 @@ typedef struct st_ha_create_information
   uint64_t auto_increment_value;
   uint32_t table_options;
   uint32_t used_fields;
-  uint32_t key_block_size;
   enum row_type row_type;
   drizzled::plugin::StorageEngine *db_type;
   uint32_t options;                         /* OR of HA_CREATE_ options */

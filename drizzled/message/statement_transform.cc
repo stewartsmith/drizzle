@@ -344,6 +344,23 @@ message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
   destination->push_back(quoted_identifier);
   destination->append(" SET ");
 
+  return NONE;
+}
+
+enum message::TransformSqlError
+message::transformUpdateRecordToSql(const message::UpdateHeader &header,
+                                    const message::UpdateRecord &record,
+                                    std::string *destination,
+                                    enum message::TransformSqlVariant sql_variant)
+{
+  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
+                                                                    destination,
+                                                                    sql_variant);
+
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
   /* Add field SET list to SQL string... */
   size_t num_set_fields= header.set_field_metadata_size();
   size_t x;
@@ -365,32 +382,13 @@ message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
 
-    destination->append(header.set_value(x));
+    destination->append(record.after_value(x));
 
     if (should_quote_field_value)
       destination->push_back('\'');
   }
 
-  return NONE;
-}
-
-enum message::TransformSqlError
-message::transformUpdateRecordToSql(const message::UpdateHeader &header,
-                                    const message::UpdateRecord &record,
-                                    std::string *destination,
-                                    enum message::TransformSqlVariant sql_variant)
-{
-  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
-
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
-
   size_t num_key_fields= header.key_field_metadata_size();
-  size_t x;
-  bool should_quote_field_value= false;
 
   destination->append(" WHERE ");
   for (x= 0; x < num_key_fields; ++x) 
@@ -419,64 +417,6 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
   if (num_key_fields > 1)
     destination->push_back(')');
 
-  return error;
-}
-
-enum message::TransformSqlError
-message::transformUpdateStatementToSql(const message::UpdateHeader &header,
-                                       const message::UpdateData &data,
-                                       std::string *destination,
-                                       enum message::TransformSqlVariant sql_variant)
-{
-  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
-
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
-
-  /* Add WHERE clause to SQL string... */
-  size_t num_key_fields= header.key_field_metadata_size();
-  size_t num_key_records= data.record_size();
-  size_t x, y;
-  bool should_quote_field_value= false;
-
-  destination->append(" WHERE ");
-  for (x= 0; x < num_key_records; ++x)
-  {
-    if (x != 0)
-      destination->append(" OR "); /* Always OR condition for multiple key records */
-
-    if (num_key_fields > 1)
-      destination->push_back('(');
-
-    for (y= 0; y < num_key_fields; ++y) 
-    {
-      const message::FieldMetadata &field_metadata= header.key_field_metadata(y);
-      
-      if (y != 0)
-        destination->append(" AND "); /* Always AND condition with a multi-column PK */
-
-      destination->push_back(quoted_identifier);
-      destination->append(field_metadata.name());
-      destination->push_back(quoted_identifier);
-
-      destination->push_back('=');
-
-      should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
-
-      if (should_quote_field_value)
-        destination->push_back('\'');
-
-      destination->append(data.record(x).key_value(y));
-
-      if (should_quote_field_value)
-        destination->push_back('\'');
-    }
-    if (num_key_fields > 1)
-      destination->push_back(')');
-  }
   return error;
 }
 
@@ -543,8 +483,6 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
   }
-  if (num_key_fields > 1)
-    destination->push_back(')');
 
   return error;
 }

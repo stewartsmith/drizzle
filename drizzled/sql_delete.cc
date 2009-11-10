@@ -410,19 +410,21 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   - If we want to have a name lock on the table on exit without errors.
 */
 
-bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
+bool mysql_truncate(Session& session, TableList *table_list, bool dont_send_ok)
 {
   HA_CREATE_INFO create_info;
   char path[FN_REFLEN];
   Table *table;
   bool error;
   uint32_t path_length;
+  message::Table tmp_table;
 
 
   memset(&create_info, 0, sizeof(create_info));
   /* If it is a temporary table, close and regenerate it */
-  if (!dont_send_ok && (table= session->find_temporary_table(table_list)))
+  if (!dont_send_ok && (table= session.find_temporary_table(table_list)))
   {
+    message::Table::StorageEngine *engine= tmp_table.mutable_engine();
     plugin::StorageEngine *table_type= table->s->db_type();
     TableShare *share= table->s;
 
@@ -431,16 +433,26 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
 
     table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);
 
-    session->close_temporary_table(table, false, false);    // Don't free share
+    /*
+      Because we bypass "all" of what it takes to create a Table we are on shakey ground in this
+      execution path. Not everything will be properly created in order to use the table
+      we create here. 
+
+      Painful.
+    */
+    assert(share->storage_engine);
+    session.close_temporary_table(table, false, false);    // Don't free share
+    assert(share->storage_engine);
+    engine->set_name(share->db_type()->getName());
     plugin::StorageEngine::createTable(session, share->normalized_path.str,
-                                       share->db.str, share->table_name.str,
-                                       &create_info, true, NULL);
+                                       share->db.str, share->table_name.str, create_info, 
+                                       true, tmp_table, false);
     // We don't need to call invalidate() because this table is not in cache
-    if ((error= (int) !(session->open_temporary_table(share->path.str,
+    if ((error= (int) !(session.open_temporary_table(share->path.str,
                                                       share->db.str,
                                                       share->table_name.str, 1,
                                                       OTM_OPEN))))
-      (void) session->rm_temporary_table(table_type, path);
+      (void) session.rm_temporary_table(table_type, path);
     share->free_table_share();
     free((char*) table);
     /*
@@ -457,9 +469,8 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
     goto trunc_by_del;
 
   pthread_mutex_lock(&LOCK_open); /* Recreate table for truncate */
-  error= plugin::StorageEngine::createTable(session, path, table_list->db,
-                                            table_list->table_name,
-                                            &create_info, true, NULL);
+  error= plugin::StorageEngine::createTable(session, path, table_list->db, table_list->table_name,
+                                            create_info, true, tmp_table, false);
   pthread_mutex_unlock(&LOCK_open);
 
 end:
@@ -471,8 +482,8 @@ end:
         TRUNCATE must always be statement-based binlogged (not row-based) so
         we don't test current_stmt_binlog_row_based.
       */
-      write_bin_log(session, session->query, session->query_length);
-      session->my_ok();		// This should return record count
+      write_bin_log(&session, session.query, session.query_length);
+      session.my_ok();		// This should return record count
     }
     pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */
     unlock_table_name(table_list);
@@ -488,20 +499,21 @@ end:
 
 trunc_by_del:
   /* Probably InnoDB table */
-  uint64_t save_options= session->options;
+  uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
-  session->options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  ha_enable_transaction(session, false);
-  mysql_init_select(session->lex);
-  error= mysql_delete(session, table_list, (COND*) 0, (SQL_LIST*) 0,
+  session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
+  ha_enable_transaction(&session, false);
+  mysql_init_select(session.lex);
+  error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
-  ha_enable_transaction(session, true);
+  ha_enable_transaction(&session, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= ha_autocommit_or_rollback(session, error);
-  ha_commit(session);
-  session->options= save_options;
+  error= ha_autocommit_or_rollback(&session, error);
+  ha_commit(&session);
+  session.options= save_options;
+
   return(error);
 }

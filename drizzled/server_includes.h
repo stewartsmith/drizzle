@@ -152,7 +152,7 @@ extern pthread_t signal_thread;
 /* table.cc */
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length);
-int open_table_def(Session *session, TableShare *share);
+int open_table_def(Session& session, TableShare *share);
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
@@ -213,7 +213,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
-char *fn_rext(char *name);
 
 /* Conversion functions */
 size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
