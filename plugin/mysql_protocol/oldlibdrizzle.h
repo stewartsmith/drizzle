@@ -25,13 +25,13 @@
 
 #include "net_serv.h"
 
-class ListenOldLibdrizzle: public drizzled::plugin::ListenTcp
+class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
 private:
   bool using_mysql41_protocol;
 
 public:
-  ListenOldLibdrizzle(std::string name_arg, bool using_mysql41_protocol_arg):
+  ListenMySQLProtocol(std::string name_arg, bool using_mysql41_protocol_arg):
    drizzled::plugin::ListenTcp(name_arg),
    using_mysql41_protocol(using_mysql41_protocol_arg)
   { }
@@ -40,7 +40,7 @@ public:
   virtual drizzled::plugin::Client *getClient(int fd);
 };
 
-class ClientOldLibdrizzle: public drizzled::plugin::Client
+class ClientMySQLProtocol: public drizzled::plugin::Client
 {
 private:
   NET net;
@@ -53,8 +53,8 @@ private:
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
 
 public:
-  ClientOldLibdrizzle(int fd, bool using_mysql41_protocol_arg);
-  virtual ~ClientOldLibdrizzle();
+  ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
+  virtual ~ClientMySQLProtocol();
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();

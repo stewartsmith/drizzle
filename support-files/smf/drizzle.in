@@ -24,7 +24,7 @@ case "$1" in
    'start')
       /bin/coreadm -p "`svcprop -p drizzle/corepattern $SMF_FMRI`" $$
       @sbindir@/drizzled --datadir=`eval echo ${datadir}` \
-                        --oldlibdrizzle-port=`svcprop -p drizzle/port $SMF_FMRI`  \
+                        --drizzle-protocol-port=`svcprop -p drizzle/port $SMF_FMRI`  \
                         --skip-stack-trace &
    ;;
 
