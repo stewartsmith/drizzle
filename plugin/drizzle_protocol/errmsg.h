@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_OLDLIBDRIZZLE_ERRMSG_H
-#define PLUGIN_OLDLIBDRIZZLE_ERRMSG_H
+#ifndef PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H
+#define PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H
 
 /* Error messages for MySQL clients */
 /* (Error messages for the daemon are in sql/share/errmsg.txt) */
@@ -103,4 +103,4 @@ enum CR_CLIENT_ERRORS {
   CR_ERROR_LAST    =2065 /*Copy last error nr:*/
 };
 
-#endif /* PLUGIN_OLDLIBDRIZZLE_ERRMSG_H */
+#endif /* PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H */

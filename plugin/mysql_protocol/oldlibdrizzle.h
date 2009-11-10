@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_OLDLIBDRIZZLE_OLDLIBDRIZZLE_H
-#define PLUGIN_OLDLIBDRIZZLE_OLDLIBDRIZZLE_H
+#ifndef PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H
+#define PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -87,4 +87,4 @@ public:
   virtual bool wasAborted(void);
 };
 
-#endif /* PLUGIN_OLDLIBDRIZZLE_OLDLIBDRIZZLE_H */
+#endif /* PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H */
