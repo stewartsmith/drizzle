@@ -1,7 +1,5 @@
 # 
-# Simple test of the serial event log for testing rand() call 
-# 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# Tests that a value is put in the transaction log for rand()
 #
 
 --disable_warnings
