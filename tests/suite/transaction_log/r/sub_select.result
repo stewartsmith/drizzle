@@ -12,6 +12,7 @@ id INT NOT NULL
 );
 INSERT INTO t2 VALUES (4, "I like to procrastinate");
 UPDATE t1 SET id=(SELECT MAX(id) FROM t2);
+DROP TABLE t1;
 DROP TABLE IF EXISTS `t1`;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL );
@@ -23,4 +24,5 @@ START TRANSACTION;
 UPDATE `test`.`t1` SET `id`=4 WHERE ;
 UPDATE `test`.`t1` SET `id`=4 WHERE ;
 COMMIT;
+DROP TABLE `t1`;
 SET GLOBAL transaction_log_truncate_debug= true;

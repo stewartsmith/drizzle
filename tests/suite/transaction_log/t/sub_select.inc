@@ -22,3 +22,4 @@ CREATE TABLE t2 (
 
 INSERT INTO t2 VALUES (4, "I like to procrastinate");
 UPDATE t1 SET id=(SELECT MAX(id) FROM t2);
+DROP TABLE t1;
