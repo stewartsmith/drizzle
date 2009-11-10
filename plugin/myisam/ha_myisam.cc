@@ -61,7 +61,6 @@ class MyisamEngine : public drizzled::plugin::StorageEngine
 public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg, 
-                                     HTON_CAN_RECREATE | 
                                      HTON_HAS_DATA_DICTIONARY |
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
@@ -303,6 +302,10 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   return(0);
 }
 
+int ha_myisam::reset_auto_increment(uint64_t value)
+{
+  return file->s->state.auto_increment= value;
+}
 
 /*
   Check for underlying table conformance

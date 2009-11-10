@@ -98,6 +98,10 @@ public:
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
+  int reset_auto_increment(uint64_t value)
+  {
+    return file->s->auto_increment= value;
+  }
 private:
   void update_key_stats();
 };
