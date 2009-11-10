@@ -29,20 +29,14 @@ include config/plugin-list.am
 # creation of the included pandora-plugin.am files.
 ${srcdir}/config/plugin-list.am: config/plugin.list config/plugin.stamp
 	@echo Generating automake includes.
-	@mv $@ $@.stamp
-	@python config/register_plugins.py
-	@cmp -s $@ ${@}.stamp || (rm ${@}.stamp ; echo "Changed plugin am list" )
-	@test -f ${@}.stamp && mv ${@}.stamp ${@}
+	@cd ${srcdir} && python config/register_plugins.py plugin-list.am
 
 
 # config/plugin-list.ac: generated static include of per plugin m4 rules
 # to allow options in 'configure'. 
 ${srcdir}/config/plugin-list.ac: config/plugin.list config/plugin.stamp
 	@echo Generating autoconf includes.
-	@mv $@ $@.stamp
-	@python config/register_plugins.py
-	@cmp -s $@ ${@}.stamp || (rm ${@}.stamp ; echo "Changed plugin ac list" )
-	@test -f ${@}.stamp && mv ${@}.stamp ${@}
+	@cd ${srcdir} && python config/register_plugins.py plugin-list.ac
 
 # rebuild configure when the list of plugins changes.
 configure: ${srcdir}/config/plugin-list.ac
@@ -50,6 +44,5 @@ configure: ${srcdir}/config/plugin-list.ac
 
 # plugin.stamp: graph dominator for creating all per pandora-plugin.ac/am
 # files. This is invoked when the code to generate such files has altered.
-${srcdir}/config/plugin.stamp: ${srcdir}/config/plugin.list ${srcdir}/config/register_plugins.py
-	cd ${srcdir} && python config/register_plugins.py ${top_srcdir} ${top_builddir} > /dev/null
-	touch ${srcdir}/config/plugin.stamp
+config/plugin.stamp: ${srcdir}/config/plugin.list ${srcdir}/config/register_plugins.py
+	cd ${srcdir} && python config/register_plugins.py plugin-stamp
