@@ -215,7 +215,7 @@ EXTRA_DIST+=	${man_MANS}
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: test-drizzle
+test: check
 
 test-all:
 	cd tests ; \

@@ -29,6 +29,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/plugin/client.h>
+#include "drizzled/join_table.h"
 
 #include "info_schema_methods.h"
 
@@ -202,7 +203,7 @@ static bool show_status_array(Session *session, const char *wild,
   return false;
 }
 
-int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
+int CharSetISMethods::fillTable(Session *session, TableList *tables)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -258,7 +259,7 @@ int CharSetISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTa
   return 0;
 }
 
-int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
+int CollationISMethods::fillTable(Session *session, TableList *tables)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -299,7 +300,7 @@ int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
   return 0;
 }
 
-int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
+int CollCharISMethods::fillTable(Session *session, TableList *tables)
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -483,7 +484,7 @@ inline bool open_list_store(Table *table, open_table_list_st& open_list)
   return false;
 }
 
-int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+int OpenTablesISMethods::fillTable(Session *session, TableList *tables)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
 
@@ -493,23 +494,23 @@ int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
   return 0;
 }
 
-class ShowPlugins : public unary_function<drizzled::plugin::Handle *, bool>
+class ShowModules : public unary_function<drizzled::plugin::Module *, bool>
 {
   Session *session;
   Table *table;
 public:
-  ShowPlugins(Session *session_arg, Table *table_arg)
+  ShowModules(Session *session_arg, Table *table_arg)
     : session(session_arg), table(table_arg) {}
 
-  result_type operator() (argument_type plugin)
+  result_type operator() (argument_type module)
   {
-    const drizzled::plugin::Manifest &manifest= plugin->getManifest();
+    const drizzled::plugin::Manifest &manifest= module->getManifest();
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
 
-    table->field[0]->store(plugin->getName().c_str(),
-                           plugin->getName().size(), cs);
+    table->field[0]->store(module->getName().c_str(),
+                           module->getName().size(), cs);
 
     if (manifest.version)
     {
@@ -519,76 +520,132 @@ public:
     else
       table->field[1]->set_null();
 
-    if (plugin->isInited)
-    {
-      table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
-    }
-    else
-    {
-      table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
-    }
-
     if (manifest.author)
     {
-      table->field[3]->store(manifest.author, strlen(manifest.author), cs);
-      table->field[3]->set_notnull();
+      table->field[2]->store(manifest.author, strlen(manifest.author), cs);
+      table->field[2]->set_notnull();
     }
     else
     {
-      table->field[3]->set_null();
+      table->field[2]->set_null();
+    }
+
+    if (module->plugin_dl == NULL)
+    {
+      table->field[3]->store(STRING_WITH_LEN("YES"),cs);
+      table->field[4]->set_null();
+    }
+    else
+    {
+      table->field[3]->store(STRING_WITH_LEN("NO"),cs);
+      table->field[4]->store(module->plugin_dl->dl.str,
+                             module->plugin_dl->dl.length, cs);
     }
 
     if (manifest.descr)
     {
-      table->field[4]->store(manifest.descr, strlen(manifest.descr), cs);
-      table->field[4]->set_notnull();
+      table->field[5]->store(manifest.descr, strlen(manifest.descr), cs);
+      table->field[5]->set_notnull();
     }
     else
     {
-      table->field[4]->set_null();
+      table->field[5]->set_null();
     }
 
     switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      table->field[5]->store(drizzled::plugin::LICENSE_GPL_STRING.c_str(),
+      table->field[6]->store(drizzled::plugin::LICENSE_GPL_STRING.c_str(),
                              drizzled::plugin::LICENSE_GPL_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_BSD:
-      table->field[5]->store(drizzled::plugin::LICENSE_BSD_STRING.c_str(),
+      table->field[6]->store(drizzled::plugin::LICENSE_BSD_STRING.c_str(),
                              drizzled::plugin::LICENSE_BSD_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_LGPL:
-      table->field[5]->store(drizzled::plugin::LICENSE_LGPL_STRING.c_str(),
+      table->field[6]->store(drizzled::plugin::LICENSE_LGPL_STRING.c_str(),
                              drizzled::plugin::LICENSE_LGPL_STRING.size(), cs);
       break;
     default:
-      table->field[5]->store(drizzled::plugin::LICENSE_PROPRIETARY_STRING.c_str(),
+      table->field[6]->store(drizzled::plugin::LICENSE_PROPRIETARY_STRING.c_str(),
                              drizzled::plugin::LICENSE_PROPRIETARY_STRING.size(),
                              cs);
       break;
     }
-    table->field[5]->set_notnull();
+    table->field[6]->set_notnull();
 
     return schema_table_store_record(session, table);
   }
 };
 
-int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
+int ModulesISMethods::fillTable(Session *session, TableList *tables)
 {
   Table *table= tables->table;
 
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  vector<drizzled::plugin::Handle *> plugins= registry.getList(true);
-  vector<drizzled::plugin::Handle *>::iterator iter=
-    find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
-  if (iter != plugins.end())
+  vector<drizzled::plugin::Module *> modules= registry.getList(true);
+  vector<drizzled::plugin::Module *>::iterator iter=
+    find_if(modules.begin(), modules.end(), ShowModules(session, table));
+  if (iter != modules.end())
+  {
+    return 1;
+  }
+  return 0;
+}
+
+class ShowPlugins
+ : public unary_function<pair<const string, const drizzled::plugin::Plugin *>, bool>
+{
+  Session *session;
+  Table *table;
+public:
+  ShowPlugins(Session *session_arg, Table *table_arg)
+    : session(session_arg), table(table_arg) {}
+
+  result_type operator() (argument_type plugin)
+  {
+    const CHARSET_INFO * const cs= system_charset_info;
+
+    table->restoreRecordAsDefault();
+
+    table->field[0]->store(plugin.first.c_str(),
+                           plugin.first.size(), cs);
+
+    table->field[1]->store(plugin.second->getTypeName().c_str(),
+                           plugin.second->getTypeName().size(), cs);
+
+    if (plugin.second->isActive())
+    {
+      table->field[2]->store(STRING_WITH_LEN("YES"),cs);
+    }
+    else
+    {
+      table->field[2]->store(STRING_WITH_LEN("NO"), cs);
+    }
+
+    table->field[3]->store(plugin.second->getModuleName().c_str(),
+                           plugin.second->getModuleName().size(), cs);
+
+    return schema_table_store_record(session, table);
+  }
+};
+
+int PluginsISMethods::fillTable(Session *session, TableList *tables)
+{
+  Table *table= tables->table;
+
+  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
+  const map<string, const drizzled::plugin::Plugin *> &plugin_map=
+    registry.getPluginsMap();
+  map<string, const drizzled::plugin::Plugin *>::const_iterator iter=
+    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table));
+  if (iter != plugin_map.end())
   {
     return 1;
   }
   return (0);
 }
 
-int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
+int ProcessListISMethods::fillTable(Session* session, TableList* tables)
 {
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -751,7 +808,7 @@ static bool store_schema_schemata(Session* session, Table *table, LEX_STRING *db
   return schema_table_store_record(session, table);
 }
 
-int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
+int SchemataISMethods::fillTable(Session *session, TableList *tables)
 {
   /*
     TODO: fill_schema_shemata() is called when new client is connected.
@@ -762,6 +819,8 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
   vector<LEX_STRING*> db_names;
   bool with_i_schema;
   Table *table= tables->table;
+  /* the WHERE condition */
+  COND *cond= table->reginfo.join_tab->select_cond;
 
   if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
     return(0);
@@ -948,7 +1007,7 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
   return(res);
 }
 
-int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
+int StatusISMethods::fillTable(Session *session, TableList *tables)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -1291,7 +1350,7 @@ int TabNamesISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaT
   return 0;
 }
 
-int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+int VariablesISMethods::fillTable(Session *session, TableList *tables)
 {
   int res= 0;
   LEX *lex= session->lex;

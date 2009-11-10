@@ -64,36 +64,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
   return (unsigned char*) (*buff)->field_name;
 }
 
-
-/*
-  Returns pointer to '.frm' extension of the file name.
-
-  SYNOPSIS
-    fn_rext()
-    name       file name
-
-  DESCRIPTION
-    Checks file name part starting with the rightmost '.' character,
-    and returns it if it is equal to '.dfe'.
-
-  TODO
-    It is a good idea to get rid of this function modifying the code
-    to garantee that the functions presently calling fn_rext() always
-    get arguments in the same format: either with '.frm' or without '.frm'.
-
-  RETURN VALUES
-    Pointer to the '.frm' extension. If there is no extension,
-    or extension is not '.frm', pointer at the end of file name.
-*/
-
-char *fn_rext(char *name)
-{
-  char *res= strrchr(name, '.');
-  if (res && !strcmp(res, ".dfe"))
-    return res;
-  return name + strlen(name);
-}
-
 static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);
@@ -200,7 +170,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
-    field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
+    field_type= DRIZZLE_TYPE_LONG; /* Set value to kill GCC warning */
     assert(1);
   }
 
@@ -222,7 +192,6 @@ static Item *default_value_item(enum_field_types field_type,
 
   switch(field_type)
   {
-  case DRIZZLE_TYPE_TINY:
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
     default_item= new Item_int(default_value->c_str(),
@@ -272,7 +241,7 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int drizzled::parse_table_proto(Session *session,
+int drizzled::parse_table_proto(Session& session,
                                 message::Table &table,
                                 TableShare *share)
 {
@@ -282,6 +251,7 @@ int drizzled::parse_table_proto(Session *session,
   share->setTableProto(new(nothrow) message::Table(table));
 
   share->storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
+  assert(share->storage_engine); // We use an assert() here because we should never get this far and still have no suitable engine.
 
   message::Table::TableOptions table_options;
 
@@ -492,9 +462,6 @@ int drizzled::parse_table_proto(Session *session,
 
   share->keys_for_keyread.reset();
   set_prefix(share->keys_in_use, share->keys);
-
-  share->key_block_size= table_options.has_key_block_size() ?
-    table_options.key_block_size() : 0;
 
   share->fields= table.field_size();
 
@@ -849,7 +816,7 @@ int drizzled::parse_table_proto(Session *session,
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
     memset(&temp_table, 0, sizeof(temp_table));
     temp_table.s= share;
-    temp_table.in_use= session;
+    temp_table.in_use= &session;
     temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
@@ -883,10 +850,10 @@ int drizzled::parse_table_proto(Session *session,
 
     if (default_value)
     {
-      enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
-      session->count_cuted_fields= CHECK_FIELD_WARN;
+      enum_check_fields old_count_cuted_fields= session.count_cuted_fields;
+      session.count_cuted_fields= CHECK_FIELD_WARN;
       int res= default_value->save_in_field(f, 1);
-      session->count_cuted_fields= old_count_cuted_fields;
+      session.count_cuted_fields= old_count_cuted_fields;
       if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
@@ -962,7 +929,7 @@ int drizzled::parse_table_proto(Session *session,
   free(field_offsets);
   free(field_pack_length);
 
-  if (! (handler_file= share->db_type()->getCursor(share, session->mem_root)))
+  if (! (handler_file= share->db_type()->getCursor(share, session.mem_root)))
     abort(); // FIXME
 
   /* Fix key stuff */
@@ -1194,7 +1161,7 @@ err:
    6    Unknown .frm version
 */
 
-int open_table_def(Session *session, TableShare *share)
+int open_table_def(Session& session, TableShare *share)
 {
   int error;
   bool error_given;
@@ -1204,8 +1171,11 @@ int open_table_def(Session *session, TableShare *share)
 
   message::Table table;
 
-  error= plugin::StorageEngine::getTableProto(share->normalized_path.str,
-                                              &table);
+  error= plugin::StorageEngine::getTableDefinition(session, share->normalized_path.str,
+                                                   share->db.str,
+                                                   share->table_name.str,
+                                                   false,
+                                                   &table);
 
   if (error != EEXIST)
   {
@@ -1229,7 +1199,7 @@ int open_table_def(Session *session, TableShare *share)
   share->table_category= get_table_category(& share->db);
 
   if (!error)
-    session->status_var.opened_shares++;
+    session.status_var.opened_shares++;
 
 err_not_open:
   if (error && !error_given)
@@ -3235,7 +3205,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       file->closeMarkForDelete(s->table_name.str);
 
-    s->db_type()->doDeleteTable(session, s->table_name.str);
+    s->db_type()->doDropTable(*session, s->table_name.str);
 
     delete file;
   }
@@ -3347,7 +3317,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) new_table.file->close();
  err1:
-  new_table.s->db_type()->doDeleteTable(session, new_table.s->table_name.str);
+  new_table.s->db_type()->doDropTable(*session, new_table.s->table_name.str);
  err2:
   delete new_table.file;
   session->set_proc_info(save_proc_info);

@@ -32,6 +32,7 @@
 #include "drizzled/memory/multi_malloc.h"
 
 #include <string>
+#include <map>
 #include <algorithm>
 
 using namespace std;
@@ -61,8 +62,12 @@ public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg, 
                                      HTON_CAN_RECREATE | 
+                                     HTON_HAS_DATA_DICTIONARY |
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
+
+  ~MyisamEngine()
+  { }
 
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -74,15 +79,50 @@ public:
     return ha_myisam_exts;
   }
 
-  int createTableImplementation(Session *, const char *table_name,
-                                Table *table_arg,
-                                HA_CREATE_INFO *ha_create_info,
-                                drizzled::message::Table*);
+  int doCreateTable(Session *, const char *table_name,
+                    Table& table_arg,
+                    HA_CREATE_INFO& ha_create_info,
+                    drizzled::message::Table&);
 
-  int renameTableImplementation(Session*, const char *from, const char *to);
+  int doRenameTable(Session*, const char *from, const char *to);
 
-  int deleteTableImplementation(Session*, const string table_name);
+  int doDropTable(Session&, const string table_name);
+
+  int doGetTableDefinition(Session& session,
+                           const char* path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
+
+  /* Temp only engine, so do not return values. */
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+
 };
+
+int MyisamEngine::doGetTableDefinition(Session&,
+                                       const char* path,
+                                       const char *,
+                                       const char *,
+                                       const bool,
+                                       drizzled::message::Table *table_proto)
+{
+  int error= 1;
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(path);
+
+  if (iter!= proto_cache.end())
+  {
+    if (table_proto)
+      table_proto->CopyFrom(((*iter).second));
+    error= EEXIST;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return error;
+}
 
 /* 
   Convert to push_Warnings if you ever care about this, otherwise, it is a no-op.
@@ -1278,9 +1318,19 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::deleteTableImplementation(Session*, const string table_name)
+int MyisamEngine::doDropTable(Session&, const string table_path)
 {
-  return mi_delete_table(table_name.c_str());
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(table_path.c_str());
+
+  if (iter!= proto_cache.end())
+    proto_cache.erase(iter);
+
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return mi_delete_table(table_path.c_str());
 }
 
 
@@ -1303,10 +1353,10 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   return to;
 }
 
-int MyisamEngine::createTableImplementation(Session *, const char *table_name,
-                                            Table *table_arg,
-                                            HA_CREATE_INFO *ha_create_info,
-                                            drizzled::message::Table* create_proto)
+int MyisamEngine::doCreateTable(Session *, const char *table_name,
+                                Table& table_arg,
+                                HA_CREATE_INFO& ha_create_info,
+                                drizzled::message::Table& create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1314,26 +1364,26 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo;
   MI_CREATE_INFO create_info;
-  TableShare *share= table_arg->s;
+  TableShare *share= table_arg.s;
   uint32_t options= share->db_options_in_use;
-  if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
+  if ((error= table2myisam(&table_arg, &keydef, &recinfo, &create_records)))
     return(error);
   memset(&create_info, 0, sizeof(create_info));
-  create_info.max_rows= create_proto->options().max_rows();
-  create_info.reloc_rows= create_proto->options().min_rows();
+  create_info.max_rows= create_proto.options().max_rows();
+  create_info.reloc_rows= create_proto.options().min_rows();
   create_info.with_auto_increment= share->next_number_key_offset == 0;
-  create_info.auto_increment= (ha_create_info->auto_increment_value ?
-                               ha_create_info->auto_increment_value -1 :
+  create_info.auto_increment= (ha_create_info.auto_increment_value ?
+                               ha_create_info.auto_increment_value -1 :
                                (uint64_t) 0);
-  create_info.data_file_length= (create_proto->options().max_rows() *
-                                 create_proto->options().avg_row_length());
+  create_info.data_file_length= (create_proto.options().max_rows() *
+                                 create_proto.options().avg_row_length());
   create_info.data_file_name= NULL;
   create_info.index_file_name=  NULL;
   create_info.language= share->table_charset->number;
 
-  if (ha_create_info->options & HA_LEX_CREATE_TMP_TABLE)
+  if (ha_create_info.options & HA_LEX_CREATE_TMP_TABLE)
     create_flags|= HA_CREATE_TMP_TABLE;
-  if (ha_create_info->options & HA_CREATE_KEEP_FILES)
+  if (ha_create_info.options & HA_CREATE_KEEP_FILES)
     create_flags|= HA_CREATE_KEEP_FILES;
   if (options & HA_OPTION_PACK_RECORD)
     create_flags|= HA_PACK_RECORD;
@@ -1346,12 +1396,17 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
-  return(error);
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  proto_cache.insert(make_pair(table_name, create_proto));
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return error;
 }
 
 
-int MyisamEngine::renameTableImplementation(Session*,
-                                            const char *from, const char *to)
+int MyisamEngine::doRenameTable(Session*,
+                                const char *from, const char *to)
 {
   return mi_rename(from,to);
 }

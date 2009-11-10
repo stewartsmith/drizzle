@@ -241,6 +241,8 @@ void ReplicationServices::commitNormalTransaction(Session *in_session)
   {
     finalizeStatement(*statement, in_session);
   }
+  else
+    return; /* No data modification occurred inside the transaction */
   
   message::Transaction* transaction= getActiveTransaction(in_session);
 
@@ -463,24 +465,6 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
       field_metadata= header->add_set_field_metadata();
       field_metadata->set_name(current_field->field_name);
       field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
-
-      /* Store the original "read bit" for this field */
-      bool is_read_set= current_field->isReadSet();
-
-      /* We need to mark that we will "read" this field... */
-      in_table->setReadSet(current_field->field_index);
-
-      /* Read the string value of this field's contents */
-      string_value= current_field->val_str(string_value);
-
-      /* 
-       * Reset the read bit after reading field to its original state.  This 
-       * prevents the field from being included in the WHERE clause
-       */
-      current_field->setReadSet(is_read_set);
-
-      header->add_set_value(string_value->c_ptr());
-      string_value->free();
     }
   }
 }
@@ -506,6 +490,47 @@ void ReplicationServices::updateRecord(Session *in_session,
 
   while ((current_field= *table_fields++) != NULL) 
   {
+    /*
+     * Here, we add the SET field values.  We used to do this in the setUpdateHeader() method, 
+     * but then realized that an UPDATE statement could potentially have different values for
+     * the SET field.  For instance, imagine this SQL scenario:
+     *
+     * CREATE TABLE t1 (id INT NOT NULL PRIMARY KEY, count INT NOT NULL);
+     * INSERT INTO t1 (id, counter) VALUES (1,1),(2,2),(3,3);
+     * UPDATE t1 SET counter = counter + 1 WHERE id IN (1,2);
+     *
+     * We will generate two UpdateRecord messages with different set_value byte arrays.
+     *
+     * The below really should be moved into the Field API and Record API.  But for now
+     * we do this crazy pointer fiddling to figure out if the current field
+     * has been updated in the supplied record raw byte pointers.
+     */
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+
+    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      /* Store the original "read bit" for this field */
+      bool is_read_set= current_field->isReadSet();
+
+      /* We need to mark that we will "read" this field... */
+      in_table->setReadSet(current_field->field_index);
+
+      /* Read the string value of this field's contents */
+      string_value= current_field->val_str(string_value);
+
+      /* 
+       * Reset the read bit after reading field to its original state.  This 
+       * prevents the field from being included in the WHERE clause
+       */
+      current_field->setReadSet(is_read_set);
+
+      record->add_after_value(string_value->c_ptr());
+      string_value->free();
+    }
+
     /* 
      * Add the WHERE clause values now...the fields which return true
      * for isReadSet() are in the WHERE clause.  For tables with no
@@ -520,6 +545,7 @@ void ReplicationServices::updateRecord(Session *in_session,
        */
       string_value->free();
     }
+
   }
 }
 

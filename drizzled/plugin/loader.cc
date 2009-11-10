@@ -72,7 +72,7 @@ static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
 static bool initialized= false;
 
 static DYNAMIC_ARRAY plugin_dl_array;
-static DYNAMIC_ARRAY plugin_array;
+static DYNAMIC_ARRAY module_array;
 
 static bool reap_needed= false;
 
@@ -130,7 +130,7 @@ struct st_mysql_sys_var
 class sys_var_pluginvar: public sys_var
 {
 public:
-  plugin::Handle *plugin;
+  plugin::Module *plugin;
   struct st_mysql_sys_var *plugin_var;
 
   sys_var_pluginvar(const std::string name_arg,
@@ -158,11 +158,11 @@ public:
 static bool plugin_load_list(plugin::Registry &registry,
                              MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
-static int test_plugin_options(MEM_ROOT *, plugin::Handle *,
+static int test_plugin_options(MEM_ROOT *, plugin::Module *,
                                int *, char **);
 static bool register_builtin(plugin::Registry &registry,
-                             plugin::Handle *,
-                             plugin::Handle **);
+                             plugin::Module *,
+                             plugin::Module **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
@@ -405,13 +405,13 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 
 
-static plugin::Handle *plugin_insert_or_reuse(plugin::Handle *plugin)
+static plugin::Module *plugin_insert_or_reuse(plugin::Module *module)
 {
-  if (insert_dynamic(&plugin_array, (unsigned char*)&plugin))
+  if (insert_dynamic(&module_array, (unsigned char*)&module))
     return(0);
-  plugin= *dynamic_element(&plugin_array, plugin_array.elements - 1,
-                        plugin::Handle **);
-  return(plugin);
+  module= *dynamic_element(&module_array, module_array.elements - 1,
+                           plugin::Module **);
+  return module;
 }
 
 
@@ -439,7 +439,7 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
   if (library == NULL)
     return true;
 
-  plugin::Handle *tmp= NULL;
+  plugin::Module *tmp= NULL;
   /* Find plugin by name */
   for (manifest= library->plugins; manifest->name; manifest++)
   {
@@ -448,7 +448,7 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
                        (const unsigned char *)manifest->name,
                        strlen(manifest->name)))
     {
-      tmp= new (std::nothrow) plugin::Handle(manifest, library);
+      tmp= new (std::nothrow) plugin::Module(manifest, library);
       if (tmp == NULL)
         return true;
 
@@ -478,64 +478,66 @@ err:
 }
 
 
-static void plugin_del(plugin::Registry &registry, plugin::Handle *plugin)
+static void delete_module(plugin::Registry &registry, plugin::Module *module)
 {
-  if (plugin->isInited)
+  plugin::Manifest manifest= module->getManifest();
+
+  if (module->isInited)
   {
-    if (plugin->getManifest().status_vars)
+    if (manifest.status_vars)
     {
-      remove_status_vars(plugin->getManifest().status_vars);
+      remove_status_vars(manifest.status_vars);
     }
 
-    if (plugin->getManifest().deinit)
-      plugin->getManifest().deinit(registry);
+    if (manifest.deinit)
+      manifest.deinit(registry);
   }
 
   /* Free allocated strings before deleting the plugin. */
-  plugin_vars_free_values(plugin->system_vars);
-  if (plugin->plugin_dl)
-    plugin_dl_del(&plugin->plugin_dl->dl);
-  plugin->isInited= false;
+  plugin_vars_free_values(module->system_vars);
+  if (module->plugin_dl)
+    plugin_dl_del(&module->plugin_dl->dl);
+  module->isInited= false;
   pthread_rwlock_wrlock(&LOCK_system_variables_hash);
-  mysql_del_sys_var_chain(plugin->system_vars);
+  mysql_del_sys_var_chain(module->system_vars);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
-  delete plugin;
+  delete module;
 }
 
 static void reap_plugins(plugin::Registry &plugins)
 {
   size_t count;
   uint32_t idx;
-  plugin::Handle *plugin;
+  plugin::Module *module;
 
-  count= plugin_array.elements;
+  count= module_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
-    plugin= *dynamic_element(&plugin_array, idx, plugin::Handle **);
-    plugin_del(plugins, plugin);
+    module= *dynamic_element(&module_array, idx, plugin::Module **);
+    delete_module(plugins, module);
   }
   drizzle_del_plugin_sysvar();
 }
 
 
-static void plugin_initialize_vars(plugin::Handle *plugin)
+static void plugin_initialize_vars(plugin::Module *module)
 {
-  if (plugin->getManifest().status_vars)
+  if (module->getManifest().status_vars)
   {
-    add_status_vars(plugin->getManifest().status_vars); // add_status_vars makes a copy
+    add_status_vars(module->getManifest().status_vars); // add_status_vars makes a copy
   }
 
   /*
     set the plugin attribute of plugin's sys vars so they are pointing
     to the active plugin
   */
-  if (plugin->system_vars)
+  if (module->system_vars)
   {
-    sys_var_pluginvar *var= plugin->system_vars->cast_pluginvar();
+    sys_var_pluginvar *var= module->system_vars->cast_pluginvar();
     for (;;)
     {
-      var->plugin= plugin;
+      var->plugin= module;
       if (! var->getNext())
         break;
       var= var->getNext()->cast_pluginvar();
@@ -545,23 +547,23 @@ static void plugin_initialize_vars(plugin::Handle *plugin)
 
 
 static bool plugin_initialize(plugin::Registry &registry,
-                              plugin::Handle *plugin)
+                              plugin::Module *module)
 {
-  assert(plugin->isInited == false);
+  assert(module->isInited == false);
 
-  registry.setCurrentHandle(plugin);
-  if (plugin->getManifest().init)
+  registry.setCurrentModule(module);
+  if (module->getManifest().init)
   {
-    if (plugin->getManifest().init(registry))
+    if (module->getManifest().init(registry))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Plugin '%s' init function returned error.\n"),
-                    plugin->getName().c_str());
+                    module->getName().c_str());
       return true;
     }
   }
-  registry.clearCurrentHandle();
-  plugin->isInited= true;
+  registry.clearCurrentModule();
+  module->isInited= true;
 
 
   return false;
@@ -591,7 +593,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
   uint32_t idx;
   plugin::Manifest **builtins;
   plugin::Manifest *manifest;
-  plugin::Handle *handle;
+  plugin::Module *module;
   MEM_ROOT tmp_root;
 
   if (initialized)
@@ -607,8 +609,8 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
   if (my_init_dynamic_array(&plugin_dl_array,
                             sizeof(plugin::Library *),16,16) ||
-      my_init_dynamic_array(&plugin_array,
-                            sizeof(plugin::Handle *),16,16))
+      my_init_dynamic_array(&module_array,
+                            sizeof(plugin::Module *),16,16))
     goto err;
 
   initialized= 1;
@@ -620,22 +622,22 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
   {
     for (manifest= *builtins; manifest->name; manifest++)
     {
-      handle= new (std::nothrow) plugin::Handle(manifest);
-      if (handle == NULL)
+      module= new (std::nothrow) plugin::Module(manifest);
+      if (module == NULL)
         return true;
 
       free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-      if (test_plugin_options(&tmp_root, handle, argc, argv))
+      if (test_plugin_options(&tmp_root, module, argc, argv))
         continue;
 
-      if (register_builtin(registry, handle, &handle))
+      if (register_builtin(registry, module, &module))
         goto err_unlock;
 
-      plugin_initialize_vars(handle);
+      plugin_initialize_vars(module);
 
       if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
       {
-        if (plugin_initialize(registry, handle))
+        if (plugin_initialize(registry, module))
           goto err_unlock;
       }
     }
@@ -655,15 +657,15 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
   /*
     Now we initialize all remaining plugins
   */
-  for (idx= 0; idx < plugin_array.elements; idx++)
+  for (idx= 0; idx < module_array.elements; idx++)
   {
-    handle= *dynamic_element(&plugin_array, idx, plugin::Handle **);
-    if (handle->isInited == false)
+    module= *dynamic_element(&module_array, idx, plugin::Module **);
+    if (module->isInited == false)
     {
-      plugin_initialize_vars(handle);
+      plugin_initialize_vars(module);
 
-      if (plugin_initialize(registry, handle))
-        plugin_del(registry, handle);
+      if (plugin_initialize(registry, module))
+        delete_module(registry, module);
     }
   }
 
@@ -681,18 +683,18 @@ err:
 
 
 static bool register_builtin(plugin::Registry &registry,
-                             plugin::Handle *tmp,
-                             plugin::Handle **ptr)
+                             plugin::Module *tmp,
+                             plugin::Module **ptr)
 {
 
   tmp->isInited= false;
   tmp->plugin_dl= 0;
 
-  if (insert_dynamic(&plugin_array, (unsigned char*)&tmp))
+  if (insert_dynamic(&module_array, (unsigned char*)&tmp))
     return(1);
 
-  *ptr= *dynamic_element(&plugin_array, plugin_array.elements - 1,
-                         plugin::Handle **);
+  *ptr= *dynamic_element(&module_array, module_array.elements - 1,
+                         plugin::Module **);
 
   registry.add(*ptr);
 
@@ -787,8 +789,7 @@ error:
 void plugin_shutdown(plugin::Registry &registry)
 {
   uint32_t idx;
-  size_t count= plugin_array.elements;
-  vector<plugin::Handle *> plugins;
+  size_t count= module_array.elements;
   vector<plugin::Library *> dl;
 
   if (initialized)
@@ -807,7 +808,7 @@ void plugin_shutdown(plugin::Registry &registry)
 
   /* Dispose of the memory */
 
-  delete_dynamic(&plugin_array);
+  delete_dynamic(&module_array);
 
   count= plugin_dl_array.elements;
   dl.reserve(count);
@@ -1133,16 +1134,16 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
-  plugin::Handle *plugin;
+  plugin::Module *module;
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   if ((var= intern_find_sys_var(str, length, false)) &&
       (pi= var->cast_pluginvar()))
   {
     pthread_rwlock_unlock(&LOCK_system_variables_hash);
-    if (!(plugin= pi->plugin))
+    if (!(module= pi->plugin))
       var= NULL; /* failed to lock it, it must be uninstalling */
-    else if (plugin->isInited == false)
+    else if (module->isInited == false)
     {
       var= NULL;
     }
@@ -1877,7 +1878,7 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 }
 
 
-static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
+static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
                              my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->getManifest().name;
@@ -2105,7 +2106,7 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
 }
 
 
-static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Handle *p)
+static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
 {
   st_mysql_sys_var **opt;
   my_option *opts;
@@ -2163,7 +2164,7 @@ void drizzle_del_plugin_sysvar()
   NOTE:
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Handle *tmp,
+static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
@@ -2287,16 +2288,16 @@ public:
 void my_print_help_inc_plugins(my_option *main_options)
 {
   vector<my_option> all_options;
-  plugin::Handle *p;
+  plugin::Module *p;
   MEM_ROOT mem_root;
   my_option *opt= NULL;
 
   init_alloc_root(&mem_root, 4096, 4096);
 
   if (initialized)
-    for (uint32_t idx= 0; idx < plugin_array.elements; idx++)
+    for (uint32_t idx= 0; idx < module_array.elements; idx++)
     {
-      p= *dynamic_element(&plugin_array, idx, plugin::Handle **);
+      p= *dynamic_element(&module_array, idx, plugin::Module **);
 
       if (p->getManifest().system_vars == NULL)
         continue;

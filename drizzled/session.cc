@@ -841,20 +841,30 @@ bool Session::endActiveTransaction()
   return result;
 }
 
-bool Session::startTransaction()
+bool Session::startTransaction(start_transaction_option_t opt)
 {
   bool result= true;
 
   if (! endActiveTransaction())
+  {
     result= false;
+  }
   else
   {
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+
+    if (opt == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+    {
+      // TODO make this a loop for all engines, not just this one (Inno only
+      // right now)
       if (plugin::StorageEngine::startConsistentSnapshot(this))
+      {
         result= false;
+      }
+    }
   }
+
   return result;
 }
 
@@ -2158,7 +2168,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
   if (delete_table_proto_file(path))
     error=1;
 
-  if (base->doDeleteTable(this, path))
+  if (base->doDropTable(*this, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

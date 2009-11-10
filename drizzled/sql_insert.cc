@@ -1554,7 +1554,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
         {
-          quick_rm_table(create_info->db_type, create_table->db,
+          quick_rm_table(*session, create_table->db,
                          create_table->table_name, false);
         }
         else

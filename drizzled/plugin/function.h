@@ -49,7 +49,7 @@ class Function
   Function& operator=(const Function &);
 public:
   Function(std::string in_name)
-   : Plugin(in_name),
+   : Plugin(in_name, "Function"),
      std::unary_function<MEM_ROOT*, Item_func *>()
   { }
   virtual result_type operator()(argument_type root) const= 0;

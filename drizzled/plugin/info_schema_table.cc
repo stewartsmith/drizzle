@@ -123,6 +123,16 @@ plugin::InfoSchemaTable *plugin::InfoSchemaTable::getTable(const char *table_nam
 
 }
 
+void plugin::InfoSchemaTable::getTableNames(set<string>& tables_names)
+{
+  for (vector<plugin::InfoSchemaTable *>::iterator iter= all_schema_tables.begin();
+       iter != all_schema_tables.end();
+       iter++)
+  {
+    if ((*iter)->isHidden() == false)
+      tables_names.insert((*iter)->getTableName().c_str());
+  }
+}
 
 int plugin::InfoSchemaTable::addTableToList(Session *session,
                                      vector<LEX_STRING*> &files,

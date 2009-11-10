@@ -42,7 +42,7 @@ bool statement::CreateTable::execute()
   {
 
     create_info.db_type= 
-      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+      plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
     if (create_info.db_type == NULL)
     {
