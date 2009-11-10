@@ -1,5 +1,5 @@
 echo "Running register_plugins.py"
-if ! test -f  config/plugin.stamp
+if test ! -f  config/plugin.stamp
 then
   touch config/plugin.stamp
 fi
