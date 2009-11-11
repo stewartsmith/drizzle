@@ -39,14 +39,14 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/bzr_revinfo \
 			extra/run_cpplint.sh  \
 			extra/cpplint.py \
-			extra/clean_source.sh
+			extra/clean_source.sh \
+			po/POTFILES.in	
 
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
 			.plugin.scan \
-			config/bzr_revinfo \
-			po/POTFILES.in	
+			config/bzr_revinfo
 
 MAINTAINERCLEANFILES=	autom4te.cache
 
