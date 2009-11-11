@@ -132,7 +132,7 @@ void CreateField::create_length_to_internal_length(void)
       length*= charset->mbmaxlen;
       key_length= pack_length;
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       key_length= pack_length=
         my_decimal_get_binary_size(my_decimal_length_to_precision(length,
                   decimals,
@@ -240,7 +240,7 @@ bool CreateField::init(Session *,
       break;
     case DRIZZLE_TYPE_NULL:
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       my_decimal_trim(&length, &decimals);
       if (length > DECIMAL_MAX_PRECISION)
       {

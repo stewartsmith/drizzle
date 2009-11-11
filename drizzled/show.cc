@@ -2038,8 +2038,8 @@ static void store_column_type(Table *table, Field *field,
 
   decimals= field->decimals();
   switch (field->type()) {
-  case DRIZZLE_TYPE_NEWDECIMAL:
-    field_length= ((Field_new_decimal*) field)->precision;
+  case DRIZZLE_TYPE_DECIMAL:
+    field_length= ((Field_decimal*) field)->precision;
     break;
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
@@ -2242,7 +2242,7 @@ Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList 
                            column->getLength())) == NULL)
         return NULL;
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       if (!(item= new Item_decimal((int64_t) column->getValue(), false)))
       {
         return(0);

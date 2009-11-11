@@ -802,7 +802,7 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_NULL:
     sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);
     break;
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
     sql_field->pack_flag= 0;
     break;
   case DRIZZLE_TYPE_TIMESTAMP:

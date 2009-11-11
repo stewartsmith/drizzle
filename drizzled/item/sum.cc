@@ -517,7 +517,7 @@ Field *Item_sum::create_tmp_field(bool ,
                                name, table->s, collation.collation);
     break;
   case DECIMAL_RESULT:
-    field= new Field_new_decimal(max_length, maybe_null, name,
+    field= new Field_decimal(max_length, maybe_null, name,
                                  decimals, unsigned_flag);
     break;
   case ROW_RESULT:
@@ -980,7 +980,7 @@ void Item_sum_distinct::fix_length_and_dec()
   case DECIMAL_RESULT:
     val.traits= Hybrid_type_traits_decimal::instance();
     if (table_field_type != DRIZZLE_TYPE_LONGLONG)
-      table_field_type= DRIZZLE_TYPE_NEWDECIMAL;
+      table_field_type= DRIZZLE_TYPE_DECIMAL;
     break;
   case ROW_RESULT:
   default:
@@ -1259,8 +1259,8 @@ Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
                                0, name, table->s, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
-    field= new Field_new_decimal(max_length, maybe_null, name,
-                                 decimals, unsigned_flag);
+    field= new Field_decimal(max_length, maybe_null, name,
+                             decimals, unsigned_flag);
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
   if (field)

@@ -38,7 +38,7 @@ public:
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DECIMAL; }
   int64_t val_int();
   double val_real();
   String *val_str(String*);

@@ -161,7 +161,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     field_type= DRIZZLE_TYPE_VARCHAR;
     break;
   case message::Table::Field::DECIMAL:
-    field_type= DRIZZLE_TYPE_NEWDECIMAL;
+    field_type= DRIZZLE_TYPE_DECIMAL;
     break;
   case message::Table::Field::ENUM:
     field_type= DRIZZLE_TYPE_ENUM;
@@ -231,7 +231,7 @@ static Item *default_value_item(enum_field_types field_type,
 				    system_charset_info);
     }
     break;
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
     default_item= new Item_decimal(default_value->c_str(),
 				   default_value->length(),
 				   system_charset_info);
@@ -525,7 +525,7 @@ int drizzled::parse_table_proto(Session& session,
         interval_parts+= field_options.field_value_size();
       }
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
@@ -775,7 +775,7 @@ int drizzled::parse_table_proto(Session& session,
     }
 
     uint8_t decimals= 0;
-    if (field_type == DRIZZLE_TYPE_NEWDECIMAL
+    if (field_type == DRIZZLE_TYPE_DECIMAL
         || field_type == DRIZZLE_TYPE_DOUBLE)
     {
       message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
@@ -820,10 +820,47 @@ int drizzled::parse_table_proto(Session& session,
     temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
+    uint32_t field_length;
+
+    switch (field_type)
+    {
+    case DRIZZLE_TYPE_DOUBLE:
+    {
+      message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
+      if (!fo.has_precision() && !fo.has_scale())
+      {
+        field_length= DBL_DIG+7;
+      }
+      else
+      {
+        field_length= fo.precision();
+      }
+      if (field_length < decimals &&
+          decimals != NOT_FIXED_DEC)
+      {
+        my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
+        error= 1;
+        goto err;
+      }
+      break;
+    }
+    case DRIZZLE_TYPE_DECIMAL:
+    {
+      message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
+
+      field_length= my_decimal_precision_to_length(fo.precision(), fo.scale(),
+                                                   false);
+      break;
+    }
+    default:
+      field_length= pfield.options().length();
+      break;
+    }
+
     Field* f= make_field(share,
                          &share->mem_root,
                          record + field_offsets[fieldnr] + data_offset,
-                         pfield.options().length(),
+                         field_length,
                          pfield.has_constraints() && pfield.constraints().is_nullable() ? true : false,
                          null_pos,
                          null_bit_pos,

@@ -3147,7 +3147,7 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_VARMYSQL);
 		}
-	case DRIZZLE_TYPE_NEWDECIMAL:
+	case DRIZZLE_TYPE_DECIMAL:
 		return(DATA_FIXBINARY);
 	case DRIZZLE_TYPE_LONG:
 	case DRIZZLE_TYPE_LONGLONG:
