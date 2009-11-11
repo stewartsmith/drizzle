@@ -23,53 +23,81 @@
 #include <string>
 
 /*
-  Shared class for correct LOCK operation
-  TODO -> Fix to never remove/etc. We could generate all of these in startup if we wanted to.
-  Tracking count? I'm not sure that is needed at all. We could possibly make this a member of
-  engine as well (should we just hide the share detail?)
 */
-
-class InformationCursor;
 
 class InformationShare 
 {
+private:
   uint32_t count;
-  std::string name;
-  drizzled::plugin::InfoSchemaTable *i_s_table;
+  drizzled::plugin::InfoSchemaTable *table;
+  THR_LOCK lock;
+
 
 public:
 
-  InformationShare(const char *arg) :
-    count(1),
-    name(arg),
-    i_s_table(NULL)
+  InformationShare(const std::string &in_name) :
+    count(1)
   {
     thr_lock_init(&lock);
-  };
+    table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
+  }
 
   ~InformationShare() 
   {
     thr_lock_delete(&lock);
   }
 
-  void inc(void) { count++; }
-  uint32_t dec(void) { return --count; }
-
-  void setInfoSchemaTable(const std::string &in_name)
-  {
-    i_s_table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
+  /**
+   * Increment the counter which tracks how many instances of this share are
+   * currently open.
+   * @return the new counter value
+   */
+  uint32_t incUseCount(void) 
+  { 
+    return ++count; 
   }
 
+  /**
+   * Decrement the count which tracks how many instances of this share are
+   * currently open.
+   * @return the new counter value
+   */
+  uint32_t decUseCount(void) 
+  { 
+    return --count; 
+  }
+
+  /**
+   * @ return the value of the use counter for this share
+   */
+  uint32_t getUseCount() const
+  {
+    return count;
+  }
+
+  /**
+   * @return the table name associated with this share.
+   */
+  const std::string &getName() const
+  {
+    return table->getTableName();
+  }
+
+  /**
+   * @return the I_S table associated with this share.
+   */
   drizzled::plugin::InfoSchemaTable *getInfoSchemaTable()
   {
-    return i_s_table;
+    return table;
   }
 
-  static InformationShare *get(const char *table_name);
-  static void free(InformationShare *share);
-  static void start(void);
-  static void stop(void);
-  THR_LOCK lock;
+  /**
+   * @return the thread lock for this share.
+   */
+  THR_LOCK *getThreadLock()
+  {
+    return &lock;
+  }
 };
 
 #endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_SHARE_H */
