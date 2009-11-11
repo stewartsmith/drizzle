@@ -11,22 +11,23 @@ dnl From Monty Taylor
 
 AC_DEFUN([PANDORA_WITH_GETTEXT],[
 
-  mkdir -p po
-  echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
-  # The grep -v '${PACKAGE}-' is to exclude any distcheck leftovers
-  for f in `cd ${srcdir} ; find . | grep -v "${PACKAGE}-" | ${EGREP} '\.(cc|c|h|yy)$' | cut -c3- | sort`
+  m4_syscmd([if test -d po ; then
+    echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.stamp
+    PACKAGE=`grep ^AC_INIT configure.ac | cut -f2-3 -d[ | cut -f1 -d]`
+    for f in `find . | grep -v "${PACKAGE}-" | egrep '\.(cc|c|h|yy)$' | cut -c3- | sort`
     do
-      if grep gettext.h "${srcdir}/$f" | grep include >/dev/null 2>&1
+      if grep gettext.h "$f" | grep include >/dev/null 2>&1
       then
-        echo "$f" >> po/POTFILES.in.in
+        echo "$f" >> po/POTFILES.in.stamp
       fi
     done
-    if diff po/POTFILES.in.in po/POTFILES.in >/dev/null 2>&1
+    if diff po/POTFILES.in.stamp po/POTFILES.in >/dev/null 2>&1
     then
-      rm po/POTFILES.in.in
+      rm po/POTFILES.in.stamp
     else
-      mv po/POTFILES.in.in po/POTFILES.in
+      mv po/POTFILES.in.stamp po/POTFILES.in
     fi
+  fi])
 
   AM_GNU_GETTEXT(external, need-formatstring-macros)
   AM_GNU_GETTEXT_VERSION([0.17])
