@@ -121,7 +121,7 @@ class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | 
+   : drizzled::plugin::StorageEngine(name_arg, HTON_TEMPORARY_ONLY | 
                                      HTON_HAS_DATA_DICTIONARY | HTON_FILE_BASED) {}
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)

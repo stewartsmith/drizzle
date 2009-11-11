@@ -14,20 +14,24 @@ AC_DEFUN([AC_CXX_STL_HASH],
   [AC_MSG_CHECKING(the location of hash_map)
    AC_LANG_PUSH(C++)
    ac_cv_cxx_hash_map=""
-   for location in ext/hash_map boost/hash_map hash_map; do
+   for location in "" "ext/" "tr1/" ; do
      for namespace in __gnu_cxx "" std stdext; do
-       if test -z "$ac_cv_cxx_hash_map"; then
-         AC_COMPILE_IFELSE(
-           [AC_LANG_PROGRAM(
-             [[#include <$location>]],
-             [[${namespace}::hash_map<int, int> t]])],
-           [ac_cv_cxx_hash_map="<$location>";
-           ac_cv_cxx_hash_namespace="$namespace";])
-       fi
+       for classprefix in unordered hash; do
+         if test -z "$ac_cv_cxx_hash_map"; then
+           AC_COMPILE_IFELSE(
+             [AC_LANG_PROGRAM([[#include <${location}${classprefix}_map>]],
+                           [[${namespace}::${classprefix}_map<int, int> t]])],
+             [ac_cv_cxx_hash_map="<${location}${classprefix}_map>";
+              ac_cv_cxx_hash_set="<${location}${classprefix}_set>";
+              ac_cv_cxx_hash_namespace="$namespace";
+              ac_cv_cxx_hash_map_class="${classprefix}_map";
+              ac_cv_cxx_hash_set_class="${classprefix}_set"])
+
+         fi
+       done
      done
    done
-   AC_LANG_POP()
-   ac_cv_cxx_hash_set=`echo "$ac_cv_cxx_hash_map" | sed s/map/set/`;
+
    if test -n "$ac_cv_cxx_hash_map"; then
       AC_DEFINE(HAVE_HASH_MAP, 1, [define if the compiler has hash_map])
       AC_DEFINE(HAVE_HASH_SET, 1, [define if the compiler has hash_set])
@@ -37,9 +41,35 @@ AC_DEFUN([AC_CXX_STL_HASH],
                          [the location of <hash_set>])
       AC_DEFINE_UNQUOTED(HASH_NAMESPACE,$ac_cv_cxx_hash_namespace,
                          [the namespace of hash_map/hash_set])
+      AC_DEFINE_UNQUOTED(HASH_MAP_CLASS,$ac_cv_cxx_hash_map_class,
+                         [the classname of hash_map])
+      AC_DEFINE_UNQUOTED(HASH_SET_CLASS,$ac_cv_cxx_hash_set_class,
+                         [the classname of hash_set])
       AC_MSG_RESULT([$ac_cv_cxx_hash_map])
    else
       AC_MSG_RESULT()
       AC_MSG_WARN([could not find an STL hash_map])
    fi
+   AC_CACHE_CHECK(
+     [whether to redefine hash<string>],
+     [ac_cv_redefine_hash_string],
+     [AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([[
+#include HASH_SET_H
+#include <string>
+using namespace HASH_NAMESPACE;
+using namespace std;
+          ]],[[
+string teststr("test");
+HASH_SET_CLASS<string> test_hash;
+HASH_SET_CLASS<string>::iterator iter= test_hash.find(teststr);
+if (iter != test_hash.end())
+  return 1;
+          ]])],
+       [ac_cv_redefine_hash_string=no],
+       [ac_cv_redefine_hash_string=yes])])
+   AS_IF([test $ac_cv_redefine_hash_string = yes],[
+      AC_DEFINE(REDEFINE_HASH_STRING, 1, [if hash<string> needs to be defined])
+   ])
+   AC_LANG_POP()
 ])

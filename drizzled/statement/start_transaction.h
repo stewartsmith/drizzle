@@ -32,10 +32,14 @@ namespace statement
 
 class StartTransaction : public Statement
 {
+  /* Options used in START TRANSACTION statement */
+  start_transaction_option_t start_transaction_opt;
+
 public:
-  StartTransaction(Session *in_session)
+  StartTransaction(Session *in_session, start_transaction_option_t opt= START_TRANS_NO_OPTIONS)
     :
-      Statement(in_session)
+      Statement(in_session),
+      start_transaction_opt(opt)
   {}
 
   bool execute();

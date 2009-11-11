@@ -2341,18 +2341,17 @@ start:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_BEGIN;
-            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
+            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession, (start_transaction_option_t)$3);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->start_transaction_opt= $3;
           }
         ;
 
 start_transaction_opts:
-          /*empty*/ { $$ = 0; }
+          /*empty*/ { $$ = START_TRANS_NO_OPTIONS; }
         | WITH CONSISTENT_SYM SNAPSHOT_SYM
           {
-            $$= DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT;
+            $$= START_TRANS_OPT_WITH_CONS_SNAPSHOT;
           }
         ;
 

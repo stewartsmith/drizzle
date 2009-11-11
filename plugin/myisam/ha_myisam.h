@@ -100,6 +100,7 @@ class ha_myisam: public Cursor
   int read_range_first(const key_range *start_key, const key_range *end_key,
                        bool eq_range_arg, bool sorted);
   int read_range_next();
+  int reset_auto_increment(uint64_t value);
 private:
   key_map keys_with_parts;
 };

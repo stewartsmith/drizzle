@@ -218,7 +218,6 @@ enum enum_server_command
 
 #define ONLY_KILL_QUERY         1
 
-#define MAX_TINYINT_WIDTH       3       /* Max width for a TINY w.o. sign */
 #define MAX_INT_WIDTH           10      /* Max width for a LONG w.o. sign */
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
@@ -240,9 +239,7 @@ enum enum_server_command
 #define DRIZZLE_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
 #define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
-/* Start TINY at 1 because we removed DECIMAL from off the front of the enum */
-enum enum_field_types { DRIZZLE_TYPE_TINY,
-                        DRIZZLE_TYPE_LONG,
+enum enum_field_types { DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
                         DRIZZLE_TYPE_NULL,
                         DRIZZLE_TYPE_TIMESTAMP,

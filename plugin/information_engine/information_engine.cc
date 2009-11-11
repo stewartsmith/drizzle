@@ -15,8 +15,14 @@
 
 #include <plugin/information_engine/information_engine.h>
 #include <drizzled/plugin/info_schema_table.h>
+#include <drizzled/session.h>
+
+#include <plugin/information_engine/information_engine.h>
+
+#include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static const string engine_name("INFORMATION_ENGINE");
 
@@ -38,8 +44,8 @@ int InformationCursor::open(const char *name, int, uint32_t)
 {
   InformationShare *shareable;
 
-  if (!(shareable= InformationShare::get(name)))
-    return(HA_ERR_OUT_OF_MEM);
+  if (! (shareable= InformationShare::get(name)))
+    return HA_ERR_OUT_OF_MEM;
 
   thr_lock_data_init(&shareable->lock, &lock, NULL);
 
@@ -65,12 +71,33 @@ void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string
 
 int InformationCursor::rnd_init(bool)
 {
+  TableList *tmp= table->pos_in_table_list;
+  plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
+  if (sch_table)
+  {
+    sch_table->fillTable(ha_session(),
+                         tmp);
+    iter= sch_table->getRows().begin();
+  }
   return 0;
 }
 
 
-int InformationCursor::rnd_next(unsigned char *)
+int InformationCursor::rnd_next(unsigned char *buf)
 {
+  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
+
+  if (iter != sch_table->getRows().end() &&
+      ! sch_table->getRows().empty())
+  {
+    (*iter)->copyRecordInto(buf);
+    ++iter;
+    return 0;
+  }
+
+  sch_table->clearRows();
+
   return HA_ERR_END_OF_FILE;
 }
 

@@ -38,8 +38,7 @@ class MemcachedAnalysisISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 bool createMemcachedAnalysisColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);
