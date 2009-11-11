@@ -46,7 +46,8 @@ CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
 			.plugin.scan \
 			config/bzr_revinfo \
-			./po/POTFILES.in	
+			po/POTFILES.in	
+
 MAINTAINERCLEANFILES=	autom4te.cache
 
 CLIENT_LDADD=		mysys/libmysys.la \

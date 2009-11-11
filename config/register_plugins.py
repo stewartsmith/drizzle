@@ -242,15 +242,15 @@ configure: ${top_srcdir}/%(rel_path)s/pandora-plugin.ac
 	else \\
 	    cmp -s $< $@; \\
 	    if [ $$? -ne 0 ]; then \\
-	      echo 'cd ${srcdir} && python config/register_plugins.py ${top_srcdir} ${top_builddir} %(rel_path)s'; \\
-	      unchanged=`cd ${srcdir} && python config/register_plugins.py ${top_srcdir} ${top_builddir} %(rel_path)s` ;\\
+	      echo 'cd ${srcdir} && python config/register_plugins.py . . %(rel_path)s'; \\
+	      unchanged=`cd ${srcdir} && python config/register_plugins.py . . %(rel_path)s` ;\\
 	      if [ $$? -ne 0 ]; then \\
 	        echo "**** register_plugins failed ****"; \\
 	        false; \\
 	      fi && \\
 	      for plugin_dir in $$unchanged; do \\
 	        echo "plugin $$plugin_dir unchanged." ; \\
-	        touch -f -r $$plugin_dir/pandora-plugin.am $$plugin_dir/.plugin.ini.stamp; \\
+	        touch -f -r ${top_srcdir}/$$plugin_dir/pandora-plugin.am $$plugin_dir/.plugin.ini.stamp; \\
 	      done && \\
               cp $< $@ || echo "Failed to update $@"; \\
 	    fi; \\
