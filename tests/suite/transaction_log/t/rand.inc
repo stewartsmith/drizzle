@@ -13,3 +13,5 @@ CREATE TABLE t1 (
 
 insert into t1 values (1);
 insert into t1 select rand(100)*100 from t1;
+
+drop table t1;

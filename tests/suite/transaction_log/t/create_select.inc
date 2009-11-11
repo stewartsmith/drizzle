@@ -19,3 +19,5 @@ CREATE TABLE t2 (
   id INT NOT NULL
 , padding VARCHAR(200) NOT NULL
 ) select * from t1;
+
+DROP TABLE t1, t2;
