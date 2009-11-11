@@ -40,8 +40,8 @@ class HeapEngine : public drizzled::plugin::StorageEngine
 {
 public:
   HeapEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
+   : drizzled::plugin::StorageEngine(name_arg, 
+                                     HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }
@@ -708,8 +708,8 @@ int HeapEngine::doCreateTable(Session *session,
 
 
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
-                             Table *table_arg, HA_CREATE_INFO& create_info,
-                             bool internal_table, HP_SHARE **internal_share)
+                                  Table *table_arg, HA_CREATE_INFO& create_info,
+                                  bool internal_table, HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
   uint32_t auto_key= 0, auto_key_type= 0;
