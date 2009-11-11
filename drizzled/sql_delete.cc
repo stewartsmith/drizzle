@@ -129,10 +129,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   */
   if (!using_limit && const_cond_result)
   {
-    /* Update the table->file->stats.records number */
-    table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
-    ha_rows const maybe_deleted= table->file->stats.records;
-    if (!(error=table->file->ha_delete_all_rows()))
+    /* Update the table->cursor->stats.records number */
+    table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+    ha_rows const maybe_deleted= table->cursor->stats.records;
+    if (!(error=table->cursor->ha_delete_all_rows()))
     {
       error= -1;				// ok
       deleted= maybe_deleted;
@@ -140,7 +140,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     }
     if (error != HA_ERR_WRONG_COMMAND)
     {
-      table->file->print_error(error,MYF(0));
+      table->cursor->print_error(error,MYF(0));
       error=0;
       goto cleanup;
     }
@@ -154,8 +154,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       limit= 0;
   }
 
-  /* Update the table->file->stats.records number */
-  table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+  /* Update the table->cursor->stats.records number */
+  table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
   table->covering_keys.reset();
   table->quick_keys.reset();		// Can't use 'only index'
@@ -196,7 +196,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     }
   }
   if (options & OPTION_QUICK)
-    (void) table->file->extra(HA_EXTRA_QUICK);
+    (void) table->cursor->extra(HA_EXTRA_QUICK);
 
   if (order && order->elements)
   {
@@ -248,7 +248,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   session->set_proc_info("updating");
 
-  will_batch= !table->file->start_bulk_delete();
+  will_batch= !table->cursor->start_bulk_delete();
 
 
   table->mark_columns_needed_for_delete();
@@ -259,7 +259,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     // session->is_error() is tested to disallow delete row on error
     if (!(select && select->skip_record())&& ! session->is_error() )
     {
-      if (!(error= table->file->ha_delete_row(table->record[0])))
+      if (!(error= table->cursor->ha_delete_row(table->record[0])))
       {
 	deleted++;
 	if (!--limit && using_limit)
@@ -270,7 +270,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       }
       else
       {
-	table->file->print_error(error,MYF(0));
+	table->cursor->print_error(error,MYF(0));
 	/*
 	  In < 4.0.14 we set the error number to 0 here, but that
 	  was not sensible, because then MySQL would not roll back the
@@ -284,21 +284,21 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       }
     }
     else
-      table->file->unlock_row();  // Row failed selection, release lock on it
+      table->cursor->unlock_row();  // Row failed selection, release lock on it
   }
   killed_status= session->killed;
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
-  if (will_batch && (loc_error= table->file->end_bulk_delete()))
+  if (will_batch && (loc_error= table->cursor->end_bulk_delete()))
   {
     if (error != 1)
-      table->file->print_error(loc_error,MYF(0));
+      table->cursor->print_error(loc_error,MYF(0));
     error=1;
   }
   session->set_proc_info("end");
   end_read_record(&info);
   if (options & OPTION_QUICK)
-    (void) table->file->extra(HA_EXTRA_NORMAL);
+    (void) table->cursor->extra(HA_EXTRA_NORMAL);
 
 cleanup:
 
@@ -308,17 +308,17 @@ cleanup:
       We're really doing a truncate and need to reset the table's
       auto-increment counter.
     */
-    int error2= table->file->ha_reset_auto_increment(0);
+    int error2= table->cursor->ha_reset_auto_increment(0);
 
     if (error2 && (error2 != HA_ERR_WRONG_COMMAND))
     {
-      table->file->print_error(error2, MYF(0));
+      table->cursor->print_error(error2, MYF(0));
       error= 1;
     }
   }
 
   delete select;
-  transactional_table= table->file->has_transactions();
+  transactional_table= table->cursor->has_transactions();
 
   if (!transactional_table && deleted > 0)
     session->transaction.stmt.modified_non_trans_table= true;

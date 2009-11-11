@@ -559,6 +559,7 @@ drizzled_SOURCES = \
 		function/units.cc \
 		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
+		ha_commands.cc \
 		ha_trx_info.cc \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \

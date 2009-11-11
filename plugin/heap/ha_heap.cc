@@ -46,10 +46,10 @@ public:
     addAlias("HEAP");
   }
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_heap(this, table);
+    return new (mem_root) ha_heap(*this, table);
   }
 
   const char **bas_ext() const {
@@ -157,8 +157,8 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(drizzled::plugin::StorageEngine *engine_arg,
-                 TableShare *table_arg)
+ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
+                 TableShare &table_arg)
   :Cursor(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
@@ -238,7 +238,7 @@ int ha_heap::close(void)
 
 Cursor *ha_heap::clone(MEM_ROOT *mem_root)
 {
-  Cursor *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
+  Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
 
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
@@ -686,7 +686,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
-                              Table& table_arg,
+                              Table &table_arg,
                               HA_CREATE_INFO& create_info,
                               drizzled::message::Table& create_proto)
 {

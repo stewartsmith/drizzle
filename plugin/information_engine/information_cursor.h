@@ -30,7 +30,7 @@ class InformationCursor: public Cursor
   drizzled::plugin::InfoSchemaTable::Rows::iterator iter;
 
 public:
-  InformationCursor(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
+  InformationCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
   ~InformationCursor() {}
 
   /*

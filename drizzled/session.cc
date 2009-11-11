@@ -932,7 +932,7 @@ inline static void list_include(CHANGED_TableList** prev,
 void Session::add_changed_table(Table *table)
 {
   assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
-	      table->file->has_transactions());
+	      table->cursor->has_transactions());
   add_changed_table(table->s->table_cache_key.str,
                     (long) table->s->table_cache_key.length);
 }
@@ -1038,8 +1038,8 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   if (file > 0)
   {
     (void) end_io_cache(&cache);
-    (void) my_close(file,MYF(0));
-    (void) my_delete(path,MYF(0));		// Delete file on error
+    (void) my_close(file, MYF(0));
+    (void) my_delete(path, MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -1048,7 +1048,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 bool select_to_file::send_eof()
 {
   int error= test(end_io_cache(&cache));
-  if (my_close(file,MYF(MY_WME)))
+  if (my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
   {
@@ -1070,7 +1070,7 @@ void select_to_file::cleanup()
   if (file >= 0)
   {
     (void) end_io_cache(&cache);
-    (void) my_close(file,MYF(0));
+    (void) my_close(file, MYF(0));
     file= -1;
   }
   path[0]= '\0';
@@ -1083,7 +1083,7 @@ select_to_file::~select_to_file()
   if (file >= 0)
   {					// This only happens in case of error
     (void) end_io_cache(&cache);
-    (void) my_close(file,MYF(0));
+    (void) my_close(file, MYF(0));
     file= -1;
   }
 }
@@ -1249,7 +1249,7 @@ bool select_export::send_data(List<Item> &items)
   List_iterator_fast<Item> li(items);
 
   if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
-		 exchange->line_start->length()))
+                 exchange->line_start->length()))
     goto err;
   while ((item=li++))
   {
@@ -1260,26 +1260,26 @@ bool select_export::send_data(List<Item> &items)
     if (res && enclosed)
     {
       if (my_b_write(&cache,(unsigned char*) exchange->enclosed->ptr(),
-		     exchange->enclosed->length()))
-	goto err;
+                     exchange->enclosed->length()))
+        goto err;
     }
     if (!res)
     {						// NULL
       if (!fixed_row_size)
       {
-	if (escape_char != -1)			// Use \N syntax
-	{
-	  null_buff[0]=escape_char;
-	  null_buff[1]='N';
-	  if (my_b_write(&cache,(unsigned char*) null_buff,2))
-	    goto err;
-	}
-	else if (my_b_write(&cache,(unsigned char*) "NULL",4))
-	  goto err;
+        if (escape_char != -1)			// Use \N syntax
+        {
+          null_buff[0]=escape_char;
+          null_buff[1]='N';
+          if (my_b_write(&cache,(unsigned char*) null_buff,2))
+            goto err;
+        }
+        else if (my_b_write(&cache,(unsigned char*) "NULL",4))
+          goto err;
       }
       else
       {
-	used_length=0;				// Fill with space
+        used_length=0;				// Fill with space
       }
     }
     else
@@ -1290,30 +1290,30 @@ bool select_export::send_data(List<Item> &items)
         used_length= res->length();
 
       if ((result_type == STRING_RESULT || is_unsafe_field_sep) &&
-           escape_char != -1)
+          escape_char != -1)
       {
         char *pos, *start, *end;
         const CHARSET_INFO * const res_charset= res->charset();
         const CHARSET_INFO * const character_set_client= default_charset_info;
 
         bool check_second_byte= (res_charset == &my_charset_bin) &&
-                                 character_set_client->
-                                 escape_with_backslash_is_dangerous;
+          character_set_client->
+          escape_with_backslash_is_dangerous;
         assert(character_set_client->mbmaxlen == 2 ||
                !character_set_client->escape_with_backslash_is_dangerous);
-	for (start=pos=(char*) res->ptr(),end=pos+used_length ;
-	     pos != end ;
-	     pos++)
-	{
-	  if (use_mb(res_charset))
-	  {
-	    int l;
-	    if ((l=my_ismbchar(res_charset, pos, end)))
-	    {
-	      pos += l-1;
-	      continue;
-	    }
-	  }
+        for (start=pos=(char*) res->ptr(),end=pos+used_length ;
+             pos != end ;
+             pos++)
+        {
+          if (use_mb(res_charset))
+          {
+            int l;
+            if ((l=my_ismbchar(res_charset, pos, end)))
+            {
+              pos += l-1;
+              continue;
+            }
+          }
 
           /*
             Special case when dumping BINARY/VARBINARY/BLOB values
@@ -1353,47 +1353,47 @@ bool select_export::send_data(List<Item> &items)
                 pos + 1 < end &&
                 NEED_ESCAPING(pos[1]))) &&
               /*
-               Don't escape field_term_char by doubling - doubling is only
-               valid for ENCLOSED BY characters:
+                Don't escape field_term_char by doubling - doubling is only
+                valid for ENCLOSED BY characters:
               */
               (enclosed || !is_ambiguous_field_term ||
                (int) (unsigned char) *pos != field_term_char))
           {
-	    char tmp_buff[2];
+            char tmp_buff[2];
             tmp_buff[0]= ((int) (unsigned char) *pos == field_sep_char &&
                           is_ambiguous_field_sep) ?
-                          field_sep_char : escape_char;
-	    tmp_buff[1]= *pos ? *pos : '0';
-	    if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
-		my_b_write(&cache,(unsigned char*) tmp_buff,2))
-	      goto err;
-	    start=pos+1;
-	  }
-	}
-	if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
-	  goto err;
+              field_sep_char : escape_char;
+            tmp_buff[1]= *pos ? *pos : '0';
+            if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
+                my_b_write(&cache,(unsigned char*) tmp_buff,2))
+              goto err;
+            start=pos+1;
+          }
+        }
+        if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
+          goto err;
       }
       else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))
-	goto err;
+        goto err;
     }
     if (fixed_row_size)
     {						// Fill with space
       if (item->max_length > used_length)
       {
-	/* QQ:  Fix by adding a my_b_fill() function */
-	if (!space_inited)
-	{
-	  space_inited=1;
-	  memset(space, ' ', sizeof(space));
-	}
-	uint32_t length=item->max_length-used_length;
-	for (; length > sizeof(space) ; length-=sizeof(space))
-	{
-	  if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
-	    goto err;
-	}
-	if (my_b_write(&cache,(unsigned char*) space,length))
-	  goto err;
+        /* QQ:  Fix by adding a my_b_fill() function */
+        if (!space_inited)
+        {
+          space_inited=1;
+          memset(space, ' ', sizeof(space));
+        }
+        uint32_t length=item->max_length-used_length;
+        for (; length > sizeof(space) ; length-=sizeof(space))
+        {
+          if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
+            goto err;
+        }
+        if (my_b_write(&cache,(unsigned char*) space,length))
+          goto err;
       }
     }
     if (res && enclosed)
@@ -1410,7 +1410,7 @@ bool select_export::send_data(List<Item> &items)
     }
   }
   if (my_b_write(&cache,(unsigned char*) exchange->line_term->ptr(),
-		 exchange->line_term->length()))
+                 exchange->line_term->length()))
     goto err;
   return(0);
 err:
@@ -1877,7 +1877,6 @@ void Session::reset_for_next_command()
 
 /*
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
-  creates one DROP TEMPORARY Table binlog event for each pseudo-thread
 */
 
 void Session::close_temporary_tables()
@@ -2009,7 +2008,7 @@ void Session::mark_temp_tables_as_free_for_reuse()
     if (table->query_id == query_id)
     {
       table->query_id= 0;
-      table->file->ha_reset();
+      table->cursor->ha_reset();
     }
   }
 }
@@ -2021,7 +2020,7 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
     if (table->query_id == query_id)
     {
       table->query_id= 0;
-      table->file->ha_reset();
+      table->cursor->ha_reset();
     }
   }
 }

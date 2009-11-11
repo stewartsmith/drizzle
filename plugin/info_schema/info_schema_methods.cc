@@ -396,9 +396,9 @@ int KeyColUsageISMethods::processTable(Session *session,
     Table *show_table= tables->table;
     KEY *key_info=show_table->key_info;
     uint32_t primary_key= show_table->s->primary_key;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
+    show_table->cursor->info(HA_STATUS_VARIABLE |
+                             HA_STATUS_NO_LOCK |
+                             HA_STATUS_TIME);
     for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
     {
       if (i != primary_key && !(key_info->flags & HA_NOSAME))
@@ -427,7 +427,7 @@ int KeyColUsageISMethods::processTable(Session *session,
       }
     }
 
-    show_table->file->get_foreign_key_list(session, &f_key_list);
+    show_table->cursor->get_foreign_key_list(session, &f_key_list);
     FOREIGN_KEY_INFO *f_key_info;
     List_iterator_fast<FOREIGN_KEY_INFO> fkey_it(f_key_list);
     while ((f_key_info= fkey_it++))
@@ -756,11 +756,11 @@ RefConstraintsISMethods::processTable(Session *session, TableList *tables,
   {
     List<FOREIGN_KEY_INFO> f_key_list;
     Table *show_table= tables->table;
-    show_table->file->info(HA_STATUS_VARIABLE |
+    show_table->cursor->info(HA_STATUS_VARIABLE |
                            HA_STATUS_NO_LOCK |
                            HA_STATUS_TIME);
 
-    show_table->file->get_foreign_key_list(session, &f_key_list);
+    show_table->cursor->get_foreign_key_list(session, &f_key_list);
     FOREIGN_KEY_INFO *f_key_info;
     List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
     while ((f_key_info= it++))
@@ -927,11 +927,11 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
   {
     Table *show_table= tables->table;
     KEY *key_info=show_table->s->key_info;
-    if (show_table->file)
+    if (show_table->cursor)
     {
-      show_table->file->info(HA_STATUS_VARIABLE |
-                             HA_STATUS_NO_LOCK |
-                             HA_STATUS_TIME);
+      show_table->cursor->info(HA_STATUS_VARIABLE |
+                               HA_STATUS_NO_LOCK |
+                               HA_STATUS_TIME);
     }
     for (uint32_t i=0 ; i < show_table->s->keys ; i++,key_info++)
     {
@@ -950,9 +950,9 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
         str=(key_part->field ? key_part->field->field_name :
              "?unknown field?");
         table->field[7]->store(str, strlen(str), cs);
-        if (show_table->file)
+        if (show_table->cursor)
         {
-          if (show_table->file->index_flags(i, j, 0) & HA_READ_ORDER)
+          if (show_table->cursor->index_flags(i, j, 0) & HA_READ_ORDER)
           {
             table->field[8]->store(((key_part->key_part_flag &
                                      HA_REVERSE_SORT) ?
@@ -962,12 +962,12 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
           KEY *key=show_table->key_info+i;
           if (key->rec_per_key[j])
           {
-            ha_rows records=(show_table->file->stats.records /
+            ha_rows records=(show_table->cursor->stats.records /
                              key->rec_per_key[j]);
             table->field[9]->store((int64_t) records, true);
             table->field[9]->set_notnull();
           }
-          str= show_table->file->index_type(i);
+          str= show_table->cursor->index_type(i);
           table->field[13]->store(str, strlen(str), cs);
         }
         if ((key_part->field &&
@@ -1082,9 +1082,9 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
     Table *show_table= tables->table;
     KEY *key_info=show_table->key_info;
     uint32_t primary_key= show_table->s->primary_key;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
+    show_table->cursor->info(HA_STATUS_VARIABLE |
+                             HA_STATUS_NO_LOCK |
+                             HA_STATUS_TIME);
     for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
     {
       if (i != primary_key && !(key_info->flags & HA_NOSAME))
@@ -1112,7 +1112,7 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
       }
     }
 
-    show_table->file->get_foreign_key_list(session, &f_key_list);
+    show_table->cursor->get_foreign_key_list(session, &f_key_list);
     FOREIGN_KEY_INFO *f_key_info;
     List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
     while ((f_key_info=it++))
@@ -1163,7 +1163,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     char option_buff[400],*ptr;
     Table *show_table= tables->table;
     TableShare *share= show_table->s;
-    Cursor *file= show_table->file;
+    Cursor *cursor= show_table->cursor;
     drizzled::plugin::StorageEngine *tmp_db_type= share->db_type();
 
     if (share->tmp_table == SYSTEM_TMP_TABLE)
@@ -1223,11 +1223,11 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
       table->field[20]->store(share->getComment(),
                               share->getCommentLength(), cs);
 
-    if(file)
+    if (cursor)
     {
-      file->info(HA_STATUS_VARIABLE | HA_STATUS_TIME | HA_STATUS_AUTO |
-                 HA_STATUS_NO_LOCK);
-      enum row_type row_type = file->get_row_type();
+      cursor->info(HA_STATUS_VARIABLE | HA_STATUS_TIME | HA_STATUS_AUTO |
+                   HA_STATUS_NO_LOCK);
+      enum row_type row_type = cursor->get_row_type();
       switch (row_type) {
       case ROW_TYPE_NOT_USED:
       case ROW_TYPE_DEFAULT:
@@ -1258,48 +1258,47 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
       table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
       if (! tables->schema_table)
       {
-        table->field[7]->store((int64_t) file->stats.records, true);
+        table->field[7]->store((int64_t) cursor->stats.records, true);
         table->field[7]->set_notnull();
       }
-      table->field[8]->store((int64_t) file->stats.mean_rec_length, true);
-      table->field[9]->store((int64_t) file->stats.data_file_length, true);
-      if (file->stats.max_data_file_length)
+      table->field[8]->store((int64_t) cursor->stats.mean_rec_length, true);
+      table->field[9]->store((int64_t) cursor->stats.data_file_length, true);
+      if (cursor->stats.max_data_file_length)
       {
-        table->field[10]->store((int64_t) file->stats.max_data_file_length,
+        table->field[10]->store((int64_t) cursor->stats.max_data_file_length,
                                 true);
       }
-      table->field[11]->store((int64_t) file->stats.index_file_length, true);
-      table->field[12]->store((int64_t) file->stats.delete_length, true);
+      table->field[11]->store((int64_t) cursor->stats.index_file_length, true);
+      table->field[12]->store((int64_t) cursor->stats.delete_length, true);
       if (show_table->found_next_number_field)
       {
-        table->field[13]->store((int64_t) file->stats.auto_increment_value,
-                                true);
+        table->field[13]->store((int64_t) cursor->stats.auto_increment_value, true);
         table->field[13]->set_notnull();
       }
-      if (file->stats.create_time)
+      if (cursor->stats.create_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (time_t) file->stats.create_time);
+                                                  (time_t) cursor->stats.create_time);
         table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[14]->set_notnull();
       }
-      if (file->stats.update_time)
+      if (cursor->stats.update_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (time_t) file->stats.update_time);
+                                                  (time_t) cursor->stats.update_time);
         table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[15]->set_notnull();
       }
-      if (file->stats.check_time)
+      if (cursor->stats.check_time)
       {
         session->variables.time_zone->gmt_sec_to_TIME(&time,
-                                                  (time_t) file->stats.check_time);
+                                                  (time_t) cursor->stats.check_time);
         table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[16]->set_notnull();
       }
-      if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
+      if (cursor->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
       {
-        table->field[18]->store((int64_t) file->checksum(), true);
+        table->field[18]->store((int64_t) cursor->checksum(), true);
         table->field[18]->set_notnull();
       }
     }
