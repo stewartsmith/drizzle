@@ -17,8 +17,8 @@ AC_DEFUN([PANDORA_PLUGINS],[
   dnl get called probably during autoconf too, so it's important to protect
   dnl with test -f ... if the files exist, we don't have the chicken/egg 
   dnl problem and therefore don't need to do anything here
-  syscmd([test -f config/plugin.stamp || python config/register_plugins.py . . > /dev/null])
-  syscmd([test -f config/plugin.stamp || touch config/plugin.stamp aclocal.m4])
+  m4_syscmd([test -f config/plugin.stamp || python config/register_plugins.py . . > /dev/null])
+  m4_syscmd([test -f config/plugin.stamp || touch config/plugin.stamp aclocal.m4])
 
   m4_sinclude(config/plugin-list.ac)
 
