@@ -17,7 +17,7 @@
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/session.h>
 
-#include "information_cursor.h"
+#include <plugin/information_engine/information_cursor.h>
 
 #include <string>
 

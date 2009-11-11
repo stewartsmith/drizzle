@@ -21,7 +21,7 @@
 #include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
-#include "information_share.h"
+#include <plugin/information_engine/information_share.h>
 
 class InformationCursor: public Cursor
 {

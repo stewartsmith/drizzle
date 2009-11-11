@@ -21,8 +21,8 @@
 #include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
-#include "information_share.h"
-#include "information_cursor.h"
+#include <plugin/information_engine/information_share.h>
+#include <plugin/information_engine/information_cursor.h>
 
 class InformationEngine : public drizzled::plugin::StorageEngine
 {
