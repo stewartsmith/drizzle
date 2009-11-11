@@ -325,7 +325,7 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
   /* Open new dll handle */
   if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
   {
-    const char *errmsg=dlerror();
+    const char *errmsg= dlerror();
     uint32_t dlpathlen= dlpath.length();
     if (!dlpath.compare(0, dlpathlen, errmsg))
     { // if errmsg starts from dlpath, trim this prefix.
@@ -337,6 +337,11 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
       my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath.c_str(), errno, errmsg);
     if (report & REPORT_TO_LOG)
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
+
+    // This is, in theory, should cause dlerror() to deallocate the error
+    // message. Found this via Google'ing :)
+    (void)dlerror();
+
     return(0);
   }
 
