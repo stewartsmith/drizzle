@@ -295,8 +295,7 @@ endif
   if os.path.exists(plugin_am_file):
     plugin_am.write('include %s\n' % plugin_am_file)
 
-
-if len(sys.argv)>3:
+if len(sys.argv)>2:
   top_srcdir=sys.argv[1]
   top_builddir=sys.argv[2]
 
@@ -305,8 +304,8 @@ if not os.path.exists("config/plugin.list"):
   os.system("cp .plugin.scan config/plugin.list")
 
 
-if len(sys.argv)>3 or (len(sys.argv)==2 and sys.argv[1]=='plugin-stamp'):
-  if len(sys.argv)>4:
+if len(sys.argv)>2 or (len(sys.argv)==2 and sys.argv[1]=='plugin-stamp'):
+  if len(sys.argv)>3:
     plugin_list = [top_srcdir + '/' + plugin_name for plugin_name in sys.argv[3:]]
   else:
     def accumulate_plugins(arg, dirname, fnames):

@@ -43,7 +43,10 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 
 
 CLEANFILES=		${BUILT_SOURCES}
-DISTCLEANFILES=		ac_available_languages_fragment .plugin.scan
+DISTCLEANFILES=		ac_available_languages_fragment \
+			.plugin.scan \
+			config/bzr_revinfo \
+			./po/POTFILES.in	
 MAINTAINERCLEANFILES=	autom4te.cache
 
 CLIENT_LDADD=		mysys/libmysys.la \
