@@ -66,9 +66,9 @@ public:
     return 0; 
   }
 
-  virtual Cursor *create(TableShare *table, MEM_ROOT *mem_root)
+  virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root)
   {
-    return new (mem_root) InformationCursor(this, table);
+    return new (mem_root) InformationCursor(*this, table);
   }
 
   const char **bas_ext() const 

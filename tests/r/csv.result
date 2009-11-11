@@ -4997,7 +4997,7 @@ delete from t1;
 affected rows: 4
 insert t1 values (1),(2),(3),(4),(5);
 truncate table t1;
-affected rows: 0
+affected rows: 5
 drop table t1;
 create temporary table float_test (id float not null,string varchar(64) not null) Engine=CSV;
 insert into float_test values(1.0,'string');

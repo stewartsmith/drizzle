@@ -90,7 +90,7 @@ class ha_tina: public Cursor
   int init_data_file();
 
 public:
-  ha_tina(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
+  ha_tina(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
   ~ha_tina()
   {
     if (chain_alloced)

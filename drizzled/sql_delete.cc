@@ -129,10 +129,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   */
   if (!using_limit && const_cond_result)
   {
-    /* Update the table->file->stats.records number */
-    table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
-    ha_rows const maybe_deleted= table->file->stats.records;
-    if (!(error=table->file->ha_delete_all_rows()))
+    /* Update the table->cursor->stats.records number */
+    table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+    ha_rows const maybe_deleted= table->cursor->stats.records;
+    if (!(error=table->cursor->ha_delete_all_rows()))
     {
       error= -1;				// ok
       deleted= maybe_deleted;
@@ -140,7 +140,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     }
     if (error != HA_ERR_WRONG_COMMAND)
     {
-      table->file->print_error(error,MYF(0));
+      table->cursor->print_error(error,MYF(0));
       error=0;
       goto cleanup;
     }
@@ -154,8 +154,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       limit= 0;
   }
 
-  /* Update the table->file->stats.records number */
-  table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+  /* Update the table->cursor->stats.records number */
+  table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
   table->covering_keys.reset();
   table->quick_keys.reset();		// Can't use 'only index'
@@ -196,7 +196,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     }
   }
   if (options & OPTION_QUICK)
-    (void) table->file->extra(HA_EXTRA_QUICK);
+    (void) table->cursor->extra(HA_EXTRA_QUICK);
 
   if (order && order->elements)
   {
@@ -248,7 +248,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   session->set_proc_info("updating");
 
-  will_batch= !table->file->start_bulk_delete();
+  will_batch= !table->cursor->start_bulk_delete();
 
 
   table->mark_columns_needed_for_delete();
@@ -259,7 +259,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     // session->is_error() is tested to disallow delete row on error
     if (!(select && select->skip_record())&& ! session->is_error() )
     {
-      if (!(error= table->file->ha_delete_row(table->record[0])))
+      if (!(error= table->cursor->ha_delete_row(table->record[0])))
       {
 	deleted++;
 	if (!--limit && using_limit)
@@ -270,7 +270,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       }
       else
       {
-	table->file->print_error(error,MYF(0));
+	table->cursor->print_error(error,MYF(0));
 	/*
 	  In < 4.0.14 we set the error number to 0 here, but that
 	  was not sensible, because then MySQL would not roll back the
@@ -284,21 +284,23 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       }
     }
     else
-      table->file->unlock_row();  // Row failed selection, release lock on it
+      table->cursor->unlock_row();  // Row failed selection, release lock on it
   }
   killed_status= session->killed;
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
-  if (will_batch && (loc_error= table->file->end_bulk_delete()))
+  if (will_batch && (loc_error= table->cursor->end_bulk_delete()))
   {
     if (error != 1)
-      table->file->print_error(loc_error,MYF(0));
+      table->cursor->print_error(loc_error,MYF(0));
     error=1;
   }
   session->set_proc_info("end");
   end_read_record(&info);
   if (options & OPTION_QUICK)
-    (void) table->file->extra(HA_EXTRA_NORMAL);
+    (void) table->cursor->extra(HA_EXTRA_NORMAL);
+
+cleanup:
 
   if (reset_auto_increment && (error < 0))
   {
@@ -306,19 +308,17 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       We're really doing a truncate and need to reset the table's
       auto-increment counter.
     */
-    int error2= table->file->ha_reset_auto_increment(0);
+    int error2= table->cursor->ha_reset_auto_increment(0);
 
     if (error2 && (error2 != HA_ERR_WRONG_COMMAND))
     {
-      table->file->print_error(error2, MYF(0));
+      table->cursor->print_error(error2, MYF(0));
       error= 1;
     }
   }
 
-cleanup:
-
   delete select;
-  transactional_table= table->file->has_transactions();
+  transactional_table= table->cursor->has_transactions();
 
   if (!transactional_table && deleted > 0)
     session->transaction.stmt.modified_non_trans_table= true;
@@ -401,104 +401,12 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 /*
   Optimize delete of all rows by doing a full generate of the table
   This will work even if the .ISM and .ISD tables are destroyed
-
-  dont_send_ok should be set if:
-  - We should always wants to generate the table (even if the table type
-    normally can't safely do this.
-  - We don't want an ok to be sent to the end user.
-  - We don't want to log the truncate command
-  - If we want to have a name lock on the table on exit without errors.
 */
 
-bool mysql_truncate(Session& session, TableList *table_list, bool dont_send_ok)
+bool mysql_truncate(Session& session, TableList *table_list)
 {
-  HA_CREATE_INFO create_info;
-  char path[FN_REFLEN];
-  Table *table;
   bool error;
-  uint32_t path_length;
-  message::Table tmp_table;
 
-
-  memset(&create_info, 0, sizeof(create_info));
-  /* If it is a temporary table, close and regenerate it */
-  if (!dont_send_ok && (table= session.find_temporary_table(table_list)))
-  {
-    message::Table::StorageEngine *engine= tmp_table.mutable_engine();
-    plugin::StorageEngine *table_type= table->s->db_type();
-    TableShare *share= table->s;
-
-    if (!table_type->check_flag(HTON_BIT_CAN_RECREATE))
-      goto trunc_by_del;
-
-    table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);
-
-    /*
-      Because we bypass "all" of what it takes to create a Table we are on shakey ground in this
-      execution path. Not everything will be properly created in order to use the table
-      we create here. 
-
-      Painful.
-    */
-    assert(share->storage_engine);
-    session.close_temporary_table(table, false, false);    // Don't free share
-    assert(share->storage_engine);
-    engine->set_name(share->db_type()->getName());
-    plugin::StorageEngine::createTable(session, share->normalized_path.str,
-                                       share->db.str, share->table_name.str, create_info, 
-                                       true, tmp_table, false);
-    // We don't need to call invalidate() because this table is not in cache
-    if ((error= (int) !(session.open_temporary_table(share->path.str,
-                                                      share->db.str,
-                                                      share->table_name.str, 1,
-                                                      OTM_OPEN))))
-      (void) session.rm_temporary_table(table_type, path);
-    share->free_table_share();
-    free((char*) table);
-    /*
-      If we return here we will not have logged the truncation to the bin log
-      and we will not my_ok() to the client.
-    */
-    goto end;
-  }
-
-  path_length= build_table_filename(path, sizeof(path), table_list->db,
-                                    table_list->table_name, 0);
-
-  if (!dont_send_ok)
-    goto trunc_by_del;
-
-  pthread_mutex_lock(&LOCK_open); /* Recreate table for truncate */
-  error= plugin::StorageEngine::createTable(session, path, table_list->db, table_list->table_name,
-                                            create_info, true, tmp_table, false);
-  pthread_mutex_unlock(&LOCK_open);
-
-end:
-  if (!dont_send_ok)
-  {
-    if (!error)
-    {
-      /*
-        TRUNCATE must always be statement-based binlogged (not row-based) so
-        we don't test current_stmt_binlog_row_based.
-      */
-      write_bin_log(&session, session.query, session.query_length);
-      session.my_ok();		// This should return record count
-    }
-    pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */
-    unlock_table_name(table_list);
-    pthread_mutex_unlock(&LOCK_open);
-  }
-  else if (error)
-  {
-    pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */
-    unlock_table_name(table_list);
-    pthread_mutex_unlock(&LOCK_open);
-  }
-  return(error);
-
-trunc_by_del:
-  /* Probably InnoDB table */
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
@@ -515,5 +423,5 @@ trunc_by_del:
   ha_commit(&session);
   session.options= save_options;
 
-  return(error);
+  return error;
 }

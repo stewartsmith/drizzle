@@ -696,7 +696,7 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
 
     if (engine)
     {
-      if ((file= engine->create(NULL, session.mem_root)))
+      if ((file= engine->create(dummy_share, session.mem_root)))
         file->init();
     }
     memset(&dummy_table, 0, sizeof(dummy_table));
@@ -804,7 +804,7 @@ err:
   return(error != 0);
 }
 
-Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
+Cursor *plugin::StorageEngine::getCursor(TableShare &share, MEM_ROOT *alloc)
 {
   Cursor *file;
 

@@ -848,7 +848,7 @@ int Field::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
 
 bool Field::optimize_range(uint32_t idx, uint32_t part)
 {
-  return test(table->file->index_flags(idx, part, 1) & HA_READ_RANGE);
+  return test(table->cursor->index_flags(idx, part, 1) & HA_READ_RANGE);
 }
 
 Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)

@@ -138,10 +138,10 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   error= 1;
   memset(&param, 0, sizeof(param));
   param.sort_length= sortlength(session, sortorder, s_length, &multi_byte_charset);
-  param.ref_length= table->file->ref_length;
+  param.ref_length= table->cursor->ref_length;
   param.addon_field= 0;
   param.addon_length= 0;
-  if (!(table->file->ha_table_flags() & HA_FAST_KEY_READ) && !sort_positions)
+  if (!(table->cursor->ha_table_flags() & HA_FAST_KEY_READ) && !sort_positions)
   {
     /*
       Get the descriptors of all fields whose values are appended
@@ -186,13 +186,13 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   if (select && select->quick && select->quick->records > 0L)
   {
     records= min((ha_rows) (select->quick->records*2+EXTRA_RECORDS*2),
-                 table->file->stats.records)+EXTRA_RECORDS;
+                 table->cursor->stats.records)+EXTRA_RECORDS;
     selected_records_file=0;
   }
   else
 #endif
   {
-    records= table->file->estimate_rows_upper_bound();
+    records= table->cursor->estimate_rows_upper_bound();
     /*
       If number of records is not known, use as much of sort buffer
       as possible.
@@ -460,7 +460,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   idx=indexpos=0;
   error=quick_select=0;
   sort_form=param->sort_form;
-  file= sort_form->file;
+  file= sort_form->cursor;
   ref_length=param->ref_length;
   ref_pos= ref_buff;
   quick_select=select && select->quick;

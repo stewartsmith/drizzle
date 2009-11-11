@@ -185,8 +185,8 @@ static bool mysql_prepare_alter_table(Session *session,
       table->found_next_number_field)
   {
     /* Table has an autoincrement, copy value to new table */
-    table->file->info(HA_STATUS_AUTO);
-    create_info->auto_increment_value= table->file->stats.auto_increment_value;
+    table->cursor->info(HA_STATUS_AUTO);
+    create_info->auto_increment_value= table->cursor->stats.auto_increment_value;
   }
   if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
       && table->s->hasKeyBlockSize())
@@ -539,7 +539,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     return -1;
   }
 
-  error= table->file->ha_discard_or_import_tablespace(discard);
+  error= table->cursor->ha_discard_or_import_tablespace(discard);
 
   session->set_proc_info("end");
 
@@ -564,7 +564,7 @@ err:
     return 0;
   }
 
-  table->file->print_error(error, MYF(0));
+  table->cursor->print_error(error, MYF(0));
 
   return -1;
 }
@@ -589,14 +589,14 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   int error= 0;
   switch (keys_onoff) {
   case ENABLE:
-    error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+    error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
     break;
   case LEAVE_AS_IS:
     if (!indexes_were_disabled)
       break;
     /* fall-through: disabled indexes */
   case DISABLE:
-    error= table->file->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+    error= table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
   }
 
   if (error == HA_ERR_WRONG_COMMAND)
@@ -606,7 +606,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
                         table->s->table_name.str);
     error= 0;
   } else if (error)
-    table->file->print_error(error, MYF(0));
+    table->cursor->print_error(error, MYF(0));
 
   return(error);
 }
@@ -808,7 +808,7 @@ bool alter_table(Session *session,
   new_db_type= create_info->db_type;
 
   if (new_db_type != old_db_type &&
-      !table->file->can_switch_engines())
+      !table->cursor->can_switch_engines())
   {
     assert(0);
     my_error(ER_ROW_IS_REFERENCED, MYF(0));
@@ -854,14 +854,14 @@ bool alter_table(Session *session,
       pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
       pthread_mutex_unlock(&LOCK_open);
-      error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+      error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     case DISABLE:
       pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
       pthread_mutex_unlock(&LOCK_open);
-      error=table->file->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+      error=table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     default:
@@ -933,7 +933,7 @@ bool alter_table(Session *session,
     }
     else if (error > 0)
     {
-      table->file->print_error(error, MYF(0));
+      table->cursor->print_error(error, MYF(0));
       error= -1;
     }
 
@@ -1284,17 +1284,17 @@ copy_data_between_tables(Table *from,Table *to,
   if (!(copy= new CopyField[to->s->fields]))
     return -1;
 
-  if (to->file->ha_external_lock(session, F_WRLCK))
+  if (to->cursor->ha_external_lock(session, F_WRLCK))
     return -1;
 
   /* We need external lock before we can disable/enable keys */
-  alter_table_manage_keys(to, from->file->indexes_are_disabled(), keys_onoff);
+  alter_table_manage_keys(to, from->cursor->indexes_are_disabled(), keys_onoff);
 
   /* We can abort alter table for any table type */
   session->abort_on_warning= !ignore;
 
-  from->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
-  to->file->ha_start_bulk_insert(from->file->stats.records);
+  from->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+  to->cursor->ha_start_bulk_insert(from->cursor->stats.records);
 
   List_iterator<CreateField> it(create);
   CreateField *def;
@@ -1316,7 +1316,7 @@ copy_data_between_tables(Table *from,Table *to,
 
   if (order)
   {
-    if (to->s->primary_key != MAX_KEY && to->file->primary_key_is_clustered())
+    if (to->s->primary_key != MAX_KEY && to->cursor->primary_key_is_clustered())
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff),
@@ -1353,7 +1353,7 @@ copy_data_between_tables(Table *from,Table *to,
   to->use_all_columns();
   init_read_record(&info, session, from, (SQL_SELECT *) 0, 1,1);
   if (ignore)
-    to->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+    to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   session->row_count= 0;
   to->restoreRecordAsDefault();        // Create empty record
   while (!(error=info.read_record(&info)))
@@ -1383,33 +1383,33 @@ copy_data_between_tables(Table *from,Table *to,
     {
       copy_ptr->do_copy(copy_ptr);
     }
-    prev_insert_id= to->file->next_insert_id;
-    error=to->file->ha_write_row(to->record[0]);
+    prev_insert_id= to->cursor->next_insert_id;
+    error= to->cursor->ha_write_row(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)
     {
       if (!ignore ||
-          to->file->is_fatal_error(error, HA_CHECK_DUP))
+          to->cursor->is_fatal_error(error, HA_CHECK_DUP))
       {
-         if (!to->file->is_fatal_error(error, HA_CHECK_DUP))
-         {
-           uint32_t key_nr= to->file->get_dup_key(error);
-           if ((int) key_nr >= 0)
-           {
-             const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
-             if (key_nr == 0 &&
-                 (to->key_info[0].key_part[0].field->flags &
-                  AUTO_INCREMENT_FLAG))
-               err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
-             to->file->print_keydup_error(key_nr, err_msg);
-             break;
-           }
-         }
+        if (!to->cursor->is_fatal_error(error, HA_CHECK_DUP))
+        {
+          uint32_t key_nr= to->cursor->get_dup_key(error);
+          if ((int) key_nr >= 0)
+          {
+            const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
+            if (key_nr == 0 &&
+                (to->key_info[0].key_part[0].field->flags &
+                 AUTO_INCREMENT_FLAG))
+              err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
+            to->cursor->print_keydup_error(key_nr, err_msg);
+            break;
+          }
+        }
 
-	to->file->print_error(error,MYF(0));
-	break;
+        to->cursor->print_error(error,MYF(0));
+        break;
       }
-      to->file->restore_auto_increment(prev_insert_id);
+      to->cursor->restore_auto_increment(prev_insert_id);
       delete_count++;
     }
     else
@@ -1419,12 +1419,12 @@ copy_data_between_tables(Table *from,Table *to,
   from->free_io_cache();
   delete [] copy;				// This is never 0
 
-  if (to->file->ha_end_bulk_insert() && error <= 0)
+  if (to->cursor->ha_end_bulk_insert() && error <= 0)
   {
-    to->file->print_error(my_errno,MYF(0));
+    to->cursor->print_error(my_errno,MYF(0));
     error=1;
   }
-  to->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+  to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
   if (ha_enable_transaction(session, true))
   {
@@ -1446,8 +1446,8 @@ copy_data_between_tables(Table *from,Table *to,
   from->free_io_cache();
   *copied= found_count;
   *deleted=delete_count;
-  to->file->ha_release_auto_increment();
-  if (to->file->ha_external_lock(session,F_UNLCK))
+  to->cursor->ha_release_auto_increment();
+  if (to->cursor->ha_external_lock(session,F_UNLCK))
     error=1;
   return(error > 0 ? -1 : 0);
 }
@@ -1514,7 +1514,7 @@ bool create_like_schema_frm(Session* session,
   if (mysql_prepare_create_table(session, &local_create_info, table_proto,
                                  &alter_info,
                                  tmp_table, &db_options,
-                                 schema_table->table->file,
+                                 schema_table->table->cursor,
                                  &schema_table->table->s->key_info, &keys, 0))
     return true;
 

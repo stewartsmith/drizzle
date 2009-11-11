@@ -28,8 +28,8 @@ using namespace drizzled;
 ** INFORMATION_ENGINE tables
 *****************************************************************************/
 
-InformationCursor::InformationCursor(plugin::StorageEngine *engine_arg,
-                                     TableShare *table_arg) :
+InformationCursor::InformationCursor(plugin::StorageEngine &engine_arg,
+                                     TableShare &table_arg) :
   Cursor(engine_arg, table_arg)
 {}
 

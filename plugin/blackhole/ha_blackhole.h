@@ -44,7 +44,7 @@ class ha_blackhole: public Cursor
   st_blackhole_share *share;
 
 public:
-  ha_blackhole(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
+  ha_blackhole(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
   ~ha_blackhole()
   {}
 
