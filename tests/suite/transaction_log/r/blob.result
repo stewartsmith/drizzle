@@ -1,0 +1,22 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding BLOB NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, 'test\0me');
+INSERT INTO t1 VALUES (2, 'test\0you');
+UPDATE t1 SET padding = 'test\0you' WHERE padding = 'test\0me';
+DELETE FROM t1 WHERE padding = 'test\0you';
+DROP TABLE t1;
+DROP TABLE IF EXISTS `t1`;
+CREATE TABLE t1 ( id INT NOT NULL , padding BLOB NOT NULL , PRIMARY KEY (id) );
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'test\0me');
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (2,'test\0you');
+UPDATE `test`.`t1` SET `padding`='test\0you' WHERE `id`=1;
+START TRANSACTION;
+DELETE FROM `test`.`t1` WHERE `id`=1;
+DELETE FROM `test`.`t1` WHERE `id`=2;
+COMMIT;
+DROP TABLE `t1`;
+SET GLOBAL transaction_log_truncate_debug= true;

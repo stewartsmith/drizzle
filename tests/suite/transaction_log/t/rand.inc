@@ -1,7 +1,5 @@
 # 
-# Simple test of the serial event log for testing rand() call 
-# 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# Tests that a value is put in the transaction log for rand()
 #
 
 --disable_warnings
@@ -13,5 +11,7 @@ CREATE TABLE t1 (
 , PRIMARY KEY (id)
 );
 
-insert into t1 values (1);
-insert into t1 select rand(100)*100 from t1;
+INSERT INTO t1 VALUES (1);
+INSERT INTO t1 SELECT RAND(100)*100 FROM t1;
+
+DROP TABLE t1;
