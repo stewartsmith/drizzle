@@ -46,9 +46,6 @@
 using namespace std;
 using namespace drizzled;
  
-static const int REPORT_TO_LOG= 1;
-static const int REPORT_TO_USER= 2;
-
 typedef plugin::Manifest builtin_plugin[];
 extern builtin_plugin PANDORA_BUILTIN_LIST;
 static plugin::Manifest *drizzled_builtins[]=
@@ -289,7 +286,7 @@ static inline void free_plugin_mem(plugin::Library *p)
 }
 
 
-static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
+static plugin::Library *plugin_dl_add(const LEX_STRING *dl)
 {
   string dlpath;
   uint32_t plugin_dir_len;
@@ -307,11 +304,8 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
                                system_charset_info, 1) ||
       plugin_dir_len + dl->length + 1 >= FN_REFLEN)
   {
-    if (report & REPORT_TO_USER)
-      my_error(ER_UDF_NO_PATHS, MYF(0));
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_UDF_NO_PATHS));
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_UDF_NO_PATHS));
+    return NULL;
   }
   /* If this dll is already loaded just increase ref_count. */
   if ((tmp= plugin_dl_find(dl)))
@@ -336,22 +330,16 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
       if (*errmsg == ':') errmsg++;
       if (*errmsg == ' ') errmsg++;
     }
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath.c_str(), errno, errmsg);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
+    return NULL;
   }
 
   /* Find plugin declarations */
   if (!(sym= dlsym(plugin_dl.handle, plugin_declarations_sym)))
   {
     free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_FIND_DL_ENTRY, MYF(0), plugin_declarations_sym);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), plugin_declarations_sym);
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), plugin_declarations_sym);
+    return NULL;
   }
 
   plugin_dl.plugins= static_cast<plugin::Manifest *>(sym);
@@ -361,23 +349,17 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
   if (! (plugin_dl.dl.str= (char*) calloc(plugin_dl.dl.length, sizeof(char))))
   {
     free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_OUTOFMEMORY, MYF(0), plugin_dl.dl.length);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), plugin_dl.dl.length);
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), plugin_dl.dl.length);
+    return NULL;
   }
   strcpy(plugin_dl.dl.str, dl->str);
   /* Add this dll to array */
   if (! (tmp= plugin_dl_insert_or_reuse(&plugin_dl)))
   {
     free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_OUTOFMEMORY, MYF(0), sizeof(plugin::Library));
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY),
-                    sizeof(plugin::Library));
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY),
+                  sizeof(plugin::Library));
+    return NULL;
   }
   return(tmp);
 }
@@ -424,7 +406,7 @@ static plugin::Module *plugin_insert_or_reuse(plugin::Module *module)
 */
 static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
-                       int *argc, char **argv, int report)
+                       int *argc, char **argv)
 {
   plugin::Manifest *manifest;
   if (! initialized)
@@ -432,13 +414,10 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
 
   if (registry.find(name))
   {
-    if (report & REPORT_TO_USER)
-      my_error(ER_UDF_EXISTS, MYF(0), name->str);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UDF_EXISTS), name->str);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UDF_EXISTS), name->str);
     return(true);
   }
-  plugin::Library *library= plugin_dl_add(dl, report);
+  plugin::Library *library= plugin_dl_add(dl);
   if (library == NULL)
     return true;
 
@@ -471,10 +450,7 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
       return(false);
     }
   }
-  if (report & REPORT_TO_USER)
-    my_error(ER_CANT_FIND_DL_ENTRY, MYF(0), name->str);
-  if (report & REPORT_TO_LOG)
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), name->str);
+  errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), name->str);
 err:
   plugin_dl_del(dl);
   return(true);
@@ -753,7 +729,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
         }
 
         dl= name;
-        if ((plugin_dl= plugin_dl_add(&dl, REPORT_TO_LOG)))
+        if ((plugin_dl= plugin_dl_add(&dl)))
         {
           for (plugin= plugin_dl->plugins; plugin->name; plugin++)
           {
@@ -761,8 +737,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
             name.length= strlen(name.str);
 
             free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-            if (plugin_add(plugins, tmp_root, &name, &dl,
-                           argc, argv, REPORT_TO_LOG))
+            if (plugin_add(plugins, tmp_root, &name, &dl, argc, argv))
               goto error;
           }
           plugin_dl_del(&dl); // reduce ref count
@@ -771,8 +746,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
       else
       {
         free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-        if (plugin_add(plugins, tmp_root, &name, &dl,
-                       argc, argv, REPORT_TO_LOG))
+        if (plugin_add(plugins, tmp_root, &name, &dl, argc, argv))
           goto error;
       }
       name.length= dl.length= 0;

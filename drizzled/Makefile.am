@@ -406,7 +406,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(PANDORA_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
-drizzled_LDFLAGS =
+drizzled_LDFLAGS = -export-dynamic
 
 
 noinst_HEADERS = \
