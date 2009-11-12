@@ -41,10 +41,10 @@ static struct event session_add_event;
 static struct event session_kill_event;
 
 static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-static queue<Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
+static queue<Session *> *sessions_need_adding; /* queue of sessions to add to libevent queue */
 
 static pthread_mutex_t LOCK_session_kill;    /* protects sessions_to_be_killed */
-static queue<Session *> sessions_to_be_killed; /* queue of sessions to be killed */
+static queue<Session *> *sessions_to_be_killed; /* queue of sessions to be killed */
 
 static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
@@ -54,7 +54,7 @@ static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent
  * and event_del) and sessions_need_processing and sessions_waiting_for_io.
  */
 static pthread_mutex_t LOCK_event_loop;
-static queue<Session *> sessions_need_processing; /* queue of sessions that needs some processing */
+static queue<Session *> *sessions_need_processing; /* queue of sessions that needs some processing */
 
 /** 
  * Collection of sessions with added events 
@@ -63,7 +63,7 @@ static queue<Session *> sessions_need_processing; /* queue of sessions that need
  * promising to encounter an io event earlier than another; so no order
  * indeed! We will change this to unordered_set/hash_set when c++0x comes.
  */
-static set<Session *> sessions_waiting_for_io;
+static set<Session *> *sessions_waiting_for_io;
 
 static bool libevent_needs_immediate_processing(Session *session);
 static void libevent_connection_close(Session *session);
@@ -116,8 +116,8 @@ void libevent_io_callback(int, short, void *ctx)
   Session *session= (Session*)ctx;
   session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
   assert(sched);
-  sessions_waiting_for_io.erase(sched->session);
-  sessions_need_processing.push(sched->session);
+  sessions_waiting_for_io->erase(sched->session);
+  sessions_need_processing->push(sched->session);
 }
 
 /**
@@ -138,12 +138,12 @@ void libevent_kill_session_callback(int Fd, short, void*)
   int count= 0;
 
   pthread_mutex_lock(&LOCK_session_kill);
-  while (! sessions_to_be_killed.empty())
+  while (! sessions_to_be_killed->empty())
   {
     /*
      Fetch a session from the queue
     */
-    Session* session= sessions_to_be_killed.front();
+    Session* session= sessions_to_be_killed->front();
     pthread_mutex_unlock(&LOCK_session_kill);
 
     session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
@@ -155,18 +155,18 @@ void libevent_kill_session_callback(int Fd, short, void*)
     /*
      Remove from the sessions_waiting_for_io set
     */
-    sessions_waiting_for_io.erase(session);
+    sessions_waiting_for_io->erase(session);
     /*
      Push into the sessions_need_processing; the kill action will be
      performed out of the event loop
     */
-    sessions_need_processing.push(sched->session);
+    sessions_need_processing->push(sched->session);
 
     pthread_mutex_lock(&LOCK_session_kill);
     /*
      Pop until this session is already processed
     */
-    sessions_to_be_killed.pop();
+    sessions_to_be_killed->pop();
   }
   
   /*
@@ -202,12 +202,12 @@ void libevent_add_session_callback(int Fd, short, void *)
   int count= 0;
 
   pthread_mutex_lock(&LOCK_session_add);
-  while (! sessions_need_adding.empty())
+  while (! sessions_need_adding->empty())
   {
     /*
      Pop the first session off the queue 
     */
-    Session* session= sessions_need_adding.front();
+    Session* session= sessions_need_adding->front();
     session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
     assert(sched);
 
@@ -219,7 +219,7 @@ void libevent_add_session_callback(int Fd, short, void *)
        Add session to sessions_need_processing queue. If it needs closing
        we'll close it outside of event_loop().
       */
-      sessions_need_processing.push(sched->session);
+      sessions_need_processing->push(sched->session);
     }
     else
     {
@@ -231,7 +231,7 @@ void libevent_add_session_callback(int Fd, short, void *)
       }
       else
       {
-        sessions_waiting_for_io.insert(sched->session);
+        sessions_waiting_for_io->insert(sched->session);
       }
     }
 
@@ -239,7 +239,7 @@ void libevent_add_session_callback(int Fd, short, void *)
     /*
      Pop until this session is already processed
     */
-    sessions_need_adding.pop();
+    sessions_need_adding->pop();
   }
 
   /*
@@ -324,7 +324,7 @@ pthread_handler_t libevent_thread_proc(void *)
     (void) pthread_mutex_lock(&LOCK_event_loop);
 
     /* get session(s) to process */
-    while (sessions_need_processing.empty())
+    while (sessions_need_processing->empty())
     {
       if (kill_pool_threads)
       {
@@ -336,8 +336,8 @@ pthread_handler_t libevent_thread_proc(void *)
     }
 
     /* pop the first session off the queue */
-    session= sessions_need_processing.front();
-    sessions_need_processing.pop();
+    session= sessions_need_processing->front();
+    sessions_need_processing->pop();
     session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
 
     (void) pthread_mutex_unlock(&LOCK_event_loop);
@@ -451,14 +451,14 @@ void libevent_session_add(Session* session)
   assert(sched);
 
   pthread_mutex_lock(&LOCK_session_add);
-  if (sessions_need_adding.empty())
+  if (sessions_need_adding->empty())
   {
     /* notify libevent */
     size_t written= write(session_add_pipe[1], &c, sizeof(c));
     assert(written == sizeof(c));
   }
   /* queue for libevent */
-  sessions_need_adding.push(sched->session);
+  sessions_need_adding->push(sched->session);
   pthread_mutex_unlock(&LOCK_session_add);
 }
 
@@ -517,7 +517,7 @@ void PoolOfThreadsScheduler::killSession(Session *session)
 
   pthread_mutex_lock(&LOCK_session_kill);
 
-  if (sessions_to_be_killed.empty())
+  if (sessions_to_be_killed->empty())
   {
     /* 
       Notify libevent with the killing event if this's the first killing
@@ -530,7 +530,7 @@ void PoolOfThreadsScheduler::killSession(Session *session)
   /*
     Push into the sessions_to_be_killed queue
   */
-  sessions_to_be_killed.push(session);
+  sessions_to_be_killed->push(session);
   pthread_mutex_unlock(&LOCK_session_kill);
 }
 
@@ -606,6 +606,10 @@ bool PoolOfThreadsScheduler::libevent_init(void)
 static int init(drizzled::plugin::Registry &registry)
 {
   assert(size != 0);
+  sessions_need_adding= new queue<Session *>;
+  sessions_to_be_killed= new queue<Session *>;
+  sessions_need_processing= new queue<Session *>;
+  sessions_waiting_for_io= new set<Session *>;
 
   scheduler= new PoolOfThreadsScheduler("pool_of_threads");
   registry.add(scheduler);
@@ -620,6 +624,10 @@ static int init(drizzled::plugin::Registry &registry)
 static int deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(scheduler);
+  delete sessions_need_adding;
+  delete sessions_to_be_killed;
+  delete sessions_need_processing;
+  delete sessions_waiting_for_io;
   delete scheduler;
 
   return 0;
