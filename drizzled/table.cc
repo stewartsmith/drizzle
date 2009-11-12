@@ -964,7 +964,9 @@ int drizzled::parse_table_proto(Session& session,
   share->last_null_bit_pos= null_bit_pos;
 
   free(field_offsets);
+  field_offsets= NULL;
   free(field_pack_length);
+  field_pack_length= NULL;
 
   if (! (handler_file= share->db_type()->getCursor(*share, session.mem_root)))
     abort(); // FIXME
@@ -1163,6 +1165,11 @@ int drizzled::parse_table_proto(Session& session,
   return (0);
 
 err:
+  if (field_offsets)
+    free(field_offsets);
+  if (field_pack_length)
+    free(field_pack_length);
+
   share->error= error;
   share->open_errno= my_errno;
   share->errarg= 0;
