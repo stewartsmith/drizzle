@@ -18,26 +18,18 @@
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H
 
 #include <drizzled/server_includes.h>
-#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
-
-#include <plugin/information_engine/information_share.h>
-#include <plugin/information_engine/information_cursor.h>
+#include <drizzled/plugin/info_schema_table.h>
 
 class InformationEngine : public drizzled::plugin::StorageEngine
 {
-private:
-  typedef std::map<const std::string, InformationShare> OpenTables;
-  typedef std::pair<const std::string, InformationShare> Record;
-
-  OpenTables open_tables;
-  pthread_mutex_t mutex; // Mutext used in getShare() calls
-
 public:
   InformationEngine(const std::string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) 
+    : drizzled::plugin::StorageEngine(name_arg,
+                                      HTON_ALTER_NOT_SUPPORTED |
+                                      HTON_HIDDEN |
+                                      HTON_NOT_USER_SELECTABLE |
+                                      HTON_TEMPORARY_NOT_SUPPORTED)
   {
     pthread_mutex_init(&mutex, NULL);
   }
@@ -47,9 +39,85 @@ public:
     pthread_mutex_destroy(&mutex);
   }
 
+  class Share 
+  {
+  private:
+    uint32_t count;
+    drizzled::plugin::InfoSchemaTable *table;
+    THR_LOCK lock;
+
+
+  public:
+
+    Share(const std::string &in_name) :
+      count(1)
+    {
+      thr_lock_init(&lock);
+      table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
+    }
+
+    ~Share() 
+    {
+      thr_lock_delete(&lock);
+    }
+
+    /**
+     * Increment the counter which tracks how many instances of this share are
+     * currently open.
+     * @return the new counter value
+   */
+    uint32_t incUseCount(void) 
+    { 
+      return ++count; 
+    }
+
+    /**
+     * Decrement the count which tracks how many instances of this share are
+     * currently open.
+     * @return the new counter value
+   */
+    uint32_t decUseCount(void) 
+    { 
+      return --count; 
+    }
+
+    /**
+     * @ return the value of the use counter for this share
+   */
+    uint32_t getUseCount() const
+    {
+      return count;
+    }
+
+    /**
+     * @return the table name associated with this share.
+   */
+    const std::string &getName() const
+    {
+      return table->getTableName();
+    }
+
+    /**
+     * @return the I_S table associated with this share.
+   */
+    drizzled::plugin::InfoSchemaTable *getInfoSchemaTable()
+    {
+      return table;
+    }
+  };
+
+private:
+  typedef std::map<const std::string, Share> OpenTables;
+  typedef std::pair<const std::string, Share> Record;
+
+  OpenTables open_tables;
+  pthread_mutex_t mutex; // Mutext used in getShare() calls
+
+public:
+
   // Follow Two Methods are for "share"
-  InformationShare *getShare(const std::string &name_arg);
-  void freeShare(InformationShare *share);
+  Share *getShare(const std::string &name_arg);
+  void freeShare(Share *share);
 
 
   int doCreateTable(Session *,
@@ -66,10 +134,7 @@ public:
     return 0; 
   }
 
-  virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root)
-  {
-    return new (mem_root) InformationCursor(*this, table);
-  }
+  virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root);
 
   const char **bas_ext() const 
   {

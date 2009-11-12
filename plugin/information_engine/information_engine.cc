@@ -14,10 +14,9 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <plugin/information_engine/information_engine.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/session.h>
 
-#include <plugin/information_engine/information_engine.h>
+#include <plugin/information_engine/information_cursor.h>
 
 #include <string>
 
@@ -25,6 +24,13 @@ using namespace std;
 using namespace drizzled;
 
 static const string engine_name("INFORMATION_ENGINE");
+
+
+Cursor *InformationEngine::create(TableShare &table, MEM_ROOT *mem_root)
+{
+  return new (mem_root) InformationCursor(*this, table);
+}
+
 
 int InformationEngine::doGetTableDefinition(Session &,
                                             const char *,
@@ -158,9 +164,9 @@ void InformationEngine::doGetTableNames(CachedDirectory&,
   plugin::InfoSchemaTable::getTableNames(set_of_names);
 }
 
-InformationShare *InformationEngine::getShare(const string &name_arg)
+InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
 {
-  InformationShare *share;
+  InformationEngine::Share *share;
   pthread_mutex_lock(&mutex);
 
   OpenTables::iterator it= open_tables.find(name_arg);
@@ -175,7 +181,7 @@ InformationShare *InformationEngine::getShare(const string &name_arg)
     pair<OpenTables::iterator, bool> returned;
 
     returned=
-      open_tables.insert(Record(name_arg, InformationShare(name_arg)));
+      open_tables.insert(Record(name_arg, InformationEngine::Share(name_arg)));
 
     if (returned.second == false)
     {
@@ -195,7 +201,7 @@ InformationShare *InformationEngine::getShare(const string &name_arg)
 }
 
 
-void InformationEngine::freeShare(InformationShare *share)
+void InformationEngine::freeShare(InformationEngine::Share *share)
 {
   pthread_mutex_lock(&mutex);
 

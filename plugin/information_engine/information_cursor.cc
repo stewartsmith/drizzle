@@ -13,11 +13,9 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <plugin/information_engine/information_engine.h>
-#include <drizzled/plugin/info_schema_table.h>
+#include <plugin/information_engine/information_cursor.h>
 #include <drizzled/session.h>
 
-#include <plugin/information_engine/information_cursor.h>
 
 #include <string>
 
@@ -40,7 +38,7 @@ uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
 
 int InformationCursor::open(const char *name, int, uint32_t)
 {
-  InformationShare *shareable= ((InformationEngine *)engine)->getShare(name);
+  InformationEngine::Share *shareable= ((InformationEngine *)engine)->getShare(name);
 
   if (! shareable)
   {

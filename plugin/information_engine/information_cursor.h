@@ -21,12 +21,14 @@
 #include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
-#include <plugin/information_engine/information_share.h>
+#include <drizzled/plugin/info_schema_table.h>
+#include <plugin/information_engine/information_engine.h>
 
 class InformationCursor: public Cursor
 {
+private:
   THR_LOCK_DATA lock;      /* MySQL lock */
-  InformationShare *share;
+  InformationEngine::Share *share;
   drizzled::plugin::InfoSchemaTable::Rows::iterator iter;
 
 public:
