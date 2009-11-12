@@ -99,6 +99,7 @@ $Devel::Trace::TRACE= 1;
 
 # Misc global variables
 our $mysql_version_id;
+our $glob_suite_path=             undef;
 our $glob_mysql_test_dir=         undef;
 our $glob_mysql_bench_dir=        undef;
 our $glob_scriptname=             undef;
@@ -119,6 +120,7 @@ our $path_my_basedir;
 our $opt_vardir;                 # A path but set directly on cmd line
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
+our $opt_suitepath;
 our $opt_testdir;
 
 our $opt_subunit;
@@ -551,7 +553,8 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
-	     'testdir=s'		=> \$opt_testdir,
+             'suitepath=s'              => \$opt_suitepath,
+             'testdir=s'                => \$opt_testdir,
              'benchdir=s'               => \$glob_mysql_bench_dir,
              'mem'                      => \$opt_mem,
 
@@ -614,6 +617,14 @@ sub command_line_setup () {
   }
   $default_vardir= "$glob_mysql_test_dir/var";
 
+  if ( ! $opt_suitepath )
+  {
+    $glob_suite_path= "$glob_mysql_test_dir/../plugin";
+  }
+  else
+  {
+    $glob_suite_path= $opt_suitepath;
+  }
   # In most cases, the base directory we find everything relative to,
   # is the parent directory of the "mysql-test" directory. For source
   # distributions, TAR binary distributions and some other packages.

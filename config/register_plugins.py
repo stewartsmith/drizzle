@@ -141,9 +141,9 @@ AM_CONDITIONAL([%(build_conditional_tag)s],
 AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
   """ % plugin)
-  if plugin['testsuite'] != "":
+  if plugin['testsuite']:
     plugin_ac.write("""
-        pandora_plugin_test_list="%(testsuite)s,${pandora_plugin_test_list}"
+        pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
     """ % plugin)
 
   if plugin['static']:
@@ -195,10 +195,17 @@ def expand_plugin_ini(plugin, plugin_dir):
       plugin['has_build_conditional']=False
       plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
 
+def find_testsuite(plugin_dir):
+  for testdir in ['drizzle-tests','tests']:
+    if os.path.isdir(os.path.join(plugin_dir,testdir)):
+      return testdir
+  if os.path.isdir(os.path.join('tests','suite',os.path.basename(plugin_dir))):
+    return ""
+  return None
 
 def read_plugin_ini(plugin_dir):
     plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
-    parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags="", testsuite=""))
+    parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
     parser.read(plugin_file)
     plugin=dict(parser.items('plugin'))
     plugin['name']= os.path.basename(plugin_dir)
@@ -210,6 +217,16 @@ def read_plugin_ini(plugin_dir):
       plugin['static']= parser.getboolean('plugin','static')
     else:
       plugin['static']= False
+    if plugin.has_key('testsuite'):
+      if plugin['testsuite'] == 'disable':
+        plugin['testsuite']= False
+    else:
+      plugin_testsuite= find_testsuite(plugin_dir)
+      plugin['testsuitedir']=plugin_testsuite
+      if plugin_testsuite is not None:
+        plugin['testsuite']=True
+      else:
+        plugin['testsuite']=False
 
     return plugin
 
@@ -258,6 +275,9 @@ configure: ${top_srcdir}/%(rel_path)s/pandora-plugin.ac
 """ % plugin)
   if plugin['headers'] != "":
     plugin_am.write("noinst_HEADERS += %(headers)s\n" % plugin)
+  if plugin['testsuite']:
+    if plugin.has_key('testsuitedir') and plugin['testsuitedir'] != "":
+      plugin_am.write("EXTRA_DIST += %(rel_path)s/%(testsuitedir)s\n" % plugin)
   if plugin['static']:
     plugin_am.write("""
 plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
