@@ -1,7 +1,3 @@
-# check that CSV engine was compiled in, as the result of the test
-# depends on the presence of the log tables (which are CSV-based).
---source include/have_csv.inc
-
 #
 # Test of some show commands
 #
