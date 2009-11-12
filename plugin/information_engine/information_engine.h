@@ -21,6 +21,11 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/plugin/info_schema_table.h>
 
+static const char *information_exts[] = {
+  NULL
+};
+
+
 class InformationEngine : public drizzled::plugin::StorageEngine
 {
 public:
@@ -126,19 +131,19 @@ public:
                     HA_CREATE_INFO&,
                     drizzled::message::Table&)
   {
-    return 1;
+    return EPERM;
   }
 
   int doDropTable(Session&, const std::string) 
   { 
-    return 0; 
+    return EPERM; 
   }
 
   virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root);
 
   const char **bas_ext() const 
   {
-    return NULL;
+    return information_exts;
   }
 
   void doGetTableNames(CachedDirectory&, 

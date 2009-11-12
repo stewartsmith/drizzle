@@ -79,7 +79,6 @@ namespace plugin
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
-const unsigned int MAX_STORAGE_ENGINE_FILE_EXT= 4;
     
 
 /*
@@ -120,7 +119,7 @@ protected:
   std::string table_definition_ext;
 
 public:
-  const std::string& getTableDefinitionExt()
+  const std::string& getTableDefinitionFileExtension()
   {
     return table_definition_ext;
   }
@@ -358,6 +357,8 @@ public:
                          bool update_create_info,
                          drizzled::message::Table& table_proto,
                          bool used= true);
+
+  static void removeLostTemporaryTables(Session &session, const char *directory);
 
   Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
 };

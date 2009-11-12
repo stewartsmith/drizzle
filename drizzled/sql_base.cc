@@ -4531,7 +4531,6 @@ err:
 
 bool drizzle_rm_tmp_tables()
 {
-  char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   Session *session;
 
   assert(drizzle_tmpdir);
@@ -4541,55 +4540,7 @@ bool drizzle_rm_tmp_tables()
   session->thread_stack= (char*) &session;
   session->storeGlobals();
 
-  CachedDirectory dir(drizzle_tmpdir);
-
-  if (dir.fail())
-  {
-    my_errno= dir.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), drizzle_tmpdir, my_errno);
-    return true;
-  }
-
-  CachedDirectory::Entries files= dir.getEntries();
-  CachedDirectory::Entries::iterator fileIter= files.begin();
-
-  /* Remove all temp tables in the tmpdir */
-  while (fileIter != files.end())
-  {
-    CachedDirectory::Entry *entry= *fileIter;
-    string prefix= entry->filename.substr(0, TMP_FILE_PREFIX_LENGTH);
-
-    if (prefix == TMP_FILE_PREFIX)
-    {
-      char *ext= fn_ext(entry->filename.c_str());
-      uint32_t ext_len= strlen(ext);
-      uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
-                                      "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
-                                      entry->filename.c_str());
-
-      if (ext_len && !memcmp(drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT.c_str(), ext, ext_len))
-      {
-        TableShare share;
-        /* We should cut file extention before deleting of table */
-        memcpy(filePathCopy, filePath, filePath_len - ext_len);
-        filePathCopy[filePath_len - ext_len]= 0;
-        share.init(NULL, filePathCopy);
-        if (!open_table_def(*session, &share))
-        {
-          share.db_type()->doDropTable(*session, filePathCopy);
-        }
-        share.free_table_share();
-      }
-      /*
-        File can be already deleted by tmp_table.file->delete_table().
-        So we hide error messages which happnes during deleting of these
-        files(MYF(0)).
-      */
-      my_delete(filePath, MYF(0));
-    }
-
-    ++fileIter;
-  }
+  plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir);
 
   delete session;
 

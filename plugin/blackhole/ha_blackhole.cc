@@ -166,18 +166,18 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
 
 int BlackholeEngine::doDropTable(Session&, const string path)
 {
-  string new_path;
+  string new_path(path);
 
-  new_path= path;
   new_path+= BLACKHOLE_EXT;
 
-  if (unlink(new_path.c_str()) != 0)
+  int error= unlink(new_path.c_str());
+
+  if (error != 0)
   {
-    my_errno= errno;
-    return errno;
+    error= my_errno= errno;
   }
 
-  return 0;
+  return error;
 }
 
 
