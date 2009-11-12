@@ -267,7 +267,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual Cursor *create(TableShare *, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare &, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -359,7 +359,7 @@ public:
                          drizzled::message::Table& table_proto,
                          bool used= true);
 
-  Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
+  Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
 };
 
 } /* namespace plugin */

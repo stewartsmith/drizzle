@@ -145,10 +145,10 @@ public:
     table_definition_ext= ARZ;
   }
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_archive(this, table);
+    return new (mem_root) ha_archive(*this, table);
   }
 
   const char **bas_ext() const {
@@ -318,8 +318,8 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 }
 
 
-ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
-                       TableShare *table_arg)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
+                       TableShare &table_arg)
   :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */

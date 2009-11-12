@@ -72,8 +72,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
-    DRIZZLE_TYPE_NEWDECIMAL,
+    //DRIZZLE_TYPE_DECIMAL
+    DRIZZLE_TYPE_DECIMAL,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_BLOB
@@ -97,7 +97,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_DOUBLE,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
@@ -122,8 +122,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
-    DRIZZLE_TYPE_NEWDECIMAL,
+    //DRIZZLE_TYPE_DECIMAL
+    DRIZZLE_TYPE_DECIMAL,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_ENUM,
     //DRIZZLE_TYPE_BLOB
@@ -147,7 +147,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
@@ -172,8 +172,8 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_NEWDECIMAL,
+    //DRIZZLE_TYPE_DECIMAL DRIZZLE_TYPE_ENUM
+    DRIZZLE_TYPE_DECIMAL,
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
@@ -196,7 +196,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
@@ -221,7 +221,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_DATE,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
@@ -246,33 +246,33 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
-  /* DRIZZLE_TYPE_NEWDECIMAL -> */
+  /* DRIZZLE_TYPE_DECIMAL -> */
   {
     //DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_NEWDECIMAL,
+    DRIZZLE_TYPE_DECIMAL,
     //DRIZZLE_TYPE_DOUBLE
     DRIZZLE_TYPE_DOUBLE,
     //DRIZZLE_TYPE_NULL
-    DRIZZLE_TYPE_NEWDECIMAL,
+    DRIZZLE_TYPE_DECIMAL,
     //DRIZZLE_TYPE_TIMESTAMP
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_NEWDECIMAL,
+    DRIZZLE_TYPE_DECIMAL,
     //DRIZZLE_TYPE_DATETIME
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_DATE
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
-    DRIZZLE_TYPE_NEWDECIMAL,
+    //DRIZZLE_TYPE_DECIMAL
+    DRIZZLE_TYPE_DECIMAL,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_BLOB
@@ -296,7 +296,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_VARCHAR,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_VARCHAR,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,
@@ -321,7 +321,7 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_VARCHAR
     DRIZZLE_TYPE_BLOB,
-    //DRIZZLE_TYPE_NEWDECIMAL
+    //DRIZZLE_TYPE_DECIMAL
     DRIZZLE_TYPE_BLOB,
     //DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_BLOB,
@@ -348,7 +348,7 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   STRING_RESULT,
   //DRIZZLE_TYPE_VARCHAR
   STRING_RESULT,
-  //DRIZZLE_TYPE_NEWDECIMAL   
+  //DRIZZLE_TYPE_DECIMAL   
   DECIMAL_RESULT,           
   //DRIZZLE_TYPE_ENUM
   STRING_RESULT,
@@ -848,7 +848,7 @@ int Field::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
 
 bool Field::optimize_range(uint32_t idx, uint32_t part)
 {
-  return test(table->file->index_flags(idx, part, 1) & HA_READ_RANGE);
+  return test(table->cursor->index_flags(idx, part, 1) & HA_READ_RANGE);
 }
 
 Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)
@@ -944,7 +944,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_NULL: return 0;
   case DRIZZLE_TYPE_BLOB: return 4 + portable_sizeof_char_ptr;
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
     abort();
   default:
     return 0;
@@ -1037,16 +1037,16 @@ Field *make_field(TableShare *share,
 
   switch (field_type)
   {
-  case DRIZZLE_TYPE_NEWDECIMAL:
-    return new (root) Field_new_decimal(ptr,
-                                        field_length,
-                                        null_pos,
-                                        null_bit,
-                                        unireg_check,
-                                        field_name,
-                                        decimals,
-                                        false,
-                                        false /* is_unsigned */);
+  case DRIZZLE_TYPE_DECIMAL:
+    return new (root) Field_decimal(ptr,
+                                    field_length,
+                                    null_pos,
+                                    null_bit,
+                                    unireg_check,
+                                    field_name,
+                                    decimals,
+                                    false,
+                                    false /* is_unsigned */);
   case DRIZZLE_TYPE_DOUBLE:
     return new (root) Field_double(ptr,
                                    field_length,

@@ -23,7 +23,7 @@
 */
 
 /*
-  This file contains:
+  This cursor contains:
 
   RangeAnalysisModule
     A module that accepts a condition, index (or partitioning) description,
@@ -36,7 +36,7 @@
     SEL_TREE/SEL_IMERGE/SEL_ARG objects.
     See quick_range_seq_next, find_used_partitions for examples of how to walk
     this structure.
-    All direct "users" of this module are located within this file, too.
+    All direct "users" of this module are located within this cursor, too.
 
 
   PartitionPruningModule
@@ -62,7 +62,7 @@
 
   KeyTupleFormat
   ~~~~~~~~~~~~~~
-  The code in this file (and elsewhere) makes operations on key value tuples.
+  The code in this cursor (and elsewhere) makes operations on key value tuples.
   Those tuples are stored in the following format:
 
   The tuple is a sequence of key part values. The length of key part value
@@ -136,8 +136,8 @@ static inline ha_rows double2rows(double x)
 
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
 {
-  Cursor *file= (Cursor*)arg;
-  return file->cmp_ref((const unsigned char*)a, (const unsigned char*)b);
+  Cursor *cursor= (Cursor*)arg;
+  return cursor->cmp_ref((const unsigned char*)a, (const unsigned char*)b);
 }
 
 static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uint8_t b_flag);
@@ -175,7 +175,7 @@ static unsigned char is_null_string[2]= {1,0};
   actually not a constant, it depends one range of cylinders we're going
   to access. We make it constant by introducing a fuzzy concept of "typical
   datafile length" (it's fuzzy as it's hard to tell whether it should
-  include index file, temp.tables etc). Then random seek cost is:
+  include index cursor, temp.tables etc). Then random seek cost is:
 
     1 = half_rotation_cost + move_cost * 1/3 * typical_data_file_length
 
@@ -192,15 +192,15 @@ static void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
                                 COST_VECT *cost)
 {
   cost->zero();
-  if (table->file->primary_key_is_clustered())
+  if (table->cursor->primary_key_is_clustered())
   {
-    cost->io_count= table->file->read_time(table->s->primary_key,
+    cost->io_count= table->cursor->read_time(table->s->primary_key,
                                            (uint32_t) nrows, nrows);
   }
   else
   {
     double n_blocks=
-      ceil(uint64_t2double(table->file->stats.data_file_length) / IO_SIZE);
+      ceil(uint64_t2double(table->cursor->stats.data_file_length) / IO_SIZE);
     double busy_blocks=
       n_blocks * (1.0 - pow(1.0 - 1.0/n_blocks, rows2double(nrows)));
     if (busy_blocks < 1.0)
@@ -1120,7 +1120,7 @@ SQL_SELECT *make_select(Table *head, table_map const_tables,
   {
     select->file= *head->sort.io_cache;
     select->records=(ha_rows) (select->file.end_of_file/
-			       head->file->ref_length);
+			       head->cursor->ref_length);
     delete head->sort.io_cache;
     head->sort.io_cache=0;
   }
@@ -1203,7 +1203,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
   }
   else
     memset(&alloc, 0, sizeof(alloc));
-  file= head->file;
+  cursor= head->cursor;
   record= head->record[0];
   save_read_set= head->read_set;
   save_write_set= head->write_set;
@@ -1228,16 +1228,16 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
 
 int QUICK_RANGE_SELECT::init()
 {
-  if (file->inited != Cursor::NONE)
-    file->ha_index_or_rnd_end();
-  return(file->ha_index_init(index, 1));
+  if (cursor->inited != Cursor::NONE)
+    cursor->ha_index_or_rnd_end();
+  return(cursor->ha_index_init(index, 1));
 }
 
 
 void QUICK_RANGE_SELECT::range_end()
 {
-  if (file->inited != Cursor::NONE)
-    file->ha_index_or_rnd_end();
+  if (cursor->inited != Cursor::NONE)
+    cursor->ha_index_or_rnd_end();
 }
 
 
@@ -1245,20 +1245,20 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
 {
   if (!dont_free)
   {
-    /* file is NULL for CPK scan on covering ROR-intersection */
-    if (file)
+    /* cursor is NULL for CPK scan on covering ROR-intersection */
+    if (cursor)
     {
       range_end();
       if (head->key_read)
       {
         head->key_read= 0;
-        file->extra(HA_EXTRA_NO_KEYREAD);
+        cursor->extra(HA_EXTRA_NO_KEYREAD);
       }
       if (free_file)
       {
-        file->ha_external_lock(current_session, F_UNLCK);
-        file->close();
-        delete file;
+        cursor->ha_external_lock(current_session, F_UNLCK);
+        cursor->close();
+        delete cursor;
       }
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
@@ -1299,7 +1299,7 @@ QUICK_INDEX_MERGE_SELECT::push_quick_back(QUICK_RANGE_SELECT *quick_sel_range)
     Save quick_select that does scan on clustered primary key as it will be
     processed separately.
   */
-  if (head->file->primary_key_is_clustered() &&
+  if (head->cursor->primary_key_is_clustered() &&
       quick_sel_range->index == head->s->primary_key)
     pk_quick_select= quick_sel_range;
   else
@@ -1313,7 +1313,7 @@ QUICK_INDEX_MERGE_SELECT::~QUICK_INDEX_MERGE_SELECT()
   QUICK_RANGE_SELECT* quick;
   quick_it.rewind();
   while ((quick= quick_it++))
-    quick->file= NULL;
+    quick->cursor= NULL;
   quick_selects.delete_elements();
   delete pk_quick_select;
   free_root(&alloc,MYF(0));
@@ -1336,7 +1336,7 @@ QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *session_param,
   else
     memset(&alloc, 0, sizeof(MEM_ROOT));
   last_rowid= (unsigned char*) alloc_root(parent_alloc? parent_alloc : &alloc,
-                                  head->file->ref_length);
+                                  head->cursor->ref_length);
 }
 
 
@@ -1362,12 +1362,12 @@ int QUICK_ROR_INTERSECT_SELECT::init()
 
   SYNOPSIS
     QUICK_RANGE_SELECT::init_ror_merged_scan()
-      reuse_handler If true, use head->file, otherwise create a separate
+      reuse_handler If true, use head->cursor, otherwise create a separate
                     Cursor object
 
   NOTES
     This function creates and prepares for subsequent use a separate Cursor
-    object if it can't reuse head->file. The reason for this is that during
+    object if it can't reuse head->cursor. The reason for this is that during
     ROR-merge several key scans are performed simultaneously, and a single
     Cursor is only capable of preserving context of a single key scan.
 
@@ -1381,7 +1381,7 @@ int QUICK_ROR_INTERSECT_SELECT::init()
 
 int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
 {
-  Cursor *save_file= file, *org_file;
+  Cursor *save_file= cursor, *org_file;
   Session *session;
 
   in_ror_merged_scan= 1;
@@ -1403,7 +1403,7 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
   }
 
   session= head->in_use;
-  if (!(file= head->file->clone(session->mem_root)))
+  if (!(cursor= head->cursor->clone(session->mem_root)))
   {
     /*
       Manually set the error flag. Note: there seems to be quite a few
@@ -1419,35 +1419,35 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
 
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
-  if (file->ha_external_lock(session, F_RDLCK))
+  if (cursor->ha_external_lock(session, F_RDLCK))
     goto failure;
 
   if (init() || reset())
   {
-    file->ha_external_lock(session, F_UNLCK);
-    file->close();
+    cursor->ha_external_lock(session, F_UNLCK);
+    cursor->close();
     goto failure;
   }
   free_file= true;
-  last_rowid= file->ref;
+  last_rowid= cursor->ref;
 
 end:
   /*
-    We are only going to read key fields and call position() on 'file'
+    We are only going to read key fields and call position() on 'cursor'
     The following sets head->tmp_set to only use this key and then updates
     head->read_set and head->write_set to use this bitmap.
     The now bitmap is stored in 'column_bitmap' which is used in ::get_next()
   */
-  org_file= head->file;
-  head->file= file;
-  /* We don't have to set 'head->keyread' here as the 'file' is unique */
+  org_file= head->cursor;
+  head->cursor= cursor;
+  /* We don't have to set 'head->keyread' here as the 'cursor' is unique */
   if (!head->no_keyread)
   {
     head->key_read= 1;
     head->mark_columns_used_by_index(index);
   }
   head->prepare_for_position();
-  head->file= org_file;
+  head->cursor= org_file;
   column_bitmap= *head->read_set;
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
@@ -1455,15 +1455,15 @@ end:
 
 failure:
   head->column_bitmaps_set(save_read_set, save_write_set);
-  delete file;
-  file= save_file;
+  delete cursor;
+  cursor= save_file;
   return 0;
 }
 
 
 void QUICK_RANGE_SELECT::save_last_pos()
 {
-  file->position(record);
+  cursor->position(record);
 }
 
 
@@ -1471,7 +1471,7 @@ void QUICK_RANGE_SELECT::save_last_pos()
   Initialize this quick select to be a part of a ROR-merged scan.
   SYNOPSIS
     QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan()
-      reuse_handler If true, use head->file, otherwise create separate
+      reuse_handler If true, use head->cursor, otherwise create separate
                     Cursor object.
   RETURN
     0     OK
@@ -1488,23 +1488,23 @@ int QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
   {
     quick= quick_it++;
     /*
-      There is no use of this->file. Use it for the first of merged range
+      There is no use of this->cursor. Use it for the first of merged range
       selects.
     */
     if (quick->init_ror_merged_scan(true))
       return 0;
-    quick->file->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
+    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
   }
   while ((quick= quick_it++))
   {
     if (quick->init_ror_merged_scan(false))
       return 0;
-    quick->file->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
+    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
     /* All merged scans share the same record buffer in intersection. */
     quick->record= head->record[0];
   }
 
-  if (need_to_fetch_row && head->file->ha_rnd_init(1))
+  if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
   {
     return 0;
   }
@@ -1560,8 +1560,8 @@ QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
   quick_selects.delete_elements();
   delete cpk_quick;
   free_root(&alloc,MYF(0));
-  if (need_to_fetch_row && head->file->inited != Cursor::NONE)
-    head->file->ha_rnd_end();
+  if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
+    head->cursor->ha_rnd_end();
   return;
 }
 
@@ -1572,7 +1572,7 @@ QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
 {
   index= MAX_KEY;
   head= table;
-  rowid_length= table->file->ref_length;
+  rowid_length= table->cursor->ref_length;
   record= head->record[0];
   init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
   session_param->mem_root= &alloc;
@@ -1591,7 +1591,7 @@ class compare_functor
     : self(in_arg) { }
   inline bool operator()(const QUICK_SELECT_I *i, const QUICK_SELECT_I *j) const
   {
-    int val= self->head->file->cmp_ref(i->last_rowid,
+    int val= self->head->cursor->cmp_ref(i->last_rowid,
                                        j->last_rowid);
     return (val >= 0);
   }
@@ -1611,9 +1611,9 @@ int QUICK_ROR_UNION_SELECT::init()
 {
   queue= 
     new priority_queue<QUICK_SELECT_I *, vector<QUICK_SELECT_I *>, compare_functor >(compare_functor(this));
-  if (!(cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->file->ref_length)))
+  if (!(cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->cursor->ref_length)))
     return 0;
-  prev_rowid= cur_rowid + head->file->ref_length;
+  prev_rowid= cur_rowid + head->cursor->ref_length;
   return 0;
 }
 
@@ -1664,7 +1664,7 @@ int QUICK_ROR_UNION_SELECT::reset()
     queue->push(quick);
   }
 
-  if (head->file->ha_rnd_init(1))
+  if (head->cursor->ha_rnd_init(1))
   {
     return 0;
   }
@@ -1685,8 +1685,8 @@ QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
     queue->pop();
   delete queue;
   quick_selects.delete_elements();
-  if (head->file->inited != Cursor::NONE)
-    head->file->ha_rnd_end();
+  if (head->cursor->inited != Cursor::NONE)
+    head->cursor->ha_rnd_end();
   free_root(&alloc,MYF(0));
   return;
 }
@@ -1921,7 +1921,7 @@ uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit)
       indexes (records are returned in order for any index prefix) or HASH
       indexes (records are not returned in order for any index prefix).
     */
-    if (!(table->file->index_flags(idx, 0, 1) & HA_READ_ORDER))
+    if (!(table->cursor->index_flags(idx, 0, 1) & HA_READ_ORDER))
       continue;
     for (ord= order; ord && partno < n_parts; ord= ord->next, partno++)
     {
@@ -1950,8 +1950,8 @@ uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit)
       order. Now we'll check if using the index is cheaper then doing a table
       scan.
     */
-    double full_scan_time= table->file->scan_time();
-    double index_scan_time= table->file->read_time(match_key, 1, limit);
+    double full_scan_time= table->cursor->scan_time();
+    double index_scan_time= table->cursor->read_time(match_key, 1, limit);
     if (index_scan_time > full_scan_time)
       match_key= MAX_KEY;
   }
@@ -2183,7 +2183,7 @@ static int fill_used_fields_bitmap(PARAM *param)
   bitmap_union(&param->needed_fields, table->write_set);
 
   pk= param->table->s->primary_key;
-  if (pk != MAX_KEY && param->table->file->primary_key_is_clustered())
+  if (pk != MAX_KEY && param->table->cursor->primary_key_is_clustered())
   {
     /* The table uses clustered PK and it is not internally generated */
     KEY_PART_INFO *key_part= param->table->key_info[pk].key_part;
@@ -2275,11 +2275,11 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
   quick_keys.reset();
   if (keys_to_use.none())
     return 0;
-  records= head->file->stats.records;
+  records= head->cursor->stats.records;
   if (!records)
     records++;
   scan_time= (double) records / TIME_FOR_COMPARE + 1;
-  read_time= (double) head->file->scan_time() + scan_time + 1.1;
+  read_time= (double) head->cursor->scan_time() + scan_time + 1.1;
   if (head->force_index)
     scan_time= read_time= DBL_MAX;
   if (limit < records)
@@ -2301,7 +2301,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
 
     /* set up parameter that is passed to all functions */
     param.session= session;
-    param.baseflag= head->file->ha_table_flags();
+    param.baseflag= head->cursor->ha_table_flags();
     param.prev_tables= prev_tables | const_tables;
     param.read_tables= read_tables;
     param.current_table= head->map;
@@ -2365,7 +2365,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
     {
       int key_for_use= head->find_shortest_key(&head->covering_keys);
       double key_read_time=
-        param.table->file->index_only_read_time(key_for_use,
+        param.table->cursor->index_only_read_time(key_for_use,
                                                 rows2double(records)) +
         (double) records / TIME_FOR_COMPARE;
       if (key_read_time < read_time)
@@ -2403,7 +2403,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
     if (group_trp)
     {
       param.table->quick_condition_rows= min(group_trp->records,
-                                             head->file->stats.records);
+                                             head->cursor->stats.records);
       if (group_trp->read_cost < best_read_time)
       {
         best_trp= group_trp;
@@ -2532,7 +2532,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
           {cost of ordinary clustered PK scan with n_ranges=n_rows}
 
       Otherwise, we use the following model to calculate costs:
-      We need to retrieve n_rows rows from file that occupies n_blocks blocks.
+      We need to retrieve n_rows rows from cursor that occupies n_blocks blocks.
       We assume that offsets of rows we need are independent variates with
       uniform distribution in [0..max_file_offset] range.
 
@@ -2540,7 +2540,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
       and "empty" if doesn't contain rows we need.
 
       Probability that a block is empty is (1 - 1/n_blocks)^n_rows (this
-      applies to any block in file). Let x_i be a variate taking value 1 if
+      applies to any block in cursor). Let x_i be a variate taking value 1 if
       block #i is empty and 0 otherwise.
 
       Then E(x_i) = (1 - 1/n_blocks)^n_rows;
@@ -2584,7 +2584,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   double imerge_cost= 0.0;
   ha_rows cpk_scan_records= 0;
   ha_rows non_cpk_scan_records= 0;
-  bool pk_is_clustered= param->table->file->primary_key_is_clustered();
+  bool pk_is_clustered= param->table->cursor->primary_key_is_clustered();
   bool all_scans_ror_able= true;
   bool all_scans_rors= true;
   uint32_t unique_calc_buff_size;
@@ -2636,7 +2636,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   }
 
   if (imerge_too_expensive || (imerge_cost > read_time) ||
-      ((non_cpk_scan_records+cpk_scan_records >= param->table->file->stats.records) && read_time != DBL_MAX))
+      ((non_cpk_scan_records+cpk_scan_records >= param->table->cursor->stats.records) && read_time != DBL_MAX))
   {
     /*
       Bail out if it is obvious that both index_merge and ROR-union will be
@@ -2673,7 +2673,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   /* Add Unique operations cost */
   unique_calc_buff_size=
     Unique::get_cost_calc_buff_size((ulong)non_cpk_scan_records,
-                                    param->table->file->ref_length,
+                                    param->table->cursor->ref_length,
                                     param->session->variables.sortbuff_size);
   if (param->imerge_cost_buff_size < unique_calc_buff_size)
   {
@@ -2685,7 +2685,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
 
   imerge_cost +=
     Unique::get_use_cost(param->imerge_cost_buff, (uint32_t)non_cpk_scan_records,
-                         param->table->file->ref_length,
+                         param->table->cursor->ref_length,
                          param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
   {
@@ -2694,7 +2694,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
       imerge_trp->read_cost= imerge_cost;
       imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
       imerge_trp->records= min(imerge_trp->records,
-                               param->table->file->stats.records);
+                               param->table->cursor->stats.records);
       imerge_trp->range_scans= range_scans;
       imerge_trp->range_scans_end= range_scans + n_child_scans;
       read_time= imerge_cost;
@@ -2732,7 +2732,7 @@ skip_to_ror_scan:
     if ((*cur_child)->is_ror)
     {
       /* Ok, we have index_only cost, now get full rows scan cost */
-      cost= param->table->file->
+      cost= param->table->cursor->
               read_time(param->real_keynr[(*cur_child)->key_idx], 1,
                         (*cur_child)->records) +
               rows2double((*cur_child)->records) / TIME_FOR_COMPARE;
@@ -2755,7 +2755,7 @@ skip_to_ror_scan:
         ((TRP_ROR_INTERSECT*)(*cur_roru_plan))->index_scan_costs;
     roru_total_records += (*cur_roru_plan)->records;
     roru_intersect_part *= (*cur_roru_plan)->records /
-                           param->table->file->stats.records;
+                           param->table->cursor->stats.records;
   }
 
   /*
@@ -2765,7 +2765,7 @@ skip_to_ror_scan:
     in disjunction do not share key parts.
   */
   roru_total_records -= (ha_rows)(roru_intersect_part*
-                                  param->table->file->stats.records);
+                                  param->table->cursor->stats.records);
   /* ok, got a ROR read plan for each of the disjuncts
     Calculate cost:
     cost(index_union_scan(scan_1, ... scan_n)) =
@@ -2857,7 +2857,7 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
   ror_scan->idx= idx;
   ror_scan->keynr= keynr= param->real_keynr[idx];
   ror_scan->key_rec_length= (param->table->key_info[keynr].key_length +
-                             param->table->file->ref_length);
+                             param->table->cursor->ref_length);
   ror_scan->sel_arg= sel_arg;
   ror_scan->records= param->table->quick_rows[keynr];
 
@@ -2880,7 +2880,7 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
   }
   double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
   ror_scan->index_read_cost=
-    param->table->file->index_only_read_time(ror_scan->keynr, rows);
+    param->table->cursor->index_only_read_time(ror_scan->keynr, rows);
   return(ror_scan);
 }
 
@@ -2989,7 +2989,7 @@ ROR_INTERSECT_INFO* ror_intersect_init(const PARAM *param)
   info->is_covering= false;
   info->index_scan_costs= 0.0;
   info->index_records= 0;
-  info->out_rows= (double) param->table->file->stats.records;
+  info->out_rows= (double) param->table->cursor->stats.records;
   info->covered_fields.clearAll();
   return info;
 }
@@ -3114,7 +3114,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   min_range.flag= HA_READ_KEY_EXACT;
   max_range.key= key_val;
   max_range.flag= HA_READ_AFTER_KEY;
-  ha_rows prev_records= info->param->table->file->stats.records;
+  ha_rows prev_records= info->param->table->cursor->stats.records;
 
   for (sel_arg= scan->sel_arg; sel_arg;
        sel_arg= sel_arg->next_key_part)
@@ -3141,7 +3141,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
       }
       min_range.length= max_range.length= (size_t) (key_ptr - key_val);
       min_range.keypart_map= max_range.keypart_map= keypart_map;
-      records= (info->param->table->file->
+      records= (info->param->table->cursor->
                 records_in_range(scan->keynr, &min_range, &max_range));
       if (cur_covered)
       {
@@ -3326,7 +3326,7 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
   uint32_t idx;
   double min_cost= DBL_MAX;
 
-  if ((tree->n_ror_scans < 2) || !param->table->file->stats.records)
+  if ((tree->n_ror_scans < 2) || !param->table->cursor->stats.records)
     return NULL;
 
   /*
@@ -3342,7 +3342,7 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const PARAM *param, SEL_TREE *tree,
                                                      sizeof(ROR_SCAN_INFO*)*
                                                      param->keys)))
     return NULL;
-  cpk_no= ((param->table->file->primary_key_is_clustered()) ?
+  cpk_no= ((param->table->cursor->primary_key_is_clustered()) ?
            param->table->s->primary_key : MAX_KEY);
 
   for (idx= 0, cur_ror_scan= tree->ror_scans; idx < param->keys; idx++)
@@ -3779,7 +3779,7 @@ QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
         delete quick_intrsect;
         return NULL;
       }
-      quick->file= NULL;
+      quick->cursor= NULL;
       quick_intrsect->cpk_quick= quick;
     }
     quick_intrsect->records= records;
@@ -6390,7 +6390,7 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
 {
   SEL_ARG_RANGE_SEQ seq;
   RANGE_SEQ_IF seq_if = {sel_arg_range_seq_init, sel_arg_range_seq_next};
-  Cursor *file= param->table->file;
+  Cursor *cursor= param->table->cursor;
   ha_rows rows;
   uint32_t keynr= param->real_keynr[idx];
 
@@ -6411,15 +6411,15 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
   param->max_key_part=0;
 
   param->is_ror_scan= true;
-  if (file->index_flags(keynr, 0, true) & HA_KEY_SCAN_NOT_ROR)
+  if (cursor->index_flags(keynr, 0, true) & HA_KEY_SCAN_NOT_ROR)
     param->is_ror_scan= false;
 
   *mrr_flags= param->force_default_mrr? HA_MRR_USE_DEFAULT_IMPL: 0;
   *mrr_flags|= HA_MRR_NO_ASSOCIATION;
 
-  bool pk_is_clustered= file->primary_key_is_clustered();
+  bool pk_is_clustered= cursor->primary_key_is_clustered();
   if (index_only &&
-      (file->index_flags(keynr, param->max_key_part, 1) & HA_KEYREAD_ONLY) &&
+      (cursor->index_flags(keynr, param->max_key_part, 1) & HA_KEYREAD_ONLY) &&
       !(pk_is_clustered && keynr == param->table->s->primary_key))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 
@@ -6427,7 +6427,7 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
     *mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   *bufsize= param->session->variables.read_rnd_buff_size;
-  rows= file->multi_range_read_info_const(keynr, &seq_if, (void*)&seq, 0,
+  rows= cursor->multi_range_read_info_const(keynr, &seq_if, (void*)&seq, 0,
                                           bufsize, mrr_flags, cost);
   if (rows != HA_POS_ERROR)
   {
@@ -6521,7 +6521,7 @@ static bool is_key_scan_ror(PARAM *param, uint32_t keynr, uint8_t nparts)
 
   key_part= table_key->key_part + nparts;
   pk_number= param->table->s->primary_key;
-  if (!param->table->file->primary_key_is_clustered() || pk_number == MAX_KEY)
+  if (!param->table->cursor->primary_key_is_clustered() || pk_number == MAX_KEY)
     return false;
 
   KEY_PART_INFO *pk_part= param->table->key_info[pk_number].key_part;
@@ -6906,7 +6906,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
     quick->mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
-  if (table->file->multi_range_read_info(quick->index, 1, (uint32_t)records,
+  if (table->cursor->multi_range_read_info(quick->index, 1, (uint32_t)records,
                                          &quick->mrr_buf_size,
                                          &quick->mrr_flags, &cost))
     goto err;
@@ -6941,9 +6941,9 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   QUICK_RANGE_SELECT* cur_quick;
   int result;
   Unique *unique;
-  Cursor *file= head->file;
+  Cursor *cursor= head->cursor;
 
-  file->extra(HA_EXTRA_KEYREAD);
+  cursor->extra(HA_EXTRA_KEYREAD);
   head->prepare_for_position();
 
   cur_quick_it.rewind();
@@ -6957,8 +6957,8 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   if (cur_quick->init() || cur_quick->reset())
     return 0;
 
-  unique= new Unique(refpos_order_cmp, (void *)file,
-                     file->ref_length,
+  unique= new Unique(refpos_order_cmp, (void *)cursor,
+                     cursor->ref_length,
                      session->variables.sortbuff_size);
   if (!unique)
     return 0;
@@ -6971,8 +6971,8 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
       if (!cur_quick)
         break;
 
-      if (cur_quick->file->inited != Cursor::NONE)
-        cur_quick->file->ha_index_end();
+      if (cur_quick->cursor->inited != Cursor::NONE)
+        cur_quick->cursor->ha_index_end();
       if (cur_quick->init() || cur_quick->reset())
         return 0;
     }
@@ -6994,8 +6994,8 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
     if (pk_quick_select && pk_quick_select->row_in_ranges())
       continue;
 
-    cur_quick->file->position(cur_quick->record);
-    result= unique->unique_add((char*)cur_quick->file->ref);
+    cur_quick->cursor->position(cur_quick->record);
+    result= unique->unique_add((char*)cur_quick->cursor->ref);
     if (result)
       return 0;
 
@@ -7006,7 +7006,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   delete unique;
   doing_pk_scan= false;
   /* index_merge currently doesn't support "using index" at all */
-  file->extra(HA_EXTRA_NO_KEYREAD);
+  cursor->extra(HA_EXTRA_NO_KEYREAD);
   /* start table scan */
   init_read_record(&read_record, session, head, (SQL_SELECT*) 0, 1, 1);
   return result;
@@ -7088,8 +7088,8 @@ int QUICK_ROR_INTERSECT_SELECT::get_next()
     if (error)
       return(error);
 
-    quick->file->position(quick->record);
-    memcpy(last_rowid, quick->file->ref, head->file->ref_length);
+    quick->cursor->position(quick->record);
+    memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
     last_rowid_count= 1;
 
     while (last_rowid_count < quick_selects.elements)
@@ -7104,8 +7104,8 @@ int QUICK_ROR_INTERSECT_SELECT::get_next()
       {
         if ((error= quick->get_next()))
           return(error);
-        quick->file->position(quick->record);
-        cmp= head->file->cmp_ref(quick->file->ref, last_rowid);
+        quick->cursor->position(quick->record);
+        cmp= head->cursor->cmp_ref(quick->cursor->ref, last_rowid);
       } while (cmp < 0);
 
       /* Ok, current select 'caught up' and returned ref >= cur_ref */
@@ -7120,7 +7120,7 @@ int QUICK_ROR_INTERSECT_SELECT::get_next()
               return(error);
           }
         }
-        memcpy(last_rowid, quick->file->ref, head->file->ref_length);
+        memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
         last_rowid_count= 1;
       }
       else
@@ -7132,7 +7132,7 @@ int QUICK_ROR_INTERSECT_SELECT::get_next()
 
     /* We get here if we got the same row ref in all scans. */
     if (need_to_fetch_row)
-      error= head->file->rnd_pos(head->record[0], last_rowid);
+      error= head->cursor->rnd_pos(head->record[0], last_rowid);
   } while (error == HA_ERR_RECORD_DELETED);
   return(error);
 }
@@ -7191,14 +7191,14 @@ int QUICK_ROR_UNION_SELECT::get_next()
         have_prev_rowid= true;
       }
       else
-        dup_row= !head->file->cmp_ref(cur_rowid, prev_rowid);
+        dup_row= !head->cursor->cmp_ref(cur_rowid, prev_rowid);
     } while (dup_row);
 
     tmp= cur_rowid;
     cur_rowid= prev_rowid;
     prev_rowid= tmp;
 
-    error= head->file->rnd_pos(quick->record, prev_rowid);
+    error= head->cursor->rnd_pos(quick->record, prev_rowid);
   } while (error == HA_ERR_RECORD_DELETED);
   return(error);
 }
@@ -7213,7 +7213,7 @@ int QUICK_RANGE_SELECT::reset()
   last_range= NULL;
   cur_range= (QUICK_RANGE**) ranges.buffer;
 
-  if (file->inited == Cursor::NONE && (error= file->ha_index_init(index,1)))
+  if (cursor->inited == Cursor::NONE && (error= cursor->ha_index_init(index,1)))
     return(error);
 
   /* Allocate buffer if we need one but haven't allocated it yet */
@@ -7243,7 +7243,7 @@ int QUICK_RANGE_SELECT::reset()
   if (sorted)
      mrr_flags |= HA_MRR_SORTED;
   RANGE_SEQ_IF seq_funcs= {quick_range_seq_init, quick_range_seq_next};
-  error= file->multi_range_read_init(&seq_funcs, (void*)this, ranges.elements,
+  error= cursor->multi_range_read_init(&seq_funcs, (void*)this, ranges.elements,
                                      mrr_flags, mrr_buf_desc? mrr_buf_desc:
                                                               &empty_buf);
   return(error);
@@ -7341,12 +7341,12 @@ int QUICK_RANGE_SELECT::get_next()
   {
     /*
       We don't need to signal the bitmap change as the bitmap is always the
-      same for this head->file
+      same for this head->cursor
     */
     head->column_bitmaps_set(&column_bitmap, &column_bitmap);
   }
 
-  int result= file->multi_range_read_next(&dummy);
+  int result= cursor->multi_range_read_next(&dummy);
 
   if (in_ror_merged_scan)
   {
@@ -7397,9 +7397,9 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
     {
       /* Read the next record in the same range with prefix after cur_prefix. */
       assert(cur_prefix != 0);
-      result= file->index_read_map(record, cur_prefix, keypart_map,
+      result= cursor->index_read_map(record, cur_prefix, keypart_map,
                                    HA_READ_AFTER_KEY);
-      if (result || (file->compare_key(file->end_range) <= 0))
+      if (result || (cursor->compare_key(cursor->end_range) <= 0))
         return result;
     }
 
@@ -7428,7 +7428,7 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
     end_key.flag=     (last_range->flag & NEAR_MAX ? HA_READ_BEFORE_KEY :
 		       HA_READ_AFTER_KEY);
 
-    result= file->read_range_first(last_range->min_keypart_map ? &start_key : 0,
+    result= cursor->read_range_first(last_range->min_keypart_map ? &start_key : 0,
 				   last_range->max_keypart_map ? &end_key : 0,
                                    test(last_range->flag & EQ_RANGE),
 				   sorted);
@@ -7534,9 +7534,9 @@ int QUICK_SELECT_DESC::get_next()
     if (last_range)
     {						// Already read through key
       result = ((last_range->flag & EQ_RANGE)
-		? file->index_next_same(record, last_range->min_key,
+		? cursor->index_next_same(record, last_range->min_key,
 					last_range->min_length) :
-		file->index_prev(record));
+		cursor->index_prev(record));
       if (!result)
       {
 	if (cmp_prev(*rev_it.ref()) == 0)
@@ -7552,7 +7552,7 @@ int QUICK_SELECT_DESC::get_next()
     if (last_range->flag & NO_MAX_RANGE)        // Read last record
     {
       int local_error;
-      if ((local_error=file->index_last(record)))
+      if ((local_error=cursor->index_last(record)))
 	return(local_error);		// Empty table
       if (cmp_prev(last_range) == 0)
 	return 0;
@@ -7562,7 +7562,7 @@ int QUICK_SELECT_DESC::get_next()
 
     if (last_range->flag & EQ_RANGE)
     {
-      result = file->index_read_map(record, last_range->max_key,
+      result = cursor->index_read_map(record, last_range->max_key,
                                     last_range->max_keypart_map,
                                     HA_READ_KEY_EXACT);
     }
@@ -7570,7 +7570,7 @@ int QUICK_SELECT_DESC::get_next()
     {
       assert(last_range->flag & NEAR_MAX ||
                   range_reads_after_key(last_range));
-      result=file->index_read_map(record, last_range->max_key,
+      result=cursor->index_read_map(record, last_range->max_key,
                                   last_range->max_keypart_map,
                                   ((last_range->flag & NEAR_MAX) ?
                                    HA_READ_BEFORE_KEY :
@@ -8122,7 +8122,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
       we check that all query fields are indeed covered by 'cur_index'.
     */
     if (pk < MAX_KEY && cur_index != pk &&
-        (table->file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
+        (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
     {
       /* For each table field */
       for (uint32_t i= 0; i < table->s->fields; i++)
@@ -8765,9 +8765,9 @@ void cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
   double io_cost;
   double cpu_cost= 0; /* TODO: CPU cost of index_read calls? */
 
-  table_records= table->file->stats.records;
-  keys_per_block= (table->file->stats.block_size / 2 /
-                   (index_info->key_length + table->file->ref_length)
+  table_records= table->cursor->stats.records;
+  keys_per_block= (table->cursor->stats.block_size / 2 /
+                   (index_info->key_length + table->cursor->ref_length)
                         + 1);
   num_blocks= (uint32_t)(table_records / keys_per_block) + 1;
 
@@ -8957,7 +8957,7 @@ QUICK_GROUP_MIN_MAX_SELECT(Table *table, JOIN *join_arg, bool have_min_arg,
    max_functions_it(NULL)
 {
   head=       table;
-  file=       head->file;
+  cursor=       head->cursor;
   index=      use_index;
   record=     head->record[0];
   tmp_record= head->record[1];
@@ -9080,8 +9080,8 @@ int QUICK_GROUP_MIN_MAX_SELECT::init()
 
 QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
 {
-  if (file->inited != Cursor::NONE)
-    file->ha_index_end();
+  if (cursor->inited != Cursor::NONE)
+    cursor->ha_index_end();
   if (min_max_arg_part)
     delete_dynamic(&min_max_ranges);
   free_root(&alloc,MYF(0));
@@ -9262,12 +9262,12 @@ int QUICK_GROUP_MIN_MAX_SELECT::reset(void)
 {
   int result;
 
-  file->extra(HA_EXTRA_KEYREAD); /* We need only the key attributes */
-  if ((result= file->ha_index_init(index,1)))
+  cursor->extra(HA_EXTRA_KEYREAD); /* We need only the key attributes */
+  if ((result= cursor->ha_index_init(index,1)))
     return result;
   if (quick_prefix_select && quick_prefix_select->reset())
     return 0;
-  result= file->index_last(record);
+  result= cursor->index_last(record);
   if (result == HA_ERR_END_OF_FILE)
     return 0;
   /* Save the prefix of the last group. */
@@ -9359,7 +9359,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::get_next()
       first sub-group with the extended prefix.
     */
     if (!have_min && !have_max && key_infix_len > 0)
-      result= file->index_read_map(record, group_prefix,
+      result= cursor->index_read_map(record, group_prefix,
                                    make_prev_keypart_map(real_key_parts),
                                    HA_READ_KEY_EXACT);
 
@@ -9422,7 +9422,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min()
     /* Apply the constant equality conditions to the non-group select fields */
     if (key_infix_len > 0)
     {
-      if ((result= file->index_read_map(record, group_prefix,
+      if ((result= cursor->index_read_map(record, group_prefix,
                                         make_prev_keypart_map(real_key_parts),
                                         HA_READ_KEY_EXACT)))
         return result;
@@ -9439,7 +9439,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min()
     {
       /* Find the first subsequent record without NULL in the MIN/MAX field. */
       key_copy(tmp_record, record, index_info, 0);
-      result= file->index_read_map(record, tmp_record,
+      result= cursor->index_read_map(record, tmp_record,
                                    make_keypart_map(real_key_parts),
                                    HA_READ_AFTER_KEY);
       /*
@@ -9494,7 +9494,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max()
   if (min_max_ranges.elements > 0)
     result= next_max_in_range();
   else
-    result= file->index_read_map(record, group_prefix,
+    result= cursor->index_read_map(record, group_prefix,
                                  make_prev_keypart_map(real_key_parts),
                                  HA_READ_PREFIX_LAST);
   return result;
@@ -9538,7 +9538,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
   {
     if (!seen_first_key)
     {
-      result= file->index_first(record);
+      result= cursor->index_first(record);
       if (result)
         return result;
       seen_first_key= true;
@@ -9546,7 +9546,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
     else
     {
       /* Load the first key in this group into record. */
-      result= file->index_read_map(record, group_prefix,
+      result= cursor->index_read_map(record, group_prefix,
                                    make_prev_keypart_map(group_key_parts),
                                    HA_READ_AFTER_KEY);
       if (result)
@@ -9628,7 +9628,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
                  HA_READ_AFTER_KEY : HA_READ_KEY_OR_NEXT;
     }
 
-    result= file->index_read_map(record, group_prefix, keypart_map, find_flag);
+    result= cursor->index_read_map(record, group_prefix, keypart_map, find_flag);
     if (result)
     {
       if ((result == HA_ERR_KEY_NOT_FOUND || result == HA_ERR_END_OF_FILE) &&
@@ -9763,7 +9763,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
                  HA_READ_BEFORE_KEY : HA_READ_PREFIX_LAST_OR_PREV;
     }
 
-    result= file->index_read_map(record, group_prefix, keypart_map, find_flag);
+    result= cursor->index_read_map(record, group_prefix, keypart_map, find_flag);
 
     if (result)
     {

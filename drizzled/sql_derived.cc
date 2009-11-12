@@ -154,7 +154,7 @@ exit:
       orig_table_list->db= (char *)"";
       orig_table_list->db_length= 0;
       /* Force read of table stats in the optimizer */
-      table->file->info(HA_STATUS_VARIABLE);
+      table->cursor->info(HA_STATUS_VARIABLE);
       /* Add new temporary table to list of open derived tables */
       table->next= session->derived_tables;
       session->derived_tables= table;

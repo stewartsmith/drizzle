@@ -123,7 +123,7 @@ class Cursor;
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
-  Cursor *file;
+  Cursor *cursor;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;

@@ -295,13 +295,13 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 	 (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
       lock_type=F_RDLCK;
 
-    if ((error=(*tables)->file->ha_external_lock(session,lock_type)))
+    if ((error=(*tables)->cursor->ha_external_lock(session,lock_type)))
     {
-      print_lock_error(error, (*tables)->file->engine->getName().c_str());
+      print_lock_error(error, (*tables)->cursor->engine->getName().c_str());
       while (--i)
       {
         tables--;
-	(*tables)->file->ha_external_lock(session, F_UNLCK);
+	(*tables)->cursor->ha_external_lock(session, F_UNLCK);
 	(*tables)->current_lock=F_UNLCK;
       }
       return error;
@@ -589,10 +589,10 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
     if ((*table)->current_lock != F_UNLCK)
     {
       (*table)->current_lock = F_UNLCK;
-      if ((error=(*table)->file->ha_external_lock(session, F_UNLCK)))
+      if ((error=(*table)->cursor->ha_external_lock(session, F_UNLCK)))
       {
 	error_code=error;
-	print_lock_error(error_code, (*table)->file->engine->getName().c_str());
+	print_lock_error(error_code, (*table)->cursor->engine->getName().c_str());
       }
     }
     table++;
@@ -669,7 +669,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
       }
     }
     locks_start= locks;
-    locks= table->file->store_lock(session, locks,
+    locks= table->cursor->store_lock(session, locks,
                                    should_lock == false ? TL_IGNORE : lock_type);
     if (should_lock)
     {

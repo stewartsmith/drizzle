@@ -79,7 +79,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     if (join_tab->rowid_keep_flags & JoinTable::KEEP_ROWID)
     {
       cache->fields++;
-      join_tab->used_fieldlength += join_tab->table->file->ref_length;
+      join_tab->used_fieldlength += join_tab->table->cursor->ref_length;
     }
   }
   if (!(cache->field=(CACHE_FIELD*)
@@ -142,8 +142,8 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     /* SemiJoinDuplicateElimination: Allocate space for rowid if needed */
     if (tables[i].rowid_keep_flags & JoinTable::KEEP_ROWID)
     {
-      copy->str= tables[i].table->file->ref;
-      copy->length= tables[i].table->file->ref_length;
+      copy->str= tables[i].table->cursor->ref;
+      copy->length= tables[i].table->cursor->ref_length;
       copy->strip=0;
       copy->blob_field=0;
       copy->get_rowid= NULL;
@@ -209,7 +209,7 @@ bool store_record_in_cache(JOIN_CACHE *cache)
     {
       // SemiJoinDuplicateElimination: Get the rowid into table->ref:
       if (copy->get_rowid)
-        copy->get_rowid->file->position(copy->get_rowid->record[0]);
+        copy->get_rowid->cursor->position(copy->get_rowid->record[0]);
 
       if (copy->strip)
       {
