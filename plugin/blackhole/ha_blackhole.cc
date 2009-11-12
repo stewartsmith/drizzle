@@ -29,8 +29,6 @@
 using namespace std;
 using namespace google;
 
-static const string engine_name("BLACKHOLE");
-
 #define BLACKHOLE_EXT ".blk"
 
 static const char *ha_blackhole_exts[] = {
@@ -400,7 +398,7 @@ static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 static int blackhole_init(drizzled::plugin::Registry &registry)
 {
 
-  blackhole_engine= new BlackholeEngine(engine_name);
+  blackhole_engine= new BlackholeEngine("BLACKHOLE");
   registry.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
