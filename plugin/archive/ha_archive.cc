@@ -31,8 +31,6 @@
 
 using namespace std;
 
-static const string engine_name("ARCHIVE");
-
 /*
   First, if you want to understand storage engines you should look at
   ha_example.cc and ha_example.h.
@@ -104,7 +102,7 @@ static const string engine_name("ARCHIVE");
 /* Variables for archive share methods */
 pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-std::map<const char *, ArchiveShare *> archive_open_tables;
+std::map<const char *, ArchiveShare *> *archive_open_tables= NULL;
 
 static unsigned int global_version;
 
@@ -287,7 +285,8 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
-  archive_engine= new ArchiveEngine(engine_name);
+  archive_open_tables= new std::map<const char *, ArchiveShare *>;
+  archive_engine= new ArchiveEngine("ARCHIVE");
   registry.add(archive_engine);
 
   /* When the engine starts up set the first version */
@@ -311,6 +310,7 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;
+  delete archive_open_tables;
 
   pthread_mutex_destroy(&archive_mutex);
 
@@ -423,9 +423,9 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
   pthread_mutex_lock(&archive_mutex);
   length=(uint) strlen(table_name);
 
-  find_iter= archive_open_tables.find(table_name);
+  find_iter= archive_open_tables->find(table_name);
 
-  if (find_iter != archive_open_tables.end())
+  if (find_iter != archive_open_tables->end())
     share= (*find_iter).second;
   else
     share= NULL;
@@ -450,7 +450,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
       return NULL;
     }
 
-    archive_open_tables[share->table_name.c_str()]= share; 
+    (*archive_open_tables)[share->table_name.c_str()]= share; 
     thr_lock_init(&share->lock);
   }
   share->use_count++;
@@ -471,7 +471,7 @@ int ha_archive::free_share()
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    archive_open_tables.erase(share->table_name.c_str());
+    archive_open_tables->erase(share->table_name.c_str());
     delete share;
   }
   pthread_mutex_unlock(&archive_mutex);
