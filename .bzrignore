@@ -276,6 +276,7 @@ drizzled/message/command_reader
 TAGS
 *replication.pb.*
 drizzled/message/table_raw_reader
+drizzled/message/length
 .plugin.ini.stamp
 pandora-plugin.ac
 pandora-plugin.am

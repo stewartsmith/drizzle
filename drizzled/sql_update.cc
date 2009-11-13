@@ -56,14 +56,14 @@ static void prepare_record_for_error_message(int error, Table *table)
     If storage engine does always read all columns, we have the value alraedy.
   */
   if ((error != HA_ERR_FOUND_DUPP_KEY) ||
-      !(table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ))
+      !(table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ))
     return;
 
   /*
     Get the number of the offended index.
     We will see MAX_KEY if the engine cannot determine the affected index.
   */
-  if ((keynr= table->file->get_dup_key(error)) >= MAX_KEY)
+  if ((keynr= table->cursor->get_dup_key(error)) >= MAX_KEY)
     return;
 
   /* Create unique_map with all fields used by that index. */
@@ -82,12 +82,12 @@ static void prepare_record_for_error_message(int error, Table *table)
   if (unique_map.isClearAll())
     return;
 
-  /* Get identifier of last read record into table->file->ref. */
-  table->file->position(table->record[0]);
+  /* Get identifier of last read record into table->cursor->ref. */
+  table->cursor->position(table->record[0]);
   /* Add all fields used by unique index to read_set. */
   bitmap_union(table->read_set, &unique_map);
-  /* Read record that is identified by table->file->ref. */
-  (void) table->file->rnd_pos(table->record[1], table->file->ref);
+  /* Read record that is identified by table->cursor->ref. */
+  (void) table->cursor->rnd_pos(table->record[1], table->cursor->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->field; (field= *field_p); field_p++)
     if (unique_map.isBitSet(field->field_index))
@@ -199,7 +199,7 @@ int mysql_update(Session *session, TableList *table_list,
     update force the table handler to retrieve write-only fields to be able
     to compare records and detect data change.
   */
-  if (table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
+  if (table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
       table->timestamp_field &&
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
@@ -207,8 +207,8 @@ int mysql_update(Session *session, TableList *table_list,
   // Don't count on usage of 'only index' when calculating which key to use
   table->covering_keys.reset();
 
-  /* Update the table->file->stats.records number */
-  table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+  /* Update the table->cursor->stats.records number */
+  table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
   select= make_select(table, 0, 0, conds, 0, &error);
   if (error || !limit ||
@@ -258,7 +258,7 @@ int mysql_update(Session *session, TableList *table_list,
   {
     used_key_is_modified= 0;
     if (used_index == MAX_KEY)                  // no index for sort order
-      used_index= table->file->key_used_on_scan;
+      used_index= table->cursor->key_used_on_scan;
     if (used_index != MAX_KEY)
       used_key_is_modified= is_key_used(table, used_index, table->write_set);
   }
@@ -326,7 +326,7 @@ int mysql_update(Session *session, TableList *table_list,
       /* If quick select is used, initialize it before retrieving rows. */
       if (select && select->quick && select->quick->reset())
         goto err;
-      table->file->try_semi_consistent_read(1);
+      table->cursor->try_semi_consistent_read(1);
 
       /*
         When we get here, we have one of the following options:
@@ -351,12 +351,12 @@ int mysql_update(Session *session, TableList *table_list,
       {
 	if (!(select && select->skip_record()))
 	{
-          if (table->file->was_semi_consistent_read())
+          if (table->cursor->was_semi_consistent_read())
 	    continue;  /* repeat the read of the same row if it still exists */
 
-	  table->file->position(table->record[0]);
-	  if (my_b_write(&tempfile,table->file->ref,
-			 table->file->ref_length))
+	  table->cursor->position(table->record[0]);
+	  if (my_b_write(&tempfile,table->cursor->ref,
+			 table->cursor->ref_length))
 	  {
 	    error=1;
 	    break;
@@ -368,12 +368,12 @@ int mysql_update(Session *session, TableList *table_list,
 	  }
 	}
 	else
-	  table->file->unlock_row();
+	  table->cursor->unlock_row();
       }
       if (session->killed && !error)
 	error= 1;				// Aborted
       limit= tmp_limit;
-      table->file->try_semi_consistent_read(0);
+      table->cursor->try_semi_consistent_read(0);
       end_read_record(&info);
 
       /* Change select to use tempfile */
@@ -392,7 +392,7 @@ int mysql_update(Session *session, TableList *table_list,
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))
 	error=1;
-      select->file=tempfile;			// Read row ptrs from this file
+      select->file= tempfile;			// Read row ptrs from this cursor
       if (error >= 0)
 	goto err;
     }
@@ -401,11 +401,11 @@ int mysql_update(Session *session, TableList *table_list,
   }
 
   if (ignore)
-    table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+    table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
 
   if (select && select->quick && select->quick->reset())
     goto err;
-  table->file->try_semi_consistent_read(1);
+  table->cursor->try_semi_consistent_read(1);
   init_read_record(&info,session,table,select,0,1);
 
   updated= found= 0;
@@ -421,15 +421,15 @@ int mysql_update(Session *session, TableList *table_list,
   session->cuted_fields= 0L;
   session->set_proc_info("Updating");
 
-  transactional_table= table->file->has_transactions();
+  transactional_table= table->cursor->has_transactions();
   session->abort_on_warning= test(!ignore);
-  will_batch= !table->file->start_bulk_update();
+  will_batch= !table->cursor->start_bulk_update();
 
   /*
     Assure that we can use position()
     if we need to create an error message.
   */
-  if (table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ)
+  if (table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ)
     table->prepare_for_position();
 
   /*
@@ -437,7 +437,7 @@ int mysql_update(Session *session, TableList *table_list,
     the table handler is returning all columns OR if
     if all updated columns are read
   */
-  can_compare_record= (!(table->file->ha_table_flags() &
+  can_compare_record= (!(table->cursor->ha_table_flags() &
                          HA_PARTIAL_COLUMN_READ) ||
                        bitmap_is_subset(table->write_set, table->read_set));
 
@@ -445,7 +445,7 @@ int mysql_update(Session *session, TableList *table_list,
   {
     if (!(select && select->skip_record()))
     {
-      if (table->file->was_semi_consistent_read())
+      if (table->cursor->was_semi_consistent_read())
         continue;  /* repeat the read of the same row if it still exists */
 
       table->storeRecord();
@@ -484,7 +484,7 @@ int mysql_update(Session *session, TableList *table_list,
             call then it should be included in the count of dup_key_found
             and error should be set to 0 (only if these errors are ignored).
           */
-          error= table->file->ha_bulk_update_row(table->record[1],
+          error= table->cursor->ha_bulk_update_row(table->record[1],
                                                  table->record[0],
                                                  &dup_key_found);
           limit+= dup_key_found;
@@ -493,7 +493,7 @@ int mysql_update(Session *session, TableList *table_list,
         else
         {
           /* Non-batched update */
-	  error= table->file->ha_update_row(table->record[1],
+	  error= table->cursor->ha_update_row(table->record[1],
                                             table->record[0]);
         }
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
@@ -504,7 +504,7 @@ int mysql_update(Session *session, TableList *table_list,
             error= 0;
 	}
  	else if (!ignore ||
-                 table->file->is_fatal_error(error, HA_CHECK_DUP_KEY))
+                 table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
 	{
           /*
             If (ignore && error is ignorable) we don't have to
@@ -512,11 +512,11 @@ int mysql_update(Session *session, TableList *table_list,
           */
           myf flags= 0;
 
-          if (table->file->is_fatal_error(error, HA_CHECK_DUP_KEY))
+          if (table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
             flags|= ME_FATALERROR; /* Other handler errors are fatal */
 
           prepare_record_for_error_message(error, table);
-	  table->file->print_error(error,MYF(flags));
+	  table->cursor->print_error(error,MYF(flags));
 	  error= 1;
 	  break;
 	}
@@ -525,7 +525,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (!--limit && using_limit)
       {
         /*
-          We have reached end-of-file in most common situations where no
+          We have reached end-of-cursor in most common situations where no
           batching has occurred and if batching was supposed to occur but
           no updates were made and finally when the batch execution was
           performed without error and without finding any duplicate keys.
@@ -534,7 +534,7 @@ int mysql_update(Session *session, TableList *table_list,
           continue since those are not counted for in limit.
         */
         if (will_batch &&
-            ((error= table->file->exec_bulk_update(&dup_key_found)) ||
+            ((error= table->cursor->exec_bulk_update(&dup_key_found)) ||
              dup_key_found))
         {
  	  if (error)
@@ -544,7 +544,7 @@ int mysql_update(Session *session, TableList *table_list,
               are ignored. This is a requirement on batching handlers.
             */
             prepare_record_for_error_message(error, table);
-            table->file->print_error(error,MYF(0));
+            table->cursor->print_error(error,MYF(0));
             error= 1;
             break;
           }
@@ -558,13 +558,13 @@ int mysql_update(Session *session, TableList *table_list,
         }
         else
         {
-	  error= -1;				// Simulate end of file
+	  error= -1;				// Simulate end of cursor
 	  break;
         }
       }
     }
     else
-      table->file->unlock_row();
+      table->cursor->unlock_row();
     session->row_count++;
   }
   dup_key_found= 0;
@@ -582,7 +582,7 @@ int mysql_update(Session *session, TableList *table_list,
 
   if (error &&
       will_batch &&
-      (loc_error= table->file->exec_bulk_update(&dup_key_found)))
+      (loc_error= table->cursor->exec_bulk_update(&dup_key_found)))
     /*
       An error has occurred when a batched update was performed and returned
       an error indication. It cannot be an allowed duplicate key error since
@@ -593,14 +593,14 @@ int mysql_update(Session *session, TableList *table_list,
     */
   {
     prepare_record_for_error_message(loc_error, table);
-    table->file->print_error(loc_error,MYF(ME_FATALERROR));
+    table->cursor->print_error(loc_error,MYF(ME_FATALERROR));
     error= 1;
   }
   else
     updated-= dup_key_found;
   if (will_batch)
-    table->file->end_bulk_update();
-  table->file->try_semi_consistent_read(0);
+    table->cursor->end_bulk_update();
+  table->cursor->try_semi_consistent_read(0);
 
   if (!transactional_table && updated > 0)
     session->transaction.stmt.modified_non_trans_table= true;
@@ -608,7 +608,7 @@ int mysql_update(Session *session, TableList *table_list,
   end_read_record(&info);
   delete select;
   session->set_proc_info("end");
-  table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+  table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
   /*
     error < 0 means really no error at all: we processed all rows until the
@@ -655,7 +655,7 @@ err:
   if (table->key_read)
   {
     table->key_read=0;
-    table->file->extra(HA_EXTRA_NO_KEYREAD);
+    table->cursor->extra(HA_EXTRA_NO_KEYREAD);
   }
   session->abort_on_warning= 0;
 

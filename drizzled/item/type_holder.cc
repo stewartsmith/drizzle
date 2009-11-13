@@ -92,7 +92,7 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
       case REAL_RESULT:
         return DRIZZLE_TYPE_DOUBLE;
       case DECIMAL_RESULT:
-        return DRIZZLE_TYPE_NEWDECIMAL;
+        return DRIZZLE_TYPE_DECIMAL;
       case ROW_RESULT:
       default:
         assert(0);
@@ -202,7 +202,7 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_VARCHAR:
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
     return 4;

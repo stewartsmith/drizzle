@@ -60,10 +60,10 @@ bool select_union::send_data(List<Item> &values)
   if (session->is_error())
     return 1;
 
-  if ((error= table->file->ha_write_row(table->record[0])))
+  if ((error= table->cursor->ha_write_row(table->record[0])))
   {
     /* create_myisam_from_heap will generate error if needed */
-    if (table->file->is_fatal_error(error, HA_CHECK_DUP) &&
+    if (table->cursor->is_fatal_error(error, HA_CHECK_DUP) &&
         create_myisam_from_heap(session, table, tmp_table_param.start_recinfo,
                                 &tmp_table_param.recinfo, error, 1))
       return 1;
@@ -81,9 +81,9 @@ bool select_union::send_eof()
 bool select_union::flush()
 {
   int error;
-  if ((error=table->file->extra(HA_EXTRA_NO_CACHE)))
+  if ((error=table->cursor->extra(HA_EXTRA_NO_CACHE)))
   {
-    table->file->print_error(error, MYF(0));
+    table->cursor->print_error(error, MYF(0));
     return 1;
   }
   return 0;
@@ -127,8 +127,8 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
                                  (order_st*) 0, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
     return true;
-  table->file->extra(HA_EXTRA_WRITE_CACHE);
-  table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+  table->cursor->extra(HA_EXTRA_WRITE_CACHE);
+  table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   return false;
 }
 
@@ -142,8 +142,8 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
 
 void select_union::cleanup()
 {
-  table->file->extra(HA_EXTRA_RESET_STATE);
-  table->file->ha_delete_all_rows();
+  table->cursor->extra(HA_EXTRA_RESET_STATE);
+  table->cursor->ha_delete_all_rows();
   table->free_io_cache();
   table->filesort_free_buffers();
 }
@@ -409,10 +409,10 @@ bool Select_Lex_Unit::exec()
       {
         item->assigned(0); // We will reinit & rexecute unit
         item->reset();
-        table->file->ha_delete_all_rows();
+        table->cursor->ha_delete_all_rows();
       }
       /* re-enabling indexes for next subselect iteration */
-      if (union_distinct && table->file->ha_enable_indexes(HA_KEY_SWITCH_ALL))
+      if (union_distinct && table->cursor->ha_enable_indexes(HA_KEY_SWITCH_ALL))
       {
         assert(0);
       }
@@ -451,11 +451,11 @@ bool Select_Lex_Unit::exec()
       }
       if (!saved_error)
       {
-	records_at_start= table->file->stats.records;
+	records_at_start= table->cursor->stats.records;
 	sl->join->exec();
         if (sl == union_distinct)
 	{
-	  if (table->file->ha_disable_indexes(HA_KEY_SWITCH_ALL))
+	  if (table->cursor->ha_disable_indexes(HA_KEY_SWITCH_ALL))
 	    return(true);
 	  table->no_keyread=1;
 	}
@@ -479,10 +479,10 @@ bool Select_Lex_Unit::exec()
 	return(saved_error);
       }
       /* Needed for the following test and for records_at_start in next loop */
-      int error= table->file->info(HA_STATUS_VARIABLE);
+      int error= table->cursor->info(HA_STATUS_VARIABLE);
       if(error)
       {
-        table->file->print_error(error, MYF(0));
+        table->cursor->print_error(error, MYF(0));
         return(1);
       }
       if (found_rows_for_union && !sl->braces &&
@@ -495,7 +495,7 @@ bool Select_Lex_Unit::exec()
 	  rows and actual rows added to the temporary table.
 	*/
 	add_rows+= (uint64_t) (session->limit_found_rows - (uint64_t)
-			      ((table->file->stats.records -  records_at_start)));
+			      ((table->cursor->stats.records -  records_at_start)));
       }
     }
   }
@@ -575,7 +575,7 @@ bool Select_Lex_Unit::exec()
       fake_select_lex->table_list.empty();
       if (!saved_error)
       {
-	session->limit_found_rows = (uint64_t)table->file->stats.records + add_rows;
+	session->limit_found_rows = (uint64_t)table->cursor->stats.records + add_rows;
         session->examined_row_count+= examined_rows;
       }
       /*

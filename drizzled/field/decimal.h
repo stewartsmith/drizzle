@@ -24,7 +24,7 @@
 #include <drizzled/field/num.h>
 
 /* New decimal/numeric field which use fixed point arithmetic */
-class Field_new_decimal :public Field_num {
+class Field_decimal :public Field_num {
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 public:
@@ -44,21 +44,21 @@ public:
     So for example we need to count length from precision handling
     CREATE TABLE ( DECIMAL(x,y))
   */
-  Field_new_decimal(unsigned char *ptr_arg,
-                    uint32_t len_arg,
-                    unsigned char *null_ptr_arg,
-                    unsigned char null_bit_arg,
-                    enum utype unireg_check_arg,
-                    const char *field_name_arg,
-                    uint8_t dec_arg,
-                    bool zero_arg,
-                    bool unsigned_arg);
-  Field_new_decimal(uint32_t len_arg,
-                    bool maybe_null_arg,
-                    const char *field_name_arg,
-                    uint8_t dec_arg,
-                    bool unsigned_arg);
-  enum_field_types type() const { return DRIZZLE_TYPE_NEWDECIMAL;}
+  Field_decimal(unsigned char *ptr_arg,
+                uint32_t len_arg,
+                unsigned char *null_ptr_arg,
+                unsigned char null_bit_arg,
+                enum utype unireg_check_arg,
+                const char *field_name_arg,
+                uint8_t dec_arg,
+                bool zero_arg,
+                bool unsigned_arg);
+  Field_decimal(uint32_t len_arg,
+                bool maybe_null_arg,
+                const char *field_name_arg,
+                uint8_t dec_arg,
+                bool unsigned_arg);
+  enum_field_types type() const { return DRIZZLE_TYPE_DECIMAL;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
   Item_result result_type () const { return DECIMAL_RESULT; }
   int  reset(void);
@@ -85,7 +85,7 @@ public:
   int compatible_field_size(uint32_t field_metadata);
   uint32_t is_equal(CreateField *new_field);
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
-                              uint32_t param_data, bool low_byte_first);
+                                      uint32_t param_data, bool low_byte_first);
 };
 
 #endif /* DRIZZLED_FIELD_DECIMAL_H */

@@ -517,7 +517,7 @@ Field *Item_sum::create_tmp_field(bool ,
                                name, table->s, collation.collation);
     break;
   case DECIMAL_RESULT:
-    field= new Field_new_decimal(max_length, maybe_null, name,
+    field= new Field_decimal(max_length, maybe_null, name,
                                  decimals, unsigned_flag);
     break;
   case ROW_RESULT:
@@ -980,7 +980,7 @@ void Item_sum_distinct::fix_length_and_dec()
   case DECIMAL_RESULT:
     val.traits= Hybrid_type_traits_decimal::instance();
     if (table_field_type != DRIZZLE_TYPE_LONGLONG)
-      table_field_type= DRIZZLE_TYPE_NEWDECIMAL;
+      table_field_type= DRIZZLE_TYPE_DECIMAL;
     break;
   case ROW_RESULT:
   default:
@@ -1259,8 +1259,8 @@ Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
                                0, name, table->s, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
-    field= new Field_new_decimal(max_length, maybe_null, name,
-                                 decimals, unsigned_flag);
+    field= new Field_decimal(max_length, maybe_null, name,
+                             decimals, unsigned_flag);
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
   if (field)
@@ -2614,7 +2614,7 @@ bool Item_sum_count_distinct::setup(Session *session)
 				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
     return true;
-  table->file->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
+  table->cursor->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
   table->no_rows=1;
 
   if (table->s->db_type() == heap_engine)
@@ -2706,9 +2706,9 @@ void Item_sum_count_distinct::clear()
   }
   else if (table)
   {
-    table->file->extra(HA_EXTRA_NO_CACHE);
-    table->file->ha_delete_all_rows();
-    table->file->extra(HA_EXTRA_WRITE_CACHE);
+    table->cursor->extra(HA_EXTRA_NO_CACHE);
+    table->cursor->ha_delete_all_rows();
+    table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   }
 }
 
@@ -2735,8 +2735,8 @@ bool Item_sum_count_distinct::add()
     */
     return tree->unique_add(table->record[0] + table->s->null_bytes);
   }
-  if ((error= table->file->ha_write_row(table->record[0])) &&
-      table->file->is_fatal_error(error, HA_CHECK_DUP))
+  if ((error= table->cursor->ha_write_row(table->record[0])) &&
+      table->cursor->is_fatal_error(error, HA_CHECK_DUP))
     return true;
   return false;
 }
@@ -2761,14 +2761,14 @@ int64_t Item_sum_count_distinct::val_int()
     return (int64_t) count;
   }
 
-  error= table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+  error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
   if(error)
   {
-    table->file->print_error(error, MYF(0));
+    table->cursor->print_error(error, MYF(0));
   }
 
-  return table->file->stats.records;
+  return table->cursor->stats.records;
 }
 
 /*****************************************************************************
@@ -3268,7 +3268,7 @@ bool Item_func_group_concat::setup(Session *session)
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
     return(true);
-  table->file->extra(HA_EXTRA_NO_ROWS);
+  table->cursor->extra(HA_EXTRA_NO_ROWS);
   table->no_rows= 1;
 
   /*

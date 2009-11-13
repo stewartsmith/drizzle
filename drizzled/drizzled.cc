@@ -23,6 +23,7 @@
 
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <signal.h>
 
 #include <mysys/my_bit.h>

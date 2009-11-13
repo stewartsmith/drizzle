@@ -1607,14 +1607,14 @@ type:
             Lex->length=(char*) 0; /* use default length */
           }
         | DECIMAL_SYM float_options
-          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_DECIMAL;}
         | NUMERIC_SYM float_options
-          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_DECIMAL;}
         | FIXED_SYM float_options
-          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_DECIMAL;}
         | ENUM_SYM
           {Lex->interval_list.empty();}
-          '(' string_list ')' opt_binary
+          '(' string_list ')'
           { $$=DRIZZLE_TYPE_ENUM; }
         | SERIAL_SYM
           {

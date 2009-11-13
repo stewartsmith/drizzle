@@ -307,10 +307,10 @@ public:
   			/* out: 0 or error number */
   	XID	*xid);	/* in: X/Open XA transaction identification */
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_innobase(this, table);
+    return new (mem_root) ha_innobase(*this, table);
   }
 
   /*********************************************************************
@@ -1349,8 +1349,8 @@ check_trx_exists(
 /*********************************************************************//**
 Construct ha_innobase Cursor. */
 UNIV_INTERN
-ha_innobase::ha_innobase(drizzled::plugin::StorageEngine *engine_arg,
-                         TableShare *table_arg)
+ha_innobase::ha_innobase(drizzled::plugin::StorageEngine &engine_arg,
+                         TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
@@ -3147,7 +3147,7 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_VARMYSQL);
 		}
-	case DRIZZLE_TYPE_NEWDECIMAL:
+	case DRIZZLE_TYPE_DECIMAL:
 		return(DATA_FIXBINARY);
 	case DRIZZLE_TYPE_LONG:
 	case DRIZZLE_TYPE_LONGLONG:

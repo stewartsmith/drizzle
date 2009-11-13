@@ -236,9 +236,9 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  Cursor(drizzled::plugin::StorageEngine *engine_arg, TableShare *share_arg)
-    :table_share(share_arg), table(0),
-    estimation_rows_to_insert(0), engine(engine_arg),
+  Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg)
+    :table_share(&share_arg), table(0),
+    estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(my_off_t)),
@@ -911,7 +911,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds);
 bool mysql_delete(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
-bool mysql_truncate(Session& session, TableList *table_list, bool dont_send_ok);
+bool mysql_truncate(Session& session, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
