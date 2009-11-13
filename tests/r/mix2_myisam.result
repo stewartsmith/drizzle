@@ -331,9 +331,9 @@ a	b
 drop table t1,t2;
 create TEMPORARY table t1 (
 id int NOT NULL auto_increment,
-ggid varchar(32) binary DEFAULT '' NOT NULL,
+ggid varchar(32) DEFAULT '' NOT NULL,
 email varchar(64) DEFAULT '' NOT NULL,
-passwd varchar(32) binary DEFAULT '' NOT NULL,
+passwd varchar(32) DEFAULT '' NOT NULL,
 PRIMARY KEY (id),
 UNIQUE ggid (ggid)
 ) ENGINE=MyISAM;
