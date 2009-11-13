@@ -104,7 +104,6 @@ extern uint32_t back_log;
 extern pid_t current_pid;
 extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
-extern uint32_t drizzled_tcp_port;
 extern char *drizzled_bind_host;
 extern uint32_t drizzled_bind_timeout;
 extern uint32_t dropping_tables;

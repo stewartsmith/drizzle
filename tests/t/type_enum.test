@@ -113,24 +113,24 @@ drop table t1;
 # Bug#20922 mysql removes a name of first column in a table
 #
 create table t1 (f1 int);
-alter table t1 add f2 enum(0xFFFF);
+alter table t1 add f2 enum('Y','N');
 show create table t1;
 drop table t1;
 
 #
 # Bug#24660 "enum" field type definition problem
 #
-create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
-
-create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
-
-create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
+#create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
+#show create table t1;
+#drop table t1;
+#
+#create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
+#show create table t1;
+#drop table t1;
+#
+#create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
+#show create table t1;
+#drop table t1;
 
 #
 # Bug #29251: MySQL coerces special 0 enum values to normal '' value

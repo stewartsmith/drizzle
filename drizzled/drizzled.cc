@@ -253,11 +253,6 @@ char* opt_secure_file_priv= 0;
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
 
-/*
-  This needs to be a uint32_t and not a in_port_t because the config system
-  requires a 4-byte integer.
-*/
-uint32_t drizzled_tcp_port;
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
@@ -604,36 +599,6 @@ static void clean_up_mutexes()
   (void) pthread_cond_destroy(&COND_global_read_lock);
 }
 
-
-/**
- * Setup default port value from (in order or precedence):
- * - Command line option
- * - DRIZZLE_TCP_PORT environment variable
- * - Compile options
- * - Lookup in /etc/services
- * - Default value
- */
-static void set_default_port()
-{
-  struct servent *serv_ptr;
-  char *env;
-
-  if (drizzled_tcp_port == 0)
-  {
-    drizzled_tcp_port= DRIZZLE_TCP_PORT;
-
-    if (DRIZZLE_TCP_PORT_DEFAULT == 0)
-    {
-      if ((serv_ptr= getservbyname("drizzle", "tcp")))
-        drizzled_tcp_port= ntohs((u_short) serv_ptr->s_port);
-    }
-
-    if ((env = getenv("DRIZZLE_TCP_PORT")))
-      drizzled_tcp_port= (uint32_t) atoi(env);
-
-    assert(drizzled_tcp_port != 0);
-  }
-}
 
 /* Change to run as another user if started with --user */
 
@@ -1633,8 +1598,6 @@ int main(int argc, char **argv)
   if (init_server_components(plugins))
     unireg_abort(1);
 
-  set_default_port();
-
   if (plugin::Listen::setup())
     unireg_abort(1);
 
@@ -1862,12 +1825,6 @@ struct my_option my_long_options[] =
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P',
-   N_("Port number to use for connection or 0 for default to, in "
-      "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-      "built-in default (" STRINGIFY_ARG(DRIZZLE_TCP_PORT) ")."),
-   (char**) &drizzled_tcp_port,
-   (char**) &drizzled_tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),

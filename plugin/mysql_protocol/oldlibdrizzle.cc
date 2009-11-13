@@ -35,9 +35,8 @@ using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
-extern uint32_t drizzled_tcp_port;
-
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
+static uint32_t port;
 static uint32_t connect_timeout;
 static uint32_t read_timeout;
 static uint32_t write_timeout;
@@ -45,27 +44,28 @@ static uint32_t retry_count;
 static uint32_t buffer_length;
 static char* bind_address;
 
-const char* ListenOldLibdrizzle::getHost(void) const
+const char* ListenMySQLProtocol::getHost(void) const
 {
   return bind_address;
 }
 
-in_port_t ListenOldLibdrizzle::getPort(void) const
+in_port_t ListenMySQLProtocol::getPort(void) const
 {
-  return (in_port_t) drizzled_tcp_port;
+  return (in_port_t) port;
 }
 
-plugin::Client *ListenOldLibdrizzle::getClient(int fd)
+plugin::Client *ListenMySQLProtocol::getClient(int fd)
 {
   int new_fd;
   new_fd= acceptTcp(fd);
   if (new_fd == -1)
     return NULL;
 
-  return new (nothrow) ClientOldLibdrizzle(new_fd);
+  return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol);
 }
 
-ClientOldLibdrizzle::ClientOldLibdrizzle(int fd)
+ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg):
+  using_mysql41_protocol(using_mysql41_protocol_arg)
 {
   net.vio= 0;
 
@@ -80,33 +80,33 @@ ClientOldLibdrizzle::ClientOldLibdrizzle(int fd)
   net.retry_count=retry_count;
 }
 
-ClientOldLibdrizzle::~ClientOldLibdrizzle()
+ClientMySQLProtocol::~ClientMySQLProtocol()
 {
   if (net.vio)
     drizzleclient_vio_close(net.vio);
 }
 
-int ClientOldLibdrizzle::getFileDescriptor(void)
+int ClientMySQLProtocol::getFileDescriptor(void)
 {
   return drizzleclient_net_get_sd(&net);
 }
 
-bool ClientOldLibdrizzle::isConnected()
+bool ClientMySQLProtocol::isConnected()
 {
   return net.vio != 0;
 }
 
-bool ClientOldLibdrizzle::isReading(void)
+bool ClientMySQLProtocol::isReading(void)
 {
   return net.reading_or_writing == 1;
 }
 
-bool ClientOldLibdrizzle::isWriting(void)
+bool ClientMySQLProtocol::isWriting(void)
 {
   return net.reading_or_writing == 2;
 }
 
-bool ClientOldLibdrizzle::flush()
+bool ClientMySQLProtocol::flush()
 {
   if (net.vio == NULL)
     return false;
@@ -116,7 +116,7 @@ bool ClientOldLibdrizzle::flush()
   return ret;
 }
 
-void ClientOldLibdrizzle::close(void)
+void ClientMySQLProtocol::close(void)
 {
   if (net.vio)
   { 
@@ -125,7 +125,7 @@ void ClientOldLibdrizzle::close(void)
   }
 }
 
-bool ClientOldLibdrizzle::authenticate()
+bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
 
@@ -149,7 +149,7 @@ bool ClientOldLibdrizzle::authenticate()
   return true;
 }
 
-bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
+bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 {
   /*
     This thread will do a blocking read from the client which
@@ -203,6 +203,34 @@ bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
     (*l_packet)[0]= (unsigned char) COM_SLEEP;
     *packet_length= 1;
   }
+  else if (using_mysql41_protocol)
+  {
+    /* Map from MySQL commands to Drizzle commands. */
+    switch ((int)(*l_packet)[0])
+    {
+    case 0: /* SLEEP */
+    case 1: /* QUIT */
+    case 2: /* INIT_DB */
+    case 3: /* QUERY */
+      break;
+
+    case 8: /* SHUTDOWN */
+      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      break;
+
+    case 14: /* PING */
+      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      break;
+
+
+    default:
+      /* Just drop connection for MySQL commands we don't support. */
+      (*l_packet)[0]= (unsigned char) COM_QUIT;
+      *packet_length= 1;
+      break;
+    }
+  }
+
   /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
   (*l_packet)[*packet_length]= '\0';                  /* safety */
 
@@ -237,7 +265,7 @@ bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
   @param message       Message to send to the client (Used by mysql_status)
 */
 
-void ClientOldLibdrizzle::sendOK()
+void ClientMySQLProtocol::sendOK()
 {
   unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
   const char *message= NULL;
@@ -304,7 +332,7 @@ void ClientOldLibdrizzle::sendOK()
   client.
 */
 
-void ClientOldLibdrizzle::sendEOF()
+void ClientMySQLProtocol::sendEOF()
 {
   /* Set to true if no active vio, to work well in case of --init-file */
   if (net.vio != 0)
@@ -319,7 +347,7 @@ void ClientOldLibdrizzle::sendEOF()
 }
 
 
-void ClientOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
+void ClientMySQLProtocol::sendError(uint32_t sql_errno, const char *err)
 {
   uint32_t length;
   /*
@@ -389,7 +417,7 @@ void ClientOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
     1    Error  (Note that in this case the error is not sent to the
     client)
 */
-bool ClientOldLibdrizzle::sendFields(List<Item> *list)
+bool ClientMySQLProtocol::sendFields(List<Item> *list)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
@@ -422,8 +450,63 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
     /* No conversion */
     int2store(pos, field.charsetnr);
     int4store(pos+2, field.length);
-    /* Add one to compensate for tinyint removal from enum. */
-    pos[6]= field.type + 1;
+
+    if (using_mysql41_protocol)
+    {
+      /* Switch to MySQL field numbering. */
+      switch (field.type)
+      {
+      case DRIZZLE_TYPE_LONG:
+        pos[6]= 3;
+        break;
+
+      case DRIZZLE_TYPE_DOUBLE:
+        pos[6]= 5;
+        break;
+
+      case DRIZZLE_TYPE_NULL:
+        pos[6]= 6;
+        break;
+
+      case DRIZZLE_TYPE_TIMESTAMP:
+        pos[6]= 7;
+        break;
+
+      case DRIZZLE_TYPE_LONGLONG:
+        pos[6]= 8;
+        break;
+
+      case DRIZZLE_TYPE_DATETIME:
+        pos[6]= 12;
+        break;
+
+      case DRIZZLE_TYPE_DATE:
+        pos[6]= 14;
+        break;
+
+      case DRIZZLE_TYPE_VARCHAR:
+        pos[6]= 15;
+        break;
+
+      case DRIZZLE_TYPE_DECIMAL:
+        pos[6]= (char)246;
+        break;
+
+      case DRIZZLE_TYPE_ENUM:
+        pos[6]= (char)247;
+        break;
+
+      case DRIZZLE_TYPE_BLOB:
+        pos[6]= (char)252;
+        break;
+      }
+    }
+    else
+    {
+      /* Add one to compensate for tinyint removal from enum. */
+      pos[6]= field.type + 1;
+    }
+
     int2store(pos+7,field.flags);
     pos[9]= (char) field.decimals;
     pos[10]= 0;                // For the future
@@ -449,7 +532,7 @@ err:
   return 1;
 }
 
-bool ClientOldLibdrizzle::store(Field *from)
+bool ClientMySQLProtocol::store(Field *from)
 {
   if (from->is_null())
     return store();
@@ -461,68 +544,68 @@ bool ClientOldLibdrizzle::store(Field *from)
   return netStoreData((const unsigned char *)str.ptr(), str.length());
 }
 
-bool ClientOldLibdrizzle::store(void)
+bool ClientMySQLProtocol::store(void)
 {
   char buff[1];
   buff[0]= (char)251;
   return packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
 }
 
-bool ClientOldLibdrizzle::store(int32_t from)
+bool ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
   return netStoreData((unsigned char*) buff,
                       (size_t) (int10_to_str(from, buff, -10) - buff));
 }
 
-bool ClientOldLibdrizzle::store(uint32_t from)
+bool ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
   return netStoreData((unsigned char*) buff,
                       (size_t) (int10_to_str(from, buff, 10) - buff));
 }
 
-bool ClientOldLibdrizzle::store(int64_t from)
+bool ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
   return netStoreData((unsigned char*) buff,
                       (size_t) (int64_t10_to_str(from, buff, -10) - buff));
 }
 
-bool ClientOldLibdrizzle::store(uint64_t from)
+bool ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
   return netStoreData((unsigned char*) buff,
                       (size_t) (int64_t10_to_str(from, buff, 10) - buff));
 }
 
-bool ClientOldLibdrizzle::store(double from, uint32_t decimals, String *buffer)
+bool ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, session->charset());
   return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
 }
 
-bool ClientOldLibdrizzle::store(const char *from, size_t length)
+bool ClientMySQLProtocol::store(const char *from, size_t length)
 {
   return netStoreData((const unsigned char *)from, length);
 }
 
-bool ClientOldLibdrizzle::wasAborted(void)
+bool ClientMySQLProtocol::wasAborted(void)
 {
   return net.error && net.vio != 0;
 }
 
-bool ClientOldLibdrizzle::haveMoreData(void)
+bool ClientMySQLProtocol::haveMoreData(void)
 {
   return drizzleclient_net_more_data(&net);
 }
 
-bool ClientOldLibdrizzle::haveError(void)
+bool ClientMySQLProtocol::haveError(void)
 {
   return net.error || net.vio == 0;
 }
 
-bool ClientOldLibdrizzle::checkConnection(void)
+bool ClientMySQLProtocol::checkConnection(void)
 {
   uint32_t pkt_len= 0;
   char *end;
@@ -530,9 +613,9 @@ bool ClientOldLibdrizzle::checkConnection(void)
   // TCP/IP connection
   {
     char ip[NI_MAXHOST];
-    uint16_t port;
+    uint16_t peer_port;
 
-    if (drizzleclient_net_peer_addr(&net, ip, &port, NI_MAXHOST))
+    if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
       return false;
@@ -548,6 +631,9 @@ bool ClientOldLibdrizzle::checkConnection(void)
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
 
     server_capabilites= CLIENT_BASIC_FLAGS;
+
+    if (using_mysql41_protocol)
+      server_capabilites|= CLIENT_PROTOCOL_MYSQL41;
 
 #ifdef HAVE_COMPRESS
     server_capabilites|= CLIENT_COMPRESS;
@@ -659,7 +745,7 @@ bool ClientOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-bool ClientOldLibdrizzle::netStoreData(const unsigned char *from, size_t length)
+bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
 {
   size_t packet_length= packet.length();
   /*
@@ -680,7 +766,7 @@ bool ClientOldLibdrizzle::netStoreData(const unsigned char *from, size_t length)
   write it to the network output buffer.
 */
 
-void ClientOldLibdrizzle::writeEOFPacket(uint32_t server_status,
+void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
                                          uint32_t total_warn_count)
 {
   unsigned char buff[5];
@@ -702,11 +788,11 @@ void ClientOldLibdrizzle::writeEOFPacket(uint32_t server_status,
   drizzleclient_net_write(&net, buff, 5);
 }
 
-static ListenOldLibdrizzle *listen_obj= NULL;
+static ListenMySQLProtocol *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  listen_obj= new ListenOldLibdrizzle("oldlibdrizzle");
+  listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
   registry.add(listen_obj); 
   return 0;
 }
@@ -718,6 +804,10 @@ static int deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_UINT(port, port, PLUGIN_VAR_RQCMDARG,
+                           N_("Port number to use for connection or 0 for default to with MySQL "
+                              "protocol."),
+                           NULL, NULL, 3306, 0, 65535, 0);
 static DRIZZLE_SYSVAR_UINT(connect_timeout, connect_timeout,
                            PLUGIN_VAR_RQCMDARG, N_("Connect Timeout."),
                            NULL, NULL, 10, 1, 300, 0);
@@ -734,6 +824,7 @@ static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
                           N_("Address to bind to."), NULL, NULL, NULL);
 
 static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(port),
   DRIZZLE_SYSVAR(connect_timeout),
   DRIZZLE_SYSVAR(read_timeout),
   DRIZZLE_SYSVAR(write_timeout),
@@ -745,10 +836,10 @@ static struct st_mysql_sys_var* system_variables[]= {
 
 drizzle_declare_plugin
 {
-  "oldlibdrizzle",
+  "mysql_protocol",
   "0.1",
   "Eric Day",
-  "Old libdrizzle Client",
+  "MySQL Protocol Module",
   PLUGIN_LICENSE_GPL,
   init,             /* Plugin Init */
   deinit,           /* Plugin Deinit */

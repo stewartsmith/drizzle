@@ -248,7 +248,7 @@ public:
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
-               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\",%"PRIu32"",
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\"",
                t_mark,
                session->thread_id,
                session->getQueryId(),
@@ -270,8 +270,7 @@ public:
                session->tmp_table,
                session->total_warn_count,
                session->getServerId(),
-               glob_hostname,
-               drizzled_tcp_port
+               glob_hostname
                );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];

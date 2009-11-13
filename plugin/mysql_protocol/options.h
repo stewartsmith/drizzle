@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_OLDLIBDRIZZLE_OPTIONS_H
-#define PLUGIN_OLDLIBDRIZZLE_OPTIONS_H
+#ifndef PLUGIN_MYSQL_PROTOCOL_OPTIONS_H
+#define PLUGIN_MYSQL_PROTOCOL_OPTIONS_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -87,7 +87,7 @@ struct st_drizzleclient_options {
 #define CLIENT_COMPRESS         32      /* Can use compression protocol */
 #define CLIENT_ODBC             64      /* Odbc client */
 #define CLIENT_IGNORE_SPACE     256     /* Ignore spaces before '(' */
-#define UNUSED_CLIENT_PROTOCOL_41       512     /* New 4.1 protocol */
+#define CLIENT_PROTOCOL_MYSQL41 512     /* New 4.1 protocol */
 #define CLIENT_SSL              2048    /* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
 #define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */
@@ -125,4 +125,4 @@ struct st_drizzleclient_options {
                                                & ~CLIENT_COMPRESS) \
                                                & ~CLIENT_SSL_VERIFY_SERVER_CERT)
 
-#endif /* PLUGIN_OLDLIBDRIZZLE_OPTIONS_H */
+#endif /* PLUGIN_MYSQL_PROTOCOL_OPTIONS_H */
