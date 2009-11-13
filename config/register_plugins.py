@@ -319,7 +319,7 @@ if len(sys.argv)>2:
   top_srcdir=sys.argv[1]
   top_builddir=sys.argv[2]
 
-if not os.path.exists("config/plugin.list"):
+if not os.path.exists("config/plugin.list") or (len(sys.argv)==2 and sys.argv[1]=='plugin.list'):
   os.system("find plugin -name 'plugin.ini' | xargs -n1 dirname | xargs -n1 basename | sort -b -d > .plugin.scan")
   os.system("cp .plugin.scan config/plugin.list")
 
@@ -344,8 +344,8 @@ else:
       if not (len(sys.argv)==2 and sys.argv[1]=='plugin-stamp'):
         print plugin_dir
 
-if not os.path.exists("config/plugin-list.am") or (len(sys.argv)==2 and sys.argv[0]=='plugin-list.am'):
+if not os.path.exists("config/plugin-list.am") or (len(sys.argv)==2 and sys.argv[1]=='plugin-list.am'):
   os.system(r"sed 's,^\(.*\)$,include plugin/\1/pandora-plugin.am,' < config/plugin.list > config/plugin-list.am")
 
-if not os.path.exists("config/plugin-list.ac") or (len(sys.argv)==2 and sys.argv[0]=='plugin-list.ac'):
+if not os.path.exists("config/plugin-list.ac") or (len(sys.argv)==2 and sys.argv[1]=='plugin-list.ac'):
   os.system(r"sed 's,^\(.*\)$,m4_sinclude(plugin/\1/pandora-plugin.ac),'  < config/plugin.list > config/plugin-list.ac")
