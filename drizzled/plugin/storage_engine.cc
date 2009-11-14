@@ -774,7 +774,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
   }
 
   if (open_table_from_share(&session, &share, "", 0, (uint32_t) READ_ALL, 0,
-                            &table, OTM_CREATE))
+                            &table))
     goto err;
 
   if (update_create_info)

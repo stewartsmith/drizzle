@@ -995,7 +995,7 @@ bool alter_table(Session *session,
     /* table is a normal table: Create temporary table in same directory */
     build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
-    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, false);
   }
 
   if (new_table == NULL)
@@ -1150,7 +1150,7 @@ bool alter_table(Session *session,
     char table_path[FN_REFLEN];
     Table *t_table;
     build_table_filename(table_path, sizeof(table_path), new_db, table_name, false);
-    t_table= session->open_temporary_table(table_path, new_db, tmp_name, false, OTM_OPEN);
+    t_table= session->open_temporary_table(table_path, new_db, tmp_name, false);
     if (t_table)
     {
       t_table->intern_close_table();
