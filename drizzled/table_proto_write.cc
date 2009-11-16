@@ -85,6 +85,9 @@ int fill_table_proto(message::Table *table_proto,
     assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
     assert(strcmp(attribute->name().c_str(), field_arg->field_name)==0);
 
+
+    message::Table::Field::FieldType parser_type= attribute->type();
+
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_LONG:
       attribute->set_type(message::Table::Field::INTEGER);
@@ -181,6 +184,8 @@ int fill_table_proto(message::Table *table_proto,
     default:
       assert(0); /* Tell us, since this shouldn't happend */
     }
+
+    assert (!use_existing_fields || parser_type == attribute->type());
 
 #ifdef NOTDONE
     field_constraints= attribute->mutable_constraints();

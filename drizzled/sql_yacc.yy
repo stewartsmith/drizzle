@@ -1573,59 +1573,176 @@ field_def:
 
 type:
         int_type
-        { 
-          $$=$1; 
+        {
+          $$=$1;
           Lex->length=(char*) 0; /* use default length */
-        }
-        | real_type opt_precision { $$=$1; }
-        | char '(' NUM ')' opt_binary
+
+          statement::CreateTable *statement=
+            (statement::CreateTable *)Lex->statement;
+
+          if (statement->current_proto_field)
           {
-            Lex->length=$3.str;
-            $$=DRIZZLE_TYPE_VARCHAR;
+            if ($1 == DRIZZLE_TYPE_LONG)
+              statement->current_proto_field->set_type(message::Table::Field::INTEGER);
+            else if ($1 == DRIZZLE_TYPE_LONGLONG)
+              statement->current_proto_field->set_type(message::Table::Field::BIGINT);
+            else
+              abort();
           }
-        | char opt_binary
+          }
+        | real_type opt_precision
           {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_VARCHAR;
+            $$=$1;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+            {
+              assert ($1 == DRIZZLE_TYPE_DOUBLE);
+              statement->current_proto_field->set_type(message::Table::Field::DOUBLE);
+            }
           }
-        | varchar '(' NUM ')' opt_binary
+          | char '(' NUM ')' opt_binary
+            {
+              Lex->length=$3.str;
+              $$=DRIZZLE_TYPE_VARCHAR;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+            }
+          | char opt_binary
+            {
+              Lex->length=(char*) "1";
+              $$=DRIZZLE_TYPE_VARCHAR;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+            }
+          | varchar '(' NUM ')' opt_binary
+            {
+              Lex->length=$3.str;
+              $$= DRIZZLE_TYPE_VARCHAR;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+            }
+          | VARBINARY '(' NUM ')'
+            {
+              Lex->length=$3.str;
+              Lex->charset=&my_charset_bin;
+              $$= DRIZZLE_TYPE_VARCHAR;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+            }
+          | DATE_SYM
           {
-            Lex->length=$3.str;
-            $$= DRIZZLE_TYPE_VARCHAR;
+            $$=DRIZZLE_TYPE_DATE;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::DATE);
           }
-        | VARBINARY '(' NUM ')'
+          | TIMESTAMP_SYM
           {
-            Lex->length=$3.str;
-            Lex->charset=&my_charset_bin;
-            $$= DRIZZLE_TYPE_VARCHAR;
+            $$=DRIZZLE_TYPE_TIMESTAMP;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::TIMESTAMP);
           }
-        | DATE_SYM
-          { $$=DRIZZLE_TYPE_DATE; }
-        | TIMESTAMP_SYM
-          { $$=DRIZZLE_TYPE_TIMESTAMP; }
-        | DATETIME_SYM
-          { $$=DRIZZLE_TYPE_DATETIME; }
-        | BLOB_SYM
+          | DATETIME_SYM
           {
-            Lex->charset=&my_charset_bin;
-            $$=DRIZZLE_TYPE_BLOB;
-            Lex->length=(char*) 0; /* use default length */
+            $$=DRIZZLE_TYPE_DATETIME;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::DATETIME);
           }
-        | TEXT_SYM opt_binary
-          { 
-            $$=DRIZZLE_TYPE_BLOB; 
-            Lex->length=(char*) 0; /* use default length */
+          | BLOB_SYM
+            {
+              Lex->charset=&my_charset_bin;
+              $$=DRIZZLE_TYPE_BLOB;
+              Lex->length=(char*) 0; /* use default length */
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::BLOB);
+            }
+          | TEXT_SYM opt_binary
+            {
+              $$=DRIZZLE_TYPE_BLOB;
+              Lex->length=(char*) 0; /* use default length */
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::BLOB);
+            }
+          | DECIMAL_SYM float_options
+          {
+            $$=DRIZZLE_TYPE_DECIMAL;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::DECIMAL);
           }
-        | DECIMAL_SYM float_options
-          { $$=DRIZZLE_TYPE_DECIMAL;}
-        | NUMERIC_SYM float_options
-          { $$=DRIZZLE_TYPE_DECIMAL;}
-        | FIXED_SYM float_options
-          { $$=DRIZZLE_TYPE_DECIMAL;}
-        | ENUM_SYM
-          {Lex->interval_list.empty();}
-          '(' string_list ')'
-          { $$=DRIZZLE_TYPE_ENUM; }
+          | NUMERIC_SYM float_options
+          {
+            $$=DRIZZLE_TYPE_DECIMAL;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::DECIMAL);
+          }
+          | FIXED_SYM float_options
+          {
+            $$=DRIZZLE_TYPE_DECIMAL;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::DECIMAL);
+          }
+          | ENUM_SYM
+            {Lex->interval_list.empty();}
+            '(' string_list ')' opt_binary
+          {
+            $$=DRIZZLE_TYPE_ENUM;
+
+            statement::CreateTable *statement=
+              (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_type(message::Table::Field::ENUM);
+          }
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;
@@ -1637,6 +1754,8 @@ type:
               message::Table::Field::FieldConstraints *constraints;
               constraints= statement->current_proto_field->mutable_constraints();
               constraints->set_is_nullable(false);
+
+              statement->current_proto_field->set_type(message::Table::Field::BIGINT);
             }
           }
         ;
