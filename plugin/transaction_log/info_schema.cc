@@ -37,8 +37,8 @@
  * , NUM_TRANSACTIONS BIGINT NOT NULL
  * , MIN_TRANSACTION_ID BIGINT NOT NULL
  * , MAX_TRANSACTION_ID BIGINT NOT NULL
- * , MIN_TIMESTAMP BIGINT NOT NULL
- * , MAX_TIMESTAMP BIGINT NOT NULL
+ * , MIN_END_TIMESTAMP BIGINT NOT NULL
+ * , MAX_END_TIMESTAMP BIGINT NOT NULL
  * );
  * 
  * CREATE TABLE INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES (
@@ -63,6 +63,8 @@
 #include <drizzled/show.h>
 
 #include "transaction_log.h"
+#include "transaction_log_entry.h"
+#include "transaction_log_index.h"
 #include "info_schema.h"
 
 #include <string>
@@ -73,6 +75,7 @@ using namespace std;
 using namespace drizzled;
 
 extern TransactionLog *transaction_log; /* the singleton transaction log */
+extern TransactionLogIndex *transaction_log_index; /* the singleton transaction log index */
 
 class DeletePtr
 {
@@ -118,24 +121,91 @@ int TransactionLogViewISMethods::fillTable(Session *session,
   {
     table->restoreRecordAsDefault();
 
-    table->field[0]->store(transaction_log->getLogFilename().c_str(), 255, system_charset_info);
+    const string &filename= transaction_log->getLogFilename();
+    table->field[0]->store(filename.c_str(), filename.length(), system_charset_info);
 
     /* Grab the file size of the log */
     struct stat file_stat;
-    (void) fstat(transaction_log->getLogFileDescriptor(), &file_stat);
+    (void) stat(filename.c_str(), &file_stat);
 
     table->field[1]->store(static_cast<int64_t>(file_stat.st_size));
 
-    table->field[2]->store(static_cast<int64_t>(transaction_log->getLogOffset()));
-    table->field[3]->store(0); // @todo
-    table->field[4]->store(0); // @todo
-    table->field[5]->store(0); // @todo
-    table->field[6]->store(0); // @todo
+    table->field[2]->store(static_cast<int64_t>(transaction_log_index->getNumLogEntries()));
+    table->field[3]->store(static_cast<int64_t>(transaction_log_index->getNumTransactionEntries()));
+    table->field[4]->store(static_cast<int64_t>(transaction_log_index->getMinTransactionId()));
+    table->field[5]->store(static_cast<int64_t>(transaction_log_index->getMaxTransactionId()));
+    table->field[6]->store(static_cast<int64_t>(transaction_log_index->getMinEndTimestamp()));
+    table->field[7]->store(static_cast<int64_t>(transaction_log_index->getMaxEndTimestamp()));
 
     /* store the actual record now */
     if (schema_table_store_record(session, table))
     {
       return 1;
+    }
+  }
+  return 0;
+}
+
+int TransactionLogEntriesViewISMethods::fillTable(Session *session,
+                                                  TableList *tables)
+{
+  Table *table= tables->table;
+
+  if (transaction_log != NULL)
+  {
+    /** @todo trigger indexing update here. */
+    for (TransactionLog::Entries::iterator entry_iter= transaction_log_index->getEntries().begin();
+         entry_iter != transaction_log_index->getEntries().end();
+         ++entry_iter)
+    {
+      TransactionLogEntry &entry= *entry_iter;
+
+      table->restoreRecordAsDefault();
+
+      table->field[0]->store(static_cast<int64_t>(entry.getOffset()));
+      const char *type_string= entry.getTypeAsString();
+      table->field[1]->store(type_string, strlen(type_string), system_charset_info);
+      table->field[2]->store(static_cast<int64_t>(entry.getLengthInBytes()));
+
+      /* store the actual record now */
+      if (schema_table_store_record(session, table))
+      {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+int TransactionLogTransactionsViewISMethods::fillTable(Session *session,
+                                                  TableList *tables)
+{
+  Table *table= tables->table;
+
+  if (transaction_log != NULL)
+  {
+    /** @todo trigger indexing update here. */
+    for (TransactionLog::TransactionEntries::iterator entry_iter= transaction_log_index->getTransactionEntries().begin();
+         entry_iter != transaction_log_index->getTransactionEntries().end();
+         ++entry_iter)
+    {
+      TransactionLogTransactionEntry &entry= *entry_iter;
+
+      table->restoreRecordAsDefault();
+
+      table->field[0]->store(static_cast<int64_t>(entry.getOffset()));
+      table->field[1]->store(static_cast<int64_t>(entry.getTransactionId()));
+      table->field[2]->store(static_cast<int64_t>(entry.getServerId()));
+      table->field[3]->store(static_cast<int64_t>(entry.getStartTimestamp()));
+      table->field[4]->store(static_cast<int64_t>(entry.getEndTimestamp()));
+      table->field[5]->store(static_cast<int64_t>(entry.getNumStatements()));
+      table->field[6]->store(static_cast<int64_t>(entry.getChecksum()));
+
+      /* store the actual record now */
+      if (schema_table_store_record(session, table))
+      {
+        return 1;
+      }
     }
   }
   return 0;
@@ -243,7 +313,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
   }
 
   const plugin::ColumnInfo *min_timestamp_col= 
-    new (nothrow) plugin::ColumnInfo("MIN_TIMESTAMP",
+    new (nothrow) plugin::ColumnInfo("MIN_END_TIMESTAMP",
                                       8,
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
@@ -253,13 +323,13 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
   if (min_timestamp_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
-                  "MIN_TIMESTAMP", 
+                  "MIN_END_TIMESTAMP", 
                   strerror(errno));
     return true;
   }
 
   const plugin::ColumnInfo *max_timestamp_col= 
-    new (nothrow) plugin::ColumnInfo("MAX_TIMESTAMP",
+    new (nothrow) plugin::ColumnInfo("MAX_END_TIMESTAMP",
                                       8,
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
@@ -269,7 +339,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
   if (max_timestamp_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
-                  "MAX_TIMESTAMP", 
+                  "MAX_END_TIMESTAMP", 
                   strerror(errno));
     return true;
   }
@@ -449,8 +519,8 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
 
   const plugin::ColumnInfo *checksum_col= 
     new (nothrow) plugin::ColumnInfo("CHECKSUM",
-                                      4,
-                                      DRIZZLE_TYPE_LONG,
+                                      8,
+                                      DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
                                       "Checksum of this transaction",
@@ -513,6 +583,22 @@ bool initViewMethods()
   if (transaction_log_view_methods == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate TransactionLogViewISMethods.  Got error: %s\n"), 
+                  strerror(errno));
+    return true;
+  }
+
+  transaction_log_entries_view_methods= new (nothrow) TransactionLogEntriesViewISMethods();
+  if (transaction_log_entries_view_methods == NULL)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate TransactionLogEntriesViewISMethods.  Got error: %s\n"), 
+                  strerror(errno));
+    return true;
+  }
+
+  transaction_log_transactions_view_methods= new (nothrow) TransactionLogTransactionsViewISMethods();
+  if (transaction_log_transactions_view_methods == NULL)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate TransactionLogTransactionsViewISMethods.  Got error: %s\n"), 
                   strerror(errno));
     return true;
   }

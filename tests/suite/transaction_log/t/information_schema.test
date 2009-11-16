@@ -10,7 +10,11 @@
 # that the information contained in them matches
 # the transaction log.
 
+--vertical_results
 SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG;
+--horizontal_results
+SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES;
+SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG_TRANSACTIONS;
 
 # Truncate the log file to reset for the next test
 --source suite/transaction_log/t/truncate_log.inc

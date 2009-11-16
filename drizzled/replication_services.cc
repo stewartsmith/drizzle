@@ -40,7 +40,7 @@
  *
  * @see /drizzled/message/transaction.proto
  *
- * @TODO
+ * @todo
  *
  * We really should store the raw bytes in the messages, not the
  * String value of the Field.  But, to do that, the

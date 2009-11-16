@@ -773,15 +773,6 @@ public:
     return proc_info;
   }
 
-  inline void setReplicationData (void *data)
-  {
-    replication_data= data;
-  }
-  inline void *getReplicationData () const
-  {
-    return replication_data;
-  }
-
   /** Returns the current query ID */
   inline query_id_t getQueryId()  const
   {
