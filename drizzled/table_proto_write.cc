@@ -131,8 +131,11 @@ int fill_table_proto(message::Table *table_proto,
 
         string_field_options= attribute->mutable_string_options();
         attribute->set_type(message::Table::Field::VARCHAR);
-        string_field_options->set_length(field_arg->length
-					 / field_arg->charset->mbmaxlen);
+        if (! use_existing_fields || string_field_options->length()==0)
+          string_field_options->set_length(field_arg->length
+                                           / field_arg->charset->mbmaxlen);
+        else
+          assert((uint32_t)string_field_options->length() == (uint32_t)(field_arg->length / field_arg->charset->mbmaxlen));
         string_field_options->set_collation_id(field_arg->charset->number);
         string_field_options->set_collation(field_arg->charset->name);
 
