@@ -1661,7 +1661,14 @@ type:
               (statement::CreateTable *)Lex->statement;
 
             if (statement->current_proto_field)
+	    {
               statement->current_proto_field->set_type(message::Table::Field::VARCHAR);
+              message::Table::Field::StringFieldOptions *string_field_options;
+
+              string_field_options= statement->current_proto_field->mutable_string_options();
+
+              string_field_options->set_length(atoi($3.str));
+            }
             }
           | DATE_SYM
           {
