@@ -1951,7 +1951,7 @@ retry:
                                                    HA_GET_INDEX |
                                                    HA_TRY_READ_ONLY),
                                        (EXTRA_RECORD),
-                                       session->open_options, entry, OTM_OPEN)))
+                                       session->open_options, entry)))
   {
     if (error == 7)                             // Table def changed
     {
@@ -2013,7 +2013,7 @@ retry:
                                           HA_TRY_READ_ONLY),
                               EXTRA_RECORD,
                               ha_open_options | HA_OPEN_FOR_REPAIR,
-                              entry, OTM_OPEN) || ! entry->cursor)
+                              entry) || ! entry->cursor)
     {
       /* Give right error message */
       session->clear_error();
@@ -2347,8 +2347,7 @@ RETURN
 */
 
 Table *Session::open_temporary_table(const char *path, const char *db_arg,
-                                     const char *table_name_arg, bool link_in_list,
-                                     open_table_mode open_mode)
+                                     const char *table_name_arg, bool link_in_list)
 {
   Table *new_tmp_table;
   TableShare *share;
@@ -2378,14 +2377,11 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   */
   if (open_table_def(*this, share) ||
       open_table_from_share(this, share, table_name_arg,
-                            (open_mode == OTM_ALTER) ? 0 :
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
-                            (open_mode == OTM_ALTER) ?
-                            (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
-                            : (EXTRA_RECORD),
+                            (EXTRA_RECORD),
                             ha_open_options,
-                            new_tmp_table, open_mode))
+                            new_tmp_table))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();
@@ -2394,17 +2390,8 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  if (open_mode == OTM_ALTER)
-  {
-    /*
-      Temporary table has been created with frm_only
-      and has not been created in any storage engine
-    */
-    share->tmp_table= TMP_TABLE_FRM_FILE_ONLY;
-  }
-  else
-    share->tmp_table= (new_tmp_table->cursor->has_transactions() ?
-                       TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+  share->tmp_table= (new_tmp_table->cursor->has_transactions() ?
+                     TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
 
   if (link_in_list)
   {

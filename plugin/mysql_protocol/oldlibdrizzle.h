@@ -17,39 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_OLDLIBDRIZZLE_OLDLIBDRIZZLE_H
-#define PLUGIN_OLDLIBDRIZZLE_OLDLIBDRIZZLE_H
+#ifndef PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H
+#define PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 
 #include "net_serv.h"
 
-class ListenOldLibdrizzle: public drizzled::plugin::ListenTcp
+class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
+private:
+  bool using_mysql41_protocol;
+
 public:
-  ListenOldLibdrizzle(std::string name_arg)
-   : drizzled::plugin::ListenTcp(name_arg)
+  ListenMySQLProtocol(std::string name_arg, bool using_mysql41_protocol_arg):
+   drizzled::plugin::ListenTcp(name_arg),
+   using_mysql41_protocol(using_mysql41_protocol_arg)
   { }
   virtual const char* getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);
 };
 
-class ClientOldLibdrizzle: public drizzled::plugin::Client
+class ClientMySQLProtocol: public drizzled::plugin::Client
 {
 private:
   NET net;
   String packet;
   uint32_t client_capabilities;
+  bool using_mysql41_protocol;
 
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
 
 public:
-  ClientOldLibdrizzle(int fd);
-  virtual ~ClientOldLibdrizzle();
+  ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
+  virtual ~ClientMySQLProtocol();
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();
@@ -82,4 +87,4 @@ public:
   virtual bool wasAborted(void);
 };
 
-#endif /* PLUGIN_OLDLIBDRIZZLE_OLDLIBDRIZZLE_H */
+#endif /* PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H */

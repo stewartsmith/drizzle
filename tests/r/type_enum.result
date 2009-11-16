@@ -1656,33 +1656,12 @@ a	c
 Y	NULL
 drop table t1;
 create table t1 (f1 int);
-alter table t1 add f2 enum(0xFFFF);
+alter table t1 add f2 enum('Y','N');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` int DEFAULT NULL,
-  `f2` enum('ÿÿ') DEFAULT NULL
-) ENGINE=InnoDB
-drop table t1;
-create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `russian` enum('E','F','EÿF','FÿE') NOT NULL DEFAULT 'E'
-) ENGINE=InnoDB
-drop table t1;
-create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `denormal` enum('E','F','E,F','F,E') NOT NULL DEFAULT 'E'
-) ENGINE=InnoDB
-drop table t1;
-create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-Table	Create Table
-t1	CREATE TABLE `t1` (
-  `russian_deviant` enum('E','F','EÿF','F,E') NOT NULL DEFAULT 'E'
+  `f2` enum('Y','N') DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
 CREATE TABLE t1 (

@@ -2436,7 +2436,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--oldlibdrizzle-connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--drizzle-protocol-connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail
@@ -2449,8 +2449,11 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--pid-file=%s", $prefix,
 	      $mysqld->{'path_pid'});
 
-  mtr_add_arg($args, "%s--port=%d", $prefix,
+  mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
                 $mysqld->{'port'});
+
+  mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
+                $mysqld->{'port'} + 50);
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});

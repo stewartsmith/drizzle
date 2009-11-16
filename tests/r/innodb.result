@@ -2367,8 +2367,8 @@ e varchar(255),
 key (a,b,c,d,e)) engine=innodb;
 ERROR 42000: Specified key was too long; max key length is 3500 bytes
 create table t1 (s1 varbinary(2),primary key (s1)) engine=innodb;
-create table t3 (s1 varchar(2) binary,primary key (s1)) engine=innodb;
-create table t4 (s1 char(2) binary,primary key (s1)) engine=innodb;
+create table t3 (s1 varchar(2) ,primary key (s1)) engine=innodb;
+create table t4 (s1 char(2) ,primary key (s1)) engine=innodb;
 insert into t1 values (0x41),(0x4120),(0x4100);
 insert into t3 values (0x41),(0x4120),(0x4100);
 ERROR 23000: Duplicate entry 'A ' for key 'PRIMARY'
@@ -2437,8 +2437,8 @@ hex(s1)
 4120
 4120
 drop table t2,t1;
-create table t1 (a int primary key,s1 varchar(2) binary not null unique) engine=innodb;
-create table t2 (s1 char(2) binary not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=innodb;
+create table t1 (a int primary key,s1 varchar(2) not null unique) engine=innodb;
+create table t2 (s1 char(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=innodb;
 insert into t1 values(1,0x4100),(2,0x41);
 insert into t2 values(0x41);
 select hex(s1) from t2;
