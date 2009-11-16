@@ -1626,6 +1626,14 @@ type:
           {
             $$=DRIZZLE_TYPE_LONGLONG;
             Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG);
+
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            if (statement->current_proto_field)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= statement->current_proto_field->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
           }
         ;
 
@@ -1693,7 +1701,18 @@ opt_attribute_list:
         ;
 
 attribute:
-          NULL_SYM { Lex->type&= ~ NOT_NULL_FLAG; }
+          NULL_SYM
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            Lex->type&= ~ NOT_NULL_FLAG;
+
+            if (statement->current_proto_field)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= statement->current_proto_field->mutable_constraints();
+              constraints->set_is_nullable(true);
+            }
+          }
         | COLUMN_FORMAT_SYM column_format_types
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
@@ -1701,7 +1720,18 @@ attribute:
             statement->column_format= $2;
             statement->alter_info.flags.set(ALTER_COLUMN_FORMAT);
           }
-        | not NULL_SYM { Lex->type|= NOT_NULL_FLAG; }
+        | not NULL_SYM
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            Lex->type|= NOT_NULL_FLAG;
+
+            if (statement->current_proto_field)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= statement->current_proto_field->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
+          }
         | DEFAULT now_or_signed_literal 
           { 
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
@@ -1711,7 +1741,19 @@ attribute:
           }
         | ON UPDATE_SYM NOW_SYM optional_braces 
           { ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local(); }
-        | AUTO_INC { Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG; }
+        | AUTO_INC
+          {
+            Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG;
+
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            if (statement->current_proto_field)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+
+              constraints= statement->current_proto_field->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
+          }
         | SERIAL_SYM DEFAULT VALUE_SYM
           { 
             LEX *lex=Lex;
@@ -1719,6 +1761,13 @@ attribute:
 
             lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+            if (statement->current_proto_field)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= statement->current_proto_field->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
           }
         | opt_primary KEY_SYM
           {
@@ -1727,6 +1776,13 @@ attribute:
 
             lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
+
+            if (statement->current_proto_field)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= statement->current_proto_field->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
           }
         | UNIQUE_SYM
           {
@@ -2182,6 +2238,8 @@ alter_list_item:
             lex->charset= NULL;
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
             statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+
+            statement->current_proto_field= NULL;
           }
           field_def
           {

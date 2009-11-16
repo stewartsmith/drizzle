@@ -485,7 +485,7 @@ int drizzled::parse_table_proto(Session& session,
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
-    if (pfield.has_constraints() && pfield.constraints().is_nullable())
+    if (pfield.constraints().is_nullable())
       null_fields++;
 
     enum_field_types drizzle_field_type=
@@ -861,7 +861,7 @@ int drizzled::parse_table_proto(Session& session,
                          &share->mem_root,
                          record + field_offsets[fieldnr] + data_offset,
                          field_length,
-                         pfield.has_constraints() && pfield.constraints().is_nullable() ? true : false,
+                         pfield.constraints().is_nullable(),
                          null_pos,
                          null_bit_pos,
                          decimals,

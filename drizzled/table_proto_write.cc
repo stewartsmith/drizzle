@@ -60,20 +60,29 @@ int fill_table_proto(message::Table *table_proto,
   {
     message::Table::Field *attribute;
 
+    /* some (one) code path for CREATE TABLE fills the proto
+       out more than the others, so we already have partially
+       filled out Field messages */
+
     if (use_existing_fields)
       attribute= table_proto->mutable_field(field_number++);
     else
+    {
+      /* Other code paths still have to fill out the proto */
       attribute= table_proto->add_field();
 
-    attribute->set_name(field_arg->field_name);
+      if(field_arg->flags & NOT_NULL_FLAG)
+      {
+        message::Table::Field::FieldConstraints *constraints;
 
-    if(! (field_arg->flags & NOT_NULL_FLAG))
-    {
-      message::Table::Field::FieldConstraints *constraints;
-
-      constraints= attribute->mutable_constraints();
-      constraints->set_is_nullable(true);
+        constraints= attribute->mutable_constraints();
+        constraints->set_is_nullable(false);
+      }
     }
+
+    assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
+
+    attribute->set_name(field_arg->field_name);
 
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_LONG:

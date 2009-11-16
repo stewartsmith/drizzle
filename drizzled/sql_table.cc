@@ -1276,15 +1276,18 @@ int mysql_prepare_create_table(Session *session,
       key_info->comment.str= key->key_create_info.comment.str;
     }
 
+    message::Table::Field *protofield= NULL;
+
     List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
       Key_part_spec *dup_column;
+      int proto_field_nr= 0;
 
       it.rewind();
       field=0;
-      while ((sql_field=it++) &&
+      while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
 			   column->field_name.str,
 			   sql_field->field_name))
@@ -1306,6 +1309,10 @@ int mysql_prepare_create_table(Session *session,
 	}
       }
       cols2.rewind();
+
+      if (create_proto->field_size() > 0)
+        protofield= create_proto->mutable_field(proto_field_nr - 1);
+
       {
         column->length*= sql_field->charset->mbmaxlen;
 
@@ -1329,6 +1336,14 @@ int mysql_prepare_create_table(Session *session,
             /* Implicitly set primary key fields to NOT NULL for ISO conf. */
             sql_field->flags|= NOT_NULL_FLAG;
             null_fields--;
+
+            if (protofield)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= protofield->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
+
           }
           else
           {
