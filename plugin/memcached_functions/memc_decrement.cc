@@ -44,7 +44,7 @@ using namespace std;
 String *MemcachedDecrement::val_str(String *str)
 {
   memcached_return rc;
-  int64_t offset;
+  uint32_t offset;
   uint64_t value;
   size_t val_len;
   char tmp_buff[32]= "";
@@ -61,7 +61,7 @@ String *MemcachedDecrement::val_str(String *str)
 
   if (arg_count == 2) {
     dec_str= args[1]->val_str(str);
-    offset= atoi(dec_str->c_ptr());
+    offset= (uint32_t)atoi(dec_str->c_ptr());
   }
   else
   {
