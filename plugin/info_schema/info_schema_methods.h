@@ -23,20 +23,6 @@
 
 #include "drizzled/plugin/info_schema_table.h"
 
-
-/**
- * @class ColumnsISMethods
- * @brief
- *   Class which implements any methods that the COLUMNS
- *   I_S table needs besides the default methods
- */
-class ColumnsISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchemaTable *schema_table) const;
-};
-
 /**
  * @class KeyColUsageISMethods
  * @brief

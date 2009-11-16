@@ -204,39 +204,6 @@ static bool show_status_array(Session *session, const char *wild,
 }
 
 
-int ColumnsISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
-  const
-{
-  int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
-  int *field_num= fields_arr;
-  const drizzled::plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
-  const drizzled::plugin::ColumnInfo *column;
-  Name_resolution_context *context= &session->lex->select_lex.context;
-
-  for (; *field_num >= 0; field_num++)
-  {
-    column= columns[*field_num];
-    if (! session->lex->verbose && (*field_num == 13 ||
-                                    *field_num == 17 ||
-                                    *field_num == 18))
-    {
-      continue;
-    }
-    Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName().c_str());
-    if (field)
-    {
-      field->set_name(column->getOldName().c_str(),
-                      column->getOldName().length(),
-                      system_charset_info);
-      if (session->add_item_to_list(field))
-      {
-        return 1;
-      }
-    }
-  }
-  return 0;
-}
 
 static void store_key_column_usage(Table *table, LEX_STRING *db_name,
                                    LEX_STRING *table_name, const char *key_name,
