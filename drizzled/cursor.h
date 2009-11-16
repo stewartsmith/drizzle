@@ -163,13 +163,10 @@ inline key_part_map make_prev_keypart_map(T a)
 
 class Cursor :public Sql_alloc
 {
-public:
-  typedef uint64_t Table_flags;
-
 protected:
   TableShare *table_share;   /* The table definition */
   Table *table;               /* The current open table */
-  Table_flags cached_table_flags;       /* Set on init() and open() */
+  drizzled::plugin::StorageEngine::Table_flags cached_table_flags;       /* Set on init() and open() */
 
   ha_rows estimation_rows_to_insert;
 public:
@@ -195,6 +192,12 @@ public:
     being scanned.
   */
   bool in_range_check_pushed_down;
+  bool is_ordered;
+  bool isOrdered(void)
+  {
+    return is_ordered;
+  }
+
 
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
@@ -240,6 +243,7 @@ public:
     :table_share(&share_arg), table(0),
     estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0), in_range_check_pushed_down(false),
+    is_ordered(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(my_off_t)),
     inited(NONE),
@@ -251,7 +255,7 @@ public:
   /** This is called after create to allow us to set up cached variables */
   void init()
   {
-    cached_table_flags= table_flags();
+    cached_table_flags= engine->table_flags();
   }
 
   /* ha_ methods: pubilc wrappers for private virtual API */
@@ -265,7 +269,7 @@ public:
 
   /* this is necessary in many places, e.g. in HANDLER command */
   int ha_index_or_rnd_end();
-  Table_flags ha_table_flags() const;
+  drizzled::plugin::StorageEngine::Table_flags ha_table_flags() const;
 
   /**
     These functions represent the public interface to *users* of the
@@ -697,7 +701,6 @@ private:
     by that statement.
   */
   virtual int reset() { return 0; }
-  virtual Table_flags table_flags(void) const= 0;
 
   /**
     Is not invoked for non-transactional temporary tables.

@@ -94,6 +94,11 @@ const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
 */
 class StorageEngine : public Plugin
 {
+public:
+  typedef uint64_t Table_flags;
+
+private:
+
   /*
     Name used for storage engine.
   */
@@ -188,6 +193,8 @@ public:
    slot number is initialized by MySQL after xxx_init() is called.
   */
   uint32_t slot;
+
+  virtual Table_flags table_flags(void) const= 0;
 
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }

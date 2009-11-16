@@ -250,6 +250,17 @@ public:
     addAlias("INNOBASE");
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_NULL_IN_KEY |
+            HA_CAN_INDEX_BLOBS |
+            HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+            HA_PRIMARY_KEY_IN_READ_INDEX |
+            HA_PARTIAL_COLUMN_READ |
+            HA_TABLE_SCAN_ON_INDEX | 
+            HA_MRR_CANT_SORT);
+  }
+
   virtual
   int
   close_connection(
@@ -1355,14 +1366,6 @@ UNIV_INTERN
 ha_innobase::ha_innobase(drizzled::plugin::StorageEngine &engine_arg,
                          TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
-  int_table_flags(HA_REC_NOT_IN_SEQ |
-		  HA_NULL_IN_KEY |
-		  HA_CAN_INDEX_BLOBS |
-		  HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-		  HA_PRIMARY_KEY_IN_READ_INDEX |
-		  HA_PARTIAL_COLUMN_READ |
-		  HA_TABLE_SCAN_ON_INDEX | 
-                  HA_MRR_CANT_SORT),
   primary_key(0), /* needs initialization because index_flags() may be called 
                      before this is set to the real value. It's ok to have any 
                      value here because it doesn't matter if we return the
@@ -2496,18 +2499,6 @@ ha_innobase::get_row_type() const
 	return(ROW_TYPE_NOT_USED);
 }
 
-
-
-/****************************************************************//**
-Get the table flags to use for the statement.
-@return	table flags */
-UNIV_INTERN
-Cursor::Table_flags
-ha_innobase::table_flags() const
-/*============================*/
-{
-        return int_table_flags;
-}
 
 /****************************************************************//**
 Returns the index type. */

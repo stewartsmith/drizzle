@@ -46,6 +46,15 @@ public:
     addAlias("HEAP");
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_FAST_KEY_READ |
+            HA_NO_BLOBS | HA_NULL_IN_KEY |
+            HA_NO_TRANSACTIONS |
+            HA_HAS_RECORDS |
+            HA_STATS_RECORDS_IS_EXACT);
+  }
+
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
