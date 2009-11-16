@@ -38,6 +38,7 @@
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
+#include <drizzled/temporal.h>
 
 #include "drizzled/table_proto.h"
 
@@ -852,6 +853,9 @@ int drizzled::parse_table_proto(Session& session,
                                                    false);
       break;
     }
+    case DRIZZLE_TYPE_TIMESTAMP:
+      field_length= drizzled::DateTime::MAX_STRING_LENGTH;
+      break;
     default:
       field_length= pfield.options().length();
       break;
