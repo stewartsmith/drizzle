@@ -856,6 +856,12 @@ int drizzled::parse_table_proto(Session& session,
     case DRIZZLE_TYPE_TIMESTAMP:
       field_length= drizzled::DateTime::MAX_STRING_LENGTH;
       break;
+    case DRIZZLE_TYPE_LONG:
+      {
+        uint32_t sign_len= pfield.constraints().is_unsigned() ? 0 : 1;
+          field_length= MAX_INT_WIDTH+sign_len;
+      }
+      break;
     default:
       field_length= pfield.options().length();
       break;
