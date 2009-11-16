@@ -854,6 +854,7 @@ int drizzled::parse_table_proto(Session& session,
       break;
     }
     case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_DATETIME:
       field_length= drizzled::DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_LONG:
