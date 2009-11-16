@@ -1,6 +1,6 @@
 select cast("A" as binary) = "a", cast(BINARY "a" as CHAR) = "A";
 cast("A" as binary) = "a"	cast(BINARY "a" as CHAR) = "A"
-0	1
+0	0
 select cast("2001-1-1" as DATE), cast("2001-1-1" as DATETIME);
 cast("2001-1-1" as DATE)	cast("2001-1-1" as DATETIME)
 2001-01-01	2001-01-01 00:00:00
@@ -146,14 +146,8 @@ DROP TABLE t1;
 select cast(NULL as decimal(6)) as t1;
 t1
 NULL
-select hex(cast('a' as char(2) binary));
-hex(cast('a' as char(2) binary))
-61
 select hex(cast('a' as binary(2)));
 hex(cast('a' as binary(2)))
-6100
-select hex(cast('a' as char(2) binary));
-hex(cast('a' as char(2) binary))
 6100
 CREATE TABLE t1 (f1 DATE);
 INSERT INTO t1 VALUES ('2007-07-19'), (NULL);

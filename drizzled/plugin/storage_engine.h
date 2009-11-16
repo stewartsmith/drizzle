@@ -48,7 +48,6 @@ typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_l
 /* Possible flags of a StorageEngine (there can be 32 of them) */
 enum engine_flag_bits {
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
-  HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
   HTON_BIT_HIDDEN,                    // Engine does not appear in lists
   HTON_BIT_FLUSH_AFTER_RENAME,
   HTON_BIT_NOT_USER_SELECTABLE,
@@ -62,7 +61,6 @@ enum engine_flag_bits {
 
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
 static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
-static const std::bitset<HTON_BIT_SIZE> HTON_CAN_RECREATE(1 << HTON_BIT_CAN_RECREATE);
 static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
 static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FLUSH_AFTER_RENAME);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
@@ -81,7 +79,6 @@ namespace plugin
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
-const unsigned int MAX_STORAGE_ENGINE_FILE_EXT= 4;
     
 
 /*
@@ -122,7 +119,7 @@ protected:
   std::string table_definition_ext;
 
 public:
-  const std::string& getTableDefinitionExt()
+  const std::string& getTableDefinitionFileExtension()
   {
     return table_definition_ext;
   }
@@ -269,7 +266,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual Cursor *create(TableShare *, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare &, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -361,7 +358,9 @@ public:
                          drizzled::message::Table& table_proto,
                          bool used= true);
 
-  Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
+  static void removeLostTemporaryTables(Session &session, const char *directory);
+
+  Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
 };
 
 } /* namespace plugin */

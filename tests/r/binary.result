@@ -1,5 +1,5 @@
 drop table if exists t1,t2;
-create table t1 (a char(10) not null, b char(10) binary not null,key (a), key(b));
+create table t1 (a char(10) not null, b char(10) not null,key (a), key(b));
 insert into t1 values ("hello ","hello "),("hello2 ","hello2 ");
 select concat("-",a,"-",b,"-") from t1 where a="hello";
 concat("-",a,"-",b,"-")
@@ -41,7 +41,7 @@ NULL
 select b from t1 having binary b like '';
 b
 drop table t1;
-create table t1 (a char(3) binary, b varbinary(3));
+create table t1 (a char(3), b varbinary(3));
 insert into t1 values ('aaa','bbb'),('AAA','BBB');
 select upper(a),upper(b) from t1;
 upper(a)	upper(b)
@@ -67,7 +67,7 @@ a	b
 aaa	bbb
 select collation(a), collation(b), collation(binary 'ccc') from t1 limit 1;
 collation(a)	collation(b)	collation(binary 'ccc')
-utf8_bin	binary	binary
+utf8_general_ci	binary	binary
 drop table t1;
 create table t1( firstname char(20), lastname char(20));
 insert into t1 values ("john","doe"),("John","Doe");

@@ -40,16 +40,16 @@ class HeapEngine : public drizzled::plugin::StorageEngine
 {
 public:
   HeapEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
+   : drizzled::plugin::StorageEngine(name_arg, 
+                                     HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_heap(this, table);
+    return new (mem_root) ha_heap(*this, table);
   }
 
   const char **bas_ext() const {
@@ -157,8 +157,8 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(drizzled::plugin::StorageEngine *engine_arg,
-                 TableShare *table_arg)
+ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
+                 TableShare &table_arg)
   :Cursor(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
@@ -238,7 +238,7 @@ int ha_heap::close(void)
 
 Cursor *ha_heap::clone(MEM_ROOT *mem_root)
 {
-  Cursor *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
+  Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
 
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
@@ -686,7 +686,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
-                              Table& table_arg,
+                              Table &table_arg,
                               HA_CREATE_INFO& create_info,
                               drizzled::message::Table& create_proto)
 {
@@ -708,8 +708,8 @@ int HeapEngine::doCreateTable(Session *session,
 
 
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
-                             Table *table_arg, HA_CREATE_INFO& create_info,
-                             bool internal_table, HP_SHARE **internal_share)
+                                  Table *table_arg, HA_CREATE_INFO& create_info,
+                                  bool internal_table, HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
   uint32_t auto_key= 0, auto_key_type= 0;

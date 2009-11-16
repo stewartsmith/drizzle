@@ -104,7 +104,6 @@ extern uint32_t back_log;
 extern pid_t current_pid;
 extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
-extern uint32_t drizzled_tcp_port;
 extern char *drizzled_bind_host;
 extern uint32_t drizzled_bind_timeout;
 extern uint32_t dropping_tables;
@@ -156,7 +155,7 @@ int open_table_def(Session& session, TableShare *share);
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
-                          Table *outparam, open_table_mode open_mode);
+                          Table *outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);

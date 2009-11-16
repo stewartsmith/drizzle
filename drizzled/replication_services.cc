@@ -718,7 +718,7 @@ static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum e
       return message::Table::Field::BIGINT;
     case DRIZZLE_TYPE_LONG:
       return message::Table::Field::INTEGER;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       return message::Table::Field::DECIMAL;
     case DRIZZLE_TYPE_DOUBLE:
       return message::Table::Field::DOUBLE;

@@ -68,7 +68,7 @@ amount int DEFAULT '0' NOT NULL,
 operator int,
 method enum('unknown','cash','dealer','check','card','lazy','delayed','test') DEFAULT 'unknown' NOT NULL,
 DIID int,
-reason char(1) binary DEFAULT '' NOT NULL,
+reason char(1) DEFAULT '' NOT NULL,
 code_id int,
 qty int DEFAULT '0' NOT NULL,
 PRIMARY KEY (PID),
@@ -205,34 +205,6 @@ a	count(*)
 NULL	3
 A	5
 B	5
-SELECT a FROM t1 GROUP BY binary a;
-a
-NULL
-A
-B
-a
-b
-SELECT a,count(*) FROM t1 GROUP BY binary a;
-a	count(*)
-NULL	3
-A	4
-B	4
-a	1
-b	1
-SELECT binary a FROM t1 GROUP BY 1;
-binary a 
-NULL
-A
-B
-a
-b
-SELECT binary a,count(*) FROM t1 GROUP BY 1;
-binary a	count(*)
-NULL	3
-A	4
-B	4
-a	1
-b	1
 SELECT a FROM t1 GROUP BY a;
 a
 NULL
@@ -243,34 +215,46 @@ a	count(*)
 NULL	3
 A	5
 B	5
-SELECT a FROM t1 GROUP BY binary a;
+SELECT a FROM t1 GROUP BY 1;
 a
 NULL
 A
 B
-a
-b
-SELECT a,count(*) FROM t1 GROUP BY binary a;
+SELECT a,count(*) FROM t1 GROUP BY 1;
 a	count(*)
 NULL	3
-A	4
-B	4
-a	1
-b	1
-SELECT binary a FROM t1 GROUP BY 1;
-binary a 
+A	5
+B	5
+SELECT a FROM t1 GROUP BY a;
+a
 NULL
 A
 B
-a
-b
-SELECT binary a,count(*) FROM t1 GROUP BY 1;
-binary a	count(*)
+SELECT a,count(*) FROM t1 GROUP BY a;
+a	count(*)
 NULL	3
-A	4
-B	4
-a	1
-b	1
+A	5
+B	5
+SELECT a FROM t1 GROUP BY a;
+a
+NULL
+A
+B
+SELECT a,count(*) FROM t1 GROUP BY a;
+a	count(*)
+NULL	3
+A	5
+B	5
+SELECT a FROM t1 GROUP BY 1;
+a
+NULL
+A
+B
+SELECT a,count(*) FROM t1 GROUP BY 1;
+a	count(*)
+NULL	3
+A	5
+B	5
 drop table t1;
 CREATE TABLE t1 (
 `a` char(193) default NULL,

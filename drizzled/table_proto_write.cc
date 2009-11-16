@@ -84,24 +84,10 @@ int fill_table_proto(message::Table *table_proto,
         if (field_arg->decimals != NOT_FIXED_DEC)
         {
           drizzled::message::Table::Field::NumericFieldOptions *numeric_field_options;
-          
+
           numeric_field_options= attribute->mutable_numeric_options();
-          /* 
-           * Precision and scale are specified like so:
-           *
-           * DOUBLE(P,S)
-           *
-           * From the CreateField, we get the "length", which is the *total* length
-           * of the double storage space, including the decimal point if there is a
-           * scale argument and a 1 byte length header.  We also get the "decimals", 
-           * which is actually the scale (the number of numbers stored after the decimal point)
-           *
-           * Therefore, PRECISION= LENGTH - 1 - (SCALE ? SCALE + 1 : 0)
-           */
-          if (field_arg->decimals)
-            numeric_field_options->set_precision(field_arg->length - 2); /* One for the decimal, one for the header */
-          else
-            numeric_field_options->set_precision(field_arg->length - 1); /* for the header */
+
+          numeric_field_options->set_precision(field_arg->length);
           numeric_field_options->set_scale(field_arg->decimals);
         }
       }
@@ -133,7 +119,7 @@ int fill_table_proto(message::Table *table_proto,
 
         break;
       }
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       {
         message::Table::Field::NumericFieldOptions *numeric_field_options;
 
@@ -287,6 +273,8 @@ int fill_table_proto(message::Table *table_proto,
       }
     }
 
+    if (field_arg->sql_type != DRIZZLE_TYPE_DECIMAL
+        && field_arg->sql_type != DRIZZLE_TYPE_DOUBLE)
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();

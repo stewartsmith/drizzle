@@ -14,9 +14,9 @@ drop table if exists t1;
 
 CREATE TABLE t1 (
   id int NOT NULL auto_increment,
-  ggid varchar(32) binary DEFAULT '' NOT NULL,
+  ggid varchar(32) DEFAULT '' NOT NULL,
   email varchar(64) DEFAULT '' NOT NULL,
-  passwd varchar(32) binary DEFAULT '' NOT NULL,
+  passwd varchar(32) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
   UNIQUE ggid (ggid)
 ) ENGINE=innodb;

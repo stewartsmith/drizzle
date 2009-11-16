@@ -203,10 +203,10 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
   if (engine->check_flag(HTON_BIT_DOES_TRANSACTIONS))
     vector_of_transactional_engines.push_back(engine);
 
-  if (engine->getTableDefinitionExt().length())
+  if (engine->getTableDefinitionFileExtension().length())
   {
-    assert(engine->getTableDefinitionExt().length() == MAX_STORAGE_ENGINE_FILE_EXT);
-    set_of_table_definition_ext.insert(engine->getTableDefinitionExt());
+    assert(engine->getTableDefinitionFileExtension().length() == DEFAULT_DEFINITION_FILE_EXT.length());
+    set_of_table_definition_ext.insert(engine->getTableDefinitionFileExtension());
   }
 
   return false;
@@ -696,7 +696,7 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
 
     if (engine)
     {
-      if ((file= engine->create(NULL, session.mem_root)))
+      if ((file= engine->create(dummy_share, session.mem_root)))
         file->init();
     }
     memset(&dummy_table, 0, sizeof(dummy_table));
@@ -774,7 +774,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
   }
 
   if (open_table_from_share(&session, &share, "", 0, (uint32_t) READ_ALL, 0,
-                            &table, OTM_CREATE))
+                            &table))
     goto err;
 
   if (update_create_info)
@@ -804,7 +804,7 @@ err:
   return(error != 0);
 }
 
-Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
+Cursor *plugin::StorageEngine::getCursor(TableShare &share, MEM_ROOT *alloc)
 {
   Cursor *file;
 
@@ -893,6 +893,108 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            AddTableName(directory, db, set_of_names));
+}
+
+/* This will later be converted to TableIdentifiers */
+class DropTables: public unary_function<plugin::StorageEngine *, void>
+{
+  Session &session;
+  set<string>& set_of_names;
+
+public:
+
+  DropTables(Session &session_arg, set<string>& of_names) :
+    session(session_arg),
+    set_of_names(of_names)
+  { }
+
+  result_type operator() (argument_type engine)
+  {
+
+    for (set<string>::iterator iter= set_of_names.begin();
+         iter != set_of_names.end();
+         iter++)
+    {
+      int error= engine->doDropTable(session, *iter);
+
+      // On a return of zero we know we found and deleted the table. So we
+      // remove it from our search.
+      if (! error)
+        set_of_names.erase(iter);
+    }
+  }
+};
+
+/*
+  This only works for engines which use file based DFE.
+
+  Note-> Unlike MySQL, we do not, on purpose, delete files that do not match any engines. 
+*/
+void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
+{
+  CachedDirectory dir(directory, set_of_table_definition_ext);
+  set<string> set_of_table_names;
+
+  if (dir.fail())
+  {
+    my_errno= dir.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), directory, my_errno);
+
+    return;
+  }
+
+  CachedDirectory::Entries files= dir.getEntries();
+
+  for (CachedDirectory::Entries::iterator fileIter= files.begin();
+       fileIter != files.end(); fileIter++)
+  {
+    size_t length;
+    string path;
+    CachedDirectory::Entry *entry= *fileIter;
+
+    /* We remove the file extension. */
+    length= entry->filename.length();
+    entry->filename.resize(length - DEFAULT_DEFINITION_FILE_EXT.length());
+
+    path+= directory;
+    path+= FN_LIBCHAR;
+    path+= entry->filename;
+    set_of_table_names.insert(path);
+  }
+
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           DropTables(session, set_of_table_names));
+  
+  /*
+    Now we just clean up anything that might left over.
+
+    We rescan because some of what might have been there should
+    now be all nice and cleaned up.
+  */
+  set<string> all_exts= set_of_table_definition_ext;
+
+  for (vector<plugin::StorageEngine *>::iterator iter= vector_of_engines.begin();
+       iter != vector_of_engines.end() ; iter++)
+  {
+    for (const char **ext= (*iter)->bas_ext(); *ext ; ext++)
+      all_exts.insert(*ext);
+  }
+
+  CachedDirectory rescan(directory, all_exts);
+
+  files= rescan.getEntries();
+  for (CachedDirectory::Entries::iterator fileIter= files.begin();
+       fileIter != files.end(); fileIter++)
+  {
+    string path;
+    CachedDirectory::Entry *entry= *fileIter;
+
+    path+= directory;
+    path+= FN_LIBCHAR;
+    path+= entry->filename;
+
+    unlink(path.c_str());
+  }
 }
 
 

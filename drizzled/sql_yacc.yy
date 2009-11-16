@@ -1017,7 +1017,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column
         set unlock string_list
-        opt_binary
         ref_list opt_match_clause opt_on_update_delete use
         opt_delete_options opt_delete_option varchar
         opt_outer table_list table_name
@@ -1568,17 +1567,17 @@ type:
           Lex->length=(char*) 0; /* use default length */
         }
         | real_type opt_precision { $$=$1; }
-        | char '(' NUM ')' opt_binary
+        | char '(' NUM ')'
           {
             Lex->length=$3.str;
             $$=DRIZZLE_TYPE_VARCHAR;
           }
-        | char opt_binary
+        | char
           {
             Lex->length=(char*) "1";
             $$=DRIZZLE_TYPE_VARCHAR;
           }
-        | varchar '(' NUM ')' opt_binary
+        | varchar '(' NUM ')'
           {
             Lex->length=$3.str;
             $$= DRIZZLE_TYPE_VARCHAR;
@@ -1601,20 +1600,20 @@ type:
             $$=DRIZZLE_TYPE_BLOB;
             Lex->length=(char*) 0; /* use default length */
           }
-        | TEXT_SYM opt_binary
+        | TEXT_SYM
           { 
             $$=DRIZZLE_TYPE_BLOB; 
             Lex->length=(char*) 0; /* use default length */
           }
         | DECIMAL_SYM float_options
-          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_DECIMAL;}
         | NUMERIC_SYM float_options
-          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_DECIMAL;}
         | FIXED_SYM float_options
-          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_DECIMAL;}
         | ENUM_SYM
           {Lex->interval_list.empty();}
-          '(' string_list ')' opt_binary
+          '(' string_list ')'
           { $$=DRIZZLE_TYPE_ENUM; }
         | SERIAL_SYM
           {
@@ -1780,12 +1779,6 @@ collation_name_or_default:
 opt_default:
           /* empty */ {}
         | DEFAULT {}
-        ;
-
-opt_binary:
-          /* empty */ { Lex->charset=NULL; }
-        | BYTE_SYM { Lex->charset=&my_charset_bin; }
-        | BINARY { Lex->type|= BINCMP_FLAG; }
         ;
 
 ws_nweights:
@@ -3401,7 +3394,7 @@ in_sum_expr:
 cast_type:
           BINARY opt_len
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
-        | CHAR_SYM opt_len opt_binary
+        | CHAR_SYM opt_len
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }

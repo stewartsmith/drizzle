@@ -36,7 +36,7 @@ class ha_heap: public Cursor
   uint32_t    key_stat_version;
   bool internal_table;
 public:
-  ha_heap(drizzled::plugin::StorageEngine *engine, TableShare *table);
+  ha_heap(drizzled::plugin::StorageEngine &engine, TableShare &table);
   ~ha_heap() {}
   Cursor *clone(MEM_ROOT *mem_root);
 
@@ -98,6 +98,11 @@ public:
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
+  int reset_auto_increment(uint64_t value)
+  {
+    file->s->auto_increment= value;
+    return 0;
+  }
 private:
   void update_key_stats();
 };

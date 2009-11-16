@@ -61,7 +61,6 @@ class MyisamEngine : public drizzled::plugin::StorageEngine
 public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg, 
-                                     HTON_CAN_RECREATE | 
                                      HTON_HAS_DATA_DICTIONARY |
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
@@ -69,10 +68,10 @@ public:
   ~MyisamEngine()
   { }
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_myisam(this, table);
+    return new (mem_root) ha_myisam(*this, table);
   }
 
   const char **bas_ext() const {
@@ -303,6 +302,11 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   return(0);
 }
 
+int ha_myisam::reset_auto_increment(uint64_t value)
+{
+  file->s->state.auto_increment= value;
+  return 0;
+}
 
 /*
   Check for underlying table conformance
@@ -494,8 +498,8 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
-                     TableShare *table_arg)
+ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
+                     TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
     file(0),
     int_table_flags(HA_NULL_IN_KEY |

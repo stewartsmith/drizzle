@@ -29,7 +29,7 @@
 using namespace std;
 
 class READ_INFO {
-  File	file;
+  File	cursor;
   unsigned char	*buffer;                /* Buffer for read text */
   unsigned char *end_of_buff;           /* Data in bufferts ends here */
   size_t buff_length;                   /* Length of buffert */
@@ -48,7 +48,7 @@ public:
 	*row_end;			/* Found row ends here */
   const CHARSET_INFO *read_charset;
 
-  READ_INFO(File file, size_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(File cursor, size_t tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -95,10 +95,10 @@ static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_li
   SYNOPSYS
     mysql_load()
       session - current thread
-      ex  - file_exchange object representing source file and its parsing rules
+      ex  - file_exchange object representing source cursor and its parsing rules
       table_list  - list of tables to which we are loading data
       fields_vars - list of fields and variables to which we read
-                    data from file
+                    data from cursor
       set_fields  - list of fields mentioned in set clause
       set_values  - expressions to assign to fields in previous list
       handle_duplicates - indicates whenever we should emit error or
@@ -124,7 +124,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   char *db= table_list->db;			// This is never null
   assert(db);
   /*
-    If path for file is not defined, we will use the current database.
+    If path for cursor is not defined, we will use the current database.
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
@@ -165,7 +165,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   }
 
   table= table_list->table;
-  transactional_table= table->file->has_transactions();
+  transactional_table= table->cursor->has_transactions();
 
   if (!fields_vars.elements)
   {
@@ -275,7 +275,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 	return(true);
       }
 
-      // if we are not in slave thread, the file must be:
+      // if we are not in slave thread, the cursor must be:
       if (!((stat_info.st_mode & S_IROTH) == S_IROTH &&  // readable by others
             (stat_info.st_mode & S_IFLNK) != S_IFLNK && // and not a symlink
             ((stat_info.st_mode & S_IFREG) == S_IFREG ||
@@ -339,10 +339,10 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     table->next_number_field=table->found_next_number_field;
     if (ignore ||
 	handle_duplicates == DUP_REPLACE)
-      table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+      table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
     if (handle_duplicates == DUP_REPLACE)
-        table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
-    table->file->ha_start_bulk_insert((ha_rows) 0);
+        table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+    table->cursor->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
     session->abort_on_warning= true;
@@ -355,13 +355,13 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
       error= read_sep_field(session, info, table_list, fields_vars,
                             set_fields, set_values, read_info,
 			    *enclosed, skip_lines, ignore);
-    if (table->file->ha_end_bulk_insert() && !error)
+    if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->file->print_error(my_errno, MYF(0));
+      table->cursor->print_error(my_errno, MYF(0));
       error= 1;
     }
-    table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
-    table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
+    table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+    table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     table->next_number_field=0;
   }
   if (file >= 0)
@@ -390,7 +390,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.modified_non_trans_table);
-  table->file->ha_release_auto_increment();
+  table->cursor->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
   session->abort_on_warning= 0;
   return(error);
@@ -631,7 +631,7 @@ read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
     }
     if (item)
     {
-      /* Have not read any field, thus input file is simply ended */
+      /* Have not read any field, thus input cursor is simply ended */
       if (item == fields_vars.head())
 	break;
       for (; item ; item= it++)
@@ -714,7 +714,7 @@ READ_INFO::unescape(char chr)
   case 'r': return '\r';
   case 'b': return '\b';
   case '0': return 0;				// Ascii null
-  case 'Z': return '\032';			// Win32 end of file
+  case 'Z': return '\032';			// Win32 end of cursor
   case 'N': found_null=1;
 
     /* fall through */
@@ -733,7 +733,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
                      const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
-  :file(file_par),escape_char(escape)
+  :cursor(file_par),escape_char(escape)
 {
   read_charset= cs;
   field_term_ptr=(char*) field_term.ptr();
@@ -776,7 +776,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
   else
   {
     end_of_buff=buffer+buff_length;
-    if (init_io_cache(&cache,(false) ? -1 : file, 0,
+    if (init_io_cache(&cache,(false) ? -1 : cursor, 0,
 		      (false) ? READ_NET :
 		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
 		      MYF(MY_WME)))
@@ -1001,7 +1001,7 @@ found_eof:
 
   NOTES
     The row may not be fixed size on disk if there are escape
-    characters in the file.
+    characters in the cursor.
 
   IMPLEMENTATION NOTE
     One can't use fixed length with multi-byte charset **

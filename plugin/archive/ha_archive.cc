@@ -145,10 +145,10 @@ public:
     table_definition_ext= ARZ;
   }
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_archive(this, table);
+    return new (mem_root) ha_archive(*this, table);
   }
 
   const char **bas_ext() const {
@@ -208,17 +208,15 @@ void ArchiveEngine::doGetTableNames(CachedDirectory &directory,
 int ArchiveEngine::doDropTable(Session&,
                                const string table_path)
 {
-  int error= 0;
-  char buff[FN_REFLEN];
+  string new_path(table_path);
 
-  fn_format(buff, table_path.c_str(), "", ARZ,
-            MY_UNPACK_FILENAME|MY_APPEND_EXT);
-  if (my_delete_with_symlink(buff, MYF(0)))
+  new_path+= ARZ;
+
+  int error= unlink(new_path.c_str());
+
+  if (error != 0)
   {
-    if (my_errno != ENOENT)
-    {
-      error= my_errno;
-    }
+    error= my_errno= errno;
   }
 
   return error;
@@ -318,8 +316,8 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 }
 
 
-ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
-                       TableShare *table_arg)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
+                       TableShare &table_arg)
   :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */

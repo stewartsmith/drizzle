@@ -1960,8 +1960,8 @@ bool subselect_union_engine::no_rows()
 void subselect_uniquesubquery_engine::cleanup()
 {
   /* Tell handler we don't need the index anymore */
-  if (tab->table->file->inited)
-    tab->table->file->ha_index_end();
+  if (tab->table->cursor->inited)
+    tab->table->cursor->ha_index_end();
   return;
 }
 
@@ -2205,7 +2205,7 @@ int subselect_single_select_engine::exec()
               tab->read_first_record= init_read_record_seq;
               tab->read_record.record= tab->table->record[0];
               tab->read_record.session= join->session;
-              tab->read_record.ref_length= tab->table->file->ref_length;
+              tab->read_record.ref_length= tab->table->cursor->ref_length;
               *(last_changed_tab++)= tab;
               break;
             }
@@ -2267,16 +2267,16 @@ int subselect_uniquesubquery_engine::scan_table()
   int error;
   Table *table= tab->table;
 
-  if (table->file->inited)
-    table->file->ha_index_end();
+  if (table->cursor->inited)
+    table->cursor->ha_index_end();
 
-  table->file->ha_rnd_init(1);
-  table->file->extra_opt(HA_EXTRA_CACHE,
+  table->cursor->ha_rnd_init(1);
+  table->cursor->extra_opt(HA_EXTRA_CACHE,
                          current_session->variables.read_buff_size);
   table->null_row= 0;
   for (;;)
   {
-    error=table->file->rnd_next(table->record[0]);
+    error=table->cursor->rnd_next(table->record[0]);
     if (error && error != HA_ERR_END_OF_FILE)
     {
       error= table->report_error(error);
@@ -2293,7 +2293,7 @@ int subselect_uniquesubquery_engine::scan_table()
     }
   }
 
-  table->file->ha_rnd_end();
+  table->cursor->ha_rnd_end();
   return(error != 0);
 }
 
@@ -2447,9 +2447,9 @@ int subselect_uniquesubquery_engine::exec()
   if (null_keypart)
     return(scan_table());
 
-  if (!table->file->inited)
-    table->file->ha_index_init(tab->ref.key, 0);
-  error= table->file->index_read_map(table->record[0],
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(tab->ref.key, 0);
+  error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
                                      HA_READ_KEY_EXACT);
@@ -2560,9 +2560,9 @@ int subselect_indexsubquery_engine::exec()
   if (null_keypart)
     return(scan_table());
 
-  if (!table->file->inited)
-    table->file->ha_index_init(tab->ref.key, 1);
-  error= table->file->index_read_map(table->record[0],
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(tab->ref.key, 1);
+  error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
                                      HA_READ_KEY_EXACT);
@@ -2586,7 +2586,7 @@ int subselect_indexsubquery_engine::exec()
             ((Item_in_subselect *) item)->value= 1;
           break;
         }
-        error= table->file->index_next_same(table->record[0],
+        error= table->cursor->index_next_same(table->record[0],
                                             tab->ref.key_buff,
                                             tab->ref.key_length);
         if (error && error != HA_ERR_END_OF_FILE)
@@ -2963,8 +2963,8 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     assert(tmp_table->s->db_type() == myisam_engine);
     assert(
       tmp_table->s->uniques ||
-      tmp_table->key_info->key_length >= tmp_table->file->max_key_length() ||
-      tmp_table->key_info->key_parts > tmp_table->file->max_key_parts());
+      tmp_table->key_info->key_length >= tmp_table->cursor->max_key_length() ||
+      tmp_table->key_info->key_parts > tmp_table->cursor->max_key_parts());
     tmp_table->free_tmp_table(session);
     delete result;
     result= NULL;
@@ -3122,8 +3122,8 @@ int subselect_hash_sj_engine::exec()
       statistics, then we test if the temporary table for the query result is
       empty.
     */
-    tab->table->file->info(HA_STATUS_VARIABLE);
-    if (!tab->table->file->stats.records)
+    tab->table->cursor->info(HA_STATUS_VARIABLE);
+    if (!tab->table->cursor->stats.records)
     {
       empty_result_set= true;
       item_in->value= false;
