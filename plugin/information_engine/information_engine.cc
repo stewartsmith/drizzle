@@ -97,7 +97,6 @@ int InformationEngine::doGetTableDefinition(Session &,
     {
     case DRIZZLE_TYPE_LONG:
       proto_field->set_type(message::Table::Field::INTEGER);
-      field_options->set_length(MAX_INT_WIDTH);
       break;
     case DRIZZLE_TYPE_DOUBLE:
       proto_field->set_type(message::Table::Field::DOUBLE);
@@ -111,7 +110,6 @@ int InformationEngine::doGetTableDefinition(Session &,
       break;
     case DRIZZLE_TYPE_LONGLONG:
       proto_field->set_type(message::Table::Field::BIGINT);
-      field_options->set_length(MAX_BIGINT_WIDTH);
       break;
     case DRIZZLE_TYPE_DATETIME:
       proto_field->set_type(message::Table::Field::DATETIME);
@@ -127,7 +125,6 @@ int InformationEngine::doGetTableDefinition(Session &,
         proto_field->mutable_string_options();
       proto_field->set_type(message::Table::Field::VARCHAR);
       str_field_options->set_length(column->getLength());
-      field_options->set_length(column->getLength() * 4);
       field_options->set_default_value("");
       str_field_options->set_collation_id(default_charset_info->number);
       str_field_options->set_collation(default_charset_info->name);

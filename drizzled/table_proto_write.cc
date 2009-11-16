@@ -297,23 +297,6 @@ int fill_table_proto(message::Table *table_proto,
       }
     }
 
-    if (field_arg->sql_type != DRIZZLE_TYPE_DECIMAL
-        && field_arg->sql_type != DRIZZLE_TYPE_DOUBLE
-        && field_arg->sql_type != DRIZZLE_TYPE_TIMESTAMP
-        && field_arg->sql_type != DRIZZLE_TYPE_LONG
-        && field_arg->sql_type != DRIZZLE_TYPE_LONGLONG
-        && field_arg->sql_type != DRIZZLE_TYPE_DATETIME
-        && field_arg->sql_type != DRIZZLE_TYPE_DATE
-        && field_arg->sql_type != DRIZZLE_TYPE_ENUM
-        && field_arg->sql_type != DRIZZLE_TYPE_VARCHAR
-        && field_arg->sql_type != DRIZZLE_TYPE_BLOB)
-    {
-      message::Table::Field::FieldOptions *field_options;
-      field_options= attribute->mutable_options();
-
-      field_options->set_length(field_arg->length);
-    }
-
     assert(field_arg->unireg_check == Field::NONE
 	   || field_arg->unireg_check == Field::NEXT_NUMBER
 	   || field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD

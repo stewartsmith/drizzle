@@ -901,7 +901,7 @@ int drizzled::parse_table_proto(Session& session,
       field_length= MAX_BIGINT_WIDTH;
       break;
     default:
-      field_length= pfield.options().length();
+      abort();
       break;
     }
 

@@ -99,8 +99,6 @@ message Table {
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
       optional bytes default_bin_value = 4;
-
-      optional uint32 length = 100; /* TODO: should go away */
     }
 
     message TimestampFieldOptions {
