@@ -862,6 +862,9 @@ int drizzled::parse_table_proto(Session& session,
           field_length= MAX_INT_WIDTH+sign_len;
       }
       break;
+    case DRIZZLE_TYPE_LONGLONG:
+      field_length= MAX_BIGINT_WIDTH;
+      break;
     default:
       field_length= pfield.options().length();
       break;

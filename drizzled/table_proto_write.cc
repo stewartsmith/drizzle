@@ -300,7 +300,8 @@ int fill_table_proto(message::Table *table_proto,
     if (field_arg->sql_type != DRIZZLE_TYPE_DECIMAL
         && field_arg->sql_type != DRIZZLE_TYPE_DOUBLE
         && field_arg->sql_type != DRIZZLE_TYPE_TIMESTAMP
-        && field_arg->sql_type != DRIZZLE_TYPE_INTEGER)
+        && field_arg->sql_type != DRIZZLE_TYPE_LONG
+        && field_arg->sql_type != DRIZZLE_TYPE_LONGLONG)
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
