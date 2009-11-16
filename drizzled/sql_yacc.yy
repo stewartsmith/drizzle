@@ -1543,6 +1543,10 @@ field_spec:
             statement->comment= null_lex_str;
             lex->charset=NULL;
             statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+
+            message::AlterTable &alter_proto=
+              ((statement::CreateTable *)Lex->statement)->alter_info.alter_proto;
+            statement->current_proto_field= alter_proto.add_added_field();
           }
           field_def
           {
@@ -1555,6 +1559,8 @@ field_spec:
                                   &statement->comment,
                                   statement->change, &lex->interval_list, lex->charset))
               DRIZZLE_YYABORT;
+
+            statement->current_proto_field= NULL;
           }
         ;
 field_def:

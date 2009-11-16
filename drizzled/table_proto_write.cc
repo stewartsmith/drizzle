@@ -54,11 +54,17 @@ int fill_table_proto(message::Table *table_proto,
 
   assert(strcmp(table_proto->name().c_str(),table_name)==0);
 
+  int field_number= 0;
+  bool use_existing_fields= table_proto->field_size() > 0;
   while ((field_arg= it++))
   {
     message::Table::Field *attribute;
 
-    attribute= table_proto->add_field();
+    if (use_existing_fields)
+      attribute= table_proto->mutable_field(field_number++);
+    else
+      attribute= table_proto->add_field();
+
     attribute->set_name(field_arg->field_name);
 
     if(! (field_arg->flags & NOT_NULL_FLAG))
@@ -289,6 +295,8 @@ int fill_table_proto(message::Table *table_proto,
 	   || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD);
 
   }
+
+  assert(! use_existing_fields || (field_number == table_proto->field_size()));
 
   switch(create_info->row_type)
   {
