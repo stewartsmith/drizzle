@@ -129,6 +129,11 @@ public:
     return new (mem_root) ha_tina(*this, table);
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_NO_TRANSACTIONS | HA_NO_AUTO_INCREMENT);
+  }
+
   const char **bas_ext() const {
     return ha_tina_exts;
   }

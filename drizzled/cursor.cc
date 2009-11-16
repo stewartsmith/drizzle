@@ -112,9 +112,9 @@ int Cursor::ha_index_or_rnd_end()
   return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
 }
 
-Cursor::Table_flags Cursor::ha_table_flags() const
+plugin::StorageEngine::Table_flags Cursor::ha_table_flags() const
 {
-  return cached_table_flags;
+  return engine->table_flags();
 }
 
 void Cursor::ha_start_bulk_insert(ha_rows rows)
@@ -218,7 +218,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
     }
     else
       dup_ref=ref+ALIGN_SIZE(ref_length);
-    cached_table_flags= table_flags();
   }
   return error;
 }
@@ -1460,8 +1459,6 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
 
   int error= external_lock(session, lock_type);
 
-  if (error == 0)
-    cached_table_flags= table_flags();
   return error;
 }
 

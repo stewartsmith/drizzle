@@ -145,6 +145,13 @@ public:
     table_definition_ext= ARZ;
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_NO_TRANSACTIONS |
+            HA_STATS_RECORDS_IS_EXACT |
+            HA_HAS_RECORDS);
+  }
+
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
@@ -1042,7 +1049,7 @@ int ha_archive::rnd_next(unsigned char *buf)
 
 
 /*
-  Thanks to the table flag HA_REC_NOT_IN_SEQ this will be called after
+  Thanks to the table bool is_ordered this will be called after
   each call to ha_archive::rnd_next() if an ordering of the rows is
   needed.
 */

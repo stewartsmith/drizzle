@@ -53,10 +53,6 @@ public:
     don't implement this method unless you really have indexes
   */
   const char *index_type(uint32_t key_number);
-  uint64_t table_flags() const
-  {
-    return(HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY);
-  }
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }

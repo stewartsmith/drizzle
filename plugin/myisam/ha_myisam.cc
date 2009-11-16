@@ -68,6 +68,19 @@ public:
   ~MyisamEngine()
   { }
 
+  uint64_t table_flags() const
+  {
+    return (HA_NULL_IN_KEY |
+            HA_DUPLICATE_POS |
+            HA_CAN_INDEX_BLOBS |
+            HA_AUTO_PART_KEY |
+            HA_NO_TRANSACTIONS |
+            HA_HAS_RECORDS |
+            HA_STATS_RECORDS_IS_EXACT |
+            HA_NEED_READ_RANGE_BUFFER |
+            HA_MRR_CANT_SORT);
+  }
+
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
@@ -502,17 +515,10 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
                      TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
     file(0),
-    int_table_flags(HA_NULL_IN_KEY |
-                    HA_DUPLICATE_POS |
-                    HA_CAN_INDEX_BLOBS |
-                    HA_AUTO_PART_KEY |
-                    HA_NO_TRANSACTIONS |
-                    HA_HAS_RECORDS |
-                    HA_STATS_RECORDS_IS_EXACT |
-                    HA_NEED_READ_RANGE_BUFFER |
-                    HA_MRR_CANT_SORT),
      can_enable_indexes(1)
-{}
+{
+  is_ordered= true;
+}
 
 Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
 {
@@ -575,7 +581,8 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   if (!(test_if_locked & HA_OPEN_WAIT_IF_LOCKED))
     mi_extra(file, HA_EXTRA_WAIT_LOCK, 0);
   if (!table->s->db_record_offset)
-    int_table_flags|=HA_REC_NOT_IN_SEQ;
+    is_ordered= false;
+
 
   keys_with_parts.reset();
   for (i= 0; i < table->s->keys; i++)

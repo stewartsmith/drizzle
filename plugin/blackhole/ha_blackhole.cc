@@ -46,6 +46,11 @@ public:
     table_definition_ext= BLACKHOLE_EXT;
   }
 
+  uint64_t table_flags() const
+  {
+    return(HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY);
+  }
+
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {

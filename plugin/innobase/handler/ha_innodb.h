@@ -71,7 +71,6 @@ class ha_innobase: public Cursor
 	ulong		upd_and_key_val_buff_len;
 					/* the length of each of the previous
 					two buffers */
-	Table_flags	int_table_flags;
 	uint		primary_key;
 	ulong		start_of_scan;	/*!< this is set to 1 when we are
 					starting a table scan but have not
@@ -109,7 +108,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN enum row_type get_row_type() const;
 
 	UNIV_INTERN const char* index_type(uint key_number);
-	UNIV_INTERN Table_flags table_flags() const;
 	UNIV_INTERN uint32_t index_flags(uint idx, uint part, bool all_parts) const;
 	UNIV_INTERN uint32_t max_supported_keys() const;
 	UNIV_INTERN uint32_t max_supported_key_length() const;

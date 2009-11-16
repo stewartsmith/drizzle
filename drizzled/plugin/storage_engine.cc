@@ -777,13 +777,8 @@ err:
 
 Cursor *plugin::StorageEngine::getCursor(TableShare &share, MEM_ROOT *alloc)
 {
-  Cursor *file;
-
   assert(enabled);
-
-  if ((file= create(share, alloc)))
-    file->init();
-  return file;
+  return create(share, alloc);
 }
 
 /**
