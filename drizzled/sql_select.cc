@@ -3380,7 +3380,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
       new_errno= tmp;
     }
     if (new_errno)
-      table->cursor->print_error(new_errno,MYF(0));
+      table->print_error(new_errno,MYF(0));
   }
   return(join->session->is_error() ? -1 : rc);
 }
@@ -5403,7 +5403,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
 err:
   cursor->extra(HA_EXTRA_NO_CACHE);
   if (error)
-    cursor->print_error(error,MYF(0));
+    table->print_error(error,MYF(0));
   return(1);
 }
 
@@ -5514,7 +5514,7 @@ err:
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->ha_rnd_end();
   if (error)
-    cursor->print_error(error,MYF(0));
+    table->print_error(error,MYF(0));
   return(1);
 }
 

@@ -690,47 +690,18 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
 
   if (error && generate_warning)
   {
-    TableShare dummy_share;
-    Table dummy_table;
-    Cursor *file= NULL;
-
-    if (engine)
-    {
-      if ((file= engine->create(dummy_share, session.mem_root)))
-        file->init();
-    }
-    memset(&dummy_table, 0, sizeof(dummy_table));
-    memset(&dummy_share, 0, sizeof(dummy_share));
-    dummy_table.s= &dummy_share;
-
     /*
-      Because file->print_error() use my_error() to generate the error message
+      Because engine->print_error() use my_error() to generate the error message
       we use an internal error Cursor to intercept it and store the text
       in a temporary buffer. Later the message will be presented to user
       as a warning.
     */
     Ha_delete_table_error_handler ha_delete_table_error_handler;
 
-    /* Fill up strucutures that print_error may need */
-    dummy_share.path.str= (char*) path;
-    dummy_share.path.length= strlen(path);
-    dummy_share.db.str= (char*) db;
-    dummy_share.db.length= strlen(db);
-    dummy_share.table_name.str= (char*) alias;
-    dummy_share.table_name.length= strlen(alias);
-    dummy_table.alias= alias;
+    session.push_internal_handler(&ha_delete_table_error_handler);
+    engine->print_error(error, 0);
 
-    if (file != NULL)
-    {
-      file->change_table_ptr(&dummy_table, &dummy_share);
-
-      session.push_internal_handler(&ha_delete_table_error_handler);
-      file->print_error(error, 0);
-
-      session.pop_internal_handler();
-    }
-    else
-      error= -1; /* General form of fail. maybe bad FRM */
+    session.pop_internal_handler();
 
     /*
       XXX: should we convert *all* errors to warnings here?
@@ -996,6 +967,267 @@ void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const ch
     unlink(path.c_str());
   }
 }
+
+
+/**
+  Print error that we got from Cursor function.
+
+  @note
+    In case of delete table it's only safe to use the following parts of
+    the 'table' structure:
+    - table->s->path
+    - table->alias
+*/
+void plugin::StorageEngine::print_error(int error, myf errflag, Table &table)
+{
+  print_error(error, errflag, &table);
+}
+
+void plugin::StorageEngine::print_error(int error, myf errflag, Table *table)
+{
+  int textno= ER_GET_ERRNO;
+  switch (error) {
+  case EACCES:
+    textno=ER_OPEN_AS_READONLY;
+    break;
+  case EAGAIN:
+    textno=ER_FILE_USED;
+    break;
+  case ENOENT:
+    textno=ER_FILE_NOT_FOUND;
+    break;
+  case HA_ERR_KEY_NOT_FOUND:
+  case HA_ERR_NO_ACTIVE_RECORD:
+  case HA_ERR_END_OF_FILE:
+    textno=ER_KEY_NOT_FOUND;
+    break;
+  case HA_ERR_WRONG_MRG_TABLE_DEF:
+    textno=ER_WRONG_MRG_TABLE;
+    break;
+  case HA_ERR_FOUND_DUPP_KEY:
+  {
+    assert(table);
+    uint32_t key_nr= table->get_dup_key(error);
+    if ((int) key_nr >= 0)
+    {
+      const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
+
+      if (key_nr == 0 &&
+          (table->key_info[0].key_part[0].field->flags &
+           AUTO_INCREMENT_FLAG)
+          && (current_session)->lex->sql_command == SQLCOM_ALTER_TABLE)
+      {
+        err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
+      }
+
+      print_keydup_error(key_nr, err_msg, *table);
+      return;
+    }
+    textno=ER_DUP_KEY;
+    break;
+  }
+  case HA_ERR_FOREIGN_DUPLICATE_KEY:
+  {
+    assert(table);
+    uint32_t key_nr= table->get_dup_key(error);
+    if ((int) key_nr >= 0)
+    {
+      uint32_t max_length;
+
+      /* Write the key in the error message */
+      char key[MAX_KEY_LENGTH];
+      String str(key,sizeof(key),system_charset_info);
+
+      /* Table is opened and defined at this point */
+      key_unpack(&str,table,(uint32_t) key_nr);
+      max_length= (DRIZZLE_ERRMSG_SIZE-
+                   (uint32_t) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
+      if (str.length() >= max_length)
+      {
+        str.length(max_length-4);
+        str.append(STRING_WITH_LEN("..."));
+      }
+      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->s->table_name.str,
+        str.c_ptr(), key_nr+1);
+      return;
+    }
+    textno= ER_DUP_KEY;
+    break;
+  }
+  case HA_ERR_FOUND_DUPP_UNIQUE:
+    textno=ER_DUP_UNIQUE;
+    break;
+  case HA_ERR_RECORD_CHANGED:
+    textno=ER_CHECKREAD;
+    break;
+  case HA_ERR_CRASHED:
+    textno=ER_NOT_KEYFILE;
+    break;
+  case HA_ERR_WRONG_IN_RECORD:
+    textno= ER_CRASHED_ON_USAGE;
+    break;
+  case HA_ERR_CRASHED_ON_USAGE:
+    textno=ER_CRASHED_ON_USAGE;
+    break;
+  case HA_ERR_NOT_A_TABLE:
+    textno= error;
+    break;
+  case HA_ERR_CRASHED_ON_REPAIR:
+    textno=ER_CRASHED_ON_REPAIR;
+    break;
+  case HA_ERR_OUT_OF_MEM:
+    textno=ER_OUT_OF_RESOURCES;
+    break;
+  case HA_ERR_WRONG_COMMAND:
+    textno=ER_ILLEGAL_HA;
+    break;
+  case HA_ERR_OLD_FILE:
+    textno=ER_OLD_KEYFILE;
+    break;
+  case HA_ERR_UNSUPPORTED:
+    textno=ER_UNSUPPORTED_EXTENSION;
+    break;
+  case HA_ERR_RECORD_FILE_FULL:
+  case HA_ERR_INDEX_FILE_FULL:
+    textno=ER_RECORD_FILE_FULL;
+    break;
+  case HA_ERR_LOCK_WAIT_TIMEOUT:
+    textno=ER_LOCK_WAIT_TIMEOUT;
+    break;
+  case HA_ERR_LOCK_TABLE_FULL:
+    textno=ER_LOCK_TABLE_FULL;
+    break;
+  case HA_ERR_LOCK_DEADLOCK:
+    textno=ER_LOCK_DEADLOCK;
+    break;
+  case HA_ERR_READ_ONLY_TRANSACTION:
+    textno=ER_READ_ONLY_TRANSACTION;
+    break;
+  case HA_ERR_CANNOT_ADD_FOREIGN:
+    textno=ER_CANNOT_ADD_FOREIGN;
+    break;
+  case HA_ERR_ROW_IS_REFERENCED:
+  {
+    String str;
+    get_error_message(error, &str);
+    my_error(ER_ROW_IS_REFERENCED_2, MYF(0), str.c_ptr_safe());
+    return;
+  }
+  case HA_ERR_NO_REFERENCED_ROW:
+  {
+    String str;
+    get_error_message(error, &str);
+    my_error(ER_NO_REFERENCED_ROW_2, MYF(0), str.c_ptr_safe());
+    return;
+  }
+  case HA_ERR_TABLE_DEF_CHANGED:
+    textno=ER_TABLE_DEF_CHANGED;
+    break;
+  case HA_ERR_NO_SUCH_TABLE:
+    assert(table);
+    my_error(ER_NO_SUCH_TABLE, MYF(0), table->s->db.str,
+             table->s->table_name.str);
+    return;
+  case HA_ERR_RBR_LOGGING_FAILED:
+    textno= ER_BINLOG_ROW_LOGGING_FAILED;
+    break;
+  case HA_ERR_DROP_INDEX_FK:
+  {
+    assert(table);
+    const char *ptr= "???";
+    uint32_t key_nr= table->get_dup_key(error);
+    if ((int) key_nr >= 0)
+      ptr= table->key_info[key_nr].name;
+    my_error(ER_DROP_INDEX_FK, MYF(0), ptr);
+    return;
+  }
+  case HA_ERR_TABLE_NEEDS_UPGRADE:
+    textno=ER_TABLE_NEEDS_UPGRADE;
+    break;
+  case HA_ERR_TABLE_READONLY:
+    textno= ER_OPEN_AS_READONLY;
+    break;
+  case HA_ERR_AUTOINC_READ_FAILED:
+    textno= ER_AUTOINC_READ_FAILED;
+    break;
+  case HA_ERR_AUTOINC_ERANGE:
+    textno= ER_WARN_DATA_OUT_OF_RANGE;
+    break;
+  case HA_ERR_LOCK_OR_ACTIVE_TRANSACTION:
+    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
+               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
+    return;
+  default:
+    {
+      /* 
+        The error was "unknown" to this function.
+        Ask Cursor if it has got a message for this error 
+      */
+      bool temporary= false;
+      String str;
+      temporary= get_error_message(error, &str);
+      if (!str.is_empty())
+      {
+        const char* engine_name= getName().c_str();
+        if (temporary)
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+                   engine_name);
+        else
+          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
+      }
+      else
+      {
+	      my_error(ER_GET_ERRNO,errflag,error);
+      }
+      return;
+    }
+  }
+  my_error(textno, errflag, table->s->table_name.str, error);
+}
+
+
+/**
+  Return an error message specific to this Cursor.
+
+  @param error  error code previously returned by Cursor
+  @param buf    pointer to String where to add error message
+
+  @return
+    Returns true if this is a temporary error
+*/
+bool plugin::StorageEngine::get_error_message(int , String* )
+{
+  return false;
+}
+
+
+void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &table)
+{
+  /* Write the duplicated key in the error message */
+  char key[MAX_KEY_LENGTH];
+  String str(key,sizeof(key),system_charset_info);
+
+  if (key_nr == MAX_KEY)
+  {
+    /* Key is unknown */
+    str.copy("", 0, system_charset_info);
+    my_printf_error(ER_DUP_ENTRY, msg, MYF(0), str.c_ptr(), "*UNKNOWN*");
+  }
+  else
+  {
+    /* Table is opened and defined at this point */
+    key_unpack(&str, &table, (uint32_t) key_nr);
+    uint32_t max_length=DRIZZLE_ERRMSG_SIZE-(uint32_t) strlen(msg);
+    if (str.length() >= max_length)
+    {
+      str.length(max_length-4);
+      str.append(STRING_WITH_LEN("..."));
+    }
+    my_printf_error(ER_DUP_ENTRY, msg,
+		    MYF(0), str.c_ptr(), table.key_info[key_nr].name);
+  }
+}
+
 
 
 } /* namespace drizzled */

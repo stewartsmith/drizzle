@@ -564,7 +564,7 @@ err:
     return 0;
   }
 
-  table->cursor->print_error(error, MYF(0));
+  table->print_error(error, MYF(0));
 
   return -1;
 }
@@ -606,7 +606,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
                         table->s->table_name.str);
     error= 0;
   } else if (error)
-    table->cursor->print_error(error, MYF(0));
+    table->print_error(error, MYF(0));
 
   return(error);
 }
@@ -933,7 +933,7 @@ bool alter_table(Session *session,
     }
     else if (error > 0)
     {
-      table->cursor->print_error(error, MYF(0));
+      table->print_error(error, MYF(0));
       error= -1;
     }
 
@@ -1040,7 +1040,7 @@ bool alter_table(Session *session,
     }
 
     /* Remove link to old table and rename the new one */
-    session->close_temporary_table(table, true, true);
+    session->close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
     if (new_table->rename_temporary_table(new_db, new_name))
@@ -1188,7 +1188,7 @@ err1:
   if (new_table)
   {
     /* close_temporary_table() frees the new_table pointer. */
-    session->close_temporary_table(new_table, true, true);
+    session->close_temporary_table(new_table);
   }
   else
     quick_rm_table(*session, new_db, tmp_name, true);
@@ -1248,12 +1248,12 @@ err_with_placeholders:
 /* alter_table */
 
 static int
-copy_data_between_tables(Table *from,Table *to,
-			 List<CreateField> &create,
+copy_data_between_tables(Table *from, Table *to,
+                         List<CreateField> &create,
                          bool ignore,
-			 uint32_t order_num, order_st *order,
-			 ha_rows *copied,
-			 ha_rows *deleted,
+                         uint32_t order_num, order_st *order,
+                         ha_rows *copied,
+                         ha_rows *deleted,
                          enum enum_enable_or_disable keys_onoff,
                          bool error_if_not_empty)
 {
@@ -1387,26 +1387,11 @@ copy_data_between_tables(Table *from,Table *to,
     error= to->cursor->ha_write_row(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)
-    {
+    { 
       if (!ignore ||
           to->cursor->is_fatal_error(error, HA_CHECK_DUP))
-      {
-        if (!to->cursor->is_fatal_error(error, HA_CHECK_DUP))
-        {
-          uint32_t key_nr= to->cursor->get_dup_key(error);
-          if ((int) key_nr >= 0)
-          {
-            const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
-            if (key_nr == 0 &&
-                (to->key_info[0].key_part[0].field->flags &
-                 AUTO_INCREMENT_FLAG))
-              err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
-            to->cursor->print_keydup_error(key_nr, err_msg);
-            break;
-          }
-        }
-
-        to->cursor->print_error(error,MYF(0));
+      { 
+        to->print_error(error, MYF(0));
         break;
       }
       to->cursor->restore_auto_increment(prev_insert_id);
@@ -1421,7 +1406,7 @@ copy_data_between_tables(Table *from,Table *to,
 
   if (to->cursor->ha_end_bulk_insert() && error <= 0)
   {
-    to->cursor->print_error(my_errno,MYF(0));
+    to->print_error(my_errno, MYF(0));
     error=1;
   }
   to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);

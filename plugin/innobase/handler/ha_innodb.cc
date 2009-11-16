@@ -378,6 +378,9 @@ public:
                                 const char* from, 
                                 const char* to);
   UNIV_INTERN int doDropTable(Session& session, const string table_path);
+
+  UNIV_INTERN virtual bool get_error_message(int error, String *buf);
+
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -8059,15 +8062,15 @@ ha_innobase::reset_auto_increment(
 
 	innobase_reset_autoinc(value);
 
-	return(0);
+	return 0;
 }
 
 /* See comment in Cursor.cc */
 UNIV_INTERN
 bool
-ha_innobase::get_error_message(int, String *buf)
+InnobaseEngine::get_error_message(int, String *buf)
 {
-	trx_t*	trx = check_trx_exists(ha_session());
+	trx_t*	trx = check_trx_exists(current_session);
 
 	buf->copy(trx->detailed_error, (uint) strlen(trx->detailed_error),
 		system_charset_info);

@@ -170,6 +170,14 @@ public:
     return ENOENT;
   }
 
+  /* Old style cursor errors */
+protected:
+  void print_keydup_error(uint32_t key_nr, const char *msg, Table &table);
+  void print_error(int error, myf errflag, Table *table= NULL);
+  virtual bool get_error_message(int error, String *buf);
+public:
+  virtual void print_error(int error, myf errflag, Table& table);
+
   /*
     each storage engine has it's own memory area (actually a pointer)
     in the session, for storing per-connection information.

@@ -589,7 +589,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
 
   if (error != HA_ERR_END_OF_FILE)
   {
-    file->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
+    sort_form->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
     return(HA_POS_ERROR);
   }
   if (indexpos && idx &&

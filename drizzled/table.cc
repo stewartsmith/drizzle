@@ -1475,7 +1475,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 	  my_errno= EMFILE;
           break;
         default:
-          outparam->cursor->print_error(ha_err, MYF(0));
+          outparam->print_error(ha_err, MYF(0));
           error_reported= true;
           if (ha_err == HA_ERR_TABLE_DEF_CHANGED)
             error= 7;
@@ -3088,7 +3088,7 @@ bool Table::open_tmp_table()
   if ((error=cursor->ha_open(this, s->table_name.str,O_RDWR,
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
-    cursor->print_error(error,MYF(0));
+    print_error(error, MYF(0));
     db_stat= 0;
     return true;
   }
@@ -3221,7 +3221,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 		       &create_info,
 		       HA_CREATE_TMP_TABLE)))
   {
-    cursor->print_error(error,MYF(0));
+    print_error(error, MYF(0));
     db_stat= 0;
     goto err;
   }
@@ -3281,7 +3281,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   if (table->s->db_type() != heap_engine ||
       error != HA_ERR_RECORD_FILE_FULL)
   {
-    table->cursor->print_error(error,MYF(0));
+    table->print_error(error, MYF(0));
     return true;
   }
 
@@ -3357,7 +3357,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   return false;
 
  err:
-  table->cursor->print_error(write_err, MYF(0));
+  table->print_error(write_err, MYF(0));
   (void) table->cursor->ha_rnd_end();
   (void) new_table.cursor->close();
  err1:
@@ -3517,7 +3517,7 @@ int Table::report_error(int error)
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
 		    error, s->path.str);
-  cursor->print_error(error,MYF(0));
+  print_error(error, MYF(0));
 
   return 1;
 }

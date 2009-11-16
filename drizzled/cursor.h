@@ -298,10 +298,6 @@ public:
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
-  void print_keydup_error(uint32_t key_nr, const char *msg);
-  virtual void print_error(int error, myf errflag);
-  virtual bool get_error_message(int error, String *buf);
-  uint32_t get_dup_key(int error);
   virtual void change_table_ptr(Table *table_arg, TableShare *share);
 
   /* Estimates calculation */
