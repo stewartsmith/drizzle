@@ -49,14 +49,22 @@
 
 #include <drizzled/table_proto.h>
 
+#include <drizzled/hash.h>
+
+static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
+
 using namespace std;
 
 namespace drizzled
 {
 
-NameMap<plugin::StorageEngine *> all_engines;
-static std::vector<plugin::StorageEngine *> vector_of_engines;
-static std::vector<plugin::StorageEngine *> vector_of_transactional_engines;
+typedef hash_map<std::string, plugin::StorageEngine *> EngineMap;
+typedef std::vector<plugin::StorageEngine *> EngineVector;
+
+static EngineMap engine_map;
+static EngineVector vector_of_engines;
+static EngineVector vector_of_transactional_engines;
+
 static std::set<std::string> set_of_table_definition_ext;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
@@ -191,12 +199,22 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 
 bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 {
-  if (all_engines.add(engine))
+  vector<string> aliases= engine->getAliases();
+
+  string name= engine->getName();
+  transform(name.begin(), name.end(),
+            name.begin(), ::tolower);
+  engine_map.insert(make_pair(name, engine));
+
+  for (vector<string>::iterator iter= aliases.begin();
+       iter != aliases.end(); iter++)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("Couldn't add StorageEngine"));
-    return true;
+    string alias= *iter;
+    transform(alias.begin(), alias.end(),
+              alias.begin(), ::tolower);
+    engine_map.insert(make_pair(alias, engine));
   }
+
 
   vector_of_engines.push_back(engine);
 
@@ -212,11 +230,16 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
   return false;
 }
 
-void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)
+void plugin::StorageEngine::removePlugin(plugin::StorageEngine *)
 {
-  all_engines.remove(engine);
-  vector_of_engines.clear();
-  vector_of_transactional_engines.clear();
+  if (shutdown_has_begun == false)
+  {
+    engine_map.clear();
+    vector_of_engines.clear();
+    vector_of_transactional_engines.clear();
+
+    shutdown_has_begun= true;
+  }
 }
 
 plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
@@ -224,10 +247,13 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
 
-  plugin::StorageEngine *engine= all_engines.find(find_str);
-
-  if (engine && engine->is_user_selectable())
-    return engine;
+  EngineMap::iterator iter= engine_map.find(find_str);
+  if (iter != engine_map.end())
+  {
+    StorageEngine *engine= (*iter).second;
+    if (engine->is_user_selectable())
+      return engine;
+  }
 
   return NULL;
 }
@@ -242,16 +268,19 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
   if (find_str.compare("default") == 0)
     return session.getDefaultStorageEngine();
 
-  plugin::StorageEngine *engine= all_engines.find(find_str);
-
-  if (engine && engine->is_user_selectable())
-    return engine;
+  EngineMap::iterator iter= engine_map.find(find_str);
+  if (iter != engine_map.end())
+  {
+    StorageEngine *engine= (*iter).second;
+    if (engine->is_user_selectable())
+      return engine;
+  }
 
   return NULL;
 }
 
 class StorageEngineCloseConnection
-  : public unary_function<plugin::StorageEngine *, void>
+: public unary_function<plugin::StorageEngine *, void>
 {
   Session *session;
 public:
@@ -263,7 +292,7 @@ public:
   inline result_type operator() (argument_type engine)
   {
     if (engine->is_enabled() && 
-      session_get_ha_data(session, engine))
+        session_get_ha_data(session, engine))
     engine->close_connection(session);
   }
 };
@@ -289,10 +318,10 @@ int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
   vector<int> results;
   
   if (commit)
-    transform(all_engines.begin(), all_engines.end(), results.begin(),
+    transform(vector_of_engines.begin(), vector_of_engines.end(), results.begin(),
               bind2nd(mem_fun(&plugin::StorageEngine::commit_by_xid),xid));
   else
-    transform(all_engines.begin(), all_engines.end(), results.begin(),
+    transform(vector_of_engines.begin(), vector_of_engines.end(), results.begin(),
               bind2nd(mem_fun(&plugin::StorageEngine::rollback_by_xid),xid));
 
   if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
@@ -330,9 +359,9 @@ bool plugin::StorageEngine::flushLogs(plugin::StorageEngine *engine)
 {
   if (engine == NULL)
   {
-    if (find_if(all_engines.begin(), all_engines.end(),
+    if (find_if(vector_of_engines.begin(), vector_of_engines.end(),
             mem_fun(&plugin::StorageEngine::flush_logs))
-          != all_engines.begin())
+          != vector_of_engines.begin())
       return true;
   }
   else

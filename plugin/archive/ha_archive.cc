@@ -237,7 +237,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
                                         drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
-  int error= 0;
+  int error= ENOENT;
   string proto_path;
 
   proto_path.reserve(FN_REFLEN);
@@ -247,12 +247,14 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
   if (stat(proto_path.c_str(),&stat_info))
     return errno;
+  else
+    error= EEXIST;
 
   if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
-    if(azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
+    if (azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
 
     proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
@@ -264,14 +266,14 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
     azread_frm(&proto_stream, proto_string);
 
-    if(table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);
     free(proto_string);
   }
 
-  return EEXIST;
+  return error;
 }
 
 static ArchiveEngine *archive_engine= NULL;

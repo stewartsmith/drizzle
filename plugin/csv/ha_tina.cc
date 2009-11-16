@@ -194,7 +194,7 @@ int Tina::doGetTableDefinition(Session&,
                                const bool,
                                drizzled::message::Table *table_proto)
 {
-  int error= 1;
+  int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
