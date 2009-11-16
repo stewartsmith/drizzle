@@ -197,20 +197,20 @@ int BlackholeEngine::doGetTableDefinition(Session&,
 
   if (fd == -1)
   {
-    return -1;
+    return errno;
   }
 
   google::protobuf::io::ZeroCopyInputStream* input=
     new google::protobuf::io::FileInputStream(fd);
 
   if (! input)
-    return -1;
+    return HA_ERR_CRASHED_ON_USAGE;
 
   if (table_proto && ! table_proto->ParseFromZeroCopyStream(input))
   {
     close(fd);
     delete input;
-    return -1;
+    return HA_ERR_CRASHED_ON_USAGE;
   }
 
   delete input;
