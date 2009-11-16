@@ -24,22 +24,6 @@
 #include "drizzled/plugin/info_schema_table.h"
 
 /**
- * @class CharSetISMethods
- * @brief
- *   Class which implements any methods that the 
- *   CHARACTER_SET I_S table needs besides the default
- *   methods.
- */
-class CharSetISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables);
-  virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchemaTable *schema_table) const;
-};
-
-/**
  * @class CollationISMethods
  * @brief
  *   Class which implements any methods that the Collations
