@@ -1804,7 +1804,14 @@ attribute:
             lex->type|= UNIQUE_KEY_FLAG; 
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
-        | COMMENT_SYM TEXT_STRING_sys { ((statement::AlterTable *)Lex->statement)->comment= $2; }
+        | COMMENT_SYM TEXT_STRING_sys
+          {
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+            statement->comment= $2;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_comment($2.str);
+          }
         | COLLATE_SYM collation_name
           {
             if (Lex->charset && !my_charset_same(Lex->charset,$2))

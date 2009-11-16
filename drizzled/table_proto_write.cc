@@ -221,7 +221,10 @@ int fill_table_proto(message::Table *table_proto,
 	return(1);
       }
 
-      attribute->set_comment(field_arg->comment.str);
+      if (! use_existing_fields)
+        attribute->set_comment(field_arg->comment.str);
+
+      assert(strcmp(attribute->comment().c_str(), field_arg->comment.str)==0);
     }
 
     if(field_arg->unireg_check == Field::NEXT_NUMBER)
