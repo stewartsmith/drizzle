@@ -23,18 +23,6 @@
 
 #include "drizzled/plugin/info_schema_table.h"
 
-/**
- * @class CollCharISMethods
- * @brief
- *   Class which implements any methods that the collation char set
- *   I_S table needs besides the default methods
- */
-class CollCharISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session,
-                        TableList *tables);
-};
 
 /**
  * @class ColumnsISMethods

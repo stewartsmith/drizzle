@@ -34,44 +34,6 @@
 
 using namespace std;
 
-bool createCollCharSetColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
-{
-  /*
-   * Create each column for the table.
-   */
-  const drizzled::plugin::ColumnInfo *name_col= new(std::nothrow) drizzled::plugin::ColumnInfo("COLLATION_NAME",
-                                                           64,
-                                                           DRIZZLE_TYPE_VARCHAR,
-                                                           0,
-                                                           0,
-                                                           "",
-                                                           SKIP_OPEN_TABLE);
-  if (name_col == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *char_set_col= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_SET_NAME",
-                                                               64,
-                                                               DRIZZLE_TYPE_VARCHAR,
-                                                               0,
-                                                               0,
-                                                               "",
-                                                               SKIP_OPEN_TABLE);
-  if (char_set_col == NULL)
-  {
-    return true;
-  }
-
-  /*
-   * Add the columns to the vector.
-   */
-  cols.push_back(name_col);
-  cols.push_back(char_set_col);
-
-  return false;
-}
-
 bool createColColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*

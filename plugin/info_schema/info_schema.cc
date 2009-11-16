@@ -31,6 +31,7 @@
 #include "info_schema_columns.h"
 #include "character_set.h"
 #include "collation.h"
+#include "collation_char_set.h"
 
 #include <vector>
 
@@ -40,7 +41,6 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
-static vector<const plugin::ColumnInfo *> coll_char_columns;
 static vector<const plugin::ColumnInfo *> col_columns;
 static vector<const plugin::ColumnInfo *> key_col_usage_columns;
 static vector<const plugin::ColumnInfo *> open_tab_columns;
@@ -58,7 +58,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
 /*
  * Methods for various I_S tables.
  */
-static plugin::InfoSchemaMethods *coll_char_methods= NULL;
 static plugin::InfoSchemaMethods *columns_methods= NULL;
 static plugin::InfoSchemaMethods *key_col_usage_methods= NULL;
 static plugin::InfoSchemaMethods *open_tab_methods= NULL;
@@ -77,7 +76,6 @@ static plugin::InfoSchemaMethods *variables_methods= NULL;
 /*
  * I_S tables.
  */
-static plugin::InfoSchemaTable *coll_char_set_table= NULL;
 static plugin::InfoSchemaTable *columns_table= NULL;
 static plugin::InfoSchemaTable *key_col_usage_table= NULL;
 static plugin::InfoSchemaTable *global_stat_table= NULL;
@@ -105,11 +103,6 @@ static plugin::InfoSchemaTable *var_table= NULL;
 static bool initTableColumns()
 {
   bool retval= false;
-
-  if ((retval= createCollCharSetColumns(coll_char_columns)) == true)
-  {
-    return true;
-  }
 
   if ((retval= createColColumns(col_columns)) == true)
   {
@@ -184,7 +177,6 @@ static bool initTableColumns()
  */
 static void cleanupTableColumns()
 {
-  clearColumns(coll_char_columns);
   clearColumns(col_columns);
   clearColumns(key_col_usage_columns);
   clearColumns(open_tab_columns);
@@ -207,11 +199,6 @@ static void cleanupTableColumns()
  */
 static bool initTableMethods()
 {
-  if ((coll_char_methods= new(nothrow) CollCharISMethods()) == NULL)
-  {
-    return true;
-  }
-
   if ((columns_methods= new(nothrow) ColumnsISMethods()) == NULL)
   {
     return true;
@@ -290,7 +277,6 @@ static bool initTableMethods()
  */
 static void cleanupTableMethods()
 {
-  delete coll_char_methods;
   delete columns_methods;
   delete key_col_usage_methods;
   delete open_tab_methods;
@@ -314,15 +300,6 @@ static void cleanupTableMethods()
  */
 static bool initTables()
 {
-
-  coll_char_set_table= new(nothrow) plugin::InfoSchemaTable("COLLATION_CHARACTER_SET_APPLICABILITY",
-                                                            coll_char_columns,
-                                                            -1, -1, false, false, 0,
-                                                            coll_char_methods);
-  if (coll_char_set_table == NULL)
-  {
-    return true;
-  }
 
   columns_table= new(nothrow) plugin::InfoSchemaTable("COLUMNS",
                                                       col_columns,
@@ -500,7 +477,6 @@ static bool initTables()
  */
 static void cleanupTables()
 {
-  delete coll_char_set_table;
   delete columns_table;
   delete key_col_usage_table;
   delete global_stat_table;
@@ -548,7 +524,7 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
 
   registry.add(CharacterSetIS::getTable());
   registry.add(CollationIS::getTable());
-  registry.add(coll_char_set_table);
+  registry.add(CollationCharSetIS::getTable());
   registry.add(columns_table);
   registry.add(key_col_usage_table);
   registry.add(global_stat_table);
@@ -585,7 +561,9 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(CollationIS::getTable());
   CollationIS::cleanup();
 
-  registry.remove(coll_char_set_table);
+  registry.remove(CollationCharSetIS::getTable());
+  CollationCharSetIS::cleanup();
+
   registry.remove(columns_table);
   registry.remove(key_col_usage_table);
   registry.remove(global_stat_table);

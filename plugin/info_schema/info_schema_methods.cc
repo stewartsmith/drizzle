@@ -204,34 +204,6 @@ static bool show_status_array(Session *session, const char *wild,
 }
 
 
-int CollCharISMethods::fillTable(Session *session, TableList *tables)
-{
-  CHARSET_INFO **cs;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
-  {
-    CHARSET_INFO **cl;
-    const CHARSET_INFO *tmp_cs= cs[0];
-    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
-        ! (tmp_cs->state & MY_CS_PRIMARY))
-      continue;
-    for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
-    {
-      const CHARSET_INFO *tmp_cl= cl[0];
-      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
-          ! my_charset_same(tmp_cs,tmp_cl))
-        continue;
-      table->restoreRecordAsDefault();
-      table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
-      table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-      if (schema_table_store_record(session, table))
-        return 1;
-    }
-  }
-  return 0;
-}
-
 int ColumnsISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
   const
 {
