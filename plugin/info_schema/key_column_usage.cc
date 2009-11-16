@@ -28,6 +28,7 @@
 #include <drizzled/show.h>
 
 #include "info_schema_columns.h"
+#include "info_schema_methods.h"
 #include "key_column_usage.h"
 
 #include <vector>
@@ -182,7 +183,7 @@ plugin::InfoSchemaTable *KeyColumnUsageIS::getTable()
   if (key_col_table == NULL)
   {
     key_col_table= new plugin::InfoSchemaTable("KEY_COLUMN_USAGE",
-                                               columns,
+                                               *columns,
                                                4, 5, false, true,
                                                OPEN_TABLE_ONLY,
                                                methods);
@@ -203,10 +204,10 @@ void KeyColumnUsageIS::cleanup()
 }
 
 int KeyColUsageISMethods::processTable(Session *session,
-                                              TableList *tables,
-                                              Table *table, bool res,
-                                              LEX_STRING *db_name,
-                                              LEX_STRING *table_name) const
+                                       TableList *tables,
+                                       Table *table, bool res,
+                                       LEX_STRING *db_name,
+                                       LEX_STRING *table_name) const
 {
   if (res)
   {
