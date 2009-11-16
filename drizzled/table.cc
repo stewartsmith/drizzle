@@ -1270,9 +1270,6 @@ err_not_open:
     prgflag   		READ_ALL etc..
     ha_open_flags	HA_OPEN_ABORT_IF_LOCKED etc..
     outparam       	result table
-    open_mode           One of OTM_OPEN|OTM_CREATE|OTM_ALTER
-                        if OTM_CREATE some errors are ignore
-                        if OTM_ALTER HA_OPEN is not called
 
   RETURN VALUES
    0	ok
@@ -1286,7 +1283,7 @@ err_not_open:
 
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
-                          Table *outparam, open_table_mode open_mode)
+                          Table *outparam)
 {
   int error;
   uint32_t records, i, bitmap_size;
@@ -1439,7 +1436,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   /* The table struct is now initialized;  Open the table */
   error= 2;
-  if (db_stat && open_mode != OTM_ALTER)
+  if (db_stat)
   {
     int ha_err;
     if ((ha_err= (outparam->cursor->

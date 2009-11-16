@@ -1760,7 +1760,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
     /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(path, db, table_name, 1, OTM_OPEN)))
+    if (!(session->open_temporary_table(path, db, table_name, 1)))
     {
       (void) session->rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
@@ -2511,7 +2511,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
-    if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
+    if (err || !session->open_temporary_table(dst_path, db, table_name, true))
     {
       (void) session->rm_temporary_table(create_info->db_type, dst_path);
       goto err;
