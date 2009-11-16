@@ -1460,9 +1460,15 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+
   void close_temporary_tables();
-  void close_temporary_table(Table *table, bool free_share, bool delete_table);
-  void close_temporary(Table *table, bool free_share, bool delete_table);
+  void close_temporary_table(Table *table);
+  // The method below just handles the de-allocation of the table. In
+  // a better memory type world, this would not be needed. 
+private:
+  void close_temporary(Table *table);
+public:
+
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
   Table *open_temporary_table(const char *path, const char *db,

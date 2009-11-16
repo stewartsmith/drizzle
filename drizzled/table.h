@@ -583,6 +583,26 @@ public:
   void free_io_cache();
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
+
+  void print_error(int error, myf errflag)
+  {
+    s->storage_engine->print_error(error, errflag, *this);
+  }
+
+  /**
+    @return
+    key if error because of duplicated keys
+  */
+  uint32_t get_dup_key(int error)
+  {
+    cursor->errkey  = (uint32_t) -1;
+    if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
+        error == HA_ERR_FOUND_DUPP_UNIQUE ||
+        error == HA_ERR_DROP_INDEX_FK)
+      cursor->info(HA_STATUS_ERRKEY | HA_STATUS_NO_LOCK);
+
+    return(cursor->errkey);
+  }
 };
 
 Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);

@@ -1890,7 +1890,7 @@ void Session::close_temporary_tables()
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table, true, true);
+    close_temporary(table);
   }
   temporary_tables= NULL;
 }
@@ -1899,8 +1899,8 @@ void Session::close_temporary_tables()
   unlink from session->temporary tables and close temporary table
 */
 
-void Session::close_temporary_table(Table *table,
-                                    bool free_share, bool delete_table)
+void Session::close_temporary_table(Table *table)
+                         
 {
   if (table->prev)
   {
@@ -1921,7 +1921,7 @@ void Session::close_temporary_table(Table *table,
     if (temporary_tables)
       table->next->prev= NULL;
   }
-  close_temporary(table, free_share, delete_table);
+  close_temporary(table);
 }
 
 /*
@@ -1932,22 +1932,17 @@ void Session::close_temporary_table(Table *table,
   If this is needed, use close_temporary_table()
 */
 
-void Session::close_temporary(Table *table, bool free_share, bool delete_table)
+void Session::close_temporary(Table *table)
 {
   plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
 
-  if (delete_table)
-    rm_temporary_table(table_type, table->s->path.str);
+  rm_temporary_table(table_type, table->s->path.str);
 
-  if (free_share)
-  {
-    table->s->free_table_share();
-    /* This makes me sad, but we're allocating it via malloc */
-    free(table);
-  }
+  table->s->free_table_share();
+  /* This makes me sad, but we're allocating it via malloc */
 }
 
 /** Clear most status variables. */

@@ -47,7 +47,7 @@ static int rr_index(READ_RECORD *info);
   @param info         READ_RECORD structure to initialize.
   @param session          Thread handle
   @param table        Table to be accessed
-  @param print_error  If true, call table->cursor->print_error() if an error
+  @param print_error  If true, call table->print_error() if an error
                       occurs (except for end-of-records error)
   @param idx          index to scan
 */
@@ -142,8 +142,8 @@ void init_read_record_idx(READ_RECORD *info,
 void init_read_record(READ_RECORD *info,
                       Session *session, 
                       Table *table,
-		                  SQL_SELECT *select,
-		                  int use_record_cache, 
+                      SQL_SELECT *select,
+                      int use_record_cache, 
                       bool print_error)
 {
   IO_CACHE *tempfile;
@@ -166,7 +166,7 @@ void init_read_record(READ_RECORD *info,
     info->ref_length= table->cursor->ref_length;
   }
   info->select=select;
-  info->print_error=print_error;
+  info->print_error= print_error;
   info->ignore_not_found_rows= 0;
   table->status=0;			/* And it's always found */
 
@@ -262,7 +262,7 @@ static int rr_handle_error(READ_RECORD *info, int error)
   else
   {
     if (info->print_error)
-      info->table->cursor->print_error(error, MYF(0));
+      info->table->print_error(error, MYF(0));
     if (error < 0)                            // Fix negative BDB errno
       error= 1;
   }
@@ -502,7 +502,7 @@ static int rr_from_cache(READ_RECORD *info)
       {
         shortget(error,info->cache_pos);
         if (info->print_error)
-          info->table->cursor->print_error(error,MYF(0));
+          info->table->print_error(error,MYF(0));
       }
       else
       {

@@ -178,8 +178,6 @@ class ha_innobase: public Cursor
                                                     uint64_t *nb_reserved_values);
         UNIV_INTERN int reset_auto_increment(uint64_t value);
 
-        UNIV_INTERN virtual bool get_error_message(int error, String *buf);
-
 	UNIV_INTERN bool primary_key_is_clustered();
 	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
