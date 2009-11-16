@@ -49,7 +49,7 @@
 
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
-extern drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
+extern uint64_t refresh_version;  /* Increments on each reload */
 
 
 typedef bool (*qc_engine_callback)(Session *session, char *table_key,

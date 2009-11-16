@@ -47,7 +47,7 @@ class TableList;
 class Field_timestamp;
 class Field_blob;
 
-extern drizzled::atomic<uint32_t> refresh_version;
+extern uint64_t refresh_version;
 
 typedef enum enum_table_category TABLE_CATEGORY;
 
