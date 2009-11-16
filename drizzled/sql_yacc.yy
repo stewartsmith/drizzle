@@ -1668,6 +1668,8 @@ type:
               string_field_options= statement->current_proto_field->mutable_string_options();
 
               string_field_options->set_length(atoi($3.str));
+              string_field_options->set_collation_id(my_charset_bin.number);
+              string_field_options->set_collation(my_charset_bin.name);
             }
             }
           | DATE_SYM

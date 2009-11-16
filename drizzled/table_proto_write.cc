@@ -136,9 +136,12 @@ int fill_table_proto(message::Table *table_proto,
                                            / field_arg->charset->mbmaxlen);
         else
           assert((uint32_t)string_field_options->length() == (uint32_t)(field_arg->length / field_arg->charset->mbmaxlen));
-        string_field_options->set_collation_id(field_arg->charset->number);
-        string_field_options->set_collation(field_arg->charset->name);
 
+        if (! string_field_options->has_collation())
+        {
+          string_field_options->set_collation_id(field_arg->charset->number);
+          string_field_options->set_collation(field_arg->charset->name);
+        }
         break;
       }
     case DRIZZLE_TYPE_DECIMAL:
