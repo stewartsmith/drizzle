@@ -303,7 +303,8 @@ int fill_table_proto(message::Table *table_proto,
         && field_arg->sql_type != DRIZZLE_TYPE_LONG
         && field_arg->sql_type != DRIZZLE_TYPE_LONGLONG
         && field_arg->sql_type != DRIZZLE_TYPE_DATETIME
-        && field_arg->sql_type != DRIZZLE_TYPE_DATE)
+        && field_arg->sql_type != DRIZZLE_TYPE_DATE
+        && field_arg->sql_type != DRIZZLE_TYPE_ENUM)
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();

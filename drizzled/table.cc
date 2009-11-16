@@ -860,6 +860,23 @@ int drizzled::parse_table_proto(Session& session,
     case DRIZZLE_TYPE_DATE:
       field_length= drizzled::Date::MAX_STRING_LENGTH;
       break;
+    case DRIZZLE_TYPE_ENUM:
+    {
+      field_length= 0;
+
+      message::Table::Field::SetFieldOptions fo= pfield.set_options();
+
+      for(int valnr= 0; valnr < fo.field_value_size(); valnr++)
+      {
+        if (fo.field_value(valnr).length() > field_length)
+          field_length= charset->cset->numchars(charset,
+                                                fo.field_value(valnr).c_str(),
+                                                fo.field_value(valnr).c_str()
+                                                + fo.field_value(valnr).length())
+            * charset->mbmaxlen;
+      }
+    }
+      break;
     case DRIZZLE_TYPE_LONG:
       {
         uint32_t sign_len= pfield.constraints().is_unsigned() ? 0 : 1;
