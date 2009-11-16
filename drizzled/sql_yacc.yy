@@ -1552,6 +1552,10 @@ field_spec:
           {
             LEX *lex=Lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+            if (statement->current_proto_field)
+              statement->current_proto_field->set_name($1.str);
+
             if (add_field_to_list(lex->session, &$1, (enum enum_field_types) $3,
                                   lex->length,lex->dec,lex->type,
                                   statement->column_format,

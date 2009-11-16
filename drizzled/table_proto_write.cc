@@ -78,11 +78,12 @@ int fill_table_proto(message::Table *table_proto,
         constraints= attribute->mutable_constraints();
         constraints->set_is_nullable(false);
       }
+
+      attribute->set_name(field_arg->field_name);
     }
 
     assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
-
-    attribute->set_name(field_arg->field_name);
+    assert(strcmp(attribute->name().c_str(), field_arg->field_name)==0);
 
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_LONG:
