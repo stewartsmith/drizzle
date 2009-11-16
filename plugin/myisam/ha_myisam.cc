@@ -1574,7 +1574,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 };
 
 
-drizzle_declare_plugin(myisam)
+drizzle_declare_plugin
 {
   "MyISAM",
   "1.0",

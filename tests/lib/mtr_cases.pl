@@ -213,10 +213,14 @@ sub collect_one_suite($)
 
   mtr_verbose("Collecting: $suite");
 
+  my $suitepath= "$::glob_suite_path";
   my $suitedir= "$::glob_mysql_test_dir"; # Default
   if ( $suite ne "main" )
   {
-    $suitedir= mtr_path_exists("$suitedir/suite/$suite",
+    $suitedir= mtr_path_exists(
+             "$suitepath/$suite/drizzle-tests",
+             "$suitepath/$suite/tests",
+             "$suitedir/suite/$suite",
 			       "$suitedir/$suite");
     mtr_verbose("suitedir: $suitedir");
   }

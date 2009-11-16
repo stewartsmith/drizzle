@@ -920,7 +920,7 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 }
 
 
-drizzle_declare_plugin(heap)
+drizzle_declare_plugin
 {
   "MEMORY",
   "1.0",

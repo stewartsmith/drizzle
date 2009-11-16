@@ -330,7 +330,7 @@ static struct st_mysql_sys_var* vars[]= {
   NULL
 };
 
-drizzle_declare_plugin(console)
+drizzle_declare_plugin
 {
   "console",
   "0.1",

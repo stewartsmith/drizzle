@@ -35,6 +35,7 @@ LDADD=			$(top_builddir)/mysys/libmysys.la \
 TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
 		${top_srcdir}/tests/test-run.pl \
 		--vardir=${top_builddir}/tests/var \
+		--suitepath=${top_srcdir}/plugin \
 		--testdir=${top_srcdir}/tests \
 		--mtr-build-thread=$$$$
 

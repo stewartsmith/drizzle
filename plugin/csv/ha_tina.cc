@@ -1617,7 +1617,7 @@ int ha_tina::check(Session* session, HA_CHECK_OPT *)
 }
 
 
-drizzle_declare_plugin(csv)
+drizzle_declare_plugin
 {
   "CSV",
   "1.0",

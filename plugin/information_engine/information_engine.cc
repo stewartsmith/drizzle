@@ -239,7 +239,7 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(information_engine)
+drizzle_declare_plugin
 {
   "INFORMATION_ENGINE",
   "1.0",

@@ -80,7 +80,6 @@ template <typename Key>
 struct hash {
   // Dummy, just to make derivative hash functions compile.
   int operator()(const Key& key) {
-    errmsg_printf("Should never be called.\n");
     assert(0);
     return 0;
   }
@@ -95,7 +94,6 @@ template <>
 struct hash<const char*> {
   // Dummy, just to make derivative hash functions compile.
   int operator()(const char* key) {
-    errmsg_printf("Should never be called.\n");
     assert(0);
     return 0;
   }

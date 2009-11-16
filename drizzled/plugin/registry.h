@@ -111,6 +111,7 @@ public:
                     plugin->getName().c_str());
       unireg_abort(1);
     }
+    plugin_registry.insert(std::pair<std::string, const Plugin *>(plugin_name, plugin));
   }
 
   template<class T>

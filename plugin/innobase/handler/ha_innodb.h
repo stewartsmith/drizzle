@@ -89,8 +89,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
 	UNIV_INTERN ulint innobase_lock_autoinc();
 	UNIV_INTERN uint64_t innobase_peek_autoinc();
-	ulint innobase_set_max_autoinc(uint64_t auto_inc);
-	ulint innobase_reset_autoinc(uint64_t auto_inc);
+	UNIV_INTERN ulint innobase_set_max_autoinc(uint64_t auto_inc);
+	UNIV_INTERN ulint innobase_reset_autoinc(uint64_t auto_inc);
 	UNIV_INTERN ulint innobase_get_autoinc(uint64_t* value);
 	ulint innobase_update_autoinc(uint64_t	auto_inc);
 	UNIV_INTERN ulint innobase_initialize_autoinc();

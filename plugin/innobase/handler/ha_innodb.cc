@@ -9083,7 +9083,7 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(innobase)
+drizzle_declare_plugin
 {
   innobase_engine_name,
   INNODB_VERSION_STR,

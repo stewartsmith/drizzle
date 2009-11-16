@@ -18,17 +18,17 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
-AC_INIT([drizzle],[RELEASE_VERSION],[http://bugs.launchpad.net/drizzle])
+dnl Version from the AC_INIT call below is overridden later
+dnl So don't update it here
+AC_INIT([drizzle],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
+PANDORA_VC_VERSION
 
-# Version with no dots
-AC_DEFINE([DRIZZLE_VERSION_ID],RELEASE_ID,
-	  [Version ID that can be easily used for numeric comparison])
 
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
@@ -42,20 +42,12 @@ AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
-AS_IF([test "x$YACC" = "x" -a "$building_from_bzr" = "yes"],[
+AS_IF([test "x$YACC" = "x" -a "$ac_cv_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
 
-AM_GNU_GETTEXT(external, need-formatstring-macros)
-if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
-then
-  AM_PATH_PROG_WITH_TEST(GMSGMERGE, gmsgmerge,
-    [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
-  MSGMERGE="${GMSGMERGE}"
-fi
-AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
-
+PANDORA_WITH_GETTEXT
 
 dnl We need to turn on our CXXFLAGS to make sure it shows up correctly
 save_CXXFLAGS="${CXXFLAGS}"
@@ -330,47 +322,29 @@ LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL_LIBS)
 
 
-AC_ARG_WITH([atomic-ops],
-    [AS_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
-       [Implement atomic operations using pthread rwlocks or atomic CPU
-        instructions for multi-processor or uniprocessor
-        configuration. By default gcc built-in sync functions are used,
-        if available and 'smp' configuration otherwise.])],
-    [with_atomic_ops="$withval"],
-    [with_atomic_ops=smp])
+AC_CACHE_CHECK(
+  [whether the compiler provides atomic builtins],
+  [ac_cv_gcc_atomic_builtins],
+  [AC_RUN_IFELSE(
+    [AC_LANG_PROGRAM([],[[
+      int foo= -10; int bar= 10;
+      if (!__sync_fetch_and_add(&foo, bar) || foo)
+        return -1;
+      bar= __sync_lock_test_and_set(&foo, bar);
+      if (bar || foo != 10)
+        return -1;
+      bar= __sync_val_compare_and_swap(&bar, foo, 15);
+      if (bar)
+        return -1;
+      return 0;
+      ]])],
+    [ac_cv_gcc_atomic_builtins=yes],
+    [ac_cv_gcc_atomic_builtins=no])])
 
-case "$with_atomic_ops" in
-  "up") AC_DEFINE([MY_ATOMIC_MODE_DUMMY], [1],
-                  [Assume single-CPU mode, no concurrency]) ;;
-  "rwlocks") AC_DEFINE([MY_ATOMIC_MODE_RWLOCKS], [1],
-                  [Use pthread rwlocks for atomic ops]) ;;
-  "smp") 
-    AC_CACHE_CHECK(
-      [whether the compiler provides atomic builtins],
-      [ac_cv_gcc_atomic_builtins],
-      [AC_RUN_IFELSE(
-        [AC_LANG_PROGRAM([],[[
-          int foo= -10; int bar= 10;
-          if (!__sync_fetch_and_add(&foo, bar) || foo)
-            return -1;
-          bar= __sync_lock_test_and_set(&foo, bar);
-          if (bar || foo != 10)
-            return -1;
-          bar= __sync_val_compare_and_swap(&bar, foo, 15);
-          if (bar)
-            return -1;
-          return 0;
-        ]])],
-       [ac_cv_gcc_atomic_builtins=yes],
-       [ac_cv_gcc_atomic_builtins=no])])
-
-    if test "x$ac_cv_gcc_atomic_builtins" = "xyes"; then
-      AC_DEFINE(HAVE_GCC_ATOMIC_BUILTINS, 1,
-                [Define to 1 if compiler provides atomic builtins.])
-    fi
-   ;;
-   *) AC_MSG_ERROR(["$with_atomic_ops" is not a valid value for --with-atomic-ops]) ;;
-esac
+AS_IF([test "x$ac_cv_gcc_atomic_builtins" = "xyes"],[
+  AC_DEFINE(HAVE_GCC_ATOMIC_BUILTINS, 1,
+            [Define to 1 if compiler provides atomic builtins.])
+])
 
 
 AC_ARG_WITH([comment],
@@ -382,7 +356,7 @@ if test "$with_comment" != "no"
 then
   COMPILATION_COMMENT=$with_comment
 else
-  COMPILATION_COMMENT="Source distribution (RELEASE_COMMENT)"
+  COMPILATION_COMMENT="Source distribution (${PANDORA_RELEASE_COMMENT})"
 fi
 AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
                    [Comment about compilation environment])
@@ -473,10 +447,7 @@ AC_CHECK_FUNCS( \
   localtime_r log log2 gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
-  pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
-  pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
-  pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
-  pthread_setprio_np pthread_setschedparam pthread_sigmask readlink \
+  readlink \
   realpath rename rwlock_init setupterm \
   sigaction \
   sigthreadmask \
@@ -509,7 +480,7 @@ fi]
 )
 
 # Check definition of pthread_getspecific
-AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
+AC_CACHE_CHECK([args to pthread_getspecific], [pandora_cv_getspecific_args],
   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #if !defined(_REENTRANT)
 #define _REENTRANT
@@ -522,16 +493,16 @@ AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
 void *pthread_getspecific(pthread_key_t key);
 pthread_getspecific((pthread_key_t) NULL);
    ]])],
-    [mysql_cv_getspecific_args=POSIX],
-    [mysql_cv_getspecific_args=other])])
-  if test "$mysql_cv_getspecific_args" = "other"
+    [pandora_cv_getspecific_args=POSIX],
+    [pandora_cv_getspecific_args=other])])
+  if test "$pandora_cv_getspecific_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_GETSPECIFIC], [1],
               [For some non posix threads])
   fi
 
   # Check definition of pthread_mutex_init
-  AC_CACHE_CHECK([args to pthread_mutex_init], [mysql_cv_mutex_init_args],
+  AC_CACHE_CHECK([args to pthread_mutex_init], [pandora_cv_mutex_init_args],
     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #ifndef _REENTRANT
 #define _REENTRANT
@@ -543,9 +514,9 @@ pthread_getspecific((pthread_key_t) NULL);
   pthread_mutexattr_t attr;
   pthread_mutex_t mp;
   pthread_mutex_init(&mp,&attr); ]])],
-      [mysql_cv_mutex_init_args=POSIX],
-      [mysql_cv_mutex_init_args=other])])
-  if test "$mysql_cv_mutex_init_args" = "other"
+      [pandora_cv_mutex_init_args=POSIX],
+      [pandora_cv_mutex_init_args=other])])
+  if test "$pandora_cv_mutex_init_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_MUTEX_INIT], [1],
               [For some non posix threads])
@@ -554,7 +525,7 @@ pthread_getspecific((pthread_key_t) NULL);
 
 #---START: Used in for client configure
 # Check definition of readdir_r
-AC_CACHE_CHECK([args to readdir_r], [mysql_cv_readdir_r],
+AC_CACHE_CHECK([args to readdir_r], [pandora_cv_readdir_r],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifndef _REENTRANT
 #define _REENTRANT
@@ -565,15 +536,15 @@ AC_CACHE_CHECK([args to readdir_r], [mysql_cv_readdir_r],
 #include <pthread.h>
 #include <dirent.h>]], [[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],
-    [mysql_cv_readdir_r=POSIX],
-    [mysql_cv_readdir_r=other])])
-if test "$mysql_cv_readdir_r" = "POSIX"
+    [pandora_cv_readdir_r=POSIX],
+    [pandora_cv_readdir_r=other])])
+if test "$pandora_cv_readdir_r" = "POSIX"
 then
   AC_DEFINE([HAVE_READDIR_R], [1], [POSIX readdir_r])
 fi
 
 # Check definition of posix sigwait()
-AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+AC_CACHE_CHECK([style of sigwait], [pandora_cv_sigwait],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifndef _REENTRANT
 #define _REENTRANT
@@ -590,18 +561,18 @@ int sig;
 sigwait(&set,&sig);
 #endif
       ]])],
-    [mysql_cv_sigwait=POSIX],
-    [mysql_cv_sigwait=other])])
-if test "$mysql_cv_sigwait" = "POSIX"
+    [pandora_cv_sigwait=POSIX],
+    [pandora_cv_sigwait=other])])
+if test "$pandora_cv_sigwait" = "POSIX"
 then
   AC_DEFINE([HAVE_SIGWAIT], [1], [POSIX sigwait])
 fi
 
-if test "$mysql_cv_sigwait" != "POSIX"
+if test "$pandora_cv_sigwait" != "POSIX"
 then
-unset mysql_cv_sigwait
+unset pandora_cv_sigwait
 # Check definition of posix sigwait()
-AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+AC_CACHE_CHECK([style of sigwait], [pandora_cv_sigwait],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifndef _REENTRANT
 #define _REENTRANT
@@ -616,9 +587,9 @@ sigset_t set;
 int sig;
 sigwait(&set);
       ]])],
-    [mysql_cv_sigwait=NONPOSIX],
-    [mysql_cv_sigwait=other])])
-if test "$mysql_cv_sigwait" = "NONPOSIX"
+    [pandora_cv_sigwait=NONPOSIX],
+    [pandora_cv_sigwait=other])])
+if test "$pandora_cv_sigwait" = "NONPOSIX"
 then
   AC_DEFINE([HAVE_NONPOSIX_SIGWAIT], [1], [sigwait with one argument])
 fi
@@ -626,7 +597,7 @@ fi
 #---END:
 
 # Check if pthread_attr_setscope() exists
-AC_CACHE_CHECK([for pthread_attr_setscope], [mysql_cv_pthread_attr_setscope],
+AC_CACHE_CHECK([for pthread_attr_setscope], [pandora_cv_pthread_attr_setscope],
   [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifndef _REENTRANT
 #define _REENTRANT
@@ -639,23 +610,23 @@ AC_CACHE_CHECK([for pthread_attr_setscope], [mysql_cv_pthread_attr_setscope],
 pthread_attr_t thr_attr;
 pthread_attr_setscope(&thr_attr,0);
       ]])],
-    [mysql_cv_pthread_attr_setscope=yes],
-    [mysql_cv_pthread_attr_setscope=no])])
-if test "$mysql_cv_pthread_attr_setscope" = "yes"
+    [pandora_cv_pthread_attr_setscope=yes],
+    [pandora_cv_pthread_attr_setscope=no])])
+if test "$pandora_cv_pthread_attr_setscope" = "yes"
 then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])
 fi
 
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS(cxxabi.h)
-AC_CACHE_CHECK([checking for abi::__cxa_demangle], mysql_cv_cxa_demangle,
+AC_CACHE_CHECK([checking for abi::__cxa_demangle], pandora_cv_cxa_demangle,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <cxxabi.h>]], [[
   char *foo= 0; int bar= 0;
   foo= abi::__cxa_demangle(foo, foo, 0, &bar);
-]])],[mysql_cv_cxa_demangle=yes],[mysql_cv_cxa_demangle=no])])
+]])],[pandora_cv_cxa_demangle=yes],[pandora_cv_cxa_demangle=no])])
 AC_LANG_POP([])
 
-if test "x$mysql_cv_cxa_demangle" = xyes; then
+if test "x$pandora_cv_cxa_demangle" = xyes; then
   AC_DEFINE(HAVE_ABI_CXA_DEMANGLE, 1,
             [Define to 1 if you have the `abi::__cxa_demangle' function.])
 fi
@@ -707,7 +678,7 @@ done
 AC_OUTPUT
 
 echo "---"
-echo "Configuration summary for $PACKAGE_NAME version $VERSION RELEASE_COMMENT"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION $PANDORA_RELEASE_COMMENT"
 echo ""
 echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $host_vendor-$host_os"

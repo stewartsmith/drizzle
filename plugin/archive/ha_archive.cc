@@ -1436,7 +1436,7 @@ static struct st_mysql_sys_var* archive_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(archive)
+drizzle_declare_plugin
 {
   "ARCHIVE",
   "3.5",

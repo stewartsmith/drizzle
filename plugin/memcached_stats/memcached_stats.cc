@@ -263,7 +263,7 @@ static struct st_mysql_sys_var *system_variables[]=
   NULL
 };
 
-drizzle_declare_plugin(memcached_stats)
+drizzle_declare_plugin
 {
   "memcached_stats",
   "1.0",

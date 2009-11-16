@@ -45,10 +45,12 @@ public:
   sys_var *system_vars;         /* server variables for this plugin */
   Module(Manifest *manifest_arg, Library *library_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
+      isInited(false),
       mem_root(), system_vars(NULL) {}
       
   Module(Manifest *manifest_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
+      isInited(false),
       mem_root(), system_vars(NULL) {}
       
   const std::string& getName() const
