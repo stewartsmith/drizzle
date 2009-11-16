@@ -33,6 +33,7 @@
 #include "collation.h"
 #include "collation_char_set.h"
 #include "columns.h"
+#include "key_column_usage.h"
 
 #include <vector>
 
@@ -42,7 +43,6 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
-static vector<const plugin::ColumnInfo *> key_col_usage_columns;
 static vector<const plugin::ColumnInfo *> open_tab_columns;
 static vector<const plugin::ColumnInfo *> modules_columns;
 static vector<const plugin::ColumnInfo *> plugins_columns;
@@ -58,7 +58,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
 /*
  * Methods for various I_S tables.
  */
-static plugin::InfoSchemaMethods *key_col_usage_methods= NULL;
 static plugin::InfoSchemaMethods *open_tab_methods= NULL;
 static plugin::InfoSchemaMethods *modules_methods= NULL;
 static plugin::InfoSchemaMethods *plugins_methods= NULL;
@@ -75,7 +74,6 @@ static plugin::InfoSchemaMethods *variables_methods= NULL;
 /*
  * I_S tables.
  */
-static plugin::InfoSchemaTable *key_col_usage_table= NULL;
 static plugin::InfoSchemaTable *global_stat_table= NULL;
 static plugin::InfoSchemaTable *global_var_table= NULL;
 static plugin::InfoSchemaTable *open_tab_table= NULL;
@@ -101,11 +99,6 @@ static plugin::InfoSchemaTable *var_table= NULL;
 static bool initTableColumns()
 {
   bool retval= false;
-
-  if ((retval= createKeyColUsageColumns(key_col_usage_columns)) == true)
-  {
-    return true;
-  }
 
   if ((retval= createOpenTabColumns(open_tab_columns)) == true)
   {
@@ -170,7 +163,6 @@ static bool initTableColumns()
  */
 static void cleanupTableColumns()
 {
-  clearColumns(key_col_usage_columns);
   clearColumns(open_tab_columns);
   clearColumns(modules_columns);
   clearColumns(plugins_columns);
@@ -191,11 +183,6 @@ static void cleanupTableColumns()
  */
 static bool initTableMethods()
 {
-  if ((key_col_usage_methods= new(nothrow) KeyColUsageISMethods()) == NULL)
-  {
-    return true;
-  }
-
   if ((open_tab_methods= new(nothrow) OpenTablesISMethods()) == NULL)
   {
     return true;
@@ -264,7 +251,6 @@ static bool initTableMethods()
  */
 static void cleanupTableMethods()
 {
-  delete key_col_usage_methods;
   delete open_tab_methods;
   delete modules_methods;
   delete plugins_methods;
@@ -286,16 +272,6 @@ static void cleanupTableMethods()
  */
 static bool initTables()
 {
-
-  key_col_usage_table= new(nothrow) plugin::InfoSchemaTable("KEY_COLUMN_USAGE",
-                                                            key_col_usage_columns,
-                                                            4, 5, false, true,
-                                                            OPEN_TABLE_ONLY,
-                                                            key_col_usage_methods);
-  if (key_col_usage_table == NULL)
-  {
-    return true;
-  }
 
   global_stat_table= new(nothrow) plugin::InfoSchemaTable("GLOBAL_STATUS",
                                                           status_columns,
@@ -453,7 +429,6 @@ static bool initTables()
  */
 static void cleanupTables()
 {
-  delete key_col_usage_table;
   delete global_stat_table;
   delete global_var_table;
   delete open_tab_table;
@@ -501,7 +476,7 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(CollationIS::getTable());
   registry.add(CollationCharSetIS::getTable());
   registry.add(ColumnsIS::getTable());
-  registry.add(key_col_usage_table);
+  registry.add(KeyColumnUsageIS::getTable());
   registry.add(global_stat_table);
   registry.add(global_var_table);
   registry.add(open_tab_table);
@@ -542,7 +517,9 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(ColumnsIS::getTable());
   ColumnsIS::cleanup();
 
-  registry.remove(key_col_usage_table);
+  registry.remove(KeyColumnUsageIS::getTable());
+  KeyColumnUsageIS::cleanup();
+
   registry.remove(global_stat_table);
   registry.remove(global_var_table);
   registry.remove(open_tab_table);

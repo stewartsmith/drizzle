@@ -23,19 +23,14 @@
 
 #include "drizzled/plugin/info_schema_table.h"
 
-/**
- * @class KeyColUsageISMethods
- * @brief
- *   Class which implements any methods that the key column usage
- *   I_S table needs besides the default methods
- */
-class KeyColUsageISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
+void store_key_column_usage(Table *table, 
+                            LEX_STRING *db_name,
+                            LEX_STRING *table_name, 
+                            const char *key_name,
+                            uint32_t key_len, 
+                            const char *con_type, 
+                            uint32_t con_len,
+                            int64_t idx);
 
 /**
  * @class OpenTablesISMethods
