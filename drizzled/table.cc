@@ -825,6 +825,20 @@ int drizzled::parse_table_proto(Session& session,
 
     switch (field_type)
     {
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    {
+      message::Table::Field::StringFieldOptions field_options= pfield.string_options();
+
+      charset= get_charset(field_options.has_collation_id() ?
+                           field_options.collation_id() : 0);
+
+      if (! charset)
+      	charset= default_charset_info;
+
+      field_length= field_options.length() * charset->mbmaxlen;
+    }
+      break;
     case DRIZZLE_TYPE_DOUBLE:
     {
       message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
