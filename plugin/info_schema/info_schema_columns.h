@@ -26,24 +26,6 @@
 #include <vector>
 
 /**
- * Create the various columns for the CHARACTER_SET I_S table and add them
- * to the std::vector of columns for the CHARACTER_SET table.
- *
- * @param[out] cols vector to add columns to
- * @return false on success; true on failure
- */
-bool createCharSetColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
-
-/**
- * Create the various columns for the Collations I_S table and add them
- * to the std::vector of columns for the Collations table.
- *
- * @param[out] cols vector to add columns to
- * @return false on success; true on failure
- */
-bool createCollationColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
-
-/**
  * Create the various columns for the character set applicability
  * I_S table and add them to the std::vector of columns for the
  * table.

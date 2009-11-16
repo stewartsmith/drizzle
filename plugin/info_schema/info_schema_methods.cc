@@ -203,46 +203,6 @@ static bool show_status_array(Session *session, const char *wild,
   return false;
 }
 
-int CollationISMethods::fillTable(Session *session, TableList *tables)
-{
-  CHARSET_INFO **cs;
-  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
-  {
-    CHARSET_INFO **cl;
-    const CHARSET_INFO *tmp_cs= cs[0];
-    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
-         (tmp_cs->state & MY_CS_HIDDEN) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
-      continue;
-    for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
-    {
-      const CHARSET_INFO *tmp_cl= cl[0];
-      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs, tmp_cl))
-        continue;
-      if (! (wild && wild[0] &&
-          wild_case_compare(scs, tmp_cl->name,wild)))
-      {
-        const char *tmp_buff;
-        table->restoreRecordAsDefault();
-        table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
-        table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-        table->field[2]->store((int64_t) tmp_cl->number, true);
-        tmp_buff= (tmp_cl->state & MY_CS_PRIMARY) ? "Yes" : "";
-        table->field[3]->store(tmp_buff, strlen(tmp_buff), scs);
-        tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
-        table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
-        table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
-        if (schema_table_store_record(session, table))
-          return 1;
-      }
-    }
-  }
-  return 0;
-}
 
 int CollCharISMethods::fillTable(Session *session, TableList *tables)
 {
