@@ -1139,28 +1139,6 @@ bool alter_table(Session *session,
   session->set_proc_info("end");
 
   write_bin_log(session, session->query, session->query_length);
-
-  if (old_db_type->check_flag(HTON_BIT_FLUSH_AFTER_RENAME))
-  {
-    /*
-      For the alter table to be properly flushed to the logs, we
-      have to open the new table.  If not, we get a problem on server
-      shutdown. But we do not need to attach MERGE children.
-    */
-    char table_path[FN_REFLEN];
-    Table *t_table;
-    build_table_filename(table_path, sizeof(table_path), new_db, table_name, false);
-    t_table= session->open_temporary_table(table_path, new_db, tmp_name, false);
-    if (t_table)
-    {
-      t_table->intern_close_table();
-      free(t_table);
-    }
-    else
-      errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"), new_db, table_name);
-
-    plugin::StorageEngine::flushLogs(old_db_type);
-  }
   table_list->table= NULL;
 
 end_temporary:

@@ -49,7 +49,6 @@ typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_l
 enum engine_flag_bits {
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
   HTON_BIT_HIDDEN,                    // Engine does not appear in lists
-  HTON_BIT_FLUSH_AFTER_RENAME,
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
@@ -62,7 +61,6 @@ enum engine_flag_bits {
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
 static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
-static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FLUSH_AFTER_RENAME);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
