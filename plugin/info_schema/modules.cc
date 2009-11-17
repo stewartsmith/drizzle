@@ -141,7 +141,7 @@ plugin::InfoSchemaTable *ModulesIS::getTable()
   if (mods_table == NULL)
   {
     mods_table= new plugin::InfoSchemaTable("MODULES",
-                                            columns,
+                                            *columns,
                                             -1, -1, false, false, 0,
                                             methods);
   }
