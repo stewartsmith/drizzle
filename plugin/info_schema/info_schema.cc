@@ -34,6 +34,7 @@
 #include "collation_char_set.h"
 #include "columns.h"
 #include "key_column_usage.h"
+#include "modules.h"
 
 #include <vector>
 
@@ -44,7 +45,6 @@ using namespace std;
  * Vectors of columns for various I_S tables.
  */
 static vector<const plugin::ColumnInfo *> open_tab_columns;
-static vector<const plugin::ColumnInfo *> modules_columns;
 static vector<const plugin::ColumnInfo *> plugins_columns;
 static vector<const plugin::ColumnInfo *> processlist_columns;
 static vector<const plugin::ColumnInfo *> ref_constraint_columns;
@@ -59,7 +59,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
  * Methods for various I_S tables.
  */
 static plugin::InfoSchemaMethods *open_tab_methods= NULL;
-static plugin::InfoSchemaMethods *modules_methods= NULL;
 static plugin::InfoSchemaMethods *plugins_methods= NULL;
 static plugin::InfoSchemaMethods *processlist_methods= NULL;
 static plugin::InfoSchemaMethods *ref_constraint_methods= NULL;
@@ -77,7 +76,6 @@ static plugin::InfoSchemaMethods *variables_methods= NULL;
 static plugin::InfoSchemaTable *global_stat_table= NULL;
 static plugin::InfoSchemaTable *global_var_table= NULL;
 static plugin::InfoSchemaTable *open_tab_table= NULL;
-static plugin::InfoSchemaTable *modules_table= NULL;
 static plugin::InfoSchemaTable *plugins_table= NULL;
 static plugin::InfoSchemaTable *processlist_table= NULL;
 static plugin::InfoSchemaTable *ref_constraint_table= NULL;
@@ -101,11 +99,6 @@ static bool initTableColumns()
   bool retval= false;
 
   if ((retval= createOpenTabColumns(open_tab_columns)) == true)
-  {
-    return true;
-  }
-
-  if ((retval= createModulesColumns(modules_columns)) == true)
   {
     return true;
   }
@@ -164,7 +157,6 @@ static bool initTableColumns()
 static void cleanupTableColumns()
 {
   clearColumns(open_tab_columns);
-  clearColumns(modules_columns);
   clearColumns(plugins_columns);
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
@@ -184,11 +176,6 @@ static void cleanupTableColumns()
 static bool initTableMethods()
 {
   if ((open_tab_methods= new(nothrow) OpenTablesISMethods()) == NULL)
-  {
-    return true;
-  }
-
-  if ((modules_methods= new(nothrow) ModulesISMethods()) == NULL)
   {
     return true;
   }
@@ -252,7 +239,6 @@ static bool initTableMethods()
 static void cleanupTableMethods()
 {
   delete open_tab_methods;
-  delete modules_methods;
   delete plugins_methods;
   delete processlist_methods;
   delete ref_constraint_methods;
@@ -296,15 +282,6 @@ static bool initTables()
                                                        -1, -1, true, false, 0,
                                                        open_tab_methods);
   if (open_tab_table == NULL)
-  {
-    return true;
-  }
-
-  modules_table= new(nothrow) plugin::InfoSchemaTable("MODULES",
-                                                      modules_columns,
-                                                      -1, -1, false, false, 0,
-                                                      modules_methods);
-  if (modules_table == NULL)
   {
     return true;
   }
@@ -433,7 +410,6 @@ static void cleanupTables()
   delete global_var_table;
   delete open_tab_table;
   delete plugins_table;
-  delete modules_table;
   delete processlist_table;
   delete ref_constraint_table;
   delete schemata_table;
@@ -477,10 +453,13 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(CollationCharSetIS::getTable());
   registry.add(ColumnsIS::getTable());
   registry.add(KeyColumnUsageIS::getTable());
+
   registry.add(global_stat_table);
   registry.add(global_var_table);
   registry.add(open_tab_table);
-  registry.add(modules_table);
+
+  registry.add(ModulesIS::getTable());
+
   registry.add(plugins_table);
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
@@ -523,7 +502,10 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(global_stat_table);
   registry.remove(global_var_table);
   registry.remove(open_tab_table);
-  registry.remove(modules_table);
+
+  registry.remove(ModulesIS::getTable());
+  ModulesIS::cleanup();
+
   registry.remove(plugins_table);
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
