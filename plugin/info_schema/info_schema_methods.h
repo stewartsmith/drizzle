@@ -33,19 +33,6 @@ void store_key_column_usage(Table *table,
                             int64_t idx);
 
 /**
- * @class ProcessListISMethods
- * @brief
- *   Class which implements any methods that the PROCESSLIST
- *   I_S table needs besides the default methods
- */
-class ProcessListISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session,
-                        TableList *tables);
-};
-
-/**
  * @class RefConstraintISMethods
  * @brief
  *   Class which implements any methods that the REFERENTIAL_CONSTRAINTS

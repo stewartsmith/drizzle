@@ -26,15 +26,6 @@
 #include <vector>
 
 /**
- * Create the various volumns for the PROCESSLIST I_S table and add them
- * to the std::vector of columns for the PROCESSLIST table.
- *
- * @param[out] cols vector to add columns to
- * @return false on success; true on failure
- */
-bool createProcessListColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
-
-/**
  * Create the various volumns for the REFERENTIAL_CONSTRAINTS I_S table 
  * and add them to the std::vector of columns for this table.
  *
