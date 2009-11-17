@@ -1094,7 +1094,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
 
 Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 {
-  register Table *table;
+  Table *table;
   char key[MAX_DBKEY_LENGTH];
   unsigned int key_length;
   const char *alias= table_list->alias;
