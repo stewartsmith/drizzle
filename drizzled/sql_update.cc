@@ -701,7 +701,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
   /* Check that we are not using table that we are updating in a sub select */
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(session, table_list, table_list->next_global, 0)))
+    if ((duplicate= unique_table(table_list, table_list->next_global)))
     {
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
       return true;

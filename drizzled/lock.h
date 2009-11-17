@@ -41,8 +41,6 @@ void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count);
 void mysql_lock_remove(Session *session, Table *table);
 void mysql_lock_abort(Session *session, Table *table);
 bool mysql_lock_abort_for_thread(Session *session, Table *table);
-TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
-                                      TableList *haystack);
 bool lock_global_read_lock(Session *session);
 void unlock_global_read_lock(Session *session);
 bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,

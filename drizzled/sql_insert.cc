@@ -655,7 +655,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
   if (!select_insert)
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(session, table_list, table_list->next_global, 1)))
+    if ((duplicate= unique_table(table_list, table_list->next_global, true)))
     {
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
 
@@ -1154,7 +1154,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     Is table which we are changing used somewhere in other parts of
     query
   */
-  if (unique_table(session, table_list, table_list->next_global, 0))
+  if (unique_table(table_list, table_list->next_global))
   {
     /* Using same table for INSERT and SELECT */
     lex->current_select->options|= OPTION_BUFFER_RESULT;

@@ -601,7 +601,7 @@ found duplicate
 0 if table is unique
 */
 
-TableList* unique_table(Session *session, TableList *table, TableList *table_list,
+TableList* unique_table(TableList *table, TableList *table_list,
                         bool check_alias)
 {
   TableList *res;
@@ -635,8 +635,7 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
 
   for (;;)
   {
-    if (((! (res= find_table_in_global_list(table_list, d_name, t_name))) &&
-         (! (res= mysql_lock_have_duplicate(session, table, table_list)))) ||
+    if ((! (res= find_table_in_global_list(table_list, d_name, t_name))) ||
         ((!res->table || res->table != table->table) &&
          (!check_alias || !(my_strcasecmp(files_charset_info, t_alias, res->alias))) &&
          res->select_lex && !res->select_lex->exclude_from_table_unique_test))

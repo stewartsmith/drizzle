@@ -136,7 +136,7 @@ bool statement::CreateTable::execute()
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
-        if ((duplicate= unique_table(session, create_table, select_tables, 0)))
+        if ((duplicate= unique_table(create_table, select_tables)))
         {
           my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
           /*
