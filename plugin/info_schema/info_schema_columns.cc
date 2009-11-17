@@ -34,64 +34,6 @@
 
 using namespace std;
 
-bool createOpenTabColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
-{
-  const drizzled::plugin::ColumnInfo *db= new(std::nothrow) drizzled::plugin::ColumnInfo("Database",
-                                                     NAME_CHAR_LEN,
-                                                     DRIZZLE_TYPE_VARCHAR,
-                                                     0,
-                                                     0,
-                                                     "Database",
-                                                     SKIP_OPEN_TABLE);
-  if (db == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *tab= new(std::nothrow) drizzled::plugin::ColumnInfo("Table",
-                                                      NAME_CHAR_LEN,
-                                                      DRIZZLE_TYPE_VARCHAR,
-                                                      0,
-                                                      0,
-                                                      "Table",
-                                                      SKIP_OPEN_TABLE);
-  if (tab == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *in_use= new(std::nothrow) drizzled::plugin::ColumnInfo("In_use",
-                                                         1,
-                                                         DRIZZLE_TYPE_LONGLONG,
-                                                         0,
-                                                         0,
-                                                         "In_use",
-                                                         SKIP_OPEN_TABLE);
-  if (in_use == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *name_locked= new(std::nothrow) drizzled::plugin::ColumnInfo("Name_locked",
-                                                              4,
-                                                              DRIZZLE_TYPE_LONGLONG,
-                                                              0,
-                                                              0,
-                                                              "Name_locked",
-                                                              SKIP_OPEN_TABLE);
-  if (name_locked == NULL)
-  {
-    return true;
-  }
-
-  cols.push_back(db);
-  cols.push_back(tab);
-  cols.push_back(in_use);
-  cols.push_back(name_locked);
-
-  return false;
-}
-
 bool createProcessListColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*

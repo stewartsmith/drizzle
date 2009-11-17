@@ -35,6 +35,7 @@
 #include "columns.h"
 #include "key_column_usage.h"
 #include "modules.h"
+#include "open_tables.h"
 #include "plugins.h"
 
 #include <vector>
@@ -45,7 +46,6 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
-static vector<const plugin::ColumnInfo *> open_tab_columns;
 static vector<const plugin::ColumnInfo *> processlist_columns;
 static vector<const plugin::ColumnInfo *> ref_constraint_columns;
 static vector<const plugin::ColumnInfo *> schemata_columns;
@@ -58,7 +58,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
 /*
  * Methods for various I_S tables.
  */
-static plugin::InfoSchemaMethods *open_tab_methods= NULL;
 static plugin::InfoSchemaMethods *processlist_methods= NULL;
 static plugin::InfoSchemaMethods *ref_constraint_methods= NULL;
 static plugin::InfoSchemaMethods *schemata_methods= NULL;
@@ -74,7 +73,6 @@ static plugin::InfoSchemaMethods *variables_methods= NULL;
  */
 static plugin::InfoSchemaTable *global_stat_table= NULL;
 static plugin::InfoSchemaTable *global_var_table= NULL;
-static plugin::InfoSchemaTable *open_tab_table= NULL;
 static plugin::InfoSchemaTable *processlist_table= NULL;
 static plugin::InfoSchemaTable *ref_constraint_table= NULL;
 static plugin::InfoSchemaTable *schemata_table= NULL;
@@ -95,11 +93,6 @@ static plugin::InfoSchemaTable *var_table= NULL;
 static bool initTableColumns()
 {
   bool retval= false;
-
-  if ((retval= createOpenTabColumns(open_tab_columns)) == true)
-  {
-    return true;
-  }
 
   if ((retval= createProcessListColumns(processlist_columns)) == true)
   {
@@ -149,7 +142,6 @@ static bool initTableColumns()
  */
 static void cleanupTableColumns()
 {
-  clearColumns(open_tab_columns);
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
   clearColumns(schemata_columns);
@@ -167,11 +159,6 @@ static void cleanupTableColumns()
  */
 static bool initTableMethods()
 {
-  if ((open_tab_methods= new(nothrow) OpenTablesISMethods()) == NULL)
-  {
-    return true;
-  }
-
   if ((processlist_methods= new(nothrow) ProcessListISMethods()) == NULL)
   {
     return true;
@@ -225,7 +212,6 @@ static bool initTableMethods()
  */
 static void cleanupTableMethods()
 {
-  delete open_tab_methods;
   delete processlist_methods;
   delete ref_constraint_methods;
   delete schemata_methods;
@@ -259,15 +245,6 @@ static bool initTables()
                                                          -1, -1, false, false,
                                                          0, variables_methods);
   if (global_var_table == NULL)
-  {
-    return true;
-  }
-
-  open_tab_table= new(nothrow) plugin::InfoSchemaTable("OPEN_TABLES",
-                                                       open_tab_columns,
-                                                       -1, -1, true, false, 0,
-                                                       open_tab_methods);
-  if (open_tab_table == NULL)
   {
     return true;
   }
@@ -385,7 +362,6 @@ static void cleanupTables()
 {
   delete global_stat_table;
   delete global_var_table;
-  delete open_tab_table;
   delete processlist_table;
   delete ref_constraint_table;
   delete schemata_table;
@@ -432,8 +408,8 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
 
   registry.add(global_stat_table);
   registry.add(global_var_table);
-  registry.add(open_tab_table);
 
+  registry.add(OpenTablesIS::getTable());
   registry.add(ModulesIS::getTable());
   registry.add(PluginsIS::getTable());
 
@@ -477,7 +453,9 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
   registry.remove(global_stat_table);
   registry.remove(global_var_table);
-  registry.remove(open_tab_table);
+
+  registry.remove(OpenTablesIS::getTable());
+  OpenTablesIS::cleanup();
 
   registry.remove(ModulesIS::getTable());
   ModulesIS::cleanup();

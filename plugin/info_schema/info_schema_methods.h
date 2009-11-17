@@ -33,20 +33,6 @@ void store_key_column_usage(Table *table,
                             int64_t idx);
 
 /**
- * @class OpenTablesISMethods
- * @brief
- *   Class which implements any methods that the OPEN_TABLES
- *   I_S table needs besides the default methods
- */
-class OpenTablesISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session,
-                        TableList *tables);
-};
-
-
-/**
  * @class ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST

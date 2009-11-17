@@ -222,31 +222,6 @@ void store_key_column_usage(Table *table,
   table->field[7]->store((int64_t) idx, true);
 }
 
-
-inline bool open_list_store(Table *table, open_table_list_st& open_list);
-inline bool open_list_store(Table *table, open_table_list_st& open_list)
-{
-  table->restoreRecordAsDefault();
-  table->field[0]->store(open_list.db.c_str(), open_list.db.length(), system_charset_info);
-  table->field[1]->store(open_list.table.c_str(), open_list.table.length(), system_charset_info);
-  table->field[2]->store((int64_t) open_list.in_use, true);
-  table->field[3]->store((int64_t) open_list.locked, true);
-  if (schema_table_store_record(table->in_use, table))
-    return true;
-
-  return false;
-}
-
-int OpenTablesISMethods::fillTable(Session *session, TableList *tables)
-{
-  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-
-  if ((list_open_tables(session->lex->select_lex.db, wild, open_list_store, tables->table) == true) && session->is_fatal_error)
-    return 1;
-
-  return 0;
-}
-
 int ProcessListISMethods::fillTable(Session* session, TableList* tables)
 {
   Table *table= tables->table;
