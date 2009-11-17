@@ -2362,7 +2362,7 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   path_length= strlen(path);
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
-                                   path_length + 1 + key_length)))
+                                       path_length + 1 + key_length)))
     return NULL;
 
   share= (TableShare*) (new_tmp_table+1);

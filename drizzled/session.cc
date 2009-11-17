@@ -1943,6 +1943,7 @@ void Session::close_temporary(Table *table)
 
   table->s->free_table_share();
   /* This makes me sad, but we're allocating it via malloc */
+  free(table);
 }
 
 /** Clear most status variables. */
