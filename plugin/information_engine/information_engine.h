@@ -54,10 +54,9 @@ public:
   private:
     uint32_t count;
     drizzled::plugin::InfoSchemaTable *table;
-    THR_LOCK lock;
-
 
   public:
+    THR_LOCK lock;
 
     Share(const std::string &in_name) :
       count(1)
