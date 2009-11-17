@@ -189,6 +189,14 @@ bool statement::CreateTable::execute()
     }
     else
     {
+
+      for (int32_t x= 0; x < alter_info.alter_proto.added_field_size(); x++)
+      {
+        message::Table::Field *field= create_table_proto.add_field();
+
+        *field= alter_info.alter_proto.added_field(x);
+      }
+
       res= mysql_create_table(session, 
                               create_table->db,
                               create_table->table_name, 
