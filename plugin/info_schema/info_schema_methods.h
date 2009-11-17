@@ -33,33 +33,6 @@ void store_key_column_usage(Table *table,
                             int64_t idx);
 
 /**
- * @class RefConstraintISMethods
- * @brief
- *   Class which implements any methods that the REFERENTIAL_CONSTRAINTS
- *   I_S table needs besides the default methods
- */
-class RefConstraintsISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  /**
-   * Fill and store records into I_S.referential_constraints table
-   *
-   * @param[in] session   thread handle
-   * @param[in] tables    table list struct(processed table)
-   * @param[in] table     I_S table
-   * @param[in] res       1 means the error during opening of the processed table
-   *                      0 means processed table is opened without error
-   * @param[in] base_name db name
-   * @param[in] file_name table name
-   *
-   * @return 0 on success; 1 on failure
-   */
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
-/**
  * @class SchemataISMethods
  * @brief
  *   Class which implements any methods that the SCHEMATA
