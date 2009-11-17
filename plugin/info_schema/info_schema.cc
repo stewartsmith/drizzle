@@ -39,6 +39,7 @@
 #include "plugins.h"
 #include "processlist.h"
 #include "referential_constraints.h"
+#include "schemata.h"
 
 #include <vector>
 
@@ -48,7 +49,6 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
-static vector<const plugin::ColumnInfo *> schemata_columns;
 static vector<const plugin::ColumnInfo *> stats_columns;
 static vector<const plugin::ColumnInfo *> status_columns;
 static vector<const plugin::ColumnInfo *> tab_constraints_columns;
@@ -58,7 +58,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
 /*
  * Methods for various I_S tables.
  */
-static plugin::InfoSchemaMethods *schemata_methods= NULL;
 static plugin::InfoSchemaMethods *stats_methods= NULL;
 static plugin::InfoSchemaMethods *status_methods= NULL;
 static plugin::InfoSchemaMethods *tab_constraints_methods= NULL;
@@ -71,7 +70,6 @@ static plugin::InfoSchemaMethods *variables_methods= NULL;
  */
 static plugin::InfoSchemaTable *global_stat_table= NULL;
 static plugin::InfoSchemaTable *global_var_table= NULL;
-static plugin::InfoSchemaTable *schemata_table= NULL;
 static plugin::InfoSchemaTable *sess_stat_table= NULL;
 static plugin::InfoSchemaTable *sess_var_table= NULL;
 static plugin::InfoSchemaTable *stats_table= NULL;
@@ -89,11 +87,6 @@ static plugin::InfoSchemaTable *var_table= NULL;
 static bool initTableColumns()
 {
   bool retval= false;
-
-  if ((retval= createSchemataColumns(schemata_columns)) == true)
-  {
-    return true;
-  }
 
   if ((retval= createStatsColumns(stats_columns)) == true)
   {
@@ -128,7 +121,6 @@ static bool initTableColumns()
  */
 static void cleanupTableColumns()
 {
-  clearColumns(schemata_columns);
   clearColumns(stats_columns);
   clearColumns(status_columns);
   clearColumns(tab_constraints_columns);
@@ -143,11 +135,6 @@ static void cleanupTableColumns()
  */
 static bool initTableMethods()
 {
-  if ((schemata_methods= new(nothrow) SchemataISMethods()) == NULL)
-  {
-    return true;
-  }
-
   if ((stats_methods= new(nothrow) StatsISMethods()) == NULL)
   {
     return true;
@@ -186,7 +173,6 @@ static bool initTableMethods()
  */
 static void cleanupTableMethods()
 {
-  delete schemata_methods;
   delete stats_methods;
   delete status_methods;
   delete tab_constraints_methods;
@@ -217,15 +203,6 @@ static bool initTables()
                                                          -1, -1, false, false,
                                                          0, variables_methods);
   if (global_var_table == NULL)
-  {
-    return true;
-  }
-
-  schemata_table= new(nothrow) plugin::InfoSchemaTable("SCHEMATA",
-                                                       schemata_columns,
-                                                       1, -1, false, false, 0,
-                                                       schemata_methods);
-  if (schemata_table == NULL)
   {
     return true;
   }
@@ -315,7 +292,6 @@ static void cleanupTables()
 {
   delete global_stat_table;
   delete global_var_table;
-  delete schemata_table;
   delete sess_stat_table;
   delete sess_var_table;
   delete stats_table;
@@ -365,8 +341,8 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(PluginsIS::getTable());
   registry.add(ProcessListIS::getTable());
   registry.add(ReferentialConstraintsIS::getTable());
+  registry.add(SchemataIS::getTable());
 
-  registry.add(schemata_table);
   registry.add(sess_stat_table);
   registry.add(sess_var_table);
   registry.add(stats_table);
@@ -420,7 +396,9 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(ReferentialConstraintsIS::getTable());
   ReferentialConstraintsIS::cleanup();
 
-  registry.remove(schemata_table);
+  registry.remove(SchemataIS::getTable());
+  SchemataIS::cleanup();
+
   registry.remove(sess_stat_table);
   registry.remove(sess_var_table);
   registry.remove(stats_table);

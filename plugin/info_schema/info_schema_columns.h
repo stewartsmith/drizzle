@@ -26,15 +26,6 @@
 #include <vector>
 
 /**
- * Create the various volumns for the SCHEMATA I_S table 
- * and add them to the std::vector of columns for this table.
- *
- * @param[out] cols vector to add columns to
- * @return false on success; true on failure
- */
-bool createSchemataColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
-
-/**
  * Create the various volumns for the STATISTICS I_S table 
  * and add them to the std::vector of columns for this table.
  *

@@ -33,21 +33,6 @@ void store_key_column_usage(Table *table,
                             int64_t idx);
 
 /**
- * @class SchemataISMethods
- * @brief
- *   Class which implements any methods that the SCHEMATA
- *   I_S table needs besides the default methods
- */
-class SchemataISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session,
-                        TableList *tables);
-  virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchemaTable *schema_table) const;
-};
-
-/**
  * @class StatsISMethods
  * @brief
  *   Class which implements any methods that the SCHEMATA
