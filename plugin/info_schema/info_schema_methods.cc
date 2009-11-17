@@ -247,59 +247,6 @@ int OpenTablesISMethods::fillTable(Session *session, TableList *tables)
   return 0;
 }
 
-class ShowPlugins
- : public unary_function<pair<const string, const drizzled::plugin::Plugin *>, bool>
-{
-  Session *session;
-  Table *table;
-public:
-  ShowPlugins(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
-
-  result_type operator() (argument_type plugin)
-  {
-    const CHARSET_INFO * const cs= system_charset_info;
-
-    table->restoreRecordAsDefault();
-
-    table->field[0]->store(plugin.first.c_str(),
-                           plugin.first.size(), cs);
-
-    table->field[1]->store(plugin.second->getTypeName().c_str(),
-                           plugin.second->getTypeName().size(), cs);
-
-    if (plugin.second->isActive())
-    {
-      table->field[2]->store(STRING_WITH_LEN("YES"),cs);
-    }
-    else
-    {
-      table->field[2]->store(STRING_WITH_LEN("NO"), cs);
-    }
-
-    table->field[3]->store(plugin.second->getModuleName().c_str(),
-                           plugin.second->getModuleName().size(), cs);
-
-    return schema_table_store_record(session, table);
-  }
-};
-
-int PluginsISMethods::fillTable(Session *session, TableList *tables)
-{
-  Table *table= tables->table;
-
-  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  const map<string, const drizzled::plugin::Plugin *> &plugin_map=
-    registry.getPluginsMap();
-  map<string, const drizzled::plugin::Plugin *>::const_iterator iter=
-    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table));
-  if (iter != plugin_map.end())
-  {
-    return 1;
-  }
-  return (0);
-}
-
 int ProcessListISMethods::fillTable(Session* session, TableList* tables)
 {
   Table *table= tables->table;

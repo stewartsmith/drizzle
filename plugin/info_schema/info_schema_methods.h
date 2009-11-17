@@ -45,18 +45,6 @@ public:
                         TableList *tables);
 };
 
-/**
- * @class PluginsISMethods
- * @brief
- *   Class which implements any methods that the PLUGINS
- *   I_S table needs besides the default methods
- */
-class PluginsISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session,
-                        TableList *tables);
-};
 
 /**
  * @class ProcessListISMethods

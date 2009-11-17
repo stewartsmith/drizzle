@@ -92,68 +92,6 @@ bool createOpenTabColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
   return false;
 }
 
-bool createPluginsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
-{
-  const drizzled::plugin::ColumnInfo *name=
-    new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_NAME",
-                                                   NAME_CHAR_LEN,
-                                                   DRIZZLE_TYPE_VARCHAR,
-                                                   0,
-                                                   0,
-                                                   "Name",
-                                                   SKIP_OPEN_TABLE);
-  if (name == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *ptype=
-    new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_TYPE",
-                                                   NAME_CHAR_LEN,
-                                                   DRIZZLE_TYPE_VARCHAR,
-                                                   0,
-                                                   0,
-                                                   "",
-                                                   SKIP_OPEN_TABLE);
-  if (name == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *is_active=
-    new(std::nothrow) drizzled::plugin::ColumnInfo("IS_ACTIVE",
-                                                   3,
-                                                   DRIZZLE_TYPE_VARCHAR,
-                                                   0,
-                                                   0,
-                                                   "",
-                                                   SKIP_OPEN_TABLE);
-  if (is_active == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *mod_name=
-    new(std::nothrow) drizzled::plugin::ColumnInfo("MODULE_NAME",
-                                                    NAME_CHAR_LEN,
-                                                    DRIZZLE_TYPE_VARCHAR,
-                                                    0,
-                                                    0,
-                                                    "Name",
-                                                    SKIP_OPEN_TABLE);
-  if (name == NULL)
-  {
-    return true;
-  }
-  cols.push_back(name);
-  cols.push_back(ptype);
-  cols.push_back(is_active);
-  cols.push_back(mod_name);
-
-  return false;
-}
-
-
 bool createProcessListColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
