@@ -128,7 +128,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     If this is not set, we will use the directory where the table to be
     loaded is located
   */
-  char *tdb= session->db ? session->db : db;		// Result is never null
+  const char *tdb= session->db.empty() ? db  : session->db.c_str();		// Result is never null
   assert(tdb);
   uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
@@ -301,7 +301,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
   READ_INFO read_info(file, tot_length,
-                      ex->cs ? ex->cs : get_default_db_collation(session->db),
+                      ex->cs ? ex->cs : get_default_db_collation(session->db.c_str()),
 		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
 		      info.escape_char, is_fifo);
   if (read_info.error)

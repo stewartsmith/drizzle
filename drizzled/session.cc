@@ -180,7 +180,6 @@ Session::Session(plugin::Client *client_arg)
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
-  db(NULL),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -411,11 +410,6 @@ Session::~Session()
   plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
-  if (db)
-  {
-    free(db);
-    db= NULL;
-  }
   free_root(&warn_root,MYF(0));
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
@@ -661,14 +655,6 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
-  /*
-    Clear session->db as it points to something, that will be freed when
-    connection is closed. We don't want to accidentally free a wrong
-    pointer if connect failed. Also in case of 'CHANGE USER' failure,
-    current database will be switched to 'no database selected'.
-  */
-  reset_db(NULL, 0);
-
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
@@ -753,7 +739,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
 
   /* We must allocate some extra memory for the cached query string */
   query_length= 0; /* Extra safety: Avoid races */
-  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db_length + 1);
+  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db.length() + 1);
   if (! query)
     return false;
 
@@ -1126,8 +1112,8 @@ static File create_file(Session *session, char *path, file_exchange *exchange, I
   if (!dirname_length(exchange->file_name))
   {
     strcpy(path, drizzle_real_data_home);
-    if (session->db)
-      strncat(path, session->db, FN_REFLEN-strlen(drizzle_real_data_home)-1);
+    if (! session->db.empty())
+      strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
     (void) fn_format(path, exchange->file_name, path, "", option);
   }
   else
@@ -1631,13 +1617,13 @@ void Session::end_statement()
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
-  if (db == NULL)
+  if (db.empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= strmake(db, db_length);
-  *p_db_length= db_length;
+  *p_db= strmake(db.c_str(), db.length());
+  *p_db_length= db.length();
   return false;
 }
 
@@ -1712,29 +1698,15 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
 }
 
 
-bool Session::set_db(const char *new_db, size_t new_db_len)
+bool Session::set_db(const char *new_db, size_t length)
 {
   /* Do not reallocate memory if current chunk is big enough. */
-  if (db && new_db && db_length >= new_db_len)
-    memcpy(db, new_db, new_db_len+1);
+  if (length)
+    db= new_db;
   else
-  {
-    if (db)
-      free(db);
-    if (new_db)
-    {
-      db= (char *)malloc(new_db_len + 1);
-      if (db != NULL)
-      {
-        memcpy(db, new_db, new_db_len);
-        db[new_db_len]= 0;
-      }
-    }
-    else
-      db= NULL;
-  }
-  db_length= db ? new_db_len : 0;
-  return new_db && !db;
+    db.clear();
+
+  return false;
 }
 
 
@@ -1821,7 +1793,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
-                  , (db ? db : "unconnected")
+                  , (db.empty() ? "unconnected" : db.c_str())
                   , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
                   , sctx->ip.c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));

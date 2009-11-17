@@ -51,7 +51,7 @@ bool statement::DropIndex::execute()
   memset(&create_info, 0, sizeof(create_info));
   create_info.db_type= 0;
   create_info.row_type= ROW_TYPE_NOT_USED;
-  create_info.default_table_charset= get_default_db_collation(session->db);
+  create_info.default_table_charset= get_default_db_collation(session->db.c_str());
 
   bool res= alter_table(session, 
                         first_table->db, 

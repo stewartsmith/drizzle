@@ -680,9 +680,9 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables)
       /* HOST */
       table->field[2]->store(tmp_sctx->ip.c_str(), strlen(tmp_sctx->ip.c_str()), cs);
       /* DB */
-      if (tmp->db)
+      if (! tmp->db.empty())
       {
-        table->field[3]->store(tmp->db, strlen(tmp->db), cs);
+        table->field[3]->store(tmp->db.c_str(), tmp->db.length(), cs);
         table->field[3]->set_notnull();
       }
 

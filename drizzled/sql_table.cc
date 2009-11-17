@@ -345,7 +345,7 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
     built_query.append("DROP TABLE ");
 
   built_query.append("`");
-  if (session->db == NULL || strcmp(db_name ,session->db) != 0)
+  if (session->db.empty() || strcmp(db_name, session->db.c_str()) != 0)
   {
     built_query.append(db_name);
     built_query.append("`.`");
