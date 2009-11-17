@@ -514,11 +514,10 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
                      TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
-    file(0),
-     can_enable_indexes(1)
-{
-  is_ordered= true;
-}
+  file(0),
+  can_enable_indexes(true),
+  is_ordered(true)
+{ }
 
 Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
 {

@@ -821,7 +821,7 @@ int drizzled::parse_table_proto(Session& session,
     temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
-    uint32_t field_length;
+    uint32_t field_length= 0; //Assignment is for compiler complaint.
 
     switch (field_type)
     {
@@ -900,9 +900,8 @@ int drizzled::parse_table_proto(Session& session,
     case DRIZZLE_TYPE_LONGLONG:
       field_length= MAX_BIGINT_WIDTH;
       break;
-    default:
-      abort();
-      break;
+    case DRIZZLE_TYPE_NULL:
+      abort(); // Programming error
     }
 
     Field* f= make_field(share,

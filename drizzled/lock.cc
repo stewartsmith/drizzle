@@ -652,8 +652,9 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     Table *table;
     enum thr_lock_type lock_type;
 
-    if ((table=table_ptr[i])->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
+    if (table_ptr[i]->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
       continue;
+    table= table_ptr[i];
     lock_type= table->reginfo.lock_type;
     assert (lock_type != TL_WRITE_DEFAULT);
     if (lock_type >= TL_WRITE_ALLOW_WRITE)
