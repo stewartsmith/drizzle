@@ -64,7 +64,7 @@ vector<const plugin::ColumnInfo *> *SchemataIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   columns->push_back(new plugin::ColumnInfo("CATALOG_NAME",

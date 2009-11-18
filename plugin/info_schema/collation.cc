@@ -63,7 +63,7 @@ vector<const plugin::ColumnInfo *> *CollationIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   /*

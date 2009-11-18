@@ -66,7 +66,7 @@ vector<const plugin::ColumnInfo *> *ProcessListIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   /*

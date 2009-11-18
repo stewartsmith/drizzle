@@ -63,7 +63,7 @@ vector<const plugin::ColumnInfo *> *CharacterSetIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   /*

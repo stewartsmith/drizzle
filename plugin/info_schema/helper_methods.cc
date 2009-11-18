@@ -236,7 +236,7 @@ public:
   }
 };
 
-void clearColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
+void clearColumns(vector<const drizzled::plugin::ColumnInfo *> &cols)
 {
   for_each(cols.begin(), cols.end(), DeleteColumns());
   cols.clear();

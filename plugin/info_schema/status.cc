@@ -66,7 +66,7 @@ vector<const plugin::ColumnInfo *> *GlobalStatusIS::createColumns()
   }
   else
   {
-    status_columns->clear();
+    clearColumns(*status_columns);
   }
 
   status_columns->push_back(new plugin::ColumnInfo("VARIABLE_NAME",

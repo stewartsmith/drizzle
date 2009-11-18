@@ -63,7 +63,7 @@ vector<const plugin::ColumnInfo *> *ModulesIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   columns->push_back(new plugin::ColumnInfo("MODULE_NAME",

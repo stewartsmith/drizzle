@@ -64,7 +64,7 @@ vector<const plugin::ColumnInfo *> *TableNamesIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   columns->push_back(new plugin::ColumnInfo("TABLE_CATALOG",

@@ -63,7 +63,7 @@ vector<const plugin::ColumnInfo *> *PluginsIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   columns->push_back(new plugin::ColumnInfo("PLUGIN_NAME",

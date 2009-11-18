@@ -46,6 +46,6 @@ void store_key_column_usage(Table *table,
  *
  * @param[out] cols vector to clear and de-allocate memory from
  */
-void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
+void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);
 
 #endif /* PLUGIN_INFO_SCHEMA_HELPER_METHODS_H */

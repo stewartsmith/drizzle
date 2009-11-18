@@ -63,7 +63,7 @@ vector<const plugin::ColumnInfo *> *OpenTablesIS::createColumns()
   }
   else
   {
-    columns->clear();
+    clearColumns(*columns);
   }
 
   columns->push_back(new plugin::ColumnInfo("Database",
