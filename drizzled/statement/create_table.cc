@@ -58,7 +58,6 @@ bool statement::CreateTable::execute()
   }
 
 
-
   /* 
     Now we set the name in our Table proto so that it will match 
     create_info.db_type.

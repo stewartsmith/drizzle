@@ -2462,6 +2462,20 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
+      /* 
+        If engine was not specified and we are reading from the I_S, then we need to 
+        toss an error. This should go away later on when we straighten out the 
+        I_S engine.
+      */
+      if (! (create_info->used_fields & HA_CREATE_USED_ENGINE))
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+                 "INFORMATION_ENGINE",
+                 "TEMPORARY");
+        goto err;
+      }
+
       if (create_like_schema_frm(session, src_table, create_info, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
@@ -2488,20 +2502,22 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       protoengine->set_name(create_table_proto.engine().name());
     }
 
-    string dst_proto_path(dst_path);
-    string file_ext = ".dfe";
-
-    dst_proto_path.append(file_ext);
-
     if (protoerr == EEXIST)
     {
       plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
                                                                        new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+      {
+        string dst_proto_path(dst_path);
+        dst_proto_path.append(".dfe");
+
         protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
+      }
       else
+      {
         protoerr= 0;
+      }
     }
 
     if (protoerr)
