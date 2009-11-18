@@ -353,7 +353,7 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 drizzle_declare_plugin(info_schema)
 {
   "info_schema",
-  "0.2",
+  "1.0",
   "Padraig O'Sullivan",
   "I_S plugin",
   PLUGIN_LICENSE_GPL,
