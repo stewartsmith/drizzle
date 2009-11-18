@@ -26,7 +26,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/show.h>
-#include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/plugin/client.h>
 #include "drizzled/join_table.h"
