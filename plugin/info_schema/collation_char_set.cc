@@ -23,11 +23,11 @@
  *   Collation Character Set I_S table methods.
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/session.h>
-#include <drizzled/show.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/session.h"
+#include "drizzled/show.h"
 
-#include "info_schema_methods.h"
+#include "helper_methods.h"
 #include "collation_char_set.h"
 
 #include <vector>

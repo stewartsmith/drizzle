@@ -27,7 +27,7 @@
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 
-#include "info_schema_methods.h"
+#include "helper_methods.h"
 #include "referential_constraints.h"
 
 #include <vector>

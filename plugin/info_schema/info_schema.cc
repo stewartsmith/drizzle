@@ -23,11 +23,11 @@
  *   I_S plugin implementation.
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/session.h>
-#include <drizzled/show.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/session.h"
+#include "drizzled/show.h"
 
-#include "info_schema_methods.h"
+#include "helper_methods.h"
 #include "character_set.h"
 #include "collation.h"
 #include "collation_char_set.h"

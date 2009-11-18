@@ -28,7 +28,7 @@
 #include "drizzled/show.h"
 #include "drizzled/join_table.h"
 
-#include "info_schema_methods.h"
+#include "helper_methods.h"
 #include "schemata.h"
 
 #include <vector>

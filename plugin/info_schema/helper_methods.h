@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H
-#define PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H
+#ifndef PLUGIN_INFO_SCHEMA_HELPER_METHODS_H
+#define PLUGIN_INFO_SCHEMA_HELPER_METHODS_H
 
 #include "drizzled/plugin/info_schema_table.h"
 
@@ -48,4 +48,4 @@ void store_key_column_usage(Table *table,
  */
 void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
-#endif /* PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H */
+#endif /* PLUGIN_INFO_SCHEMA_HELPER_METHODS_H */

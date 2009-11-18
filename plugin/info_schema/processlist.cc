@@ -28,7 +28,7 @@
 #include "drizzled/show.h"
 #include "drizzled/plugin/client.h"
 
-#include "info_schema_methods.h"
+#include "helper_methods.h"
 #include "processlist.h"
 
 #include <vector>

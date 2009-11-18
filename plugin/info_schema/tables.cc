@@ -28,7 +28,7 @@
 #include "drizzled/show.h"
 #include "drizzled/tztime.h"
 
-#include "info_schema_methods.h"
+#include "helper_methods.h"
 #include "tables.h"
 
 #include <vector>
