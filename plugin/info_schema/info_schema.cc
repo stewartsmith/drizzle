@@ -41,6 +41,7 @@
 #include "referential_constraints.h"
 #include "schemata.h"
 #include "table_constraints.h"
+#include "tables.h"
 
 #include <vector>
 
@@ -52,7 +53,6 @@ using namespace std;
  */
 static vector<const plugin::ColumnInfo *> stats_columns;
 static vector<const plugin::ColumnInfo *> status_columns;
-static vector<const plugin::ColumnInfo *> tables_columns;
 static vector<const plugin::ColumnInfo *> tab_names_columns;
 
 /*
@@ -60,7 +60,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
  */
 static plugin::InfoSchemaMethods *stats_methods= NULL;
 static plugin::InfoSchemaMethods *status_methods= NULL;
-static plugin::InfoSchemaMethods *tables_methods= NULL;
 static plugin::InfoSchemaMethods *tab_names_methods= NULL;
 static plugin::InfoSchemaMethods *variables_methods= NULL;
 
@@ -73,7 +72,6 @@ static plugin::InfoSchemaTable *sess_stat_table= NULL;
 static plugin::InfoSchemaTable *sess_var_table= NULL;
 static plugin::InfoSchemaTable *stats_table= NULL;
 static plugin::InfoSchemaTable *status_table= NULL;
-static plugin::InfoSchemaTable *tables_table= NULL;
 static plugin::InfoSchemaTable *tab_names_table= NULL;
 static plugin::InfoSchemaTable *var_table= NULL;
 
@@ -96,11 +94,6 @@ static bool initTableColumns()
     return true;
   }
 
-  if ((retval= createTablesColumns(tables_columns)) == true)
-  {
-    return true;
-  }
-
   if ((retval= createTabNamesColumns(tab_names_columns)) == true)
   {
     return true;
@@ -116,7 +109,6 @@ static void cleanupTableColumns()
 {
   clearColumns(stats_columns);
   clearColumns(status_columns);
-  clearColumns(tables_columns);
   clearColumns(tab_names_columns);
 }
 
@@ -133,11 +125,6 @@ static bool initTableMethods()
   }
 
   if ((status_methods= new(nothrow) StatusISMethods()) == NULL)
-  {
-    return true;
-  }
-
-  if ((tables_methods= new(nothrow) TablesISMethods()) == NULL)
   {
     return true;
   }
@@ -162,7 +149,6 @@ static void cleanupTableMethods()
 {
   delete stats_methods;
   delete status_methods;
-  delete tables_methods;
   delete tab_names_methods;
   delete variables_methods;
 }
@@ -230,16 +216,6 @@ static bool initTables()
     return true;
   }
 
-  tables_table= new(nothrow) plugin::InfoSchemaTable("TABLES",
-                                                     tables_columns,
-                                                     1, 2, false, true,
-                                                     OPTIMIZE_I_S_TABLE,
-                                                     tables_methods);
-  if (tables_table == NULL)
-  {
-    return true;
-  }
-
   tab_names_table= new(nothrow) plugin::InfoSchemaTable("TABLE_NAMES",
                                                         tab_names_columns,
                                                         1, 2, true, true, 0,
@@ -272,7 +248,6 @@ static void cleanupTables()
   delete sess_var_table;
   delete stats_table;
   delete status_table;
-  delete tables_table;
   delete tab_names_table;
   delete var_table;
 }
@@ -324,8 +299,8 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(status_table);
 
   registry.add(TableConstraintsIS::getTable());
+  registry.add(TablesIS::getTable());
 
-  registry.add(tables_table);
   registry.add(tab_names_table);
   registry.add(var_table);
 
@@ -384,7 +359,9 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(TableConstraintsIS::getTable());
   TableConstraintsIS::cleanup();
 
-  registry.remove(tables_table);
+  registry.remove(TablesIS::getTable());
+  TablesIS::cleanup();
+
   registry.remove(tab_names_table);
   registry.remove(var_table);
 

@@ -50,15 +50,6 @@ bool createStatusColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createTablesColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
-
-/**
- * Create the various volumns for the TABLE_NAMES I_S table 
- * and add them to the std::vector of columns for this table.
- *
- * @param[out] cols vector to add columns to
- * @return false on success; true on failure
- */
 bool createTabNamesColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
