@@ -26,13 +26,13 @@ String *Item_func_database::val_str(String *str)
 {
   assert(fixed == 1);
   Session *session= current_session;
-  if (session->db == NULL)
+  if (session->db.empty())
   {
     null_value= 1;
     return 0;
   }
   else
-    str->copy(session->db, session->db_length, system_charset_info);
+    str->copy(session->db.c_str(), session->db.length(), system_charset_info);
   return str;
 }
 

@@ -172,7 +172,7 @@ static struct st_mysql_sys_var* auth_http_system_variables[]= {
 };
 
 
-drizzle_declare_plugin(auth_http)
+drizzle_declare_plugin
 {
   "auth_http",
   "0.1",

@@ -2811,7 +2811,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
     if ((error= table->cursor->ha_update_row(table->record[1],
                                           table->record[0])))
     {
-      table->cursor->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     return NESTED_LOOP_OK;
@@ -2869,14 +2869,14 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
     join->send_records++;			// New group
   else
   {
-    if ((int) table->cursor->get_dup_key(error) < 0)
+    if ((int) table->get_dup_key(error) < 0)
     {
-      table->cursor->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
     {
-      table->cursor->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     table->restoreRecord();
@@ -2884,7 +2884,7 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
     if ((error= table->cursor->ha_update_row(table->record[1],
                                           table->record[0])))
     {
-      table->cursor->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
   }
@@ -5570,7 +5570,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
     if (error)
     {
-        table->cursor->print_error(error, MYF(0));
+        table->print_error(error, MYF(0));
         return 1;
     }
     table->quick_keys.reset();

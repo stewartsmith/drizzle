@@ -71,7 +71,6 @@ class ha_innobase: public Cursor
 	ulong		upd_and_key_val_buff_len;
 					/* the length of each of the previous
 					two buffers */
-	Table_flags	int_table_flags;
 	uint		primary_key;
 	ulong		start_of_scan;	/*!< this is set to 1 when we are
 					starting a table scan but have not
@@ -89,8 +88,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
 	UNIV_INTERN ulint innobase_lock_autoinc();
 	UNIV_INTERN uint64_t innobase_peek_autoinc();
-	ulint innobase_set_max_autoinc(uint64_t auto_inc);
-	ulint innobase_reset_autoinc(uint64_t auto_inc);
+	UNIV_INTERN ulint innobase_set_max_autoinc(uint64_t auto_inc);
+	UNIV_INTERN ulint innobase_reset_autoinc(uint64_t auto_inc);
 	UNIV_INTERN ulint innobase_get_autoinc(uint64_t* value);
 	ulint innobase_update_autoinc(uint64_t	auto_inc);
 	UNIV_INTERN ulint innobase_initialize_autoinc();
@@ -109,7 +108,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN enum row_type get_row_type() const;
 
 	UNIV_INTERN const char* index_type(uint key_number);
-	UNIV_INTERN Table_flags table_flags() const;
 	UNIV_INTERN uint32_t index_flags(uint idx, uint part, bool all_parts) const;
 	UNIV_INTERN uint32_t max_supported_keys() const;
 	UNIV_INTERN uint32_t max_supported_key_length() const;
@@ -177,8 +175,6 @@ class ha_innobase: public Cursor
                                                     uint64_t *first_value,
                                                     uint64_t *nb_reserved_values);
         UNIV_INTERN int reset_auto_increment(uint64_t value);
-
-        UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
 	UNIV_INTERN bool primary_key_is_clustered();
 	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);

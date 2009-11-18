@@ -347,7 +347,7 @@ static int memcachedDone(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(memcached_functions)
+drizzle_declare_plugin
 {
   "memcached_functions",
   "0.1",

@@ -18,6 +18,7 @@
 
 #define DRIZZLE_LEX 1
 #include "drizzled/server_includes.h"
+#include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"

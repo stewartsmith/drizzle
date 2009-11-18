@@ -52,7 +52,7 @@ static int compressionudf_plugin_deinit(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(compression)
+drizzle_declare_plugin
 {
   "compression",
   "1.1",

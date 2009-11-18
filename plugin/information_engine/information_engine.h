@@ -44,15 +44,19 @@ public:
     pthread_mutex_destroy(&mutex);
   }
 
+  uint64_t table_flags() const
+  {
+    return 0;
+  }
+
   class Share 
   {
   private:
     uint32_t count;
     drizzled::plugin::InfoSchemaTable *table;
-    THR_LOCK lock;
-
 
   public:
+    THR_LOCK lock;
 
     Share(const std::string &in_name) :
       count(1)

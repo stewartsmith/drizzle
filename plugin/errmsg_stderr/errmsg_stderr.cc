@@ -70,7 +70,7 @@ static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(errmsg_stderr)
+drizzle_declare_plugin
 {
   "errmsg_stderr",
   "0.1",
