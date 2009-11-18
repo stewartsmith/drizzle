@@ -2494,6 +2494,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     message::Table new_proto(src_proto);
 
+    if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
+    {
+      new_proto.set_type(message::Table::TEMPORARY);
+    }
+    else
+    {
+      new_proto.set_type(message::Table::STANDARD);
+    }
+
     if (create_info->used_fields & HA_CREATE_USED_ENGINE)
     {
       message::Table::StorageEngine *protoengine;

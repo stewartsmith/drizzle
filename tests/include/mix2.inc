@@ -1012,7 +1012,9 @@ drop table t1;
 # Bug#2160: Extra error message for create $temp table LIKE with InnoDB
 #
 eval create $temp table t1 (a int) engine=$engine_type;
+--error 1005
 create table t2 like t1;
+create table t2 like t1 engine=innodb;
 show create table t2;
 drop table t1,t2;
 

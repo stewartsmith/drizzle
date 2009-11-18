@@ -958,11 +958,13 @@ Error	1146	Table 'test.t7' doesn't exist
 drop table t1,t2,t3, t4, t5, t6;
 create TEMPORARY table t1 (a int) engine=MyISAM;
 create table t2 like t1;
+ERROR HY000: Can't create table 'test.t2' (errno: 138)
+create table t2 like t1 engine=innodb;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` int DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=InnoDB
 drop table t1,t2;
 flush status;
 show status like "binlog_cache_use";
