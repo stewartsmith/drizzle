@@ -278,64 +278,6 @@ bool createStatusColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
   return false;
 }
 
-bool createTabNamesColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
-{
-  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_CATALOG",
-                                                      FN_REFLEN,
-                                                      DRIZZLE_TYPE_VARCHAR,
-                                                      0,
-                                                      1,
-                                                      "",
-                                                      SKIP_OPEN_TABLE);
-  if (cat == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
-                                                      NAME_CHAR_LEN,
-                                                      DRIZZLE_TYPE_VARCHAR,
-                                                      0,
-                                                      0,
-                                                      "",
-                                                      SKIP_OPEN_TABLE);
-  if (sch == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
-                                                       NAME_CHAR_LEN,
-                                                       DRIZZLE_TYPE_VARCHAR,
-                                                       0,
-                                                       0,
-                                                       "Tables_in_",
-                                                       SKIP_OPEN_TABLE);
-  if (name == NULL)
-  {
-    return true;
-  }
-
-  const drizzled::plugin::ColumnInfo *type= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_TYPE",
-                                                       NAME_CHAR_LEN,
-                                                       DRIZZLE_TYPE_VARCHAR,
-                                                       0,
-                                                       0,
-                                                       "Table_type",
-                                                       OPEN_FRM_ONLY);
-  if (type == NULL)
-  {
-    return true;
-  }
-
-  cols.push_back(cat);
-  cols.push_back(sch);
-  cols.push_back(name);
-  cols.push_back(type);
-
-  return false;
-}
-
 /*
  * Function object used for deleting the memory allocated
  * for the columns contained with the vector of columns.

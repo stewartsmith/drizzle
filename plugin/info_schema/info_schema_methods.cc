@@ -369,48 +369,6 @@ int StatusISMethods::fillTable(Session *session, TableList *tables)
   return(res);
 }
 
-int TabNamesISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
-  const
-{
-  char tmp[128];
-  String buffer(tmp,sizeof(tmp), session->charset());
-  LEX *lex= session->lex;
-  Name_resolution_context *context= &lex->select_lex.context;
-  const drizzled::plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
-
-  const drizzled::plugin::ColumnInfo *column= columns[2];
-  buffer.length(0);
-  buffer.append(column->getOldName().c_str());
-  buffer.append(lex->select_lex.db);
-  if (lex->wild && lex->wild->ptr())
-  {
-    buffer.append(STRING_WITH_LEN(" ("));
-    buffer.append(lex->wild->ptr());
-    buffer.append(')');
-  }
-  Item_field *field= new Item_field(context,
-                                    NULL, NULL, column->getName().c_str());
-  if (session->add_item_to_list(field))
-  {
-    return 1;
-  }
-  field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-  if (session->lex->verbose)
-  {
-    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    column= columns[3];
-    field= new Item_field(context, NULL, NULL, column->getName().c_str());
-    if (session->add_item_to_list(field))
-    {
-      return 1;
-    }
-    field->set_name(column->getOldName().c_str(),
-                    column->getOldName().length(),
-                    system_charset_info);
-  }
-  return 0;
-}
-
 int VariablesISMethods::fillTable(Session *session, TableList *tables)
 {
   int res= 0;

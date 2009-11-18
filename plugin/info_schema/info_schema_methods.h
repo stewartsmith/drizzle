@@ -60,19 +60,6 @@ public:
 };
 
 /**
- * @class TabNamesISMethods
- * @brief
- *   Class which implements any methods that the TABLE_NAMES
- *   I_S table needs besides the default methods
- */
-class TabNamesISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchemaTable *schema_table) const;
-};
-
-/**
  * @class VariablesISMethods
  * @brief
  *   Class which implements any methods that the VARIABLES
