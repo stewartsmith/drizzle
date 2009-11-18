@@ -18,28 +18,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
-#define PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
+#ifndef PLUGIN_INFO_SCHEMA_STATISTICS_H
+#define PLUGIN_INFO_SCHEMA_STATISTICS_H
 
 #include "drizzled/plugin/info_schema_table.h"
 
-#include <vector>
-
 /**
- * Create the various volumns for numerous I_S tables 
- * and add them to the std::vector of columns for these table.
- *
- * @param[out] cols vector to add columns to
- * @return false on success; true on failure
+ * @class StatsISMethods
+ * @brief
+ *   Class which implements any methods that the SCHEMATA
+ *   I_S table needs besides the default methods
  */
-bool createStatusColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
+class StatsISMethods : public drizzled::plugin::InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
 
-/**
- * Iterate through the given vector of columns and delete the memory that
- * has been allocated for them.
- *
- * @param[out] cols vector to clear and de-allocate memory from
- */
-void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
+class StatisticsIS
+{
+  /**
+   * Create the various columns for the STATISTICS I_S table and add them
+   * to the std::vector of columns for the STATISTICS table.
+   *
+   * @return cols vector to add columns to
+   */
+  static std::vector<const drizzled::plugin::ColumnInfo *>
+    *createColumns();
+public:
+  static drizzled::plugin::InfoSchemaTable *getTable();
+  static void cleanup();
+};
 
-#endif /* PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H */
+#endif /* PLUGIN_INFO_SCHEMA_STATISTICS_H */

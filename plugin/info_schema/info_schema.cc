@@ -43,6 +43,7 @@
 #include "table_constraints.h"
 #include "tables.h"
 #include "table_names.h"
+#include "statistics.h"
 
 #include <vector>
 
@@ -52,13 +53,11 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
-static vector<const plugin::ColumnInfo *> stats_columns;
 static vector<const plugin::ColumnInfo *> status_columns;
 
 /*
  * Methods for various I_S tables.
  */
-static plugin::InfoSchemaMethods *stats_methods= NULL;
 static plugin::InfoSchemaMethods *status_methods= NULL;
 static plugin::InfoSchemaMethods *variables_methods= NULL;
 
@@ -69,7 +68,6 @@ static plugin::InfoSchemaTable *global_stat_table= NULL;
 static plugin::InfoSchemaTable *global_var_table= NULL;
 static plugin::InfoSchemaTable *sess_stat_table= NULL;
 static plugin::InfoSchemaTable *sess_var_table= NULL;
-static plugin::InfoSchemaTable *stats_table= NULL;
 static plugin::InfoSchemaTable *status_table= NULL;
 static plugin::InfoSchemaTable *var_table= NULL;
 
@@ -81,11 +79,6 @@ static plugin::InfoSchemaTable *var_table= NULL;
 static bool initTableColumns()
 {
   bool retval= false;
-
-  if ((retval= createStatsColumns(stats_columns)) == true)
-  {
-    return true;
-  }
 
   if ((retval= createStatusColumns(status_columns)) == true)
   {
@@ -100,7 +93,6 @@ static bool initTableColumns()
  */
 static void cleanupTableColumns()
 {
-  clearColumns(stats_columns);
   clearColumns(status_columns);
 }
 
@@ -111,11 +103,6 @@ static void cleanupTableColumns()
  */
 static bool initTableMethods()
 {
-  if ((stats_methods= new(nothrow) StatsISMethods()) == NULL)
-  {
-    return true;
-  }
-
   if ((status_methods= new(nothrow) StatusISMethods()) == NULL)
   {
     return true;
@@ -134,7 +121,6 @@ static bool initTableMethods()
  */
 static void cleanupTableMethods()
 {
-  delete stats_methods;
   delete status_methods;
   delete variables_methods;
 }
@@ -183,16 +169,6 @@ static bool initTables()
     return true;
   }
 
-  stats_table= new(nothrow) plugin::InfoSchemaTable("STATISTICS",
-                                                    stats_columns,
-                                                    1, 2, false, true,
-                                                    OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
-                                                    stats_methods);
-  if (stats_table == NULL)
-  {
-    return true;
-  }
-
   status_table= new(nothrow) plugin::InfoSchemaTable("STATUS",
                                                      status_columns,
                                                      -1, -1, true, false, 0,
@@ -223,7 +199,6 @@ static void cleanupTables()
   delete global_var_table;
   delete sess_stat_table;
   delete sess_var_table;
-  delete stats_table;
   delete status_table;
   delete var_table;
 }
@@ -271,7 +246,7 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
 
   registry.add(sess_stat_table);
   registry.add(sess_var_table);
-  registry.add(stats_table);
+  registry.add(StatisticsIS::getTable());
   registry.add(status_table);
 
   registry.add(TableConstraintsIS::getTable());
@@ -329,7 +304,10 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
   registry.remove(sess_stat_table);
   registry.remove(sess_var_table);
-  registry.remove(stats_table);
+
+  registry.remove(StatisticsIS::getTable());
+  StatisticsIS::cleanup();
+
   registry.remove(status_table);
 
   registry.remove(TableConstraintsIS::getTable());
@@ -353,7 +331,7 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 drizzle_declare_plugin(info_schema)
 {
   "info_schema",
-  "1.0",
+  "1.1",
   "Padraig O'Sullivan",
   "I_S plugin",
   PLUGIN_LICENSE_GPL,
