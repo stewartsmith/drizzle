@@ -140,7 +140,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     }
     if (error != HA_ERR_WRONG_COMMAND)
     {
-      table->cursor->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       error=0;
       goto cleanup;
     }
@@ -270,7 +270,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
       }
       else
       {
-	table->cursor->print_error(error,MYF(0));
+	table->print_error(error,MYF(0));
 	/*
 	  In < 4.0.14 we set the error number to 0 here, but that
 	  was not sensible, because then MySQL would not roll back the
@@ -292,7 +292,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   if (will_batch && (loc_error= table->cursor->end_bulk_delete()))
   {
     if (error != 1)
-      table->cursor->print_error(loc_error,MYF(0));
+      table->print_error(loc_error,MYF(0));
     error=1;
   }
   session->set_proc_info("end");
@@ -312,7 +312,7 @@ cleanup:
 
     if (error2 && (error2 != HA_ERR_WRONG_COMMAND))
     {
-      table->cursor->print_error(error2, MYF(0));
+      table->print_error(error2, MYF(0));
       error= 1;
     }
   }

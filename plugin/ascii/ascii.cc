@@ -82,7 +82,7 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(ascii)
+drizzle_declare_plugin
 {
   "ascii",
   "1.0",

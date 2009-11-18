@@ -79,7 +79,7 @@ static int finalize(drizzled::plugin::Registry &registry)
    return 0;
 }
 
-drizzle_declare_plugin(length)
+drizzle_declare_plugin
 {
   "length",
   "1.0",

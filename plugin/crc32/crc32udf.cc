@@ -85,7 +85,7 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(crc32)
+drizzle_declare_plugin
 {
   "crc32",
   "1.0",

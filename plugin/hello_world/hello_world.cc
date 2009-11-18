@@ -60,7 +60,7 @@ static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
 }
 
 
-drizzle_declare_plugin(hello_world)
+drizzle_declare_plugin
 {
   "hello_world",
   "1.0",

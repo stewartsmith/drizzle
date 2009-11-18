@@ -19,7 +19,6 @@ noinst_HEADERS+= \
 			plugin/heap/heap.h \
 			plugin/heap/heap_priv.h
 plugin_heap_libheap_la_SOURCES= \
-			plugin/heap/ha_heap.cc \
 			plugin/heap/hp_block.cc \
 			plugin/heap/hp_clear.cc \
 			plugin/heap/hp_close.cc \

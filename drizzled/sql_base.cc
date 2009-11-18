@@ -715,7 +715,7 @@ int Session::drop_temporary_table(TableList *table_list)
     return -1;
   }
 
-  close_temporary_table(table, true, true);
+  close_temporary_table(table);
 
   return 0;
 }
@@ -809,7 +809,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
                               const char *table_name)
 {
   if (table->s->tmp_table)
-    close_temporary_table(table, true, true);
+    close_temporary_table(table);
   else
   {
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
@@ -1094,7 +1094,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
 
 Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 {
-  register Table *table;
+  Table *table;
   char key[MAX_DBKEY_LENGTH];
   unsigned int key_length;
   const char *alias= table_list->alias;
@@ -2362,7 +2362,7 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   path_length= strlen(path);
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
-                                   path_length + 1 + key_length)))
+                                       path_length + 1 + key_length)))
     return NULL;
 
   share= (TableShare*) (new_tmp_table+1);

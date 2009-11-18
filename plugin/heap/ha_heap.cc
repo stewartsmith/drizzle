@@ -46,6 +46,15 @@ public:
     addAlias("HEAP");
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_FAST_KEY_READ |
+            HA_NO_BLOBS | HA_NULL_IN_KEY |
+            HA_NO_TRANSACTIONS |
+            HA_HAS_RECORDS |
+            HA_STATS_RECORDS_IS_EXACT);
+  }
+
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
@@ -95,7 +104,7 @@ int HeapEngine::doGetTableDefinition(Session&,
                                      const bool,
                                      drizzled::message::Table *table_proto)
 {
-  int error= 1;
+  int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
@@ -920,7 +929,7 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 }
 
 
-drizzle_declare_plugin(heap)
+drizzle_declare_plugin
 {
   "MEMORY",
   "1.0",

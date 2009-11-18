@@ -148,7 +148,7 @@ static int finalize(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(auth_pam)
+drizzle_declare_plugin
 {
   "pam",
   "0.1",

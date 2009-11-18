@@ -43,7 +43,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(single_thread)
+drizzle_declare_plugin
 {
   "single_thread",
   "0.1",

@@ -764,7 +764,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->thread_id=tmp->thread_id;
         session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user");
         session_info->host= session->strdup(tmp_sctx->ip.c_str());
-        if ((session_info->db=tmp->db))             // Safe test
+        if ((session_info->db= tmp->db.c_str()))             // Safe test
           session_info->db=session->strdup(session_info->db);
         session_info->command=(int) tmp->command;
         if ((mysys_var= tmp->mysys_var))
