@@ -28,7 +28,6 @@
 #include <drizzled/show.h>
 
 #include "info_schema_methods.h"
-#include "info_schema_columns.h"
 #include "character_set.h"
 #include "collation.h"
 #include "collation_char_set.h"
@@ -44,164 +43,13 @@
 #include "tables.h"
 #include "table_names.h"
 #include "statistics.h"
+#include "status.h"
+#include "variables.h"
 
 #include <vector>
 
 using namespace drizzled;
 using namespace std;
-
-/*
- * Vectors of columns for various I_S tables.
- */
-static vector<const plugin::ColumnInfo *> status_columns;
-
-/*
- * Methods for various I_S tables.
- */
-static plugin::InfoSchemaMethods *status_methods= NULL;
-static plugin::InfoSchemaMethods *variables_methods= NULL;
-
-/*
- * I_S tables.
- */
-static plugin::InfoSchemaTable *global_stat_table= NULL;
-static plugin::InfoSchemaTable *global_var_table= NULL;
-static plugin::InfoSchemaTable *sess_stat_table= NULL;
-static plugin::InfoSchemaTable *sess_var_table= NULL;
-static plugin::InfoSchemaTable *status_table= NULL;
-static plugin::InfoSchemaTable *var_table= NULL;
-
-/**
- * Populate the vectors of columns for each I_S table.
- *
- * @return false on success; true on failure.
- */
-static bool initTableColumns()
-{
-  bool retval= false;
-
-  if ((retval= createStatusColumns(status_columns)) == true)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Clear the vectors of columns for each I_S table.
- */
-static void cleanupTableColumns()
-{
-  clearColumns(status_columns);
-}
-
-/**
- * Initialize the methods for each I_S table.
- *
- * @return false on success; true on failure
- */
-static bool initTableMethods()
-{
-  if ((status_methods= new(nothrow) StatusISMethods()) == NULL)
-  {
-    return true;
-  }
-
-  if ((variables_methods= new(nothrow) VariablesISMethods()) == NULL)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Delete memory allocated for the I_S table methods.
- */
-static void cleanupTableMethods()
-{
-  delete status_methods;
-  delete variables_methods;
-}
-
-/**
- * Initialize the I_S tables.
- *
- * @return false on success; true on failure
- */
-static bool initTables()
-{
-
-  global_stat_table= new(nothrow) plugin::InfoSchemaTable("GLOBAL_STATUS",
-                                                          status_columns,
-                                                          -1, -1, false, false,
-                                                          0, status_methods);
-  if (global_stat_table == NULL)
-  {
-    return true;
-  }
-
-  global_var_table= new(nothrow) plugin::InfoSchemaTable("GLOBAL_VARIABLES",
-                                                         status_columns,
-                                                         -1, -1, false, false,
-                                                         0, variables_methods);
-  if (global_var_table == NULL)
-  {
-    return true;
-  }
-
-  sess_stat_table= new(nothrow) plugin::InfoSchemaTable("SESSION_STATUS",
-                                                        status_columns,
-                                                        -1, -1, false, false,
-                                                        0, status_methods);
-  if (sess_stat_table == NULL)
-  {
-    return true;
-  }
-
-  sess_var_table= new(nothrow) plugin::InfoSchemaTable("SESSION_VARIABLES",
-                                                       status_columns,
-                                                       -1, -1, false, false, 0,
-                                                       variables_methods);
-  if (sess_var_table == NULL)
-  {
-    return true;
-  }
-
-  status_table= new(nothrow) plugin::InfoSchemaTable("STATUS",
-                                                     status_columns,
-                                                     -1, -1, true, false, 0,
-                                                     status_methods);
-  if (status_table == NULL)
-  {
-    return true;
-  }
-
-  var_table= new(nothrow) plugin::InfoSchemaTable("VARIABLES",
-                                                  status_columns,
-                                                  -1, -1, true, false, 0,
-                                                  variables_methods);
-  if (var_table == NULL)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Delete memory allocated for the I_S tables.
- */
-static void cleanupTables()
-{
-  delete global_stat_table;
-  delete global_var_table;
-  delete sess_stat_table;
-  delete sess_var_table;
-  delete status_table;
-  delete var_table;
-}
 
 /**
  * Initialize the I_S plugin.
@@ -211,49 +59,27 @@ static void cleanupTables()
  */
 static int infoSchemaInit(drizzled::plugin::Registry& registry)
 {
-  bool retval= false;
-
-  if ((retval= initTableMethods()) == true)
-  {
-    return 1;
-  }
-
-  if ((retval= initTableColumns()) == true)
-  {
-    return 1;
-  }
-
-  if ((retval= initTables()) == true)
-  {
-    return 1;
-  }
-
   registry.add(CharacterSetIS::getTable());
   registry.add(CollationIS::getTable());
   registry.add(CollationCharSetIS::getTable());
   registry.add(ColumnsIS::getTable());
   registry.add(KeyColumnUsageIS::getTable());
-
-  registry.add(global_stat_table);
-  registry.add(global_var_table);
-
+  registry.add(GlobalStatusIS::getTable());
+  registry.add(GlobalVariablesIS::getTable());
   registry.add(OpenTablesIS::getTable());
   registry.add(ModulesIS::getTable());
   registry.add(PluginsIS::getTable());
   registry.add(ProcessListIS::getTable());
   registry.add(ReferentialConstraintsIS::getTable());
   registry.add(SchemataIS::getTable());
-
-  registry.add(sess_stat_table);
-  registry.add(sess_var_table);
+  registry.add(SessionStatusIS::getTable());
+  registry.add(SessionVariablesIS::getTable());
   registry.add(StatisticsIS::getTable());
-  registry.add(status_table);
-
+  registry.add(StatusIS::getTable());
   registry.add(TableConstraintsIS::getTable());
   registry.add(TablesIS::getTable());
   registry.add(TableNamesIS::getTable());
-
-  registry.add(var_table);
+  registry.add(VariablesIS::getTable());
 
   return 0;
 }
@@ -281,8 +107,11 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(KeyColumnUsageIS::getTable());
   KeyColumnUsageIS::cleanup();
 
-  registry.remove(global_stat_table);
-  registry.remove(global_var_table);
+  registry.remove(GlobalStatusIS::getTable());
+  GlobalStatusIS::cleanup();
+
+  registry.remove(GlobalVariablesIS::getTable());
+  GlobalVariablesIS::cleanup();
 
   registry.remove(OpenTablesIS::getTable());
   OpenTablesIS::cleanup();
@@ -302,13 +131,17 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(SchemataIS::getTable());
   SchemataIS::cleanup();
 
-  registry.remove(sess_stat_table);
-  registry.remove(sess_var_table);
+  registry.remove(SessionStatusIS::getTable());
+  SessionStatusIS::cleanup();
+
+  registry.remove(SessionVariablesIS::getTable());
+  SessionVariablesIS::cleanup();
 
   registry.remove(StatisticsIS::getTable());
   StatisticsIS::cleanup();
 
-  registry.remove(status_table);
+  registry.remove(StatusIS::getTable());
+  StatusIS::cleanup();
 
   registry.remove(TableConstraintsIS::getTable());
   TableConstraintsIS::cleanup();
@@ -319,11 +152,8 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(TableNamesIS::getTable());
   TableNamesIS::cleanup();
 
-  registry.remove(var_table);
-
-  cleanupTableMethods();
-  cleanupTableColumns();
-  cleanupTables();
+  registry.remove(VariablesIS::getTable());
+  VariablesIS::cleanup();
 
   return 0;
 }

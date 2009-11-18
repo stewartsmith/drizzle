@@ -23,6 +23,14 @@
 
 #include "drizzled/plugin/info_schema_table.h"
 
+bool show_status_array(Session *session, 
+                       const char *wild,
+                       SHOW_VAR *variables,
+                       enum enum_var_type value_type,
+                       struct system_status_var *status_var,
+                       const char *prefix, Table *table,
+                       bool ucase_names);
+
 void store_key_column_usage(Table *table, 
                             LEX_STRING *db_name,
                             LEX_STRING *table_name, 
@@ -33,29 +41,11 @@ void store_key_column_usage(Table *table,
                             int64_t idx);
 
 /**
- * @class StatusISMethods
- * @brief
- *   Class which implements any methods that the STATUS
- *   I_S table needs besides the default methods
+ * Iterate through the given vector of columns and delete the memory that
+ * has been allocated for them.
+ *
+ * @param[out] cols vector to clear and de-allocate memory from
  */
-class StatusISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables);
-};
-
-/**
- * @class VariablesISMethods
- * @brief
- *   Class which implements any methods that the VARIABLES
- *   I_S table needs besides the default methods
- */
-class VariablesISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables);
-};
+void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 #endif /* PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H */

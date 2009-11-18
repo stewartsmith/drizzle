@@ -27,7 +27,6 @@
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 
-#include "info_schema_columns.h"
 #include "info_schema_methods.h"
 #include "key_column_usage.h"
 

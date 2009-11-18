@@ -18,12 +18,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
-#define PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
+#ifndef PLUGIN_INFO_SCHEMA_VARIABLES_H
+#define PLUGIN_INFO_SCHEMA_VARIABLES_H
 
 #include "drizzled/plugin/info_schema_table.h"
 
-#include <vector>
+/**
+ * @class VariablesISMethods
+ * @brief
+ *   Class which implements any methods that the VARIABLES
+ *   I_S table needs besides the default methods
+ */
+class VariablesISMethods : public drizzled::plugin::InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables);
+};
 
 
-#endif /* PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H */
+class GlobalVariablesIS
+{
+public:
+  static drizzled::plugin::InfoSchemaTable *getTable();
+  static void cleanup();
+};
+
+class SessionVariablesIS
+{
+public:
+  static drizzled::plugin::InfoSchemaTable *getTable();
+  static void cleanup();
+};
+
+class VariablesIS
+{
+public:
+  static drizzled::plugin::InfoSchemaTable *getTable();
+  static void cleanup();
+};
+
+#endif /* PLUGIN_INFO_SCHEMA_VARIABLES_H */

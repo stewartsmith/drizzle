@@ -28,7 +28,7 @@
 #include "drizzled/show.h"
 #include "drizzled/tztime.h"
 
-#include "info_schema_columns.h"
+#include "info_schema_methods.h"
 #include "statistics.h"
 
 #include <vector>

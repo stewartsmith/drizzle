@@ -43,12 +43,13 @@ static inline void make_upper(char *buf)
     *buf= my_toupper(system_charset_info, *buf);
 }
 
-static bool show_status_array(Session *session, const char *wild,
-                              SHOW_VAR *variables,
-                              enum enum_var_type value_type,
-                              struct system_status_var *status_var,
-                              const char *prefix, Table *table,
-                              bool ucase_names)
+bool show_status_array(Session *session, 
+                       const char *wild,
+                       SHOW_VAR *variables,
+                       enum enum_var_type value_type,
+                       struct system_status_var *status_var,
+                       const char *prefix, Table *table,
+                       bool ucase_names)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
@@ -221,66 +222,22 @@ void store_key_column_usage(Table *table,
   table->field[7]->store((int64_t) idx, true);
 }
 
-int StatusISMethods::fillTable(Session *session, TableList *tables)
+/*
+ * Function object used for deleting the memory allocated
+ * for the columns contained with the vector of columns.
+ */
+class DeleteColumns
 {
-  LEX *lex= session->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  int res= 0;
-  STATUS_VAR *tmp1, tmp;
-  const string schema_table_name= tables->schema_table->getTableName();
-  enum enum_var_type option_type;
-  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
-
-  if (schema_table_name.compare("STATUS") == 0)
+public:
+  template<typename T>
+  inline void operator()(const T *ptr) const
   {
-    option_type= lex->option_type;
-    if (option_type == OPT_GLOBAL)
-      tmp1= &tmp;
-    else
-      tmp1= session->initial_status_var;
+    delete ptr;
   }
-  else if (schema_table_name.compare("GLOBAL_STATUS") == 0)
-  {
-    option_type= OPT_GLOBAL;
-    tmp1= &tmp;
-  }
-  else
-  {
-    option_type= OPT_SESSION;
-    tmp1= &session->status_var;
-  }
+};
 
-  pthread_mutex_lock(&LOCK_status);
-  if (option_type == OPT_GLOBAL)
-    calc_sum_of_all_status(&tmp);
-  res= show_status_array(session, wild,
-                         getFrontOfStatusVars(),
-                         option_type, tmp1, "", tables->table,
-                         upper_case_names);
-  pthread_mutex_unlock(&LOCK_status);
-  return(res);
-}
-
-int VariablesISMethods::fillTable(Session *session, TableList *tables)
+void clearColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  int res= 0;
-  LEX *lex= session->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  const string schema_table_name= tables->schema_table->getTableName();
-  enum enum_var_type option_type= OPT_SESSION;
-  bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
-  bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
-
-  if (lex->option_type == OPT_GLOBAL ||
-      schema_table_name.compare("GLOBAL_VARIABLES") == 0)
-  {
-    option_type= OPT_GLOBAL;
-  }
-
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-  res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
-                         option_type, NULL, "", tables->table, upper_case_names);
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
-  return(res);
+  for_each(cols.begin(), cols.end(), DeleteColumns());
+  cols.clear();
 }
-
