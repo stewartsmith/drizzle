@@ -13,9 +13,10 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   save_CXXFLAGS="${CXXFLAGS}"
   CXXFLAGS="${CXXFLAGS} ${AM_CXXFLAGS}"
   PANDORA_CXX_STL_HASH
+  CXXFLAGS="${save_CXXFLAGS}"
+
   PANDORA_CXX_CSTDINT
   PANDORA_CXX_CINTTYPES
-  CXXFLAGS="${save_CXXFLAGS}"
 
   #--------------------------------------------------------------------
   # Check for system header files
