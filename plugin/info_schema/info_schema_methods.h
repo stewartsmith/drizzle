@@ -60,20 +60,6 @@ public:
 };
 
 /**
- * @class TabConstraintsISMethods
- * @brief
- *   Class which implements any methods that the TABLE_CONSTRAINTS
- *   I_S table needs besides the default methods
- */
-class TabConstraintsISMethods : public drizzled::plugin::InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
-/**
  * @class TablesISMethods
  * @brief
  *   Class which implements any methods that the TABLE_NAMES

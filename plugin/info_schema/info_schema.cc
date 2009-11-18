@@ -40,6 +40,7 @@
 #include "processlist.h"
 #include "referential_constraints.h"
 #include "schemata.h"
+#include "table_constraints.h"
 
 #include <vector>
 
@@ -51,7 +52,6 @@ using namespace std;
  */
 static vector<const plugin::ColumnInfo *> stats_columns;
 static vector<const plugin::ColumnInfo *> status_columns;
-static vector<const plugin::ColumnInfo *> tab_constraints_columns;
 static vector<const plugin::ColumnInfo *> tables_columns;
 static vector<const plugin::ColumnInfo *> tab_names_columns;
 
@@ -60,7 +60,6 @@ static vector<const plugin::ColumnInfo *> tab_names_columns;
  */
 static plugin::InfoSchemaMethods *stats_methods= NULL;
 static plugin::InfoSchemaMethods *status_methods= NULL;
-static plugin::InfoSchemaMethods *tab_constraints_methods= NULL;
 static plugin::InfoSchemaMethods *tables_methods= NULL;
 static plugin::InfoSchemaMethods *tab_names_methods= NULL;
 static plugin::InfoSchemaMethods *variables_methods= NULL;
@@ -74,7 +73,6 @@ static plugin::InfoSchemaTable *sess_stat_table= NULL;
 static plugin::InfoSchemaTable *sess_var_table= NULL;
 static plugin::InfoSchemaTable *stats_table= NULL;
 static plugin::InfoSchemaTable *status_table= NULL;
-static plugin::InfoSchemaTable *tab_constraints_table= NULL;
 static plugin::InfoSchemaTable *tables_table= NULL;
 static plugin::InfoSchemaTable *tab_names_table= NULL;
 static plugin::InfoSchemaTable *var_table= NULL;
@@ -94,11 +92,6 @@ static bool initTableColumns()
   }
 
   if ((retval= createStatusColumns(status_columns)) == true)
-  {
-    return true;
-  }
-
-  if ((retval= createTabConstraintsColumns(tab_constraints_columns)) == true)
   {
     return true;
   }
@@ -123,7 +116,6 @@ static void cleanupTableColumns()
 {
   clearColumns(stats_columns);
   clearColumns(status_columns);
-  clearColumns(tab_constraints_columns);
   clearColumns(tables_columns);
   clearColumns(tab_names_columns);
 }
@@ -141,11 +133,6 @@ static bool initTableMethods()
   }
 
   if ((status_methods= new(nothrow) StatusISMethods()) == NULL)
-  {
-    return true;
-  }
-
-  if ((tab_constraints_methods= new(nothrow) TabConstraintsISMethods()) == NULL)
   {
     return true;
   }
@@ -175,7 +162,6 @@ static void cleanupTableMethods()
 {
   delete stats_methods;
   delete status_methods;
-  delete tab_constraints_methods;
   delete tables_methods;
   delete tab_names_methods;
   delete variables_methods;
@@ -244,16 +230,6 @@ static bool initTables()
     return true;
   }
 
-  tab_constraints_table= new(nothrow) plugin::InfoSchemaTable("TABLE_CONSTRAINTS",
-                                                              tab_constraints_columns,
-                                                              3, 4, false, true,
-                                                              OPEN_TABLE_ONLY,
-                                                              tab_constraints_methods);
-  if (tab_constraints_table == NULL)
-  {
-    return true;
-  }
-
   tables_table= new(nothrow) plugin::InfoSchemaTable("TABLES",
                                                      tables_columns,
                                                      1, 2, false, true,
@@ -296,7 +272,6 @@ static void cleanupTables()
   delete sess_var_table;
   delete stats_table;
   delete status_table;
-  delete tab_constraints_table;
   delete tables_table;
   delete tab_names_table;
   delete var_table;
@@ -347,7 +322,9 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(sess_var_table);
   registry.add(stats_table);
   registry.add(status_table);
-  registry.add(tab_constraints_table);
+
+  registry.add(TableConstraintsIS::getTable());
+
   registry.add(tables_table);
   registry.add(tab_names_table);
   registry.add(var_table);
@@ -403,7 +380,10 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(sess_var_table);
   registry.remove(stats_table);
   registry.remove(status_table);
-  registry.remove(tab_constraints_table);
+
+  registry.remove(TableConstraintsIS::getTable());
+  TableConstraintsIS::cleanup();
+
   registry.remove(tables_table);
   registry.remove(tab_names_table);
   registry.remove(var_table);
