@@ -90,7 +90,6 @@ public:
   bool cmp(void);
 };
 
-Cached_item *new_Cached_item(Session *session, Item *item,
-                             bool use_result_field);
+Cached_item *new_Cached_item(Session *session, Item *item);
 
 #endif /* DRIZZLED_CACHED_ITEM_H */
