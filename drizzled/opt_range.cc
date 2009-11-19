@@ -3666,7 +3666,7 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
     {
       ha_rows found_records;
       COST_VECT cost;
-      double found_read_time;
+      double found_read_time= 0.0;
       uint32_t mrr_flags, buf_size;
       uint32_t keynr= param->real_keynr[idx];
       if ((*key)->type == SEL_ARG::MAYBE_KEY ||

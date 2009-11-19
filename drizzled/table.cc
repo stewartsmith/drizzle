@@ -3423,11 +3423,11 @@ bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
     return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
+  
   /* Compare null bits */
-  if (memcmp(null_flags,
-	     null_flags + s->rec_buff_length,
-	     s->null_bytes))
-    return true;				// Diff in NULL value
+  if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
+    return true; /* Diff in NULL value */
+
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {

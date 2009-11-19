@@ -36,7 +36,13 @@ public:
   static const uint32_t MEM_COEFF=1;
   static const uint32_t IMPORT_COEFF=1;
 
-  COST_VECT() {}                              // keep gcc happy
+  COST_VECT() :
+    io_count(0.0),
+    avg_io_cost(1.0),
+    cpu_cost(0.0),
+    mem_cost(0.0),
+    import_cost(0.0)
+  {}
 
   double total_cost()
   {

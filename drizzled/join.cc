@@ -3007,7 +3007,7 @@ static bool alloc_group_fields(JOIN *join,order_st *group)
   {
     for (; group ; group=group->next)
     {
-      Cached_item *tmp=new_Cached_item(join->session, *group->item, false);
+      Cached_item *tmp= new_Cached_item(join->session, *group->item);
       if (!tmp || join->group_fields.push_front(tmp))
         return true;
     }
