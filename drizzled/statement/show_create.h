@@ -35,10 +35,12 @@ class ShowCreate : public Statement
 public:
   ShowCreate(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session),
+      is_if_not_exists(false)
   {}
 
   bool execute();
+  bool is_if_not_exists;
 };
 
 } /* end namespace statement */

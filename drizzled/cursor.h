@@ -844,25 +844,33 @@ int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags);
+
 bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
                         AlterInfo *alter_info,
-                        bool tmp_table, uint32_t select_field_count);
+                        bool tmp_table, uint32_t select_field_count,
+                        bool is_if_not_exists);
+
 bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table, uint32_t select_field_count);
+                                bool tmp_table, uint32_t select_field_count, 
+                                bool is_if_not_exists);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);
+
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
-                             HA_CREATE_INFO *create_info);
+                             HA_CREATE_INFO *create_info,
+                             bool is_if_not_exists);
+
 bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
+
 bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, order_st *order);
 int mysql_update(Session *session,TableList *tables,List<Item> &fields,

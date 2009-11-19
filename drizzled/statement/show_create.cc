@@ -31,7 +31,7 @@ bool statement::ShowCreate::execute()
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool res= drizzled_show_create(session, first_table);
+  bool res= drizzled_show_create(session, first_table, is_if_not_exists);
   return res;
 }
 

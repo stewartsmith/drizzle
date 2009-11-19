@@ -23,6 +23,7 @@
 class select_create: public select_insert {
   order_st *group;
   TableList *create_table;
+  bool is_if_not_exists;
   HA_CREATE_INFO *create_info;
   drizzled::message::Table *table_proto;
   TableList *select_tables;
@@ -34,13 +35,15 @@ class select_create: public select_insert {
   DRIZZLE_LOCK **m_plock;
 public:
   select_create (TableList *table_arg,
-		 HA_CREATE_INFO *create_info_par,
+                 bool is_if_not_exists_arg,
+                 HA_CREATE_INFO *create_info_par,
                  drizzled::message::Table *proto,
                  AlterInfo *alter_info_arg,
-		 List<Item> &select_fields,enum_duplicates duplic, bool ignore,
+                 List<Item> &select_fields,enum_duplicates duplic, bool ignore,
                  TableList *select_tables_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),
     create_table(table_arg),
+    is_if_not_exists(is_if_not_exists_arg),
     create_info(create_info_par),
     table_proto(proto),
     select_tables(select_tables_arg),

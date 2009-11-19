@@ -190,7 +190,7 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 }
 
 
-bool drizzled_show_create(Session *session, TableList *table_list)
+bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
@@ -212,7 +212,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
 
   buffer.length(0);
 
-  if (store_create_info(table_list, &buffer, NULL))
+  if (store_create_info(table_list, &buffer, NULL, is_if_not_exists))
     return true;
 
   List<Item> field_list;
@@ -250,7 +250,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   Resulting statement is stored in the string pointed by @c buffer. The string
   is emptied first and its character set is set to the system character set.
 
-  If HA_LEX_CREATE_IF_NOT_EXISTS flag is set in @c create_info->options, then
+  If is_if_not_exists is set, then
   the resulting CREATE statement contains "IF NOT EXISTS" clause. Other flags
   in @c create_options are ignored.
 
@@ -431,7 +431,7 @@ static bool get_field_default_value(Field *timestamp_field,
     0       OK
  */
 
-int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *create_info_arg)
+int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *create_info_arg, bool is_if_not_exists)
 {
   List<Item> field_list;
   char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
@@ -455,8 +455,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
   else
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
-  if (create_info_arg &&
-      (create_info_arg->options & HA_LEX_CREATE_IF_NOT_EXISTS))
+  if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
   if (table_list->schema_table)
     alias= table_list->schema_table->getTableName().c_str();
