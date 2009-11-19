@@ -823,7 +823,13 @@ bool alter_table(Session *session,
   }
 
   if (create_info->row_type == ROW_TYPE_NOT_USED)
+  {
+    message::Table::TableOptions *table_options;
+    table_options= create_proto->mutable_options();
+
     create_info->row_type= table->s->row_type;
+    table_options->set_row_type((drizzled::message::Table_TableOptions_RowType)table->s->row_type);
+  }
 
   if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
       new_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))

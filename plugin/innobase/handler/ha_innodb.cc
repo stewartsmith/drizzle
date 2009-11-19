@@ -5371,7 +5371,6 @@ create_options_are_valid(
 	Session*	session,	/*!< in: connection thread. */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO& create_info,
         drizzled::message::Table& create_proto)
 {
 	ibool	kbs_specified	= FALSE;
@@ -5429,7 +5428,7 @@ create_options_are_valid(
 	}
 
 	/* Now check for ROW_FORMAT specifier. */
-	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_proto.options().has_row_type()) {
 		switch (form.s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_COMPRESSED:
@@ -5531,7 +5530,7 @@ InnobaseEngine::doCreateTable(
 	const char*	table_name,	/*!< in: table name */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO& create_info,	/*!< in: more information of the
+	HA_CREATE_INFO&,	/*!< in: more information of the
 					created table, contains also the
 					create statement string */
         drizzled::message::Table& create_proto)
@@ -5611,7 +5610,7 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (! create_options_are_valid(session, form, create_info, create_proto)) {
+	if (! create_options_are_valid(session, form, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
@@ -5660,7 +5659,7 @@ InnobaseEngine::doCreateTable(
 		}
 	}
 
-	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_proto.options().has_row_type()) {
 		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
 			if (form.s->row_type != ROW_TYPE_COMPRESSED) {
@@ -5735,10 +5734,8 @@ InnobaseEngine::doCreateTable(
 		case ROW_TYPE_NOT_USED:
 		case ROW_TYPE_FIXED:
 		default:
-			push_warning(session,
-				     DRIZZLE_ERROR::WARN_LEVEL_WARN,
-				     ER_ILLEGAL_HA_CREATE_OPTION,
-				     "InnoDB: assuming ROW_FORMAT=COMPACT.");
+                        error = ER_ILLEGAL_HA_CREATE_OPTION;
+                        goto cleanup;
 		case ROW_TYPE_DEFAULT:
 		case ROW_TYPE_COMPACT:
 			iflags = DICT_TF_COMPACT;
