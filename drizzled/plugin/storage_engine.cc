@@ -798,21 +798,6 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
       goto err2;
     }
   }
-  else // Lets see how good old create_info handles this
-  {
-    if (create_info.options & HA_LEX_CREATE_TMP_TABLE && 
-        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
-    else if (create_info.options | HA_LEX_CREATE_TMP_TABLE &&
-             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
-  }
 
 
   {
