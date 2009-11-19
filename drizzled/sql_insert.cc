@@ -359,17 +359,8 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
     else
     {
-      if (session->used_tables)			// Column used in values()
-	table->restoreRecordAsDefault();	// Get empty record
-      else
-      {
-        /*
-          Fix delete marker. No need to restore rest of record since it will
-          be overwritten by fill_record() anyway (and fill_record() does not
-          use default values in this case).
-        */
-	table->record[0][0]= table->s->default_values[0];
-      }
+      table->restoreRecordAsDefault();	// Get empty record
+
       if (fill_record(session, table->field, *values, 0))
       {
 	if (values_list.elements != 1 && ! session->is_error())
