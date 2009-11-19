@@ -379,7 +379,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
     return(true);
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(session, table_list, table_list->next_global, 0)))
+    if ((duplicate= unique_table(table_list, table_list->next_global)))
     {
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
       return(true);

@@ -38,6 +38,7 @@
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
+#include <drizzled/temporal.h>
 
 #include "drizzled/table_proto.h"
 
@@ -485,7 +486,7 @@ int drizzled::parse_table_proto(Session& session,
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
-    if (pfield.has_constraints() && pfield.constraints().is_nullable())
+    if (pfield.constraints().is_nullable())
       null_fields++;
 
     enum_field_types drizzle_field_type=
@@ -820,10 +821,24 @@ int drizzled::parse_table_proto(Session& session,
     temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
-    uint32_t field_length;
+    uint32_t field_length= 0; //Assignment is for compiler complaint.
 
     switch (field_type)
     {
+    case DRIZZLE_TYPE_BLOB:
+    case DRIZZLE_TYPE_VARCHAR:
+    {
+      message::Table::Field::StringFieldOptions field_options= pfield.string_options();
+
+      charset= get_charset(field_options.has_collation_id() ?
+                           field_options.collation_id() : 0);
+
+      if (! charset)
+      	charset= default_charset_info;
+
+      field_length= field_options.length() * charset->mbmaxlen;
+    }
+      break;
     case DRIZZLE_TYPE_DOUBLE:
     {
       message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
@@ -852,16 +867,48 @@ int drizzled::parse_table_proto(Session& session,
                                                    false);
       break;
     }
-    default:
-      field_length= pfield.options().length();
+    case DRIZZLE_TYPE_TIMESTAMP:
+    case DRIZZLE_TYPE_DATETIME:
+      field_length= drizzled::DateTime::MAX_STRING_LENGTH;
       break;
+    case DRIZZLE_TYPE_DATE:
+      field_length= drizzled::Date::MAX_STRING_LENGTH;
+      break;
+    case DRIZZLE_TYPE_ENUM:
+    {
+      field_length= 0;
+
+      message::Table::Field::SetFieldOptions fo= pfield.set_options();
+
+      for(int valnr= 0; valnr < fo.field_value_size(); valnr++)
+      {
+        if (fo.field_value(valnr).length() > field_length)
+          field_length= charset->cset->numchars(charset,
+                                                fo.field_value(valnr).c_str(),
+                                                fo.field_value(valnr).c_str()
+                                                + fo.field_value(valnr).length())
+            * charset->mbmaxlen;
+      }
+    }
+      break;
+    case DRIZZLE_TYPE_LONG:
+      {
+        uint32_t sign_len= pfield.constraints().is_unsigned() ? 0 : 1;
+          field_length= MAX_INT_WIDTH+sign_len;
+      }
+      break;
+    case DRIZZLE_TYPE_LONGLONG:
+      field_length= MAX_BIGINT_WIDTH;
+      break;
+    case DRIZZLE_TYPE_NULL:
+      abort(); // Programming error
     }
 
     Field* f= make_field(share,
                          &share->mem_root,
                          record + field_offsets[fieldnr] + data_offset,
                          field_length,
-                         pfield.has_constraints() && pfield.constraints().is_nullable() ? true : false,
+                         pfield.constraints().is_nullable(),
                          null_pos,
                          null_bit_pos,
                          decimals,

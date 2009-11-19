@@ -750,6 +750,8 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
    0  ok
   @retval
    1  error
+
+   @todo refactor to remove goto, and absorb check_engine() logic into createTable()
 */
 int plugin::StorageEngine::createTable(Session& session, const char *path,
                                        const char *db, const char *table_name,
@@ -780,6 +782,39 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
   if (update_create_info)
     table.updateCreateInfo(&create_info, &table_proto);
 
+  /* Check for legal operations against the Engine using the proto (if used) */
+  if (proto_used)
+  {
+    if (table_proto.type() == message::Table::TEMPORARY && 
+        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
+    {
+      error= HA_ERR_UNSUPPORTED;
+      goto err2;
+    }
+    else if (table_proto.type() != message::Table::TEMPORARY && 
+             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
+    {
+      error= HA_ERR_UNSUPPORTED;
+      goto err2;
+    }
+  }
+  else // Lets see how good old create_info handles this
+  {
+    if (create_info.options & HA_LEX_CREATE_TMP_TABLE && 
+        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
+    {
+      error= HA_ERR_UNSUPPORTED;
+      goto err2;
+    }
+    else if (create_info.options | HA_LEX_CREATE_TMP_TABLE &&
+             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
+    {
+      error= HA_ERR_UNSUPPORTED;
+      goto err2;
+    }
+  }
+
+
   {
     char name_buff[FN_REFLEN];
     const char *table_name_arg;
@@ -792,7 +827,9 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
                                                create_info, table_proto);
   }
 
+err2:
   table.closefrm(false);
+
   if (error)
   {
     char name_buff[FN_REFLEN];

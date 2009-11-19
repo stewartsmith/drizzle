@@ -1276,15 +1276,18 @@ int mysql_prepare_create_table(Session *session,
       key_info->comment.str= key->key_create_info.comment.str;
     }
 
+    message::Table::Field *protofield= NULL;
+
     List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
       Key_part_spec *dup_column;
+      int proto_field_nr= 0;
 
       it.rewind();
       field=0;
-      while ((sql_field=it++) &&
+      while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
 			   column->field_name.str,
 			   sql_field->field_name))
@@ -1306,6 +1309,10 @@ int mysql_prepare_create_table(Session *session,
 	}
       }
       cols2.rewind();
+
+      if (create_proto->field_size() > 0)
+        protofield= create_proto->mutable_field(proto_field_nr - 1);
+
       {
         column->length*= sql_field->charset->mbmaxlen;
 
@@ -1329,6 +1336,14 @@ int mysql_prepare_create_table(Session *session,
             /* Implicitly set primary key fields to NOT NULL for ISO conf. */
             sql_field->flags|= NOT_NULL_FLAG;
             null_fields--;
+
+            if (protofield)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= protofield->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
+
           }
           else
           {
@@ -2447,6 +2462,20 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
+      /* 
+        If engine was not specified and we are reading from the I_S, then we need to 
+        toss an error. This should go away later on when we straighten out the 
+        I_S engine.
+      */
+      if (! (create_info->used_fields & HA_CREATE_USED_ENGINE))
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+                 "INFORMATION_ENGINE",
+                 "TEMPORARY");
+        goto err;
+      }
+
       if (create_like_schema_frm(session, src_table, create_info, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
@@ -2473,20 +2502,22 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       protoengine->set_name(create_table_proto.engine().name());
     }
 
-    string dst_proto_path(dst_path);
-    string file_ext = ".dfe";
-
-    dst_proto_path.append(file_ext);
-
     if (protoerr == EEXIST)
     {
       plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
                                                                        new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+      {
+        string dst_proto_path(dst_path);
+        dst_proto_path.append(".dfe");
+
         protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
+      }
       else
+      {
         protoerr= 0;
+      }
     }
 
     if (protoerr)

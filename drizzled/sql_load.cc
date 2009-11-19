@@ -158,7 +158,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     table is marked to be 'used for insert' in which case we should never
     mark this table as 'const table' (ie, one that has only one row).
   */
-  if (unique_table(session, table_list, table_list->next_global, 0))
+  if (unique_table(table_list, table_list->next_global))
   {
     my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
     return(true);

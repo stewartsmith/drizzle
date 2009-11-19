@@ -191,12 +191,6 @@ public:
     being scanned.
   */
   bool in_range_check_pushed_down;
-  bool is_ordered;
-  bool isOrdered(void)
-  {
-    return is_ordered;
-  }
-
 
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
@@ -242,7 +236,6 @@ public:
     :table_share(&share_arg), table(0),
     estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0), in_range_check_pushed_down(false),
-    is_ordered(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(my_off_t)),
     inited(NONE),
@@ -617,34 +610,11 @@ public:
    return memcmp(ref1, ref2, ref_length);
  }
 
-  /**
-    Lock table.
-
-    @param    session                     Thread handle
-    @param    lock_type               HA_LOCK_IN_SHARE_MODE     (F_RDLCK)
-                                      HA_LOCK_IN_EXCLUSIVE_MODE (F_WRLCK)
-    @param    lock_timeout            -1 default timeout
-                                      0  no wait
-                                      >0 wait timeout in milliseconds.
-
-   @note
-      lock_timeout >0 is not used by MySQL currently. If the storage
-      engine does not support NOWAIT (lock_timeout == 0) it should
-      return an error. But if it does not support WAIT X (lock_timeout
-      >0) it should treat it as lock_timeout == -1 and wait a default
-      (or even hard-coded) timeout.
-
-    @retval HA_ERR_WRONG_COMMAND      Storage engine does not support
-                                      lock_table()
-    @retval HA_ERR_UNSUPPORTED        Storage engine does not support NOWAIT
-    @retval HA_ERR_LOCK_WAIT_TIMEOUT  Lock request timed out or
-                                      lock conflict with NOWAIT option
-    @retval HA_ERR_LOCK_DEADLOCK      Deadlock detected
-  */
-  virtual int lock_table(Session *, int, int)
+  virtual bool isOrdered(void)
   {
-    return HA_ERR_WRONG_COMMAND;
+    return false;
   }
+
 
 protected:
   /* Service methods for use by storage engines. */
@@ -769,17 +739,28 @@ private:
   */
   virtual int reset_auto_increment(uint64_t)
   { return HA_ERR_WRONG_COMMAND; }
+
   virtual int optimize(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
+
   virtual int analyze(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual int disable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
+
   virtual int enable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
+
   virtual int discard_or_import_tablespace(bool)
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
+
+  /* 
+    @todo this is just for the HEAP engine, it should
+    be removed at some point in the future (and
+    no new engine should ever use it). Right
+    now HEAP does rely on it, so we cannot remove it.
+  */
   virtual void drop_table(const char *name);
 };
 

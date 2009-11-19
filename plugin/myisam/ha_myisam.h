@@ -37,6 +37,7 @@ class ha_myisam: public Cursor
   MI_INFO *file;
   char    *data_file_name, *index_file_name;
   bool can_enable_indexes;
+  bool is_ordered;
   int repair(Session *session, MI_CHECK &param, bool optimize);
 
  public:
@@ -99,6 +100,12 @@ class ha_myisam: public Cursor
                        bool eq_range_arg, bool sorted);
   int read_range_next();
   int reset_auto_increment(uint64_t value);
+
+  virtual bool isOrdered(void)
+  {
+    return false;
+  }
+
 private:
   key_map keys_with_parts;
 };

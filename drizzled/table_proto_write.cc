@@ -54,20 +54,39 @@ int fill_table_proto(message::Table *table_proto,
 
   assert(strcmp(table_proto->name().c_str(),table_name)==0);
 
+  int field_number= 0;
+  bool use_existing_fields= table_proto->field_size() > 0;
   while ((field_arg= it++))
   {
     message::Table::Field *attribute;
 
-    attribute= table_proto->add_field();
-    attribute->set_name(field_arg->field_name);
+    /* some (one) code path for CREATE TABLE fills the proto
+       out more than the others, so we already have partially
+       filled out Field messages */
 
-    if(! (field_arg->flags & NOT_NULL_FLAG))
+    if (use_existing_fields)
+      attribute= table_proto->mutable_field(field_number++);
+    else
     {
-      message::Table::Field::FieldConstraints *constraints;
+      /* Other code paths still have to fill out the proto */
+      attribute= table_proto->add_field();
 
-      constraints= attribute->mutable_constraints();
-      constraints->set_is_nullable(true);
+      if(field_arg->flags & NOT_NULL_FLAG)
+      {
+        message::Table::Field::FieldConstraints *constraints;
+
+        constraints= attribute->mutable_constraints();
+        constraints->set_is_nullable(false);
+      }
+
+      attribute->set_name(field_arg->field_name);
     }
+
+    assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
+    assert(strcmp(attribute->name().c_str(), field_arg->field_name)==0);
+
+
+    message::Table::Field::FieldType parser_type= attribute->type();
 
     switch (field_arg->sql_type) {
     case DRIZZLE_TYPE_LONG:
@@ -112,11 +131,17 @@ int fill_table_proto(message::Table *table_proto,
 
         string_field_options= attribute->mutable_string_options();
         attribute->set_type(message::Table::Field::VARCHAR);
-        string_field_options->set_length(field_arg->length
-					 / field_arg->charset->mbmaxlen);
-        string_field_options->set_collation_id(field_arg->charset->number);
-        string_field_options->set_collation(field_arg->charset->name);
+        if (! use_existing_fields || string_field_options->length()==0)
+          string_field_options->set_length(field_arg->length
+                                           / field_arg->charset->mbmaxlen);
+        else
+          assert((uint32_t)string_field_options->length() == (uint32_t)(field_arg->length / field_arg->charset->mbmaxlen));
 
+        if (! string_field_options->has_collation())
+        {
+          string_field_options->set_collation_id(field_arg->charset->number);
+          string_field_options->set_collation(field_arg->charset->name);
+        }
         break;
       }
     case DRIZZLE_TYPE_DECIMAL:
@@ -166,6 +191,8 @@ int fill_table_proto(message::Table *table_proto,
       assert(0); /* Tell us, since this shouldn't happend */
     }
 
+    assert (!use_existing_fields || parser_type == attribute->type());
+
 #ifdef NOTDONE
     field_constraints= attribute->mutable_constraints();
     constraints->set_is_nullable(field_arg->def->null_value);
@@ -205,7 +232,10 @@ int fill_table_proto(message::Table *table_proto,
 	return(1);
       }
 
-      attribute->set_comment(field_arg->comment.str);
+      if (! use_existing_fields)
+        attribute->set_comment(field_arg->comment.str);
+
+      assert(strcmp(attribute->comment().c_str(), field_arg->comment.str)==0);
     }
 
     if(field_arg->unireg_check == Field::NEXT_NUMBER)
@@ -273,15 +303,6 @@ int fill_table_proto(message::Table *table_proto,
       }
     }
 
-    if (field_arg->sql_type != DRIZZLE_TYPE_DECIMAL
-        && field_arg->sql_type != DRIZZLE_TYPE_DOUBLE)
-    {
-      message::Table::Field::FieldOptions *field_options;
-      field_options= attribute->mutable_options();
-
-      field_options->set_length(field_arg->length);
-    }
-
     assert(field_arg->unireg_check == Field::NONE
 	   || field_arg->unireg_check == Field::NEXT_NUMBER
 	   || field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
@@ -289,6 +310,8 @@ int fill_table_proto(message::Table *table_proto,
 	   || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD);
 
   }
+
+  assert(! use_existing_fields || (field_number == table_proto->field_size()));
 
   switch(create_info->row_type)
   {
