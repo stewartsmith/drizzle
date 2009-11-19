@@ -311,7 +311,6 @@ protected:
   virtual int doCreateTable(Session *session,
                             const char *table_name,
                             Table& table_arg,
-                            HA_CREATE_INFO& create_info,
                             drizzled::message::Table& proto)= 0;
 
   virtual int doRenameTable(Session* session,
@@ -366,7 +365,6 @@ public:
 
   static int createTable(Session& session, const char *path,
                          const char *db, const char *table_name,
-                         HA_CREATE_INFO& create_info,
                          bool update_create_info,
                          drizzled::message::Table& table_proto,
                          bool used= true);

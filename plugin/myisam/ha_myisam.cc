@@ -93,7 +93,6 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
-                    HA_CREATE_INFO& ha_create_info,
                     drizzled::message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
@@ -1365,7 +1364,6 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
 
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
-                                HA_CREATE_INFO& ha_create_info,
                                 drizzled::message::Table& create_proto)
 {
   int error;
@@ -1382,8 +1380,8 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   create_info.max_rows= create_proto.options().max_rows();
   create_info.reloc_rows= create_proto.options().min_rows();
   create_info.with_auto_increment= share->next_number_key_offset == 0;
-  create_info.auto_increment= (ha_create_info.auto_increment_value ?
-                               ha_create_info.auto_increment_value -1 :
+  create_info.auto_increment= (create_proto.options().has_auto_increment_value() ?
+                               create_proto.options().auto_increment_value() -1 :
                                (uint64_t) 0);
   create_info.data_file_length= (create_proto.options().max_rows() *
                                  create_proto.options().avg_row_length());

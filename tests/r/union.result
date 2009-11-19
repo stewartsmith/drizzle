@@ -1206,14 +1206,11 @@ t2	CREATE TABLE `t2` (
 select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
 row_format
 Compact
-alter table t2 ROW_FORMAT=fixed;
-Warnings:
-Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` varchar(5) DEFAULT NULL
-) ENGINE=DEFAULT ROW_FORMAT=FIXED
+) ENGINE=DEFAULT
 drop table t1,t2;
 CREATE TABLE t1 (a mediumtext);
 CREATE TABLE t2 (b varchar(20));

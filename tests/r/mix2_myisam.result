@@ -1623,13 +1623,13 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
-create TEMPORARY table t1 (v varchar(10), c char(10)) row_format=fixed;
+create TEMPORARY table t1 (v varchar(10), c char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL
-) ENGINE=MyISAM ROW_FORMAT=FIXED
+) ENGINE=MyISAM
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
 concat('*',v,'*',c,'*')

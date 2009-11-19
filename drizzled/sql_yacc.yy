@@ -1333,16 +1333,12 @@ create_table_option:
           ENGINE_SYM opt_equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            message::Table::StorageEngine *protoengine;
+            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
 
-            statement->create_info.db_type= NULL;
-            statement->create_info.used_fields|= HA_CREATE_USED_ENGINE;
+            statement->is_engine_set= true;
 
-	    {
-	      message::Table::StorageEngine *protoengine;
-	      protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
-
-	      protoengine->set_name($3.str);
-	    }
+            protoengine->set_name($3.str);
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
@@ -1362,10 +1358,14 @@ create_table_option:
           }
         | AUTO_INC opt_equal ulonglong_num
           {
+	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
+	    tableopts->set_auto_increment_value($3);
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -2268,8 +2268,6 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.db_type= 0;
-            statement->create_info.default_table_charset= NULL;
             statement->create_info.row_type= ROW_TYPE_NOT_USED;
             statement->alter_info.build_method= $2;
           }

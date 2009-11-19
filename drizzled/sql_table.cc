@@ -1632,10 +1632,6 @@ bool mysql_create_table_no_lock(Session *session,
     return true;
   }
   assert(strcmp(table_name,table_proto->name().c_str())==0);
-  if (check_engine(session, table_name, 
-                   table_proto,
-                   create_info))
-    return true;
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -2397,8 +2393,9 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
-                             HA_CREATE_INFO *create_info,
-                             bool is_if_not_exists)
+                             drizzled::plugin::StorageEngine *engine_arg,
+                             bool is_if_not_exists,
+                             bool is_engine_set)
 {
   Table *name_lock= 0;
   char src_path[FN_REFLEN], dst_path[FN_REFLEN];
@@ -2475,7 +2472,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         toss an error. This should go away later on when we straighten out the 
         I_S engine.
       */
-      if (! (create_info->used_fields & HA_CREATE_USED_ENGINE))
+      if (! is_engine_set)
       {
         pthread_mutex_unlock(&LOCK_open);
         my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
@@ -2484,7 +2481,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         goto err;
       }
 
-      if (create_like_schema_frm(session, src_table, create_info, &src_proto))
+      if (create_like_schema_frm(session, src_table, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
         goto err;
@@ -2511,7 +2508,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       new_proto.set_type(message::Table::STANDARD);
     }
 
-    if (create_info->used_fields & HA_CREATE_USED_ENGINE)
+    if (is_engine_set)
     {
       message::Table::StorageEngine *protoengine;
 
@@ -2552,7 +2549,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       creation, instead create the table directly (for both normal
       and temporary tables).
     */
-    err= plugin::StorageEngine::createTable(*session, dst_path, db, table_name, *create_info, 
+    err= plugin::StorageEngine::createTable(*session, dst_path, db, table_name,
                                             true, new_proto);
   }
   pthread_mutex_unlock(&LOCK_open);
@@ -2561,7 +2558,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (err || !session->open_temporary_table(dst_path, db, table_name))
     {
-      (void) session->rm_temporary_table(create_info->db_type, dst_path);
+      (void) session->rm_temporary_table(engine_arg, dst_path);
       goto err;
     }
   }
@@ -2615,7 +2612,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         }
         pthread_mutex_unlock(&LOCK_open);
 
-        int result= store_create_info(table, &query, create_info, is_if_not_exists);
+        int result= store_create_info(table, &query, is_if_not_exists);
 
         assert(result == 0); // store_create_info() always return 0
         write_bin_log(session, query.ptr(), query.length());
@@ -2819,55 +2816,4 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   if (table)
     table->table=0;
   return(true);
-}
-
-bool check_engine(Session *session, const char *table_name,
-                  message::Table *create_proto,
-                  HA_CREATE_INFO *create_info)
-{
-  plugin::StorageEngine **new_engine= &create_info->db_type;
-  plugin::StorageEngine *req_engine= *new_engine;
-  bool lex_identified_temp_table=  (create_proto->type() == drizzled::message::Table::TEMPORARY);
-
-  if (!req_engine->is_enabled())
-  {
-    string engine_name= req_engine->getName();
-    my_error(ER_FEATURE_DISABLED,MYF(0),
-             engine_name.c_str(), engine_name.c_str());
-             
-    return true;
-  }
-
-  if (req_engine && req_engine != *new_engine)
-  {
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                       ER_WARN_USING_OTHER_HANDLER,
-                       ER(ER_WARN_USING_OTHER_HANDLER),
-                       plugin::StorageEngine::resolveName(*new_engine).c_str(),
-                       table_name);
-  }
-  if (lex_identified_temp_table &&
-      (*new_engine)->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED))
-  {
-    if (create_info->used_fields & HA_CREATE_USED_ENGINE)
-    {
-      my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-               plugin::StorageEngine::resolveName(*new_engine).c_str(),
-               "TEMPORARY");
-      *new_engine= 0;
-      return true;
-    }
-    *new_engine= myisam_engine;
-  }
-  if(! lex_identified_temp_table
-     && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
-  {
-    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             plugin::StorageEngine::resolveName(*new_engine).c_str(),
-             "non-TEMPORARY");
-    *new_engine= 0;
-    return true;
-  }
-
-  return false;
 }

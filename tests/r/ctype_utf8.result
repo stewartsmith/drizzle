@@ -505,10 +505,7 @@ utf8_general_ci	61
 utf8_general_ci	6109
 utf8_general_ci	6120
 drop table t1;
-create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;
-Warnings:
-Warning	1478	InnoDB: ROW_FORMAT=DYNAMIC requires innodb_file_per_table.
-Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
+create table t1 select repeat('a',50) as c1 ;
 insert into t1 values('abcdef');
 insert into t1 values('_bcdef');
 insert into t1 values('a_cdef');
@@ -567,10 +564,7 @@ utf8_general_ci	61
 utf8_general_ci	6109
 utf8_general_ci	6120
 drop table t1;
-create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;
-Warnings:
-Warning	1478	InnoDB: ROW_FORMAT=DYNAMIC requires innodb_file_per_table.
-Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
+create table t1 select repeat('a',50) as c1 ;
 insert into t1 values('abcdef');
 insert into t1 values('_bcdef');
 insert into t1 values('a_cdef');

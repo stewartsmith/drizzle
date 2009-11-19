@@ -37,7 +37,8 @@ public:
     :
       Statement(in_session),
       is_create_table_like(false),
-      is_if_not_exists(false)
+      is_if_not_exists(false),
+      is_engine_set(false)
   {
     memset(&create_info, 0, sizeof(create_info));
   }
@@ -68,6 +69,7 @@ public:
 
   bool is_create_table_like;
   bool is_if_not_exists;
+  bool is_engine_set;
 };
 
 } /* end namespace statement */

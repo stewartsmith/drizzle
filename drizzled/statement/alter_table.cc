@@ -64,9 +64,8 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  if (is_engine_set)
   {
-
     create_info.db_type= 
       plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
@@ -810,9 +809,6 @@ bool alter_table(Session *session,
     create_proto->set_type(message::Table::STANDARD);
   }
 
-  if (check_engine(session, new_name, create_proto, create_info))
-    goto err;
-
   new_db_type= create_info->db_type;
 
   if (new_db_type != old_db_type &&
@@ -824,7 +820,13 @@ bool alter_table(Session *session,
   }
 
   if (create_info->row_type == ROW_TYPE_NOT_USED)
+  {
+    message::Table::TableOptions *table_options;
+    table_options= create_proto->mutable_options();
+
     create_info->row_type= table->s->row_type;
+    table_options->set_row_type((drizzled::message::Table_TableOptions_RowType)table->s->row_type);
+  }
 
   if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
       new_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
@@ -1443,7 +1445,6 @@ create_temporary_table(Session *session,
 /** @TODO This will soon die. */
 bool create_like_schema_frm(Session* session,
                             TableList* schema_table,
-                            HA_CREATE_INFO *,
                             message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;

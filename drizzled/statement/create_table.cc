@@ -40,7 +40,7 @@ bool statement::CreateTable::execute()
   bool lex_identified_temp_table= 
     create_table_proto.type() == drizzled::message::Table::TEMPORARY;
 
-  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  if (is_engine_set)
   {
 
     create_info.db_type= 
@@ -187,8 +187,9 @@ bool statement::CreateTable::execute()
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
-                                   &create_info, 
-                                   is_if_not_exists);
+                                   create_info.db_type, 
+                                   is_if_not_exists,
+                                   is_engine_set);
     }
     else
     {
