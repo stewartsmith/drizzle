@@ -2398,7 +2398,8 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
                              HA_CREATE_INFO *create_info,
-                             bool is_if_not_exists)
+                             bool is_if_not_exists,
+                             bool is_engine_set)
 {
   Table *name_lock= 0;
   char src_path[FN_REFLEN], dst_path[FN_REFLEN];
@@ -2475,7 +2476,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         toss an error. This should go away later on when we straighten out the 
         I_S engine.
       */
-      if (! (create_info->used_fields & HA_CREATE_USED_ENGINE))
+      if (! is_engine_set)
       {
         pthread_mutex_unlock(&LOCK_open);
         my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
@@ -2502,7 +2503,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     message::Table new_proto(src_proto);
 
-    if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
+    if (lex_identified_temp_table)
     {
       new_proto.set_type(message::Table::TEMPORARY);
     }
@@ -2511,7 +2512,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       new_proto.set_type(message::Table::STANDARD);
     }
 
-    if (create_info->used_fields & HA_CREATE_USED_ENGINE)
+    if (is_engine_set)
     {
       message::Table::StorageEngine *protoengine;
 
@@ -2615,7 +2616,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         }
         pthread_mutex_unlock(&LOCK_open);
 
-        int result= store_create_info(table, &query, create_info, is_if_not_exists);
+        int result= store_create_info(table, &query, is_if_not_exists);
 
         assert(result == 0); // store_create_info() always return 0
         write_bin_log(session, query.ptr(), query.length());
@@ -2849,7 +2850,7 @@ bool check_engine(Session *session, const char *table_name,
   if (lex_identified_temp_table &&
       (*new_engine)->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED))
   {
-    if (create_info->used_fields & HA_CREATE_USED_ENGINE)
+    if (true)
     {
       my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
                plugin::StorageEngine::resolveName(*new_engine).c_str(),

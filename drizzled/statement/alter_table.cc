@@ -64,9 +64,8 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  if (is_engine_set)
   {
-
     create_info.db_type= 
       plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
