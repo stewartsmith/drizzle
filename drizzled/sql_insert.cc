@@ -1458,6 +1458,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      message::Table *table_proto,
                                       AlterInfo *alter_info,
                                       List<Item> *items,
+                                      bool is_if_not_exists,
                                       DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'CreateField()'
@@ -1476,7 +1477,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
-    if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+    if (is_if_not_exists)
     {
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -1537,7 +1538,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                     create_info,
 				    table_proto,
 				    alter_info, false,
-                                    select_field_count))
+                                    select_field_count,
+                                    is_if_not_exists))
     {
       if (create_info->table_existed &&
           !(lex_identified_temp_table))
@@ -1637,6 +1639,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   if (!(table= create_table_from_items(session, create_info, create_table,
 				       table_proto,
                                        alter_info, &values,
+                                       is_if_not_exists,
                                        &extra_lock)))
     return(-1);				// abort() deletes table
 

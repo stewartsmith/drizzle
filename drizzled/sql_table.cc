@@ -1611,7 +1611,8 @@ bool mysql_create_table_no_lock(Session *session,
 				message::Table *table_proto,
                                 AlterInfo *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count)
+                                uint32_t select_field_count, 
+                                bool is_if_not_exists)
 {
   char		path[FN_REFLEN];
   uint32_t          path_length;
@@ -1675,7 +1676,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (lex_identified_temp_table &&
       session->find_temporary_table(db, table_name))
   {
-    if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+    if (is_if_not_exists)
     {
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -1693,7 +1694,7 @@ bool mysql_create_table_no_lock(Session *session,
   {
     if (plugin::StorageEngine::getTableDefinition(*session, path, db, table_name, internal_tmp_table)==EEXIST)
     {
-      if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+      if (is_if_not_exists)
       {
         error= false;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -1732,9 +1733,6 @@ bool mysql_create_table_no_lock(Session *session,
   */
   if (! lex_identified_temp_table)
   {
-    bool create_if_not_exists =
-      create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS;
-
     char table_path[FN_REFLEN];
     uint32_t          table_path_length;
 
@@ -1748,7 +1746,7 @@ bool mysql_create_table_no_lock(Session *session,
         /* Normal case, no table exists. we can go and create it */
         break;
       case EEXIST:
-        if (create_if_not_exists)
+        if (is_if_not_exists)
         {
           error= false;
           push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -1815,7 +1813,8 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 			message::Table *table_proto,
                         AlterInfo *alter_info,
                         bool internal_tmp_table,
-                        uint32_t select_field_count)
+                        uint32_t select_field_count,
+                        bool is_if_not_exists)
 {
   Table *name_lock= NULL;
   bool result;
@@ -1831,7 +1830,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
     }
     if (name_lock == NULL)
     {
-      if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+      if (is_if_not_exists)
       {
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
@@ -1852,7 +1851,8 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 				     table_proto,
                                      alter_info,
                                      internal_tmp_table,
-                                     select_field_count);
+                                     select_field_count,
+                                     is_if_not_exists);
 
 unlock:
   if (name_lock)
@@ -2397,7 +2397,8 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
-                             HA_CREATE_INFO *create_info)
+                             HA_CREATE_INFO *create_info,
+                             bool is_if_not_exists)
 {
   Table *name_lock= 0;
   char src_path[FN_REFLEN], dst_path[FN_REFLEN];
@@ -2605,7 +2606,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         }
         pthread_mutex_unlock(&LOCK_open);
 
-        int result= store_create_info(table, &query, create_info);
+        int result= store_create_info(table, &query, create_info, is_if_not_exists);
 
         assert(result == 0); // store_create_info() always return 0
         write_bin_log(session, query.ptr(), query.length());
@@ -2619,7 +2620,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   goto err;
 
 table_exists:
-  if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+  if (is_if_not_exists)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff),

@@ -156,6 +156,7 @@ bool statement::CreateTable::execute()
          needs to be created for every execution of a PS/SP.
        */
       if ((result= new select_create(create_table,
+                                     is_if_not_exists,
                                      &create_info,
                                      &create_table_proto,
                                      &alter_info,
@@ -180,13 +181,14 @@ bool statement::CreateTable::execute()
   else
   {
     /* regular create */
-    if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
+    if (is_create_table_like)
     {
       res= mysql_create_like_table(session, 
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
-                                   &create_info);
+                                   &create_info, 
+                                   is_if_not_exists);
     }
     else
     {
@@ -205,7 +207,8 @@ bool statement::CreateTable::execute()
                               &create_table_proto,
                               &alter_info, 
                               0, 
-                              0);
+                              0,
+                              is_if_not_exists);
     }
     if (! res)
     {

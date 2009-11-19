@@ -1435,7 +1435,7 @@ create_temporary_table(Session *session,
   protoengine->set_name(new_db_type->getName());
 
   error= mysql_create_table(session, new_db, tmp_name,
-                            create_info, create_proto, alter_info, true, 0);
+                            create_info, create_proto, alter_info, true, 0, false);
 
   return error;
 }

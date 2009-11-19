@@ -1142,7 +1142,8 @@ create:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             statement->change=NULL;
-            statement->create_info.options= $4;
+            statement->is_if_not_exists= $4;
+            statement->create_info.options= 0;
             statement->create_info.db_type= NULL;
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
@@ -1196,7 +1197,8 @@ create:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->create_info.options=$3;
+            statement->is_if_not_exists= $3;
+            statement->create_info.options= 0;
           }
           opt_create_database_options
           {
@@ -1214,7 +1216,7 @@ create2:
             LEX *lex= session->lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->is_create_table_like= true;
             if (!lex->select_lex.add_table_to_list(session, $2, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1224,7 +1226,7 @@ create2:
             LEX *lex= session->lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->is_create_table_like= true;
             if (!lex->select_lex.add_table_to_list(session, $3, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1309,8 +1311,8 @@ opt_table_options:
         ;
 
 opt_if_not_exists:
-          /* empty */ { $$= 0; }
-        | IF not EXISTS { $$=HA_LEX_CREATE_IF_NOT_EXISTS; }
+          /* empty */ { $$= false; }
+        | IF not EXISTS { $$= true; }
         ;
 
 opt_create_table_options:
@@ -5044,7 +5046,7 @@ show_param:
             Lex->statement= statement;
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->create_info.options=$3;
+            statement->is_if_not_exists= $3;
             Lex->name= $4;
           }
         | CREATE TABLE_SYM table_ident
