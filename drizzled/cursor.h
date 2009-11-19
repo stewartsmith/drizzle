@@ -864,7 +864,7 @@ bool mysql_recreate_table(Session *session, TableList *table_list);
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
-                             HA_CREATE_INFO *create_info,
+                             drizzled::plugin::StorageEngine*,
                              bool is_if_not_exists,
                              bool is_engine_set);
 

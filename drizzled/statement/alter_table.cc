@@ -1445,7 +1445,6 @@ create_temporary_table(Session *session,
 /** @TODO This will soon die. */
 bool create_like_schema_frm(Session* session,
                             TableList* schema_table,
-                            HA_CREATE_INFO *,
                             message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;

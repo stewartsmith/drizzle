@@ -2393,7 +2393,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
-                             HA_CREATE_INFO *create_info,
+                             drizzled::plugin::StorageEngine *engine_arg,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
@@ -2481,7 +2481,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         goto err;
       }
 
-      if (create_like_schema_frm(session, src_table, create_info, &src_proto))
+      if (create_like_schema_frm(session, src_table, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
         goto err;
@@ -2558,7 +2558,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (err || !session->open_temporary_table(dst_path, db, table_name))
     {
-      (void) session->rm_temporary_table(create_info->db_type, dst_path);
+      (void) session->rm_temporary_table(engine_arg, dst_path);
       goto err;
     }
   }

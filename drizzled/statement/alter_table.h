@@ -60,7 +60,6 @@ bool alter_table(Session *session, char *new_db, char *new_name,
 /** @TODO This should die with I_S engine work from Padraig */
 bool create_like_schema_frm(Session* session,
                             TableList* schema_table,
-                            HA_CREATE_INFO *create_info,
                             message::Table* table_proto);
 
 } /* namespace drizzled */
