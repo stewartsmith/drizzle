@@ -809,9 +809,6 @@ bool alter_table(Session *session,
     create_proto->set_type(message::Table::STANDARD);
   }
 
-  if (check_engine(session, new_name, create_proto, create_info))
-    goto err;
-
   new_db_type= create_info->db_type;
 
   if (new_db_type != old_db_type &&

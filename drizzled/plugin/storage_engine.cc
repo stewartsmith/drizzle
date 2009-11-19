@@ -751,7 +751,7 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
   @retval
    1  error
 
-   @todo refactor to remove goto, and absorb check_engine() logic into createTable()
+   @todo refactor to remove goto
 */
 int plugin::StorageEngine::createTable(Session& session, const char *path,
                                        const char *db, const char *table_name,
@@ -796,6 +796,12 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
       error= HA_ERR_UNSUPPORTED;
       goto err2;
     }
+  }
+
+  if (! share.storage_engine->is_enabled())
+  {
+    error= HA_ERR_UNSUPPORTED;
+    goto err2;
   }
 
 

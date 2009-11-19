@@ -1632,10 +1632,6 @@ bool mysql_create_table_no_lock(Session *session,
     return true;
   }
   assert(strcmp(table_name,table_proto->name().c_str())==0);
-  if (check_engine(session, table_name, 
-                   table_proto,
-                   create_info))
-    return true;
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -2820,55 +2816,4 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   if (table)
     table->table=0;
   return(true);
-}
-
-bool check_engine(Session *session, const char *table_name,
-                  message::Table *create_proto,
-                  HA_CREATE_INFO *create_info)
-{
-  plugin::StorageEngine **new_engine= &create_info->db_type;
-  plugin::StorageEngine *req_engine= *new_engine;
-  bool lex_identified_temp_table=  (create_proto->type() == drizzled::message::Table::TEMPORARY);
-
-  if (!req_engine->is_enabled())
-  {
-    string engine_name= req_engine->getName();
-    my_error(ER_FEATURE_DISABLED,MYF(0),
-             engine_name.c_str(), engine_name.c_str());
-             
-    return true;
-  }
-
-  if (req_engine && req_engine != *new_engine)
-  {
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                       ER_WARN_USING_OTHER_HANDLER,
-                       ER(ER_WARN_USING_OTHER_HANDLER),
-                       plugin::StorageEngine::resolveName(*new_engine).c_str(),
-                       table_name);
-  }
-  if (lex_identified_temp_table &&
-      (*new_engine)->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED))
-  {
-    if (true)
-    {
-      my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-               plugin::StorageEngine::resolveName(*new_engine).c_str(),
-               "TEMPORARY");
-      *new_engine= 0;
-      return true;
-    }
-    *new_engine= myisam_engine;
-  }
-  if(! lex_identified_temp_table
-     && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
-  {
-    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             plugin::StorageEngine::resolveName(*new_engine).c_str(),
-             "non-TEMPORARY");
-    *new_engine= 0;
-    return true;
-  }
-
-  return false;
 }
