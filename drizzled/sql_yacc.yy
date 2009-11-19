@@ -911,8 +911,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <num>
         type int_type real_type order_dir field_def
-        if_exists opt_table_options table_options
-        table_option opt_if_not_exists
+        if_exists opt_table_options
+        opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
@@ -1142,7 +1142,7 @@ create:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             statement->change=NULL;
-            statement->create_info.options=$2 | $4;
+            statement->create_info.options= $4;
             statement->create_info.db_type= NULL;
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
@@ -1150,7 +1150,7 @@ create:
 	    message::Table *proto= &statement->create_table_proto;
 	    
 	    proto->set_name($5->table.str);
-	    if($2 & HA_LEX_CREATE_TMP_TABLE)
+	    if($2)
 	      proto->set_type(message::Table::TEMPORARY);
 	    else
 	      proto->set_type(message::Table::STANDARD);
@@ -1304,17 +1304,8 @@ opt_create_database_options:
         ;
 
 opt_table_options:
-          /* empty */ { $$= 0; }
-        | table_options  { $$= $1;}
-        ;
-
-table_options:
-          table_option { $$=$1; }
-        | table_option table_options { $$= $1 | $2; }
-        ;
-
-table_option:
-          TEMPORARY_SYM { $$=HA_LEX_CREATE_TMP_TABLE; }
+          /* empty */ { $$= false; }
+        | TEMPORARY_SYM { $$= true; }
         ;
 
 opt_if_not_exists:

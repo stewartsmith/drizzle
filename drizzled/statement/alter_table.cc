@@ -502,7 +502,6 @@ static bool mysql_prepare_alter_table(Session *session,
 
   if (table->s->tmp_table)
   {
-    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
     table_proto->set_type(message::Table::TEMPORARY);
   }
 
@@ -804,7 +803,6 @@ bool alter_table(Session *session,
 
   if (table->s->tmp_table != NO_TMP_TABLE)
   {
-    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
     create_proto->set_type(message::Table::TEMPORARY);
   }
   else

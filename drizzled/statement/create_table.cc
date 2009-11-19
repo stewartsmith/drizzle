@@ -37,7 +37,8 @@ bool statement::CreateTable::execute()
   bool need_start_waiting= false;
   bool res= false;
   bool link_to_local= false;
-  bool lex_identified_temp_table= (create_info.options & HA_LEX_CREATE_TMP_TABLE);
+  bool lex_identified_temp_table= 
+    create_table_proto.type() == drizzled::message::Table::TEMPORARY;
 
   if (create_info.used_fields & HA_CREATE_USED_ENGINE)
   {
