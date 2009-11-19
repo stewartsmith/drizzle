@@ -1391,7 +1391,7 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   create_info.index_file_name=  NULL;
   create_info.language= share->table_charset->number;
 
-  if (ha_create_info.options & HA_LEX_CREATE_TMP_TABLE)
+  if (create_proto.type() == drizzled::message::Table::TEMPORARY)
     create_flags|= HA_CREATE_TMP_TABLE;
   if (ha_create_info.options & HA_CREATE_KEEP_FILES)
     create_flags|= HA_CREATE_KEEP_FILES;

@@ -37,6 +37,7 @@ bool statement::CreateTable::execute()
   bool need_start_waiting= false;
   bool res= false;
   bool link_to_local= false;
+  bool lex_identified_temp_table= (create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
   if (create_info.used_fields & HA_CREATE_USED_ENGINE)
   {
@@ -71,7 +72,7 @@ bool statement::CreateTable::execute()
 
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+  if (! lex_identified_temp_table)
   {
     if (! session->endActiveTransaction())
     {
@@ -119,7 +120,7 @@ bool statement::CreateTable::execute()
     select_lex->options|= SELECT_NO_UNLOCK;
     unit->set_limit(select_lex);
 
-    if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+    if (! lex_identified_temp_table)
     {
       session->lex->link_first_table_back(create_table, link_to_local);
       create_table->create= true;
@@ -131,7 +132,7 @@ bool statement::CreateTable::execute()
          Is table which we are changing used somewhere in other parts
          of query
        */
-      if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+      if (! lex_identified_temp_table)
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
@@ -170,7 +171,7 @@ bool statement::CreateTable::execute()
         delete result;
       }
     }
-    else if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+    else if (! lex_identified_temp_table)
     {
       create_table= session->lex->unlink_first_table(&link_to_local);
     }

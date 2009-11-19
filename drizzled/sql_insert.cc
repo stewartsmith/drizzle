@@ -1470,7 +1470,9 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
+  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
+
+  if (!(lex_identified_temp_table) &&
       create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
@@ -1538,7 +1540,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                     select_field_count))
     {
       if (create_info->table_existed &&
-          !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
+          !(lex_identified_temp_table))
       {
         /*
           This means that someone created table underneath server
@@ -1549,7 +1551,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         return NULL;
       }
 
-      if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
+      if (!(lex_identified_temp_table))
       {
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
@@ -1602,6 +1604,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
+  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
+
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
     For row-based replication, the CREATE-SELECT statement is written
@@ -1640,7 +1644,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   {
     assert(m_plock == NULL);
 
-    if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
+    if (lex_identified_temp_table)
       m_plock= &m_lock;
     else
       m_plock= &session->extra_lock;

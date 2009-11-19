@@ -5549,6 +5549,7 @@ InnobaseEngine::doCreateTable(
 	/* Cache the value of innodb_file_format, in case it is
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
+        bool lex_identified_temp_table= (create_proto.type() == drizzled::message::Table::TEMPORARY);
 
 	assert(session != NULL);
 
@@ -5564,7 +5565,7 @@ InnobaseEngine::doCreateTable(
 	table. Currently InnoDB does not support symbolic link on Windows. */
 
 	if (srv_file_per_table
-	    && (!create_info.options & HA_LEX_CREATE_TMP_TABLE)) {
+	    && (! lex_identified_temp_table)) {
 
 		if ((table_name[1] == ':')
 		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
@@ -5750,7 +5751,7 @@ InnobaseEngine::doCreateTable(
 	}
 
 	error = create_table_def(trx, &form, norm_name,
-		create_info.options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
+		lex_identified_temp_table ? name2 : NULL,
 		iflags);
 
 	if (error) {
@@ -5805,7 +5806,7 @@ InnobaseEngine::doCreateTable(
 	if (*trx->mysql_query_str) {
 		error = row_table_add_foreign_constraints(trx,
 			*trx->mysql_query_str, norm_name,
-			create_info.options & HA_LEX_CREATE_TMP_TABLE);
+			lex_identified_temp_table);
 
 		error = convert_error_code_to_mysql(error, iflags, NULL);
 
