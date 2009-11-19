@@ -138,9 +138,10 @@ public:
     return ha_tina_exts;
   }
 
-  int doCreateTable(Session *, const char *table_name,
+  int doCreateTable(Session *, 
+                    const char *table_name,
                     Table& table_arg,
-                    HA_CREATE_INFO&, drizzled::message::Table&);
+                    drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -1531,7 +1532,6 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
 
 int Tina::doCreateTable(Session *, const char *table_name,
                         Table& table_arg,
-                        HA_CREATE_INFO&, 
                         drizzled::message::Table& create_proto)
 {
   char name_buff[FN_REFLEN];

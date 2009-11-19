@@ -68,7 +68,6 @@ public:
   int doCreateTable(Session *session, 
                     const char *table_name,
                     Table& table_arg, 
-                    HA_CREATE_INFO& create_info,
                     drizzled::message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
@@ -700,7 +699,6 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
                               Table &table_arg,
-                              HA_CREATE_INFO&,
                               drizzled::message::Table& create_proto)
 {
   int error;

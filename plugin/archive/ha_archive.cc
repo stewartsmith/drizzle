@@ -163,7 +163,7 @@ public:
   }
 
   int doCreateTable(Session *session, const char *table_name,
-                    Table& table_arg, HA_CREATE_INFO& create_info,
+                    Table& table_arg,
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(Session& session,
@@ -633,7 +633,6 @@ int ha_archive::close(void)
 int ArchiveEngine::doCreateTable(Session *,
                                  const char *table_name,
                                  Table& table_arg,
-                                 HA_CREATE_INFO&,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];

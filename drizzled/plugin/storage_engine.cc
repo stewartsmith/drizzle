@@ -755,7 +755,6 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
 */
 int plugin::StorageEngine::createTable(Session& session, const char *path,
                                        const char *db, const char *table_name,
-                                       HA_CREATE_INFO& create_info,
                                        bool update_create_info,
                                        drizzled::message::Table& table_proto, bool proto_used)
 {
@@ -780,7 +779,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(&create_info, &table_proto);
+    table.updateCreateInfo(&table_proto);
 
   /* Check for legal operations against the Engine using the proto (if used) */
   if (proto_used)
@@ -808,8 +807,10 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
 
     share.storage_engine->setTransactionReadWrite(session);
 
-    error= share.storage_engine->doCreateTable(&session, table_name_arg, table,
-                                               create_info, table_proto);
+    error= share.storage_engine->doCreateTable(&session, 
+                                               table_name_arg,
+                                               table,
+                                               table_proto);
   }
 
 err2:

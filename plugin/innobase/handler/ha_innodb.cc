@@ -383,7 +383,6 @@ public:
   UNIV_INTERN int doCreateTable(Session *session, 
                                 const char *table_name,
                                 Table& form,
-                                HA_CREATE_INFO& create_info,
                                 drizzled::message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from, 
@@ -5530,9 +5529,6 @@ InnobaseEngine::doCreateTable(
 	const char*	table_name,	/*!< in: table name */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO&,	/*!< in: more information of the
-					created table, contains also the
-					create statement string */
         drizzled::message::Table& create_proto)
 {
 	int		error;

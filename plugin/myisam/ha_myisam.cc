@@ -93,7 +93,6 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
-                    HA_CREATE_INFO& ha_create_info,
                     drizzled::message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
@@ -1365,7 +1364,6 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
 
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
-                                HA_CREATE_INFO&,
                                 drizzled::message::Table& create_proto)
 {
   int error;

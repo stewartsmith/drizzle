@@ -1813,15 +1813,10 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 
 
 
-void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
-                             message::Table *table_proto)
+void Table::updateCreateInfo(message::Table *table_proto)
 {
   message::Table::TableOptions *table_options= table_proto->mutable_options();
-  create_info->table_options= s->db_create_options;
   table_options->set_block_size(s->block_size);
-  create_info->row_type= s->row_type;
-  create_info->default_table_charset= s->table_charset;
-  create_info->table_charset= 0;
   table_options->set_comment(s->getComment());
 }
 
