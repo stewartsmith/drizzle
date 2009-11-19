@@ -1358,10 +1358,14 @@ create_table_option:
           }
         | AUTO_INC opt_equal ulonglong_num
           {
+	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
+	    tableopts->set_auto_increment_value($3);
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {

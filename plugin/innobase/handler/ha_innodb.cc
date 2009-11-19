@@ -5611,7 +5611,7 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (!create_options_are_valid(session, form, create_info, create_proto)) {
+	if (! create_options_are_valid(session, form, create_info, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
@@ -5844,9 +5844,9 @@ InnobaseEngine::doCreateTable(
 	/* We need to copy the AUTOINC value from the old table if
 	this is an ALTER TABLE. */
 
-	if (((create_info.used_fields & HA_CREATE_USED_AUTO)
+	if ((create_proto.options().has_auto_increment_value()
 	    || session_sql_command(session) == SQLCOM_ALTER_TABLE)
-	    && create_info.auto_increment_value != 0) {
+	    && create_proto.options().auto_increment_value() != 0) {
 
 		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or
 		CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
@@ -5855,7 +5855,7 @@ InnobaseEngine::doCreateTable(
 		auto increment field if the value is greater than the
 		maximum value in the column. */
 
-		auto_inc_value = create_info.auto_increment_value;
+		auto_inc_value = create_proto.options().auto_increment_value();
 
 		dict_table_autoinc_lock(innobase_table);
 		dict_table_autoinc_initialize(innobase_table, auto_inc_value);
