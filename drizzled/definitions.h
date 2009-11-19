@@ -438,7 +438,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_KEY_NULL_LENGTH	1
 #define HA_KEY_BLOB_LENGTH	2
 
-#define HA_OPTION_NO_CHECKSUM	(1L << 17)
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */

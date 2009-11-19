@@ -1143,7 +1143,6 @@ create:
             lex->col_list.empty();
             statement->change=NULL;
             statement->is_if_not_exists= $4;
-            statement->create_info.options= 0;
             statement->create_info.db_type= NULL;
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
@@ -1198,7 +1197,6 @@ create:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             statement->is_if_not_exists= $3;
-            statement->create_info.options= 0;
           }
           opt_create_database_options
           {
