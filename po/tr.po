@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-11-18 23:15+0000\n"
+"PO-Revision-Date: 2009-11-19 15:57+0000\n"
 "Last-Translator: SerdarGULER <guler_serdar@yahoo.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-11-19 04:34+0000\n"
+"X-Launchpad-Export-Date: 2009-11-20 04:41+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -61,7 +61,7 @@ msgstr "outfile 'e  yazmayınız."
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
+msgstr "PAGER[to_pager] kullan. Sorgu sonuçlarını PAGER kullanarak yazdır."
 
 #: client/drizzle.cc:288
 msgid "Print current command."
@@ -77,7 +77,7 @@ msgstr "drizzle' dan çık"
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Tamamlama hashini tekrar oluştur."
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -90,6 +90,7 @@ msgstr "Sunucuda durum bilgisi al."
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Dış dosyayı [to_outfile] ayarla. Herşeyi verilen dışdosyanın sonuna ekle."
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
@@ -120,8 +121,8 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"Drizzle bağlantı kimliğiniz %u\n"
-"Sunucu sürümü: %s\n"
+"Drizzle bağlantı id niz : %u\n"
+"Sunucu versiyonu : %s\n"
 
 #: client/drizzle.cc:1308
 #, c-format
@@ -142,7 +143,7 @@ msgstr ""
 #: client/drizzle.cc:1337
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr "%s eçmiş dosyası yazılıyor\n"
+msgstr "%s geçmiş dosyası yazılıyor\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
@@ -209,11 +210,11 @@ msgstr "Sunucu / istemci protokolünde sıkıştırma kullan"
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "Çıkışta hafıza ve açık dosya kullanımını kontrol et."
 
 #: client/drizzle.cc:1451
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "Çıkışta debug bilgisi yazdır."
 
 #: client/drizzle.cc:1453
 msgid "Database to use."
@@ -225,7 +226,7 @@ msgstr "(kullanılmadı)"
 
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
-msgstr "Ayraç kullanılmalı"
+msgstr "Kullanılacak ayraç"
 
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
@@ -282,10 +283,12 @@ msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
+"Hatalar için satır numaralarını yaz. UYARI: -L eski bir seçenek, yerine bu "
+"seçeneğin uzun şeklini kullanın"
 
 #: client/drizzle.cc:1489
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "Her sorguda tamponu temizle"
 
 #: client/drizzle.cc:1491
 msgid "Write column names in results."
@@ -296,12 +299,16 @@ msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"Sonuçlarda kolon adlarını yazdırma. UYARI: -N eski bir seçenek, yerine bu "
+"seçeneğin uzun şeklini kullanın"
 
 #: client/drizzle.cc:1498
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+"Değişkenin değerini değiştir. Bu seçenek eski bir seçenek, bunun yerine "
+"değişkenleri direk --variable-name=değer kullanarak atayabilirsiniz."
 
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
@@ -312,6 +319,8 @@ msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"Sadece öntanımlı veritabanını güncelle. Bu güncelleme logunda diğer "
+"vertabanlarına olan güncellemeleri atlamak için kullnışlı bir yoldur."
 
 #: client/drizzle.cc:1507
 msgid ""
@@ -333,6 +342,8 @@ msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"Sunucuya bağlanırken kullanılacak olan şifre. Eğer şifre verilmezse tty "
+"tarafından sorulacaktır."
 
 #: client/drizzle.cc:1515
 msgid ""
@@ -363,6 +374,8 @@ msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
 msgstr ""
+"Bağlantı koparsa yeniden bağlan. --disable-reconnect seçeneği ile iptal "
+"edilebilir. Bu seçenek öntanımlı olarak açıktır."
 
 #: client/drizzle.cc:1529
 msgid "Shutdown the server."
@@ -375,11 +388,11 @@ msgstr ""
 
 #: client/drizzle.cc:1533
 msgid "Socket file to use for connection."
-msgstr ""
+msgstr "Bağlantı için kullanılacak socket dosyası"
 
 #: client/drizzle.cc:1536
 msgid "Output in table format."
-msgstr ""
+msgstr "Çıktı tablo formatında"
 
 #: client/drizzle.cc:1539
 msgid ""
@@ -404,7 +417,7 @@ msgstr ""
 
 #: client/drizzle.cc:1548
 msgid "Synonym for option --safe-updates, -U."
-msgstr ""
+msgstr "--safe updates seçeneği için kısaltma, -U."
 
 #: client/drizzle.cc:1551
 msgid "Write more. (-v -v -v gives the table output format)."
@@ -420,7 +433,7 @@ msgstr "Bağlantı koparsa bekle ve tekrar dene."
 
 #: client/drizzle.cc:1558
 msgid "Number of seconds before connection timeout."
-msgstr ""
+msgstr "Bağlantının zaman aşımna uğraması için gereken saniye sayısı."
 
 #: client/drizzle.cc:1563
 msgid "Max length of input line"
@@ -428,20 +441,23 @@ msgstr ""
 
 #: client/drizzle.cc:1568
 msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
+msgstr "--safe-updates kullanırken SELECT için otomatik limit."
 
 #: client/drizzle.cc:1573
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
+"--safe-updates kullanırken satırları birleştirmek için otomatik limit."
 
 #: client/drizzle.cc:1577
 msgid ""
 "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
+"Sunucuya bağlanmak için eski tip protokol (pre-4.1.1) kullanan istemcileri "
+"reddet"
 
 #: client/drizzle.cc:1582
 msgid "Number of lines before each import progress report."
-msgstr ""
+msgstr "Girdi ilerleme raporundan önceki satır sayısı."
 
 #: client/drizzle.cc:1585
 msgid "Ping the server to check if it's alive."
@@ -477,12 +493,13 @@ msgstr ""
 #: client/drizzle.cc:1679
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
+msgstr "UYARI: seçenek eski; onun yerine --disable-pager kullan.\n"
 
 #: client/drizzle.cc:1683
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
+"UYARI: --server-arg seçeneği bu konfigurasyonda desteklenmemektedir.\n"
 
 #: client/drizzle.cc:1714
 msgid ""
@@ -499,7 +516,7 @@ msgstr "Port için girilen değer geçerli değil"
 #: client/drizzle.cc:1861
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
-msgstr ""
+msgstr "İşlediği satır: %<PRIu32>\n"
 
 #: client/drizzle.cc:2076
 msgid "Unknown command: "
@@ -511,6 +528,9 @@ msgid ""
 "    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
+"Tablo ve kolon adlarının tamamlamak için tablo bilgilerini okuyor\n"
+"    Bu seçeneği -A ile iptal edebilirsiniz.\n"
+"\n"
 
 #: client/drizzle.cc:2579
 msgid "No connection. Trying to reconnect..."
@@ -544,8 +564,7 @@ msgstr "Boş küme"
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Kümede %ld satır"
 
 #: client/drizzle.cc:2807
 msgid "Query OK"
@@ -560,7 +579,7 @@ msgstr[0] "Sorgu bitti %ld satır etkilendi"
 #: client/drizzledump.cc:345
 msgid ""
 "Number of rows before each output progress report (requires --verbose)."
-msgstr ""
+msgstr "Çıktı ilerleme raporundan önceki satır sayısı (--verbose gerektirir)"
 
 #: client/drizzledump.cc:415
 #, c-format
@@ -580,12 +599,12 @@ msgstr "Kullanım: %s [SEÇENEKLER] veritabanı [tablolar]\n"
 #: client/drizzledump.cc:428
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
+msgstr "OR %s [SEÇENEKLER] --databases [SEÇENEKLER] DB1 [DB2 DB3 ...]\n"
 
 #: client/drizzledump.cc:430
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
+msgstr "OR %s [SEÇENEKLER] -all--databases [SEÇENEKLER]\n"
 
 #: client/drizzledump.cc:438
 msgid ""
@@ -595,7 +614,7 @@ msgstr ""
 
 #: client/drizzledump.cc:439
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Drizzle veritabanı sunucusundan tanımları ve veriyi indiriyor."
 
 #: client/drizzledump.cc:450
 #, c-format
@@ -609,17 +628,19 @@ msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead.\n"
 msgstr ""
+"Port için tamsayı olmayan bir değer verildi. Eğer şifre girmeye "
+"çalışıyorsanız --password kullanın.\n"
 
 #: client/drizzledump.cc:565 client/drizzleimport.cc:203
 #: client/drizzleslap.cc:755 client/drizzletest.cc:4737
 #, c-format
 msgid "Value supplied for port is not valid.\n"
-msgstr ""
+msgstr "Port için verilen değer geçersiz.\n"
 
 #: client/drizzledump.cc:582
 #, c-format
 msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
+msgstr "Şifreyi kopyalarken hafıza ayırma hatası.İptal ediliyor.\n"
 
 #: client/drizzledump.cc:621
 #, c-format
@@ -634,7 +655,7 @@ msgstr ""
 #: client/drizzledump.cc:681
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
-msgstr ""
+msgstr "--compatible ile uyumsuz mod: %s\n"
 
 #: client/drizzledump.cc:726
 #, c-format
@@ -658,7 +679,7 @@ msgstr ""
 #: client/drizzledump.cc:744
 #, c-format
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
-msgstr ""
+msgstr "%s: --databases ya da --all-databases --tab ile kullanılamaz.\n"
 
 #: client/drizzledump.cc:767
 #, c-format
@@ -679,12 +700,12 @@ msgstr "Çalıştırılamadı '%s': %s (%d)"
 #: client/drizzledump.cc:956
 #, c-format
 msgid "-- Connecting to %s...\n"
-msgstr ""
+msgstr "-- %s e bağlanıyor.\n"
 
 #: client/drizzledump.cc:977
 #, c-format
 msgid "-- Disconnecting from %s...\n"
-msgstr ""
+msgstr "-- %s den bağlantı kesiliyor ....\n"
 
 #: client/drizzledump.cc:988
 msgid "Couldn't allocate memory"
@@ -700,7 +721,7 @@ msgstr ""
 #: client/drizzledump.cc:1346
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
-msgstr ""
+msgstr "-- %s tablosunun tablo yapısı alınıyor...\n"
 
 #: client/drizzledump.cc:1460
 #, c-format
@@ -933,7 +954,7 @@ msgstr ""
 #: drizzled/drizzled.cc:1281
 #, c-format
 msgid "Unknown locale: '%s'"
-msgstr ""
+msgstr "Bilinmeyen locale: '%s'"
 
 #: drizzled/drizzled.cc:1310
 msgid "Can't create thread-keys"
@@ -945,7 +966,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1346
 msgid "Failed to initialize plugins."
-msgstr ""
+msgstr "Eklentileri başlatılamadı"
 
 #: drizzled/drizzled.cc:1377
 #, c-format
@@ -960,12 +981,12 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1404
 msgid "Can't init databases"
-msgstr ""
+msgstr "Veritabanları başlatılamıyor"
 
 #: drizzled/drizzled.cc:1428
 #, c-format
 msgid "Unknown/unsupported table type: %s"
-msgstr ""
+msgstr "Bilinmeyen/desteklenmeyen tablo tipi: %s"
 
 #: drizzled/drizzled.cc:1434
 #, c-format
@@ -999,7 +1020,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1700
 msgid "IP address to bind to."
-msgstr ""
+msgstr "Bağlanılacak IP adresi."
 
 #: drizzled/drizzled.cc:1704
 msgid "Chroot drizzled daemon during startup."
@@ -1019,7 +1040,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1721
 msgid "Path to the database root."
-msgstr ""
+msgstr "Veritabanı kökünün yolu."
 
 #: drizzled/drizzled.cc:1725
 msgid "Set the default storage engine (table type) for tables."
@@ -1027,7 +1048,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1729
 msgid "Set the default time zone."
-msgstr ""
+msgstr "Öntanımlı zaman dilimini ayarla"
 
 #: drizzled/drizzled.cc:1734
 msgid "Print a symbolic stack trace on failure."
@@ -1091,7 +1112,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1796
 msgid "Enable symbolic link support."
-msgstr ""
+msgstr "Sembolik link desteğini etkinleştir."
 
 #: drizzled/drizzled.cc:1805
 msgid ""
@@ -1100,7 +1121,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1810
 msgid "Path for temporary files."
-msgstr ""
+msgstr "Geçici dosyalar için yol"
 
 #: drizzled/drizzled.cc:1814
 msgid "Default transaction isolation level."
@@ -1209,7 +1230,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1939
 msgid "Buffer length for TCP/IP and socket communication."
-msgstr ""
+msgstr "TCP/IP ve soket iltişimi için tampon uzunluğu."
 
 #: drizzled/drizzled.cc:1944
 msgid ""
@@ -1232,7 +1253,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1964
 msgid "Directory for plugins."
-msgstr ""
+msgstr "Eklentiler klasörü"
 
 #: drizzled/drizzled.cc:1968
 msgid ""
