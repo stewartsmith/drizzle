@@ -374,7 +374,7 @@ static int init(drizzled::plugin::Registry &registry)
   /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)
   {
-    transaction_log= new (nothrow) TransactionLog("transaction_log",
+    transaction_log= new (nothrow) TransactionLog("transaction_log_applier",
                                                   string(sysvar_transaction_log_file), 
                                                   sysvar_transaction_log_checksum_enabled);
 
