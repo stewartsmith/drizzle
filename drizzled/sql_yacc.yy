@@ -1024,7 +1024,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_attribute opt_attribute_list attribute
         flush_options flush_option
         equal optional_braces
-        opt_mi_check_type opt_to mi_check_types normal_join
+        normal_join
         table_to_table_list table_to_table opt_table_list opt_as
         single_multi
         union_clause union_list
@@ -2564,14 +2564,8 @@ checksum:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
-          table_list opt_checksum_type
+          table_list
           {}
-        ;
-
-opt_checksum_type:
-          /* nothing */ { ((statement::Checksum *)Lex->statement)->check_opt.flags= 0; }
-        | QUICK         { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_QUICK; }
-        | EXTENDED_SYM  { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_EXTEND; }
         ;
 
 
@@ -2598,26 +2592,8 @@ check:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
-          table_list opt_mi_check_type
+          table_list
           {}
-        ;
-
-opt_mi_check_type:
-          /* empty */ { ((statement::Check *)Lex->statement)->check_opt.flags = T_MEDIUM; }
-        | mi_check_types {}
-        ;
-
-mi_check_types:
-          mi_check_type {}
-        | mi_check_type mi_check_types {}
-        ;
-
-mi_check_type:
-          QUICK               { ((statement::Check *)Lex->statement)->check_opt.flags|= T_QUICK; }
-        | FAST_SYM            { ((statement::Check *)Lex->statement)->check_opt.flags|= T_FAST; }
-        | MEDIUM_SYM          { ((statement::Check *)Lex->statement)->check_opt.flags|= T_MEDIUM; }
-        | EXTENDED_SYM        { ((statement::Check *)Lex->statement)->check_opt.flags|= T_EXTEND; }
-        | CHANGED             { ((statement::Check *)Lex->statement)->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
         ;
 
 optimize:

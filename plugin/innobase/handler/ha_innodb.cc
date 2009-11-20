@@ -6666,8 +6666,7 @@ UNIV_INTERN
 int
 ha_innobase::analyze(
 /*=================*/
-	Session*	,		/*!< in: connection thread handle */
-	HA_CHECK_OPT*	)	/*!< in: currently ignored */
+	Session*)		/*!< in: connection thread handle */
 {
 	/* Simply call ::info() with all the flags */
 	info(HA_STATUS_TIME | HA_STATUS_CONST | HA_STATUS_VARIABLE);
@@ -6682,8 +6681,7 @@ UNIV_INTERN
 int
 ha_innobase::optimize(
 /*==================*/
-	Session*	,	/*!< in: connection thread handle */
-	HA_CHECK_OPT*	)	/*!< in: currently ignored */
+	Session*)	/*!< in: connection thread handle */
 {
 	return(HA_ADMIN_TRY_ALTER);
 }
@@ -6697,9 +6695,7 @@ UNIV_INTERN
 int
 ha_innobase::check(
 /*===============*/
-	Session*	session,	/*!< in: user thread handle */
-	HA_CHECK_OPT*	)		/*!< in: check options, currently
-					ignored */
+	Session*	session)	/*!< in: user thread handle */
 {
 	ulint		ret;
 

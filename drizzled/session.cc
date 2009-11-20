@@ -169,12 +169,6 @@ int session_tx_isolation(const Session *session)
   return (int) session->variables.tx_isolation;
 }
 
-extern "C"
-void session_inc_row_count(Session *session)
-{
-  session->row_count++;
-}
-
 Session::Session(plugin::Client *client_arg)
   :
   Open_tables_state(refresh_version),

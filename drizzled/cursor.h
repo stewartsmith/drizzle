@@ -694,7 +694,7 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check(Session *, HA_CHECK_OPT *)
+  virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual void start_bulk_insert(ha_rows)
@@ -740,10 +740,10 @@ private:
   virtual int reset_auto_increment(uint64_t)
   { return HA_ERR_WRONG_COMMAND; }
 
-  virtual int optimize(Session *, HA_CHECK_OPT *)
+  virtual int optimize(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
-  virtual int analyze(Session *, HA_CHECK_OPT *)
+  virtual int analyze(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual int disable_indexes(uint32_t)

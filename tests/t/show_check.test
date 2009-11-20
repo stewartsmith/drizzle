@@ -18,13 +18,9 @@ insert into t1 values (1,2,2),(2,2,3),(3,2,4),(4,2,4);
 --echo -- after Bug#29394 is implemented.
 
 --enable_metadata
-check table t1 fast;
-check table t1 fast;
-check table t1 changed;
+check table t1;
 insert into t1 values (5,5,5);
-check table t1 changed;
-check table t1 medium;
-check table t1 extended;
+check table t1;
 show index from t1;
 --disable_metadata
 --error ER_DUP_ENTRY

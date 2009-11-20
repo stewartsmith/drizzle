@@ -11452,7 +11452,7 @@ DROP TABLE t1, t2, t4, t5, t6;
 create table t1(a longblob) engine=archive;
 insert into t1 set a='';
 insert into t1 set a='a';
-check table t1 extended;
+check table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 drop table t1;
