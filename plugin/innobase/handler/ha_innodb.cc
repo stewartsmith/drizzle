@@ -383,7 +383,6 @@ public:
   UNIV_INTERN int doCreateTable(Session *session, 
                                 const char *table_name,
                                 Table& form,
-                                HA_CREATE_INFO& create_info,
                                 drizzled::message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from, 
@@ -5371,7 +5370,6 @@ create_options_are_valid(
 	Session*	session,	/*!< in: connection thread. */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO& create_info,
         drizzled::message::Table& create_proto)
 {
 	ibool	kbs_specified	= FALSE;
@@ -5429,7 +5427,7 @@ create_options_are_valid(
 	}
 
 	/* Now check for ROW_FORMAT specifier. */
-	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_proto.options().has_row_type()) {
 		switch (form.s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_COMPRESSED:
@@ -5531,9 +5529,6 @@ InnobaseEngine::doCreateTable(
 	const char*	table_name,	/*!< in: table name */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO& create_info,	/*!< in: more information of the
-					created table, contains also the
-					create statement string */
         drizzled::message::Table& create_proto)
 {
 	int		error;
@@ -5549,6 +5544,7 @@ InnobaseEngine::doCreateTable(
 	/* Cache the value of innodb_file_format, in case it is
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
+        bool lex_identified_temp_table= (create_proto.type() == drizzled::message::Table::TEMPORARY);
 
 	assert(session != NULL);
 
@@ -5564,7 +5560,7 @@ InnobaseEngine::doCreateTable(
 	table. Currently InnoDB does not support symbolic link on Windows. */
 
 	if (srv_file_per_table
-	    && (!create_info.options & HA_LEX_CREATE_TMP_TABLE)) {
+	    && (! lex_identified_temp_table)) {
 
 		if ((table_name[1] == ':')
 		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
@@ -5610,7 +5606,7 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (!create_options_are_valid(session, form, create_info, create_proto)) {
+	if (! create_options_are_valid(session, form, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
@@ -5659,7 +5655,7 @@ InnobaseEngine::doCreateTable(
 		}
 	}
 
-	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_proto.options().has_row_type()) {
 		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
 			if (form.s->row_type != ROW_TYPE_COMPRESSED) {
@@ -5734,10 +5730,8 @@ InnobaseEngine::doCreateTable(
 		case ROW_TYPE_NOT_USED:
 		case ROW_TYPE_FIXED:
 		default:
-			push_warning(session,
-				     DRIZZLE_ERROR::WARN_LEVEL_WARN,
-				     ER_ILLEGAL_HA_CREATE_OPTION,
-				     "InnoDB: assuming ROW_FORMAT=COMPACT.");
+                        error = ER_ILLEGAL_HA_CREATE_OPTION;
+                        goto cleanup;
 		case ROW_TYPE_DEFAULT:
 		case ROW_TYPE_COMPACT:
 			iflags = DICT_TF_COMPACT;
@@ -5750,7 +5744,7 @@ InnobaseEngine::doCreateTable(
 	}
 
 	error = create_table_def(trx, &form, norm_name,
-		create_info.options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
+		lex_identified_temp_table ? name2 : NULL,
 		iflags);
 
 	if (error) {
@@ -5805,7 +5799,7 @@ InnobaseEngine::doCreateTable(
 	if (*trx->mysql_query_str) {
 		error = row_table_add_foreign_constraints(trx,
 			*trx->mysql_query_str, norm_name,
-			create_info.options & HA_LEX_CREATE_TMP_TABLE);
+			lex_identified_temp_table);
 
 		error = convert_error_code_to_mysql(error, iflags, NULL);
 
@@ -5843,9 +5837,9 @@ InnobaseEngine::doCreateTable(
 	/* We need to copy the AUTOINC value from the old table if
 	this is an ALTER TABLE. */
 
-	if (((create_info.used_fields & HA_CREATE_USED_AUTO)
+	if ((create_proto.options().has_auto_increment_value()
 	    || session_sql_command(session) == SQLCOM_ALTER_TABLE)
-	    && create_info.auto_increment_value != 0) {
+	    && create_proto.options().auto_increment_value() != 0) {
 
 		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or
 		CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
@@ -5854,7 +5848,7 @@ InnobaseEngine::doCreateTable(
 		auto increment field if the value is greater than the
 		maximum value in the column. */
 
-		auto_inc_value = create_info.auto_increment_value;
+		auto_inc_value = create_proto.options().auto_increment_value();
 
 		dict_table_autoinc_lock(innobase_table);
 		dict_table_autoinc_initialize(innobase_table, auto_inc_value);

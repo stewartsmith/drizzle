@@ -751,11 +751,10 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
   @retval
    1  error
 
-   @todo refactor to remove goto, and absorb check_engine() logic into createTable()
+   @todo refactor to remove goto
 */
 int plugin::StorageEngine::createTable(Session& session, const char *path,
                                        const char *db, const char *table_name,
-                                       HA_CREATE_INFO& create_info,
                                        bool update_create_info,
                                        drizzled::message::Table& table_proto, bool proto_used)
 {
@@ -780,7 +779,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(&create_info, &table_proto);
+    table.updateCreateInfo(&table_proto);
 
   /* Check for legal operations against the Engine using the proto (if used) */
   if (proto_used)
@@ -798,20 +797,11 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
       goto err2;
     }
   }
-  else // Lets see how good old create_info handles this
+
+  if (! share.storage_engine->is_enabled())
   {
-    if (create_info.options & HA_LEX_CREATE_TMP_TABLE && 
-        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
-    else if (create_info.options | HA_LEX_CREATE_TMP_TABLE &&
-             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
+    error= HA_ERR_UNSUPPORTED;
+    goto err2;
   }
 
 
@@ -823,8 +813,10 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
 
     share.storage_engine->setTransactionReadWrite(session);
 
-    error= share.storage_engine->doCreateTable(&session, table_name_arg, table,
-                                               create_info, table_proto);
+    error= share.storage_engine->doCreateTable(&session, 
+                                               table_name_arg,
+                                               table,
+                                               table_proto);
   }
 
 err2:

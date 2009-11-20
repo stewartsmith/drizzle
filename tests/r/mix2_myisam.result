@@ -958,11 +958,13 @@ Error	1146	Table 'test.t7' doesn't exist
 drop table t1,t2,t3, t4, t5, t6;
 create TEMPORARY table t1 (a int) engine=MyISAM;
 create table t2 like t1;
+ERROR HY000: Can't create table 'test.t2' (errno: 138)
+create table t2 like t1 engine=innodb;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` int DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=InnoDB
 drop table t1,t2;
 flush status;
 show status like "binlog_cache_use";
@@ -1621,13 +1623,13 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL
 ) ENGINE=MyISAM
 drop table t1;
-create TEMPORARY table t1 (v varchar(10), c char(10)) row_format=fixed;
+create TEMPORARY table t1 (v varchar(10), c char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL
-) ENGINE=MyISAM ROW_FORMAT=FIXED
+) ENGINE=MyISAM
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
 concat('*',v,'*',c,'*')

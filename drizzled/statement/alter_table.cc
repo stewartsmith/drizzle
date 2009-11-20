@@ -64,9 +64,8 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  if (is_engine_set)
   {
-
     create_info.db_type= 
       plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
@@ -501,7 +500,9 @@ static bool mysql_prepare_alter_table(Session *session,
     table_options->set_comment(table->s->getComment());
 
   if (table->s->tmp_table)
-    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
+  {
+    table_proto->set_type(message::Table::TEMPORARY);
+  }
 
   rc= false;
   alter_info->create_list.swap(new_create_list);
@@ -800,10 +801,13 @@ bool alter_table(Session *session,
   }
 
   if (table->s->tmp_table != NO_TMP_TABLE)
-    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
-
-  if (check_engine(session, new_name, create_info))
-    goto err;
+  {
+    create_proto->set_type(message::Table::TEMPORARY);
+  }
+  else
+  {
+    create_proto->set_type(message::Table::STANDARD);
+  }
 
   new_db_type= create_info->db_type;
 
@@ -816,7 +820,13 @@ bool alter_table(Session *session,
   }
 
   if (create_info->row_type == ROW_TYPE_NOT_USED)
+  {
+    message::Table::TableOptions *table_options;
+    table_options= create_proto->mutable_options();
+
     create_info->row_type= table->s->row_type;
+    table_options->set_row_type((drizzled::message::Table_TableOptions_RowType)table->s->row_type);
+  }
 
   if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
       new_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
@@ -946,18 +956,6 @@ bool alter_table(Session *session,
   }
 
   /* We have to do full alter table. */
-
-  /*
-    If the old table had partitions and we are doing ALTER Table ...
-    engine= <new_engine>, the new table must preserve the original
-    partitioning. That means that the new engine is still the
-    partitioning engine, not the engine specified in the parser.
-    This is discovered  in prep_alter_part_table, which in such case
-    updates create_info->db_type.
-    Now we need to update the stack copy of create_info->db_type,
-    as otherwise we won't be able to correctly move the files of the
-    temporary table to the result table files.
-  */
   new_db_type= create_info->db_type;
 
   if (mysql_prepare_alter_table(session, table, create_info, create_proto,
@@ -1433,27 +1431,25 @@ create_temporary_table(Session *session,
     We don't log the statement, it will be logged later.
   */
   create_proto->set_name(tmp_name);
-  create_proto->set_type(message::Table::TEMPORARY);
 
   message::Table::StorageEngine *protoengine;
   protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
   error= mysql_create_table(session, new_db, tmp_name,
-                            create_info, create_proto, alter_info, true, 0);
+                            create_info, create_proto, alter_info, true, 0, false);
 
-  return(error);
+  return error;
 }
 
 /** @TODO This will soon die. */
 bool create_like_schema_frm(Session* session,
                             TableList* schema_table,
-                            HA_CREATE_INFO *create_info,
                             message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   AlterInfo alter_info;
-  bool tmp_table= (create_info->options & HA_LEX_CREATE_TMP_TABLE);
+  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
   uint32_t keys= schema_table->table->s->keys;
   uint32_t db_options= 0;
 
@@ -1476,16 +1472,12 @@ bool create_like_schema_frm(Session* session,
 
   if (mysql_prepare_create_table(session, &local_create_info, table_proto,
                                  &alter_info,
-                                 tmp_table, &db_options,
+                                 lex_identified_temp_table, &db_options,
                                  schema_table->table->cursor,
                                  &schema_table->table->s->key_info, &keys, 0))
     return true;
 
   table_proto->set_name("system_stupid_i_s_fix_nonsense");
-  if(tmp_table)
-    table_proto->set_type(message::Table::TEMPORARY);
-  else
-    table_proto->set_type(message::Table::STANDARD);
 
   {
     message::Table::StorageEngine *protoengine;

@@ -911,8 +911,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <num>
         type int_type real_type order_dir field_def
-        if_exists opt_table_options table_options
-        table_option opt_if_not_exists
+        if_exists opt_table_options
+        opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
@@ -1142,7 +1142,7 @@ create:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             statement->change=NULL;
-            statement->create_info.options=$2 | $4;
+            statement->is_if_not_exists= $4;
             statement->create_info.db_type= NULL;
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
@@ -1150,7 +1150,7 @@ create:
 	    message::Table *proto= &statement->create_table_proto;
 	    
 	    proto->set_name($5->table.str);
-	    if($2 & HA_LEX_CREATE_TMP_TABLE)
+	    if($2)
 	      proto->set_type(message::Table::TEMPORARY);
 	    else
 	      proto->set_type(message::Table::STANDARD);
@@ -1196,7 +1196,7 @@ create:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->create_info.options=$3;
+            statement->is_if_not_exists= $3;
           }
           opt_create_database_options
           {
@@ -1214,7 +1214,7 @@ create2:
             LEX *lex= session->lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->is_create_table_like= true;
             if (!lex->select_lex.add_table_to_list(session, $2, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1224,7 +1224,7 @@ create2:
             LEX *lex= session->lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->is_create_table_like= true;
             if (!lex->select_lex.add_table_to_list(session, $3, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1304,22 +1304,13 @@ opt_create_database_options:
         ;
 
 opt_table_options:
-          /* empty */ { $$= 0; }
-        | table_options  { $$= $1;}
-        ;
-
-table_options:
-          table_option { $$=$1; }
-        | table_option table_options { $$= $1 | $2; }
-        ;
-
-table_option:
-          TEMPORARY_SYM { $$=HA_LEX_CREATE_TMP_TABLE; }
+          /* empty */ { $$= false; }
+        | TEMPORARY_SYM { $$= true; }
         ;
 
 opt_if_not_exists:
-          /* empty */ { $$= 0; }
-        | IF not EXISTS { $$=HA_LEX_CREATE_IF_NOT_EXISTS; }
+          /* empty */ { $$= false; }
+        | IF not EXISTS { $$= true; }
         ;
 
 opt_create_table_options:
@@ -1342,16 +1333,12 @@ create_table_option:
           ENGINE_SYM opt_equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            message::Table::StorageEngine *protoengine;
+            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
 
-            statement->create_info.db_type= NULL;
-            statement->create_info.used_fields|= HA_CREATE_USED_ENGINE;
+            statement->is_engine_set= true;
 
-	    {
-	      message::Table::StorageEngine *protoengine;
-	      protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
-
-	      protoengine->set_name($3.str);
-	    }
+            protoengine->set_name($3.str);
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
@@ -1371,10 +1358,14 @@ create_table_option:
           }
         | AUTO_INC opt_equal ulonglong_num
           {
+	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
+	    tableopts->set_auto_increment_value($3);
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -2277,8 +2268,6 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.db_type= 0;
-            statement->create_info.default_table_charset= NULL;
             statement->create_info.row_type= ROW_TYPE_NOT_USED;
             statement->alter_info.build_method= $2;
           }
@@ -5053,7 +5042,7 @@ show_param:
             Lex->statement= statement;
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->create_info.options=$3;
+            statement->is_if_not_exists= $3;
             Lex->name= $4;
           }
         | CREATE TABLE_SYM table_ident

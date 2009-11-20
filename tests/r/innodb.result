@@ -2048,15 +2048,13 @@ t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
-create  table t1 (v varchar(10), c char(10)) row_format=fixed;
-Warnings:
-Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
+create  table t1 (v varchar(10), c char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB ROW_FORMAT=FIXED
+) ENGINE=InnoDB
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
 concat('*',v,'*',c,'*')

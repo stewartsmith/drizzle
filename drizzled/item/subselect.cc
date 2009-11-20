@@ -40,10 +40,21 @@ inline Item * and_items(Item* cond, Item *item)
   return (cond? (new Item_cond_and(cond, item)) : item);
 }
 
-Item_subselect::Item_subselect():
-  Item_result_field(), value_assigned(0), session(0), substitution(0),
-  engine(0), old_engine(0), used_tables_cache(0), have_to_be_excluded(0),
-  const_item_cache(1), engine_changed(0), changed(0),
+Item_subselect::Item_subselect() :
+  Item_result_field(),
+  value_assigned(false),
+  session(NULL),
+  substitution(NULL),
+  unit(NULL),
+  engine(NULL),
+  old_engine(NULL),
+  used_tables_cache(0),
+  max_columns(0),
+  parsing_place(NO_MATTER),
+  have_to_be_excluded(false),
+  const_item_cache(true),
+  engine_changed(false),
+  changed(false),
   is_correlated(false)
 {
   with_subselect= 1;
@@ -704,12 +715,18 @@ bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
 }
 
 Item_in_subselect::Item_in_subselect(Item * left_exp,
-				     Select_Lex *select_lex):
-  Item_exists_subselect(), left_expr_cache(0), first_execution(true),
-  optimizer(0), pushed_cond_guards(NULL), exec_method(NOT_TRANSFORMED),
-  upper_item(0)
+                                     Select_Lex *select_lex) :
+  Item_exists_subselect(),
+  left_expr(left_exp),
+  left_expr_cache(NULL),
+  first_execution(true),
+  optimizer(NULL),
+  pushed_cond_guards(NULL),
+  sj_convert_priority(0),
+  expr_join_nest(NULL),
+  exec_method(NOT_TRANSFORMED),
+  upper_item(NULL)
 {
-  left_expr= left_exp;
   init(select_lex, new select_exists_subselect(this));
   max_columns= UINT_MAX;
   maybe_null= 1;
@@ -1814,34 +1831,18 @@ bool Item_in_subselect::setup_engine()
 
 bool Item_in_subselect::init_left_expr_cache()
 {
-  JOIN *outer_join;
-  Next_select_func end_select;
-  bool use_result_field= false;
+  JOIN *outer_join= NULL;
 
   outer_join= unit->outer_select()->join;
-  if (!outer_join || !outer_join->tables)
+  if (! outer_join || ! outer_join->tables || ! outer_join->join_tab)
     return true;
-  /*
-    If we use end_[send | write]_group to handle complete rows of the outer
-    query, make the cache of the left IN operand use Item_field::result_field
-    instead of Item_field::field.  We need this because normally
-    Cached_item_field uses Item::field to fetch field data, while
-    copy_ref_key() that copies the left IN operand into a lookup key uses
-    Item::result_field. In the case end_[send | write]_group result_field is
-    one row behind field.
-  */
-  end_select= outer_join->join_tab[outer_join->tables-1].next_select;
-  if (end_select == end_send_group || end_select == end_write_group)
-    use_result_field= true;
 
   if (!(left_expr_cache= new List<Cached_item>))
     return true;
 
   for (uint32_t i= 0; i < left_expr->cols(); i++)
   {
-    Cached_item *cur_item_cache= new_Cached_item(session,
-                                                 left_expr->element_index(i),
-                                                 use_result_field);
+    Cached_item *cur_item_cache= new_Cached_item(session, left_expr->element_index(i));
     if (!cur_item_cache || left_expr_cache->push_front(cur_item_cache))
       return true;
   }

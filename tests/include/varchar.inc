@@ -214,7 +214,7 @@ eval create $temp table t1 (v char(10));
 show create table t1;
 drop table t1;
 
-eval create $temp table t1 (v varchar(10), c char(10)) row_format=fixed;
+eval create $temp table t1 (v varchar(10), c char(10));
 show create table t1;
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
