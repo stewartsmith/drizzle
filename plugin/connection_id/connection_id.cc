@@ -83,7 +83,7 @@ static int finalize(plugin::Registry &registry)
    return 0;
 }
 
-drizzle_declare_plugin(connection_id)
+drizzle_declare_plugin
 {
   "connection_id",
   "1.0",

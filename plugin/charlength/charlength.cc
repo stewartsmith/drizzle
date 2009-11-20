@@ -80,7 +80,7 @@ static int finalize(drizzled::plugin::Registry &registry)
    return 0;
 }
 
-drizzle_declare_plugin(charlength)
+drizzle_declare_plugin
 {
   "charlength",
   "1.0",

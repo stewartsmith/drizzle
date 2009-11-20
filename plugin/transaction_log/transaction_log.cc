@@ -520,7 +520,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(transaction_log)
+drizzle_declare_plugin
 {
   "transaction_log",
   "0.1",

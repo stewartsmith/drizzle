@@ -83,7 +83,7 @@ bool select_union::flush()
   int error;
   if ((error=table->cursor->extra(HA_EXTRA_NO_CACHE)))
   {
-    table->cursor->print_error(error, MYF(0));
+    table->print_error(error, MYF(0));
     return 1;
   }
   return 0;
@@ -480,9 +480,9 @@ bool Select_Lex_Unit::exec()
       }
       /* Needed for the following test and for records_at_start in next loop */
       int error= table->cursor->info(HA_STATUS_VARIABLE);
-      if(error)
+      if (error)
       {
-        table->cursor->print_error(error, MYF(0));
+        table->print_error(error, MYF(0));
         return(1);
       }
       if (found_rows_for_union && !sl->braces &&

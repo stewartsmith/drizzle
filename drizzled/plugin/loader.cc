@@ -46,9 +46,6 @@
 using namespace std;
 using namespace drizzled;
  
-static const int REPORT_TO_LOG= 1;
-static const int REPORT_TO_USER= 2;
-
 typedef plugin::Manifest builtin_plugin[];
 extern builtin_plugin PANDORA_BUILTIN_LIST;
 static plugin::Manifest *drizzled_builtins[]=
@@ -59,8 +56,9 @@ static plugin::Manifest *drizzled_builtins[]=
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
+char *opt_plugin_add= NULL;
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= QUOTE_ARG(PANDORA_PLUGIN_LIST);
+const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
@@ -288,7 +286,7 @@ static inline void free_plugin_mem(plugin::Library *p)
 }
 
 
-static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
+static plugin::Library *plugin_dl_add(const LEX_STRING *dl)
 {
   string dlpath;
   uint32_t plugin_dir_len;
@@ -306,11 +304,8 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
                                system_charset_info, 1) ||
       plugin_dir_len + dl->length + 1 >= FN_REFLEN)
   {
-    if (report & REPORT_TO_USER)
-      my_error(ER_UDF_NO_PATHS, MYF(0));
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_UDF_NO_PATHS));
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_UDF_NO_PATHS));
+    return NULL;
   }
   /* If this dll is already loaded just increase ref_count. */
   if ((tmp= plugin_dl_find(dl)))
@@ -321,9 +316,11 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
   /* Compile dll path */
   dlpath.append(opt_plugin_dir);
   dlpath.append("/");
+  dlpath.append("lib");
   dlpath.append(dl->str);
+  dlpath.append("_plugin.so");
   /* Open new dll handle */
-  if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
+  if (!(plugin_dl.handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL)))
   {
     const char *errmsg= dlerror();
     uint32_t dlpathlen= dlpath.length();
@@ -333,27 +330,21 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
       if (*errmsg == ':') errmsg++;
       if (*errmsg == ' ') errmsg++;
     }
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath.c_str(), errno, errmsg);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY), dlpath.c_str(), errno, errmsg);
 
     // This is, in theory, should cause dlerror() to deallocate the error
     // message. Found this via Google'ing :)
     (void)dlerror();
 
-    return(0);
+    return NULL;
   }
 
   /* Find plugin declarations */
   if (!(sym= dlsym(plugin_dl.handle, plugin_declarations_sym)))
   {
     free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_FIND_DL_ENTRY, MYF(0), plugin_declarations_sym);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), plugin_declarations_sym);
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), plugin_declarations_sym);
+    return NULL;
   }
 
   plugin_dl.plugins= static_cast<plugin::Manifest *>(sym);
@@ -363,23 +354,17 @@ static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
   if (! (plugin_dl.dl.str= (char*) calloc(plugin_dl.dl.length, sizeof(char))))
   {
     free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_OUTOFMEMORY, MYF(0), plugin_dl.dl.length);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), plugin_dl.dl.length);
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), plugin_dl.dl.length);
+    return NULL;
   }
   strcpy(plugin_dl.dl.str, dl->str);
   /* Add this dll to array */
   if (! (tmp= plugin_dl_insert_or_reuse(&plugin_dl)))
   {
     free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_OUTOFMEMORY, MYF(0), sizeof(plugin::Library));
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY),
-                    sizeof(plugin::Library));
-    return(0);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY),
+                  sizeof(plugin::Library));
+    return NULL;
   }
   return(tmp);
 }
@@ -413,7 +398,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
 static plugin::Module *plugin_insert_or_reuse(plugin::Module *module)
 {
   if (insert_dynamic(&module_array, (unsigned char*)&module))
-    return(0);
+    return NULL;
   module= *dynamic_element(&module_array, module_array.elements - 1,
                            plugin::Module **);
   return module;
@@ -426,7 +411,7 @@ static plugin::Module *plugin_insert_or_reuse(plugin::Module *module)
 */
 static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
-                       int *argc, char **argv, int report)
+                       int *argc, char **argv)
 {
   plugin::Manifest *manifest;
   if (! initialized)
@@ -434,13 +419,10 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
 
   if (registry.find(name))
   {
-    if (report & REPORT_TO_USER)
-      my_error(ER_UDF_EXISTS, MYF(0), name->str);
-    if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UDF_EXISTS), name->str);
+    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UDF_EXISTS), name->str);
     return(true);
   }
-  plugin::Library *library= plugin_dl_add(dl, report);
+  plugin::Library *library= plugin_dl_add(dl);
   if (library == NULL)
     return true;
 
@@ -473,10 +455,7 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
       return(false);
     }
   }
-  if (report & REPORT_TO_USER)
-    my_error(ER_CANT_FIND_DL_ENTRY, MYF(0), name->str);
-  if (report & REPORT_TO_LOG)
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), name->str);
+  errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY), name->str);
 err:
   plugin_dl_del(dl);
   return(true);
@@ -653,7 +632,19 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
   if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
   {
     if (opt_plugin_load)
+    {
       plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
+    }
+    else
+    {
+      string tmp_plugin_list(opt_plugin_load_default);
+      if (opt_plugin_add)
+      {
+        tmp_plugin_list.push_back(',');
+        tmp_plugin_list.append(opt_plugin_add);
+      }
+      plugin_load_list(registry, &tmp_root, argc, argv, tmp_plugin_list.c_str());
+    }
   }
 
   if (flags & PLUGIN_INIT_SKIP_INITIALIZATION)
@@ -732,7 +723,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
       list= NULL; /* terminate the loop */
       /* fall through */
     case ':':     /* can't use this as delimiter as it may be drive letter */
-    case ';':
+    case ',':
       str->str[str->length]= '\0';
       if (str == &name)  // load all plugins in named module
       {
@@ -743,7 +734,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
         }
 
         dl= name;
-        if ((plugin_dl= plugin_dl_add(&dl, REPORT_TO_LOG)))
+        if ((plugin_dl= plugin_dl_add(&dl)))
         {
           for (plugin= plugin_dl->plugins; plugin->name; plugin++)
           {
@@ -751,8 +742,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
             name.length= strlen(name.str);
 
             free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-            if (plugin_add(plugins, tmp_root, &name, &dl,
-                           argc, argv, REPORT_TO_LOG))
+            if (plugin_add(plugins, tmp_root, &name, &dl, argc, argv))
               goto error;
           }
           plugin_dl_del(&dl); // reduce ref count
@@ -761,8 +751,7 @@ static bool plugin_load_list(plugin::Registry &plugins,
       else
       {
         free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-        if (plugin_add(plugins, tmp_root, &name, &dl,
-                       argc, argv, REPORT_TO_LOG))
+        if (plugin_add(plugins, tmp_root, &name, &dl, argc, argv))
           goto error;
       }
       name.length= dl.length= 0;

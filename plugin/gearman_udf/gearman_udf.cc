@@ -70,7 +70,7 @@ static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(gearman_udf)
+drizzle_declare_plugin
 {
   "gearman_udf",
   "0.1",

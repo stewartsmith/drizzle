@@ -834,7 +834,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(mysql_protocol)
+drizzle_declare_plugin
 {
   "mysql_protocol",
   "0.1",

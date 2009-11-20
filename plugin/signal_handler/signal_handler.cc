@@ -248,7 +248,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(signal_handler)
+drizzle_declare_plugin
 {
   "signal_handler",
   "0.1",
