@@ -48,9 +48,6 @@ AC_DEFUN([_PANDORA_REQUIRE_LIBUUID],[
   AS_IF([test "x$ac_cv_header_uuid_uuid_h" = "xno"],[
     AC_MSG_ERROR([Couldn't find uuid/uuid.h. On Debian this can be found in uuid-dev. On Redhat this can be found in e2fsprogs-devel.])
   ])
-  AS_IF([test "x${ac_cv_libuuid}" = "xno"],[
-    AC_MSG_ERROR([libuuid is required for ${PACKAGE}])
-  ])
 ])
 
 AC_DEFUN([PANDORA_REQUIRE_LIBUUID],[
