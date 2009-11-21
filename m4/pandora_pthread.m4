@@ -202,8 +202,6 @@ then
 fi
 
 
-# Some OSes like Mac OS X have that as a replacement for pthread_yield()
-AC_CHECK_FUNCS(pthread_yield_np, AC_DEFINE([HAVE_PTHREAD_YIELD_NP],[],[Define if you have pthread_yield_np]))
 AC_CACHE_CHECK([if pthread_yield takes zero arguments], ac_cv_pthread_yield_zero_arg,
 [AC_TRY_LINK([#define _GNU_SOURCE
 #include <pthread.h>
