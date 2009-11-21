@@ -1659,20 +1659,15 @@ bool insert_precheck(Session *session, TableList *)
     true   Error
 */
 
-bool create_table_precheck(Session *, TableList *,
-                           TableList *create_table)
+bool create_table_precheck(TableIdentifier &identifier)
 {
-  bool error= true;                                 // Error message is given
-
-  if (create_table && (strcmp(create_table->db, "information_schema") == 0))
+  if (strcmp(identifier.getDBName(), "information_schema") == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
+    return true;
   }
 
-  error= false;
-
-  return(error);
+  return false;
 }
 
 

@@ -34,6 +34,7 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/table_identifier.h>
 
 #include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
 
@@ -286,12 +287,13 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
     path length on success, 0 on failure
 */
 
-static uint32_t build_tmptable_filename(Session* session,
-                                        char *buff, size_t bufflen)
+size_t build_tmptable_filename(char *buff, size_t bufflen)
 {
-  uint32_t length;
+  size_t length;
   ostringstream path_str, post_tmpdir_str;
   string tmp;
+
+  Session *session= current_session;
 
   path_str << drizzle_tmpdir;
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
@@ -1653,7 +1655,7 @@ bool mysql_create_table_no_lock(Session *session,
       /* Check if table exists */
   if (lex_identified_temp_table)
   {
-    path_length= build_tmptable_filename(session, path, sizeof(path));
+    path_length= build_tmptable_filename(path, sizeof(path));
   }
   else
   {
@@ -1804,7 +1806,8 @@ err:
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
 
-bool mysql_create_table(Session *session, const char *db, const char *table_name,
+bool mysql_create_table(Session *session,
+                        TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
 			message::Table *table_proto,
                         AlterInfo *alter_info,
@@ -1819,7 +1822,9 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 
   if (! lex_identified_temp_table)
   {
-    if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
+    if (session->lock_table_name_if_not_cached(identifier.getDBName(),
+                                               identifier.getTableName(),
+                                               &name_lock))
     {
       result= true;
       goto unlock;
@@ -1830,20 +1835,23 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
       {
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            table_name);
+                            identifier.getTableName());
         create_info->table_existed= 1;
         result= false;
       }
       else
       {
-        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
         result= true;
       }
       goto unlock;
     }
   }
 
-  result= mysql_create_table_no_lock(session, db, table_name, create_info,
+  result= mysql_create_table_no_lock(session,
+                                     identifier.getDBName(),
+                                     identifier.getTableName(),
+                                     create_info,
 				     table_proto,
                                      alter_info,
                                      internal_tmp_table,
@@ -2432,7 +2440,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (session->find_temporary_table(db, table_name))
       goto table_exists;
-    dst_path_length= build_tmptable_filename(session, dst_path, sizeof(dst_path));
+    dst_path_length= build_tmptable_filename(dst_path, sizeof(dst_path));
   }
   else
   {

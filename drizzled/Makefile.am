@@ -369,6 +369,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		symbol_hash.h \
 		table.h \
 		table_ident.h \
+		table_identifier.h \
 		table_list.h \
 		table_map_iterator.h \
 		table_proto.h \

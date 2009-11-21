@@ -214,6 +214,7 @@ bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
 
 /* Conversion functions */
+size_t build_tmptable_filename(char *buff, size_t bufflen);
 size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
                             const char *table_name, bool is_tmp);
 

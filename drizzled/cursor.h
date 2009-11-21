@@ -22,6 +22,7 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
+#include <drizzled/table_identifier.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 
@@ -845,7 +846,8 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags);
 
-bool mysql_create_table(Session *session,const char *db, const char *table_name,
+bool mysql_create_table(Session *session,
+                        drizzled::TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
                         AlterInfo *alter_info,

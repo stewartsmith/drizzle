@@ -1424,8 +1424,15 @@ create_temporary_table(Session *session,
 {
   int error;
   plugin::StorageEngine *old_db_type, *new_db_type;
+  TableIdentifier identifier(new_db,
+                             tmp_name,
+                             create_proto->type() == message::Table::TEMPORARY ? NO_TMP_TABLE :
+                             create_info->db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : 
+                             NON_TRANSACTIONAL_TMP_TABLE );
+
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
+
   /*
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
@@ -1436,7 +1443,8 @@ create_temporary_table(Session *session,
   protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
-  error= mysql_create_table(session, new_db, tmp_name,
+  error= mysql_create_table(session,
+                            identifier,
                             create_info, create_proto, alter_info, true, 0, false);
 
   return error;
