@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-31 14:16+0000\n"
-"Last-Translator: Joachim Spalink <J.Spalink@gmx.de>\n"
+"PO-Revision-Date: 2009-11-20 10:12+0000\n"
+"Last-Translator: Keruskerfuerst <armin_mohring@web.de>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-11-01 08:21+0000\n"
+"X-Launchpad-Export-Date: 2009-11-21 04:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -683,7 +683,7 @@ msgstr ""
 
 #: client/drizzledump.cc:439
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Sichert Definitionen und Daten von einem Drizzledatenbankserver"
 
 #: client/drizzledump.cc:450
 #, c-format
@@ -809,7 +809,7 @@ msgstr ""
 #: client/drizzledump.cc:1567
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
-msgstr ""
+msgstr "%s Kann keine Schlüssel für Tabelle %s bekommen\n"
 
 #: client/drizzledump.cc:1645 client/drizzledump.cc:2719
 #, c-format
@@ -825,16 +825,19 @@ msgstr "Fehler beim Auslesen der Tabellen-Struktur der Tabelle: \"%s\""
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
 msgstr ""
+"-- Breche Sicherung der Daten von Tabelle '%s' ab, --keine Daten wurden "
+"benutzt\n"
 
 #: client/drizzledump.cc:1806
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
-msgstr ""
+msgstr "-- Achtung: Brechen Daten für Tabelle '%s' ab wegen Typ %s\n"
 
 #: client/drizzledump.cc:1813
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
 msgstr ""
+"-- Breche Sicherung der Daten für Tabelle '%s' ab, hat keine Felder\n"
 
 #: client/drizzledump.cc:1821
 msgid "-- Sending SELECT query...\n"
@@ -879,7 +882,7 @@ msgstr "-- %<PRIu32> of ~%<PRIu64> Reihen dupliziert für Tabelle %s\n"
 #: client/drizzledump.cc:2012
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
-msgstr ""
+msgstr "Nicht genug Felder von Tabelle '%s'! Abruch.\n"
 
 #: client/drizzledump.cc:2411 client/drizzledump.cc:2525
 msgid "when doing refresh"
@@ -947,7 +950,7 @@ msgstr ""
 #: drizzled/drizzled.cc:841
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
-msgstr ""
+msgstr "Schwerwigendes Signal %d während zurückverfolgung\n"
 
 #: drizzled/drizzled.cc:864
 #, c-format
@@ -975,6 +978,11 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
+"Ist es möglich das drizzled kann bis zu \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+"bytes of memory\n"
+"Hoffe das ist ok: Wenn nicht verändere einige variablen in der Gleichung\n"
+"\n"
 
 #: drizzled/drizzled.cc:886
 #, c-format
