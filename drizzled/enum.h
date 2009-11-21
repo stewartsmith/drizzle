@@ -347,5 +347,4 @@ enum enum_duplicates
   DUP_UPDATE 
 };
 
-
 #endif /* DRIZZLED_ENUM_H */

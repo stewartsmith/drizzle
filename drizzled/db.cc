@@ -473,7 +473,7 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (session->db && !strcmp(session->db, db))
+  if (! session->db.empty() && ! strcmp(session->db.c_str(), db))
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
@@ -607,17 +607,6 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
 
     session->set_db(NULL, 0);
   }
-  else if (my_strcasecmp(system_charset_info, new_db_name->str,
-                         INFORMATION_SCHEMA_NAME.c_str()) == 0)
-  {
-    /*
-      Here we must use Session::set_db(), because we want to copy
-      INFORMATION_SCHEMA_NAME constant.
-    */
-
-    session->set_db(INFORMATION_SCHEMA_NAME.c_str(),
-                    INFORMATION_SCHEMA_NAME.length());
-  }
   else
   {
     /*
@@ -626,10 +615,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
       the previous database name, we should do it explicitly.
     */
 
-    if (session->db)
-      free(session->db);
-
-    session->reset_db(new_db_name->str, new_db_name->length);
+    session->set_db(new_db_name->str, new_db_name->length);
   }
 }
 
@@ -807,14 +793,10 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     }
   }
 
-  /*
-    NOTE: in mysql_change_db_impl() new_db_file_name is assigned to Session
-    attributes and will be freed in Session::~Session().
-  */
-
   db_default_cl= get_default_db_collation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
+  free(new_db_file_name.str);
 
   return false;
 }

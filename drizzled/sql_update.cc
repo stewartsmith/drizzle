@@ -63,7 +63,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     Get the number of the offended index.
     We will see MAX_KEY if the engine cannot determine the affected index.
   */
-  if ((keynr= table->cursor->get_dup_key(error)) >= MAX_KEY)
+  if ((keynr= table->get_dup_key(error)) >= MAX_KEY)
     return;
 
   /* Create unique_map with all fields used by that index. */
@@ -516,7 +516,7 @@ int mysql_update(Session *session, TableList *table_list,
             flags|= ME_FATALERROR; /* Other handler errors are fatal */
 
           prepare_record_for_error_message(error, table);
-	  table->cursor->print_error(error,MYF(flags));
+	  table->print_error(error,MYF(flags));
 	  error= 1;
 	  break;
 	}
@@ -544,7 +544,7 @@ int mysql_update(Session *session, TableList *table_list,
               are ignored. This is a requirement on batching handlers.
             */
             prepare_record_for_error_message(error, table);
-            table->cursor->print_error(error,MYF(0));
+            table->print_error(error,MYF(0));
             error= 1;
             break;
           }
@@ -593,7 +593,7 @@ int mysql_update(Session *session, TableList *table_list,
     */
   {
     prepare_record_for_error_message(loc_error, table);
-    table->cursor->print_error(loc_error,MYF(ME_FATALERROR));
+    table->print_error(loc_error,MYF(ME_FATALERROR));
     error= 1;
   }
   else
@@ -701,7 +701,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
   /* Check that we are not using table that we are updating in a sub select */
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(session, table_list, table_list->next_global, 0)))
+    if ((duplicate= unique_table(table_list, table_list->next_global)))
     {
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
       return true;

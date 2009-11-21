@@ -35,9 +35,9 @@ extern "C" {
 class ha_myisam: public Cursor
 {
   MI_INFO *file;
-  uint64_t int_table_flags;
   char    *data_file_name, *index_file_name;
   bool can_enable_indexes;
+  bool is_ordered;
   int repair(Session *session, MI_CHECK &param, bool optimize);
 
  public:
@@ -45,7 +45,6 @@ class ha_myisam: public Cursor
   ~ha_myisam() {}
   Cursor *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);
-  uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint32_t idx, bool sorted);
   int index_end();
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
@@ -101,6 +100,12 @@ class ha_myisam: public Cursor
                        bool eq_range_arg, bool sorted);
   int read_range_next();
   int reset_auto_increment(uint64_t value);
+
+  virtual bool isOrdered(void)
+  {
+    return false;
+  }
+
 private:
   key_map keys_with_parts;
 };
