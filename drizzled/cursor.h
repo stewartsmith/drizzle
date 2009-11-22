@@ -599,7 +599,7 @@ public:
                                      THR_LOCK_DATA **to,
                                      enum thr_lock_type)
   {
-    abort(); // Impossible programming situation
+    assert(0); // Impossible programming situation
 
     return(to);
   }
