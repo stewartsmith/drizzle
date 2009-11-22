@@ -498,10 +498,10 @@ create table t1 (a int, b varchar(200), c text not null);
 create table t2 (a int, b varchar(200), c text not null);
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
-checksum table t1, t2, t3 quick;
+checksum table t1, t2, t3;
 Table	Checksum
-test.t1	NULL
-test.t2	NULL
+test.t1	2948697075
+test.t2	2948697075
 test.t3	NULL
 Warnings:
 Error	1146	Table 'test.t3' doesn't exist
@@ -512,7 +512,7 @@ test.t2	2948697075
 test.t3	NULL
 Warnings:
 Error	1146	Table 'test.t3' doesn't exist
-checksum table t1, t2, t3 extended;
+checksum table t1, t2, t3;
 Table	Checksum
 test.t1	2948697075
 test.t2	2948697075
@@ -643,13 +643,13 @@ _id
 DELETE FROM t1 WHERE _id < 8;
 SHOW TABLE STATUS LIKE 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 OPTIMIZE TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	optimize	note	The storage engine for the table doesn't support optimize
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 SHOW TABLE STATUS LIKE 't1';
@@ -1463,7 +1463,7 @@ SET GLOBAL myisam_repair_threads=2;
 ALTER TABLE t1 DISABLE KEYS;
 ALTER TABLE t1 ENABLE KEYS;
 SET GLOBAL myisam_repair_threads=1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 DROP TABLE t1;
@@ -1701,13 +1701,13 @@ INSERT INTO t1 VALUES(REPEAT("a",128), 'b');
 SELECT COUNT(*) FROM t1;
 COUNT(*)
 1
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 SELECT COUNT(*) FROM t1;
 COUNT(*)
 1
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 DROP TABLE t1;
@@ -1746,7 +1746,7 @@ COUNT(*)
 CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 DROP TABLE t1;
@@ -1776,13 +1776,13 @@ INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 COUNT(*)
 1
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 SELECT COUNT(*) FROM t1;
 COUNT(*)
 1
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 DROP TABLE t1;
@@ -1821,7 +1821,7 @@ COUNT(*)
 CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 DROP TABLE t1;

@@ -650,16 +650,6 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(Session *,
-                                    THR_LOCK_DATA **to,
-                                    enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
-    file->lock.type=lock_type;
-  *to++= &file->lock;
-  return to;
-}
-
 void ha_heap::drop_table(const char *)
 {
   file->s->delete_on_close= 1;

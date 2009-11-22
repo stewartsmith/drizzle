@@ -86,8 +86,6 @@ class ha_myisam: public Cursor
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-			     enum thr_lock_type lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,

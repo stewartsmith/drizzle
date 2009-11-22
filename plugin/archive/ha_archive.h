@@ -131,8 +131,8 @@ public:
   int read_data_header(azio_stream *file_to_read);
   void position(const unsigned char *record);
   int info(uint);
-  int optimize(Session* session, HA_CHECK_OPT* check_opt);
-  int repair(Session* session, HA_CHECK_OPT* check_opt);
+  int optimize(Session* session);
+  int repair(Session* session);
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   enum row_type get_row_type() const
@@ -142,7 +142,7 @@ public:
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
   bool is_crashed() const;
-  int check(Session* session, HA_CHECK_OPT* check_opt);
+  int check(Session* session);
   bool check_and_repair(Session *session);
   uint32_t max_row_length(const unsigned char *buf);
   bool fix_rec_buff(unsigned int length);

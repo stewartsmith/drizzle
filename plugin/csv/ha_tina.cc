@@ -424,16 +424,6 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
   return(0);
 }
 
-bool ha_tina::check_and_repair(Session *session)
-{
-  HA_CHECK_OPT check_opt;
-
-  check_opt.init();
-
-  return(repair(session, &check_opt));
-}
-
-
 int ha_tina::init_tina_writer()
 {
   /*
@@ -454,11 +444,6 @@ int ha_tina::init_tina_writer()
   return(0);
 }
 
-
-bool ha_tina::is_crashed() const
-{
-  return(share->crashed);
-}
 
 /*
   Free lock controls.
@@ -1078,7 +1063,6 @@ int ha_tina::init_data_file()
   All table scans call this first.
   The order of a table scan is:
 
-  ha_tina::store_lock
   ha_tina::info
   ha_tina::rnd_init
   ha_tina::extra
@@ -1347,144 +1331,6 @@ error:
 
 
 /*
-  Repair CSV table in the case, it is crashed.
-
-  SYNOPSIS
-    repair()
-    session         The thread, performing repair
-    check_opt   The options for repair. We do not use it currently.
-
-  DESCRIPTION
-    If the file is empty, change # of rows in the file and complete recovery.
-    Otherwise, scan the table looking for bad rows. If none were found,
-    we mark file as a good one and return. If a bad row was encountered,
-    we truncate the datafile up to the last good row.
-
-   TODO: Make repair more clever - it should try to recover subsequent
-         rows (after the first bad one) as well.
-*/
-
-int ha_tina::repair(Session* session, HA_CHECK_OPT *)
-{
-  char repaired_fname[FN_REFLEN];
-  unsigned char *buf;
-  File repair_file;
-  int rc;
-  ha_rows rows_repaired= 0;
-  off_t write_begin= 0, write_end;
-
-  /* empty file */
-  if (!share->saved_data_file_length)
-  {
-    share->rows_recorded= 0;
-    goto end;
-  }
-
-  /* Don't assert in field::val() functions */
-  table->use_all_columns();
-  if (!(buf= (unsigned char*) malloc(table->s->reclength)))
-    return(HA_ERR_OUT_OF_MEM);
-
-  /* position buffer to the start of the file */
-  if (init_data_file())
-    return(HA_ERR_CRASHED_ON_REPAIR);
-
-  /*
-    Local_saved_data_file_length is initialized during the lock phase.
-    Sometimes this is not getting executed before ::repair (e.g. for
-    the log tables). We set it manually here.
-  */
-  local_saved_data_file_length= share->saved_data_file_length;
-  /* set current position to the beginning of the file */
-  current_position= next_position= 0;
-
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE, 0);
-
-  /* Read the file row-by-row. If everything is ok, repair is not needed. */
-  while (!(rc= find_current_row(buf)))
-  {
-    session_inc_row_count(session);
-    rows_repaired++;
-    current_position= next_position;
-  }
-
-  free_root(&blobroot, MYF(0));
-
-  free((char*)buf);
-
-  if (rc == HA_ERR_END_OF_FILE)
-  {
-    /*
-      All rows were read ok until end of file, the file does not need repair.
-      If rows_recorded != rows_repaired, we should update rows_recorded value
-      to the current amount of rows.
-    */
-    share->rows_recorded= rows_repaired;
-    goto end;
-  }
-
-  /*
-    Otherwise we've encountered a bad row => repair is needed.
-    Let us create a temporary file.
-  */
-  if ((repair_file= my_create(fn_format(repaired_fname, share->table_name,
-                                        "", CSN_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                           0, O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
-    return(HA_ERR_CRASHED_ON_REPAIR);
-
-  file_buff->init_buff(data_file);
-
-
-  /* we just truncated the file up to the first bad row. update rows count. */
-  share->rows_recorded= rows_repaired;
-
-  /* write repaired file */
-  while (1)
-  {
-    write_end= std::min(file_buff->end(), current_position);
-
-    off_t write_length= write_end - write_begin;
-    if ((uint64_t)write_length > SIZE_MAX)
-    {
-      return -1;
-    }
-    if ((write_length) &&
-        (my_write(repair_file, (unsigned char*)file_buff->ptr(),
-                  (size_t)write_length, MYF_RW)))
-      return(-1);
-
-    write_begin= write_end;
-    if (write_end== current_position)
-      break;
-    else
-      file_buff->read_next(); /* shift the buffer */
-  }
-
-  /*
-    Close the files and rename repaired file to the datafile.
-    We have to close the files, as on Windows one cannot rename
-    a file, which descriptor is still open. EACCES will be returned
-    when trying to delete the "to"-file in my_rename().
-  */
-  if (my_close(data_file,MYF(0)) || my_close(repair_file, MYF(0)) ||
-      my_rename(repaired_fname, share->data_file_name, MYF(0)))
-    return(-1);
-
-  /* Open the file again, it should now be repaired */
-  if ((data_file= my_open(share->data_file_name, O_RDWR|O_APPEND,
-                          MYF(0))) == -1)
-     return(-1);
-
-  /* Set new file size. The file size will be updated by ::update_status() */
-  local_saved_data_file_length= (size_t) current_position;
-
-end:
-  share->crashed= false;
-  return(HA_ADMIN_OK);
-}
-
-/*
   DELETE without WHERE calls this
 */
 
@@ -1509,20 +1355,6 @@ int ha_tina::delete_all_rows()
   pthread_mutex_unlock(&share->mutex);
   local_saved_data_file_length= 0;
   return(rc);
-}
-
-/*
-  Called by the database to lock the table. Keep in mind that this
-  is an internal lock.
-*/
-THR_LOCK_DATA **ha_tina::store_lock(Session *,
-                                    THR_LOCK_DATA **to,
-                                    enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-    lock.type=lock_type;
-  *to++= &lock;
-  return to;
 }
 
 /*
@@ -1570,55 +1402,6 @@ int Tina::doCreateTable(Session *, const char *table_name,
   pthread_mutex_unlock(&proto_cache_mutex);
 
   return 0;
-}
-
-int ha_tina::check(Session* session, HA_CHECK_OPT *)
-{
-  int rc= 0;
-  unsigned char *buf;
-  const char *old_proc_info;
-  ha_rows count= share->rows_recorded;
-
-  old_proc_info= get_session_proc_info(session);
-  set_session_proc_info(session, "Checking table");
-  if (!(buf= (unsigned char*) malloc(table->s->reclength)))
-    return(HA_ERR_OUT_OF_MEM);
-
-  /* position buffer to the start of the file */
-   if (init_data_file())
-     return(HA_ERR_CRASHED);
-
-  /*
-    Local_saved_data_file_length is initialized during the lock phase.
-    Check does not use store_lock in certain cases. So, we set it
-    manually here.
-  */
-  local_saved_data_file_length= share->saved_data_file_length;
-  /* set current position to the beginning of the file */
-  current_position= next_position= 0;
-
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE, 0);
-
-  /* Read the file row-by-row. If everything is ok, repair is not needed. */
-  while (!(rc= find_current_row(buf)))
-  {
-    session_inc_row_count(session);
-    count--;
-    current_position= next_position;
-  }
-
-  free_root(&blobroot, MYF(0));
-
-  free((char*)buf);
-  set_session_proc_info(session, old_proc_info);
-
-  if ((rc != HA_ERR_END_OF_FILE) || count)
-  {
-    share->crashed= true;
-    return(HA_ADMIN_CORRUPT);
-  }
-  else
-    return(HA_ADMIN_OK);
 }
 
 
