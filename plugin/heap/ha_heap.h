@@ -89,8 +89,6 @@ public:
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
   void drop_table(const char *name);
 
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
   int reset_auto_increment(uint64_t value)
   {

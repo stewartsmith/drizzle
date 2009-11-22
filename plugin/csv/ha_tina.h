@@ -141,9 +141,6 @@ public:
   int info(uint);
   int delete_all_rows(void);
 
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-      enum thr_lock_type lock_type);
-
   /*
     These functions used to get/update status of the Cursor.
     Needed to enable concurrent inserts.

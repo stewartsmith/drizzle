@@ -577,10 +577,10 @@ public:
   virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
-  virtual bool low_byte_first(void) const { return 1; }
+  virtual bool low_byte_first(void) const { return true; }
   virtual uint32_t checksum(void) const { return 0; }
-  virtual bool is_crashed(void) const  { return 0; }
-  virtual bool auto_repair(void) const { return 0; }
+  virtual bool is_crashed(void) const  { return false; }
+  virtual bool auto_repair(void) const { return false; }
 
   /**
     Is not invoked for non-transactional temporary tables.
@@ -595,9 +595,14 @@ public:
     than lock_count() claimed. This can happen when the MERGE children
     are not attached when this is called from another thread.
   */
-  virtual THR_LOCK_DATA **store_lock(Session *session,
+  virtual THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
-                                     enum thr_lock_type lock_type)=0;
+                                     enum thr_lock_type)
+  {
+    abort(); // Impossible programming situation
+
+    return(to);
+  }
 
  /*
    @retval true   Primary key (if there is one) is clustered

@@ -1063,7 +1063,6 @@ int ha_tina::init_data_file()
   All table scans call this first.
   The order of a table scan is:
 
-  ha_tina::store_lock
   ha_tina::info
   ha_tina::rnd_init
   ha_tina::extra
@@ -1356,20 +1355,6 @@ int ha_tina::delete_all_rows()
   pthread_mutex_unlock(&share->mutex);
   local_saved_data_file_length= 0;
   return(rc);
-}
-
-/*
-  Called by the database to lock the table. Keep in mind that this
-  is an internal lock.
-*/
-THR_LOCK_DATA **ha_tina::store_lock(Session *,
-                                    THR_LOCK_DATA **to,
-                                    enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-    lock.type=lock_type;
-  *to++= &lock;
-  return to;
 }
 
 /*
