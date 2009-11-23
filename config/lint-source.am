@@ -1,0 +1,29 @@
+LINT_COMMAND=python ${top_srcdir}/extra/cpplint.py  --filter=-whitespace,-runtime,-readability,+legal,-build,+build/header_guard,+build/include_config,+build/namespaces
+
+# make a dep file from a cc by linting
+%.cc.linted: %.cc
+	@test -d `dirname $@` || mkdir -p `dirname $@`
+	$(LINT_COMMAND) --deps $@ $<
+
+# make a dep file from a h by linting
+%.h.linted: %.h
+	@test -d `dirname $@` || mkdir -p `dirname $@`
+	$(LINT_COMMAND) --deps $@ $<
+
+clean-local: cleanlints
+
+
+check-local: linted ${srcdir}/config/lint-rules.am
+
+# Build the things to lint dynamically
+${srcdir}/config/lint-rules.am: lint-rules-gen
+	@# Make make think it did something so it sees the file changed.
+
+# This is a ChangeProtected output
+lint-rules-gen:
+	srcdir=${srcdir} ${top_srcdir}/config/make-lint.py
+
+.PHONY: cleanlints lint-rules-gen
+
+# dynamic rules
+include config/lint-rules.am

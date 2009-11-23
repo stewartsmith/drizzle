@@ -22,8 +22,6 @@ endif
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-TESTS= ${top_srcdir}/extra/run_cpplint.sh
-
 SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/hash \
@@ -39,7 +37,8 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/bzr_revinfo \
 			extra/run_cpplint.sh  \
 			extra/cpplint.py \
-			extra/clean_source.sh
+			extra/clean_source.sh \
+			config/make-lint.py
 
 
 CLEANFILES=		${BUILT_SOURCES}
@@ -209,8 +208,11 @@ extra_my_print_defaults_LDADD= \
 
 EXTRA_DIST+=	${man_MANS}
 
-.PHONY: test \
-    indent
+.PHONY: \
+	indent \
+	linted \
+	test
+
 
 # Target 'test' will run the regression test suite using the built server.
 #
@@ -298,3 +300,5 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 
+
+include config/lint-source.am
