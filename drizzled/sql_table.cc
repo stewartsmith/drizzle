@@ -64,7 +64,7 @@ static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
 
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
-void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
+void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
 {
   /*
     If the table character set was not given explicitly,
@@ -1608,7 +1608,7 @@ static bool prepare_blob_field(Session *,
 */
 
 bool mysql_create_table_no_lock(Session *session,
-                                const char *db, const char *table_name,
+                                TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
 				message::Table *table_proto,
                                 AlterInfo *alter_info,
@@ -1632,7 +1632,7 @@ bool mysql_create_table_no_lock(Session *session,
                MYF(0));
     return true;
   }
-  assert(strcmp(table_name,table_proto->name().c_str())==0);
+  assert(strcmp(identifier.getTableName(), table_proto->name().c_str())==0);
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -1642,14 +1642,9 @@ bool mysql_create_table_no_lock(Session *session,
     return true;
   }
 
-  set_table_default_charset(create_info, (char*) db);
+  set_table_default_charset(create_info, identifier.getDBName());
 
   /* Check if table exists */
-  TableIdentifier identifier(db, table_name,
-                             lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
-                             internal_tmp_table ? INTERNAL_TMP_TABLE :
-                             NO_TMP_TABLE);
-
   if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, cursor,
@@ -1661,36 +1656,39 @@ bool mysql_create_table_no_lock(Session *session,
 
   /* Check if table already exists */
   if (lex_identified_temp_table &&
-      session->find_temporary_table(db, table_name))
+      session->find_temporary_table(identifier.getDBName(), identifier.getTableName()))
   {
     if (is_if_not_exists)
     {
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          table_name);
+                          identifier.getTableName());
       error= 0;
       goto err;
     }
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
+    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
     goto err;
   }
 
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && ! lex_identified_temp_table)
   {
-    if (plugin::StorageEngine::getTableDefinition(*session, path, db, table_name, internal_tmp_table)==EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session, path,
+                                                  identifier.getDBName(),
+                                                  identifier.getTableName(),
+                                                  internal_tmp_table)==EEXIST)
     {
       if (is_if_not_exists)
       {
         error= false;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            table_name);
+                            identifier.getTableName());
         create_info->table_existed= 1;		// Mark that table existed
       }
       else 
-        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
 
       goto unlock_and_end;
     }
@@ -1702,9 +1700,9 @@ bool mysql_create_table_no_lock(Session *session,
       Then she could create the table. This case is pretty obscure and
       therefore we don't introduce a new error message only for it.
     */
-    if (TableShare::getShare(db, table_name))
+    if (TableShare::getShare(identifier.getDBName(), identifier.getTableName()))
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
       goto unlock_and_end;
     }
   }
@@ -1724,9 +1722,9 @@ bool mysql_create_table_no_lock(Session *session,
     uint32_t          table_path_length;
 
     table_path_length= build_table_filename(table_path, sizeof(table_path),
-                                            db, table_name, false);
+                                            identifier.getDBName(), identifier.getTableName(), false);
 
-    int retcode= plugin::StorageEngine::getTableDefinition(*session, table_path, db, table_name, false);
+    int retcode= plugin::StorageEngine::getTableDefinition(*session, table_path, identifier.getDBName(), identifier.getTableName(), false);
     switch (retcode)
     {
       case ENOENT:
@@ -1738,14 +1736,14 @@ bool mysql_create_table_no_lock(Session *session,
           error= false;
           push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                               ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                              table_name);
+                              identifier.getTableName());
           create_info->table_existed= 1;		// Mark that table existed
           goto unlock_and_end;
         }
-        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
         goto unlock_and_end;
       default:
-        my_error(retcode, MYF(0),table_name);
+        my_error(retcode, MYF(0), identifier.getTableName());
         goto unlock_and_end;
     }
   }
@@ -1755,7 +1753,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   create_info->table_options=db_options;
 
-  if (rea_create_table(session, path, db, table_name,
+  if (rea_create_table(session, path, identifier.getDBName(), identifier.getTableName(),
 		       table_proto,
                        create_info, alter_info->create_list,
                        key_count, key_info_buffer))
@@ -1764,7 +1762,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (lex_identified_temp_table)
   {
     /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(path, db, table_name)))
+    if (!(session->open_temporary_table(path, identifier.getDBName(), identifier.getTableName())))
     {
       (void) session->rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
@@ -1837,15 +1835,21 @@ bool mysql_create_table(Session *session,
     }
   }
 
-  result= mysql_create_table_no_lock(session,
-                                     identifier.getDBName(),
-                                     identifier.getTableName(),
-                                     create_info,
-				     table_proto,
-                                     alter_info,
-                                     internal_tmp_table,
-                                     select_field_count,
-                                     is_if_not_exists);
+  {
+    TableIdentifier middle(identifier.getDBName(), identifier.getTableName(),
+                           lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
+                           internal_tmp_table ? INTERNAL_TMP_TABLE :
+                           NO_TMP_TABLE);
+
+    result= mysql_create_table_no_lock(session,
+                                       middle,
+                                       create_info,
+                                       table_proto,
+                                       alter_info,
+                                       internal_tmp_table,
+                                       select_field_count,
+                                       is_if_not_exists);
+  }
 
 unlock:
   if (name_lock)

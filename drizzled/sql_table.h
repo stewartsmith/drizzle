@@ -59,7 +59,7 @@ void write_bin_log(Session *session,
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
 bool check_engine(Session *, const char *, drizzled::message::Table *, HA_CREATE_INFO *);
-void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
+void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
 /*
   Preparation for table creation
 

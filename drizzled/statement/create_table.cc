@@ -90,11 +90,9 @@ bool statement::CreateTable::execute()
     to determine if the table is transactional or not if it is temp.
   */
   TableIdentifier new_table_identifier(create_table->db,
-                                       create_table->table_name, 
-                                       create_table_proto.type() == message::Table::TEMPORARY ? NO_TMP_TABLE :
-                                       create_info.db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : 
-                                       NON_TRANSACTIONAL_TMP_TABLE );
-
+                                       create_table->table_name,
+                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE :
+                                       create_info.db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
 
   if (create_table_precheck(new_table_identifier))
   {
@@ -218,7 +216,7 @@ bool statement::CreateTable::execute()
                               &create_info,
                               &create_table_proto,
                               &alter_info, 
-                              0, 
+                              false, 
                               0,
                               is_if_not_exists);
     }
