@@ -854,12 +854,14 @@ bool mysql_create_table(Session *session,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
 
-bool mysql_create_table_no_lock(Session *session, const char *db,
+bool mysql_create_table_no_lock(Session *session,
+                                const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table, uint32_t select_field_count, 
+                                bool tmp_table,
+                                uint32_t select_field_count,
                                 bool is_if_not_exists);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);

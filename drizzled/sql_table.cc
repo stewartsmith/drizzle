@@ -1617,7 +1617,6 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists)
 {
   char		path[FN_REFLEN];
-  uint32_t          path_length;
   uint		db_options, key_count;
   KEY		*key_info_buffer;
   Cursor	*cursor;
@@ -1645,6 +1644,12 @@ bool mysql_create_table_no_lock(Session *session,
 
   set_table_default_charset(create_info, (char*) db);
 
+  /* Check if table exists */
+  TableIdentifier identifier(db, table_name,
+                             lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
+                             internal_tmp_table ? INTERNAL_TMP_TABLE :
+                             NO_TMP_TABLE);
+
   if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, cursor,
@@ -1652,23 +1657,7 @@ bool mysql_create_table_no_lock(Session *session,
                                  select_field_count))
     goto err;
 
-      /* Check if table exists */
-  if (lex_identified_temp_table)
-  {
-    path_length= build_tmptable_filename(path, sizeof(path));
-  }
-  else
-  {
- #ifdef FN_DEVCHAR
-    /* check if the table name contains FN_DEVCHAR when defined */
-    if (strchr(table_name, FN_DEVCHAR))
-    {
-      my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name);
-      return true;
-    }
-#endif
-    path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
-  }
+  strcpy(path, identifier.getPath());
 
   /* Check if table already exists */
   if (lex_identified_temp_table &&

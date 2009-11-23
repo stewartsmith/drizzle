@@ -69,7 +69,7 @@ public:
   {
     if (! path_inited)
     {
-      size_t path_length;
+      size_t path_length= 0;
 
       switch (type) {
       case NO_TMP_TABLE:
@@ -84,7 +84,7 @@ public:
         break;
       case NON_TRANSACTIONAL_TMP_TABLE:
       case TRANSACTIONAL_TMP_TABLE:
-        build_tmptable_filename(path, sizeof(path));
+        path_length= build_tmptable_filename(path, sizeof(path));
         break;
       case SYSTEM_TMP_TABLE:
         assert(0);
