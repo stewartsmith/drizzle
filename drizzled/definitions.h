@@ -340,15 +340,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_NO_TRANSACTIONS     (1 << 0) /* Doesn't support transactions */
 #define HA_PARTIAL_COLUMN_READ (1 << 1) /* read may not return all columns */
 #define HA_TABLE_SCAN_ON_INDEX (1 << 2) /* No separate data/index file */
-/*
-  The following should be set if the following is not true when scanning
-  a table with rnd_next()
-  - We will see all rows (including deleted ones)
-  - Row positions are 'table->s->db_record_offset' apart
-  If this flag is not set, filesort will do a postion() call for each matched
-  row to be able to find the row later.
-*/
-#define HA_REC_NOT_IN_SEQ      (1 << 3)
 
 /*
   Reading keys in random order is as fast as reading keys in sort order
@@ -454,7 +445,11 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
-#define DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
+enum start_transaction_option_t
+{
+  START_TRANS_NO_OPTIONS,
+  START_TRANS_OPT_WITH_CONS_SNAPSHOT
+};
 
 /* Flags for method is_fatal_error */
 #define HA_CHECK_DUP_KEY 1

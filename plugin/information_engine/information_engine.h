@@ -18,58 +18,116 @@
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H
 
 #include <drizzled/server_includes.h>
-#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
-#include "information_share.h"
+#include <drizzled/plugin/info_schema_table.h>
 
-
-/*
-  Class definition for the information engine
-*/
-class InformationCursor: public Cursor
-{
-  THR_LOCK_DATA lock;      /* MySQL lock */
-  InformationShare *share;
-
-public:
-  InformationCursor(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
-  ~InformationCursor()
-  {}
-
-  /*
-    The name of the index type that will be used for display
-    don't implement this method unless you really have indexes
-  */
-  uint64_t table_flags() const
-  {
-    return 0;
-  }
-  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
-  /* The following defines can be increased if necessary */
-  int open(const char *name, int mode, uint32_t test_if_locked);
-  int close(void);
-  int rnd_init(bool scan);
-  int rnd_next(unsigned char *buf);
-  int rnd_pos(unsigned char * buf, unsigned char *pos);
-  void position(const unsigned char *record);
-  int info(uint32_t flag);
-  THR_LOCK_DATA **store_lock(Session *session,
-                             THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
-};
-
-static const char *InformationEngine_exts[] = {
+static const char *information_exts[] = {
   NULL
 };
+
 
 class InformationEngine : public drizzled::plugin::StorageEngine
 {
 public:
   InformationEngine(const std::string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) 
-  {}
+    : drizzled::plugin::StorageEngine(name_arg,
+                                      HTON_ALTER_NOT_SUPPORTED |
+                                      HTON_HIDDEN |
+                                      HTON_NOT_USER_SELECTABLE |
+                                      HTON_TEMPORARY_NOT_SUPPORTED)
+  {
+    pthread_mutex_init(&mutex, NULL);
+  }
+
+  ~InformationEngine()
+  {
+    pthread_mutex_destroy(&mutex);
+  }
+
+  uint64_t table_flags() const
+  {
+    return 0;
+  }
+
+  class Share 
+  {
+  private:
+    uint32_t count;
+    drizzled::plugin::InfoSchemaTable *table;
+
+  public:
+    THR_LOCK lock;
+
+    Share(const std::string &in_name) :
+      count(1)
+    {
+      thr_lock_init(&lock);
+      table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
+    }
+
+    ~Share() 
+    {
+      thr_lock_delete(&lock);
+    }
+
+    /**
+     * Increment the counter which tracks how many instances of this share are
+     * currently open.
+     * @return the new counter value
+   */
+    uint32_t incUseCount(void) 
+    { 
+      return ++count; 
+    }
+
+    /**
+     * Decrement the count which tracks how many instances of this share are
+     * currently open.
+     * @return the new counter value
+   */
+    uint32_t decUseCount(void) 
+    { 
+      return --count; 
+    }
+
+    /**
+     * @ return the value of the use counter for this share
+   */
+    uint32_t getUseCount() const
+    {
+      return count;
+    }
+
+    /**
+     * @return the table name associated with this share.
+   */
+    const std::string &getName() const
+    {
+      return table->getTableName();
+    }
+
+    /**
+     * @return the I_S table associated with this share.
+   */
+    drizzled::plugin::InfoSchemaTable *getInfoSchemaTable()
+    {
+      return table;
+    }
+  };
+
+private:
+  typedef std::map<const std::string, Share> OpenTables;
+  typedef std::pair<const std::string, Share> Record;
+
+  OpenTables open_tables;
+  pthread_mutex_t mutex; // Mutext used in getShare() calls
+
+public:
+
+  // Follow Two Methods are for "share"
+  Share *getShare(const std::string &name_arg);
+  void freeShare(Share *share);
+
 
   int doCreateTable(Session *,
                     const char *,
@@ -77,24 +135,32 @@ public:
                     HA_CREATE_INFO&,
                     drizzled::message::Table&)
   {
-    return 1;
+    return EPERM;
   }
 
   int doDropTable(Session&, const std::string) 
   { 
-    return 0; 
+    return EPERM; 
   }
 
-  virtual Cursor *create(TableShare *table, MEM_ROOT *mem_root)
+  virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root);
+
+  const char **bas_ext() const 
   {
-    return new (mem_root) InformationCursor(this, table);
+    return information_exts;
   }
 
-  const char **bas_ext() const {
-    return InformationEngine_exts;
-  }
+  void doGetTableNames(CachedDirectory&, 
+                       std::string &db, 
+                       std::set<std::string> &set_of_names);
 
-  void doGetTableNames(CachedDirectory&, std::string& db, std::set<std::string>& set_of_names);
+  int doGetTableDefinition(Session &session,
+                           const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
+
 };
 
 #endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H */

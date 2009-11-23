@@ -28,58 +28,58 @@
 extern my_decimal decimal_zero;
 
 /****************************************************************************
-** Field_new_decimal
-****************************************************************************/
+ ** File_decimal
+ ****************************************************************************/
 
-Field_new_decimal::Field_new_decimal(unsigned char *ptr_arg,
-                                     uint32_t len_arg,
-                                     unsigned char *null_ptr_arg,
-                                     unsigned char null_bit_arg,
-                                     enum utype unireg_check_arg,
-                                     const char *field_name_arg,
-                                     uint8_t dec_arg,
-                                     bool zero_arg,
-                                     bool unsigned_arg)
-  :Field_num(ptr_arg,
-             len_arg,
-             null_ptr_arg,
-             null_bit_arg,
-             unireg_check_arg,
-             field_name_arg,
-             dec_arg, zero_arg,
-             unsigned_arg)
+Field_decimal::Field_decimal(unsigned char *ptr_arg,
+                             uint32_t len_arg,
+                             unsigned char *null_ptr_arg,
+                             unsigned char null_bit_arg,
+                             enum utype unireg_check_arg,
+                             const char *field_name_arg,
+                             uint8_t dec_arg,
+                             bool zero_arg,
+                             bool unsigned_arg)
+:Field_num(ptr_arg,
+           len_arg,
+           null_ptr_arg,
+           null_bit_arg,
+           unireg_check_arg,
+           field_name_arg,
+           dec_arg, zero_arg,
+           unsigned_arg)
 {
   precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   assert((precision <= DECIMAL_MAX_PRECISION) &&
-              (dec <= DECIMAL_MAX_SCALE));
+         (dec <= DECIMAL_MAX_SCALE));
   bin_size= my_decimal_get_binary_size(precision, dec);
 }
 
-Field_new_decimal::Field_new_decimal(uint32_t len_arg,
-                                     bool maybe_null_arg,
-                                     const char *name,
-                                     uint8_t dec_arg,
-                                     bool unsigned_arg)
-  :Field_num((unsigned char*) 0,
-             len_arg,
-             maybe_null_arg ? (unsigned char*) "": 0,
-             0,
-             NONE,
-             name,
-             dec_arg,
-             0,
-             unsigned_arg)
+Field_decimal::Field_decimal(uint32_t len_arg,
+                             bool maybe_null_arg,
+                             const char *name,
+                             uint8_t dec_arg,
+                             bool unsigned_arg)
+:Field_num((unsigned char*) 0,
+           len_arg,
+           maybe_null_arg ? (unsigned char*) "": 0,
+           0,
+           NONE,
+           name,
+           dec_arg,
+           0,
+           unsigned_arg)
 {
   precision= my_decimal_length_to_precision(len_arg, dec_arg, unsigned_arg);
   set_if_smaller(precision, (uint32_t)DECIMAL_MAX_PRECISION);
   assert((precision <= DECIMAL_MAX_PRECISION) &&
-              (dec <= DECIMAL_MAX_SCALE));
+         (dec <= DECIMAL_MAX_SCALE));
   bin_size= my_decimal_get_binary_size(precision, dec);
 }
 
 
-int Field_new_decimal::reset(void)
+int Field_decimal::reset(void)
 {
   store_value(&decimal_zero);
   return 0;
@@ -93,8 +93,8 @@ int Field_new_decimal::reset(void)
   @param sign              sign of value which caused overflow
 */
 
-void Field_new_decimal::set_value_on_overflow(my_decimal *decimal_value,
-                                              bool sign)
+void Field_decimal::set_value_on_overflow(my_decimal *decimal_value,
+                                          bool sign)
 {
   max_my_decimal(decimal_value, precision, decimals());
   if (sign)
@@ -114,12 +114,12 @@ void Field_new_decimal::set_value_on_overflow(my_decimal *decimal_value,
   @param decimal_value   my_decimal
 
   @retval
-    0 ok
+  0 ok
   @retval
-    1 error
+  1 error
 */
 
-bool Field_new_decimal::store_value(const my_decimal *decimal_value)
+bool Field_decimal::store_value(const my_decimal *decimal_value)
 {
   int error= 0;
 
@@ -135,8 +135,8 @@ bool Field_new_decimal::store_value(const my_decimal *decimal_value)
 }
 
 
-int Field_new_decimal::store(const char *from, uint32_t length,
-                             const CHARSET_INFO * const charset_arg)
+int Field_decimal::store(const char *from, uint32_t length,
+                         const CHARSET_INFO * const charset_arg)
 {
   int err;
   my_decimal decimal_value;
@@ -177,14 +177,14 @@ int Field_new_decimal::store(const char *from, uint32_t length,
       String from_as_str;
       from_as_str.copy(from, length, &my_charset_bin);
 
-    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                        ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
-                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
+      push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                          ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
+                          ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
-                        (uint32_t) table->in_use->row_count);
-    my_decimal_set_zero(&decimal_value);
+                          (uint32_t) table->in_use->row_count);
+      my_decimal_set_zero(&decimal_value);
 
-    break;
+      break;
     }
   }
 
@@ -199,7 +199,7 @@ int Field_new_decimal::store(const char *from, uint32_t length,
   will return E_DEC_TRUNCATED always correctly
 */
 
-int Field_new_decimal::store(double nr)
+int Field_decimal::store(double nr)
 {
   my_decimal decimal_value;
   int err;
@@ -223,7 +223,7 @@ int Field_new_decimal::store(double nr)
 }
 
 
-int Field_new_decimal::store(int64_t nr, bool unsigned_val)
+int Field_decimal::store(int64_t nr, bool unsigned_val)
 {
   my_decimal decimal_value;
   int err;
@@ -246,21 +246,21 @@ int Field_new_decimal::store(int64_t nr, bool unsigned_val)
 }
 
 
-int Field_new_decimal::store_decimal(const my_decimal *decimal_value)
+int Field_decimal::store_decimal(const my_decimal *decimal_value)
 {
   return store_value(decimal_value);
 }
 
 
-int Field_new_decimal::store_time(DRIZZLE_TIME *ltime,
-                                  enum enum_drizzle_timestamp_type )
+int Field_decimal::store_time(DRIZZLE_TIME *ltime,
+                              enum enum_drizzle_timestamp_type )
 {
-    my_decimal decimal_value;
-    return store_value(date2my_decimal(ltime, &decimal_value));
+  my_decimal decimal_value;
+  return store_value(date2my_decimal(ltime, &decimal_value));
 }
 
 
-double Field_new_decimal::val_real(void)
+double Field_decimal::val_real(void)
 {
   double dbl;
   my_decimal decimal_value;
@@ -273,7 +273,7 @@ double Field_new_decimal::val_real(void)
 }
 
 
-int64_t Field_new_decimal::val_int(void)
+int64_t Field_decimal::val_int(void)
 {
   int64_t i;
   my_decimal decimal_value;
@@ -286,7 +286,7 @@ int64_t Field_new_decimal::val_int(void)
 }
 
 
-my_decimal* Field_new_decimal::val_decimal(my_decimal *decimal_value)
+my_decimal* Field_decimal::val_decimal(my_decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
 
@@ -296,8 +296,8 @@ my_decimal* Field_new_decimal::val_decimal(my_decimal *decimal_value)
 }
 
 
-String *Field_new_decimal::val_str(String *val_buffer,
-                                   String *)
+String *Field_decimal::val_str(String *val_buffer,
+                               String *)
 {
   my_decimal decimal_value;
 
@@ -310,20 +310,20 @@ String *Field_new_decimal::val_str(String *val_buffer,
 }
 
 
-int Field_new_decimal::cmp(const unsigned char *a,const unsigned char*b)
+int Field_decimal::cmp(const unsigned char *a,const unsigned char*b)
 {
   return memcmp(a, b, bin_size);
 }
 
 
-void Field_new_decimal::sort_string(unsigned char *buff,
-                                    uint32_t )
+void Field_decimal::sort_string(unsigned char *buff,
+                                uint32_t )
 {
   memcpy(buff, ptr, bin_size);
 }
 
 
-void Field_new_decimal::sql_type(String &str) const
+void Field_decimal::sql_type(String &str) const
 {
   const CHARSET_INFO * const cs= str.charset();
   str.length(cs->cset->snprintf(cs, (char*) str.ptr(), str.alloced_length(),
@@ -332,17 +332,17 @@ void Field_new_decimal::sql_type(String &str) const
 
 
 /**
-   Save the field metadata for new decimal fields.
+  Save the field metadata for new decimal fields.
 
-   Saves the precision in the first byte and decimals() in the second
-   byte of the field metadata array at index of *metadata_ptr and
-   *(metadata_ptr + 1).
+  Saves the precision in the first byte and decimals() in the second
+  byte of the field metadata array at index of *metadata_ptr and
+ *(metadata_ptr + 1).
 
-   @param   metadata_ptr   First byte of field metadata
+ @param   metadata_ptr   First byte of field metadata
 
-   @returns number of bytes written to metadata_ptr
+ @returns number of bytes written to metadata_ptr
 */
-int Field_new_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
+int Field_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
 {
   *metadata_ptr= precision;
   *(metadata_ptr + 1)= decimals();
@@ -351,57 +351,57 @@ int Field_new_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
 
 
 /**
-   Returns the number of bytes field uses in row-based replication
-   row packed size.
+  Returns the number of bytes field uses in row-based replication
+  row packed size.
 
-   This method is used in row-based replication to determine the number
-   of bytes that the field consumes in the row record format. This is
-   used to skip fields in the master that do not exist on the slave.
+  This method is used in row-based replication to determine the number
+  of bytes that the field consumes in the row record format. This is
+  used to skip fields in the master that do not exist on the slave.
 
-   @param   field_metadata   Encoded size in field metadata
+  @param   field_metadata   Encoded size in field metadata
 
-   @returns The size of the field based on the field metadata.
+  @returns The size of the field based on the field metadata.
 */
-uint32_t Field_new_decimal::pack_length_from_metadata(uint32_t field_metadata)
+uint32_t Field_decimal::pack_length_from_metadata(uint32_t field_metadata)
 {
   uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
   uint32_t const source_decimal= field_metadata & 0x00ff;
   uint32_t const source_size= my_decimal_get_binary_size(source_precision,
-                                                     source_decimal);
+                                                         source_decimal);
   return (source_size);
 }
 
 
 /**
-   Check to see if field size is compatible with destination.
+  Check to see if field size is compatible with destination.
 
-   This method is used in row-based replication to verify that the slave's
-   field size is less than or equal to the master's field size. The
-   encoded field metadata (from the master or source) is decoded and compared
-   to the size of this field (the slave or destination).
+  This method is used in row-based replication to verify that the slave's
+  field size is less than or equal to the master's field size. The
+  encoded field metadata (from the master or source) is decoded and compared
+  to the size of this field (the slave or destination).
 
-   @param   field_metadata   Encoded size in field metadata
+  @param   field_metadata   Encoded size in field metadata
 
-   @retval 0 if this field's size is < the source field's size
-   @retval 1 if this field's size is >= the source field's size
+  @retval 0 if this field's size is < the source field's size
+  @retval 1 if this field's size is >= the source field's size
 */
-int Field_new_decimal::compatible_field_size(uint32_t field_metadata)
+int Field_decimal::compatible_field_size(uint32_t field_metadata)
 {
   int compatible= 0;
   uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
   uint32_t const source_decimal= field_metadata & 0x00ff;
   uint32_t const source_size= my_decimal_get_binary_size(source_precision,
-                                                     source_decimal);
+                                                         source_decimal);
   uint32_t const destination_size= row_pack_length();
   compatible= (source_size <= destination_size);
   if (compatible)
     compatible= (source_precision <= precision) &&
-                (source_decimal <= decimals());
+      (source_decimal <= decimals());
   return (compatible);
 }
 
 
-uint32_t Field_new_decimal::is_equal(CreateField *new_field_ptr)
+uint32_t Field_decimal::is_equal(CreateField *new_field_ptr)
 {
   return ((new_field_ptr->sql_type == real_type()) &&
           ((new_field_ptr->flags & UNSIGNED_FLAG) ==
@@ -414,22 +414,22 @@ uint32_t Field_new_decimal::is_equal(CreateField *new_field_ptr)
 
 
 /**
-   Unpack a decimal field from row data.
+  Unpack a decimal field from row data.
 
-   This method is used to unpack a decimal or numeric field from a master
-   whose size of the field is less than that of the slave.
+  This method is used to unpack a decimal or numeric field from a master
+  whose size of the field is less than that of the slave.
 
-   @param   to         Destination of the data
-   @param   from       Source of the data
-   @param   param_data Precision (upper) and decimal (lower) values
+  @param   to         Destination of the data
+  @param   from       Source of the data
+  @param   param_data Precision (upper) and decimal (lower) values
 
-   @return  New pointer into memory based on from + length of the data
+  @return  New pointer into memory based on from + length of the data
 */
 const unsigned char *
-Field_new_decimal::unpack(unsigned char* to,
-                          const unsigned char *from,
-                          uint32_t param_data,
-                          bool low_byte_first)
+Field_decimal::unpack(unsigned char* to,
+                      const unsigned char *from,
+                      uint32_t param_data,
+                      bool low_byte_first)
 {
   if (param_data == 0)
     return Field::unpack(to, from, param_data, low_byte_first);
@@ -439,7 +439,7 @@ Field_new_decimal::unpack(unsigned char* to,
   uint32_t length=pack_length();
   uint32_t from_pack_len= my_decimal_get_binary_size(from_precision, from_decimal);
   uint32_t len= (param_data && (from_pack_len < length)) ?
-            from_pack_len : length;
+    from_pack_len : length;
   if ((from_pack_len && (from_pack_len < length)) ||
       (from_precision < precision) ||
       (from_decimal < decimals()))
@@ -454,9 +454,9 @@ Field_new_decimal::unpack(unsigned char* to,
     conv_dec.len= from_precision;
     conv_dec.buf= dec_buf;
     /*
-      Note: bin2decimal does not change the length of the field. So it is
-      just the first step the resizing operation. The second step does the
-      resizing using the precision and decimals from the slave.
+Note: bin2decimal does not change the length of the field. So it is
+just the first step the resizing operation. The second step does the
+resizing using the precision and decimals from the slave.
     */
     bin2decimal((unsigned char *)from, &conv_dec, from_precision, from_decimal);
     decimal2bin(&conv_dec, to, precision, decimals());

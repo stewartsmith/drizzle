@@ -155,7 +155,7 @@ int open_table_def(Session& session, TableShare *share);
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
-                          Table *outparam, open_table_mode open_mode);
+                          Table *outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);
@@ -212,7 +212,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
-const char *fn_rext(const char *name);
 
 /* Conversion functions */
 size_t build_table_filename(char *buff, size_t bufflen, const char *db, 

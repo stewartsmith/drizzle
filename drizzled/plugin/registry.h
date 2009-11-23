@@ -20,33 +20,34 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include "drizzled/name_map.h"
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 #include "drizzled/gettext.h"
 #include "drizzled/unireg.h"
+#include "drizzled/errmsg_print.h"
 
 namespace drizzled
 {
 namespace plugin
 {
-class Handle;
+class Module;
 class Plugin;
 
 class Registry
 {
 private:
-  std::map<std::string, Handle *> handle_map;
-  NameMap<const Plugin *> plugin_registry;
+  std::map<std::string, Module *> module_map;
+  std::map<std::string, const Plugin *> plugin_registry;
 
-  Handle *current_handle;
+  Module *current_module;
 
   Registry()
-   : handle_map(),
+   : module_map(),
      plugin_registry(),
-     current_handle(NULL)
+     current_module(NULL)
   { }
 
   Registry(const Registry&);
@@ -65,48 +66,62 @@ public:
     delete &registry;
   }
 
-  Handle *find(const LEX_STRING *name);
+  Module *find(const LEX_STRING *name);
 
-  void add(Handle *handle);
+  void add(Module *module);
 
-  void setCurrentHandle(Handle *plugin)
+  void setCurrentModule(Module *module)
   {
-    current_handle= plugin;
+    current_module= module;
   }
 
-  void clearCurrentHandle()
+  void clearCurrentModule()
   {
-    current_handle= NULL;
+    current_module= NULL;
   }
 
-  std::vector<Handle *> getList(bool active);
+  std::vector<Module *> getList(bool active);
+
+  const std::map<std::string, const Plugin *> &getPluginsMap() const
+  {
+    return plugin_registry;
+  }
 
   template<class T>
   void add(T *plugin)
   {
-    plugin->setHandle(current_handle);
+    plugin->setModule(current_module);
     bool failed= false;
-    if (plugin_registry.add(plugin))
+    std::string plugin_name(plugin->getName());
+    std::transform(plugin_name.begin(), plugin_name.end(),
+                   plugin_name.begin(), ::tolower);
+    if (plugin_registry.find(plugin_name) != plugin_registry.end())
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Loading plugin %s failed: a plugin by that name already "
+                      "exists."), plugin->getName().c_str());
       failed= true;
+    }
     if (T::addPlugin(plugin))
       failed= true;
     if (failed)
     {
-      /* Can't use errmsg_printf here because we might be initializing the
-       * error_message plugin.
-       */
-      fprintf(stderr,
-              _("Fatal error: Failed initializing %s plugin."),
-              plugin->getName().c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Fatal error: Failed initializing %s plugin."),
+                    plugin->getName().c_str());
       unireg_abort(1);
     }
+    plugin_registry.insert(std::pair<std::string, const Plugin *>(plugin_name, plugin));
   }
 
   template<class T>
   void remove(T *plugin)
   {
+    std::string plugin_name(plugin->getName());
+    std::transform(plugin_name.begin(), plugin_name.end(),
+                   plugin_name.begin(), ::tolower);
     T::removePlugin(plugin);
-    plugin_registry.remove(plugin);
+    plugin_registry.erase(plugin_name);
   }
 
 };

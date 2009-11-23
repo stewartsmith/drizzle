@@ -443,7 +443,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   uint32_t primary_key;
   KEY *key_info;
   Table *table= table_list->table;
-  Cursor *file= table->file;
+  Cursor *cursor= table->cursor;
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
@@ -560,7 +560,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   memset(&create_info, 0, sizeof(create_info));
   /* Allow update_create_info to update row type */
   create_info.row_type= share->row_type;
-  file->update_create_info(&create_info);
+  cursor->update_create_info(&create_info);
   primary_key= share->primary_key;
 
   for (uint32_t i=0 ; i < share->keys ; i++,key_info++)
@@ -616,10 +616,10 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
     to the CREATE TABLE statement
   */
 
-  if ((for_str= file->get_foreign_key_create_info()))
+  if ((for_str= cursor->get_foreign_key_create_info()))
   {
     packet->append(for_str, strlen(for_str));
-    file->free_foreign_key_create_info(for_str);
+    cursor->free_foreign_key_create_info(for_str);
   }
 
   packet->append(STRING_WITH_LEN("\n)"));
@@ -638,7 +638,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
         (create_info_arg->used_fields & HA_CREATE_USED_ENGINE))
     {
       packet->append(STRING_WITH_LEN(" ENGINE="));
-      packet->append(file->engine->getName().c_str());
+      packet->append(cursor->engine->getName().c_str());
     }
 
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
@@ -662,7 +662,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       buff= to_string(share->block_size);
       packet->append(buff.c_str(), buff.length());
     }
-    table->file->append_create_info(packet);
+    table->cursor->append_create_info(packet);
     if (share->hasComment() && share->getCommentLength())
     {
       packet->append(STRING_WITH_LEN(" COMMENT="));
@@ -764,7 +764,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->thread_id=tmp->thread_id;
         session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user");
         session_info->host= session->strdup(tmp_sctx->ip.c_str());
-        if ((session_info->db=tmp->db))             // Safe test
+        if ((session_info->db= tmp->db.c_str()))             // Safe test
           session_info->db=session->strdup(session_info->db);
         session_info->command=(int) tmp->command;
         if ((mysys_var= tmp->mysys_var))
@@ -1034,7 +1034,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 bool schema_table_store_record(Session *session, Table *table)
 {
   int error;
-  if ((error= table->file->ha_write_row(table->record[0])))
+  if ((error= table->cursor->ha_write_row(table->record[0])))
   {
     Tmp_Table_Param *param= table->pos_in_table_list->schema_table_param;
 
@@ -1457,7 +1457,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
   @return         Operation status
     @retval       0           ok
     @retval       1           fatal error
-    @retval       2           Not fatal error; Safe to ignore this file list
+    @retval       2           Not fatal error; Safe to ignore this cursor list
 */
 
 static int
@@ -1641,7 +1641,7 @@ static int fill_schema_table_names(Session *session, Table *table,
   @details        The function calculates the method which will be used
                   for table opening:
                   SKIP_OPEN_TABLE - do not open table
-                  OPEN_FRM_ONLY   - open FRM file only
+                  OPEN_FRM_ONLY   - open FRM cursor only
                   OPEN_FULL_TABLE - open FRM, data, index files
   @param[in]      tables               I_S table table_list
   @param[in]      schema_table         I_S table struct
@@ -1674,7 +1674,7 @@ static uint32_t get_table_open_method(TableList *tables,
 
 
 /**
-  @brief          Fill I_S table with data from FRM file only
+  @brief          Fill I_S table with data from FRM cursor only
 
   @param[in]      session                      thread Cursor
   @param[in]      table                    Table struct for I_S table
@@ -1748,13 +1748,12 @@ err:
 
   @param[in]      session                      thread Cursor
   @param[in]      tables                   I_S table
-  @param[in]      cond                     'WHERE' condition
 
   @return         Operation status
     @retval       0                        success
     @retval       1                        error
 */
-int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
+int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
@@ -1766,6 +1765,8 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, CO
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
   vector<LEX_STRING*> db_names, table_names;
+  /* the WHERE clause */
+  COND *cond= table->reginfo.join_tab->select_cond;
   COND *partial_cond= 0;
   uint32_t derived_tables= lex->derived_tables;
   int error= 1;
@@ -2037,8 +2038,8 @@ static void store_column_type(Table *table, Field *field,
 
   decimals= field->decimals();
   switch (field->type()) {
-  case DRIZZLE_TYPE_NEWDECIMAL:
-    field_length= ((Field_new_decimal*) field)->precision;
+  case DRIZZLE_TYPE_DECIMAL:
+    field_length= ((Field_decimal*) field)->precision;
     break;
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
@@ -2241,7 +2242,7 @@ Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList 
                            column->getLength())) == NULL)
         return NULL;
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       if (!(item= new Item_decimal((int64_t) column->getValue(), false)))
       {
         return(0);
@@ -2366,7 +2367,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
   table->s->tmp_table= SYSTEM_TMP_TABLE;
   /*
     This test is necessary to make
-    case insensitive file systems +
+    case insensitive cursor systems +
     upper case table names(information schema tables) +
     views
     working correctly
@@ -2482,26 +2483,25 @@ bool get_schema_tables_result(JOIN *join,
       */
       if (table_list->schema_table_state && is_subselect)
       {
-        table_list->table->file->extra(HA_EXTRA_NO_CACHE);
-        table_list->table->file->extra(HA_EXTRA_RESET_STATE);
-        table_list->table->file->ha_delete_all_rows();
+        table_list->table->cursor->extra(HA_EXTRA_NO_CACHE);
+        table_list->table->cursor->extra(HA_EXTRA_RESET_STATE);
+        table_list->table->cursor->ha_delete_all_rows();
         table_list->table->free_io_cache();
         table_list->table->filesort_free_buffers(true);
         table_list->table->null_row= 0;
       }
       else
-        table_list->table->file->stats.records= 0;
+        table_list->table->cursor->stats.records= 0;
 
-      if (table_list->schema_table->fillTable(session, table_list,
-                                               tab->select_cond))
+      if (table_list->schema_table->fillTable(session, table_list))
       {
         result= 1;
         join->error= 1;
-        tab->read_record.file= table_list->table->file;
+        tab->read_record.cursor= table_list->table->cursor;
         table_list->schema_table_state= executed_place;
         break;
       }
-      tab->read_record.file= table_list->table->file;
+      tab->read_record.cursor= table_list->table->cursor;
       table_list->schema_table_state= executed_place;
     }
   }

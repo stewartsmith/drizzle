@@ -278,10 +278,7 @@ public:
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= (session->db) ? session->db : "";
-    int dbl= 0;
-    if (dbs != NULL)
-      dbl= session->db_length;
+    const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
@@ -292,7 +289,7 @@ public:
                session->thread_id,
                session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               dbl, dbs,
+               (int)session->db.length(), dbs,
                // do need to quote the query
                quotify((unsigned char *)session->getQueryString(),
                        session->getQueryLength(), qs, sizeof(qs)),
@@ -411,7 +408,7 @@ static struct st_mysql_sys_var* logging_query_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(logging_query)
+drizzle_declare_plugin
 {
   "logging_query",
   "0.2",

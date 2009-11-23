@@ -323,7 +323,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
      idx	Key number
 */
 
-void key_unpack(String *to,Table *table,uint32_t idx)
+void key_unpack(String *to, Table *table, uint32_t idx)
 {
   KEY_PART_INFO *key_part,*key_part_end;
   Field *field;
@@ -408,7 +408,7 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     key is not updated
   */
   if (idx != table->s->primary_key && table->s->primary_key < MAX_KEY &&
-      (table->file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
+      (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
     return is_key_used(table, table->s->primary_key, fields);
   return 0;
 }

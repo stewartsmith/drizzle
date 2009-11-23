@@ -35,7 +35,9 @@ class Authentication : public Plugin
   Authentication(const Authentication &);
   Authentication& operator=(const Authentication &);
 public:
-  explicit Authentication(std::string name_arg) : Plugin(name_arg) {}
+  explicit Authentication(std::string name_arg)
+    : Plugin(name_arg, "Authentication")
+  {}
   virtual ~Authentication() {}
 
   virtual bool authenticate(Session *, const char *)= 0;

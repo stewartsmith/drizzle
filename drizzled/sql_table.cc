@@ -75,11 +75,11 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
 }
 
 /*
-  Translate a file name to a table name (WL #1324).
+  Translate a cursor name to a table name (WL #1324).
 
   SYNOPSIS
     filename_to_tablename()
-      from                      The file name
+      from                      The cursor name
       to                OUT     The table name
       to_length                 The size of the table name buffer.
 
@@ -125,13 +125,13 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
 
 
 /*
-  Translate a table name to a file name (WL #1324).
+  Translate a table name to a cursor name (WL #1324).
 
   SYNOPSIS
     tablename_to_filename()
       from                      The table name
-      to                OUT     The file name
-      to_length                 The size of the file name buffer.
+      to                OUT     The cursor name
+      to_length                 The size of the cursor name buffer.
 
   RETURN
     true if errors happen. false on success.
@@ -180,7 +180,7 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
 
 
 /*
-  Creates path to a file: drizzle_data_dir/db/table.ext
+  Creates path to a cursor: drizzle_data_dir/db/table.ext
 
   SYNOPSIS
    build_table_filename()
@@ -196,7 +196,7 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
   NOTES
 
     Uses database and table name, and extension to create
-    a file name in drizzle_data_dir. Database and table
+    a cursor name in drizzle_data_dir. Database and table
     names are converted from system_charset_info into "fscs".
     Unless flags indicate a temporary table name.
     'db' is always converted.
@@ -269,7 +269,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
 
 
 /*
-  Creates path to a file: drizzle_tmpdir/#sql1234_12_1.ext
+  Creates path to a cursor: drizzle_tmpdir/#sql1234_12_1.ext
 
   SYNOPSIS
    build_tmptable_filename()
@@ -280,7 +280,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
   NOTES
 
     Uses current_pid, thread_id, and tmp_table counter to create
-    a file name in drizzle_tmpdir.
+    a cursor name in drizzle_tmpdir.
 
   RETURN
     path length on success, 0 on failure
@@ -322,7 +322,7 @@ static uint32_t build_tmptable_filename(Session* session,
 
   DESCRIPTION
     Write the binlog if open, routine used in multiple places in this
-    file
+    cursor
 */
 
 void write_bin_log(Session *session,
@@ -345,7 +345,7 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
     built_query.append("DROP TABLE ");
 
   built_query.append("`");
-  if (session->db == NULL || strcmp(db_name ,session->db) != 0)
+  if (session->db.empty() || strcmp(db_name, session->db.c_str()) != 0)
   {
     built_query.append(db_name);
     built_query.append("`.`");
@@ -458,7 +458,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   /*
     If we have the table in the definition cache, we don't have to check the
-    .frm file to find if the table is a normal table (not view) and what
+    .frm cursor to find if the table is a normal table (not view) and what
     engine to use.
   */
 
@@ -518,7 +518,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         error= -1;
         goto err_with_placeholders;
       }
-      /* remove .frm file and engine files */
+      /* remove .frm cursor and engine files */
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
 
@@ -802,7 +802,7 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_NULL:
     sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);
     break;
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
     sql_field->pack_flag= 0;
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
@@ -836,7 +836,7 @@ int mysql_prepare_create_table(Session *session,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
-                               Cursor *file,
+                               Cursor *cursor,
                                KEY **key_info_buffer,
                                uint32_t *key_count,
                                int select_field_count)
@@ -856,7 +856,7 @@ int mysql_prepare_create_table(Session *session,
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
-  max_key_length= file->max_key_length();
+  max_key_length= cursor->max_key_length();
 
   for (field_no=0; (sql_field=it++) ; field_no++)
   {
@@ -1080,7 +1080,7 @@ int mysql_prepare_create_table(Session *session,
 
     if (prepare_create_field(sql_field, &blob_columns,
 			     &timestamps, &timestamps_with_niladic,
-			     file->ha_table_flags()))
+			     cursor->ha_table_flags()))
       return(true);
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
@@ -1098,14 +1098,14 @@ int mysql_prepare_create_table(Session *session,
     return(true);
   }
   if (auto_increment &&
-      (file->ha_table_flags() & HA_NO_AUTO_INCREMENT))
+      (cursor->ha_table_flags() & HA_NO_AUTO_INCREMENT))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
     return(true);
   }
 
-  if (blob_columns && (file->ha_table_flags() & HA_NO_BLOBS))
+  if (blob_columns && (cursor->ha_table_flags() & HA_NO_BLOBS))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
@@ -1146,7 +1146,7 @@ int mysql_prepare_create_table(Session *session,
       continue;
     }
     (*key_count)++;
-    tmp=file->max_key_parts();
+    tmp=cursor->max_key_parts();
     if (key->columns.elements > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
@@ -1195,7 +1195,7 @@ int mysql_prepare_create_table(Session *session,
       return(true);
     }
   }
-  tmp=file->max_keys();
+  tmp=cursor->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
@@ -1276,15 +1276,18 @@ int mysql_prepare_create_table(Session *session,
       key_info->comment.str= key->key_create_info.comment.str;
     }
 
+    message::Table::Field *protofield= NULL;
+
     List_iterator<Key_part_spec> cols(key->columns), cols2(key->columns);
     for (uint32_t column_nr=0 ; (column=cols++) ; column_nr++)
     {
       uint32_t length;
       Key_part_spec *dup_column;
+      int proto_field_nr= 0;
 
       it.rewind();
       field=0;
-      while ((sql_field=it++) &&
+      while ((sql_field=it++) && ++proto_field_nr &&
 	     my_strcasecmp(system_charset_info,
 			   column->field_name.str,
 			   sql_field->field_name))
@@ -1306,12 +1309,16 @@ int mysql_prepare_create_table(Session *session,
 	}
       }
       cols2.rewind();
+
+      if (create_proto->field_size() > 0)
+        protofield= create_proto->mutable_field(proto_field_nr - 1);
+
       {
         column->length*= sql_field->charset->mbmaxlen;
 
         if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
         {
-          if (! (file->ha_table_flags() & HA_CAN_INDEX_BLOBS))
+          if (! (cursor->ha_table_flags() & HA_CAN_INDEX_BLOBS))
           {
             my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
             return true;
@@ -1329,11 +1336,19 @@ int mysql_prepare_create_table(Session *session,
             /* Implicitly set primary key fields to NOT NULL for ISO conf. */
             sql_field->flags|= NOT_NULL_FLAG;
             null_fields--;
+
+            if (protofield)
+            {
+              message::Table::Field::FieldConstraints *constraints;
+              constraints= protofield->mutable_constraints();
+              constraints->set_is_nullable(false);
+            }
+
           }
           else
           {
             key_info->flags|= HA_NULL_PART_KEY;
-            if (! (file->ha_table_flags() & HA_NULL_IN_KEY))
+            if (! (cursor->ha_table_flags() & HA_NULL_IN_KEY))
             {
               my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
               return true;
@@ -1342,7 +1357,7 @@ int mysql_prepare_create_table(Session *session,
         }
         if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
         {
-          if (column_nr == 0 || (file->ha_table_flags() & HA_AUTO_PART_KEY))
+          if (column_nr == 0 || (cursor->ha_table_flags() & HA_AUTO_PART_KEY))
             auto_increment--;			// Field is used
         }
       }
@@ -1357,9 +1372,9 @@ int mysql_prepare_create_table(Session *session,
 	if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
 	{
 	  if ((length=column->length) > max_key_length ||
-	      length > file->max_key_part_length())
+	      length > cursor->max_key_part_length())
 	  {
-	    length= min(max_key_length, file->max_key_part_length());
+	    length= min(max_key_length, cursor->max_key_part_length());
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
@@ -1384,7 +1399,7 @@ int mysql_prepare_create_table(Session *session,
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
 	  return(true);
 	}
-	else if (!(file->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS))
+	else if (!(cursor->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS))
 	  length=column->length;
       }
       else if (length == 0)
@@ -1392,9 +1407,9 @@ int mysql_prepare_create_table(Session *session,
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
 	  return(true);
       }
-      if (length > file->max_key_part_length())
+      if (length > cursor->max_key_part_length())
       {
-        length= file->max_key_part_length();
+        length= cursor->max_key_part_length();
 	if (key->type == Key::MULTIPLE)
 	{
 	  /* not a critical problem */
@@ -1474,7 +1489,7 @@ int mysql_prepare_create_table(Session *session,
     key_info++;
   }
   if (!unique_key && !primary_key &&
-      (file->ha_table_flags() & HA_REQUIRE_PRIMARY_KEY))
+      (cursor->ha_table_flags() & HA_REQUIRE_PRIMARY_KEY))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
     return(true);
@@ -1602,8 +1617,10 @@ bool mysql_create_table_no_lock(Session *session,
   uint32_t          path_length;
   uint		db_options, key_count;
   KEY		*key_info_buffer;
-  Cursor	*file;
+  Cursor	*cursor;
   bool		error= true;
+  TableShare share;
+
   /* Check for duplicate fields and check type of table to create */
   if (!alter_info->create_list.elements)
   {
@@ -1617,7 +1634,7 @@ bool mysql_create_table_no_lock(Session *session,
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
-  if (!(file= create_info->db_type->getCursor((TableShare*) 0, session->mem_root)))
+  if (!(cursor= create_info->db_type->getCursor(share, session->mem_root)))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Cursor));
     return true;
@@ -1627,7 +1644,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
-                                 &db_options, file,
+                                 &db_options, cursor,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
     goto err;
@@ -1689,7 +1706,7 @@ bool mysql_create_table_no_lock(Session *session,
       We don't assert here, but check the result, because the table could be
       in the table definition cache and in the same time the .frm could be
       missing from the disk, in case of manual intervention which deletes
-      the .frm file. The user has to use FLUSH TABLES; to clear the cache.
+      the .frm cursor. The user has to use FLUSH TABLES; to clear the cache.
       Then she could create the table. This case is pretty obscure and
       therefore we don't introduce a new error message only for it.
     */
@@ -1707,7 +1724,7 @@ bool mysql_create_table_no_lock(Session *session,
     unless user specified CREATE TABLE IF EXISTS
     The LOCK_open mutex has been locked to make sure no
     one else is attempting to discover the table. Since
-    it's not on disk as a frm file, no one could be using it!
+    it's not on disk as a frm cursor, no one could be using it!
   */
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
@@ -1758,7 +1775,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
     /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(path, db, table_name, 1, OTM_OPEN)))
+    if (!(session->open_temporary_table(path, db, table_name)))
     {
       (void) session->rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
@@ -1781,7 +1798,7 @@ unlock_and_end:
 
 err:
   session->set_proc_info("After create");
-  delete file;
+  delete cursor;
   return(error);
 }
 
@@ -1902,7 +1919,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
       flags                     flags for build_table_filename().
                                 FN_FROM_IS_TMP old_name is temporary.
                                 FN_TO_IS_TMP   new_name is temporary.
-                                NO_FRM_RENAME  Don't rename the FRM file
+                                NO_FRM_RENAME  Don't rename the FRM cursor
                                 but only the table in the storage engine.
 
   RETURN
@@ -1971,7 +1988,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  table->file->extra(function);
+  table->cursor->extra(function);
   /* Mark all tables that are in use as 'old' */
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
@@ -2170,7 +2187,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
         goto err;
     }
 
-    result_code = (table->table->file->*operator_func)(session, check_opt);
+    result_code = (table->table->cursor->*operator_func)(session, check_opt);
 
 send_result:
 
@@ -2265,7 +2282,7 @@ send_result_message:
       if (!result_code) // recreation went ok
       {
         if ((table->table= session->openTableLock(table, lock_type)) &&
-            ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
+            ((result_code= table->table->cursor->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
       if (result_code) // either mysql_recreate_table or analyze failed
@@ -2321,7 +2338,7 @@ send_result_message:
       else if (open_for_modify)
       {
         if (table->table->s->tmp_table)
-          table->table->file->info(HA_STATUS_CONST);
+          table->table->cursor->info(HA_STATUS_CONST);
         else
         {
           pthread_mutex_lock(&LOCK_open);
@@ -2390,7 +2407,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   /*
     By opening source table we guarantee that it exists and no concurrent
     DDL operation will mess with it. Later we also take an exclusive
-    name-lock on target table name, which makes copying of .frm file,
+    name-lock on target table name, which makes copying of .frm cursor,
     call to plugin::StorageEngine::createTable() and binlogging atomic
     against concurrent DML and DDL operations on target table.
     Thus by holding both these "locks" we ensure that our statement is
@@ -2445,6 +2462,20 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
+      /* 
+        If engine was not specified and we are reading from the I_S, then we need to 
+        toss an error. This should go away later on when we straighten out the 
+        I_S engine.
+      */
+      if (! (create_info->used_fields & HA_CREATE_USED_ENGINE))
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+                 "INFORMATION_ENGINE",
+                 "TEMPORARY");
+        goto err;
+      }
+
       if (create_like_schema_frm(session, src_table, create_info, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
@@ -2471,20 +2502,22 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       protoengine->set_name(create_table_proto.engine().name());
     }
 
-    string dst_proto_path(dst_path);
-    string file_ext = ".dfe";
-
-    dst_proto_path.append(file_ext);
-
     if (protoerr == EEXIST)
     {
       plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
                                                                        new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+      {
+        string dst_proto_path(dst_path);
+        dst_proto_path.append(".dfe");
+
         protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
+      }
       else
+      {
         protoerr= 0;
+      }
     }
 
     if (protoerr)
@@ -2509,7 +2542,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
-    if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
+    if (err || !session->open_temporary_table(dst_path, db, table_name))
     {
       (void) session->rm_temporary_table(create_info->db_type, dst_path);
       goto err;
@@ -2694,10 +2727,10 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     }
     else
     {
-      if (t->file->ha_table_flags() & HA_HAS_CHECKSUM &&
+      if (t->cursor->ha_table_flags() & HA_HAS_CHECKSUM &&
 	  !(check_opt->flags & T_EXTEND))
-	session->client->store((uint64_t)t->file->checksum());
-      else if (!(t->file->ha_table_flags() & HA_HAS_CHECKSUM) &&
+	session->client->store((uint64_t)t->cursor->checksum());
+      else if (!(t->cursor->ha_table_flags() & HA_HAS_CHECKSUM) &&
 	       (check_opt->flags & T_QUICK))
 	session->client->store();
       else
@@ -2708,14 +2741,14 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
         t->use_all_columns();
 
-	if (t->file->ha_rnd_init(1))
+	if (t->cursor->ha_rnd_init(1))
 	  session->client->store();
 	else
 	{
 	  for (;;)
 	  {
 	    ha_checksum row_crc= 0;
-            int error= t->file->rnd_next(t->record[0]);
+            int error= t->cursor->rnd_next(t->record[0]);
             if (unlikely(error))
             {
               if (error == HA_ERR_RECORD_DELETED)
@@ -2750,7 +2783,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 	    crc+= row_crc;
 	  }
 	  session->client->store((uint64_t)crc);
-          t->file->ha_rnd_end();
+          t->cursor->ha_rnd_end();
 	}
       }
       session->clear_error();

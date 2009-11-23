@@ -43,3 +43,19 @@ INSERT INTO t1 (name,alias) VALUES ("jeff lebowski","dude");
 UPDATE t1 SET alias = "the dude" WHERE alias = "dude";
 
 DROP TABLE t1;
+
+# Tests UPDATE statement which changes an existing row
+# by referencing the changed field.
+
+CREATE TABLE t1 (
+  id INT NOT NULL
+, counter INT NOT NULL
+, PRIMARY KEY (id)
+);
+
+INSERT INTO t1 (id, counter) VALUES (1,1),(2,2),(3,3);
+
+UPDATE t1 SET counter = counter + 1 WHERE id = 1;
+UPDATE t1 SET counter = counter + 1 WHERE id IN (2,3);
+
+DROP TABLE t1;

@@ -81,7 +81,7 @@ static uint64_t get_exact_record_count(TableList *tables)
   uint64_t count= 1;
   for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
-    ha_rows tmp= tl->table->file->records();
+    ha_rows tmp= tl->table->cursor->records();
     if ((tmp == HA_POS_ERROR))
       return UINT64_MAX;
     count*= tmp;
@@ -162,24 +162,24 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
       Schema tables are filled after this function is invoked, so we can't
       get row count
     */
-    if (!(tl->table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) ||
+    if (!(tl->table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) ||
         tl->schema_table)
     {
       maybe_exact_count&= test(!tl->schema_table &&
-                               (tl->table->file->ha_table_flags() &
+                               (tl->table->cursor->ha_table_flags() &
                                 HA_HAS_RECORDS));
       is_exact_count= false;
       count= 1;                                 // ensure count != 0
     }
     else
     {
-      error= tl->table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+      error= tl->table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
       if(error)
       {
-        tl->table->file->print_error(error, MYF(ME_FATALERROR));
+        tl->table->print_error(error, MYF(ME_FATALERROR));
         return error;
       }
-      count*= tl->table->file->stats.records;
+      count*= tl->table->cursor->stats.records;
     }
   }
 
@@ -245,17 +245,17 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
             Type of range for the key part for this field will be
             returned in range_fl.
           */
-          if (table->file->inited || (outer_tables & table->map) ||
+          if (table->cursor->inited || (outer_tables & table->map) ||
               !find_key_for_maxmin(0, &ref, item_field->field, conds,
                                    &range_fl, &prefix_len))
           {
             const_result= 0;
             break;
           }
-          error= table->file->ha_index_init((uint32_t) ref.key, 1);
+          error= table->cursor->ha_index_init((uint32_t) ref.key, 1);
 
           if (!ref.key_length)
-            error= table->file->index_first(table->record[0]);
+            error= table->cursor->index_first(table->record[0]);
           else
           {
             /*
@@ -277,7 +277,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
                  Closed interval: Either The MIN argument is non-nullable, or
                  we have a >= predicate for the MIN argument.
               */
-              error= table->file->index_read_map(table->record[0],
+              error= table->cursor->index_read_map(table->record[0],
                                                  ref.key_buff,
                                                  make_prev_keypart_map(ref.key_parts),
                                                  HA_READ_KEY_OR_NEXT);
@@ -289,7 +289,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
                 2) there is a > predicate on it, nullability is irrelevant.
                 We need to scan the next bigger record first.
               */
-              error= table->file->index_read_map(table->record[0],
+              error= table->cursor->index_read_map(table->record[0],
                                                  ref.key_buff,
                                                  make_prev_keypart_map(ref.key_parts),
                                                  HA_READ_AFTER_KEY);
@@ -315,7 +315,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
                    key_cmp_if_same(table, ref.key_buff, ref.key, prefix_len)))
               {
                 assert(item_field->field->real_maybe_null());
-                error= table->file->index_read_map(table->record[0],
+                error= table->cursor->index_read_map(table->record[0],
                                                    ref.key_buff,
                                                    make_prev_keypart_map(ref.key_parts),
                                                    HA_READ_KEY_EXACT);
@@ -329,15 +329,15 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
           if (table->key_read)
           {
             table->key_read= 0;
-            table->file->extra(HA_EXTRA_NO_KEYREAD);
+            table->cursor->extra(HA_EXTRA_NO_KEYREAD);
           }
-          table->file->ha_index_end();
+          table->cursor->ha_index_end();
           if (error)
 	  {
 	    if (error == HA_ERR_KEY_NOT_FOUND || error == HA_ERR_END_OF_FILE)
 	      return HA_ERR_KEY_NOT_FOUND;	      // No rows matching WHERE
 	    /* HA_ERR_LOCK_DEADLOCK or some other error */
- 	    table->file->print_error(error, MYF(0));
+ 	    table->print_error(error, MYF(0));
             return(error);
 	  }
           removed_tables|= table->map;
@@ -393,19 +393,19 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
             Type of range for the key part for this field will be
             returned in range_fl.
           */
-          if (table->file->inited || (outer_tables & table->map) ||
+          if (table->cursor->inited || (outer_tables & table->map) ||
 	          !find_key_for_maxmin(1, &ref, item_field->field, conds,
 				                   &range_fl, &prefix_len))
           {
             const_result= 0;
             break;
           }
-          error= table->file->ha_index_init((uint32_t) ref.key, 1);
+          error= table->cursor->ha_index_init((uint32_t) ref.key, 1);
 
           if (!ref.key_length)
-            error= table->file->index_last(table->record[0]);
+            error= table->cursor->index_last(table->record[0]);
           else
-	    error= table->file->index_read_map(table->record[0], key_buff,
+	    error= table->cursor->index_read_map(table->record[0], key_buff,
                                                make_prev_keypart_map(ref.key_parts),
                                                range_fl & NEAR_MAX ?
                                                HA_READ_BEFORE_KEY :
@@ -416,15 +416,15 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
           if (table->key_read)
           {
             table->key_read=0;
-            table->file->extra(HA_EXTRA_NO_KEYREAD);
+            table->cursor->extra(HA_EXTRA_NO_KEYREAD);
           }
-          table->file->ha_index_end();
+          table->cursor->ha_index_end();
           if (error)
           {
 	    if (error == HA_ERR_KEY_NOT_FOUND || error == HA_ERR_END_OF_FILE)
 	      return HA_ERR_KEY_NOT_FOUND;	     // No rows matching WHERE
 	    /* HA_ERR_LOCK_DEADLOCK or some other error */
-            table->file->print_error(error, MYF(ME_FATALERROR));
+            table->print_error(error, MYF(ME_FATALERROR));
             return(error);
 	  }
           removed_tables|= table->map;
@@ -829,7 +829,7 @@ static bool find_key_for_maxmin(bool max_fl, table_reference_st *ref,
          part != part_end ;
          part++, jdx++, key_part_to_use= (key_part_to_use << 1) | 1)
     {
-      if (!(table->file->index_flags(idx, jdx, 0) & HA_READ_ORDER))
+      if (!(table->cursor->index_flags(idx, jdx, 0) & HA_READ_ORDER))
         return 0;
 
       /* Check whether the index component is partial */
@@ -882,7 +882,7 @@ static bool find_key_for_maxmin(bool max_fl, table_reference_st *ref,
           if (field->part_of_key.test(idx))
           {
             table->key_read= 1;
-            table->file->extra(HA_EXTRA_KEYREAD);
+            table->cursor->extra(HA_EXTRA_KEYREAD);
           }
           return 1;
         }

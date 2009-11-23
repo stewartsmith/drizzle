@@ -48,9 +48,7 @@ typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_l
 /* Possible flags of a StorageEngine (there can be 32 of them) */
 enum engine_flag_bits {
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
-  HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
   HTON_BIT_HIDDEN,                    // Engine does not appear in lists
-  HTON_BIT_FLUSH_AFTER_RENAME,
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
@@ -62,9 +60,7 @@ enum engine_flag_bits {
 
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
 static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
-static const std::bitset<HTON_BIT_SIZE> HTON_CAN_RECREATE(1 << HTON_BIT_CAN_RECREATE);
 static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
-static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FLUSH_AFTER_RENAME);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
@@ -81,7 +77,6 @@ namespace plugin
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
-const unsigned int MAX_STORAGE_ENGINE_FILE_EXT= 4;
     
 
 /*
@@ -97,6 +92,11 @@ const unsigned int MAX_STORAGE_ENGINE_FILE_EXT= 4;
 */
 class StorageEngine : public Plugin
 {
+public:
+  typedef uint64_t Table_flags;
+
+private:
+
   /*
     Name used for storage engine.
   */
@@ -122,7 +122,7 @@ protected:
   std::string table_definition_ext;
 
 public:
-  const std::string& getTableDefinitionExt()
+  const std::string& getTableDefinitionFileExtension()
   {
     return table_definition_ext;
   }
@@ -173,6 +173,14 @@ public:
     return ENOENT;
   }
 
+  /* Old style cursor errors */
+protected:
+  void print_keydup_error(uint32_t key_nr, const char *msg, Table &table);
+  void print_error(int error, myf errflag, Table *table= NULL);
+  virtual bool get_error_message(int error, String *buf);
+public:
+  virtual void print_error(int error, myf errflag, Table& table);
+
   /*
     each storage engine has it's own memory area (actually a pointer)
     in the session, for storing per-connection information.
@@ -183,6 +191,8 @@ public:
    slot number is initialized by MySQL after xxx_init() is called.
   */
   uint32_t slot;
+
+  virtual Table_flags table_flags(void) const= 0;
 
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
@@ -269,7 +279,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual Cursor *create(TableShare *, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare &, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -361,7 +371,9 @@ public:
                          drizzled::message::Table& table_proto,
                          bool used= true);
 
-  Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
+  static void removeLostTemporaryTables(Session &session, const char *directory);
+
+  Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
 };
 
 } /* namespace plugin */

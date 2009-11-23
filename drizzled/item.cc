@@ -1048,7 +1048,7 @@ enum_field_types Item::field_type() const
   case INT_RESULT:     
     return DRIZZLE_TYPE_LONGLONG;
   case DECIMAL_RESULT: 
-    return DRIZZLE_TYPE_NEWDECIMAL;
+    return DRIZZLE_TYPE_DECIMAL;
   case REAL_RESULT:    
     return DRIZZLE_TYPE_DOUBLE;
   case ROW_RESULT:
@@ -1152,8 +1152,8 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   Field *field;
 
   switch (field_type()) {
-  case DRIZZLE_TYPE_NEWDECIMAL:
-    field= new Field_new_decimal((unsigned char*) 0,
+  case DRIZZLE_TYPE_DECIMAL:
+    field= new Field_decimal((unsigned char*) 0,
                                  max_length,
                                  null_ptr,
                                  0,
@@ -1282,7 +1282,7 @@ bool Item::send(plugin::Client *client, String *buffer)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
   {
     String *res;
     if ((res=val_str(buffer)))
@@ -1586,11 +1586,11 @@ static Field *create_tmp_field_from_item(Session *,
         len-= item->decimals - dec;             // corrected value fits
     }
 
-    new_field= new Field_new_decimal(len,
-                                     maybe_null,
-                                     item->name,
-                                     dec,
-                                     item->unsigned_flag);
+    new_field= new Field_decimal(len,
+                                 maybe_null,
+                                 item->name,
+                                 dec,
+                                 item->unsigned_flag);
     break;
   }
   case ROW_RESULT:

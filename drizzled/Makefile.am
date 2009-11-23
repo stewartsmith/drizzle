@@ -268,13 +268,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/client.h \
 		plugin/error_message.h \
 		plugin/function.h \
-		plugin/handle.h \
 		plugin/info_schema_table.h \
 		plugin/library.h \
 		plugin/listen.h \
 		plugin/listen_tcp.h \
 		plugin/logging.h \
 		plugin/manifest.h \
+		plugin/module.h \
 		plugin/null_client.h \
 		plugin/plugin.h \
 		plugin/query_cache.h \
@@ -406,10 +406,11 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(PANDORA_PLUGIN_DEP_LIBS)
 drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
-drizzled_LDFLAGS =
+drizzled_LDFLAGS = -export-dynamic
 
 
 noinst_HEADERS = \
+		hash.h \
 		gettext.h \
 		global.h \
 		server_includes.h \
@@ -558,6 +559,7 @@ drizzled_SOURCES = \
 		function/units.cc \
 		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
+		ha_commands.cc \
 		ha_trx_info.cc \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \

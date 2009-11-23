@@ -247,7 +247,7 @@ enum enum_field_types { DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DATETIME,
                         DRIZZLE_TYPE_DATE,
                         DRIZZLE_TYPE_VARCHAR,
-                        DRIZZLE_TYPE_NEWDECIMAL,
+                        DRIZZLE_TYPE_DECIMAL,
                         DRIZZLE_TYPE_ENUM,
                         DRIZZLE_TYPE_BLOB,
                         DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB

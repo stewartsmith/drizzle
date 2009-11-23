@@ -112,7 +112,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(multi_thread)
+drizzle_declare_plugin
 {
   "multi_thread",
   "0.1",

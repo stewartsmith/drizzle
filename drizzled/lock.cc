@@ -295,13 +295,13 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 	 (*tables)->reginfo.lock_type <= TL_READ_NO_INSERT))
       lock_type=F_RDLCK;
 
-    if ((error=(*tables)->file->ha_external_lock(session,lock_type)))
+    if ((error=(*tables)->cursor->ha_external_lock(session,lock_type)))
     {
-      print_lock_error(error, (*tables)->file->engine->getName().c_str());
+      print_lock_error(error, (*tables)->cursor->engine->getName().c_str());
       while (--i)
       {
         tables--;
-	(*tables)->file->ha_external_lock(session, F_UNLCK);
+	(*tables)->cursor->ha_external_lock(session, F_UNLCK);
 	(*tables)->current_lock=F_UNLCK;
       }
       return error;
@@ -478,105 +478,6 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
 }
 
 
-/**
-  Find duplicate lock in tables.
-
-  Temporary tables are ignored here like they are ignored in
-  get_lock_data(). If we allow two opens on temporary tables later,
-  both functions should be checked.
-
-  @param session                 The current thread.
-  @param needle              The table to check for duplicate lock.
-  @param haystack            The list of tables to search for the dup lock.
-
-  @note
-    This is mainly meant for MERGE tables in INSERT ... SELECT
-    situations. The 'real', underlying tables can be found only after
-    the MERGE tables are opened. This function assumes that the tables are
-    already locked.
-
-  @retval
-    NULL    No duplicate lock found.
-  @retval
-    !NULL   First table from 'haystack' that matches a lock on 'needle'.
-*/
-
-TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
-                                      TableList *haystack)
-{
-  DRIZZLE_LOCK            *mylock;
-  Table                 **lock_tables;
-  Table                 *table;
-  Table                 *table2;
-  THR_LOCK_DATA         **lock_locks;
-  THR_LOCK_DATA         **table_lock_data;
-  THR_LOCK_DATA         **end_data;
-  THR_LOCK_DATA         **lock_data2;
-  THR_LOCK_DATA         **end_data2;
-
-  /*
-    Table may not be defined for derived or view tables.
-    Table may not be part of a lock for delayed operations.
-  */
-  if (! (table= needle->table) || ! table->lock_count)
-    goto end;
-
-  /* A temporary table does not have locks. */
-  if (table->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
-    goto end;
-
-  /* Get command lock or LOCK TABLES lock. Maybe empty for INSERT DELAYED. */
-  if (!(mylock= session->lock))
-    goto end;
-
-  /* If we have less than two tables, we cannot have duplicates. */
-  if (mylock->table_count < 2)
-    goto end;
-
-  lock_locks=  mylock->locks;
-  lock_tables= mylock->table;
-
-  /* Prepare table related variables that don't change in loop. */
-  assert((table->lock_position < mylock->table_count) &&
-              (table == lock_tables[table->lock_position]));
-  table_lock_data= lock_locks + table->lock_data_start;
-  end_data= table_lock_data + table->lock_count;
-
-  for (; haystack; haystack= haystack->next_global)
-  {
-    if (haystack->placeholder())
-      continue;
-    table2= haystack->table;
-    if (table2->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
-      continue;
-
-    /* All tables in list must be in lock. */
-    assert((table2->lock_position < mylock->table_count) &&
-                (table2 == lock_tables[table2->lock_position]));
-
-    for (lock_data2=  lock_locks + table2->lock_data_start,
-           end_data2= lock_data2 + table2->lock_count;
-         lock_data2 < end_data2;
-         lock_data2++)
-    {
-      THR_LOCK_DATA **lock_data;
-      THR_LOCK *lock2= (*lock_data2)->lock;
-
-      for (lock_data= table_lock_data;
-           lock_data < end_data;
-           lock_data++)
-      {
-        if ((*lock_data)->lock == lock2)
-          return haystack;
-      }
-    }
-  }
-
- end:
-  return NULL;
-}
-
-
 /** Unlock a set of external. */
 
 static int unlock_external(Session *session, Table **table,uint32_t count)
@@ -589,10 +490,10 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
     if ((*table)->current_lock != F_UNLCK)
     {
       (*table)->current_lock = F_UNLCK;
-      if ((error=(*table)->file->ha_external_lock(session, F_UNLCK)))
+      if ((error=(*table)->cursor->ha_external_lock(session, F_UNLCK)))
       {
 	error_code=error;
-	print_lock_error(error_code, (*table)->file->engine->getName().c_str());
+	print_lock_error(error_code, (*table)->cursor->engine->getName().c_str());
       }
     }
     table++;
@@ -652,8 +553,9 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     Table *table;
     enum thr_lock_type lock_type;
 
-    if ((table=table_ptr[i])->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
+    if (table_ptr[i]->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
       continue;
+    table= table_ptr[i];
     lock_type= table->reginfo.lock_type;
     assert (lock_type != TL_WRITE_DEFAULT);
     if (lock_type >= TL_WRITE_ALLOW_WRITE)
@@ -669,7 +571,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
       }
     }
     locks_start= locks;
-    locks= table->file->store_lock(session, locks,
+    locks= table->cursor->store_lock(session, locks,
                                    should_lock == false ? TL_IGNORE : lock_type);
     if (should_lock)
     {

@@ -47,7 +47,7 @@ static int rr_index(READ_RECORD *info);
   @param info         READ_RECORD structure to initialize.
   @param session          Thread handle
   @param table        Table to be accessed
-  @param print_error  If true, call table->file->print_error() if an error
+  @param print_error  If true, call table->print_error() if an error
                       occurs (except for end-of-records error)
   @param idx          index to scan
 */
@@ -60,13 +60,13 @@ void init_read_record_idx(READ_RECORD *info,
   table->emptyRecord();
   memset(info, 0, sizeof(*info));
   info->table= table;
-  info->file=  table->file;
+  info->cursor=  table->cursor;
   info->record= table->record[0];
   info->print_error= print_error;
 
   table->status=0;			/* And it's always found */
-  if (!table->file->inited)
-    table->file->ha_index_init(idx, 1);
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(idx, 1);
   /* read_record will be changed to rr_index in rr_index_first */
   info->read_record= rr_index_first;
 }
@@ -82,13 +82,13 @@ void init_read_record_idx(READ_RECORD *info,
   calls. The other two methods are used for normal table access.
 
   The filesort will produce references to the records sorted, these
-  references can be stored in memory or in a temporary file.
+  references can be stored in memory or in a temporary cursor.
 
-  The temporary file is normally used when the references doesn't fit into
+  The temporary cursor is normally used when the references doesn't fit into
   a properly sized memory buffer. For most small queries the references
   are stored in the memory buffer.
 
-  The temporary file is also used when performing an update where a key is
+  The temporary cursor is also used when performing an update where a key is
   modified.
 
   Methods used when ref's are in memory (using rr_from_pointers):
@@ -106,22 +106,22 @@ void init_read_record_idx(READ_RECORD *info,
       In this case the record data is fetched from the handler using the
       saved reference using the rnd_pos handler call.
 
-  Methods used when ref's are in a temporary file (using rr_from_tempfile)
+  Methods used when ref's are in a temporary cursor (using rr_from_tempfile)
     rr_unpack_from_tempfile:
     ------------------------
       Same as rr_unpack_from_buffer except that references are fetched from
-      temporary file. Should obviously not really happen other than in
+      temporary cursor. Should obviously not really happen other than in
       strange configurations.
 
     rr_from_tempfile:
     -----------------
       Same as rr_from_pointers except that references are fetched from
-      temporary file instead of from
+      temporary cursor instead of from
     rr_from_cache:
     --------------
       This is a special variant of rr_from_tempfile that can be used for
       handlers that is not using the HA_FAST_KEY_READ table flag. Instead
-      of reading the references one by one from the temporary file it reads
+      of reading the references one by one from the temporary cursor it reads
       a set of them, sorts them and reads all of them into a buffer which
       is then used for a number of subsequent calls to rr_from_cache.
       It is only used for SELECT queries and a number of other conditions
@@ -142,8 +142,8 @@ void init_read_record_idx(READ_RECORD *info,
 void init_read_record(READ_RECORD *info,
                       Session *session, 
                       Table *table,
-		                  SQL_SELECT *select,
-		                  int use_record_cache, 
+                      SQL_SELECT *select,
+                      int use_record_cache, 
                       bool print_error)
 {
   IO_CACHE *tempfile;
@@ -151,7 +151,7 @@ void init_read_record(READ_RECORD *info,
   memset(info, 0, sizeof(*info));
   info->session=session;
   info->table=table;
-  info->file= table->file;
+  info->cursor= table->cursor;
   info->forms= &info->table;		/* Only one table */
 
   if (table->sort.addon_field)
@@ -163,10 +163,10 @@ void init_read_record(READ_RECORD *info,
   {
     table->emptyRecord();
     info->record= table->record[0];
-    info->ref_length= table->file->ref_length;
+    info->ref_length= table->cursor->ref_length;
   }
   info->select=select;
-  info->print_error=print_error;
+  info->print_error= print_error;
   info->ignore_not_found_rows= 0;
   table->status=0;			/* And it's always found */
 
@@ -180,9 +180,9 @@ void init_read_record(READ_RECORD *info,
                         rr_unpack_from_tempfile : rr_from_tempfile);
     info->io_cache=tempfile;
     reinit_io_cache(info->io_cache,READ_CACHE,0L,0,0);
-    info->ref_pos=table->file->ref;
-    if (!table->file->inited)
-      table->file->ha_rnd_init(0);
+    info->ref_pos=table->cursor->ref;
+    if (!table->cursor->inited)
+      table->cursor->ha_rnd_init(0);
 
     /*
       table->sort.addon_field is checked because if we use addon fields,
@@ -191,11 +191,11 @@ void init_read_record(READ_RECORD *info,
     */
     if (!table->sort.addon_field &&
         session->variables.read_rnd_buff_size &&
-        !(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
+        !(table->cursor->ha_table_flags() & HA_FAST_KEY_READ) &&
         (table->db_stat & HA_READ_ONLY ||
         table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
-        (uint64_t) table->s->reclength* (table->file->stats.records+
-                                                table->file->stats.deleted) >
+        (uint64_t) table->s->reclength* (table->cursor->stats.records+
+                                                table->cursor->stats.deleted) >
         (uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
         info->io_cache->end_of_file/info->ref_length * table->s->reclength >
         (my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
@@ -214,7 +214,7 @@ void init_read_record(READ_RECORD *info,
   }
   else if (table->sort.record_pointers)
   {
-    table->file->ha_rnd_init(0);
+    table->cursor->ha_rnd_init(0);
     info->cache_pos=table->sort.record_pointers;
     info->cache_end=info->cache_pos+
                     table->sort.found_records*info->ref_length;
@@ -224,15 +224,15 @@ void init_read_record(READ_RECORD *info,
   else
   {
     info->read_record=rr_sequential;
-    table->file->ha_rnd_init(1);
+    table->cursor->ha_rnd_init(1);
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
         (use_record_cache > 0 ||
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
         !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
         (use_record_cache < 0 &&
-          !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
-      table->file->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
+          !(table->cursor->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
+      table->cursor->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
 
   return;
@@ -248,9 +248,9 @@ void end_read_record(READ_RECORD *info)
   if (info->table)
   {
     info->table->filesort_free_buffers();
-    (void) info->file->extra(HA_EXTRA_NO_CACHE);
+    (void) info->cursor->extra(HA_EXTRA_NO_CACHE);
     if (info->read_record != rr_quick) // otherwise quick_range does it
-      (void) info->file->ha_index_or_rnd_end();
+      (void) info->cursor->ha_index_or_rnd_end();
     info->table=0;
   }
 }
@@ -262,7 +262,7 @@ static int rr_handle_error(READ_RECORD *info, int error)
   else
   {
     if (info->print_error)
-      info->table->file->print_error(error, MYF(0));
+      info->table->print_error(error, MYF(0));
     if (error < 0)                            // Fix negative BDB errno
       error= 1;
   }
@@ -304,7 +304,7 @@ static int rr_quick(READ_RECORD *info)
 */
 static int rr_index_first(READ_RECORD *info)
 {
-  int tmp= info->file->index_first(info->record);
+  int tmp= info->cursor->index_first(info->record);
   info->read_record= rr_index;
   if (tmp)
     tmp= rr_handle_error(info, tmp);
@@ -328,7 +328,7 @@ static int rr_index_first(READ_RECORD *info)
 */
 static int rr_index(READ_RECORD *info)
 {
-  int tmp= info->file->index_next(info->record);
+  int tmp= info->cursor->index_next(info->record);
   if (tmp)
     tmp= rr_handle_error(info, tmp);
   return tmp;
@@ -337,7 +337,7 @@ static int rr_index(READ_RECORD *info)
 int rr_sequential(READ_RECORD *info)
 {
   int tmp;
-  while ((tmp= info->file->rnd_next(info->record)))
+  while ((tmp= info->cursor->rnd_next(info->record)))
   {
     if (info->session->killed)
     {
@@ -365,8 +365,8 @@ static int rr_from_tempfile(READ_RECORD *info)
   for (;;)
   {
     if (my_b_read(info->io_cache,info->ref_pos,info->ref_length))
-      return -1;					/* End of file */
-    if (!(tmp=info->file->rnd_pos(info->record,info->ref_pos)))
+      return -1;					/* End of cursor */
+    if (!(tmp=info->cursor->rnd_pos(info->record,info->ref_pos)))
       break;
     /* The following is extremely unlikely to happen */
     if (tmp == HA_ERR_RECORD_DELETED ||
@@ -379,9 +379,9 @@ static int rr_from_tempfile(READ_RECORD *info)
 } /* rr_from_tempfile */
 
 /**
-  Read a result set record from a temporary file after sorting.
+  Read a result set record from a temporary cursor after sorting.
 
-  The function first reads the next sorted record from the temporary file.
+  The function first reads the next sorted record from the temporary cursor.
   into a buffer. If a success it calls a callback function that unpacks
   the fields values use in the result set from this buffer into their
   positions in the regular record buffer.
@@ -411,11 +411,11 @@ static int rr_from_pointers(READ_RECORD *info)
   for (;;)
   {
     if (info->cache_pos == info->cache_end)
-      return -1;					/* End of file */
+      return -1;					/* End of cursor */
     cache_pos= info->cache_pos;
     info->cache_pos+= info->ref_length;
 
-    if (!(tmp=info->file->rnd_pos(info->record,cache_pos)))
+    if (!(tmp=info->cursor->rnd_pos(info->record,cache_pos)))
       break;
 
     /* The following is extremely unlikely to happen */
@@ -502,7 +502,7 @@ static int rr_from_cache(READ_RECORD *info)
       {
         shortget(error,info->cache_pos);
         if (info->print_error)
-          info->table->file->print_error(error,MYF(0));
+          info->table->print_error(error,MYF(0));
       }
       else
       {
@@ -518,7 +518,7 @@ static int rr_from_cache(READ_RECORD *info)
       length= (uint32_t) rest_of_file;
     if (!length || my_b_read(info->io_cache,info->cache,length))
     {
-      return -1;			/* End of file */
+      return -1;			/* End of cursor */
     }
 
     length/=info->ref_length;
@@ -542,7 +542,7 @@ static int rr_from_cache(READ_RECORD *info)
       record=uint3korr(position);
       position+=3;
       record_pos=info->cache+record*info->reclength;
-      if ((error=(int16_t) info->file->rnd_pos(record_pos,info->ref_pos)))
+      if ((error=(int16_t) info->cursor->rnd_pos(record_pos,info->ref_pos)))
       {
         record_pos[info->error_offset]=1;
         shortstore(record_pos,error);

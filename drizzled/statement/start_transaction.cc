@@ -37,7 +37,7 @@ bool statement::StartTransaction::execute()
   /*
      Breakpoints for backup testing.
    */
-  if (! session->startTransaction())
+  if (! session->startTransaction(start_transaction_opt))
   {
     return true;
   }

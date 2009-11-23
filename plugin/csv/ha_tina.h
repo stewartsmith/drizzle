@@ -90,7 +90,7 @@ class ha_tina: public Cursor
   int init_data_file();
 
 public:
-  ha_tina(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
+  ha_tina(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
   ~ha_tina()
   {
     if (chain_alloced)
@@ -101,10 +101,6 @@ public:
   const char *table_type(void) const { return "CSV"; }
   const char *index_type(uint32_t)
   { return "NONE"; }
-  uint64_t table_flags() const
-  {
-    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT);
-  }
   uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
     /*

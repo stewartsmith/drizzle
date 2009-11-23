@@ -23,6 +23,7 @@
 
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <signal.h>
 
 #include <mysys/my_bit.h>
@@ -384,7 +385,7 @@ drizzled::atomic<uint32_t> connection_count;
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
 */
-drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
+uint64_t refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
 bool drizzle_rm_tmp_tables();
@@ -395,7 +396,7 @@ static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
-static void fix_paths(void);
+static void fix_paths(string &progname);
 extern "C" pthread_handler_t handle_slave(void *arg);
 static void clean_up(bool print_message);
 
@@ -1620,8 +1621,8 @@ int main(int argc, char **argv)
 
   init_status_vars();
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname, VERSION,
-                COMPILATION_COMMENT);
+  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname,
+                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 
 
   /* Listen for new connections and start new session for each connection
@@ -1723,6 +1724,7 @@ enum options_drizzled
   OPT_ENABLE_LARGE_PAGES,
   OPT_TIMED_MUTEXES,
   OPT_TABLE_LOCK_WAIT_TIMEOUT,
+  OPT_PLUGIN_ADD,
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
@@ -2009,8 +2011,15 @@ struct my_option my_long_options[] =
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"plugin_add", OPT_PLUGIN_ADD,
+   N_("Optional comma separated list of plugins to load at startup in addition "
+      "to the default list of plugins. "
+      "[for example: --plugin_add=crc32,logger_gearman]"),
+   (char**) &opt_plugin_add, (char**) &opt_plugin_add, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
-   N_("Optional comma separated list of plugins to load at starup."
+   N_("Optional comma separated list of plugins to load at starup instead of "
+      "the default plugin load list. "
       "[for example: --plugin_load=crc32,logger_gearman]"),
    (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -2108,7 +2117,8 @@ static void print_version(void)
     version from the output of 'drizzled --version', so don't change it!
   */
   printf("%s  Ver %s for %s-%s on %s (%s)\n",my_progname,
-	 VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
+	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU,
+         COMPILATION_COMMENT);
 }
 
 static void usage(void)
@@ -2361,6 +2371,8 @@ static void get_options(int *argc,char **argv)
 
   my_getopt_error_reporter= option_error_reporter;
 
+  string progname(argv[0]);
+
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
@@ -2391,7 +2403,7 @@ static void get_options(int *argc,char **argv)
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
-  fix_paths();
+  fix_paths(progname);
 
   /*
     Set some global variables from the global_system_variables
@@ -2416,7 +2428,7 @@ static const char *get_relative_path(const char *path)
 }
 
 
-static void fix_paths(void)
+static void fix_paths(string &progname)
 {
   char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
   convert_dirname(drizzle_home,drizzle_home,NULL);
@@ -2444,9 +2456,56 @@ static void fix_paths(void)
   (void) my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
   (void) my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
   (void) my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
-  (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr ? opt_plugin_dir_ptr :
-                                      get_relative_path(PKGPLUGINDIR),
-                                      drizzle_home);
+
+  if (opt_plugin_dir_ptr == NULL)
+  {
+    /* No plugin dir has been specified. Figure out where the plugins are */
+    if (progname[0] != FN_LIBCHAR)
+    {
+      /* We have a relative path and need to find the absolute */
+      char working_dir[FN_REFLEN];
+      char *working_dir_ptr= working_dir;
+      working_dir_ptr= getcwd(working_dir_ptr, FN_REFLEN);
+      string new_path(working_dir);
+      if (*(new_path.end()-1) != '/')
+        new_path.push_back('/');
+      if (progname[0] == '.' && progname[1] == '/')
+        new_path.append(progname.substr(2));
+      else
+        new_path.append(progname);
+      progname.swap(new_path);
+    }
+
+    /* Now, trim off the exe name */
+    string progdir(progname.substr(0, progname.rfind(FN_LIBCHAR)+1));
+    if (progdir.rfind(".libs/") != string::npos)
+    {
+      progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
+    }
+    string testfile(progdir);
+    testfile.append("drizzled.o");
+    struct stat testfile_stat;
+    if (stat(testfile.c_str(), &testfile_stat))
+    {
+      /* drizzled.o doesn't exist - we are not in a source dir.
+       * Go on as usual
+       */
+      (void) my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
+                                          drizzle_home);
+    }
+    else
+    {
+      /* We are in a source dir! Plugin dir is ../plugin/.libs */
+      size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
+      string source_plugindir(progdir.substr(0,last_libchar_pos));
+      source_plugindir.append("plugin/.libs");
+      (void) my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
+    }
+  }
+  else
+  {
+    (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr, drizzle_home);
+  }
   opt_plugin_dir_ptr= opt_plugin_dir;
 
   const char *sharedir= get_relative_path(PKGDATADIR);

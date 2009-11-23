@@ -45,7 +45,7 @@ public:
 
 String *VersionFunction::val_str(String *str)
 {
-  str->set(STRING_WITH_LEN(VERSION),system_charset_info);
+  str->set(STRING_WITH_LEN(PANDORA_RELEASE_VERSION),system_charset_info);
   return str;
 }
 
@@ -65,7 +65,7 @@ static int finalize(plugin::Registry &registry)
    return 0;
 }
 
-drizzle_declare_plugin(version)
+drizzle_declare_plugin
 {
   "version",
   "1.0",

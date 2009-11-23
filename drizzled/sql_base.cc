@@ -108,7 +108,7 @@ uint32_t cached_open_tables(void)
 
 
 /*
-  Close file handle, but leave the table in the table cache
+  Close cursor handle, but leave the table in the table cache
 
   SYNOPSIS
   close_handle_and_leave_table_as_lock()
@@ -149,11 +149,11 @@ void close_handle_and_leave_table_as_lock(Table *table)
     share->tmp_table= INTERNAL_TMP_TABLE;       // for intern_close_table()
   }
 
-  table->file->close();
-  table->db_stat= 0;                            // Mark file closed
+  table->cursor->close();
+  table->db_stat= 0;                            // Mark cursor closed
   TableShare::release(table->s);
   table->s= share;
-  table->file->change_table_ptr(table, table->s);
+  table->cursor->change_table_ptr(table, table->s);
 }
 
 
@@ -240,8 +240,8 @@ bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table
 void Table::intern_close_table()
 {						// Free all structures
   free_io_cache();
-  if (file)                              // Not true if name lock
-    closefrm(true);			// close file
+  if (cursor)                              // Not true if name lock
+    closefrm(true);			// close cursor
 }
 
 /*
@@ -465,7 +465,7 @@ bool Session::free_cached_table()
 
   safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
-  assert(!table->file || table->file->inited == Cursor::NONE);
+  assert(!table->cursor || table->cursor->inited == Cursor::NONE);
 
   open_tables= table->next;
 
@@ -484,7 +484,7 @@ bool Session::free_cached_table()
     assert(!table->open_placeholder);
 
     /* Free memory and reset for next loop */
-    table->file->ha_reset();
+    table->cursor->ha_reset();
     table->in_use= false;
 
     if (unused_tables)
@@ -601,7 +601,7 @@ found duplicate
 0 if table is unique
 */
 
-TableList* unique_table(Session *session, TableList *table, TableList *table_list,
+TableList* unique_table(TableList *table, TableList *table_list,
                         bool check_alias)
 {
   TableList *res;
@@ -635,8 +635,7 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
 
   for (;;)
   {
-    if (((! (res= find_table_in_global_list(table_list, d_name, t_name))) &&
-         (! (res= mysql_lock_have_duplicate(session, table, table_list)))) ||
+    if ((! (res= find_table_in_global_list(table_list, d_name, t_name))) ||
         ((!res->table || res->table != table->table) &&
          (!check_alias || !(my_strcasecmp(files_charset_info, t_alias, res->alias))) &&
          res->select_lex && !res->select_lex->exclude_from_table_unique_test))
@@ -715,7 +714,7 @@ int Session::drop_temporary_table(TableList *table_list)
     return -1;
   }
 
-  close_temporary_table(table, true, true);
+  close_temporary_table(table);
 
   return 0;
 }
@@ -809,7 +808,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
                               const char *table_name)
 {
   if (table->s->tmp_table)
-    close_temporary_table(table, true, true);
+    close_temporary_table(table);
   else
   {
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
@@ -922,7 +921,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
   /*
     We want to prevent other connections from opening this table until end
     of statement as it is likely that modifications of table's metadata are
-    not yet finished (for example CREATE TRIGGER have to change .TRG file,
+    not yet finished (for example CREATE TRIGGER have to change .TRG cursor,
     or we might want to drop table if CREATE TABLE ... SELECT fails).
     This also allows us to assume that no other connection will sneak in
     before we will get table-level lock on this table.
@@ -1094,7 +1093,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
 
 Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 {
-  register Table *table;
+  Table *table;
   char key[MAX_DBKEY_LENGTH];
   unsigned int key_length;
   const char *alias= table_list->alias;
@@ -1415,7 +1414,7 @@ reset:
   table	Table object
 
   NOTES
-  The data file for the table is already closed and the share is released
+  The data cursor for the table is already closed and the share is released
   The table has a 'dummy' share that mainly contains database and table name.
 
   RETURN
@@ -1469,12 +1468,12 @@ bool reopen_table(Table *table)
   tmp.next=		table->next;
   tmp.prev=		table->prev;
 
-  if (table->file)
-    table->closefrm(true);		// close file, free everything
+  if (table->cursor)
+    table->closefrm(true);		// close cursor, free everything
 
   *table= tmp;
   table->default_column_bitmaps();
-  table->file->change_table_ptr(table, table->s);
+  table->cursor->change_table_ptr(table, table->s);
 
   assert(table->alias != 0);
   for (field=table->field ; *field ; field++)
@@ -1864,7 +1863,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
         if (table->db_stat)
         {
           table->db_stat= 0;
-          table->file->close();
+          table->cursor->close();
         }
       }
       else
@@ -1909,7 +1908,7 @@ void abort_locked_tables(Session *session,const char *db, const char *table_name
 }
 
 /*
-  Load a table definition from file and open unireg table
+  Load a table definition from cursor and open unireg table
 
   SYNOPSIS
   open_unireg_entry()
@@ -1951,7 +1950,7 @@ retry:
                                                    HA_GET_INDEX |
                                                    HA_TRY_READ_ONLY),
                                        (EXTRA_RECORD),
-                                       session->open_options, entry, OTM_OPEN)))
+                                       session->open_options, entry)))
   {
     if (error == 7)                             // Table def changed
     {
@@ -1993,7 +1992,7 @@ retry:
     }
     if (!entry->s || !entry->s->crashed)
       goto err;
-    // Code below is for repairing a crashed file
+    // Code below is for repairing a crashed cursor
     if ((error= lock_table_name(session, table_list, true)))
     {
       if (error < 0)
@@ -2013,14 +2012,14 @@ retry:
                                           HA_TRY_READ_ONLY),
                               EXTRA_RECORD,
                               ha_open_options | HA_OPEN_FOR_REPAIR,
-                              entry, OTM_OPEN) || ! entry->file)
+                              entry) || ! entry->cursor)
     {
       /* Give right error message */
       session->clear_error();
       my_error(ER_NOT_KEYFILE, MYF(0), share->table_name.str, my_errno);
       errmsg_printf(ERRMSG_LVL_ERROR, _("Couldn't repair table: %s.%s"), share->db.str,
                     share->table_name.str);
-      if (entry->file)
+      if (entry->cursor)
         entry->closefrm(false);
       error=1;
     }
@@ -2038,10 +2037,10 @@ retry:
     If we are here, there was no fatal error (but error may be still
     unitialized).
   */
-  if (unlikely(entry->file->implicit_emptied))
+  if (unlikely(entry->cursor->implicit_emptied))
   {
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    entry->file->implicit_emptied= 0;
+    entry->cursor->implicit_emptied= 0;
     {
       char *query, *end;
       uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
@@ -2347,8 +2346,7 @@ RETURN
 */
 
 Table *Session::open_temporary_table(const char *path, const char *db_arg,
-                                     const char *table_name_arg, bool link_in_list,
-                                     open_table_mode open_mode)
+                                     const char *table_name_arg, bool link_in_list)
 {
   Table *new_tmp_table;
   TableShare *share;
@@ -2363,7 +2361,7 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   path_length= strlen(path);
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
-                                   path_length + 1 + key_length)))
+                                       path_length + 1 + key_length)))
     return NULL;
 
   share= (TableShare*) (new_tmp_table+1);
@@ -2378,14 +2376,11 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   */
   if (open_table_def(*this, share) ||
       open_table_from_share(this, share, table_name_arg,
-                            (open_mode == OTM_ALTER) ? 0 :
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
-                            (open_mode == OTM_ALTER) ?
-                            (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
-                            : (EXTRA_RECORD),
+                            (EXTRA_RECORD),
                             ha_open_options,
-                            new_tmp_table, open_mode))
+                            new_tmp_table))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();
@@ -2394,17 +2389,8 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  if (open_mode == OTM_ALTER)
-  {
-    /*
-      Temporary table has been created with frm_only
-      and has not been created in any storage engine
-    */
-    share->tmp_table= TMP_TABLE_FRM_FILE_ONLY;
-  }
-  else
-    share->tmp_table= (new_tmp_table->file->has_transactions() ?
-                       TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+  share->tmp_table= (new_tmp_table->cursor->has_transactions() ?
+                     TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
 
   if (link_in_list)
   {
@@ -4531,7 +4517,6 @@ err:
 
 bool drizzle_rm_tmp_tables()
 {
-  char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   Session *session;
 
   assert(drizzle_tmpdir);
@@ -4541,55 +4526,7 @@ bool drizzle_rm_tmp_tables()
   session->thread_stack= (char*) &session;
   session->storeGlobals();
 
-  CachedDirectory dir(drizzle_tmpdir);
-
-  if (dir.fail())
-  {
-    my_errno= dir.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), drizzle_tmpdir, my_errno);
-    return true;
-  }
-
-  CachedDirectory::Entries files= dir.getEntries();
-  CachedDirectory::Entries::iterator fileIter= files.begin();
-
-  /* Remove all temp tables in the tmpdir */
-  while (fileIter != files.end())
-  {
-    CachedDirectory::Entry *entry= *fileIter;
-    string prefix= entry->filename.substr(0, TMP_FILE_PREFIX_LENGTH);
-
-    if (prefix == TMP_FILE_PREFIX)
-    {
-      char *ext= fn_ext(entry->filename.c_str());
-      uint32_t ext_len= strlen(ext);
-      uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
-                                      "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
-                                      entry->filename.c_str());
-
-      if (ext_len && !memcmp(drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT.c_str(), ext, ext_len))
-      {
-        TableShare share;
-        /* We should cut file extention before deleting of table */
-        memcpy(filePathCopy, filePath, filePath_len - ext_len);
-        filePathCopy[filePath_len - ext_len]= 0;
-        share.init(NULL, filePathCopy);
-        if (!open_table_def(*session, &share))
-        {
-          share.db_type()->doDropTable(*session, filePathCopy);
-        }
-        share.free_table_share();
-      }
-      /*
-        File can be already deleted by tmp_table.file->delete_table().
-        So we hide error messages which happnes during deleting of these
-        files(MYF(0)).
-      */
-      my_delete(filePath, MYF(0));
-    }
-
-    ++fileIter;
-  }
+  plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir);
 
   delete session;
 

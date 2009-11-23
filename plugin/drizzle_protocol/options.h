@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_OLDLIBDRIZZLE_OPTIONS_H
-#define PLUGIN_OLDLIBDRIZZLE_OPTIONS_H
+#ifndef PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H
+#define PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -125,4 +125,4 @@ struct st_drizzleclient_options {
                                                & ~CLIENT_COMPRESS) \
                                                & ~CLIENT_SSL_VERIFY_SERVER_CERT)
 
-#endif /* PLUGIN_OLDLIBDRIZZLE_OPTIONS_H */
+#endif /* PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H */

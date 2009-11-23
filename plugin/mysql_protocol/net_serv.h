@@ -18,8 +18,8 @@
  */
 
 
-#ifndef PLUGIN_OLDLIBDRIZZLE_NET_SERV_H
-#define PLUGIN_OLDLIBDRIZZLE_NET_SERV_H
+#ifndef PLUGIN_MYSQL_PROTOCOL_NET_SERV_H
+#define PLUGIN_MYSQL_PROTOCOL_NET_SERV_H
 
 #include "vio.h"
 
@@ -94,4 +94,4 @@ typedef struct st_net {
 }
 #endif
 
-#endif /* PLUGIN_OLDLIBDRIZZLE_NET_SERV_H */
+#endif /* PLUGIN_MYSQL_PROTOCOL_NET_SERV_H */

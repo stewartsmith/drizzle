@@ -71,21 +71,6 @@ enum Derivation
   DERIVATION_EXPLICIT= 0
 };
 
-/**
- * Opening modes for open_temporary_table and open_table_from_share
- *
- * @TODO Put this into an appropriate header. It is only needed in:
- *
- *    table.cc
- *    sql_base.cc
- */
-enum open_table_mode
-{
-  OTM_OPEN= 0,
-  OTM_CREATE= 1,
-  OTM_ALTER= 2
-};
-
 enum enum_parsing_place
 {
   NO_MATTER, 
@@ -240,8 +225,7 @@ enum tmp_table_type
   NON_TRANSACTIONAL_TMP_TABLE, 
   TRANSACTIONAL_TMP_TABLE,
   INTERNAL_TMP_TABLE, 
-  SYSTEM_TMP_TABLE, 
-  TMP_TABLE_FRM_FILE_ONLY
+  SYSTEM_TMP_TABLE
 };
 
 /*
@@ -362,6 +346,5 @@ enum enum_duplicates
   DUP_REPLACE, 
   DUP_UPDATE 
 };
-
 
 #endif /* DRIZZLED_ENUM_H */

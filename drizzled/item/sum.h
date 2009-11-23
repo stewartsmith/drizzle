@@ -663,7 +663,7 @@ public:
   enum_field_types field_type() const
   {
     return hybrid_type == DECIMAL_RESULT ?
-      DRIZZLE_TYPE_NEWDECIMAL : DRIZZLE_TYPE_DOUBLE;
+      DRIZZLE_TYPE_DECIMAL : DRIZZLE_TYPE_DOUBLE;
   }
   void fix_length_and_dec() {}
   enum Item_result result_type () const { return hybrid_type; }
@@ -730,7 +730,7 @@ public:
   enum_field_types field_type() const
   {
     return hybrid_type == DECIMAL_RESULT ?
-      DRIZZLE_TYPE_NEWDECIMAL : DRIZZLE_TYPE_DOUBLE;
+      DRIZZLE_TYPE_DECIMAL : DRIZZLE_TYPE_DOUBLE;
   }
   void fix_length_and_dec() {}
   enum Item_result result_type () const { return hybrid_type; }

@@ -104,7 +104,7 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(md5)
+drizzle_declare_plugin
 {
   "md5",
   "1.0",

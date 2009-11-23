@@ -121,12 +121,17 @@ class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | 
+   : drizzled::plugin::StorageEngine(name_arg, HTON_TEMPORARY_ONLY | 
                                      HTON_HAS_DATA_DICTIONARY | HTON_FILE_BASED) {}
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_tina(this, table);
+    return new (mem_root) ha_tina(*this, table);
+  }
+
+  uint64_t table_flags() const
+  {
+    return (HA_NO_TRANSACTIONS | HA_NO_AUTO_INCREMENT);
   }
 
   const char **bas_ext() const {
@@ -189,7 +194,7 @@ int Tina::doGetTableDefinition(Session&,
                                const bool,
                                drizzled::message::Table *table_proto)
 {
-  int error= 1;
+  int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
@@ -524,7 +529,7 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(drizzled::plugin::StorageEngine *engine_arg, TableShare *table_arg)
+ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
   /*
     These definitions are found in Cursor.h
@@ -1617,7 +1622,7 @@ int ha_tina::check(Session* session, HA_CHECK_OPT *)
 }
 
 
-drizzle_declare_plugin(csv)
+drizzle_declare_plugin
 {
   "CSV",
   "1.0",

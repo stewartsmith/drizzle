@@ -61,7 +61,6 @@ class MyisamEngine : public drizzled::plugin::StorageEngine
 public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg, 
-                                     HTON_CAN_RECREATE | 
                                      HTON_HAS_DATA_DICTIONARY |
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
@@ -69,10 +68,23 @@ public:
   ~MyisamEngine()
   { }
 
-  virtual Cursor *create(TableShare *table,
+  uint64_t table_flags() const
+  {
+    return (HA_NULL_IN_KEY |
+            HA_DUPLICATE_POS |
+            HA_CAN_INDEX_BLOBS |
+            HA_AUTO_PART_KEY |
+            HA_NO_TRANSACTIONS |
+            HA_HAS_RECORDS |
+            HA_STATS_RECORDS_IS_EXACT |
+            HA_NEED_READ_RANGE_BUFFER |
+            HA_MRR_CANT_SORT);
+  }
+
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_myisam(this, table);
+    return new (mem_root) ha_myisam(*this, table);
   }
 
   const char **bas_ext() const {
@@ -107,7 +119,7 @@ int MyisamEngine::doGetTableDefinition(Session&,
                                        const bool,
                                        drizzled::message::Table *table_proto)
 {
-  int error= 1;
+  int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
@@ -303,6 +315,11 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   return(0);
 }
 
+int ha_myisam::reset_auto_increment(uint64_t value)
+{
+  file->s->state.auto_increment= value;
+  return 0;
+}
 
 /*
   Check for underlying table conformance
@@ -494,21 +511,13 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
-                     TableShare *table_arg)
+ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
+                     TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
-    file(0),
-    int_table_flags(HA_NULL_IN_KEY |
-                    HA_DUPLICATE_POS |
-                    HA_CAN_INDEX_BLOBS |
-                    HA_AUTO_PART_KEY |
-                    HA_NO_TRANSACTIONS |
-                    HA_HAS_RECORDS |
-                    HA_STATS_RECORDS_IS_EXACT |
-                    HA_NEED_READ_RANGE_BUFFER |
-                    HA_MRR_CANT_SORT),
-     can_enable_indexes(1)
-{}
+  file(0),
+  can_enable_indexes(true),
+  is_ordered(true)
+{ }
 
 Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
 {
@@ -571,7 +580,8 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   if (!(test_if_locked & HA_OPEN_WAIT_IF_LOCKED))
     mi_extra(file, HA_EXTRA_WAIT_LOCK, 0);
   if (!table->s->db_record_offset)
-    int_table_flags|=HA_REC_NOT_IN_SEQ;
+    is_ordered= false;
+
 
   keys_with_parts.reset();
   for (i= 0; i < table->s->keys; i++)
@@ -1570,7 +1580,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 };
 
 
-drizzle_declare_plugin(myisam)
+drizzle_declare_plugin
 {
   "MyISAM",
   "1.0",

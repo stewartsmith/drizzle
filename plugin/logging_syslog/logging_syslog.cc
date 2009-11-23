@@ -136,10 +136,7 @@ public:
   
     /* to avoid trying to printf %s something that is potentially NULL */
   
-    const char *dbs= (session->db) ? session->db : "";
-    int dbl= 0;
-    if (dbs)
-      dbl= session->db_length;
+    const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
     const char *qys= (session->getQueryString()) ? session->getQueryString() : "";
     int qyl= 0;
@@ -156,7 +153,7 @@ public:
            " tmp_table=%ld total_warn_count=%ld\n",
            (unsigned long) session->thread_id,
            (unsigned long) session->getQueryId(),
-           dbl, dbs,
+           (int)session->db.length(), dbs,
            qyl, qys,
            (int) command_name[session->command].length,
            command_name[session->command].str,
@@ -273,7 +270,7 @@ static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(logging_syslog)
+drizzle_declare_plugin
 {
   "logging_syslog",
   "0.2",

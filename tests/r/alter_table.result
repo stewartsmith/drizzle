@@ -300,8 +300,8 @@ t1	0	a	2	b	A	300	NULL	NULL	YES	BTREE
 t1	1	b	1	b	A	300	NULL	NULL	YES	BTREE		
 drop table t1;
 CREATE TEMPORARY TABLE t1 (
-Host varchar(16) binary NOT NULL default '',
-User varchar(16) binary NOT NULL default '',
+Host varchar(16) NOT NULL default '',
+User varchar(16) NOT NULL default '',
 PRIMARY KEY  (Host,User),
 KEY  (Host)
 ) ENGINE=MyISAM;
@@ -761,12 +761,12 @@ drop table t1;
 create TEMPORARY table t1 (t varchar(255) default null, key t (t(80))) engine=myisam;
 alter table t1 change t t text;
 drop table t1;
-CREATE TABLE t1 (s CHAR(8) BINARY);
+CREATE TABLE t1 (s CHAR(8));
 INSERT INTO t1 VALUES ('test');
 SELECT LENGTH(s) FROM t1;
 LENGTH(s)
 4
-ALTER TABLE t1 MODIFY s CHAR(10) BINARY;
+ALTER TABLE t1 MODIFY s CHAR(10);
 SELECT LENGTH(s) FROM t1;
 LENGTH(s)
 4

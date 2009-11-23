@@ -47,7 +47,7 @@ class TableList;
 class Field_timestamp;
 class Field_blob;
 
-extern drizzled::atomic<uint32_t> refresh_version;
+extern uint64_t refresh_version;
 
 typedef enum enum_table_category TABLE_CATEGORY;
 
@@ -67,7 +67,7 @@ public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
   Field **field; /**< Pointer to fields collection */
 
-  Cursor *file; /**< Pointer to the storage engine's Cursor managing this table */
+  Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
   Table *prev;
 
@@ -75,7 +75,7 @@ public:
   MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
-  uint32_t db_stat; /**< information about the file as in Cursor.h */
+  uint32_t db_stat; /**< information about the cursor as in Cursor.h */
 
   MyBitmap def_read_set; /**< Default read set of columns */
   MyBitmap def_write_set; /**< Default write set of columns */
@@ -172,7 +172,7 @@ public:
 
   /**
    * Estimate of number of records that satisfy SARGable part of the table
-   * condition, or table->file->records if no SARGable condition could be
+   * condition, or table->cursor->records if no SARGable condition could be
    * constructed.
    * This value is used by join optimizer as an estimate of number of records
    * that will pass the table condition (condition that depends on fields of
@@ -240,7 +240,7 @@ public:
   Table() : 
     s(NULL), 
     field(NULL),
-    file(NULL),
+    cursor(NULL),
     next(NULL),
     prev(NULL),
     read_set(NULL),
@@ -318,7 +318,7 @@ public:
     s= share;
     field= NULL;
 
-    file= NULL;
+    cursor= NULL;
     next= NULL;
     prev= NULL;
 
@@ -583,6 +583,26 @@ public:
   void free_io_cache();
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
+
+  void print_error(int error, myf errflag)
+  {
+    s->storage_engine->print_error(error, errflag, *this);
+  }
+
+  /**
+    @return
+    key if error because of duplicated keys
+  */
+  uint32_t get_dup_key(int error)
+  {
+    cursor->errkey  = (uint32_t) -1;
+    if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
+        error == HA_ERR_FOUND_DUPP_UNIQUE ||
+        error == HA_ERR_DROP_INDEX_FK)
+      cursor->info(HA_STATUS_ERRKEY | HA_STATUS_NO_LOCK);
+
+    return(cursor->errkey);
+  }
 };
 
 Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);

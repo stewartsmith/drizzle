@@ -99,6 +99,16 @@ static void doCreateTable2(message::Transaction &transaction)
   statement->set_end_timestamp(getNanoTimestamp());
 }
 
+static void doCreateTable3(message::Transaction &transaction)
+{
+  message::Statement *statement= transaction.add_statement();
+
+  statement->set_type(message::Statement::RAW_SQL);
+  statement->set_sql("CREATE TABLE t3 (a INTEGER NOT NULL, b BLOB NOT NULL, PRIMARY KEY a) ENGINE=InnoDB");
+  statement->set_start_timestamp(getNanoTimestamp());
+  statement->set_end_timestamp(getNanoTimestamp());
+}
+
 static void doSimpleInsert(message::Transaction &transaction)
 {
   message::Statement *statement= transaction.add_statement();
@@ -169,6 +179,44 @@ static void doNonVarcharInsert(message::Transaction &transaction)
   statement->set_end_timestamp(getNanoTimestamp());
 }
 
+static void doBlobInsert(message::Transaction &transaction)
+{
+  message::Statement *statement= transaction.add_statement();
+
+  /* Do generic Statement setup */
+  statement->set_type(message::Statement::INSERT);
+  statement->set_sql("INSERT INTO t3 (a, b) VALUES (1, 'test\0me')", 43); /* 43 == length including \0 */
+  statement->set_start_timestamp(getNanoTimestamp());
+
+  /* Do INSERT-specific header and setup */
+  message::InsertHeader *header= statement->mutable_insert_header();
+
+  /* Add table and field metadata for the statement */
+  message::TableMetadata *t_meta= header->mutable_table_metadata();
+  t_meta->set_schema_name("test");
+  t_meta->set_table_name("t3");
+
+  message::FieldMetadata *f_meta= header->add_field_metadata();
+  f_meta->set_name("a");
+  f_meta->set_type(message::Table::Field::INTEGER);
+
+  f_meta= header->add_field_metadata();
+  f_meta->set_name("b");
+  f_meta->set_type(message::Table::Field::BLOB);
+
+  /* Add new values... */
+  message::InsertData *data= statement->mutable_insert_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+
+  message::InsertRecord *record1= data->add_record();
+
+  record1->add_insert_value("1");
+  record1->add_insert_value("test\0me", 7); /* 7 == length including \0 */
+
+  statement->set_end_timestamp(getNanoTimestamp());
+}
+
 static void doSimpleDelete(message::Transaction &transaction)
 {
   message::Statement *statement= transaction.add_statement();
@@ -227,8 +275,6 @@ static void doSimpleUpdate(message::Transaction &transaction)
   sf_meta->set_name("a");
   sf_meta->set_type(message::Table::Field::VARCHAR);
 
-  header->add_set_value("5");
-
   /* Add new values... */
   message::UpdateData *data= statement->mutable_update_data();
   data->set_segment_id(1);
@@ -236,6 +282,7 @@ static void doSimpleUpdate(message::Transaction &transaction)
 
   message::UpdateRecord *record1= data->add_record();
 
+  record1->add_after_value("5");
   record1->add_key_value("1");
 
   statement->set_end_timestamp(getNanoTimestamp());
@@ -266,8 +313,6 @@ static void doMultiKeyUpdate(message::Transaction &transaction)
   sf_meta->set_name("a");
   sf_meta->set_type(message::Table::Field::VARCHAR);
 
-  header->add_set_value("5");
-
   /* Add new values... */
   message::UpdateData *data= statement->mutable_update_data();
   data->set_segment_id(1);
@@ -276,7 +321,9 @@ static void doMultiKeyUpdate(message::Transaction &transaction)
   message::UpdateRecord *record1= data->add_record();
   message::UpdateRecord *record2= data->add_record();
 
+  record1->add_after_value("5");
   record1->add_key_value("1");
+  record2->add_after_value("5");
   record2->add_key_value("2");
 
   statement->set_end_timestamp(getNanoTimestamp());
@@ -352,6 +399,13 @@ int main(int argc, char* argv[])
   /* Write an UPDATE which affects >1 row */
   initTransactionContext(transaction);
   doMultiKeyUpdate(transaction);
+  writeTransaction(coded_output, transaction);
+  transaction.Clear();
+
+  /* Write an INSERT which writes BLOB data */
+  initTransactionContext(transaction);
+  doCreateTable3(transaction);
+  doBlobInsert(transaction);
   writeTransaction(coded_output, transaction);
   transaction.Clear();
 

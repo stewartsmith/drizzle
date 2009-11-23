@@ -43,7 +43,7 @@ class QueryCache : public Plugin
   QueryCache& operator=(const QueryCache &);
 public:
   explicit QueryCache(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "QueryCache")
   {}
 
   virtual ~QueryCache() {}

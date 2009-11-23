@@ -180,7 +180,6 @@ Session::Session(plugin::Client *client_arg)
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
-  db(NULL),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -411,11 +410,6 @@ Session::~Session()
   plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
-  if (db)
-  {
-    free(db);
-    db= NULL;
-  }
   free_root(&warn_root,MYF(0));
   free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
@@ -661,14 +655,6 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
-  /*
-    Clear session->db as it points to something, that will be freed when
-    connection is closed. We don't want to accidentally free a wrong
-    pointer if connect failed. Also in case of 'CHANGE USER' failure,
-    current database will be switched to 'no database selected'.
-  */
-  reset_db(NULL, 0);
-
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
@@ -753,7 +739,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
 
   /* We must allocate some extra memory for the cached query string */
   query_length= 0; /* Extra safety: Avoid races */
-  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db_length + 1);
+  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db.length() + 1);
   if (! query)
     return false;
 
@@ -841,20 +827,30 @@ bool Session::endActiveTransaction()
   return result;
 }
 
-bool Session::startTransaction()
+bool Session::startTransaction(start_transaction_option_t opt)
 {
   bool result= true;
 
   if (! endActiveTransaction())
+  {
     result= false;
+  }
   else
   {
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+
+    if (opt == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+    {
+      // TODO make this a loop for all engines, not just this one (Inno only
+      // right now)
       if (plugin::StorageEngine::startConsistentSnapshot(this))
+      {
         result= false;
+      }
+    }
   }
+
   return result;
 }
 
@@ -922,7 +918,7 @@ inline static void list_include(CHANGED_TableList** prev,
 void Session::add_changed_table(Table *table)
 {
   assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
-	      table->file->has_transactions());
+	      table->cursor->has_transactions());
   add_changed_table(table->s->table_cache_key.str,
                     (long) table->s->table_cache_key.length);
 }
@@ -1028,8 +1024,8 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   if (file > 0)
   {
     (void) end_io_cache(&cache);
-    (void) my_close(file,MYF(0));
-    (void) my_delete(path,MYF(0));		// Delete file on error
+    (void) my_close(file, MYF(0));
+    (void) my_delete(path, MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -1038,7 +1034,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 bool select_to_file::send_eof()
 {
   int error= test(end_io_cache(&cache));
-  if (my_close(file,MYF(MY_WME)))
+  if (my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
   {
@@ -1060,7 +1056,7 @@ void select_to_file::cleanup()
   if (file >= 0)
   {
     (void) end_io_cache(&cache);
-    (void) my_close(file,MYF(0));
+    (void) my_close(file, MYF(0));
     file= -1;
   }
   path[0]= '\0';
@@ -1073,7 +1069,7 @@ select_to_file::~select_to_file()
   if (file >= 0)
   {					// This only happens in case of error
     (void) end_io_cache(&cache);
-    (void) my_close(file,MYF(0));
+    (void) my_close(file, MYF(0));
     file= -1;
   }
 }
@@ -1116,8 +1112,8 @@ static File create_file(Session *session, char *path, file_exchange *exchange, I
   if (!dirname_length(exchange->file_name))
   {
     strcpy(path, drizzle_real_data_home);
-    if (session->db)
-      strncat(path, session->db, FN_REFLEN-strlen(drizzle_real_data_home)-1);
+    if (! session->db.empty())
+      strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
     (void) fn_format(path, exchange->file_name, path, "", option);
   }
   else
@@ -1239,7 +1235,7 @@ bool select_export::send_data(List<Item> &items)
   List_iterator_fast<Item> li(items);
 
   if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
-		 exchange->line_start->length()))
+                 exchange->line_start->length()))
     goto err;
   while ((item=li++))
   {
@@ -1250,26 +1246,26 @@ bool select_export::send_data(List<Item> &items)
     if (res && enclosed)
     {
       if (my_b_write(&cache,(unsigned char*) exchange->enclosed->ptr(),
-		     exchange->enclosed->length()))
-	goto err;
+                     exchange->enclosed->length()))
+        goto err;
     }
     if (!res)
     {						// NULL
       if (!fixed_row_size)
       {
-	if (escape_char != -1)			// Use \N syntax
-	{
-	  null_buff[0]=escape_char;
-	  null_buff[1]='N';
-	  if (my_b_write(&cache,(unsigned char*) null_buff,2))
-	    goto err;
-	}
-	else if (my_b_write(&cache,(unsigned char*) "NULL",4))
-	  goto err;
+        if (escape_char != -1)			// Use \N syntax
+        {
+          null_buff[0]=escape_char;
+          null_buff[1]='N';
+          if (my_b_write(&cache,(unsigned char*) null_buff,2))
+            goto err;
+        }
+        else if (my_b_write(&cache,(unsigned char*) "NULL",4))
+          goto err;
       }
       else
       {
-	used_length=0;				// Fill with space
+        used_length=0;				// Fill with space
       }
     }
     else
@@ -1280,30 +1276,30 @@ bool select_export::send_data(List<Item> &items)
         used_length= res->length();
 
       if ((result_type == STRING_RESULT || is_unsafe_field_sep) &&
-           escape_char != -1)
+          escape_char != -1)
       {
         char *pos, *start, *end;
         const CHARSET_INFO * const res_charset= res->charset();
         const CHARSET_INFO * const character_set_client= default_charset_info;
 
         bool check_second_byte= (res_charset == &my_charset_bin) &&
-                                 character_set_client->
-                                 escape_with_backslash_is_dangerous;
+          character_set_client->
+          escape_with_backslash_is_dangerous;
         assert(character_set_client->mbmaxlen == 2 ||
                !character_set_client->escape_with_backslash_is_dangerous);
-	for (start=pos=(char*) res->ptr(),end=pos+used_length ;
-	     pos != end ;
-	     pos++)
-	{
-	  if (use_mb(res_charset))
-	  {
-	    int l;
-	    if ((l=my_ismbchar(res_charset, pos, end)))
-	    {
-	      pos += l-1;
-	      continue;
-	    }
-	  }
+        for (start=pos=(char*) res->ptr(),end=pos+used_length ;
+             pos != end ;
+             pos++)
+        {
+          if (use_mb(res_charset))
+          {
+            int l;
+            if ((l=my_ismbchar(res_charset, pos, end)))
+            {
+              pos += l-1;
+              continue;
+            }
+          }
 
           /*
             Special case when dumping BINARY/VARBINARY/BLOB values
@@ -1343,47 +1339,47 @@ bool select_export::send_data(List<Item> &items)
                 pos + 1 < end &&
                 NEED_ESCAPING(pos[1]))) &&
               /*
-               Don't escape field_term_char by doubling - doubling is only
-               valid for ENCLOSED BY characters:
+                Don't escape field_term_char by doubling - doubling is only
+                valid for ENCLOSED BY characters:
               */
               (enclosed || !is_ambiguous_field_term ||
                (int) (unsigned char) *pos != field_term_char))
           {
-	    char tmp_buff[2];
+            char tmp_buff[2];
             tmp_buff[0]= ((int) (unsigned char) *pos == field_sep_char &&
                           is_ambiguous_field_sep) ?
-                          field_sep_char : escape_char;
-	    tmp_buff[1]= *pos ? *pos : '0';
-	    if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
-		my_b_write(&cache,(unsigned char*) tmp_buff,2))
-	      goto err;
-	    start=pos+1;
-	  }
-	}
-	if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
-	  goto err;
+              field_sep_char : escape_char;
+            tmp_buff[1]= *pos ? *pos : '0';
+            if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
+                my_b_write(&cache,(unsigned char*) tmp_buff,2))
+              goto err;
+            start=pos+1;
+          }
+        }
+        if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
+          goto err;
       }
       else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))
-	goto err;
+        goto err;
     }
     if (fixed_row_size)
     {						// Fill with space
       if (item->max_length > used_length)
       {
-	/* QQ:  Fix by adding a my_b_fill() function */
-	if (!space_inited)
-	{
-	  space_inited=1;
-	  memset(space, ' ', sizeof(space));
-	}
-	uint32_t length=item->max_length-used_length;
-	for (; length > sizeof(space) ; length-=sizeof(space))
-	{
-	  if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
-	    goto err;
-	}
-	if (my_b_write(&cache,(unsigned char*) space,length))
-	  goto err;
+        /* QQ:  Fix by adding a my_b_fill() function */
+        if (!space_inited)
+        {
+          space_inited=1;
+          memset(space, ' ', sizeof(space));
+        }
+        uint32_t length=item->max_length-used_length;
+        for (; length > sizeof(space) ; length-=sizeof(space))
+        {
+          if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
+            goto err;
+        }
+        if (my_b_write(&cache,(unsigned char*) space,length))
+          goto err;
       }
     }
     if (res && enclosed)
@@ -1400,7 +1396,7 @@ bool select_export::send_data(List<Item> &items)
     }
   }
   if (my_b_write(&cache,(unsigned char*) exchange->line_term->ptr(),
-		 exchange->line_term->length()))
+                 exchange->line_term->length()))
     goto err;
   return(0);
 err:
@@ -1621,13 +1617,13 @@ void Session::end_statement()
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
-  if (db == NULL)
+  if (db.empty())
   {
     my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
     return true;
   }
-  *p_db= strmake(db, db_length);
-  *p_db_length= db_length;
+  *p_db= strmake(db.c_str(), db.length());
+  *p_db_length= db.length();
   return false;
 }
 
@@ -1702,29 +1698,15 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
 }
 
 
-bool Session::set_db(const char *new_db, size_t new_db_len)
+bool Session::set_db(const char *new_db, size_t length)
 {
   /* Do not reallocate memory if current chunk is big enough. */
-  if (db && new_db && db_length >= new_db_len)
-    memcpy(db, new_db, new_db_len+1);
+  if (length)
+    db= new_db;
   else
-  {
-    if (db)
-      free(db);
-    if (new_db)
-    {
-      db= (char *)malloc(new_db_len + 1);
-      if (db != NULL)
-      {
-        memcpy(db, new_db, new_db_len);
-        db[new_db_len]= 0;
-      }
-    }
-    else
-      db= NULL;
-  }
-  db_length= db ? new_db_len : 0;
-  return new_db && !db;
+    db.clear();
+
+  return false;
 }
 
 
@@ -1811,7 +1793,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
-                  , (db ? db : "unconnected")
+                  , (db.empty() ? "unconnected" : db.c_str())
                   , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
                   , sctx->ip.c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
@@ -1867,7 +1849,6 @@ void Session::reset_for_next_command()
 
 /*
   Close all temporary tables created by 'CREATE TEMPORARY TABLE' for thread
-  creates one DROP TEMPORARY Table binlog event for each pseudo-thread
 */
 
 void Session::close_temporary_tables()
@@ -1881,7 +1862,7 @@ void Session::close_temporary_tables()
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table, true, true);
+    close_temporary(table);
   }
   temporary_tables= NULL;
 }
@@ -1890,8 +1871,8 @@ void Session::close_temporary_tables()
   unlink from session->temporary tables and close temporary table
 */
 
-void Session::close_temporary_table(Table *table,
-                                    bool free_share, bool delete_table)
+void Session::close_temporary_table(Table *table)
+                         
 {
   if (table->prev)
   {
@@ -1912,7 +1893,7 @@ void Session::close_temporary_table(Table *table,
     if (temporary_tables)
       table->next->prev= NULL;
   }
-  close_temporary(table, free_share, delete_table);
+  close_temporary(table);
 }
 
 /*
@@ -1923,22 +1904,18 @@ void Session::close_temporary_table(Table *table,
   If this is needed, use close_temporary_table()
 */
 
-void Session::close_temporary(Table *table, bool free_share, bool delete_table)
+void Session::close_temporary(Table *table)
 {
   plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
 
-  if (delete_table)
-    rm_temporary_table(table_type, table->s->path.str);
+  rm_temporary_table(table_type, table->s->path.str);
 
-  if (free_share)
-  {
-    table->s->free_table_share();
-    /* This makes me sad, but we're allocating it via malloc */
-    free(table);
-  }
+  table->s->free_table_share();
+  /* This makes me sad, but we're allocating it via malloc */
+  free(table);
 }
 
 /** Clear most status variables. */
@@ -1999,7 +1976,7 @@ void Session::mark_temp_tables_as_free_for_reuse()
     if (table->query_id == query_id)
     {
       table->query_id= 0;
-      table->file->ha_reset();
+      table->cursor->ha_reset();
     }
   }
 }
@@ -2011,7 +1988,7 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
     if (table->query_id == query_id)
     {
       table->query_id= 0;
-      table->file->ha_reset();
+      table->cursor->ha_reset();
     }
   }
 }

@@ -60,7 +60,7 @@ class TransactionReplicator : public Plugin
   atomic<bool> is_enabled;
 public:
   explicit TransactionReplicator(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "TransactionReplicator")
   {
     is_enabled= true;
   }

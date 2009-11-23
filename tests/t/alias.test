@@ -188,48 +188,48 @@ create table t3 select t2.*, t2.* as 'with_alias', 3 from t2;
 #
 
 #Bug: ap309865 These fail in drizzle: "drizzletest: Result content mismatch"
-# select t1.* from t1;
-# select t2.* from t2;
-# select t1.*, t1.* from t1;
-# select t1.*, a, t1.* from t1;
+select t1.* from t1;
+select t2.* from t2;
+select t1.*, t1.* from t1;
+select t1.*, a, t1.* from t1;
 
 # other fields without alias
 #Bug: ap309865 These fail in drizzle: "drizzletest: Result content mismatch"
-# select a, t1.* from t1;
-#select t1.*, a from t1;
-#select a, t1.*, b from t1;
-#select (select d from t2 where d > a), t1.* from t1;
-#select t1.*, (select a from t2 where d > a) from t1;
+select a, t1.* from t1;
+select t1.*, a from t1;
+select a, t1.*, b from t1;
+select (select d from t2 where d > a), t1.* from t1;
+select t1.*, (select a from t2 where d > a) from t1;
 
 # other fields with alias
 #Bug: ap309865 These fail in drizzle: "drizzletest: Result content mismatch"
-#select a as 'x', t1.* from t1;
-#select t1.*, a as 'x' from t1;
-#select a as 'x', t1.*, b as 'x' from t1;
-#select (select d from t2 where d > a) as 'x', t1.* from t1;
-#select t1.*, (select a from t2 where d > a) as 'x' from t1;
+select a as 'x', t1.* from t1;
+select t1.*, a as 'x' from t1;
+select a as 'x', t1.*, b as 'x' from t1;
+select (select d from t2 where d > a) as 'x', t1.* from t1;
+select t1.*, (select a from t2 where d > a) as 'x' from t1;
 
 # some more subquery
 #Bug: ap309865 These fail in drizzle: "drizzletest: Result content mismatch"
-#select (select t2.* from t2) from t1;
-#select a, (select t2.* from t2) from t1;
-#select t1.*, (select t2.* from t2) from t1;
+select (select t2.* from t2) from t1;
+select a, (select t2.* from t2) from t1;
+select t1.*, (select t2.* from t2) from t1;
 
 # insert
 #Bug: ap309865 These fail in drizzle: "drizzletest: Result content mismatch"
-#insert into t3 select t1.* from t1;
-#insert into t3 select t2.*, 1, 2 from t2;
-#insert into t3.* select t2, d as 'x', d as 'z' from t2;
-#insert into t3 select t2.*, t2.*, 3 from t2;
+insert into t3 select t1.* from t1;
+insert into t3 select t2.*, 1, 2 from t2;
+insert into t3 select t2.*, d as 'x', d as 'z' from t2;
+insert into t3 select t2.*, t2.*, 3 from t2;
 
 # create
 #Bug: ap309865 These fail in drizzle: "drizzletest: Result content mismatch"
-#create table t4 select t1.* from t1;
-#drop table t4;
-#create table t4 select t2.*, 1, 2 from t2;
-#drop table t4;
-#create table t4 select t2.*, d as 'x', d as 'z' from t2;
-#drop table t4;
+create table t4 select t1.* from t1;
+drop table t4;
+create table t4 select t2.*, 1, 2 from t2;
+drop table t4;
+create table t4 select t2.*, d as 'x', d as 'z' from t2;
+drop table t4;
 
 # end
 drop table t1,t2,t3;

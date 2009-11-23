@@ -145,10 +145,17 @@ public:
     table_definition_ext= ARZ;
   }
 
-  virtual Cursor *create(TableShare *table,
+  uint64_t table_flags() const
+  {
+    return (HA_NO_TRANSACTIONS |
+            HA_STATS_RECORDS_IS_EXACT |
+            HA_HAS_RECORDS);
+  }
+
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_archive(this, table);
+    return new (mem_root) ha_archive(*this, table);
   }
 
   const char **bas_ext() const {
@@ -208,17 +215,15 @@ void ArchiveEngine::doGetTableNames(CachedDirectory &directory,
 int ArchiveEngine::doDropTable(Session&,
                                const string table_path)
 {
-  int error= 0;
-  char buff[FN_REFLEN];
+  string new_path(table_path);
 
-  fn_format(buff, table_path.c_str(), "", ARZ,
-            MY_UNPACK_FILENAME|MY_APPEND_EXT);
-  if (my_delete_with_symlink(buff, MYF(0)))
+  new_path+= ARZ;
+
+  int error= unlink(new_path.c_str());
+
+  if (error != 0)
   {
-    if (my_errno != ENOENT)
-    {
-      error= my_errno;
-    }
+    error= my_errno= errno;
   }
 
   return error;
@@ -232,7 +237,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
                                         drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
-  int error= 0;
+  int error= ENOENT;
   string proto_path;
 
   proto_path.reserve(FN_REFLEN);
@@ -242,12 +247,14 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
   if (stat(proto_path.c_str(),&stat_info))
     return errno;
+  else
+    error= EEXIST;
 
   if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
-    if(azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
+    if (azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
 
     proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
@@ -259,14 +266,14 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
     azread_frm(&proto_stream, proto_string);
 
-    if(table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);
     free(proto_string);
   }
 
-  return EEXIST;
+  return error;
 }
 
 static ArchiveEngine *archive_engine= NULL;
@@ -318,8 +325,8 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 }
 
 
-ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
-                       TableShare *table_arg)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
+                       TableShare &table_arg)
   :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
@@ -1044,7 +1051,7 @@ int ha_archive::rnd_next(unsigned char *buf)
 
 
 /*
-  Thanks to the table flag HA_REC_NOT_IN_SEQ this will be called after
+  Thanks to the table bool is_ordered this will be called after
   each call to ha_archive::rnd_next() if an ordering of the rows is
   needed.
 */
@@ -1438,7 +1445,7 @@ static struct st_mysql_sys_var* archive_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(archive)
+drizzle_declare_plugin
 {
   "ARCHIVE",
   "3.5",

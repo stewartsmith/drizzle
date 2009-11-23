@@ -250,6 +250,17 @@ public:
     addAlias("INNOBASE");
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_NULL_IN_KEY |
+            HA_CAN_INDEX_BLOBS |
+            HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+            HA_PRIMARY_KEY_IN_READ_INDEX |
+            HA_PARTIAL_COLUMN_READ |
+            HA_TABLE_SCAN_ON_INDEX | 
+            HA_MRR_CANT_SORT);
+  }
+
   virtual
   int
   close_connection(
@@ -307,10 +318,10 @@ public:
   			/* out: 0 or error number */
   	XID	*xid);	/* in: X/Open XA transaction identification */
 
-  virtual Cursor *create(TableShare *table,
+  virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
-    return new (mem_root) ha_innobase(this, table);
+    return new (mem_root) ha_innobase(*this, table);
   }
 
   /*********************************************************************
@@ -378,6 +389,9 @@ public:
                                 const char* from, 
                                 const char* to);
   UNIV_INTERN int doDropTable(Session& session, const string table_path);
+
+  UNIV_INTERN virtual bool get_error_message(int error, String *buf);
+
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -1349,17 +1363,9 @@ check_trx_exists(
 /*********************************************************************//**
 Construct ha_innobase Cursor. */
 UNIV_INTERN
-ha_innobase::ha_innobase(drizzled::plugin::StorageEngine *engine_arg,
-                         TableShare *table_arg)
+ha_innobase::ha_innobase(drizzled::plugin::StorageEngine &engine_arg,
+                         TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
-  int_table_flags(HA_REC_NOT_IN_SEQ |
-		  HA_NULL_IN_KEY |
-		  HA_CAN_INDEX_BLOBS |
-		  HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-		  HA_PRIMARY_KEY_IN_READ_INDEX |
-		  HA_PARTIAL_COLUMN_READ |
-		  HA_TABLE_SCAN_ON_INDEX | 
-                  HA_MRR_CANT_SORT),
   primary_key(0), /* needs initialization because index_flags() may be called 
                      before this is set to the real value. It's ok to have any 
                      value here because it doesn't matter if we return the
@@ -2494,18 +2500,6 @@ ha_innobase::get_row_type() const
 }
 
 
-
-/****************************************************************//**
-Get the table flags to use for the statement.
-@return	table flags */
-UNIV_INTERN
-Cursor::Table_flags
-ha_innobase::table_flags() const
-/*============================*/
-{
-        return int_table_flags;
-}
-
 /****************************************************************//**
 Returns the index type. */
 UNIV_INTERN
@@ -3147,7 +3141,7 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_VARMYSQL);
 		}
-	case DRIZZLE_TYPE_NEWDECIMAL:
+	case DRIZZLE_TYPE_DECIMAL:
 		return(DATA_FIXBINARY);
 	case DRIZZLE_TYPE_LONG:
 	case DRIZZLE_TYPE_LONGLONG:
@@ -8059,15 +8053,15 @@ ha_innobase::reset_auto_increment(
 
 	innobase_reset_autoinc(value);
 
-	return(0);
+	return 0;
 }
 
 /* See comment in Cursor.cc */
 UNIV_INTERN
 bool
-ha_innobase::get_error_message(int, String *buf)
+InnobaseEngine::get_error_message(int, String *buf)
 {
-	trx_t*	trx = check_trx_exists(ha_session());
+	trx_t*	trx = check_trx_exists(current_session);
 
 	buf->copy(trx->detailed_error, (uint) strlen(trx->detailed_error),
 		system_charset_info);
@@ -9083,7 +9077,7 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(innobase)
+drizzle_declare_plugin
 {
   innobase_engine_name,
   INNODB_VERSION_STR,

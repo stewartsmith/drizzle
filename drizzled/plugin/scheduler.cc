@@ -62,6 +62,7 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
     return true;
   }
 
+  sched->deactivate();
   all_schedulers.push_back(sched);
 
   return false;
@@ -84,8 +85,10 @@ bool plugin::Scheduler::setPlugin(const string& name)
 
   if (iter != all_schedulers.end())
   {
+    if (scheduler != NULL)
+      scheduler->deactivate();
     scheduler= *iter;
-
+    scheduler->activate();
     return false;
   }
 

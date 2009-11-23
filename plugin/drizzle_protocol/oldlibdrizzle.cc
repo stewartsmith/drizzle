@@ -507,7 +507,7 @@ bool ClientDrizzleProtocol::sendFields(List<Item> *list)
         pos[6]= 15;
         break;
 
-      case DRIZZLE_TYPE_NEWDECIMAL:
+      case DRIZZLE_TYPE_DECIMAL:
         pos[6]= (char)246;
         break;
 
@@ -854,7 +854,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(drizzle_protocol)
+drizzle_declare_plugin
 {
   "drizzle_protocol",
   "0.1",

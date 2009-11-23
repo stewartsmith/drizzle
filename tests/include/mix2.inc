@@ -381,9 +381,9 @@ drop table t1,t2;
 
 eval create $temp table t1 (
   id int NOT NULL auto_increment,
-  ggid varchar(32) binary DEFAULT '' NOT NULL,
+  ggid varchar(32) DEFAULT '' NOT NULL,
   email varchar(64) DEFAULT '' NOT NULL,
-  passwd varchar(32) binary DEFAULT '' NOT NULL,
+  passwd varchar(32) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
   UNIQUE ggid (ggid)
 ) ENGINE=$engine_type;
@@ -1730,8 +1730,8 @@ eval create $temp table t1 (a varchar(255) character set utf8,
 
 eval create $temp table t1 (s1 varbinary(2),primary key (s1)) engine=$engine_type;
 eval create $temp table t2 (s1 binary(2),primary key (s1)) engine=$engine_type;
-eval create $temp table t3 (s1 varchar(2) binary,primary key (s1)) engine=$engine_type;
-eval create $temp table t4 (s1 char(2) binary,primary key (s1)) engine=$engine_type;
+eval create $temp table t3 (s1 varchar(2),primary key (s1)) engine=$engine_type;
+eval create $temp table t4 (s1 char(2),primary key (s1)) engine=$engine_type;
 
 insert into t1 values (0x41),(0x4120),(0x4100);
 -- error ER_DUP_ENTRY
@@ -1786,8 +1786,8 @@ select hex(s1) from t2;
 
 drop table t2,t1;
 
-eval create $temp table t1 (a int primary key,s1 varchar(2) binary not null unique) engine=$engine_type;
-eval create $temp table t2 (s1 char(2) binary not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
+eval create $temp table t1 (a int primary key,s1 varchar(2) not null unique) engine=$engine_type;
+eval create $temp table t2 (s1 char(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
 
 insert into t1 values(1,0x4100),(2,0x41);
 insert into t2 values(0x41);

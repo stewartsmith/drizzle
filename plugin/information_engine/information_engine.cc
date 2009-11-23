@@ -14,152 +14,233 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <plugin/information_engine/information_engine.h>
-#include <drizzled/plugin/info_schema_table.h>
+#include <drizzled/session.h>
+
+#include <plugin/information_engine/information_cursor.h>
+
+#include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static const string engine_name("INFORMATION_ENGINE");
 
-/*****************************************************************************
-** INFORMATION_ENGINE tables
-*****************************************************************************/
 
-InformationCursor::InformationCursor(drizzled::plugin::StorageEngine *engine_arg,
-                                     TableShare *table_arg) :
-  Cursor(engine_arg, table_arg)
-{}
-
-uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
+Cursor *InformationEngine::create(TableShare &table, MEM_ROOT *mem_root)
 {
-  return 0;
+  return new (mem_root) InformationCursor(*this, table);
 }
 
-int InformationCursor::open(const char *name, int, uint32_t)
+
+int InformationEngine::doGetTableDefinition(Session &,
+                                            const char *,
+                                            const char *,
+                                            const char *table_name,
+                                            const bool,
+                                            message::Table *table_proto)
 {
-  InformationShare *shareable;
+  if (! table_name)
+  {
+    return ENOENT;
+  }
 
-  if (!(shareable= InformationShare::get(name)))
-    return(HA_ERR_OUT_OF_MEM);
+  if (! table_proto)
+  {
+    return EEXIST;
+  }
 
-  thr_lock_data_init(&shareable->lock, &lock, NULL);
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(table_name);
 
-  return 0;
+  if (! schema_table)
+  {
+    return ENOENT;
+  }
+
+  table_proto->set_name(table_name);
+  table_proto->set_type(message::Table::STANDARD);
+
+  message::Table::StorageEngine *protoengine= table_proto->mutable_engine();
+  protoengine->set_name(engine_name);
+
+  message::Table::TableOptions *table_options= table_proto->mutable_options();
+  table_options->set_collation_id(default_charset_info->number);
+  table_options->set_collation(default_charset_info->name);
+
+  const plugin::InfoSchemaTable::Columns &columns= schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+
+  while (iter != columns.end())
+  {
+    const plugin::ColumnInfo *column= *iter;
+    /* get the various proto variables we need */
+    message::Table::Field *proto_field= table_proto->add_field();
+    message::Table::Field::FieldOptions *field_options=
+      proto_field->mutable_options();
+    message::Table::Field::FieldConstraints *field_constraints=
+      proto_field->mutable_constraints();
+
+    proto_field->set_name(column->getName());
+    field_options->set_default_value("0");
+
+    if (column->getFlags() & MY_I_S_MAYBE_NULL)
+    {
+      field_options->set_default_null(true);
+      field_constraints->set_is_nullable(true);
+    }
+
+    if (column->getFlags() & MY_I_S_UNSIGNED)
+    {
+      field_constraints->set_is_unsigned(true);
+    }
+
+    switch(column->getType())
+    {
+    case DRIZZLE_TYPE_LONG:
+      proto_field->set_type(message::Table::Field::INTEGER);
+      break;
+    case DRIZZLE_TYPE_DOUBLE:
+      proto_field->set_type(message::Table::Field::DOUBLE);
+      break;
+    case DRIZZLE_TYPE_NULL:
+      assert(true);
+      break;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      proto_field->set_type(message::Table::Field::TIMESTAMP);
+      field_options->set_default_value("NOW()");
+      break;
+    case DRIZZLE_TYPE_LONGLONG:
+      proto_field->set_type(message::Table::Field::BIGINT);
+      break;
+    case DRIZZLE_TYPE_DATETIME:
+      proto_field->set_type(message::Table::Field::DATETIME);
+      field_options->set_default_value("NOW()");
+      break;
+    case DRIZZLE_TYPE_DATE:
+      proto_field->set_type(message::Table::Field::DATE);
+      field_options->set_default_value("NOW()");
+      break;
+    case DRIZZLE_TYPE_VARCHAR:
+    {
+      message::Table::Field::StringFieldOptions *str_field_options=
+        proto_field->mutable_string_options();
+      proto_field->set_type(message::Table::Field::VARCHAR);
+      str_field_options->set_length(column->getLength());
+      field_options->set_default_value("");
+      str_field_options->set_collation_id(default_charset_info->number);
+      str_field_options->set_collation(default_charset_info->name);
+      break;
+    }
+    case DRIZZLE_TYPE_DECIMAL:
+    {
+      message::Table::Field::NumericFieldOptions *num_field_options=
+        proto_field->mutable_numeric_options();
+      proto_field->set_type(message::Table::Field::DECIMAL);
+      num_field_options->set_precision(column->getLength());
+      num_field_options->set_scale(column->getLength() % 10);
+      break;
+    }
+    default:
+      assert(true);
+      break;
+    }
+
+    ++iter;
+  }
+
+  return EEXIST;
 }
 
-int InformationCursor::close(void)
-{
-  InformationShare::free(share);
 
-  return 0;
-}
-
-void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names)
+void InformationEngine::doGetTableNames(CachedDirectory&, 
+                                        string &db, 
+                                        set<string> &set_of_names)
 {
   if (db.compare("information_schema"))
     return;
 
-  drizzled::plugin::InfoSchemaTable::getTableNames(set_of_names);
+  plugin::InfoSchemaTable::getTableNames(set_of_names);
 }
 
-
-
-int InformationCursor::rnd_init(bool)
+InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
 {
-  return 0;
-}
+  InformationEngine::Share *share;
+  pthread_mutex_lock(&mutex);
 
+  OpenTables::iterator it= open_tables.find(name_arg);
 
-int InformationCursor::rnd_next(unsigned char *)
-{
-  return HA_ERR_END_OF_FILE;
-}
-
-
-int InformationCursor::rnd_pos(unsigned char *, unsigned char *)
-{
-  assert(1);
-
-  return 0;
-}
-
-
-void InformationCursor::position(const unsigned char *)
-{
-  assert(1);
-}
-
-
-int InformationCursor::info(uint32_t flag)
-{
-  memset(&stats, 0, sizeof(stats));
-  if (flag & HA_STATUS_AUTO)
-    stats.auto_increment_value= 1;
-  return(0);
-}
-
-
-THR_LOCK_DATA **InformationCursor::store_lock(Session *session,
-                                         THR_LOCK_DATA **to,
-                                         enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
+  if (it != open_tables.end())
   {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type= lock_type;
+    share= &((*it).second);
+    share->incUseCount();
   }
-  *to++= &lock;
+  else
+  {
+    pair<OpenTables::iterator, bool> returned;
 
-  return to;
+    returned=
+      open_tables.insert(Record(name_arg, InformationEngine::Share(name_arg)));
+
+    if (returned.second == false)
+    {
+      pthread_mutex_unlock(&mutex);
+      return NULL;
+    }
+
+    Record &value= *(returned.first);
+
+    share= &(value.second);
+  }
+
+
+  pthread_mutex_unlock(&mutex);
+
+  return share;
 }
 
-static drizzled::plugin::StorageEngine *information_engine= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+void InformationEngine::freeShare(InformationEngine::Share *share)
 {
-  information_engine= new InformationEngine(engine_name);
+  pthread_mutex_lock(&mutex);
+
+  share->decUseCount();
+
+  if (share->getUseCount() == 0)
+  {
+    open_tables.erase(share->getName());
+  }
+
+  pthread_mutex_unlock(&mutex);
+}
+
+
+static plugin::StorageEngine *information_engine= NULL;
+
+static int init(plugin::Registry &registry)
+{
+  information_engine= new(std::nothrow) InformationEngine(engine_name);
+  if (! information_engine)
+  {
+    return 1;
+  }
+
   registry.add(information_engine);
   
-  InformationShare::start();
-
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(plugin::Registry &registry)
 {
   registry.remove(information_engine);
   delete information_engine;
 
-  InformationShare::stop();
-
   return 0;
 }
 
-drizzle_declare_plugin(information_engine)
+drizzle_declare_plugin
 {
   "INFORMATION_ENGINE",
   "1.0",
-  "Sun Microsystems ala Brian Aker",
+  "Padraig O'Sullivan, Brian Aker",
   "Engine which provides information schema tables",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */

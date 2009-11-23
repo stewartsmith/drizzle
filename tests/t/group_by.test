@@ -70,7 +70,7 @@ CREATE TABLE t1 (
   operator int,
   method enum('unknown','cash','dealer','check','card','lazy','delayed','test') DEFAULT 'unknown' NOT NULL,
   DIID int,
-  reason char(1) binary DEFAULT '' NOT NULL,
+  reason char(1) DEFAULT '' NOT NULL,
   code_id int,
   qty int DEFAULT '0' NOT NULL,
   PRIMARY KEY (PID),
@@ -283,17 +283,17 @@ CREATE TABLE t1 (a char(1));
 INSERT INTO t1 VALUES ('A'),('B'),('A'),('B'),('A'),('B'),(NULL),('a'),('b'),(NULL),('A'),('B'),(NULL);
 SELECT a FROM t1 GROUP BY a;
 SELECT a,count(*) FROM t1 GROUP BY a;
-SELECT a FROM t1 GROUP BY binary a;
-SELECT a,count(*) FROM t1 GROUP BY binary a;
-SELECT binary a FROM t1 GROUP BY 1;
-SELECT binary a,count(*) FROM t1 GROUP BY 1;
+SELECT a FROM t1 GROUP BY a;
+SELECT a,count(*) FROM t1 GROUP BY a;
+SELECT a FROM t1 GROUP BY 1;
+SELECT a,count(*) FROM t1 GROUP BY 1;
 # Do the same tests with MyISAM temporary tables
 SELECT a FROM t1 GROUP BY a;
 SELECT a,count(*) FROM t1 GROUP BY a;
-SELECT a FROM t1 GROUP BY binary a;
-SELECT a,count(*) FROM t1 GROUP BY binary a;
-SELECT binary a FROM t1 GROUP BY 1;
-SELECT binary a,count(*) FROM t1 GROUP BY 1;
+SELECT a FROM t1 GROUP BY a;
+SELECT a,count(*) FROM t1 GROUP BY a;
+SELECT a FROM t1 GROUP BY 1;
+SELECT a,count(*) FROM t1 GROUP BY 1;
 drop table t1;
 
 #

@@ -95,7 +95,7 @@ name_id	name
 create table t2
 (
 name_id int not null auto_increment,
-name char(255) binary,
+name char(255),
 INDEX name_idx (name(5)),
 primary key (name_id)
 );

@@ -641,7 +641,7 @@ static struct st_mysql_sys_var* filtered_replicator_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(filtered_replicator)
+drizzle_declare_plugin
 {
   "filtered_replicator",
   "0.2",

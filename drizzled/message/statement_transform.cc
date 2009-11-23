@@ -208,7 +208,7 @@ message::transformInsertHeaderToSql(const message::InsertHeader &header,
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  destination->assign("INSERT INTO ");
+  destination->assign("INSERT INTO ", 12);
   destination->push_back(quoted_identifier);
   destination->append(header.table_metadata().schema_name());
   destination->push_back(quoted_identifier);
@@ -216,7 +216,7 @@ message::transformInsertHeaderToSql(const message::InsertHeader &header,
   destination->push_back(quoted_identifier);
   destination->append(header.table_metadata().table_name());
   destination->push_back(quoted_identifier);
-  destination->append(" (");
+  destination->append(" (", 2);
 
   /* Add field list to SQL string... */
   size_t num_fields= header.field_metadata_size();
@@ -262,12 +262,28 @@ message::transformInsertRecordToSql(const message::InsertHeader &header,
     if (x != 0)
       destination->push_back(',');
 
-    should_quote_field_value= message::shouldQuoteFieldValue(header.field_metadata(x).type());
+    const message::FieldMetadata &field_metadata= header.field_metadata(x);
+
+    should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
 
     if (should_quote_field_value)
       destination->push_back('\'');
 
-    destination->append(record.insert_value(x));
+    if (field_metadata.type() == message::Table::Field::BLOB)
+    {
+      /* 
+        * We do this here because BLOB data is returned
+        * in a string correctly, but calling append()
+        * without a length will result in only the string
+        * up to a \0 being output here.
+        */
+      string raw_data(record.insert_value(x));
+      destination->append(raw_data.c_str(), raw_data.size());
+    }
+    else
+    {
+      destination->append(record.insert_value(x));
+    }
 
     if (should_quote_field_value)
       destination->push_back('\'');
@@ -291,7 +307,7 @@ message::transformInsertStatementToSql(const message::InsertHeader &header,
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  destination->append(") VALUES (");
+  destination->append(") VALUES (", 10);
 
   /* Add insert values */
   size_t num_records= data.record_size();
@@ -302,19 +318,35 @@ message::transformInsertStatementToSql(const message::InsertHeader &header,
   for (x= 0; x < num_records; ++x)
   {
     if (x != 0)
-      destination->append("),(");
+      destination->append("),(", 3);
 
     for (y= 0; y < num_fields; ++y)
     {
       if (y != 0)
         destination->push_back(',');
 
-      should_quote_field_value= message::shouldQuoteFieldValue(header.field_metadata(y).type());
+      const message::FieldMetadata &field_metadata= header.field_metadata(y);
+      
+      should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
 
       if (should_quote_field_value)
         destination->push_back('\'');
 
-      destination->append(data.record(x).insert_value(y));
+      if (field_metadata.type() == message::Table::Field::BLOB)
+      {
+        /* 
+         * We do this here because BLOB data is returned
+         * in a string correctly, but calling append()
+         * without a length will result in only the string
+         * up to a \0 being output here.
+         */
+        string raw_data(data.record(x).insert_value(y));
+        destination->append(raw_data.c_str(), raw_data.size());
+      }
+      else
+      {
+        destination->append(data.record(x).insert_value(y));
+      }
 
       if (should_quote_field_value)
         destination->push_back('\'');
@@ -334,7 +366,7 @@ message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  destination->assign("UPDATE ");
+  destination->assign("UPDATE ", 7);
   destination->push_back(quoted_identifier);
   destination->append(header.table_metadata().schema_name());
   destination->push_back(quoted_identifier);
@@ -342,7 +374,24 @@ message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
   destination->push_back(quoted_identifier);
   destination->append(header.table_metadata().table_name());
   destination->push_back(quoted_identifier);
-  destination->append(" SET ");
+  destination->append(" SET ", 5);
+
+  return NONE;
+}
+
+enum message::TransformSqlError
+message::transformUpdateRecordToSql(const message::UpdateHeader &header,
+                                    const message::UpdateRecord &record,
+                                    std::string *destination,
+                                    enum message::TransformSqlVariant sql_variant)
+{
+  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
+                                                                    destination,
+                                                                    sql_variant);
+
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
 
   /* Add field SET list to SQL string... */
   size_t num_set_fields= header.set_field_metadata_size();
@@ -365,40 +414,35 @@ message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
 
-    destination->append(header.set_value(x));
+    if (field_metadata.type() == message::Table::Field::BLOB)
+    {
+      /* 
+       * We do this here because BLOB data is returned
+       * in a string correctly, but calling append()
+       * without a length will result in only the string
+       * up to a \0 being output here.
+       */
+      string raw_data(record.after_value(x));
+      destination->append(raw_data.c_str(), raw_data.size());
+    }
+    else
+    {
+      destination->append(record.after_value(x));
+    }
 
     if (should_quote_field_value)
       destination->push_back('\'');
   }
 
-  return NONE;
-}
-
-enum message::TransformSqlError
-message::transformUpdateRecordToSql(const message::UpdateHeader &header,
-                                    const message::UpdateRecord &record,
-                                    std::string *destination,
-                                    enum message::TransformSqlVariant sql_variant)
-{
-  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
-
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
-
   size_t num_key_fields= header.key_field_metadata_size();
-  size_t x;
-  bool should_quote_field_value= false;
 
-  destination->append(" WHERE ");
+  destination->append(" WHERE ", 7);
   for (x= 0; x < num_key_fields; ++x) 
   {
     const message::FieldMetadata &field_metadata= header.key_field_metadata(x);
     
     if (x != 0)
-      destination->append(" AND "); /* Always AND condition with a multi-column PK */
+      destination->append(" AND ", 5); /* Always AND condition with a multi-column PK */
 
     destination->push_back(quoted_identifier);
     destination->append(field_metadata.name());
@@ -411,7 +455,21 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
 
-    destination->append(record.key_value(x));
+    if (field_metadata.type() == message::Table::Field::BLOB)
+    {
+      /* 
+       * We do this here because BLOB data is returned
+       * in a string correctly, but calling append()
+       * without a length will result in only the string
+       * up to a \0 being output here.
+       */
+      string raw_data(record.key_value(x));
+      destination->append(raw_data.c_str(), raw_data.size());
+    }
+    else
+    {
+      destination->append(record.key_value(x));
+    }
 
     if (should_quote_field_value)
       destination->push_back('\'');
@@ -419,64 +477,6 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
   if (num_key_fields > 1)
     destination->push_back(')');
 
-  return error;
-}
-
-enum message::TransformSqlError
-message::transformUpdateStatementToSql(const message::UpdateHeader &header,
-                                       const message::UpdateData &data,
-                                       std::string *destination,
-                                       enum message::TransformSqlVariant sql_variant)
-{
-  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
-
-  char quoted_identifier= '`';
-  if (sql_variant == ANSI)
-    quoted_identifier= '"';
-
-  /* Add WHERE clause to SQL string... */
-  size_t num_key_fields= header.key_field_metadata_size();
-  size_t num_key_records= data.record_size();
-  size_t x, y;
-  bool should_quote_field_value= false;
-
-  destination->append(" WHERE ");
-  for (x= 0; x < num_key_records; ++x)
-  {
-    if (x != 0)
-      destination->append(" OR "); /* Always OR condition for multiple key records */
-
-    if (num_key_fields > 1)
-      destination->push_back('(');
-
-    for (y= 0; y < num_key_fields; ++y) 
-    {
-      const message::FieldMetadata &field_metadata= header.key_field_metadata(y);
-      
-      if (y != 0)
-        destination->append(" AND "); /* Always AND condition with a multi-column PK */
-
-      destination->push_back(quoted_identifier);
-      destination->append(field_metadata.name());
-      destination->push_back(quoted_identifier);
-
-      destination->push_back('=');
-
-      should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
-
-      if (should_quote_field_value)
-        destination->push_back('\'');
-
-      destination->append(data.record(x).key_value(y));
-
-      if (should_quote_field_value)
-        destination->push_back('\'');
-    }
-    if (num_key_fields > 1)
-      destination->push_back(')');
-  }
   return error;
 }
 
@@ -489,7 +489,7 @@ message::transformDeleteHeaderToSql(const message::DeleteHeader &header,
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  destination->assign("DELETE FROM ");
+  destination->assign("DELETE FROM ", 12);
   destination->push_back(quoted_identifier);
   destination->append(header.table_metadata().schema_name());
   destination->push_back(quoted_identifier);
@@ -519,13 +519,13 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
   uint32_t x;
   bool should_quote_field_value= false;
 
-  destination->append(" WHERE ");
+  destination->append(" WHERE ", 7);
   for (x= 0; x < num_key_fields; ++x) 
   {
     const message::FieldMetadata &field_metadata= header.key_field_metadata(x);
     
     if (x != 0)
-      destination->append(" AND "); /* Always AND condition with a multi-column PK */
+      destination->append(" AND ", 5); /* Always AND condition with a multi-column PK */
 
     destination->push_back(quoted_identifier);
     destination->append(field_metadata.name());
@@ -538,7 +538,21 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
 
-    destination->append(record.key_value(x));
+    if (field_metadata.type() == message::Table::Field::BLOB)
+    {
+      /* 
+       * We do this here because BLOB data is returned
+       * in a string correctly, but calling append()
+       * without a length will result in only the string
+       * up to a \0 being output here.
+       */
+      string raw_data(record.key_value(x));
+      destination->append(raw_data.c_str(), raw_data.size());
+    }
+    else
+    {
+      destination->append(record.key_value(x));
+    }
 
     if (should_quote_field_value)
       destination->push_back('\'');
@@ -566,11 +580,11 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
   uint32_t x, y;
   bool should_quote_field_value= false;
 
-  destination->append(" WHERE ");
+  destination->append(" WHERE ", 7);
   for (x= 0; x < num_key_records; ++x)
   {
     if (x != 0)
-      destination->append(" OR "); /* Always OR condition for multiple key records */
+      destination->append(" OR ", 4); /* Always OR condition for multiple key records */
 
     if (num_key_fields > 1)
       destination->push_back('(');
@@ -580,7 +594,7 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
       const message::FieldMetadata &field_metadata= header.key_field_metadata(y);
       
       if (y != 0)
-        destination->append(" AND "); /* Always AND condition with a multi-column PK */
+        destination->append(" AND ", 5); /* Always AND condition with a multi-column PK */
 
       destination->push_back(quoted_identifier);
       destination->append(field_metadata.name());
@@ -593,7 +607,21 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
       if (should_quote_field_value)
         destination->push_back('\'');
 
-      destination->append(data.record(x).key_value(y));
+      if (field_metadata.type() == message::Table::Field::BLOB)
+      {
+        /* 
+         * We do this here because BLOB data is returned
+         * in a string correctly, but calling append()
+         * without a length will result in only the string
+         * up to a \0 being output here.
+         */
+        string raw_data(data.record(x).key_value(y));
+        destination->append(raw_data.c_str(), raw_data.size());
+      }
+      else
+      {
+        destination->append(data.record(x).key_value(y));
+      }
 
       if (should_quote_field_value)
         destination->push_back('\'');
@@ -613,7 +641,7 @@ message::transformSetVariableStatementToSql(const message::SetVariableStatement 
   const message::FieldMetadata &variable_metadata= statement.variable_metadata();
   bool should_quote_field_value= message::shouldQuoteFieldValue(variable_metadata.type());
 
-  destination->append("SET GLOBAL "); /* Only global variables are replicated */
+  destination->append("SET GLOBAL ", 11); /* Only global variables are replicated */
   destination->append(variable_metadata.name());
   destination->push_back('=');
 

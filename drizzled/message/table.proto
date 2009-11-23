@@ -6,6 +6,7 @@ message Table {
   enum TableType {
     STANDARD = 0;
     TEMPORARY = 1;
+    INTERNAL = 2;
   }
 
   message StorageEngine {
@@ -98,8 +99,6 @@ message Table {
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
       optional bytes default_bin_value = 4;
-
-      optional int32 length = 100; /* TODO: should go away */
     }
 
     message TimestampFieldOptions {
@@ -107,30 +106,29 @@ message Table {
     }
 
     message FieldConstraints {
-      required bool is_nullable = 1 [default = false];
+      required bool is_nullable = 1 [default = true];
       optional bool is_unsigned = 2 [default = false];
       repeated string expression = 16; /* Reserve 0-15 for frequenty accessed attributes */
     }
 
     message NumericFieldOptions {
       optional bool is_autoincrement = 1 [default = false];
-      optional int32 length = 2;
-      optional int32 scale = 3;
-      optional int32 precision = 4;
+      optional uint32 scale = 2;
+      optional uint32 precision = 3;
     }
 
     message StringFieldOptions {
       optional bool is_fixed_width = 1 [default = false];
-      optional int32 length = 2;
+      optional uint32 length = 2;
       optional uint32 collation_id = 3;
       optional string collation = 4;
     }
 
     message SetFieldOptions {
-      required int32 count_elements = 1;
+      required uint32 count_elements = 1;
       optional uint32 collation_id = 2;
       optional string collation = 3;
-      repeated bytes field_value = 4;
+      repeated string field_value = 4;
     }
 
     required string name = 1;
@@ -194,4 +192,8 @@ message Table {
   repeated ForeignKeyConstraint fk_constraint = 8;
   optional TableOptions options = 9;
   optional TableStats stats = 10;
+}
+
+message AlterTable {
+  repeated Table.Field added_field = 1;
 }

@@ -728,7 +728,7 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
       if (map == 1)			// Only one table
       {
         Table *tmp_table=join->all_tables[tablenr];
-        keyuse->setTableRows(max(tmp_table->file->stats.records, (ha_rows)100));
+        keyuse->setTableRows(max(tmp_table->cursor->stats.records, (ha_rows)100));
       }
     }
     /*
@@ -882,7 +882,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
     rec_length+=sizeof(bool);
   if (blobs)
   {
-    uint32_t blob_length=(uint32_t) (join_tab->table->file->stats.mean_rec_length-
+    uint32_t blob_length=(uint32_t) (join_tab->table->cursor->stats.mean_rec_length-
                                      (join_tab->table->getRecordLength()- rec_length));
     rec_length+= max((uint32_t)4,blob_length);
   }
@@ -899,7 +899,6 @@ StoredKey *get_store_key(Session *session,
                          uint32_t maybe_null)
 {
   Item_ref *key_use_val= static_cast<Item_ref *>(keyuse->getVal());
-  Item_ref **dir_val= reinterpret_cast<Item_ref **>(key_use_val->ref);
   if (! ((~used_tables) & keyuse->getUsedTables())) // if const item
   {
     return new store_key_const_item(session,
@@ -912,7 +911,7 @@ StoredKey *get_store_key(Session *session,
   else if (key_use_val->type() == Item::FIELD_ITEM ||
            (key_use_val->type() == Item::REF_ITEM &&
             key_use_val->ref_type() == Item_ref::OUTER_REF &&
-            (*dir_val)->ref_type() == Item_ref::DIRECT_REF &&
+            (*(Item_ref**)((Item_ref*)key_use_val)->ref)->ref_type() == Item_ref::DIRECT_REF &&
             key_use_val->real_item()->type() == Item::FIELD_ITEM))
   {
     return new store_key_field(session,
@@ -1477,9 +1476,9 @@ void JoinTable::cleanup()
     if (table->key_read)
     {
       table->key_read= 0;
-      table->file->extra(HA_EXTRA_NO_KEYREAD);
+      table->cursor->extra(HA_EXTRA_NO_KEYREAD);
     }
-    table->file->ha_index_or_rnd_end();
+    table->cursor->ha_index_or_rnd_end();
     /*
       We need to reset this for next select
       (Tested in part_of_refkey)
@@ -3296,11 +3295,11 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
 
   if (table)
   {
-    table->file->extra(HA_EXTRA_WRITE_CACHE);
+    table->cursor->extra(HA_EXTRA_WRITE_CACHE);
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
-        table->s->keys && !table->file->inited)
-      table->file->ha_index_init(0, 0);
+        table->s->keys && !table->cursor->inited)
+      table->cursor->ha_index_init(0, 0);
   }
   /* Set up select_end */
   Next_select_func end_select= setup_end_select_func(join);
@@ -3372,16 +3371,16 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
   if (table)
   {
     int tmp, new_errno= 0;
-    if ((tmp=table->file->extra(HA_EXTRA_NO_CACHE)))
+    if ((tmp=table->cursor->extra(HA_EXTRA_NO_CACHE)))
     {
       new_errno= tmp;
     }
-    if ((tmp=table->file->ha_index_or_rnd_end()))
+    if ((tmp=table->cursor->ha_index_or_rnd_end()))
     {
       new_errno= tmp;
     }
     if (new_errno)
-      table->file->print_error(new_errno,MYF(0));
+      table->print_error(new_errno,MYF(0));
   }
   return(join->session->is_error() ? -1 : rc);
 }
@@ -3598,7 +3597,7 @@ int safe_index_read(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
-  if ((error=table->file->index_read_map(table->record[0],
+  if ((error=table->cursor->index_read_map(table->record[0],
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
@@ -3634,14 +3633,14 @@ int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
     {
       table->key_read=1;
-      table->file->extra(HA_EXTRA_KEYREAD);
+      table->cursor->extra(HA_EXTRA_KEYREAD);
       tab->index= tab->ref.key;
     }
     error=join_read_const(tab);
     if (table->key_read)
     {
       table->key_read=0;
-      table->file->extra(HA_EXTRA_NO_KEYREAD);
+      table->cursor->extra(HA_EXTRA_NO_KEYREAD);
     }
     if (error)
     {
@@ -3690,7 +3689,7 @@ int join_read_system(JoinTable *tab)
   int error;
   if (table->status & STATUS_GARBAGE)		// If first read
   {
-    if ((error=table->file->read_first_row(table->record[0],
+    if ((error=table->cursor->read_first_row(table->record[0],
 					   table->s->primary_key)))
     {
       if (error != HA_ERR_END_OF_FILE)
@@ -3730,7 +3729,7 @@ int join_read_const(JoinTable *tab)
       error= HA_ERR_KEY_NOT_FOUND;
     else
     {
-      error=table->file->index_read_idx_map(table->record[0],tab->ref.key,
+      error=table->cursor->index_read_idx_map(table->record[0],tab->ref.key,
                                             (unsigned char*) tab->ref.key_buff,
                                             make_prev_keypart_map(tab->ref.key_parts),
                                             HA_READ_KEY_EXACT);
@@ -3776,9 +3775,9 @@ int join_read_key(JoinTable *tab)
   int error;
   Table *table= tab->table;
 
-  if (!table->file->inited)
+  if (!table->cursor->inited)
   {
-    table->file->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
   }
 
   /* TODO: Why don't we do "Late NULLs Filtering" here? */
@@ -3790,7 +3789,7 @@ int join_read_key(JoinTable *tab)
       table->status=STATUS_NOT_FOUND;
       return -1;
     }
-    error=table->file->index_read_map(table->record[0],
+    error=table->cursor->index_read_map(table->record[0],
                                       tab->ref.key_buff,
                                       make_prev_keypart_map(tab->ref.key_parts),
                                       HA_READ_KEY_EXACT);
@@ -3825,8 +3824,8 @@ int join_read_always_key(JoinTable *tab)
   Table *table= tab->table;
 
   /* Initialize the index first */
-  if (!table->file->inited)
-    table->file->ha_index_init(tab->ref.key, tab->sorted);
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
 
   /* Perform "Late NULLs Filtering" (see internals manual for explanations) */
   for (uint32_t i= 0 ; i < tab->ref.key_parts ; i++)
@@ -3837,7 +3836,7 @@ int join_read_always_key(JoinTable *tab)
 
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
-  if ((error=table->file->index_read_map(table->record[0],
+  if ((error=table->cursor->index_read_map(table->record[0],
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
@@ -3859,11 +3858,11 @@ int join_read_last_key(JoinTable *tab)
   int error;
   Table *table= tab->table;
 
-  if (!table->file->inited)
-    table->file->ha_index_init(tab->ref.key, tab->sorted);
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
-  if ((error=table->file->index_read_last_map(table->record[0],
+  if ((error=table->cursor->index_read_last_map(table->record[0],
                                               tab->ref.key_buff,
                                               make_prev_keypart_map(tab->ref.key_parts))))
   {
@@ -3892,7 +3891,7 @@ int join_read_next_same_diff(READ_RECORD *info)
       /* Save index tuple from record to the buffer */
       key_copy(tab->insideout_buf, info->record, key, 0);
 
-      if ((error=table->file->index_next_same(table->record[0],
+      if ((error=table->cursor->index_next_same(table->record[0],
                                               tab->ref.key_buff,
                                               tab->ref.key_length)))
       {
@@ -3916,7 +3915,7 @@ int join_read_next_same(READ_RECORD *info)
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
 
-  if ((error=table->file->index_next_same(table->record[0],
+  if ((error=table->cursor->index_next_same(table->record[0],
 					  tab->ref.key_buff,
 					  tab->ref.key_length)))
   {
@@ -3935,7 +3934,7 @@ int join_read_prev_same(READ_RECORD *info)
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
 
-  if ((error=table->file->index_prev(table->record[0])))
+  if ((error=table->cursor->index_prev(table->record[0])))
     return table->report_error(error);
   if (key_cmp_if_same(table, tab->ref.key_buff, tab->ref.key,
                       tab->ref.key_length))
@@ -3957,7 +3956,7 @@ int rr_sequential(READ_RECORD *info);
 int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
-  if (tab->read_record.file->ha_rnd_init(1))
+  if (tab->read_record.cursor->ha_rnd_init(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -3987,11 +3986,11 @@ int join_read_first(JoinTable *tab)
       !table->no_keyread)
   {
     table->key_read=1;
-    table->file->extra(HA_EXTRA_KEYREAD);
+    table->cursor->extra(HA_EXTRA_KEYREAD);
   }
   tab->table->status=0;
   tab->read_record.table=table;
-  tab->read_record.file=table->file;
+  tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
   tab->read_record.record=table->record[0];
   if (tab->insideout_match_tab)
@@ -4006,9 +4005,9 @@ int join_read_first(JoinTable *tab)
     tab->read_record.do_insideout_scan= 0;
   }
 
-  if (!table->file->inited)
-    table->file->ha_index_init(tab->index, tab->sorted);
-  if ((error=tab->table->file->index_first(tab->table->record[0])))
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(tab->index, tab->sorted);
+  if ((error=tab->table->cursor->index_first(tab->table->record[0])))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
       table->report_error(error);
@@ -4030,7 +4029,7 @@ int join_read_next_different(READ_RECORD *info)
       /* Save index tuple from record to the buffer */
       key_copy(tab->insideout_buf, info->record, key, 0);
 
-      if ((error=info->file->index_next(info->record)))
+      if ((error=info->cursor->index_next(info->record)))
         return info->table->report_error(error);
     } while (!key_cmp(tab->table->key_info[tab->index].key_part,
                       tab->insideout_buf, key->key_length));
@@ -4044,7 +4043,7 @@ int join_read_next_different(READ_RECORD *info)
 int join_read_next(READ_RECORD *info)
 {
   int error;
-  if ((error=info->file->index_next(info->record)))
+  if ((error=info->cursor->index_next(info->record)))
     return info->table->report_error(error);
   return 0;
 }
@@ -4057,17 +4056,17 @@ int join_read_last(JoinTable *tab)
       !table->no_keyread)
   {
     table->key_read=1;
-    table->file->extra(HA_EXTRA_KEYREAD);
+    table->cursor->extra(HA_EXTRA_KEYREAD);
   }
   tab->table->status=0;
   tab->read_record.read_record=join_read_prev;
   tab->read_record.table=table;
-  tab->read_record.file=table->file;
+  tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
   tab->read_record.record=table->record[0];
-  if (!table->file->inited)
-    table->file->ha_index_init(tab->index, 1);
-  if ((error= tab->table->file->index_last(tab->table->record[0])))
+  if (!table->cursor->inited)
+    table->cursor->ha_index_init(tab->index, 1);
+  if ((error= tab->table->cursor->index_last(tab->table->record[0])))
     return table->report_error(error);
 
   return 0;
@@ -4076,7 +4075,7 @@ int join_read_last(JoinTable *tab)
 int join_read_prev(READ_RECORD *info)
 {
   int error;
-  if ((error= info->file->index_prev(info->record)))
+  if ((error= info->cursor->index_prev(info->record)))
     return info->table->report_error(error);
 
   return 0;
@@ -4228,7 +4227,7 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->file->ha_write_row(table->record[0]);
+          int error= table->cursor->ha_write_row(table->record[0]);
           if (error && create_myisam_from_heap(join->session, table,
                                               join->tmp_table_param.start_recinfo,
                                                 &join->tmp_table_param.recinfo,
@@ -4534,7 +4533,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
         the primary key as a suffix.
       */
       if (!on_primary_key &&
-          (table->file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
+          (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
           table->s->primary_key != MAX_KEY)
       {
         on_primary_key= true;
@@ -4568,7 +4567,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
   }
   *used_key_parts= on_primary_key ? table->key_info[idx].key_parts :
     (uint32_t) (key_part - table->key_info[idx].key_part);
-  if (reverse == -1 && !(table->file->index_flags(idx, *used_key_parts-1, 1) &
+  if (reverse == -1 && !(table->cursor->index_flags(idx, *used_key_parts-1, 1) &
                          HA_READ_PREV))
     reverse= 0;                                 // Index can't be used
   return(reverse);
@@ -4932,7 +4931,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     double fanout= 1;
     JOIN *join= tab->join;
     uint32_t tablenr= tab - join->join_tab;
-    ha_rows table_records= table->file->stats.records;
+    ha_rows table_records= table->cursor->stats.records;
     bool group= join->group && order == join->group_list;
     optimizer::Position cur_pos;
 
@@ -4949,7 +4948,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         */
       if (tab->type == AM_ALL && tab->join->tables > tab->join->const_tables + 1)
         return(0);
-      keys= *table->file->keys_to_use_for_scanning();
+      keys= *table->cursor->keys_to_use_for_scanning();
       keys|= table->covering_keys;
 
       /*
@@ -4979,7 +4978,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       if (keys.test(nr) &&
           (direction= test_if_order_by_key(order, table, nr, &used_key_parts)))
       {
-        bool is_covering= table->covering_keys.test(nr) || (nr == table->s->primary_key && table->file->primary_key_is_clustered());
+        bool is_covering= table->covering_keys.test(nr) || (nr == table->s->primary_key && table->cursor->primary_key_is_clustered());
 
         /*
           Don't use an index scan with order_st BY without limit.
@@ -5049,13 +5048,13 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
             Rows in such a sequence are supposed to be ordered
             by rowid/primary key. When reading the data
             in a sequence we'll touch not more pages than the
-            table file contains.
+            table cursor contains.
             TODO. Use the formula for a disk sweep sequential access
             to calculate the cost of accessing data rows for one
             index entry.
           */
           index_scan_time= select_limit/rec_per_key *
-                           min(rec_per_key, table->file->scan_time());
+                           min(rec_per_key, table->cursor->scan_time());
           if (is_covering || (ref_key < 0 && (group || table->force_index)) ||
               index_scan_time < read_time)
           {
@@ -5110,9 +5109,9 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
           if (table->covering_keys.test(best_key))
           {
             table->key_read=1;
-            table->file->extra(HA_EXTRA_KEYREAD);
+            table->cursor->extra(HA_EXTRA_KEYREAD);
           }
-          table->file->ha_index_or_rnd_end();
+          table->cursor->ha_index_or_rnd_end();
           if (join->select_options & SELECT_DESCRIBE)
           {
             tab->ref.key= -1;
@@ -5216,7 +5215,7 @@ check_reverse_order:
   IMPLEMENTATION
    - If there is an index that can be used, 'tab' is modified to use
      this index.
-   - If no index, create with filesort() an index file that can be used to
+   - If no index, create with filesort() an index cursor that can be used to
      retrieve rows in order (should be done with 'read_record').
      The sorted data is stored in tab->table and will be freed when calling
      tab->table->free_io_cache().
@@ -5277,7 +5276,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
       if (table->key_read && ((uint32_t) tab->ref.key != select->quick->index))
       {
         table->key_read=0;
-        table->file->extra(HA_EXTRA_NO_KEYREAD);
+        table->cursor->extra(HA_EXTRA_NO_KEYREAD);
       }
     }
     else
@@ -5300,7 +5299,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
     goto err;
 
   if (table->s->tmp_table)
-    table->file->info(HA_STATUS_VARIABLE);	// Get record count
+    table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
   table->sort.found_records=filesort(session, table,join->sortorder, length,
                                      select, filesort_limit, 0,
                                      &examined_rows);
@@ -5319,7 +5318,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   if (table->key_read)				// Restore if we used indexes
   {
     table->key_read=0;
-    table->file->extra(HA_EXTRA_NO_KEYREAD);
+    table->cursor->extra(HA_EXTRA_NO_KEYREAD);
   }
   return(table->sort.found_records == HA_POS_ERROR);
 err:
@@ -5328,7 +5327,7 @@ err:
 
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having)
 {
-  Cursor *file=table->file;
+  Cursor *cursor=table->cursor;
   char *org_record,*new_record;
   unsigned char *record;
   int error;
@@ -5337,8 +5336,8 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;
 
-  file->ha_rnd_init(1);
-  error=file->rnd_next(record);
+  cursor->ha_rnd_init(1);
+  error=cursor->rnd_next(record);
   for (;;)
   {
     if (session->killed)
@@ -5357,9 +5356,9 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (having && !having->val_int())
     {
-      if ((error=file->ha_delete_row(record)))
+      if ((error=cursor->ha_delete_row(record)))
         goto err;
-      error=file->rnd_next(record);
+      error=cursor->rnd_next(record);
       continue;
     }
     if (copy_blobs(first_field))
@@ -5370,11 +5369,11 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     memcpy(new_record,org_record,reclength);
 
-    /* Read through rest of file and mark duplicated rows deleted */
+    /* Read through rest of cursor and mark duplicated rows deleted */
     bool found=0;
     for (;;)
     {
-      if ((error=file->rnd_next(record)))
+      if ((error=cursor->rnd_next(record)))
       {
         if (error == HA_ERR_RECORD_DELETED)
           continue;
@@ -5384,27 +5383,27 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       }
       if (table->compare_record(first_field) == 0)
       {
-        if ((error=file->ha_delete_row(record)))
+        if ((error=cursor->ha_delete_row(record)))
           goto err;
       }
       else if (!found)
       {
         found= 1;
-        file->position(record);	// Remember position
+        cursor->position(record);	// Remember position
       }
     }
     if (!found)
-      break;					// End of file
+      break;					// End of cursor
     /* Restart search on next row */
-    error=file->restart_rnd_next(record,file->ref);
+    error=cursor->restart_rnd_next(record,cursor->ref);
   }
 
-  file->extra(HA_EXTRA_NO_CACHE);
+  cursor->extra(HA_EXTRA_NO_CACHE);
   return(0);
 err:
-  file->extra(HA_EXTRA_NO_CACHE);
+  cursor->extra(HA_EXTRA_NO_CACHE);
   if (error)
-    file->print_error(error,MYF(0));
+    table->print_error(error,MYF(0));
   return(1);
 }
 
@@ -5423,7 +5422,7 @@ int remove_dup_with_hash_index(Session *session,
 {
   unsigned char *key_buffer, *key_pos, *record=table->record[0];
   int error;
-  Cursor *file= table->file;
+  Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_lengths,*field_length;
   HASH hash;
@@ -5431,7 +5430,7 @@ int remove_dup_with_hash_index(Session *session,
   if (! memory::multi_malloc(false,
 		       &key_buffer,
 		       (uint32_t) ((key_length + extra_length) *
-			       (long) file->stats.records),
+			       (long) cursor->stats.records),
 		       &field_lengths,
 		       (uint32_t) (field_count*sizeof(*field_lengths)),
 		       NULL))
@@ -5451,14 +5450,14 @@ int remove_dup_with_hash_index(Session *session,
     extra_length= ALIGN_SIZE(key_length)-key_length;
   }
 
-  if (hash_init(&hash, &my_charset_bin, (uint32_t) file->stats.records, 0,
+  if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
     free((char*) key_buffer);
     return(1);
   }
 
-  file->ha_rnd_init(1);
+  cursor->ha_rnd_init(1);
   key_pos=key_buffer;
   for (;;)
   {
@@ -5469,7 +5468,7 @@ int remove_dup_with_hash_index(Session *session,
       error=0;
       goto err;
     }
-    if ((error=file->rnd_next(record)))
+    if ((error=cursor->rnd_next(record)))
     {
       if (error == HA_ERR_RECORD_DELETED)
         continue;
@@ -5479,7 +5478,7 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=file->ha_delete_row(record)))
+      if ((error=cursor->ha_delete_row(record)))
         goto err;
       continue;
     }
@@ -5496,7 +5495,7 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=file->ha_delete_row(record)))
+      if ((error=cursor->ha_delete_row(record)))
         goto err;
     }
     else
@@ -5505,17 +5504,17 @@ int remove_dup_with_hash_index(Session *session,
   }
   free((char*) key_buffer);
   hash_free(&hash);
-  file->extra(HA_EXTRA_NO_CACHE);
-  (void) file->ha_rnd_end();
+  cursor->extra(HA_EXTRA_NO_CACHE);
+  (void) cursor->ha_rnd_end();
   return(0);
 
 err:
   free((char*) key_buffer);
   hash_free(&hash);
-  file->extra(HA_EXTRA_NO_CACHE);
-  (void) file->ha_rnd_end();
+  cursor->extra(HA_EXTRA_NO_CACHE);
+  (void) cursor->ha_rnd_end();
   if (error)
-    file->print_error(error,MYF(0));
+    table->print_error(error,MYF(0));
   return(1);
 }
 
@@ -6822,7 +6821,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           examined_rows= rows2double(tab->select->quick->records);
         else if (tab->type == AM_NEXT || tab->type == AM_ALL)
           examined_rows= rows2double(tab->limit ? tab->limit :
-                                     tab->table->file->records());
+                                     tab->table->cursor->records());
         else
         {
           optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);

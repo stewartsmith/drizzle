@@ -20,6 +20,8 @@ if BUILD_GETTEXT
   po=po
 endif
 
+VERSION=$(PANDORA_RELEASE_VERSION)
+
 TESTS= ${top_srcdir}/extra/run_cpplint.sh
 
 SUBDIRS = ${po} \
@@ -33,15 +35,18 @@ SUBDIRS = ${po} \
 
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
-			config/plugin.ac config/plugin.am \
 			config/autorun.sh Doxyfile \
+			config/bzr_revinfo \
 			extra/run_cpplint.sh  \
 			extra/cpplint.py \
 			extra/clean_source.sh
 
 
 CLEANFILES=		${BUILT_SOURCES}
-DISTCLEANFILES=		ac_available_languages_fragment
+DISTCLEANFILES=		ac_available_languages_fragment \
+			.plugin.scan \
+			config/bzr_revinfo
+
 MAINTAINERCLEANFILES=	autom4te.cache
 
 CLIENT_LDADD=		mysys/libmysys.la \
@@ -194,7 +199,7 @@ client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
 
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
-include config/plugin.am
+include config/pandora-plugin.am
 
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= \
@@ -279,6 +284,10 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
 	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
 	  echo '#define PKGPLUGINDIR "$(pkgplugindir)"'; \
+          echo '#undef VERSION'; \
+          echo '#define VERSION "${PANDORA_RELEASE_VERSION}"'; \
+          echo '#define DRIZZLE_VERSION_ID $(PANDORA_RELEASE_ID)'; \
+          echo '#define DRIZZLE_RELEASE_COMMENT "${PANDORA_RELEASE_COMMENT}"'; \
 	} | sed '/""/d' > $@-t
 	@if diff $@-t $@ >/dev/null 2>&1 ; then \
 	  rm @-t ; \

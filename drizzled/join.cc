@@ -1109,15 +1109,15 @@ int JOIN::reinit()
 
   if (exec_tmp_table1)
   {
-    exec_tmp_table1->file->extra(HA_EXTRA_RESET_STATE);
-    exec_tmp_table1->file->ha_delete_all_rows();
+    exec_tmp_table1->cursor->extra(HA_EXTRA_RESET_STATE);
+    exec_tmp_table1->cursor->ha_delete_all_rows();
     exec_tmp_table1->free_io_cache();
     exec_tmp_table1->filesort_free_buffers();
   }
   if (exec_tmp_table2)
   {
-    exec_tmp_table2->file->extra(HA_EXTRA_RESET_STATE);
-    exec_tmp_table2->file->ha_delete_all_rows();
+    exec_tmp_table2->cursor->extra(HA_EXTRA_RESET_STATE);
+    exec_tmp_table2->cursor->ha_delete_all_rows();
     exec_tmp_table2->free_io_cache();
     exec_tmp_table2->filesort_free_buffers();
   }
@@ -1309,7 +1309,7 @@ void JOIN::exec()
       error= tmp_error;
       return;
     }
-    curr_tmp_table->file->info(HA_STATUS_VARIABLE);
+    curr_tmp_table->cursor->info(HA_STATUS_VARIABLE);
 
     if (curr_join->having)
       curr_join->having= curr_join->tmp_having= 0; // Allready done
@@ -1874,7 +1874,7 @@ void JOIN::cleanup(bool full)
       for (tab= join_tab, end= tab+tables; tab != end; tab++)
       {
         if (tab->table)
-          tab->table->file->ha_index_or_rnd_end();
+          tab->table->cursor->ha_index_or_rnd_end();
       }
     }
   }
@@ -2327,7 +2327,7 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
           item->save_in_result_field(1);
       }
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
-      if ((write_error= table_arg->file->ha_write_row(table_arg->record[0])))
+      if ((write_error= table_arg->cursor->ha_write_row(table_arg->record[0])))
       {
   if (create_myisam_from_heap(session, table_arg,
                                     tmp_table_param.start_recinfo,
@@ -2493,7 +2493,7 @@ enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int
         return NESTED_LOOP_NO_MORE_ROWS;
     }
     else
-      join_tab->read_record.file->unlock_row();
+      join_tab->read_record.cursor->unlock_row();
   }
   else
   {
@@ -2503,7 +2503,7 @@ enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int
     */
     join->examined_rows++;
     join->session->row_count++;
-    join_tab->read_record.file->unlock_row();
+    join_tab->read_record.cursor->unlock_row();
   }
   return NESTED_LOOP_OK;
 }
@@ -2691,7 +2691,7 @@ enum_nested_loop_state end_send(JOIN *join, JoinTable *, bool end_of_records)
         if ((join->tables == 1) && !join->tmp_table && !join->sort_and_group
             && !join->send_group_parts && !join->having && !jt->select_cond &&
             !(jt->select && jt->select->quick) &&
-            (jt->table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
+            (jt->table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
                   (jt->ref.key < 0))
         {
           /* Join over all rows in table;  Return number of found rows */
@@ -2706,8 +2706,8 @@ enum_nested_loop_state end_send(JOIN *join, JoinTable *, bool end_of_records)
           }
           else
           {
-            table->file->info(HA_STATUS_VARIABLE);
-            join->send_records= table->file->stats.records;
+            table->cursor->info(HA_STATUS_VARIABLE);
+            join->send_records= table->cursor->stats.records;
           }
         }
         else
@@ -2750,9 +2750,9 @@ enum_nested_loop_state end_write(JOIN *join, JoinTable *, bool end_of_records)
     {
       int error;
       join->found_records++;
-      if ((error=table->file->ha_write_row(table->record[0])))
+      if ((error=table->cursor->ha_write_row(table->record[0])))
       {
-        if (!table->file->is_fatal_error(error, HA_CHECK_DUP))
+        if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
           goto end;
         if (create_myisam_from_heap(join->session, table,
                                           join->tmp_table_param.start_recinfo,
@@ -2801,17 +2801,17 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
     if (item->maybe_null)
       group->buff[-1]= (char) group->field->is_null();
   }
-  if (!table->file->index_read_map(table->record[1],
+  if (!table->cursor->index_read_map(table->record[1],
                                    join->tmp_table_param.group_buff,
                                    HA_WHOLE_KEY,
                                    HA_READ_KEY_EXACT))
   {						/* Update old record */
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->file->ha_update_row(table->record[1],
+    if ((error= table->cursor->ha_update_row(table->record[1],
                                           table->record[0])))
     {
-      table->file->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     return NESTED_LOOP_OK;
@@ -2832,7 +2832,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
   }
   init_tmptable_sum_functions(join->sum_funcs);
   copy_funcs(join->tmp_table_param.items_to_copy);
-  if ((error=table->file->ha_write_row(table->record[0])))
+  if ((error=table->cursor->ha_write_row(table->record[0])))
   {
     if (create_myisam_from_heap(join->session, table,
                                 join->tmp_table_param.start_recinfo,
@@ -2840,7 +2840,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
 				error, 0))
       return NESTED_LOOP_ERROR;            // Not a table_is_full error
     /* Change method to update rows */
-    table->file->ha_index_init(0, 0);
+    table->cursor->ha_index_init(0, 0);
     join->join_tab[join->tables-1].next_select= end_unique_update;
   }
   join->send_records++;
@@ -2865,26 +2865,26 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
   copy_fields(&join->tmp_table_param);		// Groups are copied twice.
   copy_funcs(join->tmp_table_param.items_to_copy);
 
-  if (!(error= table->file->ha_write_row(table->record[0])))
+  if (!(error= table->cursor->ha_write_row(table->record[0])))
     join->send_records++;			// New group
   else
   {
-    if ((int) table->file->get_dup_key(error) < 0)
+    if ((int) table->get_dup_key(error) < 0)
     {
-      table->file->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
-    if (table->file->rnd_pos(table->record[1],table->file->dup_ref))
+    if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
     {
-      table->file->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->file->ha_update_row(table->record[1],
+    if ((error= table->cursor->ha_update_row(table->record[1],
                                           table->record[0])))
     {
-      table->file->print_error(error,MYF(0));
+      table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
   }
@@ -3458,7 +3458,7 @@ static void best_access_path(JOIN *join,
             if (table->covering_keys.test(key))
             {
               /* we can use only index tree */
-              tmp= record_count * table->file->index_only_read_time(key, tmp);
+              tmp= record_count * table->cursor->index_only_read_time(key, tmp);
             }
             else
               tmp= record_count * min(tmp,s->worst_seeks);
@@ -3472,7 +3472,7 @@ static void best_access_path(JOIN *join,
             Set tmp to (previous record count) * (records / combination)
           */
           if ((found_part & 1) &&
-              (!(table->file->index_flags(key, 0, 0) & HA_ONLY_WHOLE_INDEX) ||
+              (!(table->cursor->index_flags(key, 0, 0) & HA_ONLY_WHOLE_INDEX) ||
                found_part == PREV_BITS(uint,keyinfo->key_parts)))
           {
             max_key_part= max_part_bit(found_part);
@@ -3552,7 +3552,7 @@ static void best_access_path(JOIN *join,
               else
               {
                 /*
-                  Assume that the first key part matches 1% of the file
+                  Assume that the first key part matches 1% of the cursor
                   and that the whole key matches 10 (duplicates) or 1
                   (unique) records.
                   Assume also that more key matches proportionally more
@@ -3623,7 +3623,7 @@ static void best_access_path(JOIN *join,
             if (table->covering_keys.test(key))
             {
               /* we can use only index tree */
-              tmp= record_count * table->file->index_only_read_time(key, tmp);
+              tmp= record_count * table->cursor->index_only_read_time(key, tmp);
             }
             else
               tmp= record_count * min(tmp,s->worst_seeks);
@@ -3677,7 +3677,7 @@ static void best_access_path(JOIN *join,
   if ((records >= s->found_records || best > s->read_time) &&            // (1)
       ! (s->quick && best_key && s->quick->index == best_key->getKey() &&      // (2)
         best_max_key_part >= s->table->quick_key_parts[best_key->getKey()]) &&// (2)
-      ! ((s->table->file->ha_table_flags() & HA_TABLE_SCAN_ON_INDEX) &&   // (3)
+      ! ((s->table->cursor->ha_table_flags() & HA_TABLE_SCAN_ON_INDEX) &&   // (3)
         ! s->table->covering_keys.none() && best_key && !s->quick) && // (3)
       ! (s->table->force_index && best_key && !s->quick))                 // (4)
   {                                             // Check full join
@@ -3724,7 +3724,7 @@ static void best_access_path(JOIN *join,
     else
     {
       /* Estimate cost of reading table. */
-      tmp= s->table->file->scan_time();
+      tmp= s->table->cursor->scan_time();
       if (s->table->map & join->outer_join)     // Can't use join cache
       {
         /*
@@ -4815,7 +4815,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
     Table *table=tab->table;
     bool using_join_cache;
     tab->read_record.table= table;
-    tab->read_record.file=table->file;
+    tab->read_record.cursor= table->cursor;
     tab->next_select=sub_select;		/* normal select */
     /*
       TODO: don't always instruct first table's ref/range access method to
@@ -4844,7 +4844,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
           !table->no_keyread)
       {
         table->key_read=1;
-        table->file->extra(HA_EXTRA_KEYREAD);
+        table->cursor->extra(HA_EXTRA_KEYREAD);
       }
       break;
     case AM_EQ_REF:
@@ -4861,7 +4861,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       if (table->covering_keys.test(tab->ref.key) && !table->no_keyread)
       {
         table->key_read=1;
-        table->file->extra(HA_EXTRA_KEYREAD);
+        table->cursor->extra(HA_EXTRA_KEYREAD);
       }
       break;
     case AM_REF_OR_NULL:
@@ -4877,7 +4877,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       if (table->covering_keys.test(tab->ref.key) && !table->no_keyread)
       {
         table->key_read=1;
-        table->file->extra(HA_EXTRA_KEYREAD);
+        table->cursor->extra(HA_EXTRA_KEYREAD);
       }
       if (tab->type == AM_REF)
       {
@@ -4956,7 +4956,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
               table->covering_keys.test(tab->select->quick->index))
           {
             table->key_read=1;
-            table->file->extra(HA_EXTRA_KEYREAD);
+            table->cursor->extra(HA_EXTRA_KEYREAD);
           }
           else if (!table->covering_keys.none() &&
             !(tab->select && tab->select->quick))
@@ -4968,7 +4968,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
                       is always faster than using a secondary index".
                     */
                     if (table->s->primary_key != MAX_KEY &&
-                        table->file->primary_key_is_clustered())
+                        table->cursor->primary_key_is_clustered())
                       tab->index= table->s->primary_key;
                     else
                       tab->index= table->find_shortest_key(&table->covering_keys);
@@ -5462,10 +5462,10 @@ static int remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *
   reclength= entry->s->reclength-offset;
 
   entry->free_io_cache();				// Safety
-  entry->file->info(HA_STATUS_VARIABLE);
+  entry->cursor->info(HA_STATUS_VARIABLE);
   if (entry->s->db_type() == heap_engine ||
       (!entry->s->blob_fields &&
-       ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->file->stats.records <
+       ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->cursor->stats.records <
 	session->variables.sortbuff_size)))
     error= remove_dup_with_hash_index(join->session, entry,
 				     field_count, first_field,
@@ -5567,10 +5567,10 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     s->needed_reg.reset();
     table_vector[i]=s->table=table=tables->table;
     table->pos_in_table_list= tables;
-    error= table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+    error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
     if (error)
     {
-        table->file->print_error(error, MYF(0));
+        table->print_error(error, MYF(0));
         return 1;
     }
     table->quick_keys.reset();
@@ -5585,14 +5585,14 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     s->dependent= tables->dep_tables;
     s->key_dependent= 0;
     if (tables->schema_table)
-      table->file->stats.records= 2;
-    table->quick_condition_rows= table->file->stats.records;
+      table->cursor->stats.records= 2;
+    table->quick_condition_rows= table->cursor->stats.records;
 
     s->on_expr_ref= &tables->on_expr;
     if (*s->on_expr_ref)
     {
       /* s is the only inner table of an outer join */
-      if (!table->file->stats.records && !embedding)
+      if (!table->cursor->stats.records && !embedding)
       {						// Empty table
         s->dependent= 0;                        // Ignore LEFT JOIN depend.
         set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
@@ -5619,8 +5619,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       while (embedding);
       continue;
     }
-    if ((table->file->stats.records <= 1) && !s->dependent &&
-	      (table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && 
+    if ((table->cursor->stats.records <= 1) && !s->dependent &&
+	      (table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && 
         !join->no_const_tables)
     {
       set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
@@ -5745,8 +5745,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         // All dep. must be constants
         if (s->dependent & ~(found_const_table_map))
           continue;
-        if (table->file->stats.records <= 1L &&
-            (table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
+        if (table->cursor->stats.records <= 1L &&
+            (table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
                   !table->pos_in_table_list->embedding)
         {					// system table
           int tmp= 0;
@@ -5859,8 +5859,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       continue;
     }
     /* Approximate found rows and time to read them */
-    s->found_records=s->records=s->table->file->stats.records;
-    s->read_time=(ha_rows) s->table->file->scan_time();
+    s->found_records=s->records=s->table->cursor->stats.records;
+    s->read_time=(ha_rows) s->table->cursor->scan_time();
 
     /*
       Set a max range of how many seeks we can expect when using keys
