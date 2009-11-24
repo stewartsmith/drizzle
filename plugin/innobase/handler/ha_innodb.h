@@ -146,8 +146,8 @@ class ha_innobase: public Cursor
 
 	UNIV_INTERN void position(const unsigned char *record);
 	UNIV_INTERN int info(uint);
-	UNIV_INTERN int analyze(Session* session,HA_CHECK_OPT* check_opt);
-	UNIV_INTERN int optimize(Session* session,HA_CHECK_OPT* check_opt);
+	UNIV_INTERN int analyze(Session* session);
+	UNIV_INTERN int optimize(Session* session);
 	UNIV_INTERN int discard_or_import_tablespace(bool discard);
 	UNIV_INTERN int extra(enum ha_extra_function operation);
         UNIV_INTERN int reset();
@@ -159,7 +159,7 @@ class ha_innobase: public Cursor
 	UNIV_INTERN ha_rows estimate_rows_upper_bound();
 
 	UNIV_INTERN int delete_all_rows();
-	UNIV_INTERN int check(Session* session, HA_CHECK_OPT* check_opt);
+	UNIV_INTERN int check(Session* session);
 	UNIV_INTERN char* update_table_comment(const char* comment);
 	UNIV_INTERN char* get_foreign_key_create_info();
 	UNIV_INTERN int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);

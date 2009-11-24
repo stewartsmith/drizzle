@@ -498,9 +498,9 @@ create table t1 (a int, b varchar(200), c text not null);
 create table t2 (a int, b varchar(200), c text not null);
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
-checksum table t1, t2, t3 quick;
 checksum table t1, t2, t3;
-checksum table t1, t2, t3 extended;
+checksum table t1, t2, t3;
+checksum table t1, t2, t3;
 #show table status;
 drop table t1,t2;
 
@@ -651,9 +651,9 @@ SELECT _id FROM t1;
 DELETE FROM t1 WHERE _id < 8;
 --replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
 SHOW TABLE STATUS LIKE 't1';
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 OPTIMIZE TABLE t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 --replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
 SHOW TABLE STATUS LIKE 't1';
 SELECT _id FROM t1;
@@ -903,7 +903,7 @@ SET GLOBAL myisam_repair_threads=2;
 ALTER TABLE t1 DISABLE KEYS;
 ALTER TABLE t1 ENABLE KEYS;
 SET GLOBAL myisam_repair_threads=1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 DROP TABLE t1;
 
 #
@@ -1060,9 +1060,9 @@ CREATE temporary TABLE t1 (
 ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES(REPEAT("a",128), 'b');
 SELECT COUNT(*) FROM t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 SELECT COUNT(*) FROM t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 DROP TABLE t1;
 #
 # Test #3 - same as test #1, but using OPTIMIZE TABLE.
@@ -1113,7 +1113,7 @@ ALTER TABLE t1 ENGINE=MyISAM;
 # With bug present, this shows that all long rows are gone.
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 DROP TABLE t1;
 #
 # Test #5 - same as test #1 but UTF-8.
@@ -1141,9 +1141,9 @@ CREATE temporary TABLE t1 (
 # Using Tamil Letter A, Unicode U+0B85
 INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 SELECT COUNT(*) FROM t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 DROP TABLE t1;
 #
 # Test #7 - same as test #3, but UTF-8.
@@ -1196,7 +1196,7 @@ ALTER TABLE t1 ENGINE=MyISAM;
 # With bug present, this shows that all long rows are gone.
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
-CHECK TABLE t1 EXTENDED;
+CHECK TABLE t1;
 DROP TABLE t1;
 --echo End of 5.1 tests
 

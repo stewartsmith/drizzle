@@ -1539,7 +1539,7 @@ DROP TABLE t1, t2, t4, t5, t6;
 create table t1(a blob) engine=archive;
 insert into t1 set a='';
 insert into t1 set a='a';
-check table t1 extended;
+check table t1;
 drop table t1;
 
 #

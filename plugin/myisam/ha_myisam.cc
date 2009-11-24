@@ -1351,17 +1351,6 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-THR_LOCK_DATA **ha_myisam::store_lock(Session *,
-				      THR_LOCK_DATA **to,
-				      enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
-    file->lock.type=lock_type;
-  *to++= &file->lock;
-
-  return to;
-}
-
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
                                 drizzled::message::Table& create_proto)

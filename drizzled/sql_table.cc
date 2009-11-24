@@ -2706,7 +2706,7 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
 
 
 bool mysql_checksum_table(Session *session, TableList *tables,
-                          HA_CHECK_OPT *check_opt)
+                          HA_CHECK_OPT *)
 {
   TableList *table;
   List<Item> field_list;
@@ -2741,12 +2741,11 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     }
     else
     {
-      if (t->cursor->ha_table_flags() & HA_HAS_CHECKSUM &&
-	  !(check_opt->flags & T_EXTEND))
+      /**
+        @note if the engine keeps a checksum then we return the checksum, otherwise we calculate
+      */
+      if (t->cursor->ha_table_flags() & HA_HAS_CHECKSUM)
 	session->client->store((uint64_t)t->cursor->checksum());
-      else if (!(t->cursor->ha_table_flags() & HA_HAS_CHECKSUM) &&
-	       (check_opt->flags & T_QUICK))
-	session->client->store();
       else
       {
 	/* calculating table's checksum */

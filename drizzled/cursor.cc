@@ -753,11 +753,11 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 */
 
 int
-Cursor::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
+Cursor::ha_optimize(Session* session, HA_CHECK_OPT*)
 {
   mark_trx_read_write();
 
-  return optimize(session, check_opt);
+  return optimize(session);
 }
 
 
@@ -768,11 +768,11 @@ Cursor::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
 */
 
 int
-Cursor::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
+Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
 {
   mark_trx_read_write();
 
-  return analyze(session, check_opt);
+  return analyze(session);
 }
 
 /**

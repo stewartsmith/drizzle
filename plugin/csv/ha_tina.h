@@ -134,19 +134,12 @@ public:
   int rnd_init(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  bool check_and_repair(Session *session);
-  int check(Session* session, HA_CHECK_OPT* check_opt);
-  bool is_crashed() const;
   int rnd_end();
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
-  bool auto_repair() const { return 1; }
   void position(const unsigned char *record);
   int info(uint);
   int delete_all_rows(void);
-
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-      enum thr_lock_type lock_type);
 
   /*
     These functions used to get/update status of the Cursor.

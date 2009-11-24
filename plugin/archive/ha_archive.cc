@@ -1083,10 +1083,9 @@ int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
   rewriting the meta file. Currently it does this by calling optimize with
   the extended flag.
 */
-int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
+int ha_archive::repair(Session* session)
 {
-  check_opt->flags= T_EXTEND;
-  int rc= optimize(session, check_opt);
+  int rc= optimize(session);
 
   if (rc)
     return(HA_ERR_CRASHED_ON_REPAIR);
@@ -1099,7 +1098,7 @@ int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely.
 */
-int ha_archive::optimize(Session *, HA_CHECK_OPT *)
+int ha_archive::optimize(Session *)
 {
   int rc= 0;
   azio_stream writer;
@@ -1368,7 +1367,7 @@ bool ha_archive::is_crashed() const
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(Session* session, HA_CHECK_OPT *)
+int ha_archive::check(Session* session)
 {
   int rc= 0;
   const char *old_proc_info;

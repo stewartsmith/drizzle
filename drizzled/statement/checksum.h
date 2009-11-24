@@ -37,7 +37,6 @@ public:
     :
       Statement(in_session)
   {
-    check_opt.init();
   }
 
   bool execute();

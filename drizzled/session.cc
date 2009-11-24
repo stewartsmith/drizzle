@@ -99,7 +99,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(ulong version_arg)
+Open_tables_state::Open_tables_state(uint64_t version_arg)
   :version(version_arg), backups_available(false)
 {
   reset_open_tables_state();
@@ -167,12 +167,6 @@ extern "C"
 int session_tx_isolation(const Session *session)
 {
   return (int) session->variables.tx_isolation;
-}
-
-extern "C"
-void session_inc_row_count(Session *session)
-{
-  session->row_count++;
 }
 
 Session::Session(plugin::Client *client_arg)

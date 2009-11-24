@@ -991,9 +991,9 @@ insert t3 select * from t1;
 insert t4 select * from t1;
 insert t5 select * from t1;
 insert t6 select * from t1;
-checksum table t1, t2, t3, t4, t5, t6, t7 quick;
 checksum table t1, t2, t3, t4, t5, t6, t7;
-checksum table t1, t2, t3, t4, t5, t6, t7 extended;
+checksum table t1, t2, t3, t4, t5, t6, t7;
+checksum table t1, t2, t3, t4, t5, t6, t7;
 # #show table status;
 drop table t1,t2,t3, t4, t5, t6;
 
