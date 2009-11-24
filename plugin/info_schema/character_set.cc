@@ -163,8 +163,7 @@ int CharSetISMethods::fillTable(Session *session, TableList *tables)
       comment= tmp_cs->comment ? tmp_cs->comment : "";
       table->field[2]->store(comment, strlen(comment), scs);
       table->field[3]->store((int64_t) tmp_cs->mbmaxlen, true);
-      if (schema_table_store_record(session, table))
-        return 1;
+      tables->schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

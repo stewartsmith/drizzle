@@ -197,8 +197,7 @@ int CollationISMethods::fillTable(Session *session, TableList *tables)
         tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
         table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
         table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
-        if (schema_table_store_record(session, table))
-          return 1;
+        tables->schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

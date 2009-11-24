@@ -254,11 +254,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables)
         table->field[7]->set_notnull();
       }
 
-      if (schema_table_store_record(session, table))
-      {
-        pthread_mutex_unlock(&LOCK_thread_count);
-        return(1);
-      }
+      tables->schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
 

@@ -254,10 +254,7 @@ RefConstraintsISMethods::processTable(Session *session,
                              f_key_info->update_method->length, cs);
       table->field[8]->store(f_key_info->delete_method->str,
                              f_key_info->delete_method->length, cs);
-      if (schema_table_store_record(session, table))
-      {
-        return 1;
-      }
+      tables->schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

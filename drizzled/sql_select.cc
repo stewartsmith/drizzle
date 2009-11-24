@@ -5293,11 +5293,6 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
     }
   }
 
-  /* Fill schema tables with data before filesort if it's necessary */
-  if ((join->select_lex->options & OPTION_SCHEMA_TABLE) &&
-      get_schema_tables_result(join, PROCESSED_BY_CREATE_SORT_INDEX))
-    goto err;
-
   if (table->s->tmp_table)
     table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
   table->sort.found_records=filesort(session, table,join->sortorder, length,

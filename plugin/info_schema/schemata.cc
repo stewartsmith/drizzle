@@ -146,7 +146,7 @@ void SchemataIS::cleanup()
   delete columns;
 }
 
-static bool store_schema_schemata(Session* session, 
+static bool store_schema_schemata(Session *, 
                                   Table *table, 
                                   LEX_STRING *db_name,
                                   const CHARSET_INFO * const cs)
@@ -155,7 +155,9 @@ static bool store_schema_schemata(Session* session,
   table->field[1]->store(db_name->str, db_name->length, system_charset_info);
   table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
   table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
-  return schema_table_store_record(session, table);
+  TableList *tmp= table->pos_in_table_list;
+  tmp->schema_table->addRow(table->record[0], table->s->reclength);
+  return false;
 }
 
 int SchemataISMethods::fillTable(Session *session, TableList *tables)

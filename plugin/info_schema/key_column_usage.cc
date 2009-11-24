@@ -245,10 +245,8 @@ int KeyColUsageISMethods::processTable(Session *session,
                                  key_part->field->field_name,
                                  strlen(key_part->field->field_name),
                                  (int64_t) f_idx);
-          if (schema_table_store_record(session, table))
-          {
-            return (1);
-          }
+          tables->schema_table->addRow(table->record[0],
+                                       table->s->reclength);
         }
       }
     }
@@ -286,10 +284,7 @@ int KeyColUsageISMethods::processTable(Session *session,
         table->field[11]->store(r_info->str, r_info->length,
                                 system_charset_info);
         table->field[11]->set_notnull();
-        if (schema_table_store_record(session, table))
-        {
-          return (1);
-        }
+        tables->schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

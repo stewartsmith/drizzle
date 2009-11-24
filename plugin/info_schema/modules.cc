@@ -239,7 +239,9 @@ public:
     }
     table->field[6]->set_notnull();
 
-    return schema_table_store_record(session, table);
+    TableList *tmp= table->pos_in_table_list;
+    tmp->schema_table->addRow(table->record[0], table->s->reclength);
+    return false;
   }
 };
 

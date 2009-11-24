@@ -42,7 +42,7 @@
 using namespace std;
 using namespace drizzled;
 
-int MemcachedStatsISMethods::fillTable(Session *session,
+int MemcachedStatsISMethods::fillTable(Session *,
                                        TableList *tables)
 {
   const CHARSET_INFO * const scs= system_charset_info;
@@ -82,10 +82,7 @@ int MemcachedStatsISMethods::fillTable(Session *session,
     }
     free(list);
     /* store the actual record now */
-    if (schema_table_store_record(session, table))
-    {
-      return 1;
-    }
+    tables->schema_table->addRow(table->record[0], table->s->reclength);
   }
 
   memcached_stat_free(serv, stats);

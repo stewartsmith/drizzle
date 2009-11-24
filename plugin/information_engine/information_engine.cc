@@ -33,13 +33,15 @@ Cursor *InformationEngine::create(TableShare &table, MEM_ROOT *mem_root)
 
 
 int InformationEngine::doGetTableDefinition(Session &,
+                                            const char *path,
                                             const char *,
                                             const char *,
-                                            const char *table_name,
                                             const bool,
                                             message::Table *table_proto)
 {
-  if (! table_name)
+  string tab_name(path);
+  string i_s_prefix("./information_schema/");
+  if (tab_name.compare(0, i_s_prefix.length(), i_s_prefix) != 0)
   {
     return ENOENT;
   }
@@ -49,14 +51,15 @@ int InformationEngine::doGetTableDefinition(Session &,
     return EEXIST;
   }
 
-  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(table_name);
+  tab_name.erase(0, i_s_prefix.length());
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(tab_name.c_str());
 
   if (! schema_table)
   {
     return ENOENT;
   }
 
-  table_proto->set_name(table_name);
+  table_proto->set_name(tab_name);
   table_proto->set_type(message::Table::STANDARD);
 
   message::Table::StorageEngine *protoengine= table_proto->mutable_engine();
@@ -163,7 +166,7 @@ void InformationEngine::doGetTableNames(CachedDirectory&,
 
 InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
 {
-  InformationEngine::Share *share;
+  InformationEngine::Share *share= NULL;
   pthread_mutex_lock(&mutex);
 
   OpenTables::iterator it= open_tables.find(name_arg);
@@ -187,8 +190,8 @@ InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
     }
 
     Record &value= *(returned.first);
-
     share= &(value.second);
+    share->setInfoSchemaTable(name_arg);
   }
 
 

@@ -337,10 +337,7 @@ int StatsISMethods::processTable(Session *session,
           table->field[15]->store(key_info->comment.str,
                                   key_info->comment.length, cs);
         }
-        if (schema_table_store_record(session, table))
-        {
-          return 1;
-        }
+        tables->schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

@@ -145,8 +145,8 @@ inline bool open_list_store(Table *table, open_table_list_st& open_list)
   table->field[1]->store(open_list.table.c_str(), open_list.table.length(), system_charset_info);
   table->field[2]->store((int64_t) open_list.in_use, true);
   table->field[3]->store((int64_t) open_list.locked, true);
-  if (schema_table_store_record(table->in_use, table))
-    return true;
+  TableList *tmp= table->pos_in_table_list;
+  tmp->schema_table->addRow(table->record[0], table->s->reclength);
 
   return false;
 }

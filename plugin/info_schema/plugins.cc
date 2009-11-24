@@ -169,7 +169,9 @@ public:
     table->field[3]->store(plugin.second->getModuleName().c_str(),
                            plugin.second->getModuleName().size(), cs);
 
-    return schema_table_store_record(session, table);
+    TableList *tmp= table->pos_in_table_list;
+    tmp->schema_table->addRow(table->record[0], table->s->reclength);
+    return false;
   }
 };
 
@@ -186,5 +188,5 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables)
   {
     return 1;
   }
-  return (0);
+  return 0;
 }

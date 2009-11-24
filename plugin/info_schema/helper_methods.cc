@@ -36,6 +36,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static inline void make_upper(char *buf)
 {
@@ -194,15 +195,14 @@ bool show_status_array(Session *session,
 
         pthread_mutex_unlock(&LOCK_global_system_variables);
 
-        if (schema_table_store_record(session, table))
-          return true;
+        TableList *tmp_tbl_list= table->pos_in_table_list;
+        tmp_tbl_list->schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }
 
   return false;
 }
-
 
 void store_key_column_usage(Table *table, 
                             LEX_STRING *db_name,

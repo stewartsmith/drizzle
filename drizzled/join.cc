@@ -1245,9 +1245,6 @@ void JOIN::exec()
     return;
   }
 
-  if ((this->select_lex->options & OPTION_SCHEMA_TABLE) && get_schema_tables_result(this, PROCESSED_BY_JOIN_EXEC))
-    return;
-
   if (select_options & SELECT_DESCRIBE)
   {
     /*

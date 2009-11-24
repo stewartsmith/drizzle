@@ -2137,18 +2137,6 @@ restart:
     {
       continue;
     }
-    /*
-      If this TableList object is a placeholder for an information_schema
-      table, create a temporary table to represent the information_schema
-      table in the query. Do not fill it yet - will be filled during
-      execution.
-    */
-    if (tables->schema_table)
-    {
-      if (mysql_schema_table(this, lex, tables) == false)
-        continue;
-      return -1;
-    }
     (*counter)++;
 
     /*

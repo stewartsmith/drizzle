@@ -124,7 +124,7 @@ void CollationCharSetIS::cleanup()
   delete columns;
 }
 
-int CollCharISMethods::fillTable(Session *session, TableList *tables)
+int CollCharISMethods::fillTable(Session *, TableList *tables)
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -145,8 +145,7 @@ int CollCharISMethods::fillTable(Session *session, TableList *tables)
       table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-      if (schema_table_store_record(session, table))
-        return 1;
+      tables->schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

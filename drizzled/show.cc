@@ -1009,34 +1009,6 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   return;
 }
 
-/*
-  Store record to I_S table, convert HEAP table
-  to MyISAM if necessary
-
-  SYNOPSIS
-    schema_table_store_record()
-    session                   thread Cursor
-    table                 Information schema table to be updated
-
-  RETURN
-    0	                  success
-    1	                  error
-*/
-
-bool schema_table_store_record(Session *session, Table *table)
-{
-  int error;
-  if ((error= table->cursor->ha_write_row(table->record[0])))
-  {
-    Tmp_Table_Param *param= table->pos_in_table_list->schema_table_param;
-
-    if (create_myisam_from_heap(session, table, param->start_recinfo,
-                                &param->recinfo, error, 0))
-      return true;
-  }
-  return false;
-}
-
 
 static int make_table_list(Session *session, Select_Lex *sel,
                            LEX_STRING *db_name, LEX_STRING *table_name)
@@ -1621,8 +1593,8 @@ static int fill_schema_table_names(Session *session, Table *table,
       return 0;
     }
   }
-  if (schema_table_store_record(session, table))
-    return 1;
+  TableList *tmp= table->pos_in_table_list;
+  tmp->schema_table->addRow(table->record[0], table->s->reclength);
   return 0;
 }
 
@@ -1868,8 +1840,7 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
             (! lookup_field_vals.table_value.length ||
              lookup_field_vals.wild_table_value))
         {
-          if (schema_table_store_record(session, table))
-            goto err;      /* Out of space in temporary table */
+          schema_table->addRow(table->record[0], table->s->reclength);
           continue;
         }
 
@@ -2187,109 +2158,9 @@ int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
       table->field[20]->store((const char*) pos,
                               strlen((const char*) pos), cs);
     }
-    if (schema_table_store_record(session, table))
-      return(1);
+    tables->schema_table->addRow(table->record[0], table->s->reclength);
   }
   return(0);
-}
-
-
-Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
-  const
-{
-  int field_count= 0;
-  Item *item;
-  Table *table;
-  List<Item> field_list;
-  const CHARSET_INFO * const cs= system_charset_info;
-  const plugin::InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
-  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
-
-  while (iter != columns.end())
-  {
-    const plugin::ColumnInfo *column= *iter;
-    switch (column->getType()) {
-    case DRIZZLE_TYPE_LONG:
-    case DRIZZLE_TYPE_LONGLONG:
-      if (!(item= new Item_return_int(column->getName().c_str(),
-                                      column->getLength(),
-                                      column->getType(),
-                                      column->getValue())))
-      {
-        return(0);
-      }
-      item->unsigned_flag= (column->getFlags() & MY_I_S_UNSIGNED);
-      break;
-    case DRIZZLE_TYPE_DATE:
-    case DRIZZLE_TYPE_TIMESTAMP:
-    case DRIZZLE_TYPE_DATETIME:
-      if (!(item=new Item_return_date_time(column->getName().c_str(),
-                                           column->getType())))
-      {
-        return(0);
-      }
-      break;
-    case DRIZZLE_TYPE_DOUBLE:
-      if ((item= new Item_float(column->getName().c_str(), 0.0, NOT_FIXED_DEC,
-                           column->getLength())) == NULL)
-        return NULL;
-      break;
-    case DRIZZLE_TYPE_DECIMAL:
-      if (!(item= new Item_decimal((int64_t) column->getValue(), false)))
-      {
-        return(0);
-      }
-      item->unsigned_flag= (column->getFlags() & MY_I_S_UNSIGNED);
-      item->decimals= column->getLength() % 10;
-      item->max_length= (column->getLength()/100)%100;
-      if (item->unsigned_flag == 0)
-        item->max_length+= 1;
-      if (item->decimals > 0)
-        item->max_length+= 1;
-      item->set_name(column->getName().c_str(),
-                     column->getName().length(), cs);
-      break;
-    case DRIZZLE_TYPE_BLOB:
-      if (!(item= new Item_blob(column->getName().c_str(),
-                                column->getLength())))
-      {
-        return(0);
-      }
-      break;
-    default:
-      if (!(item= new Item_empty_string("", column->getLength(), cs)))
-      {
-        return(0);
-      }
-      item->set_name(column->getName().c_str(),
-                     column->getName().length(), cs);
-      break;
-    }
-    field_list.push_back(item);
-    item->maybe_null= (column->getFlags() & MY_I_S_MAYBE_NULL);
-    field_count++;
-    ++iter;
-  }
-  Tmp_Table_Param *tmp_table_param =
-    (Tmp_Table_Param*) (session->alloc(sizeof(Tmp_Table_Param)));
-  tmp_table_param->init();
-  tmp_table_param->table_charset= cs;
-  tmp_table_param->field_count= field_count;
-  tmp_table_param->schema_table= 1;
-  Select_Lex *select_lex= session->lex->current_select;
-  if (!(table= create_tmp_table(session, tmp_table_param,
-                                field_list, (order_st*) 0, 0, 0,
-                                (select_lex->options | session->options |
-                                 TMP_TABLE_ALL_COLUMNS),
-                                HA_POS_ERROR, table_list->alias)))
-    return(0);
-  my_bitmap_map* bitmaps=
-    (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  table->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
-  table->read_set= &table->def_read_set;
-  table->read_set->clearAll();
-  table_list->schema_table_param= tmp_table_param;
-  return(table);
 }
 
 
@@ -2339,47 +2210,6 @@ int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchemaTab
 
 
 /*
-  Create information_schema table
-
-  SYNOPSIS
-  mysql_schema_table()
-    session                thread Cursor
-    lex                pointer to LEX
-    table_list         pointer to table_list
-
-  RETURN
-    true on error
-*/
-
-bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
-{
-  Table *table;
-  if (!(table= table_list->schema_table->createSchemaTable(session, table_list)))
-    return true;
-  table->s->tmp_table= SYSTEM_TMP_TABLE;
-  /*
-    This test is necessary to make
-    case insensitive cursor systems +
-    upper case table names(information schema tables) +
-    views
-    working correctly
-  */
-  if (table_list->schema_table_name)
-    table->alias_name_used= my_strcasecmp(table_alias_charset,
-                                          table_list->schema_table_name,
-                                          table_list->alias);
-  table_list->table_name= table->s->table_name.str;
-  table_list->table_name_length= table->s->table_name.length;
-  table_list->table= table;
-  table->next= session->derived_tables;
-  session->derived_tables= table;
-  table_list->select_lex->options |= OPTION_SCHEMA_TABLE;
-
-  return false;
-}
-
-
-/*
   Generate select from information_schema table
 
   SYNOPSIS
@@ -2413,90 +2243,3 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   return false;
 }
 
-
-/*
-  Fill temporary schema tables before SELECT
-
-  SYNOPSIS
-    get_schema_tables_result()
-    join  join which use schema tables
-    executed_place place where I_S table processed
-
-  RETURN
-    false success
-    true  error
-*/
-
-bool get_schema_tables_result(JOIN *join,
-                              enum enum_schema_table_state executed_place)
-{
-  JoinTable *tmp_join_tab= join->join_tab+join->tables;
-  Session *session= join->session;
-  LEX *lex= session->lex;
-  bool result= 0;
-
-  session->no_warnings_for_error= 1;
-  for (JoinTable *tab= join->join_tab; tab < tmp_join_tab; tab++)
-  {
-    if (!tab->table || !tab->table->pos_in_table_list)
-      break;
-
-    TableList *table_list= tab->table->pos_in_table_list;
-    if (table_list->schema_table)
-    {
-      bool is_subselect= (&lex->unit != lex->current_select->master_unit() &&
-                          lex->current_select->master_unit()->item);
-
-
-      /* skip I_S optimizations specific to get_all_tables */
-      if (session->lex->describe &&
-          (table_list->schema_table->isOptimizationPossible() != true))
-      {
-        continue;
-      }
-
-      /*
-        If schema table is already processed and
-        the statement is not a subselect then
-        we don't need to fill this table again.
-        If schema table is already processed and
-        schema_table_state != executed_place then
-        table is already processed and
-        we should skip second data processing.
-      */
-      if (table_list->schema_table_state &&
-          (!is_subselect || table_list->schema_table_state != executed_place))
-        continue;
-
-      /*
-        if table is used in a subselect and
-        table has been processed earlier with the same
-        'executed_place' value then we should refresh the table.
-      */
-      if (table_list->schema_table_state && is_subselect)
-      {
-        table_list->table->cursor->extra(HA_EXTRA_NO_CACHE);
-        table_list->table->cursor->extra(HA_EXTRA_RESET_STATE);
-        table_list->table->cursor->ha_delete_all_rows();
-        table_list->table->free_io_cache();
-        table_list->table->filesort_free_buffers(true);
-        table_list->table->null_row= 0;
-      }
-      else
-        table_list->table->cursor->stats.records= 0;
-
-      if (table_list->schema_table->fillTable(session, table_list))
-      {
-        result= 1;
-        join->error= 1;
-        tab->read_record.cursor= table_list->table->cursor;
-        table_list->schema_table_state= executed_place;
-        break;
-      }
-      tab->read_record.cursor= table_list->table->cursor;
-      table_list->schema_table_state= executed_place;
-    }
-  }
-  session->no_warnings_for_error= 0;
-  return(result);
-}

@@ -194,8 +194,6 @@ class InfoSchemaMethods
 public:
   virtual ~InfoSchemaMethods() {}
 
-  virtual Table *createSchemaTable(Session *session,
-                                   TableList *table_list) const;
   virtual int fillTable(Session *session, 
                         TableList *tables);
   virtual int processTable(Session *session, TableList *tables,
@@ -221,9 +219,12 @@ public:
   InfoSchemaRecord(unsigned char *buf,
                    size_t in_len)
     :
-      record(buf),
+      record(NULL),
       rec_len(in_len)
-  {}
+  {
+    record= new unsigned char[rec_len];
+    memcpy(record, buf, rec_len);
+  }
 
   InfoSchemaRecord(const InfoSchemaRecord &rhs)
     :
@@ -328,21 +329,6 @@ public:
   void setInfoSchemaMethods(InfoSchemaMethods *new_methods)
   {
     i_s_methods= new_methods;
-  }
-
-  /**
-   * Create the temporary I_S tables using schema_table data.
-   *
-   * @param[in] session a session handler
-   * @param[in] table_list Used to pass I_S table information (fields,
-   *                       tables, parameters, etc.) and table name
-   * @retval \# pointer to created table
-   * @retval NULL Can't create table
-   */
-  Table *createSchemaTable(Session *session, TableList *table_list) const
-  {
-    Table *retval= i_s_methods->createSchemaTable(session, table_list);
-    return retval;
   }
 
   /**

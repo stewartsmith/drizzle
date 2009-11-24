@@ -112,7 +112,6 @@ time_t			DRIZZLE_TYPE_DATETIME
 */
 
 /* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
-bool schema_table_store_record(Session *session, Table *table);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
 /*******************************************************************//**
@@ -283,8 +282,6 @@ int
 fill_innodb_trx_from_cache(
 /*=======================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
-	Session*		session,/*!< in: used to call
-					schema_table_store_record() */
 	Table*			table)	/*!< in/out: fill this table */
 {
 	Field**	fields;
@@ -351,7 +348,9 @@ fill_innodb_trx_from_cache(
 		OK(field_store_string(fields[IDX_TRX_QUERY],
 				      row->trx_query));
 
-		OK(schema_table_store_record(session, table));
+                TableList *tmp_tbl_list= table->pos_in_table_list;
+                tmp_tbl_list->schema_table->addRow(table->record[0],
+                                                   table->s->reclength);
 	}
 
 	return(0);
@@ -571,7 +570,9 @@ fill_innodb_locks_from_cache(
 		OK(field_store_string(fields[IDX_LOCK_DATA],
 				      row->lock_data));
 
-		OK(schema_table_store_record(session, table));
+                TableList *tmp_tbl_list= table->pos_in_table_list;
+                tmp_tbl_list->schema_table->addRow(table->record[0],
+                                                   table->s->reclength);
 	}
 
 	return(0);
@@ -645,8 +646,6 @@ int
 fill_innodb_lock_waits_from_cache(
 /*==============================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
-	Session*		session,/*!< in: used to call
-					schema_table_store_record() */
 	Table*			table)	/*!< in/out: fill this table */
 {
 	Field**	fields;
@@ -699,7 +698,9 @@ fill_innodb_lock_waits_from_cache(
 				   blocking_lock_id,
 				   sizeof(blocking_lock_id))));
 
-		OK(schema_table_store_record(session, table));
+                TableList *tmp_tbl_list= table->pos_in_table_list;
+                tmp_tbl_list->schema_table->addRow(table->record[0],
+                                                   table->s->reclength);
 	}
 
 	return(0);
@@ -770,7 +771,7 @@ TrxISMethods::fillTable(
 	if (innobase_strcasecmp(table_name, "innodb_trx") == 0) {
 
 		if (fill_innodb_trx_from_cache(
-			cache, session, tables->table) != 0) {
+			cache, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -786,7 +787,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_lock_waits") == 0) {
 
 		if (fill_innodb_lock_waits_from_cache(
-			cache, session, tables->table) != 0) {
+			cache, tables->table) != 0) {
 
 			ret = 1;
 		}
@@ -913,10 +914,8 @@ i_s_cmp_fill_low(
 			memset(zip_stat, 0, sizeof *zip_stat);
 		}
 
-		if (schema_table_store_record(session, table)) {
-			status = 1;
-			break;
-		}
+                tables->schema_table->addRow(table->record[0],
+                                             table->s->reclength);
 	}
 
 	return(status);
@@ -1065,10 +1064,8 @@ i_s_cmpmem_fill_low(
 			buddy_stat->relocated_usec = 0;
 		}
 
-		if (schema_table_store_record(session, table)) {
-			status = 1;
-			break;
-		}
+                tables->schema_table->addRow(table->record[0],
+                                             table->s->reclength);
 	}
 
 	buf_pool_mutex_exit();

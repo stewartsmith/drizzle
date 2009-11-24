@@ -70,16 +70,12 @@ SHOW_VAR *getFrontOfStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
-bool schema_table_store_record(Session *session, Table *table);
-
 int get_quote_char_for_identifier();
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
 
 bool make_schema_select(Session *session,  Select_Lex *sel,
                         const std::string& schema_table_name);
-bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
-bool get_schema_tables_result(JOIN *join, enum enum_schema_table_state executed_place);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);

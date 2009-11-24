@@ -455,6 +455,7 @@ int TablesISMethods::processTable(Session *session,
       }
     }
   }
-  return (schema_table_store_record(session, table));
+  tables->schema_table->addRow(table->record[0], table->s->reclength);
+  return false;
 }
 

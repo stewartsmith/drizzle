@@ -153,8 +153,7 @@ void TableConstraintsIS::cleanup()
   delete columns;
 }
 
-static bool store_constraints(Session *session, 
-                              Table *table, 
+static bool store_constraints(Table *table, 
                               LEX_STRING *db_name,
                               LEX_STRING *table_name, 
                               const char *key_name,
@@ -169,7 +168,9 @@ static bool store_constraints(Session *session,
   table->field[3]->store(db_name->str, db_name->length, cs);
   table->field[4]->store(table_name->str, table_name->length, cs);
   table->field[5]->store(con_type, con_len, cs);
-  return schema_table_store_record(session, table);
+  TableList *tmp= table->pos_in_table_list;
+  tmp->schema_table->addRow(table->record[0], table->s->reclength);
+  return false;
 }
 
 int TabConstraintsISMethods::processTable(Session *session, 
@@ -209,8 +210,7 @@ int TabConstraintsISMethods::processTable(Session *session,
 
       if (i == primary_key && is_primary_key(key_info))
       {
-        if (store_constraints(session, 
-                              table, 
+        if (store_constraints(table, 
                               db_name, 
                               table_name, 
                               key_info->name,
@@ -222,8 +222,7 @@ int TabConstraintsISMethods::processTable(Session *session,
       }
       else if (key_info->flags & HA_NOSAME)
       {
-        if (store_constraints(session, 
-                              table, 
+        if (store_constraints(table, 
                               db_name, 
                               table_name, 
                               key_info->name,
@@ -240,8 +239,7 @@ int TabConstraintsISMethods::processTable(Session *session,
     List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
     while ((f_key_info= it++))
     {
-      if (store_constraints(session, 
-                            table, 
+      if (store_constraints(table, 
                             db_name, 
                             table_name,
                             f_key_info->forein_id->str,

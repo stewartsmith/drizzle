@@ -33,7 +33,6 @@ public:
     : drizzled::plugin::StorageEngine(name_arg,
                                       HTON_ALTER_NOT_SUPPORTED |
                                       HTON_HIDDEN |
-                                      HTON_NOT_USER_SELECTABLE |
                                       HTON_TEMPORARY_NOT_SUPPORTED)
   {
     pthread_mutex_init(&mutex, NULL);
@@ -107,8 +106,17 @@ public:
     }
 
     /**
+     * Set the I_S table associated with this share.
+     * @param[in] name the name of the I_S table
+     */
+    void setInfoSchemaTable(const std::string &name)
+    {
+      table= drizzled::plugin::InfoSchemaTable::getTable(name.c_str());
+    }
+
+    /**
      * @return the I_S table associated with this share.
-   */
+     */
     drizzled::plugin::InfoSchemaTable *getInfoSchemaTable()
     {
       return table;

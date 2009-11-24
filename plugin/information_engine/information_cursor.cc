@@ -38,7 +38,10 @@ uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
 
 int InformationCursor::open(const char *name, int, uint32_t)
 {
-  share= ((InformationEngine *)engine)->getShare(name);
+  string tab_name(name);
+  string i_s_prefix("./information_schema/");
+  tab_name.erase(0, i_s_prefix.length());
+  share= ((InformationEngine *)engine)->getShare(tab_name);
 
   assert(share);
   thr_lock_data_init(&share->lock, &lock, NULL);

@@ -105,7 +105,7 @@ int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO 
   const char *cannot_convert_error_pos;
   const char *from_end_pos;
 
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
+  //ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   copy_length= well_formed_copy_nchars(field_charset,
                                        (char*) ptr + length_bytes,
