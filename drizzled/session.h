@@ -1453,7 +1453,7 @@ private:
 public:
 
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, const char *path);
   Table *open_temporary_table(const char *path, const char *db,
                               const char *table_name, bool link_in_list= true);
   

@@ -2126,7 +2126,7 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
 {
   bool error=0;
 
