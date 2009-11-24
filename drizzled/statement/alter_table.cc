@@ -682,7 +682,6 @@ bool alter_table(Session *session,
   plugin::StorageEngine *new_db_type;
   plugin::StorageEngine *save_old_db_type;
   bitset<32> tmp;
-  TableIdentifier identifier(db, table_name, NO_TMP_TABLE);
 
   new_name_buff[0]= '\0';
 
@@ -1423,7 +1422,7 @@ create_temporary_table(Session *session,
   plugin::StorageEngine *old_db_type, *new_db_type;
   TableIdentifier identifier(new_db,
                              tmp_name,
-                             create_proto->type() != message::Table::TEMPORARY ? NO_TMP_TABLE :
+                             create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
                              create_info->db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE :
                              NON_TRANSACTIONAL_TMP_TABLE );
 

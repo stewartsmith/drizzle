@@ -1771,21 +1771,14 @@ bool mysql_create_table(Session *session,
     }
   }
 
-  {
-    TableIdentifier middle(identifier.getDBName(), identifier.getTableName(),
-                           lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
-                           internal_tmp_table ? INTERNAL_TMP_TABLE :
-                           NO_TMP_TABLE);
-
-    result= mysql_create_table_no_lock(session,
-                                       middle,
-                                       create_info,
-                                       table_proto,
-                                       alter_info,
-                                       internal_tmp_table,
-                                       select_field_count,
-                                       is_if_not_exists);
-  }
+  result= mysql_create_table_no_lock(session,
+                                     identifier,
+                                     create_info,
+                                     table_proto,
+                                     alter_info,
+                                     internal_tmp_table,
+                                     select_field_count,
+                                     is_if_not_exists);
 
 unlock:
   if (name_lock)
