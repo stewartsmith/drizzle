@@ -1,12 +1,13 @@
 LINT_COMMAND=python ${top_srcdir}/extra/cpplint.py  --filter=-whitespace,-runtime,-readability,+legal,-build,+build/header_guard,+build/include_config,+build/namespaces
 
 # make a dep file from a cc by linting
-%.cc.linted: %.cc
+SUFFIXES = .cc.linted .h.linted
+.cc.linted.cc:
 	@test -d `dirname $@` || mkdir -p `dirname $@`
 	$(LINT_COMMAND) --deps $@ $<
 
 # make a dep file from a h by linting
-%.h.linted: %.h
+.h.linted.h:
 	@test -d `dirname $@` || mkdir -p `dirname $@`
 	$(LINT_COMMAND) --deps $@ $<
 
