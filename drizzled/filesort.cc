@@ -465,7 +465,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   ref_pos= ref_buff;
   quick_select=select && select->quick;
   record=0;
-  flag= ((!indexfile && file->ha_table_flags() & HA_REC_NOT_IN_SEQ)
+  flag= ((!indexfile && ! file->isOrdered())
 	 || quick_select);
   if (indexfile || flag)
     ref_pos= &file->ref[0];
@@ -589,7 +589,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
 
   if (error != HA_ERR_END_OF_FILE)
   {
-    file->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
+    sort_form->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
     return(HA_POS_ERROR);
   }
   if (indexpos && idx &&

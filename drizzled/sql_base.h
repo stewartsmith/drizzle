@@ -129,8 +129,8 @@ TableList *find_table_in_list(TableList *table,
                                TableList *TableList::*link,
                                const char *db_name,
                                const char *table_name);
-TableList *unique_table(Session *session, TableList *table, TableList *table_list,
-                         bool check_alias);
+TableList *unique_table(TableList *table, TableList *table_list,
+                        bool check_alias= false);
 void remove_db_from_cache(const char *db);
 
 /* bits for last argument to remove_table_from_cache() */

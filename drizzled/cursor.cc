@@ -112,9 +112,9 @@ int Cursor::ha_index_or_rnd_end()
   return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
 }
 
-Cursor::Table_flags Cursor::ha_table_flags() const
+plugin::StorageEngine::Table_flags Cursor::ha_table_flags() const
 {
-  return cached_table_flags;
+  return engine->table_flags();
 }
 
 void Cursor::ha_start_bulk_insert(ha_rows rows)
@@ -218,7 +218,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
     }
     else
       dup_ref=ref+ALIGN_SIZE(ref_length);
-    cached_table_flags= table_flags();
   }
   return error;
 }
@@ -649,266 +648,6 @@ void Cursor::ha_release_auto_increment()
     */
     table->in_use->auto_inc_intervals_forced.empty();
   }
-}
-
-
-void Cursor::print_keydup_error(uint32_t key_nr, const char *msg)
-{
-  /* Write the duplicated key in the error message */
-  char key[MAX_KEY_LENGTH];
-  String str(key,sizeof(key),system_charset_info);
-
-  if (key_nr == MAX_KEY)
-  {
-    /* Key is unknown */
-    str.copy("", 0, system_charset_info);
-    my_printf_error(ER_DUP_ENTRY, msg, MYF(0), str.c_ptr(), "*UNKNOWN*");
-  }
-  else
-  {
-    /* Table is opened and defined at this point */
-    key_unpack(&str,table,(uint32_t) key_nr);
-    uint32_t max_length=DRIZZLE_ERRMSG_SIZE-(uint32_t) strlen(msg);
-    if (str.length() >= max_length)
-    {
-      str.length(max_length-4);
-      str.append(STRING_WITH_LEN("..."));
-    }
-    my_printf_error(ER_DUP_ENTRY, msg,
-		    MYF(0), str.c_ptr(), table->key_info[key_nr].name);
-  }
-}
-
-
-/**
-  Print error that we got from Cursor function.
-
-  @note
-    In case of delete table it's only safe to use the following parts of
-    the 'table' structure:
-    - table->s->path
-    - table->alias
-*/
-void Cursor::print_error(int error, myf errflag)
-{
-  int textno= ER_GET_ERRNO;
-  switch (error) {
-  case EACCES:
-    textno=ER_OPEN_AS_READONLY;
-    break;
-  case EAGAIN:
-    textno=ER_FILE_USED;
-    break;
-  case ENOENT:
-    textno=ER_FILE_NOT_FOUND;
-    break;
-  case HA_ERR_KEY_NOT_FOUND:
-  case HA_ERR_NO_ACTIVE_RECORD:
-  case HA_ERR_END_OF_FILE:
-    textno=ER_KEY_NOT_FOUND;
-    break;
-  case HA_ERR_WRONG_MRG_TABLE_DEF:
-    textno=ER_WRONG_MRG_TABLE;
-    break;
-  case HA_ERR_FOUND_DUPP_KEY:
-  {
-    uint32_t key_nr=get_dup_key(error);
-    if ((int) key_nr >= 0)
-    {
-      print_keydup_error(key_nr, ER(ER_DUP_ENTRY_WITH_KEY_NAME));
-      return;
-    }
-    textno=ER_DUP_KEY;
-    break;
-  }
-  case HA_ERR_FOREIGN_DUPLICATE_KEY:
-  {
-    uint32_t key_nr= get_dup_key(error);
-    if ((int) key_nr >= 0)
-    {
-      uint32_t max_length;
-      /* Write the key in the error message */
-      char key[MAX_KEY_LENGTH];
-      String str(key,sizeof(key),system_charset_info);
-      /* Table is opened and defined at this point */
-      key_unpack(&str,table,(uint32_t) key_nr);
-      max_length= (DRIZZLE_ERRMSG_SIZE-
-                   (uint32_t) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
-      if (str.length() >= max_length)
-      {
-        str.length(max_length-4);
-        str.append(STRING_WITH_LEN("..."));
-      }
-      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table_share->table_name.str,
-        str.c_ptr(), key_nr+1);
-      return;
-    }
-    textno= ER_DUP_KEY;
-    break;
-  }
-  case HA_ERR_FOUND_DUPP_UNIQUE:
-    textno=ER_DUP_UNIQUE;
-    break;
-  case HA_ERR_RECORD_CHANGED:
-    textno=ER_CHECKREAD;
-    break;
-  case HA_ERR_CRASHED:
-    textno=ER_NOT_KEYFILE;
-    break;
-  case HA_ERR_WRONG_IN_RECORD:
-    textno= ER_CRASHED_ON_USAGE;
-    break;
-  case HA_ERR_CRASHED_ON_USAGE:
-    textno=ER_CRASHED_ON_USAGE;
-    break;
-  case HA_ERR_NOT_A_TABLE:
-    textno= error;
-    break;
-  case HA_ERR_CRASHED_ON_REPAIR:
-    textno=ER_CRASHED_ON_REPAIR;
-    break;
-  case HA_ERR_OUT_OF_MEM:
-    textno=ER_OUT_OF_RESOURCES;
-    break;
-  case HA_ERR_WRONG_COMMAND:
-    textno=ER_ILLEGAL_HA;
-    break;
-  case HA_ERR_OLD_FILE:
-    textno=ER_OLD_KEYFILE;
-    break;
-  case HA_ERR_UNSUPPORTED:
-    textno=ER_UNSUPPORTED_EXTENSION;
-    break;
-  case HA_ERR_RECORD_FILE_FULL:
-  case HA_ERR_INDEX_FILE_FULL:
-    textno=ER_RECORD_FILE_FULL;
-    break;
-  case HA_ERR_LOCK_WAIT_TIMEOUT:
-    textno=ER_LOCK_WAIT_TIMEOUT;
-    break;
-  case HA_ERR_LOCK_TABLE_FULL:
-    textno=ER_LOCK_TABLE_FULL;
-    break;
-  case HA_ERR_LOCK_DEADLOCK:
-    textno=ER_LOCK_DEADLOCK;
-    break;
-  case HA_ERR_READ_ONLY_TRANSACTION:
-    textno=ER_READ_ONLY_TRANSACTION;
-    break;
-  case HA_ERR_CANNOT_ADD_FOREIGN:
-    textno=ER_CANNOT_ADD_FOREIGN;
-    break;
-  case HA_ERR_ROW_IS_REFERENCED:
-  {
-    String str;
-    get_error_message(error, &str);
-    my_error(ER_ROW_IS_REFERENCED_2, MYF(0), str.c_ptr_safe());
-    return;
-  }
-  case HA_ERR_NO_REFERENCED_ROW:
-  {
-    String str;
-    get_error_message(error, &str);
-    my_error(ER_NO_REFERENCED_ROW_2, MYF(0), str.c_ptr_safe());
-    return;
-  }
-  case HA_ERR_TABLE_DEF_CHANGED:
-    textno=ER_TABLE_DEF_CHANGED;
-    break;
-  case HA_ERR_NO_SUCH_TABLE:
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table_share->db.str,
-             table_share->table_name.str);
-    return;
-  case HA_ERR_RBR_LOGGING_FAILED:
-    textno= ER_BINLOG_ROW_LOGGING_FAILED;
-    break;
-  case HA_ERR_DROP_INDEX_FK:
-  {
-    const char *ptr= "???";
-    uint32_t key_nr= get_dup_key(error);
-    if ((int) key_nr >= 0)
-      ptr= table->key_info[key_nr].name;
-    my_error(ER_DROP_INDEX_FK, MYF(0), ptr);
-    return;
-  }
-  case HA_ERR_TABLE_NEEDS_UPGRADE:
-    textno=ER_TABLE_NEEDS_UPGRADE;
-    break;
-  case HA_ERR_TABLE_READONLY:
-    textno= ER_OPEN_AS_READONLY;
-    break;
-  case HA_ERR_AUTOINC_READ_FAILED:
-    textno= ER_AUTOINC_READ_FAILED;
-    break;
-  case HA_ERR_AUTOINC_ERANGE:
-    textno= ER_WARN_DATA_OUT_OF_RANGE;
-    break;
-  case HA_ERR_LOCK_OR_ACTIVE_TRANSACTION:
-    my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-               ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-    return;
-  default:
-    {
-      /* 
-        The error was "unknown" to this function.
-        Ask Cursor if it has got a message for this error 
-      */
-      bool temporary= false;
-      String str;
-      temporary= get_error_message(error, &str);
-      if (!str.is_empty())
-      {
-        const char* engine_name= engine->getName().c_str();
-        if (temporary)
-          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
-                   engine_name);
-        else
-          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
-      }
-      else
-      {
-	      my_error(ER_GET_ERRNO,errflag,error);
-      }
-      return;
-    }
-  }
-  my_error(textno, errflag, table_share->table_name.str, error);
-}
-
-
-/**
-  Return an error message specific to this Cursor.
-
-  @param error  error code previously returned by Cursor
-  @param buf    pointer to String where to add error message
-
-  @return
-    Returns true if this is a temporary error
-*/
-bool Cursor::get_error_message(int , String* )
-{
-  return false;
-}
-
-
-/* Code left, but Drizzle has no legacy yet (while MySQL did) */
-int Cursor::check_old_types()
-{
-  return 0;
-}
-
-/**
-  @return
-    key if error because of duplicated keys
-*/
-uint32_t Cursor::get_dup_key(int error)
-{
-  table->cursor->errkey  = (uint32_t) -1;
-  if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
-      error == HA_ERR_FOUND_DUPP_UNIQUE ||
-      error == HA_ERR_DROP_INDEX_FK)
-    info(HA_STATUS_ERRKEY | HA_STATUS_NO_LOCK);
-  return(table->cursor->errkey);
 }
 
 void Cursor::drop_table(const char *)
@@ -1720,8 +1459,6 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
 
   int error= external_lock(session, lock_type);
 
-  if (error == 0)
-    cached_table_flags= table_flags();
   return error;
 }
 

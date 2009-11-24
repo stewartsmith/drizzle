@@ -22,7 +22,8 @@ fi
 
 command="python extra/cpplint.py  --filter=-whitespace,-runtime,-readability,+legal,-build,+build/header_guard,+build/include_config,+build/namespaces"
 if test "x$1" = "x" ; then
-  find plugin drizzled client -type f | egrep '\.(cc|h)$' | grep -v innobase | grep -v gnulib | grep -v '\.pb\.'| grep -v bak-header | grep -v '^intl' | grep -v '^config' | grep -v '\.am$' | grep -v '\.ac$' | grep -v m4 | grep -v sql_yacc.yy | grep -v '.gperf$' | grep -v 'drizzled/probes.h' | grep -v 'drizzled/function_hash.h' | grep -v 'drizzled/symbol_hash.h' | grep -v 'util/dummy.cc' | grep -v 'drizzled/sql_yacc.h' | grep -v 'drizzled/configmake.h' | xargs $command
+  echo "ERROR: supply a filename to line."
+  exit 1
 else
   $command $1
 fi

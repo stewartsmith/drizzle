@@ -35,14 +35,6 @@ public:
   InformationCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
   ~InformationCursor() {}
 
-  /*
-    The name of the index type that will be used for display
-    don't implement this method unless you really have indexes
-  */
-  uint64_t table_flags() const
-  {
-    return 0;
-  }
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   /* The following defines can be increased if necessary */
   int open(const char *name, int mode, uint32_t test_if_locked);

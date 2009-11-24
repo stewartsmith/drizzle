@@ -81,6 +81,7 @@ public:
   List<AlterColumn> alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
+  drizzled::message::AlterTable alter_proto;
   std::bitset<32> flags;
   enum enum_enable_or_disable keys_onoff;
   enum tablespace_op_type tablespace_op;

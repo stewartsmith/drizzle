@@ -385,7 +385,7 @@ drizzled::atomic<uint32_t> connection_count;
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
 */
-drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
+uint64_t refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
 bool drizzle_rm_tmp_tables();
