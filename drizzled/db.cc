@@ -484,8 +484,6 @@ exit2:
 static int rm_table_part2(Session *session, TableList *tables)
 {
   TableList *table;
-  char path[FN_REFLEN];
-  uint32_t path_length= 0;
   String wrong_tables;
   int error= 0;
   bool foreign_key_error= false;
@@ -554,16 +552,16 @@ static int rm_table_part2(Session *session, TableList *tables)
         error= -1;
         goto err_with_placeholders;
       }
-      /* remove .frm cursor and engine files */
-      path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
+
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
 
     if ((table_type == NULL
           && (plugin::StorageEngine::getTableDefinition(*session,
-                                                        path,
-                                                        db,
-                                                        table->table_name,
-                                                        table->internal_tmp_table) != EEXIST)))
+                                                        identifier.getPath(),
+                                                        identifier.getDBName(),
+                                                        identifier.getTableName(),
+                                                        identifier.isTmp()) != EEXIST)))
     {
       // Table was not found on disk and table can't be created from engine
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -572,9 +570,10 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
     else
     {
-      error= plugin::StorageEngine::dropTable(*session, path, db,
-                                                table->table_name,
-                                                ! (true));
+      error= plugin::StorageEngine::dropTable(*session, identifier.getPath(), 
+                                              identifier.getDBName(), 
+                                              identifier.getTableName(), false);
+
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
       {
 	error= 0;

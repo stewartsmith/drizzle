@@ -482,8 +482,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     else
     {
       error= plugin::StorageEngine::dropTable(*session, path, db,
-                                              table->table_name,
-                                              true);
+                                              table->table_name, true);
+
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
 	error= 0;
@@ -559,7 +559,7 @@ bool quick_rm_table(Session& session, const char *db,
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
 
   return (plugin::StorageEngine::dropTable(session, path, db,
-                                           table_name, 0)
+                                           table_name, false)
           || error);
 }
 

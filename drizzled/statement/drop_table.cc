@@ -52,7 +52,7 @@ namespace drizzled
 
 */
 
-static bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool drop_temporary)
+static bool mysql_rm_table(Session *session, TableList *tables, bool if_exists, bool drop_temporary)
 {
   bool error, need_start_waiting= false;
 
