@@ -696,6 +696,7 @@ drizzled_SOURCES = \
 		statement/update.cc \
 		strfunc.cc \
 		table.cc \
+		table_identifier.cc \
 		table_list.cc \
 		table_map_iterator.cc \
 		table_share.cc \

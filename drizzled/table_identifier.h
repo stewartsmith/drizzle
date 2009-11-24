@@ -32,18 +32,19 @@
 #ifndef DRIZZLED_TABLE_IDENTIFIER_H
 #define DRIZZLED_TABLE_IDENTIFIER_H
 
+#include <drizzled/global.h>
+#include <drizzled/enum.h>
 #include <string.h>
 
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
-
+#include <ostream>
 
 namespace drizzled {
 
-class TableIdentifier 
+class TableIdentifier
 {
 private:
   bool path_inited;
+
   tmp_table_type type;
   char path[FN_REFLEN];
   const char *db;
@@ -57,53 +58,74 @@ public:
     type(tmp_arg),
     db(db_arg),
     table_name(table_name_arg)
-  { 
-  }
+  { }
 
-  bool isTmp()
+  bool isTmp() const
   {
     return type == NO_TMP_TABLE ? false  : true;
   }
 
-  const char *getPath()
-  {
-    if (! path_inited)
-    {
-      size_t path_length= 0;
+  const char *getPath();
 
-      switch (type) {
-      case NO_TMP_TABLE:
-        path_length= build_table_filename(path, sizeof(path),
-                                          db, table_name,
-                                          false);
-        break;
-      case INTERNAL_TMP_TABLE:
-        path_length= build_table_filename(path, sizeof(path),
-                                          db, table_name,
-                                          true);
-        break;
-      case NON_TRANSACTIONAL_TMP_TABLE:
-      case TRANSACTIONAL_TMP_TABLE:
-        path_length= build_tmptable_filename(path, sizeof(path));
-        break;
-      case SYSTEM_TMP_TABLE:
-        assert(0);
-      }
-      assert(path_length); // TODO throw exception, this is a possibility
-    }
-
-    return path;
-  }
-
-  const char *getDBName()
+  const char *getDBName() const
   {
     return db;
   }
 
-  const char *getTableName()
+  const char *getTableName() const
   {
     return table_name;
   }
+
+  friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
+  {
+    const char *type_str;
+
+    output << "TableIdentifier:(";
+    output <<  identifier.getDBName();
+    output << ", ";
+    output << identifier.getTableName();
+    output << ", ";
+
+    switch (identifier.type) {
+    case NO_TMP_TABLE:
+      type_str= "standard";
+      break;
+    case INTERNAL_TMP_TABLE:
+      type_str= "internal";
+      break;
+    case NON_TRANSACTIONAL_TMP_TABLE:
+      type_str= "non-transactional temp";
+      break;
+    case TRANSACTIONAL_TMP_TABLE:
+      type_str= "transactional temp";
+      break;
+    case SYSTEM_TMP_TABLE:
+      type_str= "system";
+    }
+
+    output << type_str;
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
+
+  friend bool operator==(const TableIdentifier &left, const TableIdentifier &right)
+  {
+    if (left.type == right.type)
+    {
+      if (! strcmp(left.db, right.db))
+      {
+        if (! strcmp(left.table_name, right.table_name))
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
 };
 
 } /* namespace drizzled */
