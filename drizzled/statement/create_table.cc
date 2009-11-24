@@ -37,8 +37,10 @@ bool statement::CreateTable::execute()
   bool need_start_waiting= false;
   bool res= false;
   bool link_to_local= false;
+  bool lex_identified_temp_table= 
+    create_table_proto.type() == drizzled::message::Table::TEMPORARY;
 
-  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  if (is_engine_set)
   {
 
     create_info.db_type= 
@@ -71,7 +73,7 @@ bool statement::CreateTable::execute()
 
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+  if (! lex_identified_temp_table)
   {
     if (! session->endActiveTransaction())
     {
@@ -119,7 +121,7 @@ bool statement::CreateTable::execute()
     select_lex->options|= SELECT_NO_UNLOCK;
     unit->set_limit(select_lex);
 
-    if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+    if (! lex_identified_temp_table)
     {
       session->lex->link_first_table_back(create_table, link_to_local);
       create_table->create= true;
@@ -131,7 +133,7 @@ bool statement::CreateTable::execute()
          Is table which we are changing used somewhere in other parts
          of query
        */
-      if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+      if (! lex_identified_temp_table)
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
@@ -154,6 +156,7 @@ bool statement::CreateTable::execute()
          needs to be created for every execution of a PS/SP.
        */
       if ((result= new select_create(create_table,
+                                     is_if_not_exists,
                                      &create_info,
                                      &create_table_proto,
                                      &alter_info,
@@ -170,7 +173,7 @@ bool statement::CreateTable::execute()
         delete result;
       }
     }
-    else if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+    else if (! lex_identified_temp_table)
     {
       create_table= session->lex->unlink_first_table(&link_to_local);
     }
@@ -178,13 +181,15 @@ bool statement::CreateTable::execute()
   else
   {
     /* regular create */
-    if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
+    if (is_create_table_like)
     {
       res= mysql_create_like_table(session, 
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
-                                   &create_info);
+                                   create_info.db_type, 
+                                   is_if_not_exists,
+                                   is_engine_set);
     }
     else
     {
@@ -203,7 +208,8 @@ bool statement::CreateTable::execute()
                               &create_table_proto,
                               &alter_info, 
                               0, 
-                              0);
+                              0,
+                              is_if_not_exists);
     }
     if (! res)
     {

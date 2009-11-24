@@ -51,7 +51,6 @@ public:
   /* substitution instead of subselect in case of optimization */
   Item *substitution;
   /* unit of subquery */
-public:
   Select_Lex_Unit *unit;
 protected:
   /* engine that perform execution of subselect (single select or union) */
@@ -332,9 +331,18 @@ public:
 
   Item_in_subselect(Item * left_expr, Select_Lex *select_lex);
   Item_in_subselect()
-    :Item_exists_subselect(), left_expr_cache(0), first_execution(true),
-    optimizer(0), abort_on_null(0), pushed_cond_guards(NULL),
-    exec_method(NOT_TRANSFORMED), upper_item(0)
+    :
+      Item_exists_subselect(),
+      left_expr(NULL),
+      left_expr_cache(NULL),
+      first_execution(true),
+      optimizer(NULL),
+      abort_on_null(false),
+      pushed_cond_guards(NULL),
+      sj_convert_priority(0),
+      expr_join_nest(NULL),
+      exec_method(NOT_TRANSFORMED),
+      upper_item(NULL)
   {}
   void cleanup();
   subs_type substype() { return IN_SUBS; }

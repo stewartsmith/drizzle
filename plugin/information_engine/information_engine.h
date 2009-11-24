@@ -132,7 +132,6 @@ public:
   int doCreateTable(Session *,
                     const char *,
                     Table&,
-                    HA_CREATE_INFO&,
                     drizzled::message::Table&)
   {
     return EPERM;

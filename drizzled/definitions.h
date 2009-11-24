@@ -438,10 +438,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_KEY_NULL_LENGTH	1
 #define HA_KEY_BLOB_LENGTH	2
 
-#define HA_LEX_CREATE_TMP_TABLE	1
-#define HA_LEX_CREATE_IF_NOT_EXISTS 2
-#define HA_LEX_CREATE_TABLE_LIKE 4
-#define HA_OPTION_NO_CHECKSUM	(1L << 17)
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
@@ -461,9 +457,7 @@ enum start_transaction_option_t
 #define HA_CREATE_USED_AUTO             (1L << 0)
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
-#define HA_CREATE_USED_ENGINE           (1L << 12)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
-#define HA_CREATE_USED_COMMENT          (1L << 16)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 

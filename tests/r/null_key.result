@@ -72,6 +72,16 @@ a	b
 select * from t1 where a > 8 and a < 9;
 a	b
 create table t2 like t1;
+ERROR HY000: Can't create table 'test.t2' (errno: 138)
+create temporary table t2 like t1;
+show create table t2;
+Table	Create Table
+t2	CREATE TEMPORARY TABLE `t2` (
+  `a` int DEFAULT NULL,
+  `b` int NOT NULL,
+  UNIQUE KEY `a` (`a`,`b`),
+  KEY `b` (`b`)
+) ENGINE=MyISAM
 insert into t2 select * from t1;
 alter table t1 modify b blob not null, add c int not null, drop key a, add unique key (a,b(20),c), drop key b, add key (b(10));
 explain select * from t1 where a is null and b = 2;

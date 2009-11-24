@@ -186,14 +186,13 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 */
 
-bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
+bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   char	 path[FN_REFLEN+16];
   long result= 1;
   int error_erno;
   bool error= false;
-  uint32_t create_options= create_info ? create_info->options : 0;
   uint32_t path_len;
 
   /* do not create 'information_schema' db */
@@ -231,7 +230,7 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
   {
     if (errno == EEXIST)
     {
-      if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
+      if (! is_if_not_exists)
       {
 	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
 	error= true;

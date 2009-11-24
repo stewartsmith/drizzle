@@ -1813,15 +1813,10 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 
 
 
-void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
-                             message::Table *table_proto)
+void Table::updateCreateInfo(message::Table *table_proto)
 {
   message::Table::TableOptions *table_options= table_proto->mutable_options();
-  create_info->table_options= s->db_create_options;
   table_options->set_block_size(s->block_size);
-  create_info->row_type= s->row_type;
-  create_info->default_table_charset= s->table_charset;
-  create_info->table_charset= 0;
   table_options->set_comment(s->getComment());
 }
 
@@ -3470,11 +3465,11 @@ bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
     return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
+  
   /* Compare null bits */
-  if (memcmp(null_flags,
-	     null_flags + s->rec_buff_length,
-	     s->null_bytes))
-    return true;				// Diff in NULL value
+  if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
+    return true; /* Diff in NULL value */
+
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
