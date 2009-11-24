@@ -33,10 +33,8 @@ class Table;
 
 namespace drizzled { namespace message { class Table; } }
 
-bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
-                    bool drop_temporary);
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool log_query);
+                         bool drop_temporary, bool log_query= false);
 bool quick_rm_table(Session& session, const char *db,
                     const char *table_name, bool is_tmp);
 void close_cached_table(Session *session, Table *table);

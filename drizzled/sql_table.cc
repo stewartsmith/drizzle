@@ -358,65 +358,6 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
   replication_services.rawStatement(session, built_query.c_str(), built_query.length());
 }
 
-
-/*
- delete (drop) tables.
-
-  SYNOPSIS
-   mysql_rm_table()
-   session			Thread handle
-   tables		List of tables to delete
-   if_exists		If 1, don't give error if one table doesn't exists
-
-  NOTES
-    Will delete all tables that can be deleted and give a compact error
-    messages for tables that could not be deleted.
-    If a table is in use, we will wait for all users to free the table
-    before dropping it
-
-    Wait if global_read_lock (FLUSH TABLES WITH READ LOCK) is set, but
-    not if under LOCK TABLES.
-
-  RETURN
-    false OK.  In this case ok packet is sent to user
-    true  Error
-
-*/
-
-bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool drop_temporary)
-{
-  bool error, need_start_waiting= false;
-
-  if (tables && tables->schema_table)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
-  }
-
-  /* mark for close and remove all cached entries */
-
-  if (!drop_temporary)
-  {
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-      return(true);
-  }
-
-  /*
-    Acquire LOCK_open after wait_if_global_read_lock(). If we would hold
-    LOCK_open during wait_if_global_read_lock(), other threads could not
-    close their tables. This would make a pretty deadlock.
-  */
-  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, false);
-
-  if (need_start_waiting)
-    start_waiting_global_read_lock(session);
-
-  if (error)
-    return(true);
-  session->my_ok();
-  return(false);
-}
-
 /*
   Execute the drop of a normal or temporary table
 
@@ -501,7 +442,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
 
     table_type= table->db_type;
-    if (!drop_temporary)
+    if (drop_temporary == false)
     {
       Table *locked_table;
       abort_locked_tables(session, db, table->table_name);
@@ -526,10 +467,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     if (drop_temporary ||
         ((table_type == NULL
-          && (plugin::StorageEngine::getTableDefinition(*session, 
-                                                        path, 
-                                                        db, 
-                                                        table->table_name, 
+          && (plugin::StorageEngine::getTableDefinition(*session,
+                                                        path,
+                                                        db,
+                                                        table->table_name,
                                                         table->internal_tmp_table) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
