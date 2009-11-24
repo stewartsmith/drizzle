@@ -2126,22 +2126,40 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
+bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+{
+  bool error= false;
+
+  assert(base);
+
+  if (delete_table_proto_file(identifier.getPath()))
+    error= true;
+
+  if (base->doDropTable(*this, identifier.getPath()))
+  {
+    error= true;
+    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+                  identifier.getPath(), my_errno);
+  }
+  return error;
+}
+
 bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
 {
-  bool error=0;
+  bool error= false;
 
   assert(base);
 
   if (delete_table_proto_file(path))
-    error=1;
+    error= true;
 
   if (base->doDropTable(*this, path))
   {
-    error=1;
+    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path, my_errno);
   }
-  return(error);
+  return error;
 }
 
 

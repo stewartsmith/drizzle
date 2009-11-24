@@ -1750,7 +1750,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   create_info->table_options=db_options;
 
-  if (rea_create_table(session, identifier.getPath(), identifier.getDBName(), identifier.getTableName(),
+  if (rea_create_table(session, identifier,
 		       table_proto,
                        create_info, alter_info->create_list,
                        key_count, key_info_buffer))
@@ -1761,7 +1761,7 @@ bool mysql_create_table_no_lock(Session *session,
     /* Open table and put in temporary table list */
     if (!(session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(create_info->db_type, identifier.getPath());
+      (void) session->rm_temporary_table(create_info->db_type, identifier);
       goto unlock_and_end;
     }
   }
@@ -2563,7 +2563,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (err || !session->open_temporary_table(destination_identifier))
     {
-      (void) session->rm_temporary_table(engine_arg, destination_identifier.getPath());
+      (void) session->rm_temporary_table(engine_arg, destination_identifier);
       goto err;
     }
   }

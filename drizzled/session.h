@@ -1454,6 +1454,7 @@ public:
 
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(drizzled::plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, drizzled::TableIdentifier &identifier);
   Table *open_temporary_table(drizzled::TableIdentifier &identifier,
                               bool link_in_list= true);
   
