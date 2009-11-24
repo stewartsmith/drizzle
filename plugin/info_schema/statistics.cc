@@ -235,12 +235,13 @@ void StatisticsIS::cleanup()
   delete columns;
 }
 
-int StatsISMethods::processTable(Session *session, 
+int StatsISMethods::processTable(plugin::InfoSchemaTable *store_table,
+                                 Session *session, 
                                  TableList *tables,
                                  Table *table, 
                                  bool res,
                                  LEX_STRING *db_name,
-                                 LEX_STRING *table_name) const
+                                 LEX_STRING *table_name)
 {
   const CHARSET_INFO * const cs= system_charset_info;
   if (res)
@@ -337,7 +338,7 @@ int StatsISMethods::processTable(Session *session,
           table->field[15]->store(key_info->comment.str,
                                   key_info->comment.length, cs);
         }
-        tables->schema_table->addRow(table->record[0], table->s->reclength);
+        store_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

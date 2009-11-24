@@ -2044,10 +2044,13 @@ static void store_column_type(Table *table, Field *field,
 }
 
 
-int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
+int plugin::InfoSchemaMethods::processTable(
+            plugin::InfoSchemaTable *store_table,
+            Session *session, 
+            TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
-				    LEX_STRING *table_name) const
+				    LEX_STRING *table_name)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -2158,7 +2161,7 @@ int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
       table->field[20]->store((const char*) pos,
                               strlen((const char*) pos), cs);
     }
-    tables->schema_table->addRow(table->record[0], table->s->reclength);
+    store_table->addRow(table->record[0], table->s->reclength);
   }
   return(0);
 }

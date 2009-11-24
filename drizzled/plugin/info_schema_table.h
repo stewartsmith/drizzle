@@ -196,9 +196,10 @@ public:
 
   virtual int fillTable(Session *session, 
                         TableList *tables);
-  virtual int processTable(Session *session, TableList *tables,
+  virtual int processTable(InfoSchemaTable *store_table, 
+                           Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
+                           LEX_STRING *table_name);
   virtual int oldFormat(Session *session, 
                         InfoSchemaTable *schema_table) const;
 };
@@ -357,9 +358,9 @@ public:
    * @return 0 on success; 1 on error
    */
   int processTable(Session *session, TableList *tables, Table *table,
-                   bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
+                   bool res, LEX_STRING *db_name, LEX_STRING *tab_name)
   {
-    int retval= i_s_methods->processTable(session, tables, table,
+    int retval= i_s_methods->processTable(this, session, tables, table,
                                           res, db_name, tab_name);
     return retval;
   }

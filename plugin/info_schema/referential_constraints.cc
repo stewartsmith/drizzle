@@ -195,13 +195,13 @@ void ReferentialConstraintsIS::cleanup()
 }
 
 int
-RefConstraintsISMethods::processTable(Session *session, 
+RefConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
+                                      Session *session, 
                                       TableList *tables,
                                       Table *table, 
                                       bool res,
                                       LEX_STRING *db_name, 
                                       LEX_STRING *table_name)
-  const
 {
   const CHARSET_INFO * const cs= system_charset_info;
 

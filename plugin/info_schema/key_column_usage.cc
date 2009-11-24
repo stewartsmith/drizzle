@@ -202,11 +202,12 @@ void KeyColumnUsageIS::cleanup()
   delete columns;
 }
 
-int KeyColUsageISMethods::processTable(Session *session,
+int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *,
+                                       Session *session,
                                        TableList *tables,
                                        Table *table, bool res,
                                        LEX_STRING *db_name,
-                                       LEX_STRING *table_name) const
+                                       LEX_STRING *table_name)
 {
   if (res)
   {

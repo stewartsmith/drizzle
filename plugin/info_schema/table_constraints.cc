@@ -173,12 +173,13 @@ static bool store_constraints(Table *table,
   return false;
 }
 
-int TabConstraintsISMethods::processTable(Session *session, 
+int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
+                                          Session *session, 
                                           TableList *tables,
                                           Table *table, 
                                           bool res,
                                           LEX_STRING *db_name,
-                                          LEX_STRING *table_name) const
+                                          LEX_STRING *table_name)
 {
   if (res)
   {

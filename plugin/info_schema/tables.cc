@@ -275,12 +275,13 @@ void TablesIS::cleanup()
   delete columns;
 }
 
-int TablesISMethods::processTable(Session *session, 
+int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
+                                  Session *session, 
                                   TableList *tables,
                                   Table *table, 
                                   bool res,
                                   LEX_STRING *db_name,
-                                  LEX_STRING *table_name) const
+                                  LEX_STRING *table_name)
 {
   const char *tmp_buff= NULL;
   DRIZZLE_TIME time;
@@ -455,7 +456,7 @@ int TablesISMethods::processTable(Session *session,
       }
     }
   }
-  tables->schema_table->addRow(table->record[0], table->s->reclength);
+  store_table->addRow(table->record[0], table->s->reclength);
   return false;
 }
 
