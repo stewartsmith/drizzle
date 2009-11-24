@@ -336,7 +336,7 @@ void write_bin_log(Session *session,
 
 
 /* Should should be refactored to go away */
-static void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_name, const char *table_name)
+void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_name, const char *table_name)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   string built_query;
@@ -368,8 +368,6 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
     if_exists		If set, don't give an error if table doesn't exists.
 			In this case we give an warning of level 'NOTE'
     drop_temporary	Only drop temporary tables
-    dont_log_query	Don't write query to log files. This will also not
-			generate warnings if the Cursor files doesn't exists
 
   TODO:
     When logging to the binary log, we should log
@@ -388,7 +386,7 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
 */
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool dont_log_query)
+                         bool drop_temporary)
 {
   TableList *table;
   char path[FN_REFLEN];
@@ -484,8 +482,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     else
     {
       error= plugin::StorageEngine::dropTable(*session, path, db,
-                                                table->table_name,
-                                                ! dont_log_query);
+                                              table->table_name,
+                                              true);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
 	error= 0;
