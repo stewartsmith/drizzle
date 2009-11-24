@@ -129,7 +129,7 @@ vector<const plugin::ColumnInfo *> *ProcessListIS::createColumns()
                                             SKIP_OPEN_TABLE));
 
   columns->push_back(new plugin::ColumnInfo("INFO",
-                                            PROCESS_LIST_INFO_WIDTH,
+                                            16383,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
