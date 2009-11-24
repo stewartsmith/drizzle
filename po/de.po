@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-11-20 10:12+0000\n"
-"Last-Translator: Keruskerfuerst <armin_mohring@web.de>\n"
+"PO-Revision-Date: 2009-11-23 16:31+0000\n"
+"Last-Translator: amarradi <Unknown>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-11-21 04:45+0000\n"
+"X-Launchpad-Export-Date: 2009-11-24 04:38+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -519,7 +519,7 @@ msgstr "Ping an den Server senden um zu prüfen, ob er reagiert."
 #: client/drizzle.cc:1595
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
+msgstr "%s Version %s Distribution %s, für %s-%s (%s) verwendet %s %s\n"
 
 #: client/drizzle.cc:1602
 #, c-format
