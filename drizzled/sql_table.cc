@@ -2399,8 +2399,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
                              bool is_engine_set)
 {
   Table *name_lock= 0;
-  char src_path[FN_REFLEN], dst_path[FN_REFLEN];
-  uint32_t dst_path_length;
+  char src_path[FN_REFLEN];
   char *db= table->db;
   char *table_name= table->table_name;
   int  err;
@@ -2425,6 +2424,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
 
 
+  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ?
+                                         (engine_arg->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE) :
+                                         NO_TMP_TABLE);
+
   /*
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
@@ -2433,17 +2436,18 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (session->find_temporary_table(db, table_name))
       goto table_exists;
-    dst_path_length= build_tmptable_filename(dst_path, sizeof(dst_path));
   }
   else
   {
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
       goto err;
-    if (!name_lock)
+    if (! name_lock)
       goto table_exists;
-    dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
-                                          db, table_name, false);
-    if (plugin::StorageEngine::getTableDefinition(*session, dst_path, db, table_name, false) == EEXIST)
+
+    if (plugin::StorageEngine::getTableDefinition(*session, destination_identifier.getPath(),
+                                                  destination_identifier.getDBName(),
+                                                  destination_identifier.getTableName(),
+                                                  false) == EEXIST)
       goto table_exists;
   }
 
@@ -2468,9 +2472,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
-      /* 
-        If engine was not specified and we are reading from the I_S, then we need to 
-        toss an error. This should go away later on when we straighten out the 
+      /*
+        If engine was not specified and we are reading from the I_S, then we need to
+        toss an error. This should go away later on when we straighten out the
         I_S engine.
       */
       if (! is_engine_set)
@@ -2524,7 +2528,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
       {
-        string dst_proto_path(dst_path);
+        string dst_proto_path(destination_identifier.getPath());
         dst_proto_path.append(".dfe");
 
         protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
@@ -2540,7 +2544,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       if (my_errno == ENOENT)
         my_error(ER_BAD_DB_ERROR,MYF(0),db);
       else
-        my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
+        my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), my_errno);
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
@@ -2550,16 +2554,21 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       creation, instead create the table directly (for both normal
       and temporary tables).
     */
-    err= plugin::StorageEngine::createTable(*session, dst_path, db, table_name,
+    err= plugin::StorageEngine::createTable(*session,
+                                            destination_identifier.getPath(),
+                                            destination_identifier.getDBName(),
+                                            destination_identifier.getTableName(),
                                             true, new_proto);
   }
   pthread_mutex_unlock(&LOCK_open);
 
   if (lex_identified_temp_table)
   {
-    if (err || !session->open_temporary_table(dst_path, db, table_name))
+    if (err || !session->open_temporary_table(destination_identifier.getPath(),
+                                              destination_identifier.getDBName(),
+                                              destination_identifier.getTableName()))
     {
-      (void) session->rm_temporary_table(engine_arg, dst_path);
+      (void) session->rm_temporary_table(engine_arg, destination_identifier.getPath());
       goto err;
     }
   }

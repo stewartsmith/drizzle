@@ -676,13 +676,13 @@ bool alter_table(Session *session,
   char *table_name;
   char *db;
   const char *new_alias;
-  char path[FN_REFLEN];
   ha_rows copied= 0;
   ha_rows deleted= 0;
   plugin::StorageEngine *old_db_type;
   plugin::StorageEngine *new_db_type;
   plugin::StorageEngine *save_old_db_type;
   bitset<32> tmp;
+  TableIdentifier identifier(db, table_name, NO_TMP_TABLE);
 
   new_name_buff[0]= '\0';
 
@@ -709,8 +709,6 @@ bool alter_table(Session *session,
     /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
     return mysql_discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
   }
-
-  build_table_filename(path, sizeof(path), db, table_name, false);
 
   ostringstream oss;
   oss << drizzle_data_home << "/" << db << "/" << table_name;
@@ -989,11 +987,10 @@ bool alter_table(Session *session,
   }
   else
   {
-    char tmp_path[FN_REFLEN];
-    /* table is a normal table: Create temporary table in same directory */
-    build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
+    TableIdentifier new_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+
     /* Open our intermediate table */
-    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, false);
+    new_table= session->open_temporary_table(new_identifier.getPath(), new_db, tmp_name, false);
   }
 
   if (new_table == NULL)
