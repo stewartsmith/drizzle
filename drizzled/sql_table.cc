@@ -35,6 +35,8 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 
+#include "drizzled/statement/alter_table.h"
+
 #include <algorithm>
 
 using namespace std;
