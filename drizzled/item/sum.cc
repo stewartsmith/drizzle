@@ -2765,7 +2765,7 @@ int64_t Item_sum_count_distinct::val_int()
 
   if(error)
   {
-    table->cursor->print_error(error, MYF(0));
+    table->print_error(error, MYF(0));
   }
 
   return table->cursor->stats.records;

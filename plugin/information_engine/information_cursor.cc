@@ -38,12 +38,10 @@ uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
 
 int InformationCursor::open(const char *name, int, uint32_t)
 {
-  InformationEngine::Share *shareable= ((InformationEngine *)engine)->getShare(name);
+  share= ((InformationEngine *)engine)->getShare(name);
 
-  if (! shareable)
-  {
-    return HA_ERR_OUT_OF_MEM;
-  }
+  assert(share);
+  thr_lock_data_init(&share->lock, &lock, NULL);
 
   return 0;
 }

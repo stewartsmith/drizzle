@@ -250,6 +250,17 @@ public:
     addAlias("INNOBASE");
   }
 
+  uint64_t table_flags() const
+  {
+    return (HA_NULL_IN_KEY |
+            HA_CAN_INDEX_BLOBS |
+            HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+            HA_PRIMARY_KEY_IN_READ_INDEX |
+            HA_PARTIAL_COLUMN_READ |
+            HA_TABLE_SCAN_ON_INDEX | 
+            HA_MRR_CANT_SORT);
+  }
+
   virtual
   int
   close_connection(
@@ -378,6 +389,9 @@ public:
                                 const char* from, 
                                 const char* to);
   UNIV_INTERN int doDropTable(Session& session, const string table_path);
+
+  UNIV_INTERN virtual bool get_error_message(int error, String *buf);
+
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -1352,14 +1366,6 @@ UNIV_INTERN
 ha_innobase::ha_innobase(drizzled::plugin::StorageEngine &engine_arg,
                          TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
-  int_table_flags(HA_REC_NOT_IN_SEQ |
-		  HA_NULL_IN_KEY |
-		  HA_CAN_INDEX_BLOBS |
-		  HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-		  HA_PRIMARY_KEY_IN_READ_INDEX |
-		  HA_PARTIAL_COLUMN_READ |
-		  HA_TABLE_SCAN_ON_INDEX | 
-                  HA_MRR_CANT_SORT),
   primary_key(0), /* needs initialization because index_flags() may be called 
                      before this is set to the real value. It's ok to have any 
                      value here because it doesn't matter if we return the
@@ -2493,18 +2499,6 @@ ha_innobase::get_row_type() const
 	return(ROW_TYPE_NOT_USED);
 }
 
-
-
-/****************************************************************//**
-Get the table flags to use for the statement.
-@return	table flags */
-UNIV_INTERN
-Cursor::Table_flags
-ha_innobase::table_flags() const
-/*============================*/
-{
-        return int_table_flags;
-}
 
 /****************************************************************//**
 Returns the index type. */
@@ -8059,15 +8053,15 @@ ha_innobase::reset_auto_increment(
 
 	innobase_reset_autoinc(value);
 
-	return(0);
+	return 0;
 }
 
 /* See comment in Cursor.cc */
 UNIV_INTERN
 bool
-ha_innobase::get_error_message(int, String *buf)
+InnobaseEngine::get_error_message(int, String *buf)
 {
-	trx_t*	trx = check_trx_exists(ha_session());
+	trx_t*	trx = check_trx_exists(current_session);
 
 	buf->copy(trx->detailed_error, (uint) strlen(trx->detailed_error),
 		system_charset_info);

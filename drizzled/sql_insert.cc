@@ -406,7 +406,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     table->cursor->ha_release_auto_increment();
     if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->cursor->print_error(my_errno,MYF(0));
+      table->print_error(my_errno,MYF(0));
       error=1;
     }
     if (duplic != DUP_ERROR || ignore)
@@ -655,7 +655,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
   if (!select_insert)
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(session, table_list, table_list->next_global, 1)))
+    if ((duplicate= unique_table(table_list, table_list->next_global, true)))
     {
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
 
@@ -751,7 +751,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           goto gok_or_after_err; /* Ignoring a not fatal error, return 0 */
         goto err;
       }
-      if ((int) (key_nr = table->cursor->get_dup_key(error)) < 0)
+      if ((int) (key_nr = table->get_dup_key(error)) < 0)
       {
 	error= HA_ERR_FOUND_DUPP_KEY;         /* Database can't find key */
 	goto err;
@@ -936,7 +936,7 @@ err:
   /* current_select is NULL if this is a delayed insert */
   if (session->lex->current_select)
     session->lex->current_select->no_error= 0;        // Give error
-  table->cursor->print_error(error,MYF(0));
+  table->print_error(error,MYF(0));
 
 before_err:
   table->cursor->restore_auto_increment(prev_insert_id);
@@ -1154,7 +1154,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     Is table which we are changing used somewhere in other parts of
     query
   */
-  if (unique_table(session, table_list, table_list->next_global, 0))
+  if (unique_table(table_list, table_list->next_global))
   {
     /* Using same table for INSERT and SELECT */
     lex->current_select->options|= OPTION_BUFFER_RESULT;
@@ -1338,7 +1338,7 @@ bool select_insert::send_eof()
 
   if (error)
   {
-    table->cursor->print_error(error,MYF(0));
+    table->print_error(error,MYF(0));
     DRIZZLE_INSERT_SELECT_DONE(error, 0);
     return 1;
   }

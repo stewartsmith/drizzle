@@ -42,12 +42,6 @@ public:
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
-  uint64_t table_flags() const
-  {
-    return (HA_FAST_KEY_READ | HA_NO_BLOBS | HA_NULL_IN_KEY |
-            HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS |
-            HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT);
-  }
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   const key_map *keys_to_use_for_scanning() { return &btree_keys; }
   uint32_t max_supported_keys()          const { return MAX_KEY; }

@@ -438,8 +438,7 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-  char *db;
-  uint32_t db_length; /**< Length of current schema name */
+  std::string db;
 
   /**
     Constant for Session::where initialization in the beginning of every query.
@@ -1151,22 +1150,6 @@ public:
   */
   bool set_db(const char *new_db, size_t new_db_len);
 
-  /**
-    Set the current database; use shallow copy of C-string.
-
-    @param new_db     a pointer to the new database name.
-    @param new_db_len length of the new database name.
-
-    @note This operation just sets {db, db_length}. Switching the current
-    database usually involves other actions, like switching other database
-    attributes including security context. In the future, this operation
-    will be made private and more convenient interface will be provided.
-  */
-  void reset_db(char *new_db, size_t new_db_len)
-  {
-    db= new_db;
-    db_length= new_db_len;
-  }
   /*
     Copy the current database to the argument. Use the current arena to
     allocate memory for a deep copy: current database may be freed after
@@ -1460,13 +1443,19 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+
   void close_temporary_tables();
-  void close_temporary_table(Table *table, bool free_share, bool delete_table);
-  void close_temporary(Table *table, bool free_share, bool delete_table);
+  void close_temporary_table(Table *table);
+  // The method below just handles the de-allocation of the table. In
+  // a better memory type world, this would not be needed. 
+private:
+  void close_temporary(Table *table);
+public:
+
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
   Table *open_temporary_table(const char *path, const char *db,
-                              const char *table_name, bool link_in_list);
+                              const char *table_name, bool link_in_list= true);
   
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);

@@ -10,7 +10,7 @@
 #
 # b) the "Artistic License".
 
-# Modified for Drizzle by Monty Taylor
+# Modified for Drizzle by Monty Taylor & Robert Collins
 
 # Here are some issues that I've had people identify in my code during reviews,
 # that I think are possible to flag automatically in a lint tool.  If these were
@@ -75,7 +75,7 @@ import unicodedata
 
 
 _USAGE = """
-Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
+Syntax: cpplint.py [--verbose=#] [--output=vs7] [--deps=path] [--filter=-x,+y,...]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
@@ -99,6 +99,13 @@ Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
 
     verbose=#
       Specify a number 0-5 to restrict errors to certain verbosity levels.
+
+    deps=path
+      write out a Makefile that can be included listing the files included
+      during the lint process as make style dependencies with null-build rules
+      (so that deleted headers will not cause failures). This can be useful to
+      perform on-demand linting. The top level target will be the name of the
+      lint file itself.
 
     filter=-x,+y,...
       Specify a comma-separated list of category-filters to apply: only
@@ -377,6 +384,31 @@ class _CppLintState(object):
     # "emacs" - format that emacs can parse (default)
     # "vs7" - format that Microsoft Visual Studio 7 can parse
     self.output_format = 'emacs'
+
+    # deps
+    self.depfilename = None
+    self.seen_fnames = set()
+
+  def finished(self):
+    """Complete things that wait for the end of the lint operation."""
+    if self.depfilename is not None:
+      if self.error_count:
+          # Don't alter dependency data
+          return
+      depfile = file(self.depfilename, 'w+')
+      # depend on what we read
+      depfile.write("%s: " % self.depfilename)
+      names = sorted(self.seen_fnames)
+      depfile.write(' '.join(names))
+      depfile.write('\n')
+      # anything we read shouldn't cause an error if its missing - so claim
+      # it can be made.
+      for name in names:
+        depfile.write('%s:\n' % name)
+      depfile.close()
+
+  def seen_file(self, fname):
+    self.seen_fnames.add(fname)
 
   def SetOutputFormat(self, output_format):
     """Sets the output format for errors."""
@@ -2582,6 +2614,7 @@ def UpdateIncludeState(filename, include_state, io=codecs):
     headerfile = io.open(filename, 'r', 'utf8', 'replace')
   except IOError:
     return False
+  _cpplint_state.seen_file(filename)
   linenum = 0
   for line in headerfile:
     linenum += 1
@@ -2788,6 +2821,7 @@ def ProcessFile(filename, vlevel):
                                         codecs.getwriter('utf8'),
                                         'replace').read().split('\n')
     else:
+      _cpplint_state.seen_file(filename)
       lines = codecs.open(filename, 'r', 'utf8', 'replace').read().split('\n')
 
     carriage_return_found = False
@@ -2856,8 +2890,8 @@ def ParseArguments(args):
     The list of filenames to lint.
   """
   try:
-    (opts, filenames) = getopt.getopt(args, '', ['help', 'output=', 'verbose=',
-                                                 'filter='])
+    (opts, filenames) = getopt.getopt(args, '',
+        ['help', 'output=', 'verbose=', 'deps=', 'filter='])
   except getopt.GetoptError:
     PrintUsage('Invalid arguments.')
 
@@ -2878,6 +2912,8 @@ def ParseArguments(args):
       filters = val
       if not filters:
         PrintCategories()
+    elif opt == '--deps':
+        _cpplint_state.depfilename = val
 
   if not filenames:
     PrintUsage('No files were specified.')
@@ -2902,6 +2938,7 @@ def main():
   _cpplint_state.ResetErrorCount()
   for filename in filenames:
     ProcessFile(filename, _cpplint_state.verbose_level)
+  _cpplint_state.finished()
   sys.stderr.write('Total errors found: %d\n' % _cpplint_state.error_count)
   sys.exit(_cpplint_state.error_count > 0)
 

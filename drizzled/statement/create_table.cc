@@ -58,7 +58,6 @@ bool statement::CreateTable::execute()
   }
 
 
-
   /* 
     Now we set the name in our Table proto so that it will match 
     create_info.db_type.
@@ -136,7 +135,7 @@ bool statement::CreateTable::execute()
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
-        if ((duplicate= unique_table(session, create_table, select_tables, 0)))
+        if ((duplicate= unique_table(create_table, select_tables)))
         {
           my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
           /*
@@ -189,6 +188,14 @@ bool statement::CreateTable::execute()
     }
     else
     {
+
+      for (int32_t x= 0; x < alter_info.alter_proto.added_field_size(); x++)
+      {
+        message::Table::Field *field= create_table_proto.add_field();
+
+        *field= alter_info.alter_proto.added_field(x);
+      }
+
       res= mysql_create_table(session, 
                               create_table->db,
                               create_table->table_name, 
