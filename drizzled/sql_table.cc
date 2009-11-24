@@ -35,8 +35,6 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 
-#include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
-
 #include <algorithm>
 
 using namespace std;
@@ -2465,37 +2463,12 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     int protoerr= EEXIST;
 
-    if (src_table->schema_table)
-    {
-      /* 
-        If engine was not specified and we are reading from the I_S, then we need to 
-        toss an error. This should go away later on when we straighten out the 
-        I_S engine.
-      */
-      if (! is_engine_set)
-      {
-        pthread_mutex_unlock(&LOCK_open);
-        my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-                 "INFORMATION_ENGINE",
-                 "TEMPORARY");
-        goto err;
-      }
-
-      if (create_like_schema_frm(session, src_table, &src_proto))
-      {
-        pthread_mutex_unlock(&LOCK_open);
-        goto err;
-      }
-    }
-    else
-    {
-      protoerr= plugin::StorageEngine::getTableDefinition(*session,
-                                                          src_path,
-                                                          db,
-                                                          table_name,
-                                                          false,
-                                                          &src_proto);
-    }
+    protoerr= plugin::StorageEngine::getTableDefinition(*session,
+                                                        src_path,
+                                                        db,
+                                                        table_name,
+                                                        false,
+                                                        &src_proto);
 
     message::Table new_proto(src_proto);
 
