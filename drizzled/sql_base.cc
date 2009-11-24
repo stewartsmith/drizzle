@@ -2345,8 +2345,8 @@ RETURN
 #  Table object
 */
 
-Table *Session::open_temporary_table(const char *path, const char *db_arg,
-                                     const char *table_name_arg, bool link_in_list)
+Table *Session::open_temporary_table(TableIdentifier &identifier,
+                                     bool link_in_list)
 {
   Table *new_tmp_table;
   TableShare *share;
@@ -2354,11 +2354,11 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   uint32_t key_length, path_length;
   TableList table_list;
 
-  table_list.db=         (char*) db_arg;
-  table_list.table_name= (char*) table_name_arg;
+  table_list.db=         (char*) identifier.getDBName();
+  table_list.table_name= (char*) identifier.getTableName();
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
-  path_length= strlen(path);
+  path_length= strlen(identifier.getPath());
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
                                        path_length + 1 + key_length)))
@@ -2366,7 +2366,7 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
 
   share= (TableShare*) (new_tmp_table+1);
   tmp_path= (char*) (share+1);
-  saved_cache_key= strcpy(tmp_path, path)+path_length+1;
+  saved_cache_key= strcpy(tmp_path, identifier.getPath())+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
   share->init(saved_cache_key, key_length, strchr(saved_cache_key, '\0')+1, tmp_path);
@@ -2375,7 +2375,7 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
     First open the share, and then open the table from the share we just opened.
   */
   if (open_table_def(*this, share) ||
-      open_table_from_share(this, share, table_name_arg,
+      open_table_from_share(this, share, identifier.getTableName(),
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
                             (EXTRA_RECORD),

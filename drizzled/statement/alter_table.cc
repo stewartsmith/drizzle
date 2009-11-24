@@ -990,7 +990,7 @@ bool alter_table(Session *session,
     TableIdentifier new_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
 
     /* Open our intermediate table */
-    new_table= session->open_temporary_table(new_identifier.getPath(), new_db, tmp_name, false);
+    new_table= session->open_temporary_table(new_identifier, false);
   }
 
   if (new_table == NULL)

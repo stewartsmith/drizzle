@@ -1616,7 +1616,6 @@ bool mysql_create_table_no_lock(Session *session,
                                 uint32_t select_field_count, 
                                 bool is_if_not_exists)
 {
-  char		path[FN_REFLEN];
   uint		db_options, key_count;
   KEY		*key_info_buffer;
   Cursor	*cursor;
@@ -1652,8 +1651,6 @@ bool mysql_create_table_no_lock(Session *session,
                                  select_field_count))
     goto err;
 
-  strcpy(path, identifier.getPath());
-
   /* Check if table already exists */
   if (lex_identified_temp_table &&
       session->find_temporary_table(identifier.getDBName(), identifier.getTableName()))
@@ -1674,7 +1671,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && ! lex_identified_temp_table)
   {
-    if (plugin::StorageEngine::getTableDefinition(*session, path,
+    if (plugin::StorageEngine::getTableDefinition(*session, identifier.getPath(),
                                                   identifier.getDBName(),
                                                   identifier.getTableName(),
                                                   internal_tmp_table)==EEXIST)
@@ -1753,7 +1750,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   create_info->table_options=db_options;
 
-  if (rea_create_table(session, path, identifier.getDBName(), identifier.getTableName(),
+  if (rea_create_table(session, identifier.getPath(), identifier.getDBName(), identifier.getTableName(),
 		       table_proto,
                        create_info, alter_info->create_list,
                        key_count, key_info_buffer))
@@ -1762,9 +1759,9 @@ bool mysql_create_table_no_lock(Session *session,
   if (lex_identified_temp_table)
   {
     /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(path, identifier.getDBName(), identifier.getTableName())))
+    if (!(session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(create_info->db_type, path);
+      (void) session->rm_temporary_table(create_info->db_type, identifier.getPath());
       goto unlock_and_end;
     }
   }
@@ -2564,9 +2561,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
   if (lex_identified_temp_table)
   {
-    if (err || !session->open_temporary_table(destination_identifier.getPath(),
-                                              destination_identifier.getDBName(),
-                                              destination_identifier.getTableName()))
+    if (err || !session->open_temporary_table(destination_identifier))
     {
       (void) session->rm_temporary_table(engine_arg, destination_identifier.getPath());
       goto err;
