@@ -108,7 +108,7 @@ template <typename Key, typename Data,
           typename EqualKey = int >
 class hash_map : public std::map<Key, Data, HashFcn> {
 
-  void rehash(size_type buckets_in)
+  void rehash(size_t buckets_in)
   {
     resize(buckets_in);
   }
@@ -118,7 +118,7 @@ template <typename Key,
           typename HashFcn = hash<Key>,
           typename EqualKey = int >
 class hash_set : public std::set<Key, HashFcn> {
-  void rehash(size_type buckets_in)
+  void rehash(size_t buckets_in)
   {
     resize(buckets_in);
   }
@@ -151,7 +151,7 @@ class hash_map : public HASH_NAMESPACE::HASH_MAP_CLASS<
     Key, Data, HashFcn> {
 #if !defined(HASH_MAP_HAS_REHASH)
 public:
-  void rehash(size_type buckets_in)
+  void rehash(size_t buckets_in)
   {
 # if defined(HASH_MAP_HAS_RESIZE)
     resize(buckets_in);
@@ -167,7 +167,7 @@ class hash_set : public HASH_NAMESPACE::HASH_SET_CLASS<
     Key, HashFcn> {
 #if !defined(HASH_MAP_HAS_REHASH)
 public:
-  void rehash(size_type buckets_in)
+  void rehash(size_t buckets_in)
   {
 # if defined(HASH_MAP_HAS_RESIZE)
     resize(buckets_in);
@@ -200,10 +200,10 @@ class hash_map : public HASH_NAMESPACE::HASH_MAP_CLASS<
     Key, Data, HashFcn, EqualKey> {
 #if !defined(HASH_MAP_HAS_REHASH)
 public:
-  void rehash(size_type buckets_in)
+  void rehash(size_t buckets_in)
   {
 # if defined(HASH_MAP_HAS_RESIZE)
-    resize(buckets_in);
+    HASH_NAMESPACE::HASH_MAP_CLASS<Key, Data, HashFcn, EqualKey>::resize(buckets_in);
 # endif /* HASH_MAP_HAS_RESIZE */
   }
 #endif /* HASH_MAP_HAS_REHASH */
@@ -216,10 +216,10 @@ class hash_set : public HASH_NAMESPACE::HASH_SET_CLASS<
     Key, HashFcn, EqualKey> {
 #if !defined(HASH_MAP_HAS_REHASH)
 public:
-  void rehash(size_type buckets_in)
+  void rehash(size_t buckets_in)
   {
 # if defined(HASH_MAP_HAS_RESIZE)
-    resize(buckets_in);
+    HASH_NAMESPACE::HASH_SET_CLASS<Key, HashFcn, EqualKey>::resize(buckets_in);
 # endif /* HASH_MAP_HAS_RESIZE */
   }
 #endif /* HASH_MAP_HAS_REHASH */
