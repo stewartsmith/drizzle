@@ -137,7 +137,6 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
-extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 
