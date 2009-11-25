@@ -2465,6 +2465,21 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     int protoerr= EEXIST;
 
+    /*
+     * If an engine was not specified and we are reading from an I_S table, then we need to toss an
+     * error. This should go away soon.
+     * @todo make this go away!
+     */
+    if (! is_engine_set && src_table->schema_table)
+    {
+      pthread_mutex_unlock(&LOCK_open);
+      my_error(ER_ILLEGAL_HA_CREATE_OPTION,
+               MYF(0),
+               "INFORMATION_ENGINE",
+               "TEMPORARY");
+      goto err;
+    }
+
     protoerr= plugin::StorageEngine::getTableDefinition(*session,
                                                         src_path,
                                                         db,
