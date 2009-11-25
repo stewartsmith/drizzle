@@ -167,6 +167,13 @@ public:
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
+    table->setWriteSet(6);
 
     table->field[0]->store(module->getName().c_str(),
                            module->getName().size(), cs);
