@@ -65,38 +65,21 @@ PANDORA_DRIZZLE_BUILD
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
       [Append value to the version string.])],
-    [ DRIZZLE_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
-    [ DRIZZLE_SERVER_SUFFIX= ]
-    )
+    [ DRIZZLE_SERVER_SUFFIX="$withval" ]
+    [ DRIZZLE_SERVER_SUFFIX= ])
+
 AC_DEFINE_UNQUOTED([DRIZZLE_SERVER_SUFFIX],[$DRIZZLE_SERVER_SUFFIX],
                    [Append value to the version string])
 
 
-# Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([drizzled-user],
     [AS_HELP_STRING([--with-drizzled-user=username],
             [What user the drizzled daemon shall be run as.
 		@<:@default=drizzle@:>@])],
-    [ DRIZZLED_USER=$withval ],
-    [ DRIZZLED_USER=drizzle ]
-    )
+    [ DRIZZLED_USER="$withval" ],
+    [ DRIZZLED_USER=drizzle ])
 AC_SUBST(DRIZZLED_USER)
 
-# If we should allow LOAD DATA LOCAL
-AC_MSG_CHECKING(If we should should enable LOAD DATA LOCAL by default)
-AC_ARG_ENABLE(local-infile,
-    [  --enable-local-infile   Enable LOAD DATA LOCAL INFILE (default: disabled)],
-    [ ENABLED_LOCAL_INFILE=$enableval ],
-    [ ENABLED_LOCAL_INFILE=no ]
-    )
-if test "$ENABLED_LOCAL_INFILE" = "yes"
-then
-  AC_MSG_RESULT([yes])
-  AC_DEFINE([ENABLED_LOCAL_INFILE], [1],
-            [If LOAD DATA LOCAL INFILE should be enabled by default])
-else
-  AC_MSG_RESULT([no])
-fi
 
 AC_ARG_WITH([comment],
     [AS_HELP_STRING([--with-comment],
