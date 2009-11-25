@@ -43,11 +43,13 @@ static int copy_data_between_tables(Table *from,Table *to,
                                     ha_rows *deleted,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
+
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
                                       message::Table *table_proto,
                                       AlterInfo *alter_info);
+
 static int create_temporary_table(Session *session,
                                   Table *table,
                                   char *new_db,
@@ -55,6 +57,8 @@ static int create_temporary_table(Session *session,
                                   HA_CREATE_INFO *create_info,
                                   message::Table *create_proto,
                                   AlterInfo *alter_info);
+
+static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name);
 
 bool statement::AlterTable::execute()
 {
@@ -974,23 +978,7 @@ bool alter_table(Session *session,
     goto err;
 
   /* Open the table so we need to copy the data to it. */
-  if (table->s->tmp_table)
-  {
-    TableList tbl;
-    tbl.db= new_db;
-    tbl.alias= tmp_name;
-    tbl.table_name= tmp_name;
-
-    /* Table is in session->temporary_tables */
-    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
-  }
-  else
-  {
-    TableIdentifier new_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
-
-    /* Open our intermediate table */
-    new_table= session->open_temporary_table(new_identifier, false);
-  }
+  new_table= open_alter_table(session, table, new_db, tmp_name);
 
   if (new_table == NULL)
     goto err1;
@@ -1098,10 +1086,6 @@ bool alter_table(Session *session,
     However, in case of ALTER Table RENAME there might be no intermediate
     table. This is when the old and new tables are compatible, according to
     compare_table(). Then, we need one additional call to
-    mysql_rename_table() with flag NO_FRM_RENAME, which does nothing else but
-    actual rename in the SE and the FRM is not touched. Note that, if the
-    table is renamed and the SE is also changed, then an intermediate table
-    is created and the additional call will not take place.
   */
   if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
@@ -1498,6 +1482,33 @@ bool create_like_schema_frm(Session* session,
     return true;
 
   return false;
+}
+
+
+static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name)
+{
+  Table *new_table;
+
+  /* Open the table so we need to copy the data to it. */
+  if (table->s->tmp_table)
+  {
+    TableList tbl;
+    tbl.db= db;
+    tbl.alias= table_name;
+    tbl.table_name= table_name;
+
+    /* Table is in session->temporary_tables */
+    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+  }
+  else
+  {
+    TableIdentifier new_identifier(db, table_name, INTERNAL_TMP_TABLE);
+
+    /* Open our intermediate table */
+    new_table= session->open_temporary_table(new_identifier, false);
+  }
+
+  return new_table;
 }
 
 } /* namespace drizzled */

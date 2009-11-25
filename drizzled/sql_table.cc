@@ -1850,8 +1850,6 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
       flags                     flags for build_table_filename().
                                 FN_FROM_IS_TMP old_name is temporary.
                                 FN_TO_IS_TMP   new_name is temporary.
-                                NO_FRM_RENAME  Don't rename the FRM cursor
-                                but only the table in the storage engine.
 
   RETURN
     false   OK
@@ -1877,8 +1875,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
 
   if (!(error= base->renameTable(session, from_base, to_base)))
   {
-    if(!(flags & NO_FRM_RENAME)
-       && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
+    if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
