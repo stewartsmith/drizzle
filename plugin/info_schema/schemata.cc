@@ -152,6 +152,9 @@ static bool store_schema_schemata(Session *,
                                   const CHARSET_INFO * const cs)
 {
   table->restoreRecordAsDefault();
+  table->setWriteSet(1);
+  table->setWriteSet(2);
+  table->setWriteSet(3);
   table->field[1]->store(db_name->str, db_name->length, system_charset_info);
   table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
   table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);

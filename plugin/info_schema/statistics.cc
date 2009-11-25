@@ -281,6 +281,19 @@ int StatsISMethods::processTable(plugin::InfoSchemaTable *store_table,
       for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
       {
         table->restoreRecordAsDefault();
+        table->setWriteSet(1);
+        table->setWriteSet(2);
+        table->setWriteSet(3);
+        table->setWriteSet(4);
+        table->setWriteSet(5);
+        table->setWriteSet(6);
+        table->setWriteSet(8);
+        table->setWriteSet(9);
+        table->setWriteSet(10);
+        table->setWriteSet(12);
+        table->setWriteSet(13);
+        table->setWriteSet(14);
+        table->setWriteSet(15);
         table->field[1]->store(db_name->str, db_name->length, cs);
         table->field[2]->store(table_name->str, table_name->length, cs);
         table->field[3]->store((int64_t) ((key_info->flags &

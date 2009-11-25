@@ -272,6 +272,10 @@ int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *,
                                f_key_info->forein_id->length,
                                f_info->str, f_info->length,
                                (int64_t) f_idx);
+        table->setWriteSet(8);
+        table->setWriteSet(9);
+        table->setWriteSet(10);
+        table->setWriteSet(11);
         table->field[8]->store((int64_t) f_idx, true);
         table->field[8]->set_notnull();
         table->field[9]->store(f_key_info->referenced_db->str,

@@ -151,6 +151,14 @@ public:
 
     table->restoreRecordAsDefault();
 
+    /* mark fields that will be written to in the write bitset */
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
+
     table->field[0]->store(plugin.first.c_str(),
                            plugin.first.size(), cs);
 

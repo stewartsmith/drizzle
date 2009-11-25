@@ -143,6 +143,8 @@ int CollCharISMethods::fillTable(Session *, TableList *tables)
           ! my_charset_same(tmp_cs,tmp_cl))
         continue;
       table->restoreRecordAsDefault();
+      table->setWriteSet(0);
+      table->setWriteSet(1);
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
       tables->schema_table->addRow(table->record[0], table->s->reclength);

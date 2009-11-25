@@ -189,6 +189,13 @@ int CollationISMethods::fillTable(Session *session, TableList *tables)
       {
         const char *tmp_buff;
         table->restoreRecordAsDefault();
+        /* set the appropriate bits in the write bitset */
+        table->setWriteSet(0);
+        table->setWriteSet(1);
+        table->setWriteSet(2);
+        table->setWriteSet(3);
+        table->setWriteSet(4);
+        table->setWriteSet(5);
         table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
         table->field[2]->store((int64_t) tmp_cl->number, true);

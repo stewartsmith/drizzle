@@ -158,6 +158,10 @@ int CharSetISMethods::fillTable(Session *session, TableList *tables)
     {
       const char *comment;
       table->restoreRecordAsDefault();
+      table->setWriteSet(0);
+      table->setWriteSet(1);
+      table->setWriteSet(2);
+      table->setWriteSet(3);
       table->field[0]->store(tmp_cs->csname, strlen(tmp_cs->csname), scs);
       table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
       comment= tmp_cs->comment ? tmp_cs->comment : "";

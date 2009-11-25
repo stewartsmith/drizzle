@@ -231,6 +231,15 @@ RefConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
     while ((f_key_info= it++))
     {
       table->restoreRecordAsDefault();
+      table->setWriteSet(1);
+      table->setWriteSet(2);
+      table->setWriteSet(4);
+      table->setWriteSet(5);
+      table->setWriteSet(6);
+      table->setWriteSet(7);
+      table->setWriteSet(8);
+      table->setWriteSet(9);
+      table->setWriteSet(10);
       table->field[1]->store(db_name->str, db_name->length, cs);
       table->field[9]->store(table_name->str, table_name->length, cs);
       table->field[2]->store(f_key_info->forein_id->str,

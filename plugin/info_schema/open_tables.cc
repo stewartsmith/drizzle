@@ -141,6 +141,10 @@ inline bool open_list_store(Table *table, open_table_list_st& open_list);
 inline bool open_list_store(Table *table, open_table_list_st& open_list)
 {
   table->restoreRecordAsDefault();
+  table->setWriteSet(0);
+  table->setWriteSet(1);
+  table->setWriteSet(2);
+  table->setWriteSet(3);
   table->field[0]->store(open_list.db.c_str(), open_list.db.length(), system_charset_info);
   table->field[1]->store(open_list.table.c_str(), open_list.table.length(), system_charset_info);
   table->field[2]->store((int64_t) open_list.in_use, true);
