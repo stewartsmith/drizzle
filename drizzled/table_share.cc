@@ -49,6 +49,12 @@ void TableShare::cacheStart(void)
 {
   pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
   table_def_inited= true;
+  /* 
+   * This is going to overalloc a bit - as rehash sets the number of
+   * buckets, not the number of elements. BUT, it'll allow us to not need
+   * to rehash later on as the hash_map grows.
+   */
+  table_def_cache.rehash(table_def_size);
 }
 
 
