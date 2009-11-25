@@ -71,32 +71,28 @@ vector<const plugin::ColumnInfo *> *PluginsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
 
   columns->push_back(new plugin::ColumnInfo("PLUGIN_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("IS_ACTIVE",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
   return columns;
 }
 

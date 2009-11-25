@@ -72,168 +72,147 @@ vector<const plugin::ColumnInfo *> *TablesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("ENGINE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Engine",
-                                            OPEN_FRM_ONLY));
+                                            "Engine"));
 
   columns->push_back(new plugin::ColumnInfo("VERSION",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Version",
-                                            OPEN_FRM_ONLY));
+                                            "Version"));
 
   columns->push_back(new plugin::ColumnInfo("ROW_FORMAT",
                                             10,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Row_format",
-                                            OPEN_FULL_TABLE));
+                                            "Row_format"));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_ROWS",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Rows",
-                                            OPEN_FULL_TABLE));
+                                            "Rows"));
 
   columns->push_back(new plugin::ColumnInfo("AVG_ROW_LENGTH",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Avg_row_length",
-                                            OPEN_FULL_TABLE));
+                                            "Avg_row_length"));
 
   columns->push_back(new plugin::ColumnInfo("DATA_LENGTH",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Data_length",
-                                            OPEN_FULL_TABLE));
+                                            "Data_length"));
 
   columns->push_back(new plugin::ColumnInfo("MAX_DATA_LENGTH",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Max_data_length",
-                                            OPEN_FULL_TABLE));
+                                            "Max_data_length"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_LENGTH",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Index_length",
-                                            OPEN_FULL_TABLE));
+                                            "Index_length"));
 
   columns->push_back(new plugin::ColumnInfo("DATA_FREE",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Data_free",
-                                            OPEN_FULL_TABLE));
+                                            "Data_free"));
 
   columns->push_back(new plugin::ColumnInfo("AUTO_INCREMENT",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Auto_increment",
-                                            OPEN_FULL_TABLE));
+                                            "Auto_increment"));
 
   columns->push_back(new plugin::ColumnInfo("CREATE_TIME",
                                             0,
                                             DRIZZLE_TYPE_DATETIME,
                                             0,
                                             1,
-                                            "Create_time",
-                                            OPEN_FULL_TABLE));
+                                            "Create_time"));
 
   columns->push_back(new plugin::ColumnInfo("UPDATE_TIME",
                                             0,
                                             DRIZZLE_TYPE_DATETIME,
                                             0,
                                             1,
-                                            "Update_time",
-                                            OPEN_FULL_TABLE));
+                                            "Update_time"));
 
   columns->push_back(new plugin::ColumnInfo("CHECK_TIME",
                                             0,
                                             DRIZZLE_TYPE_DATETIME,
                                             0,
                                             1,
-                                            "Check_time",
-                                            OPEN_FULL_TABLE));
+                                            "Check_time"));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_COLLATION",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Collation",
-                                            OPEN_FRM_ONLY));
+                                            "Collation"));
 
   columns->push_back(new plugin::ColumnInfo("CHECKSUM",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "Checksum",
-                                            OPEN_FULL_TABLE));
+                                            "Checksum"));
 
   columns->push_back(new plugin::ColumnInfo("CREATE_OPTIONS",
                                             255,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Create_options",
-                                            OPEN_FRM_ONLY));
+                                            "Create_options"));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_COMMENT",
                                             TABLE_COMMENT_MAXLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Comment",
-                                            OPEN_FRM_ONLY));
+                                            "Comment"));
 
   return columns;
 }

@@ -77,64 +77,56 @@ vector<const plugin::ColumnInfo *> *ProcessListIS::createColumns()
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Id",
-                                            SKIP_OPEN_TABLE));
+                                            "Id"));
 
   columns->push_back(new plugin::ColumnInfo("USER",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "User",
-                                            SKIP_OPEN_TABLE));
+                                            "User"));
 
   columns->push_back(new plugin::ColumnInfo("HOST",
                                             LIST_PROCESS_HOST_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Host",
-                                            SKIP_OPEN_TABLE));
+                                            "Host"));
 
   columns->push_back(new plugin::ColumnInfo("DB",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Db",
-                                            SKIP_OPEN_TABLE));
+                                            "Db"));
 
   columns->push_back(new plugin::ColumnInfo("COMMAND",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Command",
-                                            SKIP_OPEN_TABLE));
+                                            "Command"));
 
   columns->push_back(new plugin::ColumnInfo("TIME",
                                             7,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Time",
-                                            SKIP_OPEN_TABLE));
+                                            "Time"));
 
   columns->push_back(new plugin::ColumnInfo("STATE",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "State",
-                                            SKIP_OPEN_TABLE));
+                                            "State"));
 
   columns->push_back(new plugin::ColumnInfo("INFO",
                                             16383,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Info",
-                                            SKIP_OPEN_TABLE));
+                                            "Info"));
 
   return columns;
 }

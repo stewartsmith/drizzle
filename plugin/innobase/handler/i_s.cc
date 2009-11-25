@@ -204,8 +204,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_STATE		1
         drizzled::plugin::ColumnInfo("trx_state",
@@ -213,8 +212,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_STARTED		2
         drizzled::plugin::ColumnInfo("trx_started",
@@ -222,8 +220,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_DATETIME,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_REQUESTED_LOCK_ID	3
         drizzled::plugin::ColumnInfo("trx_requested_lock_id",
@@ -231,8 +228,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_WAIT_STARTED	4
         drizzled::plugin::ColumnInfo("trx_wait_started",
@@ -240,8 +236,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_DATETIME,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_WEIGHT		5
         drizzled::plugin::ColumnInfo("trx_weight",
@@ -249,8 +244,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_DRIZZLE_THREAD_ID	6
         drizzled::plugin::ColumnInfo("trx_mysql_thread_id",
@@ -258,8 +252,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_QUERY		7
         drizzled::plugin::ColumnInfo("trx_query",
@@ -267,8 +260,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -382,8 +374,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_TRX_ID		1
         drizzled::plugin::ColumnInfo("lock_trx_id",
@@ -391,8 +382,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_MODE		2
         drizzled::plugin::ColumnInfo("lock_mode",
@@ -401,8 +391,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_TYPE		3
         drizzled::plugin::ColumnInfo("lock_type",
@@ -410,8 +399,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_TABLE		4
         drizzled::plugin::ColumnInfo("lock_table",
@@ -419,8 +407,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_INDEX		5
         drizzled::plugin::ColumnInfo("lock_index",
@@ -428,8 +415,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_SPACE		6
         drizzled::plugin::ColumnInfo("lock_space",
@@ -437,8 +423,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_PAGE		7
         drizzled::plugin::ColumnInfo("lock_page",
@@ -446,8 +431,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_REC		8
         drizzled::plugin::ColumnInfo("lock_rec",
@@ -455,8 +439,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_DATA		9
         drizzled::plugin::ColumnInfo("lock_data",
@@ -464,8 +447,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -604,8 +586,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_REQUESTED_LOCK_ID	1
         drizzled::plugin::ColumnInfo("requested_lock_id",
@@ -613,8 +594,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_BLOCKING_TRX_ID	2
         drizzled::plugin::ColumnInfo("blocking_trx_id",
@@ -622,8 +602,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_BLOCKING_LOCK_ID	3
         drizzled::plugin::ColumnInfo("blocking_lock_id",
@@ -631,8 +610,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -826,48 +804,42 @@ static drizzled::plugin::ColumnInfo	i_s_cmp_fields_info[] =
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Compressed Page Size",
-                  SKIP_OPEN_TABLE),
+                  "Compressed Page Size"),
 
         drizzled::plugin::ColumnInfo("compress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Number of Compressions",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Compressions"),
 
         drizzled::plugin::ColumnInfo("compress_ops_ok",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Number of Successful Compressions",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Successful Compressions"),
 
         drizzled::plugin::ColumnInfo("compress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Duration of Compressions in Seconds",
-                  SKIP_OPEN_TABLE),
+                  "Total Duration of Compressions in Seconds"),
 
         drizzled::plugin::ColumnInfo("uncompress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Number of Decompressions",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Decompressions"),
 
         drizzled::plugin::ColumnInfo("uncompress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Duration of Decompressions in Seconds",
-                  SKIP_OPEN_TABLE),
+                  "Total Duration of Decompressions in Seconds"),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -989,40 +961,35 @@ static drizzled::plugin::ColumnInfo	i_s_cmpmem_fields_info[] =
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Buddy Block Size",
-                  SKIP_OPEN_TABLE),
+                  "Buddy Block Size"),
 
         drizzled::plugin::ColumnInfo("pages_used",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Currently in Use",
-                  SKIP_OPEN_TABLE),
+                  "Currently in Use"),
 
         drizzled::plugin::ColumnInfo("pages_free",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Currently Available",
-                  SKIP_OPEN_TABLE),
+                  "Currently Available"),
 
         drizzled::plugin::ColumnInfo("relocation_ops",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   0,
-                  "Total Number of Relocations",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Relocations"),
 
         drizzled::plugin::ColumnInfo("relocation_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Duration of Relocations, in Seconds",
-                  SKIP_OPEN_TABLE),
+                  "Total Duration of Relocations, in Seconds"),
 
         drizzled::plugin::ColumnInfo()
 };

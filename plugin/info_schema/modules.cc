@@ -71,56 +71,49 @@ vector<const plugin::ColumnInfo *> *ModulesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_VERSION",
                                             20,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_AUTHOR",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("IS_BUILTIN",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_LIBRARY",
                                             65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_DESCRIPTION",
                                             65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_LICENSE",
                                             80,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "License",
-                                            SKIP_OPEN_TABLE));
+                                            "License"));
   return columns;
 }
 

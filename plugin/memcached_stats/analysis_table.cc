@@ -106,8 +106,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                                DRIZZLE_TYPE_LONGLONG,
                                                                0,
                                                                0, 
-                                                               "Num of Servers Analyzed",
-                                                               SKIP_OPEN_TABLE);
+                                                               "Num of Servers Analyzed");
   if (! num_analyzed)
   {
     return true;
@@ -118,8 +117,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
                                                            0, 
-                                                           "Average Item Size",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Average Item Size");
   if (! avg_size)
   {
     return true;
@@ -130,8 +128,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
                                                            0,
-                                                           "Node with Most Memory Consumption",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Node with Most Memory Consumption");
   if (! mem_node)
   {
     return true;
@@ -142,8 +139,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0,
-                                                             "Used Bytes",
-                                                             SKIP_OPEN_TABLE);
+                                                             "Used Bytes");
   if (! used_bytes)
   {
     return true;
@@ -154,8 +150,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
                                                             0,
-                                                            "Node with Least Free Space",
-                                                            SKIP_OPEN_TABLE);
+                                                            "Node with Least Free Space");
   if (! free_node)
   {
     return true;
@@ -166,8 +161,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0,
-                                                             "Free Bytes",
-                                                             SKIP_OPEN_TABLE);
+                                                             "Free Bytes");
   if (! free_bytes)
   {
     return true;
@@ -178,8 +172,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
                                                           0,
-                                                          "Node with Longest Uptime",
-                                                          SKIP_OPEN_TABLE);
+                                                          "Node with Longest Uptime");
   if (! up_node)
   {
     return true;
@@ -190,8 +183,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
                                                          0,
-                                                         "Longest Uptime",
-                                                         SKIP_OPEN_TABLE);
+                                                         "Longest Uptime");
   if (! uptime)
   {
     return true;
@@ -202,8 +194,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,
                                                             0,
-                                                            "Pool-wide Hit Ratio",
-                                                            SKIP_OPEN_TABLE);
+                                                            "Pool-wide Hit Ratio");
   if (! hit_ratio)
   {
     return true;

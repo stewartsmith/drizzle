@@ -74,32 +74,28 @@ vector<const plugin::ColumnInfo *> *CharacterSetIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Charset",
-                                            SKIP_OPEN_TABLE));
+                                            "Charset"));
 
   columns->push_back(new plugin::ColumnInfo("DEFAULT_COLLATE_NAME",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Default collation",
-                                            SKIP_OPEN_TABLE));
+                                            "Default collation"));
 
   columns->push_back(new plugin::ColumnInfo("DESCRIPTION",
                                             60,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Description",
-                                            SKIP_OPEN_TABLE));
+                                            "Description"));
 
   columns->push_back(new plugin::ColumnInfo("MAXLEN",
                                             3,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Maxlen",
-                                            SKIP_OPEN_TABLE));
+                                            "Maxlen"));
 
   return columns;
 }

@@ -72,128 +72,112 @@ vector<const plugin::ColumnInfo *> *StatisticsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
   
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Table",
-                                            OPEN_FRM_ONLY));
+                                            "Table"));
 
   columns->push_back(new plugin::ColumnInfo("NON_UNIQUE",
                                             1,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Non_unique",
-                                            OPEN_FRM_ONLY));
+                                            "Non_unique"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Key_name",
-                                            OPEN_FRM_ONLY));
+                                            "Key_name"));
 
   columns->push_back(new plugin::ColumnInfo("SEQ_IN_INDEX",
                                             2,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Seq_in_index",
-                                            OPEN_FRM_ONLY));
+                                            "Seq_in_index"));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Column_name",
-                                            OPEN_FRM_ONLY));
+                                            "Column_name"));
 
   columns->push_back(new plugin::ColumnInfo("COLLATION",
                                             1,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Collation",
-                                            OPEN_FRM_ONLY));
+                                            "Collation"));
 
   columns->push_back(new plugin::ColumnInfo("CARDINALITY",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             1,
-                                            "Cardinality",
-                                            OPEN_FULL_TABLE));
+                                            "Cardinality"));
 
   columns->push_back(new plugin::ColumnInfo("SUB_PART",
                                             3,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             1,
-                                            "Sub_part",
-                                            OPEN_FRM_ONLY));
+                                            "Sub_part"));
 
   columns->push_back(new plugin::ColumnInfo("PACKED",
                                             10,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Packed",
-                                            OPEN_FRM_ONLY));
+                                            "Packed"));
 
   columns->push_back(new plugin::ColumnInfo("NULLABLE",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Null",
-                                            OPEN_FRM_ONLY));
+                                            "Null"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_TYPE",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Index_type",
-                                            OPEN_FULL_TABLE));
+                                            "Index_type"));
 
   columns->push_back(new plugin::ColumnInfo("COMMENT",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Comment",
-                                            OPEN_FRM_ONLY));
+                                            "Comment"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_COMMENT",
                                             INDEX_COMMENT_MAXLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Index_Comment",
-                                            OPEN_FRM_ONLY));
+                                            "Index_Comment"));
 
   return columns;
 }

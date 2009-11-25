@@ -74,16 +74,14 @@ vector<const plugin::ColumnInfo *> *GlobalStatusIS::createColumns()
                                                    DRIZZLE_TYPE_VARCHAR,
                                                    0,
                                                    0,
-                                                   "Variable_name",
-                                                   SKIP_OPEN_TABLE));
+                                                   "Variable_name"));
 
   status_columns->push_back(new plugin::ColumnInfo("VARIABLE_VALUE",
                                                    16300,
                                                    DRIZZLE_TYPE_VARCHAR,
                                                    0,
                                                    1,
-                                                   "Value",
-                                                   SKIP_OPEN_TABLE));
+                                                   "Value"));
 
   return status_columns;
 }

@@ -71,32 +71,28 @@ vector<const plugin::ColumnInfo *> *OpenTablesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Database",
-                                            SKIP_OPEN_TABLE));
+                                            "Database"));
 
   columns->push_back(new plugin::ColumnInfo("Table",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Table",
-                                            SKIP_OPEN_TABLE));
+                                            "Table"));
 
   columns->push_back(new plugin::ColumnInfo("In_use",
                                             1,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "In_use",
-                                            SKIP_OPEN_TABLE));
+                                            "In_use"));
 
   columns->push_back(new plugin::ColumnInfo("Name_locked",
                                             4,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Name_locked",
-                                            SKIP_OPEN_TABLE));
+                                            "Name_locked"));
 
   return columns;
 }

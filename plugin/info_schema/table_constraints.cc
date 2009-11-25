@@ -71,48 +71,42 @@ vector<const plugin::ColumnInfo *> *TableConstraintsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
   return columns;
 }
 

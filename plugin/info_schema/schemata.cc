@@ -72,40 +72,35 @@ vector<const plugin::ColumnInfo *> *SchemataIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0, 
                                             1, 
-                                            "", 
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("SCHEMA_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0, 
                                             0, 
-                                            "Database", 
-                                            SKIP_OPEN_TABLE));
+                                            "Database"));
 
   columns->push_back(new plugin::ColumnInfo("DEFAULT_CHARACTER_SET_NAME",
                                             64, 
                                             DRIZZLE_TYPE_VARCHAR, 
                                             0, 
                                             0, 
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("DEFAULT_COLLATION_NAME",
                                             64, 
                                             DRIZZLE_TYPE_VARCHAR, 
                                             0, 
                                             0, 
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("SQL_PATH",
                                             FN_REFLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0, 
                                             1, 
-                                            "", 
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   return columns;
 }

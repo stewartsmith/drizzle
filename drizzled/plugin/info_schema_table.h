@@ -53,16 +53,14 @@ public:
              enum enum_field_types in_type,
              int32_t in_value,
              uint32_t in_flags,
-             const std::string& in_old_name,
-             uint32_t in_open_method)
+             const std::string& in_old_name)
     :
       name(in_name),
       length(in_length),
       type(in_type),
       value(in_value),
       flags(in_flags),
-      old_name(in_old_name),
-      open_method(in_open_method)
+      old_name(in_old_name)
   {}
 
   ColumnInfo()
@@ -71,8 +69,7 @@ public:
       length(0),
       type(DRIZZLE_TYPE_VARCHAR),
       flags(0),
-      old_name(),
-      open_method(SKIP_OPEN_TABLE)
+      old_name()
   {}
 
   /**
@@ -96,14 +93,6 @@ public:
   const std::string &getOldName() const
   {
     return old_name;
-  }
-
-  /**
-   * @return the open method for this column.
-   */
-  uint32_t getOpenMethod() const
-  {
-    return open_method;
   }
 
   /**
@@ -175,12 +164,6 @@ private:
    * compatability.
    */
   const std::string old_name;
-
-  /**
-   * This should be one of @c SKIP_OPEN_TABLE,
-   * @c OPEN_FRM_ONLY or @c OPEN_FULL_TABLE.
-   */
-  uint32_t open_method;
 
 };
 
@@ -496,15 +479,6 @@ public:
   const std::string &getColumnName(int index) const
   {
     return column_info[index]->getName();
-  }
-
-  /**
-   * @param[in] index the index of this column
-   * @return the open method for the column at the given index
-   */
-  uint32_t getColumnOpenMethod(int index) const
-  {
-    return column_info[index]->getOpenMethod();
   }
 
 private:

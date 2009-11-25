@@ -101,8 +101,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
                                                            0,
-                                                           "Name",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Name");
   if (! name_col)
   {
     return true;
@@ -113,8 +112,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
                                                        0, 
-                                                       "Port Number",
-                                                       SKIP_OPEN_TABLE);
+                                                       "Port Number");
   if (! port)
   {
     return true;
@@ -125,8 +123,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                       DRIZZLE_TYPE_LONGLONG,
                                                       0,
                                                       0, 
-                                                      "Process ID",
-                                                      SKIP_OPEN_TABLE);
+                                                      "Process ID");
   if (! pid)
   {
     return true;
@@ -137,8 +134,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
                                                          0, 
-                                                         "Uptime",
-                                                         SKIP_OPEN_TABLE);
+                                                         "Uptime");
   if (! uptime)
   {
     return true;
@@ -149,8 +145,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
                                                        0, 
-                                                       "Time",
-                                                       SKIP_OPEN_TABLE);
+                                                       "Time");
   if (! time)
   {
     return true;
@@ -161,8 +156,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
                                                           0,
-                                                          "Version",
-                                                          SKIP_OPEN_TABLE);
+                                                          "Version");
   if (! version)
   {
     return true;
@@ -173,8 +167,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
                                                            0, 
-                                                           "Pointer Size",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Pointer Size");
   if (! ptr_size)
   {
     return true;
@@ -185,8 +178,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
                                                          0, 
-                                                         "rusage user",
-                                                         SKIP_OPEN_TABLE);
+                                                         "rusage user");
   if (! r_user)
   {
     return true;
@@ -197,8 +189,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                         DRIZZLE_TYPE_LONGLONG,
                                                         0,
                                                         0, 
-                                                        "rusage system",
-                                                        SKIP_OPEN_TABLE);
+                                                        "rusage system");
   if (! r_sys)
   {
     return true;
@@ -208,8 +199,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0, 
-                                                             "Current Items",
-                                                             SKIP_OPEN_TABLE);
+                                                             "Current Items");
   if (! curr_items)
   {
     return true;
@@ -220,8 +210,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
                                                               0,
-                                                              "Total Items",
-                                                              SKIP_OPEN_TABLE);
+                                                              "Total Items");
   if (! total_items)
   {
     return true;
@@ -232,8 +221,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                         DRIZZLE_TYPE_LONGLONG,
                                                         0,
                                                         0,
-                                                        "Bytes",
-                                                        SKIP_OPEN_TABLE);
+                                                        "Bytes");
   if (! bytes)
   {
     return true;
@@ -244,8 +232,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,
                                                             0,
-                                                            "Current Connections",
-                                                            SKIP_OPEN_TABLE);
+                                                            "Current Connections");
   if (! curr_cons)
   {
     return true;
@@ -256,8 +243,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0,
-                                                             "Total Connections",
-                                                             SKIP_OPEN_TABLE);
+                                                             "Total Connections");
   if (! total_cons)
   {
     return true;
@@ -268,8 +254,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
                                                               0,
-                                                              "Connection Structures",
-                                                              SKIP_OPEN_TABLE);
+                                                              "Connection Structures");
   if (! con_structs)
   {
     return true;
@@ -280,8 +265,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
                                                            0,
-                                                           "Gets",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Gets");
   if (! cmd_gets)
   {
     return true;
@@ -292,8 +276,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
                                                            0,
-                                                           "Sets",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Sets");
   if (! cmd_sets)
   {
     return true;
@@ -304,8 +287,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
                                                        0,
-                                                       "Hits",
-                                                       SKIP_OPEN_TABLE);
+                                                       "Hits");
   if (! hits)
   {
     return true;
@@ -316,8 +298,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
                                                          0,
-                                                         "Misses",
-                                                         SKIP_OPEN_TABLE);
+                                                         "Misses");
   if (! misses)
   {
     return true;
@@ -328,8 +309,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
                                                          0,
-                                                         "Evictions",
-                                                         SKIP_OPEN_TABLE);
+                                                         "Evictions");
   if (! evicts)
   {
     return true;
@@ -340,8 +320,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0,
-                                                             "bytes read",
-                                                             SKIP_OPEN_TABLE);
+                                                             "bytes read");
   if (! bytes_read)
   {
     return true;
@@ -352,8 +331,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                                 DRIZZLE_TYPE_LONGLONG,
                                                                 0,
                                                                 0,
-                                                                "bytes written",
-                                                                SKIP_OPEN_TABLE);
+                                                                "bytes written");
   if (! bytes_written)
   {
     return true;
@@ -364,8 +342,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                                 DRIZZLE_TYPE_LONGLONG,
                                                                 0,
                                                                 0,
-                                                                "limit maxbytes",
-                                                                SKIP_OPEN_TABLE);
+                                                                "limit maxbytes");
   if (! lim_max_bytes)
   {
     return true;
@@ -376,8 +353,7 @@ bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
                                                           0,
-                                                          "Threads",
-                                                          SKIP_OPEN_TABLE);
+                                                          "Threads");
   if (! threads)
   {
     return true;
