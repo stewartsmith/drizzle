@@ -6926,24 +6926,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (table->reginfo.not_exists_optimize)
           extra.append(STRING_WITH_LEN("; Not exists"));
 
-        if (table_list->schema_table &&
-            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
-        {
-          if (!table_list->table_open_method)
-            extra.append(STRING_WITH_LEN("; Skip_open_table"));
-          else if (table_list->table_open_method == OPEN_FRM_ONLY)
-            extra.append(STRING_WITH_LEN("; Open_frm_only"));
-          else
-            extra.append(STRING_WITH_LEN("; Open_full_table"));
-          if (table_list->has_db_lookup_value &&
-              table_list->has_table_lookup_value)
-            extra.append(STRING_WITH_LEN("; Scanned 0 databases"));
-          else if (table_list->has_db_lookup_value ||
-                   table_list->has_table_lookup_value)
-            extra.append(STRING_WITH_LEN("; Scanned 1 database"));
-          else
-            extra.append(STRING_WITH_LEN("; Scanned all databases"));
-        }
         if (need_tmp_table)
         {
           need_tmp_table=0;

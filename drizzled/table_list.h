@@ -126,8 +126,7 @@ public:
     is_alias(false),
     is_fqtn(false),
     has_db_lookup_value(false),
-    has_table_lookup_value(false),
-    table_open_method(0)
+    has_table_lookup_value(false)
   {}
 
   /**
@@ -246,7 +245,6 @@ public:
 
   bool has_db_lookup_value;
   bool has_table_lookup_value;
-  uint32_t table_open_method;
   enum enum_schema_table_state schema_table_state;
 
   void set_underlying_merge();

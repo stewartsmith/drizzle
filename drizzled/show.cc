@@ -1600,44 +1600,6 @@ static int fill_schema_table_names(Session *session, Table *table,
 
 
 /**
-  @brief          Get open table method
-
-  @details        The function calculates the method which will be used
-                  for table opening:
-                  SKIP_OPEN_TABLE - do not open table
-                  OPEN_FRM_ONLY   - open FRM cursor only
-                  OPEN_FULL_TABLE - open FRM, data, index files
-  @param[in]      tables               I_S table table_list
-  @param[in]      schema_table         I_S table struct
-
-  @return         return a set of flags
-    @retval       SKIP_OPEN_TABLE | OPEN_FRM_ONLY | OPEN_FULL_TABLE
-*/
-
-static uint32_t get_table_open_method(TableList *tables,
-                                      plugin::InfoSchemaTable *schema_table)
-{
-  /*
-    determine which method will be used for table opening
-  */
-  if (schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
-  {
-    Field **ptr, *field;
-    int table_open_method= 0, field_indx= 0;
-    for (ptr= tables->table->field; (field= *ptr) ; ptr++)
-    {
-      if (field->isReadSet())
-        table_open_method|= schema_table->getColumnOpenMethod(field_indx);
-      field_indx++;
-    }
-    return table_open_method;
-  }
-  /* I_S tables which use get_all_tables but can not be optimized */
-  return (uint32_t) OPEN_FULL_TABLE;
-}
-
-
-/**
   @brief          Fill I_S tables whose data are retrieved
                   from frm files and storage engine
 
@@ -1673,7 +1635,6 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
   int error= 1;
   Open_tables_state open_tables_state_backup;
   Query_tables_list query_tables_list_backup;
-  uint32_t table_open_method;
   bool old_value= session->no_warnings_for_error;
 
   /*
@@ -1683,8 +1644,6 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
   */
   session->reset_n_backup_open_tables_state(&open_tables_state_backup);
 
-  tables->table_open_method= table_open_method=
-    get_table_open_method(tables, schema_table);
   /*
     this branch processes SHOW FIELDS, SHOW INDEXES commands.
     see sql_parse.cc, prepare_schema_table() function where
