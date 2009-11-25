@@ -191,7 +191,7 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
      db                         Database name
      table_name                 Table name
      ext                        File extension.
-     flags                      FN_FROM_IS_TMP or FN_TO_IS_TMP or FN_IS_TMP
+     flags                      FN_FROM_IS_TMP or FN_TO_IS_TMP
                                 table_name is temporary, do not change.
 
   NOTES
