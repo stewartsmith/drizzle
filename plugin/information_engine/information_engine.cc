@@ -95,6 +95,11 @@ int InformationEngine::doGetTableDefinition(Session &,
       field_options->set_default_null(true);
       field_constraints->set_is_nullable(true);
     }
+    else
+    {
+      field_options->set_default_null(false);
+      field_constraints->set_is_nullable(false);
+    }
 
     if (column->getFlags() & MY_I_S_UNSIGNED)
     {
