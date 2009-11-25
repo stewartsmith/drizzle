@@ -1,18 +1,22 @@
-/* Copyright (C) 2005 MySQL AB
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; version 2 of the License.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #ifndef PLUGIN_INFORMATION_ENGINE_INFORMATION_CURSOR_H
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_CURSOR_H
@@ -36,14 +40,33 @@ public:
   ~InformationCursor() {}
 
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
-  /* The following defines can be increased if necessary */
+
   int open(const char *name, int mode, uint32_t test_if_locked);
+
   int close(void);
+
   int rnd_init(bool scan);
+
+  /* get the next row and copy it into buf */
   int rnd_next(unsigned char *buf);
-  int rnd_pos(unsigned char * buf, unsigned char *pos);
+
+  /* locate row pointed to by pos, copy it into buf */
+  int rnd_pos(unsigned char *buf, unsigned char *pos);
+
+  /* record position of a record for reordering */
   void position(const unsigned char *record);
+
   int info(uint32_t flag);
+
+  /**
+   * @todo: return the actual number of rows in the table.
+   * (e.g. save number of records seen on full table scan and/or use file size as upper bound)
+   */
+  ha_rows estimate_rows_upper_bound()
+  {
+    return HA_POS_ERROR;
+  }
+
   THR_LOCK_DATA **store_lock(Session *session,
                              THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);

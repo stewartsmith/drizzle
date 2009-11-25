@@ -110,7 +110,8 @@ vector<const plugin::ColumnInfo *> *ColumnsIS::createColumns()
                                             OPEN_FRM_ONLY));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_DEFAULT",
-                                            MAX_FIELD_VARCHARLENGTH,
+                                            64,
+                                            //MAX_FIELD_VARCHARLENGTH,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
@@ -182,7 +183,8 @@ vector<const plugin::ColumnInfo *> *ColumnsIS::createColumns()
                                             OPEN_FRM_ONLY));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_TYPE",
-                                            65535,
+                                            64,
+                                            //65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
