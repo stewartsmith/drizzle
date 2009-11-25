@@ -593,7 +593,6 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
       uint32_t length= seg->length;
       unsigned char *pos= (unsigned char*) rec + seg->start;
 
-#ifdef HAVE_ISNAN
       if (seg->type == HA_KEYTYPE_DOUBLE)
       {
 	double nr;
@@ -605,7 +604,6 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
 	  continue;
 	}
       }
-#endif
       pos+= length;
       while (length--)
       {

@@ -249,9 +249,7 @@ plugin::StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
 
-#ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
-#endif
 
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
@@ -665,7 +663,6 @@ err:
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-#ifdef HAVE_INITGROUPS
   /*
     We can get a SIGSEGV when calling initgroups() on some systems when NSS
     is configured to use LDAP and the server is statically linked.  We set
@@ -675,7 +672,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
   calling_initgroups= true;
   initgroups((char*) user, user_info_arg->pw_gid);
   calling_initgroups= false;
-#endif
   if (setgid(user_info_arg->pw_gid) == -1)
   {
     sql_perror("setgid");
@@ -884,7 +880,6 @@ extern "C" void handle_segfault(int sig)
   fflush(stderr);
 #endif /* HAVE_STACKTRACE */
 
-#ifdef HAVE_INITGROUPS
   if (calling_initgroups)
     fprintf(stderr, _("\nThis crash occurred while the server was calling "
                       "initgroups(). This is\n"
@@ -897,7 +892,6 @@ extern "C" void handle_segfault(int sig)
                       "later when used with nscd), disable LDAP in your "
                       "nsswitch.conf, or use a\n"
                       "drizzled that is not statically linked.\n"));
-#endif
 
   if (thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
     fprintf(stderr,
@@ -968,18 +962,17 @@ static void init_signals(void)
     sigaction(SIGFPE, &sa, NULL);
   }
 
-#ifdef HAVE_GETRLIMIT
   if (test_flags.test(TEST_CORE_ON_SIGNAL))
   {
     /* Change limits so that we will get a core file */
     struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN, _("setrlimit could not change the size of core files "
-                          "to 'infinity';  We may not be able to generate a "
-                          "core file on signals"));
+        errmsg_printf(ERRMSG_LVL_WARN,
+                      _("setrlimit could not change the size of core files "
+                        "to 'infinity';  We may not be able to generate a "
+                        "core file on signals"));
   }
-#endif
   (void) sigemptyset(&set);
   my_sigset(SIGPIPE,SIG_IGN);
   sigaddset(&set,SIGPIPE);

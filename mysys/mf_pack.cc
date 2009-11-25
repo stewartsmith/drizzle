@@ -224,24 +224,20 @@ static char * expand_tilde(char * *path)
 {
   if (path[0][0] == FN_LIBCHAR)
     return home_dir;			/* ~/ expanded to home */
-#ifdef HAVE_GETPWNAM
-  {
-    char *str,save;
-    struct passwd *user_entry;
+  char *str,save;
+  struct passwd *user_entry;
 
-    if (!(str=strchr(*path,FN_LIBCHAR)))
-      str= strchr(*path, '\0');
-    save= *str; *str= '\0';
-    user_entry=getpwnam(*path);
-    *str=save;
-    endpwent();
-    if (user_entry)
-    {
-      *path=str;
-      return user_entry->pw_dir;
-    }
+  if (!(str=strchr(*path,FN_LIBCHAR)))
+    str= strchr(*path, '\0');
+  save= *str; *str= '\0';
+  user_entry=getpwnam(*path);
+  *str=save;
+  endpwent();
+  if (user_entry)
+  {
+    *path=str;
+    return user_entry->pw_dir;
   }
-#endif
   return NULL;
 }
 

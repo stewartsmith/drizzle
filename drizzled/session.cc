@@ -1135,11 +1135,7 @@ static File create_file(Session *session, char *path, file_exchange *exchange, I
   /* Create the file world readable */
   if ((file= my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
-#ifdef HAVE_FCHMOD
   (void) fchmod(file, 0666);			// Because of umask()
-#else
-  (void) chmod(path, 0666);
-#endif
   if (init_io_cache(cache, file, 0L, WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     my_close(file, MYF(0));

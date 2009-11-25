@@ -108,7 +108,6 @@ void my_end(int infoflag)
 
   if ((infoflag & MY_GIVE_INFO) || print_info)
   {
-#ifdef HAVE_GETRUSAGE
     struct rusage rus;
 #ifdef HAVE_purify
     /* Purify assumes that rus is uninitialized after getrusage call */
@@ -130,7 +129,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
 	      rus.ru_nswap, rus.ru_inblock, rus.ru_oublock,
 	      rus.ru_msgsnd, rus.ru_msgrcv, rus.ru_nsignals,
 	      rus.ru_nvcsw, rus.ru_nivcsw);
-#endif
   }
   else if (infoflag & MY_CHECK_ERROR)
   {

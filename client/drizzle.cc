@@ -2557,30 +2557,6 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
 
 /* for gnu readline */
 
-#ifndef HAVE_INDEX
-extern "C" {
-  extern char *index(const char *,int c),*rindex(const char *,int);
-
-  char *index(const char *s,int c)
-  {
-    for (;;)
-    {
-      if (*s == (char) c) return (char*) s;
-      if (!*s++) return NULL;
-    }
-  }
-
-  char *rindex(const char *s,int c)
-  {
-    register char *t;
-
-    t = NULL;
-    do if (*s == (char) c) t = (char*) s; while (*s++);
-    return (char*) t;
-  }
-}
-#endif
-
 
 static int reconnect(void)
 {

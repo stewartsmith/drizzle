@@ -114,10 +114,6 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 
 
   AC_CHECK_FUNCS( \
-    cuserid fchmod \
-    fpresetsticky fpsetmask fsync \
-    getpassphrase getpwnam \
-    getpwuid getrlimit getrusage index initgroups isnan \
     localtime_r log log2 gethrtime gmtime_r \
     madvise \
     mkstemp mlockall poll pread mmap mmap64 \
