@@ -18,26 +18,39 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   PANDORA_CXX_CSTDINT
   PANDORA_CXX_CINTTYPES
 
-  #--------------------------------------------------------------------
-  # Check for system header files
-  #--------------------------------------------------------------------
-  
+  AC_STRUCT_TM
+
+  AC_FUNC_ALLOCA
+  AC_FUNC_UTIME_NULL
+  AC_FUNC_VPRINTF
+
+  PANDORA_WORKING_FDATASYNC
+
+  AC_CHECK_FUNCS(\
+    gethrtime \
+    setupterm \
+    backtrace \
+    backtrace_symbols \
+    backtrace_symbols_fd)
+
+  AC_HEADER_STAT
   AC_HEADER_DIRENT
   AC_HEADER_STDC
   AC_HEADER_SYS_WAIT
   AC_HEADER_STDBOOL
+
   AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
   AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
   AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
   AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h)
-  AC_CHECK_HEADERS([curses.h term.h],[],[],[[
-    #ifdef HAVE_CURSES_H
-    # include <curses.h>
-    #endif
-  ]])
   AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
   AC_CHECK_HEADERS(sys/prctl.h ieeefp.h)
   AC_CHECK_HEADERS(execinfo.h)
+  AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
+   sys/ndir.h sys/select.h \
+   sys/mman.h termcap.h termio.h asm/termbits.h grp.h \
+   paths.h)
+
   
   #--------------------------------------------------------------------
   # Check for system libraries. Adds the library to $LIBS
@@ -72,31 +85,13 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
     #include <ieeefp.h>
   ])
 
-  dnl Checks for header files.
-  AC_CHECK_HEADERS(malloc.h)
-
-  dnl Checks for library functions.
-  AC_FUNC_ALLOCA
-
-  AC_CHECK_FUNCS(issetugid)
-
-  # Already-done: stdlib.h string.h unistd.h termios.h
-  AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
-   sys/ndir.h sys/select.h \
-   sys/mman.h termcap.h termio.h asm/termbits.h grp.h \
-   paths.h)
-
-  # Already-done: strcasecmp
-  AC_CHECK_FUNCS(lstat select)
-
-  dnl Checks for library functions.
-  AC_HEADER_STAT
-  AC_FUNC_UTIME_NULL
-  AC_FUNC_VPRINTF
-
-  AC_STRUCT_TM
+  AC_CHECK_HEADERS([curses.h term.h],[],[],[[
+    #ifdef HAVE_CURSES_H
+    # include <curses.h>
+    #endif
+  ]])
   AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
-  AC_CHECK_TYPES([uint, ulong])
+  AC_CHECK_TYPES([ulong])
 
   AC_LANG_PUSH([C++])
   AC_CHECK_HEADERS(cxxabi.h)
@@ -112,19 +107,5 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
               [Define to 1 if you have the `abi::__cxa_demangle' function.])
   ])
 
-
-  AC_CHECK_FUNCS( \
-    localtime_r log log2 gethrtime gmtime_r \
-    madvise \
-    mkstemp mlockall poll pread mmap mmap64 \
-    readlink \
-    realpath rename setupterm \
-    sigaction \
-    sigthreadmask \
-    snprintf strpbrk \
-    tell tempnam \
-    backtrace backtrace_symbols backtrace_symbols_fd)
-
-  PANDORA_WORKING_FDATASYNC
 
 ])

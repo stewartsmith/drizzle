@@ -318,14 +318,12 @@ static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symli
 
 #define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
 static SHOW_VAR fixed_vars[]= {
-  {"back_log",                (char*) &back_log,                    SHOW_INT},
-  {"language",                language,                             SHOW_CHAR},
-#ifdef HAVE_MLOCKALL
-  {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
-#endif
-  {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
-  {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
-  {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_INT},
+  {"back_log",                (char*) &back_log,                SHOW_INT},
+  {"language",                language,                         SHOW_CHAR},
+  {"locked_in_memory",	      (char*) &locked_in_memory,        SHOW_MY_BOOL},
+  {"pid_file",                (char*) pidfile_name,             SHOW_CHAR},
+  {"plugin_dir",              (char*) opt_plugin_dir,           SHOW_CHAR},
+  {"thread_stack",            (char*) &my_thread_stack_size,    SHOW_INT},
 };
 
 bool sys_var::check(Session *, set_var *var)

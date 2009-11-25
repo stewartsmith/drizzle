@@ -1506,7 +1506,7 @@ static int init_server_components(plugin::Registry &plugins)
     unireg_abort(1);
   }
 
-#if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
+#if defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())
   {
     if (setreuid((uid_t)-1, 0) == -1)
@@ -1575,7 +1575,7 @@ int main(int argc, char **argv)
 
   if ((user_info= check_user(drizzled_user)))
   {
-#if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
+#if defined(MCL_CURRENT)
     if (locked_in_memory) // getuid() == 0 here
       set_effective_user(user_info);
     else

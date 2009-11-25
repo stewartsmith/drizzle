@@ -52,7 +52,6 @@ const char* ListenDrizzleProtocol::getHost(void) const
 
 in_port_t ListenDrizzleProtocol::getPort(void) const
 {
-  struct servent *serv_ptr;
   char *env;
 
   if (port == 0)
