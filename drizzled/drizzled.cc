@@ -1384,8 +1384,7 @@ static int init_server_components(plugin::Registry &plugins)
   */
   if (table_cache_init())
     unireg_abort(1);
-  if (TableShare::cacheStart())
-    unireg_abort(1);
+  TableShare::cacheStart();
 
   setup_fpu();
   init_thr_lock();

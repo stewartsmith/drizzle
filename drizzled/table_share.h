@@ -400,7 +400,7 @@ public:
     return key_length;
   }
 
-  static bool cacheStart(void);
+  static void cacheStart(void);
   static void cacheStop(void);
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
