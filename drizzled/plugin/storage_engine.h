@@ -363,8 +363,8 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session& session, const char *path,
-                         const char *db, const char *table_name,
+  static int createTable(Session& session,
+                         drizzled::TableIdentifier &identifier,
                          bool update_create_info,
                          drizzled::message::Table& table_proto,
                          bool used= true);

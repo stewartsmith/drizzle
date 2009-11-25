@@ -578,9 +578,7 @@ int rea_create_table(Session *session,
   }
 
   if (plugin::StorageEngine::createTable(*session,
-                                         identifier.getPath(),
-                                         identifier.getDBName(),
-                                         identifier.getTableName(),
+                                         identifier,
                                          false, *table_proto))
     goto err_handler;
   return 0;

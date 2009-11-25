@@ -753,14 +753,14 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
 
    @todo refactor to remove goto
 */
-int plugin::StorageEngine::createTable(Session& session, const char *path,
-                                       const char *db, const char *table_name,
+int plugin::StorageEngine::createTable(Session& session,
+                                       TableIdentifier &identifier,
                                        bool update_create_info,
                                        drizzled::message::Table& table_proto, bool proto_used)
 {
   int error= 1;
   Table table;
-  TableShare share(db, 0, table_name, path);
+  TableShare share(identifier.getDBName(), 0, identifier.getTableName(), identifier.getPath());
   message::Table tmp_proto;
 
   if (proto_used)
@@ -809,7 +809,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
     char name_buff[FN_REFLEN];
     const char *table_name_arg;
 
-    table_name_arg= share.storage_engine->checkLowercaseNames(path, name_buff);
+    table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
 
     share.storage_engine->setTransactionReadWrite(session);
 
@@ -825,7 +825,7 @@ err2:
   if (error)
   {
     char name_buff[FN_REFLEN];
-    sprintf(name_buff,"%s.%s",db,table_name);
+    sprintf(name_buff,"%s.%s", identifier.getDBName(), identifier.getTableName());
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:
