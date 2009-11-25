@@ -70,15 +70,98 @@ class ChangeProtectedFile(object):
           pass
 
 
+def write_external_configure(plugin, plugin_file):
+  """Write the initial bits of the configure.ac file"""
+  if not os.path.exists('m4'):
+    os.mkdir('m4')
+  plugin_file.write("""
+AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
+AC_INIT([%(name)s],[%(version)s],[%(url)s])
+AC_CONFIG_SRCDIR([%(main_source)s])
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42)
+
+PANDORA_REQUIRE_LIBPROTOBUF
+PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
+PANDORA_REQUIRE_PROTOC
+
+AC_LANG_PUSH(C++)
+PANDORA_REQUIRE_PTHREAD
+PANDORA_REQUIRE_LIBDL
+AC_LANG_POP
+
+PANDORA_USE_BETTER_MALLOC
+
+PANDORA_DRIZZLE_BUILD
+""" % plugin)
+
+  write_plugin_ac(plugin, plugin_file)
+
+  plugin_file.write("""
+AC_CONFIG_FILES(Makefile)
+
+AC_OUTPUT
+
+echo "---"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION $PANDORA_RELEASE_COMMENT"
+echo ""
+echo "   * Installation prefix:       $prefix"
+echo "   * System type:               $host_vendor-$host_os"
+echo "   * Host CPU:                  $host_cpu"
+echo "   * C Compiler:                $CC_VERSION"
+echo "   * C++ Compiler:              $CXX_VERSION"
+echo "   * Debug enabled:             $with_debug"
+echo "   * Warnings as failure:       $ac_cv_warnings_as_errors"
+echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
+echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
+echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
+echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
+echo ""
+echo "---"
+
+  """ % plugin)
+
+def write_external_makefile(plugin, plugin_file):
+
+  plugin_file.write("""
+ACLOCAL_AMFLAGS = -I m4 --force
+VERSION=$(PANDORA_RELEASE_VERSION)
+
+pkgplugindir=$(libdir)/drizzle/plugin
+EXTRA_DIST = %(rel_path)s/plugin.ini
+  """ % plugin)
+  if plugin['headers'] != "":
+    plugin_file.write("noinst_HEADERS = %(headers)s\n" % plugin)
+  if plugin['testsuite']:
+    if plugin.has_key('testsuitedir') and plugin['testsuitedir'] != "":
+      plugin_file.write("EXTRA_DIST += %(rel_path)s/%(testsuitedir)s\n" % plugin)
+  plugin_file.write("""
+pkgplugin_LTLIBRARIES=lib%(name)s_plugin.la
+lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s
+lib%(name)s_plugin_la_LIBADD=%(libs)s
+lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
+lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
+lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
+lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
+
+lib%(name)s_plugin_la_SOURCES=%(sources)s
+""" % plugin)
+  plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
+  if os.path.exists(plugin_am_file):
+    plugin_file.write('include %s\n' % plugin_am_file)
+
 def write_external_plugin():
   """Return True if the plugin had changed."""
   plugin = read_plugin_ini('.')
   expand_plugin_ini(plugin, '.')
-  plugin_file = ChangeProtectedFile('pandora-plugin.ac')
-  write_plugin_ac(plugin, plugin_file)
+  plugin_file = ChangeProtectedFile('configure.ac')
+  write_external_configure(plugin, plugin_file)
   result = plugin_file.close()
-  plugin_file = ChangeProtectedFile('pandora-plugin.am')
-  write_plugin_am(plugin, plugin_file)
+  plugin_file = ChangeProtectedFile('Makefile.am')
+  write_external_makefile(plugin, plugin_file)
   # Write some stub configure.ac and Makefile.am files that include the above
   result = plugin_file.close() or result
   return result
@@ -132,9 +215,12 @@ AS_IF([test %(build_conditional)s],
       [with_%(name)s_plugin=no])
   """ % plugin)
   plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
-  plugin_ac.write("""
+  if not plugin['unconditional']:
+    plugin_ac.write("""
 AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
+    """ % plugin)
+  plugin_ac.write("""
 AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
   """ % plugin)
@@ -158,6 +244,10 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
 
 
 def expand_plugin_ini(plugin, plugin_dir):
+    if plugin_dir == ".":
+      plugin['unconditional']=True
+    else:
+      plugin['unconditional']=False
     plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
     # TODO: determine path to plugin dir relative to top_srcdir... append it to
     # source files if they don't already have it
@@ -168,7 +258,9 @@ def expand_plugin_ini(plugin, plugin_dir):
       if not src.startswith(plugin['rel_path']):
         src= os.path.join(plugin['rel_path'], src)
         new_sources= "%s %s" % (new_sources, src)
-    plugin['sources']= new_sources
+    if new_sources != "":
+      plugin['sources']= new_sources
+    plugin['main_source']= plugin['sources'].split()[0]
     
     new_headers=""
     for header in plugin['headers'].split():
@@ -205,7 +297,17 @@ def read_plugin_ini(plugin_dir):
     parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
     parser.read(plugin_file)
     plugin=dict(parser.items('plugin'))
-    plugin['name']= os.path.basename(plugin_dir)
+    if not plugin.has_key('name'):
+      plugin['name']= os.path.basename(plugin_dir)
+    if plugin_dir == '.':
+      if not plugin.has_key('url'):
+        print "External Plugins are required to specifiy a url"
+        plugin['url']= 'http://launchpad.net/%(name)s' % plugin
+        sys.exit(1)
+      if plugin_dir == '.' and not plugin.has_key('version'):
+        print "External Plugins are required to specifiy a version"
+        sys.exit(1)
+   
     if plugin.has_key('load_by_default'):
       plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
     else:
@@ -314,7 +416,7 @@ if not os.path.exists("config/pandora-plugin.am") or "write" in actions:
 # plugin.list: datestamp preserved list
 ${srcdir}/config/plugin.list: .plugin.scan
 .plugin.scan:
-	@cd ${top_srcdir} && python config/register_plugins.py plugin-list
+	@cd ${top_srcdir} && python config/pandora-plugin plugin-list
 
 # Plugins affect configure; so to prevent configure running twice in a tarball
 # build (once up front, once with the right list of plugins, we ship the
@@ -323,7 +425,7 @@ ${srcdir}/config/plugin.list: .plugin.scan
 EXTRA_DIST += \
 	config/pandora-plugin.am \
 	config/pandora-plugin.ac \
-	config/register_plugins.py
+	config/pandora-plugin
 
 
 # Seed the list of plugin LDADDS which plugins may extend.
@@ -350,10 +452,10 @@ else:
   plugin_list_file.close()
 
 if not os.path.exists("config/pandora-plugin.am") or 'write' in actions:
-  plugin_am_file.write("\nconfig/pandora-plugin.am: ${top_srcdir}/config/plugin.list ${top_srcdir}/config/register_plugins.py ")
+  plugin_am_file.write("\nconfig/pandora-plugin.am: ${top_srcdir}/config/plugin.list ${top_srcdir}/config/pandora-plugin ")
   for plugin_dir in plugin_list:
     plugin_am_file.write("\\\n\t%s/plugin.ini " % plugin_dir)
-  plugin_am_file.write("\n\tcd ${top_srcdir} && python config/register_plugins.py write\n")
+  plugin_am_file.write("\n\tcd ${top_srcdir} && python config/pandora-plugin write\n")
   for plugin_dir in plugin_list:
     write_plugin(plugin_dir)
 

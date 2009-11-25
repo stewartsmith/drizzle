@@ -93,7 +93,7 @@ struct hash {
 template <>
 struct hash<const char*> {
   // Dummy, just to make derivative hash functions compile.
-  int operator()(const char* key) {
+  int operator()(const char*) {
     assert(0);
     return 0;
   }
