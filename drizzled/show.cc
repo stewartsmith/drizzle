@@ -1638,69 +1638,6 @@ static uint32_t get_table_open_method(TableList *tables,
 
 
 /**
-  @brief          Fill I_S table with data from FRM cursor only
-
-  @param[in]      session                      thread Cursor
-  @param[in]      table                    Table struct for I_S table
-  @param[in]      schema_table             I_S table struct
-  @param[in]      db_name                  database name
-  @param[in]      table_name               table name
-
-  @return         Operation status
-    @retval       0           Table is processed and we can continue
-                              with new table
-    @retval       1           It's view and we have to use
-                              open_tables function for this table
-*/
-
-static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      plugin::InfoSchemaTable *schema_table,
-                                      LEX_STRING *db_name,
-                                      LEX_STRING *table_name)
-{
-  Table *table= tables->table;
-  TableShare *share;
-  Table tbl;
-  TableList table_list;
-  uint32_t res= 0;
-  int error;
-  char key[MAX_DBKEY_LENGTH];
-  uint32_t key_length;
-
-  memset(&tbl, 0, sizeof(Table));
-
-  table_list.table_name= table_name->str;
-  table_list.db= db_name->str;
-
-  key_length= table_list.create_table_def_key(key);
-  pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
-  share= TableShare::getShare(session, &table_list, key, key_length, 0, &error);
-  if (!share)
-  {
-    res= 0;
-    goto err;
-  }
-
-  {
-    tbl.s= share;
-    table_list.table= &tbl;
-    res= schema_table->processTable(session, &table_list, table,
-                                    res, db_name, table_name);
-  }
-  /* For the moment we just set everything to read */
-  table->setReadSet();
-
-  TableShare::release(share);
-
-err:
-  pthread_mutex_unlock(&LOCK_open);
-  session->clear_error();
-  return res;
-}
-
-
-
-/**
   @brief          Fill I_S tables whose data are retrieved
                   from frm files and storage engine
 
@@ -1829,38 +1766,18 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
 
       if (!partial_cond || partial_cond->val_int())
       {
-        /*
-          If table is I_S.tables and open_table_method is 0 (eg SKIP_OPEN)
-          we can skip table opening and we don't have lookup value for
-          table name or lookup value is wild string(table name list is
-          already created by make_table_name_list() function).
-        */
-        if (! table_open_method &&
-            schema_table->getTableName().compare("TABLES") == 0 &&
-            (! lookup_field_vals.table_value.length ||
-             lookup_field_vals.wild_table_value))
-        {
-          schema_table->addRow(table->record[0], table->s->reclength);
-          continue;
-        }
-
         /* SHOW Table NAMES command */
         if (schema_table->getTableName().compare("TABLE_NAMES") == 0)
         {
-          if (fill_schema_table_names(session, tables->table, *db_name,
-                                      *table_name, with_i_schema))
+          if (fill_schema_table_names(session, 
+                                      tables->table, 
+                                      *db_name,
+                                      *table_name, 
+                                      with_i_schema))
             continue;
         }
         else
         {
-          if (!(table_open_method & ~OPEN_FRM_ONLY) &&
-              !with_i_schema)
-          {
-            if (!fill_schema_table_from_frm(session, tables, schema_table, *db_name,
-                                            *table_name))
-              continue;
-          }
-
           LEX_STRING tmp_lex_string, orig_db_name;
           /*
             Set the parent lex of 'sel' because it is needed by
@@ -1869,9 +1786,13 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
           session->no_warnings_for_error= 1;
           sel.parent_lex= lex;
           /* db_name can be changed in make_table_list() func */
-          if (!session->make_lex_string(&orig_db_name, (*db_name)->str,
-                                        (*db_name)->length, false))
+          if (! session->make_lex_string(&orig_db_name, 
+                                         (*db_name)->str,
+                                         (*db_name)->length, 
+                                         false))
+          {
             goto err;
+          }
 
           if (make_table_list(session, &sel, *db_name, *table_name))
             goto err;
