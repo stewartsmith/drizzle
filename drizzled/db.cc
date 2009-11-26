@@ -558,10 +558,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     if ((table_type == NULL
           && (plugin::StorageEngine::getTableDefinition(*session,
-                                                        identifier.getPath(),
-                                                        identifier.getDBName(),
-                                                        identifier.getTableName(),
-                                                        identifier.isTmp()) != EEXIST)))
+                                                        identifier) != EEXIST)))
     {
       // Table was not found on disk and table can't be created from engine
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,

@@ -338,7 +338,10 @@ public:
   static void removePlugin(plugin::StorageEngine *engine);
 
   static int getTableDefinition(Session& session,
-                                const char* path, 
+                                TableIdentifier &identifier,
+                                message::Table *table_proto= NULL);
+  static int getTableDefinition(Session& session,
+                                const char* path,
                                 const char *db,
                                 const char *table_name,
                                 const bool is_tmp,

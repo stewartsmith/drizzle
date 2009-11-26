@@ -605,6 +605,15 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   or any dropped tables that need to be removed from disk
 */
 int plugin::StorageEngine::getTableDefinition(Session& session,
+                                              TableIdentifier &identifier,
+                                              message::Table *table_proto)
+{
+  return getTableDefinition(session,
+                            identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
+                            table_proto);
+}
+
+int plugin::StorageEngine::getTableDefinition(Session& session,
                                               const char* path,
                                               const char *,
                                               const char *,
@@ -688,10 +697,7 @@ int plugin::StorageEngine::dropTable(Session& session,
   plugin::StorageEngine* engine;
 
   error_proto= plugin::StorageEngine::getTableDefinition(session,
-                                                         identifier.getPath(), 
-                                                         identifier.getDBName(),
-                                                         identifier.getTableName(),
-                                                         true,
+                                                         identifier,
                                                          &src_proto);
 
   engine= plugin::StorageEngine::findByName(session,

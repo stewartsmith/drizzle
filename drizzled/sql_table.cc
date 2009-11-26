@@ -1610,10 +1610,8 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && ! lex_identified_temp_table)
   {
-    if (plugin::StorageEngine::getTableDefinition(*session, identifier.getPath(),
-                                                  identifier.getDBName(),
-                                                  identifier.getTableName(),
-                                                  internal_tmp_table)==EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session,
+                                                  identifier)==EEXIST)
     {
       if (is_if_not_exists)
       {
@@ -1660,7 +1658,7 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             identifier.getDBName(), identifier.getTableName(), false);
 
-    int retcode= plugin::StorageEngine::getTableDefinition(*session, table_path, identifier.getDBName(), identifier.getTableName(), false);
+    int retcode= plugin::StorageEngine::getTableDefinition(*session,table_path, identifier.getDBName(), identifier.getTableName(), false);
     switch (retcode)
     {
       case ENOENT:
@@ -2370,10 +2368,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (! name_lock)
       goto table_exists;
 
-    if (plugin::StorageEngine::getTableDefinition(*session, destination_identifier.getPath(),
-                                                  destination_identifier.getDBName(),
-                                                  destination_identifier.getTableName(),
-                                                  false) == EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(*session,
+                                                  destination_identifier) == EEXIST)
       goto table_exists;
   }
 
