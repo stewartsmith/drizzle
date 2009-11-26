@@ -385,12 +385,6 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 {
   bool error, need_start_waiting= false;
 
-  if (tables && tables->schema_table)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
-  }
-
   /* mark for close and remove all cached entries */
 
   if (!drop_temporary)
@@ -2470,14 +2464,18 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
      * error. This should go away soon.
      * @todo make this go away!
      */
-    if (! is_engine_set && src_table->schema_table)
+    if (! is_engine_set)
     {
-      pthread_mutex_unlock(&LOCK_open);
-      my_error(ER_ILLEGAL_HA_CREATE_OPTION,
-               MYF(0),
-               "INFORMATION_ENGINE",
-               "TEMPORARY");
-      goto err;
+      string i_s_prefix("./information_schema/");
+      if (i_s_prefix.compare(0, i_s_prefix.length(), src_path) == 0)
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        my_error(ER_ILLEGAL_HA_CREATE_OPTION,
+                 MYF(0),
+                 "INFORMATION_ENGINE",
+                 "TEMPORARY");
+        goto err;
+      }
     }
 
     protoerr= plugin::StorageEngine::getTableDefinition(*session,

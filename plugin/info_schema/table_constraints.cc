@@ -153,7 +153,8 @@ static bool store_constraints(Table *table,
                               const char *key_name,
                               uint32_t key_len, 
                               const char *con_type, 
-                              uint32_t con_len)
+                              uint32_t con_len,
+                              plugin::InfoSchemaTable *schema_table)
 {
   const CHARSET_INFO * const cs= system_charset_info;
   table->restoreRecordAsDefault();
@@ -167,12 +168,11 @@ static bool store_constraints(Table *table,
   table->field[3]->store(db_name->str, db_name->length, cs);
   table->field[4]->store(table_name->str, table_name->length, cs);
   table->field[5]->store(con_type, con_len, cs);
-  TableList *tmp= table->pos_in_table_list;
-  tmp->schema_table->addRow(table->record[0], table->s->reclength);
+  schema_table->addRow(table->record[0], table->s->reclength);
   return false;
 }
 
-int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
+int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *store_table,
                                           Session *session, 
                                           TableList *tables,
                                           Table *table, 
@@ -215,7 +215,8 @@ int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
                               table_name, 
                               key_info->name,
                               strlen(key_info->name),
-                              STRING_WITH_LEN("PRIMARY KEY")))
+                              STRING_WITH_LEN("PRIMARY KEY"),
+                              store_table))
         {
           return 1;
         }
@@ -227,7 +228,8 @@ int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
                               table_name, 
                               key_info->name,
                               strlen(key_info->name),
-                              STRING_WITH_LEN("UNIQUE")))
+                              STRING_WITH_LEN("UNIQUE"),
+                              store_table))
         {
           return 1;
         }
@@ -244,7 +246,8 @@ int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
                             table_name,
                             f_key_info->forein_id->str,
                             strlen(f_key_info->forein_id->str),
-                            "FOREIGN KEY", 11))
+                            "FOREIGN KEY", 11,
+                            store_table))
       {
         return 1;
       }

@@ -61,9 +61,11 @@ typedef struct st_lookup_field_values
 } LOOKUP_FIELD_VALUES;
 
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
-                                  LOOKUP_FIELD_VALUES *lookup_field_vals);
+                                  LOOKUP_FIELD_VALUES *lookup_field_vals,
+                                  drizzled::plugin::InfoSchemaTable *schema_table);
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
-                             LOOKUP_FIELD_VALUES *lookup_field_values);
+                             LOOKUP_FIELD_VALUES *lookup_field_values,
+                             drizzled::plugin::InfoSchemaTable *schema_table);
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 SHOW_VAR *getFrontOfStatusVars();

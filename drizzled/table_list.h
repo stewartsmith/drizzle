@@ -57,8 +57,6 @@ struct nested_join_st;
  *    (TableList::derived == NULL)
  *    - subquery - TableList::table is a temp table
  *    (TableList::derived != NULL)
- *    - information schema table
- *    (TableList::schema_table != NULL)
  *    
  *    @note
  *
@@ -86,7 +84,6 @@ public:
     db(NULL),
     alias(NULL),
     table_name(NULL),
-    schema_table_name(NULL),
     option(NULL),
     on_expr(NULL),
     table(NULL),
@@ -106,9 +103,7 @@ public:
     index_hints(NULL),
     derived_result(NULL),
     derived(NULL),
-    schema_table(NULL),
     schema_select_lex(NULL),
-    schema_table_param(NULL),
     select_lex(NULL),
     next_leaf(NULL),
     outer_join(0),
@@ -143,7 +138,6 @@ public:
   char *db;
   const char *alias;
   char *table_name;
-  char *schema_table_name;
   char *option; ///< Used by cache index
   Item *on_expr; ///< Used with outer join
   Table *table; ///< opened table
@@ -210,9 +204,7 @@ public:
    */
   select_union *derived_result;
   Select_Lex_Unit *derived; ///< Select_Lex_Unit of derived table */
-  drizzled::plugin::InfoSchemaTable *schema_table; ///< Information_schema table
   Select_Lex *schema_select_lex;
-  Tmp_Table_Param *schema_table_param;
   /** link to select_lex where this table was used */
   Select_Lex *select_lex;
   /**

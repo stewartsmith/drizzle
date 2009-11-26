@@ -226,10 +226,7 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
   if (session->client->sendFields(&field_list))
     return true;
   {
-    if (table_list->schema_table)
-      session->client->store(table_list->schema_table->getTableName().c_str());
-    else
-      session->client->store(table_list->table->alias);
+    session->client->store(table_list->table->alias);
   }
 
   session->client->store(buffer.ptr(), buffer.length());
@@ -453,10 +450,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
   if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  if (table_list->schema_table)
-    alias= table_list->schema_table->getTableName().c_str();
-  else
-    alias= share->table_name.str;
+  alias= share->table_name.str;
 
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
@@ -1042,9 +1036,9 @@ static int make_table_list(Session *session, Select_Lex *sel,
 
 static bool get_lookup_value(Session *session, Item_func *item_func,
                              TableList *table,
-                             LOOKUP_FIELD_VALUES *lookup_field_vals)
+                             LOOKUP_FIELD_VALUES *lookup_field_vals,
+                             plugin::InfoSchemaTable *schema_table)
 {
-  plugin::InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
     schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
   const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1123,7 +1117,8 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
 */
 
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
-                                  LOOKUP_FIELD_VALUES *lookup_field_vals)
+                                  LOOKUP_FIELD_VALUES *lookup_field_vals,
+                                  plugin::InfoSchemaTable *schema_table)
 {
   if (!cond)
     return 0;
@@ -1138,12 +1133,12 @@ bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table
       {
         if (item->type() == Item::FUNC_ITEM)
         {
-          if (get_lookup_value(session, (Item_func*)item, table, lookup_field_vals))
+          if (get_lookup_value(session, (Item_func*)item, table, lookup_field_vals, schema_table))
             return 1;
         }
         else
         {
-          if (calc_lookup_values_from_cond(session, item, table, lookup_field_vals))
+          if (calc_lookup_values_from_cond(session, item, table, lookup_field_vals, schema_table))
             return 1;
         }
       }
@@ -1151,20 +1146,20 @@ bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table
     return 0;
   }
   else if (cond->type() == Item::FUNC_ITEM &&
-           get_lookup_value(session, (Item_func*) cond, table, lookup_field_vals))
+           get_lookup_value(session, (Item_func*) cond, table, lookup_field_vals, schema_table))
     return 1;
   return 0;
 }
 
 
-static bool uses_only_table_name_fields(Item *item, TableList *table)
+static bool uses_only_table_name_fields(Item *item, Table *table, plugin::InfoSchemaTable *schema_table)
 {
   if (item->type() == Item::FUNC_ITEM)
   {
     Item_func *item_func= (Item_func*)item;
     for (uint32_t i=0; i<item_func->argument_count(); i++)
     {
-      if (!uses_only_table_name_fields(item_func->arguments()[i], table))
+      if (! uses_only_table_name_fields(item_func->arguments()[i], table, schema_table))
         return 0;
     }
   }
@@ -1172,12 +1167,11 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    plugin::InfoSchemaTable *schema_table= table->schema_table;
     const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
     const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getSecondColumnIndex()).c_str() : "";
-    if (table->table != item_field->field->table ||
+    if (table != item_field->field->table ||
         (cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
                                (unsigned char *) item_field->field_name,
                                strlen(item_field->field_name), 0) &&
@@ -1187,7 +1181,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
       return 0;
   }
   else if (item->type() == Item::REF_ITEM)
-    return uses_only_table_name_fields(item->real_item(), table);
+    return uses_only_table_name_fields(item->real_item(), table, schema_table);
 
   if (item->type() == Item::SUBSELECT_ITEM && !item->const_item())
     return 0;
@@ -1196,7 +1190,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
 }
 
 
-static COND * make_cond_for_info_schema(COND *cond, TableList *table)
+static COND * make_cond_for_info_schema(COND *cond, Table *table, plugin::InfoSchemaTable *schema_table)
 {
   if (!cond)
     return (COND*) 0;
@@ -1207,38 +1201,38 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
       /* Create new top level AND item */
       Item_cond_and *new_cond=new Item_cond_and;
       if (!new_cond)
-	return (COND*) 0;
+        return (COND*) 0;
       List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
       {
-	Item *fix= make_cond_for_info_schema(item, table);
-	if (fix)
-	  new_cond->argument_list()->push_back(fix);
+        Item *fix= make_cond_for_info_schema(item, table, schema_table);
+        if (fix)
+          new_cond->argument_list()->push_back(fix);
       }
       switch (new_cond->argument_list()->elements) {
-      case 0:
-	return (COND*) 0;
-      case 1:
-	return new_cond->argument_list()->head();
-      default:
-	new_cond->quick_fix_field();
-	return new_cond;
+        case 0:
+          return (COND*) 0;
+        case 1:
+          return new_cond->argument_list()->head();
+        default:
+          new_cond->quick_fix_field();
+          return new_cond;
       }
     }
     else
     {						// Or list
       Item_cond_or *new_cond=new Item_cond_or;
       if (!new_cond)
-	return (COND*) 0;
+        return (COND*) 0;
       List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
       {
-	Item *fix=make_cond_for_info_schema(item, table);
-	if (!fix)
-	  return (COND*) 0;
-	new_cond->argument_list()->push_back(fix);
+        Item *fix=make_cond_for_info_schema(item, table, schema_table);
+        if (!fix)
+          return (COND*) 0;
+        new_cond->argument_list()->push_back(fix);
       }
       new_cond->quick_fix_field();
       new_cond->top_level_item();
@@ -1246,7 +1240,7 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
     }
   }
 
-  if (!uses_only_table_name_fields(cond, table))
+  if (! uses_only_table_name_fields(cond, table, schema_table))
     return (COND*) 0;
   return cond;
 }
@@ -1271,7 +1265,8 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
 */
 
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
-                             LOOKUP_FIELD_VALUES *lookup_field_values)
+                             LOOKUP_FIELD_VALUES *lookup_field_values,
+                             plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -1301,7 +1296,7 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
       The "default" is for queries over I_S.
       All previous cases handle SHOW commands.
     */
-    return calc_lookup_values_from_cond(session, cond, tables, lookup_field_values);
+    return calc_lookup_values_from_cond(session, cond, tables, lookup_field_values, schema_table);
   }
 }
 
@@ -1571,7 +1566,8 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
 
 static int fill_schema_table_names(Session *session, Table *table,
                                    LEX_STRING *db_name, LEX_STRING *table_name,
-                                   bool with_i_schema)
+                                   bool with_i_schema,
+                                   plugin::InfoSchemaTable *schema_table)
 {
   if (with_i_schema)
   {
@@ -1593,8 +1589,7 @@ static int fill_schema_table_names(Session *session, Table *table,
       return 0;
     }
   }
-  TableList *tmp= table->pos_in_table_list;
-  tmp->schema_table->addRow(table->record[0], table->s->reclength);
+  schema_table->addRow(table->record[0], table->s->reclength);
   return 0;
 }
 
@@ -1656,7 +1651,11 @@ int plugin::InfoSchemaMethods::fillTable(Session *session,
     goto err;
   }
 
-  if (get_lookup_field_values(session, cond, table->pos_in_table_list, &lookup_field_vals))
+  if (get_lookup_field_values(session, 
+                              cond, 
+                              table->pos_in_table_list, 
+                              &lookup_field_vals,
+                              schema_table))
   {
     error= 0;
     goto err;
@@ -1688,7 +1687,7 @@ int plugin::InfoSchemaMethods::fillTable(Session *session,
       table->pos_in_table_list->has_table_lookup_value)
     partial_cond= 0;
   else
-    partial_cond= make_cond_for_info_schema(cond, table->pos_in_table_list);
+    partial_cond= make_cond_for_info_schema(cond, table, schema_table);
 
   if (lex->describe)
   {
@@ -1733,7 +1732,8 @@ int plugin::InfoSchemaMethods::fillTable(Session *session,
                                       table, 
                                       *db_name,
                                       *table_name, 
-                                      with_i_schema))
+                                      with_i_schema,
+                                      schema_table))
             continue;
         }
         else
@@ -1962,16 +1962,8 @@ int plugin::InfoSchemaMethods::processTable(
   show_table_share= show_table->s;
   count= 0;
 
-  if (tables->schema_table)
-  {
-    ptr= show_table->field;
-    timestamp_field= show_table->timestamp_field;
-  }
-  else
-  {
-    ptr= show_table_share->field;
-    timestamp_field= show_table_share->timestamp_field;
-  }
+  ptr= show_table_share->field;
+  timestamp_field= show_table_share->timestamp_field;
 
   /* For the moment we just set everything to read */
   if (!show_table->read_set)

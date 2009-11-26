@@ -294,14 +294,7 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
       there was errors during opening tables
     */
     const char *error= session->is_error() ? session->main_da.message() : "";
-    if (tables->schema_table)
-    {
-      table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
-    }
-    else
-    {
-      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
-    }
+    table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
     table->field[20]->store(error, strlen(error), cs);
     session->clear_error();
   }
@@ -407,11 +400,8 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
         break;
       }
       table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
-      if (! tables->schema_table)
-      {
-        table->field[7]->store((int64_t) cursor->stats.records, true);
-        table->field[7]->set_notnull();
-      }
+      table->field[7]->store((int64_t) cursor->stats.records, true);
+      table->field[7]->set_notnull();
       table->field[8]->store((int64_t) cursor->stats.mean_rec_length, true);
       table->field[9]->store((int64_t) cursor->stats.data_file_length, true);
       if (cursor->stats.max_data_file_length)

@@ -2266,39 +2266,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 
 
 /**
-  Create field for information schema table.
-
-  @param session		Thread Cursor
-  @param table		Temporary table
-  @param item		Item to create a field for
-
-  @retval
-    0			on error
-  @retval
-    new_created field
-*/
-
-static Field *create_tmp_field_for_schema(Item *item, Table *table)
-{
-  if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
-  {
-    Field *field;
-    if (item->max_length > MAX_FIELD_VARCHARLENGTH)
-      field= new Field_blob(item->max_length, item->maybe_null,
-                            item->name, item->collation.collation);
-    else
-      field= new Field_varstring(item->max_length, item->maybe_null,
-                                 item->name,
-                                 table->s, item->collation.collation);
-    if (field)
-      field->init(table);
-    return field;
-  }
-  return item->tmp_table_field_from_field_type(table, 0);
-}
-
-
-/**
   Create a temp table according to a field list.
 
   Given field pointers are changed to point at tmp_table for
@@ -2562,8 +2529,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	We here distinguish between UNION and multi-table-updates by the fact
 	that in the later case group is set to the row pointer.
       */
-      Field *new_field= (param->schema_table) ?
-        create_tmp_field_for_schema(item, table) :
+      Field *new_field= 
         create_tmp_field(session, table, item, type, &copy_func,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,

@@ -173,7 +173,11 @@ int SchemataISMethods::fillTable(Session *session,
   /* the WHERE condition */
   COND *cond= table->reginfo.join_tab->select_cond;
 
-  if (get_lookup_field_values(session, cond, table->pos_in_table_list, &lookup_field_vals))
+  if (get_lookup_field_values(session, 
+                              cond, 
+                              table->pos_in_table_list, 
+                              &lookup_field_vals,
+                              schema_table))
   {
     return 0;
   }

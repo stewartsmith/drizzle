@@ -6655,7 +6655,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     {
       JoinTable *tab=join->join_tab+i;
       Table *table=tab->table;
-      TableList *table_list= tab->table->pos_in_table_list;
       char buff[512];
       char buff1[512], buff2[512], buff3[512];
       char keylen_str_buf[64];
@@ -6772,72 +6771,38 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        if (table_list->schema_table && 
-            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
-        {
-          if (table_list->has_db_lookup_value)
-          {
-            int f_idx= table_list->schema_table->getFirstColumnIndex();
-            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
-            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
-          }
-          if (table_list->has_table_lookup_value)
-          {
-            if (table_list->has_db_lookup_value)
-              tmp2.append(',');
-            int f_idx= table_list->schema_table->getSecondColumnIndex();
-            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
-            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
-          }
-          if (tmp2.length())
-            item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
-          else
-            item_list.push_back(item_null);
-        }
-        else
-          item_list.push_back(item_null);
+        item_list.push_back(item_null);
 	item_list.push_back(item_null);
 	item_list.push_back(item_null);
       }
 
       /* Add "rows" field to item_list. */
-      if (table_list->schema_table)
-      {
-        /* in_rows */
-        if (join->session->lex->describe & DESCRIBE_EXTENDED)
-          item_list.push_back(item_null);
-        /* rows */
-        item_list.push_back(item_null);
-      }
+      double examined_rows;
+      if (tab->select && tab->select->quick)
+        examined_rows= rows2double(tab->select->quick->records);
+      else if (tab->type == AM_NEXT || tab->type == AM_ALL)
+        examined_rows= rows2double(tab->limit ? tab->limit :
+            tab->table->cursor->records());
       else
       {
-        double examined_rows;
-        if (tab->select && tab->select->quick)
-          examined_rows= rows2double(tab->select->quick->records);
-        else if (tab->type == AM_NEXT || tab->type == AM_ALL)
-          examined_rows= rows2double(tab->limit ? tab->limit :
-                                     tab->table->cursor->records());
-        else
+        optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
+        examined_rows= cur_pos.getFanout();
+      }
+
+      item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
+            MY_INT64_NUM_DECIMAL_DIGITS));
+
+      /* Add "filtered" field to item_list. */
+      if (join->session->lex->describe & DESCRIBE_EXTENDED)
+      {
+        float f= 0.0;
+        if (examined_rows)
         {
           optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
-          examined_rows= cur_pos.getFanout();
+          f= (float) (100.0 * cur_pos.getFanout() /
+              examined_rows);
         }
-
-        item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
-                                         MY_INT64_NUM_DECIMAL_DIGITS));
-
-        /* Add "filtered" field to item_list. */
-        if (join->session->lex->describe & DESCRIBE_EXTENDED)
-        {
-          float f= 0.0;
-          if (examined_rows)
-          {
-            optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
-            f= (float) (100.0 * cur_pos.getFanout() /
-                        examined_rows);
-          }
-          item_list.push_back(new Item_float(f, 2));
-        }
+        item_list.push_back(new Item_float(f, 2));
       }
 
       /* Build "Extra" field and add it to item_list. */

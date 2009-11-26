@@ -274,7 +274,8 @@ int
 fill_innodb_trx_from_cache(
 /*=======================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
-	Table*			table)	/*!< in/out: fill this table */
+	Table*			table,	/*!< in/out: fill this table */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -340,9 +341,8 @@ fill_innodb_trx_from_cache(
 		OK(field_store_string(fields[IDX_TRX_QUERY],
 				      row->trx_query));
 
-                TableList *tmp_tbl_list= table->pos_in_table_list;
-                tmp_tbl_list->schema_table->addRow(table->record[0],
-                                                   table->s->reclength);
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(0);
@@ -462,7 +462,8 @@ fill_innodb_locks_from_cache(
 /*=========================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
 	Session*		session,/*!< in: MySQL client connection */
-	Table*			table)	/*!< in/out: fill this table */
+	Table*			table,	/*!< in/out: fill this table */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -552,9 +553,8 @@ fill_innodb_locks_from_cache(
 		OK(field_store_string(fields[IDX_LOCK_DATA],
 				      row->lock_data));
 
-                TableList *tmp_tbl_list= table->pos_in_table_list;
-                tmp_tbl_list->schema_table->addRow(table->record[0],
-                                                   table->s->reclength);
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(0);
@@ -624,7 +624,8 @@ int
 fill_innodb_lock_waits_from_cache(
 /*==============================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
-	Table*			table)	/*!< in/out: fill this table */
+	Table*			table,	/*!< in/out: fill this table */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -676,9 +677,8 @@ fill_innodb_lock_waits_from_cache(
 				   blocking_lock_id,
 				   sizeof(blocking_lock_id))));
 
-                TableList *tmp_tbl_list= table->pos_in_table_list;
-                tmp_tbl_list->schema_table->addRow(table->record[0],
-                                                   table->s->reclength);
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(0);
@@ -750,7 +750,7 @@ TrxISMethods::fillTable(
 	if (innobase_strcasecmp(table_name, "innodb_trx") == 0) {
 
 		if (fill_innodb_trx_from_cache(
-			cache, table) != 0) {
+			cache, table, schema_table) != 0) {
 
 			ret = 1;
 		}
@@ -758,7 +758,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_locks") == 0) {
 
 		if (fill_innodb_locks_from_cache(
-			cache, session, table) != 0) {
+			cache, session, table, schema_table) != 0) {
 
 			ret = 1;
 		}
@@ -766,7 +766,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_lock_waits") == 0) {
 
 		if (fill_innodb_lock_waits_from_cache(
-			cache, table) != 0) {
+			cache, table, schema_table) != 0) {
 
 			ret = 1;
 		}

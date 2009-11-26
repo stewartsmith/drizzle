@@ -190,7 +190,7 @@ void KeyColumnUsageIS::cleanup()
   delete columns;
 }
 
-int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *,
+int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *store_table,
                                        Session *session,
                                        TableList *tables,
                                        Table *table, bool res,
@@ -234,7 +234,7 @@ int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *,
                                  key_part->field->field_name,
                                  strlen(key_part->field->field_name),
                                  (int64_t) f_idx);
-          tables->schema_table->addRow(table->record[0],
+          store_table->addRow(table->record[0],
                                        table->s->reclength);
         }
       }
@@ -277,7 +277,7 @@ int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *,
         table->field[11]->store(r_info->str, r_info->length,
                                 system_charset_info);
         table->field[11]->set_notnull();
-        tables->schema_table->addRow(table->record[0], table->s->reclength);
+        store_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

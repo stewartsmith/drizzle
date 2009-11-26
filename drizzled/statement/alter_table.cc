@@ -686,12 +686,6 @@ bool alter_table(Session *session,
 
   new_name_buff[0]= '\0';
 
-  if (table_list && table_list->schema_table)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
-
   session->set_proc_info("init");
 
   /*

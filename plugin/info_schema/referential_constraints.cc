@@ -184,7 +184,7 @@ void ReferentialConstraintsIS::cleanup()
 }
 
 int
-RefConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
+RefConstraintsISMethods::processTable(plugin::InfoSchemaTable *store_table,
                                       Session *session, 
                                       TableList *tables,
                                       Table *table, 
@@ -252,7 +252,7 @@ RefConstraintsISMethods::processTable(plugin::InfoSchemaTable *,
                              f_key_info->update_method->length, cs);
       table->field[8]->store(f_key_info->delete_method->str,
                              f_key_info->delete_method->length, cs);
-      tables->schema_table->addRow(table->record[0], table->s->reclength);
+      store_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;
