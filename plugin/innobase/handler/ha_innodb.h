@@ -147,7 +147,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN void position(const unsigned char *record);
 	UNIV_INTERN int info(uint);
 	UNIV_INTERN int analyze(Session* session);
-	UNIV_INTERN int optimize(Session* session);
 	UNIV_INTERN int discard_or_import_tablespace(bool discard);
 	UNIV_INTERN int extra(enum ha_extra_function operation);
         UNIV_INTERN int reset();

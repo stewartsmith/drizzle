@@ -60,7 +60,6 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
 
 extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
-const char *any_db="*any*";	// Special symbol for check_access
 
 const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Sleep") },
@@ -137,7 +136,6 @@ void init_update_queries(void)
     The following admin table operations are allowed
     on log tables.
   */
-  sql_command_flags[SQLCOM_OPTIMIZE]=         CF_WRITE_LOGS_COMMAND;
   sql_command_flags[SQLCOM_ANALYZE]=          CF_WRITE_LOGS_COMMAND;
 }
 

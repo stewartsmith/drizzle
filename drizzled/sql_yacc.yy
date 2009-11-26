@@ -108,7 +108,6 @@
 #include <drizzled/statement/insert_select.h>
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
-#include <drizzled/statement/optimize.h>
 #include <drizzled/statement/release_savepoint.h>
 #include <drizzled/statement/rename_table.h>
 #include <drizzled/statement/replace.h>
@@ -1009,7 +1008,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
-        show describe load alter optimize flush
+        show describe load alter flush
         begin commit rollback savepoint release
         analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
@@ -1079,7 +1078,7 @@ query:
             else
             {
               session->lex->sql_command= SQLCOM_EMPTY_QUERY;
-              session->lex->statement= 
+              session->lex->statement=
                 new(std::nothrow) statement::EmptyQuery(YYSession);
               if (session->lex->statement == NULL)
                 DRIZZLE_YYABORT;
@@ -1108,7 +1107,6 @@ statement:
         | insert
         | kill
         | load
-        | optimize
         | release
         | rename
         | replace
@@ -2589,20 +2587,6 @@ check:
 
             lex->sql_command = SQLCOM_CHECK;
             lex->statement= new(std::nothrow) statement::Check(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list
-          {}
-        ;
-
-optimize:
-          OPTIMIZE table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_OPTIMIZE;
-            statement::Optimize *statement= new(std::nothrow) statement::Optimize(YYSession);
-            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
