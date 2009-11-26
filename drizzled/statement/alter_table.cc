@@ -967,7 +967,7 @@ bool alter_table(Session *session,
   alter_info->build_method= HA_BUILD_OFFLINE;
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
-  
+ 
   /* Safety fix for innodb */
   my_casedn_str(files_charset_info, tmp_name);
 

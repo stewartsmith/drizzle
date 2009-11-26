@@ -2362,8 +2362,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   status_var_increment(session->status_var.created_tmp_tables);
 
   /* if we run out of slots or we are not using tempool */
-  sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-          session->thread_id, session->tmp_table++);
+  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+           session->thread_id, session->tmp_table++);
 
   /*
     No need to change table name to lower case as we are only creating
