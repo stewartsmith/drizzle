@@ -75,6 +75,7 @@
 #include "transaction_log_index.h"
 #include "info_schema.h"
 #include "print_transaction_message.h"
+#include "hexdump_transaction_message.h"
 #include "background_worker.h"
 
 #include <unistd.h>
@@ -124,7 +125,8 @@ extern plugin::InfoSchemaTable *transaction_log_transactions_view;
 extern TransactionLogIndex *transaction_log_index;
 
 /** Defined in print_transaction_message.cc */
-extern plugin::Create_function<PrintTransactionMessageFunction> *print_transaction_message_func;
+extern plugin::Create_function<PrintTransactionMessageFunction> *print_transaction_message_func_factory;
+extern plugin::Create_function<HexdumpTransactionMessageFunction> *hexdump_transaction_message_func_factory;
 
 TransactionLog::TransactionLog(string name_arg,
                                const string &in_log_file_path,
@@ -407,9 +409,13 @@ static int init(drizzled::plugin::Registry &registry)
     registry.add(transaction_log_transactions_view);
 
     /* Setup the module's UDFs */
-    print_transaction_message_func=
+    print_transaction_message_func_factory=
       new plugin::Create_function<PrintTransactionMessageFunction>("print_transaction_message");
-    registry.add(print_transaction_message_func);
+    registry.add(print_transaction_message_func_factory);
+
+    hexdump_transaction_message_func_factory=
+      new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
+    registry.add(hexdump_transaction_message_func_factory);
 
     /* Create and initialize the transaction log index */
     transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
@@ -459,8 +465,10 @@ static int deinit(drizzled::plugin::Registry &registry)
     cleanupViews();
 
     /* Cleanup module UDFs */
-    registry.remove(print_transaction_message_func);
-    delete print_transaction_message_func;
+    registry.remove(print_transaction_message_func_factory);
+    delete print_transaction_message_func_factory;
+    registry.remove(hexdump_transaction_message_func_factory);
+    delete hexdump_transaction_message_func_factory;
   }
 
   return 0;

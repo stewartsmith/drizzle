@@ -171,7 +171,7 @@ private:
   void clearError();
 
   int log_file; ///< Handle for our log file
-  enum Status state; ///< The state the log is in
+  Status state; ///< The state the log is in
   drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
   const std::string log_file_path; ///< Full path to the log file
   std::string log_file_name; ///< Name of the log file

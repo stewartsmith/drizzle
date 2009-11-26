@@ -25,7 +25,7 @@
 /**
  * @file
  *
- * Implements the PRINT_TRANSACTION_MESSAGE(filename, offset) UDF.
+ * Implements the HEXDUMP_TRANSACTION_MESSAGE(filename, offset) UDF.
  */
 
 #include <drizzled/server_includes.h>
@@ -33,11 +33,13 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
+#include <drizzled/hash/crc32.h>
 
 #include "transaction_log.h"
-#include "print_transaction_message.h"
+#include "hexdump_transaction_message.h"
 
 #include <drizzled/message/transaction.pb.h>
+#include <drizzled/util/convert.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -50,9 +52,9 @@ using namespace google;
 /** Defined in transaction_log.cc */
 extern TransactionLog *transaction_log;
 
-plugin::Create_function<PrintTransactionMessageFunction> *print_transaction_message_func_factory= NULL;
+plugin::Create_function<HexdumpTransactionMessageFunction> *hexdump_transaction_message_func_factory= NULL;
 
-void PrintTransactionMessageFunction::fix_length_and_dec()
+void HexdumpTransactionMessageFunction::fix_length_and_dec()
 {
   max_length= 2 * 1024 * 1024; /* 2MB size limit seems ok... */
   args[0]->collation.set(
@@ -60,7 +62,7 @@ void PrintTransactionMessageFunction::fix_length_and_dec()
                           MY_CS_BINSORT), DERIVATION_COERCIBLE);
 }
 
-String *PrintTransactionMessageFunction::val_str(String *str)
+String *HexdumpTransactionMessageFunction::val_str(String *str)
 {
   assert(fixed == true);
 
@@ -140,6 +142,18 @@ String *PrintTransactionMessageFunction::val_str(String *str)
     fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
   }
 
+  /*
+   * Convert raw bytes to a hex representation and store back into
+   * the return String.
+   */
+  string hexdump;
+  hexdump.reserve(message_size * 4);
+  bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), message_size);
+
+  /* 
+   * Check that the transaction message is actually not corrupt before
+   * printing out the raw byte representation of the transaction message...
+   */
   result= transaction_message.ParseFromArray(buffer, static_cast<int32_t>(message_size));
   if (result == false)
   {
@@ -148,20 +162,16 @@ String *PrintTransactionMessageFunction::val_str(String *str)
       fprintf(stderr, _("BUFFER: %s\n"), buffer);
   }
 
-  free(buffer);
-
-  string transaction_text;
-  protobuf::TextFormat::PrintToString(transaction_message, &transaction_text);
-
-  if (str->alloc(transaction_text.length()))
+  if (str->alloc(message_size * 4)) /* Hex representation is ~4 times number of bytes */
   {
     null_value= true;
     return NULL;
   }
 
-  str->length(transaction_text.length());
+  strncpy(str->ptr(), hexdump.c_str(), hexdump.length());
+  str->length(hexdump.length());
 
-  strncpy(str->ptr(), transaction_text.c_str(), transaction_text.length());
+  free(buffer);
 
   delete coded_input;
   delete file_input;
