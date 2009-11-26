@@ -2466,8 +2466,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
      */
     if (! is_engine_set)
     {
+      string tab_name(src_path);
       string i_s_prefix("./information_schema/");
-      if (i_s_prefix.compare(0, i_s_prefix.length(), src_path) == 0)
+      if (tab_name.compare(0, i_s_prefix.length(), i_s_prefix) == 0)
       {
         pthread_mutex_unlock(&LOCK_open);
         my_error(ER_ILLEGAL_HA_CREATE_OPTION,
