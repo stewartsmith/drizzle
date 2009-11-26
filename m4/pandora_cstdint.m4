@@ -4,7 +4,7 @@
 # HAVE_BOOST_CSTDINT depending
 # on location.
 
-AC_DEFUN([AC_CXX_CSTDINT],
+AC_DEFUN([PANDORA_CXX_CSTDINT],
   [AC_MSG_CHECKING(the location of cstdint)
    AC_LANG_PUSH(C++)
    ac_cv_cxx_cstdint=""
