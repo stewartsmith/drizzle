@@ -14,11 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
+
+#include <pwd.h>
+
 #include <mystrings/m_string.h>
 #include "my_static.h"
-#ifdef HAVE_PWD_H
-#include <pwd.h>
-#endif
 
 static char * expand_tilde(char * *path);
 static size_t system_filename(char * to, const char *from);

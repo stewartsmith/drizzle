@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     azio_stream reader_handle;
 
     if (method)
-      printf("Performing aio_read() test\n");
+      printf("Performing azio_read() test\n");
     else
       printf("Performing read() test\n");
 

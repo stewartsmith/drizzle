@@ -30,7 +30,7 @@
 #undef _FILE_OFFSET_BITS
 #endif
 
-#include <config.h>
+#include "config.h"
 
 #if defined(__cplusplus)
 
@@ -107,16 +107,9 @@
 
 #define _REENTRANT  1  /* Threads requires reentrant code */
 
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -220,16 +213,7 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 #error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"
 #endif
 
-#ifdef HAVE_FLOAT_H
 #include <float.h>
-#else
-#if !defined(FLT_MIN)
-#define FLT_MIN         ((float)1.40129846432481707e-45)
-#endif
-#if !defined(FLT_MAX)
-#define FLT_MAX         ((float)3.40282346638528860e+38)
-#endif
-#endif
 
 /* From limits.h instead */
 #ifndef DBL_MIN
@@ -237,9 +221,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 #endif
 #ifndef DBL_MAX
 #define DBL_MAX    1.79769313486231470e+308
-#endif
-#ifndef SIZE_T_MAX
-#define SIZE_T_MAX ~((size_t) 0)
 #endif
 
 

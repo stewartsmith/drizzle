@@ -84,12 +84,8 @@ extern "C" {					// Because of SCO 3.2V4.2
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
-#ifdef HAVE_PWD_H
 #include <pwd.h>				// For getpwent
-#endif
-#ifdef HAVE_GRP_H
 #include <grp.h>
-#endif
 
 #include <sys/resource.h>
 
@@ -109,9 +105,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
-#ifdef HAVE_FP_EXCEPT				// Fix type conflict
-typedef fp_except fp_except_t;
-#endif
 #endif /* __FreeBSD__ && HAVE_IEEEFP_H */
 
 #ifdef HAVE_FPU_CONTROL_H
@@ -1903,7 +1896,7 @@ struct my_option my_long_options[] =
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
    0, (GET_ULL),
-   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
+   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_MAX, MALLOC_OVERHEAD,
    IO_SIZE, 0},
   {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
    N_("This characterizes the number of hits a hot block has to be untouched "

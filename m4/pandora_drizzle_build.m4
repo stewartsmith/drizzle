@@ -39,17 +39,16 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   AC_HEADER_SYS_WAIT
   AC_HEADER_STDBOOL
 
-  AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
-  AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
-  AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
+  AC_CHECK_HEADERS(sys/fpu.h fpu_control.h ieeefp.h)
+  AC_CHECK_HEADERS(select.h sys/select.h)
+  AC_CHECK_HEADERS(utime.h sys/utime.h )
   AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h)
-  AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
-  AC_CHECK_HEADERS(sys/prctl.h ieeefp.h)
+  AC_CHECK_HEADERS(sched.h)
+  AC_CHECK_HEADERS(sys/prctl.h)
   AC_CHECK_HEADERS(execinfo.h)
-  AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
-   sys/ndir.h sys/select.h \
-   sys/mman.h termcap.h termio.h asm/termbits.h grp.h \
-   paths.h)
+  AC_CHECK_HEADERS(locale.h)
+  AC_CHECK_HEADERS(termcap.h termio.h termios.h asm/termbits.h)
+  AC_CHECK_HEADERS(paths.h)
 
   
   #--------------------------------------------------------------------
@@ -60,16 +59,8 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
   
   AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
-  AC_CHECK_FUNC(yp_get_default_domain, [],
-    [AC_CHECK_LIB(nsl, yp_get_default_domain)])
-  AC_CHECK_FUNC(p2open, [], [AC_CHECK_LIB(gen, p2open)])
   # This may get things to compile even if bind-8 is installed
   AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
-  # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
-  AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
-  
-  # Check rt for aio_read
-  AC_CHECK_LIB(rt, aio_read)
   
   # For the sched_yield() function on Solaris
   AC_CHECK_FUNC(sched_yield, [],
@@ -80,17 +71,11 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
     AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
   ])
   
-  AC_CHECK_TYPES([fp_except], [], [], [
-    #include <sys/types.h>
-    #include <ieeefp.h>
-  ])
-
   AC_CHECK_HEADERS([curses.h term.h],[],[],[[
     #ifdef HAVE_CURSES_H
     # include <curses.h>
     #endif
   ]])
-  AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
   AC_CHECK_TYPES([ulong])
 
   AC_LANG_PUSH([C++])
