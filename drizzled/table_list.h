@@ -245,7 +245,6 @@ public:
 
   bool has_db_lookup_value;
   bool has_table_lookup_value;
-  enum enum_schema_table_state schema_table_state;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
