@@ -678,8 +678,8 @@ handle_error(uint32_t ,
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int plugin::StorageEngine::dropTable(Session& session, const char *path,
-                                     const char *db, const char *alias,
+int plugin::StorageEngine::dropTable(Session& session,
+                                     TableIdentifier &identifier,
                                      bool generate_warning)
 {
   int error= 0;
@@ -688,9 +688,9 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
   plugin::StorageEngine* engine;
 
   error_proto= plugin::StorageEngine::getTableDefinition(session,
-                                                         path, 
-                                                         db,
-                                                         alias,
+                                                         identifier.getPath(), 
+                                                         identifier.getDBName(),
+                                                         identifier.getTableName(),
                                                          true,
                                                          &src_proto);
 
@@ -700,7 +700,7 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
   if (engine)
   {
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, path);
+    error= engine->doDropTable(session, identifier.getPath());
   }
 
   if (error != ENOENT)
@@ -708,9 +708,9 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
     if (error == 0)
     {
       if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-        delete_table_proto_file(path);
+        delete_table_proto_file(identifier.getPath());
       else
-        error= delete_table_proto_file(path);
+        error= delete_table_proto_file(identifier.getPath());
     }
   }
 

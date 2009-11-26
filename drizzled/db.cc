@@ -570,9 +570,9 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
     else
     {
-      error= plugin::StorageEngine::dropTable(*session, identifier.getPath(), 
-                                              identifier.getDBName(), 
-                                              identifier.getTableName(), false);
+      error= plugin::StorageEngine::dropTable(*session,
+                                              identifier,
+                                              false);
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
       {

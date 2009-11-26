@@ -462,6 +462,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       /* remove .frm cursor and engine files */
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
 
     if (drop_temporary ||
         ((table_type == NULL
@@ -481,8 +482,9 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     else
     {
-      error= plugin::StorageEngine::dropTable(*session, path, db,
-                                              table->table_name, true);
+      error= plugin::StorageEngine::dropTable(*session,
+                                              identifier,
+                                              true);
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
@@ -553,13 +555,11 @@ err_with_placeholders:
 bool quick_rm_table(Session& session, const char *db,
                     const char *table_name, bool is_tmp)
 {
-  char path[FN_REFLEN];
   bool error= 0;
 
-  build_table_filename(path, sizeof(path), db, table_name, is_tmp);
+  TableIdentifier identifier(db, table_name, is_tmp ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
 
-  return (plugin::StorageEngine::dropTable(session, path, db,
-                                           table_name, false)
+  return (plugin::StorageEngine::dropTable(session, identifier, false)
           || error);
 }
 

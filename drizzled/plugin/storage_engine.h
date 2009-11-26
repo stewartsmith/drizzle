@@ -354,8 +354,9 @@ public:
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int recover(HASH *commit_list);
   static int startConsistentSnapshot(Session *session);
-  static int dropTable(Session& session, const char *path, const char *db,
-                       const char *alias, bool generate_warning);
+  static int dropTable(Session& session,
+                       drizzled::TableIdentifier &identifier,
+                       bool generate_warning);
   static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
 
   static inline const std::string &resolveName(const StorageEngine *engine)
