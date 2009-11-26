@@ -97,13 +97,12 @@ int InformationCursor::rnd_next(unsigned char *buf)
 int InformationCursor::rnd_pos(unsigned char *, unsigned char *)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
-  return HA_ERR_WRONG_COMMAND;
+  return 0;
 }
 
 
 void InformationCursor::position(const unsigned char *)
 {
-  assert(1);
 }
 
 
