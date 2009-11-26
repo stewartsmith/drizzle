@@ -98,7 +98,7 @@ extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
-extern uint64_t table_def_size;
+extern size_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;
 extern pid_t current_pid;

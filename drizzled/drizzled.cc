@@ -261,7 +261,7 @@ uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t server_id;
 uint64_t table_cache_size;
-uint64_t table_def_size;
+size_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
@@ -2073,7 +2073,7 @@ struct my_option my_long_options[] =
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
-   0, GET_ULL, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
+   0, GET_SIZE, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
