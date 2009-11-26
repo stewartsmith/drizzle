@@ -28,6 +28,7 @@
 #include "drizzled/data_home.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 using namespace std;
 
@@ -685,6 +686,17 @@ bool alter_table(Session *session,
   bitset<32> tmp;
 
   new_name_buff[0]= '\0';
+
+  /**
+   * @todo this is a result of retaining the behavior that was here before. This should be removed
+   * and the correct error handling should be done in doDropTable for the I_S engine.
+   */
+  plugin::InfoSchemaTable *sch_table= plugin::InfoSchemaTable::getTable(table_list->table_name);
+  if (sch_table)
+  {
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
+    return true;
+  }
 
   session->set_proc_info("init");
 

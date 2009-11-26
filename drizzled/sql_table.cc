@@ -36,6 +36,7 @@
 #include <drizzled/plugin/client.h>
 
 #include "drizzled/statement/alter_table.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <algorithm>
 
@@ -384,6 +385,17 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
 bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool drop_temporary)
 {
   bool error, need_start_waiting= false;
+
+  /**
+   * @todo this is a result of retaining the behavior that was here before. This should be removed
+   * and the correct error handling should be done in doDropTable for the I_S engine.
+   */
+  plugin::InfoSchemaTable *sch_table= plugin::InfoSchemaTable::getTable(tables->table_name);
+  if (sch_table)
+  {
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
+    return true;
+  }
 
   /* mark for close and remove all cached entries */
 
