@@ -1312,14 +1312,9 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      char path[FN_REFLEN];
-      size_t length;
+      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, NO_TMP_TABLE);
 
-      length= build_table_filename(path, sizeof(path),
-                                   table_list->db, table_list->table_name,
-                                   false);
-
-      if (plugin::StorageEngine::getTableDefinition(*this, path, table_list->db, table_list->table_name, false) != EEXIST)
+      if (plugin::StorageEngine::getTableDefinition(*this, lock_table_identifier) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.

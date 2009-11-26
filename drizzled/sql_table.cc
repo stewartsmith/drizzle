@@ -467,10 +467,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     if (drop_temporary ||
         ((table_type == NULL
           && (plugin::StorageEngine::getTableDefinition(*session,
-                                                        path,
-                                                        db,
-                                                        table->table_name,
-                                                        table->internal_tmp_table) != EEXIST))))
+                                                        identifier) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -1652,13 +1649,8 @@ bool mysql_create_table_no_lock(Session *session,
   */
   if (! lex_identified_temp_table)
   {
-    char table_path[FN_REFLEN];
-    uint32_t          table_path_length;
+    int retcode= plugin::StorageEngine::getTableDefinition(*session, identifier);
 
-    table_path_length= build_table_filename(table_path, sizeof(table_path),
-                                            identifier.getDBName(), identifier.getTableName(), false);
-
-    int retcode= plugin::StorageEngine::getTableDefinition(*session,table_path, identifier.getDBName(), identifier.getTableName(), false);
     switch (retcode)
     {
       case ENOENT:
