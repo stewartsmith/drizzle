@@ -47,13 +47,13 @@ bool statement::Insert::execute()
 
   DRIZZLE_INSERT_START(session->query);
 
-  bool res= mysql_insert(session, 
-                         all_tables, 
-                         session->lex->field_list, 
+  bool res= mysql_insert(session,
+                         all_tables,
+                         session->lex->field_list,
                          session->lex->many_values,
-                         session->lex->update_list, 
+                         session->lex->update_list,
                          session->lex->value_list,
-                         session->lex->duplicates, 
+                         session->lex->duplicates,
                          session->lex->ignore);
   /*
      Release the protection against the global read lock and wake

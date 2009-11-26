@@ -1516,6 +1516,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     alter_info->create_list.push_back(cr_field);
   }
 
+  TableIdentifier identifier(create_table->db,
+                             create_table->table_name,
+                             lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
+                             NO_TMP_TABLE);
+
+
   /*
     Create and lock table.
 
@@ -1524,11 +1530,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     should not cause deadlocks or races.
   */
   {
-    if (!mysql_create_table_no_lock(session, create_table->db,
-                                    create_table->table_name,
+    if (!mysql_create_table_no_lock(session,
+                                    identifier,
                                     create_info,
 				    table_proto,
-				    alter_info, false,
+				    alter_info,
+                                    false,
                                     select_field_count,
                                     is_if_not_exists))
     {

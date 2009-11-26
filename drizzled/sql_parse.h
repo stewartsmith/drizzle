@@ -24,6 +24,7 @@
 #include "drizzled/common.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/comp_creator.h"
+#include <drizzled/table_identifier.h>
 
 #include "mystrings/m_ctype.h"
 
@@ -40,8 +41,7 @@ bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
-bool create_table_precheck(Session *session, TableList *tables,
-                           TableList *create_table);
+bool create_table_precheck(drizzled::TableIdentifier &identifier);
 
 Item *negate_expression(Session *session, Item *expr);
 

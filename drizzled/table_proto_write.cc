@@ -544,21 +544,18 @@ int drizzle_write_proto_file(const std::string file_name,
     1  error
 */
 
-int rea_create_table(Session *session, const char *path,
-                     const char *db, const char *table_name,
+int rea_create_table(Session *session,
+                     TableIdentifier &identifier,
 		     message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_fields,
                      uint32_t keys, KEY *key_info)
 {
-  /* Proto will blow up unless we give a name */
-  assert(table_name);
-
-  if (fill_table_proto(table_proto, table_name, create_fields, create_info,
+  if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
 		      keys, key_info))
     return 1;
 
-  string new_path(path);
+  string new_path(identifier.getPath());
   string file_ext = ".dfe";
 
   new_path.append(file_ext);
@@ -573,21 +570,22 @@ int rea_create_table(Session *session, const char *path,
   if (err != 0)
   {
     if (err == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
+      my_error(ER_BAD_DB_ERROR,MYF(0), identifier.getDBName());
     else
-      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
+      my_error(ER_CANT_CREATE_TABLE, MYF(0), identifier.getTableName(), err);
 
     goto err_handler;
   }
 
-  if (plugin::StorageEngine::createTable(*session, path, db, table_name,
+  if (plugin::StorageEngine::createTable(*session,
+                                         identifier,
                                          false, *table_proto))
     goto err_handler;
   return 0;
 
 err_handler:
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    delete_table_proto_file(path);
+    delete_table_proto_file(identifier.getPath());
 
   return 1;
 } /* rea_create_table */

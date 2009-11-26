@@ -40,8 +40,8 @@ int fill_table_proto(message::Table *table_proto,
 int rename_table_proto_file(const char *from, const char* to);
 int delete_table_proto_file(const char *file_name);
 
-int rea_create_table(Session *session, const char *path,
-                     const char *db, const char *table_name,
+int rea_create_table(Session *session,
+                     TableIdentifier &identifier,
                      message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_field,
