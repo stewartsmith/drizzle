@@ -605,6 +605,15 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   or any dropped tables that need to be removed from disk
 */
 int plugin::StorageEngine::getTableDefinition(Session& session,
+                                              TableIdentifier &identifier,
+                                              message::Table *table_proto)
+{
+  return getTableDefinition(session,
+                            identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
+                            table_proto);
+}
+
+int plugin::StorageEngine::getTableDefinition(Session& session,
                                               const char* path,
                                               const char *,
                                               const char *,
@@ -678,8 +687,8 @@ handle_error(uint32_t ,
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int plugin::StorageEngine::dropTable(Session& session, const char *path,
-                                     const char *db, const char *alias,
+int plugin::StorageEngine::dropTable(Session& session,
+                                     TableIdentifier &identifier,
                                      bool generate_warning)
 {
   int error= 0;
@@ -688,10 +697,7 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
   plugin::StorageEngine* engine;
 
   error_proto= plugin::StorageEngine::getTableDefinition(session,
-                                                         path, 
-                                                         db,
-                                                         alias,
-                                                         true,
+                                                         identifier,
                                                          &src_proto);
 
   engine= plugin::StorageEngine::findByName(session,
@@ -700,7 +706,7 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
   if (engine)
   {
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, path);
+    error= engine->doDropTable(session, identifier.getPath());
   }
 
   if (error != ENOENT)
@@ -708,9 +714,9 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
     if (error == 0)
     {
       if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-        delete_table_proto_file(path);
+        delete_table_proto_file(identifier.getPath());
       else
-        error= delete_table_proto_file(path);
+        error= delete_table_proto_file(identifier.getPath());
     }
   }
 
@@ -753,14 +759,14 @@ int plugin::StorageEngine::dropTable(Session& session, const char *path,
 
    @todo refactor to remove goto
 */
-int plugin::StorageEngine::createTable(Session& session, const char *path,
-                                       const char *db, const char *table_name,
+int plugin::StorageEngine::createTable(Session& session,
+                                       TableIdentifier &identifier,
                                        bool update_create_info,
                                        drizzled::message::Table& table_proto, bool proto_used)
 {
   int error= 1;
   Table table;
-  TableShare share(db, 0, table_name, path);
+  TableShare share(identifier.getDBName(), 0, identifier.getTableName(), identifier.getPath());
   message::Table tmp_proto;
 
   if (proto_used)
@@ -809,7 +815,7 @@ int plugin::StorageEngine::createTable(Session& session, const char *path,
     char name_buff[FN_REFLEN];
     const char *table_name_arg;
 
-    table_name_arg= share.storage_engine->checkLowercaseNames(path, name_buff);
+    table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
 
     share.storage_engine->setTransactionReadWrite(session);
 
@@ -825,7 +831,7 @@ err2:
   if (error)
   {
     char name_buff[FN_REFLEN];
-    sprintf(name_buff,"%s.%s",db,table_name);
+    sprintf(name_buff,"%s.%s", identifier.getDBName(), identifier.getTableName());
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:

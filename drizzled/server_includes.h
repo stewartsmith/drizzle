@@ -213,14 +213,13 @@ bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
 
 /* Conversion functions */
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
+size_t build_tmptable_filename(char *buff, size_t bufflen);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db,
                             const char *table_name, bool is_tmp);
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)
 #define FN_TO_IS_TMP    (1 << 1)
-#define FN_IS_TMP       (FN_FROM_IS_TMP | FN_TO_IS_TMP)
-#define NO_FRM_RENAME   (1 << 2)
 
 inline uint32_t sql_rnd()
 {

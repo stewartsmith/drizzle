@@ -33,10 +33,11 @@ class Table;
 
 namespace drizzled { namespace message { class Table; } }
 
-bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
-                    bool drop_temporary);
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool log_query);
+                         bool drop_temporary);
+void write_bin_log_drop_table(Session *session,
+                              bool if_exists, const char *db_name,
+                              const char *table_name);
 bool quick_rm_table(Session& session, const char *db,
                     const char *table_name, bool is_tmp);
 void close_cached_table(Session *session, Table *table);
@@ -59,7 +60,7 @@ void write_bin_log(Session *session,
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
 bool check_engine(Session *, const char *, drizzled::message::Table *, HA_CREATE_INFO *);
-void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
+void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
 /*
   Preparation for table creation
 

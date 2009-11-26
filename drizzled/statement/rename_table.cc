@@ -154,10 +154,11 @@ bool statement::RenameTable::rename(TableList *ren_table,
   char path[FN_REFLEN];
   size_t length;
 
+  TableIdentifier old_identifier(ren_table->db, old_alias, NO_TMP_TABLE);
   length= build_table_filename(path, sizeof(path),
                                ren_table->db, old_alias, false);
 
-  if (plugin::StorageEngine::getTableDefinition(*session, path, ren_table->db, old_alias, false, &table_proto) != EEXIST)
+  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, &table_proto) != EEXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
     return true;
@@ -168,7 +169,8 @@ bool statement::RenameTable::rename(TableList *ren_table,
   length= build_table_filename(path, sizeof(path),
                                new_db, new_alias, false);
 
-  if (plugin::StorageEngine::getTableDefinition(*session, path, new_db, new_alias, false) != ENOENT)
+  TableIdentifier new_identifier(new_db, new_alias, NO_TMP_TABLE);
+  if (plugin::StorageEngine::getTableDefinition(*session, new_identifier) != ENOENT)
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return 1; // This can't be skipped
