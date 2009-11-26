@@ -2212,8 +2212,6 @@ send_result:
     session->client->store(table_name);
     session->client->store(operator_name);
 
-send_result_message:
-
     switch (result_code) {
     case HA_ADMIN_NOT_IMPLEMENTED:
       {
@@ -2256,69 +2254,6 @@ send_result_message:
       session->client->store(STRING_WITH_LEN("error"));
       session->client->store(STRING_WITH_LEN("Invalid argument"));
       break;
-
-    case HA_ADMIN_TRY_ALTER:
-    {
-      /*
-        This is currently used only by InnoDB. ha_innobase::optimize() answers
-        "try with alter", so here we close the table, do an ALTER Table,
-        reopen the table and do ha_innobase::analyze() on it.
-      */
-      ha_autocommit_or_rollback(session, 0);
-      session->close_thread_tables();
-      TableList *save_next_local= table->next_local,
-                 *save_next_global= table->next_global;
-      table->next_local= table->next_global= 0;
-      result_code= mysql_recreate_table(session, table);
-      /*
-        mysql_recreate_table() can push OK or ERROR.
-        Clear 'OK' status. If there is an error, keep it:
-        we will store the error message in a result set row
-        and then clear.
-      */
-      if (session->main_da.is_ok())
-        session->main_da.reset_diagnostics_area();
-      ha_autocommit_or_rollback(session, 0);
-      session->close_thread_tables();
-      if (!result_code) // recreation went ok
-      {
-        if ((table->table= session->openTableLock(table, lock_type)) &&
-            ((result_code= table->table->cursor->ha_analyze(session, check_opt)) > 0))
-          result_code= 0; // analyze went ok
-      }
-      if (result_code) // either mysql_recreate_table or analyze failed
-      {
-        assert(session->is_error());
-        if (session->is_error())
-        {
-          const char *err_msg= session->main_da.message();
-          /* Hijack the row already in-progress. */
-          session->client->store(STRING_WITH_LEN("error"));
-          session->client->store(err_msg);
-          (void)session->client->flush();
-          /* Start off another row for HA_ADMIN_FAILED */
-          session->client->store(table_name);
-          session->client->store(operator_name);
-          session->clear_error();
-        }
-      }
-      result_code= result_code ? HA_ADMIN_FAILED : HA_ADMIN_OK;
-      table->next_local= save_next_local;
-      table->next_global= save_next_global;
-      goto send_result_message;
-    }
-    case HA_ADMIN_NEEDS_UPGRADE:
-    case HA_ADMIN_NEEDS_ALTER:
-    {
-      char buf[ERRMSGSIZE];
-      uint32_t length;
-
-      session->client->store(STRING_WITH_LEN("error"));
-      length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
-      session->client->store(buf, length);
-      fatal_error=1;
-      break;
-    }
 
     default:				// Probably HA_ADMIN_INTERNAL_ERROR
       {
@@ -2367,13 +2302,6 @@ err:
   if (table)
     table->table=0;
   return(true);
-}
-
-bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
-{
-  return(mysql_admin_table(session, tables, check_opt,
-                           "optimize", TL_WRITE, 1,0,0,0,
-                           &Cursor::ha_optimize));
 }
 
 /*

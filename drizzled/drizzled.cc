@@ -261,7 +261,7 @@ uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t server_id;
 uint64_t table_cache_size;
-uint64_t table_def_size;
+size_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
@@ -1142,7 +1142,6 @@ static SHOW_VAR com_status_vars[]= {
   {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
   {"kill",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
   {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
   {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
   {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
@@ -1384,8 +1383,7 @@ static int init_server_components(plugin::Registry &plugins)
   */
   if (table_cache_init())
     unireg_abort(1);
-  if (TableShare::cacheStart())
-    unireg_abort(1);
+  TableShare::cacheStart();
 
   setup_fpu();
   init_thr_lock();
@@ -2075,7 +2073,7 @@ struct my_option my_long_options[] =
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
-   0, GET_ULL, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
+   0, GET_SIZE, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,

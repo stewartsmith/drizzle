@@ -98,7 +98,7 @@ extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
-extern uint64_t table_def_size;
+extern size_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;
 extern pid_t current_pid;
@@ -137,7 +137,6 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
-extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 

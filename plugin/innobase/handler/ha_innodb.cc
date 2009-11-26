@@ -3831,7 +3831,6 @@ ha_innobase::write_row(
 	sql_command = session_sql_command(user_session);
 
 	if ((sql_command == SQLCOM_ALTER_TABLE
-	     || sql_command == SQLCOM_OPTIMIZE
 	     || sql_command == SQLCOM_CREATE_INDEX
 	     || sql_command == SQLCOM_DROP_INDEX)
 	    && num_write_row >= 10000) {
@@ -6674,18 +6673,6 @@ ha_innobase::analyze(
 	return(0);
 }
 
-/**********************************************************************//**
-This is mapped to "ALTER TABLE tablename ENGINE=InnoDB", which rebuilds
-the table in MySQL. */
-UNIV_INTERN
-int
-ha_innobase::optimize(
-/*==================*/
-	Session*)	/*!< in: connection thread handle */
-{
-	return(HA_ADMIN_TRY_ALTER);
-}
-
 /*******************************************************************//**
 Tries to check that an InnoDB table is not corrupted. If corruption is
 noticed, prints to stderr information about it. In case of corruption
@@ -7817,7 +7804,6 @@ ha_innobase::store_lock(
 		     && lock_type <= TL_WRITE)
 		    && !session_tablespace_op(session)
 		    && sql_command != SQLCOM_TRUNCATE
-		    && sql_command != SQLCOM_OPTIMIZE
 		    && sql_command != SQLCOM_CREATE_TABLE) {
 
 			lock_type = TL_WRITE_ALLOW_WRITE;

@@ -330,10 +330,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_INTERNAL_ERROR  -4
 #define HA_ADMIN_INVALID         -5
 #define HA_ADMIN_REJECT          -6
-#define HA_ADMIN_TRY_ALTER       -7
-#define HA_ADMIN_NEEDS_UPGRADE  -10
-#define HA_ADMIN_NEEDS_ALTER    -11
-#define HA_ADMIN_NEEDS_CHECK    -12
 
 /* Bits in table_flags() to show what database can do */
 
