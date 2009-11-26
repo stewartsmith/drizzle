@@ -133,8 +133,12 @@ void OpenTablesIS::cleanup()
   delete columns;
 }
 
-inline bool open_list_store(Table *table, open_table_list_st& open_list);
-inline bool open_list_store(Table *table, open_table_list_st& open_list)
+inline bool open_list_store(Table *table, 
+                            open_table_list_st& open_list,
+                            plugin::InfoSchemaTable *schema_table);
+inline bool open_list_store(Table *table, 
+                            open_table_list_st& open_list,
+                            plugin::InfoSchemaTable *schema_table)
 {
   table->restoreRecordAsDefault();
   table->setWriteSet(0);
@@ -145,17 +149,18 @@ inline bool open_list_store(Table *table, open_table_list_st& open_list)
   table->field[1]->store(open_list.table.c_str(), open_list.table.length(), system_charset_info);
   table->field[2]->store((int64_t) open_list.in_use, true);
   table->field[3]->store((int64_t) open_list.locked, true);
-  TableList *tmp= table->pos_in_table_list;
-  tmp->schema_table->addRow(table->record[0], table->s->reclength);
+  schema_table->addRow(table->record[0], table->s->reclength);
 
   return false;
 }
 
-int OpenTablesISMethods::fillTable(Session *session, TableList *tables)
+int OpenTablesISMethods::fillTable(Session *session, 
+                                   Table *table,
+                                   plugin::InfoSchemaTable *schema_table)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
 
-  if ((list_open_tables(session->lex->select_lex.db, wild, open_list_store, tables->table) == true) && session->is_fatal_error)
+  if ((list_open_tables(session->lex->select_lex.db, wild, open_list_store, table, schema_table) == true) && session->is_fatal_error)
     return 1;
 
   return 0;

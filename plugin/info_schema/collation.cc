@@ -157,11 +157,12 @@ void CollationIS::cleanup()
   delete columns;
 }
 
-int CollationISMethods::fillTable(Session *session, TableList *tables)
+int CollationISMethods::fillTable(Session *session, 
+                                  Table *table,
+                                  plugin::InfoSchemaTable *schema_table)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
@@ -197,7 +198,7 @@ int CollationISMethods::fillTable(Session *session, TableList *tables)
         tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
         table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
         table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
-        tables->schema_table->addRow(table->record[0], table->s->reclength);
+        schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

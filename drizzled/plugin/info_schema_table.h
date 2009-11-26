@@ -178,7 +178,8 @@ public:
   virtual ~InfoSchemaMethods() {}
 
   virtual int fillTable(Session *session, 
-                        TableList *tables);
+                        Table *table,
+                        InfoSchemaTable *schema_table);
   virtual int processTable(InfoSchemaTable *store_table, 
                            Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
@@ -319,12 +320,11 @@ public:
    * Fill I_S table.
    *
    * @param[in] session a session handler
-   * @param[in] tables I_S table
    * @return 0 on success; 1 on error
    */
-  int fillTable(Session *session, TableList *tables)
+  int fillTable(Session *session, Table *table)
   {
-    int retval= i_s_methods->fillTable(session, tables);
+    int retval= i_s_methods->fillTable(session, table, this);
     return retval;
   }
 

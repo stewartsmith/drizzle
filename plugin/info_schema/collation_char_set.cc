@@ -122,10 +122,11 @@ void CollationCharSetIS::cleanup()
   delete columns;
 }
 
-int CollCharISMethods::fillTable(Session *, TableList *tables)
+int CollCharISMethods::fillTable(Session *,  
+                                 Table *table,
+                                 plugin::InfoSchemaTable *schema_table)
 {
   CHARSET_INFO **cs;
-  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
@@ -145,7 +146,7 @@ int CollCharISMethods::fillTable(Session *, TableList *tables)
       table->setWriteSet(1);
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-      tables->schema_table->addRow(table->record[0], table->s->reclength);
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

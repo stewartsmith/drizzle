@@ -157,9 +157,10 @@ class ShowModules : public unary_function<drizzled::plugin::Module *, bool>
 {
   Session *session;
   Table *table;
+  plugin::InfoSchemaTable *schema_table;
 public:
-  ShowModules(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
+  ShowModules(Session *session_arg, Table *table_arg, plugin::InfoSchemaTable *sch_tab_arg)
+    : session(session_arg), table(table_arg), schema_table(sch_tab_arg) {}
 
   result_type operator() (argument_type module)
   {
@@ -239,20 +240,19 @@ public:
     }
     table->field[6]->set_notnull();
 
-    TableList *tmp= table->pos_in_table_list;
-    tmp->schema_table->addRow(table->record[0], table->s->reclength);
+    schema_table->addRow(table->record[0], table->s->reclength);
     return false;
   }
 };
 
-int ModulesISMethods::fillTable(Session *session, TableList *tables)
+int ModulesISMethods::fillTable(Session *session, 
+                                Table *table,
+                                plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   vector<drizzled::plugin::Module *> modules= registry.getList(true);
   vector<drizzled::plugin::Module *>::iterator iter=
-    find_if(modules.begin(), modules.end(), ShowModules(session, table));
+    find_if(modules.begin(), modules.end(), ShowModules(session, table, schema_table));
   if (iter != modules.end())
   {
     return 1;

@@ -167,9 +167,10 @@ void ProcessListIS::cleanup()
   delete columns;
 }
 
-int ProcessListISMethods::fillTable(Session* session, TableList* tables)
+int ProcessListISMethods::fillTable(Session* session, 
+                                    Table *table,
+                                    plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   time_t now= time(NULL);
   size_t length;
@@ -254,7 +255,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables)
         table->field[7]->set_notnull();
       }
 
-      tables->schema_table->addRow(table->record[0], table->s->reclength);
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
 

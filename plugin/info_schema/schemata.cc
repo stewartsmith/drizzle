@@ -144,7 +144,8 @@ void SchemataIS::cleanup()
 static bool store_schema_schemata(Session *, 
                                   Table *table, 
                                   LEX_STRING *db_name,
-                                  const CHARSET_INFO * const cs)
+                                  const CHARSET_INFO * const cs,
+                                  plugin::InfoSchemaTable *schema_table)
 {
   table->restoreRecordAsDefault();
   table->setWriteSet(1);
@@ -153,12 +154,13 @@ static bool store_schema_schemata(Session *,
   table->field[1]->store(db_name->str, db_name->length, system_charset_info);
   table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
   table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
-  TableList *tmp= table->pos_in_table_list;
-  tmp->schema_table->addRow(table->record[0], table->s->reclength);
+  schema_table->addRow(table->record[0], table->s->reclength);
   return false;
 }
 
-int SchemataISMethods::fillTable(Session *session, TableList *tables)
+int SchemataISMethods::fillTable(Session *session, 
+                                 Table *table,
+                                 plugin::InfoSchemaTable *schema_table)
 {
   /*
     TODO: fill_schema_shemata() is called when new client is connected.
@@ -168,11 +170,10 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables)
   LOOKUP_FIELD_VALUES lookup_field_vals;
   vector<LEX_STRING*> db_names;
   bool with_i_schema;
-  Table *table= tables->table;
   /* the WHERE condition */
   COND *cond= table->reginfo.join_tab->select_cond;
 
-  if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
+  if (get_lookup_field_values(session, cond, table->pos_in_table_list, &lookup_field_vals))
   {
     return 0;
   }
@@ -217,7 +218,7 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables)
   {
     if (with_i_schema)       // information schema name is always first in list
     {
-      if (store_schema_schemata(session, table, *db_name, system_charset_info))
+      if (store_schema_schemata(session, table, *db_name, system_charset_info, schema_table))
       {
         return 1;
       }
@@ -227,7 +228,7 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables)
     {
       const CHARSET_INFO *cs= get_default_db_collation((*db_name)->str);
 
-      if (store_schema_schemata(session, table, *db_name, cs))
+      if (store_schema_schemata(session, table, *db_name, cs, schema_table))
       {
         return 1;
       }

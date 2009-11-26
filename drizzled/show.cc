@@ -1616,14 +1616,14 @@ static int fill_schema_table_names(Session *session, Table *table,
     @retval       0                        success
     @retval       1                        error
 */
-int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
+int plugin::InfoSchemaMethods::fillTable(Session *session, 
+                                         Table *table,
+                                         plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
-  Table *table= tables->table;
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
-  Select_Lex *lsel= tables->schema_select_lex;
-  plugin::InfoSchemaTable *schema_table= tables->schema_table;
+  Select_Lex *lsel= table->pos_in_table_list->schema_select_lex;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
@@ -1651,12 +1651,12 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
   */
   if (lsel && lsel->table_list.first)
   {
-    error= fill_schema_show_cols_or_idxs(session, tables, schema_table,
+    error= fill_schema_show_cols_or_idxs(session, table->pos_in_table_list, schema_table,
                                          &open_tables_state_backup);
     goto err;
   }
 
-  if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
+  if (get_lookup_field_values(session, cond, table->pos_in_table_list, &lookup_field_vals))
   {
     error= 0;
     goto err;
@@ -1678,16 +1678,17 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
 
   if (lookup_field_vals.db_value.length &&
       !lookup_field_vals.wild_db_value)
-    tables->has_db_lookup_value= true;
+    table->pos_in_table_list->has_db_lookup_value= true;
 
   if (lookup_field_vals.table_value.length &&
       !lookup_field_vals.wild_table_value)
-    tables->has_table_lookup_value= true;
+    table->pos_in_table_list->has_table_lookup_value= true;
 
-  if (tables->has_db_lookup_value && tables->has_table_lookup_value)
+  if (table->pos_in_table_list->has_db_lookup_value && 
+      table->pos_in_table_list->has_table_lookup_value)
     partial_cond= 0;
   else
-    partial_cond= make_cond_for_info_schema(cond, tables);
+    partial_cond= make_cond_for_info_schema(cond, table->pos_in_table_list);
 
   if (lex->describe)
   {
@@ -1729,7 +1730,7 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
         if (schema_table->getTableName().compare("TABLE_NAMES") == 0)
         {
           if (fill_schema_table_names(session, 
-                                      tables->table, 
+                                      table, 
                                       *db_name,
                                       *table_name, 
                                       with_i_schema))

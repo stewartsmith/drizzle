@@ -136,11 +136,12 @@ void CharacterSetIS::cleanup()
   delete columns;
 }
 
-int CharSetISMethods::fillTable(Session *session, TableList *tables)
+int CharSetISMethods::fillTable(Session *session, 
+                                Table *table,
+                                plugin::InfoSchemaTable *schema_table)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
 
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++)
@@ -163,7 +164,7 @@ int CharSetISMethods::fillTable(Session *session, TableList *tables)
       comment= tmp_cs->comment ? tmp_cs->comment : "";
       table->field[2]->store(comment, strlen(comment), scs);
       table->field[3]->store((int64_t) tmp_cs->mbmaxlen, true);
-      tables->schema_table->addRow(table->record[0], table->s->reclength);
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

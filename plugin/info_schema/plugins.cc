@@ -137,9 +137,10 @@ class ShowPlugins
 {
   Session *session;
   Table *table;
+  plugin::InfoSchemaTable *schema_table;
 public:
-  ShowPlugins(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
+  ShowPlugins(Session *session_arg, Table *table_arg, plugin::InfoSchemaTable *sch_tab_arg)
+    : session(session_arg), table(table_arg), schema_table(sch_tab_arg) {}
 
   result_type operator() (argument_type plugin)
   {
@@ -173,21 +174,20 @@ public:
     table->field[3]->store(plugin.second->getModuleName().c_str(),
                            plugin.second->getModuleName().size(), cs);
 
-    TableList *tmp= table->pos_in_table_list;
-    tmp->schema_table->addRow(table->record[0], table->s->reclength);
+    schema_table->addRow(table->record[0], table->s->reclength);
     return false;
   }
 };
 
-int PluginsISMethods::fillTable(Session *session, TableList *tables)
+int PluginsISMethods::fillTable(Session *session, 
+                                Table *table,
+                                plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   const map<string, const drizzled::plugin::Plugin *> &plugin_map=
     registry.getPluginsMap();
   map<string, const drizzled::plugin::Plugin *>::const_iterator iter=
-    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table));
+    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table, schema_table));
   if (iter != plugin_map.end())
   {
     return 1;

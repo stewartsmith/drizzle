@@ -43,10 +43,10 @@ using namespace std;
 using namespace drizzled;
 
 int MemcachedStatsISMethods::fillTable(Session *,
-                                       TableList *tables)
+                                       Table *table,
+                                       plugin::InfoSchemaTable *schema_table)
 {
   const CHARSET_INFO * const scs= system_charset_info;
-  Table *table= tables->table;
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   const string servers_string= sysvar_holder.getServersString();
 
@@ -82,7 +82,7 @@ int MemcachedStatsISMethods::fillTable(Session *,
     }
     free(list);
     /* store the actual record now */
-    tables->schema_table->addRow(table->record[0], table->s->reclength);
+    schema_table->addRow(table->record[0], table->s->reclength);
   }
 
   memcached_stat_free(serv, stats);

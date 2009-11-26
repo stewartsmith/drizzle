@@ -50,7 +50,8 @@ bool show_status_array(Session *session,
                        enum enum_var_type value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
-                       bool ucase_names)
+                       bool ucase_names,
+                       plugin::InfoSchemaTable *schema_table)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
@@ -85,7 +86,7 @@ bool show_status_array(Session *session,
     if (show_type == SHOW_ARRAY)
     {
       show_status_array(session, wild, (SHOW_VAR *) var->value, value_type,
-                        status_var, name_buffer, table, ucase_names);
+                        status_var, name_buffer, table, ucase_names, schema_table);
     }
     else
     {
@@ -198,8 +199,7 @@ bool show_status_array(Session *session,
 
         pthread_mutex_unlock(&LOCK_global_system_variables);
 
-        TableList *tmp_tbl_list= table->pos_in_table_list;
-        tmp_tbl_list->schema_table->addRow(table->record[0], table->s->reclength);
+        schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

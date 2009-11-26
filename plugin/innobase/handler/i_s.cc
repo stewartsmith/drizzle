@@ -713,7 +713,8 @@ int
 TrxISMethods::fillTable(
 /*======================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	const char*		table_name;
 	int			ret;
@@ -724,7 +725,7 @@ TrxISMethods::fillTable(
 	cache = trx_i_s_cache;
 
 	/* which table we have to fill? */
-	table_name = tables->schema_table_name;
+	table_name = schema_table->getName().c_str();
 	/* or table_name = tables->schema_table->table_name; */
 
 	RETURN_IF_INNODB_NOT_STARTED(table_name);
@@ -749,7 +750,7 @@ TrxISMethods::fillTable(
 	if (innobase_strcasecmp(table_name, "innodb_trx") == 0) {
 
 		if (fill_innodb_trx_from_cache(
-			cache, tables->table) != 0) {
+			cache, table) != 0) {
 
 			ret = 1;
 		}
@@ -757,7 +758,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_locks") == 0) {
 
 		if (fill_innodb_locks_from_cache(
-			cache, session, tables->table) != 0) {
+			cache, session, table) != 0) {
 
 			ret = 1;
 		}
@@ -765,7 +766,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_lock_waits") == 0) {
 
 		if (fill_innodb_lock_waits_from_cache(
-			cache, tables->table) != 0) {
+			cache, table) != 0) {
 
 			ret = 1;
 		}
@@ -854,14 +855,14 @@ int
 i_s_cmp_fill_low(
 /*=============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table,
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
-	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
 
 
-	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name);
+	RETURN_IF_INNODB_NOT_STARTED(schema_table->getName().c_str());
 
 	for (uint i = 0; i < PAGE_ZIP_NUM_SSIZE - 1; i++) {
 		page_zip_stat_t*	zip_stat = &page_zip_stat[i];
@@ -886,8 +887,8 @@ i_s_cmp_fill_low(
 			memset(zip_stat, 0, sizeof *zip_stat);
 		}
 
-                tables->schema_table->addRow(table->record[0],
-                                             table->s->reclength);
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(status);
@@ -900,9 +901,10 @@ int
 CmpISMethods::fillTable(
 /*=========*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
-	return(i_s_cmp_fill_low(session, tables, FALSE));
+	return(i_s_cmp_fill_low(session, table, schema_table, FALSE));
 }
 
 /*******************************************************************//**
@@ -912,9 +914,10 @@ int
 CmpResetISMethods::fillTable(
 /*===============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
-	return(i_s_cmp_fill_low(session, tables, TRUE));
+	return(i_s_cmp_fill_low(session, table, schema_table, TRUE));
 }
 
 /*******************************************************************//**
@@ -1003,13 +1006,13 @@ int
 i_s_cmpmem_fill_low(
 /*================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table,
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
-	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
 
-	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name);
+	RETURN_IF_INNODB_NOT_STARTED(schema_table->getName().c_str());
 
 	buf_pool_mutex_enter();
 
@@ -1031,8 +1034,8 @@ i_s_cmpmem_fill_low(
 			buddy_stat->relocated_usec = 0;
 		}
 
-                tables->schema_table->addRow(table->record[0],
-                                             table->s->reclength);
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	buf_pool_mutex_exit();
@@ -1046,9 +1049,10 @@ int
 CmpmemISMethods::fillTable(
 /*============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table, /*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)	
 {
-	return(i_s_cmpmem_fill_low(session, tables, FALSE));
+	return(i_s_cmpmem_fill_low(session, table, schema_table, FALSE));
 }
 
 /*******************************************************************//**
@@ -1058,9 +1062,10 @@ int
 CmpmemResetISMethods::fillTable(
 /*==================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
-	return(i_s_cmpmem_fill_low(session, tables, TRUE));
+	return(i_s_cmpmem_fill_low(session, table, schema_table, TRUE));
 }
 
 /*******************************************************************//**

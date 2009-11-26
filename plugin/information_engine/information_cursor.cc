@@ -63,7 +63,6 @@ int InformationCursor::close(void)
 
 int InformationCursor::rnd_init(bool)
 {
-  TableList *tmp= table->pos_in_table_list;
   plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
   if (sch_table)
   {
@@ -76,7 +75,7 @@ int InformationCursor::rnd_init(bool)
       sch_table->clearRows();
     }
     sch_table->fillTable(ha_session(),
-                         tmp);
+                         table);
     iter= sch_table->getRows().begin();
   }
   return 0;
