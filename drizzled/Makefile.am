@@ -343,7 +343,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/insert_select.h \
 		statement/kill.h \
 		statement/load.h \
-		statement/optimize.h \
 		statement/release_savepoint.h \
 		statement/rename_table.h \
 		statement/replace.h \
@@ -672,7 +671,6 @@ drizzled_SOURCES = \
 		statement/insert_select.cc \
 		statement/kill.cc \
 		statement/load.cc \
-		statement/optimize.cc \
 		statement/release_savepoint.cc \
 		statement/rename_table.cc \
 		statement/replace.cc \

@@ -120,19 +120,21 @@ public:
   int rnd_init(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  int get_row(azio_stream *file_to_read, unsigned char *buf);
-  int get_row_version2(azio_stream *file_to_read, unsigned char *buf);
-  int get_row_version3(azio_stream *file_to_read, unsigned char *buf);
   ArchiveShare *get_share(const char *table_name, int *rc);
   int free_share();
   int init_archive_writer();
   int init_archive_reader();
   bool auto_repair() const { return 1; } // For the moment we just do this
-  int read_data_header(azio_stream *file_to_read);
   void position(const unsigned char *record);
   int info(uint);
-  int optimize(Session* session);
-  int repair(Session* session);
+private:
+  int get_row(azio_stream *file_to_read, unsigned char *buf);
+  int get_row_version2(azio_stream *file_to_read, unsigned char *buf);
+  int get_row_version3(azio_stream *file_to_read, unsigned char *buf);
+  int read_data_header(azio_stream *file_to_read);
+  int optimize();
+  int repair();
+public:
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   enum row_type get_row_type() const

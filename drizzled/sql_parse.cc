@@ -136,7 +136,6 @@ void init_update_queries(void)
     The following admin table operations are allowed
     on log tables.
   */
-  sql_command_flags[SQLCOM_OPTIMIZE]=         CF_WRITE_LOGS_COMMAND;
   sql_command_flags[SQLCOM_ANALYZE]=          CF_WRITE_LOGS_COMMAND;
 }
 

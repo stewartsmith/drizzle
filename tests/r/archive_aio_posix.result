@@ -1412,9 +1412,7 @@ auto	fld1	companynr	fld3	fld4	fld5	fld6
 2	11401	37	breaking	dreaded	Steinberg	W
 3	11402	37	Romans	scholastics	jarring	
 4	11403	37	intercepted	audiology	tinily	
-OPTIMIZE TABLE t2;
-Table	Op	Msg_type	Msg_text
-test.t2	optimize	status	OK
+ALTER TABLE t2 ENGINE=ARCHIVE;
 SELECT * FROM t2;
 auto	fld1	companynr	fld3	fld4	fld5	fld6
 1	1	0	Omaha	teethe	neat	
@@ -2623,9 +2621,7 @@ auto	fld1	companynr	fld3	fld4	fld5	fld6
 INSERT INTO t2 VALUES (2,011401,37,'breaking','dreaded','Steinberg','W');
 INSERT INTO t2 VALUES (3,011402,37,'Romans','scholastics','jarring','');
 INSERT INTO t2 VALUES (4,011403,37,'intercepted','audiology','tinily','');
-OPTIMIZE TABLE t2;
-Table	Op	Msg_type	Msg_text
-test.t2	optimize	status	OK
+ALTER TABLE t2 ENGINE=ARCHIVE;
 SELECT * FROM t2;
 auto	fld1	companynr	fld3	fld4	fld5	fld6
 1	1	0	Omaha	teethe	neat	
@@ -11202,9 +11198,7 @@ a	b
 34	foo
 3	foo
 35	foo
-OPTIMIZE TABLE t5;
-Table	Op	Msg_type	Msg_text
-test.t5	optimize	status	OK
+ALTER TABLE t5 ENGINE=ARCHIVE;
 SELECT * FROM t5;
 a	b
 5	foo

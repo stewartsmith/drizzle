@@ -279,7 +279,6 @@ public:
                          uint32_t *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
-  int ha_optimize(Session* session, HA_CHECK_OPT* check_opt);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
 
   int ha_disable_indexes(uint32_t mode);
@@ -744,9 +743,6 @@ private:
   */
   virtual int reset_auto_increment(uint64_t)
   { return HA_ERR_WRONG_COMMAND; }
-
-  virtual int optimize(Session *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual int analyze(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }

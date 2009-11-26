@@ -31,9 +31,9 @@ insert into t1 values (5,5,5);
 --echo -- after Bug#29394 is implemented.
 
 --enable_metadata
-optimize table t1;
+alter table t1 engine="default";
 --disable_metadata
-optimize table t1;
+alter table t1 engine="default";
 drop table t1;
 
 #show variables;

@@ -33,9 +33,7 @@ t
 delete from t1 where t > 0;
 ERROR HY000: Received an invalid datetime value '0'.
 delete from t1 where t > "0001-01-01 00:00:00";
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine="default";
 check table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK

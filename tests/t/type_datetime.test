@@ -28,7 +28,7 @@ select * from t1;
 delete from t1 where t > 0;
 # try earliest datetime end point which is actually a friggin datetime, not a 0.
 delete from t1 where t > "0001-01-01 00:00:00";
-optimize table t1;
+alter table t1 engine="default";
 check table t1;
 delete from t1;
 insert into t1 values("000101");
