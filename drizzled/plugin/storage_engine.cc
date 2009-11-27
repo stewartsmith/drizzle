@@ -65,6 +65,9 @@ static EngineMap engine_map;
 static EngineVector vector_of_engines;
 static EngineVector vector_of_transactional_engines;
 
+const std::string plugin::UNKNOWN_STRING("UNKNOWN");
+const std::string plugin::DEFAULT_DEFINITION_FILE_EXT(".dfe");
+
 static std::set<std::string> set_of_table_definition_ext;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,

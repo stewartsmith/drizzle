@@ -537,7 +537,6 @@ void unireg_abort(int exit_code)
 
 static void clean_up(bool print_message)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
     return;
 
@@ -545,8 +544,9 @@ static void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin_shutdown(plugins);
   ha_end();
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugin_shutdown(plugins);
   xid_cache_free();
   free_status_vars();
   if (defaults_argv)

@@ -617,6 +617,7 @@ drizzled_SOURCES = \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \
+		plugin/library.cc \
 		plugin/listen.cc \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \

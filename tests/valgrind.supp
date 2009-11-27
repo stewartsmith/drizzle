@@ -785,3 +785,23 @@
    obj:/lib/libc-2.9.so
    fun:__nss_database_lookup
 }
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   fun:_ZL13plugin_dl_addPK19st_mysql_lex_string
+   fun:_ZL16plugin_load_listRN8drizzled6plugin8RegistryEP11st_mem_rootPiPPcPKc
+   fun:plugin_init
+}
+
+{
+   Valgrind has issues tracking the deallocation of plugin objects.
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZL17plugin_initializeRN8drizzled6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
+}

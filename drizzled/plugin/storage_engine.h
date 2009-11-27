@@ -75,8 +75,8 @@ namespace drizzled
 namespace plugin
 {
 
-const std::string UNKNOWN_STRING("UNKNOWN");
-const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
+extern const std::string UNKNOWN_STRING;
+extern const std::string DEFAULT_DEFINITION_FILE_EXT;
     
 
 /*

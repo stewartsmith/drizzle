@@ -52,7 +52,7 @@
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
 /* information schema */
-static const std::string INFORMATION_SCHEMA_NAME("information_schema");
+extern const std::string INFORMATION_SCHEMA_NAME;
 
 /* drizzled.cc */
 void refresh_status(Session *session);

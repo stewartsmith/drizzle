@@ -40,11 +40,6 @@ namespace drizzled
 namespace plugin
 {
 
-static const std::string LICENSE_GPL_STRING("GPL");
-static const std::string LICENSE_BSD_STRING("BSD");
-static const std::string LICENSE_LGPL_STRING("LGPL");
-static const std::string LICENSE_PROPRIETARY_STRING("PROPRIETARY");
-
 typedef int (*initialize_func_t)(Registry &);
 
 /**
