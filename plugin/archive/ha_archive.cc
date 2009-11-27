@@ -104,8 +104,6 @@ static const string engine_name("ARCHIVE");
 /* Variables for archive share methods */
 pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-std::map<const char *, ArchiveShare *> archive_open_tables;
-
 static unsigned int global_version;
 
 /* The file extension */
@@ -136,11 +134,13 @@ static const char *ha_archive_exts[] = {
 
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
+std::map<std::string, ArchiveShare *> archive_open_tables;
 public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) 
+                                      | HTON_HAS_DATA_DICTIONARY),
+     archive_open_tables()
   {
     table_definition_ext= ARZ;
   }
@@ -176,8 +176,31 @@ public:
   void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
 
   int doDropTable(Session&, const string table_path);
+  ArchiveShare *findOpenTable(const string table_name);
+  void addOpenTable(const string &table_name, ArchiveShare *);
+  void deleteOpenTable(const string &table_name);
 };
 
+ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
+{
+  map<string, ArchiveShare *>::iterator find_iter=
+    archive_open_tables.find(table_name);
+
+  if (find_iter != archive_open_tables.end())
+    return (*find_iter).second;
+  else
+    return NULL;
+}
+
+void ArchiveEngine::addOpenTable(const string &table_name, ArchiveShare *share)
+{
+  archive_open_tables[table_name]= share;
+}
+
+void ArchiveEngine::deleteOpenTable(const string &table_name)
+{
+  archive_open_tables.erase(table_name);
+}
 
 void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
                                     string&, 
@@ -294,7 +317,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
-  archive_engine= new ArchiveEngine(engine_name);
+  archive_engine= new ArchiveEngine("ARCHIVE");
   registry.add(archive_engine);
 
   /* When the engine starts up set the first version */
@@ -424,18 +447,10 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  uint32_t length;
-  map<const char *, ArchiveShare *> ::iterator find_iter;
-
   pthread_mutex_lock(&archive_mutex);
-  length=(uint) strlen(table_name);
 
-  find_iter= archive_open_tables.find(table_name);
-
-  if (find_iter != archive_open_tables.end())
-    share= (*find_iter).second;
-  else
-    share= NULL;
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  share= a_engine->findOpenTable(table_name);
 
   if (!share)
   {
@@ -457,7 +472,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
       return NULL;
     }
 
-    archive_open_tables[share->table_name.c_str()]= share; 
+    a_engine->addOpenTable(share->table_name, share);
     thr_lock_init(&share->lock);
   }
   share->use_count++;
@@ -478,7 +493,8 @@ int ha_archive::free_share()
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    archive_open_tables.erase(share->table_name.c_str());
+    ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+    a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
   pthread_mutex_unlock(&archive_mutex);
