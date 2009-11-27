@@ -711,25 +711,15 @@
    nss_parse_service_list static allocation
    Memcheck:Leak
    fun:malloc
-   fun:nss_parse_service_list
-   fun:__nss_database_lookup
-   obj:*
-   obj:*
-   fun:getpwnam_r*
+   ...
    fun:getpwnam
-   fun:_ZL10check_userPKc
-   fun:main
 }
 
 {
    tsearch static allocation
    Memcheck:Leak
    fun:malloc
-   fun:tsearch
-   fun:__nss_lookup_function
-   obj:*
-   obj:*
-   fun:getpwnam_r*
+   ...
    fun:getpwnam
    fun:_ZL10check_userPKc
    fun:main
@@ -790,9 +780,58 @@
    Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
    Memcheck:Leak
    fun:dlopen
-   fun:_ZL13plugin_dl_addPK19st_mysql_lex_string
-   fun:_ZL16plugin_load_listRN8drizzled6plugin8RegistryEP11st_mem_rootPiPPcPKc
+   ...
    fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:main
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen
+   ...
+   fun:plugin_init
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:main
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
 }
 
 {
@@ -805,3 +844,27 @@
    fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
    fun:main
 }
+
+{
+   Valgrind has issues tracking the deallocation of plugin objects.
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZL17plugin_initializeRN8drizzled6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:main
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getpwnam_r@@GLIBC_2.2.5
+   fun:getpwnam
+   fun:main
+}
+
