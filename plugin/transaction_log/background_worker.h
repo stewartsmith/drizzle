@@ -1,7 +1,11 @@
-/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  Authors:
+ *
+ *  Jay Pipes <joinfu@sun.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,36 +22,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_UTIL_CONVERT_H
-#define DRIZZLED_UTIL_CONVERT_H
+/**
+ * @file
+ *
+ * Defines the methods used by the background worker thread which
+ * maintains summary information about the transaction log.
+ */
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <stdint.h>
+#ifndef PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H
+#define PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H
 
-template <class T>
-std::string to_string(T t)
-{
-  std::ostringstream o;
-  o << t;
-  return o.str();
+#include <pthread.h>
+
+/**
+ * Initializes the background worker thread
+ *
+ * @return false on success; true on failure
+ */
+bool initTransactionLogBackgroundWorker();
+
+/**
+ * The routine which the background worker executes
+ */
+extern "C" {
+  pthread_handler_t collectTransactionLogStats(void *arg);
 }
 
-template <class T>
-std::string& to_string(std::string &str, T t)
-{
-  std::ostringstream o(str);
-  o << t;
-  return str;
-}
-
-void bytesToHexdumpFormat(std::string &s, const unsigned char *from, size_t from_length);
-
-extern "C"
-{
-  uint64_t drizzled_string_to_hex(char *to, const char *from,
-                                  uint64_t from_size);
-}
-
-#endif /* DRIZZLED_UTIL_CONVERT_H */
+#endif /* PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H */

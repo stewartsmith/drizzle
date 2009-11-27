@@ -47,6 +47,8 @@
 #include <drizzled/plugin/transaction_replicator.h>
 #include <drizzled/plugin/transaction_applier.h>
 
+#include "transaction_log_entry.h"
+
 #include <vector>
 #include <string>
 
@@ -57,6 +59,8 @@ public:
                                               sizeof(uint32_t) + /* 4-byte length header */
                                               sizeof(uint32_t); /* 4 byte checksum trailer */
 
+  typedef std::vector<TransactionLogEntry> Entries;
+  typedef std::vector<TransactionLogTransactionEntry> TransactionEntries;
   /**
    * The state the log is in
    */
@@ -67,15 +71,9 @@ public:
     ONLINE,
     WRITING
   };
-private:
-  int log_file; /**< Handle for our log file */
-  enum Status state; /**< The state the log is in */
-  drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
-  const char *log_file_path; /**< Full path to the log file */
-  drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
 public:
   TransactionLog(std::string name_arg,
-                 const char *in_log_file_path,
+                 const std::string &in_log_file_path,
                  bool in_do_checksum);
 
   /** Destructor */
@@ -97,6 +95,24 @@ public:
    * @param Transaction message to be replicated
    */
   void apply(const drizzled::message::Transaction &to_apply);
+
+  /**
+   * Returns the current offset into the log
+   */
+  inline off_t getLogOffset()
+  {
+    return log_offset;
+  }
+
+  /**
+   * Returns the filename of the transaction log
+   */
+  const std::string &getLogFilename();
+
+  /**
+   * Returns the filename of the transaction log
+   */
+  const std::string &getLogFilepath();
   
   /**
    * Returns the state that the log is in
@@ -134,6 +150,34 @@ public:
    */
   bool findLogFilenameContainingTransactionId(const drizzled::ReplicationServices::GlobalTransactionId &to_find,
                                               std::string &out_filename) const;
+
+  /**
+   * Returns whether the log is currently in error.
+   */
+  bool hasError() const;
+
+  /**
+   * Returns the log's current error message
+   */
+  const std::string &getErrorMessage() const;
+private:
+  /* Don't allows these */
+  TransactionLog();
+  TransactionLog(const TransactionLog &other);
+  TransactionLog &operator=(const TransactionLog &other);
+  /**
+   * Clears the current error message
+   */
+  void clearError();
+
+  int log_file; ///< Handle for our log file
+  Status state; ///< The state the log is in
+  drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
+  const std::string log_file_path; ///< Full path to the log file
+  std::string log_file_name; ///< Name of the log file
+  drizzled::atomic<off_t> log_offset; ///< Offset in log file where log will write next command
+  bool has_error; ///< Is the log in error?
+  std::string error_message; ///< Current error message
 };
 
 #endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H */
