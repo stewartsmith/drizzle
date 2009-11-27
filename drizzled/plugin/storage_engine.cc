@@ -40,16 +40,14 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/name_map.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
-#include "drizzled/name_map.h"
 #include "drizzled/xid.h"
 
 #include <drizzled/table_proto.h>
 
-#include <drizzled/hash.h>
+#include "drizzled/hash.h"
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -77,6 +75,7 @@ plugin::StorageEngine::StorageEngine(const string name_arg,
       flags(flags_arg),
       savepoint_offset(savepoint_alloc_size),
       orig_savepoint_offset(savepoint_offset_arg),
+      aliases(),
       slot(0)
 {
   if (enabled)

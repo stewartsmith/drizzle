@@ -59,7 +59,6 @@
 #include <drizzled/item/float.h>
 #include <drizzled/plugin.h>
 
-#include "drizzled/name_map.h"
 #include <map>
 #include <algorithm>
 
@@ -71,7 +70,8 @@ extern size_t my_thread_stack_size;
 
 class sys_var_pluginvar;
 static DYNAMIC_ARRAY fixed_show_vars;
-static NameMap<sys_var *> system_variable_hash;
+typedef map<string, sys_var *> SystemVariableMap;
+static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -1715,11 +1715,27 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
   for (var= first; var; var= var->getNext())
   {
 
+    string lower_name(var->getName());
+    transform(lower_name.begin(), lower_name.end(),
+              lower_name.begin(), ::tolower);
+
     /* this fails if there is a conflicting variable name. */
-    if (system_variable_hash.add(var))
+    if (system_variable_map.find(lower_name) != system_variable_map.end())
     {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Variable named %s already exists!\n"),
+                    var->getName().c_str());
       return 1;
     } 
+
+    pair<SystemVariableMap::iterator, bool> ret= 
+      system_variable_map.insert(make_pair(lower_name, var));
+    if (ret.second == false)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Could not add Variable: %s\n"),
+                    var->getName().c_str());
+      return 1;
+    }
+
     if (long_options)
       var->setOptionLimits(find_option(long_options, var->getName().c_str()));
   }
@@ -1742,14 +1758,16 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 
 int mysql_del_sys_var_chain(sys_var *first)
 {
-  int result= 0;
 
   /* A write lock should be held on LOCK_system_variables_hash */
   for (sys_var *var= first; var; var= var->getNext())
   {
-    system_variable_hash.remove(var);
+    string lower_name(var->getName());
+    transform(lower_name.begin(), lower_name.end(),
+              lower_name.begin(), ::tolower);
+    system_variable_map.erase(lower_name);
   }
-  return result;
+  return 0;
 }
 
 
@@ -1770,7 +1788,7 @@ int mysql_del_sys_var_chain(sys_var *first)
 SHOW_VAR* enumerate_sys_vars(Session *session, bool)
 {
   int fixed_count= fixed_show_vars.elements;
-  int size= sizeof(SHOW_VAR) * (system_variable_hash.size() + fixed_count + 1);
+  int size= sizeof(SHOW_VAR) * (system_variable_map.size() + fixed_count + 1);
   SHOW_VAR *result= (SHOW_VAR*) session->alloc(size);
 
   if (result)
@@ -1778,16 +1796,15 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    NameMap<sys_var *>::const_iterator iter;
-    for(iter= system_variable_hash.begin();
-        iter != system_variable_hash.end();
-        iter++)
+    SystemVariableMap::const_iterator iter= system_variable_map.begin();
+    while (iter != system_variable_map.end())
     {
-      sys_var *var= *iter;
+      sys_var *var= (*iter).second;
       show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
       show++;
+      ++iter;
     }
 
     /* make last element empty */
@@ -1876,11 +1893,22 @@ int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count)
 
 sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
 {
+  string lower_name(str);
+  transform(lower_name.begin(), lower_name.end(),
+            lower_name.begin(), ::tolower);
+
+  sys_var *result= NULL;
+
+  SystemVariableMap::iterator iter= system_variable_map.find(lower_name);
+  if (iter != system_variable_map.end())
+  {
+    result= (*iter).second;
+  } 
+
   /*
     This function is only called from the sql_plugin.cc.
     A lock on LOCK_system_variable_hash should be held
   */
-  sys_var *result= system_variable_hash.find(str);
   if (result == NULL)
   {
     if (no_error)
