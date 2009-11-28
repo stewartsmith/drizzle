@@ -1877,8 +1877,7 @@ bool check_db_name(LEX_STRING *org_name)
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
 
-  if (name != any_db)
-    my_casedn_str(files_charset_info, name);
+  my_casedn_str(files_charset_info, name);
 
   return check_identifier_name(org_name);
 }

@@ -338,7 +338,10 @@ public:
   static void removePlugin(plugin::StorageEngine *engine);
 
   static int getTableDefinition(Session& session,
-                                const char* path, 
+                                TableIdentifier &identifier,
+                                message::Table *table_proto= NULL);
+  static int getTableDefinition(Session& session,
+                                const char* path,
                                 const char *db,
                                 const char *table_name,
                                 const bool is_tmp,
@@ -354,8 +357,9 @@ public:
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int recover(HASH *commit_list);
   static int startConsistentSnapshot(Session *session);
-  static int dropTable(Session& session, const char *path, const char *db,
-                       const char *alias, bool generate_warning);
+  static int dropTable(Session& session,
+                       drizzled::TableIdentifier &identifier,
+                       bool generate_warning);
   static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
 
   static inline const std::string &resolveName(const StorageEngine *engine)
@@ -363,8 +367,8 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session& session, const char *path,
-                         const char *db, const char *table_name,
+  static int createTable(Session& session,
+                         drizzled::TableIdentifier &identifier,
                          bool update_create_info,
                          drizzled::message::Table& table_proto,
                          bool used= true);

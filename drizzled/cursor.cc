@@ -747,21 +747,6 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 
 
 /**
-  Optimize table: public interface.
-
-  @sa Cursor::optimize()
-*/
-
-int
-Cursor::ha_optimize(Session* session, HA_CHECK_OPT*)
-{
-  mark_trx_read_write();
-
-  return optimize(session);
-}
-
-
-/**
   Analyze table: public interface.
 
   @sa Cursor::analyze()

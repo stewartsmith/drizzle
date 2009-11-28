@@ -164,9 +164,7 @@ level	id	parent_id
 1	1005	101
 1	1006	101
 1	1007	101
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 ENGINE=innodb;
 show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	id	A	#	NULL	NULL		BTREE		
@@ -188,9 +186,7 @@ gesuchnr	benutzer_id
 drop table t1;
 create table t1 (a int) engine=innodb;
 insert into t1 values (1), (2);
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine=innodb;
 delete from t1 where a = 1;
 select * from t1;
 a
@@ -735,9 +731,7 @@ select * from t1 order by b desc;
 a	b
 world	2
 hello	1
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine=innodb;
 show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	a	A	#	NULL	NULL		BTREE		
@@ -2698,9 +2692,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
-OPTIMIZE TABLE t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 CREATE TABLE t1 (id int PRIMARY KEY, f int NOT NULL, INDEX(f)) ENGINE=InnoDB;
 CREATE TABLE t2 (id int PRIMARY KEY, f INT NOT NULL,

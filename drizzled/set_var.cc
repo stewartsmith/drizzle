@@ -211,8 +211,8 @@ static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine"
 				       &SV::storage_engine);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
                                              system_time_zone);
-static sys_var_uint64_t_ptr	sys_table_def_size(&vars, "table_definition_cache",
-                                           &table_def_size);
+static sys_var_size_t_ptr	sys_table_def_size(&vars, "table_definition_cache",
+                                             &table_def_size);
 static sys_var_uint64_t_ptr	sys_table_cache_size(&vars, "table_open_cache",
 					     &table_cache_size);
 static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
