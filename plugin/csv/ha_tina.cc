@@ -1405,7 +1405,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
 }
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "CSV",
   "1.0",
@@ -1418,5 +1418,5 @@ drizzle_declare_plugin
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
 

@@ -324,7 +324,7 @@ static int deinit(drizzled::plugin::Registry &registry)
 }
 
 static void set_truncate_debug(Session *,
-                               struct st_mysql_sys_var *, 
+                               drizzle_sys_var *, 
                                void *, 
                                const void *save)
 {
@@ -369,7 +369,7 @@ static DRIZZLE_SYSVAR_BOOL(enable_checksum,
                           NULL, /* update func */
                           false /* default */);
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(truncate_debug),
   DRIZZLE_SYSVAR(log_file),
@@ -377,7 +377,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "transaction_log",
   "0.1",
@@ -390,4 +390,4 @@ drizzle_declare_plugin
   system_variables, /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

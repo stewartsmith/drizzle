@@ -1555,7 +1555,7 @@ static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
                            N_("Default pointer size to be used for MyISAM tables."),
                            NULL, NULL, 6, 2, 7, 0);
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(block_size),
   DRIZZLE_SYSVAR(repair_threads),
   DRIZZLE_SYSVAR(max_sort_file_size),
@@ -1565,7 +1565,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 };
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "MyISAM",
   "1.0",
@@ -1578,4 +1578,4 @@ drizzle_declare_plugin
   system_variables,           /* system variables */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

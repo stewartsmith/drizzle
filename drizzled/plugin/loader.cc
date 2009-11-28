@@ -84,7 +84,7 @@ static HASH bookmark_hash;
   hidden part of opaque value passed to variable check functions.
   Used to provide a object-like structure to non C++ consumers.
 */
-struct st_item_value_holder : public st_mysql_value
+struct st_item_value_holder : public drizzle_value
 {
   Item *item;
 };
@@ -113,7 +113,7 @@ struct st_bookmark
 /*
   skeleton of a plugin variable - portion of structure common to all.
 */
-struct st_mysql_sys_var
+struct drizzle_sys_var
 {
   DRIZZLE_PLUGIN_VAR_HEADER;
 };
@@ -126,10 +126,10 @@ class sys_var_pluginvar: public sys_var
 {
 public:
   plugin::Module *plugin;
-  struct st_mysql_sys_var *plugin_var;
+  drizzle_sys_var *plugin_var;
 
   sys_var_pluginvar(const std::string name_arg,
-                    struct st_mysql_sys_var *plugin_var_arg)
+                    drizzle_sys_var *plugin_var_arg)
     :sys_var(name_arg), plugin_var(plugin_var_arg) {}
   sys_var_pluginvar *cast_pluginvar() { return this; }
   bool is_readonly() const { return plugin_var->flags & PLUGIN_VAR_READONLY; }
@@ -159,8 +159,7 @@ static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
-                                  const struct st_mysql_sys_var *opt);
-static void reap_plugins(plugin::Registry &registry);
+                                  const drizzle_sys_var *opt);
 
 
 /* declared in set_var.cc */
@@ -179,7 +178,7 @@ static bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
   Value type thunks, allows the C world to play in the C++ world
 ****************************************************************************/
 
-static int item_value_type(struct st_mysql_value *value)
+static int item_value_type(drizzle_value *value)
 {
   switch (((st_item_value_holder*)value)->item->result_type()) {
   case INT_RESULT:
@@ -191,7 +190,7 @@ static int item_value_type(struct st_mysql_value *value)
   }
 }
 
-static const char *item_val_str(struct st_mysql_value *value,
+static const char *item_val_str(drizzle_value *value,
                                 char *buffer, int *length)
 {
   String str(buffer, *length, system_charset_info), *res;
@@ -209,7 +208,7 @@ static const char *item_val_str(struct st_mysql_value *value,
 }
 
 
-static int item_val_int(struct st_mysql_value *value, int64_t *buf)
+static int item_val_int(drizzle_value *value, int64_t *buf)
 {
   Item *item= ((st_item_value_holder*)value)->item;
   *buf= item->val_int();
@@ -219,7 +218,7 @@ static int item_val_int(struct st_mysql_value *value, int64_t *buf)
 }
 
 
-static int item_val_real(struct st_mysql_value *value, double *buf)
+static int item_val_real(drizzle_value *value, double *buf)
 {
   Item *item= ((st_item_value_holder*)value)->item;
   *buf= item->val_real();
@@ -597,8 +596,8 @@ typedef bool *(*mysql_sys_var_ptr_p)(Session* a_session, int offset);
   default variable data check and update functions
 ****************************************************************************/
 
-static int check_func_bool(Session *, struct st_mysql_sys_var *var,
-                           void *save, st_mysql_value *value)
+static int check_func_bool(Session *, drizzle_sys_var *var,
+                           void *save, drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *strvalue= "NULL", *str;
@@ -636,8 +635,8 @@ err:
 }
 
 
-static int check_func_int(Session *session, struct st_mysql_sys_var *var,
-                          void *save, st_mysql_value *value)
+static int check_func_int(Session *session, drizzle_sys_var *var,
+                          void *save, drizzle_value *value)
 {
   bool fixed;
   int64_t tmp;
@@ -656,8 +655,8 @@ static int check_func_int(Session *session, struct st_mysql_sys_var *var,
 }
 
 
-static int check_func_long(Session *session, struct st_mysql_sys_var *var,
-                          void *save, st_mysql_value *value)
+static int check_func_long(Session *session, drizzle_sys_var *var,
+                          void *save, drizzle_value *value)
 {
   bool fixed;
   int64_t tmp;
@@ -676,8 +675,8 @@ static int check_func_long(Session *session, struct st_mysql_sys_var *var,
 }
 
 
-static int check_func_int64_t(Session *session, struct st_mysql_sys_var *var,
-                               void *save, st_mysql_value *value)
+static int check_func_int64_t(Session *session, drizzle_sys_var *var,
+                               void *save, drizzle_value *value)
 {
   bool fixed;
   int64_t tmp;
@@ -695,8 +694,8 @@ static int check_func_int64_t(Session *session, struct st_mysql_sys_var *var,
                               var->name, (int64_t) tmp);
 }
 
-static int check_func_str(Session *session, struct st_mysql_sys_var *,
-                          void *save, st_mysql_value *value)
+static int check_func_str(Session *session, drizzle_sys_var *,
+                          void *save, drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *str;
@@ -710,8 +709,8 @@ static int check_func_str(Session *session, struct st_mysql_sys_var *,
 }
 
 
-static int check_func_enum(Session *, struct st_mysql_sys_var *var,
-                           void *save, st_mysql_value *value)
+static int check_func_enum(Session *, drizzle_sys_var *var,
+                           void *save, drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *strvalue= "NULL", *str;
@@ -756,8 +755,8 @@ err:
 }
 
 
-static int check_func_set(Session *, struct st_mysql_sys_var *var,
-                          void *save, st_mysql_value *value)
+static int check_func_set(Session *, drizzle_sys_var *var,
+                          void *save, drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
   const char *strvalue= "NULL", *str;
@@ -808,35 +807,35 @@ err:
 }
 
 
-static void update_func_bool(Session *, struct st_mysql_sys_var *,
+static void update_func_bool(Session *, drizzle_sys_var *,
                              void *tgt, const void *save)
 {
   *(bool *) tgt= *(int *) save ? 1 : 0;
 }
 
 
-static void update_func_int(Session *, struct st_mysql_sys_var *,
+static void update_func_int(Session *, drizzle_sys_var *,
                              void *tgt, const void *save)
 {
   *(int *)tgt= *(int *) save;
 }
 
 
-static void update_func_long(Session *, struct st_mysql_sys_var *,
+static void update_func_long(Session *, drizzle_sys_var *,
                              void *tgt, const void *save)
 {
   *(long *)tgt= *(long *) save;
 }
 
 
-static void update_func_int64_t(Session *, struct st_mysql_sys_var *,
+static void update_func_int64_t(Session *, drizzle_sys_var *,
                                  void *tgt, const void *save)
 {
   *(int64_t *)tgt= *(uint64_t *) save;
 }
 
 
-static void update_func_str(Session *, struct st_mysql_sys_var *var,
+static void update_func_str(Session *, drizzle_sys_var *var,
                              void *tgt, const void *save)
 {
   char *old= *(char **) tgt;
@@ -1500,7 +1499,7 @@ bool sys_var_pluginvar::update(Session *session, set_var *var)
 
 
 static void plugin_opt_set_limits(struct my_option *options,
-                                  const struct st_mysql_sys_var *opt)
+                                  const drizzle_sys_var *opt)
 {
   options->sub_size= 0;
 
@@ -1619,7 +1618,7 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
   bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
   char *optname, *p;
   int index= 0, offset= 0;
-  st_mysql_sys_var *opt, **plugin_option;
+  drizzle_sys_var *opt, **plugin_option;
   st_bookmark *v;
 
   /* support --skip-plugin-foo syntax */
@@ -1839,7 +1838,7 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
 
 static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
 {
-  st_mysql_sys_var **opt;
+  drizzle_sys_var **opt;
   my_option *opts;
   bool can_disable;
   uint32_t count= EXTRA_OPTIONS;
@@ -1900,10 +1899,10 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
 {
   struct sys_var_chain chain= { NULL, NULL };
   bool can_disable;
-  st_mysql_sys_var **opt;
+  drizzle_sys_var **opt;
   my_option *opts= NULL;
   int error;
-  st_mysql_sys_var *o;
+  drizzle_sys_var *o;
   struct st_bookmark *var;
   uint32_t len, count= EXTRA_OPTIONS;
 

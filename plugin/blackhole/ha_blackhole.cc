@@ -429,7 +429,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "BLACKHOLE",
   "1.0",
@@ -442,4 +442,4 @@ drizzle_declare_plugin
   NULL,               /* system variables */
   NULL                /* config options   */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

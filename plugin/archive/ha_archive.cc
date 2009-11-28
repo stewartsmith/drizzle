@@ -1456,12 +1456,12 @@ static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
   "Whether or not to use asynchronous IO.",
   NULL, NULL, true);
 
-static struct st_mysql_sys_var* archive_system_variables[]= {
+static drizzle_sys_var* archive_system_variables[]= {
   DRIZZLE_SYSVAR(aio),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "ARCHIVE",
   "3.5",
@@ -1474,5 +1474,5 @@ drizzle_declare_plugin
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
 

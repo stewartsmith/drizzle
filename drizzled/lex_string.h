@@ -27,7 +27,7 @@
 */
 
 /* This definition must match the one given in mysql/plugin.h */
-typedef struct st_mysql_lex_string
+typedef struct drizzle_lex_string
 {
   char *str;
   size_t length;

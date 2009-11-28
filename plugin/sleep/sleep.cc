@@ -144,7 +144,7 @@ static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 }
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "sleep",
   "1.0",
@@ -157,4 +157,4 @@ drizzle_declare_plugin
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
