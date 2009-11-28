@@ -170,10 +170,11 @@ drop table t1;
 alter database information_schema;
 --error ER_DBACCESS_DENIED_ERROR
 drop database information_schema;
+use information_schema;
 --error 1044
-drop table information_schema.tables;
+drop table tables;
 --error 1044
-alter table information_schema.tables;
+alter table tables;
 #
 # Bug #9683 INFORMATION_SCH: Creation of temporary table allowed in Information_schema DB
 #
