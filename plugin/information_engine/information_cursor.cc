@@ -100,16 +100,47 @@ int InformationCursor::rnd_next(unsigned char *buf)
   return HA_ERR_END_OF_FILE;
 }
 
-
-int InformationCursor::rnd_pos(unsigned char *, unsigned char *)
+class FindRowByChecksum
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
-  return 0;
+  uint32_t checksum;
+public:
+  FindRowByChecksum(uint32_t in_crc)
+    :
+      checksum(in_crc)
+  {}
+
+  inline bool operator()(const plugin::InfoSchemaRecord *rec) const
+  {
+    return rec->checksumMatches(checksum);
+  }
+};
+
+void InformationCursor::position(const unsigned char *record)
+{
+  /* compute a hash of the row */
+  uint32_t cs= drizzled::hash::crc32((const char *) record, table->s->reclength);
+  /* copy the hash into ref */
+  memcpy(ref, &cs, sizeof(uint32_t));
 }
 
-
-void InformationCursor::position(const unsigned char *)
+int InformationCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
+  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  /* get the checksum */
+  uint32_t cs;
+  memcpy(&cs, pos, sizeof(uint32_t));
+
+  /* search for that data */
+  plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
+  plugin::InfoSchemaTable::Rows::iterator it= find_if(sch_table->getRows().begin(),
+                                                      sch_table->getRows().end(),
+                                                      FindRowByChecksum(cs));
+  if (it != sch_table->getRows().end())
+  {
+    (*it)->copyRecordInto(buf);
+  }
+
+  return 0;
 }
 
 

@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
+#include "drizzled/hash/crc32.h"
+
 #include <string>
 #include <set>
 #include <algorithm>
@@ -198,17 +200,20 @@ public:
   InfoSchemaRecord()
     :
       record(NULL),
-      rec_len(0)
+      rec_len(0),
+      checksum(0)
   {}
 
   InfoSchemaRecord(unsigned char *buf,
                    size_t in_len)
     :
       record(NULL),
-      rec_len(in_len)
+      rec_len(in_len),
+      checksum(0)
   {
     record= new unsigned char[rec_len];
     memcpy(record, buf, rec_len);
+    checksum= drizzled::hash::crc32((const char *) record, rec_len);
   }
 
   InfoSchemaRecord(const InfoSchemaRecord &rhs)
@@ -218,6 +223,7 @@ public:
   {
     record= new(std::nothrow) unsigned char[rec_len];
     memcpy(record, rhs.record, rec_len);
+    checksum= drizzled::hash::crc32((const char *) record, rec_len);
   }
 
   ~InfoSchemaRecord()
@@ -233,11 +239,28 @@ public:
     memcpy(buf, record, rec_len);
   }
 
+  size_t getRecordLength() const
+  {
+    return rec_len;
+  }
+
+  uint32_t getChecksum() const
+  {
+    return checksum;
+  }
+
+  bool checksumMatches(uint32_t crc) const
+  {
+    return (checksum == crc);
+  }
+
 private:
 
   unsigned char *record;
 
   size_t rec_len;
+
+  uint32_t checksum;
 
 };
 
