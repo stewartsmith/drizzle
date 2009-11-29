@@ -45,9 +45,10 @@ public:
    *
    * @return 0 on success; 1 on failure
    */
-  virtual int processTable(Session *session, TableList *tables,
+  virtual int processTable(drizzled::plugin::InfoSchemaTable *store_table,
+                           Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
+                           LEX_STRING *table_name);
 };
 
 class ReferentialConstraintsIS

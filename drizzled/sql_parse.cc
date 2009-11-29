@@ -1001,8 +1001,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
       return NULL;
     }
-    ptr->schema_table_name= ptr->table_name;
-    ptr->schema_table= schema_table;
   }
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;

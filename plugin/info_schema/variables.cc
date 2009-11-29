@@ -137,12 +137,14 @@ void VariablesIS::cleanup()
   delete var_table;
 }
 
-int VariablesISMethods::fillTable(Session *session, TableList *tables)
+int VariablesISMethods::fillTable(Session *session, 
+                                  Table *table,
+                                  plugin::InfoSchemaTable *schema_table)
 {
   int res= 0;
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  const string schema_table_name= tables->schema_table->getTableName();
+  const string schema_table_name= schema_table->getTableName();
   enum enum_var_type option_type= OPT_SESSION;
   bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
   bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
@@ -155,7 +157,7 @@ int VariablesISMethods::fillTable(Session *session, TableList *tables)
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
-                         option_type, NULL, "", tables->table, upper_case_names);
+                         option_type, NULL, "", table, upper_case_names, schema_table);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
   return res;
 }

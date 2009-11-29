@@ -71,96 +71,84 @@ vector<const plugin::ColumnInfo *> *KeyColumnUsageIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_CATALOG",
                                             FN_REFLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("ORDINAL_POSITION",
                                             10,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT",
                                             10,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("REFERENCED_TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("REFERENCED_TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("REFERENCED_COLUMN_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   return columns;
 }
@@ -202,11 +190,12 @@ void KeyColumnUsageIS::cleanup()
   delete columns;
 }
 
-int KeyColUsageISMethods::processTable(Session *session,
+int KeyColUsageISMethods::processTable(plugin::InfoSchemaTable *store_table,
+                                       Session *session,
                                        TableList *tables,
                                        Table *table, bool res,
                                        LEX_STRING *db_name,
-                                       LEX_STRING *table_name) const
+                                       LEX_STRING *table_name)
 {
   if (res)
   {
@@ -245,10 +234,8 @@ int KeyColUsageISMethods::processTable(Session *session,
                                  key_part->field->field_name,
                                  strlen(key_part->field->field_name),
                                  (int64_t) f_idx);
-          if (schema_table_store_record(session, table))
-          {
-            return (1);
-          }
+          store_table->addRow(table->record[0],
+                                       table->s->reclength);
         }
       }
     }
@@ -273,6 +260,10 @@ int KeyColUsageISMethods::processTable(Session *session,
                                f_key_info->forein_id->length,
                                f_info->str, f_info->length,
                                (int64_t) f_idx);
+        table->setWriteSet(8);
+        table->setWriteSet(9);
+        table->setWriteSet(10);
+        table->setWriteSet(11);
         table->field[8]->store((int64_t) f_idx, true);
         table->field[8]->set_notnull();
         table->field[9]->store(f_key_info->referenced_db->str,
@@ -286,10 +277,7 @@ int KeyColUsageISMethods::processTable(Session *session,
         table->field[11]->store(r_info->str, r_info->length,
                                 system_charset_info);
         table->field[11]->set_notnull();
-        if (schema_table_store_record(session, table))
-        {
-          return (1);
-        }
+        store_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }
