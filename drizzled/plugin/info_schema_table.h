@@ -234,21 +234,36 @@ public:
     }
   }
 
+  /**
+   * Copy this record into the memory passed to this function.
+   *
+   * @param[out] buf copy the record into this memory
+   */
   void copyRecordInto(unsigned char *buf)
   {
     memcpy(buf, record, rec_len);
   }
 
+  /**
+   * @return the length of this record
+   */
   size_t getRecordLength() const
   {
     return rec_len;
   }
 
+  /**
+   * @return the checksum of the data in this record
+   */
   uint32_t getChecksum() const
   {
     return checksum;
   }
 
+  /**
+   * @param[in] crc a checksum to compare
+   * @return true if the input checksum matches the checksum for this record; false otherwise
+   */
   bool checksumMatches(uint32_t crc) const
   {
     return (checksum == crc);
