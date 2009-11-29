@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
-#include <zlib.h>
+#include <drizzled/hash/crc32.h>
 
 #include <string>
 
@@ -66,7 +66,7 @@ int64_t Crc32Function::val_int()
   }
 
   null_value= false;
-  return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
+  return static_cast<int64_t>(drizzled::hash::crc32(res->ptr(), res->length()));
 }
 
 plugin::Create_function<Crc32Function> *crc32udf= NULL;
