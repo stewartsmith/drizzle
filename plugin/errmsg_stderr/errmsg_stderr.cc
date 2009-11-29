@@ -31,7 +31,8 @@
 class Error_message_stderr : public drizzled::plugin::ErrorMessage
 {
 public:
-  Error_message_stderr() : Error_message_handler("Error_message_stderr") {}
+  Error_message_stderr()
+   : drizzled::plugin::ErrorMessage("Error_message_stderr") {}
   virtual bool errmsg(Session *, int , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
