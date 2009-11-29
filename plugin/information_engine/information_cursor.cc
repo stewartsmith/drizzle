@@ -66,6 +66,10 @@ int InformationCursor::rnd_init(bool)
   plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
   if (sch_table)
   {
+    if (! sch_table->getRows().empty())
+    {
+      sch_table->clearRows();
+    }
     sch_table->fillTable(ha_session(),
                          table);
     iter= sch_table->getRows().begin();
@@ -86,8 +90,6 @@ int InformationCursor::rnd_next(unsigned char *buf)
     ++iter;
     return 0;
   }
-
-  sch_table->clearRows();
 
   return HA_ERR_END_OF_FILE;
 }

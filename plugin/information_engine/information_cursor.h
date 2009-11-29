@@ -59,7 +59,7 @@ public:
   int info(uint32_t flag);
 
   /**
-   * @return the number of rows in the table
+   * @return an upper bound estimate for the number of rows in the table
    */
   ha_rows estimate_rows_upper_bound()
   {
@@ -70,7 +70,8 @@ public:
       {
         if (! sch_table->getRows().empty())
         {
-          return (sch_table->getRows().size());
+          /* we multiply by 3 here to ensure enough memory is allocated for sort buffers */
+          return (3 * sch_table->getRows().size());
         }
       }
     }
