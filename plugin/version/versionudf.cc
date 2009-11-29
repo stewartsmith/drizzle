@@ -45,7 +45,8 @@ public:
 
 String *VersionFunction::val_str(String *str)
 {
-  str->set(STRING_WITH_LEN(PANDORA_RELEASE_VERSION),system_charset_info);
+  str->set(drizzled_version().c_str(), drizzled_version().size(),
+           system_charset_info);
   return str;
 }
 

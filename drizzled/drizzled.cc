@@ -167,6 +167,13 @@ using namespace drizzled;
 
 /* Constants */
 
+const string& drizzled_version()
+{
+  static const string DRIZZLED_VERSION(STRING_WITH_LEN(PANDORA_RELEASE_VERSION));
+  return DRIZZLED_VERSION;
+}
+
+
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
 static const char *optimizer_switch_names[]=
 {

@@ -70,6 +70,8 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
 uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
                 const CHARSET_INFO *cs);
 
+extern const std::string &drizzled_version();
+
 /*
   External variables
 */
