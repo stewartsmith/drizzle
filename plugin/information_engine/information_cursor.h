@@ -59,11 +59,21 @@ public:
   int info(uint32_t flag);
 
   /**
-   * @todo: return the actual number of rows in the table.
-   * (e.g. save number of records seen on full table scan and/or use file size as upper bound)
+   * @return the number of rows in the table
    */
   ha_rows estimate_rows_upper_bound()
   {
+    if (share)
+    {
+      drizzled::plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
+      if (sch_table)
+      {
+        if (! sch_table->getRows().empty())
+        {
+          return (sch_table->getRows().size());
+        }
+      }
+    }
     return HA_POS_ERROR;
   }
 
