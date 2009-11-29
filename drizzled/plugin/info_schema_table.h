@@ -537,9 +537,9 @@ public:
   void addRow(unsigned char *buf, size_t len)
   {
     uint32_t cs= drizzled::hash::crc32((const char *) buf, len);
-    Rows::iterator it= find_if(rows.begin(),
-                               rows.end(),
-                               FindRowByChecksum(cs));
+    Rows::iterator it= std::find_if(rows.begin(),
+                                    rows.end(),
+                                    FindRowByChecksum(cs));
     if (it == rows.end())
     {
       InfoSchemaRecord *record= new InfoSchemaRecord(buf, len);
