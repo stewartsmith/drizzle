@@ -506,11 +506,17 @@ public:
     return column_info;
   }
 
+  /**
+   * @return the rows for this I_S table.
+   */
   Rows &getRows()
   {
     return rows;
   }
 
+  /**
+   * Clear the rows for this table and de-allocate all memory for this rows.
+   */
   void clearRows()
   {
     std::for_each(rows.begin(),
@@ -519,6 +525,15 @@ public:
     rows.clear();
   }
 
+  /**
+   * Add a row to the std::vector of rows for this I_S table. For the moment, we check to make sure
+   * that we do not add any duplicate rows. This is done in a niave manner for the moment by
+   * checking the crc of the raw data for each row. We will not add this row to the std::vector of
+   * rows for this I_S table is a duplicate row already exists in the std::vector.
+   *
+   * @param[in] buf raw data for the record to add
+   * @param[in] len size of the raw data for the record to add
+   */
   void addRow(unsigned char *buf, size_t len)
   {
     uint32_t cs= drizzled::hash::crc32((const char *) buf, len);
@@ -577,6 +592,9 @@ private:
    */
   Columns column_info;
 
+  /**
+   * The rows for this I_S table.
+   */
   Rows rows;
 
   /**
