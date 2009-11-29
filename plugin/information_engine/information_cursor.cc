@@ -66,14 +66,6 @@ int InformationCursor::rnd_init(bool)
   plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
   if (sch_table)
   {
-    /*
-     * If the vector of rows is not empty, then we clear it here. Otherwise, it is possible that the
-     * vector will contain duplicate rows.
-     */
-    if (! sch_table->getRows().empty())
-    {
-      sch_table->clearRows();
-    }
     sch_table->fillTable(ha_session(),
                          table);
     iter= sch_table->getRows().begin();
