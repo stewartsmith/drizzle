@@ -202,6 +202,7 @@ InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
     Record &value= *(returned.first);
     share= &(value.second);
     share->setInfoSchemaTable(name_arg);
+    share->initThreadLock();
   }
 
 
@@ -220,6 +221,7 @@ void InformationEngine::freeShare(InformationEngine::Share *share)
   if (share->getUseCount() == 0)
   {
     open_tables.erase(share->getName());
+    share->deinitThreadLock();
   }
 
   pthread_mutex_unlock(&mutex);

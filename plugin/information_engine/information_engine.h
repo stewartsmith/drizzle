@@ -64,11 +64,17 @@ public:
     Share(const std::string &in_name) :
       count(1)
     {
-      thr_lock_init(&lock);
       table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
     }
 
-    ~Share() 
+    ~Share()  {}
+
+    void initThreadLock()
+    {
+      thr_lock_init(&lock);
+    }
+
+    void deinitThreadLock()
     {
       thr_lock_delete(&lock);
     }
