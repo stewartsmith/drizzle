@@ -808,7 +808,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
+        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {

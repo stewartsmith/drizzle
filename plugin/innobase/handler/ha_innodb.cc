@@ -246,6 +246,11 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
+                                     HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+                                     HTON_PRIMARY_KEY_IN_READ_INDEX |
+                                     HTON_PARTIAL_COLUMN_READ |
+                                     HTON_TABLE_SCAN_ON_INDEX |
+                                     HTON_MRR_CANT_SORT |
                                      HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
   {
     table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
@@ -254,11 +259,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-            HA_PRIMARY_KEY_IN_READ_INDEX |
-            HA_PARTIAL_COLUMN_READ |
-            HA_TABLE_SCAN_ON_INDEX |
-            HA_MRR_CANT_SORT);
+    return (0);
   }
 
   virtual

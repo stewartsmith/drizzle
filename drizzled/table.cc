@@ -1112,7 +1112,7 @@ int drizzled::parse_table_proto(Session& session,
             If this field is part of the primary key and all keys contains
             the primary key, then we can use any key to find this column
           */
-          if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
+          if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
           {
             field->part_of_key= share->keys_in_use;
             if (field->part_of_sortkey.test(key))
@@ -1971,7 +1971,7 @@ void Table::clear_column_bitmaps()
 void Table::prepare_for_position()
 {
 
-  if ((cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
+  if ((cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
       s->primary_key < MAX_KEY)
   {
     mark_columns_used_by_index_no_reset(s->primary_key);

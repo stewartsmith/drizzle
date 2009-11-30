@@ -8122,7 +8122,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
       we check that all query fields are indeed covered by 'cur_index'.
     */
     if (pk < MAX_KEY && cur_index != pk &&
-        (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
+        (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
     {
       /* For each table field */
       for (uint32_t i= 0; i < table->s->fields; i++)
