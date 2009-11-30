@@ -70,6 +70,12 @@ enum engine_flag_bits {
   HTON_BIT_DUPLICATE_POS,
   HTON_BIT_AUTO_PART_KEY,
   HTON_BIT_NEED_READ_RANGE_BUFFER,
+  HTON_BIT_REQUIRE_PRIMARY_KEY,
+  HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE,
+  HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE,
+  HTON_BIT_NO_PREFIX_CHAR_KEYS,
+  HTON_BIT_HAS_CHECKSUM,
+  HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE,
   HTON_BIT_SIZE
 };
 
@@ -93,10 +99,16 @@ static const std::bitset<HTON_BIT_SIZE> HTON_MRR_CANT_SORT(1 << HTON_BIT_MRR_CAN
 static const std::bitset<HTON_BIT_SIZE> HTON_FAST_KEY_READ(1 << HTON_BIT_FAST_KEY_READ);
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_BLOBS(1 << HTON_BIT_NO_BLOBS);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_RECORDS(1 << HTON_BIT_HAS_RECORDS);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_AUTO_INCREMENT(1 << HTON_BIT_NO_AUTO_INCREMENT);
 static const std::bitset<HTON_BIT_SIZE> HTON_DUPLICATE_POS(1 << HTON_BIT_DUPLICATE_POS);
 static const std::bitset<HTON_BIT_SIZE> HTON_AUTO_PART_KEY(1 << HTON_BIT_AUTO_PART_KEY);
 static const std::bitset<HTON_BIT_SIZE> HTON_NEED_READ_RANGE_BUFFER(1 << HTON_BIT_NEED_READ_RANGE_BUFFER);
-static const std::bitset<HTON_BIT_SIZE> HTON_NO_AUTO_INCREMENT(1 << HTON_BIT_NO_AUTO_INCREMENT);
+static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRE_PRIMARY_KEY(1 << HTON_BIT_REQUIRE_PRIMARY_KEY);
+static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRES_KEY_COLUMNS_FOR_DELETE(1 << HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE);
+static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_DELETE(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_NO_PREFIX_CHAR_KEYS);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
+static const std::bitset<HTON_BIT_SIZE> HTON_ANY_INDEX_MAY_BE_UNIQUE(1 << HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE);
 
 
 class Table;
@@ -223,7 +235,10 @@ public:
   */
   uint32_t slot;
 
-  virtual Table_flags table_flags(void) const= 0;
+  virtual Table_flags table_flags(void) const
+  {
+    return 0;
+  }
 
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }

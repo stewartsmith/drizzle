@@ -257,11 +257,6 @@ public:
     addAlias("INNOBASE");
   }
 
-  uint64_t table_flags() const
-  {
-    return (0);
-  }
-
   virtual
   int
   close_connection(

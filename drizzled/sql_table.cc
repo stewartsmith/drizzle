@@ -1337,8 +1337,10 @@ int mysql_prepare_create_table(Session *session,
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
 	  return(true);
 	}
-	else if (!(cursor->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS))
+	else if (! (cursor->getEngine()->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
+        {
 	  length=column->length;
+        }
       }
       else if (length == 0)
       {
@@ -1427,7 +1429,7 @@ int mysql_prepare_create_table(Session *session,
     key_info++;
   }
   if (!unique_key && !primary_key &&
-      (cursor->ha_table_flags() & HA_REQUIRE_PRIMARY_KEY))
+      (cursor->getEngine()->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
     return(true);
@@ -2592,8 +2594,10 @@ bool mysql_checksum_table(Session *session, TableList *tables,
       /**
         @note if the engine keeps a checksum then we return the checksum, otherwise we calculate
       */
-      if (t->cursor->ha_table_flags() & HA_HAS_CHECKSUM)
-	session->client->store((uint64_t)t->cursor->checksum());
+      if (t->cursor->getEngine()->check_flag(HTON_BIT_HAS_CHECKSUM))
+      {
+        session->client->store((uint64_t)t->cursor->checksum());
+      }
       else
       {
 	/* calculating table's checksum */

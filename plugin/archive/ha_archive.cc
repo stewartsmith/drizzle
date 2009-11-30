@@ -148,11 +148,6 @@ public:
     table_definition_ext= ARZ;
   }
 
-  uint64_t table_flags() const
-  {
-    return 0;
-  }
-
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
