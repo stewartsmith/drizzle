@@ -333,7 +333,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 
 /* Bits in table_flags() to show what database can do */
 
-#define HA_NO_TRANSACTIONS     (1 << 0) /* Doesn't support transactions */
 #define HA_PARTIAL_COLUMN_READ (1 << 1) /* read may not return all columns */
 #define HA_TABLE_SCAN_ON_INDEX (1 << 2) /* No separate data/index file */
 

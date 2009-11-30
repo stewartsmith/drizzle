@@ -148,8 +148,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_NO_TRANSACTIONS |
-            HA_STATS_RECORDS_IS_EXACT |
+    return (HA_STATS_RECORDS_IS_EXACT |
             HA_HAS_RECORDS);
   }
 

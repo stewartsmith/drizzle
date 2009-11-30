@@ -74,7 +74,6 @@ public:
             HA_DUPLICATE_POS |
             HA_CAN_INDEX_BLOBS |
             HA_AUTO_PART_KEY |
-            HA_NO_TRANSACTIONS |
             HA_HAS_RECORDS |
             HA_STATS_RECORDS_IS_EXACT |
             HA_NEED_READ_RANGE_BUFFER |

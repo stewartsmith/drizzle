@@ -142,7 +142,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0;
+  return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(ulong SSV::*offset) const
