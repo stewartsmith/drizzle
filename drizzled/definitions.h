@@ -347,10 +347,8 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
   and on update read all keys that changes
 */
 #define HA_REQUIRES_KEY_COLUMNS_FOR_DELETE (1 << 6)
-#define HA_NULL_IN_KEY         (1 << 7) /* One can have keys with NULL */
 #define HA_DUPLICATE_POS       (1 << 8)    /* ha_position() gives dup row */
 #define HA_NO_BLOBS            (1 << 9) /* Doesn't support blobs */
-#define HA_CAN_INDEX_BLOBS     (1 << 10)
 #define HA_AUTO_PART_KEY       (1 << 11) /* auto-increment in multi-part key */
 #define HA_REQUIRE_PRIMARY_KEY (1 << 12) /* .. and can't create a hidden one */
 /*

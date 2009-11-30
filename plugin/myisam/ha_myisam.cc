@@ -62,8 +62,10 @@ public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_HAS_DATA_DICTIONARY |
+                                     HTON_CAN_INDEX_BLOBS |
                                      HTON_STATS_RECORDS_IS_EXACT |
                                      HTON_TEMPORARY_ONLY |
+                                     HTON_NULL_IN_KEY |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
@@ -71,9 +73,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_NULL_IN_KEY |
-            HA_DUPLICATE_POS |
-            HA_CAN_INDEX_BLOBS |
+    return (HA_DUPLICATE_POS |
             HA_AUTO_PART_KEY |
             HA_HAS_RECORDS |
             HA_NEED_READ_RANGE_BUFFER |

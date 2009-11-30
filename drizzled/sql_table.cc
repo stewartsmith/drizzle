@@ -1238,7 +1238,7 @@ int mysql_prepare_create_table(Session *session,
       while ((dup_column= cols2++) != column)
       {
         if (!my_strcasecmp(system_charset_info,
-	     	           column->field_name.str, dup_column->field_name.str))
+                           column->field_name.str, dup_column->field_name.str))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
@@ -1256,7 +1256,7 @@ int mysql_prepare_create_table(Session *session,
 
         if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
         {
-          if (! (cursor->ha_table_flags() & HA_CAN_INDEX_BLOBS))
+          if (! (cursor->getEngine()->check_flag(HTON_BIT_CAN_INDEX_BLOBS)))
           {
             my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
             return true;
@@ -1286,7 +1286,7 @@ int mysql_prepare_create_table(Session *session,
           else
           {
             key_info->flags|= HA_NULL_PART_KEY;
-            if (! (cursor->ha_table_flags() & HA_NULL_IN_KEY))
+            if (! (cursor->getEngine()->check_flag(HTON_BIT_NULL_IN_KEY)))
             {
               my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
               return true;

@@ -42,6 +42,7 @@ public:
   HeapEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_NULL_IN_KEY |
                                      HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
@@ -50,7 +51,7 @@ public:
   uint64_t table_flags() const
   {
     return (HA_FAST_KEY_READ |
-            HA_NO_BLOBS | HA_NULL_IN_KEY |
+            HA_NO_BLOBS |
             HA_HAS_RECORDS);
   }
 
@@ -64,9 +65,9 @@ public:
     return ha_heap_exts;
   }
 
-  int doCreateTable(Session *session, 
+  int doCreateTable(Session *session,
                     const char *table_name,
-                    Table& table_arg, 
+                    Table& table_arg,
                     drizzled::message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()

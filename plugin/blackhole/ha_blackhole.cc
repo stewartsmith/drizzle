@@ -41,14 +41,17 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_HAS_DATA_DICTIONARY) 
+   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
+                                     HTON_NULL_IN_KEY |
+                                     HTON_CAN_INDEX_BLOBS |
+                                     HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= BLACKHOLE_EXT;
   }
 
   uint64_t table_flags() const
   {
-    return(HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY);
+    return(HA_AUTO_PART_KEY);
   }
 
   virtual Cursor *create(TableShare &table,

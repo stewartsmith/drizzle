@@ -244,6 +244,8 @@ class InnobaseEngine : public drizzled::plugin::StorageEngine
 public:
   InnobaseEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_NULL_IN_KEY |
+                                     HTON_CAN_INDEX_BLOBS |
                                      HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
   {
     table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
@@ -252,12 +254,10 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_NULL_IN_KEY |
-            HA_CAN_INDEX_BLOBS |
-            HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+    return (HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
             HA_PRIMARY_KEY_IN_READ_INDEX |
             HA_PARTIAL_COLUMN_READ |
-            HA_TABLE_SCAN_ON_INDEX | 
+            HA_TABLE_SCAN_ON_INDEX |
             HA_MRR_CANT_SORT);
   }
 
@@ -271,9 +271,9 @@ public:
 
   virtual int savepoint_set_hook(Session* session,
                                  void *savepoint);
-  virtual int savepoint_rollback_hook(Session* session, 
+  virtual int savepoint_rollback_hook(Session* session,
                                       void *savepoint);
-  virtual int savepoint_release_hook(Session* session, 
+  virtual int savepoint_release_hook(Session* session,
                                      void *savepoint);
   virtual int commit(Session* session, bool all);
   virtual int rollback(Session* session, bool all);
