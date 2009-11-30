@@ -166,8 +166,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         tl->schema_table)
     {
       maybe_exact_count&= test(!tl->schema_table &&
-                               (tl->table->cursor->ha_table_flags() &
-                                HA_HAS_RECORDS));
+                               (tl->table->cursor->getEngine()->check_flag(HTON_BIT_HAS_RECORDS)));
       is_exact_count= false;
       count= 1;                                 // ensure count != 0
     }

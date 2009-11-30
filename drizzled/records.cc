@@ -191,7 +191,7 @@ void init_read_record(READ_RECORD *info,
     */
     if (!table->sort.addon_field &&
         session->variables.read_rnd_buff_size &&
-        !(table->cursor->ha_table_flags() & HA_FAST_KEY_READ) &&
+        !(table->cursor->getEngine()->check_flag(HTON_BIT_FAST_KEY_READ)) &&
         (table->db_stat & HA_READ_ONLY ||
         table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
         (uint64_t) table->s->reclength* (table->cursor->stats.records+

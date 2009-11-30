@@ -1036,14 +1036,14 @@ int mysql_prepare_create_table(Session *session,
     return(true);
   }
   if (auto_increment &&
-      (cursor->ha_table_flags() & HA_NO_AUTO_INCREMENT))
+      (cursor->getEngine()->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
     return(true);
   }
 
-  if (blob_columns && (cursor->ha_table_flags() & HA_NO_BLOBS))
+  if (blob_columns && (cursor->getEngine()->check_flag(HTON_BIT_NO_BLOBS)))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));

@@ -67,6 +67,7 @@ public:
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NULL_IN_KEY |
                                      HTON_MRR_CANT_SORT |
+                                     HTON_HAS_RECORDS |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
@@ -76,7 +77,6 @@ public:
   {
     return (HA_DUPLICATE_POS |
             HA_AUTO_PART_KEY |
-            HA_HAS_RECORDS |
             HA_NEED_READ_RANGE_BUFFER
             );
   }

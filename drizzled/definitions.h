@@ -332,18 +332,11 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_REJECT          -6
 
 /*
-  Reading keys in random order is as fast as reading keys in sort order
-  (Used in records.cc to decide if we should use a record cache and by
-  filesort to decide if we should sort key + data or key + pointer-to-row
-*/
-#define HA_FAST_KEY_READ       (1 << 5)
-/*
   Set the following flag if we on delete should force all key to be read
   and on update read all keys that changes
 */
 #define HA_REQUIRES_KEY_COLUMNS_FOR_DELETE (1 << 6)
 #define HA_DUPLICATE_POS       (1 << 8)    /* ha_position() gives dup row */
-#define HA_NO_BLOBS            (1 << 9) /* Doesn't support blobs */
 #define HA_AUTO_PART_KEY       (1 << 11) /* auto-increment in multi-part key */
 #define HA_REQUIRE_PRIMARY_KEY (1 << 12) /* .. and can't create a hidden one */
 
@@ -354,11 +347,9 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 */
 #define HA_PRIMARY_KEY_REQUIRED_FOR_DELETE (1 << 19)
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
-#define HA_NO_AUTO_INCREMENT   (1 << 23)
 #define HA_HAS_CHECKSUM        (1 << 24)
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
-#define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
 
 /* bits in index_flags(index_number) for what you can do with index */
 #define HA_READ_NEXT            1       /* TODO really use this flag */

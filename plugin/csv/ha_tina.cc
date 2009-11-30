@@ -121,8 +121,11 @@ class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_TEMPORARY_ONLY | 
-                                     HTON_HAS_DATA_DICTIONARY | HTON_FILE_BASED) {}
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_TEMPORARY_ONLY |
+                                     HTON_NO_AUTO_INCREMENT |
+                                     HTON_HAS_DATA_DICTIONARY |
+                                     HTON_FILE_BASED) {}
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
@@ -131,7 +134,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_NO_AUTO_INCREMENT);
+    return 0;
   }
 
   const char **bas_ext() const {

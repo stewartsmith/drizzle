@@ -142,14 +142,15 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_FILE_BASED |
                                      HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_HAS_DATA_DICTIONARY) 
+                                     HTON_HAS_RECORDS |
+                                     HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= ARZ;
   }
 
   uint64_t table_flags() const
   {
-    return (HA_HAS_RECORDS);
+    return 0;
   }
 
   virtual Cursor *create(TableShare &table,

@@ -43,6 +43,9 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_STATS_RECORDS_IS_EXACT |
                                      HTON_NULL_IN_KEY |
+                                     HTON_FAST_KEY_READ |
+                                     HTON_NO_BLOBS |
+                                     HTON_HAS_RECORDS |
                                      HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
@@ -50,9 +53,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_FAST_KEY_READ |
-            HA_NO_BLOBS |
-            HA_HAS_RECORDS);
+    return 0;
   }
 
   virtual Cursor *create(TableShare &table,
