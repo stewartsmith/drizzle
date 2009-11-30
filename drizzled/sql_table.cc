@@ -1295,7 +1295,7 @@ int mysql_prepare_create_table(Session *session,
         }
         if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
         {
-          if (column_nr == 0 || (cursor->ha_table_flags() & HA_AUTO_PART_KEY))
+          if (column_nr == 0 || (cursor->getEngine()->check_flag(HTON_BIT_AUTO_PART_KEY)))
             auto_increment--;			// Field is used
         }
       }

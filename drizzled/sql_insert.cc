@@ -759,7 +759,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           key_nr == table->s->next_number_index &&
 	  (insert_id_for_cur_row > 0))
 	goto err;
-      if (table->cursor->ha_table_flags() & HA_DUPLICATE_POS)
+      if (table->cursor->getEngine()->check_flag(HTON_BIT_DUPLICATE_POS))
       {
 	if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
 	  goto err;

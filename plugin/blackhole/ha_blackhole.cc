@@ -44,6 +44,7 @@ public:
    : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
+                                     HTON_AUTO_PART_KEY |
                                      HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= BLACKHOLE_EXT;
@@ -51,7 +52,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return(HA_AUTO_PART_KEY);
+    return 0;
   }
 
   virtual Cursor *create(TableShare &table,
@@ -64,12 +65,12 @@ public:
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*, 
+  int doCreateTable(Session*,
                     const char *,
                     Table&,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name); 
+  int doDropTable(Session&, const string table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,

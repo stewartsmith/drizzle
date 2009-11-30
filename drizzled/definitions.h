@@ -336,11 +336,10 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
   and on update read all keys that changes
 */
 #define HA_REQUIRES_KEY_COLUMNS_FOR_DELETE (1 << 6)
-#define HA_DUPLICATE_POS       (1 << 8)    /* ha_position() gives dup row */
-#define HA_AUTO_PART_KEY       (1 << 11) /* auto-increment in multi-part key */
 #define HA_REQUIRE_PRIMARY_KEY (1 << 12) /* .. and can't create a hidden one */
 
 #define HA_NOT_DELETE_WITH_CACHE (1 << 18)
+
 /*
   The following is we need to a primary key to delete (and update) a row.
   If there is no primary key, all columns needs to be read on update and delete
@@ -348,7 +347,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_PRIMARY_KEY_REQUIRED_FOR_DELETE (1 << 19)
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
 #define HA_HAS_CHECKSUM        (1 << 24)
-#define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
 
 /* bits in index_flags(index_number) for what you can do with index */

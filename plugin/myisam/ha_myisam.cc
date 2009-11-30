@@ -68,6 +68,9 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_MRR_CANT_SORT |
                                      HTON_HAS_RECORDS |
+                                     HTON_DUPLICATE_POS |
+                                     HTON_AUTO_PART_KEY |
+                                     HTON_NEED_READ_RANGE_BUFFER |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
@@ -75,10 +78,7 @@ public:
 
   uint64_t table_flags() const
   {
-    return (HA_DUPLICATE_POS |
-            HA_AUTO_PART_KEY |
-            HA_NEED_READ_RANGE_BUFFER
-            );
+    return 0;
   }
 
   virtual Cursor *create(TableShare &table,

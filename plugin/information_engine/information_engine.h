@@ -49,7 +49,7 @@ public:
     return 0;
   }
 
-  class Share 
+  class Share
   {
   private:
     uint32_t count;
