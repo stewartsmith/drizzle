@@ -60,9 +60,10 @@ class MyisamEngine : public drizzled::plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, 
+   : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_HAS_DATA_DICTIONARY |
-                                     HTON_TEMPORARY_ONLY | 
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_TEMPORARY_ONLY |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
@@ -75,7 +76,6 @@ public:
             HA_CAN_INDEX_BLOBS |
             HA_AUTO_PART_KEY |
             HA_HAS_RECORDS |
-            HA_STATS_RECORDS_IS_EXACT |
             HA_NEED_READ_RANGE_BUFFER |
             HA_MRR_CANT_SORT);
   }

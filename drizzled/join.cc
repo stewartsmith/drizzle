@@ -2691,7 +2691,7 @@ enum_nested_loop_state end_send(JOIN *join, JoinTable *, bool end_of_records)
         if ((join->tables == 1) && !join->tmp_table && !join->sort_and_group
             && !join->send_group_parts && !join->having && !jt->select_cond &&
             !(jt->select && jt->select->quick) &&
-            (jt->table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
+            (jt->table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
                   (jt->ref.key < 0))
         {
           /* Join over all rows in table;  Return number of found rows */
@@ -5620,7 +5620,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       continue;
     }
     if ((table->cursor->stats.records <= 1) && !s->dependent &&
-	      (table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && 
+	      (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
         !join->no_const_tables)
     {
       set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
@@ -5746,7 +5746,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         if (s->dependent & ~(found_const_table_map))
           continue;
         if (table->cursor->stats.records <= 1L &&
-            (table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
+            (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
                   !table->pos_in_table_list->embedding)
         {					// system table
           int tmp= 0;

@@ -140,16 +140,16 @@ class ArchiveEngine : public drizzled::plugin::StorageEngine
 public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) 
+                                     HTON_FILE_BASED |
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_HAS_DATA_DICTIONARY) 
   {
     table_definition_ext= ARZ;
   }
 
   uint64_t table_flags() const
   {
-    return (HA_STATS_RECORDS_IS_EXACT |
-            HA_HAS_RECORDS);
+    return (HA_HAS_RECORDS);
   }
 
   virtual Cursor *create(TableShare &table,

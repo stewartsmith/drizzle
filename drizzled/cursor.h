@@ -171,7 +171,11 @@ protected:
   ha_rows estimation_rows_to_insert;
 public:
   drizzled::plugin::StorageEngine *engine;      /* storage engine of this Cursor */
-  unsigned char *ref;		  		/* Pointer to current row */
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return engine;
+  }
+  unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
   ha_statistics stats;

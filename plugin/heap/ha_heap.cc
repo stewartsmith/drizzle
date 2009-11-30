@@ -41,6 +41,7 @@ class HeapEngine : public drizzled::plugin::StorageEngine
 public:
   HeapEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_STATS_RECORDS_IS_EXACT |
                                      HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
@@ -50,8 +51,7 @@ public:
   {
     return (HA_FAST_KEY_READ |
             HA_NO_BLOBS | HA_NULL_IN_KEY |
-            HA_HAS_RECORDS |
-            HA_STATS_RECORDS_IS_EXACT);
+            HA_HAS_RECORDS);
   }
 
   virtual Cursor *create(TableShare &table,
