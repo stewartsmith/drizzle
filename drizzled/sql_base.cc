@@ -174,7 +174,13 @@ void close_handle_and_leave_table_as_lock(Table *table)
   true	Error 
 */
 
-bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display)
+bool list_open_tables(const char *db, 
+                      const char *wild, 
+                      bool(*func)(Table *table, 
+                                  open_table_list_st& open_list,
+                                  plugin::InfoSchemaTable *schema_table), 
+                      Table *display,
+                      plugin::InfoSchemaTable *schema_table)
 {
   vector<open_table_list_st> open_list;
   vector<open_table_list_st>::iterator it;
@@ -225,7 +231,7 @@ bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table
 
   for (it= open_list.begin(); it < open_list.end(); it++)
   {
-    if (func(display, *it))
+    if (func(display, *it, schema_table))
       return true;
   }
 
@@ -2131,18 +2137,6 @@ restart:
     if (tables->derived)
     {
       continue;
-    }
-    /*
-      If this TableList object is a placeholder for an information_schema
-      table, create a temporary table to represent the information_schema
-      table in the query. Do not fill it yet - will be filled during
-      execution.
-    */
-    if (tables->schema_table)
-    {
-      if (mysql_schema_table(this, lex, tables) == false)
-        continue;
-      return -1;
     }
     (*counter)++;
 

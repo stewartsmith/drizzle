@@ -512,10 +512,6 @@ typedef int myf;
 #define MY_I_S_UNSIGNED   2
 
 
-#define SKIP_OPEN_TABLE 0                // do not open table
-#define OPEN_FRM_ONLY   1                // open FRM file only
-#define OPEN_FULL_TABLE 2                // open FRM,MYD, MYI files
-
 /*
    "Declared Type Collation"
    A combination of collation and its derivation.

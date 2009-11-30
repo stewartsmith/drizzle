@@ -162,10 +162,9 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
       Schema tables are filled after this function is invoked, so we can't
       get row count
     */
-    if (!(tl->table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) ||
-        tl->schema_table)
+    if (!(tl->table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT))
     {
-      maybe_exact_count&= test(!tl->schema_table &&
+      maybe_exact_count&= test(
                                (tl->table->cursor->ha_table_flags() &
                                 HA_HAS_RECORDS));
       is_exact_count= false;

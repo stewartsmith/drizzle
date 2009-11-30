@@ -1245,9 +1245,6 @@ void JOIN::exec()
     return;
   }
 
-  if ((this->select_lex->options & OPTION_SCHEMA_TABLE) && get_schema_tables_result(this, PROCESSED_BY_JOIN_EXEC))
-    return;
-
   if (select_options & SELECT_DESCRIBE)
   {
     /*
@@ -5584,8 +5581,6 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
 
     s->dependent= tables->dep_tables;
     s->key_dependent= 0;
-    if (tables->schema_table)
-      table->cursor->stats.records= 2;
     table->quick_condition_rows= table->cursor->stats.records;
 
     s->on_expr_ref= &tables->on_expr;

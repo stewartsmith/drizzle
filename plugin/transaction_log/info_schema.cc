@@ -112,14 +112,22 @@ static bool createTransactionLogViewColumns(vector<const drizzled::plugin::Colum
 static bool createTransactionLogEntriesViewColumns(vector<const drizzled::plugin::ColumnInfo *> &cols);
 static bool createTransactionLogTransactionsViewColumns(vector<const drizzled::plugin::ColumnInfo *> &cols);
 
-int TransactionLogViewISMethods::fillTable(Session *session,
-                                           TableList *tables)
+int TransactionLogViewISMethods::fillTable(Session *,
+                                           Table *table,
+                                           plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   if (transaction_log != NULL)
   {
     table->restoreRecordAsDefault();
+
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
+    table->setWriteSet(6);
+    table->setWriteSet(7);
 
     const string &filename= transaction_log->getLogFilename();
     table->field[0]->store(filename.c_str(), filename.length(), system_charset_info);
@@ -138,19 +146,15 @@ int TransactionLogViewISMethods::fillTable(Session *session,
     table->field[7]->store(static_cast<int64_t>(transaction_log_index->getMaxEndTimestamp()));
 
     /* store the actual record now */
-    if (schema_table_store_record(session, table))
-    {
-      return 1;
-    }
+    schema_table->addRow(table->record[0], table->s->reclength);
   }
   return 0;
 }
 
-int TransactionLogEntriesViewISMethods::fillTable(Session *session,
-                                                  TableList *tables)
+int TransactionLogEntriesViewISMethods::fillTable(Session *,
+                                                  Table *table,
+                                                  plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   if (transaction_log != NULL)
   {
     /** @todo trigger indexing update here. */
@@ -162,26 +166,26 @@ int TransactionLogEntriesViewISMethods::fillTable(Session *session,
 
       table->restoreRecordAsDefault();
 
+      table->setWriteSet(0);
+      table->setWriteSet(1);
+      table->setWriteSet(2);
+
       table->field[0]->store(static_cast<int64_t>(entry.getOffset()));
       const char *type_string= entry.getTypeAsString();
       table->field[1]->store(type_string, strlen(type_string), system_charset_info);
       table->field[2]->store(static_cast<int64_t>(entry.getLengthInBytes()));
 
       /* store the actual record now */
-      if (schema_table_store_record(session, table))
-      {
-        return 1;
-      }
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;
 }
 
-int TransactionLogTransactionsViewISMethods::fillTable(Session *session,
-                                                  TableList *tables)
+int TransactionLogTransactionsViewISMethods::fillTable(Session *,
+                                                       Table *table,
+                                                       plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   if (transaction_log != NULL)
   {
     /** @todo trigger indexing update here. */
@@ -193,6 +197,14 @@ int TransactionLogTransactionsViewISMethods::fillTable(Session *session,
 
       table->restoreRecordAsDefault();
 
+      table->setWriteSet(0);
+      table->setWriteSet(1);
+      table->setWriteSet(2);
+      table->setWriteSet(3);
+      table->setWriteSet(4);
+      table->setWriteSet(5);
+      table->setWriteSet(6);
+
       table->field[0]->store(static_cast<int64_t>(entry.getOffset()));
       table->field[1]->store(static_cast<int64_t>(entry.getTransactionId()));
       table->field[2]->store(static_cast<int64_t>(entry.getServerId()));
@@ -202,10 +214,7 @@ int TransactionLogTransactionsViewISMethods::fillTable(Session *session,
       table->field[6]->store(static_cast<int64_t>(entry.getChecksum()));
 
       /* store the actual record now */
-      if (schema_table_store_record(session, table))
-      {
-        return 1;
-      }
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;
@@ -222,8 +231,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_VARCHAR,
                                       0,
                                       0, 
-                                      "Filename of the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Filename of the transaction log");
   if (file_name_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -238,8 +246,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Length in bytes of the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Length in bytes of the transaction log");
   if (file_length_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -254,8 +261,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Total number of entries in the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Total number of entries in the transaction log");
   if (num_log_entries_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -270,8 +276,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Total number of transaction message entries in the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Total number of transaction message entries in the transaction log");
   if (num_transactions_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -286,8 +291,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Minimum transaction ID in the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Minimum transaction ID in the transaction log");
   if (min_transaction_id_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -302,8 +306,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Maximum transaction ID in the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Maximum transaction ID in the transaction log");
   if (max_transaction_id_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -318,8 +321,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Minimum end timestamp for a transaction in the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Minimum end timestamp for a transaction in the transaction log");
   if (min_timestamp_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -334,8 +336,7 @@ static bool createTransactionLogViewColumns(vector<const plugin::ColumnInfo *> &
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Maximum end timestamp for a transaction in the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Maximum end timestamp for a transaction in the transaction log");
   if (max_timestamp_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -367,8 +368,7 @@ static bool createTransactionLogEntriesViewColumns(vector<const plugin::ColumnIn
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Offset of this entry into the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Offset of this entry into the transaction log");
   if (entry_offset_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -383,8 +383,7 @@ static bool createTransactionLogEntriesViewColumns(vector<const plugin::ColumnIn
                                       DRIZZLE_TYPE_VARCHAR,
                                       0,
                                       0, 
-                                      "Type of this entry",
-                                      SKIP_OPEN_TABLE);
+                                      "Type of this entry");
   if (entry_type_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -399,8 +398,7 @@ static bool createTransactionLogEntriesViewColumns(vector<const plugin::ColumnIn
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Length in bytes of this entry",
-                                      SKIP_OPEN_TABLE);
+                                      "Length in bytes of this entry");
   if (entry_length_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -427,8 +425,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Offset of this entry into the transaction log",
-                                      SKIP_OPEN_TABLE);
+                                      "Offset of this entry into the transaction log");
   if (entry_offset_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -443,8 +440,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Transaction ID for this entry",
-                                      SKIP_OPEN_TABLE);
+                                      "Transaction ID for this entry");
   if (transaction_id_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -459,8 +455,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Server ID for this entry",
-                                      SKIP_OPEN_TABLE);
+                                      "Server ID for this entry");
   if (server_id_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -475,8 +470,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Start timestamp for this transaction",
-                                      SKIP_OPEN_TABLE);
+                                      "Start timestamp for this transaction");
   if (start_timestamp_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -491,8 +485,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "End timestamp for this transaction",
-                                      SKIP_OPEN_TABLE);
+                                      "End timestamp for this transaction");
   if (end_timestamp_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -507,8 +500,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Number of statements in this transaction",
-                                      SKIP_OPEN_TABLE);
+                                      "Number of statements in this transaction");
   if (num_statements_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 
@@ -523,8 +515,7 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
                                       DRIZZLE_TYPE_LONGLONG,
                                       0,
                                       0, 
-                                      "Checksum of this transaction",
-                                      SKIP_OPEN_TABLE);
+                                      "Checksum of this transaction");
   if (checksum_col == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate ColumnInfo %s.  Got error: %s\n"), 

@@ -112,7 +112,6 @@ time_t			DRIZZLE_TYPE_DATETIME
 */
 
 /* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
-bool schema_table_store_record(Session *session, Table *table);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
 /*******************************************************************//**
@@ -205,8 +204,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_STATE		1
         drizzled::plugin::ColumnInfo("trx_state",
@@ -214,8 +212,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_STARTED		2
         drizzled::plugin::ColumnInfo("trx_started",
@@ -223,8 +220,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_DATETIME,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_REQUESTED_LOCK_ID	3
         drizzled::plugin::ColumnInfo("trx_requested_lock_id",
@@ -232,8 +228,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_WAIT_STARTED	4
         drizzled::plugin::ColumnInfo("trx_wait_started",
@@ -241,8 +236,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_DATETIME,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_WEIGHT		5
         drizzled::plugin::ColumnInfo("trx_weight",
@@ -250,8 +244,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_DRIZZLE_THREAD_ID	6
         drizzled::plugin::ColumnInfo("trx_mysql_thread_id",
@@ -259,8 +252,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_TRX_QUERY		7
         drizzled::plugin::ColumnInfo("trx_query",
@@ -268,8 +260,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -283,9 +274,8 @@ int
 fill_innodb_trx_from_cache(
 /*=======================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
-	Session*		session,/*!< in: used to call
-					schema_table_store_record() */
-	Table*			table)	/*!< in/out: fill this table */
+	Table*			table,	/*!< in/out: fill this table */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -351,7 +341,8 @@ fill_innodb_trx_from_cache(
 		OK(field_store_string(fields[IDX_TRX_QUERY],
 				      row->trx_query));
 
-		OK(schema_table_store_record(session, table));
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(0);
@@ -383,8 +374,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_TRX_ID		1
         drizzled::plugin::ColumnInfo("lock_trx_id",
@@ -392,8 +382,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_MODE		2
         drizzled::plugin::ColumnInfo("lock_mode",
@@ -402,8 +391,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_TYPE		3
         drizzled::plugin::ColumnInfo("lock_type",
@@ -411,8 +399,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_TABLE		4
         drizzled::plugin::ColumnInfo("lock_table",
@@ -420,8 +407,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_INDEX		5
         drizzled::plugin::ColumnInfo("lock_index",
@@ -429,8 +415,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_SPACE		6
         drizzled::plugin::ColumnInfo("lock_space",
@@ -438,8 +423,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_PAGE		7
         drizzled::plugin::ColumnInfo("lock_page",
@@ -447,8 +431,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_REC		8
         drizzled::plugin::ColumnInfo("lock_rec",
@@ -456,8 +439,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_LOCK_DATA		9
         drizzled::plugin::ColumnInfo("lock_data",
@@ -465,8 +447,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -481,7 +462,8 @@ fill_innodb_locks_from_cache(
 /*=========================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
 	Session*		session,/*!< in: MySQL client connection */
-	Table*			table)	/*!< in/out: fill this table */
+	Table*			table,	/*!< in/out: fill this table */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -571,7 +553,8 @@ fill_innodb_locks_from_cache(
 		OK(field_store_string(fields[IDX_LOCK_DATA],
 				      row->lock_data));
 
-		OK(schema_table_store_record(session, table));
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(0);
@@ -603,8 +586,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_REQUESTED_LOCK_ID	1
         drizzled::plugin::ColumnInfo("requested_lock_id",
@@ -612,8 +594,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_BLOCKING_TRX_ID	2
         drizzled::plugin::ColumnInfo("blocking_trx_id",
@@ -621,8 +602,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
 #define IDX_BLOCKING_LOCK_ID	3
         drizzled::plugin::ColumnInfo("blocking_lock_id",
@@ -630,8 +610,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
-                  "",
-                  SKIP_OPEN_TABLE),
+                  ""),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -645,9 +624,8 @@ int
 fill_innodb_lock_waits_from_cache(
 /*==============================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
-	Session*		session,/*!< in: used to call
-					schema_table_store_record() */
-	Table*			table)	/*!< in/out: fill this table */
+	Table*			table,	/*!< in/out: fill this table */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -699,7 +677,8 @@ fill_innodb_lock_waits_from_cache(
 				   blocking_lock_id,
 				   sizeof(blocking_lock_id))));
 
-		OK(schema_table_store_record(session, table));
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(0);
@@ -734,7 +713,8 @@ int
 TrxISMethods::fillTable(
 /*======================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
 	const char*		table_name;
 	int			ret;
@@ -745,7 +725,7 @@ TrxISMethods::fillTable(
 	cache = trx_i_s_cache;
 
 	/* which table we have to fill? */
-	table_name = tables->schema_table_name;
+	table_name = schema_table->getName().c_str();
 	/* or table_name = tables->schema_table->table_name; */
 
 	RETURN_IF_INNODB_NOT_STARTED(table_name);
@@ -770,7 +750,7 @@ TrxISMethods::fillTable(
 	if (innobase_strcasecmp(table_name, "innodb_trx") == 0) {
 
 		if (fill_innodb_trx_from_cache(
-			cache, session, tables->table) != 0) {
+			cache, table, schema_table) != 0) {
 
 			ret = 1;
 		}
@@ -778,7 +758,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_locks") == 0) {
 
 		if (fill_innodb_locks_from_cache(
-			cache, session, tables->table) != 0) {
+			cache, session, table, schema_table) != 0) {
 
 			ret = 1;
 		}
@@ -786,7 +766,7 @@ TrxISMethods::fillTable(
 	} else if (innobase_strcasecmp(table_name, "innodb_lock_waits") == 0) {
 
 		if (fill_innodb_lock_waits_from_cache(
-			cache, session, tables->table) != 0) {
+			cache, table, schema_table) != 0) {
 
 			ret = 1;
 		}
@@ -825,48 +805,42 @@ static drizzled::plugin::ColumnInfo	i_s_cmp_fields_info[] =
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Compressed Page Size",
-                  SKIP_OPEN_TABLE),
+                  "Compressed Page Size"),
 
         drizzled::plugin::ColumnInfo("compress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Number of Compressions",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Compressions"),
 
         drizzled::plugin::ColumnInfo("compress_ops_ok",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Number of Successful Compressions",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Successful Compressions"),
 
         drizzled::plugin::ColumnInfo("compress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Duration of Compressions in Seconds",
-                  SKIP_OPEN_TABLE),
+                  "Total Duration of Compressions in Seconds"),
 
         drizzled::plugin::ColumnInfo("uncompress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Number of Decompressions",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Decompressions"),
 
         drizzled::plugin::ColumnInfo("uncompress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Duration of Decompressions in Seconds",
-                  SKIP_OPEN_TABLE),
+                  "Total Duration of Decompressions in Seconds"),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -881,14 +855,14 @@ int
 i_s_cmp_fill_low(
 /*=============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table,
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
-	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
 
 
-	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name);
+	RETURN_IF_INNODB_NOT_STARTED(schema_table->getName().c_str());
 
 	for (uint i = 0; i < PAGE_ZIP_NUM_SSIZE - 1; i++) {
 		page_zip_stat_t*	zip_stat = &page_zip_stat[i];
@@ -913,10 +887,8 @@ i_s_cmp_fill_low(
 			memset(zip_stat, 0, sizeof *zip_stat);
 		}
 
-		if (schema_table_store_record(session, table)) {
-			status = 1;
-			break;
-		}
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	return(status);
@@ -929,9 +901,10 @@ int
 CmpISMethods::fillTable(
 /*=========*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
-	return(i_s_cmp_fill_low(session, tables, FALSE));
+	return(i_s_cmp_fill_low(session, table, schema_table, FALSE));
 }
 
 /*******************************************************************//**
@@ -941,9 +914,10 @@ int
 CmpResetISMethods::fillTable(
 /*===============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
-	return(i_s_cmp_fill_low(session, tables, TRUE));
+	return(i_s_cmp_fill_low(session, table, schema_table, TRUE));
 }
 
 /*******************************************************************//**
@@ -990,40 +964,35 @@ static drizzled::plugin::ColumnInfo	i_s_cmpmem_fields_info[] =
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Buddy Block Size",
-                  SKIP_OPEN_TABLE),
+                  "Buddy Block Size"),
 
         drizzled::plugin::ColumnInfo("pages_used",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Currently in Use",
-                  SKIP_OPEN_TABLE),
+                  "Currently in Use"),
 
         drizzled::plugin::ColumnInfo("pages_free",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Currently Available",
-                  SKIP_OPEN_TABLE),
+                  "Currently Available"),
 
         drizzled::plugin::ColumnInfo("relocation_ops",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   0,
-                  "Total Number of Relocations",
-                  SKIP_OPEN_TABLE),
+                  "Total Number of Relocations"),
 
         drizzled::plugin::ColumnInfo("relocation_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
-                  "Total Duration of Relocations, in Seconds",
-                  SKIP_OPEN_TABLE),
+                  "Total Duration of Relocations, in Seconds"),
 
         drizzled::plugin::ColumnInfo()
 };
@@ -1037,13 +1006,13 @@ int
 i_s_cmpmem_fill_low(
 /*================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables,	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table,
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
-	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
 
-	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name);
+	RETURN_IF_INNODB_NOT_STARTED(schema_table->getName().c_str());
 
 	buf_pool_mutex_enter();
 
@@ -1065,10 +1034,8 @@ i_s_cmpmem_fill_low(
 			buddy_stat->relocated_usec = 0;
 		}
 
-		if (schema_table_store_record(session, table)) {
-			status = 1;
-			break;
-		}
+                schema_table->addRow(table->record[0],
+                                     table->s->reclength);
 	}
 
 	buf_pool_mutex_exit();
@@ -1082,9 +1049,10 @@ int
 CmpmemISMethods::fillTable(
 /*============*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table, /*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)	
 {
-	return(i_s_cmpmem_fill_low(session, tables, FALSE));
+	return(i_s_cmpmem_fill_low(session, table, schema_table, FALSE));
 }
 
 /*******************************************************************//**
@@ -1094,9 +1062,10 @@ int
 CmpmemResetISMethods::fillTable(
 /*==================*/
 	Session*	session,/*!< in: thread */
-	TableList*	tables)	/*!< in/out: tables to fill */
+	Table*	table,	/*!< in/out: tables to fill */
+        drizzled::plugin::InfoSchemaTable *schema_table)
 {
-	return(i_s_cmpmem_fill_low(session, tables, TRUE));
+	return(i_s_cmpmem_fill_low(session, table, schema_table, TRUE));
 }
 
 /*******************************************************************//**

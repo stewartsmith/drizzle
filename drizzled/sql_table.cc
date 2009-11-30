@@ -36,7 +36,8 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
 
-#include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
+#include "drizzled/statement/alter_table.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <algorithm>
 
@@ -2312,37 +2313,32 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     int protoerr= EEXIST;
 
-    if (src_table->schema_table)
+    /*
+     * If an engine was not specified and we are reading from an I_S table, then we need to toss an
+     * error. This should go away soon.
+     * @todo make this go away!
+     */
+    if (! is_engine_set)
     {
-      /*
-        If engine was not specified and we are reading from the I_S, then we need to
-        toss an error. This should go away later on when we straighten out the
-        I_S engine.
-      */
-      if (! is_engine_set)
+      string tab_name(src_path);
+      string i_s_prefix("./information_schema/");
+      if (tab_name.compare(0, i_s_prefix.length(), i_s_prefix) == 0)
       {
         pthread_mutex_unlock(&LOCK_open);
-        my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+        my_error(ER_ILLEGAL_HA_CREATE_OPTION,
+                 MYF(0),
                  "INFORMATION_ENGINE",
                  "TEMPORARY");
         goto err;
       }
+    }
 
-      if (create_like_schema_frm(session, src_table, &src_proto))
-      {
-        pthread_mutex_unlock(&LOCK_open);
-        goto err;
-      }
-    }
-    else
-    {
-      protoerr= plugin::StorageEngine::getTableDefinition(*session,
-                                                          src_path,
-                                                          db,
-                                                          table_name,
-                                                          false,
-                                                          &src_proto);
-    }
+    protoerr= plugin::StorageEngine::getTableDefinition(*session,
+                                                        src_path,
+                                                        db,
+                                                        table_name,
+                                                        false,
+                                                        &src_proto);
 
     message::Table new_proto(src_proto);
 

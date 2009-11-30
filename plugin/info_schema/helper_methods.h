@@ -29,7 +29,8 @@ bool show_status_array(Session *session,
                        enum enum_var_type value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
-                       bool ucase_names);
+                       bool ucase_names,
+                       drizzled::plugin::InfoSchemaTable *schema_table);
 
 void store_key_column_usage(Table *table, 
                             LEX_STRING *db_name,
