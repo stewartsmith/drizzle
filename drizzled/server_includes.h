@@ -98,7 +98,7 @@ extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
-extern uint64_t table_def_size;
+extern size_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;
 extern pid_t current_pid;
@@ -137,7 +137,6 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
-extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 
@@ -214,14 +213,13 @@ bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
 
 /* Conversion functions */
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
+size_t build_tmptable_filename(char *buff, size_t bufflen);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db,
                             const char *table_name, bool is_tmp);
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)
 #define FN_TO_IS_TMP    (1 << 1)
-#define FN_IS_TMP       (FN_FROM_IS_TMP | FN_TO_IS_TMP)
-#define NO_FRM_RENAME   (1 << 2)
 
 inline uint32_t sql_rnd()
 {

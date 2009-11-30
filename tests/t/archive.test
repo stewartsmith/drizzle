@@ -1318,12 +1318,12 @@ INSERT INTO t2 VALUES (2,011401,37,'breaking','dreaded','Steinberg','W');
 INSERT INTO t2 VALUES (3,011402,37,'Romans','scholastics','jarring','');
 INSERT INTO t2 VALUES (4,011403,37,'intercepted','audiology','tinily','');
 SELECT * FROM t2;
-OPTIMIZE TABLE t2;
+ALTER TABLE t2 ENGINE=ARCHIVE;
 SELECT * FROM t2;
 INSERT INTO t2 VALUES (2,011401,37,'breaking','dreaded','Steinberg','W');
 INSERT INTO t2 VALUES (3,011402,37,'Romans','scholastics','jarring','');
 INSERT INTO t2 VALUES (4,011403,37,'intercepted','audiology','tinily','');
-OPTIMIZE TABLE t2;
+ALTER TABLE t2 ENGINE=ARCHIVE;
 SELECT * FROM t2;
 
 #
@@ -1402,7 +1402,7 @@ INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (3, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
 SELECT * FROM t5;
-OPTIMIZE TABLE t5;
+ALTER TABLE t5 ENGINE=ARCHIVE;
 SELECT * FROM t5;
 
 SELECT * FROM t5 WHERE a=32;
@@ -1539,7 +1539,7 @@ DROP TABLE t1, t2, t4, t5, t6;
 create table t1(a blob) engine=archive;
 insert into t1 set a='';
 insert into t1 set a='a';
-check table t1 extended;
+check table t1;
 drop table t1;
 
 #

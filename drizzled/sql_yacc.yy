@@ -108,7 +108,6 @@
 #include <drizzled/statement/insert_select.h>
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
-#include <drizzled/statement/optimize.h>
 #include <drizzled/statement/release_savepoint.h>
 #include <drizzled/statement/rename_table.h>
 #include <drizzled/statement/replace.h>
@@ -1009,7 +1008,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
-        show describe load alter optimize flush
+        show describe load alter flush
         begin commit rollback savepoint release
         analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
@@ -1024,7 +1023,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_attribute opt_attribute_list attribute
         flush_options flush_option
         equal optional_braces
-        opt_mi_check_type opt_to mi_check_types normal_join
+        normal_join
         table_to_table_list table_to_table opt_table_list opt_as
         single_multi
         union_clause union_list
@@ -1079,7 +1078,7 @@ query:
             else
             {
               session->lex->sql_command= SQLCOM_EMPTY_QUERY;
-              session->lex->statement= 
+              session->lex->statement=
                 new(std::nothrow) statement::EmptyQuery(YYSession);
               if (session->lex->statement == NULL)
                 DRIZZLE_YYABORT;
@@ -1108,7 +1107,6 @@ statement:
         | insert
         | kill
         | load
-        | optimize
         | release
         | rename
         | replace
@@ -2564,14 +2562,8 @@ checksum:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
-          table_list opt_checksum_type
+          table_list
           {}
-        ;
-
-opt_checksum_type:
-          /* nothing */ { ((statement::Checksum *)Lex->statement)->check_opt.flags= 0; }
-        | QUICK         { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_QUICK; }
-        | EXTENDED_SYM  { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_EXTEND; }
         ;
 
 
@@ -2595,38 +2587,6 @@ check:
 
             lex->sql_command = SQLCOM_CHECK;
             lex->statement= new(std::nothrow) statement::Check(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list opt_mi_check_type
-          {}
-        ;
-
-opt_mi_check_type:
-          /* empty */ { ((statement::Check *)Lex->statement)->check_opt.flags = T_MEDIUM; }
-        | mi_check_types {}
-        ;
-
-mi_check_types:
-          mi_check_type {}
-        | mi_check_type mi_check_types {}
-        ;
-
-mi_check_type:
-          QUICK               { ((statement::Check *)Lex->statement)->check_opt.flags|= T_QUICK; }
-        | FAST_SYM            { ((statement::Check *)Lex->statement)->check_opt.flags|= T_FAST; }
-        | MEDIUM_SYM          { ((statement::Check *)Lex->statement)->check_opt.flags|= T_MEDIUM; }
-        | EXTENDED_SYM        { ((statement::Check *)Lex->statement)->check_opt.flags|= T_EXTEND; }
-        | CHANGED             { ((statement::Check *)Lex->statement)->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
-        ;
-
-optimize:
-          OPTIMIZE table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_OPTIMIZE;
-            statement::Optimize *statement= new(std::nothrow) statement::Optimize(YYSession);
-            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }

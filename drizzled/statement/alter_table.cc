@@ -43,11 +43,13 @@ static int copy_data_between_tables(Table *from,Table *to,
                                     ha_rows *deleted,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
+
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
                                       message::Table *table_proto,
                                       AlterInfo *alter_info);
+
 static int create_temporary_table(Session *session,
                                   Table *table,
                                   char *new_db,
@@ -55,6 +57,8 @@ static int create_temporary_table(Session *session,
                                   HA_CREATE_INFO *create_info,
                                   message::Table *create_proto,
                                   AlterInfo *alter_info);
+
+static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name);
 
 bool statement::AlterTable::execute()
 {
@@ -676,7 +680,6 @@ bool alter_table(Session *session,
   char *table_name;
   char *db;
   const char *new_alias;
-  char path[FN_REFLEN];
   ha_rows copied= 0;
   ha_rows deleted= 0;
   plugin::StorageEngine *old_db_type;
@@ -709,8 +712,6 @@ bool alter_table(Session *session,
     /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
     return mysql_discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
   }
-
-  build_table_filename(path, sizeof(path), db, table_name, false);
 
   ostringstream oss;
   oss << drizzle_data_home << "/" << db << "/" << table_name;
@@ -977,24 +978,7 @@ bool alter_table(Session *session,
     goto err;
 
   /* Open the table so we need to copy the data to it. */
-  if (table->s->tmp_table)
-  {
-    TableList tbl;
-    tbl.db= new_db;
-    tbl.alias= tmp_name;
-    tbl.table_name= tmp_name;
-
-    /* Table is in session->temporary_tables */
-    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
-  }
-  else
-  {
-    char tmp_path[FN_REFLEN];
-    /* table is a normal table: Create temporary table in same directory */
-    build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
-    /* Open our intermediate table */
-    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, false);
-  }
+  new_table= open_alter_table(session, table, new_db, tmp_name);
 
   if (new_table == NULL)
     goto err1;
@@ -1102,10 +1086,6 @@ bool alter_table(Session *session,
     However, in case of ALTER Table RENAME there might be no intermediate
     table. This is when the old and new tables are compatible, according to
     compare_table(). Then, we need one additional call to
-    mysql_rename_table() with flag NO_FRM_RENAME, which does nothing else but
-    actual rename in the SE and the FRM is not touched. Note that, if the
-    table is renamed and the SE is also changed, then an intermediate table
-    is created and the additional call will not take place.
   */
   if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
@@ -1424,8 +1404,15 @@ create_temporary_table(Session *session,
 {
   int error;
   plugin::StorageEngine *old_db_type, *new_db_type;
+  TableIdentifier identifier(new_db,
+                             tmp_name,
+                             create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
+                             create_info->db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE :
+                             NON_TRANSACTIONAL_TMP_TABLE );
+
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
+
   /*
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
@@ -1436,7 +1423,8 @@ create_temporary_table(Session *session,
   protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
-  error= mysql_create_table(session, new_db, tmp_name,
+  error= mysql_create_table(session,
+                            identifier,
                             create_info, create_proto, alter_info, true, 0, false);
 
   return error;
@@ -1494,6 +1482,33 @@ bool create_like_schema_frm(Session* session,
     return true;
 
   return false;
+}
+
+
+static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name)
+{
+  Table *new_table;
+
+  /* Open the table so we need to copy the data to it. */
+  if (table->s->tmp_table)
+  {
+    TableList tbl;
+    tbl.db= db;
+    tbl.alias= table_name;
+    tbl.table_name= table_name;
+
+    /* Table is in session->temporary_tables */
+    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+  }
+  else
+  {
+    TableIdentifier new_identifier(db, table_name, INTERNAL_TMP_TABLE);
+
+    /* Open our intermediate table */
+    new_table= session->open_temporary_table(new_identifier, false);
+  }
+
+  return new_table;
 }
 
 } /* namespace drizzled */

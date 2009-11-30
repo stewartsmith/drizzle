@@ -343,7 +343,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/insert_select.h \
 		statement/kill.h \
 		statement/load.h \
-		statement/optimize.h \
 		statement/release_savepoint.h \
 		statement/rename_table.h \
 		statement/replace.h \
@@ -369,6 +368,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		symbol_hash.h \
 		table.h \
 		table_ident.h \
+		table_identifier.h \
 		table_list.h \
 		table_map_iterator.h \
 		table_proto.h \
@@ -672,7 +672,6 @@ drizzled_SOURCES = \
 		statement/insert_select.cc \
 		statement/kill.cc \
 		statement/load.cc \
-		statement/optimize.cc \
 		statement/release_savepoint.cc \
 		statement/rename_table.cc \
 		statement/replace.cc \
@@ -695,6 +694,7 @@ drizzled_SOURCES = \
 		statement/update.cc \
 		strfunc.cc \
 		table.cc \
+		table_identifier.cc \
 		table_list.cc \
 		table_map_iterator.cc \
 		table_share.cc \

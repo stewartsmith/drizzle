@@ -3831,7 +3831,6 @@ ha_innobase::write_row(
 	sql_command = session_sql_command(user_session);
 
 	if ((sql_command == SQLCOM_ALTER_TABLE
-	     || sql_command == SQLCOM_OPTIMIZE
 	     || sql_command == SQLCOM_CREATE_INDEX
 	     || sql_command == SQLCOM_DROP_INDEX)
 	    && num_write_row >= 10000) {
@@ -6666,26 +6665,12 @@ UNIV_INTERN
 int
 ha_innobase::analyze(
 /*=================*/
-	Session*	,		/*!< in: connection thread handle */
-	HA_CHECK_OPT*	)	/*!< in: currently ignored */
+	Session*)		/*!< in: connection thread handle */
 {
 	/* Simply call ::info() with all the flags */
 	info(HA_STATUS_TIME | HA_STATUS_CONST | HA_STATUS_VARIABLE);
 
 	return(0);
-}
-
-/**********************************************************************//**
-This is mapped to "ALTER TABLE tablename ENGINE=InnoDB", which rebuilds
-the table in MySQL. */
-UNIV_INTERN
-int
-ha_innobase::optimize(
-/*==================*/
-	Session*	,	/*!< in: connection thread handle */
-	HA_CHECK_OPT*	)	/*!< in: currently ignored */
-{
-	return(HA_ADMIN_TRY_ALTER);
 }
 
 /*******************************************************************//**
@@ -6697,9 +6682,7 @@ UNIV_INTERN
 int
 ha_innobase::check(
 /*===============*/
-	Session*	session,	/*!< in: user thread handle */
-	HA_CHECK_OPT*	)		/*!< in: check options, currently
-					ignored */
+	Session*	session)	/*!< in: user thread handle */
 {
 	ulint		ret;
 
@@ -7821,7 +7804,6 @@ ha_innobase::store_lock(
 		     && lock_type <= TL_WRITE)
 		    && !session_tablespace_op(session)
 		    && sql_command != SQLCOM_TRUNCATE
-		    && sql_command != SQLCOM_OPTIMIZE
 		    && sql_command != SQLCOM_CREATE_TABLE) {
 
 			lock_type = TL_WRITE_ALLOW_WRITE;

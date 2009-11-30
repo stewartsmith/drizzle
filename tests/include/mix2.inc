@@ -111,7 +111,7 @@ explain select level,id from t1 where level=1;
 explain select level,id,parent_id from t1 where level=1;
 select level,id from t1 where level=1;
 select level,id,parent_id from t1 where level=1;
-optimize table t1;
+eval alter table t1 engine=$engine_type;
 --replace_column 7 #
 show keys from t1;
 drop table t1;
@@ -138,7 +138,7 @@ drop table t1;
 
 eval create $temp table t1 (a int) engine=$engine_type;
 insert into t1 values (1), (2);
-optimize table t1;
+eval alter table t1 ENGINE=$engine_type;
 delete from t1 where a = 1;
 select * from t1;
 check table t1;
@@ -516,7 +516,7 @@ drop table t1;
 eval create $temp table t1 (a varchar(100) not null, primary key(a), b int not null) engine=$engine_type;
 insert into t1 values("hello",1),("world",2);
 select * from t1 order by b desc;
-optimize table t1;
+eval alter table t1 ENGINE=$engine_type;
 --replace_column 7 #
 show keys from t1;
 drop table t1;
@@ -991,9 +991,9 @@ insert t3 select * from t1;
 insert t4 select * from t1;
 insert t5 select * from t1;
 insert t6 select * from t1;
-checksum table t1, t2, t3, t4, t5, t6, t7 quick;
 checksum table t1, t2, t3, t4, t5, t6, t7;
-checksum table t1, t2, t3, t4, t5, t6, t7 extended;
+checksum table t1, t2, t3, t4, t5, t6, t7;
+checksum table t1, t2, t3, t4, t5, t6, t7;
 # #show table status;
 drop table t1,t2,t3, t4, t5, t6;
 
@@ -2212,7 +2212,7 @@ eval create $temp table t1 (g geometry not null, spatial gk(g)) engine=$engine_t
 eval create $temp table t1 ( a int ) ENGINE=$engine_type;
 BEGIN;
 INSERT INTO t1 VALUES (1);
-OPTIMIZE TABLE t1;
+eval ALTER TABLE t1 ENGINE=$engine_type;
 DROP TABLE t1;
 
 #######################################################################

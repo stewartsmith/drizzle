@@ -7,23 +7,7 @@ insert into t1 values (1,2,2),(2,2,3),(3,2,4),(4,2,4);
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-check table t1 fast;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 fast;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 changed;
+check table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					Table	8	512	7	Y	0	31	45
 def					Op	8	40	5	Y	0	31	45
@@ -32,23 +16,7 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 insert into t1 values (5,5,5);
-check table t1 changed;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 medium;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 extended;
+check table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					Table	8	512	7	Y	0	31	45
 def					Op	8	40	5	Y	0	31	45
@@ -80,17 +48,8 @@ ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-optimize table t1;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	8	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine="default";
+alter table t1 engine="default";
 drop table t1;
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed

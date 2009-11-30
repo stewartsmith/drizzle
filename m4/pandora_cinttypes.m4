@@ -4,8 +4,8 @@
 # HAVE_BOOST_CINTTYPES depending
 # on location.
 
-AC_DEFUN([AC_CXX_CINTTYPES],
-  [AC_REQUIRE([AC_CXX_CSTDINT])
+AC_DEFUN([PANDORA_CXX_CINTTYPES],
+  [AC_REQUIRE([PANDORA_CXX_CSTDINT])
    AC_MSG_CHECKING(the location of cinttypes)
    AC_LANG_PUSH(C++)
    ac_cv_cxx_cinttypes=""

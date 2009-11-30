@@ -23,6 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
+#include <drizzled/table_identifier.h>
 
 namespace drizzled
 {
@@ -42,7 +43,6 @@ bool statement::CreateTable::execute()
 
   if (is_engine_set)
   {
-
     create_info.db_type= 
       plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
@@ -84,7 +84,17 @@ bool statement::CreateTable::execute()
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
-  if (create_table_precheck(session, select_tables, create_table))
+
+  /* 
+    Now that we have the engine, we can figure out the table identifier. We need the engine in order
+    to determine if the table is transactional or not if it is temp.
+  */
+  TableIdentifier new_table_identifier(create_table->db,
+                                       create_table->table_name,
+                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE :
+                                       create_info.db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+
+  if (create_table_precheck(new_table_identifier))
   {
     /* put tables back for PS rexecuting */
     session->lex->link_first_table_back(create_table, link_to_local);
@@ -202,12 +212,11 @@ bool statement::CreateTable::execute()
       }
 
       res= mysql_create_table(session, 
-                              create_table->db,
-                              create_table->table_name, 
+                              new_table_identifier,
                               &create_info,
                               &create_table_proto,
                               &alter_info, 
-                              0, 
+                              false, 
                               0,
                               is_if_not_exists);
     }

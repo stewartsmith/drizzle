@@ -68,7 +68,7 @@ public:
    */
   DRIZZLE_LOCK *extra_lock;
 
-  ulong	version;
+  uint64_t version;
   uint32_t current_tablenr;
 
   /*
@@ -82,7 +82,7 @@ public:
   */
   Open_tables_state() : backups_available(false) { }
 
-  Open_tables_state(ulong version_arg);
+  Open_tables_state(uint64_t version_arg);
 
   void set_open_tables_state(Open_tables_state *state)
   {

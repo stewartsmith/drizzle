@@ -22,6 +22,7 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
+#include <drizzled/table_identifier.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 
@@ -279,7 +280,6 @@ public:
                          uint32_t *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
-  int ha_optimize(Session* session, HA_CHECK_OPT* check_opt);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
 
   int ha_disable_indexes(uint32_t mode);
@@ -577,10 +577,10 @@ public:
   virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
-  virtual bool low_byte_first(void) const { return 1; }
+  virtual bool low_byte_first(void) const { return true; }
   virtual uint32_t checksum(void) const { return 0; }
-  virtual bool is_crashed(void) const  { return 0; }
-  virtual bool auto_repair(void) const { return 0; }
+  virtual bool is_crashed(void) const  { return false; }
+  virtual bool auto_repair(void) const { return false; }
 
   /**
     Is not invoked for non-transactional temporary tables.
@@ -595,9 +595,14 @@ public:
     than lock_count() claimed. This can happen when the MERGE children
     are not attached when this is called from another thread.
   */
-  virtual THR_LOCK_DATA **store_lock(Session *session,
+  virtual THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
-                                     enum thr_lock_type lock_type)=0;
+                                     enum thr_lock_type)
+  {
+    assert(0); // Impossible programming situation
+
+    return(to);
+  }
 
  /*
    @retval true   Primary key (if there is one) is clustered
@@ -694,7 +699,7 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check(Session *, HA_CHECK_OPT *)
+  virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual void start_bulk_insert(ha_rows)
@@ -740,10 +745,7 @@ private:
   virtual int reset_auto_increment(uint64_t)
   { return HA_ERR_WRONG_COMMAND; }
 
-  virtual int optimize(Session *, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
-
-  virtual int analyze(Session *, HA_CHECK_OPT *)
+  virtual int analyze(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual int disable_indexes(uint32_t)
@@ -845,19 +847,21 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags);
 
-bool mysql_create_table(Session *session,const char *db, const char *table_name,
+bool mysql_create_table(Session *session,
+                        drizzled::TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
                         AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
 
-bool mysql_create_table_no_lock(Session *session, const char *db,
-                                const char *table_name,
+bool mysql_create_table_no_lock(Session *session,
+                                drizzled::TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table, uint32_t select_field_count, 
+                                bool tmp_table,
+                                uint32_t select_field_count,
                                 bool is_if_not_exists);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);

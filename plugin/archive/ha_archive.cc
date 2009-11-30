@@ -548,15 +548,22 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t open_options)
+int ha_archive::open(const char *name, int, uint32_t)
 {
   int rc= 0;
   share= get_share(name, &rc);
 
-  if (rc == HA_ERR_CRASHED_ON_USAGE && !(open_options & HA_OPEN_FOR_REPAIR))
+  /** 
+    We either fix it ourselves, or we just take it offline 
+
+    @todo Create some documentation in the recovery tools shipped with the engine.
+  */
+  if (rc == HA_ERR_CRASHED_ON_USAGE)
   {
     free_share();
-    return(rc);
+    rc= repair();
+
+    return 0;
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -576,12 +583,7 @@ int ha_archive::open(const char *name, int, uint32_t open_options)
 
   thr_lock_data_init(&share->lock, &lock, NULL);
 
-  if (rc == HA_ERR_CRASHED_ON_USAGE && open_options & HA_OPEN_FOR_REPAIR)
-  {
-    return(0);
-  }
-  else
-    return(rc);
+  return(rc);
 }
 
 
@@ -1083,10 +1085,9 @@ int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
   rewriting the meta file. Currently it does this by calling optimize with
   the extended flag.
 */
-int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
+int ha_archive::repair()
 {
-  check_opt->flags= T_EXTEND;
-  int rc= optimize(session, check_opt);
+  int rc= optimize();
 
   if (rc)
     return(HA_ERR_CRASHED_ON_REPAIR);
@@ -1099,7 +1100,7 @@ int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely.
 */
-int ha_archive::optimize(Session *, HA_CHECK_OPT *)
+int ha_archive::optimize()
 {
   int rc= 0;
   azio_stream writer;
@@ -1368,7 +1369,7 @@ bool ha_archive::is_crashed() const
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(Session* session, HA_CHECK_OPT *)
+int ha_archive::check(Session* session)
 {
   int rc= 0;
   const char *old_proc_info;

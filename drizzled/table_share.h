@@ -196,7 +196,7 @@ public:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 
   uint32_t   block_size;                   /* create information */
-  uint32_t   version;
+  uint64_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
   uint32_t   stored_rec_length;         /* Stored record length*/
@@ -508,7 +508,7 @@ public:
     return key_length;
   }
 
-  static bool cacheStart(void);
+  static void cacheStart(void);
   static void cacheStop(void);
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
