@@ -2095,16 +2095,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    if (table->table->s->crashed && operator_func == &Cursor::ha_check)
-    {
-      session->client->store(table_name);
-      session->client->store(operator_name);
-      session->client->store(STRING_WITH_LEN("warning"));
-      session->client->store(STRING_WITH_LEN("Table is marked as crashed"));
-      if (session->client->flush())
-        goto err;
-    }
-
     result_code = (table->table->cursor->*operator_func)(session, check_opt);
 
 send_result:
