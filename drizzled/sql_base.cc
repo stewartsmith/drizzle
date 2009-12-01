@@ -823,7 +823,8 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    quick_rm_table(*this, db_name, table_name, false);
+    TableIdentifier identifier(db_name, table_name, NO_TMP_TABLE);
+    quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }
 }
