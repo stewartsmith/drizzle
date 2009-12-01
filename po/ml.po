@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-11-29 09:48+0000\n"
+"PO-Revision-Date: 2009-11-30 09:55+0000\n"
 "Last-Translator: Jobin Augustine <Unknown>\n"
 "Language-Team: Malayalam <ml@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-11-30 04:37+0000\n"
+"X-Launchpad-Export-Date: 2009-12-01 04:40+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -85,36 +85,46 @@ msgstr "completion hash പുനര്നിര്മിക്കുക"
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
+"സ്ക്രിപ്റ്റ് ഫയല്‍ ഓടിക്കുക (എക്സിക്യുട് ചെയ്യുക). ഒരു ഫയലിന്റെ പേരു "
+"എടുക്കും (പറഞ്ഞു കൊടുക്കണം )"
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr ""
+msgstr "സ്ഥിതിവിവരം ​സെര്‍വറില്‍ നിന്നു എടുക്കുക"
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"outfile [to_outfile] സെറ്റ് ചെയ്യുക. ഏല്ലാം പറഞ്ഞിരിക്കുന്ന outfile ലേക്കു "
+"ചേര്‍ ക്കുക"
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
 msgstr ""
+"വേറെ ഒരു ഡറ്റാബേസ് ഉപയോഗിക്കുക. ഒരു ഡേറ്റാബേസ്സിന്റെ പേരു എടുക്കും (പറഞ്ഞു "
+"കൊടുക്കണം)"
 
 #: client/drizzle.cc:300 client/drizzle.cc:1579
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "ഓരോ സ്റ്ററ്റ്മെന്റിന്റ്യും അവസ്സാനം ​സൂചനകള്‍ കാണിക്കുക"
 
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "ഓരോ സ്റ്ററ്റ്മെന്റിന്റ്യും അവസ്സാനം ​സൂചനകള്‍ കാണിക്കേണ്ടതില്ല"
 
 #: client/drizzle.cc:1163 client/drizzle.cc:1170
 #, c-format
 msgid ""
 "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
+"തുടങ്ങുന്നതിന്റെ ഭാഗമായി മെമ്മറി കൊടുത്തില്‍ കുഴപ്പമുണ്ടായി. അടിയന്തിരമായി "
+"പുറത്തുകടക്കുന്നു\n"
 
 #: client/drizzle.cc:1266
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
+"ഡ്രിസ്സില്‍ ക്ലയ്ന്റിലേക്കു സ്വാഗതം.കമാന്റുകള്‍ ; അല്ലെങ്കില്‍ \\g വച്ച് "
+"അവസ്സാനിപ്പിക്കണം."
 
 #: client/drizzle.cc:1276
 #, c-format
@@ -122,45 +132,49 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"നിങ്ങളുടെ ഡ്രിസ്സില്‍ കണക്ഷന്‍ ഐഡി %u ആണ്.\n"
+"സെര്‍വര്‍ വേര്‍ഷന്‍ %s ആണ്\n"
 
 #: client/drizzle.cc:1308
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "history-file %s (ചരിത്രം) വായിക്കുന്നു\n"
 
 #: client/drizzle.cc:1312
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
+msgstr "temp histfile നു മെമ്മറി കൊടുക്കാന്‍ സാധിക്കുന്നില്ല.\n"
 
 #: client/drizzle.cc:1319
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"സഹായം കിട്ടാന്‍ help; അല്ല്ലെങ്കില്‍ \\h എന്നു ടയ്പ് ചെയ്യുക. ബഫറില്‍ ഉള്ളതു "
+"വൃത്തിയാക്കാന്‍ \\c എന്നു ടയ്പ് ചെയ്യുക\n"
 
 #: client/drizzle.cc:1337
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "history-file %s ലേക്ക് എഴുതിക്കൊണ്ടിരിക്കുന്നു\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr ""
+msgstr "അടിയന്തിരമായി പുറത്തു കടന്നു."
 
 #: client/drizzle.cc:1345
 msgid "Bye"
-msgstr ""
+msgstr "ബൈ. തത്കാലം ​വിട"
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Ctrl+C കാരണം അടിയന്തിരമായി query നിര്‍ത്തുന്നു\n"
 
 #: client/drizzle.cc:1423 drizzled/drizzled.cc:1677
 msgid "Display this help and exit."
-msgstr ""
+msgstr "ഈ സഹായം കാണിച്ചതിനു ശേഷം പുറത്തിറങ്ങുക."
 
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
-msgstr ""
+msgstr "-? നു പകരമുള്ള വാക്ക് (സിനൊണിം)"
 
 #: client/drizzle.cc:1428
 msgid ""
@@ -168,6 +182,9 @@ msgid ""
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
+"ഓട്ടോമാറ്റിക് റീഹാഷിങ് എനേബിള്‍ ചെയ്യുക. 'rehash' എന്നു പറയേണ്ടതില്ല. പക്ഷെ "
+"സ്റ്റാര്‍ ട്ടു ചെയ്യുന്നതിനും വീണ്ടും കണക്റ്റ് ചെയ്യുന്നതിനും താമസം "
+"ഉണ്ടാവും. --disable-auto-rehash വച്ചു ഡിസ്സേബിള്‍ ചെയ്യാം"
 
 #: client/drizzle.cc:1432
 msgid ""
@@ -175,12 +192,18 @@ msgid ""
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
+"ഓട്ടോമാറ്റിക് റീഹാഷിങ് ഇല്ല. റ്റേബിളും ഫീല്ഡും കമ്പ്ലീറ്റ് ചെയ്യുന്നതിനു "
+"'rehash' എന്നു പ്രത്യേകം പറയണം . ഇതു വീണ്ടും കണക്റ്റുചെയ്യുമ്പോള്‍ റീഹാഷിങ് "
+"ഒഴിവാക്കാനും പെട്ടെന്നു സ്റ്റാര്‍ ട്ടുചെയ്യാന്‍ സഹായിക്കും. \r\n"
+"സൂചന: ഈ ഒപ്ഷന്‍ പഴഞ്ചനായി. പകരം --disable-auto-rehash എന്നു ഉപയോഗിക്കുക"
 
 #: client/drizzle.cc:1435
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
+"റിസ്സള്‍റ്റ് റ്റെര്മിനലിന്റെ വീതിയെക്കാളും കൂടുതല്‍ ഉണ്ടെങ്കില്‍ കുത്തനെ "
+"കാണിക്കുന്ന രീതിയിലോട്ടു തനിയെ മാറുക."
 
 #: client/drizzle.cc:1438
 msgid ""
