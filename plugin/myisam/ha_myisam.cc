@@ -71,6 +71,7 @@ public:
                                      HTON_DUPLICATE_POS |
                                      HTON_AUTO_PART_KEY |
                                      HTON_NEED_READ_RANGE_BUFFER |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()

@@ -46,6 +46,7 @@ public:
                                      HTON_FAST_KEY_READ |
                                      HTON_NO_BLOBS |
                                      HTON_HAS_RECORDS |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_TEMPORARY_ONLY)
   { }
 
