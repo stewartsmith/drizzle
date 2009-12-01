@@ -30,7 +30,6 @@
 #include <vector>
 
 #include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/table_map_iterator.h"
 
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
