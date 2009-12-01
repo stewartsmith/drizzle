@@ -1377,14 +1377,6 @@ int ha_archive::delete_all_rows()
 }
 
 /*
-  We just return state if asked.
-*/
-bool ha_archive::is_crashed() const
-{
-  return(share->crashed);
-}
-
-/*
   Simple scan of the tables to make sure everything is ok.
 */
 

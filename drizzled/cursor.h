@@ -564,8 +564,6 @@ public:
 
   virtual bool low_byte_first(void) const { return true; }
   virtual uint32_t checksum(void) const { return 0; }
-  virtual bool is_crashed(void) const  { return false; }
-  virtual bool auto_repair(void) const { return false; }
 
   /**
     Is not invoked for non-transactional temporary tables.

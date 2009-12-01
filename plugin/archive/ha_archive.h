@@ -121,7 +121,6 @@ public:
   int free_share();
   int init_archive_writer();
   int init_archive_reader();
-  bool auto_repair() const { return 1; } // For the moment we just do this
   void position(const unsigned char *record);
   int info(uint);
 private:
@@ -140,7 +139,6 @@ public:
   }
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
-  bool is_crashed() const;
   int check(Session* session);
   bool check_and_repair(Session *session);
   uint32_t max_row_length(const unsigned char *buf);

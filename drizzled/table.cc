@@ -1493,11 +1493,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
                           HA_OPEN_ABORT_IF_LOCKED :
                            HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
-      /* Set a flag if the table is crashed and it can be auto. repaired */
-      share->crashed= ((ha_err == HA_ERR_CRASHED_ON_USAGE) &&
-                       outparam->cursor->auto_repair() &&
-                       !(ha_open_flags & HA_OPEN_FOR_REPAIR));
-
       switch (ha_err)
       {
         case HA_ERR_NO_SUCH_TABLE:
