@@ -136,7 +136,7 @@ SELECT * FROM `£Ô£¶a` LEFT JOIN `£Ô£¶b` ON (`£Ô£¶a`.`£Ã£±` = `£Ô£¶b`.`£Ã£±`);
 SELECT * FROM `£Ô£¶b` RIGHT JOIN `£Ô£¶a` USING (`£Ã£±`);
 SELECT * FROM `£Ô£¶b` RIGHT JOIN `£Ô£¶a` ON (`£Ô£¶a`.`£Ã£±` = `£Ô£¶b`.`£Ã£±`);
 
-#Test for heap
+#Test for MEMORY
 SELECT * FROM `£Ô£·a` JOIN `£Ô£·b`;
 SELECT * FROM `£Ô£·a` INNER JOIN `£Ô£·b`;
 SELECT * FROM `£Ô£·a` JOIN `£Ô£·b` USING (`£Ã£±`);
@@ -165,7 +165,7 @@ SELECT * FROM `£Ô£¹a` LEFT JOIN `£Ô£¹b` ON (`£Ô£¹a`.`£Ã£±` = `£Ô£¹b`.`£Ã£±`);
 SELECT * FROM `£Ô£¹b` RIGHT JOIN `£Ô£¹a` USING (`£Ã£±`);
 SELECT * FROM `£Ô£¹b` RIGHT JOIN `£Ô£¹a` ON (`£Ô£¹a`.`£Ã£±` = `£Ô£¹b`.`£Ã£±`);
 
-#Test for heap
+#Test for MEMORY
 SELECT * FROM `£Ô£±£°a` JOIN `£Ô£±£°b`;
 SELECT * FROM `£Ô£±£°a` INNER JOIN `£Ô£±£°b`;
 SELECT * FROM `£Ô£±£°a` JOIN `£Ô£±£°b` USING (`£Ã£±`);

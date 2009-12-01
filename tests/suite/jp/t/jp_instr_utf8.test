@@ -24,9 +24,9 @@ CREATE TABLE `Ｔ３` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8
 CREATE TABLE `Ｔ４` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ５` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ６` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ７` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ８` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ９` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = heap;
+CREATE TABLE `Ｔ７` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ８` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ９` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
 CREATE TABLE `Ｔ１０` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１１` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１２` (`Ｃ１` char(5), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
@@ -84,7 +84,7 @@ SELECT INSTR(`Ｃ１`,'龞') from `Ｔ６`;
 SELECT INSTR(`Ｃ１`,'龡') from `Ｔ６`;
 SELECT INSTR(`Ｃ１`,'丂') from `Ｔ６`;
 
-#HEAP
+#MEMORY
 SELECT INSTR(`Ｃ１`,'ｱ') from `Ｔ７`;
 SELECT INSTR(`Ｃ１`,'ｲ') from `Ｔ７`;
 SELECT INSTR(`Ｃ１`,'ｳ') from `Ｔ７`;

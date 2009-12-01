@@ -98,7 +98,7 @@ set global timed_mutexes=0;
 show variables like 'timed_mutexes';
 select * from information_schema.session_variables where variable_name like 'timed_mutexes';
 
-set storage_engine=MYISAM, storage_engine="HEAP";
+set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 select * from information_schema.session_variables where variable_name like 'storage_engine';
 show global variables like 'storage_engine';

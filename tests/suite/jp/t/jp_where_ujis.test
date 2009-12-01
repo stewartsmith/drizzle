@@ -28,9 +28,9 @@ CREATE TABLE `г╘г│` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engi
 CREATE TABLE `г╘г┤` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = myisam;
 CREATE TABLE `г╘г╡` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = myisam;
 CREATE TABLE `г╘г╢` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = myisam;
-CREATE TABLE `г╘г╖` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = heap;
-CREATE TABLE `г╘г╕` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = heap;
-CREATE TABLE `г╘г╣` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = heap;
+CREATE TABLE `г╘г╖` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `г╘г╕` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `г╘г╣` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = MEMORY;
 CREATE TABLE `г╘г▒г░` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = bdb;
 CREATE TABLE `г╘г▒г▒` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = bdb;
 CREATE TABLE `г╘г▒г▓` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ujis engine = bdb;
@@ -63,7 +63,7 @@ SELECT * FROM `г╘г┤` WHERE `г├г▒` = 'О░О▒О▓О│О┤О╡О╢О╖О╕О╣О║О╗О╝О╜О╛О┐';
 SELECT * FROM `г╘г╡` WHERE `г├г▒` = 'бждбдвдгдддедждздидйдкдлдмдндодпд░д▒д▓д│';
 SELECT * FROM `г╘г╢` WHERE `г├г▒` = 'Пэ┤Пэ╡Пэ╢Пэ╖Пэ╕Пэ╣Пэ║Пэ╗Пэ╝Пэ╜Пэ╛Пэ┐Пэ└Пэ┴Пэ┬Пэ├Пэ─Пэ┼Пэ╞Пэ╟';
 
-#Heap
+#MEMORY
 SELECT * FROM `г╘г╖` WHERE `г├г▒` = 'О░О▒О▓О│О┤О╡О╢О╖О╕О╣О║О╗О╝О╜О╛О┐';
 SELECT * FROM `г╘г╕` WHERE `г├г▒` = 'бждбдвдгдддедждздидйдкдлдмдндодпд░д▒д▓д│';
 SELECT * FROM `г╘г╣` WHERE `г├г▒` = 'Пэ┤Пэ╡Пэ╢Пэ╖Пэ╕Пэ╣Пэ║Пэ╗Пэ╝Пэ╜Пэ╛Пэ┐Пэ└Пэ┴Пэ┬Пэ├Пэ─Пэ┼Пэ╞Пэ╟';

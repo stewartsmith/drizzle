@@ -326,17 +326,17 @@ select @@max_heap_table_size;
 CREATE TEMPORARY TABLE t1 (
 a int default NULL,
 KEY a USING BTREE (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 CREATE TEMPORARY TABLE t2 (
 b int default NULL,
 index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 CREATE TEMPORARY TABLE t3 (
 a int default NULL,
 b int default NULL,
 KEY a USING BTREE (a),
 index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);

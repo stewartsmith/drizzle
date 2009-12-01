@@ -26,9 +26,9 @@ CREATE TABLE `Ｔ３` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = innodb
 CREATE TABLE `Ｔ４` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ５` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ６` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ７` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ８` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ９` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = heap;
+CREATE TABLE `Ｔ７` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ８` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ９` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = MEMORY;
 CREATE TABLE `Ｔ１０` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１１` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１２` (`Ｃ１` char(20)) DEFAULT CHARSET = utf8 engine = bdb;
@@ -85,7 +85,7 @@ SELECT DISTINCT CHARSET(CONVERT(`Ｃ１` USING ucs2)) FROM `Ｔ６`;
 SELECT DISTINCT CHARSET(CONVERT(`Ｃ１` USING sjis)) FROM `Ｔ６`;
 SELECT DISTINCT CHARSET(CONVERT(`Ｃ１` USING ujis)) FROM `Ｔ６`;
 
-#Heap
+#MEMORY
 SELECT DISTINCT CHARSET(`Ｃ１`) FROM `Ｔ７`;
 SELECT DISTINCT CHARSET(`Ｃ１`) FROM `Ｔ８`;
 SELECT DISTINCT CHARSET(`Ｃ１`) FROM `Ｔ９`;

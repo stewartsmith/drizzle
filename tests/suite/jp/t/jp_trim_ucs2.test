@@ -27,9 +27,9 @@ CREATE TABLE `£‘£≥` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engi
 CREATE TABLE `£‘£¥` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£‘£µ` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£‘£∂` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `£‘£∑` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£‘£∏` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£‘£π` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `£‘£∑` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£‘£∏` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£‘£π` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `£‘£±£∞` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£‘£±£±` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£‘£±£≤` (`£√£±` char(12), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -179,7 +179,7 @@ SELECT `£√£±`,TRIM(LEADING 'è∞°' FROM `£√£±`) FROM `£‘£∂`;
 SELECT `£√£±`,TRIM(BOTH 'è∞°' FROM `£√£±`) FROM `£‘£∂`;
 SELECT `£√£±`,TRIM(`£√£±`) FROM `£‘£∂`;
 
-#HEAP
+#MEMORY
 SELECT `£√£±`,TRIM(TRAILING 'é∂' FROM `£√£±`) FROM `£‘£∑`;
 SELECT `£√£±`,TRIM(LEADING 'é∂' FROM `£√£±`) FROM `£‘£∑`;
 SELECT `£√£±`,TRIM(BOTH 'é∂' FROM `£√£±`) FROM `£‘£∑`;

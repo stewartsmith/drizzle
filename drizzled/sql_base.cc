@@ -2055,7 +2055,7 @@ retry:
       }
       else
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("When opening HEAP table, could not allocate memory "
+        errmsg_printf(ERRMSG_LVL_ERROR, _("When opening MEMORY table, could not allocate memory "
                                           "to write 'DELETE FROM `%s`.`%s`' to replication"),
                       table_list->db, table_list->table_name);
         my_error(ER_OUTOFMEMORY, MYF(0), query_buf_size);

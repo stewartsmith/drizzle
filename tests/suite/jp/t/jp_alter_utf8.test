@@ -217,15 +217,15 @@ DROP TABLE `龖龖龖`;
 DROP TABLE `龗龗龗`;
 
 #
-# Test HEAP
+# Test MEMORY
 #
 
-CREATE TABLE `ｱｱｱ`(`ｷｷｷ` char(5)) DEFAULT CHARSET = utf8 engine=HEAP;
-CREATE TABLE `ｲｲｲ`(`ｹｹｹ` char(5)) DEFAULT CHARSET = utf8 engine=HEAP;
-CREATE TABLE `あああ`(`ききき` char(5)) DEFAULT CHARSET = utf8 engine=HEAP;
-CREATE TABLE `いいい`(`けけけ` char(5)) DEFAULT CHARSET = utf8 engine=HEAP;
-CREATE TABLE `龖龖龖`(`丂丂丂` char(5)) DEFAULT CHARSET = utf8 engine=HEAP;
-CREATE TABLE `龗龗龗`(`乚乚乚` char(5)) DEFAULT CHARSET = utf8 engine=HEAP;
+CREATE TABLE `ｱｱｱ`(`ｷｷｷ` char(5)) DEFAULT CHARSET = utf8 engine=MEMORY;
+CREATE TABLE `ｲｲｲ`(`ｹｹｹ` char(5)) DEFAULT CHARSET = utf8 engine=MEMORY;
+CREATE TABLE `あああ`(`ききき` char(5)) DEFAULT CHARSET = utf8 engine=MEMORY;
+CREATE TABLE `いいい`(`けけけ` char(5)) DEFAULT CHARSET = utf8 engine=MEMORY;
+CREATE TABLE `龖龖龖`(`丂丂丂` char(5)) DEFAULT CHARSET = utf8 engine=MEMORY;
+CREATE TABLE `龗龗龗`(`乚乚乚` char(5)) DEFAULT CHARSET = utf8 engine=MEMORY;
 
 INSERT INTO `ｱｱｱ` VALUES ('ｱｱｱｱｱ'),('ｲｲｲｲｲ'),('ｳｳｳｳｳ');
 INSERT INTO `あああ` VALUES ('あああああ'),('いいいいい'),('ううううう');
