@@ -191,7 +191,7 @@ DROP TABLE `a.1`;
 
 
 #
-# Test for bug #2719 "Heap tables status shows wrong or missing data."
+# Test for bug #2719 "MEMORY tables status shows wrong or missing data."
 #
 
 select @@max_heap_table_size;
@@ -199,19 +199,19 @@ select @@max_heap_table_size;
 CREATE TEMPORARY TABLE t1 (
  a int default NULL,
  KEY a USING BTREE (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 CREATE TEMPORARY TABLE t2 (
  b int default NULL,
  index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 CREATE TEMPORARY TABLE t3 (
  a int default NULL,
  b int default NULL,
  KEY a USING BTREE (a),
  index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);

@@ -18,9 +18,9 @@ CREATE TABLE `ÇsÇR` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engi
 CREATE TABLE `ÇsÇS` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `ÇsÇT` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `ÇsÇU` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `ÇsÇV` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `ÇsÇW` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `ÇsÇX` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `ÇsÇV` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `ÇsÇW` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `ÇsÇX` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = MEMORY;
 CREATE TABLE `ÇsÇPÇO` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `ÇsÇPÇP` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `ÇsÇPÇQ` (`ÇbÇP` char(20), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = bdb;
@@ -74,7 +74,7 @@ SELECT * FROM `ÇsÇPÇQ` WHERE `ÇbÇP` = 'É\è\ï\ó\ç\â\é\ê\ì\î\ñ\ò\ë\í\ô\ö\õ\ú\ù\û\'
 É\è\ï\ó\ç\â\é\ê\ì\î\ñ\ò\ë\í\ô\ö\õ\ú\ù\û\
 CREATE TABLE t1(c1 char(1)) default charset = sjis engine=innodb;
 CREATE TABLE t2(c1 char(1)) default charset = sjis engine=myisam;
-CREATE TABLE t3(c1 char(1)) default charset = sjis engine=heap;
+CREATE TABLE t3(c1 char(1)) default charset = sjis engine=MEMORY;
 CREATE TABLE t4(c1 char(1)) default charset = sjis engine=bdb;
 INSERT INTO t1 VALUES('ìS'),('ìs');
 INSERT INTO t2 VALUES('ìS'),('ìs');

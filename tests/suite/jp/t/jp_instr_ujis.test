@@ -26,9 +26,9 @@ CREATE TABLE `£Τ£³` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engin
 CREATE TABLE `£Τ£΄` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = myisam;
 CREATE TABLE `£Τ£µ` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = myisam;
 CREATE TABLE `£Τ£¶` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = myisam;
-CREATE TABLE `£Τ£·` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = heap;
-CREATE TABLE `£Τ£Έ` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = heap;
-CREATE TABLE `£Τ£Ή` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = heap;
+CREATE TABLE `£Τ£·` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `£Τ£Έ` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `£Τ£Ή` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
 CREATE TABLE `£Τ£±£°` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = bdb;
 CREATE TABLE `£Τ£±£±` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = bdb;
 CREATE TABLE `£Τ£±£²` (`£Γ£±` char(5), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = bdb;
@@ -86,7 +86,7 @@ SELECT INSTR(`£Γ£±`,'νί') from `£Τ£¶`;
 SELECT INSTR(`£Γ£±`,'νΰ') from `£Τ£¶`;
 SELECT INSTR(`£Γ£±`,'°΅') from `£Τ£¶`;
 
-#HEAP
+#MEMORY
 SELECT INSTR(`£Γ£±`,'±') from `£Τ£·`;
 SELECT INSTR(`£Γ£±`,'²') from `£Τ£·`;
 SELECT INSTR(`£Γ£±`,'³') from `£Τ£·`;

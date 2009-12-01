@@ -28,9 +28,9 @@ CREATE TABLE `£Τ£³` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHAR
 CREATE TABLE `£Τ£΄` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = myisam;
 CREATE TABLE `£Τ£µ` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = myisam;
 CREATE TABLE `£Τ£¶` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = myisam;
-CREATE TABLE `£Τ£·` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = heap;
-CREATE TABLE `£Τ£Έ` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = heap;
-CREATE TABLE `£Τ£Ή` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = heap;
+CREATE TABLE `£Τ£·` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `£Τ£Έ` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `£Τ£Ή` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
 CREATE TABLE `£Τ£±£°` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = bdb;
 CREATE TABLE `£Τ£±£±` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = bdb;
 CREATE TABLE `£Τ£±£²` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = bdb;

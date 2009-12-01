@@ -133,7 +133,7 @@ SELECT * FROM `Ｔ６a` LEFT JOIN `Ｔ６b` ON (`Ｔ６a`.`Ｃ１` = `Ｔ６b`.`
 SELECT * FROM `Ｔ６b` RIGHT JOIN `Ｔ６a` USING (`Ｃ１`);
 SELECT * FROM `Ｔ６b` RIGHT JOIN `Ｔ６a` ON (`Ｔ６a`.`Ｃ１` = `Ｔ６b`.`Ｃ１`);
 
-#Test for heap
+#Test for MEMORY
 SELECT * FROM `Ｔ７a` JOIN `Ｔ７b`;
 SELECT * FROM `Ｔ７a` INNER JOIN `Ｔ７b`;
 SELECT * FROM `Ｔ７a` JOIN `Ｔ７b` USING (`Ｃ１`);
@@ -162,7 +162,7 @@ SELECT * FROM `Ｔ９a` LEFT JOIN `Ｔ９b` ON (`Ｔ９a`.`Ｃ１` = `Ｔ９b`.`
 SELECT * FROM `Ｔ９b` RIGHT JOIN `Ｔ９a` USING (`Ｃ１`);
 SELECT * FROM `Ｔ９b` RIGHT JOIN `Ｔ９a` ON (`Ｔ９a`.`Ｃ１` = `Ｔ９b`.`Ｃ１`);
 
-#Test for heap
+#Test for MEMORY
 SELECT * FROM `Ｔ１０a` JOIN `Ｔ１０b`;
 SELECT * FROM `Ｔ１０a` INNER JOIN `Ｔ１０b`;
 SELECT * FROM `Ｔ１０a` JOIN `Ｔ１０b` USING (`Ｃ１`);

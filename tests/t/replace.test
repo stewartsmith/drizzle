@@ -1,5 +1,5 @@
 #
-# Test of REPLACE with MyISAM and HEAP
+# Test of REPLACE with MyISAM and MEMORY
 #
 
 --disable_warnings
