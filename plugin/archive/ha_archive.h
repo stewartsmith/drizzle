@@ -102,9 +102,6 @@ public:
   }
   void get_auto_increment(uint64_t, uint64_t, uint64_t,
                           uint64_t *first_value, uint64_t *nb_reserved_values);
-  uint32_t max_supported_keys()          const { return 1; }
-  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
-  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
   ha_rows records() { return share->rows_recorded; }
   int index_init(uint32_t keynr, bool sorted);
   virtual int index_read(unsigned char * buf, const unsigned char * key,

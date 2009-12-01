@@ -91,6 +91,8 @@ public:
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
+  uint32_t max_supported_keys()          const { return MAX_KEY; }
+  uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
 };
 
 int HeapEngine::doGetTableDefinition(Session&,

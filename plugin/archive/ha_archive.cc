@@ -175,6 +175,10 @@ public:
   ArchiveShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, ArchiveShare *);
   void deleteOpenTable(const string &table_name);
+
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
 };
 
 

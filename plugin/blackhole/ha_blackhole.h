@@ -54,10 +54,6 @@ public:
   */
   const char *index_type(uint32_t key_number);
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
-  /* The following defines can be increased if necessary */
-  uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
-  uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
-  uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int write_row(unsigned char * buf);

@@ -2633,8 +2633,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     share->storage_engine= myisam_engine;
     table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
     if (group &&
-	(param->group_parts > table->cursor->max_key_parts() ||
-	 param->group_length > table->cursor->max_key_length()))
+	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
+	 param->group_length > table->cursor->getEngine()->max_key_length()))
       using_unique_constraint=1;
   }
   else
@@ -3181,8 +3181,8 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       goto err;
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
-    if (keyinfo->key_length >= cursor->max_key_length() ||
-	keyinfo->key_parts > cursor->max_key_parts() ||
+    if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
+	keyinfo->key_parts > cursor->getEngine()->max_key_parts() ||
 	share->uniques)
     {
       /* Can't create a key; Make a unique constraint instead of a key */

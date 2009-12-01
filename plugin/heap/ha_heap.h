@@ -44,8 +44,6 @@ public:
   enum row_type get_row_type() const;
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   const key_map *keys_to_use_for_scanning() { return &btree_keys; }
-  uint32_t max_supported_keys()          const { return MAX_KEY; }
-  uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
   double read_time(uint32_t, uint32_t,

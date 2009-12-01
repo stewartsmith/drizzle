@@ -562,24 +562,6 @@ public:
   virtual int final_drop_index(Table *)
   { return (HA_ERR_WRONG_COMMAND); }
 
-  uint32_t max_record_length() const
-  { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
-  uint32_t max_keys() const
-  { return std::min((unsigned int)MAX_KEY, max_supported_keys()); }
-  uint32_t max_key_parts() const
-  { return std::min((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
-  uint32_t max_key_length() const
-  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
-  uint32_t max_key_part_length(void) const
-  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
-
-  virtual uint32_t max_supported_record_length(void) const
-  { return HA_MAX_REC_LENGTH; }
-  virtual uint32_t max_supported_keys(void) const { return 0; }
-  virtual uint32_t max_supported_key_parts(void) const { return MAX_REF_PARTS; }
-  virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
-  virtual uint32_t max_supported_key_part_length(void) const { return 255; }
-
   virtual bool low_byte_first(void) const { return true; }
   virtual uint32_t checksum(void) const { return 0; }
   virtual bool is_crashed(void) const  { return false; }
