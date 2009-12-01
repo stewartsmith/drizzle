@@ -38,7 +38,8 @@ class MemcachedStatsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 bool createMemcachedStatsColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);

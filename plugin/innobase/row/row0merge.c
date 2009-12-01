@@ -1892,7 +1892,8 @@ row_merge_drop_temp_indexes(void)
 	incomplete transactions is initiated.  Thus, this should not
 	interfere with the incomplete transactions. */
 	trx->isolation_level = TRX_ISO_READ_UNCOMMITTED;
-	err = que_eval_sql(NULL, drop_temp_indexes, FALSE, trx);
+        pars_info_t *info = pars_info_create();
+	err = que_eval_sql(info, drop_temp_indexes, FALSE, trx);
 	ut_a(err == DB_SUCCESS);
 
 	row_mysql_unlock_data_dictionary(trx);

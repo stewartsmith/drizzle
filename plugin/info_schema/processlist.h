@@ -33,7 +33,8 @@ class ProcessListISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class ProcessListIS

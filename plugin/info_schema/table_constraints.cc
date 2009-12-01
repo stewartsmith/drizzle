@@ -71,48 +71,42 @@ vector<const plugin::ColumnInfo *> *TableConstraintsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
   return columns;
 }
 
@@ -153,31 +147,38 @@ void TableConstraintsIS::cleanup()
   delete columns;
 }
 
-static bool store_constraints(Session *session, 
-                              Table *table, 
+static bool store_constraints(Table *table, 
                               LEX_STRING *db_name,
                               LEX_STRING *table_name, 
                               const char *key_name,
                               uint32_t key_len, 
                               const char *con_type, 
-                              uint32_t con_len)
+                              uint32_t con_len,
+                              plugin::InfoSchemaTable *schema_table)
 {
   const CHARSET_INFO * const cs= system_charset_info;
   table->restoreRecordAsDefault();
+  table->setWriteSet(1);
+  table->setWriteSet(2);
+  table->setWriteSet(3);
+  table->setWriteSet(4);
+  table->setWriteSet(5);
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(key_name, key_len, cs);
   table->field[3]->store(db_name->str, db_name->length, cs);
   table->field[4]->store(table_name->str, table_name->length, cs);
   table->field[5]->store(con_type, con_len, cs);
-  return schema_table_store_record(session, table);
+  schema_table->addRow(table->record[0], table->s->reclength);
+  return false;
 }
 
-int TabConstraintsISMethods::processTable(Session *session, 
+int TabConstraintsISMethods::processTable(plugin::InfoSchemaTable *store_table,
+                                          Session *session, 
                                           TableList *tables,
                                           Table *table, 
                                           bool res,
                                           LEX_STRING *db_name,
-                                          LEX_STRING *table_name) const
+                                          LEX_STRING *table_name)
 {
   if (res)
   {
@@ -209,26 +210,26 @@ int TabConstraintsISMethods::processTable(Session *session,
 
       if (i == primary_key && is_primary_key(key_info))
       {
-        if (store_constraints(session, 
-                              table, 
+        if (store_constraints(table, 
                               db_name, 
                               table_name, 
                               key_info->name,
                               strlen(key_info->name),
-                              STRING_WITH_LEN("PRIMARY KEY")))
+                              STRING_WITH_LEN("PRIMARY KEY"),
+                              store_table))
         {
           return 1;
         }
       }
       else if (key_info->flags & HA_NOSAME)
       {
-        if (store_constraints(session, 
-                              table, 
+        if (store_constraints(table, 
                               db_name, 
                               table_name, 
                               key_info->name,
                               strlen(key_info->name),
-                              STRING_WITH_LEN("UNIQUE")))
+                              STRING_WITH_LEN("UNIQUE"),
+                              store_table))
         {
           return 1;
         }
@@ -240,13 +241,13 @@ int TabConstraintsISMethods::processTable(Session *session,
     List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
     while ((f_key_info= it++))
     {
-      if (store_constraints(session, 
-                            table, 
+      if (store_constraints(table, 
                             db_name, 
                             table_name,
                             f_key_info->forein_id->str,
                             strlen(f_key_info->forein_id->str),
-                            "FOREIGN KEY", 11))
+                            "FOREIGN KEY", 11,
+                            store_table))
       {
         return 1;
       }

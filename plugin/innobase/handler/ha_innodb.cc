@@ -244,21 +244,17 @@ class InnobaseEngine : public drizzled::plugin::StorageEngine
 public:
   InnobaseEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_NULL_IN_KEY |
+                                     HTON_CAN_INDEX_BLOBS |
+                                     HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+                                     HTON_PRIMARY_KEY_IN_READ_INDEX |
+                                     HTON_PARTIAL_COLUMN_READ |
+                                     HTON_TABLE_SCAN_ON_INDEX |
+                                     HTON_MRR_CANT_SORT |
                                      HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
   {
     table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
-  }
-
-  uint64_t table_flags() const
-  {
-    return (HA_NULL_IN_KEY |
-            HA_CAN_INDEX_BLOBS |
-            HA_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-            HA_PRIMARY_KEY_IN_READ_INDEX |
-            HA_PARTIAL_COLUMN_READ |
-            HA_TABLE_SCAN_ON_INDEX | 
-            HA_MRR_CANT_SORT);
   }
 
   virtual
@@ -271,9 +267,9 @@ public:
 
   virtual int savepoint_set_hook(Session* session,
                                  void *savepoint);
-  virtual int savepoint_rollback_hook(Session* session, 
+  virtual int savepoint_rollback_hook(Session* session,
                                       void *savepoint);
-  virtual int savepoint_release_hook(Session* session, 
+  virtual int savepoint_release_hook(Session* session,
                                      void *savepoint);
   virtual int commit(Session* session, bool all);
   virtual int rollback(Session* session, bool all);
@@ -391,6 +387,9 @@ public:
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
+  UNIV_INTERN uint32_t max_supported_keys() const;
+  UNIV_INTERN uint32_t max_supported_key_length() const;
+  UNIV_INTERN uint32_t max_supported_key_part_length() const;
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -2533,7 +2532,7 @@ Returns the maximum number of keys.
 @return	MAX_KEY */
 UNIV_INTERN
 uint
-ha_innobase::max_supported_keys() const
+InnobaseEngine::max_supported_keys() const
 /*===================================*/
 {
 	return(MAX_KEY);
@@ -2544,7 +2543,7 @@ Returns the maximum key length.
 @return	maximum supported key length, in bytes */
 UNIV_INTERN
 uint32_t
-ha_innobase::max_supported_key_length() const
+InnobaseEngine::max_supported_key_length() const
 /*=========================================*/
 {
 	/* An InnoDB page must store >= 2 keys; a secondary key record
@@ -2903,7 +2902,7 @@ retry:
 
 UNIV_INTERN
 uint32_t
-ha_innobase::max_supported_key_part_length() const
+InnobaseEngine::max_supported_key_part_length() const
 {
 	return(DICT_MAX_INDEX_COL_LEN - 1);
 }

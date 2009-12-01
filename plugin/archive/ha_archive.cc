@@ -134,22 +134,19 @@ static const char *ha_archive_exts[] = {
 
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
-std::map<std::string, ArchiveShare *> archive_open_tables;
+  typedef std::map<string, ArchiveShare*> ArchiveMap;
+  ArchiveMap archive_open_tables;
+
 public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY),
+                                     HTON_FILE_BASED |
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_HAS_RECORDS |
+                                     HTON_HAS_DATA_DICTIONARY),
      archive_open_tables()
   {
     table_definition_ext= ARZ;
-  }
-
-  uint64_t table_flags() const
-  {
-    return (HA_NO_TRANSACTIONS |
-            HA_STATS_RECORDS_IS_EXACT |
-            HA_HAS_RECORDS);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -179,11 +176,15 @@ public:
   ArchiveShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, ArchiveShare *);
   void deleteOpenTable(const string &table_name);
+
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
 };
 
 ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
 {
-  map<string, ArchiveShare *>::iterator find_iter=
+  ArchiveMap::iterator find_iter=
     archive_open_tables.find(table_name);
 
   if (find_iter != archive_open_tables.end())
@@ -201,6 +202,7 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 {
   archive_open_tables.erase(table_name);
 }
+
 
 void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
                                     string&, 
@@ -476,6 +478,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
     thr_lock_init(&share->lock);
   }
   share->use_count++;
+
   if (share->crashed)
     *rc= HA_ERR_CRASHED_ON_USAGE;
   pthread_mutex_unlock(&archive_mutex);
@@ -1371,14 +1374,6 @@ int ha_archive::end_bulk_insert()
 int ha_archive::delete_all_rows()
 {
   return(HA_ERR_WRONG_COMMAND);
-}
-
-/*
-  We just return state if asked.
-*/
-bool ha_archive::is_crashed() const
-{
-  return(share->crashed);
 }
 
 /*

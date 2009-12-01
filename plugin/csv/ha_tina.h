@@ -109,10 +109,6 @@ public:
     */
     return 0;
   }
-  uint32_t max_record_length() const { return HA_MAX_REC_LENGTH; }
-  uint32_t max_keys()          const { return 0; }
-  uint32_t max_key_parts()     const { return 0; }
-  uint32_t max_key_length()    const { return 0; }
   /*
      Called in test_quick_select to determine if indexes should be used.
    */

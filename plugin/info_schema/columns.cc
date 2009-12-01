@@ -74,168 +74,147 @@ vector<const plugin::ColumnInfo *> *ColumnsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Field",
-                                            OPEN_FRM_ONLY));
+                                            "Field"));
 
   columns->push_back(new plugin::ColumnInfo("ORDINAL_POSITION",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             MY_I_S_UNSIGNED,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_DEFAULT",
-                                            MAX_FIELD_VARCHARLENGTH,
+                                            64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Default",
-                                            OPEN_FRM_ONLY));
+                                            "Default"));
 
   columns->push_back(new plugin::ColumnInfo("IS_NULLABLE",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Null",
-                                            OPEN_FRM_ONLY));
+                                            "Null"));
 
   columns->push_back(new plugin::ColumnInfo("DATA_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CHARACTER_MAXIMUM_LENGTH",
                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                            DRIZZLE_TYPE_LONGLONG,
                                            0,
                                            (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                           "",
-                                           OPEN_FRM_ONLY));
+                                           ""));
 
   columns->push_back(new plugin::ColumnInfo("CHARACTER_OCTET_LENGTH",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("NUMERIC_PRECISION",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("NUMERIC_SCALE",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CHARACTER_SET_NAME",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("COLLATION_NAME",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Collation",
-                                            OPEN_FRM_ONLY));
+                                            "Collation"));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_TYPE",
-                                            65535,
+                                            64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Type",
-                                            OPEN_FRM_ONLY));
+                                            "Type"));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_KEY",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Key",
-                                            OPEN_FRM_ONLY));
+                                            "Key"));
 
   columns->push_back(new plugin::ColumnInfo("EXTRA",
                                             27,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Extra",
-                                            OPEN_FRM_ONLY));
+                                            "Extra"));
 
   columns->push_back(new plugin::ColumnInfo("PRIVILEGES",
                                             80,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Privileges",
-                                            OPEN_FRM_ONLY));
+                                            "Privileges"));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_COMMENT",
                                             COLUMN_COMMENT_MAXLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Comment",
-                                            OPEN_FRM_ONLY));
+                                            "Comment"));
 
   columns->push_back(new plugin::ColumnInfo("STORAGE",
                                             8,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Storage",
-                                            OPEN_FRM_ONLY));
+                                            "Storage"));
 
   columns->push_back(new plugin::ColumnInfo("FORMAT",
                                             8,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Format",
-                                            OPEN_FRM_ONLY));
+                                            "Format"));
   return columns;
 }
 

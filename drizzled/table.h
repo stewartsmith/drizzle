@@ -410,7 +410,6 @@ public:
   inline unsigned char *getDefaultValues() { return s->default_values; }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isCrashed() { return s->crashed; }
   inline bool isNameLock() { return s->name_lock; }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */

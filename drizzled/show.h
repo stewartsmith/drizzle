@@ -61,16 +61,16 @@ typedef struct st_lookup_field_values
 } LOOKUP_FIELD_VALUES;
 
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
-                                  LOOKUP_FIELD_VALUES *lookup_field_vals);
+                                  LOOKUP_FIELD_VALUES *lookup_field_vals,
+                                  drizzled::plugin::InfoSchemaTable *schema_table);
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
-                             LOOKUP_FIELD_VALUES *lookup_field_values);
+                             LOOKUP_FIELD_VALUES *lookup_field_values,
+                             drizzled::plugin::InfoSchemaTable *schema_table);
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 SHOW_VAR *getFrontOfStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
-
-bool schema_table_store_record(Session *session, Table *table);
 
 int get_quote_char_for_identifier();
 int wild_case_compare(const CHARSET_INFO * const cs, 
@@ -78,8 +78,6 @@ int wild_case_compare(const CHARSET_INFO * const cs,
 
 bool make_schema_select(Session *session,  Select_Lex *sel,
                         const std::string& schema_table_name);
-bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
-bool get_schema_tables_result(JOIN *join, enum enum_schema_table_state executed_place);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);

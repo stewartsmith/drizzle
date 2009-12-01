@@ -56,7 +56,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     If storage engine does always read all columns, we have the value alraedy.
   */
   if ((error != HA_ERR_FOUND_DUPP_KEY) ||
-      !(table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ))
+      !(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)))
     return;
 
   /*
@@ -199,7 +199,7 @@ int mysql_update(Session *session, TableList *table_list,
     update force the table handler to retrieve write-only fields to be able
     to compare records and detect data change.
   */
-  if (table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
+  if (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
       table->timestamp_field &&
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
@@ -429,7 +429,7 @@ int mysql_update(Session *session, TableList *table_list,
     Assure that we can use position()
     if we need to create an error message.
   */
-  if (table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ)
+  if (table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ))
     table->prepare_for_position();
 
   /*
@@ -437,8 +437,7 @@ int mysql_update(Session *session, TableList *table_list,
     the table handler is returning all columns OR if
     if all updated columns are read
   */
-  can_compare_record= (!(table->cursor->ha_table_flags() &
-                         HA_PARTIAL_COLUMN_READ) ||
+  can_compare_record= (!(table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ)) ||
                        bitmap_is_subset(table->write_set, table->read_set));
 
   while (!(error=info.read_record(&info)) && !session->killed)
