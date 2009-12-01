@@ -2303,8 +2303,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= (new_tmp_table->cursor->has_transactions() ?
-                     TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+  share->tmp_table= TEMP_TABLE;
 
   if (link_in_list)
   {

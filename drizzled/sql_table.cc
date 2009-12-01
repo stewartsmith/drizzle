@@ -2259,9 +2259,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
 
 
-  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ?
-                                         (engine_arg->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE) :
-                                         NO_TMP_TABLE);
+  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ? TEMP_TABLE : NO_TMP_TABLE);
 
   /*
     Check that destination tables does not exist. Note that its name

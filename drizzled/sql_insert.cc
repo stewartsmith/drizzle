@@ -1518,7 +1518,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   TableIdentifier identifier(create_table->db,
                              create_table->table_name,
-                             lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
+                             lex_identified_temp_table ?  TEMP_TABLE :
                              NO_TMP_TABLE);
 
 

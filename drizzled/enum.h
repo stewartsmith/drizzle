@@ -213,10 +213,9 @@ enum find_item_error_report_type
 
 enum tmp_table_type
 {
-  NO_TMP_TABLE, 
-  NON_TRANSACTIONAL_TMP_TABLE, 
-  TRANSACTIONAL_TMP_TABLE,
-  INTERNAL_TMP_TABLE, 
+  NO_TMP_TABLE,
+  TEMP_TABLE,
+  INTERNAL_TMP_TABLE,
   SYSTEM_TMP_TABLE
 };
 

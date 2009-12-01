@@ -1413,8 +1413,7 @@ create_temporary_table(Session *session,
   TableIdentifier identifier(new_db,
                              tmp_name,
                              create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
-                             create_info->db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE :
-                             NON_TRANSACTIONAL_TMP_TABLE );
+                             TEMP_TABLE);
 
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
