@@ -29,9 +29,9 @@ CREATE TABLE `£Ô£³` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engin
 CREATE TABLE `£Ô£´` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Ô£µ` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Ô£¶` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `£Ô£·` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Ô£¸` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Ô£¹` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `£Ô£·` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Ô£¸` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Ô£¹` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `£Ô£±£°` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Ô£±£±` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Ô£±£²` (`£Ã£±` char(5), INDEX(`£Ã£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -228,7 +228,7 @@ SELECT `£Ã£±`, SUBSTRING(`£Ã£±` FROM 1 FOR 4) FROM `£Ô£¶`;
 SELECT `£Ã£±`, SUBSTRING(`£Ã£±` FROM 1 FOR 5) FROM `£Ô£¶`;
 SELECT `£Ã£±`, SUBSTRING(`£Ã£±` FROM 1 FOR 6) FROM `£Ô£¶`;
 
-#HEAP
+#MEMORY
 #SELECT `£Ã£±`, SUBSTRING(`£Ã£±`,0) FROM `£Ô£·`;
 #SELECT `£Ã£±`, SUBSTRING(`£Ã£±`,1) FROM `£Ô£·`;
 #SELECT `£Ã£±`, SUBSTRING(`£Ã£±`,2) FROM `£Ô£·`;

@@ -725,7 +725,7 @@ desc t1;
 Field	Type	Null	Key	Default	Extra
 mycol	int	NO		NULL	
 drop table t1;
-create table t1(id int primary key auto_increment) engine=heap;
+create table t1(id int primary key auto_increment) engine=MEMORY;
 insert into t1 values (null);
 insert into t1 values (null);
 select * from t1;
@@ -740,7 +740,7 @@ id
 1
 2
 50
-alter table t1 engine = heap;
+alter table t1 engine = MEMORY;
 insert into t1 values (null);
 select * from t1;
 id

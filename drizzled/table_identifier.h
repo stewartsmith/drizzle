@@ -94,11 +94,8 @@ public:
     case INTERNAL_TMP_TABLE:
       type_str= "internal";
       break;
-    case NON_TRANSACTIONAL_TMP_TABLE:
-      type_str= "non-transactional temp";
-      break;
-    case TRANSACTIONAL_TMP_TABLE:
-      type_str= "transactional temp";
+    case TEMP_TABLE:
+      type_str= "temporary";
       break;
     case SYSTEM_TMP_TABLE:
       type_str= "system";

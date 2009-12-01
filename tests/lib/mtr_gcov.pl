@@ -49,7 +49,7 @@ our @mysqld_src_dirs=
    "merge",
    "myisam",
    "myisammrg",
-   "heap",
+   "MEMORY",
    "sql",
   );
 

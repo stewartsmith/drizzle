@@ -29,9 +29,9 @@ CREATE TABLE `£Τ£³` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = innodb;
 CREATE TABLE `£Τ£΄` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Τ£µ` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Τ£¶` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `£Τ£·` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Τ£Έ` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Τ£Ή` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `£Τ£·` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Τ£Έ` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Τ£Ή` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `£Τ£±£°` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Τ£±£±` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Τ£±£²` (`£Γ£±` char(5)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -83,7 +83,7 @@ SELECT REPLACE(`£Γ£±`,'νή','νήνή') FROM `£Τ£¶`;
 SELECT REPLACE(`£Γ£±`,'νί','νίνί') FROM `£Τ£¶`;
 SELECT REPLACE(`£Γ£±`,'νΰ','νΰνΰ') FROM `£Τ£¶`;
 
-#HEAP
+#MEMORY
 SELECT REPLACE(`£Γ£±`,'±','±±') FROM `£Τ£·`;
 SELECT REPLACE(`£Γ£±`,'²','²²') FROM `£Τ£·`;
 SELECT REPLACE(`£Γ£±`,'³','³³') FROM `£Τ£·`;

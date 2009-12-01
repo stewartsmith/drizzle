@@ -70,10 +70,10 @@ DROP TABLE `£Τ£±` ;
 DROP TABLE `£Τ£²` ;
 DROP TABLE `£Τ£³` ;
 
-#HEAP
-CREATE TABLE `£Τ£±` (`£Γ£±` char(1), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = HEAP;
-CREATE TABLE `£Τ£²` (`£Γ£±` char(1), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = HEAP;
-CREATE TABLE `£Τ£³` (`£Γ£±` char(1), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = HEAP;
+#MEMORY
+CREATE TABLE `£Τ£±` (`£Γ£±` char(1), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `£Τ£²` (`£Γ£±` char(1), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
+CREATE TABLE `£Τ£³` (`£Γ£±` char(1), INDEX(`£Γ£±`)) DEFAULT CHARSET = ujis engine = MEMORY;
 INSERT INTO `£Τ£±` VALUES('±'),('±'),('¤Ά'),('¤Ά'),('νά'),('νά');
 INSERT INTO `£Τ£²` VALUES('²'),('²'),('¤¤'),('¤¤'),('νέ'),('νέ');
 INSERT INTO `£Τ£³` VALUES('³'),('³'),('¤¦'),('¤¦'),('νή'),('νή');

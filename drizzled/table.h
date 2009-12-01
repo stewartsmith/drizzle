@@ -414,6 +414,11 @@ public:
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return s->storage_engine;
+  }
+
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(drizzled::message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);

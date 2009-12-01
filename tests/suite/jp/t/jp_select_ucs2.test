@@ -29,9 +29,9 @@ CREATE TABLE `£Ô£³` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = inn
 CREATE TABLE `£Ô£´` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Ô£µ` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Ô£¶` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `£Ô£·` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Ô£¸` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Ô£¹` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `£Ô£·` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Ô£¸` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Ô£¹` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `£Ô£±£°` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Ô£±£±` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Ô£±£²` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -149,7 +149,7 @@ SELECT * FROM `£Ô£³`;
 SELECT * FROM `£Ô£´`;
 SELECT * FROM `£Ô£µ`;
 SELECT * FROM `£Ô£¶`;
-#Heap
+#MEMORY
 SELECT * FROM `£Ô£·`;
 SELECT * FROM `£Ô£¸`;
 SELECT * FROM `£Ô£¹`;
