@@ -140,17 +140,12 @@ class ArchiveEngine : public drizzled::plugin::StorageEngine
 public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) 
+                                     HTON_FILE_BASED |
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_HAS_RECORDS |
+                                     HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= ARZ;
-  }
-
-  uint64_t table_flags() const
-  {
-    return (HA_NO_TRANSACTIONS |
-            HA_STATS_RECORDS_IS_EXACT |
-            HA_HAS_RECORDS);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -180,6 +175,10 @@ public:
   ArchiveShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, ArchiveShare *);
   void deleteOpenTable(const string &table_name);
+
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
 };
 
 
@@ -1375,14 +1374,6 @@ int ha_archive::end_bulk_insert()
 int ha_archive::delete_all_rows()
 {
   return(HA_ERR_WRONG_COMMAND);
-}
-
-/*
-  We just return state if asked.
-*/
-bool ha_archive::is_crashed() const
-{
-  return(share->crashed);
 }
 
 /*

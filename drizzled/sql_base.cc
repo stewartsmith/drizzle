@@ -1991,85 +1991,9 @@ retry:
       }
       return 1;
     }
-    if (!entry->s || !entry->s->crashed)
-      goto err;
-    // Code below is for repairing a crashed cursor
-    if ((error= lock_table_name(session, table_list, true)))
-    {
-      if (error < 0)
-        goto err;
-      if (wait_for_locked_table_names(session, table_list))
-      {
-        unlock_table_name(table_list);
-        goto err;
-      }
-    }
-    pthread_mutex_unlock(&LOCK_open);
-    session->clear_error();				// Clear error message
-    error= 0;
-    if (open_table_from_share(session, share, alias,
-                              (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
-                                          HA_GET_INDEX |
-                                          HA_TRY_READ_ONLY),
-                              EXTRA_RECORD,
-                              ha_open_options | HA_OPEN_FOR_REPAIR,
-                              entry) || ! entry->cursor)
-    {
-      /* Give right error message */
-      session->clear_error();
-      my_error(ER_NOT_KEYFILE, MYF(0), share->table_name.str, my_errno);
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Couldn't repair table: %s.%s"), share->db.str,
-                    share->table_name.str);
-      if (entry->cursor)
-        entry->closefrm(false);
-      error=1;
-    }
-    else
-      session->clear_error();			// Clear error message
-    pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(table_list);
-
-    if (error)
-      goto err;
-    break;
+    goto err;
   }
 
-  /*
-    If we are here, there was no fatal error (but error may be still
-    unitialized).
-  */
-  if (unlikely(entry->cursor->implicit_emptied))
-  {
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    entry->cursor->implicit_emptied= 0;
-    {
-      char *query, *end;
-      uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
-      if ((query= (char*) malloc(query_buf_size)))
-      {
-        /* 
-          "this DELETE FROM is needed even with row-based binlogging"
-
-          We inherited this from MySQL. TODO: fix it to issue a propper truncate
-          of the table (though that may not be completely right sematics).
-        */
-        end= query;
-        end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
-                      share->table_name.str);
-        replication_services.rawStatement(session, query, (size_t)(end - query)); 
-        free(query);
-      }
-      else
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("When opening HEAP table, could not allocate memory "
-                                          "to write 'DELETE FROM `%s`.`%s`' to replication"),
-                      table_list->db, table_list->table_name);
-        my_error(ER_OUTOFMEMORY, MYF(0), query_buf_size);
-        entry->closefrm(false);
-        goto err;
-      }
-    }
-  }
   return 0;
 
 err:

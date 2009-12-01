@@ -437,7 +437,7 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
         table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[16]->set_notnull();
       }
-      if (cursor->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
+      if (cursor->getEngine()->check_flag(HTON_BIT_HAS_CHECKSUM))
       {
         table->field[18]->store((int64_t) cursor->checksum(), true);
         table->field[18]->set_notnull();

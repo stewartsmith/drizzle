@@ -4533,7 +4533,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
         the primary key as a suffix.
       */
       if (!on_primary_key &&
-          (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
+          (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
           table->s->primary_key != MAX_KEY)
       {
         on_primary_key= true;
