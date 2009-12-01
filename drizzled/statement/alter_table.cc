@@ -53,8 +53,7 @@ static bool mysql_prepare_alter_table(Session *session,
 
 static int create_temporary_table(Session *session,
                                   Table *table,
-                                  char *new_db,
-                                  char *tmp_name,
+                                  TableIdentifier &identifier,
                                   HA_CREATE_INFO *create_info,
                                   message::Table *create_proto,
                                   AlterInfo *alter_info);
@@ -974,14 +973,27 @@ bool alter_table(Session *session,
   alter_info->build_method= HA_BUILD_OFFLINE;
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
- 
+
   /* Safety fix for innodb */
   my_casedn_str(files_charset_info, tmp_name);
 
   /* Create a temporary table with the new format */
-  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info);
-  if (error != 0)
-    goto err;
+  {
+    /**
+      @note we make an internal temporary table unless the table is a temporary table. In last
+      case we just use it as is. Neither of these tables require locks in order to  be
+      filled.
+    */
+    TableIdentifier new_table_temp(new_db,
+                                   tmp_name,
+                                   create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
+                                   TEMP_TABLE);
+
+    error= create_temporary_table(session, table, new_table_temp, create_info, create_proto, alter_info);
+
+    if (error != 0)
+      goto err;
+  }
 
   /* Open the table so we need to copy the data to it. */
   new_table= open_alter_table(session, table, new_db, tmp_name);
@@ -1000,13 +1012,13 @@ bool alter_table(Session *session,
   /* We don't want update TIMESTAMP fields during ALTER Table. */
   new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
   new_table->next_number_field= new_table->found_next_number_field;
-  error= copy_data_between_tables(table, 
+  error= copy_data_between_tables(table,
                                   new_table,
-                                  alter_info->create_list, 
+                                  alter_info->create_list,
                                   ignore,
-                                  order_num, 
-                                  order, 
-                                  &copied, 
+                                  order_num,
+                                  order,
+                                  &copied,
                                   &deleted,
                                   alter_info->keys_onoff,
                                   alter_info->error_if_not_empty);
@@ -1033,7 +1045,7 @@ bool alter_table(Session *session,
     /* Should pass the 'new_name' as we store table name in the cache */
     if (new_table->rename_temporary_table(new_db, new_name))
       goto err1;
-    
+
     goto end_temporary;
   }
 
@@ -1048,10 +1060,11 @@ bool alter_table(Session *session,
   }
 
   pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
-  
+
   if (error)
   {
-    quick_rm_table(*session, new_db, tmp_name, true);
+    TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, identifier);
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
@@ -1096,7 +1109,8 @@ bool alter_table(Session *session,
   if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
     error= 1;
-    quick_rm_table(*session, new_db, tmp_name, true);
+    TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, identifier);
   }
   else
   {
@@ -1104,8 +1118,13 @@ bool alter_table(Session *session,
     {
       /* Try to get everything back. */
       error= 1;
-      quick_rm_table(*session, new_db, new_alias, false);
-      quick_rm_table(*session, new_db, tmp_name, true);
+
+      TableIdentifier alias_identifier(new_db, new_alias, NO_TMP_TABLE);
+      quick_rm_table(*session, alias_identifier);
+
+      TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+      quick_rm_table(*session, tmp_identifier);
+
       mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
     }
   }
@@ -1116,7 +1135,11 @@ bool alter_table(Session *session,
     goto err_with_placeholders;
   }
 
-  quick_rm_table(*session, db, old_name, true);
+  {
+    TableIdentifier old_identifier(db, old_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, old_identifier);
+  }
+  
 
   pthread_mutex_unlock(&LOCK_open);
 
@@ -1153,7 +1176,10 @@ err1:
     session->close_temporary_table(new_table);
   }
   else
-    quick_rm_table(*session, new_db, tmp_name, true);
+  {
+    TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, tmp_identifier);
+  }
 
 err:
   /*
@@ -1402,18 +1428,13 @@ copy_data_between_tables(Table *from, Table *to,
 static int
 create_temporary_table(Session *session,
                        Table *table,
-                       char *new_db,
-                       char *tmp_name,
+                       TableIdentifier &identifier,
                        HA_CREATE_INFO *create_info,
                        message::Table *create_proto,
                        AlterInfo *alter_info)
 {
   int error;
   plugin::StorageEngine *old_db_type, *new_db_type;
-  TableIdentifier identifier(new_db,
-                             tmp_name,
-                             create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
-                             TEMP_TABLE);
 
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
@@ -1422,7 +1443,7 @@ create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
-  create_proto->set_name(tmp_name);
+  create_proto->set_name(identifier.getTableName());
 
   message::Table::StorageEngine *protoengine;
   protoengine= create_proto->mutable_engine();

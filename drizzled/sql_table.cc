@@ -549,16 +549,10 @@ err_with_placeholders:
     0           OK
     != 0        Error
 */
-
-bool quick_rm_table(Session& session, const char *db,
-                    const char *table_name, bool is_tmp)
+bool quick_rm_table(Session& session,
+                    TableIdentifier &identifier)
 {
-  bool error= 0;
-
-  TableIdentifier identifier(db, table_name, is_tmp ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
-
-  return (plugin::StorageEngine::dropTable(session, identifier, false)
-          || error);
+  return (plugin::StorageEngine::dropTable(session, identifier, false));
 }
 
 /*
@@ -1550,7 +1544,7 @@ bool mysql_create_table_no_lock(Session *session,
 				message::Table *table_proto,
                                 AlterInfo *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count, 
+                                uint32_t select_field_count,
                                 bool is_if_not_exists)
 {
   uint		db_options, key_count;
@@ -1558,7 +1552,7 @@ bool mysql_create_table_no_lock(Session *session,
   Cursor	*cursor;
   bool		error= true;
   TableShare share;
-  bool lex_identified_temp_table= 
+  bool lex_identified_temp_table=
     (table_proto->type() == drizzled::message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
@@ -2396,8 +2390,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else if (err)
   {
-    (void) quick_rm_table(*session, db,
-			  table_name, false);
+    TableIdentifier identifier(db, table_name, NO_TMP_TABLE);
+    quick_rm_table(*session, identifier);
+
     goto err;
   }
 
@@ -2499,41 +2494,6 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 				"check", lock_type,
 				0, 0, HA_OPEN_FOR_REPAIR, 0,
 				&Cursor::ha_check));
-}
-
-/*
-  Recreates tables by calling drizzled::alter_table().
-
-  SYNOPSIS
-    mysql_recreate_table()
-    session			Thread Cursor
-    tables		Tables to recreate
-
- RETURN
-    Like drizzled::alter_table().
-*/
-bool mysql_recreate_table(Session *session, TableList *table_list)
-{
-  HA_CREATE_INFO create_info;
-  AlterInfo alter_info;
-  message::Table table_proto;
-
-  assert(!table_list->next_global);
-  /*
-    table_list->table has been closed and freed. Do not reference
-    uninitialized data. open_tables() could fail.
-  */
-  table_list->table= NULL;
-
-  memset(&create_info, 0, sizeof(create_info));
-  create_info.row_type=ROW_TYPE_NOT_USED;
-  create_info.default_table_charset=default_charset_info;
-  /* Force alter table to recreate table */
-  alter_info.flags.set(ALTER_CHANGE_COLUMN);
-  alter_info.flags.set(ALTER_RECREATE);
-  return(alter_table(session, NULL, NULL, &create_info, &table_proto,
-                     table_list, &alter_info, 0,
-                     (order_st *) 0, 0));
 }
 
 

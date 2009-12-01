@@ -846,8 +846,6 @@ bool mysql_create_table_no_lock(Session *session,
                                 uint32_t select_field_count,
                                 bool is_if_not_exists);
 
-bool mysql_recreate_table(Session *session, TableList *table_list);
-
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
                              drizzled::plugin::StorageEngine*,
