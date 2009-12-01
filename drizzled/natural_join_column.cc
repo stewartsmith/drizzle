@@ -61,12 +61,9 @@ const char *Natural_join_column::db_name()
 {
   /*
     Test that TableList::db is the same as TableShare::db to
-    ensure consistency. An exception are I_S schema tables, which
-    are inconsistent in this respect.
+    ensure consistency. 
   */
   assert(!strcmp(table_ref->db,
-                      table_ref->table->s->db.str) ||
-              (table_ref->schema_table &&
-               table_ref->table->s->db.str[0] == 0));
+                      table_ref->table->s->db.str));
   return table_ref->db;
 }

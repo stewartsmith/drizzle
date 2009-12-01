@@ -55,6 +55,27 @@ enum engine_flag_bits {
   HTON_BIT_FILE_BASED, // use for check_lowercase_names
   HTON_BIT_HAS_DATA_DICTIONARY,
   HTON_BIT_DOES_TRANSACTIONS,
+  HTON_BIT_STATS_RECORDS_IS_EXACT,
+  HTON_BIT_NULL_IN_KEY,
+  HTON_BIT_CAN_INDEX_BLOBS,
+  HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION,
+  HTON_BIT_PRIMARY_KEY_IN_READ_INDEX,
+  HTON_BIT_PARTIAL_COLUMN_READ,
+  HTON_BIT_TABLE_SCAN_ON_INDEX,
+  HTON_BIT_MRR_CANT_SORT,
+  HTON_BIT_FAST_KEY_READ,
+  HTON_BIT_NO_BLOBS,
+  HTON_BIT_HAS_RECORDS,
+  HTON_BIT_NO_AUTO_INCREMENT,
+  HTON_BIT_DUPLICATE_POS,
+  HTON_BIT_AUTO_PART_KEY,
+  HTON_BIT_NEED_READ_RANGE_BUFFER,
+  HTON_BIT_REQUIRE_PRIMARY_KEY,
+  HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE,
+  HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE,
+  HTON_BIT_NO_PREFIX_CHAR_KEYS,
+  HTON_BIT_HAS_CHECKSUM,
+  HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE,
   HTON_BIT_SIZE
 };
 
@@ -67,6 +88,28 @@ static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPOR
 static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DOES_TRANSACTIONS(1 << HTON_BIT_DOES_TRANSACTIONS);
+static const std::bitset<HTON_BIT_SIZE> HTON_STATS_RECORDS_IS_EXACT(1 << HTON_BIT_STATS_RECORDS_IS_EXACT);
+static const std::bitset<HTON_BIT_SIZE> HTON_NULL_IN_KEY(1 << HTON_BIT_NULL_IN_KEY);
+static const std::bitset<HTON_BIT_SIZE> HTON_CAN_INDEX_BLOBS(1 << HTON_BIT_CAN_INDEX_BLOBS);
+static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION);
+static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_IN_READ_INDEX(1 << HTON_BIT_PRIMARY_KEY_IN_READ_INDEX);
+static const std::bitset<HTON_BIT_SIZE> HTON_PARTIAL_COLUMN_READ(1 << HTON_BIT_PARTIAL_COLUMN_READ);
+static const std::bitset<HTON_BIT_SIZE> HTON_TABLE_SCAN_ON_INDEX(1 << HTON_BIT_TABLE_SCAN_ON_INDEX);
+static const std::bitset<HTON_BIT_SIZE> HTON_MRR_CANT_SORT(1 << HTON_BIT_MRR_CANT_SORT);
+static const std::bitset<HTON_BIT_SIZE> HTON_FAST_KEY_READ(1 << HTON_BIT_FAST_KEY_READ);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_BLOBS(1 << HTON_BIT_NO_BLOBS);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_RECORDS(1 << HTON_BIT_HAS_RECORDS);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_AUTO_INCREMENT(1 << HTON_BIT_NO_AUTO_INCREMENT);
+static const std::bitset<HTON_BIT_SIZE> HTON_DUPLICATE_POS(1 << HTON_BIT_DUPLICATE_POS);
+static const std::bitset<HTON_BIT_SIZE> HTON_AUTO_PART_KEY(1 << HTON_BIT_AUTO_PART_KEY);
+static const std::bitset<HTON_BIT_SIZE> HTON_NEED_READ_RANGE_BUFFER(1 << HTON_BIT_NEED_READ_RANGE_BUFFER);
+static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRE_PRIMARY_KEY(1 << HTON_BIT_REQUIRE_PRIMARY_KEY);
+static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRES_KEY_COLUMNS_FOR_DELETE(1 << HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE);
+static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_DELETE(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE);
+static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_NO_PREFIX_CHAR_KEYS);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
+static const std::bitset<HTON_BIT_SIZE> HTON_ANY_INDEX_MAY_BE_UNIQUE(1 << HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE);
+
 
 class Table;
 
@@ -77,7 +120,7 @@ namespace plugin
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
-    
+
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -191,8 +234,6 @@ public:
    slot number is initialized by MySQL after xxx_init() is called.
   */
   uint32_t slot;
-
-  virtual Table_flags table_flags(void) const= 0;
 
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
@@ -376,6 +417,25 @@ public:
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
   Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
+
+  uint32_t max_record_length() const
+  { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
+  uint32_t max_keys() const
+  { return std::min((unsigned int)MAX_KEY, max_supported_keys()); }
+  uint32_t max_key_parts() const
+  { return std::min((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
+  uint32_t max_key_length() const
+  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
+  uint32_t max_key_part_length(void) const
+  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
+
+  virtual uint32_t max_supported_record_length(void) const
+  { return HA_MAX_REC_LENGTH; }
+  virtual uint32_t max_supported_keys(void) const { return 0; }
+  virtual uint32_t max_supported_key_parts(void) const { return MAX_REF_PARTS; }
+  virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
+  virtual uint32_t max_supported_key_part_length(void) const { return 255; }
+
 };
 
 } /* namespace plugin */

@@ -60,26 +60,21 @@ class MyisamEngine : public drizzled::plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, 
+   : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_HAS_DATA_DICTIONARY |
-                                     HTON_TEMPORARY_ONLY | 
+                                     HTON_CAN_INDEX_BLOBS |
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_TEMPORARY_ONLY |
+                                     HTON_NULL_IN_KEY |
+                                     HTON_MRR_CANT_SORT |
+                                     HTON_HAS_RECORDS |
+                                     HTON_DUPLICATE_POS |
+                                     HTON_AUTO_PART_KEY |
+                                     HTON_NEED_READ_RANGE_BUFFER |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
   { }
-
-  uint64_t table_flags() const
-  {
-    return (HA_NULL_IN_KEY |
-            HA_DUPLICATE_POS |
-            HA_CAN_INDEX_BLOBS |
-            HA_AUTO_PART_KEY |
-            HA_NO_TRANSACTIONS |
-            HA_HAS_RECORDS |
-            HA_STATS_RECORDS_IS_EXACT |
-            HA_NEED_READ_RANGE_BUFFER |
-            HA_MRR_CANT_SORT);
-  }
 
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
@@ -109,6 +104,9 @@ public:
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
+  uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
+  uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
 };
 
 int MyisamEngine::doGetTableDefinition(Session&,

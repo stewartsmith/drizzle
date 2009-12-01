@@ -28,6 +28,7 @@
 #include "drizzled/data_home.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 using namespace std;
 
@@ -689,7 +690,12 @@ bool alter_table(Session *session,
 
   new_name_buff[0]= '\0';
 
-  if (table_list && table_list->schema_table)
+  /**
+   * @todo this is a result of retaining the behavior that was here before. This should be removed
+   * and the correct error handling should be done in doDropTable for the I_S engine.
+   */
+  plugin::InfoSchemaTable *sch_table= plugin::InfoSchemaTable::getTable(table_list->table_name);
+  if (sch_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return true;
@@ -968,7 +974,7 @@ bool alter_table(Session *session,
   alter_info->build_method= HA_BUILD_OFFLINE;
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
-  
+ 
   /* Safety fix for innodb */
   my_casedn_str(files_charset_info, tmp_name);
 
@@ -1429,61 +1435,6 @@ create_temporary_table(Session *session,
 
   return error;
 }
-
-/** @TODO This will soon die. */
-bool create_like_schema_frm(Session* session,
-                            TableList* schema_table,
-                            message::Table* table_proto)
-{
-  HA_CREATE_INFO local_create_info;
-  AlterInfo alter_info;
-  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
-  uint32_t keys= schema_table->table->s->keys;
-  uint32_t db_options= 0;
-
-  memset(&local_create_info, 0, sizeof(local_create_info));
-  local_create_info.db_type= schema_table->table->s->db_type();
-  local_create_info.row_type= schema_table->table->s->row_type;
-  local_create_info.default_table_charset=default_charset_info;
-  alter_info.flags.set(ALTER_CHANGE_COLUMN);
-  alter_info.flags.set(ALTER_RECREATE);
-  schema_table->table->use_all_columns();
-  if (mysql_prepare_alter_table(session, schema_table->table,
-                                &local_create_info, table_proto, &alter_info))
-    return true;
-
-  /* I_S tables are created with MAX_ROWS for some efficiency drive.
-     When CREATE LIKE, we don't want to keep it coming across */
-  message::Table::TableOptions *table_options;
-  table_options= table_proto->mutable_options();
-  table_options->clear_max_rows();
-
-  if (mysql_prepare_create_table(session, &local_create_info, table_proto,
-                                 &alter_info,
-                                 lex_identified_temp_table, &db_options,
-                                 schema_table->table->cursor,
-                                 &schema_table->table->s->key_info, &keys, 0))
-    return true;
-
-  table_proto->set_name("system_stupid_i_s_fix_nonsense");
-
-  {
-    message::Table::StorageEngine *protoengine;
-    protoengine= table_proto->mutable_engine();
-
-    plugin::StorageEngine *engine= local_create_info.db_type;
-
-    protoengine->set_name(engine->getName());
-  }
-
-  if (fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
-                       alter_info.create_list, &local_create_info,
-                       keys, schema_table->table->s->key_info))
-    return true;
-
-  return false;
-}
-
 
 static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name)
 {

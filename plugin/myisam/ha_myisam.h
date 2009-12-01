@@ -48,9 +48,6 @@ class ha_myisam: public Cursor
   int index_init(uint32_t idx, bool sorted);
   int index_end();
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
-  uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
-  uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
-  uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
   uint32_t checksum() const;
 
   int open(const char *name, int mode, uint32_t test_if_locked);

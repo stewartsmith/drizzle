@@ -42,11 +42,11 @@
 using namespace std;
 using namespace drizzled;
 
-int MemcachedAnalysisISMethods::fillTable(Session *session,
-                                          TableList *tables)
+int MemcachedAnalysisISMethods::fillTable(Session *,
+                                          Table *table,
+                                          plugin::InfoSchemaTable *schema_table)
 {
   const CHARSET_INFO * const scs= system_charset_info;
-  Table *table= tables->table;
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   const string servers_string= sysvar_holder.getServersString();
 
@@ -87,10 +87,7 @@ int MemcachedAnalysisISMethods::fillTable(Session *session,
     table->field[8]->store(report->pool_hit_ratio);
 
     /* store the actual record now */
-    if (schema_table_store_record(session, table))
-    {
-      return 1;
-    }
+    schema_table->addRow(table->record[0], table->s->reclength);
     free(report);
   }
 
@@ -109,8 +106,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                                DRIZZLE_TYPE_LONGLONG,
                                                                0,
                                                                0, 
-                                                               "Num of Servers Analyzed",
-                                                               SKIP_OPEN_TABLE);
+                                                               "Num of Servers Analyzed");
   if (! num_analyzed)
   {
     return true;
@@ -121,8 +117,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
                                                            0, 
-                                                           "Average Item Size",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Average Item Size");
   if (! avg_size)
   {
     return true;
@@ -133,8 +128,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
                                                            0,
-                                                           "Node with Most Memory Consumption",
-                                                           SKIP_OPEN_TABLE);
+                                                           "Node with Most Memory Consumption");
   if (! mem_node)
   {
     return true;
@@ -145,8 +139,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0,
-                                                             "Used Bytes",
-                                                             SKIP_OPEN_TABLE);
+                                                             "Used Bytes");
   if (! used_bytes)
   {
     return true;
@@ -157,8 +150,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
                                                             0,
-                                                            "Node with Least Free Space",
-                                                            SKIP_OPEN_TABLE);
+                                                            "Node with Least Free Space");
   if (! free_node)
   {
     return true;
@@ -169,8 +161,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
                                                              0,
-                                                             "Free Bytes",
-                                                             SKIP_OPEN_TABLE);
+                                                             "Free Bytes");
   if (! free_bytes)
   {
     return true;
@@ -181,8 +172,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
                                                           0,
-                                                          "Node with Longest Uptime",
-                                                          SKIP_OPEN_TABLE);
+                                                          "Node with Longest Uptime");
   if (! up_node)
   {
     return true;
@@ -193,8 +183,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
                                                          0,
-                                                         "Longest Uptime",
-                                                         SKIP_OPEN_TABLE);
+                                                         "Longest Uptime");
   if (! uptime)
   {
     return true;
@@ -205,8 +194,7 @@ bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,
                                                             0,
-                                                            "Pool-wide Hit Ratio",
-                                                            SKIP_OPEN_TABLE);
+                                                            "Pool-wide Hit Ratio");
   if (! hit_ratio)
   {
     return true;

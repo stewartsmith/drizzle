@@ -71,56 +71,49 @@ vector<const plugin::ColumnInfo *> *ModulesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_VERSION",
                                             20,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_AUTHOR",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("IS_BUILTIN",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_LIBRARY",
                                             65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_DESCRIPTION",
                                             65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_LICENSE",
                                             80,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "License",
-                                            SKIP_OPEN_TABLE));
+                                            "License"));
   return columns;
 }
 
@@ -164,9 +157,10 @@ class ShowModules : public unary_function<drizzled::plugin::Module *, bool>
 {
   Session *session;
   Table *table;
+  plugin::InfoSchemaTable *schema_table;
 public:
-  ShowModules(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
+  ShowModules(Session *session_arg, Table *table_arg, plugin::InfoSchemaTable *sch_tab_arg)
+    : session(session_arg), table(table_arg), schema_table(sch_tab_arg) {}
 
   result_type operator() (argument_type module)
   {
@@ -174,6 +168,13 @@ public:
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
+    table->setWriteSet(6);
 
     table->field[0]->store(module->getName().c_str(),
                            module->getName().size(), cs);
@@ -239,18 +240,19 @@ public:
     }
     table->field[6]->set_notnull();
 
-    return schema_table_store_record(session, table);
+    schema_table->addRow(table->record[0], table->s->reclength);
+    return false;
   }
 };
 
-int ModulesISMethods::fillTable(Session *session, TableList *tables)
+int ModulesISMethods::fillTable(Session *session, 
+                                Table *table,
+                                plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   vector<drizzled::plugin::Module *> modules= registry.getList(true);
   vector<drizzled::plugin::Module *>::iterator iter=
-    find_if(modules.begin(), modules.end(), ShowModules(session, table));
+    find_if(modules.begin(), modules.end(), ShowModules(session, table, schema_table));
   if (iter != modules.end())
   {
     return 1;

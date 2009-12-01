@@ -1290,7 +1290,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   defaults_argc=argc;
   get_options(&defaults_argc, defaults_argv);
 
-  current_pid=(ulong) getpid();		/* Save for later ref */
+  current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
   if (init_errmessage())	/* Read error messages from file */

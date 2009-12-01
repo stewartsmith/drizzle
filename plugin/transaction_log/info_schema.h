@@ -40,21 +40,24 @@ class TransactionLogViewISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class TransactionLogEntriesViewISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class TransactionLogTransactionsViewISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 /**

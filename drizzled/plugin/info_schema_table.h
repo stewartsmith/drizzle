@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
+#include "drizzled/hash/crc32.h"
+
 #include <string>
 #include <set>
 #include <algorithm>
@@ -53,16 +55,14 @@ public:
              enum enum_field_types in_type,
              int32_t in_value,
              uint32_t in_flags,
-             const std::string& in_old_name,
-             uint32_t in_open_method)
+             const std::string& in_old_name)
     :
       name(in_name),
       length(in_length),
       type(in_type),
       value(in_value),
       flags(in_flags),
-      old_name(in_old_name),
-      open_method(in_open_method)
+      old_name(in_old_name)
   {}
 
   ColumnInfo()
@@ -71,8 +71,7 @@ public:
       length(0),
       type(DRIZZLE_TYPE_VARCHAR),
       flags(0),
-      old_name(),
-      open_method(SKIP_OPEN_TABLE)
+      old_name()
   {}
 
   /**
@@ -96,14 +95,6 @@ public:
   const std::string &getOldName() const
   {
     return old_name;
-  }
-
-  /**
-   * @return the open method for this column.
-   */
-  uint32_t getOpenMethod() const
-  {
-    return open_method;
   }
 
   /**
@@ -176,12 +167,6 @@ private:
    */
   const std::string old_name;
 
-  /**
-   * This should be one of @c SKIP_OPEN_TABLE,
-   * @c OPEN_FRM_ONLY or @c OPEN_FULL_TABLE.
-   */
-  uint32_t open_method;
-
 };
 
 /**
@@ -194,13 +179,13 @@ class InfoSchemaMethods
 public:
   virtual ~InfoSchemaMethods() {}
 
-  virtual Table *createSchemaTable(Session *session,
-                                   TableList *table_list) const;
   virtual int fillTable(Session *session, 
-                        TableList *tables);
-  virtual int processTable(Session *session, TableList *tables,
+                        Table *table,
+                        InfoSchemaTable *schema_table);
+  virtual int processTable(InfoSchemaTable *store_table, 
+                           Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
+                           LEX_STRING *table_name);
   virtual int oldFormat(Session *session, 
                         InfoSchemaTable *schema_table) const;
 };
@@ -215,15 +200,21 @@ public:
   InfoSchemaRecord()
     :
       record(NULL),
-      rec_len(0)
+      rec_len(0),
+      checksum(0)
   {}
 
   InfoSchemaRecord(unsigned char *buf,
                    size_t in_len)
     :
-      record(buf),
-      rec_len(in_len)
-  {}
+      record(NULL),
+      rec_len(in_len),
+      checksum(0)
+  {
+    record= new unsigned char[rec_len];
+    memcpy(record, buf, rec_len);
+    checksum= drizzled::hash::crc32((const char *) record, rec_len);
+  }
 
   InfoSchemaRecord(const InfoSchemaRecord &rhs)
     :
@@ -232,6 +223,7 @@ public:
   {
     record= new(std::nothrow) unsigned char[rec_len];
     memcpy(record, rhs.record, rec_len);
+    checksum= drizzled::hash::crc32((const char *) record, rec_len);
   }
 
   ~InfoSchemaRecord()
@@ -242,9 +234,39 @@ public:
     }
   }
 
+  /**
+   * Copy this record into the memory passed to this function.
+   *
+   * @param[out] buf copy the record into this memory
+   */
   void copyRecordInto(unsigned char *buf)
   {
     memcpy(buf, record, rec_len);
+  }
+
+  /**
+   * @return the length of this record
+   */
+  size_t getRecordLength() const
+  {
+    return rec_len;
+  }
+
+  /**
+   * @return the checksum of the data in this record
+   */
+  uint32_t getChecksum() const
+  {
+    return checksum;
+  }
+
+  /**
+   * @param[in] crc a checksum to compare
+   * @return true if the input checksum matches the checksum for this record; false otherwise
+   */
+  bool checksumMatches(uint32_t crc) const
+  {
+    return (checksum == crc);
   }
 
 private:
@@ -252,6 +274,8 @@ private:
   unsigned char *record;
 
   size_t rec_len;
+
+  uint32_t checksum;
 
 };
 
@@ -262,6 +286,21 @@ public:
   inline void operator()(const T *ptr) const
   {
     delete ptr;
+  }
+};
+
+class FindRowByChecksum
+{
+  uint32_t cs;
+public:
+  FindRowByChecksum(uint32_t in_cs)
+    :
+      cs(in_cs)
+  {}
+
+  inline bool operator()(const InfoSchemaRecord *rec) const
+  {
+    return (cs == rec->getChecksum());
   }
 };
 
@@ -331,30 +370,14 @@ public:
   }
 
   /**
-   * Create the temporary I_S tables using schema_table data.
-   *
-   * @param[in] session a session handler
-   * @param[in] table_list Used to pass I_S table information (fields,
-   *                       tables, parameters, etc.) and table name
-   * @retval \# pointer to created table
-   * @retval NULL Can't create table
-   */
-  Table *createSchemaTable(Session *session, TableList *table_list) const
-  {
-    Table *retval= i_s_methods->createSchemaTable(session, table_list);
-    return retval;
-  }
-
-  /**
    * Fill I_S table.
    *
    * @param[in] session a session handler
-   * @param[in] tables I_S table
    * @return 0 on success; 1 on error
    */
-  int fillTable(Session *session, TableList *tables)
+  int fillTable(Session *session, Table *table)
   {
-    int retval= i_s_methods->fillTable(session, tables);
+    int retval= i_s_methods->fillTable(session, table, this);
     return retval;
   }
 
@@ -371,9 +394,9 @@ public:
    * @return 0 on success; 1 on error
    */
   int processTable(Session *session, TableList *tables, Table *table,
-                   bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
+                   bool res, LEX_STRING *db_name, LEX_STRING *tab_name)
   {
-    int retval= i_s_methods->processTable(session, tables, table,
+    int retval= i_s_methods->processTable(this, session, tables, table,
                                           res, db_name, tab_name);
     return retval;
   }
@@ -483,11 +506,17 @@ public:
     return column_info;
   }
 
+  /**
+   * @return the rows for this I_S table.
+   */
   Rows &getRows()
   {
     return rows;
   }
 
+  /**
+   * Clear the rows for this table and de-allocate all memory for this rows.
+   */
   void clearRows()
   {
     std::for_each(rows.begin(),
@@ -496,10 +525,26 @@ public:
     rows.clear();
   }
 
+  /**
+   * Add a row to the std::vector of rows for this I_S table. For the moment, we check to make sure
+   * that we do not add any duplicate rows. This is done in a niave manner for the moment by
+   * checking the crc of the raw data for each row. We will not add this row to the std::vector of
+   * rows for this I_S table is a duplicate row already exists in the std::vector.
+   *
+   * @param[in] buf raw data for the record to add
+   * @param[in] len size of the raw data for the record to add
+   */
   void addRow(unsigned char *buf, size_t len)
   {
-    InfoSchemaRecord *record= new InfoSchemaRecord(buf, len);
-    rows.push_back(record);
+    uint32_t cs= drizzled::hash::crc32((const char *) buf, len);
+    Rows::iterator it= std::find_if(rows.begin(),
+                                    rows.end(),
+                                    FindRowByChecksum(cs));
+    if (it == rows.end())
+    {
+      InfoSchemaRecord *record= new InfoSchemaRecord(buf, len);
+      rows.push_back(record);
+    }
   }
 
   /**
@@ -509,15 +554,6 @@ public:
   const std::string &getColumnName(int index) const
   {
     return column_info[index]->getName();
-  }
-
-  /**
-   * @param[in] index the index of this column
-   * @return the open method for the column at the given index
-   */
-  uint32_t getColumnOpenMethod(int index) const
-  {
-    return column_info[index]->getOpenMethod();
   }
 
 private:
@@ -556,6 +592,9 @@ private:
    */
   Columns column_info;
 
+  /**
+   * The rows for this I_S table.
+   */
   Rows rows;
 
   /**
