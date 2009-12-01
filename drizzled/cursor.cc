@@ -112,11 +112,6 @@ int Cursor::ha_index_or_rnd_end()
   return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
 }
 
-plugin::StorageEngine::Table_flags Cursor::ha_table_flags() const
-{
-  return engine->table_flags();
-}
-
 void Cursor::ha_start_bulk_insert(ha_rows rows)
 {
   estimation_rows_to_insert= rows;

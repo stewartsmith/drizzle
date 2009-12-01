@@ -229,9 +229,7 @@ void init_read_record(READ_RECORD *info,
     if (!table->no_cache &&
         (use_record_cache > 0 ||
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
-        !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
-        (use_record_cache < 0 &&
-          !(table->cursor->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
+        !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD)))
       table->cursor->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
 

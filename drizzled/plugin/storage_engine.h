@@ -235,11 +235,6 @@ public:
   */
   uint32_t slot;
 
-  virtual Table_flags table_flags(void) const
-  {
-    return 0;
-  }
-
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 

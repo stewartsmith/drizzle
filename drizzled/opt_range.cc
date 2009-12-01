@@ -776,7 +776,6 @@ class PARAM : public RANGE_OPT_PARAM
 {
 public:
   KEY_PART *key[MAX_KEY]; /* First key parts of keys used in the query */
-  int64_t baseflag;
   uint32_t max_key_part;
   /* Number of ranges in the last checked tree->key */
   uint32_t range_count;
@@ -2301,7 +2300,6 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
 
     /* set up parameter that is passed to all functions */
     param.session= session;
-    param.baseflag= head->cursor->ha_table_flags();
     param.prev_tables= prev_tables | const_tables;
     param.read_tables= read_tables;
     param.current_table= head->map;

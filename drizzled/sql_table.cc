@@ -694,7 +694,6 @@ static void calculate_interval_lengths(const CHARSET_INFO * const cs,
     sql_field     field to prepare for packing
     blob_columns  count for BLOBs
     timestamps    count for timestamps
-    table_flags   table flags
 
   DESCRIPTION
     This function prepares a CreateField instance.
@@ -706,8 +705,8 @@ static void calculate_interval_lengths(const CHARSET_INFO * const cs,
 */
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
-                         int *timestamps, int *timestamps_with_niladic,
-                         int64_t )
+                         int *timestamps,
+                         int *timestamps_with_niladic)
 {
   unsigned int dup_val_count;
 
@@ -1017,8 +1016,7 @@ int mysql_prepare_create_table(Session *session,
     assert(sql_field->charset != 0);
 
     if (prepare_create_field(sql_field, &blob_columns,
-			     &timestamps, &timestamps_with_niladic,
-			     cursor->ha_table_flags()))
+			     &timestamps, &timestamps_with_niladic))
       return(true);
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
