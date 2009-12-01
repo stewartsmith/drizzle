@@ -171,7 +171,11 @@ protected:
   ha_rows estimation_rows_to_insert;
 public:
   drizzled::plugin::StorageEngine *engine;      /* storage engine of this Cursor */
-  unsigned char *ref;		  		/* Pointer to current row */
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return engine;
+  }
+  unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
   ha_statistics stats;
@@ -257,7 +261,6 @@ public:
 
   /* this is necessary in many places, e.g. in HANDLER command */
   int ha_index_or_rnd_end();
-  drizzled::plugin::StorageEngine::Table_flags ha_table_flags() const;
 
   /**
     These functions represent the public interface to *users* of the
@@ -844,8 +847,7 @@ bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
-                         int *timestamps, int *timestamps_with_niladic,
-                         int64_t table_flags);
+                         int *timestamps, int *timestamps_with_niladic);
 
 bool mysql_create_table(Session *session,
                         drizzled::TableIdentifier &identifier,

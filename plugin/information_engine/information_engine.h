@@ -47,12 +47,7 @@ public:
     pthread_mutex_destroy(&mutex);
   }
 
-  uint64_t table_flags() const
-  {
-    return 0;
-  }
-
-  class Share 
+  class Share
   {
   private:
     uint32_t count;

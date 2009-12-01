@@ -2688,7 +2688,7 @@ enum_nested_loop_state end_send(JOIN *join, JoinTable *, bool end_of_records)
         if ((join->tables == 1) && !join->tmp_table && !join->sort_and_group
             && !join->send_group_parts && !join->having && !jt->select_cond &&
             !(jt->select && jt->select->quick) &&
-            (jt->table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
+            (jt->table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
                   (jt->ref.key < 0))
         {
           /* Join over all rows in table;  Return number of found rows */
@@ -3674,7 +3674,7 @@ static void best_access_path(JOIN *join,
   if ((records >= s->found_records || best > s->read_time) &&            // (1)
       ! (s->quick && best_key && s->quick->index == best_key->getKey() &&      // (2)
         best_max_key_part >= s->table->quick_key_parts[best_key->getKey()]) &&// (2)
-      ! ((s->table->cursor->ha_table_flags() & HA_TABLE_SCAN_ON_INDEX) &&   // (3)
+      ! ((s->table->cursor->getEngine()->check_flag(HTON_BIT_TABLE_SCAN_ON_INDEX)) &&   // (3)
         ! s->table->covering_keys.none() && best_key && !s->quick) && // (3)
       ! (s->table->force_index && best_key && !s->quick))                 // (4)
   {                                             // Check full join
@@ -5615,7 +5615,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       continue;
     }
     if ((table->cursor->stats.records <= 1) && !s->dependent &&
-	      (table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && 
+	      (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
         !join->no_const_tables)
     {
       set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
@@ -5741,7 +5741,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         if (s->dependent & ~(found_const_table_map))
           continue;
         if (table->cursor->stats.records <= 1L &&
-            (table->cursor->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
+            (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
                   !table->pos_in_table_list->embedding)
         {					// system table
           int tmp= 0;

@@ -1024,8 +1024,6 @@ int drizzled::parse_table_proto(Session& session,
     uint32_t primary_key= (uint32_t) (find_type((char*) "PRIMARY",
                                                 &share->keynames, 3) - 1); /* @TODO Huh? */
 
-    int64_t ha_option= handler_file->ha_table_flags();
-
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
@@ -1112,7 +1110,7 @@ int drizzled::parse_table_proto(Session& session,
             If this field is part of the primary key and all keys contains
             the primary key, then we can use any key to find this column
           */
-          if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
+          if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
           {
             field->part_of_key= share->keys_in_use;
             if (field->part_of_sortkey.test(key))
@@ -1134,7 +1132,7 @@ int drizzled::parse_table_proto(Session& session,
         an unique index on the underlying MyISAM table. (Bug #10400)
       */
       if ((keyinfo->flags & HA_NOSAME) ||
-          (ha_option & HA_ANY_INDEX_MAY_BE_UNIQUE))
+          (handler_file->getEngine()->check_flag(HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE)))
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
     }
     if (primary_key < MAX_KEY &&
@@ -1971,7 +1969,7 @@ void Table::clear_column_bitmaps()
 void Table::prepare_for_position()
 {
 
-  if ((cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
+  if ((cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
       s->primary_key < MAX_KEY)
   {
     mark_columns_used_by_index_no_reset(s->primary_key);
@@ -2102,7 +2100,7 @@ void Table::mark_columns_needed_for_delete()
     mark_columns_used_by_index_no_reset(s->primary_key);
 
   /* If we the engine wants all predicates we mark all keys */
-  if (cursor->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
+  if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
     Field **reg_field;
     for (reg_field= field ; *reg_field ; reg_field++)
@@ -2126,7 +2124,7 @@ void Table::mark_columns_needed_for_delete()
     if neeed, either the primary key column or all columns to be read.
     (see mark_columns_needed_for_delete() for details)
 
-    If the engine has HA_REQUIRES_KEY_COLUMNS_FOR_DELETE, we will
+    If the engine has HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE, we will
     mark all USED key columns as 'to-be-read'. This allows the engine to
     loop over the given record to find all changed keys and doesn't have to
     retrieve the row again.
@@ -2149,7 +2147,7 @@ void Table::mark_columns_needed_for_update()
   else
     mark_columns_used_by_index_no_reset(s->primary_key);
 
-  if (cursor->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
+  if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
     /* Mark all used key columns for read */
     Field **reg_field;

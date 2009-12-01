@@ -331,54 +331,7 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_INVALID         -5
 #define HA_ADMIN_REJECT          -6
 
-/* Bits in table_flags() to show what database can do */
-
-#define HA_NO_TRANSACTIONS     (1 << 0) /* Doesn't support transactions */
-#define HA_PARTIAL_COLUMN_READ (1 << 1) /* read may not return all columns */
-#define HA_TABLE_SCAN_ON_INDEX (1 << 2) /* No separate data/index file */
-
-/*
-  Reading keys in random order is as fast as reading keys in sort order
-  (Used in records.cc to decide if we should use a record cache and by
-  filesort to decide if we should sort key + data or key + pointer-to-row
-*/
-#define HA_FAST_KEY_READ       (1 << 5)
-/*
-  Set the following flag if we on delete should force all key to be read
-  and on update read all keys that changes
-*/
-#define HA_REQUIRES_KEY_COLUMNS_FOR_DELETE (1 << 6)
-#define HA_NULL_IN_KEY         (1 << 7) /* One can have keys with NULL */
-#define HA_DUPLICATE_POS       (1 << 8)    /* ha_position() gives dup row */
-#define HA_NO_BLOBS            (1 << 9) /* Doesn't support blobs */
-#define HA_CAN_INDEX_BLOBS     (1 << 10)
-#define HA_AUTO_PART_KEY       (1 << 11) /* auto-increment in multi-part key */
-#define HA_REQUIRE_PRIMARY_KEY (1 << 12) /* .. and can't create a hidden one */
-#define HA_STATS_RECORDS_IS_EXACT (1 << 13) /* stats.records is exact */
-/*
-  If we get the primary key columns for free when we do an index read
-  It also implies that we have to retrive the primary key when using
-  position() and rnd_pos().
-*/
-#define HA_PRIMARY_KEY_IN_READ_INDEX (1 << 15)
-/*
-  If HA_PRIMARY_KEY_REQUIRED_FOR_POSITION is set, it means that to position()
-  uses a primary key. Without primary key, we can't call position().
-*/
-#define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1 << 16)
 #define HA_NOT_DELETE_WITH_CACHE (1 << 18)
-/*
-  The following is we need to a primary key to delete (and update) a row.
-  If there is no primary key, all columns needs to be read on update and delete
-*/
-#define HA_PRIMARY_KEY_REQUIRED_FOR_DELETE (1 << 19)
-#define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
-#define HA_NO_AUTO_INCREMENT   (1 << 23)
-#define HA_HAS_CHECKSUM        (1 << 24)
-#define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
-#define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
-#define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
-#define HA_MRR_CANT_SORT       (INT64_C(1) << 34)
 
 /* bits in index_flags(index_number) for what you can do with index */
 #define HA_READ_NEXT            1       /* TODO really use this flag */
