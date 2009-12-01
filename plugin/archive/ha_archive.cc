@@ -175,6 +175,10 @@ public:
   ArchiveShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, ArchiveShare *);
   void deleteOpenTable(const string &table_name);
+
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
 };
 
 
@@ -1370,14 +1374,6 @@ int ha_archive::end_bulk_insert()
 int ha_archive::delete_all_rows()
 {
   return(HA_ERR_WRONG_COMMAND);
-}
-
-/*
-  We just return state if asked.
-*/
-bool ha_archive::is_crashed() const
-{
-  return(share->crashed);
 }
 
 /*

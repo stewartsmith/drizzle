@@ -152,6 +152,10 @@ public:
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
   int doDropTable(Session&, const string table_path);
+
+  uint32_t max_keys()          const { return 0; }
+  uint32_t max_key_parts()     const { return 0; }
+  uint32_t max_key_length()    const { return 0; }
 };
 
 int Tina::doDropTable(Session&,

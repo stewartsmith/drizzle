@@ -794,7 +794,7 @@ int mysql_prepare_create_table(Session *session,
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
-  max_key_length= cursor->max_key_length();
+  max_key_length= cursor->getEngine()->max_key_length();
 
   for (field_no=0; (sql_field=it++) ; field_no++)
   {
@@ -1083,7 +1083,7 @@ int mysql_prepare_create_table(Session *session,
       continue;
     }
     (*key_count)++;
-    tmp=cursor->max_key_parts();
+    tmp=cursor->getEngine()->max_key_parts();
     if (key->columns.elements > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
@@ -1132,7 +1132,7 @@ int mysql_prepare_create_table(Session *session,
       return(true);
     }
   }
-  tmp=cursor->max_keys();
+  tmp=cursor->getEngine()->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
@@ -1309,9 +1309,9 @@ int mysql_prepare_create_table(Session *session,
 	if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
 	{
 	  if ((length=column->length) > max_key_length ||
-	      length > cursor->max_key_part_length())
+	      length > cursor->getEngine()->max_key_part_length())
 	  {
-	    length= min(max_key_length, cursor->max_key_part_length());
+	    length= min(max_key_length, cursor->getEngine()->max_key_part_length());
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
@@ -1346,9 +1346,9 @@ int mysql_prepare_create_table(Session *session,
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
 	  return(true);
       }
-      if (length > cursor->max_key_part_length())
+      if (length > cursor->getEngine()->max_key_part_length())
       {
-        length= cursor->max_key_part_length();
+        length= cursor->getEngine()->max_key_part_length();
 	if (key->type == Key::MULTIPLE)
 	{
 	  /* not a critical problem */
@@ -2094,16 +2094,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       if (session->killed)
 	goto err;
       open_for_modify= 0;
-    }
-
-    if (table->table->s->crashed && operator_func == &Cursor::ha_check)
-    {
-      session->client->store(table_name);
-      session->client->store(operator_name);
-      session->client->store(STRING_WITH_LEN("warning"));
-      session->client->store(STRING_WITH_LEN("Table is marked as crashed"));
-      if (session->client->flush())
-        goto err;
     }
 
     result_code = (table->table->cursor->*operator_func)(session, check_opt);

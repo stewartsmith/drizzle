@@ -78,7 +78,7 @@ public:
   {
     CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
       CachedDirectory::Entry *entry= *entry_iter;
@@ -98,11 +98,16 @@ public:
 
         file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
         // TODO: Remove need for memory copy here
-        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL 
+        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
         set_of_names.insert(uname);
       }
     }
   }
+
+  /* The following defines can be increased if necessary */
+  uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
+  uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
 };
 
 /* Static declarations for shared structures */
