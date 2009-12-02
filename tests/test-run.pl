@@ -1269,7 +1269,7 @@ sub generate_cmdline_mysqldump ($) {
   my($mysqld) = @_;
   return
     mtr_native_path($exe_drizzledump) .
-      " --no-defaults -uroot --debug-check " .
+      " --no-defaults -uroot " .
       "--port=$mysqld->{'port'} ";
 }
 
