@@ -26,8 +26,7 @@ AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42, skip-visibility)
-PANDORA_VC_VERSION
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42, skip-visibility, version-from-vc)
 
 
 AC_PATH_PROG(GPERF, gperf)
