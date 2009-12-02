@@ -133,7 +133,7 @@ static bool debug_info_flag= false, debug_check_flag= false;
 static bool opt_only_print= false;
 static bool opt_burnin= false;
 static bool opt_ignore_sql_errors= false;
-static bool opt_compress= false, tty_password= false,
+static bool tty_password= false,
   opt_silent= false,
   auto_generate_sql_autoincrement= false,
   auto_generate_sql_guid_primary= false,
@@ -588,9 +588,6 @@ static struct my_option my_long_options[] =
   {"commit", OPT_SLAP_COMMIT, "Commit records every X number of statements.",
    (char**) &commit_rate, (char**) &commit_rate, 0, GET_UINT, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"compress", 'C', "Use compression in server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"concurrency", 'c', "Number of clients to simulate for query to run.",
    (char**) &concurrency_str, (char**) &concurrency_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
