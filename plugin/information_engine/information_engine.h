@@ -36,6 +36,7 @@ public:
   InformationEngine(const std::string &name_arg)
     : drizzled::plugin::StorageEngine(name_arg,
                                       HTON_ALTER_NOT_SUPPORTED |
+                                      HTON_SKIP_STORE_LOCK |
                                       HTON_HIDDEN |
                                       HTON_TEMPORARY_NOT_SUPPORTED)
   {

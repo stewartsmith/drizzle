@@ -77,10 +77,6 @@ public:
     }
     return HA_POS_ERROR;
   }
-
-  THR_LOCK_DATA **store_lock(Session *session,
-                             THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
 };
 
 #endif /* PLUGIN_INFORMATION_ENGINE_INFORMATION_CURSOR_H */
