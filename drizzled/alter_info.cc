@@ -90,6 +90,5 @@ AlterInfo::AlterInfo(const AlterInfo &rhs, MEM_ROOT *mem_root) :
   */
   list_copy_and_replace_each_value(drop_list, mem_root);
   list_copy_and_replace_each_value(alter_list, mem_root);
-  list_copy_and_replace_each_value(key_list, mem_root);
   list_copy_and_replace_each_value(create_list, mem_root);
 }
