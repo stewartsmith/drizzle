@@ -143,7 +143,8 @@ public:
                                      HTON_FILE_BASED |
                                      HTON_STATS_RECORDS_IS_EXACT |
                                      HTON_HAS_RECORDS |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_HAS_DATA_DICTIONARY),
+     archive_open_tables()
   {
     table_definition_ext= ARZ;
   }
@@ -180,7 +181,6 @@ public:
   uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
   uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
 };
-
 
 ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
 {
@@ -319,7 +319,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
-  archive_engine= new ArchiveEngine(engine_name);
+  archive_engine= new ArchiveEngine("ARCHIVE");
   registry.add(archive_engine);
 
   /* When the engine starts up set the first version */
@@ -498,7 +498,7 @@ int ha_archive::free_share()
   {
     ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
     a_engine->deleteOpenTable(share->table_name);
-     delete share;
+    delete share;
   }
   pthread_mutex_unlock(&archive_mutex);
 
@@ -1451,12 +1451,12 @@ static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
   "Whether or not to use asynchronous IO.",
   NULL, NULL, true);
 
-static struct st_mysql_sys_var* archive_system_variables[]= {
+static drizzle_sys_var* archive_system_variables[]= {
   DRIZZLE_SYSVAR(aio),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "ARCHIVE",
   "3.5",
@@ -1469,5 +1469,5 @@ drizzle_declare_plugin
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
 

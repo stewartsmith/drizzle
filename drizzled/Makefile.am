@@ -370,7 +370,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_ident.h \
 		table_identifier.h \
 		table_list.h \
-		table_map_iterator.h \
 		table_proto.h \
 		table_reference.h \
 		table_share.h \
@@ -617,6 +616,7 @@ drizzled_SOURCES = \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \
+		plugin/library.cc \
 		plugin/listen.cc \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
@@ -696,7 +696,6 @@ drizzled_SOURCES = \
 		table.cc \
 		table_identifier.cc \
 		table_list.cc \
-		table_map_iterator.cc \
 		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \

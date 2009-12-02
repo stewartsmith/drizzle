@@ -40,7 +40,7 @@ class XID;
 class Cursor;
 
 class TableShare;
-typedef struct st_mysql_lex_string LEX_STRING;
+typedef drizzle_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
@@ -120,9 +120,8 @@ namespace drizzled
 namespace plugin
 {
 
-const std::string UNKNOWN_STRING("UNKNOWN");
-const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
-
+extern const std::string UNKNOWN_STRING;
+extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -

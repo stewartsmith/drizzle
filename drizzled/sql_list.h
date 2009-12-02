@@ -126,13 +126,6 @@ public:
     first= tmp.first;
     last= elements ? tmp.last : &first;
   }
-  /**
-    Construct a deep copy of the argument in memory root mem_root.
-    The elements themselves are copied by pointer. If you also
-    need to copy elements by value, you should employ
-    list_copy_and_replace_each_value after creating a copy.
-  */
-  base_list(const base_list &rhs, MEM_ROOT *mem_root);
   inline base_list(bool) { }
   inline bool push_back(void *info)
   {
@@ -614,10 +607,6 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
   while ((el= it++))
     it.replace(el->clone(mem_root));
 }
-
-/* sql_list.cc */
-void free_list(I_List <i_string_pair> *list);
-void free_list(I_List <i_string> *list);
 
 
 #endif /* DRIZZLED_SQL_LIST_H */

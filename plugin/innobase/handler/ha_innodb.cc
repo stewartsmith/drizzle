@@ -444,11 +444,11 @@ int
 innobase_commit_concurrency_validate(
 /*=================================*/
 	Session*			,	/*!< in: thread handle */
-	struct st_mysql_sys_var*	,	/*!< in: pointer to system
+	drizzle_sys_var*	,	/*!< in: pointer to system
 						variable */
 	void*				save,	/*!< out: immediate result
 						for update function */
-	struct st_mysql_value*		value)	/*!< in: incoming string */
+	drizzle_value*		value)	/*!< in: incoming string */
 {
 	int64_t 	intbuf;
 	ulong		commit_concurrency;
@@ -8462,11 +8462,11 @@ int
 innodb_file_format_name_validate(
 /*=============================*/
 	Session*			,	/*!< in: thread handle */
-	struct st_mysql_sys_var*	,	/*!< in: pointer to system
+	drizzle_sys_var*	,	/*!< in: pointer to system
 						variable */
 	void*				save,	/*!< out: immediate result
 						for update function */
-	struct st_mysql_value*		value)	/*!< in: incoming string */
+	drizzle_value*		value)	/*!< in: incoming string */
 {
 	const char*	file_format_input;
 	char		buff[STRING_BUFFER_USUAL_SIZE];
@@ -8502,7 +8502,7 @@ void
 innodb_file_format_name_update(
 /*===========================*/
 	Session*			,		/*!< in: thread handle */
-	struct st_mysql_sys_var*	,		/*!< in: pointer to
+	drizzle_sys_var*	,		/*!< in: pointer to
 							system variable */
 	void*				var_ptr,	/*!< out: where the
 							formal string goes */
@@ -8539,11 +8539,11 @@ int
 innodb_file_format_check_validate(
 /*==============================*/
 	Session*			,	/*!< in: thread handle */
-	struct st_mysql_sys_var*	,	/*!< in: pointer to system
+	drizzle_sys_var*	,	/*!< in: pointer to system
 						variable */
 	void*				save,	/*!< out: immediate result
 						for update function */
-	struct st_mysql_value*		value)	/*!< in: incoming string */
+	drizzle_value*		value)	/*!< in: incoming string */
 {
 	const char*	file_format_input;
 	char		buff[STRING_BUFFER_USUAL_SIZE];
@@ -8593,7 +8593,7 @@ void
 innodb_file_format_check_update(
 /*============================*/
 	Session*			session,	/*!< in: thread handle */
-	struct st_mysql_sys_var*	,		/*!< in: pointer to
+	drizzle_sys_var*	,		/*!< in: pointer to
 							system variable */
 	void*				var_ptr,	/*!< out: where the
 							formal string goes */
@@ -8644,7 +8644,7 @@ void
 innodb_adaptive_hash_index_update(
 /*==============================*/
 	Session*			,		/*!< in: thread handle */
-	struct st_mysql_sys_var*	,		/*!< in: pointer to
+	drizzle_sys_var*	,		/*!< in: pointer to
 							system variable */
 	void*				,	/*!< out: where the
 							formal string goes */
@@ -8667,11 +8667,11 @@ int
 innodb_change_buffering_validate(
 /*=============================*/
 	Session*			,	/*!< in: thread handle */
-	struct st_mysql_sys_var*	,	/*!< in: pointer to system
+	drizzle_sys_var*	,	/*!< in: pointer to system
 						variable */
 	void*				save,	/*!< out: immediate result
 						for update function */
-	struct st_mysql_value*		value)	/*!< in: incoming string */
+	drizzle_value*		value)	/*!< in: incoming string */
 {
 	const char*	change_buffering_input;
 	char		buff[STRING_BUFFER_USUAL_SIZE];
@@ -8707,7 +8707,7 @@ void
 innodb_change_buffering_update(
 /*===========================*/
 	Session*			,		/*!< in: thread handle */
-	struct st_mysql_sys_var*	,		/*!< in: pointer to
+	drizzle_sys_var*	,		/*!< in: pointer to
 							system variable */
 	void*				var_ptr,	/*!< out: where the
 							formal string goes */
@@ -8995,7 +8995,7 @@ static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
   "trigger a readahead.",
   NULL, NULL, 56, 0, 64, 0);
 
-static struct st_mysql_sys_var* innobase_system_variables[]= {
+static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(additional_mem_pool_size),
   DRIZZLE_SYSVAR(autoextend_increment),
   DRIZZLE_SYSVAR(buffer_pool_size),
@@ -9052,7 +9052,7 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   innobase_engine_name,
   INNODB_VERSION_STR,
@@ -9065,7 +9065,7 @@ drizzle_declare_plugin
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
 
 int ha_innobase::read_range_first(const key_range *start_key,
 				  const key_range *end_key,

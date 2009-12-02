@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  my_end(0);
+  my_end();
 
   return 0;
 }

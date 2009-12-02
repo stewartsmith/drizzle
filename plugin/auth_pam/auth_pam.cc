@@ -148,7 +148,7 @@ static int finalize(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "pam",
   "0.1",
@@ -161,4 +161,4 @@ drizzle_declare_plugin
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

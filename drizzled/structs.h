@@ -142,7 +142,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
 
 extern const char *show_comp_option_name[];
 
-typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
+typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 
 	/* Bits in form->status */
 #define STATUS_NO_RECORD	(1+2)	/* Record isn't usably */

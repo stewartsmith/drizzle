@@ -326,14 +326,14 @@ static DRIZZLE_SYSVAR_STR(
                           NULL, /* update func*/
                           "drizzlelog" /* default */);
 
-static struct st_mysql_sys_var* logging_gearman_system_variables[]= {
+static drizzle_sys_var* logging_gearman_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(host),
   DRIZZLE_SYSVAR(function),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
     "logging_gearman",
     "0.1",
@@ -346,4 +346,4 @@ drizzle_declare_plugin
     logging_gearman_system_variables,
     NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
