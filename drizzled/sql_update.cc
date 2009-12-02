@@ -124,9 +124,10 @@ int mysql_update(Session *session, TableList *table_list,
 {
   bool		using_limit= limit != HA_POS_ERROR;
   bool		safe_update= test(session->options & OPTION_SAFE_UPDATES);
-  bool		used_key_is_modified, transactional_table, will_batch;
+  bool		used_key_is_modified;
+  bool		transactional_table;
   bool		can_compare_record;
-  int		error, loc_error;
+  int		error;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
   ha_rows	updated, found;
@@ -423,7 +424,6 @@ int mysql_update(Session *session, TableList *table_list,
 
   transactional_table= table->cursor->has_transactions();
   session->abort_on_warning= test(!ignore);
-  will_batch= !table->cursor->start_bulk_update();
 
   /*
     Assure that we can use position()
@@ -455,46 +455,9 @@ int mysql_update(Session *session, TableList *table_list,
 
       if (!can_compare_record || table->compare_record())
       {
-        if (will_batch)
-        {
-          /*
-            Typically a batched handler can execute the batched jobs when:
-            1) When specifically told to do so
-            2) When it is not a good idea to batch anymore
-            3) When it is necessary to send batch for other reasons
-               (One such reason is when READ's must be performed)
-
-            1) is covered by exec_bulk_update calls.
-            2) and 3) is handled by the bulk_update_row method.
-
-            bulk_update_row can execute the updates including the one
-            defined in the bulk_update_row or not including the row
-            in the call. This is up to the handler implementation and can
-            vary from call to call.
-
-            The dup_key_found reports the number of duplicate keys found
-            in those updates actually executed. It only reports those if
-            the extra call with HA_EXTRA_IGNORE_DUP_KEY have been issued.
-            If this hasn't been issued it returns an error code and can
-            ignore this number. Thus any handler that implements batching
-            for UPDATE IGNORE must also handle this extra call properly.
-
-            If a duplicate key is found on the record included in this
-            call then it should be included in the count of dup_key_found
-            and error should be set to 0 (only if these errors are ignored).
-          */
-          error= table->cursor->ha_bulk_update_row(table->record[1],
-                                                 table->record[0],
-                                                 &dup_key_found);
-          limit+= dup_key_found;
-          updated-= dup_key_found;
-        }
-        else
-        {
-          /* Non-batched update */
-	  error= table->cursor->ha_update_row(table->record[1],
+        /* Non-batched update */
+        error= table->cursor->ha_update_row(table->record[1],
                                             table->record[0]);
-        }
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
 	{
           if (error != HA_ERR_RECORD_IS_THE_SAME)
@@ -502,7 +465,7 @@ int mysql_update(Session *session, TableList *table_list,
           else
             error= 0;
 	}
- 	else if (!ignore ||
+	else if (! ignore ||
                  table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
 	{
           /*
@@ -523,43 +486,8 @@ int mysql_update(Session *session, TableList *table_list,
 
       if (!--limit && using_limit)
       {
-        /*
-          We have reached end-of-cursor in most common situations where no
-          batching has occurred and if batching was supposed to occur but
-          no updates were made and finally when the batch execution was
-          performed without error and without finding any duplicate keys.
-          If the batched updates were performed with errors we need to
-          check and if no error but duplicate key's found we need to
-          continue since those are not counted for in limit.
-        */
-        if (will_batch &&
-            ((error= table->cursor->exec_bulk_update(&dup_key_found)) ||
-             dup_key_found))
-        {
- 	  if (error)
-          {
-            /*
-              The handler should not report error of duplicate keys if they
-              are ignored. This is a requirement on batching handlers.
-            */
-            prepare_record_for_error_message(error, table);
-            table->print_error(error,MYF(0));
-            error= 1;
-            break;
-          }
-          /*
-            Either an error was found and we are ignoring errors or there
-            were duplicate keys found. In both cases we need to correct
-            the counters and continue the loop.
-          */
-          limit= dup_key_found; //limit is 0 when we get here so need to +
-          updated-= dup_key_found;
-        }
-        else
-        {
-	  error= -1;				// Simulate end of cursor
-	  break;
-        }
+        error= -1;				// Simulate end of cursor
+        break;
       }
     }
     else
@@ -579,26 +507,7 @@ int mysql_update(Session *session, TableList *table_list,
   // simulated killing after the loop must be ineffective for binlogging
   error= (killed_status == Session::NOT_KILLED)?  error : 1;
 
-  if (error &&
-      will_batch &&
-      (loc_error= table->cursor->exec_bulk_update(&dup_key_found)))
-    /*
-      An error has occurred when a batched update was performed and returned
-      an error indication. It cannot be an allowed duplicate key error since
-      we require the batching handler to treat this as a normal behavior.
-
-      Otherwise we simply remove the number of duplicate keys records found
-      in the batched update.
-    */
-  {
-    prepare_record_for_error_message(loc_error, table);
-    table->print_error(loc_error,MYF(ME_FATALERROR));
-    error= 1;
-  }
-  else
-    updated-= dup_key_found;
-  if (will_batch)
-    table->cursor->end_bulk_update();
+  updated-= dup_key_found;
   table->cursor->try_semi_consistent_read(0);
 
   if (!transactional_table && updated > 0)

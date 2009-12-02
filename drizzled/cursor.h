@@ -279,8 +279,6 @@ public:
 
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
-  int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                         uint32_t *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
@@ -693,24 +691,6 @@ private:
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_read_last(unsigned char *, const unsigned char *, uint32_t)
    { return (my_errno= HA_ERR_WRONG_COMMAND); }
-  /**
-    This method is similar to update_row, however the Cursor doesn't need
-    to execute the updates at this point in time. The Cursor can be certain
-    that another call to bulk_update_row will occur OR a call to
-    exec_bulk_update before the set of updates in this query is concluded.
-
-    @param    old_data       Old record
-    @param    new_data       New record
-    @param    dup_key_found  Number of duplicate keys found
-
-    @retval  0   Bulk delete used by Cursor
-    @retval  1   Bulk delete not used, normal operation used
-  */
-  virtual int bulk_update_row(const unsigned char *, unsigned char *, uint32_t *)
-  {
-    assert(false);
-    return HA_ERR_WRONG_COMMAND;
-  }
   /**
     This is called to delete all rows in a table
     If the Cursor don't support this, then this function will
