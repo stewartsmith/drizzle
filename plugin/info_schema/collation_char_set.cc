@@ -74,16 +74,14 @@ vector<const plugin::ColumnInfo *> *CollationCharSetIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CHARACTER_SET_NAME",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   return columns;
 }
@@ -124,10 +122,11 @@ void CollationCharSetIS::cleanup()
   delete columns;
 }
 
-int CollCharISMethods::fillTable(Session *session, TableList *tables)
+int CollCharISMethods::fillTable(Session *,  
+                                 Table *table,
+                                 plugin::InfoSchemaTable *schema_table)
 {
   CHARSET_INFO **cs;
-  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
@@ -143,10 +142,11 @@ int CollCharISMethods::fillTable(Session *session, TableList *tables)
           ! my_charset_same(tmp_cs,tmp_cl))
         continue;
       table->restoreRecordAsDefault();
+      table->setWriteSet(0);
+      table->setWriteSet(1);
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-      if (schema_table_store_record(session, table))
-        return 1;
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

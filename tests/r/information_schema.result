@@ -74,7 +74,7 @@ varchar(64)
 select TABLE_ROWS from information_schema.tables where 
 table_schema="information_schema" and table_name="COLUMNS";
 TABLE_ROWS
-NULL
+0
 select table_type from information_schema.tables
 where table_schema="mysql" and table_name="user";
 table_type
@@ -169,9 +169,10 @@ alter database information_schema;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
 drop database information_schema;
 ERROR 42000: Access denied for user ''@'' to database 'information_schema'
-drop table information_schema.tables;
+use information_schema;
+drop table tables;
 ERROR 42000: Access denied for user ''@'' to database 'information_schema'
-alter table information_schema.tables;
+alter table tables;
 ERROR 42000: Access denied for user ''@'' to database 'information_schema'
 use information_schema;
 create temporary table schemata(f1 char(10));
@@ -211,7 +212,7 @@ from information_schema.columns where
 table_schema='information_schema' and
 (column_type = 'varchar(7)' or column_type = 'varchar(20)'
  or column_type = 'varchar(27)')
-group by column_type order by num;
+group by column_type order by column_type, num;
 column_type	group_concat(table_schema, '.', table_name)	num
 varchar(20)	information_schema.MODULES	1
 varchar(27)	information_schema.COLUMNS	1

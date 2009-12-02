@@ -41,14 +41,14 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_HAS_DATA_DICTIONARY) 
+   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
+                                     HTON_NULL_IN_KEY |
+                                     HTON_CAN_INDEX_BLOBS |
+                                     HTON_SKIP_STORE_LOCK |
+                                     HTON_AUTO_PART_KEY |
+                                     HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= BLACKHOLE_EXT;
-  }
-
-  uint64_t table_flags() const
-  {
-    return(HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -61,12 +61,12 @@ public:
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*, 
+  int doCreateTable(Session*,
                     const char *,
                     Table&,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name); 
+  int doDropTable(Session&, const string table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -79,7 +79,7 @@ public:
   {
     CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
       CachedDirectory::Entry *entry= *entry_iter;
@@ -99,11 +99,16 @@ public:
 
         file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
         // TODO: Remove need for memory copy here
-        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL 
+        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
         set_of_names.insert(uname);
       }
     }
   }
+
+  /* The following defines can be increased if necessary */
+  uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
+  uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
 };
 
 /* Static declarations for shared structures */
@@ -266,40 +271,6 @@ int ha_blackhole::info(uint32_t flag)
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
-}
-
-THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
-                                         THR_LOCK_DATA **to,
-                                         enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type= lock_type;
-  }
-  *to++= &lock;
-  return(to);
 }
 
 

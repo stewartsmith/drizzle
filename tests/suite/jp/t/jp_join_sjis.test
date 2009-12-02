@@ -33,18 +33,18 @@ CREATE TABLE `‚s‚Ta` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine 
 CREATE TABLE `‚s‚Tb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚Ua` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚Ub` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `‚s‚Va` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚Vb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚Wa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚Wb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚Xa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚Xb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚P‚Oa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚P‚Ob` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚P‚Pa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚P‚Pb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚P‚Qa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚P‚Qb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `‚s‚Va` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚Vb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚Wa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚Wb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚Xa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚Xb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚P‚Oa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚P‚Ob` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚P‚Pa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚P‚Pb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚P‚Qa` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚P‚Qb` (`‚b‚P` char(1) PRIMARY KEY) DEFAULT CHARSET = sjis engine = MEMORY;
 
 #insert the following data in each table
 # jisx0201 hankaku-katakana data
@@ -134,7 +134,7 @@ SELECT * FROM `‚s‚Ua` LEFT JOIN `‚s‚Ub` ON (`‚s‚Ua`.`‚b‚P` = `‚s‚Ub`.`‚b‚P`);
 SELECT * FROM `‚s‚Ub` RIGHT JOIN `‚s‚Ua` USING (`‚b‚P`);
 SELECT * FROM `‚s‚Ub` RIGHT JOIN `‚s‚Ua` ON (`‚s‚Ua`.`‚b‚P` = `‚s‚Ub`.`‚b‚P`);
 
-#Test for heap
+#Test for MEMORY
 SELECT * FROM `‚s‚Va` JOIN `‚s‚Vb`;
 SELECT * FROM `‚s‚Va` INNER JOIN `‚s‚Vb`;
 SELECT * FROM `‚s‚Va` JOIN `‚s‚Vb` USING (`‚b‚P`);
@@ -163,7 +163,7 @@ SELECT * FROM `‚s‚Xa` LEFT JOIN `‚s‚Xb` ON (`‚s‚Xa`.`‚b‚P` = `‚s‚Xb`.`‚b‚P`);
 SELECT * FROM `‚s‚Xb` RIGHT JOIN `‚s‚Xa` USING (`‚b‚P`);
 SELECT * FROM `‚s‚Xb` RIGHT JOIN `‚s‚Xa` ON (`‚s‚Xa`.`‚b‚P` = `‚s‚Xb`.`‚b‚P`);
 
-#Test for heap
+#Test for MEMORY
 SELECT * FROM `‚s‚P‚Oa` JOIN `‚s‚P‚Ob`;
 SELECT * FROM `‚s‚P‚Oa` INNER JOIN `‚s‚P‚Ob`;
 SELECT * FROM `‚s‚P‚Oa` JOIN `‚s‚P‚Ob` USING (`‚b‚P`);

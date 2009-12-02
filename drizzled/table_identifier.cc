@@ -44,8 +44,7 @@ const char *TableIdentifier::getPath()
                                         db, table_name,
                                         true);
       break;
-    case NON_TRANSACTIONAL_TMP_TABLE:
-    case TRANSACTIONAL_TMP_TABLE:
+    case TEMP_TABLE:
       path_length= build_tmptable_filename(path, sizeof(path));
       break;
     case SYSTEM_TMP_TABLE:

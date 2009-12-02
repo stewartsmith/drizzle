@@ -533,7 +533,7 @@ create table mysqltest.t1 (a int not null) engine= innodb;
 insert into mysqltest.t1 values(1);
 create TEMPORARY table mysqltest.t2 (a int not null) engine= myisam;
 insert into mysqltest.t2 values(1);
-create temporary table mysqltest.t3 (a int not null) engine= heap;
+create temporary table mysqltest.t3 (a int not null) engine= MEMORY;
 insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;

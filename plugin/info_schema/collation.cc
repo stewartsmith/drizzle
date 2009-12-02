@@ -74,56 +74,49 @@ vector<const plugin::ColumnInfo *> *CollationIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Collation",
-                                            SKIP_OPEN_TABLE));
+                                            "Collation"));
 
   columns->push_back(new plugin::ColumnInfo("CHARACTER_SET_NAME",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Default collation",
-                                            SKIP_OPEN_TABLE));
+                                            "Default collation"));
 
   columns->push_back(new plugin::ColumnInfo("DESCRIPTION",
                                             60,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Charset",
-                                            SKIP_OPEN_TABLE));
+                                            "Charset"));
 
   columns->push_back(new plugin::ColumnInfo("ID",
                                             MY_INT32_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Id",
-                                            SKIP_OPEN_TABLE));
+                                            "Id"));
 
   columns->push_back(new plugin::ColumnInfo("IS_DEFAULT",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Default",
-                                            SKIP_OPEN_TABLE));
+                                            "Default"));
 
   columns->push_back(new plugin::ColumnInfo("IS_COMPILED",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Compiled",
-                                            SKIP_OPEN_TABLE));
+                                            "Compiled"));
 
   columns->push_back(new plugin::ColumnInfo("SORTLEN",
                                             3,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Sortlen",
-                                            SKIP_OPEN_TABLE));
+                                            "Sortlen"));
 
   return columns;
 }
@@ -164,11 +157,12 @@ void CollationIS::cleanup()
   delete columns;
 }
 
-int CollationISMethods::fillTable(Session *session, TableList *tables)
+int CollationISMethods::fillTable(Session *session, 
+                                  Table *table,
+                                  plugin::InfoSchemaTable *schema_table)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
@@ -189,6 +183,13 @@ int CollationISMethods::fillTable(Session *session, TableList *tables)
       {
         const char *tmp_buff;
         table->restoreRecordAsDefault();
+        /* set the appropriate bits in the write bitset */
+        table->setWriteSet(0);
+        table->setWriteSet(1);
+        table->setWriteSet(2);
+        table->setWriteSet(3);
+        table->setWriteSet(4);
+        table->setWriteSet(5);
         table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
         table->field[2]->store((int64_t) tmp_cl->number, true);
@@ -197,8 +198,7 @@ int CollationISMethods::fillTable(Session *session, TableList *tables)
         tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
         table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
         table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
-        if (schema_table_store_record(session, table))
-          return 1;
+        schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

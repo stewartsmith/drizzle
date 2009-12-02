@@ -82,7 +82,6 @@ public:
     column_bitmap_size(0),
     blob_ptr_size(0),
     db_low_byte_first(false),
-    crashed(false),
     name_lock(false),
     replace_with_name_lock(false),
     waiting_on_cond(false),
@@ -144,7 +143,6 @@ public:
     column_bitmap_size(0),
     blob_ptr_size(0),
     db_low_byte_first(false),
-    crashed(false),
     name_lock(false),
     replace_with_name_lock(false),
     waiting_on_cond(false),
@@ -256,6 +254,10 @@ public:
   {
     return storage_engine;
   }
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return storage_engine;
+  }
   enum tmp_table_type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
@@ -293,7 +295,6 @@ public:
 
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
-  bool crashed;
   bool name_lock;
   bool replace_with_name_lock;
   bool waiting_on_cond;                 /* Protection against free */

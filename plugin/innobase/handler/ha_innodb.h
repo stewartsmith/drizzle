@@ -109,9 +109,6 @@ class ha_innobase: public Cursor
 
 	UNIV_INTERN const char* index_type(uint key_number);
 	UNIV_INTERN uint32_t index_flags(uint idx, uint part, bool all_parts) const;
-	UNIV_INTERN uint32_t max_supported_keys() const;
-	UNIV_INTERN uint32_t max_supported_key_length() const;
-	UNIV_INTERN uint32_t max_supported_key_part_length() const;
 	UNIV_INTERN const key_map* keys_to_use_for_scanning();
 
 	UNIV_INTERN int open(const char *name, int mode, uint test_if_locked);

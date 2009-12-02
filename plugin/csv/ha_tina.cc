@@ -121,24 +121,23 @@ class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_TEMPORARY_ONLY | 
-                                     HTON_HAS_DATA_DICTIONARY | HTON_FILE_BASED) {}
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_TEMPORARY_ONLY |
+                                     HTON_NO_AUTO_INCREMENT |
+                                     HTON_HAS_DATA_DICTIONARY |
+                                     HTON_SKIP_STORE_LOCK |
+                                     HTON_FILE_BASED) {}
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_tina(*this, table);
   }
 
-  uint64_t table_flags() const
-  {
-    return (HA_NO_TRANSACTIONS | HA_NO_AUTO_INCREMENT);
-  }
-
   const char **bas_ext() const {
     return ha_tina_exts;
   }
 
-  int doCreateTable(Session *, 
+  int doCreateTable(Session *,
                     const char *table_name,
                     Table& table_arg,
                     drizzled::message::Table&);
@@ -154,6 +153,10 @@ public:
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
   int doDropTable(Session&, const string table_path);
+
+  uint32_t max_keys()          const { return 0; }
+  uint32_t max_key_parts()     const { return 0; }
+  uint32_t max_key_length()    const { return 0; }
 };
 
 int Tina::doDropTable(Session&,

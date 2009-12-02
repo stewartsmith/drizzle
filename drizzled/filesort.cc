@@ -141,7 +141,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   param.ref_length= table->cursor->ref_length;
   param.addon_field= 0;
   param.addon_length= 0;
-  if (!(table->cursor->ha_table_flags() & HA_FAST_KEY_READ) && !sort_positions)
+  if (!(table->cursor->getEngine()->check_flag(HTON_BIT_FAST_KEY_READ)) && !sort_positions)
   {
     /*
       Get the descriptors of all fields whose values are appended

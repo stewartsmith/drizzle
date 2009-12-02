@@ -1221,7 +1221,8 @@ dict_create_or_check_foreign_constraint_tables(void)
 	VARBINARY, like in other InnoDB system tables, to get a clean
 	design. */
 
-	error = que_eval_sql(NULL,
+        pars_info_t *info = pars_info_create();
+	error = que_eval_sql(info,
 			     "PROCEDURE CREATE_FOREIGN_SYS_TABLES_PROC () IS\n"
 			     "BEGIN\n"
 			     "CREATE TABLE\n"

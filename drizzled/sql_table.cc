@@ -36,7 +36,8 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
 
-#include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
+#include "drizzled/statement/alter_table.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <algorithm>
 
@@ -548,16 +549,10 @@ err_with_placeholders:
     0           OK
     != 0        Error
 */
-
-bool quick_rm_table(Session& session, const char *db,
-                    const char *table_name, bool is_tmp)
+bool quick_rm_table(Session& session,
+                    TableIdentifier &identifier)
 {
-  bool error= 0;
-
-  TableIdentifier identifier(db, table_name, is_tmp ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
-
-  return (plugin::StorageEngine::dropTable(session, identifier, false)
-          || error);
+  return (plugin::StorageEngine::dropTable(session, identifier, false));
 }
 
 /*
@@ -694,7 +689,6 @@ static void calculate_interval_lengths(const CHARSET_INFO * const cs,
     sql_field     field to prepare for packing
     blob_columns  count for BLOBs
     timestamps    count for timestamps
-    table_flags   table flags
 
   DESCRIPTION
     This function prepares a CreateField instance.
@@ -706,8 +700,8 @@ static void calculate_interval_lengths(const CHARSET_INFO * const cs,
 */
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
-                         int *timestamps, int *timestamps_with_niladic,
-                         int64_t )
+                         int *timestamps,
+                         int *timestamps_with_niladic)
 {
   unsigned int dup_val_count;
 
@@ -794,7 +788,7 @@ int mysql_prepare_create_table(Session *session,
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
-  max_key_length= cursor->max_key_length();
+  max_key_length= cursor->getEngine()->max_key_length();
 
   for (field_no=0; (sql_field=it++) ; field_no++)
   {
@@ -1017,8 +1011,7 @@ int mysql_prepare_create_table(Session *session,
     assert(sql_field->charset != 0);
 
     if (prepare_create_field(sql_field, &blob_columns,
-			     &timestamps, &timestamps_with_niladic,
-			     cursor->ha_table_flags()))
+			     &timestamps, &timestamps_with_niladic))
       return(true);
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
@@ -1036,14 +1029,14 @@ int mysql_prepare_create_table(Session *session,
     return(true);
   }
   if (auto_increment &&
-      (cursor->ha_table_flags() & HA_NO_AUTO_INCREMENT))
+      (cursor->getEngine()->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
     return(true);
   }
 
-  if (blob_columns && (cursor->ha_table_flags() & HA_NO_BLOBS))
+  if (blob_columns && (cursor->getEngine()->check_flag(HTON_BIT_NO_BLOBS)))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
@@ -1084,7 +1077,7 @@ int mysql_prepare_create_table(Session *session,
       continue;
     }
     (*key_count)++;
-    tmp=cursor->max_key_parts();
+    tmp=cursor->getEngine()->max_key_parts();
     if (key->columns.elements > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
@@ -1133,7 +1126,7 @@ int mysql_prepare_create_table(Session *session,
       return(true);
     }
   }
-  tmp=cursor->max_keys();
+  tmp=cursor->getEngine()->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
@@ -1238,7 +1231,7 @@ int mysql_prepare_create_table(Session *session,
       while ((dup_column= cols2++) != column)
       {
         if (!my_strcasecmp(system_charset_info,
-	     	           column->field_name.str, dup_column->field_name.str))
+                           column->field_name.str, dup_column->field_name.str))
 	{
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
@@ -1256,7 +1249,7 @@ int mysql_prepare_create_table(Session *session,
 
         if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
         {
-          if (! (cursor->ha_table_flags() & HA_CAN_INDEX_BLOBS))
+          if (! (cursor->getEngine()->check_flag(HTON_BIT_CAN_INDEX_BLOBS)))
           {
             my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
             return true;
@@ -1286,7 +1279,7 @@ int mysql_prepare_create_table(Session *session,
           else
           {
             key_info->flags|= HA_NULL_PART_KEY;
-            if (! (cursor->ha_table_flags() & HA_NULL_IN_KEY))
+            if (! (cursor->getEngine()->check_flag(HTON_BIT_NULL_IN_KEY)))
             {
               my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
               return true;
@@ -1295,7 +1288,7 @@ int mysql_prepare_create_table(Session *session,
         }
         if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
         {
-          if (column_nr == 0 || (cursor->ha_table_flags() & HA_AUTO_PART_KEY))
+          if (column_nr == 0 || (cursor->getEngine()->check_flag(HTON_BIT_AUTO_PART_KEY)))
             auto_increment--;			// Field is used
         }
       }
@@ -1310,9 +1303,9 @@ int mysql_prepare_create_table(Session *session,
 	if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
 	{
 	  if ((length=column->length) > max_key_length ||
-	      length > cursor->max_key_part_length())
+	      length > cursor->getEngine()->max_key_part_length())
 	  {
-	    length= min(max_key_length, cursor->max_key_part_length());
+	    length= min(max_key_length, cursor->getEngine()->max_key_part_length());
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
@@ -1337,17 +1330,19 @@ int mysql_prepare_create_table(Session *session,
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
 	  return(true);
 	}
-	else if (!(cursor->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS))
+	else if (! (cursor->getEngine()->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
+        {
 	  length=column->length;
+        }
       }
       else if (length == 0)
       {
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
 	  return(true);
       }
-      if (length > cursor->max_key_part_length())
+      if (length > cursor->getEngine()->max_key_part_length())
       {
-        length= cursor->max_key_part_length();
+        length= cursor->getEngine()->max_key_part_length();
 	if (key->type == Key::MULTIPLE)
 	{
 	  /* not a critical problem */
@@ -1427,7 +1422,7 @@ int mysql_prepare_create_table(Session *session,
     key_info++;
   }
   if (!unique_key && !primary_key &&
-      (cursor->ha_table_flags() & HA_REQUIRE_PRIMARY_KEY))
+      (cursor->getEngine()->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
     return(true);
@@ -1549,7 +1544,7 @@ bool mysql_create_table_no_lock(Session *session,
 				message::Table *table_proto,
                                 AlterInfo *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count, 
+                                uint32_t select_field_count,
                                 bool is_if_not_exists)
 {
   uint		db_options, key_count;
@@ -1557,7 +1552,7 @@ bool mysql_create_table_no_lock(Session *session,
   Cursor	*cursor;
   bool		error= true;
   TableShare share;
-  bool lex_identified_temp_table= 
+  bool lex_identified_temp_table=
     (table_proto->type() == drizzled::message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
@@ -2095,16 +2090,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    if (table->table->s->crashed && operator_func == &Cursor::ha_check)
-    {
-      session->client->store(table_name);
-      session->client->store(operator_name);
-      session->client->store(STRING_WITH_LEN("warning"));
-      session->client->store(STRING_WITH_LEN("Table is marked as crashed"));
-      if (session->client->flush())
-        goto err;
-    }
-
     result_code = (table->table->cursor->*operator_func)(session, check_opt);
 
 send_result:
@@ -2268,9 +2253,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
 
 
-  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ?
-                                         (engine_arg->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE) :
-                                         NO_TMP_TABLE);
+  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ? TEMP_TABLE : NO_TMP_TABLE);
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2312,37 +2295,32 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     int protoerr= EEXIST;
 
-    if (src_table->schema_table)
+    /*
+     * If an engine was not specified and we are reading from an I_S table, then we need to toss an
+     * error. This should go away soon.
+     * @todo make this go away!
+     */
+    if (! is_engine_set)
     {
-      /*
-        If engine was not specified and we are reading from the I_S, then we need to
-        toss an error. This should go away later on when we straighten out the
-        I_S engine.
-      */
-      if (! is_engine_set)
+      string tab_name(src_path);
+      string i_s_prefix("./information_schema/");
+      if (tab_name.compare(0, i_s_prefix.length(), i_s_prefix) == 0)
       {
         pthread_mutex_unlock(&LOCK_open);
-        my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+        my_error(ER_ILLEGAL_HA_CREATE_OPTION,
+                 MYF(0),
                  "INFORMATION_ENGINE",
                  "TEMPORARY");
         goto err;
       }
+    }
 
-      if (create_like_schema_frm(session, src_table, &src_proto))
-      {
-        pthread_mutex_unlock(&LOCK_open);
-        goto err;
-      }
-    }
-    else
-    {
-      protoerr= plugin::StorageEngine::getTableDefinition(*session,
-                                                          src_path,
-                                                          db,
-                                                          table_name,
-                                                          false,
-                                                          &src_proto);
-    }
+    protoerr= plugin::StorageEngine::getTableDefinition(*session,
+                                                        src_path,
+                                                        db,
+                                                        table_name,
+                                                        false,
+                                                        &src_proto);
 
     message::Table new_proto(src_proto);
 
@@ -2412,8 +2390,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else if (err)
   {
-    (void) quick_rm_table(*session, db,
-			  table_name, false);
+    TableIdentifier identifier(db, table_name, NO_TMP_TABLE);
+    quick_rm_table(*session, identifier);
+
     goto err;
   }
 
@@ -2517,41 +2496,6 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 				&Cursor::ha_check));
 }
 
-/*
-  Recreates tables by calling drizzled::alter_table().
-
-  SYNOPSIS
-    mysql_recreate_table()
-    session			Thread Cursor
-    tables		Tables to recreate
-
- RETURN
-    Like drizzled::alter_table().
-*/
-bool mysql_recreate_table(Session *session, TableList *table_list)
-{
-  HA_CREATE_INFO create_info;
-  AlterInfo alter_info;
-  message::Table table_proto;
-
-  assert(!table_list->next_global);
-  /*
-    table_list->table has been closed and freed. Do not reference
-    uninitialized data. open_tables() could fail.
-  */
-  table_list->table= NULL;
-
-  memset(&create_info, 0, sizeof(create_info));
-  create_info.row_type=ROW_TYPE_NOT_USED;
-  create_info.default_table_charset=default_charset_info;
-  /* Force alter table to recreate table */
-  alter_info.flags.set(ALTER_CHANGE_COLUMN);
-  alter_info.flags.set(ALTER_RECREATE);
-  return(alter_table(session, NULL, NULL, &create_info, &table_proto,
-                     table_list, &alter_info, 0,
-                     (order_st *) 0, 0));
-}
-
 
 bool mysql_checksum_table(Session *session, TableList *tables,
                           HA_CHECK_OPT *)
@@ -2592,8 +2536,10 @@ bool mysql_checksum_table(Session *session, TableList *tables,
       /**
         @note if the engine keeps a checksum then we return the checksum, otherwise we calculate
       */
-      if (t->cursor->ha_table_flags() & HA_HAS_CHECKSUM)
-	session->client->store((uint64_t)t->cursor->checksum());
+      if (t->cursor->getEngine()->check_flag(HTON_BIT_HAS_CHECKSUM))
+      {
+        session->client->store((uint64_t)t->cursor->checksum());
+      }
       else
       {
 	/* calculating table's checksum */

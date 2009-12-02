@@ -759,7 +759,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           key_nr == table->s->next_number_index &&
 	  (insert_id_for_cur_row > 0))
 	goto err;
-      if (table->cursor->ha_table_flags() & HA_DUPLICATE_POS)
+      if (table->cursor->getEngine()->check_flag(HTON_BIT_DUPLICATE_POS))
       {
 	if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
 	  goto err;
@@ -808,7 +808,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
+        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
@@ -1518,7 +1518,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   TableIdentifier identifier(create_table->db,
                              create_table->table_name,
-                             lex_identified_temp_table ?  NON_TRANSACTIONAL_TMP_TABLE :
+                             lex_identified_temp_table ?  TEMP_TABLE :
                              NO_TMP_TABLE);
 
 
@@ -1556,8 +1556,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
         {
-          quick_rm_table(*session, create_table->db,
-                         create_table->table_name, false);
+          quick_rm_table(*session, identifier);
         }
         else
           table= create_table->table;

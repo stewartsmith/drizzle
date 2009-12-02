@@ -85,14 +85,13 @@ bool statement::CreateTable::execute()
   TableList *select_tables= session->lex->query_tables;
 
 
-  /* 
+  /*
     Now that we have the engine, we can figure out the table identifier. We need the engine in order
     to determine if the table is transactional or not if it is temp.
   */
   TableIdentifier new_table_identifier(create_table->db,
                                        create_table->table_name,
-                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE :
-                                       create_info.db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE : TEMP_TABLE);
 
   if (create_table_precheck(new_table_identifier))
   {

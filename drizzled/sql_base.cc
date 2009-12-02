@@ -174,7 +174,13 @@ void close_handle_and_leave_table_as_lock(Table *table)
   true	Error 
 */
 
-bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display)
+bool list_open_tables(const char *db, 
+                      const char *wild, 
+                      bool(*func)(Table *table, 
+                                  open_table_list_st& open_list,
+                                  plugin::InfoSchemaTable *schema_table), 
+                      Table *display,
+                      plugin::InfoSchemaTable *schema_table)
 {
   vector<open_table_list_st> open_list;
   vector<open_table_list_st>::iterator it;
@@ -225,7 +231,7 @@ bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table
 
   for (it= open_list.begin(); it < open_list.end(); it++)
   {
-    if (func(display, *it))
+    if (func(display, *it, schema_table))
       return true;
   }
 
@@ -817,7 +823,8 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    quick_rm_table(*this, db_name, table_name, false);
+    TableIdentifier identifier(db_name, table_name, NO_TMP_TABLE);
+    quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }
 }
@@ -1985,85 +1992,10 @@ retry:
       }
       return 1;
     }
-    if (!entry->s || !entry->s->crashed)
-      goto err;
-    // Code below is for repairing a crashed cursor
-    if ((error= lock_table_name(session, table_list, true)))
-    {
-      if (error < 0)
-        goto err;
-      if (wait_for_locked_table_names(session, table_list))
-      {
-        unlock_table_name(table_list);
-        goto err;
-      }
-    }
-    pthread_mutex_unlock(&LOCK_open);
-    session->clear_error();				// Clear error message
-    error= 0;
-    if (open_table_from_share(session, share, alias,
-                              (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
-                                          HA_GET_INDEX |
-                                          HA_TRY_READ_ONLY),
-                              EXTRA_RECORD,
-                              ha_open_options | HA_OPEN_FOR_REPAIR,
-                              entry) || ! entry->cursor)
-    {
-      /* Give right error message */
-      session->clear_error();
-      my_error(ER_NOT_KEYFILE, MYF(0), share->table_name.str, my_errno);
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Couldn't repair table: %s.%s"), share->db.str,
-                    share->table_name.str);
-      if (entry->cursor)
-        entry->closefrm(false);
-      error=1;
-    }
-    else
-      session->clear_error();			// Clear error message
-    pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(table_list);
 
-    if (error)
-      goto err;
-    break;
+    goto err;
   }
 
-  /*
-    If we are here, there was no fatal error (but error may be still
-    unitialized).
-  */
-  if (unlikely(entry->cursor->implicit_emptied))
-  {
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    entry->cursor->implicit_emptied= 0;
-    {
-      char *query, *end;
-      uint32_t query_buf_size= 20 + share->db.length + share->table_name.length +1;
-      if ((query= (char*) malloc(query_buf_size)))
-      {
-        /* 
-          "this DELETE FROM is needed even with row-based binlogging"
-
-          We inherited this from MySQL. TODO: fix it to issue a propper truncate
-          of the table (though that may not be completely right sematics).
-        */
-        end= query;
-        end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
-                      share->table_name.str);
-        replication_services.rawStatement(session, query, (size_t)(end - query)); 
-        free(query);
-      }
-      else
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("When opening HEAP table, could not allocate memory "
-                                          "to write 'DELETE FROM `%s`.`%s`' to replication"),
-                      table_list->db, table_list->table_name);
-        my_error(ER_OUTOFMEMORY, MYF(0), query_buf_size);
-        entry->closefrm(false);
-        goto err;
-      }
-    }
-  }
   return 0;
 
 err:
@@ -2131,18 +2063,6 @@ restart:
     if (tables->derived)
     {
       continue;
-    }
-    /*
-      If this TableList object is a placeholder for an information_schema
-      table, create a temporary table to represent the information_schema
-      table in the query. Do not fill it yet - will be filled during
-      execution.
-    */
-    if (tables->schema_table)
-    {
-      if (mysql_schema_table(this, lex, tables) == false)
-        continue;
-      return -1;
     }
     (*counter)++;
 
@@ -2384,8 +2304,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= (new_tmp_table->cursor->has_transactions() ?
-                     TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+  share->tmp_table= TEMP_TABLE;
 
   if (link_in_list)
   {

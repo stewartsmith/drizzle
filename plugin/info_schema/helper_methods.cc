@@ -36,6 +36,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static inline void make_upper(char *buf)
 {
@@ -49,7 +50,8 @@ bool show_status_array(Session *session,
                        enum enum_var_type value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
-                       bool ucase_names)
+                       bool ucase_names,
+                       plugin::InfoSchemaTable *schema_table)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
@@ -84,7 +86,7 @@ bool show_status_array(Session *session,
     if (show_type == SHOW_ARRAY)
     {
       show_status_array(session, wild, (SHOW_VAR *) var->value, value_type,
-                        status_var, name_buffer, table, ucase_names);
+                        status_var, name_buffer, table, ucase_names, schema_table);
     }
     else
     {
@@ -187,6 +189,9 @@ bool show_status_array(Session *session,
           break;
         }
         table->restoreRecordAsDefault();
+        table->setWriteSet(0);
+        table->setWriteSet(1);
+        table->setWriteSet(2);
         table->field[0]->store(name_buffer, strlen(name_buffer),
                                system_charset_info);
         table->field[1]->store(pos, (uint32_t) (end - pos), system_charset_info);
@@ -194,15 +199,13 @@ bool show_status_array(Session *session,
 
         pthread_mutex_unlock(&LOCK_global_system_variables);
 
-        if (schema_table_store_record(session, table))
-          return true;
+        schema_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }
 
   return false;
 }
-
 
 void store_key_column_usage(Table *table, 
                             LEX_STRING *db_name,
@@ -214,6 +217,13 @@ void store_key_column_usage(Table *table,
                             int64_t idx)
 {
   const CHARSET_INFO * const cs= system_charset_info;
+  /* set the appropriate bits in the write bitset */
+  table->setWriteSet(1);
+  table->setWriteSet(2);
+  table->setWriteSet(4);
+  table->setWriteSet(5);
+  table->setWriteSet(6);
+  table->setWriteSet(7);
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(key_name, key_len, cs);
   table->field[4]->store(db_name->str, db_name->length, cs);

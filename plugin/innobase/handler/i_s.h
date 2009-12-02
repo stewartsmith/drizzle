@@ -30,42 +30,48 @@ class TrxISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class LocksISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpResetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpmemISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpmemResetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables);
+                        Table *table,
+                        drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 int i_s_common_deinit(drizzled::plugin::Registry &registry);

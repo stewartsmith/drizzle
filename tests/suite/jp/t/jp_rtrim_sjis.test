@@ -25,9 +25,9 @@ CREATE TABLE `‚s‚R` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engin
 CREATE TABLE `‚s‚S` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚T` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚U` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `‚s‚V` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚W` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚X` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `‚s‚V` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚W` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚X` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = MEMORY;
 CREATE TABLE `‚s‚P‚O` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `‚s‚P‚P` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `‚s‚P‚Q` (`‚b‚P` char(8), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = bdb;
@@ -139,7 +139,7 @@ SELECT RTRIM(`‚b‚P`) from `‚s‚S`;
 SELECT RTRIM(`‚b‚P`) from `‚s‚T`;
 SELECT RTRIM(`‚b‚P`) from `‚s‚U`;
 
-#HEAP
+#MEMORY
 SELECT RTRIM(`‚b‚P`) from `‚s‚V`;
 SELECT RTRIM(`‚b‚P`) from `‚s‚W`;
 SELECT RTRIM(`‚b‚P`) from `‚s‚X`;

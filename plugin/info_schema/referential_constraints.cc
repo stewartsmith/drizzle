@@ -71,88 +71,77 @@ vector<const plugin::ColumnInfo *> *ReferentialConstraintsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("CONSTRAINT_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("UNIQUE_CONSTRAINT_CATALOG",
                                             FN_REFLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("UNIQUE_CONSTRAINT_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             MY_I_S_MAYBE_NULL,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MATCH_OPTION",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("UPDATE_RULE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("DELETE_RULE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("REFERENCED_TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FULL_TABLE));
+                                            ""));
 
   return columns;
 }
@@ -195,13 +184,13 @@ void ReferentialConstraintsIS::cleanup()
 }
 
 int
-RefConstraintsISMethods::processTable(Session *session, 
+RefConstraintsISMethods::processTable(plugin::InfoSchemaTable *store_table,
+                                      Session *session, 
                                       TableList *tables,
                                       Table *table, 
                                       bool res,
                                       LEX_STRING *db_name, 
                                       LEX_STRING *table_name)
-  const
 {
   const CHARSET_INFO * const cs= system_charset_info;
 
@@ -231,6 +220,15 @@ RefConstraintsISMethods::processTable(Session *session,
     while ((f_key_info= it++))
     {
       table->restoreRecordAsDefault();
+      table->setWriteSet(1);
+      table->setWriteSet(2);
+      table->setWriteSet(4);
+      table->setWriteSet(5);
+      table->setWriteSet(6);
+      table->setWriteSet(7);
+      table->setWriteSet(8);
+      table->setWriteSet(9);
+      table->setWriteSet(10);
       table->field[1]->store(db_name->str, db_name->length, cs);
       table->field[9]->store(table_name->str, table_name->length, cs);
       table->field[2]->store(f_key_info->forein_id->str,
@@ -254,10 +252,7 @@ RefConstraintsISMethods::processTable(Session *session,
                              f_key_info->update_method->length, cs);
       table->field[8]->store(f_key_info->delete_method->str,
                              f_key_info->delete_method->length, cs);
-      if (schema_table_store_record(session, table))
-      {
-        return 1;
-      }
+      store_table->addRow(table->record[0], table->s->reclength);
     }
   }
   return 0;

@@ -2964,8 +2964,8 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     assert(tmp_table->s->db_type() == myisam_engine);
     assert(
       tmp_table->s->uniques ||
-      tmp_table->key_info->key_length >= tmp_table->cursor->max_key_length() ||
-      tmp_table->key_info->key_parts > tmp_table->cursor->max_key_parts());
+      tmp_table->key_info->key_length >= tmp_table->cursor->getEngine()->max_key_length() ||
+      tmp_table->key_info->key_parts > tmp_table->cursor->getEngine()->max_key_parts());
     tmp_table->free_tmp_table(session);
     delete result;
     result= NULL;

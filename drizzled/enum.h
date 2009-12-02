@@ -211,20 +211,11 @@ enum find_item_error_report_type
   IGNORE_EXCEPT_NON_UNIQUE
 };
 
-enum enum_schema_table_state
-{
-  NOT_PROCESSED= 0,
-  PROCESSED_BY_CREATE_SORT_INDEX,
-  PROCESSED_BY_JOIN_EXEC
-};
-
-
 enum tmp_table_type
 {
-  NO_TMP_TABLE, 
-  NON_TRANSACTIONAL_TMP_TABLE, 
-  TRANSACTIONAL_TMP_TABLE,
-  INTERNAL_TMP_TABLE, 
+  NO_TMP_TABLE,
+  TEMP_TABLE,
+  INTERNAL_TMP_TABLE,
   SYSTEM_TMP_TABLE
 };
 

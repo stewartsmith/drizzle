@@ -32,9 +32,10 @@
 class KeyColUsageISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int processTable(Session *session, TableList *tables,
+  virtual int processTable(drizzled::plugin::InfoSchemaTable *store_table,
+                           Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
+                           LEX_STRING *table_name);
 };
 
 class KeyColumnUsageIS

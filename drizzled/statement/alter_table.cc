@@ -28,6 +28,7 @@
 #include "drizzled/data_home.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 using namespace std;
 
@@ -52,8 +53,7 @@ static bool mysql_prepare_alter_table(Session *session,
 
 static int create_temporary_table(Session *session,
                                   Table *table,
-                                  char *new_db,
-                                  char *tmp_name,
+                                  TableIdentifier &identifier,
                                   HA_CREATE_INFO *create_info,
                                   message::Table *create_proto,
                                   AlterInfo *alter_info);
@@ -689,7 +689,12 @@ bool alter_table(Session *session,
 
   new_name_buff[0]= '\0';
 
-  if (table_list && table_list->schema_table)
+  /**
+   * @todo this is a result of retaining the behavior that was here before. This should be removed
+   * and the correct error handling should be done in doDropTable for the I_S engine.
+   */
+  plugin::InfoSchemaTable *sch_table= plugin::InfoSchemaTable::getTable(table_list->table_name);
+  if (sch_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return true;
@@ -968,14 +973,27 @@ bool alter_table(Session *session,
   alter_info->build_method= HA_BUILD_OFFLINE;
 
   snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
-  
+
   /* Safety fix for innodb */
   my_casedn_str(files_charset_info, tmp_name);
 
   /* Create a temporary table with the new format */
-  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info);
-  if (error != 0)
-    goto err;
+  {
+    /**
+      @note we make an internal temporary table unless the table is a temporary table. In last
+      case we just use it as is. Neither of these tables require locks in order to  be
+      filled.
+    */
+    TableIdentifier new_table_temp(new_db,
+                                   tmp_name,
+                                   create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
+                                   TEMP_TABLE);
+
+    error= create_temporary_table(session, table, new_table_temp, create_info, create_proto, alter_info);
+
+    if (error != 0)
+      goto err;
+  }
 
   /* Open the table so we need to copy the data to it. */
   new_table= open_alter_table(session, table, new_db, tmp_name);
@@ -994,13 +1012,13 @@ bool alter_table(Session *session,
   /* We don't want update TIMESTAMP fields during ALTER Table. */
   new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
   new_table->next_number_field= new_table->found_next_number_field;
-  error= copy_data_between_tables(table, 
+  error= copy_data_between_tables(table,
                                   new_table,
-                                  alter_info->create_list, 
+                                  alter_info->create_list,
                                   ignore,
-                                  order_num, 
-                                  order, 
-                                  &copied, 
+                                  order_num,
+                                  order,
+                                  &copied,
                                   &deleted,
                                   alter_info->keys_onoff,
                                   alter_info->error_if_not_empty);
@@ -1027,7 +1045,7 @@ bool alter_table(Session *session,
     /* Should pass the 'new_name' as we store table name in the cache */
     if (new_table->rename_temporary_table(new_db, new_name))
       goto err1;
-    
+
     goto end_temporary;
   }
 
@@ -1042,10 +1060,11 @@ bool alter_table(Session *session,
   }
 
   pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
-  
+
   if (error)
   {
-    quick_rm_table(*session, new_db, tmp_name, true);
+    TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, identifier);
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
@@ -1090,7 +1109,8 @@ bool alter_table(Session *session,
   if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
     error= 1;
-    quick_rm_table(*session, new_db, tmp_name, true);
+    TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, identifier);
   }
   else
   {
@@ -1098,8 +1118,13 @@ bool alter_table(Session *session,
     {
       /* Try to get everything back. */
       error= 1;
-      quick_rm_table(*session, new_db, new_alias, false);
-      quick_rm_table(*session, new_db, tmp_name, true);
+
+      TableIdentifier alias_identifier(new_db, new_alias, NO_TMP_TABLE);
+      quick_rm_table(*session, alias_identifier);
+
+      TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+      quick_rm_table(*session, tmp_identifier);
+
       mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
     }
   }
@@ -1110,7 +1135,11 @@ bool alter_table(Session *session,
     goto err_with_placeholders;
   }
 
-  quick_rm_table(*session, db, old_name, true);
+  {
+    TableIdentifier old_identifier(db, old_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, old_identifier);
+  }
+  
 
   pthread_mutex_unlock(&LOCK_open);
 
@@ -1147,7 +1176,10 @@ err1:
     session->close_temporary_table(new_table);
   }
   else
-    quick_rm_table(*session, new_db, tmp_name, true);
+  {
+    TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+    quick_rm_table(*session, tmp_identifier);
+  }
 
 err:
   /*
@@ -1396,19 +1428,13 @@ copy_data_between_tables(Table *from, Table *to,
 static int
 create_temporary_table(Session *session,
                        Table *table,
-                       char *new_db,
-                       char *tmp_name,
+                       TableIdentifier &identifier,
                        HA_CREATE_INFO *create_info,
                        message::Table *create_proto,
                        AlterInfo *alter_info)
 {
   int error;
   plugin::StorageEngine *old_db_type, *new_db_type;
-  TableIdentifier identifier(new_db,
-                             tmp_name,
-                             create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
-                             create_info->db_type->check_flag(HTON_BIT_DOES_TRANSACTIONS) ? TRANSACTIONAL_TMP_TABLE :
-                             NON_TRANSACTIONAL_TMP_TABLE );
 
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
@@ -1417,7 +1443,7 @@ create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
-  create_proto->set_name(tmp_name);
+  create_proto->set_name(identifier.getTableName());
 
   message::Table::StorageEngine *protoengine;
   protoengine= create_proto->mutable_engine();
@@ -1429,61 +1455,6 @@ create_temporary_table(Session *session,
 
   return error;
 }
-
-/** @TODO This will soon die. */
-bool create_like_schema_frm(Session* session,
-                            TableList* schema_table,
-                            message::Table* table_proto)
-{
-  HA_CREATE_INFO local_create_info;
-  AlterInfo alter_info;
-  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
-  uint32_t keys= schema_table->table->s->keys;
-  uint32_t db_options= 0;
-
-  memset(&local_create_info, 0, sizeof(local_create_info));
-  local_create_info.db_type= schema_table->table->s->db_type();
-  local_create_info.row_type= schema_table->table->s->row_type;
-  local_create_info.default_table_charset=default_charset_info;
-  alter_info.flags.set(ALTER_CHANGE_COLUMN);
-  alter_info.flags.set(ALTER_RECREATE);
-  schema_table->table->use_all_columns();
-  if (mysql_prepare_alter_table(session, schema_table->table,
-                                &local_create_info, table_proto, &alter_info))
-    return true;
-
-  /* I_S tables are created with MAX_ROWS for some efficiency drive.
-     When CREATE LIKE, we don't want to keep it coming across */
-  message::Table::TableOptions *table_options;
-  table_options= table_proto->mutable_options();
-  table_options->clear_max_rows();
-
-  if (mysql_prepare_create_table(session, &local_create_info, table_proto,
-                                 &alter_info,
-                                 lex_identified_temp_table, &db_options,
-                                 schema_table->table->cursor,
-                                 &schema_table->table->s->key_info, &keys, 0))
-    return true;
-
-  table_proto->set_name("system_stupid_i_s_fix_nonsense");
-
-  {
-    message::Table::StorageEngine *protoengine;
-    protoengine= table_proto->mutable_engine();
-
-    plugin::StorageEngine *engine= local_create_info.db_type;
-
-    protoengine->set_name(engine->getName());
-  }
-
-  if (fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
-                       alter_info.create_list, &local_create_info,
-                       keys, schema_table->table->s->key_info))
-    return true;
-
-  return false;
-}
-
 
 static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name)
 {
