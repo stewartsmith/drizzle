@@ -129,7 +129,6 @@ const char *delimiter= "\n";
 const char *create_schema_string= "drizzleslap";
 
 static bool opt_preserve= true;
-static bool debug_info_flag= false;
 static bool opt_only_print= false;
 static bool opt_burnin= false;
 static bool opt_ignore_sql_errors= false;
@@ -601,8 +600,6 @@ static struct my_option my_long_options[] =
    "Generate CSV output to named file or to stdout if no file is named.",
    (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", 'T', "Print some debug info at exit.", (char**) &debug_info_flag,
-    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-start", OPT_SLAP_DELAYED_START,
    "Delay the startup of threads by a random number of microsends (the maximum of the delay)",
    (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT,
@@ -1281,8 +1278,6 @@ get_options(int *argc,char ***argv)
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);
-  if (debug_info_flag)
-    my_end_arg= MY_GIVE_INFO;
 
   if (!user)
     user= (char *)"root";

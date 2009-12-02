@@ -98,7 +98,6 @@ const char *opt_testdir= NULL;
 static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
 static bool silent= false, verbose= false;
-static bool debug_info_flag= false;
 static bool tty_password= false;
 static bool opt_mark_progress= false;
 static bool parsing_disabled= false;
@@ -4561,9 +4560,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"database", 'D', "Database to use.", (char**) &opt_db, (char**) &opt_db, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', "Connect to host.", (char**) &opt_host, (char**) &opt_host, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
@@ -4747,8 +4743,6 @@ static int parse_args(int argc, char **argv)
     opt_db= *argv;
   if (tty_password)
     opt_pass= client_get_tty_password(NULL);          /* purify tested */
-  if (debug_info_flag)
-    my_end_arg= MY_GIVE_INFO;
 
   return 0;
 }

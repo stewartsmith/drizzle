@@ -231,7 +231,6 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool opt_endinfo;
 bool locked_in_memory;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
@@ -530,7 +529,7 @@ void unireg_abort(int exit_code)
     usage();
   clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
-  my_end(opt_endinfo ? MY_GIVE_INFO : 0);
+  my_end(0);
   exit(exit_code);
 }
 
@@ -1656,7 +1655,7 @@ int main(int argc, char **argv)
   clean_up(1);
   plugin::Registry::shutdown();
   clean_up_mutexes();
-  my_end(opt_endinfo ? MY_GIVE_INFO : 0);
+  my_end(0);
   return 0;
 }
 
@@ -2173,7 +2172,6 @@ static void drizzle_init_variables(void)
   dropping_tables= ha_open_options=0;
   test_flags.reset();
   wake_thread=0;
-  opt_endinfo= false;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
@@ -2241,9 +2239,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
                         char *argument)
 {
   switch(optid) {
-  case '#':
-    opt_endinfo=1;				/* unireg: memory allocation */
-    break;
   case 'a':
     global_system_variables.tx_isolation= ISO_SERIALIZABLE;
     break;
@@ -2287,7 +2282,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     {
       test_flags.set((uint32_t) atoi(argument));
     }
-    opt_endinfo=1;
     break;
   case (int) OPT_WANT_CORE:
     test_flags.set(TEST_CORE_ON_SIGNAL);

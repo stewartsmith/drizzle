@@ -112,7 +112,6 @@ static bool opt_drop_database= false;
 static bool opt_replace_into= false;
 static bool opt_routines= false;
 static bool opt_alltspcs= false;
-static bool debug_info_flag= false;
 static uint32_t show_progress_size= 0;
 static uint64_t total_rows= 0;
 static drizzle_st drizzle;
@@ -202,9 +201,6 @@ static struct my_option my_long_options[] =
    "To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output.",
    (char**) &opt_databases, (char**) &opt_databases, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-insert", OPT_DELAYED, "Insert rows with INSERT DELAYED; ",
    (char**) &opt_delayed, (char**) &opt_delayed, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -680,9 +676,6 @@ static int get_options(int *argc, char ***argv)
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     return(ho_error);
-
-  if (debug_info_flag)
-    my_end_arg= MY_GIVE_INFO;
 
   if (!path && (enclosed || opt_enclosed || escaped || lines_terminated ||
                 fields_terminated))
