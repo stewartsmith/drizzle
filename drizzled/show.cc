@@ -190,7 +190,7 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 }
 
 
-bool drizzled_show_create(Session *session, TableList *table_list)
+bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
@@ -212,7 +212,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
 
   buffer.length(0);
 
-  if (store_create_info(table_list, &buffer, NULL))
+  if (store_create_info(table_list, &buffer, is_if_not_exists))
     return true;
 
   List<Item> field_list;
@@ -226,10 +226,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   if (session->client->sendFields(&field_list))
     return true;
   {
-    if (table_list->schema_table)
-      session->client->store(table_list->schema_table->getTableName().c_str());
-    else
-      session->client->store(table_list->table->alias);
+    session->client->store(table_list->table->alias);
   }
 
   session->client->store(buffer.ptr(), buffer.length());
@@ -250,7 +247,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   Resulting statement is stored in the string pointed by @c buffer. The string
   is emptied first and its character set is set to the system character set.
 
-  If HA_LEX_CREATE_IF_NOT_EXISTS flag is set in @c create_info->options, then
+  If is_if_not_exists is set, then
   the resulting CREATE statement contains "IF NOT EXISTS" clause. Other flags
   in @c create_options are ignored.
 
@@ -418,10 +415,6 @@ static bool get_field_default_value(Field *timestamp_field,
                       for.
     packet            Pointer to a string where statement will be
                       written.
-    create_info_arg   Pointer to create information that can be used
-                      to tailor the format of the statement.  Can be
-                      NULL, in which case only SQL_MODE is considered
-                      when building the statement.
 
   NOTE
     Currently always return 0, but might return error code in the
@@ -431,7 +424,7 @@ static bool get_field_default_value(Field *timestamp_field,
     0       OK
  */
 
-int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *create_info_arg)
+int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists)
 {
   List<Item> field_list;
   char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
@@ -455,13 +448,9 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
   else
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
-  if (create_info_arg &&
-      (create_info_arg->options & HA_LEX_CREATE_IF_NOT_EXISTS))
+  if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  if (table_list->schema_table)
-    alias= table_list->schema_table->getTableName().c_str();
-  else
-    alias= share->table_name.str;
+  alias= share->table_name.str;
 
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
@@ -630,16 +619,13 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       to the CREATE TABLE statement
     */
 
-    /*
-      IF   check_create_info
-      THEN add ENGINE only if it was used when creating the table
+    /* 
+      We should always store engine since we will now be 
+      making sure engines accept options (aka... no
+      dangling arguments for engines.
     */
-    if (!create_info_arg ||
-        (create_info_arg->used_fields & HA_CREATE_USED_ENGINE))
-    {
-      packet->append(STRING_WITH_LEN(" ENGINE="));
-      packet->append(cursor->engine->getName().c_str());
-    }
+    packet->append(STRING_WITH_LEN(" ENGINE="));
+    packet->append(cursor->engine->getName().c_str());
 
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
@@ -1017,34 +1003,6 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   return;
 }
 
-/*
-  Store record to I_S table, convert HEAP table
-  to MyISAM if necessary
-
-  SYNOPSIS
-    schema_table_store_record()
-    session                   thread Cursor
-    table                 Information schema table to be updated
-
-  RETURN
-    0	                  success
-    1	                  error
-*/
-
-bool schema_table_store_record(Session *session, Table *table)
-{
-  int error;
-  if ((error= table->cursor->ha_write_row(table->record[0])))
-  {
-    Tmp_Table_Param *param= table->pos_in_table_list->schema_table_param;
-
-    if (create_myisam_from_heap(session, table, param->start_recinfo,
-                                &param->recinfo, error, 0))
-      return true;
-  }
-  return false;
-}
-
 
 static int make_table_list(Session *session, Select_Lex *sel,
                            LEX_STRING *db_name, LEX_STRING *table_name)
@@ -1078,9 +1036,9 @@ static int make_table_list(Session *session, Select_Lex *sel,
 
 static bool get_lookup_value(Session *session, Item_func *item_func,
                              TableList *table,
-                             LOOKUP_FIELD_VALUES *lookup_field_vals)
+                             LOOKUP_FIELD_VALUES *lookup_field_vals,
+                             plugin::InfoSchemaTable *schema_table)
 {
-  plugin::InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
     schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
   const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1159,7 +1117,8 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
 */
 
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
-                                  LOOKUP_FIELD_VALUES *lookup_field_vals)
+                                  LOOKUP_FIELD_VALUES *lookup_field_vals,
+                                  plugin::InfoSchemaTable *schema_table)
 {
   if (!cond)
     return 0;
@@ -1174,12 +1133,12 @@ bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table
       {
         if (item->type() == Item::FUNC_ITEM)
         {
-          if (get_lookup_value(session, (Item_func*)item, table, lookup_field_vals))
+          if (get_lookup_value(session, (Item_func*)item, table, lookup_field_vals, schema_table))
             return 1;
         }
         else
         {
-          if (calc_lookup_values_from_cond(session, item, table, lookup_field_vals))
+          if (calc_lookup_values_from_cond(session, item, table, lookup_field_vals, schema_table))
             return 1;
         }
       }
@@ -1187,20 +1146,20 @@ bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table
     return 0;
   }
   else if (cond->type() == Item::FUNC_ITEM &&
-           get_lookup_value(session, (Item_func*) cond, table, lookup_field_vals))
+           get_lookup_value(session, (Item_func*) cond, table, lookup_field_vals, schema_table))
     return 1;
   return 0;
 }
 
 
-static bool uses_only_table_name_fields(Item *item, TableList *table)
+static bool uses_only_table_name_fields(Item *item, Table *table, plugin::InfoSchemaTable *schema_table)
 {
   if (item->type() == Item::FUNC_ITEM)
   {
     Item_func *item_func= (Item_func*)item;
     for (uint32_t i=0; i<item_func->argument_count(); i++)
     {
-      if (!uses_only_table_name_fields(item_func->arguments()[i], table))
+      if (! uses_only_table_name_fields(item_func->arguments()[i], table, schema_table))
         return 0;
     }
   }
@@ -1208,12 +1167,11 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    plugin::InfoSchemaTable *schema_table= table->schema_table;
     const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
     const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getSecondColumnIndex()).c_str() : "";
-    if (table->table != item_field->field->table ||
+    if (table != item_field->field->table ||
         (cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
                                (unsigned char *) item_field->field_name,
                                strlen(item_field->field_name), 0) &&
@@ -1223,7 +1181,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
       return 0;
   }
   else if (item->type() == Item::REF_ITEM)
-    return uses_only_table_name_fields(item->real_item(), table);
+    return uses_only_table_name_fields(item->real_item(), table, schema_table);
 
   if (item->type() == Item::SUBSELECT_ITEM && !item->const_item())
     return 0;
@@ -1232,7 +1190,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
 }
 
 
-static COND * make_cond_for_info_schema(COND *cond, TableList *table)
+static COND * make_cond_for_info_schema(COND *cond, Table *table, plugin::InfoSchemaTable *schema_table)
 {
   if (!cond)
     return (COND*) 0;
@@ -1243,38 +1201,38 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
       /* Create new top level AND item */
       Item_cond_and *new_cond=new Item_cond_and;
       if (!new_cond)
-	return (COND*) 0;
+        return (COND*) 0;
       List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
       {
-	Item *fix= make_cond_for_info_schema(item, table);
-	if (fix)
-	  new_cond->argument_list()->push_back(fix);
+        Item *fix= make_cond_for_info_schema(item, table, schema_table);
+        if (fix)
+          new_cond->argument_list()->push_back(fix);
       }
       switch (new_cond->argument_list()->elements) {
-      case 0:
-	return (COND*) 0;
-      case 1:
-	return new_cond->argument_list()->head();
-      default:
-	new_cond->quick_fix_field();
-	return new_cond;
+        case 0:
+          return (COND*) 0;
+        case 1:
+          return new_cond->argument_list()->head();
+        default:
+          new_cond->quick_fix_field();
+          return new_cond;
       }
     }
     else
     {						// Or list
       Item_cond_or *new_cond=new Item_cond_or;
       if (!new_cond)
-	return (COND*) 0;
+        return (COND*) 0;
       List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
       {
-	Item *fix=make_cond_for_info_schema(item, table);
-	if (!fix)
-	  return (COND*) 0;
-	new_cond->argument_list()->push_back(fix);
+        Item *fix=make_cond_for_info_schema(item, table, schema_table);
+        if (!fix)
+          return (COND*) 0;
+        new_cond->argument_list()->push_back(fix);
       }
       new_cond->quick_fix_field();
       new_cond->top_level_item();
@@ -1282,7 +1240,7 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
     }
   }
 
-  if (!uses_only_table_name_fields(cond, table))
+  if (! uses_only_table_name_fields(cond, table, schema_table))
     return (COND*) 0;
   return cond;
 }
@@ -1307,7 +1265,8 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
 */
 
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
-                             LOOKUP_FIELD_VALUES *lookup_field_values)
+                             LOOKUP_FIELD_VALUES *lookup_field_values,
+                             plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -1337,7 +1296,7 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
       The "default" is for queries over I_S.
       All previous cases handle SHOW commands.
     */
-    return calc_lookup_values_from_cond(session, cond, tables, lookup_field_values);
+    return calc_lookup_values_from_cond(session, cond, tables, lookup_field_values, schema_table);
   }
 }
 
@@ -1607,7 +1566,8 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
 
 static int fill_schema_table_names(Session *session, Table *table,
                                    LEX_STRING *db_name, LEX_STRING *table_name,
-                                   bool with_i_schema)
+                                   bool with_i_schema,
+                                   plugin::InfoSchemaTable *schema_table)
 {
   if (with_i_schema)
   {
@@ -1629,111 +1589,9 @@ static int fill_schema_table_names(Session *session, Table *table,
       return 0;
     }
   }
-  if (schema_table_store_record(session, table))
-    return 1;
+  schema_table->addRow(table->record[0], table->s->reclength);
   return 0;
 }
-
-
-/**
-  @brief          Get open table method
-
-  @details        The function calculates the method which will be used
-                  for table opening:
-                  SKIP_OPEN_TABLE - do not open table
-                  OPEN_FRM_ONLY   - open FRM cursor only
-                  OPEN_FULL_TABLE - open FRM, data, index files
-  @param[in]      tables               I_S table table_list
-  @param[in]      schema_table         I_S table struct
-
-  @return         return a set of flags
-    @retval       SKIP_OPEN_TABLE | OPEN_FRM_ONLY | OPEN_FULL_TABLE
-*/
-
-static uint32_t get_table_open_method(TableList *tables,
-                                      plugin::InfoSchemaTable *schema_table)
-{
-  /*
-    determine which method will be used for table opening
-  */
-  if (schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
-  {
-    Field **ptr, *field;
-    int table_open_method= 0, field_indx= 0;
-    for (ptr= tables->table->field; (field= *ptr) ; ptr++)
-    {
-      if (field->isReadSet())
-        table_open_method|= schema_table->getColumnOpenMethod(field_indx);
-      field_indx++;
-    }
-    return table_open_method;
-  }
-  /* I_S tables which use get_all_tables but can not be optimized */
-  return (uint32_t) OPEN_FULL_TABLE;
-}
-
-
-/**
-  @brief          Fill I_S table with data from FRM cursor only
-
-  @param[in]      session                      thread Cursor
-  @param[in]      table                    Table struct for I_S table
-  @param[in]      schema_table             I_S table struct
-  @param[in]      db_name                  database name
-  @param[in]      table_name               table name
-
-  @return         Operation status
-    @retval       0           Table is processed and we can continue
-                              with new table
-    @retval       1           It's view and we have to use
-                              open_tables function for this table
-*/
-
-static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      plugin::InfoSchemaTable *schema_table,
-                                      LEX_STRING *db_name,
-                                      LEX_STRING *table_name)
-{
-  Table *table= tables->table;
-  TableShare *share;
-  Table tbl;
-  TableList table_list;
-  uint32_t res= 0;
-  int error;
-  char key[MAX_DBKEY_LENGTH];
-  uint32_t key_length;
-
-  memset(&tbl, 0, sizeof(Table));
-
-  table_list.table_name= table_name->str;
-  table_list.db= db_name->str;
-
-  key_length= table_list.create_table_def_key(key);
-  pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
-  share= TableShare::getShare(session, &table_list, key, key_length, 0, &error);
-  if (!share)
-  {
-    res= 0;
-    goto err;
-  }
-
-  {
-    tbl.s= share;
-    table_list.table= &tbl;
-    res= schema_table->processTable(session, &table_list, table,
-                                    res, db_name, table_name);
-  }
-  /* For the moment we just set everything to read */
-  table->setReadSet();
-
-  TableShare::release(share);
-
-err:
-  pthread_mutex_unlock(&LOCK_open);
-  session->clear_error();
-  return res;
-}
-
 
 
 /**
@@ -1753,14 +1611,14 @@ err:
     @retval       0                        success
     @retval       1                        error
 */
-int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
+int plugin::InfoSchemaMethods::fillTable(Session *session, 
+                                         Table *table,
+                                         plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
-  Table *table= tables->table;
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
-  Select_Lex *lsel= tables->schema_select_lex;
-  plugin::InfoSchemaTable *schema_table= tables->schema_table;
+  Select_Lex *lsel= table->pos_in_table_list->schema_select_lex;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
@@ -1772,7 +1630,6 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
   int error= 1;
   Open_tables_state open_tables_state_backup;
   Query_tables_list query_tables_list_backup;
-  uint32_t table_open_method;
   bool old_value= session->no_warnings_for_error;
 
   /*
@@ -1782,8 +1639,6 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
   */
   session->reset_n_backup_open_tables_state(&open_tables_state_backup);
 
-  tables->table_open_method= table_open_method=
-    get_table_open_method(tables, schema_table);
   /*
     this branch processes SHOW FIELDS, SHOW INDEXES commands.
     see sql_parse.cc, prepare_schema_table() function where
@@ -1791,12 +1646,16 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
   */
   if (lsel && lsel->table_list.first)
   {
-    error= fill_schema_show_cols_or_idxs(session, tables, schema_table,
+    error= fill_schema_show_cols_or_idxs(session, table->pos_in_table_list, schema_table,
                                          &open_tables_state_backup);
     goto err;
   }
 
-  if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
+  if (get_lookup_field_values(session, 
+                              cond, 
+                              table->pos_in_table_list, 
+                              &lookup_field_vals,
+                              schema_table))
   {
     error= 0;
     goto err;
@@ -1818,16 +1677,17 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
 
   if (lookup_field_vals.db_value.length &&
       !lookup_field_vals.wild_db_value)
-    tables->has_db_lookup_value= true;
+    table->pos_in_table_list->has_db_lookup_value= true;
 
   if (lookup_field_vals.table_value.length &&
       !lookup_field_vals.wild_table_value)
-    tables->has_table_lookup_value= true;
+    table->pos_in_table_list->has_table_lookup_value= true;
 
-  if (tables->has_db_lookup_value && tables->has_table_lookup_value)
+  if (table->pos_in_table_list->has_db_lookup_value && 
+      table->pos_in_table_list->has_table_lookup_value)
     partial_cond= 0;
   else
-    partial_cond= make_cond_for_info_schema(cond, tables);
+    partial_cond= make_cond_for_info_schema(cond, table, schema_table);
 
   if (lex->describe)
   {
@@ -1865,39 +1725,19 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
 
       if (!partial_cond || partial_cond->val_int())
       {
-        /*
-          If table is I_S.tables and open_table_method is 0 (eg SKIP_OPEN)
-          we can skip table opening and we don't have lookup value for
-          table name or lookup value is wild string(table name list is
-          already created by make_table_name_list() function).
-        */
-        if (! table_open_method &&
-            schema_table->getTableName().compare("TABLES") == 0 &&
-            (! lookup_field_vals.table_value.length ||
-             lookup_field_vals.wild_table_value))
-        {
-          if (schema_table_store_record(session, table))
-            goto err;      /* Out of space in temporary table */
-          continue;
-        }
-
         /* SHOW Table NAMES command */
         if (schema_table->getTableName().compare("TABLE_NAMES") == 0)
         {
-          if (fill_schema_table_names(session, tables->table, *db_name,
-                                      *table_name, with_i_schema))
+          if (fill_schema_table_names(session, 
+                                      table, 
+                                      *db_name,
+                                      *table_name, 
+                                      with_i_schema,
+                                      schema_table))
             continue;
         }
         else
         {
-          if (!(table_open_method & ~OPEN_FRM_ONLY) &&
-              !with_i_schema)
-          {
-            if (!fill_schema_table_from_frm(session, tables, schema_table, *db_name,
-                                            *table_name))
-              continue;
-          }
-
           LEX_STRING tmp_lex_string, orig_db_name;
           /*
             Set the parent lex of 'sel' because it is needed by
@@ -1906,9 +1746,13 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables)
           session->no_warnings_for_error= 1;
           sel.parent_lex= lex;
           /* db_name can be changed in make_table_list() func */
-          if (!session->make_lex_string(&orig_db_name, (*db_name)->str,
-                                        (*db_name)->length, false))
+          if (! session->make_lex_string(&orig_db_name, 
+                                         (*db_name)->str,
+                                         (*db_name)->length, 
+                                         false))
+          {
             goto err;
+          }
 
           if (make_table_list(session, &sel, *db_name, *table_name))
             goto err;
@@ -2081,10 +1925,13 @@ static void store_column_type(Table *table, Field *field,
 }
 
 
-int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
+int plugin::InfoSchemaMethods::processTable(
+            plugin::InfoSchemaTable *store_table,
+            Session *session, 
+            TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
-				    LEX_STRING *table_name) const
+				    LEX_STRING *table_name)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -2115,16 +1962,8 @@ int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
   show_table_share= show_table->s;
   count= 0;
 
-  if (tables->schema_table)
-  {
-    ptr= show_table->field;
-    timestamp_field= show_table->timestamp_field;
-  }
-  else
-  {
-    ptr= show_table_share->field;
-    timestamp_field= show_table_share->timestamp_field;
-  }
+  ptr= show_table_share->field;
+  timestamp_field= show_table_share->timestamp_field;
 
   /* For the moment we just set everything to read */
   if (!show_table->read_set)
@@ -2195,109 +2034,9 @@ int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
       table->field[20]->store((const char*) pos,
                               strlen((const char*) pos), cs);
     }
-    if (schema_table_store_record(session, table))
-      return(1);
+    store_table->addRow(table->record[0], table->s->reclength);
   }
   return(0);
-}
-
-
-Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
-  const
-{
-  int field_count= 0;
-  Item *item;
-  Table *table;
-  List<Item> field_list;
-  const CHARSET_INFO * const cs= system_charset_info;
-  const plugin::InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
-  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
-
-  while (iter != columns.end())
-  {
-    const plugin::ColumnInfo *column= *iter;
-    switch (column->getType()) {
-    case DRIZZLE_TYPE_LONG:
-    case DRIZZLE_TYPE_LONGLONG:
-      if (!(item= new Item_return_int(column->getName().c_str(),
-                                      column->getLength(),
-                                      column->getType(),
-                                      column->getValue())))
-      {
-        return(0);
-      }
-      item->unsigned_flag= (column->getFlags() & MY_I_S_UNSIGNED);
-      break;
-    case DRIZZLE_TYPE_DATE:
-    case DRIZZLE_TYPE_TIMESTAMP:
-    case DRIZZLE_TYPE_DATETIME:
-      if (!(item=new Item_return_date_time(column->getName().c_str(),
-                                           column->getType())))
-      {
-        return(0);
-      }
-      break;
-    case DRIZZLE_TYPE_DOUBLE:
-      if ((item= new Item_float(column->getName().c_str(), 0.0, NOT_FIXED_DEC,
-                           column->getLength())) == NULL)
-        return NULL;
-      break;
-    case DRIZZLE_TYPE_DECIMAL:
-      if (!(item= new Item_decimal((int64_t) column->getValue(), false)))
-      {
-        return(0);
-      }
-      item->unsigned_flag= (column->getFlags() & MY_I_S_UNSIGNED);
-      item->decimals= column->getLength() % 10;
-      item->max_length= (column->getLength()/100)%100;
-      if (item->unsigned_flag == 0)
-        item->max_length+= 1;
-      if (item->decimals > 0)
-        item->max_length+= 1;
-      item->set_name(column->getName().c_str(),
-                     column->getName().length(), cs);
-      break;
-    case DRIZZLE_TYPE_BLOB:
-      if (!(item= new Item_blob(column->getName().c_str(),
-                                column->getLength())))
-      {
-        return(0);
-      }
-      break;
-    default:
-      if (!(item= new Item_empty_string("", column->getLength(), cs)))
-      {
-        return(0);
-      }
-      item->set_name(column->getName().c_str(),
-                     column->getName().length(), cs);
-      break;
-    }
-    field_list.push_back(item);
-    item->maybe_null= (column->getFlags() & MY_I_S_MAYBE_NULL);
-    field_count++;
-    ++iter;
-  }
-  Tmp_Table_Param *tmp_table_param =
-    (Tmp_Table_Param*) (session->alloc(sizeof(Tmp_Table_Param)));
-  tmp_table_param->init();
-  tmp_table_param->table_charset= cs;
-  tmp_table_param->field_count= field_count;
-  tmp_table_param->schema_table= 1;
-  Select_Lex *select_lex= session->lex->current_select;
-  if (!(table= create_tmp_table(session, tmp_table_param,
-                                field_list, (order_st*) 0, 0, 0,
-                                (select_lex->options | session->options |
-                                 TMP_TABLE_ALL_COLUMNS),
-                                HA_POS_ERROR, table_list->alias)))
-    return(0);
-  my_bitmap_map* bitmaps=
-    (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  table->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
-  table->read_set= &table->def_read_set;
-  table->read_set->clearAll();
-  table_list->schema_table_param= tmp_table_param;
-  return(table);
 }
 
 
@@ -2347,47 +2086,6 @@ int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchemaTab
 
 
 /*
-  Create information_schema table
-
-  SYNOPSIS
-  mysql_schema_table()
-    session                thread Cursor
-    lex                pointer to LEX
-    table_list         pointer to table_list
-
-  RETURN
-    true on error
-*/
-
-bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
-{
-  Table *table;
-  if (!(table= table_list->schema_table->createSchemaTable(session, table_list)))
-    return true;
-  table->s->tmp_table= SYSTEM_TMP_TABLE;
-  /*
-    This test is necessary to make
-    case insensitive cursor systems +
-    upper case table names(information schema tables) +
-    views
-    working correctly
-  */
-  if (table_list->schema_table_name)
-    table->alias_name_used= my_strcasecmp(table_alias_charset,
-                                          table_list->schema_table_name,
-                                          table_list->alias);
-  table_list->table_name= table->s->table_name.str;
-  table_list->table_name_length= table->s->table_name.length;
-  table_list->table= table;
-  table->next= session->derived_tables;
-  session->derived_tables= table;
-  table_list->select_lex->options |= OPTION_SCHEMA_TABLE;
-
-  return false;
-}
-
-
-/*
   Generate select from information_schema table
 
   SYNOPSIS
@@ -2421,90 +2119,3 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   return false;
 }
 
-
-/*
-  Fill temporary schema tables before SELECT
-
-  SYNOPSIS
-    get_schema_tables_result()
-    join  join which use schema tables
-    executed_place place where I_S table processed
-
-  RETURN
-    false success
-    true  error
-*/
-
-bool get_schema_tables_result(JOIN *join,
-                              enum enum_schema_table_state executed_place)
-{
-  JoinTable *tmp_join_tab= join->join_tab+join->tables;
-  Session *session= join->session;
-  LEX *lex= session->lex;
-  bool result= 0;
-
-  session->no_warnings_for_error= 1;
-  for (JoinTable *tab= join->join_tab; tab < tmp_join_tab; tab++)
-  {
-    if (!tab->table || !tab->table->pos_in_table_list)
-      break;
-
-    TableList *table_list= tab->table->pos_in_table_list;
-    if (table_list->schema_table)
-    {
-      bool is_subselect= (&lex->unit != lex->current_select->master_unit() &&
-                          lex->current_select->master_unit()->item);
-
-
-      /* skip I_S optimizations specific to get_all_tables */
-      if (session->lex->describe &&
-          (table_list->schema_table->isOptimizationPossible() != true))
-      {
-        continue;
-      }
-
-      /*
-        If schema table is already processed and
-        the statement is not a subselect then
-        we don't need to fill this table again.
-        If schema table is already processed and
-        schema_table_state != executed_place then
-        table is already processed and
-        we should skip second data processing.
-      */
-      if (table_list->schema_table_state &&
-          (!is_subselect || table_list->schema_table_state != executed_place))
-        continue;
-
-      /*
-        if table is used in a subselect and
-        table has been processed earlier with the same
-        'executed_place' value then we should refresh the table.
-      */
-      if (table_list->schema_table_state && is_subselect)
-      {
-        table_list->table->cursor->extra(HA_EXTRA_NO_CACHE);
-        table_list->table->cursor->extra(HA_EXTRA_RESET_STATE);
-        table_list->table->cursor->ha_delete_all_rows();
-        table_list->table->free_io_cache();
-        table_list->table->filesort_free_buffers(true);
-        table_list->table->null_row= 0;
-      }
-      else
-        table_list->table->cursor->stats.records= 0;
-
-      if (table_list->schema_table->fillTable(session, table_list))
-      {
-        result= 1;
-        join->error= 1;
-        tab->read_record.cursor= table_list->table->cursor;
-        table_list->schema_table_state= executed_place;
-        break;
-      }
-      tab->read_record.cursor= table_list->table->cursor;
-      table_list->schema_table_state= executed_place;
-    }
-  }
-  session->no_warnings_for_error= 0;
-  return(result);
-}

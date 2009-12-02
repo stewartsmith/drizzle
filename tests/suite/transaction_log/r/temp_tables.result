@@ -11,7 +11,7 @@ DROP TABLE t1;
 DROP TABLE t2;
 DROP TABLE IF EXISTS `t1`;
 DROP TABLE IF EXISTS `t2`;
-CREATE TABLE `t2` (   `id` int NOT NULL,   `padding` varchar(200) NOT NULL );
+CREATE TABLE `t2` (   `id` int NOT NULL,   `padding` varchar(200) NOT NULL ) ENGINE=InnoDB;
 START TRANSACTION;
 INSERT INTO `test`.`t2` (`id`,`padding`) VALUES (1,'I love testing.');
 INSERT INTO `test`.`t2` (`id`,`padding`) VALUES (2,'I hate testing.');

@@ -1,7 +1,11 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  Authors:
+ *
+ *  Jay Pipes <joinfu@sun.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,34 +22,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_OPTIMIZE_H
-#define DRIZZLED_STATEMENT_OPTIMIZE_H
+/**
+ * @file
+ *
+ * Defines the methods used by the background worker thread which
+ * maintains summary information about the transaction log.
+ */
 
-#include <drizzled/statement.h>
+#ifndef PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H
+#define PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H
 
-class Session;
+#include <pthread.h>
 
-namespace drizzled
-{
-namespace statement
-{
+/**
+ * Initializes the background worker thread
+ *
+ * @return false on success; true on failure
+ */
+bool initTransactionLogBackgroundWorker();
 
-class Optimize : public Statement
-{
-public:
-  Optimize(Session *in_session)
-    :
-      Statement(in_session)
-  {
-    check_opt.init();
-  }
+/**
+ * The routine which the background worker executes
+ */
+extern "C" {
+  pthread_handler_t collectTransactionLogStats(void *arg);
+}
 
-  bool execute();
-  HA_CHECK_OPT check_opt;			// check/repair options
-};
-
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_OPTIMIZE_H */
+#endif /* PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H */

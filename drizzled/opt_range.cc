@@ -776,7 +776,6 @@ class PARAM : public RANGE_OPT_PARAM
 {
 public:
   KEY_PART *key[MAX_KEY]; /* First key parts of keys used in the query */
-  int64_t baseflag;
   uint32_t max_key_part;
   /* Number of ranges in the last checked tree->key */
   uint32_t range_count;
@@ -2301,7 +2300,6 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
 
     /* set up parameter that is passed to all functions */
     param.session= session;
-    param.baseflag= head->cursor->ha_table_flags();
     param.prev_tables= prev_tables | const_tables;
     param.read_tables= read_tables;
     param.current_table= head->map;
@@ -3666,7 +3664,7 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
     {
       ha_rows found_records;
       COST_VECT cost;
-      double found_read_time;
+      double found_read_time= 0.0;
       uint32_t mrr_flags, buf_size;
       uint32_t keynr= param->real_keynr[idx];
       if ((*key)->type == SEL_ARG::MAYBE_KEY ||
@@ -8122,7 +8120,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
       we check that all query fields are indeed covered by 'cur_index'.
     */
     if (pk < MAX_KEY && cur_index != pk &&
-        (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
+        (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
     {
       /* For each table field */
       for (uint32_t i= 0; i < table->s->fields; i++)

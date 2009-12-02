@@ -292,7 +292,7 @@ DROP TABLE columns;
 set @@optimizer_switch=no_semijoin;
 set @prefix_len = 6;
 
-# BLOB == 16 (small blobs that could be stored in HEAP tables)
+# BLOB == 16 (small blobs that could be stored in MEMORY tables)
 set @blob_len = 16;
 set @suffix_len = @blob_len - @prefix_len;
 

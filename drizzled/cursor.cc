@@ -112,11 +112,6 @@ int Cursor::ha_index_or_rnd_end()
   return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
 }
 
-plugin::StorageEngine::Table_flags Cursor::ha_table_flags() const
-{
-  return engine->table_flags();
-}
-
 void Cursor::ha_start_bulk_insert(ha_rows rows)
 {
   estimation_rows_to_insert= rows;
@@ -142,7 +137,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0;
+  return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(ulong SSV::*offset) const
@@ -747,32 +742,17 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 
 
 /**
-  Optimize table: public interface.
-
-  @sa Cursor::optimize()
-*/
-
-int
-Cursor::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
-{
-  mark_trx_read_write();
-
-  return optimize(session, check_opt);
-}
-
-
-/**
   Analyze table: public interface.
 
   @sa Cursor::analyze()
 */
 
 int
-Cursor::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
+Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
 {
   mark_trx_read_write();
 
-  return analyze(session, check_opt);
+  return analyze(session);
 }
 
 /**

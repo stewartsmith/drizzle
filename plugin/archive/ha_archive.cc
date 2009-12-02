@@ -104,8 +104,6 @@ static const string engine_name("ARCHIVE");
 /* Variables for archive share methods */
 pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-std::map<const char *, ArchiveShare *> archive_open_tables;
-
 static unsigned int global_version;
 
 /* The file extension */
@@ -136,20 +134,18 @@ static const char *ha_archive_exts[] = {
 
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
+  typedef std::map<string, ArchiveShare*> ArchiveMap;
+  ArchiveMap archive_open_tables;
+
 public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) 
+                                     HTON_FILE_BASED |
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_HAS_RECORDS |
+                                     HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= ARZ;
-  }
-
-  uint64_t table_flags() const
-  {
-    return (HA_NO_TRANSACTIONS |
-            HA_STATS_RECORDS_IS_EXACT |
-            HA_HAS_RECORDS);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -163,7 +159,7 @@ public:
   }
 
   int doCreateTable(Session *session, const char *table_name,
-                    Table& table_arg, HA_CREATE_INFO& create_info,
+                    Table& table_arg,
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(Session& session,
@@ -176,7 +172,36 @@ public:
   void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
 
   int doDropTable(Session&, const string table_path);
+  ArchiveShare *findOpenTable(const string table_name);
+  void addOpenTable(const string &table_name, ArchiveShare *);
+  void deleteOpenTable(const string &table_name);
+
+  uint32_t max_supported_keys()          const { return 1; }
+  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
+  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
 };
+
+
+ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
+{
+  ArchiveMap::iterator find_iter=
+    archive_open_tables.find(table_name);
+
+  if (find_iter != archive_open_tables.end())
+    return (*find_iter).second;
+  else
+    return NULL;
+}
+
+void ArchiveEngine::addOpenTable(const string &table_name, ArchiveShare *share)
+{
+  archive_open_tables[table_name]= share;
+}
+
+void ArchiveEngine::deleteOpenTable(const string &table_name)
+{
+  archive_open_tables.erase(table_name);
+}
 
 
 void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
@@ -424,18 +449,10 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  uint32_t length;
-  map<const char *, ArchiveShare *> ::iterator find_iter;
-
   pthread_mutex_lock(&archive_mutex);
-  length=(uint) strlen(table_name);
 
-  find_iter= archive_open_tables.find(table_name);
-
-  if (find_iter != archive_open_tables.end())
-    share= (*find_iter).second;
-  else
-    share= NULL;
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  share= a_engine->findOpenTable(table_name);
 
   if (!share)
   {
@@ -457,10 +474,11 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
       return NULL;
     }
 
-    archive_open_tables[share->table_name.c_str()]= share; 
+    a_engine->addOpenTable(share->table_name, share);
     thr_lock_init(&share->lock);
   }
   share->use_count++;
+
   if (share->crashed)
     *rc= HA_ERR_CRASHED_ON_USAGE;
   pthread_mutex_unlock(&archive_mutex);
@@ -478,8 +496,9 @@ int ha_archive::free_share()
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    archive_open_tables.erase(share->table_name.c_str());
-    delete share;
+    ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+    a_engine->deleteOpenTable(share->table_name);
+     delete share;
   }
   pthread_mutex_unlock(&archive_mutex);
 
@@ -548,15 +567,22 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t open_options)
+int ha_archive::open(const char *name, int, uint32_t)
 {
   int rc= 0;
   share= get_share(name, &rc);
 
-  if (rc == HA_ERR_CRASHED_ON_USAGE && !(open_options & HA_OPEN_FOR_REPAIR))
+  /** 
+    We either fix it ourselves, or we just take it offline 
+
+    @todo Create some documentation in the recovery tools shipped with the engine.
+  */
+  if (rc == HA_ERR_CRASHED_ON_USAGE)
   {
     free_share();
-    return(rc);
+    rc= repair();
+
+    return 0;
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -576,12 +602,7 @@ int ha_archive::open(const char *name, int, uint32_t open_options)
 
   thr_lock_data_init(&share->lock, &lock, NULL);
 
-  if (rc == HA_ERR_CRASHED_ON_USAGE && open_options & HA_OPEN_FOR_REPAIR)
-  {
-    return(0);
-  }
-  else
-    return(rc);
+  return(rc);
 }
 
 
@@ -633,7 +654,6 @@ int ha_archive::close(void)
 int ArchiveEngine::doCreateTable(Session *,
                                  const char *table_name,
                                  Table& table_arg,
-                                 HA_CREATE_INFO& create_info,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -642,7 +662,7 @@ int ArchiveEngine::doCreateTable(Session *,
   uint64_t auto_increment_value;
   string serialized_proto;
 
-  auto_increment_value= create_info.auto_increment_value;
+  auto_increment_value= proto.options().auto_increment_value();
 
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
@@ -1084,10 +1104,9 @@ int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
   rewriting the meta file. Currently it does this by calling optimize with
   the extended flag.
 */
-int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
+int ha_archive::repair()
 {
-  check_opt->flags= T_EXTEND;
-  int rc= optimize(session, check_opt);
+  int rc= optimize();
 
   if (rc)
     return(HA_ERR_CRASHED_ON_REPAIR);
@@ -1100,7 +1119,7 @@ int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely.
 */
-int ha_archive::optimize(Session *, HA_CHECK_OPT *)
+int ha_archive::optimize()
 {
   int rc= 0;
   azio_stream writer;
@@ -1358,18 +1377,10 @@ int ha_archive::delete_all_rows()
 }
 
 /*
-  We just return state if asked.
-*/
-bool ha_archive::is_crashed() const
-{
-  return(share->crashed);
-}
-
-/*
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(Session* session, HA_CHECK_OPT *)
+int ha_archive::check(Session* session)
 {
   int rc= 0;
   const char *old_proc_info;

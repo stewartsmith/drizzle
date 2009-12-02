@@ -410,14 +410,17 @@ public:
   inline unsigned char *getDefaultValues() { return s->default_values; }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isCrashed() { return s->crashed; }
   inline bool isNameLock() { return s->name_lock; }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return s->storage_engine;
+  }
+
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(HA_CREATE_INFO *create_info,
-                        drizzled::message::Table *table_proto);
+  void updateCreateInfo(drizzled::message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,

@@ -48,9 +48,6 @@ class ha_myisam: public Cursor
   int index_init(uint32_t idx, bool sorted);
   int index_end();
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
-  uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
-  uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
-  uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
   uint32_t checksum() const;
 
   int open(const char *name, int mode, uint32_t test_if_locked);
@@ -86,8 +83,6 @@ class ha_myisam: public Cursor
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-			     enum thr_lock_type lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,

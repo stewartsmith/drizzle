@@ -526,7 +526,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
   {
     Table *t= table_ptr[i];
 
-    if (t->s->tmp_table != NON_TRANSACTIONAL_TMP_TABLE)
+    if (! (t->getEngine()->check_flag(HTON_BIT_SKIP_STORE_LOCK)))
     {
       tables++;
       lock_count++;
@@ -553,8 +553,9 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     Table *table;
     enum thr_lock_type lock_type;
 
-    if (table_ptr[i]->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
+    if (table_ptr[i]->getEngine()->check_flag(HTON_BIT_SKIP_STORE_LOCK))
       continue;
+
     table= table_ptr[i];
     lock_type= table->reginfo.lock_type;
     assert (lock_type != TL_WRITE_DEFAULT);

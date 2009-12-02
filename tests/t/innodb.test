@@ -67,7 +67,7 @@ explain select level,id from t1 where level=1;
 explain select level,id,parent_id from t1 where level=1;
 select level,id from t1 where level=1;
 select level,id,parent_id from t1 where level=1;
-optimize table t1;
+alter table t1 ENGINE=innodb;
 --replace_column 7 #
 show keys from t1;
 drop table t1;
@@ -94,7 +94,7 @@ drop table t1;
 
 create table t1 (a int) engine=innodb;
 insert into t1 values (1), (2);
-optimize table t1;
+alter table t1 engine=innodb;
 delete from t1 where a = 1;
 select * from t1;
 check table t1;
@@ -430,7 +430,7 @@ drop table t1;
 create table t1 (a varchar(100) not null, primary key(a), b int not null) engine=innodb;
 insert into t1 values("hello",1),("world",2);
 select * from t1 order by b desc;
-optimize table t1;
+alter table t1 engine=innodb;
 --replace_column 7 #
 show keys from t1;
 drop table t1;
@@ -533,7 +533,7 @@ create table mysqltest.t1 (a int not null) engine= innodb;
 insert into mysqltest.t1 values(1);
 create TEMPORARY table mysqltest.t2 (a int not null) engine= myisam;
 insert into mysqltest.t2 values(1);
-create temporary table mysqltest.t3 (a int not null) engine= heap;
+create temporary table mysqltest.t3 (a int not null) engine= MEMORY;
 insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
@@ -835,9 +835,9 @@ create table t3 (a int, b varchar(200), c text not null) engine=innodb;
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 insert t3 select * from t1;
-checksum table t1, t2, t3, t4 quick;
 checksum table t1, t2, t3, t4;
-checksum table t1, t2, t3, t4 extended;
+checksum table t1, t2, t3, t4;
+checksum table t1, t2, t3, t4;
 #show table status;
 drop table t1,t2,t3;
 
@@ -1857,7 +1857,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
-OPTIMIZE TABLE t1;
+ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 
 #

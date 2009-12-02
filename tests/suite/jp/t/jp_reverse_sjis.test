@@ -27,9 +27,9 @@ CREATE TABLE `‚s‚R` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engin
 CREATE TABLE `‚s‚S` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚T` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚U` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `‚s‚V` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚W` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚X` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `‚s‚V` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚W` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚X` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = MEMORY;
 CREATE TABLE `‚s‚P‚O` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `‚s‚P‚P` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `‚s‚P‚Q` (`‚b‚P` char(5), INDEX(`‚b‚P`)) DEFAULT CHARSET = sjis engine = bdb;
@@ -57,7 +57,7 @@ SELECT REVERSE(`‚b‚P`) FROM `‚s‚S`;
 SELECT REVERSE(`‚b‚P`) FROM `‚s‚T`;
 SELECT REVERSE(`‚b‚P`) FROM `‚s‚U`;
 
-#HEAP
+#MEMORY
 SELECT REVERSE(`‚b‚P`) FROM `‚s‚V`;
 SELECT REVERSE(`‚b‚P`) FROM `‚s‚W`;
 SELECT REVERSE(`‚b‚P`) FROM `‚s‚X`;

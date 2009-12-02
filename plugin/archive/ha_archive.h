@@ -102,9 +102,6 @@ public:
   }
   void get_auto_increment(uint64_t, uint64_t, uint64_t,
                           uint64_t *first_value, uint64_t *nb_reserved_values);
-  uint32_t max_supported_keys()          const { return 1; }
-  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
-  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
   ha_rows records() { return share->rows_recorded; }
   int index_init(uint32_t keynr, bool sorted);
   virtual int index_read(unsigned char * buf, const unsigned char * key,
@@ -120,19 +117,20 @@ public:
   int rnd_init(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  int get_row(azio_stream *file_to_read, unsigned char *buf);
-  int get_row_version2(azio_stream *file_to_read, unsigned char *buf);
-  int get_row_version3(azio_stream *file_to_read, unsigned char *buf);
   ArchiveShare *get_share(const char *table_name, int *rc);
   int free_share();
   int init_archive_writer();
   int init_archive_reader();
-  bool auto_repair() const { return 1; } // For the moment we just do this
-  int read_data_header(azio_stream *file_to_read);
   void position(const unsigned char *record);
   int info(uint);
-  int optimize(Session* session, HA_CHECK_OPT* check_opt);
-  int repair(Session* session, HA_CHECK_OPT* check_opt);
+private:
+  int get_row(azio_stream *file_to_read, unsigned char *buf);
+  int get_row_version2(azio_stream *file_to_read, unsigned char *buf);
+  int get_row_version3(azio_stream *file_to_read, unsigned char *buf);
+  int read_data_header(azio_stream *file_to_read);
+  int optimize();
+  int repair();
+public:
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   enum row_type get_row_type() const
@@ -141,8 +139,7 @@ public:
   }
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
-  bool is_crashed() const;
-  int check(Session* session, HA_CHECK_OPT* check_opt);
+  int check(Session* session);
   bool check_and_repair(Session *session);
   uint32_t max_row_length(const unsigned char *buf);
   bool fix_rec_buff(unsigned int length);

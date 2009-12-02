@@ -72,32 +72,28 @@ vector<const plugin::ColumnInfo *> *TableNamesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Tables_in_",
-                                            SKIP_OPEN_TABLE));
+                                            "Tables_in_"));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Table_type",
-                                            OPEN_FRM_ONLY));
+                                            "Table_type"));
   return columns;
 }
 

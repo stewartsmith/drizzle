@@ -77,64 +77,56 @@ vector<const plugin::ColumnInfo *> *ProcessListIS::createColumns()
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Id",
-                                            SKIP_OPEN_TABLE));
+                                            "Id"));
 
   columns->push_back(new plugin::ColumnInfo("USER",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "User",
-                                            SKIP_OPEN_TABLE));
+                                            "User"));
 
   columns->push_back(new plugin::ColumnInfo("HOST",
                                             LIST_PROCESS_HOST_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Host",
-                                            SKIP_OPEN_TABLE));
+                                            "Host"));
 
   columns->push_back(new plugin::ColumnInfo("DB",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Db",
-                                            SKIP_OPEN_TABLE));
+                                            "Db"));
 
   columns->push_back(new plugin::ColumnInfo("COMMAND",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Command",
-                                            SKIP_OPEN_TABLE));
+                                            "Command"));
 
   columns->push_back(new plugin::ColumnInfo("TIME",
                                             7,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Time",
-                                            SKIP_OPEN_TABLE));
+                                            "Time"));
 
   columns->push_back(new plugin::ColumnInfo("STATE",
                                             64,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "State",
-                                            SKIP_OPEN_TABLE));
+                                            "State"));
 
   columns->push_back(new plugin::ColumnInfo("INFO",
-                                            PROCESS_LIST_INFO_WIDTH,
+                                            16383,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Info",
-                                            SKIP_OPEN_TABLE));
+                                            "Info"));
 
   return columns;
 }
@@ -175,9 +167,10 @@ void ProcessListIS::cleanup()
   delete columns;
 }
 
-int ProcessListISMethods::fillTable(Session* session, TableList* tables)
+int ProcessListISMethods::fillTable(Session* session, 
+                                    Table *table,
+                                    plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   time_t now= time(NULL);
   size_t length;
@@ -202,6 +195,14 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables)
         continue;
 
       table->restoreRecordAsDefault();
+      table->setWriteSet(0);
+      table->setWriteSet(1);
+      table->setWriteSet(2);
+      table->setWriteSet(3);
+      table->setWriteSet(4);
+      table->setWriteSet(5);
+      table->setWriteSet(6);
+      table->setWriteSet(7);
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
@@ -254,11 +255,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables)
         table->field[7]->set_notnull();
       }
 
-      if (schema_table_store_record(session, table))
-      {
-        pthread_mutex_unlock(&LOCK_thread_count);
-        return(1);
-      }
+      schema_table->addRow(table->record[0], table->s->reclength);
     }
   }
 

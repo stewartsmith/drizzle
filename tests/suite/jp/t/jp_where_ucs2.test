@@ -29,9 +29,9 @@ CREATE TABLE `г╘г│` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engi
 CREATE TABLE `г╘г┤` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `г╘г╡` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `г╘г╢` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `г╘г╖` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `г╘г╕` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `г╘г╣` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `г╘г╖` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `г╘г╕` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `г╘г╣` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `г╘г▒г░` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `г╘г▒г▒` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `г╘г▒г▓` (`г├г▒` char(20), INDEX(`г├г▒`)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -151,7 +151,7 @@ SELECT * FROM `г╘г┤` WHERE `г├г▒` = 'О░О▒О▓О│О┤О╡О╢О╖О╕О╣О║О╗О╝О╜О╛О┐';
 SELECT * FROM `г╘г╡` WHERE `г├г▒` = 'бждбдвдгдддедждздидйдкдлдмдндодпд░д▒д▓д│';
 SELECT * FROM `г╘г╢` WHERE `г├г▒` = 'Пэ┤Пэ╡Пэ╢Пэ╖Пэ╕Пэ╣Пэ║Пэ╗Пэ╝Пэ╜Пэ╛Пэ┐Пэ└Пэ┴Пэ┬Пэ├Пэ─Пэ┼Пэ╞Пэ╟';
 
-#Heap
+#MEMORY
 SELECT * FROM `г╘г╖` WHERE `г├г▒` = 'О░О▒О▓О│О┤О╡О╢О╖О╕О╣О║О╗О╝О╜О╛О┐';
 SELECT * FROM `г╘г╕` WHERE `г├г▒` = 'бждбдвдгдддедждздидйдкдлдмдндодпд░д▒д▓д│';
 SELECT * FROM `г╘г╣` WHERE `г├г▒` = 'Пэ┤Пэ╡Пэ╢Пэ╖Пэ╕Пэ╣Пэ║Пэ╗Пэ╝Пэ╜Пэ╛Пэ┐Пэ└Пэ┴Пэ┬Пэ├Пэ─Пэ┼Пэ╞Пэ╟';

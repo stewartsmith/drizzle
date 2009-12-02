@@ -145,7 +145,13 @@ void mem_alloc_error(size_t size);
 
 bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
-bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display);
+bool list_open_tables(const char *db, 
+                      const char *wild, 
+                      bool(*func)(Table *table, 
+                                  open_table_list_st& open_list,
+                                  drizzled::plugin::InfoSchemaTable *schema_table), 
+                      Table *display,
+                      drizzled::plugin::InfoSchemaTable *schema_table);
 
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,

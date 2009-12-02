@@ -60,26 +60,22 @@ class MyisamEngine : public drizzled::plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, 
+   : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_HAS_DATA_DICTIONARY |
-                                     HTON_TEMPORARY_ONLY | 
+                                     HTON_CAN_INDEX_BLOBS |
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_TEMPORARY_ONLY |
+                                     HTON_NULL_IN_KEY |
+                                     HTON_MRR_CANT_SORT |
+                                     HTON_HAS_RECORDS |
+                                     HTON_DUPLICATE_POS |
+                                     HTON_AUTO_PART_KEY |
+                                     HTON_NEED_READ_RANGE_BUFFER |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
   { }
-
-  uint64_t table_flags() const
-  {
-    return (HA_NULL_IN_KEY |
-            HA_DUPLICATE_POS |
-            HA_CAN_INDEX_BLOBS |
-            HA_AUTO_PART_KEY |
-            HA_NO_TRANSACTIONS |
-            HA_HAS_RECORDS |
-            HA_STATS_RECORDS_IS_EXACT |
-            HA_NEED_READ_RANGE_BUFFER |
-            HA_MRR_CANT_SORT);
-  }
 
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
@@ -93,7 +89,6 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
-                    HA_CREATE_INFO& ha_create_info,
                     drizzled::message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
@@ -110,6 +105,9 @@ public:
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
+  uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
+  uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
 };
 
 int MyisamEngine::doGetTableDefinition(Session&,
@@ -1352,20 +1350,8 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-THR_LOCK_DATA **ha_myisam::store_lock(Session *,
-				      THR_LOCK_DATA **to,
-				      enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
-    file->lock.type=lock_type;
-  *to++= &file->lock;
-
-  return to;
-}
-
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
-                                HA_CREATE_INFO& ha_create_info,
                                 drizzled::message::Table& create_proto)
 {
   int error;
@@ -1382,8 +1368,8 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   create_info.max_rows= create_proto.options().max_rows();
   create_info.reloc_rows= create_proto.options().min_rows();
   create_info.with_auto_increment= share->next_number_key_offset == 0;
-  create_info.auto_increment= (ha_create_info.auto_increment_value ?
-                               ha_create_info.auto_increment_value -1 :
+  create_info.auto_increment= (create_proto.options().has_auto_increment_value() ?
+                               create_proto.options().auto_increment_value() -1 :
                                (uint64_t) 0);
   create_info.data_file_length= (create_proto.options().max_rows() *
                                  create_proto.options().avg_row_length());
@@ -1391,10 +1377,8 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   create_info.index_file_name=  NULL;
   create_info.language= share->table_charset->number;
 
-  if (ha_create_info.options & HA_LEX_CREATE_TMP_TABLE)
+  if (create_proto.type() == drizzled::message::Table::TEMPORARY)
     create_flags|= HA_CREATE_TMP_TABLE;
-  if (ha_create_info.options & HA_CREATE_KEEP_FILES)
-    create_flags|= HA_CREATE_KEEP_FILES;
   if (options & HA_OPTION_PACK_RECORD)
     create_flags|= HA_PACK_RECORD;
 

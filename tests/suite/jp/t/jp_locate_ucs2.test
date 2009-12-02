@@ -27,9 +27,9 @@ CREATE TABLE `£‘£≥` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engin
 CREATE TABLE `£‘£¥` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£‘£µ` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£‘£∂` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `£‘£∑` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£‘£∏` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£‘£π` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `£‘£∑` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£‘£∏` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£‘£π` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `£‘£±£∞` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£‘£±£±` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£‘£±£≤` (`£√£±` char(5), INDEX(`£√£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -88,7 +88,7 @@ SELECT LOCATE('èÌ‡',`£√£±`) from `£‘£∂`;
 SELECT LOCATE('è∞°',`£√£±`) from `£‘£∂`;
 
 
-#HEAP
+#MEMORY
 SELECT LOCATE('é±',`£√£±`) from `£‘£∑`;
 SELECT LOCATE('é≤',`£√£±`) from `£‘£∑`;
 SELECT LOCATE('é≥',`£√£±`) from `£‘£∑`;

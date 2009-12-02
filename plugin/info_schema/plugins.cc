@@ -71,32 +71,28 @@ vector<const plugin::ColumnInfo *> *PluginsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
 
   columns->push_back(new plugin::ColumnInfo("PLUGIN_TYPE",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("IS_ACTIVE",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
   return columns;
 }
 
@@ -141,15 +137,24 @@ class ShowPlugins
 {
   Session *session;
   Table *table;
+  plugin::InfoSchemaTable *schema_table;
 public:
-  ShowPlugins(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
+  ShowPlugins(Session *session_arg, Table *table_arg, plugin::InfoSchemaTable *sch_tab_arg)
+    : session(session_arg), table(table_arg), schema_table(sch_tab_arg) {}
 
   result_type operator() (argument_type plugin)
   {
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
+
+    /* mark fields that will be written to in the write bitset */
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
 
     table->field[0]->store(plugin.first.c_str(),
                            plugin.first.size(), cs);
@@ -169,22 +174,23 @@ public:
     table->field[3]->store(plugin.second->getModuleName().c_str(),
                            plugin.second->getModuleName().size(), cs);
 
-    return schema_table_store_record(session, table);
+    schema_table->addRow(table->record[0], table->s->reclength);
+    return false;
   }
 };
 
-int PluginsISMethods::fillTable(Session *session, TableList *tables)
+int PluginsISMethods::fillTable(Session *session, 
+                                Table *table,
+                                plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   const map<string, const drizzled::plugin::Plugin *> &plugin_map=
     registry.getPluginsMap();
   map<string, const drizzled::plugin::Plugin *>::const_iterator iter=
-    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table));
+    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table, schema_table));
   if (iter != plugin_map.end())
   {
     return 1;
   }
-  return (0);
+  return 0;
 }

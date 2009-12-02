@@ -57,11 +57,6 @@ bool alter_table(Session *session, char *new_db, char *new_name,
                  TableList *table_list,
                  AlterInfo *alter_info,
                  uint32_t order_num, order_st *order, bool ignore);
-/** @TODO This should die with I_S engine work from Padraig */
-bool create_like_schema_frm(Session* session,
-                            TableList* schema_table,
-                            HA_CREATE_INFO *create_info,
-                            message::Table* table_proto);
 
 } /* namespace drizzled */
 #endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */

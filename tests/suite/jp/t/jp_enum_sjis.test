@@ -28,9 +28,9 @@ CREATE TABLE `ÇsÇR` (`ÇbÇP` ENUM('É\','è\','ï\'), INDEX(`ÇbÇP`)) DEFAULT CHARSET
 CREATE TABLE `ÇsÇS` (`ÇbÇP` ENUM('±','≤','≥'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `ÇsÇT` (`ÇbÇP` ENUM('Ç†','Ç¢','Ç§'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `ÇsÇU` (`ÇbÇP` ENUM('É\','è\','ï\'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `ÇsÇV` (`ÇbÇP` ENUM('±','≤','≥'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `ÇsÇW` (`ÇbÇP` ENUM('Ç†','Ç¢','Ç§'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `ÇsÇX` (`ÇbÇP` ENUM('É\','è\','ï\'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `ÇsÇV` (`ÇbÇP` ENUM('±','≤','≥'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `ÇsÇW` (`ÇbÇP` ENUM('Ç†','Ç¢','Ç§'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `ÇsÇX` (`ÇbÇP` ENUM('É\','è\','ï\'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = MEMORY;
 CREATE TABLE `ÇsÇPÇO` (`ÇbÇP` ENUM('±','≤','≥'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `ÇsÇPÇP` (`ÇbÇP` ENUM('Ç†','Ç¢','Ç§'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `ÇsÇPÇQ` (`ÇbÇP` ENUM('É\','è\','ï\'), INDEX(`ÇbÇP`)) DEFAULT CHARSET = sjis engine = bdb;

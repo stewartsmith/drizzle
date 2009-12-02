@@ -1,10 +1,10 @@
 drop table if exists t1;
 set @@session.max_heap_table_size=16*1024*1024;
-create temporary table t1 (a int not null, b varchar(400), c int, primary key (a), key (c)) engine=heap comment="testing heaps" block_size=128;
+create temporary table t1 (a int not null, b varchar(400), c int, primary key (a), key (c)) engine=MEMORY comment="testing heaps" block_size=128;
 ERROR 42000: Incorrect usage/placement of 'block_size'
-create temporary table t1 (a int not null, b int, c varchar(400), primary key (a), key (b)) engine=heap comment="testing heaps" block_size=4;
+create temporary table t1 (a int not null, b int, c varchar(400), primary key (a), key (b)) engine=MEMORY comment="testing heaps" block_size=4;
 ERROR 42000: Incorrect usage/placement of 'block_size'
-create temporary table t1 (a int not null, b int, c varchar(400), d varchar(400), primary key (a), key (b)) engine=heap comment="testing heaps" block_size=24;
+create temporary table t1 (a int not null, b int, c varchar(400), d varchar(400), primary key (a), key (b)) engine=MEMORY comment="testing heaps" block_size=24;
 insert into t1 values (1,1,'012',NULL), (2,2,'0123456789',NULL), (3,3,'012345678901234567890123456789',NULL), (4,4,NULL,'0123456789012345678901234567890123456789012345678901234567890123456789');
 select * from t1;
 a	b	c	d

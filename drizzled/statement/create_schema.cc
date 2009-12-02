@@ -40,7 +40,7 @@ bool statement::CreateSchema::execute()
     my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;
   }
-  bool res= mysql_create_db(session, session->lex->name.str, &create_info);
+  bool res= mysql_create_db(session, session->lex->name.str, &create_info, is_if_not_exists);
   return res;
 }
 

@@ -186,14 +186,13 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 */
 
-bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
+bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   char	 path[FN_REFLEN+16];
   long result= 1;
   int error_erno;
   bool error= false;
-  uint32_t create_options= create_info ? create_info->options : 0;
   uint32_t path_len;
 
   /* do not create 'information_schema' db */
@@ -231,7 +230,7 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
   {
     if (errno == EEXIST)
     {
-      if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
+      if (! is_if_not_exists)
       {
 	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
 	error= true;
@@ -481,6 +480,147 @@ exit2:
   return(error);
 }
 
+
+static int rm_table_part2(Session *session, TableList *tables)
+{
+  TableList *table;
+  String wrong_tables;
+  int error= 0;
+  bool foreign_key_error= false;
+
+  pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
+
+  /*
+    If we have the table in the definition cache, we don't have to check the
+    .frm cursor to find if the table is a normal table (not view) and what
+    engine to use.
+  */
+
+  for (table= tables; table; table= table->next_local)
+  {
+    TableShare *share;
+    table->db_type= NULL;
+    if ((share= TableShare::getShare(table->db, table->table_name)))
+      table->db_type= share->db_type();
+  }
+
+  if (lock_table_names_exclusively(session, tables))
+  {
+    pthread_mutex_unlock(&LOCK_open);
+    return 1;
+  }
+
+  /* Don't give warnings for not found errors, as we already generate notes */
+  session->no_warnings_for_error= 1;
+
+  for (table= tables; table; table= table->next_local)
+  {
+    char *db=table->db;
+    plugin::StorageEngine *table_type;
+
+    error= session->drop_temporary_table(table);
+
+    switch (error) {
+    case  0:
+      // removed temporary table
+      continue;
+    case -1:
+      error= 1;
+      goto err_with_placeholders;
+    default:
+      // temporary table not found
+      error= 0;
+    }
+
+    table_type= table->db_type;
+
+    {
+      Table *locked_table;
+      abort_locked_tables(session, db, table->table_name);
+      remove_table_from_cache(session, db, table->table_name,
+                              RTFC_WAIT_OTHER_THREAD_FLAG |
+                              RTFC_CHECK_KILLED_FLAG);
+      /*
+        If the table was used in lock tables, remember it so that
+        unlock_table_names can free it
+      */
+      if ((locked_table= drop_locked_tables(session, db, table->table_name)))
+        table->table= locked_table;
+
+      if (session->killed)
+      {
+        error= -1;
+        goto err_with_placeholders;
+      }
+    }
+
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
+
+    if ((table_type == NULL
+          && (plugin::StorageEngine::getTableDefinition(*session,
+                                                        identifier) != EEXIST)))
+    {
+      // Table was not found on disk and table can't be created from engine
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                          ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
+                          table->table_name);
+    }
+    else
+    {
+      error= plugin::StorageEngine::dropTable(*session,
+                                              identifier,
+                                              false);
+
+      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
+      {
+	error= 0;
+        session->clear_error();
+      }
+
+      if (error == HA_ERR_ROW_IS_REFERENCED)
+      {
+        /* the table is referenced by a foreign key constraint */
+        foreign_key_error= true;
+      }
+    }
+
+    if (error == 0 || (foreign_key_error == false))
+        write_bin_log_drop_table(session, true, db, table->table_name);
+
+    if (error)
+    {
+      if (wrong_tables.length())
+        wrong_tables.append(',');
+      wrong_tables.append(String(table->table_name,system_charset_info));
+    }
+  }
+  /*
+    It's safe to unlock LOCK_open: we have an exclusive lock
+    on the table name.
+  */
+  pthread_mutex_unlock(&LOCK_open);
+  error= 0;
+  if (wrong_tables.length())
+  {
+    if (!foreign_key_error)
+      my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
+                      wrong_tables.c_ptr());
+    else
+    {
+      my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
+    }
+    error= 1;
+  }
+
+  pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+err_with_placeholders:
+  unlock_table_names(tables, NULL);
+  pthread_mutex_unlock(&LOCK_open);
+  session->no_warnings_for_error= 0;
+
+  return(error);
+}
+
 /*
   Removes files with known extensions plus.
   session MUST be set when calling this function!
@@ -561,9 +701,14 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       }
     }
   }
-  if (session->killed ||
-      (tot_list && mysql_rm_table_part2(session, tot_list, 1, 0, 1)))
+  if (session->killed)
     goto err;
+
+  if (tot_list)
+  {
+    if (rm_table_part2(session, tot_list))
+      goto err;
+  }
 
   my_dirend(dirp);
 

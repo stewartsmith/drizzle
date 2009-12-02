@@ -6305,6 +6305,8 @@ struct st_regex
   char* pattern; /* Pattern to be replaced */
   char* replace; /* String or expression to replace the pattern with */
   int icase; /* true if the match is case insensitive */
+  int global; /* true if the match should be global -- 
+                 i.e. repeat the matching until the end of the string */
 };
 
 struct st_replace_regex
@@ -6328,7 +6330,7 @@ struct st_replace_regex
 struct st_replace_regex *glob_replace_regex= 0;
 
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
-                char *string, int icase);
+                char *string, int icase, int global);
 
 
 
@@ -6429,7 +6431,17 @@ static struct st_replace_regex* init_replace_regex(char* expr)
 
     /* Check if we should do matching case insensitive */
     if (p < expr_end && *p == 'i')
+    {
+      p++;
       reg.icase= 1;
+    }
+
+    /* Check if we should do matching globally */
+    if (p < expr_end && *p == 'g')
+    {
+      p++;
+      reg.global= 1;
+    }
 
     /* done parsing the statement, now place it in regex_arr */
     if (insert_dynamic(&res->regex_arr,(unsigned char*) &reg))
@@ -6487,7 +6499,7 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
     get_dynamic(&r->regex_arr,(unsigned char*)&re,i);
 
     if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
-                     in_buf, re.icase))
+                     in_buf, re.icase, re.global))
     {
       /* if the buffer has been reallocated, make adjustements */
       if (save_out_buf != out_buf)
@@ -6557,48 +6569,80 @@ void free_replace_regex()
   icase - flag, if set to 1 the match is case insensitive
 */
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
-                char *replace, char *in_string, int icase)
+                char *replace, char *in_string, int icase, int global)
 {
-  string string_to_match(in_string);
   const char *error= NULL;
   int erroffset;
   int ovector[3];
   pcre *re= pcre_compile(pattern,
-                         icase ? PCRE_CASELESS : 0,
+                         icase ? PCRE_CASELESS | PCRE_MULTILINE : PCRE_MULTILINE,
                          &error, &erroffset, NULL);
   if (re == NULL)
     return 1;
 
-  int rc= pcre_exec(re, NULL, in_string, (int)strlen(in_string),
-                    0, 0, ovector, 3);
-  if (rc < 0)
+  if (! global)
   {
-    pcre_free(re);
-    return 1;
-  }
 
-  char *substring_to_replace= in_string + ovector[0];
-  int substring_length= ovector[1] - ovector[0];
-  *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
-  char * new_buf = (char *)malloc(*buf_len_p+1);
-  if (new_buf == NULL)
+    int rc= pcre_exec(re, NULL, in_string, (int)strlen(in_string),
+                      0, 0, ovector, 3);
+    if (rc < 0)
+    {
+      pcre_free(re);
+      return 1;
+    }
+
+    char *substring_to_replace= in_string + ovector[0];
+    int substring_length= ovector[1] - ovector[0];
+    *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
+    char * new_buf = (char *)malloc(*buf_len_p+1);
+    if (new_buf == NULL)
+    {
+      pcre_free(re);
+      return 1;
+    }
+
+    memset(new_buf, 0, *buf_len_p+1);
+    strncpy(new_buf, in_string, substring_to_replace-in_string);
+    strncpy(new_buf+(substring_to_replace-in_string), replace, strlen(replace));
+    strncpy(new_buf+(substring_to_replace-in_string)+strlen(replace),
+            substring_to_replace + substring_length,
+            strlen(in_string)
+              - substring_length
+              - (substring_to_replace-in_string));
+    *buf_p= new_buf;
+
+    pcre_free(re);
+    return 0;
+  }
+  else
   {
+    /* Repeatedly replace the string with the matched regex */
+    string subject(in_string);
+    size_t replace_length= strlen(replace);
+    size_t current_position= 0;
+    int rc= 0;
+    while(0 >= (rc= pcre_exec(re, NULL, subject.c_str() + current_position, subject.length() - current_position,
+                      0, 0, ovector, 3)))
+    {
+      current_position= static_cast<size_t>(ovector[0]);
+      replace_length= static_cast<size_t>(ovector[1] - ovector[0]);
+      subject.replace(current_position, replace_length, replace, replace_length);
+    }
+
+    char *new_buf = (char *) malloc(subject.length() + 1);
+    if (new_buf == NULL)
+    {
+      pcre_free(re);
+      return 1;
+    }
+    memset(new_buf, 0, subject.length() + 1);
+    strncpy(new_buf, subject.c_str(), subject.length());
+    *buf_len_p= subject.length() + 1;
+    *buf_p= new_buf;
+          
     pcre_free(re);
-    return 1;
+    return 0;
   }
-
-  memset(new_buf, 0, *buf_len_p+1);
-  strncpy(new_buf, in_string, substring_to_replace-in_string);
-  strncpy(new_buf+(substring_to_replace-in_string), replace, strlen(replace));
-  strncpy(new_buf+(substring_to_replace-in_string)+strlen(replace),
-          substring_to_replace + substring_length,
-          strlen(in_string)
-            - substring_length
-            - (substring_to_replace-in_string));
-  *buf_p= new_buf;
-
-  pcre_free(re);
-  return 0;
 }
 
 
