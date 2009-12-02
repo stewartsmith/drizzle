@@ -306,8 +306,6 @@ int drizzled::parse_table_proto(Session& session,
 
   share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
-  share->db_low_byte_first= true;
-
   share->keys= table.indexes_size();
 
   share->key_parts= 0;
@@ -818,7 +816,7 @@ int drizzled::parse_table_proto(Session& session,
     memset(&temp_table, 0, sizeof(temp_table));
     temp_table.s= share;
     temp_table.in_use= &session;
-    temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
+    temp_table.s->db_low_byte_first= true; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
@@ -1194,7 +1192,7 @@ int drizzled::parse_table_proto(Session& session,
     }
   }
 
-  share->db_low_byte_first= handler_file->low_byte_first();
+  share->db_low_byte_first= true; // @todo Question this.
   share->column_bitmap_size= bitmap_buffer_size(share->fields);
 
   my_bitmap_map *bitmaps;

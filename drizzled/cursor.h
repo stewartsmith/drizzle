@@ -562,7 +562,6 @@ public:
   virtual int final_drop_index(Table *)
   { return (HA_ERR_WRONG_COMMAND); }
 
-  virtual bool low_byte_first(void) const { return true; }
   virtual uint32_t checksum(void) const { return 0; }
 
   /**
