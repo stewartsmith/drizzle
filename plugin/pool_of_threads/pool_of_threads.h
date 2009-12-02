@@ -34,7 +34,7 @@
 
 
 /**
- * @brief 
+ * @brief
  *  Derived class for pool of threads scheduler.
  */
 class PoolOfThreadsScheduler: public drizzled::plugin::Scheduler
@@ -42,29 +42,35 @@ class PoolOfThreadsScheduler: public drizzled::plugin::Scheduler
 private:
   pthread_attr_t attr;
 
+  pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
+  pthread_mutex_t LOCK_session_kill;    /* protects sessions_to_be_killed */
+  /**
+   * LOCK_event_loop protects the non-thread safe libevent calls (event_add
+   * and event_del) and sessions_need_processing and sessions_waiting_for_io.
+   */
+  pthread_mutex_t LOCK_event_loop;
+
+  std::queue<Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
+  std::queue<Session *> sessions_to_be_killed; /* queue of sessions to be killed */
+  std::queue<Session *> sessions_need_processing; /* queue of sessions that needs some processing */
+  /**
+   * Collection of sessions with added events
+   *
+   * This should really be a collection of unordered Sessions. No one is more
+   * promising to encounter an io event earlier than another; so no order
+   * indeed! We will change this to unordered_set/hash_set when c++0x comes.
+   */
+  std::set<Session *> sessions_waiting_for_io;
+
 public:
-  PoolOfThreadsScheduler(const char *name_arg): 
-    Scheduler(name_arg)
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(struct sched_param));
-    /* Setup attribute parameter for session threads. */
-    (void) pthread_attr_init(&attr);
-    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
-  }
-
+  PoolOfThreadsScheduler(const char *name_arg);
   ~PoolOfThreadsScheduler();
 
   /**
-   * @brief 
+   * @brief
    *  Notify the thread pool about a new connection
    *
-   * @param[in] the newly connected session 
+   * @param[in] the newly connected session
    *
    * @return 
    *  True if there is an error.
@@ -95,6 +101,14 @@ public:
    * @retval 1 We got an error creating the thread pool. In this case we will abort all created threads.
    */
   bool libevent_init(void);
-}; 
+
+  void doIO(session_scheduler *sched);
+  void killSession(int Fd);
+  void addSession(int Fd);
+  pthread_handler_t mainLoop();
+  void sessionAddToQueue(session_scheduler *sched);
+
+
+};
 
 #endif /* PLUGIN_POOL_OF_THREADS_POOL_OF_THREADS_H */

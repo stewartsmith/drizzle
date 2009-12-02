@@ -922,7 +922,7 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 }
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "MEMORY",
   "1.0",
@@ -935,4 +935,4 @@ drizzle_declare_plugin
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

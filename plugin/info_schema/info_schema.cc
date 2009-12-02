@@ -158,7 +158,7 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "info_schema",
   "1.1",
@@ -171,4 +171,4 @@ drizzle_declare_plugin
   NULL,
   NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

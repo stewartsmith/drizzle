@@ -259,7 +259,7 @@ static DRIZZLE_SYSVAR_ULONG(
   ULONG_MAX, /* max */
   0 /* blksiz */);
 
-static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
+static drizzle_sys_var* logging_syslog_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(ident),
   DRIZZLE_SYSVAR(facility),
@@ -270,7 +270,7 @@ static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "logging_syslog",
   "0.2",
@@ -283,4 +283,4 @@ drizzle_declare_plugin
   logging_syslog_system_variables,
   NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_LIBRARY_H
 #define DRIZZLED_PLUGIN_LIBRARY_H
 
-#include <drizzled/lex_string.h>
+#include <string>
 
 namespace drizzled
 {
@@ -32,11 +32,33 @@ class Manifest;
 /* A handle for the dynamic library containing a plugin or plugins. */
 class Library
 {
-public:
-  LEX_STRING dl;
+  std::string name;
   void *handle;
-  Manifest *plugins;
-  Library() : dl(), handle(NULL), plugins(NULL) {}
+  const Manifest *manifest;
+
+  /* We don't want these */
+  Library();
+  Library(const Library &);
+  Library& operator=(const Library &);
+
+  /* Construction should only happen through the static factory method */
+  Library(const std::string &name_arg,
+          void *handle_arg,
+          const Manifest *manifest_arg);
+public:
+  ~Library();
+
+  const std::string &getName() const
+  {
+    return name;
+  }
+ 
+  const Manifest *getManifest() const
+  {
+    return manifest;
+  }
+
+  static Library *loadLibrary(const std::string &plugin_name);
 };
 
 } /* namespace plugin */
