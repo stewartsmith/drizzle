@@ -61,7 +61,7 @@ static bool verbose= false, lock_tables= false, ignore_errors= false,
             ignore_unique= false, opt_low_priority= false,
             tty_password= false;
 
-static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
+static uint32_t opt_use_threads= 0, opt_local_file= 0;
 static char  *opt_password= NULL, *current_user= NULL,
     *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
     *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
@@ -660,6 +660,6 @@ int main(int argc, char **argv)
   }
   free(opt_password);
   free_defaults(argv_to_free);
-  my_end(my_end_arg);
+  my_end();
   return(exitcode);
 }

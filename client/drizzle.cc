@@ -192,7 +192,6 @@ static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line, opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
-static uint32_t my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *current_host, *current_db, *current_user= NULL,
@@ -1223,7 +1222,7 @@ int main(int argc,char *argv[])
   if (get_options(argc, (char **) argv))
   {
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(1);
   }
 
@@ -1241,7 +1240,7 @@ int main(int argc,char *argv[])
   {
     /* we've executed a command so exit before we go into readline mode */
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(command_error);
   }
 
@@ -1251,7 +1250,7 @@ int main(int argc,char *argv[])
     if (status.line_buff == NULL)
     {
       free_defaults(defaults_argv);
-      my_end(0);
+      my_end();
       exit(1);
     }
   }
@@ -1368,7 +1367,7 @@ void drizzle_end(int sig)
   free(default_prompt);
   free(current_prompt);
   free_defaults(defaults_argv);
-  my_end(my_end_arg);
+  my_end();
   exit(status.exit_status);
 }
 
@@ -1699,7 +1698,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,NULL);
     if (status.line_buff == NULL)
     {
-      my_end(0);
+      my_end();
       exit(1);
     }
     status.line_buff->addString(argument);

@@ -114,7 +114,6 @@ static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 static uint32_t start_lineno= 0; /* Start line of current command */
-static uint32_t my_end_arg= 0;
 
 /* Number of lines of the result to include in failure report */
 static uint32_t opt_tail_lines= 0;
@@ -923,7 +922,7 @@ static void free_used_memory(void)
 static void cleanup_and_exit(int exit_code)
 {
   free_used_memory();
-  my_end(my_end_arg);
+  my_end();
 
   if (!silent) {
     switch (exit_code) {

@@ -251,7 +251,7 @@ end:
   printf("\n");
   azclose(&reader_handle);
 
-  my_end(0);
+  my_end();
   return 0;
 }
 

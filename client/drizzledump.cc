@@ -134,7 +134,6 @@ static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
 static uint32_t opt_compatible_mode= 0;
 static uint32_t opt_drizzle_port= 0;
-static uint32_t my_end_arg;
 static int first_error= 0;
 static string extended_row;
 FILE *md_result_file= 0;
@@ -884,7 +883,7 @@ static void free_resources(void)
   free(opt_password);
   if (defaults_argv)
     free_defaults(defaults_argv);
-  my_end(my_end_arg);
+  my_end();
 }
 
 

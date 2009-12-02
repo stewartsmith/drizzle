@@ -80,7 +80,7 @@ bool my_init(void)
 
 	/* End my_sys */
 
-void my_end(int)
+void my_end()
 {
   free_charsets();
   my_error_unregister_all();

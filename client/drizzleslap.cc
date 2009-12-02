@@ -161,7 +161,6 @@ static unsigned int num_blob_cols_size_min;
 static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
-static uint32_t my_end_arg= 0;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -326,7 +325,7 @@ int main(int argc, char **argv)
   if (get_options(&argc,&argv))
   {
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(1);
   }
 
@@ -345,7 +344,7 @@ int main(int argc, char **argv)
   {
     fprintf(stderr,"%s: Too many arguments\n",my_progname);
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(1);
   }
 
@@ -421,7 +420,7 @@ burnin:
     free(shared_memory_base_name);
 #endif
   free_defaults(defaults_argv);
-  my_end(my_end_arg);
+  my_end();
 
   return 0;
 }

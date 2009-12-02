@@ -529,7 +529,7 @@ void unireg_abort(int exit_code)
     usage();
   clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
-  my_end(0);
+  my_end();
   exit(exit_code);
 }
 
@@ -1655,7 +1655,7 @@ int main(int argc, char **argv)
   clean_up(1);
   plugin::Registry::shutdown();
   clean_up_mutexes();
-  my_end(0);
+  my_end();
   return 0;
 }
 

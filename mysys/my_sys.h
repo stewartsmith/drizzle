@@ -296,7 +296,7 @@ extern const char **my_error_unregister(int first, int last);
 extern void my_message(uint32_t my_err, const char *str,myf MyFlags);
 extern void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 extern bool my_init(void);
-extern void my_end(int infoflag);
+extern void my_end(void);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
 extern char * my_filename(File fd);
