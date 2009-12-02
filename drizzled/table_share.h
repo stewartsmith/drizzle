@@ -254,6 +254,10 @@ public:
   {
     return storage_engine;
   }
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return storage_engine;
+  }
   enum tmp_table_type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */

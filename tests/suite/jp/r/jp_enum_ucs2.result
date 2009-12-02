@@ -19,9 +19,9 @@ CREATE TABLE `£Τ£³` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHAR
 CREATE TABLE `£Τ£΄` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Τ£µ` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
 CREATE TABLE `£Τ£¶` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = myisam;
-CREATE TABLE `£Τ£·` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Τ£Έ` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = heap;
-CREATE TABLE `£Τ£Ή` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = heap;
+CREATE TABLE `£Τ£·` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Τ£Έ` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
+CREATE TABLE `£Τ£Ή` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = MEMORY;
 CREATE TABLE `£Τ£±£°` (`£Γ£±` ENUM('±','²','³'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Τ£±£±` (`£Γ£±` ENUM('¤Ά','¤¤','¤¦'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
 CREATE TABLE `£Τ£±£²` (`£Γ£±` ENUM('νά','νέ','νή'), INDEX(`£Γ£±`)) DEFAULT CHARSET = ucs2 engine = bdb;
@@ -138,19 +138,19 @@ Table	Create Table
 £Τ£·	CREATE TABLE `£Τ£·` (
   `£Γ£±` enum('±','²','³') default NULL,
   KEY `£Γ£±` (`£Γ£±`)
-) ENGINE=HEAP DEFAULT CHARSET=ucs2
+) ENGINE=MEMORY DEFAULT CHARSET=ucs2
 SHOW CREATE TABLE `£Τ£Έ`;
 Table	Create Table
 £Τ£Έ	CREATE TABLE `£Τ£Έ` (
   `£Γ£±` enum('¤Ά','¤¤','¤¦') default NULL,
   KEY `£Γ£±` (`£Γ£±`)
-) ENGINE=HEAP DEFAULT CHARSET=ucs2
+) ENGINE=MEMORY DEFAULT CHARSET=ucs2
 SHOW CREATE TABLE `£Τ£Ή`;
 Table	Create Table
 £Τ£Ή	CREATE TABLE `£Τ£Ή` (
   `£Γ£±` enum('νά','νέ','νή') default NULL,
   KEY `£Γ£±` (`£Γ£±`)
-) ENGINE=HEAP DEFAULT CHARSET=ucs2
+) ENGINE=MEMORY DEFAULT CHARSET=ucs2
 SHOW CREATE TABLE `£Τ£±£°`;
 Table	Create Table
 £Τ£±£°	CREATE TABLE `£Τ£±£°` (

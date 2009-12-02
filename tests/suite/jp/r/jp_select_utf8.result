@@ -18,9 +18,9 @@ CREATE TABLE `Ｔ３` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = i
 CREATE TABLE `Ｔ４` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ５` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ６` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ７` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ８` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ９` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = heap;
+CREATE TABLE `Ｔ７` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ８` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ９` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = MEMORY;
 CREATE TABLE `Ｔ１０` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１１` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１２` (c1 char(20), INDEX(c1)) DEFAULT CHARSET = utf8 engine = bdb;

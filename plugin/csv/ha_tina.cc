@@ -125,6 +125,7 @@ public:
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NO_AUTO_INCREMENT |
                                      HTON_HAS_DATA_DICTIONARY |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_FILE_BASED) {}
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)

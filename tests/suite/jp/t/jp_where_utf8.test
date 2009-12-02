@@ -26,9 +26,9 @@ CREATE TABLE `Ｔ３` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf
 CREATE TABLE `Ｔ４` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ５` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
 CREATE TABLE `Ｔ６` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ７` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ８` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = heap;
-CREATE TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = heap;
+CREATE TABLE `Ｔ７` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ８` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
+CREATE TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
 CREATE TABLE `Ｔ１０` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１１` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
 CREATE TABLE `Ｔ１２` (`Ｃ１` char(20), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
@@ -61,7 +61,7 @@ SELECT * FROM `Ｔ４` WHERE `Ｃ１` = 'ｰｱｲｳｴｵｶｷｸｹｺｻｼ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` = '・ぁあぃいぅうぇえぉおかがきぎくぐけげこ';
 SELECT * FROM `Ｔ６` WHERE `Ｃ１` = '鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖';
 
-#Heap
+#MEMORY
 SELECT * FROM `Ｔ７` WHERE `Ｃ１` = 'ｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ';
 SELECT * FROM `Ｔ８` WHERE `Ｃ１` = '・ぁあぃいぅうぇえぉおかがきぎくぐけげこ';
 SELECT * FROM `Ｔ９` WHERE `Ｃ１` = '鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖';

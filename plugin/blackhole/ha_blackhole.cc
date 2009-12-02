@@ -44,6 +44,7 @@ public:
    : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_AUTO_PART_KEY |
                                      HTON_HAS_DATA_DICTIONARY)
   {
@@ -270,40 +271,6 @@ int ha_blackhole::info(uint32_t flag)
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
-}
-
-THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
-                                         THR_LOCK_DATA **to,
-                                         enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type= lock_type;
-  }
-  *to++= &lock;
-  return(to);
 }
 
 

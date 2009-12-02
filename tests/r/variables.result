@@ -154,7 +154,7 @@ timed_mutexes	OFF
 select * from information_schema.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
 TIMED_MUTEXES	OFF
-set storage_engine=MYISAM, storage_engine="HEAP";
+set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 Variable_name	Value
 storage_engine	MEMORY

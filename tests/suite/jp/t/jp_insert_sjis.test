@@ -27,9 +27,9 @@ CREATE TABLE `‚s‚R` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = innodb;
 CREATE TABLE `‚s‚S` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚T` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `‚s‚U` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `‚s‚V` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚W` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `‚s‚X` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `‚s‚V` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚W` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `‚s‚X` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = MEMORY;
 CREATE TABLE `‚s‚P‚O` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `‚s‚P‚P` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `‚s‚P‚Q` (`‚b‚P` char(5)) DEFAULT CHARSET = sjis engine = bdb;
@@ -201,7 +201,7 @@ SELECT INSERT(`‚b‚P`,4,1,'”\') FROM `‚s‚U`;
 SELECT INSERT(`‚b‚P`,4,2,'”\”\' ) FROM `‚s‚U`;
 SELECT INSERT(`‚b‚P`,5,1,'”\') FROM `‚s‚U`;
 
-#HEAP
+#MEMORY
 SELECT INSERT(`‚b‚P`,1,1,'¶') FROM `‚s‚V`;
 SELECT INSERT(`‚b‚P`,1,2,'¶·') FROM `‚s‚V`;
 SELECT INSERT(`‚b‚P`,1,3,'¶·¸') FROM `‚s‚V`;

@@ -446,14 +446,14 @@ DROP TABLE t1;
 DROP TABLE t2;
 DROP TABLE t3;
 DROP TABLE t4;
-CREATE TABLE t1(c1 char(3)) DEFAULT CHARSET = ujis ENGINE = HEAP;
-CREATE TABLE t2(c1 char(3)) DEFAULT CHARSET = ujis ENGINE = HEAP;
+CREATE TABLE t1(c1 char(3)) DEFAULT CHARSET = ujis ENGINE = MEMORY;
+CREATE TABLE t2(c1 char(3)) DEFAULT CHARSET = ujis ENGINE = MEMORY;
 CREATE TABLE t3(
 `±` char(1),
 `¤Ά` char(1),
 `νά` char(1)
-)DEFAULT CHARSET = ujis ENGINE = HEAP;
-CREATE TABLE t4(c1 char(1)) DEFAULT CHARSET = ujis ENGINE =HEAP;
+)DEFAULT CHARSET = ujis ENGINE = MEMORY;
+CREATE TABLE t4(c1 char(1)) DEFAULT CHARSET = ujis ENGINE =MEMORY;
 INSERT INTO t1 VALUES ('xxx');
 INSERT INTO t2 VALUES ('±¤Άνά');
 INSERT INTO t3 VALUES ('x','x','x'),('x','x','x'),('y','y','y'),('y','y','y'),('z','z','z'),('z','z','z');

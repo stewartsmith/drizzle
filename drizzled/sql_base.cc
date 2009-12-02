@@ -823,7 +823,8 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    quick_rm_table(*this, db_name, table_name, false);
+    TableIdentifier identifier(db_name, table_name, NO_TMP_TABLE);
+    quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }
 }
@@ -1991,6 +1992,7 @@ retry:
       }
       return 1;
     }
+
     goto err;
   }
 
@@ -2302,8 +2304,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= (new_tmp_table->cursor->has_transactions() ?
-                     TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
+  share->tmp_table= TEMP_TABLE;
 
   if (link_in_list)
   {

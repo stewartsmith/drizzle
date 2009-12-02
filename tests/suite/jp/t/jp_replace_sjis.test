@@ -27,9 +27,9 @@ CREATE TABLE `ÇsÇR` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = innodb;
 CREATE TABLE `ÇsÇS` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `ÇsÇT` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = myisam;
 CREATE TABLE `ÇsÇU` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = myisam;
-CREATE TABLE `ÇsÇV` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `ÇsÇW` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = heap;
-CREATE TABLE `ÇsÇX` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = heap;
+CREATE TABLE `ÇsÇV` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `ÇsÇW` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = MEMORY;
+CREATE TABLE `ÇsÇX` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = MEMORY;
 CREATE TABLE `ÇsÇPÇO` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `ÇsÇPÇP` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = bdb;
 CREATE TABLE `ÇsÇPÇQ` (`ÇbÇP` char(5)) DEFAULT CHARSET = sjis engine = bdb;
@@ -81,7 +81,7 @@ SELECT REPLACE(`ÇbÇP`,'ï\','ï\ï\') FROM `ÇsÇU`;
 SELECT REPLACE(`ÇbÇP`,'ó\','ó\ó\') FROM `ÇsÇU`;
 SELECT REPLACE(`ÇbÇP`,'ç\','ç\ç\') FROM `ÇsÇU`;
 
-#HEAP
+#MEMORY
 SELECT REPLACE(`ÇbÇP`,'±','±±') FROM `ÇsÇV`;
 SELECT REPLACE(`ÇbÇP`,'≤','≤≤') FROM `ÇsÇV`;
 SELECT REPLACE(`ÇbÇP`,'≥','≥≥') FROM `ÇsÇV`;

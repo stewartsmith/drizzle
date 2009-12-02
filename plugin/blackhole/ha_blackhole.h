@@ -72,9 +72,6 @@ public:
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
-  THR_LOCK_DATA **store_lock(Session *session,
-                             THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
 };
 
 #endif /* PLUGIN_BLACKHOLE_HA_BLACKHOLE_H */

@@ -217,15 +217,15 @@ DROP TABLE `ソソソ`;
 DROP TABLE `十十十`;
 
 #
-# Test HEAP
+# Test MEMORY
 #
 
-CREATE TABLE `ｱｱｱ`(`ｷｷｷ` char(5)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `ｲｲｲ`(`ｹｹｹ` char(5)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `あああ`(`ききき` char(5)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `いいい`(`けけけ` char(5)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `ソソソ`(`表表表` char(5)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `十十十`(`予予予` char(5)) DEFAULT CHARSET = sjis engine=HEAP;
+CREATE TABLE `ｱｱｱ`(`ｷｷｷ` char(5)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `ｲｲｲ`(`ｹｹｹ` char(5)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `あああ`(`ききき` char(5)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `いいい`(`けけけ` char(5)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `ソソソ`(`表表表` char(5)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `十十十`(`予予予` char(5)) DEFAULT CHARSET = sjis engine=MEMORY;
 
 INSERT INTO `ｱｱｱ` VALUES ('ｱｱｱｱｱ'),('ｲｲｲｲｲ'),('ｳｳｳｳｳ');
 INSERT INTO `あああ` VALUES ('あああああ'),('いいいいい'),('ううううう');
