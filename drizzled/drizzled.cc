@@ -530,7 +530,7 @@ void unireg_abort(int exit_code)
     usage();
   clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
-  my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
+  my_end(opt_endinfo ? MY_GIVE_INFO : 0);
   exit(exit_code);
 }
 
@@ -1656,7 +1656,7 @@ int main(int argc, char **argv)
   clean_up(1);
   plugin::Registry::shutdown();
   clean_up_mutexes();
-  my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
+  my_end(opt_endinfo ? MY_GIVE_INFO : 0);
   return 0;
 }
 

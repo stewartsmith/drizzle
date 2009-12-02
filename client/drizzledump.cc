@@ -682,7 +682,7 @@ static int get_options(int *argc, char ***argv)
     return(ho_error);
 
   if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
+    my_end_arg= MY_GIVE_INFO;
 
   if (!path && (enclosed || opt_enclosed || escaped || lines_terminated ||
                 fields_terminated))

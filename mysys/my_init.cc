@@ -88,25 +88,11 @@ void my_end(int infoflag)
     optimized until this compiler is not in use anymore
   */
   FILE *info_file= stderr;
-  bool print_info= 0;
 
-  if ((infoflag & MY_CHECK_ERROR) || print_info)
-
-  {					/* Test if some file is left open */
-    if (my_file_opened | my_stream_opened)
-    {
-      /* TODO: Mark... look at replacement here
-       * (void) my_message_no_curses(EE_OPEN_WARNING,errbuff[0],ME_BELL);
-       */
-      (void) fflush(stdout);
-      
-      my_print_open_files();
-    }
-  }
   free_charsets();
   my_error_unregister_all();
 
-  if ((infoflag & MY_GIVE_INFO) || print_info)
+  if (infoflag & MY_GIVE_INFO)
   {
 #ifdef HAVE_GETRUSAGE
     struct rusage rus;
@@ -131,10 +117,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
 	      rus.ru_msgsnd, rus.ru_msgrcv, rus.ru_nsignals,
 	      rus.ru_nvcsw, rus.ru_nivcsw);
 #endif
-  }
-  else if (infoflag & MY_CHECK_ERROR)
-  {
-    TERMINATE(stderr, 0);		/* Print memory leaks on screen */
   }
 
   my_thread_end();

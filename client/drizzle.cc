@@ -1837,7 +1837,7 @@ static int get_options(int argc, char **argv)
   if (tty_password)
     opt_password= client_get_tty_password(NULL);
   if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
+    my_end_arg= MY_GIVE_INFO;
   return(0);
 }
 
