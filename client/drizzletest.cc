@@ -75,7 +75,6 @@ extern "C"
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
-#define MAX_EMBEDDED_SERVER_ARGS 64
 #define MAX_DELIMITER_LENGTH 16
 /* Flags controlling send and reap */
 #define QUERY_SEND_FLAG  1
@@ -98,8 +97,7 @@ const char *opt_include= NULL, *opt_charsets_dir;
 const char *opt_testdir= NULL;
 static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
-static bool opt_compress= false, silent= false, verbose= false;
-static bool debug_info_flag= false, debug_check_flag= false;
+static bool silent= false, verbose= false;
 static bool tty_password= false;
 static bool opt_mark_progress= false;
 static bool parsing_disabled= false;
@@ -116,7 +114,6 @@ static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 static uint32_t start_lineno= 0; /* Start line of current command */
-static uint32_t my_end_arg= 0;
 
 /* Number of lines of the result to include in failure report */
 static uint32_t opt_tail_lines= 0;
@@ -157,9 +154,6 @@ static struct st_test_file* file_stack_end;
 
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
-
-static int embedded_server_arg_count=0;
-static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
 
 /*
   Timer related variables
@@ -916,8 +910,6 @@ static void free_used_memory(void)
     if (var_reg[i].alloced_len)
       free(var_reg[i].str_val);
   }
-  while (embedded_server_arg_count > 1)
-    free(embedded_server_args[--embedded_server_arg_count]);
 
   free_all_replace();
   free(opt_pass);
@@ -930,7 +922,7 @@ static void free_used_memory(void)
 static void cleanup_and_exit(int exit_code)
 {
   free_used_memory();
-  my_end(my_end_arg);
+  my_end();
 
   if (!silent) {
     switch (exit_code) {
@@ -4565,17 +4557,8 @@ static struct my_option my_long_options[] =
   {"character-sets-dir", OPT_CHARSETS_DIR,
    "Directory where character sets are.", (char**) &opt_charsets_dir,
    (char**) &opt_charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"compress", 'C', "Use the compressed server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"database", 'D', "Database to use.", (char**) &opt_db, (char**) &opt_db, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', "Connect to host.", (char**) &opt_host, (char**) &opt_host, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
@@ -4606,10 +4589,6 @@ static struct my_option my_long_options[] =
   {"result-file", 'R', "Read/Store result from/in this file.",
    (char**) &result_file_name, (char**) &result_file_name, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-arg", 'A', "Send option value to embedded server as a parameter.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-file", 'F', "Read embedded server arguments from file.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Suppress all normal output. Synonym for --quiet.",
    (char**) &silent, (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"sleep", 'T', "Sleep always this many seconds on sleep commands.",
@@ -4645,6 +4624,7 @@ static void usage(void)
 {
   print_version();
   printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
+  printf("Drizzle version modified by Brian, Jay, Monty Taylor, PatG and Stewart\n");
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
   printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
   printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
@@ -4652,52 +4632,6 @@ static void usage(void)
   printf("  --no-defaults       Don't read default options from any options file.\n");
   my_print_variables(my_long_options);
 }
-
-/*
-  Read arguments for embedded server and put them into
-  embedded_server_args[]
-*/
-
-static void read_embedded_server_arguments(const char *name)
-{
-  char argument[1024],buff[FN_REFLEN], *str=0;
-  FILE *file;
-
-  if (!test_if_hard_path(name))
-  {
-    sprintf(buff,"%s%s",opt_basedir,name);
-    name=buff;
-  }
-  fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
-
-  if (!embedded_server_arg_count)
-  {
-    embedded_server_arg_count=1;
-    embedded_server_args[0]= (char*) "";    /* Progname */
-  }
-  if (!(file= fopen(buff, "r")))
-    die("Failed to open file '%s'", buff);
-
-  while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
-         (str=fgets(argument,sizeof(argument), file)))
-  {
-    *(strchr(str, '\0')-1)=0;        /* Remove end newline */
-    if (!(embedded_server_args[embedded_server_arg_count]=
-          (char*) strdup(str)))
-    {
-      fclose(file);
-      die("Out of memory");
-
-    }
-    embedded_server_arg_count++;
-  }
-  fclose(file);
-  if (str)
-    die("Too many arguments in option file: %s",name);
-
-  return;
-}
-
 
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
@@ -4780,22 +4714,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   case 't':
     strncpy(TMPDIR, argument, sizeof(TMPDIR));
     break;
-  case 'A':
-    if (!embedded_server_arg_count)
-    {
-      embedded_server_arg_count=1;
-      embedded_server_args[0]= (char*) "";
-    }
-    if (embedded_server_arg_count == MAX_EMBEDDED_SERVER_ARGS-1 ||
-        !(embedded_server_args[embedded_server_arg_count++]=
-          strdup(argument)))
-    {
-      die("Can't use server argument");
-    }
-    break;
-  case 'F':
-    read_embedded_server_arguments(argument);
-    break;
   case 'V':
     print_version();
     exit(0);
@@ -4824,10 +4742,6 @@ static int parse_args(int argc, char **argv)
     opt_db= *argv;
   if (tty_password)
     opt_pass= client_get_tty_password(NULL);          /* purify tested */
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
 
   return 0;
 }

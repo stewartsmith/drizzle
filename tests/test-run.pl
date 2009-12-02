@@ -1269,7 +1269,7 @@ sub generate_cmdline_mysqldump ($) {
   my($mysqld) = @_;
   return
     mtr_native_path($exe_drizzledump) .
-      " --no-defaults -uroot --debug-check " .
+      " --no-defaults -uroot " .
       "--port=$mysqld->{'port'} ";
 }
 
@@ -1461,7 +1461,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysqlimport=
     mtr_native_path($exe_drizzleimport) .
-    " -uroot --debug-check " .
+    " -uroot " .
     "--port=$master->[0]->{'port'} ";
 
   if ( $opt_debug )
@@ -1477,7 +1477,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysql=
     mtr_native_path($exe_drizzle) .
-    " --no-defaults --debug-check --host=localhost  --user=root --password= " .
+    " --no-defaults --host=localhost  --user=root --password= " .
     "--port=$master->[0]->{'port'} ";
 
   $ENV{'MYSQL'}= $cmdline_mysql;
