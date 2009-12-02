@@ -4632,6 +4632,7 @@ static void usage(void)
 {
   print_version();
   printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
+  printf("Drizzle version modified by Brian, Jay, Monty Taylor, PatG and Stewart\n");
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
   printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
   printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
