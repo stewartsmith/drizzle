@@ -75,7 +75,6 @@ extern "C"
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
-#define MAX_EMBEDDED_SERVER_ARGS 64
 #define MAX_DELIMITER_LENGTH 16
 /* Flags controlling send and reap */
 #define QUERY_SEND_FLAG  1
@@ -157,9 +156,6 @@ static struct st_test_file* file_stack_end;
 
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
-
-static int embedded_server_arg_count=0;
-static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
 
 /*
   Timer related variables
@@ -916,8 +912,6 @@ static void free_used_memory(void)
     if (var_reg[i].alloced_len)
       free(var_reg[i].str_val);
   }
-  while (embedded_server_arg_count > 1)
-    free(embedded_server_args[--embedded_server_arg_count]);
 
   free_all_replace();
   free(opt_pass);
@@ -4606,10 +4600,6 @@ static struct my_option my_long_options[] =
   {"result-file", 'R', "Read/Store result from/in this file.",
    (char**) &result_file_name, (char**) &result_file_name, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-arg", 'A', "Send option value to embedded server as a parameter.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-file", 'F', "Read embedded server arguments from file.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Suppress all normal output. Synonym for --quiet.",
    (char**) &silent, (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"sleep", 'T', "Sleep always this many seconds on sleep commands.",
@@ -4652,52 +4642,6 @@ static void usage(void)
   printf("  --no-defaults       Don't read default options from any options file.\n");
   my_print_variables(my_long_options);
 }
-
-/*
-  Read arguments for embedded server and put them into
-  embedded_server_args[]
-*/
-
-static void read_embedded_server_arguments(const char *name)
-{
-  char argument[1024],buff[FN_REFLEN], *str=0;
-  FILE *file;
-
-  if (!test_if_hard_path(name))
-  {
-    sprintf(buff,"%s%s",opt_basedir,name);
-    name=buff;
-  }
-  fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
-
-  if (!embedded_server_arg_count)
-  {
-    embedded_server_arg_count=1;
-    embedded_server_args[0]= (char*) "";    /* Progname */
-  }
-  if (!(file= fopen(buff, "r")))
-    die("Failed to open file '%s'", buff);
-
-  while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
-         (str=fgets(argument,sizeof(argument), file)))
-  {
-    *(strchr(str, '\0')-1)=0;        /* Remove end newline */
-    if (!(embedded_server_args[embedded_server_arg_count]=
-          (char*) strdup(str)))
-    {
-      fclose(file);
-      die("Out of memory");
-
-    }
-    embedded_server_arg_count++;
-  }
-  fclose(file);
-  if (str)
-    die("Too many arguments in option file: %s",name);
-
-  return;
-}
-
 
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
@@ -4779,22 +4723,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     break;
   case 't':
     strncpy(TMPDIR, argument, sizeof(TMPDIR));
-    break;
-  case 'A':
-    if (!embedded_server_arg_count)
-    {
-      embedded_server_arg_count=1;
-      embedded_server_args[0]= (char*) "";
-    }
-    if (embedded_server_arg_count == MAX_EMBEDDED_SERVER_ARGS-1 ||
-        !(embedded_server_args[embedded_server_arg_count++]=
-          strdup(argument)))
-    {
-      die("Can't use server argument");
-    }
-    break;
-  case 'F':
-    read_embedded_server_arguments(argument);
     break;
   case 'V':
     print_version();
