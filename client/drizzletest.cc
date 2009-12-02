@@ -97,7 +97,7 @@ const char *opt_include= NULL, *opt_charsets_dir;
 const char *opt_testdir= NULL;
 static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
-static bool opt_compress= false, silent= false, verbose= false;
+static bool silent= false, verbose= false;
 static bool debug_info_flag= false, debug_check_flag= false;
 static bool tty_password= false;
 static bool opt_mark_progress= false;
@@ -4559,9 +4559,6 @@ static struct my_option my_long_options[] =
   {"character-sets-dir", OPT_CHARSETS_DIR,
    "Directory where character sets are.", (char**) &opt_charsets_dir,
    (char**) &opt_charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"compress", 'C', "Use the compressed server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"database", 'D', "Database to use.", (char**) &opt_db, (char**) &opt_db, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
