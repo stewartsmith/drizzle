@@ -4291,22 +4291,14 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
       thus we safely can take table from the first field.
     */
     fld= (Item_field*)f++;
-    if (!(field= fld->filed_for_view_update()))
-    {
-      my_error(ER_NONUPDATEABLE_COLUMN, MYF(0), fld->name);
-      goto err;
-    }
+    field= static_cast<Item_field *>(fld);
     table= field->field->table;
     table->auto_increment_field_not_null= false;
     f.rewind();
   }
   while ((fld= f++))
   {
-    if (!(field= fld->filed_for_view_update()))
-    {
-      my_error(ER_NONUPDATEABLE_COLUMN, MYF(0), fld->name);
-      goto err;
-    }
+    field= static_cast<Item_field *>(fld);
     value=v++;
     Field *rfield= field->field;
     table= rfield->table;

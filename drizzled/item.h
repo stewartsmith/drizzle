@@ -710,7 +710,6 @@ public:
       \#    Created field
   */
   Field *tmp_table_field_from_field_type(Table *table, bool fixed_length);
-  virtual Item_field *filed_for_view_update();
 
   virtual Item *neg_transformer(Session *session);
   virtual Item *update_value_transformer(unsigned char *select_arg);
