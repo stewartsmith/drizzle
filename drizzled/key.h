@@ -56,22 +56,9 @@ public:
     name.length= name_len_arg;
   }
 
-  /**
-   * Construct an (almost) deep copy of this key. Only those
-   * elements that are known to never change are not copied.
-   * If out of memory, a partial copy is returned and an error is set
-   * in Session.
-   */
-  Key(const Key &rhs, MEM_ROOT *mem_root);
   virtual ~Key() {}
   /* Equality comparison of keys (ignoring name) */
   friend bool foreign_key_prefix(Key *a, Key *b);
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  virtual Key *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Key(*this, mem_root); }
 };
 
 
