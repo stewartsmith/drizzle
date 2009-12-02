@@ -188,7 +188,7 @@ static bool ignore_errors= false, quick= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false;
 static uint32_t  show_progress_size= 0;
-static bool debug_info_flag, debug_check_flag;
+static bool debug_info_flag;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line, opt_drizzle_port= 0;
@@ -1455,9 +1455,6 @@ static struct my_option my_long_options[] =
   {"compress", 'C', N_("Use compression in server/client protocol."),
    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, N_("Check memory and open file usage at exit ."),
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-info", 'T', N_("Print some debug info at exit."), (char**) &debug_info_flag,
    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"database", 'D', N_("Database to use."), (char**) &current_db,
@@ -1841,8 +1838,6 @@ static int get_options(int argc, char **argv)
     opt_password= client_get_tty_password(NULL);
   if (debug_info_flag)
     my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
   return(0);
 }
 

@@ -1477,7 +1477,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysql=
     mtr_native_path($exe_drizzle) .
-    " --no-defaults --debug-check --host=localhost  --user=root --password= " .
+    " --no-defaults --host=localhost  --user=root --password= " .
     "--port=$master->[0]->{'port'} ";
 
   $ENV{'MYSQL'}= $cmdline_mysql;
