@@ -973,3 +973,29 @@ bool check_db_dir_existence(const char *db_name)
 
   return my_access(db_dir_path, F_OK);
 }
+
+
+/*
+  Check if database name is valid
+
+  SYNPOSIS
+    check_db_name()
+    org_name		Name of database and length
+
+  RETURN
+    0	ok
+    1   error
+*/
+
+bool check_db_name(LEX_STRING *org_name)
+{
+  char *name= org_name->str;
+  uint32_t name_length= org_name->length;
+
+  if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
+    return 1;
+
+  my_casedn_str(files_charset_info, name);
+
+  return check_identifier_name(org_name);
+}
