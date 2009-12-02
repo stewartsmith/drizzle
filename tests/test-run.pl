@@ -1461,7 +1461,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysqlimport=
     mtr_native_path($exe_drizzleimport) .
-    " -uroot --debug-check " .
+    " -uroot " .
     "--port=$master->[0]->{'port'} ";
 
   if ( $opt_debug )
