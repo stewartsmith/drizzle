@@ -58,7 +58,7 @@ static char *add_load_option(char *ptr,const char *object,
 
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
-            ignore_unique= false, opt_compress= false, opt_low_priority= false,
+            ignore_unique= false, opt_low_priority= false,
             tty_password= false;
 static bool debug_info_flag= false, debug_check_flag= false;
 static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
@@ -75,9 +75,6 @@ static struct my_option my_long_options[] =
   {"columns", 'c',
    "Use only these columns to import the data to. Give the column names in a comma separated list. This is same as giving columns to LOAD DATA INFILE.",
    (char**) &opt_columns, (char**) &opt_columns, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
-   0, 0, 0},
-  {"compress", 'C', "Use compression in server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
   {"debug",'#', "Output debug log. Often this is 'd:t:o,filename'.", 0, 0, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
