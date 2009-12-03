@@ -63,19 +63,23 @@ int64_t LengthFunction::val_int()
 }
 
 plugin::Create_function<LengthFunction> *lengthudf= NULL;
+plugin::Create_function<LengthFunction> *octet_lengthudf= NULL;
 
 static int initialize(drizzled::plugin::Registry &registry)
 {
   lengthudf= new plugin::Create_function<LengthFunction>("length");
-  lengthudf->addAlias("octet_length");
+  octet_lengthudf= new plugin::Create_function<LengthFunction>("octet_length");
   registry.add(lengthudf);
+  registry.add(octet_lengthudf);
   return 0;
 }
 
 static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(lengthudf);
+   registry.remove(octet_lengthudf);
    delete lengthudf;
+   delete octet_lengthudf;
    return 0;
 }
 

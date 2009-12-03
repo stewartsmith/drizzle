@@ -34,7 +34,6 @@ class Plugin
 {
 private:
   const std::string name;
-  std::vector<std::string> aliases;
   bool is_active;
   Module *module;
   const std::string type_name;
@@ -67,16 +66,6 @@ public:
     return name;
   } 
 
-  const std::vector<std::string>& getAliases() const
-  {
-    return aliases;
-  }
-
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
- 
   void setModule(Module *module_arg)
   {
     module= module_arg;

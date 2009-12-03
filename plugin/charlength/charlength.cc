@@ -64,19 +64,23 @@ int64_t CharLengthFunction::val_int()
 }
 
 plugin::Create_function<CharLengthFunction> *charlengthudf= NULL;
+plugin::Create_function<CharLengthFunction> *characterlengthudf= NULL;
 
 static int initialize(drizzled::plugin::Registry &registry)
 {
   charlengthudf= new plugin::Create_function<CharLengthFunction>("char_length");
-  charlengthudf->addAlias("character_length");
+  characterlengthudf= new plugin::Create_function<CharLengthFunction>("character_length");
   registry.add(charlengthudf);
+  registry.add(characterlengthudf);
   return 0;
 }
 
 static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(charlengthudf);
+   registry.remove(characterlengthudf);
    delete charlengthudf;
+   delete characterlengthudf;
    return 0;
 }
 

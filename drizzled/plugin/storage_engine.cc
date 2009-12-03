@@ -40,16 +40,14 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/name_map.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
-#include "drizzled/name_map.h"
 #include "drizzled/xid.h"
 
 #include <drizzled/table_proto.h>
 
-#include <drizzled/hash.h>
+#include "drizzled/hash.h"
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -61,7 +59,6 @@ namespace drizzled
 typedef hash_map<std::string, plugin::StorageEngine *> EngineMap;
 typedef std::vector<plugin::StorageEngine *> EngineVector;
 
-static EngineMap engine_map;
 static EngineVector vector_of_engines;
 static EngineVector vector_of_transactional_engines;
 
@@ -202,22 +199,6 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 
 bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 {
-  vector<string> aliases= engine->getAliases();
-
-  string name= engine->getName();
-  transform(name.begin(), name.end(),
-            name.begin(), ::tolower);
-  engine_map.insert(make_pair(name, engine));
-
-  for (vector<string>::iterator iter= aliases.begin();
-       iter != aliases.end(); iter++)
-  {
-    string alias= *iter;
-    transform(alias.begin(), alias.end(),
-              alias.begin(), ::tolower);
-    engine_map.insert(make_pair(alias, engine));
-  }
-
 
   vector_of_engines.push_back(engine);
 
@@ -237,7 +218,6 @@ void plugin::StorageEngine::removePlugin(plugin::StorageEngine *)
 {
   if (shutdown_has_begun == false)
   {
-    engine_map.clear();
     vector_of_engines.clear();
     vector_of_transactional_engines.clear();
 
@@ -245,15 +225,36 @@ void plugin::StorageEngine::removePlugin(plugin::StorageEngine *)
   }
 }
 
+class FindEngineByName
+  : public unary_function<plugin::StorageEngine *, bool>
+{
+  const string target;
+public:
+  explicit FindEngineByName(const string target_arg)
+    : target(target_arg)
+  {}
+  result_type operator() (argument_type engine)
+  {
+    string engine_name(engine->getName());
+
+    transform(engine_name.begin(), engine_name.end(),
+              engine_name.begin(), ::tolower);
+    return engine_name == target;
+  }
+};
+
 plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
 {
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
 
-  EngineMap::iterator iter= engine_map.find(find_str);
-  if (iter != engine_map.end())
+  
+  EngineVector::iterator iter= find_if(vector_of_engines.begin(),
+                                       vector_of_engines.end(),
+                                       FindEngineByName(find_str));
+  if (iter != vector_of_engines.end())
   {
-    StorageEngine *engine= (*iter).second;
+    StorageEngine *engine= *iter;
     if (engine->is_user_selectable())
       return engine;
   }
@@ -271,10 +272,12 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
   if (find_str.compare("default") == 0)
     return session.getDefaultStorageEngine();
 
-  EngineMap::iterator iter= engine_map.find(find_str);
-  if (iter != engine_map.end())
+  EngineVector::iterator iter= find_if(vector_of_engines.begin(),
+                                       vector_of_engines.end(),
+                                       FindEngineByName(find_str));
+  if (iter != vector_of_engines.end())
   {
-    StorageEngine *engine= (*iter).second;
+    StorageEngine *engine= *iter;
     if (engine->is_user_selectable())
       return engine;
   }

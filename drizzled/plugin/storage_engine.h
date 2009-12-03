@@ -26,7 +26,6 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
-#include <drizzled/name_map.h>
 
 #include "mysys/cached_directory.h"
 
@@ -167,6 +166,20 @@ public:
   const std::string& getTableDefinitionFileExtension()
   {
     return table_definition_ext;
+  }
+
+private:
+  std::vector<std::string> aliases;
+
+public:
+  const std::vector<std::string>& getAliases() const
+  {
+    return aliases;
+  }
+
+  void addAlias(std::string alias)
+  {
+    aliases.push_back(alias);
   }
 
 protected:
