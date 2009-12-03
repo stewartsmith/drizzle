@@ -1287,6 +1287,4 @@ void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg,
   }
 }
 
-
-
 } /* namespace drizzled */

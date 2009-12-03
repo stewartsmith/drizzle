@@ -376,12 +376,12 @@ public:
 	return(ha_innobase_exts);
   }
 
-  UNIV_INTERN int doCreateTable(Session *session, 
+  UNIV_INTERN int doCreateTable(Session *session,
                                 const char *table_name,
                                 Table& form,
                                 drizzled::message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
-                                const char* from, 
+                                const char* from,
                                 const char* to);
   UNIV_INTERN int doDropTable(Session& session, const string table_path);
 
@@ -390,6 +390,16 @@ public:
   UNIV_INTERN uint32_t max_supported_keys() const;
   UNIV_INTERN uint32_t max_supported_key_length() const;
   UNIV_INTERN uint32_t max_supported_key_part_length() const;
+
+
+  UNIV_INTERN uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_ORDER |
+            HA_READ_RANGE |
+            HA_KEYREAD_ONLY);
+  }
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -2508,23 +2518,6 @@ ha_innobase::index_type(
 				/*!< out: index type */
 {
 	return("BTREE");
-}
-
-
-/****************************************************************//**
-Returns the operations supported for indexes.
-@return	flags of supported operations */
-UNIV_INTERN
-uint32_t
-ha_innobase::index_flags(
-/*=====================*/
-	uint,
-	uint,
-	bool)
-const
-{
-	return(HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER
-	       | HA_READ_RANGE | HA_KEYREAD_ONLY);
 }
 
 /****************************************************************//**

@@ -255,7 +255,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
     TODO remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
-      !(index_flags(primary_key, 0, 0) & HA_READ_ORDER))
+      !(table->index_flags(primary_key) & HA_READ_ORDER))
   {
     (void) ha_rnd_init(1);
     while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;

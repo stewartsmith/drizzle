@@ -39,8 +39,6 @@ public:
   InformationCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
   ~InformationCursor() {}
 
-  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
-
   int open(const char *name, int mode, uint32_t test_if_locked);
 
   int close(void);
