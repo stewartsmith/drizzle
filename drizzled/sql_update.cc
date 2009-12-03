@@ -448,7 +448,7 @@ int mysql_update(Session *session, TableList *table_list,
         continue;  /* repeat the read of the same row if it still exists */
 
       table->storeRecord();
-      if (fill_record(session, fields, values, 0))
+      if (fill_record(session, fields, values))
         break;
 
       found++;

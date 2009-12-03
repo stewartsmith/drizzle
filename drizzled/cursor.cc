@@ -1453,9 +1453,9 @@ int Cursor::ha_write_row(unsigned char *buf)
 {
   int error;
 
-  /* 
-   * If we have a timestamp column, update it to the current time 
-   * 
+  /*
+   * If we have a timestamp column, update it to the current time
+   *
    * @TODO Technically, the below two lines can be take even further out of the
    * Cursor interface and into the fill_record() method.
    */
