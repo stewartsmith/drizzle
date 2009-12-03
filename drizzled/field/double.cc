@@ -202,23 +202,6 @@ void Field_double::sort_string(unsigned char *to,uint32_t )
 }
 
 
-/**
-   Save the field metadata for double fields.
-
-   Saves the pack length in the first byte of the field metadata array
-   at index of *metadata_ptr.
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_double::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= pack_length();
-  return 1;
-}
-
-
 void Field_double::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();

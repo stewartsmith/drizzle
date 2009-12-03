@@ -124,8 +124,6 @@ public:
                        uint32_t new_null_bit);
   uint32_t is_equal(CreateField *new_field);
   void hash(uint32_t *nr, uint32_t *nr2);
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
 
 #endif /* DRIZZLED_FIELD_VARSTRING_H */

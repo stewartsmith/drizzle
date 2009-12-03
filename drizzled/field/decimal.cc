@@ -332,25 +332,6 @@ void Field_decimal::sql_type(String &str) const
 
 
 /**
-  Save the field metadata for new decimal fields.
-
-  Saves the precision in the first byte and decimals() in the second
-  byte of the field metadata array at index of *metadata_ptr and
- *(metadata_ptr + 1).
-
- @param   metadata_ptr   First byte of field metadata
-
- @returns number of bytes written to metadata_ptr
-*/
-int Field_decimal::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= precision;
-  *(metadata_ptr + 1)= decimals();
-  return 2;
-}
-
-
-/**
   Returns the number of bytes field uses in row-based replication
   row packed size.
 

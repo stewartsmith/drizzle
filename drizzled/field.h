@@ -287,7 +287,6 @@ public:
     field_length + 1, field_length, and pack_length_no_ptr() respectfully.
   */
   virtual uint32_t row_pack_length();
-  virtual int save_field_metadata(unsigned char *first_byte);
 
   /**
    * Return the "real size" of the data in memory. 
@@ -751,23 +750,6 @@ public:
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
-
-private:
-
-  /**
-    Retrieve the field metadata for fields.
-
-    This default implementation returns 0 and saves 0 in the metadata_ptr
-    value.
-
-    @param   metadata_ptr   First byte of field metadata
-
-    @returns 0 no bytes written.
-  */
-  virtual int do_save_field_metadata(unsigned char *)
-  {
-    return 0;
-  }
 };
 
 #include "drizzled/create_field.h"

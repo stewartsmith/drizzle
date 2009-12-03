@@ -477,22 +477,6 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 			 b+HA_KEY_BLOB_LENGTH, uint2korr(b));
 }
 
-/**
-   Save the field metadata for blob fields.
-
-   Saves the pack length in the first byte of the field metadata array
-   at index of *metadata_ptr.
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= pack_length_no_ptr();
-  return 1;
-}
-
 uint32_t Field_blob::sort_length() const
 {
   return (uint32_t) (current_session->variables.max_sort_length +

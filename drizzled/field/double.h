@@ -64,8 +64,6 @@ public:
   uint32_t pack_length() const { return sizeof(double); }
   uint32_t row_pack_length() { return pack_length(); }
   void sql_type(String &str) const;
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
 
 #endif /* DRIZZLED_FIELD_DOUBLE_H */

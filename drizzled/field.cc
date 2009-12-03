@@ -405,11 +405,6 @@ uint32_t Field::row_pack_length()
   return 0;
 }
 
-int Field::save_field_metadata(unsigned char *first_byte)
-{
-  return do_save_field_metadata(first_byte);
-}
-
 uint32_t Field::data_length()
 {
   return pack_length();

@@ -80,24 +80,6 @@ Field_varstring::Field_varstring(uint32_t len_arg,
   share->varchar_fields++;
 }
 
-/**
-   Save the field metadata for varstring fields.
-
-   Saves the field length in the first byte. Note: may consume
-   2 bytes. Caller must ensure second byte is contiguous with
-   first byte (e.g. array index 0,1).
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_varstring::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  assert(field_length <= 65535);
-  int2store(metadata_ptr, field_length);
-  return 2;
-}
-
 int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)
 {
   uint32_t copy_length;
