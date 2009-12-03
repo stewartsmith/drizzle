@@ -574,14 +574,6 @@ public:
     return max_length;
   }
 
-  virtual int pack_cmp(const unsigned char *a,
-                       const unsigned char *b,
-                       uint32_t key_length_arg,
-                       bool insert_or_update);
-  virtual int pack_cmp(const unsigned char *b,
-                       uint32_t key_length_arg,
-                       bool insert_or_update);
-
   inline uint32_t offset(unsigned char *record)
   {
     return (uint32_t) (ptr - record);

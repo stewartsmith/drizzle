@@ -459,59 +459,6 @@ Field_varstring::unpack(unsigned char *to, const unsigned char *from,
 }
 
 
-int Field_varstring::pack_cmp(const unsigned char *a, const unsigned char *b,
-                              uint32_t key_length_arg,
-                              bool insert_or_update)
-{
-  uint32_t a_length, b_length;
-  if (key_length_arg > 255)
-  {
-    a_length=uint2korr(a); a+= 2;
-    b_length=uint2korr(b); b+= 2;
-  }
-  else
-  {
-    a_length= (uint32_t) *a++;
-    b_length= (uint32_t) *b++;
-  }
-  return field_charset->coll->strnncollsp(field_charset,
-                                          a, a_length,
-                                          b, b_length,
-                                          insert_or_update);
-}
-
-
-int Field_varstring::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
-                              bool insert_or_update)
-{
-  unsigned char *a= ptr+ length_bytes;
-  uint32_t a_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
-  uint32_t b_length;
-  uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
-                           key_length_arg / field_charset->mbmaxlen :
-                           key_length_arg);
-
-  if (key_length_arg > 255)
-  {
-    b_length=uint2korr(b); b+= HA_KEY_BLOB_LENGTH;
-  }
-  else
-    b_length= (uint32_t) *b++;
-
-  if (a_length > local_char_length)
-  {
-    local_char_length= my_charpos(field_charset, a, a+a_length,
-                                  local_char_length);
-    set_if_smaller(a_length, local_char_length);
-  }
-
-  return field_charset->coll->strnncollsp(field_charset,
-                                          a, a_length,
-                                          b, b_length,
-                                          insert_or_update);
-}
-
-
 uint32_t Field_varstring::packed_col_length(const unsigned char *data_ptr, uint32_t length)
 {
   if (length > 255)

@@ -733,17 +733,6 @@ uint32_t Field::packed_col_length(const unsigned char *, uint32_t length)
   return length;
 }
 
-int Field::pack_cmp(const unsigned char *a, const unsigned char *b,
-                    uint32_t, bool)
-{
-  return cmp(a,b);
-}
-
-int Field::pack_cmp(const unsigned char *b, uint32_t, bool)
-{
-  return cmp(ptr,b);
-}
-
 my_decimal *Field::val_decimal(my_decimal *)
 {
   /* This never have to be called */

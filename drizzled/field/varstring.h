@@ -104,9 +104,6 @@ public:
  
   const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
                           uint32_t max_length, bool low_byte_first);
-  int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,
-               bool insert_or_update);
-  int pack_cmp(const unsigned char *b, uint32_t key_length,bool insert_or_update);
   int cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const unsigned char *,const unsigned char*);
   int key_cmp(const unsigned char *str, uint32_t length);
