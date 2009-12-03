@@ -101,18 +101,12 @@ public:
   const char *table_type(void) const { return "CSV"; }
   const char *index_type(uint32_t)
   { return "NONE"; }
-  uint32_t index_flags(uint32_t, uint32_t, bool) const
-  {
-    /*
-      We will never have indexes so this will never be called(AKA we return
-      zero)
-    */
-    return 0;
-  }
+
   /*
      Called in test_quick_select to determine if indexes should be used.
    */
   virtual double scan_time() { return (double) (stats.records+stats.deleted) / 20.0+10; }
+
   /* The next method will never be called */
   virtual bool fast_key_read() { return 1;}
   /*

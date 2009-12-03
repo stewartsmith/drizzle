@@ -710,7 +710,6 @@ public:
       \#    Created field
   */
   Field *tmp_table_field_from_field_type(Table *table, bool fixed_length);
-  virtual Item_field *filed_for_view_update();
 
   virtual Item *neg_transformer(Session *session);
   virtual Item *update_value_transformer(unsigned char *select_arg);
@@ -859,8 +858,8 @@ extern bool field_is_equal_to_item(Field *field,Item *item);
 /**
   Create field for temporary table.
 
-  @todo: 
-  
+  @todo:
+
    This is here for now because it needs the Item::Type. It should live
    in Field or Table once item.h is clean enough to actually include
 
@@ -890,13 +889,13 @@ extern bool field_is_equal_to_item(Field *field,Item *item);
     new_created field
 */
 Field *create_tmp_field(Session *session,
-                        Table *table, 
+                        Table *table,
                         Item *item,
                         Item::Type type,
-                        Item ***copy_func, 
+                        Item ***copy_func,
                         Field **from_field,
                         Field **def_field,
-                        bool group, 
+                        bool group,
                         bool modify_item,
                         bool table_cant_handle_bit_fields,
                         bool make_copy_field,

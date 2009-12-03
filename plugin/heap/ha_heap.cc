@@ -92,6 +92,18 @@ public:
 
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
+
+  uint32_t index_flags(enum  ha_key_alg algorithm) const
+  {
+    return ((algorithm == HA_KEY_ALG_BTREE) ?
+            HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_ORDER |
+            HA_READ_RANGE :
+            HA_ONLY_WHOLE_INDEX |
+            HA_KEY_SCAN_NOT_ROR);
+  }
+
 };
 
 int HeapEngine::doGetTableDefinition(Session&,
@@ -260,14 +272,6 @@ const char *ha_heap::index_type(uint32_t inx)
 {
   return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
           "BTREE" : "HASH");
-}
-
-
-uint32_t ha_heap::index_flags(uint32_t inx, uint32_t, bool) const
-{
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
-          HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
-          HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
 }
 
 

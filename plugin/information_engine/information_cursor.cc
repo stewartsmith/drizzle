@@ -36,11 +36,6 @@ InformationCursor::InformationCursor(plugin::StorageEngine &engine_arg,
   Cursor(engine_arg, table_arg)
 {}
 
-uint32_t InformationCursor::index_flags(uint32_t, uint32_t, bool) const
-{
-  return 0;
-}
-
 int InformationCursor::open(const char *name, int, uint32_t)
 {
   string tab_name(name);

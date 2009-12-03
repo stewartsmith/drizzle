@@ -793,13 +793,13 @@ int plugin::StorageEngine::createTable(Session& session,
   /* Check for legal operations against the Engine using the proto (if used) */
   if (proto_used)
   {
-    if (table_proto.type() == message::Table::TEMPORARY && 
+    if (table_proto.type() == message::Table::TEMPORARY &&
         share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
     {
       error= HA_ERR_UNSUPPORTED;
       goto err2;
     }
-    else if (table_proto.type() != message::Table::TEMPORARY && 
+    else if (table_proto.type() != message::Table::TEMPORARY &&
              share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
     {
       error= HA_ERR_UNSUPPORTED;
@@ -822,7 +822,7 @@ int plugin::StorageEngine::createTable(Session& session,
 
     share.storage_engine->setTransactionReadWrite(session);
 
-    error= share.storage_engine->doCreateTable(&session, 
+    error= share.storage_engine->doCreateTable(&session,
                                                table_name_arg,
                                                table,
                                                table_proto);
@@ -1289,7 +1289,5 @@ void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg,
 		    MYF(0), str.c_ptr(), table.key_info[key_nr].name);
   }
 }
-
-
 
 } /* namespace drizzled */

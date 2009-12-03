@@ -180,6 +180,11 @@ public:
   uint32_t max_supported_keys()          const { return 1; }
   uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
   uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
+
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return HA_ONLY_WHOLE_INDEX;
+  }
 };
 
 ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
