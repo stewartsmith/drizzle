@@ -108,6 +108,15 @@ public:
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
+
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
+  }
 };
 
 int MyisamEngine::doGetTableDefinition(Session&,
@@ -1036,17 +1045,6 @@ int ha_myisam::index_end()
 {
   active_index=MAX_KEY;
   return 0;
-}
-
-
-uint32_t ha_myisam::index_flags(uint32_t inx) const
-{
-  return (HA_READ_NEXT |
-          HA_READ_PREV |
-          HA_READ_RANGE |
-          HA_READ_ORDER |
-          HA_KEYREAD_ONLY |
-          (keys_with_parts.test(inx)? 0 : HA_DO_INDEX_COND_PUSHDOWN));
 }
 
 

@@ -1287,6 +1287,11 @@ void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg,
   }
 }
 
+uint32_t plugin::StorageEngine::index_flags(TableShare *share, uint32_t idx) const
+{
+  return index_flags(share->key_info[idx].algorithm);
+}
+
 
 
 } /* namespace drizzled */
