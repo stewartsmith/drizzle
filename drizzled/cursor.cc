@@ -695,21 +695,6 @@ Cursor::mark_trx_read_write()
   }
 }
 
-/**
-  Bulk update row: public interface.
-
-  @sa Cursor::bulk_update_row()
-*/
-
-int
-Cursor::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                            uint32_t *dup_key_found)
-{
-  mark_trx_read_write();
-
-  return bulk_update_row(old_data, new_data, dup_key_found);
-}
-
 
 /**
   Delete all rows: public interface.
@@ -1468,9 +1453,9 @@ int Cursor::ha_write_row(unsigned char *buf)
 {
   int error;
 
-  /* 
-   * If we have a timestamp column, update it to the current time 
-   * 
+  /*
+   * If we have a timestamp column, update it to the current time
+   *
    * @TODO Technically, the below two lines can be take even further out of the
    * Cursor interface and into the fill_record() method.
    */

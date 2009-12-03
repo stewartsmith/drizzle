@@ -1125,13 +1125,11 @@ int drizzled::parse_table_proto(Session& session,
       set_if_bigger(share->max_key_length,keyinfo->key_length+
                     keyinfo->key_parts);
       share->total_key_length+= keyinfo->key_length;
-      /*
-        MERGE tables do not have unique indexes. But every key could be
-        an unique index on the underlying MyISAM table. (Bug #10400)
-      */
-      if ((keyinfo->flags & HA_NOSAME) ||
-          (handler_file->getEngine()->check_flag(HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE)))
+
+      if (keyinfo->flags & HA_NOSAME)
+      {
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
+      }
     }
     if (primary_key < MAX_KEY &&
         (share->keys_in_use.test(primary_key)))

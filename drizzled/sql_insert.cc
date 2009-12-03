@@ -313,9 +313,9 @@ bool mysql_insert(Session *session,TableList *table_list,
     to NULL.
   */
   session->count_cuted_fields= ((values_list.elements == 1 &&
-                             !ignore) ?
-			    CHECK_FIELD_ERROR_FOR_NULL :
-			    CHECK_FIELD_WARN);
+                                 !ignore) ?
+                                CHECK_FIELD_ERROR_FOR_NULL :
+                                CHECK_FIELD_WARN);
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
@@ -341,7 +341,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     if (fields.elements || !value_count)
     {
       table->restoreRecordAsDefault();	// Get empty record
-      if (fill_record(session, fields, *values, 0))
+      if (fill_record(session, fields, *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -361,7 +361,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     {
       table->restoreRecordAsDefault();	// Get empty record
 
-      if (fill_record(session, table->field, *values, 0))
+      if (fill_record(session, table->field, *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -1287,9 +1287,9 @@ bool select_insert::send_data(List<Item> &values)
 void select_insert::store_values(List<Item> &values)
 {
   if (fields->elements)
-    fill_record(session, *fields, values, 1);
+    fill_record(session, *fields, values, true);
   else
-    fill_record(session, table->field, values, 1);
+    fill_record(session, table->field, values, true);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
@@ -1688,7 +1688,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
 void select_create::store_values(List<Item> &values)
 {
-  fill_record(session, field, values, 1);
+  fill_record(session, field, values, true);
 }
 
 
