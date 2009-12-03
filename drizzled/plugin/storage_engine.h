@@ -260,7 +260,6 @@ public:
   }
 
   // @todo match check_flag interface
-  uint32_t index_flags(TableShare *share, uint32_t idx) const;
   virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
 
 

@@ -3468,7 +3468,7 @@ static void best_access_path(JOIN *join,
             Set tmp to (previous record count) * (records / combination)
           */
           if ((found_part & 1) &&
-              (!(table->cursor->index_flags(key) & HA_ONLY_WHOLE_INDEX) ||
+              (!(table->index_flags(key) & HA_ONLY_WHOLE_INDEX) ||
                found_part == PREV_BITS(uint, keyinfo->key_parts)))
           {
             max_key_part= max_part_bit(found_part);

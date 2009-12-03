@@ -551,11 +551,6 @@ public:
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open Cursor */
 
-  uint32_t index_flags(uint32_t idx) const
-  {
-    return engine->index_flags(table_share, idx);
-  };
-
   virtual int add_index(Table *, KEY *, uint32_t)
   { return (HA_ERR_WRONG_COMMAND); }
   virtual int prepare_drop_index(Table *, uint32_t *, uint32_t)

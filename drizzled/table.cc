@@ -1085,13 +1085,14 @@ int drizzled::parse_table_proto(Session& session,
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
-          if (handler_file->index_flags(key) & HA_KEYREAD_ONLY)
+          enum ha_key_alg algo= share->key_info[key].algorithm;
+          if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
           {
             share->keys_for_keyread.set(key);
             field->part_of_key.set(key);
             field->part_of_key_not_clustered.set(key);
           }
-          if (handler_file->index_flags(key) & HA_READ_ORDER)
+          if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
             field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
