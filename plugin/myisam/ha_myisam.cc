@@ -1039,12 +1039,14 @@ int ha_myisam::index_end()
 }
 
 
-uint32_t ha_myisam::index_flags(uint32_t inx, uint32_t, bool) const
+uint32_t ha_myisam::index_flags(uint32_t inx) const
 {
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-          HA_READ_ORDER | HA_KEYREAD_ONLY |
-          (keys_with_parts.test(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
+  return (HA_READ_NEXT |
+          HA_READ_PREV |
+          HA_READ_RANGE |
+          HA_READ_ORDER |
+          HA_KEYREAD_ONLY |
+          (keys_with_parts.test(inx)? 0 : HA_DO_INDEX_COND_PUSHDOWN));
 }
 
 

@@ -4566,7 +4566,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
   }
   *used_key_parts= on_primary_key ? table->key_info[idx].key_parts :
     (uint32_t) (key_part - table->key_info[idx].key_part);
-  if (reverse == -1 && !(table->cursor->index_flags(idx, *used_key_parts-1, 1) &
+  if (reverse == -1 && !(table->cursor->index_flags(idx) &
                          HA_READ_PREV))
     reverse= 0;                                 // Index can't be used
   return(reverse);

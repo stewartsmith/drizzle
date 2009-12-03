@@ -42,7 +42,7 @@ public:
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
-  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
+  uint32_t index_flags(uint32_t inx) const;
   const key_map *keys_to_use_for_scanning() { return &btree_keys; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }

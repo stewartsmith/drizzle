@@ -96,7 +96,7 @@ public:
 
   const char *index_type(uint32_t)
   { return "NONE"; }
-  uint32_t index_flags(uint32_t, uint32_t, bool) const
+  uint32_t index_flags(uint32_t) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }

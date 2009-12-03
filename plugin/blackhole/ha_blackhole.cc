@@ -127,11 +127,13 @@ ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
   :Cursor(engine_arg, table_arg)
 { }
 
-uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
+uint32_t ha_blackhole::index_flags(uint32_t) const
 {
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-          HA_READ_ORDER | HA_KEYREAD_ONLY);
+  return (HA_READ_NEXT |
+          HA_READ_PREV |
+          HA_READ_RANGE |
+          HA_READ_ORDER |
+          HA_KEYREAD_ONLY);
 }
 
 int ha_blackhole::open(const char *name, int, uint32_t)

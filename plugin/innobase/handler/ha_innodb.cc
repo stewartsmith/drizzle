@@ -2518,13 +2518,14 @@ UNIV_INTERN
 uint32_t
 ha_innobase::index_flags(
 /*=====================*/
-	uint,
-	uint,
-	bool)
+	uint)
 const
 {
-	return(HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER
-	       | HA_READ_RANGE | HA_KEYREAD_ONLY);
+	return (HA_READ_NEXT |
+                HA_READ_PREV |
+                HA_READ_ORDER |
+                HA_READ_RANGE |
+                HA_KEYREAD_ONLY);
 }
 
 /****************************************************************//**

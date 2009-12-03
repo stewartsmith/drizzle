@@ -263,11 +263,15 @@ const char *ha_heap::index_type(uint32_t inx)
 }
 
 
-uint32_t ha_heap::index_flags(uint32_t inx, uint32_t, bool) const
+uint32_t ha_heap::index_flags(uint32_t inx) const
 {
   return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
-          HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
-          HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
+          HA_READ_NEXT |
+          HA_READ_PREV |
+          HA_READ_ORDER |
+          HA_READ_RANGE :
+          HA_ONLY_WHOLE_INDEX |
+          HA_KEY_SCAN_NOT_ROR);
 }
 
 

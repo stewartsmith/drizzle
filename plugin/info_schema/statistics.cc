@@ -290,7 +290,7 @@ int StatsISMethods::processTable(plugin::InfoSchemaTable *store_table,
         table->field[7]->store(str, strlen(str), cs);
         if (show_table->cursor)
         {
-          if (show_table->cursor->index_flags(i, j, 0) & HA_READ_ORDER)
+          if (show_table->cursor->index_flags(i) & HA_READ_ORDER)
           {
             table->field[8]->store(((key_part->key_part_flag &
                                      HA_REVERSE_SORT) ?

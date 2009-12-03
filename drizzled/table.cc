@@ -390,14 +390,9 @@ int drizzled::parse_table_proto(Session& session,
     case message::Table::Index::BTREE:
       keyinfo->algorithm= HA_KEY_ALG_BTREE;
       break;
-    case message::Table::Index::RTREE:
-      keyinfo->algorithm= HA_KEY_ALG_RTREE;
-      break;
     case message::Table::Index::HASH:
       keyinfo->algorithm= HA_KEY_ALG_HASH;
       break;
-    case message::Table::Index::FULLTEXT:
-      keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
 
     default:
       /* TODO: suitable warning ? */
@@ -1090,13 +1085,13 @@ int drizzled::parse_table_proto(Session& session,
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
-          if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
+          if (handler_file->index_flags(key) & HA_KEYREAD_ONLY)
           {
             share->keys_for_keyread.set(key);
             field->part_of_key.set(key);
             field->part_of_key_not_clustered.set(key);
           }
-          if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
+          if (handler_file->index_flags(key) & HA_READ_ORDER)
             field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
