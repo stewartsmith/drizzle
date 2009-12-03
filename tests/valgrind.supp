@@ -247,6 +247,52 @@
    fun:do_flush
 }
 
+
+{
+   Archive libz deflate1
+   Memcheck:Cond
+   fun:deflate
+   ...
+   fun:azflush
+   ...
+   fun:start_thread
+}
+
+{
+   Archive libz deflate2
+   Memcheck:Cond
+   fun:deflate
+   ...
+   fun:azclose
+   ...
+   fun:start_thread
+}
+
+
+{
+   Archive libz deflate3
+   Memcheck:Cond
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN7Session3runEv
+}
+
+{
+   Archive libz deflate3
+   Memcheck:Value8
+   fun:memcpy
+   obj:/lib/libz.so.1.2.3.3
+   obj:/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN7Session3runEv
+}
+
+
 #
 # Warning from my_thread_init becasue mysqld dies before kill thread exists
 #
