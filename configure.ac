@@ -28,6 +28,11 @@ AC_CONFIG_MACRO_DIR([m4])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42, skip-visibility, version-from-vc)
 
+dnl Set the default datadir location to /usr/local/var/drizzle. If a
+dnl localstatedir is explicitly given, just use that.
+AS_IF([test "x${localstatedir}" = 'x${prefix}/var'],[
+  localstatedir='${prefix}/var/drizzle'
+])
 
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
