@@ -599,9 +599,9 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
    @return  New pointer into memory based on from + length of the data
 */
 const unsigned char *Field_blob::unpack(unsigned char *,
-                                const unsigned char *from,
-                                uint32_t param_data,
-                                bool low_byte_first)
+                                        const unsigned char *from,
+                                        uint32_t param_data,
+                                        bool low_byte_first)
 {
   uint32_t const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
