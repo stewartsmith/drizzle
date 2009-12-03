@@ -247,7 +247,6 @@ int drizzled::parse_table_proto(Session& session,
                                 TableShare *share)
 {
   int error= 0;
-  Cursor *handler_file= NULL;
 
   share->setTableProto(new(nothrow) message::Table(table));
 
@@ -1008,9 +1007,6 @@ int drizzled::parse_table_proto(Session& session,
   free(field_pack_length);
   field_pack_length= NULL;
 
-  if (! (handler_file= share->db_type()->getCursor(*share, session.mem_root)))
-    abort(); // FIXME
-
   /* Fix key stuff */
   if (share->key_parts)
   {
@@ -1197,8 +1193,6 @@ int drizzled::parse_table_proto(Session& session,
   share->all_set.init(bitmaps, share->fields);
   share->all_set.setAll();
 
-  if (handler_file)
-    delete handler_file;
   return (0);
 
 err:
@@ -1211,8 +1205,6 @@ err:
   share->open_errno= my_errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
-  if (handler_file)
-    delete handler_file;
   share->open_table_error(error, share->open_errno, 0);
 
   return error;
