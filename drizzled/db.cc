@@ -334,7 +334,7 @@ exit:
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session,char *db,bool if_exists)
+bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, bool if_exists)
 {
   long deleted=0;
   int error= false;
@@ -343,7 +343,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
   uint32_t length;
   TableList *dropped_tables= NULL;
 
-  if (db && (strcmp(db, "information_schema") == 0))
+  if (database_name.to_string().compare(INFORMATION_SCHEMA_NAME) == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return true;
@@ -369,7 +369,8 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  length= build_table_filename(path, sizeof(path), db, "", false);
+  length= build_table_filename(path, sizeof(path),
+                               database_name.to_string().c_str(), "", false);
   strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
   unlink(path);
   path[length]= '\0';				// Remove file name
@@ -380,22 +381,23 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     if (!if_exists)
     {
       error= -1;
-      my_error(ER_DB_DROP_EXISTS, MYF(0), db);
+      my_error(ER_DB_DROP_EXISTS, MYF(0), database_name.to_string().c_str());
       goto exit;
     }
     else
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS), db);
+			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
+                          database_name.to_string().c_str());
   }
   else
   {
     pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
-    remove_db_from_cache(db);
+    remove_db_from_cache(database_name.to_string().c_str());
     pthread_mutex_unlock(&LOCK_open);
 
 
     error= -1;
-    if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
+    if ((deleted= mysql_rm_known_files(session, dirp, database_name.to_string().c_str(), path, &dropped_tables)) >= 0)
     {
       plugin::StorageEngine::dropDatabase(path);
       error = 0;
@@ -405,17 +407,12 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
   {
     const char *query;
     uint32_t query_length;
-    if (!session->query)
-    {
-      /* The client used the old obsolete mysql_drop_db() call */
-      query= path;
-      query_length= sprintf(path, "drop database `%s`", db);
-    }
-    else
-    {
-      query= session->query;
-      query_length= session->query_length;
-    }
+
+    assert(session->query);
+
+    query= session->query;
+    query_length= session->query_length;
+
     ReplicationServices &replication_services= ReplicationServices::singleton();
     replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
     session->clear_error();
@@ -433,7 +430,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
       goto exit; /* not much else we can do */
     query_pos= query_data_start= strcpy(query,"drop table ")+11;
     query_end= query + MAX_DROP_TABLE_Q_LEN;
-    db_len= strlen(db);
+    db_len= database_name.to_string().length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
@@ -469,7 +466,7 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (! session->db.empty() && ! strcmp(session->db.c_str(), db))
+  if (! session->db.empty() && session->db.compare(database_name.to_string()) == 0)
     session->clear_db();
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
