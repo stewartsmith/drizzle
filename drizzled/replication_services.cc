@@ -205,6 +205,43 @@ void ReplicationServices::cleanupTransaction(message::Transaction *in_transactio
   in_session->setTransactionMessage(NULL);
 }
 
+bool ReplicationServices::transactionContainsBulkSegment(const message::Transaction &transaction) const
+{
+  size_t num_statements= transaction.statement_size();
+  if (num_statements == 0)
+    return false;
+
+  /*
+   * Only INSERT, UPDATE, and DELETE statements can possibly
+   * have bulk segments.  So, we loop through the statements
+   * checking for segment_id > 1 in those specific submessages.
+   */
+  size_t x;
+  for (x= 0; x < num_statements; ++x)
+  {
+    const message::Statement &statement= transaction.statement(x);
+    message::Statement::Type type= statement.type();
+
+    switch (type)
+    {
+      case message::Statement::INSERT:
+        if (statement.insert_data().segment_id() > 1)
+          return true;
+        break;
+      case message::Statement::UPDATE:
+        if (statement.update_data().segment_id() > 1)
+          return true;
+        break;
+      case message::Statement::DELETE:
+        if (statement.delete_data().segment_id() > 1)
+          return true;
+        break;
+      default:
+        break;
+    }
+  }
+  return false;
+}
 void ReplicationServices::commitTransaction(Session *in_session)
 {
   if (! is_active)
@@ -252,22 +289,41 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
   
   message::Transaction *transaction= getActiveTransaction(in_session);
 
-  /* 
-   * We clear the current transaction, reset its transaction ID properly, 
-   * then set its type to ROLLBACK and push it out to the replicators.
+  /*
+   * OK, so there are two situations that we need to deal with here:
+   *
+   * 1) We receive an instruction to ROLLBACK the current transaction
+   *    and the currently-stored Transaction message is *self-contained*, 
+   *    meaning that no Statement messages in the Transaction message
+   *    contain a message having its segment_id member greater than 1.  If
+   *    no non-segment ID 1 members are found, we can simply clear the
+   *    current Transaction message and remove it from memory.
+   *
+   * 2) If the Transaction message does indeed have a non-end segment, that
+   *    means that a bulk update/delete/insert Transaction message segment
+   *    has previously been sent over the wire to replicators.  In this case, 
+   *    we need to package a Transaction with a Statement message of type
+   *    ROLLBACK to indicate to replicators that previously-transmitted
+   *    messages must be un-applied.
    */
-  transaction->Clear();
-  initTransaction(*transaction, in_session);
+  if (unlikely(transactionContainsBulkSegment(*transaction)))
+  {
+    /*
+     * Clear the transaction, create a Rollback statement message, 
+     * attach it to the transaction, and push it to replicators.
+     */
+    transaction->Clear();
+    initTransaction(*transaction, in_session);
 
-  message::Statement *statement= transaction->add_statement();
+    message::Statement *statement= transaction->add_statement();
 
-  initStatement(*statement, message::Statement::ROLLBACK, in_session);
-  finalizeStatement(*statement, in_session);
+    initStatement(*statement, message::Statement::ROLLBACK, in_session);
+    finalizeStatement(*statement, in_session);
 
-  finalizeTransaction(*transaction, in_session);
-  
-  push(*transaction);
-
+    finalizeTransaction(*transaction, in_session);
+    
+    push(*transaction);
+  }
   cleanupTransaction(transaction, in_session);
 }
 

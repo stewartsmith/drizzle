@@ -121,6 +121,14 @@ private:
   void cleanupTransaction(message::Transaction *in_transaction,
                           Session *in_session) const;
   /**
+   * Returns true if the transaction contains any Statement
+   * messages which are not end segments (i.e. a bulk statement has
+   * previously been sent to replicators).
+   *
+   * @param The transaction to check
+   */
+  bool transactionContainsBulkSegment(const drizzled::message::Transaction &transaction) const;
+  /**
    * Helper method which initializes a Statement message
    *
    * @param The statement to initialize

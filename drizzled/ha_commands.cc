@@ -737,6 +737,17 @@ int ha_rollback_trans(Session *session, bool all)
     }
     trans->ha_list= 0;
     trans->no_2pc=0;
+    
+    /* 
+     * We need to signal the ROLLBACK to ReplicationServices here
+     * BEFORE we set the transaction ID to NULL.  This is because
+     * if a bulk segment was sent to replicators, we need to send
+     * a rollback statement with the corresponding transaction ID
+     * to rollback.
+     */
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    replication_services.rollbackTransaction(session);
+
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
     if (all)

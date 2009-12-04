@@ -399,6 +399,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/hash/libhash.la \
+		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \

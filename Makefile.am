@@ -25,6 +25,7 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/hash \
+	  drizzled/util \
 	  drizzled/message \
 	  . \
 	  drizzled \
