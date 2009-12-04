@@ -23,6 +23,9 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/optimizer/range.h"
+
+using namespace drizzled;
 
 int rr_sequential(READ_RECORD *info);
 static int rr_quick(READ_RECORD *info);
@@ -131,7 +134,7 @@ void init_read_record_idx(READ_RECORD *info,
   table scan (rr_sequential).
   rr_quick:
   ---------
-    rr_quick uses one of the QUICK_SELECT classes in opt_range.cc to
+    rr_quick uses one of the QUICK_SELECT classes in optimizer/range.cc to
     perform an index scan. There are loads of functionality hidden
     in these quick classes. It handles all index scans of various kinds.
   rr_sequential:
@@ -142,7 +145,7 @@ void init_read_record_idx(READ_RECORD *info,
 void init_read_record(READ_RECORD *info,
                       Session *session, 
                       Table *table,
-                      SQL_SELECT *select,
+                      optimizer::SQL_SELECT *select,
                       int use_record_cache, 
                       bool print_error)
 {

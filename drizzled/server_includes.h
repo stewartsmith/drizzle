@@ -37,19 +37,21 @@
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 
-/* Range optimization API/library */
-#include <drizzled/opt_range.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 
+#include <drizzled/field.h>
+#include <drizzled/item/sum.h>
+
 #include <string>
 #include <sstream>
 #include <bitset>
 
 typedef struct st_ha_create_information HA_CREATE_INFO;
+typedef struct st_mysql_lex_string LEX_STRING;
 
 /* information schema */
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
@@ -181,21 +183,36 @@ uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
-void init_read_record(READ_RECORD *info, Session *session, Table *reg_form,
-		      SQL_SELECT *select,
-		      int use_record_cache, bool print_errors);
-void init_read_record_idx(READ_RECORD *info, Session *session, Table *table,
-                          bool print_error, uint32_t idx);
+
+void init_read_record(READ_RECORD *info, 
+                      Session *session, 
+                      Table *reg_form,
+		                  drizzled::optimizer::SQL_SELECT *select,
+		                  int use_record_cache, 
+                      bool print_errors);
+
+void init_read_record_idx(READ_RECORD *info, 
+                          Session *session, 
+                          Table *table,
+                          bool print_error, 
+                          uint32_t idx);
+
 void end_read_record(READ_RECORD *info);
-ha_rows filesort(Session *session, Table *form,struct st_sort_field *sortorder,
-		 uint32_t s_length, SQL_SELECT *select,
-		 ha_rows max_rows, bool sort_positions,
+
+ha_rows filesort(Session *session, 
+                 Table *form,
+                 struct st_sort_field *sortorder,
+		             uint32_t s_length, 
+                 drizzled::optimizer::SQL_SELECT *select,
+		             ha_rows max_rows, 
+                 bool sort_positions,
                  ha_rows *examined_rows);
+
 void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
-int get_quick_record(SQL_SELECT *select);
+int get_quick_record(drizzled::optimizer::SQL_SELECT *select);
 
 int calc_weekday(long daynr,bool sunday_first_day_of_week);
 uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);

@@ -2900,7 +2900,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info->length=   (uint16_t) (*reg_field)->pack_length();
       /* TODO:
         The below method of computing the key format length of the
-        key part is a copy/paste from opt_range.cc, and table.cc.
+        key part is a copy/paste from optimizer/range.cc, and table.cc.
         This should be factored out, e.g. as a method of Field.
         In addition it is not clear if any of the Field::*_length
         methods is supposed to compute the same length. If so, it

@@ -29,6 +29,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/optimizer/range.h"
 
 using namespace std;
 
@@ -1330,7 +1331,7 @@ copy_data_between_tables(Table *from, Table *to,
                       &tables, fields, all_fields, order) ||
           !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
           (from->sort.found_records= filesort(session, from, sortorder, length,
-                                              (SQL_SELECT *) 0, HA_POS_ERROR,
+                                              (optimizer::SQL_SELECT *) 0, HA_POS_ERROR,
                                               1, &examined_rows)) ==
           HA_POS_ERROR)
         goto err;
@@ -1339,7 +1340,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
-  init_read_record(&info, session, from, (SQL_SELECT *) 0, 1,1);
+  init_read_record(&info, session, from, (optimizer::SQL_SELECT *) 0, 1,1);
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   session->row_count= 0;

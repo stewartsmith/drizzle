@@ -23,9 +23,9 @@
 #ifndef DRIZZLED_STRUCTS_H
 #define DRIZZLED_STRUCTS_H
 
-#include <drizzled/base.h>
-#include <mysys/definitions.h>
-#include <drizzled/lex_string.h>
+#include "drizzled/base.h"
+#include "mysys/definitions.h"
+#include "drizzled/lex_string.h"
 
 class Table;
 class Field;
@@ -117,9 +117,9 @@ struct RegInfo {		/* Extra info about reg */
 };
 
 struct st_read_record;				/* For referense later */
-class SQL_SELECT;
 class Session;
 class Cursor;
+namespace drizzled { namespace optimizer { class SQL_SELECT; } }
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
@@ -127,7 +127,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;
-  SQL_SELECT *select;
+  drizzled::optimizer::SQL_SELECT *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
   uint32_t index;

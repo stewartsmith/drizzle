@@ -410,7 +410,7 @@ uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
   if ((uint32_t) length > blob_length)
   {
     /*
-      Must clear this as we do a memcmp in opt_range.cc to detect
+      Must clear this as we do a memcmp in optimizer/range.cc to detect
       identical keys
     */
     memset(buff+HA_KEY_BLOB_LENGTH+blob_length, 0, (length-blob_length));
@@ -441,7 +441,7 @@ uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff, uint32_t l
   if (length > blob_length)
   {
     /*
-      Must clear this as we do a memcmp in opt_range.cc to detect
+      Must clear this as we do a memcmp in optimizer/range.cc to detect
       identical keys
     */
 

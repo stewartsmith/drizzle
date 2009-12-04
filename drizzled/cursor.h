@@ -125,7 +125,7 @@ inline key_part_map make_prev_keypart_map(T a)
      storage engine
 
   2. KeyTupleFormat - used to pass index search tuples (aka "keys") to
-     storage engine. See opt_range.cc for description of this format.
+     storage engine. See optimizer/range.cc for description of this format.
 
   TableRecordFormat
   =================

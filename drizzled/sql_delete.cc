@@ -26,6 +26,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include "drizzled/probes.h"
+#include "drizzled/optimizer/range.h"
 
 using namespace drizzled;
 
@@ -44,7 +45,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   bool          will_batch;
   int		error, loc_error;
   Table		*table;
-  SQL_SELECT	*select=0;
+  optimizer::SQL_SELECT *select= NULL;
   READ_RECORD	info;
   bool          using_limit=limit != HA_POS_ERROR;
   bool		transactional_table, safe_update, const_cond;
@@ -159,7 +160,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
   table->covering_keys.reset();
   table->quick_keys.reset();		// Can't use 'only index'
-  select=make_select(table, 0, 0, conds, 0, &error);
+  select= optimizer::make_select(table, 0, 0, conds, 0, &error);
   if (error)
     goto err;
   if ((select && select->check_quick(session, safe_update, limit)) || !limit)
@@ -205,7 +206,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     ha_rows examined_rows;
 
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)
-      usable_index= get_index_for_order(table, (order_st*)(order->first), limit);
+      usable_index= optimizer::get_index_for_order(table, (order_st*)(order->first), limit);
 
     if (usable_index == MAX_KEY)
     {
