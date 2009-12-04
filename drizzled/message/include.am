@@ -131,7 +131,7 @@ CLEANFILES += \
 
 SUFFIXES += .proto .pb.cc .pb.h
 
-MESSAGE_PROTO_PATH=${top_buildir}/${MESSAGE_DIR}:${top_srcdir}/${MESSAGE_DIR}
+MESSAGE_PROTO_PATH=${top_builddir}/${MESSAGE_DIR}:${top_srcdir}/${MESSAGE_DIR}
 
 .proto.pb.cc:
 	$(PROTOC) --proto_path=${MESSAGE_PROTO_PATH} \

@@ -16,6 +16,7 @@
 ACLOCAL_AMFLAGS = -I m4 --force
 
 # includes append to these:
+SUFFIXES =
 TESTS = 
 check_PROGRAMS =
 noinst_HEADERS =
@@ -31,10 +32,7 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 
 SUBDIRS = ${po} \
 	  gnulib \
-	  . \
-	  drizzled \
-	  tests \
-	  support-files
+	  .
 
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
@@ -228,26 +226,6 @@ EXTRA_DIST+=	${man_MANS}
 
 test: test-drizzle
 
-test-all:
-	cd tests ; \
-	$(MAKE) $(AM_MAKEFLAGS) test-all
-
-test-drizzle:
-	cd tests ; \
-	$(MAKE) $(AM_MAKEFLAGS) test-drizzle
-
-test-junitxml:
-	cd tests ; \
-	$(MAKE) $(AM_MAKEFLAGS) test-junitxml
-
-test-big:
-	cd tests ; \
-	$(MAKE) $(AM_MAKEFLAGS) test-big
-
-test-big-junitxml:
-	cd tests ; \
-	$(MAKE) $(AM_MAKEFLAGS) test-big-junitxml
-
 doxygen:
 	doxygen Doxyfile
 
@@ -306,5 +284,8 @@ clean-local:
 
 include config/lint-source.am
 
+include drizzled/include.am
 include drizzled/hash/include.am
 include drizzled/message/include.am
+include support-files/include.am
+include tests/include.am

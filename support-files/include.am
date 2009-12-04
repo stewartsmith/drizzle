@@ -15,19 +15,21 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-SUBDIRS = smf
-
 pkgconfigdir = $(libdir)/pkgconfig
 
 # Default same as 'pkgdatadir', but we can override it
 pkgsuppdir =		$(datadir)/@PACKAGE@
 
-pkgsupp_DATA =		drizzle-log-rotate
+pkgsupp_DATA =		support-files/drizzle-log-rotate
 
-pkgsupp_SCRIPTS =	drizzle.server 
+pkgsupp_SCRIPTS =	support-files/drizzle.server 
 
 aclocaldir =		$(datadir)/aclocal
-aclocal_DATA =		drizzle.m4
+aclocal_DATA =		support-files/drizzle.m4
 
-EXTRA_DIST =		drizzle.m4
+EXTRA_DIST += \
+	support-files/drizzle.m4 \
+	support-files/smf/install.sh \
+	support-files/smf/drizzle.xml \
+	support-files/smf/drizzle
 
