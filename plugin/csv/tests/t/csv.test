@@ -1,10 +1,4 @@
 #
-# Test for the CSV engine
-#
-
---source include/have_csv.inc
-
-#
 # Simple select test
 #
 

@@ -55,8 +55,6 @@ TODO:
 
 using namespace std;
 
-static const string engine_name("CSV");
-
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
 */
@@ -221,7 +219,7 @@ static Tina *tina_engine= NULL;
 static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
-  tina_engine= new Tina(engine_name);
+  tina_engine= new Tina("CSV");
   registry.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
