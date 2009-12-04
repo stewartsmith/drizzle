@@ -216,7 +216,6 @@ public:
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
-  uint32_t is_equal(CreateField *new_field);
 };
 
 #endif /* DRIZZLED_FIELD_BLOB_H */

@@ -622,18 +622,6 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
 }
 
 
-uint32_t Field_blob::is_equal(CreateField *new_field_ptr)
-{
-  if (compare_str_field_flags(new_field_ptr, flags))
-    return 0;
-  Field_blob *blob_field_ptr= static_cast<Field_blob *>(new_field_ptr->field);
-
-  return (new_field_ptr->sql_type == DRIZZLE_TYPE_BLOB
-          && new_field_ptr->charset == field_charset
-          && blob_field_ptr->max_data_length() == max_data_length());
-}
-
-
 /**
   maximum possible display length for blob.
 
