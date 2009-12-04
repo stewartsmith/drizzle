@@ -4,7 +4,7 @@
 #
 
 # Populate log with some records...
---source suite/transaction_log/t/insert.inc
+--source ../plugin/transaction_log/tests/t/insert.inc
 
 # Query the INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES view
 # and call the PRINT_TRANSACTION_MESSAGE() UDF
@@ -14,4 +14,4 @@ FROM INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES
 LIMIT 1;
 
 # Truncate the log file to reset for the next test
---source suite/transaction_log/t/truncate_log.inc
+--source ../plugin/transaction_log/tests/t/truncate_log.inc

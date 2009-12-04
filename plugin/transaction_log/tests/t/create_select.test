@@ -1,12 +1,9 @@
-#
-# Tests ALTER statements and the transaction log
-#
-
---source suite/transaction_log/t/alter.inc
+# Populate log with some records...
+--source ../plugin/transaction_log/tests/t/create_select.inc
 
 # Read in the transaction.log.
 
 --exec ../drizzled/message/transaction_reader var/master-data/transaction.log
 
 # Truncate the log file to reset for the next test
---source suite/transaction_log/t/truncate_log.inc
+--source ../plugin/transaction_log/tests/t/truncate_log.inc

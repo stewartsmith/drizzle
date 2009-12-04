@@ -6,13 +6,13 @@
 #
 
 # Populate log with some records...
---source suite/transaction_log/t/insert.inc
+--source ../plugin/transaction_log/tests/t/insert.inc
 
 # Trim result since Solaris/BSD wc program apparently adds whitespace before output
 --exec wc -l var/master-data/transaction.log | tr -d ' ' 
 
 # Truncate the log file
---source suite/transaction_log/t/truncate_log.inc
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
 
 # Trim result since Solaris/BSD wc program apparently adds whitespace before output
 --exec wc -l var/master-data/transaction.log | tr -d ' ' 
