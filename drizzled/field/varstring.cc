@@ -296,11 +296,6 @@ void Field_varstring::sql_type(String &res) const
 }
 
 
-uint32_t Field_varstring::data_length()
-{
-  return length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
-}
-
 uint32_t Field_varstring::used_length()
 {
   return length_bytes == 1 ? 1 + (uint32_t) (unsigned char) *ptr : 2 + uint2korr(ptr);
@@ -329,64 +324,6 @@ unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *fro
   if (length > 0)
     memcpy(to, from+length_bytes, length);
   return to+length;
-}
-
-
-unsigned char *
-Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t max_length,
-                          bool )
-{
-  uint32_t length=  length_bytes == 1 ? (uint32_t) *key : uint2korr(key);
-  uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
-                     max_length/field_charset->mbmaxlen : max_length);
-  key+= length_bytes;
-  if (length > local_char_length)
-  {
-    local_char_length= my_charpos(field_charset, key, key+length,
-                                  local_char_length);
-    set_if_smaller(length, local_char_length);
-  }
-  *to++= (char) (length & 255);
-  if (max_length > 255)
-    *to++= (char) (length >> 8);
-  if (length)
-    memcpy(to, key, length);
-  return to+length;
-}
-
-
-/**
-  Unpack a key into a record buffer.
-
-  A VARCHAR key has a maximum size of 64K-1.
-  In its packed form, the length field is one or two bytes long,
-  depending on 'max_length'.
-
-  @param to                          Pointer into the record buffer.
-  @param key                         Pointer to the packed key.
-  @param max_length                  Key length limit from key description.
-
-  @return
-    Pointer to end of 'key' (To the next key part if multi-segment key)
-*/
-
-const unsigned char *
-Field_varstring::unpack_key(unsigned char *,
-                            const unsigned char *key, uint32_t max_length,
-                            bool )
-{
-  /* get length of the blob key */
-  uint32_t length= *key++;
-  if (max_length > 255)
-    length+= (*key++) << 8;
-
-  /* put the length into the record buffer */
-  if (length_bytes == 1)
-    *ptr= (unsigned char) length;
-  else
-    int2store(ptr, length);
-  memcpy(ptr + length_bytes, key, length);
-  return key + length;
 }
 
 
@@ -542,36 +479,3 @@ Field *Field_varstring::new_key_field(MEM_ROOT *root,
   }
   return res;
 }
-
-
-uint32_t Field_varstring::is_equal(CreateField *new_field_ptr)
-{
-  if (new_field_ptr->sql_type == real_type() &&
-      new_field_ptr->charset == field_charset)
-  {
-    if (new_field_ptr->length == max_display_length())
-      return IS_EQUAL_YES;
-    if (new_field_ptr->length > max_display_length() &&
-	((new_field_ptr->length <= 255 && max_display_length() <= 255) ||
-	 (new_field_ptr->length > 255 && max_display_length() > 255)))
-      return IS_EQUAL_PACK_LENGTH; // VARCHAR, longer variable length
-  }
-  return IS_EQUAL_NO;
-}
-
-
-void Field_varstring::hash(uint32_t *nr, uint32_t *nr2)
-{
-  if (is_null())
-  {
-    *nr^= (*nr << 1) | 1;
-  }
-  else
-  {
-    uint32_t len=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
-    const CHARSET_INFO * const cs= charset();
-    cs->coll->hash_sort(cs, ptr + length_bytes, len, nr, nr2);
-  }
-}
-
-
