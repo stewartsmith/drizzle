@@ -358,7 +358,6 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   if (schema_table_name.compare("TABLES") == 0 ||
       schema_table_name.compare("TABLE_NAMES") == 0)
   {
-    LEX_STRING db;
     size_t dummy;
     if (lex->select_lex.db == NULL &&
         lex->copy_db_to(&lex->select_lex.db, &dummy))
@@ -366,13 +365,18 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       return (1);
     }
     schema_select_lex= new Select_Lex();
-    db.str= schema_select_lex->db= lex->select_lex.db;
-    schema_select_lex->table_list.first= NULL;
-    db.length= strlen(db.str);
+    schema_select_lex->db= lex->select_lex.db;
 
-    if (check_db_name(&db))
+    string database_name(schema_select_lex->db);
+    NonNormalisedDatabaseName non_normalised_database_name(database_name);
+    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+    schema_select_lex->table_list.first= NULL;
+
+    if (! normalised_database_name.is_valid())
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
+      my_error(ER_WRONG_DB_NAME, MYF(0),
+               normalised_database_name.to_string().c_str());
       return (1);
     }
   }
