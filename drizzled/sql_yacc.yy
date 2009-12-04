@@ -2460,10 +2460,23 @@ alter_list_item:
             {
               DRIZZLE_YYABORT;
             }
-            if (check_table_name($3->table.str,$3->table.length) || ($3->db.str && check_db_name(&$3->db)))
+
+            if (check_table_name($3->table.str,$3->table.length))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
               DRIZZLE_YYABORT;
+            }
+
+            if ($3->db.str)
+            {
+              std::string database_name($3->db.str);
+              NonNormalisedDatabaseName non_normalised_database_name(database_name);
+              NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+              if (! normalised_database_name.is_valid())
+              {
+                my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
+                DRIZZLE_YYABORT;
+              }
             }
             lex->name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
