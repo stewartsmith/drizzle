@@ -23,24 +23,31 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
 
+#include <string>
+
+using std::string;
+
 namespace drizzled
 {
 
 bool statement::CreateSchema::execute()
 {
+  string database_name(session->lex->name.str);
+  NonNormalisedDatabaseName non_normalised_database_name(database_name);
+  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+
   if (! session->endActiveTransaction())
   {
     return true;
   }
-  char *alias= session->strmake(session->lex->name.str,
-                                session->lex->name.length);
-  if (! alias ||
-      check_db_name(&session->lex->name))
+  if (! session->lex->name.str ||
+      ! normalised_database_name.is_valid())
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;
   }
-  bool res= mysql_create_db(session, session->lex->name.str, &create_info, is_if_not_exists);
+  bool res= mysql_create_db(session, normalised_database_name.to_string().c_str(), &create_info, is_if_not_exists);
   return res;
 }
 

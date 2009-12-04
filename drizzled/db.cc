@@ -49,9 +49,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  const char *db, const char *path,
                                  TableList **dropped_tables);
 
-static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
-            
-
 /**
   Return default database collation.
 
@@ -473,7 +470,7 @@ exit:
     it to 0.
   */
   if (! session->db.empty() && ! strcmp(session->db.c_str(), db))
-    mysql_change_db_impl(session, NULL);
+    session->clear_db();
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 exit2:
@@ -729,42 +726,6 @@ err:
 }
 
 /**
-  @brief Internal implementation: switch current database to a valid one.
-
-  @param session            Thread context.
-  @param new_db_name    Name of the database to switch to. The function will
-                        take ownership of the name (the caller must not free
-                        the allocated memory). If the name is NULL, we're
-                        going to switch to NULL db.
-  @param new_db_charset Character set of the new database.
-*/
-
-static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
-{
-  /* 1. Change current database in Session. */
-
-  if (new_db_name == NULL)
-  {
-    /*
-      Session::set_db() does all the job -- it frees previous database name and
-      sets the new one.
-    */
-
-    session->set_db(NULL, 0);
-  }
-  else
-  {
-    /*
-      Here we already have a copy of database name to be used in Session. So,
-      we just call Session::reset_db(). Since Session::reset_db() does not releases
-      the previous database name, we should do it explicitly.
-    */
-
-    session->set_db(new_db_name->str, new_db_name->length);
-  }
-}
-
-/**
   Return true if db1_name is equal to db2_name, false otherwise.
 
   The function allows to compare database names according to the MySQL
@@ -850,40 +811,19 @@ cmp_db_names(const char *db1_name,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const NormalisedDatabaseName &normalised_database_name, bool force_switch)
 {
-  LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  assert(new_db_name);
-  assert(new_db_name->length);
-
-  if (my_strcasecmp(system_charset_info, new_db_name->str,
+  if (my_strcasecmp(system_charset_info, normalised_database_name.to_string().c_str(),
                     INFORMATION_SCHEMA_NAME.c_str()) == 0)
   {
-    /* Switch the current database to INFORMATION_SCHEMA. */
-    /* const_cast<> is safe here: mysql_change_db_impl does a copy */
-    LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
-                          INFORMATION_SCHEMA_NAME.length() };
-    mysql_change_db_impl(session, &is_name);
+    NonNormalisedDatabaseName non_normalised_i_s(INFORMATION_SCHEMA_NAME);
+    NormalisedDatabaseName is_name(non_normalised_i_s);
 
+    session->set_db(is_name);
     return false;
   }
-
-  /*
-    Now we need to make a copy because check_db_name requires a
-    non-constant argument. Actually, it takes database file name.
-
-    TODO: fix check_db_name().
-  */
-
-  new_db_file_name.length= new_db_name->length;
-  new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
-  if (new_db_file_name.str == NULL)
-    return true;                             /* the error is set */
-  memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
-  new_db_file_name.str[new_db_name->length]= 0;
-
 
   /*
     NOTE: if check_db_name() fails, we should throw an error in any case,
@@ -893,19 +833,18 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     from sp_head::execute(). But let's switch the current database to NULL
     in this case to be sure.
   */
-
-  if (check_db_name(&new_db_file_name))
+  if (! normalised_database_name.is_valid())
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
-    free(new_db_file_name.str);
+    my_error(ER_WRONG_DB_NAME, MYF(0),
+             normalised_database_name.to_string().c_str());
 
     if (force_switch)
-      mysql_change_db_impl(session, NULL);
+      session->clear_db();
 
     return true;
   }
 
-  if (check_db_dir_existence(new_db_file_name.str))
+  if (check_db_dir_existence(normalised_database_name.to_string().c_str()))
   {
     if (force_switch)
     {
@@ -913,13 +852,11 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
-                          new_db_file_name.str);
-
-      free(new_db_file_name.str);
+                          normalised_database_name.to_string().c_str());
 
       /* Change db to NULL. */
 
-      mysql_change_db_impl(session, NULL);
+      session->clear_db();
 
       /* The operation succeed. */
 
@@ -929,8 +866,8 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     {
       /* Report an error and free new_db_file_name. */
 
-      my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-      free(new_db_file_name.str);
+      my_error(ER_BAD_DB_ERROR, MYF(0),
+               normalised_database_name.to_string().c_str());
 
       /* The operation failed. */
 
@@ -938,10 +875,9 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     }
   }
 
-  db_default_cl= get_default_db_collation(new_db_file_name.str);
+  db_default_cl= get_default_db_collation(normalised_database_name.to_string().c_str());
 
-  mysql_change_db_impl(session, &new_db_file_name);
-  free(new_db_file_name.str);
+  session->set_db(normalised_database_name);
 
   return false;
 }
@@ -974,7 +910,6 @@ bool check_db_dir_existence(const char *db_name)
   return my_access(db_dir_path, F_OK);
 }
 
-
 /*
   Check if database name is valid
 
@@ -998,4 +933,36 @@ bool check_db_name(LEX_STRING *org_name)
   my_casedn_str(files_charset_info, name);
 
   return check_identifier_name(org_name);
+}
+
+NormalisedDatabaseName::NormalisedDatabaseName(const NonNormalisedDatabaseName &dbname)
+{
+  const std::string &non_norm_string= dbname.to_string();
+  database_name= (char*)malloc(non_norm_string.size()+1);
+
+  assert(database_name); /* FIXME: should throw exception */
+
+  strncpy(database_name, non_norm_string.c_str(), non_norm_string.size()+1);
+
+  my_casedn_str(files_charset_info, database_name);
+}
+
+NormalisedDatabaseName::~NormalisedDatabaseName()
+{
+  free(database_name);
+}
+
+bool NormalisedDatabaseName::is_valid() const
+{
+  LEX_STRING db_lexstring;
+
+  db_lexstring.str= database_name;
+  db_lexstring.length= strlen(database_name);
+
+  if (db_lexstring.length == 0
+      || db_lexstring.length > NAME_LEN
+      || database_name[db_lexstring.length - 1] == ' ')
+    return false;
+
+  return (! check_identifier_name(&db_lexstring));
 }

@@ -193,11 +193,13 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    LEX_STRING tmp;
+    string database_name(packet);
+    NonNormalisedDatabaseName non_normalised_database_name(database_name);
+    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    tmp.str= packet;
-    tmp.length= packet_length;
-    if (!mysql_change_db(session, &tmp, false))
+
+    if (!mysql_change_db(session, normalised_database_name, false))
     {
       session->my_ok();
     }

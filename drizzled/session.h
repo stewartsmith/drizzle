@@ -1139,7 +1139,9 @@ public:
       @retval false Success
       @retval true  Out-of-memory error
   */
-  bool set_db(const char *new_db, size_t new_db_len);
+  bool set_db(const NormalisedDatabaseName &new_db);
+
+  void clear_db();
 
   /*
     Copy the current database to the argument. Use the current arena to
