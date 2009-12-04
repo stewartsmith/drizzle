@@ -270,7 +270,7 @@ exit2:
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
+bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, HA_CREATE_INFO *create_info)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   long result=1;
@@ -296,10 +296,10 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
+  path_len= build_table_filename(path, sizeof(path), database_name.to_string().c_str(), "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
-  error= write_schema_file(session, path, db, create_info);
+  error= write_schema_file(session, path, database_name.to_string().c_str(), create_info);
   if (error && error != EEXIST)
   {
     /* TODO: find some witty way of getting back an error message */
