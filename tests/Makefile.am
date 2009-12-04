@@ -104,6 +104,9 @@ test-all:
 test-drizzle:
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS)
 
+test-valgrind:
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS)
+
 test-junitxml:
 	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml
 
