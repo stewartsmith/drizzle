@@ -282,3 +282,5 @@ pandora-plugin.ac
 pandora-plugin.am
 lint-rules.am
 *.linted
+config/pandora-plugin.list
+config/plugin.stamp
