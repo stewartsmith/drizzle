@@ -124,7 +124,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/row_count.h \
 		function/set_user_var.h \
 		function/sign.h \
-		function/signed.h \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
@@ -184,7 +183,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/weekday.h \
 		function/time/year.h  \
 		function/units.h \
-		function/unsigned.h \
 		function/user_var_as_out_param.h \
 		function_hash.h \
 		ha_statistics.h \
@@ -495,7 +493,6 @@ drizzled_SOURCES = \
 		function/row_count.cc \
 		function/set_user_var.cc \
 		function/sign.cc \
-		function/signed.cc \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \
@@ -555,7 +552,6 @@ drizzled_SOURCES = \
 		function/time/weekday.cc \
 		function/time/year.cc \
 		function/units.cc \
-		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
 		ha_commands.cc \
 		ha_trx_info.cc \

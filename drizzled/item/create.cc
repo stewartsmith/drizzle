@@ -2847,12 +2847,6 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
   case ITEM_CAST_BINARY:
     res= new (session->mem_root) Item_func_binary(a);
     break;
-  case ITEM_CAST_SIGNED_INT:
-    res= new (session->mem_root) Item_func_signed(a);
-    break;
-  case ITEM_CAST_UNSIGNED_INT:
-    res= new (session->mem_root) Item_func_unsigned(a);
-    break;
   case ITEM_CAST_DATE:
     res= new (session->mem_root) Item_date_typecast(a);
     break;
