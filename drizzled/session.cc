@@ -673,8 +673,9 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   {
     const string database_name_string(in_db);
     NonNormalisedDatabaseName database_name(database_name_string);
+    NormalisedDatabaseName normalised_database_name(database_name);
 
-    if (mysql_change_db(this, database_name, false))
+    if (mysql_change_db(this, normalised_database_name, false))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;

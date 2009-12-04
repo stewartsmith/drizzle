@@ -50,8 +50,10 @@ private:
      immutable and should be passed by reference */
   NonNormalisedDatabaseName(const NonNormalisedDatabaseName&);
 
+  NonNormalisedDatabaseName operator=(const NonNormalisedDatabaseName&);
+
 public:
-  NonNormalisedDatabaseName(const std::string db) :
+  explicit NonNormalisedDatabaseName(const std::string db) :
     database_name(db)
     {
     }
@@ -70,9 +72,10 @@ private:
   /* Copying a NormalisedDatabaseName is always wrong, it's
      immutable and should be passed by reference */
   NormalisedDatabaseName(const NormalisedDatabaseName&);
+  NormalisedDatabaseName operator=(const NormalisedDatabaseName&);
 
 public:
-  NormalisedDatabaseName(const NonNormalisedDatabaseName &dbname);
+  explicit NormalisedDatabaseName(const NonNormalisedDatabaseName &dbname);
 
   ~NormalisedDatabaseName();
 
