@@ -210,7 +210,6 @@ EXTRA_DIST+=	${man_MANS}
 
 .PHONY: \
 	indent \
-	linted \
 	test
 
 
@@ -299,6 +298,5 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-
 
 include config/lint-source.am

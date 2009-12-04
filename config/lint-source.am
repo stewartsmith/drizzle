@@ -16,6 +16,8 @@ clean-local: cleanlints
 
 check-local: linted ${srcdir}/config/lint-rules.am
 
+linted:
+
 # Build the things to lint dynamically
 ${srcdir}/config/lint-rules.am: lint-rules-gen
 	@# Make make think it did something so it sees the file changed.
@@ -24,7 +26,7 @@ ${srcdir}/config/lint-rules.am: lint-rules-gen
 lint-rules-gen:
 	srcdir=${srcdir} ${top_srcdir}/config/make-lint.py
 
-.PHONY: cleanlints lint-rules-gen
+.PHONY: cleanlints linted lint-rules-gen
 
 # dynamic rules
 include config/lint-rules.am
