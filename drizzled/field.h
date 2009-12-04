@@ -568,7 +568,6 @@ public:
   {
     return unpack(to, from, max_length, low_byte_first);
   }
-  virtual uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   virtual uint32_t max_packed_col_length(uint32_t max_length)
   {
     return max_length;

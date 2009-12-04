@@ -459,14 +459,6 @@ Field_varstring::unpack(unsigned char *to, const unsigned char *from,
 }
 
 
-uint32_t Field_varstring::packed_col_length(const unsigned char *data_ptr, uint32_t length)
-{
-  if (length > 255)
-    return uint2korr(data_ptr)+2;
-  return (uint32_t) *data_ptr + 1;
-}
-
-
 uint32_t Field_varstring::max_packed_col_length(uint32_t max_length)
 {
   return (max_length > 255 ? 2 : 1)+max_length;

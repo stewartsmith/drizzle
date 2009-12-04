@@ -728,11 +728,6 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-uint32_t Field::packed_col_length(const unsigned char *, uint32_t length)
-{
-  return length;
-}
-
 my_decimal *Field::val_decimal(my_decimal *)
 {
   /* This never have to be called */

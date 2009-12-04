@@ -107,7 +107,6 @@ public:
   int cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const unsigned char *,const unsigned char*);
   int key_cmp(const unsigned char *str, uint32_t length);
-  uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   uint32_t max_packed_col_length(uint32_t max_length);
   uint32_t data_length();
   uint32_t used_length();
