@@ -1,5 +1,0 @@
-# Start with thread_handling=pool-of-threads
-# and run a number of tests
-
--- source include/common-tests.inc
-
