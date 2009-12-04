@@ -97,13 +97,11 @@
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/sign.h>
-#include <drizzled/function/signed.h>
 #include <drizzled/function/math/sin.h>
 #include <drizzled/function/math/sqrt.h>
 #include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
-#include <drizzled/function/unsigned.h>
 
 #include <map>
 
