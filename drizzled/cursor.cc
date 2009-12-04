@@ -700,6 +700,10 @@ Cursor::mark_trx_read_write()
   Delete all rows: public interface.
 
   @sa Cursor::delete_all_rows()
+
+  @note
+
+  This is now equalivalent to TRUNCATE TABLE.
 */
 
 int
@@ -707,7 +711,22 @@ Cursor::ha_delete_all_rows()
 {
   mark_trx_read_write();
 
-  return delete_all_rows();
+  int result= delete_all_rows();
+
+  if (result == 0)
+  {
+    /** 
+     * Trigger post-truncate notification to plugins... 
+     *
+     * @todo Make ReplicationServices generic to AfterTriggerServices
+     * or similar...
+     */
+    Session *const session= table->in_use;
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    replication_services.truncateTable(session, table);
+  }
+
+  return result;
 }
 
 
