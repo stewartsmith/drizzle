@@ -123,7 +123,6 @@ int mysql_update(Session *session, TableList *table_list,
                  bool ignore)
 {
   bool		using_limit= limit != HA_POS_ERROR;
-  bool		safe_update= test(session->options & OPTION_SAFE_UPDATES);
   bool		used_key_is_modified;
   bool		transactional_table;
   bool		can_compare_record;
@@ -213,7 +212,7 @@ int mysql_update(Session *session, TableList *table_list,
 
   select= make_select(table, 0, 0, conds, 0, &error);
   if (error || !limit ||
-      (select && select->check_quick(session, safe_update, limit)))
+      (select && select->check_quick(session, false, limit)))
   {
     delete select;
     /**
@@ -237,12 +236,6 @@ int mysql_update(Session *session, TableList *table_list,
   if (table->quick_keys.none())
   {
     session->server_status|=SERVER_QUERY_NO_INDEX_USED;
-    if (safe_update && !using_limit)
-    {
-      my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-		 ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-      goto err;
-    }
   }
 
   table->mark_columns_needed_for_update();

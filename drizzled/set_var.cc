@@ -251,9 +251,6 @@ static sys_var_session_bit	sys_sql_warnings(&vars, "sql_warnings", 0,
 static sys_var_session_bit	sys_sql_notes(&vars, "sql_notes", 0,
 					 set_option_bit,
 					 OPTION_SQL_NOTES);
-static sys_var_session_bit	sys_safe_updates(&vars, "sql_safe_updates", 0,
-					 set_option_bit,
-					 OPTION_SAFE_UPDATES);
 static sys_var_session_bit	sys_buffer_results(&vars, "sql_buffer_result", 0,
 					   set_option_bit,
 					   OPTION_BUFFER_RESULT);

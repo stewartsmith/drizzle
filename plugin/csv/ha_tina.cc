@@ -863,12 +863,12 @@ void ha_tina::update_status()
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int, uint32_t open_options)
+int ha_tina::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name, table)))
     return(ENOENT);
 
-  if (share->crashed && !(open_options & HA_OPEN_FOR_REPAIR))
+  if (share->crashed)
   {
     free_share(share);
     return(HA_ERR_CRASHED_ON_USAGE);

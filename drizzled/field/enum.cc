@@ -204,24 +204,6 @@ int64_t Field_enum::val_int(void)
   return 0;					// impossible
 }
 
-/**
-   Save the field metadata for enum fields.
-
-   Saves the real type in the first byte and the pack length in the
-   second byte of the field metadata array at index of *metadata_ptr and
-   *(metadata_ptr + 1).
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= real_type();
-  *(metadata_ptr + 1)= pack_length();
-  return 2;
-}
-
 String *Field_enum::val_str(String *, String *val_ptr)
 {
   uint32_t tmp=(uint32_t) Field_enum::val_int();

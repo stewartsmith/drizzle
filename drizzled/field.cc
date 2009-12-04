@@ -405,11 +405,6 @@ uint32_t Field::row_pack_length()
   return 0;
 }
 
-int Field::save_field_metadata(unsigned char *first_byte)
-{
-  return do_save_field_metadata(first_byte);
-}
-
 uint32_t Field::data_length()
 {
   return pack_length();
@@ -731,22 +726,6 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
 {
   const unsigned char *result= unpack(to, from, 0U, table->s->db_low_byte_first);
   return(result);
-}
-
-uint32_t Field::packed_col_length(const unsigned char *, uint32_t length)
-{
-  return length;
-}
-
-int Field::pack_cmp(const unsigned char *a, const unsigned char *b,
-                    uint32_t, bool)
-{
-  return cmp(a,b);
-}
-
-int Field::pack_cmp(const unsigned char *b, uint32_t, bool)
-{
-  return cmp(ptr,b);
 }
 
 my_decimal *Field::val_decimal(my_decimal *)

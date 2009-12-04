@@ -38,18 +38,3 @@ AlterInfo::AlterInfo() :
   datetime_field(NULL),
   error_if_not_empty(false)
 {}
-
-void AlterInfo::reset()
-{
-  drop_list.empty();
-  alter_list.empty();
-  key_list.empty();
-  create_list.empty();
-  flags.reset();
-  keys_onoff= LEAVE_AS_IS;
-  tablespace_op= NO_TABLESPACE_OP;
-  no_parts= 0;
-  build_method= HA_BUILD_DEFAULT;
-  datetime_field= 0;
-  error_if_not_empty= false;
-}

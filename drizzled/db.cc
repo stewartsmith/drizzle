@@ -41,7 +41,7 @@ using namespace drizzled;
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
-const char *del_exts[]= {".dfe", ".BAK", ".TMD",".opt", NULL};
+const char *del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD",".opt", NULL};
 static TYPELIB deletable_extentions=
 {array_elements(del_exts)-1,"del_exts", del_exts, NULL};
 
