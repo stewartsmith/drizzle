@@ -13,118 +13,129 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-LDADD= libdrizzledmessage.la \
+MESSAGE_DIR=drizzled/message
+MESSAGE_LDADD= ${MESSAGE_DIR}/libdrizzledmessage.la \
 	${LIBPROTOBUF} \
 	${LIBUUID} \
 	${LTLIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
-AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
-TESTS_ENVIRONMENT = BINDIR=${top_builddir}/drizzled/message sh
-TESTS = check_length.sh
+MESSAGE_AM_CXXFLAGS = ${PROTOSKIP_WARNINGS}
+TESTS += ${MESSAGE_DIR}/check_length.sh
 
-noinst_PROGRAMS = \
-		table_reader \
-		table_raw_reader \
-		table_writer \
-		transaction_reader \
-		transaction_writer \
-		master_list_reader \
-		master_list_writer \
-		binlog_reader \
-		binlog_writer \
-		schema_reader
+noinst_PROGRAMS += \
+		drizzled/message/table_reader \
+		drizzled/message/table_raw_reader \
+		drizzled/message/table_writer \
+		drizzled/message/transaction_reader \
+		drizzled/message/transaction_writer \
+		drizzled/message/master_list_reader \
+		drizzled/message/master_list_writer \
+		drizzled/message/binlog_reader \
+		drizzled/message/binlog_writer \
+		drizzled/message/schema_reader
 
-check_PROGRAMS = length
+check_PROGRAMS += drizzled/message/length
 
-noinst_LTLIBRARIES = libdrizzledmessage.la
+noinst_LTLIBRARIES += drizzled/message/libdrizzledmessage.la
 
-libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
-libdrizzledmessage_la_SOURCES = statement_transform.cc
+drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_transform.cc
 
 messageincludedir= ${includedir}/drizzled/message
-messageinclude_HEADERS= statement_transform.h
+messageinclude_HEADERS= drizzled/message/statement_transform.h
 
-nodist_libdrizzledmessage_la_SOURCES = \
-		binary_log.pb.cc \
-		master_list.pb.cc \
-		transaction.pb.cc \
-		schema.pb.cc \
-		table.pb.cc
+nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
+		drizzled/message/binary_log.pb.cc \
+		drizzled/message/master_list.pb.cc \
+		drizzled/message/transaction.pb.cc \
+		drizzled/message/schema.pb.cc \
+		drizzled/message/table.pb.cc
 
 nodist_noinst_HEADERS= \
-		binary_log.pb.h \
-		master_list.pb.h \
-		transaction.pb.h \
-		schema.pb.h \
-		table.pb.h 
+		drizzled/message/binary_log.pb.h \
+		drizzled/message/master_list.pb.h \
+		drizzled/message/transaction.pb.h \
+		drizzled/message/schema.pb.h \
+		drizzled/message/table.pb.h 
 
-noinst_HEADERS= \
-		binary_log.h \
-		binlog_encoding.h \
-		ioutil.h \
-		all.h
+noinst_HEADERS+= \
+		drizzled/message/binary_log.h \
+		drizzled/message/binlog_encoding.h \
+		drizzled/message/ioutil.h \
+		drizzled/message/all.h
 
 
-binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
+drizzled_message_binlog_reader_SOURCES = drizzled/message/binlog_reader.cc drizzled/message/binary_log.cc
+drizzled_message_binlog_reader_LDADD = ${MESSAGE_LDADD}
 
-binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
+drizzled_message_binlog_writer_SOURCES = drizzled/message/binlog_writer.cc drizzled/message/binary_log.cc
+drizzled_message_binlog_writer_LDADD = ${MESSAGE_LDADD}
 
-schema_reader_SOURCES =  schema_reader.cc
+drizzled_message_schema_reader_SOURCES =  drizzled/message/schema_reader.cc
+drizzled_message_schema_reader_LDADD = ${MESSAGE_LDADD}
 
-table_reader_SOURCES =  table_reader.cc
+drizzled_message_table_reader_SOURCES =  drizzled/message/table_reader.cc
+drizzled_message_table_reader_LDADD = ${MESSAGE_LDADD}
 
-table_raw_reader_SOURCES =  table_raw_reader.cc
+drizzled_message_table_raw_reader_SOURCES =  drizzled/message/table_raw_reader.cc
+drizzled_message_table_raw_reader_LDADD = ${MESSAGE_LDADD}
 
-table_writer_SOURCES =  table_writer.cc
+drizzled_message_table_writer_SOURCES =  drizzled/message/table_writer.cc
+drizzled_message_table_writer_LDADD = ${MESSAGE_LDADD}
 
-master_list_writer_SOURCES =  master_list_writer.cc
+drizzled_message_master_list_writer_SOURCES =  drizzled/message/master_list_writer.cc
+drizzled_message_master_list_writer_LDADD = ${MESSAGE_LDADD}
 
-master_list_reader_SOURCES =  master_list_reader.cc
+drizzled_message_master_list_reader_SOURCES =  drizzled/message/master_list_reader.cc
+drizzled_message_master_list_reader_LDADD = ${MESSAGE_LDADD}
 
-transaction_writer_SOURCES =  transaction_writer.cc transaction.pb.cc
-transaction_writer_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
+drizzled_message_transaction_writer_SOURCES =  drizzled/message/transaction_writer.cc drizzled/message/transaction.pb.cc
+drizzled_message_transaction_writer_LDADD = ${MESSAGE_LDADD} ${top_builddir}/drizzled/hash/libhash.la
+drizzled_message_transaction_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
-transaction_reader_SOURCES =  transaction_reader.cc transaction.pb.cc
-transaction_reader_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
+drizzled_message_transaction_reader_SOURCES =  drizzled/message/transaction_reader.cc drizzled/message/transaction.pb.cc
+drizzled_message_transaction_reader_LDADD = ${MESSAGE_LDADD} ${top_builddir}/drizzled/hash/libhash.la
+drizzled_message_transaction_reader_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
-transaction_writer_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
-transaction_reader_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+drizzled_message_length_SOURCES = drizzled/message/length.cc
+drizzled_message_length_LDADD = ${MESSAGE_LDADD}
 
-length_SOURCES = length.cc
+EXTRA_DIST += \
+		${MESSAGE_DIR}/schema.proto \
+		${MESSAGE_DIR}/table.proto \
+		${MESSAGE_DIR}/binary_log.proto \
+		${MESSAGE_DIR}/master_list.proto \
+		${MESSAGE_DIR}/transaction.proto \
+		${MESSAGE_DIR}/check_length.sh
 
-EXTRA_DIST = \
-		schema.proto \
-		table.proto \
-		binary_log.proto \
-		master_list.proto \
-		transaction.proto \
-		check_length.sh
+BUILT_SOURCES += \
+		${MESSAGE_DIR}/schema.pb.h \
+		${MESSAGE_DIR}/table.pb.h \
+		${MESSAGE_DIR}/binary_log.pb.h \
+		${MESSAGE_DIR}/transaction.pb.h \
+		${MESSAGE_DIR}/master_list.pb.h
 
-BUILT_SOURCES = \
-		schema.pb.h \
-		table.pb.h \
-		binary_log.pb.h \
-		transaction.pb.h \
-		master_list.pb.h
+CLEANFILES += \
+	    ${MESSAGE_DIR}/binary_log.pb.h \
+	    ${MESSAGE_DIR}/binary_log.pb.cc \
+	    ${MESSAGE_DIR}/schema.pb.h \
+	    ${MESSAGE_DIR}/schema.pb.cc \
+	    ${MESSAGE_DIR}/table.pb.h \
+	    ${MESSAGE_DIR}/table.pb.cc \
+	    ${MESSAGE_DIR}/transaction.pb.h \
+	    ${MESSAGE_DIR}/transaction.pb.cc \
+	    ${MESSAGE_DIR}/master_list.pb.h \
+	    ${MESSAGE_DIR}/master_list.pb.cc
 
-CLEANFILES = \
-		binary_log.pb.h \
-		binary_log.pb.cc \
-		schema.pb.h \
-		schema.pb.cc \
-		table.pb.h \
-		table.pb.cc \
-		transaction.pb.h \
-		transaction.pb.cc \
-		master_list.pb.h \
-		master_list.pb.cc
+SUFFIXES += .proto .pb.cc .pb.h
 
-SUFFIXES = .proto .pb.cc .pb.h
+MESSAGE_PROTO_PATH=${top_buildir}/${MESSAGE_DIR}:${top_srcdir}/${MESSAGE_DIR}
+
 .proto.pb.cc:
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/message \
-		--cpp_out=${top_builddir}/drizzled/message $<
+	$(PROTOC) --proto_path=${MESSAGE_PROTO_PATH} \
+		--cpp_out=${top_builddir}/${MESSAGE_DIR} $<
 .proto.pb.h:
-	$(PROTOC) --proto_path=.:${top_srcdir}/drizzled/message \
+	$(PROTOC) --proto_path=${MESSAGE_PROTO_PATH} \
 		--cpp_out=${top_builddir}/drizzled/message $<

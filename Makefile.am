@@ -15,6 +15,13 @@
 
 ACLOCAL_AMFLAGS = -I m4 --force
 
+# includes append to these:
+TESTS = 
+check_PROGRAMS =
+noinst_HEADERS =
+noinst_LTLIBRARIES =
+noinst_PROGRAMS =
+
 # Process this file with automake to create Makefile.in
 if BUILD_GETTEXT
   po=po
@@ -24,8 +31,6 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 
 SUBDIRS = ${po} \
 	  gnulib \
-	  drizzled/hash \
-	  drizzled/message \
 	  . \
 	  drizzled \
 	  tests \
@@ -53,12 +58,12 @@ CLIENT_LDADD=		mysys/libmysys.la \
 			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
 			client/libgetpassword.la
 
-noinst_LTLIBRARIES= \
+noinst_LTLIBRARIES+= \
 		client/libgetpassword.la \
 		mysys/libmysys.la \
 		mystrings/libmystrings.la
 
-noinst_PROGRAMS=\
+noinst_PROGRAMS+=\
 		client/drizzletest \
 		extra/my_print_defaults
 
@@ -77,7 +82,7 @@ man_MANS=\
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
-noinst_HEADERS=	\
+noinst_HEADERS+=	\
 		client/client_priv.h \
 		client/errname.h \
 		client/get_password.h \
@@ -300,3 +305,6 @@ clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 
 include config/lint-source.am
+
+include drizzled/hash/include.am
+include drizzled/message/include.am
