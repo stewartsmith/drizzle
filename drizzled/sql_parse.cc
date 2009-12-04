@@ -948,11 +948,20 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str &&
-      check_db_name(&table->db))
+  if (table->is_derived_table() == false && table->db.str)
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
-    return NULL;
+    string database_name(table->db.str);
+    NonNormalisedDatabaseName non_normalised_database_name(database_name);
+    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+    if (! normalised_database_name.is_valid())
+    {
+      my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
+      return NULL;
+    }
+
+    strncpy(table->db.str, normalised_database_name.to_string().c_str(),
+            table->db.length);
   }
 
   if (!alias)					/* Alias is case sensitive */
