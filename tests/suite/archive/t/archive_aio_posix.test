@@ -2,8 +2,6 @@
 # Simple test for archive example
 # Taken FROM the select test
 #
--- source include/have_archive.inc
-
 --disable_warnings
 DROP TABLE if exists t1,t2,t3,t4,t5,t6;
 --enable_warnings
