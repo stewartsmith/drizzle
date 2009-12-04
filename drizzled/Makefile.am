@@ -262,6 +262,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		optimizer/key_use.h \
 		optimizer/position.h \
 		optimizer/sargable_param.h \
+		optimizer/sum.h \
 		order.h \
 		plugin.h \
 		plugin/authentication.h \
@@ -610,8 +611,8 @@ drizzled_SOURCES = \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
 		opt_range.cc \
-		opt_sum.cc \
 		optimizer/key_field.cc \
+		optimizer/sum.cc \
 		plugin/authentication.cc \
 		plugin/client.cc \
 		plugin/error_message.cc \

@@ -45,6 +45,7 @@
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/sargable_param.h"
 #include "drizzled/optimizer/key_use.h"
+#include "drizzled/optimizer/sum.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
@@ -484,12 +485,12 @@ int JOIN::optimize()
   {
     int res;
     /*
-      opt_sum_query() returns HA_ERR_KEY_NOT_FOUND if no rows match
+      optimizer::sum_query() returns HA_ERR_KEY_NOT_FOUND if no rows match
       to the WHERE conditions,
       or 1 if all items were resolved,
       or 0, or an error number HA_ERR_...
     */
-    if ((res=opt_sum_query(select_lex->leaf_tables, all_fields, conds)))
+    if ((res= optimizer::sum_query(select_lex->leaf_tables, all_fields, conds)))
     {
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
@@ -512,11 +513,11 @@ int JOIN::optimize()
       tables_list= 0;       // All tables resolved
       /*
         Extract all table-independent conditions and replace the WHERE
-        clause with them. All other conditions were computed by opt_sum_query
+        clause with them. All other conditions were computed by optimizer::sum_query
         and the MIN/MAX/COUNT function(s) have been replaced by constants,
         so there is no need to compute the whole WHERE clause again.
         Notice that make_cond_for_table() will always succeed to remove all
-        computed conditions, because opt_sum_query() is applicable only to
+        computed conditions, because optimizer::sum_query() is applicable only to
         conjunctions.
         Preserve conditions for EXPLAIN.
       */

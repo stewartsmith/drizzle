@@ -103,14 +103,15 @@
            subject and may omit some details.
 */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/sql_select.h>
-#include <drizzled/error.h>
-#include <drizzled/cost_vect.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/field/num.h>
-#include <drizzled/check_stack_overrun.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/sql_select.h"
+#include "drizzled/error.h"
+#include "drizzled/cost_vect.h"
+#include "drizzled/item/cmpfunc.h"
+#include "drizzled/field/num.h"
+#include "drizzled/check_stack_overrun.h"
+#include "drizzled/optimizer/sum.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
@@ -8479,7 +8480,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
         memset(args, 0, 3 * sizeof(Item*));
         bool inv;
         /* Test if this is a comparison of a field and a constant. */
-        if (!simple_pred(pred, args, &inv))
+        if (! optimizer::simple_pred(pred, args, &inv))
           return false;
 
         /* Check for compatible string comparisons - similar to get_mm_leaf. */

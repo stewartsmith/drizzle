@@ -309,7 +309,7 @@ enum ha_base_keytype {
 /*
   Errorcodes given by handler functions
 
-  opt_sum_query() assumes these codes are > 1
+  optimizer::sum_query() assumes these codes are > 1
   Do not add error numbers before HA_ERR_FIRST.
   If necessary to add lower numbers, change HA_ERR_FIRST accordingly.
 */
