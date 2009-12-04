@@ -389,33 +389,6 @@ Field_varstring::unpack_key(unsigned char *,
   return key + length;
 }
 
-/**
-  Create a packed key that will be used for storage in the index tree.
-
-  @param to		Store packed key segment here
-  @param from		Key segment (as given to index_read())
-  @param max_length  	Max length of key
-
-  @return
-    end of key storage
-*/
-
-unsigned char *
-Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                                         bool )
-{
-  /* Key length is always stored as 2 bytes */
-  uint32_t length= uint2korr(from);
-  if (length > max_length)
-    length= max_length;
-  *to++= (char) (length & 255);
-  if (max_length > 255)
-    *to++= (char) (length >> 8);
-  if (length)
-    memcpy(to, from+HA_KEY_BLOB_LENGTH, length);
-  return to+length;
-}
-
 
 /**
    Unpack a varstring field from row data.

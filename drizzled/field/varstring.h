@@ -93,10 +93,6 @@ public:
                               bool low_byte_first);
 
   unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key_from_key_image(unsigned char* to,
-                                         const unsigned char *from,
-                                         uint32_t max_length,
-                                         bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char* to,
                                       const unsigned char *from,
                                       uint32_t param_data,

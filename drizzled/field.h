@@ -554,13 +554,6 @@ public:
   {
     return pack(to, from, max_length, low_byte_first);
   }
-  virtual unsigned char *pack_key_from_key_image(unsigned char* to,
-                                                 const unsigned char *from,
-                                                 uint32_t max_length,
-                                                 bool low_byte_first)
-  {
-    return pack(to, from, max_length, low_byte_first);
-  }
   virtual const unsigned char *unpack_key(unsigned char* to,
                                           const unsigned char *from,
                                           uint32_t max_length,
