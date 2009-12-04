@@ -25,7 +25,7 @@ namespace drizzled { namespace message { class Schema; } }
 
 class NormalisedDatabaseName;
 
-bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info,
+bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, HA_CREATE_INFO *create_info,
                      bool is_if_not_exists);
 bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, HA_CREATE_INFO *create);
 bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, bool if_exists);

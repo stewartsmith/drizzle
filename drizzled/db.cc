@@ -183,7 +183,7 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 */
 
-bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, HA_CREATE_INFO *create_info, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   char	 path[FN_REFLEN+16];
@@ -193,9 +193,9 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
   uint32_t path_len;
 
   /* do not create 'information_schema' db */
-  if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.c_str()))
+  if (!my_strcasecmp(system_charset_info, database_name.to_string().c_str(), INFORMATION_SCHEMA_NAME.c_str()))
   {
-    my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
+    my_error(ER_DB_CREATE_EXISTS, MYF(0), database_name.to_string().c_str());
     return(-1);
   }
 
@@ -220,7 +220,7 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Check directory */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
+  path_len= build_table_filename(path, sizeof(path), database_name.to_string().c_str(), "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
   if (mkdir(path,0777) == -1)
@@ -229,23 +229,24 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
     {
       if (! is_if_not_exists)
       {
-	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
+	my_error(ER_DB_CREATE_EXISTS, MYF(0), database_name.to_string().c_str());
 	error= true;
 	goto exit;
       }
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
+			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
+                          database_name.to_string().c_str());
       session->my_ok();
       error= false;
       goto exit;
     }
 
-    my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
+    my_error(ER_CANT_CREATE_DB, MYF(0), database_name.to_string().c_str(), my_errno);
     error= true;
     goto exit;
   }
 
-  error_erno= write_schema_file(session, path, db, create_info);
+  error_erno= write_schema_file(session, path, database_name.to_string().c_str(), create_info);
   if (error_erno && error_erno != EEXIST)
   {
     if (rmdir(path) >= 0)
