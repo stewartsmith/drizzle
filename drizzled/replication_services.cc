@@ -94,15 +94,15 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
-  while (repl_iter != replicators.end())
+  for (Replicators::iterator repl_iter= replicators.begin();
+       repl_iter != replicators.end();
+       ++repl_iter)
   {
     if ((*repl_iter)->isEnabled())
     {
       tmp_is_active= true;
       break;
     }
-    ++repl_iter;
   }
   if (! tmp_is_active)
   {
@@ -118,15 +118,15 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  vector<plugin::TransactionApplier *>::iterator appl_iter= appliers.begin();
-  while (appl_iter != appliers.end())
+  for (Appliers::iterator appl_iter= appliers.begin();
+       appl_iter != appliers.end();
+       ++appl_iter)
   {
     if ((*appl_iter)->isEnabled())
     {
       is_active= true;
       return;
     }
-    ++appl_iter;
   }
   /* If we get here, there are no active appliers */
   is_active= false;
@@ -205,31 +205,7 @@ void ReplicationServices::cleanupTransaction(message::Transaction *in_transactio
   in_session->setTransactionMessage(NULL);
 }
 
-void ReplicationServices::startNormalTransaction(Session *in_session)
-{
-  if (! is_active)
-    return;
-
-  /* Safeguard...other transactions should have already been closed */
-  message::Transaction *transaction= in_session->getTransactionMessage();
-  assert(transaction == NULL);
-  
-  /* 
-   * A "normal" transaction for the replication services component
-   * is simply a Transaction message, nothing more...so we create a
-   * new message and attach it to the Session object.
-   *
-   * Allocate and initialize a new transaction message 
-   * for this Session object.  This memory is deleted when the
-   * transaction is pushed out to replicators.  Session is NOT
-   * responsible for deleting this memory.
-   */
-  transaction= new (nothrow) message::Transaction();
-  initTransaction(*transaction, in_session);
-  in_session->setTransactionMessage(transaction);
-}
-
-void ReplicationServices::commitNormalTransaction(Session *in_session)
+void ReplicationServices::commitTransaction(Session *in_session)
 {
   if (! is_active)
     return;

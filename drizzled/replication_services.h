@@ -258,25 +258,12 @@ public:
    */
   void detachApplier(drizzled::plugin::TransactionApplier *in_applier);
   /**
-   * Creates a new Transaction GPB message and attaches the message
-   * to the supplied session object.
-   *
-   * @note
-   *
-   * This method is called when a "normal" transaction -- i.e. an 
-   * explicitly-started transaction from a client -- is started with 
-   * BEGIN or START TRANSACTION.
-   *
-   * @param Pointer to the Session starting the transaction
-   */
-  void startNormalTransaction(Session *in_session);
-  /**
    * Commits a normal transaction (see above) and pushes the
    * transaction message out to the replicators.
    *
    * @param Pointer to the Session committing the transaction
    */
-  void commitNormalTransaction(Session *in_session);
+  void commitTransaction(Session *in_session);
   /**
    * Marks the current active transaction message as being rolled
    * back and pushes the transaction message out to replicators.

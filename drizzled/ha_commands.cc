@@ -699,7 +699,7 @@ int ha_commit_one_phase(Session *session, bool all)
         * and propogating the message to all registered replicators.
         */
       ReplicationServices &replication_services= ReplicationServices::singleton();
-      replication_services.commitNormalTransaction(session);
+      replication_services.commitTransaction(session);
     }
   }
   return error;
