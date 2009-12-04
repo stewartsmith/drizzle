@@ -477,22 +477,6 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 			 b+HA_KEY_BLOB_LENGTH, uint2korr(b));
 }
 
-/**
-   Save the field metadata for blob fields.
-
-   Saves the pack length in the first byte of the field metadata array
-   at index of *metadata_ptr.
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= pack_length_no_ptr();
-  return 1;
-}
-
 uint32_t Field_blob::sort_length() const
 {
   return (uint32_t) (current_session->variables.max_sort_length +
@@ -635,18 +619,6 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
   memcpy(to, from, length);
   ptr=save;					// Restore org row pointer
   return to+length;
-}
-
-
-uint32_t Field_blob::is_equal(CreateField *new_field_ptr)
-{
-  if (compare_str_field_flags(new_field_ptr, flags))
-    return 0;
-  Field_blob *blob_field_ptr= static_cast<Field_blob *>(new_field_ptr->field);
-
-  return (new_field_ptr->sql_type == DRIZZLE_TYPE_BLOB
-          && new_field_ptr->charset == field_charset
-          && blob_field_ptr->max_data_length() == max_data_length());
 }
 
 

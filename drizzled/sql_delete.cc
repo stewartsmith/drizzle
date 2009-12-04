@@ -38,16 +38,15 @@ using namespace drizzled;
 */
 
 bool mysql_delete(Session *session, TableList *table_list, COND *conds,
-                  SQL_LIST *order, ha_rows limit, uint64_t options,
+                  SQL_LIST *order, ha_rows limit, uint64_t,
                   bool reset_auto_increment)
 {
-  bool          will_batch;
-  int		error, loc_error;
+  int		error;
   Table		*table;
   SQL_SELECT	*select=0;
   READ_RECORD	info;
   bool          using_limit=limit != HA_POS_ERROR;
-  bool		transactional_table, safe_update, const_cond;
+  bool		transactional_table, const_cond;
   bool          const_cond_result;
   ha_rows	deleted= 0;
   uint32_t usable_index= MAX_KEY;
@@ -91,13 +90,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   }
 
   const_cond= (!conds || conds->const_item());
-  safe_update=test(session->options & OPTION_SAFE_UPDATES);
-  if (safe_update && const_cond)
-  {
-    my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-               ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-    goto err;
-  }
 
   select_lex->no_error= session->lex->ignore;
 
@@ -162,7 +154,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   select=make_select(table, 0, 0, conds, 0, &error);
   if (error)
     goto err;
-  if ((select && select->check_quick(session, safe_update, limit)) || !limit)
+  if ((select && select->check_quick(session, false, limit)) || !limit)
   {
     delete select;
     free_underlaid_joins(session, select_lex);
@@ -186,17 +178,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   if (table->quick_keys.none())
   {
     session->server_status|=SERVER_QUERY_NO_INDEX_USED;
-    if (safe_update && !using_limit)
-    {
-      delete select;
-      free_underlaid_joins(session, select_lex);
-      my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-                 ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-      goto err;
-    }
   }
-  if (options & OPTION_QUICK)
-    (void) table->cursor->extra(HA_EXTRA_QUICK);
 
   if (order && order->elements)
   {
@@ -241,15 +223,13 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     free_underlaid_joins(session, select_lex);
     goto err;
   }
+
   if (usable_index==MAX_KEY)
     init_read_record(&info,session,table,select,1,1);
   else
     init_read_record_idx(&info, session, table, 1, usable_index);
 
   session->set_proc_info("updating");
-
-  will_batch= !table->cursor->start_bulk_delete();
-
 
   table->mark_columns_needed_for_delete();
 
@@ -289,16 +269,9 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   killed_status= session->killed;
   if (killed_status != Session::NOT_KILLED || session->is_error())
     error= 1;					// Aborted
-  if (will_batch && (loc_error= table->cursor->end_bulk_delete()))
-  {
-    if (error != 1)
-      table->print_error(loc_error,MYF(0));
-    error=1;
-  }
+
   session->set_proc_info("end");
   end_read_record(&info);
-  if (options & OPTION_QUICK)
-    (void) table->cursor->extra(HA_EXTRA_NORMAL);
 
 cleanup:
 

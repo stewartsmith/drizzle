@@ -60,8 +60,6 @@ public:
   friend class CreateField;
   my_decimal *val_decimal(my_decimal *);
   virtual bool str_needs_quotes() { return true; }
-  bool compare_str_field_flags(CreateField *new_field, uint32_t flags);
-  uint32_t is_equal(CreateField *new_field);
   uint32_t max_data_length() const;
 };
 

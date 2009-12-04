@@ -34,8 +34,6 @@
 #define HA_OPEN_WAIT_IF_LOCKED		1
 #define HA_OPEN_IGNORE_IF_LOCKED	2
 #define HA_OPEN_TMP_TABLE		4	/* Table is a temp table */
-#define HA_OPEN_ABORT_IF_CRASHED	16
-#define HA_OPEN_FOR_REPAIR		32	/* open even if crashed */
 /* Internal temp table, used for temporary results */
 #define HA_OPEN_INTERNAL_TABLE          512
 

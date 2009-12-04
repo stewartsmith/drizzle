@@ -355,48 +355,6 @@ public:
   virtual int close(void)=0;
 
   /**
-    @retval  0   Bulk update used by Cursor
-    @retval  1   Bulk update not used, normal operation used
-  */
-  virtual bool start_bulk_update() { return 1; }
-  /**
-    @retval  0   Bulk delete used by Cursor
-    @retval  1   Bulk delete not used, normal operation used
-  */
-  virtual bool start_bulk_delete() { return 1; }
-  /**
-    After this call all outstanding updates must be performed. The number
-    of duplicate key errors are reported in the duplicate key parameter.
-    It is allowed to continue to the batched update after this call, the
-    Cursor has to wait until end_bulk_update with changing state.
-
-    @param    dup_key_found       Number of duplicate keys found
-
-    @retval  0           Success
-    @retval  >0          Error code
-  */
-  virtual int exec_bulk_update(uint32_t *)
-  {
-    assert(false);
-    return HA_ERR_WRONG_COMMAND;
-  }
-  /**
-    Perform any needed clean-up, no outstanding updates are there at the
-    moment.
-  */
-  virtual void end_bulk_update() { return; }
-  /**
-    Execute all outstanding deletes and close down the bulk delete.
-
-    @retval 0             Success
-    @retval >0            Error code
-  */
-  virtual int end_bulk_delete()
-  {
-    assert(false);
-    return HA_ERR_WRONG_COMMAND;
-  }
-  /**
      @brief
      Positions an index cursor to the index specified in the handle. Fetches the
      row if available. If the key value is null, begin at the first key of the
