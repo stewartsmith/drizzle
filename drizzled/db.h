@@ -36,9 +36,6 @@ int get_database_metadata(const char *dbname, drizzled::message::Schema *db);
 
 const CHARSET_INFO *get_default_db_collation(const char *db_name);
 
-extern int creating_database; // How many database locks are made
-extern int creating_table;    // How many mysql_create_table() are running
-
 class NonNormalisedDatabaseName
 {
 private:
