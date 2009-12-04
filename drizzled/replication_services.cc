@@ -564,17 +564,21 @@ void ReplicationServices::updateRecord(Session *in_session,
     }
 
     /* 
-     * Add the WHERE clause values now...the fields which return true
-     * for isReadSet() are in the WHERE clause.  For tables with no
-     * primary or unique key, all fields will be returned.
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
      */
-    if (current_field->isReadSet())
+    if (in_table->s->primary_key == current_field->field_index)
     {
-      string_value= current_field->val_str(string_value);
-      record->add_key_value(string_value->c_ptr(), string_value->length());
       /**
-       * @TODO Store optional old record value in the before data member
+       * To say the below is ugly is an understatement. But it works.
+       * 
+       * @todo Move this crap into a real Record API.
        */
+      string_value= current_field->val_str(string_value,
+                                           old_record + 
+                                           current_field->offset(const_cast<unsigned char *>(new_record)));
+      record->add_key_value(string_value->c_ptr(), string_value->length());
       string_value->free();
     }
 
