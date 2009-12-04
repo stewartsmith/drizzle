@@ -63,6 +63,8 @@ public:
     TRANSACTION= 1, /* A GPB Transaction Message */
     BLOB= 2 /* A BLOB value */
   };
+  typedef std::vector<plugin::TransactionReplicator *> Replicators;
+  typedef std::vector<plugin::TransactionApplier *> Appliers;
 private:
   /** 
    * Atomic boolean set to true if any *active* replicators
@@ -75,9 +77,9 @@ private:
    */
   atomic<uint64_t> last_applied_timestamp;
   /** Our collection of replicator plugins */
-  std::vector<drizzled::plugin::TransactionReplicator *> replicators;
+  Replicators replicators;
   /** Our collection of applier plugins */
-  std::vector<drizzled::plugin::TransactionApplier *> appliers;
+  Appliers appliers;
   /**
    * Helper method which is called after any change in the
    * registered appliers or replicators to evaluate whether
@@ -320,6 +322,15 @@ public:
    * @param Pointer to the Table containing delete information
    */
   void deleteRecord(Session *in_session, Table *in_table);
+  /**
+   * Creates a TruncateTable Statement GPB message and add it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] The Table being truncated
+   */
+  void truncateTable(Session *in_session, Table *in_table);
   /**
    * Creates a new RawSql GPB message and pushes it to 
    * replicators.

@@ -646,6 +646,38 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
   }
 }
 
+void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::TRUNCATE_TABLE, in_session);
+
+  /* 
+   * Construct the specialized TruncateTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
+  message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
+
+  const char *schema_name= in_table->getShare()->db.str;
+  const char *table_name= in_table->getShare()->table_name.str;
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+}
+
 void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
 {
   if (! is_active)
