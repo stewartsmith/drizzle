@@ -24,6 +24,7 @@
 #include <drizzled/table.h>
 
 class TableShare;
+class Name_resolution_context;
 
 void table_cache_free(void);
 bool table_cache_init(void);

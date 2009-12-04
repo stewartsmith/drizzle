@@ -24,6 +24,7 @@
 #include <drizzled/sql_alloc.h>
 #include <drizzled/key.h>
 #include <drizzled/sql_list.h>
+#include "drizzled/cursor.h" /* for default_key_create_info */
 
 class Item;
 class Table_ident;

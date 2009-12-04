@@ -38,6 +38,7 @@ class TableList;
 class Session;
 class XID;
 class Cursor;
+typedef struct st_hash HASH;
 
 class TableShare;
 typedef struct st_mysql_lex_string LEX_STRING;

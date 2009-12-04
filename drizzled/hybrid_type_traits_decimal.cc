@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/hybrid_type_traits_decimal.h>
-#include <drizzled/hybrid_type.h>
-#include <drizzled/definitions.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/hybrid_type_traits_decimal.h"
+#include "drizzled/hybrid_type.h"
+#include "drizzled/definitions.h"
+#include "drizzled/item.h"
 
 #include <algorithm>
 

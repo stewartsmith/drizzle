@@ -24,6 +24,7 @@
 #include <drizzled/server_includes.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/plugin/info_schema_table.h>
+#include <drizzled/plugin/storage_engine.h>
 
 static const char *information_exts[] = {
   NULL

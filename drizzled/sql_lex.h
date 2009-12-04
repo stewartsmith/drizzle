@@ -28,7 +28,6 @@
 #include "drizzled/plugin/function.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
-#include "drizzled/item/outer_ref.h"
 #include "drizzled/table_list.h"
 #include "drizzled/function/math/real.h"
 #include "drizzled/alter_drop.h"

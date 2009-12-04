@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 #define DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 
+#include "drizzled/item.h"
+
 class TableList;
 class Security_context;
 class Session;

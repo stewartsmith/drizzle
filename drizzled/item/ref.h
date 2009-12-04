@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_REF_H
 #define DRIZZLED_ITEM_REF_H
 
+#include "drizzled/item/ident.h"
+
 class Item_ref :public Item_ident
 {
 protected:

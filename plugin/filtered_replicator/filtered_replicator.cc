@@ -37,11 +37,13 @@
  */
 
 #include <drizzled/server_includes.h>
-#include "filtered_replicator.h"
-
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>
 #include <drizzled/message/transaction.pb.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/registry.h>
+
+#include "filtered_replicator.h"
 
 #include <vector>
 #include <string>

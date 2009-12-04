@@ -44,7 +44,6 @@
 #include <drizzled/errmsg_print.h>
 
 #include <drizzled/field.h>
-#include <drizzled/item/sum.h>
 
 #include <string>
 #include <sstream>
@@ -141,6 +140,8 @@ extern struct system_status_var global_status_var;
 extern Table *unused_tables;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
+
+namespace drizzled { namespace plugin { class StorageEngine; } }
 
 extern drizzled::plugin::StorageEngine *myisam_engine;
 extern drizzled::plugin::StorageEngine *heap_engine;
