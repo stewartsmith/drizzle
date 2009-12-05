@@ -24,11 +24,8 @@ pkgsupp_DATA =		support-files/drizzle-log-rotate
 
 pkgsupp_SCRIPTS =	support-files/drizzle.server 
 
-aclocaldir =		$(datadir)/aclocal
-aclocal_DATA =		support-files/drizzle.m4
 
 EXTRA_DIST += \
-	support-files/drizzle.m4 \
 	support-files/smf/install.sh \
 	support-files/smf/drizzle.xml \
 	support-files/smf/drizzle
