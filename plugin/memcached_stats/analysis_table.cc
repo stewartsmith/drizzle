@@ -66,6 +66,16 @@ int MemcachedAnalysisISMethods::fillTable(Session *,
     memcached_analysis_st *report= memcached_analyze(serv, stats, &rc);
     table->restoreRecordAsDefault();
 
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
+    table->setWriteSet(6);
+    table->setWriteSet(7);
+    table->setWriteSet(8);
+
     table->field[0]->store(server_count);
     table->field[1]->store(report->average_item_size);
 
