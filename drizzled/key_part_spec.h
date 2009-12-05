@@ -21,7 +21,8 @@
 #ifndef DRIZZLED_KEY_PART_SPEC_H
 #define DRIZZLED_KEY_PART_SPEC_H
 
-#include <drizzled/sql_alloc.h>
+#include "drizzled/sql_alloc.h"
+#include "drizzled/lex_string.h"
 
 class Item;
 typedef struct st_mem_root MEM_ROOT;

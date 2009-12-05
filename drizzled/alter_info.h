@@ -28,6 +28,7 @@
 #include "drizzled/base.h"
 #include "drizzled/enum.h"
 #include "drizzled/sql_list.h" /** @TODO use STL vectors! */
+#include "drizzled/key.h"
 #include "drizzled/message/table.pb.h"
 
 #include <bitset>
@@ -36,7 +37,6 @@
 class CreateField;
 class AlterDrop;
 class AlterColumn;
-class Key;
 
 enum enum_alter_info_flags
 {

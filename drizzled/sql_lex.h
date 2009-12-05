@@ -33,8 +33,7 @@
 #include "drizzled/alter_drop.h"
 #include "drizzled/alter_column.h"
 #include "drizzled/alter_info.h"
-#include "drizzled/key.h"
-#include "drizzled/foreign_key.h"
+#include "drizzled/key_part_spec.h"
 #include "drizzled/index_hint.h"
 #include "drizzled/statement.h"
 
@@ -62,6 +61,7 @@ class Item_outer_ref;
 #  define LEX_YYSTYPE void *
 # else
 #  if defined(DRIZZLE_LEX)
+#   include <drizzled/foreign_key.h>
 #   include <drizzled/lex_symbol.h>
 #   include <drizzled/sql_yacc.h>
 #   define LEX_YYSTYPE YYSTYPE *

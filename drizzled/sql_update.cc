@@ -18,14 +18,15 @@
   Single table and multi table updates of tables.
   Multi-table updates were introduced by Sinisa & Monty
 */
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <drizzled/error.h>
-#include <drizzled/probes.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/sql_parse.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_select.h"
+#include "drizzled/error.h"
+#include "drizzled/probes.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/sql_parse.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/records.h"
 
 #include <list>
 

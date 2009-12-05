@@ -29,6 +29,7 @@
 #include "drizzled/table.h"
 #include "drizzled/table_list.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/records.h"
 
 #include <queue>
 #include <algorithm>

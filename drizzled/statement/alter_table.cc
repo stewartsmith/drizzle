@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/lock.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/alter_table.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/show.h"
+#include "drizzled/lock.h"
+#include "drizzled/session.h"
+#include "drizzled/statement/alter_table.h"
 
 #include "drizzled/gettext.h"
 #include "drizzled/data_home.h"
@@ -30,6 +30,8 @@
 #include "drizzled/table_proto.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/time.h"
+#include "drizzled/records.h"
 
 using namespace std;
 

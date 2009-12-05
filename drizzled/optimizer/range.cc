@@ -117,6 +117,7 @@
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/optimizer/sum.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/records.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 

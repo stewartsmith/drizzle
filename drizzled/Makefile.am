@@ -287,6 +287,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
+		records.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -378,6 +379,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		temporal.h \
 		temporal_format.h \
 		temporal_interval.h \
+		time.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \

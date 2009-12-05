@@ -17,11 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/current_session.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/current_session.h"
 #include CSTDINT_H
-#include <drizzled/error.h>
-#include <drizzled/function/time/typecast.h>
+#include "drizzled/error.h"
+#include "drizzled/function/time/typecast.h"
+#include "drizzled/time.h"
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
 {
