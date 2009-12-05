@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.81])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.82])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl Force dependency tracking on for Sun Studio builds
@@ -96,13 +96,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   PANDORA_PLATFORM
 
   PANDORA_LIBTOOL
-
-  AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
-    ${LD} --help | grep default-symver >/dev/null 2>&1
-    AS_IF([test $? -eq 0],[
-      AM_LDFLAGS="${AM_LDFLAGS} -Wl,--default-symver"
-    ])
-  ])
 
   dnl autoconf doesn't automatically provide a fail-if-no-C++ macro
   dnl so we check c++98 features and fail if we don't have them, mainly
@@ -244,6 +237,5 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_SUBST([AM_CFLAGS])
   AC_SUBST([AM_CXXFLAGS])
   AC_SUBST([AM_CPPFLAGS])
-  AC_SUBST([AM_LDFLAGS])
 
 ])
