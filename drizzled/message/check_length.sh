@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 failed=0
 
