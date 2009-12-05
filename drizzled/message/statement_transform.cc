@@ -181,6 +181,16 @@ message::transformStatementToSql(const message::Statement &source,
       }
     }
     break;
+  case message::Statement::TRUNCATE_TABLE:
+    {
+      assert(source.has_truncate_table_statement());
+      string destination;
+      error= message::transformTruncateTableStatementToSql(source.truncate_table_statement(),
+                                                           &destination,
+                                                           sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
   case message::Statement::SET_VARIABLE:
     {
       assert(source.has_set_variable_statement());
@@ -630,6 +640,29 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
       destination->push_back(')');
   }
   return error;
+}
+
+enum message::TransformSqlError
+message::transformTruncateTableStatementToSql(const message::TruncateTableStatement &statement,
+                                              std::string *destination,
+                                              enum message::TransformSqlVariant sql_variant)
+{
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  const message::TableMetadata &table_metadata= statement.table_metadata();
+
+  destination->append("TRUNCATE TABLE ", 15);
+  destination->push_back(quoted_identifier);
+  destination->append(table_metadata.schema_name());
+  destination->push_back(quoted_identifier);
+  destination->push_back('.');
+  destination->push_back(quoted_identifier);
+  destination->append(table_metadata.table_name());
+  destination->push_back(quoted_identifier);
+
+  return NONE;
 }
 
 enum message::TransformSqlError

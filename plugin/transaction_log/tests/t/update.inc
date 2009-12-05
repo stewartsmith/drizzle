@@ -59,3 +59,19 @@ UPDATE t1 SET counter = counter + 1 WHERE id = 1;
 UPDATE t1 SET counter = counter + 1 WHERE id IN (2,3);
 
 DROP TABLE t1;
+
+# Test for updating a primary key value
+# in an UPDATE statement.  LP Bug#480710
+
+CREATE TABLE t1 (
+  id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+
+UPDATE t1 SET id = 4 WHERE id = 2;
+
+DROP TABLE t1;

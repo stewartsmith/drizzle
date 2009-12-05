@@ -395,6 +395,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/hash/libhash.la \
+		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
@@ -409,9 +410,7 @@ noinst_HEADERS = \
 		hash.h \
 		gettext.h \
 		global.h \
-		server_includes.h \
-		util/convert.h \
-		util/test.h
+		server_includes.h
 
 drizzled_SOURCES = \
 		alter_info.cc \
@@ -699,7 +698,6 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \
-		util/convert.cc \
 		xid.cc
 
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
@@ -715,9 +713,7 @@ PCHHEADERS = \
 		definitions.h.gch \
 		plugin/storage_engine.h.gch  \
 		sql_base.h.gch \
-		sql_parse.h.gch \
-		util/convert.h.gch \
-		util/test.h.gch
+		sql_parse.h.gch
 else
 PCHHEADERS = 
 endif
