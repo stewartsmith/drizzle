@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 utilincludedir = ${includedir}/drizzled/util
-dist_utilinclude_HEADERS= convert.h
+dist_utilinclude_HEADERS= convert.h test.h
 
 noinst_LTLIBRARIES= libutil.la
 libutil_la_SOURCES= convert.cc
