@@ -90,16 +90,13 @@ class ha_archive: public Cursor
   void destroy_record_buffer(archive_record_buffer *r);
 
 public:
-  ha_archive(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  ha_archive(drizzled::plugin::StorageEngine &engine_arg,
+             TableShare &table_arg);
   ~ha_archive()
   { }
 
   const char *index_type(uint32_t)
   { return "NONE"; }
-  uint32_t index_flags(uint32_t, uint32_t, bool) const
-  {
-    return HA_ONLY_WHOLE_INDEX;
-  }
   void get_auto_increment(uint64_t, uint64_t, uint64_t,
                           uint64_t *first_value, uint64_t *nb_reserved_values);
   ha_rows records() { return share->rows_recorded; }

@@ -56,7 +56,7 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 typedef struct st_mysql_lex_string LEX_STRING;
 
 /* information schema */
-static const std::string INFORMATION_SCHEMA_NAME("information_schema");
+extern const std::string INFORMATION_SCHEMA_NAME;
 
 /* drizzled.cc */
 void refresh_status(Session *session);
@@ -72,6 +72,8 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
                bool part_match);
 uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
                 const CHARSET_INFO *cs);
+
+extern const std::string &drizzled_version();
 
 /*
   External variables

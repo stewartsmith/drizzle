@@ -93,7 +93,6 @@ public:
 
   AlterInfo();
   AlterInfo(const AlterInfo &rhs, MEM_ROOT *mem_root);
-  void reset();
 private:
   AlterInfo &operator=(const AlterInfo &rhs); // not implemented
   AlterInfo(const AlterInfo &rhs);            // not implemented

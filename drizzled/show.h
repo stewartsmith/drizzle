@@ -51,7 +51,7 @@ namespace plugin
 class Table;
 typedef class Item COND;
 
-typedef struct st_mysql_show_var SHOW_VAR;
+typedef drizzle_show_var SHOW_VAR;
 typedef struct system_status_var STATUS_VAR;
 
 typedef struct st_lookup_field_values

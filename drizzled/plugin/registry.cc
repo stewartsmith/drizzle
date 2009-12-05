@@ -18,28 +18,46 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/plugin/registry.h"
-
-#include "drizzled/plugin.h"
-#include "drizzled/show.h"
-#include "drizzled/cursor.h"
 
 #include <string>
 #include <vector>
 #include <map>
+
+#include "drizzled/plugin/registry.h"
+
+#include "drizzled/plugin.h"
+#include "drizzled/plugin/library.h"
+#include "drizzled/show.h"
+#include "drizzled/cursor.h"
 
 using namespace std;
 
 namespace drizzled
 {
 
-plugin::Module *plugin::Registry::find(const LEX_STRING *name)
+plugin::Registry::~Registry()
 {
-  string find_str(name->str,name->length);
-  transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
+  map<string, plugin::Library *>::iterator iter= library_map.begin();
+  while (iter != library_map.end())
+  {
+    delete (*iter).second;
+    ++iter;
+  }
+  library_map.clear();
+}
+
+void plugin::Registry::shutdown()
+{
+  plugin::Registry& registry= singleton();
+  delete &registry;
+}
+
+plugin::Module *plugin::Registry::find(string name)
+{
+  transform(name.begin(), name.end(), name.begin(), ::tolower);
 
   map<string, plugin::Module *>::iterator map_iter;
-  map_iter= module_map.find(find_str);
+  map_iter= module_map.find(name);
   if (map_iter != module_map.end())
     return (*map_iter).second;
   return(0);
@@ -59,7 +77,7 @@ vector<plugin::Module *> plugin::Registry::getList(bool active)
 {
   plugin::Module *plugin= NULL;
 
-  vector <plugin::Module *> plugins;
+  vector<plugin::Module *> plugins;
   plugins.reserve(module_map.size());
 
   map<string, plugin::Module *>::iterator map_iter;
@@ -75,6 +93,46 @@ vector<plugin::Module *> plugin::Registry::getList(bool active)
   }
 
   return plugins;
+}
+
+plugin::Library *plugin::Registry::addLibrary(const string &plugin_name)
+{
+
+  /* If this dll is already loaded just return it */
+  plugin::Library *library= findLibrary(plugin_name);
+  if (library != NULL)
+  {
+    return library;
+  }
+
+  library= plugin::Library::loadLibrary(plugin_name);
+  if (library != NULL)
+  {
+    /* Add this dll to the map */
+    library_map.insert(make_pair(plugin_name, library));
+  }
+
+  return library;
+}
+
+void plugin::Registry::removeLibrary(const string &plugin_name)
+{
+  map<string, plugin::Library *>::iterator iter=
+    library_map.find(plugin_name);
+  if (iter != library_map.end())
+  {
+    library_map.erase(iter);
+    delete (*iter).second;
+  }
+}
+
+plugin::Library *plugin::Registry::findLibrary(const string &plugin_name) const
+{
+  map<string, plugin::Library *>::const_iterator iter=
+    library_map.find(plugin_name);
+  if (iter != library_map.end())
+    return (*iter).second;
+  return NULL;
 }
 
 } /* namespace drizzled */

@@ -1,1 +1,1 @@
---plugin_load=libsleep.so
+--plugin_add=sleep

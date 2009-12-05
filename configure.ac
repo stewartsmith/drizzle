@@ -185,6 +185,7 @@ AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  po/Makefile.in dnl
  drizzled/hash/Makefile dnl
+ drizzled/util/Makefile dnl
  drizzled/message/Makefile dnl
  drizzled/Makefile dnl
  support-files/Makefile dnl

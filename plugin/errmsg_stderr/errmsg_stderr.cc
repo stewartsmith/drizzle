@@ -31,7 +31,8 @@
 class Error_message_stderr : public drizzled::plugin::ErrorMessage
 {
 public:
-  Error_message_stderr() : Error_message_handler("Error_message_stderr") {}
+  Error_message_stderr()
+   : drizzled::plugin::ErrorMessage("Error_message_stderr") {}
   virtual bool errmsg(Session *, int , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
@@ -70,7 +71,7 @@ static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "errmsg_stderr",
   "0.1",
@@ -83,4 +84,4 @@ drizzle_declare_plugin
   NULL, /* system variables */
   NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

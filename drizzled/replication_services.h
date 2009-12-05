@@ -63,6 +63,8 @@ public:
     TRANSACTION= 1, /* A GPB Transaction Message */
     BLOB= 2 /* A BLOB value */
   };
+  typedef std::vector<plugin::TransactionReplicator *> Replicators;
+  typedef std::vector<plugin::TransactionApplier *> Appliers;
 private:
   /** 
    * Atomic boolean set to true if any *active* replicators
@@ -75,9 +77,9 @@ private:
    */
   atomic<uint64_t> last_applied_timestamp;
   /** Our collection of replicator plugins */
-  std::vector<drizzled::plugin::TransactionReplicator *> replicators;
+  Replicators replicators;
   /** Our collection of applier plugins */
-  std::vector<drizzled::plugin::TransactionApplier *> appliers;
+  Appliers appliers;
   /**
    * Helper method which is called after any change in the
    * registered appliers or replicators to evaluate whether
@@ -118,6 +120,14 @@ private:
    */
   void cleanupTransaction(message::Transaction *in_transaction,
                           Session *in_session) const;
+  /**
+   * Returns true if the transaction contains any Statement
+   * messages which are not end segments (i.e. a bulk statement has
+   * previously been sent to replicators).
+   *
+   * @param The transaction to check
+   */
+  bool transactionContainsBulkSegment(const drizzled::message::Transaction &transaction) const;
   /**
    * Helper method which initializes a Statement message
    *
@@ -256,25 +266,12 @@ public:
    */
   void detachApplier(drizzled::plugin::TransactionApplier *in_applier);
   /**
-   * Creates a new Transaction GPB message and attaches the message
-   * to the supplied session object.
-   *
-   * @note
-   *
-   * This method is called when a "normal" transaction -- i.e. an 
-   * explicitly-started transaction from a client -- is started with 
-   * BEGIN or START TRANSACTION.
-   *
-   * @param Pointer to the Session starting the transaction
-   */
-  void startNormalTransaction(Session *in_session);
-  /**
    * Commits a normal transaction (see above) and pushes the
    * transaction message out to the replicators.
    *
    * @param Pointer to the Session committing the transaction
    */
-  void commitNormalTransaction(Session *in_session);
+  void commitTransaction(Session *in_session);
   /**
    * Marks the current active transaction message as being rolled
    * back and pushes the transaction message out to replicators.
@@ -320,6 +317,15 @@ public:
    * @param Pointer to the Table containing delete information
    */
   void deleteRecord(Session *in_session, Table *in_table);
+  /**
+   * Creates a TruncateTable Statement GPB message and add it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] The Table being truncated
+   */
+  void truncateTable(Session *in_session, Table *in_table);
   /**
    * Creates a new RawSql GPB message and pushes it to 
    * replicators.

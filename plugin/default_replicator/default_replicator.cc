@@ -100,12 +100,12 @@ static DRIZZLE_SYSVAR_BOOL(
   NULL, /* update func */
   false /* default */);
 
-static struct st_mysql_sys_var* default_replicator_system_variables[]= {
+static drizzle_sys_var* default_replicator_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "default_replicator",
   "0.1",
@@ -118,4 +118,4 @@ drizzle_declare_plugin
   default_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

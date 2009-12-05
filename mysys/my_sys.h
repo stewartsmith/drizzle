@@ -66,9 +66,6 @@
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
-#define MY_CHECK_ERROR	1	/* Params to my_end; Check open-close */
-#define MY_GIVE_INFO	2	/* Give time info about process*/
-
 #define ME_HIGHBYTE	8	/* Shift for colours */
 #define ME_NOCUR	1	/* Don't use curses message */
 #define ME_OLDWIN	2	/* Use old window */
@@ -114,10 +111,6 @@
 #define GETDATE_HHMMSSTIME	4
 #define GETDATE_GMT		8
 #define GETDATE_FIXEDLENGTH	16
-
-	/* defines when allocating data */
-#undef TERMINATE
-#define TERMINATE(A,B) {}
 
 #ifdef __cplusplus
 extern "C" {
@@ -290,9 +283,6 @@ extern int check_if_legal_tablename(const char *path);
 
 #define my_delete_allow_opened(fname,flags)  my_delete((fname),(flags))
 
-#ifndef TERMINATE
-extern void TERMINATE(FILE *file, uint32_t flag);
-#endif
 extern void init_glob_errs(void);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
@@ -306,16 +296,10 @@ extern const char **my_error_unregister(int first, int last);
 extern void my_message(uint32_t my_err, const char *str,myf MyFlags);
 extern void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 extern bool my_init(void);
-extern void my_end(int infoflag);
+extern void my_end(void);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
 extern char * my_filename(File fd);
-
-#ifdef EXTRA_DEBUG
-void my_print_open_files(void);
-#else
-#define my_print_open_files()
-#endif
 
 extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);

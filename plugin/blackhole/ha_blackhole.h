@@ -53,7 +53,7 @@ public:
     don't implement this method unless you really have indexes
   */
   const char *index_type(uint32_t key_number);
-  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
+  uint32_t index_flags(uint32_t inx) const;
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int write_row(unsigned char * buf);

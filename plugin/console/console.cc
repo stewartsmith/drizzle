@@ -324,13 +324,13 @@ static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
 static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Turn on extra debugging."), NULL, NULL, false);
 
-static struct st_mysql_sys_var* vars[]= {
+static drizzle_sys_var* vars[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(debug),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "console",
   "0.1",
@@ -343,4 +343,4 @@ drizzle_declare_plugin
   vars,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

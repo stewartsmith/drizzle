@@ -23,7 +23,6 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/xid.h>
 #include <drizzled/plugin/manifest.h>
-#include <drizzled/plugin/library.h>
 #include <drizzled/plugin/module.h>
 
 class Session;
@@ -36,7 +35,7 @@ struct charset_info_st;
 
 
 class sys_var;
-typedef struct st_mysql_lex_string LEX_STRING;
+typedef drizzle_lex_string LEX_STRING;
 struct my_option;
 
 extern char *opt_plugin_add;
@@ -48,23 +47,23 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
 
 /*
   Macros for beginning and ending plugin declarations. Between
-  drizzle_declare_plugin and drizzle_declare_plugin_end there should
+  DRIZZLE_DECLARE_PLUGIN and DRIZZLE_DECLARE_PLUGIN_END there should
   be a drizzled::plugin::Manifest for each plugin to be declared.
 */
 
 
 #if defined(PANDORA_DYNAMIC_PLUGIN)
-# define drizzle_declare_plugin \
+# define DRIZZLE_DECLARE_PLUGIN \
     drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
 #else
 # define PANDORA_BUILTIN_NAME(x) builtin_ ## x ## _plugin
 # define PANDORA_NAME(x) PANDORA_BUILTIN_NAME(x)
-# define drizzle_declare_plugin \
+# define DRIZZLE_DECLARE_PLUGIN \
            drizzled::plugin::Manifest PANDORA_NAME(PANDORA_MODULE_NAME)[]= {
 #endif
 
 
-#define drizzle_declare_plugin_end ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
+#define DRIZZLE_DECLARE_PLUGIN_END ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
 
 
 
@@ -90,18 +89,18 @@ enum enum_mysql_show_type
   SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
 };
 
-struct st_mysql_show_var {
+struct drizzle_show_var {
   const char *name;
   char *value;
   enum enum_mysql_show_type type;
 };
 
 typedef enum enum_mysql_show_type SHOW_TYPE;
-typedef struct st_mysql_show_var SHOW_VAR;
+typedef drizzle_show_var SHOW_VAR;
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(struct st_mysql_show_var *, char *);
+typedef int (*mysql_show_var_func)(drizzle_show_var *, char *);
 
 struct st_show_var_func_container {
   mysql_show_var_func func;
@@ -128,8 +127,8 @@ struct st_show_var_func_container {
 #define PLUGIN_VAR_OPCMDARG     0x2000 /* Argument optional for cmd line */
 #define PLUGIN_VAR_MEMALLOC     0x8000 /* String needs memory allocated */
 
-struct st_mysql_sys_var;
-struct st_mysql_value;
+struct drizzle_sys_var;
+struct drizzle_value;
 
 /*
   SYNOPSIS
@@ -151,8 +150,8 @@ struct st_mysql_value;
 */
 
 typedef int (*mysql_var_check_func)(Session *session,
-                                    struct st_mysql_sys_var *var,
-                                    void *save, struct st_mysql_value *value);
+                                    drizzle_sys_var *var,
+                                    void *save, drizzle_value *value);
 
 /*
   SYNOPSIS
@@ -169,7 +168,7 @@ typedef int (*mysql_var_check_func)(Session *session,
    For example, strings may require memory to be allocated.
 */
 typedef void (*mysql_var_update_func)(Session *session,
-                                      struct st_mysql_sys_var *var,
+                                      drizzle_sys_var *var,
                                       void *var_ptr, const void *save);
 
 
@@ -190,7 +189,7 @@ typedef void (*mysql_var_update_func)(Session *session,
 
 #define DRIZZLE_SYSVAR_NAME(name) mysql_sysvar_ ## name
 #define DRIZZLE_SYSVAR(name) \
-  ((struct st_mysql_sys_var *)&(DRIZZLE_SYSVAR_NAME(name)))
+  ((drizzle_sys_var *)(&(DRIZZLE_SYSVAR_NAME(name))))
 
 /*
   for global variables, the value pointer is the first
@@ -361,7 +360,7 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 
 
 /*************************************************************************
-  st_mysql_value struct for reading values from mysqld.
+  drizzle_value struct for reading values from mysqld.
   Used by server variables framework to parse user-provided values.
   Will be used for arguments when implementing UDFs.
 
@@ -374,12 +373,12 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 #define DRIZZLE_VALUE_TYPE_REAL   1
 #define DRIZZLE_VALUE_TYPE_INT    2
 
-struct st_mysql_value
+struct drizzle_value
 {
-  int (*value_type)(struct st_mysql_value *);
-  const char *(*val_str)(struct st_mysql_value *, char *buffer, int *length);
-  int (*val_real)(struct st_mysql_value *, double *realbuf);
-  int (*val_int)(struct st_mysql_value *, int64_t *intbuf);
+  int (*value_type)(drizzle_value *);
+  const char *(*val_str)(drizzle_value *, char *buffer, int *length);
+  int (*val_real)(drizzle_value *, double *realbuf);
+  int (*val_int)(drizzle_value *, int64_t *intbuf);
 };
 
 

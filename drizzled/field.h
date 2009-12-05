@@ -287,7 +287,6 @@ public:
     field_length + 1, field_length, and pack_length_no_ptr() respectfully.
   */
   virtual uint32_t row_pack_length();
-  virtual int save_field_metadata(unsigned char *first_byte);
 
   /**
    * Return the "real size" of the data in memory. 
@@ -555,13 +554,6 @@ public:
   {
     return pack(to, from, max_length, low_byte_first);
   }
-  virtual unsigned char *pack_key_from_key_image(unsigned char* to,
-                                                 const unsigned char *from,
-                                                 uint32_t max_length,
-                                                 bool low_byte_first)
-  {
-    return pack(to, from, max_length, low_byte_first);
-  }
   virtual const unsigned char *unpack_key(unsigned char* to,
                                           const unsigned char *from,
                                           uint32_t max_length,
@@ -569,19 +561,10 @@ public:
   {
     return unpack(to, from, max_length, low_byte_first);
   }
-  virtual uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   virtual uint32_t max_packed_col_length(uint32_t max_length)
   {
     return max_length;
   }
-
-  virtual int pack_cmp(const unsigned char *a,
-                       const unsigned char *b,
-                       uint32_t key_length_arg,
-                       bool insert_or_update);
-  virtual int pack_cmp(const unsigned char *b,
-                       uint32_t key_length_arg,
-                       bool insert_or_update);
 
   inline uint32_t offset(unsigned char *record)
   {
@@ -751,23 +734,6 @@ public:
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
-
-private:
-
-  /**
-    Retrieve the field metadata for fields.
-
-    This default implementation returns 0 and saves 0 in the metadata_ptr
-    value.
-
-    @param   metadata_ptr   First byte of field metadata
-
-    @returns 0 no bytes written.
-  */
-  virtual int do_save_field_metadata(unsigned char *)
-  {
-    return 0;
-  }
 };
 
 #include "drizzled/create_field.h"

@@ -108,6 +108,15 @@ public:
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }
+
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
+  }
 };
 
 int MyisamEngine::doGetTableDefinition(Session&,
@@ -1039,15 +1048,6 @@ int ha_myisam::index_end()
 }
 
 
-uint32_t ha_myisam::index_flags(uint32_t inx, uint32_t, bool) const
-{
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-          HA_READ_ORDER | HA_KEYREAD_ONLY |
-          (keys_with_parts.test(inx)?0:HA_DO_INDEX_COND_PUSHDOWN));
-}
-
-
 int ha_myisam::index_read_map(unsigned char *buf, const unsigned char *key,
                               key_part_map keypart_map,
                               enum ha_rkey_function find_flag)
@@ -1554,7 +1554,7 @@ static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
                            N_("Default pointer size to be used for MyISAM tables."),
                            NULL, NULL, 6, 2, 7, 0);
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(block_size),
   DRIZZLE_SYSVAR(repair_threads),
   DRIZZLE_SYSVAR(max_sort_file_size),
@@ -1564,7 +1564,7 @@ static struct st_mysql_sys_var* system_variables[]= {
 };
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "MyISAM",
   "1.0",
@@ -1577,4 +1577,4 @@ drizzle_declare_plugin
   system_variables,           /* system variables */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

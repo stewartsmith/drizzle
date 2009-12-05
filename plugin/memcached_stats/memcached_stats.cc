@@ -217,9 +217,9 @@ static int deinit(plugin::Registry &registry)
 }
 
 static int check_memc_servers(Session *,
-                              struct st_mysql_sys_var *,
+                              drizzle_sys_var *,
                               void *save,
-                              struct st_mysql_value *value)
+                              drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   int len= sizeof(buff);
@@ -238,7 +238,7 @@ static int check_memc_servers(Session *,
 }
 
 static void set_memc_servers(Session *,
-                             struct st_mysql_sys_var *,
+                             drizzle_sys_var *,
                              void *var_ptr,
                              const void *save)
 {
@@ -257,13 +257,13 @@ static DRIZZLE_SYSVAR_STR(servers,
                           set_memc_servers, /* update func */
                           ""); /* default value */
 
-static struct st_mysql_sys_var *system_variables[]=
+static drizzle_sys_var *system_variables[]=
 {
   DRIZZLE_SYSVAR(servers),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "memcached_stats",
   "1.0",
@@ -276,4 +276,4 @@ drizzle_declare_plugin
   system_variables, /* system variables */
   NULL    /* config options   */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

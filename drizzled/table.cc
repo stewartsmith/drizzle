@@ -247,7 +247,6 @@ int drizzled::parse_table_proto(Session& session,
                                 TableShare *share)
 {
   int error= 0;
-  Cursor *handler_file= NULL;
 
   share->setTableProto(new(nothrow) message::Table(table));
 
@@ -305,8 +304,6 @@ int drizzled::parse_table_proto(Session& session,
   share->db_record_offset= 1;
 
   share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
-
-  share->db_low_byte_first= true;
 
   share->keys= table.indexes_size();
 
@@ -390,14 +387,9 @@ int drizzled::parse_table_proto(Session& session,
     case message::Table::Index::BTREE:
       keyinfo->algorithm= HA_KEY_ALG_BTREE;
       break;
-    case message::Table::Index::RTREE:
-      keyinfo->algorithm= HA_KEY_ALG_RTREE;
-      break;
     case message::Table::Index::HASH:
       keyinfo->algorithm= HA_KEY_ALG_HASH;
       break;
-    case message::Table::Index::FULLTEXT:
-      keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
 
     default:
       /* TODO: suitable warning ? */
@@ -818,7 +810,7 @@ int drizzled::parse_table_proto(Session& session,
     memset(&temp_table, 0, sizeof(temp_table));
     temp_table.s= share;
     temp_table.in_use= &session;
-    temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
+    temp_table.s->db_low_byte_first= true; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
@@ -1015,9 +1007,6 @@ int drizzled::parse_table_proto(Session& session,
   free(field_pack_length);
   field_pack_length= NULL;
 
-  if (! (handler_file= share->db_type()->getCursor(*share, session.mem_root)))
-    abort(); // FIXME
-
   /* Fix key stuff */
   if (share->key_parts)
   {
@@ -1090,13 +1079,14 @@ int drizzled::parse_table_proto(Session& session,
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
-          if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
+          enum ha_key_alg algo= share->key_info[key].algorithm;
+          if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
           {
             share->keys_for_keyread.set(key);
             field->part_of_key.set(key);
             field->part_of_key_not_clustered.set(key);
           }
-          if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
+          if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
             field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
@@ -1127,13 +1117,11 @@ int drizzled::parse_table_proto(Session& session,
       set_if_bigger(share->max_key_length,keyinfo->key_length+
                     keyinfo->key_parts);
       share->total_key_length+= keyinfo->key_length;
-      /*
-        MERGE tables do not have unique indexes. But every key could be
-        an unique index on the underlying MyISAM table. (Bug #10400)
-      */
-      if ((keyinfo->flags & HA_NOSAME) ||
-          (handler_file->getEngine()->check_flag(HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE)))
+
+      if (keyinfo->flags & HA_NOSAME)
+      {
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
+      }
     }
     if (primary_key < MAX_KEY &&
         (share->keys_in_use.test(primary_key)))
@@ -1194,7 +1182,7 @@ int drizzled::parse_table_proto(Session& session,
     }
   }
 
-  share->db_low_byte_first= handler_file->low_byte_first();
+  share->db_low_byte_first= true; // @todo Question this.
   share->column_bitmap_size= bitmap_buffer_size(share->fields);
 
   my_bitmap_map *bitmaps;
@@ -1205,8 +1193,6 @@ int drizzled::parse_table_proto(Session& session,
   share->all_set.init(bitmaps, share->fields);
   share->all_set.setAll();
 
-  if (handler_file)
-    delete handler_file;
   return (0);
 
 err:
@@ -1219,8 +1205,6 @@ err:
   share->open_errno= my_errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
-  if (handler_file)
-    delete handler_file;
   share->open_table_error(error, share->open_errno, 0);
 
   return error;

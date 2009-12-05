@@ -246,11 +246,11 @@ static int deinit(drizzled::plugin::Registry&)
   return 0;
 }
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "signal_handler",
   "0.1",
@@ -263,4 +263,4 @@ drizzle_declare_plugin
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

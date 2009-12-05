@@ -25,6 +25,7 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/hash \
+	  drizzled/util \
 	  drizzled/message \
 	  . \
 	  drizzled \
@@ -114,7 +115,6 @@ noinst_HEADERS=	\
 mystrings_libmystrings_la_SOURCES= \
 		mystrings/bmove_upp.cc \
 		mystrings/ctype-bin.cc \
-		mystrings/ctype-extra.cc \
 		mystrings/ctype-mb.cc \
 		mystrings/ctype-simple.cc \
 		mystrings/ctype-uca.cc \

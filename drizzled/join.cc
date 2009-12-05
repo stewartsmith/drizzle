@@ -28,7 +28,6 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/table_map_iterator.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -3472,8 +3471,8 @@ static void best_access_path(JOIN *join,
             Set tmp to (previous record count) * (records / combination)
           */
           if ((found_part & 1) &&
-              (!(table->cursor->index_flags(key, 0, 0) & HA_ONLY_WHOLE_INDEX) ||
-               found_part == PREV_BITS(uint,keyinfo->key_parts)))
+              (!(table->index_flags(key) & HA_ONLY_WHOLE_INDEX) ||
+               found_part == PREV_BITS(uint, keyinfo->key_parts)))
           {
             max_key_part= max_part_bit(found_part);
             /*

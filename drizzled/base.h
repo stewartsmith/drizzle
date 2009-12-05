@@ -34,8 +34,6 @@
 #define HA_OPEN_WAIT_IF_LOCKED		1
 #define HA_OPEN_IGNORE_IF_LOCKED	2
 #define HA_OPEN_TMP_TABLE		4	/* Table is a temp table */
-#define HA_OPEN_ABORT_IF_CRASHED	16
-#define HA_OPEN_FOR_REPAIR		32	/* open even if crashed */
 /* Internal temp table, used for temporary results */
 #define HA_OPEN_INTERNAL_TABLE          512
 
@@ -81,9 +79,7 @@ enum ha_rkey_function {
 enum ha_key_alg {
   HA_KEY_ALG_UNDEF=	0,		/* Not specified (old file) */
   HA_KEY_ALG_BTREE=	1,		/* B-tree, default one          */
-  HA_KEY_ALG_RTREE=	2,		/* R-tree, for spatial searches */
-  HA_KEY_ALG_HASH=	3,		/* HASH keys (HEAP tables) */
-  HA_KEY_ALG_FULLTEXT=	4		/* FULLTEXT (MyISAM tables) */
+  HA_KEY_ALG_HASH=	3		/* HASH keys (HEAP tables) */
 };
 
 	/* Index and table build methods */
