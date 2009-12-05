@@ -375,7 +375,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		temporal.h \
 		temporal_format.h \
 		temporal_interval.h \
-		time.h \
+		time_functions.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -697,7 +697,7 @@ drizzled_SOURCES = \
 		temporal.cc \
 		temporal_format.cc \
 		temporal_interval.cc \
-		time.cc \
+		time_functions.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \

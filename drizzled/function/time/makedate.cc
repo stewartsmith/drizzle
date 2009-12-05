@@ -20,7 +20,7 @@
 #include "drizzled/server_includes.h"
 #include CSTDINT_H
 #include "drizzled/function/time/makedate.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 /**
   MAKEDATE(a,b) is a date function that creates a date value

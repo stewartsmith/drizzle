@@ -22,7 +22,7 @@
 #include CSTDINT_H
 #include "drizzled/error.h"
 #include "drizzled/function/time/typecast.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
 {
