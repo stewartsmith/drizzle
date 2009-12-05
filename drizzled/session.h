@@ -283,7 +283,7 @@ struct st_savepoint
 {
   struct st_savepoint *prev;
   char *name;
-  uint32_t length;
+  size_t length;
   Ha_trx_info *ha_list;
 };
 
