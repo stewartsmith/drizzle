@@ -32,16 +32,16 @@ TEST_LDADD=			$(top_builddir)/mysys/libmysys.la \
                         $(top_builddir)/mystrings/libmystrings.la \
 			$(LIBINTL)
 
-TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
-		${top_srcdir}/tests/test-run.pl \
-		--vardir=${top_builddir}/tests/var \
-		--suitepath=${top_srcdir}/plugin \
-		--testdir=${top_srcdir}/tests \
+TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
+		../${top_srcdir}/tests/test-run.pl \
+		--vardir=../${top_builddir}/tests/var \
+		--suitepath=../${top_srcdir}/plugin \
+		--testdir=../${top_srcdir}/tests \
 		--mtr-build-thread=$$$$
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
-	suite \
+	tests/suite \
 	tests/t \
 	tests/extra/rpl_tests/*.test \
 	tests/extra/binlog_tests/*.test \
@@ -99,25 +99,25 @@ test: test-drizzle
 # maintenance and verification
 
 test-all:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS)
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS))
 
 test-drizzle:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS)
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS))
 
 test-valgrind:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS)
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS))
 
 test-junitxml:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > tests/junit-format.xml
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 
 test-big:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big )
 
 test-big-junitxml:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > tests/junit-format-big.xml
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
 
 test-plugins:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS)
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
 distclean-local: nukevar
 
