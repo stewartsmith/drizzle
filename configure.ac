@@ -125,13 +125,8 @@ AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  po/Makefile.in dnl
- drizzled/hash/Makefile dnl
- drizzled/message/Makefile dnl
- drizzled/Makefile dnl
- support-files/Makefile dnl
- tests/Makefile tests/install_test_db dnl
+ tests/install_test_db dnl
  support-files/drizzle.server support-files/drizzle-log-rotate
- support-files/smf/Makefile dnl
  support-files/smf/install.sh dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)

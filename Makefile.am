@@ -117,7 +117,6 @@ noinst_HEADERS+=	\
 mystrings_libmystrings_la_SOURCES= \
 		mystrings/bmove_upp.cc \
 		mystrings/ctype-bin.cc \
-		mystrings/ctype-extra.cc \
 		mystrings/ctype-mb.cc \
 		mystrings/ctype-simple.cc \
 		mystrings/ctype-uca.cc \
@@ -286,6 +285,7 @@ include config/lint-source.am
 
 include drizzled/include.am
 include drizzled/hash/include.am
+include drizzled/util/include.am
 include drizzled/message/include.am
 include support-files/include.am
 include tests/include.am

@@ -1920,7 +1920,7 @@ uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit)
       indexes (records are returned in order for any index prefix) or HASH
       indexes (records are not returned in order for any index prefix).
     */
-    if (!(table->cursor->index_flags(idx, 0, 1) & HA_READ_ORDER))
+    if (! (table->index_flags(idx) & HA_READ_ORDER))
       continue;
     for (ord= order; ord && partno < n_parts; ord= ord->next, partno++)
     {
@@ -6409,7 +6409,7 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
   param->max_key_part=0;
 
   param->is_ror_scan= true;
-  if (cursor->index_flags(keynr, 0, true) & HA_KEY_SCAN_NOT_ROR)
+  if (param->table->index_flags(keynr) & HA_KEY_SCAN_NOT_ROR)
     param->is_ror_scan= false;
 
   *mrr_flags= param->force_default_mrr? HA_MRR_USE_DEFAULT_IMPL: 0;
@@ -6417,7 +6417,7 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
 
   bool pk_is_clustered= cursor->primary_key_is_clustered();
   if (index_only &&
-      (cursor->index_flags(keynr, param->max_key_part, 1) & HA_KEYREAD_ONLY) &&
+      (param->table->index_flags(keynr) & HA_KEYREAD_ONLY) &&
       !(pk_is_clustered && keynr == param->table->s->primary_key))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 

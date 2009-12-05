@@ -255,7 +255,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
     TODO remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
-      !(index_flags(primary_key, 0, 0) & HA_READ_ORDER))
+      !(table->index_flags(primary_key) & HA_READ_ORDER))
   {
     (void) ha_rnd_init(1);
     while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;
@@ -695,26 +695,15 @@ Cursor::mark_trx_read_write()
   }
 }
 
-/**
-  Bulk update row: public interface.
-
-  @sa Cursor::bulk_update_row()
-*/
-
-int
-Cursor::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                            uint32_t *dup_key_found)
-{
-  mark_trx_read_write();
-
-  return bulk_update_row(old_data, new_data, dup_key_found);
-}
-
 
 /**
   Delete all rows: public interface.
 
   @sa Cursor::delete_all_rows()
+
+  @note
+
+  This is now equalivalent to TRUNCATE TABLE.
 */
 
 int
@@ -722,7 +711,22 @@ Cursor::ha_delete_all_rows()
 {
   mark_trx_read_write();
 
-  return delete_all_rows();
+  int result= delete_all_rows();
+
+  if (result == 0)
+  {
+    /** 
+     * Trigger post-truncate notification to plugins... 
+     *
+     * @todo Make ReplicationServices generic to AfterTriggerServices
+     * or similar...
+     */
+    Session *const session= table->in_use;
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    replication_services.truncateTable(session, table);
+  }
+
+  return result;
 }
 
 
@@ -1468,9 +1472,9 @@ int Cursor::ha_write_row(unsigned char *buf)
 {
   int error;
 
-  /* 
-   * If we have a timestamp column, update it to the current time 
-   * 
+  /*
+   * If we have a timestamp column, update it to the current time
+   *
    * @TODO Technically, the below two lines can be take even further out of the
    * Cursor interface and into the fill_record() method.
    */

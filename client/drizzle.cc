@@ -188,12 +188,10 @@ static bool ignore_errors= false, quick= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false;
 static uint32_t  show_progress_size= 0;
-static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line, opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
-static uint32_t my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *current_host, *current_db, *current_user= NULL,
@@ -1224,7 +1222,7 @@ int main(int argc,char *argv[])
   if (get_options(argc, (char **) argv))
   {
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(1);
   }
 
@@ -1242,7 +1240,7 @@ int main(int argc,char *argv[])
   {
     /* we've executed a command so exit before we go into readline mode */
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(command_error);
   }
 
@@ -1252,7 +1250,7 @@ int main(int argc,char *argv[])
     if (status.line_buff == NULL)
     {
       free_defaults(defaults_argv);
-      my_end(0);
+      my_end();
       exit(1);
     }
   }
@@ -1369,7 +1367,7 @@ void drizzle_end(int sig)
   free(default_prompt);
   free(current_prompt);
   free_defaults(defaults_argv);
-  my_end(my_end_arg);
+  my_end();
   exit(status.exit_status);
 }
 
@@ -1455,11 +1453,6 @@ static struct my_option my_long_options[] =
   {"compress", 'C', N_("Use compression in server/client protocol."),
    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, N_("Check memory and open file usage at exit ."),
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", 'T', N_("Print some debug info at exit."), (char**) &debug_info_flag,
-   (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"database", 'D', N_("Database to use."), (char**) &current_db,
    (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
@@ -1705,7 +1698,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,NULL);
     if (status.line_buff == NULL)
     {
-      my_end(0);
+      my_end();
       exit(1);
     }
     status.line_buff->addString(argument);
@@ -1839,10 +1832,7 @@ static int get_options(int argc, char **argv)
   }
   if (tty_password)
     opt_password= client_get_tty_password(NULL);
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
+
   return(0);
 }
 
@@ -3937,9 +3927,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     return -1;          // Retryable
   }
   connected=1;
-/* XXX hmm?
-  drizzle.reconnect= debug_info_flag; // We want to know if this happens
-*/
+
   build_completion_hash(opt_rehash, 1);
   return 0;
 }

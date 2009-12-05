@@ -399,10 +399,6 @@ int fill_table_proto(message::Table *table_proto,
       idx->set_type(message::Table::Index::BTREE);
       break;
 
-    case HA_KEY_ALG_RTREE:
-      idx->set_type(message::Table::Index::RTREE);
-    case HA_KEY_ALG_FULLTEXT:
-      idx->set_type(message::Table::Index::FULLTEXT);
     case HA_KEY_ALG_UNDEF:
       idx->set_type(message::Table::Index::UNKNOWN_INDEX);
       break;

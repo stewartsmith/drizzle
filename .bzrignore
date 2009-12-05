@@ -280,6 +280,10 @@ drizzled/message/length
 .plugin.ini.stamp
 pandora-plugin.ac
 pandora-plugin.am
+config/plugin-list.ac
+config/plugin-list.am
+.plugin.scan
+config/plugin.list
 lint-rules.am
 *.linted
 config/pandora-plugin.list

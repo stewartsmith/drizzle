@@ -37,18 +37,18 @@ class Library;
 class Module
 {
   const std::string name;
-  Manifest *manifest;
+  const Manifest *manifest;
 public:
   Library *plugin_dl;
   bool isInited;
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
-  Module(Manifest *manifest_arg, Library *library_arg)
+  Module(const Manifest *manifest_arg, Library *library_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
       isInited(false),
       mem_root(), system_vars(NULL) {}
       
-  Module(Manifest *manifest_arg)
+  Module(const Manifest *manifest_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
       isInited(false),
       mem_root(), system_vars(NULL) {}

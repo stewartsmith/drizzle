@@ -24,13 +24,16 @@
  */
 
 #include "drizzled/server_includes.h"
+
+#include <vector>
+
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/plugin/library.h"
 
 #include "helper_methods.h"
 #include "modules.h"
 
-#include <vector>
 
 using namespace drizzled;
 using namespace std;
@@ -158,9 +161,21 @@ class ShowModules : public unary_function<drizzled::plugin::Module *, bool>
   Session *session;
   Table *table;
   plugin::InfoSchemaTable *schema_table;
+
+  const string LICENSE_GPL_STRING;
+  const string LICENSE_BSD_STRING;
+  const string LICENSE_LGPL_STRING;
+  const string LICENSE_PROPRIETARY_STRING;
+
 public:
-  ShowModules(Session *session_arg, Table *table_arg, plugin::InfoSchemaTable *sch_tab_arg)
-    : session(session_arg), table(table_arg), schema_table(sch_tab_arg) {}
+  ShowModules(Session *session_arg, Table *table_arg,
+              plugin::InfoSchemaTable *sch_tab_arg)
+    : session(session_arg), table(table_arg), schema_table(sch_tab_arg),
+      LICENSE_GPL_STRING("GPL"),
+      LICENSE_BSD_STRING("BSD"),
+      LICENSE_LGPL_STRING("LGPL"),
+      LICENSE_PROPRIETARY_STRING("PROPRIETARY")
+  {}
 
   result_type operator() (argument_type module)
   {
@@ -205,8 +220,8 @@ public:
     else
     {
       table->field[3]->store(STRING_WITH_LEN("NO"),cs);
-      table->field[4]->store(module->plugin_dl->dl.str,
-                             module->plugin_dl->dl.length, cs);
+      table->field[4]->store(module->plugin_dl->getName().c_str(),
+                             module->plugin_dl->getName().size(), cs);
     }
 
     if (manifest.descr)
@@ -221,20 +236,20 @@ public:
 
     switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      table->field[6]->store(drizzled::plugin::LICENSE_GPL_STRING.c_str(),
-                             drizzled::plugin::LICENSE_GPL_STRING.size(), cs);
+      table->field[6]->store(LICENSE_GPL_STRING.c_str(),
+                             LICENSE_GPL_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_BSD:
-      table->field[6]->store(drizzled::plugin::LICENSE_BSD_STRING.c_str(),
-                             drizzled::plugin::LICENSE_BSD_STRING.size(), cs);
+      table->field[6]->store(LICENSE_BSD_STRING.c_str(),
+                             LICENSE_BSD_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_LGPL:
-      table->field[6]->store(drizzled::plugin::LICENSE_LGPL_STRING.c_str(),
-                             drizzled::plugin::LICENSE_LGPL_STRING.size(), cs);
+      table->field[6]->store(LICENSE_LGPL_STRING.c_str(),
+                             LICENSE_LGPL_STRING.size(), cs);
       break;
     default:
-      table->field[6]->store(drizzled::plugin::LICENSE_PROPRIETARY_STRING.c_str(),
-                             drizzled::plugin::LICENSE_PROPRIETARY_STRING.size(),
+      table->field[6]->store(LICENSE_PROPRIETARY_STRING.c_str(),
+                             LICENSE_PROPRIETARY_STRING.size(),
                              cs);
       break;
     }

@@ -247,6 +247,52 @@
    fun:do_flush
 }
 
+
+{
+   Archive libz deflate1
+   Memcheck:Cond
+   fun:deflate
+   ...
+   fun:azflush
+   ...
+   fun:start_thread
+}
+
+{
+   Archive libz deflate2
+   Memcheck:Cond
+   fun:deflate
+   ...
+   fun:azclose
+   ...
+   fun:start_thread
+}
+
+
+{
+   Archive libz deflate3
+   Memcheck:Cond
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN7Session3runEv
+}
+
+{
+   Archive libz deflate3
+   Memcheck:Value8
+   fun:memcpy
+   obj:/lib/libz.so.1.2.3.3
+   obj:/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN7Session3runEv
+}
+
+
 #
 # Warning from my_thread_init becasue mysqld dies before kill thread exists
 #
@@ -711,25 +757,15 @@
    nss_parse_service_list static allocation
    Memcheck:Leak
    fun:malloc
-   fun:nss_parse_service_list
-   fun:__nss_database_lookup
-   obj:*
-   obj:*
-   fun:getpwnam_r*
+   ...
    fun:getpwnam
-   fun:_ZL10check_userPKc
-   fun:main
 }
 
 {
    tsearch static allocation
    Memcheck:Leak
    fun:malloc
-   fun:tsearch
-   fun:__nss_lookup_function
-   obj:*
-   obj:*
-   fun:getpwnam_r*
+   ...
    fun:getpwnam
    fun:_ZL10check_userPKc
    fun:main
@@ -785,3 +821,96 @@
    obj:/lib/libc-2.9.so
    fun:__nss_database_lookup
 }
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:main
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen
+   ...
+   fun:plugin_init
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:main
+}
+
+{
+   Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
+   Memcheck:Leak
+   fun:dlopen
+   ...
+   fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
+}
+
+{
+   Valgrind has issues tracking the deallocation of plugin objects.
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZL17plugin_initializeRN8drizzled6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
+}
+
+{
+   Valgrind has issues tracking the deallocation of plugin objects.
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZL17plugin_initializeRN8drizzled6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:main
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getpwnam_r@@GLIBC_2.2.5
+   fun:getpwnam
+   fun:main
+}
+

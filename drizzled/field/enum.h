@@ -114,8 +114,6 @@ public:
   }
   /* enum and set are sorted as integers */
   const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
 
 #endif /* DRIZZLED_FIELD_ENUM_H */

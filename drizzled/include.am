@@ -124,7 +124,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/function/row_count.h \
 		drizzled/function/set_user_var.h \
 		drizzled/function/sign.h \
-		drizzled/function/signed.h \
 		drizzled/function/str/alloc_buffer.h \
 		drizzled/function/str/binary.h \
 		drizzled/function/str/char.h \
@@ -184,7 +183,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/function/time/weekday.h \
 		drizzled/function/time/year.h  \
 		drizzled/function/units.h \
-		drizzled/function/unsigned.h \
 		drizzled/function/user_var_as_out_param.h \
 		drizzled/function_hash.h \
 		drizzled/ha_statistics.h \
@@ -251,7 +249,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/memory/multi_malloc.h \
 		drizzled/my_decimal.h\
 		drizzled/my_var.h \
-		drizzled/name_map.h \
 		drizzled/name_resolution_context.h \
 		drizzled/name_resolution_context_state.h \
 		drizzled/natural_join_column.h \
@@ -370,7 +367,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/table_ident.h \
 		drizzled/table_identifier.h \
 		drizzled/table_list.h \
-		drizzled/table_map_iterator.h \
 		drizzled/table_proto.h \
 		drizzled/table_reference.h \
 		drizzled/table_share.h \
@@ -399,11 +395,13 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/hash/libhash.la \
+		 $(top_builddir)/drizzled/util/libutil.la \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(PANDORA_PLUGIN_DEP_LIBS)
+
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_drizzled_LDFLAGS = -export-dynamic
@@ -497,7 +495,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/function/row_count.cc \
 		drizzled/function/set_user_var.cc \
 		drizzled/function/sign.cc \
-		drizzled/function/signed.cc \
 		drizzled/function/str/alloc_buffer.cc \
 		drizzled/function/str/binary.cc \
 		drizzled/function/str/char.cc \
@@ -557,7 +554,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/function/time/weekday.cc \
 		drizzled/function/time/year.cc \
 		drizzled/function/units.cc \
-		drizzled/function/unsigned.cc \
 		drizzled/function/user_var_as_out_param.cc \
 		drizzled/ha_commands.cc \
 		drizzled/ha_trx_info.cc \
@@ -617,6 +613,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/plugin/error_message.cc \
 		drizzled/plugin/function.cc \
 		drizzled/plugin/info_schema_table.cc \
+		drizzled/plugin/library.cc \
 		drizzled/plugin/listen.cc \
 		drizzled/plugin/listen_tcp.cc \
 		drizzled/plugin/loader.cc \
@@ -696,7 +693,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/table.cc \
 		drizzled/table_identifier.cc \
 		drizzled/table_list.cc \
-		drizzled/table_map_iterator.cc \
 		drizzled/table_share.cc \
 		drizzled/temporal.cc \
 		drizzled/temporal_format.cc \

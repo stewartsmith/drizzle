@@ -80,60 +80,10 @@ bool my_init(void)
 
 	/* End my_sys */
 
-void my_end(int infoflag)
+void my_end()
 {
-  /*
-    this code is suboptimal to workaround a bug in
-    Sun CC: Sun C++ 5.6 2004/06/02 for x86, and should not be
-    optimized until this compiler is not in use anymore
-  */
-  FILE *info_file= stderr;
-  bool print_info= 0;
-
-  if ((infoflag & MY_CHECK_ERROR) || print_info)
-
-  {					/* Test if some file is left open */
-    if (my_file_opened | my_stream_opened)
-    {
-      /* TODO: Mark... look at replacement here
-       * (void) my_message_no_curses(EE_OPEN_WARNING,errbuff[0],ME_BELL);
-       */
-      (void) fflush(stdout);
-      
-      my_print_open_files();
-    }
-  }
   free_charsets();
   my_error_unregister_all();
-
-  if ((infoflag & MY_GIVE_INFO) || print_info)
-  {
-    struct rusage rus;
-#ifdef HAVE_purify
-    /* Purify assumes that rus is uninitialized after getrusage call */
-    memset(&rus, 0, sizeof(rus));
-#endif
-    if (!getrusage(RUSAGE_SELF, &rus))
-      fprintf(info_file,"\n\
-User time %.2f, System time %.2f\n\
-Maximum resident set size %ld, Integral resident set size %ld\n\
-Non-physical pagefaults %ld, Physical pagefaults %ld, Swaps %ld\n\
-Blocks in %ld out %ld, Messages in %ld out %ld, Signals %ld\n\
-Voluntary context switches %ld, Involuntary context switches %ld\n",
-	      static_cast<double>((rus.ru_utime.tv_sec * SCALE_SEC +
-	      rus.ru_utime.tv_usec / SCALE_USEC)) / 100.0,
-	      static_cast<double>((rus.ru_stime.tv_sec * SCALE_SEC +
-	      rus.ru_stime.tv_usec / SCALE_USEC)) / 100.0,
-	      rus.ru_maxrss, rus.ru_idrss,
-	      rus.ru_minflt, rus.ru_majflt,
-	      rus.ru_nswap, rus.ru_inblock, rus.ru_oublock,
-	      rus.ru_msgsnd, rus.ru_msgrcv, rus.ru_nsignals,
-	      rus.ru_nvcsw, rus.ru_nivcsw);
-  }
-  else if (infoflag & MY_CHECK_ERROR)
-  {
-    TERMINATE(stderr, 0);		/* Print memory leaks on screen */
-  }
 
   my_thread_end();
   my_thread_global_end();

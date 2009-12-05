@@ -66,7 +66,7 @@ void* multi_malloc(bool zerofill, ...)
     memset(start, 0, tot_length);
 
   va_start(args, zerofill);
-  res=reinterpret_cast<char *>(start);
+  res= static_cast<char *>(start);
   while ((ptr=va_arg(args, void **)))
   {
     *ptr=res;
