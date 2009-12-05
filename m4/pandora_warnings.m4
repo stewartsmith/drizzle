@@ -129,9 +129,9 @@ uint16_t x= htons(80);
 
     AS_IF([test "$INTELCC" = "yes"],[
       m4_if(PW_LESS_WARNINGS,[no],[
-        BASE_WARNINGS="-w1 -Wall -Werror -Wcheck -Wformat -Wp64 -Woverloaded-virtual -Wcast-qual"
+        BASE_WARNINGS="-w1 -Werror -Wcheck -Wformat -Wp64 -Woverloaded-virtual -Wcast-qual"
       ],[
-        BASE_WARNINGS="-w1 -Wall -Wcheck -Wformat -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 981"
+        BASE_WARNINGS="-w1 -Wcheck -Wformat -Wp64 -Woverloaded-virtual -Wcast-qual -diag-disable 981"
       ])
       CC_WARNINGS="${BASE_WARNINGS}"
       CXX_WARNINGS="${BASE_WARNINGS}"
