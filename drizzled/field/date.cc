@@ -24,6 +24,7 @@
 #include "drizzled/table.h"
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
+#include "drizzled/time.h"
 
 #include <sstream>
 #include <string>

@@ -26,12 +26,19 @@
 #ifndef DRIZZLED_SQL_TABLE_H
 #define DRIZZLED_SQL_TABLE_H
 
+#include "drizzled/base.h"
+
 class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
 class Table;
+typedef struct st_key KEY;
+typedef struct st_ha_create_information HA_CREATE_INFO;
+class AlterInfo;
+class Cursor;
 
 namespace drizzled { namespace message { class Table; } }
+namespace drizzled { class TableIdentifier; }
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);

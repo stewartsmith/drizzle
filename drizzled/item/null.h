@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_NULL_H
 #define DRIZZLED_ITEM_NULL_H
 
+#include "drizzled/item/basic_constant.h"
+
 class Item_null :public Item_basic_constant
 {
 public:

@@ -44,6 +44,9 @@
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/sargable_param.h"
 #include "drizzled/optimizer/key_use.h"
+#include "drizzled/optimizer/range.h"
+#include "drizzled/optimizer/sum.h"
+#include "drizzled/records.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
@@ -81,7 +84,7 @@ static bool best_extension_by_limited_search(JOIN *join,
 static uint32_t determine_search_depth(JOIN* join);
 static bool make_simple_join(JOIN *join,Table *tmp_table);
 static void make_outerjoin_info(JOIN *join);
-static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *item);
+static bool make_join_select(JOIN *join, optimizer::SQL_SELECT *select,COND *item);
 static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after);
 static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, order_st *order);
@@ -483,12 +486,12 @@ int JOIN::optimize()
   {
     int res;
     /*
-      opt_sum_query() returns HA_ERR_KEY_NOT_FOUND if no rows match
+      optimizer::sum_query() returns HA_ERR_KEY_NOT_FOUND if no rows match
       to the WHERE conditions,
       or 1 if all items were resolved,
       or 0, or an error number HA_ERR_...
     */
-    if ((res=opt_sum_query(select_lex->leaf_tables, all_fields, conds)))
+    if ((res= optimizer::sum_query(select_lex->leaf_tables, all_fields, conds)))
     {
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
@@ -511,11 +514,11 @@ int JOIN::optimize()
       tables_list= 0;       // All tables resolved
       /*
         Extract all table-independent conditions and replace the WHERE
-        clause with them. All other conditions were computed by opt_sum_query
+        clause with them. All other conditions were computed by optimizer::sum_query
         and the MIN/MAX/COUNT function(s) have been replaced by constants,
         so there is no need to compute the whole WHERE clause again.
         Notice that make_cond_for_table() will always succeed to remove all
-        computed conditions, because opt_sum_query() is applicable only to
+        computed conditions, because optimizer::sum_query() is applicable only to
         conjunctions.
         Preserve conditions for EXPLAIN.
       */
@@ -574,8 +577,8 @@ int JOIN::optimize()
     /* Handle the case where we have an OUTER JOIN without a WHERE */
     conds=new Item_int((int64_t) 1,1);  // Always true
   }
-  select= make_select(*table, const_table_map,
-                      const_table_map, conds, 1, &error);
+  select= optimizer::make_select(*table, const_table_map,
+                                 const_table_map, conds, 1, &error);
   if (error)
   {
     error= -1;
@@ -661,7 +664,7 @@ int JOIN::optimize()
       (!join_tab[const_tables].select ||
        !join_tab[const_tables].select->quick ||
        join_tab[const_tables].select->quick->get_type() !=
-       QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX))
+       optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX))
   {
     if (group_list && list_contains_unique_index(join_tab[const_tables].table, find_field_in_order_list, (void *) group_list))
     {
@@ -1548,7 +1551,7 @@ void JOIN::exec()
       if (sort_table_cond)
       {
         if (!curr_table->select)
-          if (!(curr_table->select= new SQL_SELECT))
+          if (!(curr_table->select= new optimizer::SQL_SELECT))
             return;
         if (!curr_table->select->cond)
           curr_table->select->cond= sort_table_cond;
@@ -2606,7 +2609,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
       join->session->send_kill_message();
       return NESTED_LOOP_KILLED;
     }
-    SQL_SELECT *select=join_tab->select;
+    optimizer::SQL_SELECT *select= join_tab->select;
     if (rc == NESTED_LOOP_OK &&
         (!join_tab->cache.select || !join_tab->cache.select->skip_record()))
     {
@@ -4423,7 +4426,9 @@ static void make_outerjoin_info(JOIN *join)
   return;
 }
 
-static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
+static bool make_join_select(JOIN *join,
+                             optimizer::SQL_SELECT *select,
+                             COND *cond)
 {
   Session *session= join->session;
   optimizer::Position cur_pos;
@@ -4544,7 +4549,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       if (tmp || !cond || tab->type == AM_REF || tab->type == AM_REF_OR_NULL ||
           tab->type == AM_EQ_REF)
       {
-        SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
+        optimizer::SQL_SELECT *sel= tab->select= ((optimizer::SQL_SELECT*)
             session->memdup((unsigned char*) select,
               sizeof(*select)));
         if (! sel)
@@ -4682,8 +4687,8 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
                                          current_map,
                                          current_map, 0)))
             {
-              tab->cache.select= (SQL_SELECT*)
-                session->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
+              tab->cache.select= (optimizer::SQL_SELECT*)
+                session->memdup((unsigned char*) sel, sizeof(optimizer::SQL_SELECT));
               tab->cache.select->cond= tmp;
               tab->cache.select->read_tables= join->const_table_map;
             }
@@ -5876,8 +5881,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         !s->table->pos_in_table_list->embedding)
     {
       ha_rows records;
-      SQL_SELECT *select;
-      select= make_select(s->table, found_const_table_map, found_const_table_map, *s->on_expr_ref ? *s->on_expr_ref : conds, 1, &error);
+      optimizer::SQL_SELECT *select= NULL;
+      select= optimizer::make_select(s->table, found_const_table_map, found_const_table_map, *s->on_expr_ref ? *s->on_expr_ref : conds, 1, &error);
       if (! select)
         return 1;
       records= get_quick_record_count(join->session, select, s->table, &s->const_keys, join->row_limit);
@@ -6151,8 +6156,8 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
     error=(int) cond->add(join_tab->select->cond);
     join_tab->select_cond=join_tab->select->cond=cond;
   }
-  else if ((join_tab->select= make_select(join_tab->table, 0, 0, cond, 0,
-                                          &error)))
+  else if ((join_tab->select= optimizer::make_select(join_tab->table, 0, 0, cond, 0,
+                                                     &error)))
     join_tab->select_cond=cond;
 
   return(error ? true : false);

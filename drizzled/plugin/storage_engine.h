@@ -37,6 +37,7 @@ class TableList;
 class Session;
 class XID;
 class Cursor;
+typedef struct st_hash HASH;
 
 class TableShare;
 typedef drizzle_lex_string LEX_STRING;

@@ -22,6 +22,8 @@
 #ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
 #define DRIZZLED_PLUGIN_QUERY_CACHE_H
 
+#include "drizzled/plugin/plugin.h"
+
 namespace drizzled
 {
 namespace plugin

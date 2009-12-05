@@ -24,6 +24,7 @@
 #include <drizzled/table.h>
 
 class TableShare;
+class Name_resolution_context;
 
 void table_cache_free(void);
 bool table_cache_init(void);
@@ -56,10 +57,6 @@ bool push_new_name_resolution_context(Session *session,
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);
-
-SQL_SELECT *make_select(Table *head, table_map const_tables,
-			table_map read_tables, COND *conds,
-                        bool allow_null_cond,  int *error);
 extern Item **not_found_item;
 
 /**
