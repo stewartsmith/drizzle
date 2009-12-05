@@ -53,7 +53,7 @@ public:
     :type(type_par), key_create_info(*key_info_arg), columns(cols),
     generated(generated_arg)
   {
-    name.str= (char *)name_arg;
+    name.str= const_cast<char *>(name_arg);
     name.length= name_len_arg;
   }
 

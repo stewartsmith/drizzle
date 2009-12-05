@@ -34,8 +34,8 @@ typedef struct drizzle_lex_string
 } LEX_STRING;
 
 
-#define STRING_WITH_LEN(X) (X), ((size_t) (sizeof(X) - 1))
-#define C_STRING_WITH_LEN(X) ((char *) (X)), ((size_t) (sizeof(X) - 1))
+#define STRING_WITH_LEN(X) (X), (static_cast<size_t>((sizeof(X) - 1)))
+#define C_STRING_WITH_LEN(X) (const_cast<char *>((X))), (static_cast<size_t>((sizeof(X) - 1)))
 
 
 #endif /* DRIZZLED_LEX_STRING_H */

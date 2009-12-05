@@ -36,7 +36,7 @@ public:
     :value((int64_t)i)
   { max_length=length; fixed=1; }
   Item_int(const char *str_arg,int64_t i,uint32_t length) :value(i)
-    { max_length=length; name=(char*) str_arg; fixed= 1; }
+    { max_length= length; name= const_cast<char *>(str_arg); fixed= 1; }
   Item_int(const char *str_arg, uint32_t length=64);
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
