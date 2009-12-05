@@ -39,7 +39,7 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   AC_HEADER_SYS_WAIT
   AC_HEADER_STDBOOL
 
-  AC_CHECK_HEADERS(sys/fpu.h fpu_control.h ieeefp.h)
+  AC_CHECK_HEADERS(sys/types.h sys/fpu.h fpu_control.h ieeefp.h)
   AC_CHECK_HEADERS(select.h sys/select.h)
   AC_CHECK_HEADERS(utime.h sys/utime.h )
   AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h)
@@ -70,7 +70,7 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
     # include <curses.h>
     #endif
   ]])
-  AC_CHECK_TYPES([ulong])
+  AC_CHECK_TYPES([uint, ulong])
 
   PANDORA_CXX_DEMANGLE
 
