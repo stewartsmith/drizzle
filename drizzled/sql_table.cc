@@ -1672,7 +1672,7 @@ bool mysql_create_table_no_lock(Session *session,
   session->set_proc_info("creating table");
   create_info->table_existed= 0;		// Mark that table is created
 
-  create_info->table_options=db_options;
+  create_info->table_options= db_options;
 
   if (rea_create_table(session, identifier,
 		       table_proto,

@@ -452,6 +452,11 @@ public:
   virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
+  /* TODO-> Make private */
+  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+  static int deleteDefinitionFromPath(TableIdentifier &identifier);
+  static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
+  static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
 };
 
 } /* namespace plugin */

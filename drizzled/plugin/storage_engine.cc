@@ -720,9 +720,13 @@ int plugin::StorageEngine::dropTable(Session& session,
     if (error == 0)
     {
       if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-        delete_table_proto_file(identifier.getPath());
+      {
+        deleteDefinitionFromPath(identifier);
+      }
       else
-        error= delete_table_proto_file(identifier.getPath());
+      {
+        error= deleteDefinitionFromPath(identifier);
+      }
     }
   }
 
@@ -1292,5 +1296,53 @@ void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg,
 		    MYF(0), str.c_ptr(), table.key_info[key_nr].name);
   }
 }
+
+
+int plugin::StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
+{
+  string path(identifier.getPath());
+
+  path.append(DEFAULT_DEFINITION_FILE_EXT);
+
+  return my_delete(path.c_str(), MYF(0));
+}
+
+int plugin::StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
+{
+  string src_path(src.getPath());
+  string dest_path(dest.getPath());
+
+  src_path.append(DEFAULT_DEFINITION_FILE_EXT);
+  dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
+
+  return my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
+}
+
+int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_proto)
+{
+  string file_name(identifier.getPath());
+
+  file_name.append(DEFAULT_DEFINITION_FILE_EXT);
+
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+
+  if (fd == -1)
+    return errno;
+
+  google::protobuf::io::ZeroCopyOutputStream* output=
+    new google::protobuf::io::FileOutputStream(fd);
+
+  if (table_proto.SerializeToZeroCopyStream(output) == false)
+  {
+    delete output;
+    close(fd);
+    return errno;
+  }
+
+  delete output;
+  close(fd);
+  return 0;
+}
+
 
 } /* namespace drizzled */
