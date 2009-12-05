@@ -87,32 +87,20 @@ public:
   uint32_t get_key_image(std::basic_string <unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
-  virtual unsigned char *pack(unsigned char *to, 
+  virtual unsigned char *pack(unsigned char *to,
                               const unsigned char *from,
                               uint32_t max_length,
                               bool low_byte_first);
 
-  unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key_from_key_image(unsigned char* to,
-                                         const unsigned char *from,
-                                         uint32_t max_length,
-                                         bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char* to,
                                       const unsigned char *from,
                                       uint32_t param_data,
                                       bool low_byte_first);
- 
-  const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
-                          uint32_t max_length, bool low_byte_first);
-  int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,
-               bool insert_or_update);
-  int pack_cmp(const unsigned char *b, uint32_t key_length,bool insert_or_update);
+
   int cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const unsigned char *,const unsigned char*);
   int key_cmp(const unsigned char *str, uint32_t length);
-  uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   uint32_t max_packed_col_length(uint32_t max_length);
-  uint32_t data_length();
   uint32_t used_length();
   uint32_t size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
@@ -122,10 +110,6 @@ public:
   Field *new_key_field(MEM_ROOT *root, Table *new_table,
                        unsigned char *new_ptr, unsigned char *new_null_ptr,
                        uint32_t new_null_bit);
-  uint32_t is_equal(CreateField *new_field);
-  void hash(uint32_t *nr, uint32_t *nr2);
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
 
 #endif /* DRIZZLED_FIELD_VARSTRING_H */

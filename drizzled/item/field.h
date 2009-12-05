@@ -99,7 +99,6 @@ public:
   bool set_no_const_sub(unsigned char *arg);
   Item *replace_equal_field(unsigned char *arg);
   uint32_t max_disp_length();
-  Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);

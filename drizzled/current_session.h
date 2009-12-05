@@ -26,6 +26,5 @@ class Session;
 Session *_current_session(void);
 #define current_session _current_session()
 MEM_ROOT *current_mem_root(void);
-MEM_ROOT **current_mem_root_ptr(void);
 
 #endif /* DRIZZLED_CURRENT_SESSION_H */

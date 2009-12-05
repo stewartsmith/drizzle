@@ -113,11 +113,6 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 }
 
 
-Item_field *Item::filed_for_view_update()
-{
-  return 0;
-}
-
 Item_field::Item_field(Field *f)
   :Item_ident(0, NULL, *f->table_name, f->field_name),
    item_equal(0), no_const_subst(0),

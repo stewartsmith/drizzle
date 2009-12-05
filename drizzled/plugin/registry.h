@@ -35,10 +35,12 @@ namespace plugin
 {
 class Module;
 class Plugin;
+class Library;
 
 class Registry
 {
 private:
+  std::map<std::string, Library *> library_map;
   std::map<std::string, Module *> module_map;
   std::map<std::string, const Plugin *> plugin_registry;
 
@@ -52,6 +54,7 @@ private:
 
   Registry(const Registry&);
   Registry& operator=(const Registry&);
+  ~Registry();
 public:
 
   static plugin::Registry& singleton()
@@ -60,13 +63,9 @@ public:
     return *registry;
   }
 
-  static void shutdown()
-  {
-    plugin::Registry& registry= singleton();
-    delete &registry;
-  }
+  static void shutdown();
 
-  Module *find(const LEX_STRING *name);
+  Module *find(std::string name);
 
   void add(Module *module);
 
@@ -87,6 +86,15 @@ public:
     return plugin_registry;
   }
 
+  const std::map<std::string, Module *> &getModulesMap() const
+  {
+    return module_map;
+  }
+
+  Library *addLibrary(const std::string &plugin_name);
+  void removeLibrary(const std::string &plugin_name);
+  Library *findLibrary(const std::string &plugin_name) const;
+
   template<class T>
   void add(T *plugin)
   {
@@ -99,7 +107,7 @@ public:
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Loading plugin %s failed: a plugin by that name already "
-                      "exists."), plugin->getName().c_str());
+                      "exists.\n"), plugin->getName().c_str());
       failed= true;
     }
     if (T::addPlugin(plugin))
@@ -107,7 +115,7 @@ public:
     if (failed)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Fatal error: Failed initializing %s plugin."),
+                    _("Fatal error: Failed initializing %s plugin.\n"),
                     plugin->getName().c_str());
       unireg_abort(1);
     }
@@ -123,6 +131,7 @@ public:
     T::removePlugin(plugin);
     plugin_registry.erase(plugin_name);
   }
+
 
 };
 

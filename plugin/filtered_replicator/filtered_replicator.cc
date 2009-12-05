@@ -533,9 +533,9 @@ static int deinit(plugin::Registry &registry)
 }
 
 static int check_filtered_schemas(Session *, 
-                                  struct st_mysql_sys_var *,
+                                  drizzle_sys_var *,
                                   void *,
-                                  struct st_mysql_value *value)
+                                  drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   int len= sizeof(buff);
@@ -550,7 +550,7 @@ static int check_filtered_schemas(Session *,
 }
 
 static void set_filtered_schemas(Session *,
-                                 struct st_mysql_sys_var *,
+                                 drizzle_sys_var *,
                                  void *var_ptr,
                                  const void *save)
 {
@@ -565,9 +565,9 @@ static void set_filtered_schemas(Session *,
 }
 
 static int check_filtered_tables(Session *, 
-                                 struct st_mysql_sys_var *,
+                                 drizzle_sys_var *,
                                  void *,
-                                 struct st_mysql_value *value)
+                                 drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
   int len= sizeof(buff);
@@ -582,7 +582,7 @@ static int check_filtered_tables(Session *,
 }
 
 static void set_filtered_tables(Session *,
-                                struct st_mysql_sys_var *,
+                                drizzle_sys_var *,
                                 void *var_ptr,
                                 const void *save)
 {
@@ -632,7 +632,7 @@ static DRIZZLE_SYSVAR_STR(tableregex,
                           NULL,
                           NULL);
 
-static struct st_mysql_sys_var* filtered_replicator_system_variables[]= {
+static drizzle_sys_var* filtered_replicator_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(filteredschemas),
   DRIZZLE_SYSVAR(filteredtables),
@@ -641,7 +641,7 @@ static struct st_mysql_sys_var* filtered_replicator_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "filtered_replicator",
   "0.2",
@@ -654,4 +654,4 @@ drizzle_declare_plugin
   filtered_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -826,7 +826,7 @@ static bool find_key_for_maxmin(bool max_fl, table_reference_st *ref,
          part != part_end ;
          part++, jdx++, key_part_to_use= (key_part_to_use << 1) | 1)
     {
-      if (!(table->cursor->index_flags(idx, jdx, 0) & HA_READ_ORDER))
+      if (! (table->index_flags(idx) & HA_READ_ORDER))
         return 0;
 
       /* Check whether the index component is partial */

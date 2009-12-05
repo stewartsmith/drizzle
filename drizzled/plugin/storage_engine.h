@@ -26,7 +26,6 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
-#include <drizzled/name_map.h>
 
 #include "mysys/cached_directory.h"
 
@@ -40,7 +39,7 @@ class XID;
 class Cursor;
 
 class TableShare;
-typedef struct st_mysql_lex_string LEX_STRING;
+typedef drizzle_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
@@ -75,7 +74,6 @@ enum engine_flag_bits {
   HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE,
   HTON_BIT_NO_PREFIX_CHAR_KEYS,
   HTON_BIT_HAS_CHECKSUM,
-  HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE,
   HTON_BIT_SKIP_STORE_LOCK,
   HTON_BIT_SIZE
 };
@@ -109,7 +107,6 @@ static const std::bitset<HTON_BIT_SIZE> HTON_REQUIRES_KEY_COLUMNS_FOR_DELETE(1 <
 static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_DELETE(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_DELETE);
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_NO_PREFIX_CHAR_KEYS);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
-static const std::bitset<HTON_BIT_SIZE> HTON_ANY_INDEX_MAY_BE_UNIQUE(1 << HTON_BIT_ANY_INDEX_MAY_BE_UNIQUE);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
 
 
@@ -120,9 +117,8 @@ namespace drizzled
 namespace plugin
 {
 
-const std::string UNKNOWN_STRING("UNKNOWN");
-const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
-
+extern const std::string UNKNOWN_STRING;
+extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -170,6 +166,20 @@ public:
   const std::string& getTableDefinitionFileExtension()
   {
     return table_definition_ext;
+  }
+
+private:
+  std::vector<std::string> aliases;
+
+public:
+  const std::vector<std::string>& getAliases() const
+  {
+    return aliases;
+  }
+
+  void addAlias(std::string alias)
+  {
+    aliases.push_back(alias);
   }
 
 protected:
@@ -260,6 +270,10 @@ public:
   {
     return flags.test(flag);
   }
+
+  // @todo match check_flag interface
+  virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
+
 
   void enable() { enabled= true; }
   void disable() { enabled= false; }

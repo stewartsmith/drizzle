@@ -50,6 +50,7 @@ class UpdateRecord;
 class DeleteHeader;
 class DeleteData;
 class DeleteRecord;
+class TruncateTableStatement;
 class SetVariableStatement;
 
 /** A Variation of SQL to be output during transformation */
@@ -258,6 +259,25 @@ enum TransformSqlError
 transformDeleteHeaderToSql(const DeleteHeader &header,
                            std::string *destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * This function looks at a supplied TruncateTableStatement
+ * and constructs a correctly-formatted SQL
+ * statement to the supplied destination string.
+ *
+ * @param TruncateTableStatement message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformTruncateTableStatementToSql(const TruncateTableStatement &statement,
+                                     std::string *destination,
+                                     enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * This function looks at a supplied SetVariableStatement

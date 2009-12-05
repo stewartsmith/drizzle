@@ -544,13 +544,3 @@ next_loop:
   } while (!result && ++i < key_parts);
   return(result);
 }
-
-Key::Key(const Key &rhs, MEM_ROOT *mem_root)
-  :type(rhs.type),
-  key_create_info(rhs.key_create_info),
-  columns(rhs.columns, mem_root),
-  name(rhs.name),
-  generated(rhs.generated)
-{
-  list_copy_and_replace_each_value(columns, mem_root);
-}

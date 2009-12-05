@@ -60,11 +60,9 @@
 #define OPTION_WARNINGS         (UINT64_C(1) << 13)    // THD, user
 #define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user, binlog
 #define OPTION_FOUND_COMMENT    (UINT64_C(1) << 15)    // SELECT, intern, parser
-#define OPTION_SAFE_UPDATES     (UINT64_C(1) << 16)    // THD, user
 #define OPTION_BUFFER_RESULT    (UINT64_C(1) << 17)    // SELECT, user
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
 #define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
-#define OPTION_QUICK            (UINT64_C(1) << 22)    // SELECT (for DELETE)
 
 /* The following is used to detect a conflict with DISTINCT */
 #define SELECT_ALL              (UINT64_C(1) << 24)    // SELECT, user, parser
