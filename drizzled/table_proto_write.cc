@@ -579,7 +579,7 @@ int rea_create_table(Session *session,
 
 err_handler:
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    delete_table_proto_file(identifier.getPath());
+    plugin::StorageEngine::deleteDefinitionFromPath(identifier);
 
   return 1;
 } /* rea_create_table */

@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
+#include "drizzled/plugin/plugin.h"
 #include "drizzled/hash/crc32.h"
 
 #include <string>
@@ -40,6 +41,7 @@ namespace plugin
  */
 
 typedef class Item COND;
+class InfoSchemaTable;
 
 
 /**

@@ -30,6 +30,7 @@
 #include "drizzled/item/cache_int.h"
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
+#include "drizzled/time.h"
 
 #include <algorithm>
 

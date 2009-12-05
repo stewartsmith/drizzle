@@ -283,7 +283,7 @@ struct st_savepoint
 {
   struct st_savepoint *prev;
   char *name;
-  uint32_t length;
+  size_t length;
   Ha_trx_info *ha_list;
 };
 
@@ -1428,7 +1428,7 @@ public:
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
-  bool lock_table_name_if_not_cached(const char *db, 
+  bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
   /* Work with temporary tables */
@@ -1438,7 +1438,7 @@ public:
   void close_temporary_tables();
   void close_temporary_table(Table *table);
   // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed. 
+  // a better memory type world, this would not be needed.
 private:
   void close_temporary(Table *table);
 public:
@@ -1448,7 +1448,7 @@ public:
   bool rm_temporary_table(drizzled::plugin::StorageEngine *base, drizzled::TableIdentifier &identifier);
   Table *open_temporary_table(drizzled::TableIdentifier &identifier,
                               bool link_in_list= true);
-  
+
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);

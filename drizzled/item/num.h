@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_NUM_H
 #define DRIZZLED_ITEM_NUM_H
 
+#include "drizzled/item/basic_constant.h"
+
 class Item_num: public Item_basic_constant
 {
 public:

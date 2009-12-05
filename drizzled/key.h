@@ -22,13 +22,14 @@
 #define DRIZZLED_KEY_H
 
 
-#include <drizzled/sql_alloc.h>
-#include <drizzled/key_part_spec.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/handler_structs.h>
+#include "drizzled/sql_alloc.h"
+#include "drizzled/key_part_spec.h"
+#include "drizzled/sql_list.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/handler_structs.h"
 
 class Item;
+class MyBitmap;
 typedef struct st_mem_root MEM_ROOT;
 
 class Key :public Sql_alloc {
