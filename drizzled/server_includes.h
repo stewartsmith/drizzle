@@ -53,7 +53,7 @@
 #include <bitset>
 
 typedef struct st_ha_create_information HA_CREATE_INFO;
-typedef struct st_mysql_lex_string LEX_STRING;
+typedef struct drizzle_lex_string LEX_STRING;
 
 /* information schema */
 extern const std::string INFORMATION_SCHEMA_NAME;

@@ -20,6 +20,8 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/registry.h>
 
 #include <stdio.h>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */

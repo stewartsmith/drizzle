@@ -32,6 +32,7 @@
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/sql_parse.h"
+#include "drizzled/plugin.h"
 
 /* Forward declarations */
 class String;
