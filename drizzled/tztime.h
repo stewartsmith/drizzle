@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_TZTIME_H
 #define DRIZZLED_TZTIME_H
 
+typedef struct st_drizzle_time DRIZZLE_TIME;
+
 /**
   This class represents abstract time zone and provides
   basic interface for DRIZZLE_TIME <-> time_t conversion.
@@ -38,7 +40,7 @@ public:
     falls into spring time-gap (or lefts it untouched otherwise).
   */
   virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
-                                    bool *in_dst_time_gap) const = 0;
+                                 bool *in_dst_time_gap) const = 0;
   /**
     Converts time in time_t representation to local time in
     broken down DRIZZLE_TIME representation.

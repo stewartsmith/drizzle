@@ -814,7 +814,9 @@ void Session::drop_open_table(Table *table, const char *db_name,
                               const char *table_name)
 {
   if (table->s->tmp_table)
+  {
     close_temporary_table(table);
+  }
   else
   {
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */

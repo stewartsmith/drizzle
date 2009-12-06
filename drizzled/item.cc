@@ -30,6 +30,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/time.h"
 
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"

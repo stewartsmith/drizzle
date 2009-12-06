@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_ROW_H
 #define DRIZZLED_ITEM_ROW_H
 
+#include "drizzled/item.h"
+
 class Item_row: public Item
 {
   Item **items;

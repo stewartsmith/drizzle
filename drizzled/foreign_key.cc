@@ -21,6 +21,7 @@
 #include "drizzled/server_includes.h" /* @TODO remove this when header include is refactored more... */
 #include "drizzled/foreign_key.h"
 #include "drizzled/error.h"
+#include "drizzled/create_field.h"
 
 Foreign_key::Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root)
   :Key(rhs),

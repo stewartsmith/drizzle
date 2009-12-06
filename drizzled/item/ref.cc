@@ -17,13 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
 #include CSTDINT_H
-#include <drizzled/session.h>
-#include <drizzled/error.h>
-#include <drizzled/show.h>
-#include <drizzled/item/ref.h>
-#include <drizzled/plugin/client.h>
+#include "drizzled/session.h"
+#include "drizzled/error.h"
+#include "drizzled/show.h"
+#include "drizzled/item/ref.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/item/sum.h"
 
 using namespace drizzled;
 

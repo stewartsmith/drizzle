@@ -201,7 +201,7 @@ bool update_ref_and_keys(Session *session,
                          table_map normal_tables,
                          Select_Lex *select_lex,
                          std::vector<drizzled::optimizer::SargableParam> &sargables);
-ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
+ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
@@ -213,11 +213,7 @@ bool create_ref_for_key(JOIN *join, JoinTable *j,
                         drizzled::optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
 
-/* functions from opt_sum.cc */
-bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
-int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds);
-
-/* from sql_delete.cc, used by opt_range.cc */
+/* from sql_delete.cc, used by optimizer/range.cc */
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 
 #include "drizzled/stored_key.h"

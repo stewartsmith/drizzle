@@ -1862,7 +1862,6 @@ void Session::close_temporary_tables()
 */
 
 void Session::close_temporary_table(Table *table)
-                         
 {
   if (table->prev)
   {
@@ -1904,6 +1903,7 @@ void Session::close_temporary(Table *table)
   rm_temporary_table(table_type, table->s->path.str);
 
   table->s->free_table_share();
+
   /* This makes me sad, but we're allocating it via malloc */
   free(table);
 }
@@ -2122,7 +2122,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
 
   assert(base);
 
-  if (delete_table_proto_file(identifier.getPath()))
+  if (plugin::StorageEngine::deleteDefinitionFromPath(identifier))
     error= true;
 
   if (base->doDropTable(*this, identifier.getPath()))
@@ -2151,5 +2151,3 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
   }
   return error;
 }
-
-

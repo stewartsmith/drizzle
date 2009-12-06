@@ -25,6 +25,7 @@
 #define DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 
 #include "drizzled/atomics.h"
+#include "drizzled/plugin/plugin.h"
 
 /**
  * @file Defines the API for a TransactionReplicator.  

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_INSERT_VALUE_H
 #define DRIZZLED_ITEM_INSERT_VALUE_H
 
+#include "drizzled/item/field.h"
+
 /*
   Item_insert_value -- an implementation of VALUES() function.
   You can use the VALUES(col_name) function in the UPDATE clause

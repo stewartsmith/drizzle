@@ -20,8 +20,9 @@
 #ifndef DRIZZLED_ITEM_CACHE_H
 #define DRIZZLED_ITEM_CACHE_H
 
-#include <drizzled/item/ident.h>
-#include <drizzled/item/field.h>
+#include "drizzled/item/ident.h"
+#include "drizzled/item/field.h"
+#include "drizzled/item/basic_constant.h"
 
 class Item_cache: public Item_basic_constant
 {

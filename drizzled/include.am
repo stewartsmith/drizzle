@@ -283,6 +283,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_replicator.h \
 		drizzled/probes.h \
 		drizzled/query_id.h \
+		drizzled/records.h \
 		drizzled/replication_services.h \
 		drizzled/security_context.h \
 		drizzled/select_create.h \
@@ -373,6 +374,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/temporal.h \
 		drizzled/temporal_format.h \
 		drizzled/temporal_interval.h \
+		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
 		drizzled/tzfile.h \
 		drizzled/tztime.h \
@@ -695,7 +697,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/temporal.cc \
 		drizzled/temporal_format.cc \
 		drizzled/temporal_interval.cc \
-		drizzled/time.cc \
+		drizzled/time_functions.cc \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \
 		drizzled/user_var_entry.cc \
