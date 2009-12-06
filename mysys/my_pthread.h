@@ -48,10 +48,6 @@ extern "C" {
 #define pthread_handler_t void *
 typedef void *(* pthread_handler)(void *);
 
-#if defined(HAVE_SIGTHREADMASK) && !defined(HAVE_PTHREAD_SIGMASK)
-#define pthread_sigmask(A,B,C) sigthreadmask((A),(B),(C))
-#endif
-
 
 /*
   We define my_sigset() and use that instead of the system sigset() so that
@@ -59,7 +55,7 @@ typedef void *(* pthread_handler)(void *);
   as Mac OS X, sigset() results in flags such as SA_RESTART being set, and
   we want to make sure that no such flags are set.
 */
-#if defined(HAVE_SIGACTION) && !defined(my_sigset)
+#if !defined(my_sigset)
 #define my_sigset(A,B) do { struct sigaction l_s; sigset_t l_set; int l_rc; \
                             assert((A) != 0);                          \
                             sigemptyset(&l_set);                            \

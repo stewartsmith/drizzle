@@ -8,6 +8,7 @@ dnl with or without modifications, as long as this notice is preserved.
 #--------------------------------------------------------------------
 
 AC_DEFUN([PANDORA_STACK_DIRECTION],[
+ AC_REQUIRE([AC_FUNC_ALLOCA])
  AC_CACHE_CHECK([stack direction], [ac_cv_c_stack_direction],[
   AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdlib.h>

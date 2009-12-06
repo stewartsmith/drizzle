@@ -374,7 +374,6 @@ extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
 
-#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 
 #ifndef MAP_NOSYNC
@@ -384,28 +383,6 @@ extern uint64_t my_micro_time_and_time(time_t *time_arg);
 #define MAP_NORESERVE 0         /* For irix and AIX */
 #endif
 
-#ifdef HAVE_MMAP64
-#define my_mmap(a,b,c,d,e,f)    mmap64(a,b,c,d,e,f)
-#else
-#define my_mmap(a,b,c,d,e,f)    mmap(a,b,c,d,e,f)
-#endif
-#define my_munmap(a,b)          munmap((a),(b))
-
-#else
-/* not a complete set of mmap() flags, but only those that nesessary */
-#define PROT_READ        1
-#define PROT_WRITE       2
-#define MAP_NORESERVE    0
-#define MAP_SHARED       0x0001
-#define MAP_PRIVATE      0x0002
-#define MAP_NOSYNC       0x0800
-#define MAP_FAILED       ((void *)-1)
-#define MS_SYNC          0x0000
-#define HAVE_MMAP
-
-void *my_mmap(void *, size_t, int, int, int, my_off_t);
-int my_munmap(void *, size_t);
-#endif
 
 /* character sets */
 void *cs_alloc(size_t size);

@@ -132,7 +132,8 @@ VERSION=$(PANDORA_RELEASE_VERSION)
 
 pkgplugindir=$(libdir)/drizzle/plugin
 EXTRA_DIST = %(rel_path)s/plugin.ini
-  """ % plugin)
+
+""" % plugin)
   if plugin['headers'] != "":
     plugin_file.write("noinst_HEADERS = %(headers)s\n" % plugin)
   if plugin['testsuite']:
@@ -148,6 +149,7 @@ lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
 lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
 lib%(name)s_plugin_la_SOURCES=%(sources)s
+
 """ % plugin)
   plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
   if os.path.exists(plugin_am_file):
@@ -213,7 +215,8 @@ AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title
 AS_IF([test %(build_conditional)s],
       [], dnl build_conditional can only negate
       [with_%(name)s_plugin=no])
-  """ % plugin)
+
+""" % plugin)
   plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
   if not plugin['unconditional']:
     plugin_ac.write("""
@@ -223,7 +226,7 @@ AM_CONDITIONAL([%(build_conditional_tag)s],
   plugin_ac.write("""
 AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
-  """ % plugin)
+""" % plugin)
   if plugin['testsuite']:
     plugin_ac.write("""
         pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
@@ -343,7 +346,8 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
 
 # Prevent errors when a plugin dir is removed
 %(rel_path)s/plugin.ini:
-  """ % plugin)
+
+""" % plugin)
   if plugin['headers'] != "":
     plugin_am.write("noinst_HEADERS += %(headers)s\n" % plugin)
   if plugin['testsuite']:
