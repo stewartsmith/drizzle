@@ -112,7 +112,7 @@ uint64_t TransactionLogIndex::getNumLogEntries() const
 
 uint64_t TransactionLogIndex::getNumTransactionEntries() const
 {
-  return num_transaction_entries;
+  return transaction_entries.size();
 }
 
 TransactionLog::Entries &TransactionLogIndex::getEntries()
@@ -137,7 +137,6 @@ void TransactionLogIndex::addEntry(const TransactionLogEntry &entry,
     min_end_timestamp= transaction.transaction_context().end_timestamp();
   }
   num_log_entries++;
-  num_transaction_entries++;
   max_transaction_id= transaction.transaction_context().transaction_id();
   max_end_timestamp= transaction.transaction_context().end_timestamp();
   entries.push_back(entry);
