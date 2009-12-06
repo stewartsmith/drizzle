@@ -38,9 +38,9 @@ bool statement::Savepoint::execute()
     for (sv= &session->transaction.savepoints; *sv; sv= &(*sv)->prev)
     {
       if (my_strnncoll(system_charset_info,
-                       (unsigned char *) session->lex->ident.str, 
+                       (unsigned char *) session->lex->ident.str,
                        session->lex->ident.length,
-                       (unsigned char *) (*sv)->name, 
+                       (unsigned char *) (*sv)->name,
                        (*sv)->length) == 0)
         return false;
     }
@@ -57,7 +57,7 @@ bool statement::Savepoint::execute()
       return false;
     }
     newsv->name= strmake_root(&session->transaction.mem_root,
-                              session->lex->ident.str, 
+                              session->lex->ident.str,
                               session->lex->ident.length);
     newsv->length= session->lex->ident.length;
     /*

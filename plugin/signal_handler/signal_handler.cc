@@ -17,6 +17,8 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/cursor.h> /* for refresh_version */
 
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;

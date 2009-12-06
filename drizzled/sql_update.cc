@@ -18,18 +18,20 @@
   Single table and multi table updates of tables.
   Multi-table updates were introduced by Sinisa & Monty
 */
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
-#include <drizzled/error.h>
-#include <drizzled/probes.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/sql_parse.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/sql_select.h"
+#include "drizzled/error.h"
+#include "drizzled/probes.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/sql_parse.h"
+#include "drizzled/optimizer/range.h"
+#include "drizzled/records.h"
 
 #include <list>
 
 using namespace std;
-
+using namespace drizzled;
 
 /**
   Re-read record if more columns are needed for error message.
@@ -132,7 +134,7 @@ int mysql_update(Session *session, TableList *table_list,
   ha_rows	updated, found;
   key_map	old_covering_keys;
   Table		*table;
-  SQL_SELECT	*select;
+  optimizer::SQL_SELECT *select= NULL;
   READ_RECORD	info;
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
@@ -210,7 +212,7 @@ int mysql_update(Session *session, TableList *table_list,
   /* Update the table->cursor->stats.records number */
   table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
-  select= make_select(table, 0, 0, conds, 0, &error);
+  select= optimizer::make_select(table, 0, 0, conds, 0, &error);
   if (error || !limit ||
       (select && select->check_quick(session, false, limit)))
   {
@@ -229,7 +231,7 @@ int mysql_update(Session *session, TableList *table_list,
   }
   if (!select && limit != HA_POS_ERROR)
   {
-    if ((used_index= get_index_for_order(table, order, limit)) != MAX_KEY)
+    if ((used_index= optimizer::get_index_for_order(table, order, limit)) != MAX_KEY)
       need_sort= false;
   }
   /* If running in safe sql mode, don't allow updates without keys */
@@ -381,7 +383,7 @@ int mysql_update(Session *session, TableList *table_list,
       }
       else
       {
-	select= new SQL_SELECT;
+	select= new optimizer::SQL_SELECT;
 	select->head=table;
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))

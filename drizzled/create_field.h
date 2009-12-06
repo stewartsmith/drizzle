@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
+#include "drizzled/field.h"
+
 class Item;
 
 /**

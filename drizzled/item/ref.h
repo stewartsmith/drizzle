@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_REF_H
 #define DRIZZLED_ITEM_REF_H
 
+#include "drizzled/item/ident.h"
+
 class Item_ref :public Item_ident
 {
 protected:
@@ -57,7 +59,7 @@ public:
   enum Type type() const		{ return REF_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const
   {
-    Item *it= ((Item *) item)->real_item();
+    Item *it= static_cast<Item *>(((Item *) item)->real_item());
     return ref && (*ref)->eq(it, binary_cmp);
   }
   double val_real();

@@ -143,7 +143,7 @@ public:
   Select_Lex_Unit *unit;
   /** select that processed */
   Select_Lex *select_lex;
-  SQL_SELECT *select; /**< created in optimisation phase */
+  drizzled::optimizer::SQL_SELECT *select; /**< created in optimisation phase */
   Array<Item_in_subselect> sj_subselects;
 
   /**

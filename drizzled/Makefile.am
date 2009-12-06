@@ -254,11 +254,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
-		opt_range.h \
 		optimizer/key_field.h \
 		optimizer/key_use.h \
 		optimizer/position.h \
+		optimizer/range.h \
 		optimizer/sargable_param.h \
+		optimizer/sum.h \
 		order.h \
 		plugin.h \
 		plugin/authentication.h \
@@ -283,6 +284,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
+		records.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -373,6 +375,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		temporal.h \
 		temporal_format.h \
 		temporal_interval.h \
+		time_functions.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -602,9 +605,9 @@ drizzled_SOURCES = \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
-		opt_range.cc \
-		opt_sum.cc \
 		optimizer/key_field.cc \
+		optimizer/range.cc \
+		optimizer/sum.cc \
 		plugin/authentication.cc \
 		plugin/client.cc \
 		plugin/error_message.cc \
@@ -694,7 +697,7 @@ drizzled_SOURCES = \
 		temporal.cc \
 		temporal_format.cc \
 		temporal_interval.cc \
-		time.cc \
+		time_functions.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \

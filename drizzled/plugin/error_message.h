@@ -22,6 +22,8 @@
 #ifndef DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 #define DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 
+#include "drizzled/plugin/plugin.h"
+
 #include <stdarg.h>
 #include <string>
 

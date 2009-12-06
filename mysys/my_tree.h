@@ -64,7 +64,7 @@ typedef struct st_tree {
 } TREE;
 
 /* Functions on whole tree */
-void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
+void init_tree(TREE *tree, size_t default_alloc_size, uint32_t memory_limit,
                uint32_t size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg);
 void delete_tree(TREE*);

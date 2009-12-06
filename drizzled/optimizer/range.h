@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,14 +19,17 @@
 
 /* classes to use when handling where clause */
 
-#ifndef DRIZZLED_OPT_RANGE_H
-#define DRIZZLED_OPT_RANGE_H
+#ifndef DRIZZLED_OPTIMIZER_RANGE_H
+#define DRIZZLED_OPTIMIZER_RANGE_H
 
-#include <drizzled/field.h>
-#include <drizzled/item/sum.h>
+#include "drizzled/field.h"
+#include "drizzled/item/sum.h"
+
 #include <queue>
 
+class PARAM;
 class JOIN;
+class TRP_ROR_INTERSECT; 
 typedef class Item COND;
 
 typedef struct st_handler_buffer HANDLER_BUFFER;
@@ -47,7 +50,15 @@ typedef struct st_key_part
   Field *field;
 } KEY_PART;
 
-class QUICK_RANGE :public Sql_alloc 
+class SEL_ARG;
+
+namespace drizzled
+{
+
+namespace optimizer
+{
+
+class QUICK_RANGE : public Sql_alloc 
 {
 public:
   unsigned char *min_key;
@@ -57,9 +68,6 @@ public:
   uint16_t flag;
   key_part_map min_keypart_map; /**< bitmap of used keyparts in min_key */
   key_part_map max_keypart_map; /**< bitmap of used keyparts in max_key */
-#ifdef HAVE_purify
-  uint16_t dummy;					/* Avoid warnings on 'flag' */
-#endif
   QUICK_RANGE(); /**< Constructor for a "full range" */
   QUICK_RANGE(const unsigned char *min_key_arg,
               uint32_t min_length_arg,
@@ -76,11 +84,7 @@ public:
       flag((uint16_t) flag_arg),
       min_keypart_map(min_keypart_map_arg),
       max_keypart_map(max_keypart_map_arg)
-    {
-#ifdef HAVE_purify
-      dummy=0;
-#endif
-    }
+    {}
 };
 
 /**
@@ -280,8 +284,6 @@ public:
 };
 
 struct st_qsel_param;
-class PARAM;
-class SEL_ARG;
 
 /**
  * MRR range sequence, array<QUICK_RANGE> implementation: sequence traversal
@@ -366,6 +368,10 @@ public:
   }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
+  void resetCursor()
+  {
+    cursor= NULL;
+  }
 private:
   /* Used only by QUICK_SELECT_DESC */
   QUICK_RANGE_SELECT(const QUICK_RANGE_SELECT& org) : QUICK_SELECT_I()
@@ -379,7 +385,7 @@ private:
     mrr_flags|= HA_MRR_USE_DEFAULT_IMPL;
     mrr_buf_size= 0;
   }
-  friend class TRP_ROR_INTERSECT;
+  friend class ::TRP_ROR_INTERSECT; 
   friend
   QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                                struct table_reference_st *ref,
@@ -574,7 +580,7 @@ public:
 
 
 /*
- * This function object is defined in drizzled/opt_range.cc
+ * This function object is defined in drizzled/optimizer/range.cc
  * We need this here for the priority_queue definition in the
  * QUICK_ROR_UNION_SELECT class.
  */
@@ -657,7 +663,7 @@ private:
 
   where all selected fields are parts of the same index.
   The class of queries that can be processed by this quick select is fully
-  specified in the description of get_best_trp_group_min_max() in opt_range.cc.
+  specified in the description of get_best_trp_group_min_max() in optimizer/range.cc.
 
   The get_next() method directly produces result tuples, thus obviating the
   need to call end_send_group() because all grouping is already done inside
@@ -761,7 +767,8 @@ private:
  * The QUICK_SELECT_I member variable is the implementor
  * of the SELECT execution.
  */
-class SQL_SELECT :public Sql_alloc {
+class SQL_SELECT : public Sql_alloc 
+{
  public:
   QUICK_SELECT_I *quick; /**< If quick-select used */
   COND *cond; /**< where condition */
@@ -785,9 +792,59 @@ class SQL_SELECT :public Sql_alloc {
                         bool ordered_output);
 };
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
+QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, 
+                                             Table *table,
                                              struct table_reference_st *ref,
                                              ha_rows records);
+
+/*
+  Create a QUICK_RANGE_SELECT from given key and SEL_ARG tree for that key.
+
+  SYNOPSIS
+    get_quick_select()
+      param
+      idx            Index of used key in param->key.
+      key_tree       SEL_ARG tree for the used key
+      mrr_flags      MRR parameter for quick select
+      mrr_buf_size   MRR parameter for quick select
+      parent_alloc   If not NULL, use it to allocate memory for
+                     quick select data. Otherwise use quick->alloc.
+  NOTES
+    The caller must call QUICK_SELECT::init for returned quick select.
+
+    CAUTION! This function may change session->mem_root to a MEM_ROOT which will be
+    deallocated when the returned quick select is deleted.
+
+  RETURN
+    NULL on error
+    otherwise created quick select
+*/
+QUICK_RANGE_SELECT *get_quick_select(PARAM *param,
+                                     uint32_t index,
+                                     SEL_ARG *key_tree, 
+                                     uint32_t mrr_flags,
+                                     uint32_t mrr_buf_size, 
+                                     MEM_ROOT *alloc);
+
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
-#endif /* DRIZZLED_OPT_RANGE_H */
+SQL_SELECT *make_select(Table *head, 
+                        table_map const_tables,
+			                  table_map read_tables, 
+                        COND *conds,
+                        bool allow_null_cond,
+                        int *error);
+
+bool get_quick_keys(PARAM *param, 
+                    QUICK_RANGE_SELECT *quick,KEY_PART *key,
+                    SEL_ARG *key_tree, 
+                    unsigned char *min_key,
+                    uint32_t min_key_flag,
+                    unsigned char *max_key,
+                    uint32_t max_key_flag);
+
+} /* namespace optimizer */
+
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_OPTIMIZER_RANGE_H */
