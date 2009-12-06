@@ -4,6 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([PANDORA_LIBTOOL],[
+  AC_REQUIRE([AC_DISABLE_STATIC])
   AC_REQUIRE([AC_PROG_LIBTOOL])
   dnl By requiring AC_PROG_LIBTOOL, we should force the macro system to read
   dnl libtool.m4, where in 2.2 AC_PROG_LIBTOOL is an alias for LT_INIT
