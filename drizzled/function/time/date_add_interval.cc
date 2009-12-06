@@ -21,7 +21,7 @@
 #include CSTDINT_H
 #include "drizzled/function/time/date_add_interval.h"
 #include "drizzled/temporal_interval.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.

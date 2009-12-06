@@ -254,11 +254,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/natural_join_column.h \
 		drizzled/nested_join.h \
 		drizzled/open_tables_state.h \
-		drizzled/opt_range.h \
 		drizzled/optimizer/key_field.h \
 		drizzled/optimizer/key_use.h \
 		drizzled/optimizer/position.h \
+		drizzled/optimizer/range.h \
 		drizzled/optimizer/sargable_param.h \
+		drizzled/optimizer/sum.h \
 		drizzled/order.h \
 		drizzled/plugin.h \
 		drizzled/plugin/authentication.h \
@@ -605,9 +606,9 @@ drizzled_drizzled_SOURCES = \
 		drizzled/my_decimal.cc \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
-		drizzled/opt_range.cc \
-		drizzled/opt_sum.cc \
 		drizzled/optimizer/key_field.cc \
+		drizzled/optimizer/range.cc \
+		drizzled/optimizer/sum.cc \
 		drizzled/plugin/authentication.cc \
 		drizzled/plugin/client.cc \
 		drizzled/plugin/error_message.cc \

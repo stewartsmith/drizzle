@@ -23,7 +23,7 @@
 #include "drizzled/tztime.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo
