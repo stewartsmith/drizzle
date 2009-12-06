@@ -385,7 +385,7 @@ private:
     mrr_flags|= HA_MRR_USE_DEFAULT_IMPL;
     mrr_buf_size= 0;
   }
-  friend class TRP_ROR_INTERSECT; 
+  friend class ::TRP_ROR_INTERSECT; 
   friend
   QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
                                                struct table_reference_st *ref,

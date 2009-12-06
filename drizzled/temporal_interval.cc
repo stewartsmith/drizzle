@@ -23,7 +23,7 @@
 #include "drizzled/server_includes.h"
 #include "drizzled/function/time/date.h"
 #include "drizzled/temporal_interval.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type, String *str_value)
 {

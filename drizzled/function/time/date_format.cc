@@ -21,7 +21,7 @@
 #include CSTDINT_H
 #include "drizzled/function/time/date_format.h"
 #include "drizzled/session.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 #include <algorithm>
 
