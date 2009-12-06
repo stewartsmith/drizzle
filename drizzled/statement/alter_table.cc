@@ -30,7 +30,7 @@
 #include "drizzled/table_proto.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/optimizer/range.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 #include "drizzled/records.h"
 
 using namespace std;

@@ -22,7 +22,7 @@
 #include "drizzled/function/time/from_unixtime.h"
 #include "drizzled/session.h"
 #include "drizzled/temporal.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 #include <sstream>
 #include <string>

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TIME_H
-#define DRIZZLED_TIME_H
+#ifndef DRIZZLED_TIME_FUNCTIONS_H
+#define DRIZZLED_TIME_FUNCTIONS_H
 
 #include "drizzled/sql_error.h"
 #include "mysys/drizzle_time.h"
@@ -134,4 +134,4 @@ bool calc_time_diff(DRIZZLE_TIME *l_time1,
                     int64_t *seconds_out, 
                     long *microseconds_out);
 
-#endif /* DRIZZLED_TIME_H */
+#endif /* DRIZZLED_TIME_FUNCTIONS_H */

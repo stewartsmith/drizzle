@@ -20,7 +20,7 @@
 #include "drizzled/server_includes.h"
 #include CSTDINT_H
 #include "drizzled/function/time/timestamp_diff.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
 
 int64_t Item_func_timestamp_diff::val_int()
 {

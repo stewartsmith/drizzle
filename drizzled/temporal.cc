@@ -44,7 +44,9 @@
 #include "drizzled/temporal_interval.h"
 #endif
 #include "drizzled/temporal_format.h"
-#include "drizzled/time.h"
+#include "drizzled/time_functions.h"
+#include "time.h"
+
 #include <time.h>
 
 #include <ostream>
