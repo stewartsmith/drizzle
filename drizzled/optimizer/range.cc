@@ -311,7 +311,7 @@ class RANGE_OPT_PARAM;
                             how many table records are contained within all
                             intervals.
    - get_quick_select()   - Walk the SEL_ARG, materialize the key intervals,
-                            and create QUICK_RANGE_SELECT object that will
+                            and create QuickRangeSelect object that will
                             read records within these intervals.
 
   4. SPACE COMPLEXITY NOTES
@@ -1085,7 +1085,7 @@ static int imerge_list_or_tree(RANGE_OPT_PARAM *param,
 
 
 /***************************************************************************
-** Basic functions for SQL_SELECT and QUICK_RANGE_SELECT
+** Basic functions for SQL_SELECT and QuickRangeSelect
 ***************************************************************************/
 
 	/* make a select from mysql info
@@ -1181,7 +1181,7 @@ optimizer::QUICK_SELECT_I::QUICK_SELECT_I()
     used_key_parts(0)
 {}
 
-optimizer::QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, 
+optimizer::QuickRangeSelect::QuickRangeSelect(Session *session, 
                                                   Table *table, 
                                                   uint32_t key_nr,
                                                   bool no_alloc, 
@@ -1200,9 +1200,9 @@ optimizer::QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session,
   index= key_nr;
   head= table;
   key_part_info= head->key_info[index].key_part;
-  my_init_dynamic_array(&ranges, sizeof(optimizer::QUICK_RANGE*), 16, 16);
+  my_init_dynamic_array(&ranges, sizeof(optimizer::QuickRange*), 16, 16);
 
-  /* 'session' is not accessible in QUICK_RANGE_SELECT::reset(). */
+  /* 'session' is not accessible in QuickRangeSelect::reset(). */
   mrr_buf_size= session->variables.read_rnd_buff_size;
   mrr_buf_desc= NULL;
 
@@ -1237,7 +1237,7 @@ optimizer::QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session,
 }
 
 
-int optimizer::QUICK_RANGE_SELECT::init()
+int optimizer::QuickRangeSelect::init()
 {
   if (cursor->inited != Cursor::NONE)
     cursor->ha_index_or_rnd_end();
@@ -1245,14 +1245,14 @@ int optimizer::QUICK_RANGE_SELECT::init()
 }
 
 
-void optimizer::QUICK_RANGE_SELECT::range_end()
+void optimizer::QuickRangeSelect::range_end()
 {
   if (cursor->inited != Cursor::NONE)
     cursor->ha_index_or_rnd_end();
 }
 
 
-optimizer::QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
+optimizer::QuickRangeSelect::~QuickRangeSelect()
 {
   if (!dont_free)
   {
@@ -1308,7 +1308,7 @@ int optimizer::QUICK_INDEX_MERGE_SELECT::reset()
 }
 
 bool
-optimizer::QUICK_INDEX_MERGE_SELECT::push_quick_back(optimizer::QUICK_RANGE_SELECT *quick_sel_range)
+optimizer::QUICK_INDEX_MERGE_SELECT::push_quick_back(optimizer::QuickRangeSelect *quick_sel_range)
 {
   /*
     Save quick_select that does scan on clustered primary key as it will be
@@ -1328,8 +1328,8 @@ optimizer::QUICK_INDEX_MERGE_SELECT::push_quick_back(optimizer::QUICK_RANGE_SELE
 
 optimizer::QUICK_INDEX_MERGE_SELECT::~QUICK_INDEX_MERGE_SELECT()
 {
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> quick_it(quick_selects);
-  optimizer::QUICK_RANGE_SELECT* quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
+  optimizer::QuickRangeSelect* quick;
   quick_it.rewind();
   while ((quick= quick_it++))
   {
@@ -1389,7 +1389,7 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::init()
   Initialize this quick select to be a ROR-merged scan.
 
   SYNOPSIS
-    QUICK_RANGE_SELECT::init_ror_merged_scan()
+    QuickRangeSelect::init_ror_merged_scan()
       reuse_handler If true, use head->cursor, otherwise create a separate
                     Cursor object
 
@@ -1407,7 +1407,7 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::init()
     1  error
 */
 
-int optimizer::QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
+int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
 {
   Cursor *save_file= cursor, *org_file;
   Session *session;
@@ -1489,7 +1489,7 @@ failure:
 }
 
 
-void optimizer::QUICK_RANGE_SELECT::save_last_pos()
+void optimizer::QuickRangeSelect::save_last_pos()
 {
   cursor->position(record);
 }
@@ -1507,8 +1507,8 @@ void optimizer::QUICK_RANGE_SELECT::save_last_pos()
 */
 int optimizer::QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
 {
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> quick_it(quick_selects);
-  optimizer::QUICK_RANGE_SELECT* quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
+  optimizer::QuickRangeSelect* quick;
 
   /* Initialize all merged "children" quick selects */
   assert(!need_to_fetch_row || reuse_handler);
@@ -1558,8 +1558,8 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
     return 0;
   }
   scans_inited= true;
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> it(quick_selects);
-  optimizer::QUICK_RANGE_SELECT *quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
+  optimizer::QuickRangeSelect *quick;
   while ((quick= it++))
   {
     quick->reset();
@@ -1584,7 +1584,7 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
 */
 
 bool
-optimizer::QUICK_ROR_INTERSECT_SELECT::push_quick_back(optimizer::QUICK_RANGE_SELECT *quick)
+optimizer::QUICK_ROR_INTERSECT_SELECT::push_quick_back(optimizer::QuickRangeSelect *quick)
 {
   return quick_selects.push_back(quick);
 }
@@ -1746,7 +1746,7 @@ optimizer::QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
 }
 
 
-optimizer::QUICK_RANGE::QUICK_RANGE()
+optimizer::QuickRange::QuickRange()
   :
     min_key(0),
     max_key(0),
@@ -2075,9 +2075,9 @@ class TRP_INDEX_MERGE;
 
 
 /*
-  Plan for a QUICK_RANGE_SELECT scan.
+  Plan for a QuickRangeSelect scan.
   TRP_RANGE::make_quick ignores retrieve_full_rows parameter because
-  QUICK_RANGE_SELECT doesn't distinguish between 'index only' scans and full
+  QuickRangeSelect doesn't distinguish between 'index only' scans and full
   record retrieval scans.
 */
 
@@ -2096,7 +2096,7 @@ public:
 
   optimizer::QUICK_SELECT_I *make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
   {
-    optimizer::QUICK_RANGE_SELECT *quick;
+    optimizer::QuickRangeSelect *quick;
     if ((quick= optimizer::get_quick_select(param, 
                                             key_idx, 
                                             key, 
@@ -2721,7 +2721,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
   {
     /*
       Add one ROWID comparison for each row retrieved on non-CPK scan.  (it
-      is done in QUICK_RANGE_SELECT::row_in_ranges)
+      is done in QuickRangeSelect::row_in_ranges)
      */
     imerge_cost += non_cpk_scan_records / TIME_FOR_COMPARE_ROWID;
   }
@@ -3786,7 +3786,7 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
 optimizer::QUICK_SELECT_I *TRP_INDEX_MERGE::make_quick(PARAM *param, bool, MEM_ROOT *)
 {
   optimizer::QUICK_INDEX_MERGE_SELECT *quick_imerge;
-  optimizer::QUICK_RANGE_SELECT *quick;
+  optimizer::QuickRangeSelect *quick;
   /* index_merge always retrieves full rows, ignore retrieve_full_rows */
   if (! (quick_imerge= new optimizer::QUICK_INDEX_MERGE_SELECT(param->session, param->table)))
   {
@@ -3798,7 +3798,7 @@ optimizer::QUICK_SELECT_I *TRP_INDEX_MERGE::make_quick(PARAM *param, bool, MEM_R
   for (TRP_RANGE **range_scan= range_scans; range_scan != range_scans_end;
        range_scan++)
   {
-    if (!(quick= (optimizer::QUICK_RANGE_SELECT*)
+    if (!(quick= (optimizer::QuickRangeSelect*)
           ((*range_scan)->make_quick(param, false, &quick_imerge->alloc)))||
         quick_imerge->push_quick_back(quick))
     {
@@ -3815,7 +3815,7 @@ optimizer::QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
                                                          MEM_ROOT *parent_alloc)
 {
   optimizer::QUICK_ROR_INTERSECT_SELECT *quick_intrsect= NULL;
-  optimizer::QUICK_RANGE_SELECT *quick= NULL;
+  optimizer::QuickRangeSelect *quick= NULL;
   MEM_ROOT *alloc= NULL;
 
   if ((quick_intrsect=
@@ -6615,7 +6615,7 @@ static bool is_key_scan_ror(PARAM *param, uint32_t keynr, uint8_t nparts)
 }
 
 
-optimizer::QUICK_RANGE_SELECT *
+optimizer::QuickRangeSelect *
 optimizer::get_quick_select(PARAM *param,
                             uint32_t idx,
                             SEL_ARG *key_tree, 
@@ -6623,10 +6623,10 @@ optimizer::get_quick_select(PARAM *param,
                             uint32_t mrr_buf_size, 
                             MEM_ROOT *parent_alloc)
 {
-  optimizer::QUICK_RANGE_SELECT *quick= NULL;
+  optimizer::QuickRangeSelect *quick= NULL;
   bool create_err= false;
 
-  quick=new optimizer::QUICK_RANGE_SELECT(param->session, param->table,
+  quick=new optimizer::QuickRangeSelect(param->session, param->table,
                                param->real_keynr[idx],
                                test(parent_alloc), NULL, &create_err);
 
@@ -6665,7 +6665,7 @@ optimizer::get_quick_select(PARAM *param,
 */
 bool
 optimizer::get_quick_keys(PARAM *param,
-                          optimizer::QUICK_RANGE_SELECT *quick,
+                          optimizer::QuickRangeSelect *quick,
                           KEY_PART *key,
 	                        SEL_ARG *key_tree, 
                           unsigned char *min_key,
@@ -6673,7 +6673,7 @@ optimizer::get_quick_keys(PARAM *param,
 	                        unsigned char *max_key,
                           uint32_t max_key_flag)
 {
-  optimizer::QUICK_RANGE *range= NULL;
+  optimizer::QuickRange *range= NULL;
   uint32_t flag;
   int min_part= key_tree->part - 1; // # of keypart values in min_key buffer
   int max_part= key_tree->part - 1; // # of keypart values in max_key buffer
@@ -6788,7 +6788,7 @@ optimizer::get_quick_keys(PARAM *param,
   }
 
   /* Get range for retrieving rows in QUICK_SELECT::get_next */
-  if (! (range= new optimizer::QUICK_RANGE(param->min_key,
+  if (! (range= new optimizer::QuickRange(param->min_key,
 			                                     (uint32_t) (tmp_min_key - param->min_key),
                                            min_part >=0 ? make_keypart_map(min_part) : 0,
 			                                     param->max_key,
@@ -6826,11 +6826,11 @@ optimizer::get_quick_keys(PARAM *param,
   Return 1 if there is only one range and this uses the whole primary key
 */
 
-bool optimizer::QUICK_RANGE_SELECT::unique_key_range()
+bool optimizer::QuickRangeSelect::unique_key_range()
 {
   if (ranges.elements == 1)
   {
-    optimizer::QUICK_RANGE *tmp= *((optimizer::QUICK_RANGE**)ranges.buffer);
+    optimizer::QuickRange *tmp= *((optimizer::QuickRange**)ranges.buffer);
     if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
     {
       KEY *key=head->key_info+index;
@@ -6877,8 +6877,8 @@ bool optimizer::QUICK_SELECT_I::is_keys_used(const MyBitmap *fields)
 
 bool optimizer::QUICK_INDEX_MERGE_SELECT::is_keys_used(const MyBitmap *fields)
 {
-  optimizer::QUICK_RANGE_SELECT *quick= NULL;
-  List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
+  optimizer::QuickRangeSelect *quick= NULL;
+  List_iterator_fast<QuickRangeSelect> it(quick_selects);
   while ((quick= it++))
   {
     if (is_key_used(head, quick->index, fields))
@@ -6889,8 +6889,8 @@ bool optimizer::QUICK_INDEX_MERGE_SELECT::is_keys_used(const MyBitmap *fields)
 
 bool optimizer::QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
 {
-  optimizer::QUICK_RANGE_SELECT *quick;
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> it(quick_selects);
+  optimizer::QuickRangeSelect *quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   while ((quick= it++))
   {
     if (is_key_used(head, quick->index, fields))
@@ -6931,28 +6931,28 @@ bool optimizer::QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
     NULL on error.
 */
 
-optimizer::QUICK_RANGE_SELECT *optimizer::get_quick_select_for_ref(Session *session, 
+optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *session, 
                                                         Table *table,
                                                         table_reference_st *ref, 
                                                         ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
-  optimizer::QUICK_RANGE_SELECT *quick= NULL;
+  optimizer::QuickRangeSelect *quick= NULL;
   KEY *key_info = &table->key_info[ref->key];
   KEY_PART *key_part;
-  optimizer::QUICK_RANGE *range;
+  optimizer::QuickRange *range= NULL;
   uint32_t part;
   bool create_err= false;
   COST_VECT cost;
 
   old_root= session->mem_root;
   /* The following call may change session->mem_root */
-  quick= new optimizer::QUICK_RANGE_SELECT(session, table, ref->key, 0, 0, &create_err);
-  /* save mem_root set by QUICK_RANGE_SELECT constructor */
+  quick= new optimizer::QuickRangeSelect(session, table, ref->key, 0, 0, &create_err);
+  /* save mem_root set by QuickRangeSelect constructor */
   alloc= session->mem_root;
   /*
     return back default mem_root (session->mem_root) changed by
-    QUICK_RANGE_SELECT constructor
+    QuickRangeSelect constructor
   */
   session->mem_root= old_root;
 
@@ -6963,7 +6963,7 @@ optimizer::QUICK_RANGE_SELECT *optimizer::get_quick_select_for_ref(Session *sess
   quick->records= records;
 
   if ((cp_buffer_from_ref(session, ref) && session->is_fatal_error) ||
-      !(range= new(alloc) optimizer::QUICK_RANGE()))
+      !(range= new(alloc) optimizer::QuickRange()))
     goto err;                                   // out of memory
 
   range->min_key= range->max_key= ref->key_buff;
@@ -6998,11 +6998,11 @@ optimizer::QUICK_RANGE_SELECT *optimizer::get_quick_select_for_ref(Session *sess
   */
   if (ref->null_ref_key)
   {
-    optimizer::QUICK_RANGE *null_range;
+    optimizer::QuickRange *null_range= NULL;
 
     *ref->null_ref_key= 1;		// Set null byte then create a range
     if (!(null_range= new (alloc)
-          optimizer::QUICK_RANGE(ref->key_buff, ref->key_length,
+          optimizer::QuickRange(ref->key_buff, ref->key_length,
                                  make_prev_keypart_map(ref->key_parts),
                                  ref->key_buff, ref->key_length,
                                  make_prev_keypart_map(ref->key_parts), EQ_RANGE)))
@@ -7050,8 +7050,8 @@ err:
 
 int optimizer::QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
 {
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> cur_quick_it(quick_selects);
-  optimizer::QUICK_RANGE_SELECT* cur_quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> cur_quick_it(quick_selects);
+  optimizer::QuickRangeSelect* cur_quick;
   int result;
   Unique *unique;
   Cursor *cursor= head->cursor;
@@ -7131,7 +7131,7 @@ int optimizer::QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   NOTES
     The rows are read from
       1. rowids stored in Unique.
-      2. QUICK_RANGE_SELECT with clustered primary key (if any).
+      2. QuickRangeSelect with clustered primary key (if any).
     The sets of rows retrieved in 1) and 2) are guaranteed to be disjoint.
 */
 
@@ -7183,8 +7183,8 @@ int optimizer::QUICK_INDEX_MERGE_SELECT::get_next()
 
 int optimizer::QUICK_ROR_INTERSECT_SELECT::get_next()
 {
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> quick_it(quick_selects);
-  optimizer::QUICK_RANGE_SELECT* quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
+  optimizer::QuickRangeSelect* quick;
   int error, cmp;
   uint32_t last_rowid_count=0;
 
@@ -7317,14 +7317,14 @@ int optimizer::QUICK_ROR_UNION_SELECT::get_next()
 }
 
 
-int optimizer::QUICK_RANGE_SELECT::reset()
+int optimizer::QuickRangeSelect::reset()
 {
-  uint32_t  buf_size;
+  uint32_t buf_size;
   unsigned char *mrange_buff;
-  int   error;
+  int error;
   HANDLER_BUFFER empty_buf;
   last_range= NULL;
-  cur_range= (optimizer::QUICK_RANGE**) ranges.buffer;
+  cur_range= (optimizer::QuickRange**) ranges.buffer;
 
   if (cursor->inited == Cursor::NONE && (error= cursor->ha_index_init(index,1)))
     return(error);
@@ -7364,11 +7364,11 @@ int optimizer::QUICK_RANGE_SELECT::reset()
 
 
 /*
-  Range sequence interface implementation for array<QUICK_RANGE>: initialize
+  Range sequence interface implementation for array<QuickRange>: initialize
 
   SYNOPSIS
     quick_range_seq_init()
-      init_param  Caller-opaque paramenter: QUICK_RANGE_SELECT* pointer
+      init_param  Caller-opaque paramenter: QuickRangeSelect* pointer
       n_ranges    Number of ranges in the sequence (ignored)
       flags       MRR flags (currently not used)
 
@@ -7378,9 +7378,9 @@ int optimizer::QUICK_RANGE_SELECT::reset()
 
 range_seq_t optimizer::quick_range_seq_init(void *init_param, uint32_t, uint32_t)
 {
-  optimizer::QUICK_RANGE_SELECT *quick= (optimizer::QUICK_RANGE_SELECT*)init_param;
-  quick->qr_traversal_ctx.first=  (optimizer::QUICK_RANGE**)quick->ranges.buffer;
-  quick->qr_traversal_ctx.cur=    (optimizer::QUICK_RANGE**)quick->ranges.buffer;
+  optimizer::QuickRangeSelect *quick= (optimizer::QuickRangeSelect*)init_param;
+  quick->qr_traversal_ctx.first=  (optimizer::QuickRange**)quick->ranges.buffer;
+  quick->qr_traversal_ctx.cur=    (optimizer::QuickRange**)quick->ranges.buffer;
   quick->qr_traversal_ctx.last=   quick->qr_traversal_ctx.cur +
                                   quick->ranges.elements;
   return &quick->qr_traversal_ctx;
@@ -7388,7 +7388,7 @@ range_seq_t optimizer::quick_range_seq_init(void *init_param, uint32_t, uint32_t
 
 
 /*
-  Range sequence interface implementation for array<QUICK_RANGE>: get next
+  Range sequence interface implementation for array<QuickRange>: get next
 
   SYNOPSIS
     quick_range_seq_next()
@@ -7407,7 +7407,7 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
   if (ctx->cur == ctx->last)
     return 1; /* no more ranges */
 
-  optimizer::QUICK_RANGE *cur= *(ctx->cur);
+  optimizer::QuickRange *cur= *(ctx->cur);
   key_range *start_key= &range->start_key;
   key_range *end_key=   &range->end_key;
 
@@ -7436,7 +7436,7 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
   Get next possible record using quick-struct.
 
   SYNOPSIS
-    QUICK_RANGE_SELECT::get_next()
+    QuickRangeSelect::get_next()
 
   NOTES
     Record is read into table->record[0]
@@ -7447,7 +7447,7 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
     #			Error code
 */
 
-int optimizer::QUICK_RANGE_SELECT::get_next()
+int optimizer::QuickRangeSelect::get_next()
 {
   char *dummy;
   if (in_ror_merged_scan)
@@ -7474,7 +7474,7 @@ int optimizer::QUICK_RANGE_SELECT::get_next()
   Get the next record with a different prefix.
 
   SYNOPSIS
-    QUICK_RANGE_SELECT::get_next_prefix()
+    QuickRangeSelect::get_next_prefix()
     prefix_length  length of cur_prefix
     cur_prefix     prefix of a key to be searched for
 
@@ -7488,7 +7488,7 @@ int optimizer::QUICK_RANGE_SELECT::get_next()
     discover the prefix of the next group that satisfies the range conditions.
 
   TODO
-    This method is a modified copy of QUICK_RANGE_SELECT::get_next(), so both
+    This method is a modified copy of QuickRangeSelect::get_next(), so both
     methods should be unified into a more general one to reduce code
     duplication.
 
@@ -7498,7 +7498,7 @@ int optimizer::QUICK_RANGE_SELECT::get_next()
     other              if some error occurred
 */
 
-int optimizer::QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
+int optimizer::QuickRangeSelect::get_next_prefix(uint32_t prefix_length,
                                         key_part_map keypart_map,
                                         unsigned char *cur_prefix)
 {
@@ -7516,7 +7516,7 @@ int optimizer::QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
         return result;
     }
 
-    uint32_t count= ranges.elements - (cur_range - (optimizer::QUICK_RANGE**) ranges.buffer);
+    uint32_t count= ranges.elements - (cur_range - (optimizer::QuickRange**) ranges.buffer);
     if (count == 0)
     {
       /* Ranges have already been used up before. None is left for read. */
@@ -7556,7 +7556,7 @@ int optimizer::QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
 
 
 /*
-  Check if current row will be retrieved by this QUICK_RANGE_SELECT
+  Check if current row will be retrieved by this QuickRangeSelect
 
   NOTES
     It is assumed that currently a scan is being done on another index
@@ -7573,16 +7573,16 @@ int optimizer::QUICK_RANGE_SELECT::get_next_prefix(uint32_t prefix_length,
     false if not
 */
 
-bool optimizer::QUICK_RANGE_SELECT::row_in_ranges()
+bool optimizer::QuickRangeSelect::row_in_ranges()
 {
-  optimizer::QUICK_RANGE *res;
+  optimizer::QuickRange *res= NULL;
   uint32_t min= 0;
   uint32_t max= ranges.elements - 1;
   uint32_t mid= (max + min)/2;
 
   while (min != max)
   {
-    if (cmp_next(*(optimizer::QUICK_RANGE**)dynamic_array_ptr(&ranges, mid)))
+    if (cmp_next(*(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid)))
     {
       /* current row value > mid->max */
       min= mid + 1;
@@ -7591,7 +7591,7 @@ bool optimizer::QUICK_RANGE_SELECT::row_in_ranges()
       max= mid;
     mid= (min + max) / 2;
   }
-  res= *(optimizer::QUICK_RANGE**)dynamic_array_ptr(&ranges, mid);
+  res= *(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid);
   return (!cmp_next(res) && !cmp_prev(res));
 }
 
@@ -7605,15 +7605,15 @@ bool optimizer::QUICK_RANGE_SELECT::row_in_ranges()
   for now, this seems to work right at least.
  */
 
-optimizer::QUICK_SELECT_DESC::QUICK_SELECT_DESC(optimizer::QUICK_RANGE_SELECT *q, uint32_t, bool *)
+optimizer::QUICK_SELECT_DESC::QUICK_SELECT_DESC(optimizer::QuickRangeSelect *q, uint32_t, bool *)
   :
-    optimizer::QUICK_RANGE_SELECT(*q), 
+    optimizer::QuickRangeSelect(*q), 
     rev_it(rev_ranges)
 {
-  optimizer::QUICK_RANGE *r;
+  optimizer::QuickRange *r= NULL;
 
-  optimizer::QUICK_RANGE **pr= (optimizer::QUICK_RANGE**)ranges.buffer;
-  optimizer::QUICK_RANGE **end_range= pr + ranges.elements;
+  optimizer::QuickRange **pr= (optimizer::QuickRange**)ranges.buffer;
+  optimizer::QuickRange **end_range= pr + ranges.elements;
   for (; pr!=end_range; pr++)
     rev_ranges.push_front(*pr);
 
@@ -7715,7 +7715,7 @@ int optimizer::QUICK_SELECT_DESC::get_next()
   TODO: Figure out why can't this function be as simple as cmp_prev().
 */
 
-int optimizer::QUICK_RANGE_SELECT::cmp_next(optimizer::QUICK_RANGE *range_arg)
+int optimizer::QuickRangeSelect::cmp_next(optimizer::QuickRange *range_arg)
 {
   if (range_arg->flag & NO_MAX_RANGE)
     return 0;                                   /* key can't be to large */
@@ -7755,7 +7755,7 @@ int optimizer::QUICK_RANGE_SELECT::cmp_next(optimizer::QUICK_RANGE *range_arg)
   Returns 0 if found key is inside range (found key >= range->min_key).
 */
 
-int optimizer::QUICK_RANGE_SELECT::cmp_prev(optimizer::QUICK_RANGE *range_arg)
+int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 {
   int cmp;
   if (range_arg->flag & NO_MIN_RANGE)
@@ -7774,7 +7774,7 @@ int optimizer::QUICK_RANGE_SELECT::cmp_prev(optimizer::QUICK_RANGE *range_arg)
    See comment in get_next() about this
  */
 
-bool optimizer::QUICK_SELECT_DESC::range_reads_after_key(optimizer::QUICK_RANGE *range_arg)
+bool optimizer::QUICK_SELECT_DESC::range_reads_after_key(optimizer::QuickRange *range_arg)
 {
   return ((range_arg->flag & (NO_MAX_RANGE | NEAR_MAX)) ||
 	  !(range_arg->flag & EQ_RANGE) ||
@@ -7782,7 +7782,7 @@ bool optimizer::QUICK_SELECT_DESC::range_reads_after_key(optimizer::QUICK_RANGE 
 }
 
 
-void optimizer::QUICK_RANGE_SELECT::add_info_string(String *str)
+void optimizer::QuickRangeSelect::add_info_string(String *str)
 {
   KEY *key_info= head->key_info + index;
   str->append(key_info->name);
@@ -7790,9 +7790,9 @@ void optimizer::QUICK_RANGE_SELECT::add_info_string(String *str)
 
 void optimizer::QUICK_INDEX_MERGE_SELECT::add_info_string(String *str)
 {
-  optimizer::QUICK_RANGE_SELECT *quick;
+  optimizer::QuickRangeSelect *quick;
   bool first= true;
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> it(quick_selects);
+  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   str->append(STRING_WITH_LEN("sort_union("));
   while ((quick= it++))
   {
@@ -7813,8 +7813,8 @@ void optimizer::QUICK_INDEX_MERGE_SELECT::add_info_string(String *str)
 void optimizer::QUICK_ROR_INTERSECT_SELECT::add_info_string(String *str)
 {
   bool first= true;
-  optimizer::QUICK_RANGE_SELECT *quick;
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> it(quick_selects);
+  optimizer::QuickRangeSelect *quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   str->append(STRING_WITH_LEN("intersect("));
   while ((quick= it++))
   {
@@ -7852,7 +7852,7 @@ void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
 }
 
 
-void optimizer::QUICK_RANGE_SELECT::add_keys_and_lengths(String *key_names,
+void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
                                               String *used_lengths)
 {
   char buf[64];
@@ -7869,9 +7869,9 @@ void optimizer::QUICK_INDEX_MERGE_SELECT::add_keys_and_lengths(String *key_names
   char buf[64];
   uint32_t length;
   bool first= true;
-  optimizer::QUICK_RANGE_SELECT *quick;
+  optimizer::QuickRangeSelect *quick;
 
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> it(quick_selects);
+  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   while ((quick= it++))
   {
     if (first)
@@ -7904,8 +7904,8 @@ void optimizer::QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_nam
   char buf[64];
   uint32_t length;
   bool first= true;
-  optimizer::QUICK_RANGE_SELECT *quick;
-  List_iterator_fast<optimizer::QUICK_RANGE_SELECT> it(quick_selects);
+  optimizer::QuickRangeSelect *quick;
+  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   while ((quick= it++))
   {
     KEY *key_info= head->key_info + quick->index;
@@ -8997,7 +8997,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
     }
     else
     {
-      /* Make a QUICK_RANGE_SELECT to be used for group prefix retrieval. */
+      /* Make a QuickRangeSelect to be used for group prefix retrieval. */
       quick->quick_prefix_select= optimizer::get_quick_select(param, 
                                                               param_idx,
                                                               index_tree,
@@ -9008,7 +9008,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
 
     /*
       Extract the SEL_ARG subtree that contains only ranges for the MIN/MAX
-      attribute, and create an array of QUICK_RANGES to be used by the
+      attribute, and create an array of QuickRanges to be used by the
       new quick select.
     */
     if (min_max_arg_part)
@@ -9023,7 +9023,7 @@ TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool, MEM_ROOT *parent_alloc)
       /* Scroll to the leftmost interval for the MIN/MAX argument. */
       while (min_max_range && min_max_range->prev)
         min_max_range= min_max_range->prev;
-      /* Create an array of QUICK_RANGEs for the MIN/MAX argument. */
+      /* Create an array of QuickRanges for the MIN/MAX argument. */
       while (min_max_range)
       {
         if (quick->add_range(min_max_range))
@@ -9175,7 +9175,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::init()
 
   if (min_max_arg_part)
   {
-    if (my_init_dynamic_array(&min_max_ranges, sizeof(optimizer::QUICK_RANGE*), 16, 16))
+    if (my_init_dynamic_array(&min_max_ranges, sizeof(optimizer::QuickRange*), 16, 16))
       return 1;
 
     if (have_min)
@@ -9247,7 +9247,7 @@ optimizer::QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
     sel_range  Range object from which a
 
   NOTES
-    Construct a new QUICK_RANGE object from a SEL_ARG object, and
+    Construct a new QuickRange object from a SEL_ARG object, and
     add it to the array min_max_ranges. If sel_arg is an infinite
     range, e.g. (x < 5 or x > 4), then skip it and do not construct
     a quick range.
@@ -9259,7 +9259,7 @@ optimizer::QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
 
 bool optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_range(SEL_ARG *sel_range)
 {
-  optimizer::QUICK_RANGE *range;
+  optimizer::QuickRange *range= NULL;
   uint32_t range_flag= sel_range->min_flag | sel_range->max_flag;
 
   /* Skip (-inf,+inf) ranges, e.g. (x < 5 or x > 4). */
@@ -9276,7 +9276,7 @@ bool optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_range(SEL_ARG *sel_range)
                     min_max_arg_len) == 0)
       range_flag|= EQ_RANGE;  /* equality condition */
   }
-  range= new optimizer::QUICK_RANGE(sel_range->min_value, min_max_arg_len,
+  range= new optimizer::QuickRange(sel_range->min_value, min_max_arg_len,
                          make_keypart_map(sel_range->part),
                          sel_range->max_value, min_max_arg_len,
                          make_keypart_map(sel_range->part),
@@ -9316,7 +9316,7 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::adjust_prefix_ranges()
 
     for (inx= 0, arr= &quick_prefix_select->ranges; inx < arr->elements; inx++)
     {
-      optimizer::QUICK_RANGE *range;
+      optimizer::QuickRange *range= NULL;
 
       get_dynamic(arr, (unsigned char*)&range, inx);
       range->flag &= ~(NEAR_MIN | NEAR_MAX);
@@ -9351,7 +9351,7 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_key_stat()
   max_used_key_length= real_prefix_len;
   if (min_max_ranges.elements > 0)
   {
-    optimizer::QUICK_RANGE *cur_range;
+    optimizer::QuickRange *cur_range= NULL;
     if (have_min)
     { /* Check if the right-most range has a lower boundary. */
       get_dynamic(&min_max_ranges, (unsigned char*)&cur_range,
@@ -9658,7 +9658,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max()
   DESCRIPTION
     Determine the prefix of the next group that satisfies the query conditions.
     If there is a range condition referencing the group attributes, use a
-    QUICK_RANGE_SELECT object to retrieve the *first* key that satisfies the
+    QuickRangeSelect object to retrieve the *first* key that satisfies the
     condition. If there is a key infix of constants, append this infix
     immediately after the group attributes. The possibly extended prefix is
     stored in this->group_prefix. The first key of the found group is stored in
@@ -9738,7 +9738,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
 {
   ha_rkey_function find_flag;
   key_part_map keypart_map;
-  optimizer::QUICK_RANGE *cur_range;
+  optimizer::QuickRange *cur_range= NULL;
   bool found_null= false;
   int result= HA_ERR_KEY_NOT_FOUND;
   basic_string<unsigned char> max_key;
@@ -9874,7 +9874,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
 {
   ha_rkey_function find_flag;
   key_part_map keypart_map;
-  optimizer::QUICK_RANGE *cur_range;
+  optimizer::QuickRange *cur_range= NULL;
   int result;
   basic_string<unsigned char> min_key;
   min_key.reserve(real_prefix_len + min_max_arg_len);
@@ -10093,6 +10093,6 @@ static void print_ror_scans_arr(Table *table,
 *****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<optimizer::QUICK_RANGE>;
-template class List_iterator<optimizer::QUICK_RANGE>;
+template class List<optimizer::QuickRange>;
+template class List_iterator<optimizer::QuickRange>;
 #endif

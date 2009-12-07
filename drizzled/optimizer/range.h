@@ -58,7 +58,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class QUICK_RANGE : public Sql_alloc 
+class QuickRange : public Sql_alloc 
 {
 public:
   unsigned char *min_key;
@@ -68,8 +68,9 @@ public:
   uint16_t flag;
   key_part_map min_keypart_map; /**< bitmap of used keyparts in min_key */
   key_part_map max_keypart_map; /**< bitmap of used keyparts in max_key */
-  QUICK_RANGE(); /**< Constructor for a "full range" */
-  QUICK_RANGE(const unsigned char *min_key_arg,
+
+  QuickRange(); /**< Constructor for a "full range" */
+  QuickRange(const unsigned char *min_key_arg,
               uint32_t min_length_arg,
               key_part_map min_keypart_map_arg,
 	            const unsigned char *max_key_arg, 
@@ -286,14 +287,14 @@ public:
 struct st_qsel_param;
 
 /**
- * MRR range sequence, array<QUICK_RANGE> implementation: sequence traversal
+ * MRR range sequence, array<QuickRange> implementation: sequence traversal
  * context.
  */
 typedef struct st_quick_range_seq_ctx
 {
-  QUICK_RANGE **first;
-  QUICK_RANGE **cur;
-  QUICK_RANGE **last;
+  QuickRange **first;
+  QuickRange **cur;
+  QuickRange **last;
 } QUICK_RANGE_SEQ_CTX;
 
 range_seq_t quick_range_seq_init(void *init_param, uint32_t n_ranges, uint32_t flags);
@@ -305,7 +306,7 @@ uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
  * The records are returned in key order.
  * 
  */
-class QUICK_RANGE_SELECT : public QUICK_SELECT_I
+class QuickRangeSelect : public QUICK_SELECT_I
 {
 protected:
   Cursor *cursor;
@@ -319,8 +320,8 @@ protected:
   bool free_file; /**< True when this->file is "owned" by this quick select */
 
   /* Range pointers to be used when not using MRR interface */
-  QUICK_RANGE **cur_range; /**< current element in ranges  */
-  QUICK_RANGE *last_range;
+  QuickRange **cur_range; /**< current element in ranges  */
+  QuickRange *last_range;
 
   /** Members needed to use the MRR interface */
   QUICK_RANGE_SEQ_CTX qr_traversal_ctx;
@@ -333,20 +334,20 @@ protected:
 
   bool dont_free; /**< Used by QUICK_SELECT_DESC */
 
-  int cmp_next(QUICK_RANGE *range);
-  int cmp_prev(QUICK_RANGE *range);
+  int cmp_next(QuickRange *range);
+  int cmp_prev(QuickRange *range);
   bool row_in_ranges();
 public:
   uint32_t mrr_flags; /**< Flags to be used with MRR interface */
   MEM_ROOT alloc;
 
-  QUICK_RANGE_SELECT(Session *session,
+  QuickRangeSelect(Session *session,
                      Table *table,
                      uint32_t index_arg,
                      bool no_alloc,
                      MEM_ROOT *parent_alloc,
                      bool *create_err);
-  ~QUICK_RANGE_SELECT();
+  ~QuickRangeSelect();
 
   int init();
   int reset(void);
@@ -374,7 +375,7 @@ public:
   }
 private:
   /* Used only by QUICK_SELECT_DESC */
-  QUICK_RANGE_SELECT(const QUICK_RANGE_SELECT& org) : QUICK_SELECT_I()
+  QuickRangeSelect(const QuickRangeSelect& org) : QUICK_SELECT_I()
   {
     memmove(this, &org, sizeof(*this));
     /*
@@ -387,14 +388,14 @@ private:
   }
   friend class ::TRP_ROR_INTERSECT; 
   friend
-  QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
+  QuickRangeSelect *get_quick_select_for_ref(Session *session, Table *table,
                                                struct table_reference_st *ref,
                                                ha_rows records);
-  friend bool get_quick_keys(PARAM *param, QUICK_RANGE_SELECT *quick,
+  friend bool get_quick_keys(PARAM *param, QuickRangeSelect *quick,
                              KEY_PART *key, SEL_ARG *key_tree,
                              unsigned char *min_key, uint32_t min_key_flag,
                              unsigned char *max_key, uint32_t max_key_flag);
-  friend QUICK_RANGE_SELECT *get_quick_select(PARAM*,uint32_t idx,
+  friend QuickRangeSelect *get_quick_select(PARAM*,uint32_t idx,
                                               SEL_ARG *key_tree,
                                               uint32_t mrr_flags,
                                               uint32_t mrr_buf_size,
@@ -414,7 +415,7 @@ private:
   QUICK_INDEX_MERGE_SELECT - index_merge access method quick select.
 
     QUICK_INDEX_MERGE_SELECT uses
-     * QUICK_RANGE_SELECTs to get rows
+     * QuickRangeSelects to get rows
      * Unique class to remove duplicate rows
 
   INDEX MERGE OPTIMIZER
@@ -493,13 +494,13 @@ public:
   void add_info_string(String *str);
   bool is_keys_used(const MyBitmap *fields);
 
-  bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
+  bool push_quick_back(QuickRangeSelect *quick_sel_range);
 
   /* range quick selects this index_merge read consists of */
-  List<QUICK_RANGE_SELECT> quick_selects;
+  List<QuickRangeSelect> quick_selects;
 
   /* quick select that uses clustered primary key (NULL if none) */
-  QUICK_RANGE_SELECT* pk_quick_select;
+  QuickRangeSelect* pk_quick_select;
 
   /* true if this select is currently doing a clustered PK scan */
   bool  doing_pk_scan;
@@ -516,9 +517,9 @@ public:
 /**
   Rowid-Ordered Retrieval (ROR) index intersection quick select.
   This quick select produces intersection of row sequences returned
-  by several QUICK_RANGE_SELECTs it "merges".
+  by several QuickRangeSelects it "merges".
 
-  All merged QUICK_RANGE_SELECTs must return rowids in rowid order.
+  All merged QuickRangeSelects must return rowids in rowid order.
   QUICK_ROR_INTERSECT_SELECT will return rows in rowid order, too.
 
   All merged quick selects retrieve {rowid, covered_fields} tuples (not full
@@ -557,19 +558,19 @@ public:
   void add_info_string(String *str);
   bool is_keys_used(const MyBitmap *fields);
   int init_ror_merged_scan(bool reuse_handler);
-  bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
+  bool push_quick_back(QuickRangeSelect *quick_sel_range);
 
   /**
    * Range quick selects this intersection consists of, not including
    * cpk_quick.
    */
-  List<QUICK_RANGE_SELECT> quick_selects;
+  List<QuickRangeSelect> quick_selects;
 
   /**
    * Merged quick select that uses Clustered PK, if there is one. This quick
    * select is not used for row retrieval, it is used for row retrieval.
    */
-  QUICK_RANGE_SELECT *cpk_quick;
+  QuickRangeSelect *cpk_quick;
 
   MEM_ROOT alloc; /**< Memory pool for this and merged quick selects data. */
   Session *session; /**< Pointer to the current session */
@@ -704,7 +705,7 @@ public:
     TRP_GROUP_MIN_MAX::make_quick()
   */
   MEM_ROOT alloc; /**< Memory pool for this and quick_prefix_select data. */
-  QUICK_RANGE_SELECT *quick_prefix_select; /**< For retrieval of group prefixes. */
+  QuickRangeSelect *quick_prefix_select; /**< For retrieval of group prefixes. */
 private:
   int next_prefix();
   int next_min_in_range();
@@ -744,19 +745,19 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
 };
 
-class QUICK_SELECT_DESC: public QUICK_RANGE_SELECT
+class QUICK_SELECT_DESC: public QuickRangeSelect
 {
 public:
-  QUICK_SELECT_DESC(QUICK_RANGE_SELECT *q, uint32_t used_key_parts,
+  QUICK_SELECT_DESC(QuickRangeSelect *q, uint32_t used_key_parts,
                     bool *create_err);
   int get_next();
   bool reverse_sorted() { return 1; }
   int get_type() { return QS_TYPE_RANGE_DESC; }
 private:
-  bool range_reads_after_key(QUICK_RANGE *range);
-  int reset(void) { rev_it.rewind(); return QUICK_RANGE_SELECT::reset(); }
-  List<QUICK_RANGE> rev_ranges;
-  List_iterator<QUICK_RANGE> rev_it;
+  bool range_reads_after_key(QuickRange *range);
+  int reset(void) { rev_it.rewind(); return QuickRangeSelect::reset(); }
+  List<QuickRange> rev_ranges;
+  List_iterator<QuickRange> rev_it;
 };
 
 /**
@@ -792,13 +793,13 @@ class SQL_SELECT : public Sql_alloc
                         bool ordered_output);
 };
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, 
+QuickRangeSelect *get_quick_select_for_ref(Session *session, 
                                              Table *table,
                                              struct table_reference_st *ref,
                                              ha_rows records);
 
 /*
-  Create a QUICK_RANGE_SELECT from given key and SEL_ARG tree for that key.
+  Create a QuickRangeSelect from given key and SEL_ARG tree for that key.
 
   SYNOPSIS
     get_quick_select()
@@ -819,7 +820,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session,
     NULL on error
     otherwise created quick select
 */
-QUICK_RANGE_SELECT *get_quick_select(PARAM *param,
+QuickRangeSelect *get_quick_select(PARAM *param,
                                      uint32_t index,
                                      SEL_ARG *key_tree, 
                                      uint32_t mrr_flags,
@@ -836,7 +837,7 @@ SQL_SELECT *make_select(Table *head,
                         int *error);
 
 bool get_quick_keys(PARAM *param, 
-                    QUICK_RANGE_SELECT *quick,KEY_PART *key,
+                    QuickRangeSelect *quick,KEY_PART *key,
                     SEL_ARG *key_tree, 
                     unsigned char *min_key,
                     uint32_t min_key_flag,

@@ -4885,7 +4885,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         else
         {
           /*
-            The range optimizer constructed QUICK_RANGE for ref_key, and
+            The range optimizer constructed QuickRange for ref_key, and
             we want to use instead new_ref_key as the index. We can't
             just change the index of the quick select, because this may
             result in an incosistent QUICK_SELECT object. Below we
@@ -5168,7 +5168,7 @@ check_reverse_order:
         }
 
         /* order_st BY range_key DESC */
-        tmp= new optimizer::QUICK_SELECT_DESC((optimizer::QUICK_RANGE_SELECT*)(select->quick),
+        tmp= new optimizer::QUICK_SELECT_DESC((optimizer::QuickRangeSelect*)(select->quick),
                                               used_key_parts, &error);
         if (!tmp || error)
         {
