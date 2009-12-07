@@ -16,7 +16,6 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <mysys/hash.h>
-#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
