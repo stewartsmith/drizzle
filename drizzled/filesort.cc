@@ -134,7 +134,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 
   /*
     Don't use table->sort in filesort as it is also used by
-    QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end
+    QuickIndexMergeSelect. Work with a copy and put it back at the end
     when index_merge select has finished with it.
   */
   memcpy(&table_sort, &table->sort, sizeof(filesort_info_st));

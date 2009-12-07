@@ -117,6 +117,9 @@
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/optimizer/sum.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/optimizer/quick_range.h"
+#include "drizzled/optimizer/quick_range_select.h"
+#include "drizzled/optimizer/quick_index_merge_select.h"
 #include "drizzled/records.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
@@ -139,12 +142,6 @@ using namespace drizzled;
 static inline ha_rows double2rows(double x)
 {
     return static_cast<ha_rows>(x);
-}
-
-extern "C" int refpos_order_cmp(void *arg, const void *a, const void *b)
-{
-  Cursor *cursor= (Cursor*)arg;
-  return cursor->cmp_ref((const unsigned char *) a, (const unsigned char *) b);
 }
 
 static int sel_cmp(Field *f, unsigned char *a, unsigned char *b, uint8_t a_flag, uint8_t b_flag);
@@ -1288,165 +1285,6 @@ optimizer::QuickSelectInterface::QuickSelectInterface()
     used_key_parts(0)
 {}
 
-optimizer::QuickRangeSelect::QuickRangeSelect(Session *session, 
-                                                  Table *table, 
-                                                  uint32_t key_nr,
-                                                  bool no_alloc, 
-                                                  MEM_ROOT *parent_alloc,
-                                                  bool *create_error)
-  :
-    free_file(0),
-    cur_range(NULL),
-    last_range(0),
-    dont_free(0)
-{
-  my_bitmap_map *bitmap= NULL;
-
-  in_ror_merged_scan= 0;
-  sorted= 0;
-  index= key_nr;
-  head= table;
-  key_part_info= head->key_info[index].key_part;
-  my_init_dynamic_array(&ranges, sizeof(optimizer::QuickRange*), 16, 16);
-
-  /* 'session' is not accessible in QuickRangeSelect::reset(). */
-  mrr_buf_size= session->variables.read_rnd_buff_size;
-  mrr_buf_desc= NULL;
-
-  if (!no_alloc && !parent_alloc)
-  {
-    // Allocates everything through the internal memroot
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-    session->mem_root= &alloc;
-  }
-  else
-    memset(&alloc, 0, sizeof(alloc));
-  cursor= head->cursor;
-  record= head->record[0];
-  save_read_set= head->read_set;
-  save_write_set= head->write_set;
-
-  /* Allocate a bitmap for used columns. Using sql_alloc instead of malloc
-     simply as a "fix" to the MySQL 6.0 code that also free()s it at the
-     same time we destroy the mem_root.
-   */
-
-  bitmap= reinterpret_cast<my_bitmap_map*>(sql_alloc(head->s->column_bitmap_size));
-  if (! bitmap)
-  {
-    column_bitmap.setBitmap(NULL);
-    *create_error= 1;
-  }
-  else
-  {
-    column_bitmap.init(bitmap, head->s->fields);
-  }
-}
-
-
-int optimizer::QuickRangeSelect::init()
-{
-  if (cursor->inited != Cursor::NONE)
-    cursor->ha_index_or_rnd_end();
-  return (cursor->ha_index_init(index, 1));
-}
-
-
-void optimizer::QuickRangeSelect::range_end()
-{
-  if (cursor->inited != Cursor::NONE)
-    cursor->ha_index_or_rnd_end();
-}
-
-
-optimizer::QuickRangeSelect::~QuickRangeSelect()
-{
-  if (!dont_free)
-  {
-    /* cursor is NULL for CPK scan on covering ROR-intersection */
-    if (cursor)
-    {
-      range_end();
-      if (head->key_read)
-      {
-        head->key_read= 0;
-        cursor->extra(HA_EXTRA_NO_KEYREAD);
-      }
-      if (free_file)
-      {
-        cursor->ha_external_lock(current_session, F_UNLCK);
-        cursor->close();
-        delete cursor;
-      }
-    }
-    delete_dynamic(&ranges); /* ranges are allocated in alloc */
-    free_root(&alloc,MYF(0));
-  }
-  head->column_bitmaps_set(save_read_set, save_write_set);
-  assert(mrr_buf_desc == NULL);
-  if (mrr_buf_desc)
-  {
-    free(mrr_buf_desc);
-  }
-}
-
-
-optimizer::QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(Session *session_param,
-                                                              Table *table)
-  :
-    pk_quick_select(NULL), 
-    session(session_param)
-{
-  index= MAX_KEY;
-  head= table;
-  memset(&read_record, 0, sizeof(read_record));
-  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  return;
-}
-
-int optimizer::QUICK_INDEX_MERGE_SELECT::init()
-{
-  return 0;
-}
-
-int optimizer::QUICK_INDEX_MERGE_SELECT::reset()
-{
-  return (read_keys_and_merge());
-}
-
-bool
-optimizer::QUICK_INDEX_MERGE_SELECT::push_quick_back(optimizer::QuickRangeSelect *quick_sel_range)
-{
-  /*
-    Save quick_select that does scan on clustered primary key as it will be
-    processed separately.
-  */
-  if (head->cursor->primary_key_is_clustered() &&
-      quick_sel_range->index == head->s->primary_key)
-  {
-    pk_quick_select= quick_sel_range;
-  }
-  else
-  {
-    return quick_selects.push_back(quick_sel_range);
-  }
-  return 0;
-}
-
-optimizer::QUICK_INDEX_MERGE_SELECT::~QUICK_INDEX_MERGE_SELECT()
-{
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect* quick;
-  quick_it.rewind();
-  while ((quick= quick_it++))
-  {
-    quick->cursor= NULL;
-  }
-  quick_selects.delete_elements();
-  delete pk_quick_select;
-  free_root(&alloc,MYF(0));
-  return;
-}
 
 
 optimizer::QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *session_param,
@@ -1493,116 +1331,6 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::init()
 
 
 /*
-  Initialize this quick select to be a ROR-merged scan.
-
-  SYNOPSIS
-    QuickRangeSelect::init_ror_merged_scan()
-      reuse_handler If true, use head->cursor, otherwise create a separate
-                    Cursor object
-
-  NOTES
-    This function creates and prepares for subsequent use a separate Cursor
-    object if it can't reuse head->cursor. The reason for this is that during
-    ROR-merge several key scans are performed simultaneously, and a single
-    Cursor is only capable of preserving context of a single key scan.
-
-    In ROR-merge the quick select doing merge does full records retrieval,
-    merged quick selects read only keys.
-
-  RETURN
-    0  ROR child scan initialized, ok to use.
-    1  error
-*/
-
-int optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler)
-{
-  Cursor *save_file= cursor, *org_file;
-  Session *session;
-
-  in_ror_merged_scan= 1;
-  if (reuse_handler)
-  {
-    if (init() || reset())
-    {
-      return 0;
-    }
-    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
-    goto end;
-  }
-
-  /* Create a separate Cursor object for this quick select */
-  if (free_file)
-  {
-    /* already have own 'Cursor' object. */
-    return 0;
-  }
-
-  session= head->in_use;
-  if (! (cursor= head->cursor->clone(session->mem_root)))
-  {
-    /*
-      Manually set the error flag. Note: there seems to be quite a few
-      places where a failure could cause the server to "hang" the client by
-      sending no response to a query. ATM those are not real errors because
-      the storage engine calls in question happen to never fail with the
-      existing storage engines.
-    */
-    my_error(ER_OUT_OF_RESOURCES, MYF(0));
-    /* Caller will free the memory */
-    goto failure;
-  }
-
-  head->column_bitmaps_set(&column_bitmap, &column_bitmap);
-
-  if (cursor->ha_external_lock(session, F_RDLCK))
-    goto failure;
-
-  if (init() || reset())
-  {
-    cursor->ha_external_lock(session, F_UNLCK);
-    cursor->close();
-    goto failure;
-  }
-  free_file= true;
-  last_rowid= cursor->ref;
-
-end:
-  /*
-    We are only going to read key fields and call position() on 'cursor'
-    The following sets head->tmp_set to only use this key and then updates
-    head->read_set and head->write_set to use this bitmap.
-    The now bitmap is stored in 'column_bitmap' which is used in ::get_next()
-  */
-  org_file= head->cursor;
-  head->cursor= cursor;
-  /* We don't have to set 'head->keyread' here as the 'cursor' is unique */
-  if (! head->no_keyread)
-  {
-    head->key_read= 1;
-    head->mark_columns_used_by_index(index);
-  }
-  head->prepare_for_position();
-  head->cursor= org_file;
-  column_bitmap= *head->read_set;
-  head->column_bitmaps_set(&column_bitmap, &column_bitmap);
-
-  return 0;
-
-failure:
-  head->column_bitmaps_set(save_read_set, save_write_set);
-  delete cursor;
-  cursor= save_file;
-  return 0;
-}
-
-
-void optimizer::QuickRangeSelect::save_last_pos()
-{
-  cursor->position(record);
-}
-
-
-/*
   Initialize this quick select to be a part of a ROR-merged scan.
   SYNOPSIS
     QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan()
@@ -1615,7 +1343,7 @@ void optimizer::QuickRangeSelect::save_last_pos()
 int optimizer::QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
 {
   List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect* quick;
+  optimizer::QuickRangeSelect *quick= NULL;
 
   /* Initialize all merged "children" quick selects */
   assert(!need_to_fetch_row || reuse_handler);
@@ -1666,7 +1394,7 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
   }
   scans_inited= true;
   List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  optimizer::QuickRangeSelect *quick;
+  optimizer::QuickRangeSelect *quick= NULL;
   while ((quick= it++))
   {
     quick->reset();
@@ -1852,17 +1580,6 @@ optimizer::QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
   return;
 }
 
-
-optimizer::QuickRange::QuickRange()
-  :
-    min_key(0),
-    max_key(0),
-    min_length(0),
-    max_length(0),
-    flag(NO_MIN_RANGE | NO_MAX_RANGE),
-    min_keypart_map(0), 
-    max_keypart_map(0)
-{}
 
 SEL_ARG::SEL_ARG(SEL_ARG &arg) :Sql_alloc()
 {
@@ -2259,7 +1976,7 @@ public:
 
 
 /*
-  Plan for QUICK_INDEX_MERGE_SELECT scan.
+  Plan for QuickIndexMergeSelect scan.
   QUICK_ROR_INTERSECT_SELECT always retrieves full rows, so retrieve_full_rows
   is ignored by make_quick.
 */
@@ -3892,10 +3609,10 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
 
 optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(PARAM *param, bool, MEM_ROOT *)
 {
-  optimizer::QUICK_INDEX_MERGE_SELECT *quick_imerge;
-  optimizer::QuickRangeSelect *quick;
+  optimizer::QuickIndexMergeSelect *quick_imerge;
+  optimizer::QuickRangeSelect *quick= NULL;
   /* index_merge always retrieves full rows, ignore retrieve_full_rows */
-  if (! (quick_imerge= new optimizer::QUICK_INDEX_MERGE_SELECT(param->session, param->table)))
+  if (! (quick_imerge= new optimizer::QuickIndexMergeSelect(param->session, param->table)))
   {
     return NULL;
   }
@@ -6934,27 +6651,6 @@ optimizer::get_quick_keys(PARAM *param,
 }
 
 /*
-  Return 1 if there is only one range and this uses the whole primary key
-*/
-
-bool optimizer::QuickRangeSelect::unique_key_range()
-{
-  if (ranges.elements == 1)
-  {
-    optimizer::QuickRange *tmp= *((optimizer::QuickRange**)ranges.buffer);
-    if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
-    {
-      KEY *key=head->key_info+index;
-      return ((key->flags & (HA_NOSAME)) == HA_NOSAME &&
-	      key->key_length == tmp->min_length);
-    }
-  }
-  return 0;
-}
-
-
-
-/*
   Return true if any part of the key is NULL
 
   SYNOPSIS
@@ -6986,17 +6682,6 @@ bool optimizer::QuickSelectInterface::is_keys_used(const MyBitmap *fields)
   return is_key_used(head, index, fields);
 }
 
-bool optimizer::QUICK_INDEX_MERGE_SELECT::is_keys_used(const MyBitmap *fields)
-{
-  optimizer::QuickRangeSelect *quick= NULL;
-  List_iterator_fast<QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (is_key_used(head, quick->index, fields))
-      return 1;
-  }
-  return 0;
-}
 
 bool optimizer::QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
 {
@@ -7139,136 +6824,6 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
 err:
   delete quick;
   return 0;
-}
-
-
-/*
-  Perform key scans for all used indexes (except CPK), get rowids and merge
-  them into an ordered non-recurrent sequence of rowids.
-
-  The merge/duplicate removal is performed using Unique class. We put all
-  rowids into Unique, get the sorted sequence and destroy the Unique.
-
-  If table has a clustered primary key that covers all rows (true for bdb
-  and innodb currently) and one of the index_merge scans is a scan on PK,
-  then rows that will be retrieved by PK scan are not put into Unique and
-  primary key scan is not performed here, it is performed later separately.
-
-  RETURN
-    0     OK
-    other error
-*/
-
-int optimizer::QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
-{
-  List_iterator_fast<optimizer::QuickRangeSelect> cur_quick_it(quick_selects);
-  optimizer::QuickRangeSelect* cur_quick;
-  int result;
-  Unique *unique;
-  Cursor *cursor= head->cursor;
-
-  cursor->extra(HA_EXTRA_KEYREAD);
-  head->prepare_for_position();
-
-  cur_quick_it.rewind();
-  cur_quick= cur_quick_it++;
-  assert(cur_quick != 0);
-
-  /*
-    We reuse the same instance of Cursor so we need to call both init and
-    reset here.
-  */
-  if (cur_quick->init() || cur_quick->reset())
-    return 0;
-
-  unique= new Unique(refpos_order_cmp, (void *)cursor,
-                     cursor->ref_length,
-                     session->variables.sortbuff_size);
-  if (!unique)
-    return 0;
-  for (;;)
-  {
-    while ((result= cur_quick->get_next()) == HA_ERR_END_OF_FILE)
-    {
-      cur_quick->range_end();
-      cur_quick= cur_quick_it++;
-      if (!cur_quick)
-        break;
-
-      if (cur_quick->cursor->inited != Cursor::NONE)
-        cur_quick->cursor->ha_index_end();
-      if (cur_quick->init() || cur_quick->reset())
-        return 0;
-    }
-
-    if (result)
-    {
-      if (result != HA_ERR_END_OF_FILE)
-      {
-        cur_quick->range_end();
-        return result;
-      }
-      break;
-    }
-
-    if (session->killed)
-      return 0;
-
-    /* skip row if it will be retrieved by clustered PK scan */
-    if (pk_quick_select && pk_quick_select->row_in_ranges())
-      continue;
-
-    cur_quick->cursor->position(cur_quick->record);
-    result= unique->unique_add((char*)cur_quick->cursor->ref);
-    if (result)
-      return 0;
-
-  }
-
-  /* ok, all row ids are in Unique */
-  result= unique->get(head);
-  delete unique;
-  doing_pk_scan= false;
-  /* index_merge currently doesn't support "using index" at all */
-  cursor->extra(HA_EXTRA_NO_KEYREAD);
-  /* start table scan */
-  init_read_record(&read_record, session, head, (optimizer::SqlSelect*) 0, 1, 1);
-  return result;
-}
-
-
-/*
-  Get next row for index_merge.
-  NOTES
-    The rows are read from
-      1. rowids stored in Unique.
-      2. QuickRangeSelect with clustered primary key (if any).
-    The sets of rows retrieved in 1) and 2) are guaranteed to be disjoint.
-*/
-
-int optimizer::QUICK_INDEX_MERGE_SELECT::get_next()
-{
-  int result;
-
-  if (doing_pk_scan)
-    return(pk_quick_select->get_next());
-
-  if ((result= read_record.read_record(&read_record)) == -1)
-  {
-    result= HA_ERR_END_OF_FILE;
-    end_read_record(&read_record);
-    /* All rows from Unique have been retrieved, do a clustered PK scan */
-    if (pk_quick_select)
-    {
-      doing_pk_scan= true;
-      if ((result= pk_quick_select->init()) ||
-          (result= pk_quick_select->reset()))
-        return result;
-      return(pk_quick_select->get_next());
-    }
-  }
-
-  return result;
 }
 
 
@@ -7428,69 +6983,6 @@ int optimizer::QUICK_ROR_UNION_SELECT::get_next()
 }
 
 
-int optimizer::QuickRangeSelect::reset()
-{
-  uint32_t buf_size= 0;
-  unsigned char *mrange_buff= NULL;
-  int error= 0;
-  HANDLER_BUFFER empty_buf;
-  last_range= NULL;
-  cur_range= (optimizer::QuickRange**) ranges.buffer;
-
-  if (cursor->inited == Cursor::NONE && (error= cursor->ha_index_init(index, 1)))
-  {
-    return error;
-  }
-
-  /* Allocate buffer if we need one but haven't allocated it yet */
-  if (mrr_buf_size && ! mrr_buf_desc)
-  {
-    buf_size= mrr_buf_size;
-    while (buf_size && ! memory::multi_malloc(false,
-                                              &mrr_buf_desc, 
-                                              sizeof(*mrr_buf_desc),
-                                              &mrange_buff, 
-                                              buf_size,
-                                              NULL))
-    {
-      /* Try to shrink the buffers until both are 0. */
-      buf_size/= 2;
-    }
-    if (! mrr_buf_desc)
-    {
-      return HA_ERR_OUT_OF_MEM;
-    }
-
-    /* Initialize the Cursor buffer. */
-    mrr_buf_desc->buffer= mrange_buff;
-    mrr_buf_desc->buffer_end= mrange_buff + buf_size;
-    mrr_buf_desc->end_of_used_area= mrange_buff;
-  }
-
-  if (! mrr_buf_desc)
-  {
-    empty_buf.buffer= NULL;
-    empty_buf.buffer_end= NULL;
-    empty_buf.end_of_used_area= NULL;
-  }
-
-  if (sorted)
-  {
-     mrr_flags|= HA_MRR_SORTED;
-  }
-  RANGE_SEQ_IF seq_funcs= {
-    optimizer::quick_range_seq_init, 
-    optimizer::quick_range_seq_next
-  };
-  error= cursor->multi_range_read_init(&seq_funcs, 
-                                       (void*) this, 
-                                       ranges.elements,
-                                       mrr_flags, 
-                                       mrr_buf_desc ? mrr_buf_desc : &empty_buf);
-  return error;
-}
-
-
 /*
   Range sequence interface implementation for array<QuickRange>: initialize
 
@@ -7559,383 +7051,6 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
 }
 
 
-/*
-  Get next possible record using quick-struct.
-
-  SYNOPSIS
-    QuickRangeSelect::get_next()
-
-  NOTES
-    Record is read into table->record[0]
-
-  RETURN
-    0			Found row
-    HA_ERR_END_OF_FILE	No (more) rows in range
-    #			Error code
-*/
-int optimizer::QuickRangeSelect::get_next()
-{
-  char *dummy= NULL;
-  if (in_ror_merged_scan)
-  {
-    /*
-      We don't need to signal the bitmap change as the bitmap is always the
-      same for this head->cursor
-    */
-    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
-  }
-
-  int result= cursor->multi_range_read_next(&dummy);
-
-  if (in_ror_merged_scan)
-  {
-    /* Restore bitmaps set on entry */
-    head->column_bitmaps_set(save_read_set, save_write_set);
-  }
-  return result;
-}
-
-
-/*
-  Get the next record with a different prefix.
-
-  SYNOPSIS
-    QuickRangeSelect::get_next_prefix()
-    prefix_length  length of cur_prefix
-    cur_prefix     prefix of a key to be searched for
-
-  DESCRIPTION
-    Each subsequent call to the method retrieves the first record that has a
-    prefix with length prefix_length different from cur_prefix, such that the
-    record with the new prefix is within the ranges described by
-    this->ranges. The record found is stored into the buffer pointed by
-    this->record.
-    The method is useful for GROUP-BY queries with range conditions to
-    discover the prefix of the next group that satisfies the range conditions.
-
-  TODO
-    This method is a modified copy of QuickRangeSelect::get_next(), so both
-    methods should be unified into a more general one to reduce code
-    duplication.
-
-  RETURN
-    0                  on success
-    HA_ERR_END_OF_FILE if returned all keys
-    other              if some error occurred
-*/
-int optimizer::QuickRangeSelect::get_next_prefix(uint32_t prefix_length,
-                                                 key_part_map keypart_map,
-                                                 unsigned char *cur_prefix)
-{
-  for (;;)
-  {
-    int result;
-    key_range start_key, end_key;
-    if (last_range)
-    {
-      /* Read the next record in the same range with prefix after cur_prefix. */
-      assert(cur_prefix != 0);
-      result= cursor->index_read_map(record, 
-                                     cur_prefix, 
-                                     keypart_map,
-                                     HA_READ_AFTER_KEY);
-      if (result || (cursor->compare_key(cursor->end_range) <= 0))
-        return result;
-    }
-
-    uint32_t count= ranges.elements - (cur_range - (optimizer::QuickRange**) ranges.buffer);
-    if (count == 0)
-    {
-      /* Ranges have already been used up before. None is left for read. */
-      last_range= 0;
-      return HA_ERR_END_OF_FILE;
-    }
-    last_range= *(cur_range++);
-
-    start_key.key= (const unsigned char*) last_range->min_key;
-    start_key.length= min(last_range->min_length, (uint16_t)prefix_length);
-    start_key.keypart_map= last_range->min_keypart_map & keypart_map;
-    start_key.flag= ((last_range->flag & NEAR_MIN) ? HA_READ_AFTER_KEY :
-		                                                (last_range->flag & EQ_RANGE) ?
-		                                                HA_READ_KEY_EXACT : HA_READ_KEY_OR_NEXT);
-    end_key.key= (const unsigned char*) last_range->max_key;
-    end_key.length= min(last_range->max_length, (uint16_t)prefix_length);
-    end_key.keypart_map= last_range->max_keypart_map & keypart_map;
-    /*
-      We use READ_AFTER_KEY here because if we are reading on a key
-      prefix we want to find all keys with this prefix
-    */
-    end_key.flag= (last_range->flag & NEAR_MAX ? HA_READ_BEFORE_KEY :
-		                                             HA_READ_AFTER_KEY);
-
-    result= cursor->read_range_first(last_range->min_keypart_map ? &start_key : 0,
-				                             last_range->max_keypart_map ? &end_key : 0,
-                                     test(last_range->flag & EQ_RANGE),
-				                             sorted);
-    if (last_range->flag == (UNIQUE_RANGE | EQ_RANGE))
-      last_range= 0; // Stop searching
-
-    if (result != HA_ERR_END_OF_FILE)
-      return result;
-    last_range= 0; // No matching rows; go to next range
-  }
-}
-
-
-/*
-  Check if current row will be retrieved by this QuickRangeSelect
-
-  NOTES
-    It is assumed that currently a scan is being done on another index
-    which reads all necessary parts of the index that is scanned by this
-    quick select.
-    The implementation does a binary search on sorted array of disjoint
-    ranges, without taking size of range into account.
-
-    This function is used to filter out clustered PK scan rows in
-    index_merge quick select.
-
-  RETURN
-    true  if current row will be retrieved by this quick select
-    false if not
-*/
-bool optimizer::QuickRangeSelect::row_in_ranges()
-{
-  optimizer::QuickRange *res= NULL;
-  uint32_t min= 0;
-  uint32_t max= ranges.elements - 1;
-  uint32_t mid= (max + min) / 2;
-
-  while (min != max)
-  {
-    if (cmp_next(*(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid)))
-    {
-      /* current row value > mid->max */
-      min= mid + 1;
-    }
-    else
-      max= mid;
-    mid= (min + max) / 2;
-  }
-  res= *(optimizer::QuickRange**)dynamic_array_ptr(&ranges, mid);
-  return (! cmp_next(res) && ! cmp_prev(res));
-}
-
-/*
-  This is a hack: we inherit from QUICK_SELECT so that we can use the
-  get_next() interface, but we have to hold a pointer to the original
-  QUICK_SELECT because its data are used all over the place.  What
-  should be done is to factor out the data that is needed into a base
-  class (QUICK_SELECT), and then have two subclasses (_ASC and _DESC)
-  which handle the ranges and implement the get_next() function.  But
-  for now, this seems to work right at least.
- */
-optimizer::QUICK_SELECT_DESC::QUICK_SELECT_DESC(optimizer::QuickRangeSelect *q, uint32_t, bool *)
-  :
-    optimizer::QuickRangeSelect(*q), 
-    rev_it(rev_ranges)
-{
-  optimizer::QuickRange *r= NULL;
-
-  optimizer::QuickRange **pr= (optimizer::QuickRange**)ranges.buffer;
-  optimizer::QuickRange **end_range= pr + ranges.elements;
-  for (; pr != end_range; pr++)
-    rev_ranges.push_front(*pr);
-
-  /* Remove EQ_RANGE flag for keys that are not using the full key */
-  for (r = rev_it++; r; r= rev_it++)
-  {
-    if ((r->flag & EQ_RANGE) &&
-        head->key_info[index].key_length != r->max_length)
-      r->flag&= ~EQ_RANGE;
-  }
-  rev_it.rewind();
-  q->dont_free= 1;				// Don't free shared mem
-  delete q;
-}
-
-
-int optimizer::QUICK_SELECT_DESC::get_next()
-{
-  /* The max key is handled as follows:
-   *   - if there is NO_MAX_RANGE, start at the end and move backwards
-   *   - if it is an EQ_RANGE, which means that max key covers the entire
-   *     key, go directly to the key and read through it (sorting backwards is
-   *     same as sorting forwards)
-   *   - if it is NEAR_MAX, go to the key or next, step back once, and
-   *     move backwards
-   *   - otherwise (not NEAR_MAX == include the key), go after the key,
-   *     step back once, and move backwards
-   */
-  for (;;)
-  {
-    int result;
-    if (last_range)
-    {						// Already read through key
-      result= ((last_range->flag & EQ_RANGE) ?
-		           cursor->index_next_same(record, last_range->min_key,
-					                             last_range->min_length) :
-		           cursor->index_prev(record));
-      if (! result)
-      {
-        if (cmp_prev(*rev_it.ref()) == 0)
-          return 0;
-      }
-      else if (result != HA_ERR_END_OF_FILE)
-        return result;
-    }
-
-    if (! (last_range= rev_it++))
-      return HA_ERR_END_OF_FILE;		// All ranges used
-
-    if (last_range->flag & NO_MAX_RANGE)        // Read last record
-    {
-      int local_error;
-      if ((local_error= cursor->index_last(record)))
-        return local_error;	// Empty table
-      if (cmp_prev(last_range) == 0)
-        return 0;
-      last_range= 0; // No match; go to next range
-      continue;
-    }
-
-    if (last_range->flag & EQ_RANGE)
-    {
-      result = cursor->index_read_map(record, 
-                                      last_range->max_key,
-                                      last_range->max_keypart_map,
-                                      HA_READ_KEY_EXACT);
-    }
-    else
-    {
-      assert(last_range->flag & NEAR_MAX ||
-             range_reads_after_key(last_range));
-      result= cursor->index_read_map(record, 
-                                     last_range->max_key,
-                                     last_range->max_keypart_map,
-                                     ((last_range->flag & NEAR_MAX) ?
-                                      HA_READ_BEFORE_KEY :
-                                      HA_READ_PREFIX_LAST_OR_PREV));
-    }
-    if (result)
-    {
-      if (result != HA_ERR_KEY_NOT_FOUND && result != HA_ERR_END_OF_FILE)
-        return result;
-      last_range= 0;                            // Not found, to next range
-      continue;
-    }
-    if (cmp_prev(last_range) == 0)
-    {
-      if (last_range->flag == (UNIQUE_RANGE | EQ_RANGE))
-        last_range= 0;				// Stop searching
-      return 0;				// Found key is in range
-    }
-    last_range= 0;                              // To next range
-  }
-}
-
-
-/*
-  Compare if found key is over max-value
-  Returns 0 if key <= range->max_key
-  TODO: Figure out why can't this function be as simple as cmp_prev().
-*/
-
-int optimizer::QuickRangeSelect::cmp_next(optimizer::QuickRange *range_arg)
-{
-  if (range_arg->flag & NO_MAX_RANGE)
-    return 0;                                   /* key can't be to large */
-
-  KEY_PART *key_part= key_parts;
-  uint32_t store_length;
-
-  for (unsigned char *key=range_arg->max_key, *end=key+range_arg->max_length;
-       key < end;
-       key+= store_length, key_part++)
-  {
-    int cmp;
-    store_length= key_part->store_length;
-    if (key_part->null_bit)
-    {
-      if (*key)
-      {
-        if (! key_part->field->is_null())
-          return 1;
-        continue;
-      }
-      else if (key_part->field->is_null())
-        return 0;
-      key++;					// Skip null byte
-      store_length--;
-    }
-    if ((cmp= key_part->field->key_cmp(key, key_part->length)) < 0)
-      return 0;
-    if (cmp > 0)
-      return 1;
-  }
-  return (range_arg->flag & NEAR_MAX) ? 1 : 0;          // Exact match
-}
-
-
-/*
-  Returns 0 if found key is inside range (found key >= range->min_key).
-*/
-int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
-{
-  int cmp;
-  if (range_arg->flag & NO_MIN_RANGE)
-    return 0;					/* key can't be to small */
-
-  cmp= key_cmp(key_part_info, 
-               range_arg->min_key,
-               range_arg->min_length);
-  if (cmp > 0 || (cmp == 0 && (range_arg->flag & NEAR_MIN) == false))
-    return 0;
-  return 1;                                     // outside of range
-}
-
-
-/*
- * true if this range will require using HA_READ_AFTER_KEY
-   See comment in get_next() about this
- */
-bool optimizer::QUICK_SELECT_DESC::range_reads_after_key(optimizer::QuickRange *range_arg)
-{
-  return ((range_arg->flag & (NO_MAX_RANGE | NEAR_MAX)) ||
-	        ! (range_arg->flag & EQ_RANGE) ||
-	        head->key_info[index].key_length != range_arg->max_length) ? 1 : 0;
-}
-
-
-void optimizer::QuickRangeSelect::add_info_string(String *str)
-{
-  KEY *key_info= head->key_info + index;
-  str->append(key_info->name);
-}
-
-void optimizer::QUICK_INDEX_MERGE_SELECT::add_info_string(String *str)
-{
-  optimizer::QuickRangeSelect *quick= NULL;
-  bool first= true;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  str->append(STRING_WITH_LEN("sort_union("));
-  while ((quick= it++))
-  {
-    if (! first)
-      str->append(',');
-    else
-      first= false;
-    quick->add_info_string(str);
-  }
-  if (pk_quick_select)
-  {
-    str->append(',');
-    pk_quick_select->add_info_string(str);
-  }
-  str->append(')');
-}
-
-
 void optimizer::QUICK_ROR_INTERSECT_SELECT::add_info_string(String *str)
 {
   bool first= true;
@@ -7976,54 +7091,6 @@ void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
     quick->add_info_string(str);
   }
   str->append(')');
-}
-
-
-void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
-                                                       String *used_lengths)
-{
-  char buf[64];
-  uint32_t length;
-  KEY *key_info= head->key_info + index;
-  key_names->append(key_info->name);
-  length= int64_t2str(max_used_key_length, buf, 10) - buf;
-  used_lengths->append(buf, length);
-}
-
-
-void optimizer::QUICK_INDEX_MERGE_SELECT::add_keys_and_lengths(String *key_names,
-                                                               String *used_lengths)
-{
-  char buf[64];
-  uint32_t length;
-  bool first= true;
-  optimizer::QuickRangeSelect *quick= NULL;
-
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (first)
-      first= false;
-    else
-    {
-      key_names->append(',');
-      used_lengths->append(',');
-    }
-
-    KEY *key_info= head->key_info + quick->index;
-    key_names->append(key_info->name);
-    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(buf, length);
-  }
-  if (pk_quick_select)
-  {
-    KEY *key_info= head->key_info + pk_quick_select->index;
-    key_names->append(',');
-    key_names->append(key_info->name);
-    length= int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
-    used_lengths->append(buf, length);
-  }
 }
 
 
@@ -8776,7 +7843,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
         memset(args, 0, 3 * sizeof(Item*));
         bool inv= false;
         /* Test if this is a comparison of a field and a constant. */
-        if (! optimizer::simple_pred(pred, args, &inv))
+        if (! optimizer::simple_pred(pred, args, inv))
           return false;
 
         /* Check for compatible string comparisons - similar to get_mm_leaf. */

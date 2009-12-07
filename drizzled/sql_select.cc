@@ -59,6 +59,7 @@
 #include "drizzled/optimizer/sargable_param.h"
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/optimizer/quick_range_select.h"
 
 using namespace std;
 using namespace drizzled;
@@ -5154,7 +5155,7 @@ check_reverse_order:
       */
       if (! select->quick->reverse_sorted())
       {
-        optimizer::QUICK_SELECT_DESC *tmp= NULL;
+        optimizer::QuickSelectDescending *tmp= NULL;
         bool error= false;
         int quick_type= select->quick->get_type();
         if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE ||
@@ -5164,18 +5165,19 @@ check_reverse_order:
         {
           tab->limit= 0;
           select->quick= save_quick;
-          return(0);                   // Use filesort
+          return 0; // Use filesort
         }
 
         /* order_st BY range_key DESC */
-        tmp= new optimizer::QUICK_SELECT_DESC((optimizer::QuickRangeSelect*)(select->quick),
-                                              used_key_parts, &error);
-        if (!tmp || error)
+        tmp= new optimizer::QuickSelectDescending((optimizer::QuickRangeSelect*)(select->quick),
+                                                  used_key_parts, 
+                                                  &error);
+        if (! tmp || error)
         {
           delete tmp;
-                select->quick= save_quick;
-                tab->limit= 0;
-          return(0);		// Reverse sort not supported
+          select->quick= save_quick;
+          tab->limit= 0;
+          return 0; // Reverse sort not supported
         }
         select->quick=tmp;
       }
@@ -5195,7 +5197,7 @@ check_reverse_order:
   }
   else if (select && select->quick)
     select->quick->sorted= 1;
-  return(1);
+  return 1;
 }
 
 /*

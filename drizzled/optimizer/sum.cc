@@ -74,7 +74,7 @@ static int reckey_in_range(bool max_fl,
                            uint32_t range_fl, 
                            uint32_t prefix_len);
 
-static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
+static int maxmin_in_range(bool max_fl, Field *field, COND *cond);
 
 
 /*
@@ -92,7 +92,6 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
     UINT64_MAX	Error: Could not calculate number of rows
     #			Multiplication of number of rows in all tables
 */
-
 static uint64_t get_exact_record_count(TableList *tables)
 {
   uint64_t count= 1;
@@ -121,7 +120,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
   table_map outer_tables= 0;
   table_map used_tables= 0;
   table_map where_tables= 0;
-  Item *item;
+  Item *item= NULL;
   int error;
 
   if (conds)
@@ -135,8 +134,8 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
    */
   for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
-    TableList *embedded;
-    for (embedded= tl ; embedded; embedded= embedded->embedding)
+    TableList *embedded= NULL;
+    for (embedded= tl; embedded; embedded= embedded->embedding)
     {
       if (embedded->on_expr)
         break;
@@ -285,6 +284,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                    nullable column, test if there is an exact match for the key.
                  */
                 if (! (range_fl & NEAR_MIN))
+                {
                   /*
                      Closed interval: Either The MIN argument is non-nullable, or
                      we have a >= predicate for the MIN argument.
@@ -293,6 +293,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                                                        ref.key_buff,
                                                        make_prev_keypart_map(ref.key_parts),
                                                        HA_READ_KEY_OR_NEXT);
+                }
                 else
                 {
                   /*
@@ -530,11 +531,12 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
 }
 
 
-bool optimizer::simple_pred(Item_func *func_item, Item **args, bool *inv_order)
+bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
 {
   Item *item= NULL;
-  *inv_order= 0;
-  switch (func_item->argument_count()) {
+  inv_order= false;
+  switch (func_item->argument_count()) 
+  {
   case 0:
     /* MULT_EQUAL_FUNC */
     {
@@ -582,7 +584,7 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool *inv_order)
         return 0;
       }
       args[0]= item;
-      *inv_order= 1;
+      inv_order= true;
     }
     else
     {
@@ -643,7 +645,6 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool *inv_order)
   @retval
     1        We can use index to get MIN/MAX value
 */
-
 static bool matching_cond(bool max_fl, 
                           table_reference_st *ref, 
                           KEY *keyinfo,
@@ -735,7 +736,7 @@ static bool matching_cond(bool max_fl,
   bool inv;
 
   /* Test if this is a comparison of a field and constant */
-  if (! optimizer::simple_pred((Item_func*) cond, args, &inv))
+  if (! optimizer::simple_pred((Item_func*) cond, args, inv))
   {
     return 0;
   }
@@ -894,8 +895,6 @@ static bool matching_cond(bool max_fl,
     1   Can use key to optimize MIN()/MAX().
     In this case ref, range_fl and prefix_len are updated
 */
-
-
 static bool find_key_for_maxmin(bool max_fl, 
                                 table_reference_st *ref,
                                 Field* field, 

@@ -213,9 +213,6 @@ bool create_ref_for_key(JOIN *join, JoinTable *j,
                         drizzled::optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
 
-/* from sql_delete.cc, used by optimizer/range.cc */
-extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
-
 #include "drizzled/stored_key.h"
 
 bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
