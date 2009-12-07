@@ -22,6 +22,7 @@
 #define DRIZZLED_STATEMENT_CREATE_SCHEMA_H
 
 #include <drizzled/statement.h>
+#include <drizzled/message/schema.pb.h>
 
 class Session;
 
@@ -43,6 +44,7 @@ public:
 
   bool execute();
   bool is_if_not_exists;
+  drizzled::message::Schema schema_message;
   HA_CREATE_INFO create_info;
 };
 

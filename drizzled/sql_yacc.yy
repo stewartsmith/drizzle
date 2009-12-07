@@ -87,6 +87,7 @@
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
+#include <drizzled/message/schema.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/alter_table.h>
@@ -1410,8 +1411,8 @@ default_collation_schema:
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
 
-            statement->create_info.default_table_charset= $4;
-            statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+            message::Schema &schema_message= statement->schema_message;
+            schema_message.set_collation($4->name);
           }
         ;
 

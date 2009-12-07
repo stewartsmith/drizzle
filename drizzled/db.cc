@@ -188,7 +188,7 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 */
 
-bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, HA_CREATE_INFO *create_info, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   char	 path[FN_REFLEN+16];
@@ -196,7 +196,6 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
   int error_erno;
   bool error= false;
   uint32_t path_len;
-  message::Schema schema_message;
 
   /* do not create 'information_schema' db */
   if (!my_strcasecmp(system_charset_info, database_name.to_string().c_str(), INFORMATION_SCHEMA_NAME.c_str()))
@@ -204,6 +203,9 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
     my_error(ER_DB_CREATE_EXISTS, MYF(0), database_name.to_string().c_str());
     return(-1);
   }
+
+  assert(database_name.is_valid());
+  schema_message->set_name(database_name.to_string());
 
   /*
     Do not create database if another thread is holding read lock.
@@ -252,9 +254,7 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
     goto exit;
   }
 
-  fill_schema_message(session, database_name, create_info, &schema_message);
-
-  error_erno= write_schema_file(path, schema_message);
+  error_erno= write_schema_file(path, *schema_message);
   if (error_erno && error_erno != EEXIST)
   {
     if (rmdir(path) >= 0)
