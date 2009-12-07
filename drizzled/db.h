@@ -86,6 +86,12 @@ class DatabasePathName
 {
 private:
   std::string database_path;
+
+  /* Copying a DatabasePathName is always wrong, it's
+     immutable and should be passed by reference. */
+  DatabasePathName(const DatabasePathName&);
+  DatabasePathName operator=(const DatabasePathName&);
+
 public:
   explicit DatabasePathName(const NormalisedDatabaseName &database_name);
 
