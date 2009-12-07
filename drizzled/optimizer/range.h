@@ -130,7 +130,7 @@ public:
     delete quick;
 
 */
-class QUICK_SELECT_I
+class QuickSelectInterface
 {
 public:
   bool sorted;
@@ -166,8 +166,8 @@ public:
    */
   unsigned char *record;
 
-  QUICK_SELECT_I();
-  virtual ~QUICK_SELECT_I(){};
+  QuickSelectInterface();
+  virtual ~QuickSelectInterface(){};
 
   /**
    * Do post-constructor initialization.
@@ -295,9 +295,10 @@ typedef struct st_quick_range_seq_ctx
   QuickRange **first;
   QuickRange **cur;
   QuickRange **last;
-} QUICK_RANGE_SEQ_CTX;
+} QuickRangeSequenceContext;
 
 range_seq_t quick_range_seq_init(void *init_param, uint32_t n_ranges, uint32_t flags);
+
 uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
 
 /**
@@ -306,7 +307,7 @@ uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
  * The records are returned in key order.
  * 
  */
-class QuickRangeSelect : public QUICK_SELECT_I
+class QuickRangeSelect : public QuickSelectInterface
 {
 protected:
   Cursor *cursor;
@@ -324,7 +325,7 @@ protected:
   QuickRange *last_range;
 
   /** Members needed to use the MRR interface */
-  QUICK_RANGE_SEQ_CTX qr_traversal_ctx;
+  QuickRangeSequenceContext qr_traversal_ctx;
   uint32_t mrr_buf_size; /**< copy from session->variables.read_rnd_buff_size */
   HANDLER_BUFFER *mrr_buf_desc; /**< the Cursor buffer */
 
@@ -375,7 +376,7 @@ public:
   }
 private:
   /* Used only by QUICK_SELECT_DESC */
-  QuickRangeSelect(const QuickRangeSelect& org) : QUICK_SELECT_I()
+  QuickRangeSelect(const QuickRangeSelect& org) : QuickSelectInterface()
   {
     memmove(this, &org, sizeof(*this));
     /*
@@ -469,7 +470,7 @@ private:
       retrieve all rows for CPK scan;
     }
 */
-class QUICK_INDEX_MERGE_SELECT : public QUICK_SELECT_I
+class QUICK_INDEX_MERGE_SELECT : public QuickSelectInterface
 {
 public:
   QUICK_INDEX_MERGE_SELECT(Session *session, Table *table);
@@ -531,7 +532,7 @@ public:
   If one of the merged quick selects is a Clustered PK range scan, it is
   used only to filter rowid sequence produced by other merged quick selects.
 */
-class QUICK_ROR_INTERSECT_SELECT : public QUICK_SELECT_I
+class QUICK_ROR_INTERSECT_SELECT : public QuickSelectInterface
 {
 public:
   QUICK_ROR_INTERSECT_SELECT(Session *session, Table *table,
@@ -599,7 +600,7 @@ class compare_functor;
   ROR-union quick select always retrieves full records.
 
 */
-class QUICK_ROR_UNION_SELECT : public QUICK_SELECT_I
+class QUICK_ROR_UNION_SELECT : public QuickSelectInterface
 {
 public:
   QUICK_ROR_UNION_SELECT(Session *session, Table *table);
@@ -624,12 +625,12 @@ public:
   void add_info_string(String *str);
   bool is_keys_used(const MyBitmap *fields);
 
-  bool push_quick_back(QUICK_SELECT_I *quick_sel_range);
+  bool push_quick_back(QuickSelectInterface *quick_sel_range);
 
-  List<QUICK_SELECT_I> quick_selects; /**< Merged quick selects */
+  List<QuickSelectInterface> quick_selects; /**< Merged quick selects */
 
   /** Priority queue for merge operation */
-  std::priority_queue<QUICK_SELECT_I *, std::vector<QUICK_SELECT_I *>, compare_functor > *queue;
+  std::priority_queue<QuickSelectInterface *, std::vector<QuickSelectInterface *>, compare_functor > *queue;
   MEM_ROOT alloc; /**< Memory pool for this and merged quick selects data. */
 
   Session *session; /**< current thread */
@@ -673,7 +674,7 @@ private:
   Since one of the requirements is that all select fields are part of the same
   index, this class produces only index keys, and not complete records.
 */
-class QUICK_GROUP_MIN_MAX_SELECT : public QUICK_SELECT_I
+class QUICK_GROUP_MIN_MAX_SELECT : public QuickSelectInterface
 {
 private:
   Cursor *cursor; /**< The Cursor used to get data. */
@@ -765,13 +766,13 @@ private:
  *
  * @details
  *
- * The QUICK_SELECT_I member variable is the implementor
+ * The QuickSelectInterface member variable is the implementor
  * of the SELECT execution.
  */
-class SQL_SELECT : public Sql_alloc 
+class SqlSelect : public Sql_alloc 
 {
  public:
-  QUICK_SELECT_I *quick; /**< If quick-select used */
+  QuickSelectInterface *quick; /**< If quick-select used */
   COND *cond; /**< where condition */
   Table	*head;
   IO_CACHE file; /**< Positions to used records */
@@ -783,8 +784,8 @@ class SQL_SELECT : public Sql_alloc
   table_map read_tables;
   bool free_cond;
 
-  SQL_SELECT();
-  ~SQL_SELECT();
+  SqlSelect();
+  ~SqlSelect();
   void cleanup();
   bool check_quick(Session *session, bool force_quick_range, ha_rows limit);
   bool skip_record();
@@ -829,7 +830,7 @@ QuickRangeSelect *get_quick_select(PARAM *param,
 
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
-SQL_SELECT *make_select(Table *head, 
+SqlSelect *make_select(Table *head, 
                         table_map const_tables,
 			                  table_map read_tables, 
                         COND *conds,

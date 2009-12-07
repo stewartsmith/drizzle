@@ -201,7 +201,7 @@ bool update_ref_and_keys(Session *session,
                          table_map normal_tables,
                          Select_Lex *select_lex,
                          std::vector<drizzled::optimizer::SargableParam> &sargables);
-ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
+ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SqlSelect *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
