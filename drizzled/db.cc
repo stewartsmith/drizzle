@@ -88,21 +88,6 @@ const CHARSET_INFO *get_default_db_collation(const char *db_name)
   return default_charset_info;
 }
 
-static int fill_schema_message(Session *session, const NormalisedDatabaseName &name, HA_CREATE_INFO *create, drizzled::message::Schema *schema_message)
-{
-  assert(schema_message);
-  assert(create);
-  assert(name.is_valid());
-
-  if (!create->default_table_charset)
-    create->default_table_charset= session->variables.collation_server;
-
-  schema_message->set_name(name.to_string());
-  schema_message->set_collation(create->default_table_charset->name);
-
-  return 0;
-}
-
 /* path is path to database, not schema file */
 static int write_schema_file(const char *path, const message::Schema &db)
 {
@@ -279,14 +264,13 @@ exit2:
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, HA_CREATE_INFO *create_info)
+bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   long result=1;
   int error= 0;
   char	 path[FN_REFLEN+16];
   uint32_t path_len;
-  message::Schema schema_message;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -303,15 +287,18 @@ bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_nam
   if ((error=wait_if_global_read_lock(session,0,1)))
     goto exit;
 
+  assert(schema_message);
+  assert(database_name.is_valid());
+
+  schema_message->set_name(database_name.to_string());
+
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Change options if current database is being altered. */
   path_len= build_table_filename(path, sizeof(path), database_name.to_string().c_str(), "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
-  fill_schema_message(session, database_name, create_info, &schema_message);
-
-  error= write_schema_file(path, schema_message);
+  error= write_schema_file(path, *schema_message);
   if (error && error != EEXIST)
   {
     /* TODO: find some witty way of getting back an error message */

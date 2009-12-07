@@ -39,13 +39,11 @@ public:
       Statement(in_session),
       is_if_not_exists(false)
   {
-    memset(&create_info, 0, sizeof(create_info));
   }
 
   bool execute();
   bool is_if_not_exists;
   drizzled::message::Schema schema_message;
-  HA_CREATE_INFO create_info;
 };
 
 } /* end namespace statement */

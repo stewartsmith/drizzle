@@ -48,7 +48,7 @@ bool statement::AlterSchema::execute()
                MYF(0));
     return true;
   }
-  bool res= mysql_alter_db(session, normalised_database_name, &create_info);
+  bool res= mysql_alter_db(session, normalised_database_name, &schema_message);
   return res;
 }
 

@@ -5,7 +5,7 @@ mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_bin
 alter database mysqltest collate = utf8_general_ci;
 show create database mysqltest;
 Database	Create Database
-mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_general_ci
+mysqltest	CREATE DATABASE `mysqltest`
 alter database mysqltest collate = utf8_bin;
 show create database mysqltest;
 Database	Create Database
