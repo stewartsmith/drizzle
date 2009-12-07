@@ -89,14 +89,12 @@ const CHARSET_INFO *get_default_db_collation(const char *db_name)
 }
 
 /* path is path to database, not schema file */
-static int write_schema_file(const char *path, const message::Schema &db)
+static int write_schema_file(const DatabasePathName &path, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
-  string schema_file(path);
+  string schema_file(path.to_string());
 
-  assert(path);
-
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
+  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path.to_string().c_str(), FN_LIBCHAR, MY_DB_OPT_FILE);
 
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
@@ -176,11 +174,10 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  char	 path[FN_REFLEN+16];
   long result= 1;
   int error_erno;
   bool error= false;
-  uint32_t path_len;
+  DatabasePathName database_path(database_name);
 
   /* do not create 'information_schema' db */
   if (!my_strcasecmp(system_charset_info, database_name.to_string().c_str(), INFORMATION_SCHEMA_NAME.c_str()))
@@ -212,11 +209,7 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* Check directory */
-  path_len= build_table_filename(path, sizeof(path), database_name.to_string().c_str(), "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
-
-  if (mkdir(path,0777) == -1)
+  if (mkdir(database_path.to_string().c_str(),0777) == -1)
   {
     if (errno == EEXIST)
     {
@@ -239,10 +232,10 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
     goto exit;
   }
 
-  error_erno= write_schema_file(path, *schema_message);
+  error_erno= write_schema_file(database_path, *schema_message);
   if (error_erno && error_erno != EEXIST)
   {
-    if (rmdir(path) >= 0)
+    if (rmdir(database_path.to_string().c_str()) >= 0)
     {
       error= true;
       goto exit;
@@ -269,8 +262,7 @@ bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_nam
   ReplicationServices &replication_services= ReplicationServices::singleton();
   long result=1;
   int error= 0;
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
+  DatabasePathName database_path(database_name);
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -294,11 +286,7 @@ bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_nam
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), database_name.to_string().c_str(), "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
-
-  error= write_schema_file(path, *schema_message);
+  error= write_schema_file(database_path, *schema_message);
   if (error && error != EEXIST)
   {
     /* TODO: find some witty way of getting back an error message */
