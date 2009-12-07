@@ -33,7 +33,6 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
-#include <drizzled/db.h>
 #include <drizzled/xid.h>
 
 #include <netdb.h>

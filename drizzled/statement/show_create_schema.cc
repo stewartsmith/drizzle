@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create_schema.h>
+#include <drizzled/db.h>
 
 #include <string>
 

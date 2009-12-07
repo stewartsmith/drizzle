@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
+#include <drizzled/db.h>
 
 #include <algorithm>
 

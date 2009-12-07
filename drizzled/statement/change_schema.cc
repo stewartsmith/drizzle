@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/change_schema.h>
+#include <drizzled/db.h>
 
 #include <string>
 

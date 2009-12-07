@@ -129,6 +129,7 @@
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
+#include <drizzled/db.h>
 
 using namespace drizzled;
 
