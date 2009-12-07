@@ -1578,7 +1578,10 @@ int main(int argc, char **argv)
   select_thread_in_use=1;
 
   if (chdir(drizzle_real_data_home) && !opt_help)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, "Data directory %s does not exist\n", drizzle_real_data_home);
     unireg_abort(1);
+  }
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
