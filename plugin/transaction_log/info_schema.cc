@@ -90,9 +90,9 @@ public:
 /*
  * Vectors of columns for I_S tables.
  */
-static vector<const plugin::ColumnInfo *> transaction_log_view_columns;
-static vector<const plugin::ColumnInfo *> transaction_log_entries_view_columns;
-static vector<const plugin::ColumnInfo *> transaction_log_transactions_view_columns;
+static vector<const plugin::ColumnInfo *> *transaction_log_view_columns= NULL;
+static vector<const plugin::ColumnInfo *> *transaction_log_entries_view_columns= NULL;
+static vector<const plugin::ColumnInfo *> *transaction_log_transactions_view_columns= NULL;
 
 /*
  * Methods for I_S tables.
@@ -537,17 +537,33 @@ static bool createTransactionLogTransactionsViewColumns(vector<const plugin::Col
 
 bool initViewColumns()
 {
-  if (createTransactionLogViewColumns(transaction_log_view_columns))
+  transaction_log_view_columns= new (nothrow) vector<const plugin::ColumnInfo *>;
+  if (transaction_log_view_columns == NULL)
+  {
+    return true;
+  }
+  transaction_log_entries_view_columns= new (nothrow) vector<const plugin::ColumnInfo *>;
+  if (transaction_log_entries_view_columns == NULL)
+  {
+    return true;
+  }
+  transaction_log_transactions_view_columns= new (nothrow) vector<const plugin::ColumnInfo *>;
+  if (transaction_log_transactions_view_columns == NULL)
   {
     return true;
   }
 
-  if (createTransactionLogEntriesViewColumns(transaction_log_entries_view_columns))
+  if (createTransactionLogViewColumns(*transaction_log_view_columns))
   {
     return true;
   }
 
-  if (createTransactionLogTransactionsViewColumns(transaction_log_transactions_view_columns))
+  if (createTransactionLogEntriesViewColumns(*transaction_log_entries_view_columns))
+  {
+    return true;
+  }
+
+  if (createTransactionLogTransactionsViewColumns(*transaction_log_transactions_view_columns))
   {
     return true;
   }
@@ -563,9 +579,12 @@ static void clearViewColumns(vector<const plugin::ColumnInfo *> &cols)
 
 void cleanupViewColumns()
 {
-  clearViewColumns(transaction_log_view_columns);
-  clearViewColumns(transaction_log_entries_view_columns);
-  clearViewColumns(transaction_log_transactions_view_columns);
+  clearViewColumns(*transaction_log_view_columns);
+  delete transaction_log_view_columns;
+  clearViewColumns(*transaction_log_entries_view_columns);
+  delete transaction_log_entries_view_columns;
+  clearViewColumns(*transaction_log_transactions_view_columns);
+  delete transaction_log_transactions_view_columns;
 }
 
 bool initViewMethods()
@@ -608,7 +627,7 @@ bool initViews()
 {
   transaction_log_view= 
     new (nothrow) plugin::InfoSchemaTable("TRANSACTION_LOG",
-                                          transaction_log_view_columns,
+                                          *transaction_log_view_columns,
                                           -1, -1, false, false, 0,
                                           transaction_log_view_methods);
   if (transaction_log_view == NULL)
@@ -621,7 +640,7 @@ bool initViews()
 
   transaction_log_entries_view= 
     new (nothrow) plugin::InfoSchemaTable("TRANSACTION_LOG_ENTRIES",
-                                          transaction_log_entries_view_columns,
+                                          *transaction_log_entries_view_columns,
                                           -1, -1, false, false, 0,
                                           transaction_log_entries_view_methods);
   if (transaction_log_entries_view == NULL)
@@ -634,7 +653,7 @@ bool initViews()
 
   transaction_log_transactions_view= 
     new (nothrow) plugin::InfoSchemaTable("TRANSACTION_LOG_TRANSACTIONS",
-                                          transaction_log_transactions_view_columns,
+                                          *transaction_log_transactions_view_columns,
                                           -1, -1, false, false, 0,
                                           transaction_log_transactions_view_methods);
   if (transaction_log_transactions_view == NULL)

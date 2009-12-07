@@ -31,8 +31,6 @@
 
 using namespace std;
 
-static const string engine_name("ARCHIVE");
-
 /*
   First, if you want to understand storage engines you should look at
   ha_example.cc and ha_example.h.
