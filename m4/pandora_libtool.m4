@@ -4,6 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([PANDORA_LIBTOOL],[
+  AC_REQUIRE([AC_DISABLE_STATIC])
   AC_REQUIRE([AC_PROG_LIBTOOL])
   m4_ifndef([LT_PREREQ],[
     pandora_have_old_libtool=yes
