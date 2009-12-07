@@ -722,30 +722,6 @@ err:
 }
 
 /**
-  Return true if db1_name is equal to db2_name, false otherwise.
-
-  The function allows to compare database names according to the MySQL
-  rules. The database names db1 and db2 are equal if:
-     - db1 is NULL and db2 is NULL;
-     or
-     - db1 is not-NULL, db2 is not-NULL, db1 is equal (ignoring case) to
-       db2 in system character set (UTF8).
-*/
-
-static inline bool
-cmp_db_names(const char *db1_name,
-             const char *db2_name)
-{
-  return
-         /* db1 is NULL and db2 is NULL */
-         (!db1_name && !db2_name) ||
-
-         /* db1 is not-NULL, db2 is not-NULL, db1 == db2. */
-         (db1_name && db2_name && my_strcasecmp(system_charset_info, db1_name, db2_name) == 0);
-}
-
-
-/**
   @brief Change the current database and its attributes unconditionally.
 
   @param session          thread handle
