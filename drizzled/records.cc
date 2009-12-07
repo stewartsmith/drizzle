@@ -19,10 +19,14 @@
   @brief
   Functions for easy reading of records, possible through a cache
 */
-#include <drizzled/server_includes.h>
-#include <drizzled/error.h>
-#include <drizzled/table.h>
-#include <drizzled/session.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/error.h"
+#include "drizzled/table.h"
+#include "drizzled/session.h"
+#include "drizzled/records.h"
+#include "drizzled/optimizer/range.h"
+
+using namespace drizzled;
 
 int rr_sequential(READ_RECORD *info);
 static int rr_quick(READ_RECORD *info);
@@ -36,21 +40,6 @@ static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(READ_RECORD *info);
 static int rr_index(READ_RECORD *info);
 
-/**
-  Initialize READ_RECORD structure to perform full index scan (in forward
-  direction) using read_record.read_record() interface.
-
-    This function has been added at late stage and is used only by
-    UPDATE/DELETE. Other statements perform index scans using
-    join_read_first/next functions.
-
-  @param info         READ_RECORD structure to initialize.
-  @param session          Thread handle
-  @param table        Table to be accessed
-  @param print_error  If true, call table->print_error() if an error
-                      occurs (except for end-of-records error)
-  @param idx          index to scan
-*/
 void init_read_record_idx(READ_RECORD *info, 
                           Session *, 
                           Table *table,
@@ -71,78 +60,11 @@ void init_read_record_idx(READ_RECORD *info,
   info->read_record= rr_index_first;
 }
 
-/*
-  init_read_record is used to scan by using a number of different methods.
-  Which method to use is set-up in this call so that later calls to
-  the info->read_record will call the appropriate method using a function
-  pointer.
 
-  There are five methods that relate completely to the sort function
-  filesort. The result of a filesort is retrieved using read_record
-  calls. The other two methods are used for normal table access.
-
-  The filesort will produce references to the records sorted, these
-  references can be stored in memory or in a temporary cursor.
-
-  The temporary cursor is normally used when the references doesn't fit into
-  a properly sized memory buffer. For most small queries the references
-  are stored in the memory buffer.
-
-  The temporary cursor is also used when performing an update where a key is
-  modified.
-
-  Methods used when ref's are in memory (using rr_from_pointers):
-    rr_unpack_from_buffer:
-    ----------------------
-      This method is used when table->sort.addon_field is allocated.
-      This is allocated for most SELECT queries not involving any BLOB's.
-      In this case the records are fetched from a memory buffer.
-    rr_from_pointers:
-    -----------------
-      Used when the above is not true, UPDATE, DELETE and so forth and
-      SELECT's involving BLOB's. It is also used when the addon_field
-      buffer is not allocated due to that its size was bigger than the
-      session variable max_length_for_sort_data.
-      In this case the record data is fetched from the handler using the
-      saved reference using the rnd_pos handler call.
-
-  Methods used when ref's are in a temporary cursor (using rr_from_tempfile)
-    rr_unpack_from_tempfile:
-    ------------------------
-      Same as rr_unpack_from_buffer except that references are fetched from
-      temporary cursor. Should obviously not really happen other than in
-      strange configurations.
-
-    rr_from_tempfile:
-    -----------------
-      Same as rr_from_pointers except that references are fetched from
-      temporary cursor instead of from
-    rr_from_cache:
-    --------------
-      This is a special variant of rr_from_tempfile that can be used for
-      handlers that is not using the HA_FAST_KEY_READ table flag. Instead
-      of reading the references one by one from the temporary cursor it reads
-      a set of them, sorts them and reads all of them into a buffer which
-      is then used for a number of subsequent calls to rr_from_cache.
-      It is only used for SELECT queries and a number of other conditions
-      on table size.
-
-  All other accesses use either index access methods (rr_quick) or a full
-  table scan (rr_sequential).
-  rr_quick:
-  ---------
-    rr_quick uses one of the QUICK_SELECT classes in opt_range.cc to
-    perform an index scan. There are loads of functionality hidden
-    in these quick classes. It handles all index scans of various kinds.
-  rr_sequential:
-  --------------
-    This is the most basic access method of a table using rnd_init,
-    rnd_next and rnd_end. No indexes are used.
-*/
 void init_read_record(READ_RECORD *info,
                       Session *session, 
                       Table *table,
-                      SQL_SELECT *select,
+                      optimizer::SQL_SELECT *select,
                       int use_record_cache, 
                       bool print_error)
 {
@@ -191,7 +113,7 @@ void init_read_record(READ_RECORD *info,
     */
     if (!table->sort.addon_field &&
         session->variables.read_rnd_buff_size &&
-        !(table->cursor->ha_table_flags() & HA_FAST_KEY_READ) &&
+        !(table->cursor->getEngine()->check_flag(HTON_BIT_FAST_KEY_READ)) &&
         (table->db_stat & HA_READ_ONLY ||
         table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
         (uint64_t) table->s->reclength* (table->cursor->stats.records+
@@ -223,20 +145,19 @@ void init_read_record(READ_RECORD *info,
   }
   else
   {
-    info->read_record=rr_sequential;
+    info->read_record= rr_sequential;
     table->cursor->ha_rnd_init(1);
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
         (use_record_cache > 0 ||
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
-        !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
-        (use_record_cache < 0 &&
-          !(table->cursor->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
+        !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD)))
       table->cursor->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
 
   return;
 } /* init_read_record */
+
 
 void end_read_record(READ_RECORD *info)
 {                   /* free cache if used */

@@ -32,6 +32,7 @@
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/sql_parse.h"
+#include "drizzled/plugin.h"
 
 /* Forward declarations */
 class String;
@@ -51,7 +52,7 @@ namespace plugin
 class Table;
 typedef class Item COND;
 
-typedef struct st_mysql_show_var SHOW_VAR;
+typedef drizzle_show_var SHOW_VAR;
 typedef struct system_status_var STATUS_VAR;
 
 typedef struct st_lookup_field_values
@@ -61,16 +62,16 @@ typedef struct st_lookup_field_values
 } LOOKUP_FIELD_VALUES;
 
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
-                                  LOOKUP_FIELD_VALUES *lookup_field_vals);
+                                  LOOKUP_FIELD_VALUES *lookup_field_vals,
+                                  drizzled::plugin::InfoSchemaTable *schema_table);
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
-                             LOOKUP_FIELD_VALUES *lookup_field_values);
+                             LOOKUP_FIELD_VALUES *lookup_field_values,
+                             drizzled::plugin::InfoSchemaTable *schema_table);
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 SHOW_VAR *getFrontOfStatusVars();
 
-int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO  *create_info_arg);
-
-bool schema_table_store_record(Session *session, Table *table);
+int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
 int get_quote_char_for_identifier();
 int wild_case_compare(const CHARSET_INFO * const cs, 
@@ -78,14 +79,12 @@ int wild_case_compare(const CHARSET_INFO * const cs,
 
 bool make_schema_select(Session *session,  Select_Lex *sel,
                         const std::string& schema_table_name);
-bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
-bool get_schema_tables_result(JOIN *join, enum enum_schema_table_state executed_place);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);
 void mysqld_list_fields(Session *session,TableList *table, const char *wild);
 int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
-bool drizzled_show_create(Session *session, TableList *table_list);
+bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
 bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists);
 
 int mysqld_show_status(Session *session);

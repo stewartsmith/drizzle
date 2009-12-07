@@ -24,13 +24,16 @@
  */
 
 #include "drizzled/server_includes.h"
+
+#include <vector>
+
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/plugin/library.h"
 
 #include "helper_methods.h"
 #include "modules.h"
 
-#include <vector>
 
 using namespace drizzled;
 using namespace std;
@@ -71,56 +74,49 @@ vector<const plugin::ColumnInfo *> *ModulesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Name",
-                                            SKIP_OPEN_TABLE));
+                                            "Name"));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_VERSION",
                                             20,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_AUTHOR",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("IS_BUILTIN",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_LIBRARY",
                                             65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_DESCRIPTION",
                                             65535,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            SKIP_OPEN_TABLE));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("MODULE_LICENSE",
                                             80,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "License",
-                                            SKIP_OPEN_TABLE));
+                                            "License"));
   return columns;
 }
 
@@ -164,9 +160,22 @@ class ShowModules : public unary_function<drizzled::plugin::Module *, bool>
 {
   Session *session;
   Table *table;
+  plugin::InfoSchemaTable *schema_table;
+
+  const string LICENSE_GPL_STRING;
+  const string LICENSE_BSD_STRING;
+  const string LICENSE_LGPL_STRING;
+  const string LICENSE_PROPRIETARY_STRING;
+
 public:
-  ShowModules(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
+  ShowModules(Session *session_arg, Table *table_arg,
+              plugin::InfoSchemaTable *sch_tab_arg)
+    : session(session_arg), table(table_arg), schema_table(sch_tab_arg),
+      LICENSE_GPL_STRING("GPL"),
+      LICENSE_BSD_STRING("BSD"),
+      LICENSE_LGPL_STRING("LGPL"),
+      LICENSE_PROPRIETARY_STRING("PROPRIETARY")
+  {}
 
   result_type operator() (argument_type module)
   {
@@ -174,6 +183,13 @@ public:
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+    table->setWriteSet(2);
+    table->setWriteSet(3);
+    table->setWriteSet(4);
+    table->setWriteSet(5);
+    table->setWriteSet(6);
 
     table->field[0]->store(module->getName().c_str(),
                            module->getName().size(), cs);
@@ -204,8 +220,8 @@ public:
     else
     {
       table->field[3]->store(STRING_WITH_LEN("NO"),cs);
-      table->field[4]->store(module->plugin_dl->dl.str,
-                             module->plugin_dl->dl.length, cs);
+      table->field[4]->store(module->plugin_dl->getName().c_str(),
+                             module->plugin_dl->getName().size(), cs);
     }
 
     if (manifest.descr)
@@ -220,37 +236,38 @@ public:
 
     switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      table->field[6]->store(drizzled::plugin::LICENSE_GPL_STRING.c_str(),
-                             drizzled::plugin::LICENSE_GPL_STRING.size(), cs);
+      table->field[6]->store(LICENSE_GPL_STRING.c_str(),
+                             LICENSE_GPL_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_BSD:
-      table->field[6]->store(drizzled::plugin::LICENSE_BSD_STRING.c_str(),
-                             drizzled::plugin::LICENSE_BSD_STRING.size(), cs);
+      table->field[6]->store(LICENSE_BSD_STRING.c_str(),
+                             LICENSE_BSD_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_LGPL:
-      table->field[6]->store(drizzled::plugin::LICENSE_LGPL_STRING.c_str(),
-                             drizzled::plugin::LICENSE_LGPL_STRING.size(), cs);
+      table->field[6]->store(LICENSE_LGPL_STRING.c_str(),
+                             LICENSE_LGPL_STRING.size(), cs);
       break;
     default:
-      table->field[6]->store(drizzled::plugin::LICENSE_PROPRIETARY_STRING.c_str(),
-                             drizzled::plugin::LICENSE_PROPRIETARY_STRING.size(),
+      table->field[6]->store(LICENSE_PROPRIETARY_STRING.c_str(),
+                             LICENSE_PROPRIETARY_STRING.size(),
                              cs);
       break;
     }
     table->field[6]->set_notnull();
 
-    return schema_table_store_record(session, table);
+    schema_table->addRow(table->record[0], table->s->reclength);
+    return false;
   }
 };
 
-int ModulesISMethods::fillTable(Session *session, TableList *tables)
+int ModulesISMethods::fillTable(Session *session, 
+                                Table *table,
+                                plugin::InfoSchemaTable *schema_table)
 {
-  Table *table= tables->table;
-
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   vector<drizzled::plugin::Module *> modules= registry.getList(true);
   vector<drizzled::plugin::Module *>::iterator iter=
-    find_if(modules.begin(), modules.end(), ShowModules(session, table));
+    find_if(modules.begin(), modules.end(), ShowModules(session, table, schema_table));
   if (iter != modules.end())
   {
     return 1;

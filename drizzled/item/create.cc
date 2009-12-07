@@ -97,13 +97,11 @@
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/sign.h>
-#include <drizzled/function/signed.h>
 #include <drizzled/function/math/sin.h>
 #include <drizzled/function/math/sqrt.h>
 #include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
-#include <drizzled/function/unsigned.h>
 
 #include <map>
 
@@ -2846,12 +2844,6 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
   switch (cast_type) {
   case ITEM_CAST_BINARY:
     res= new (session->mem_root) Item_func_binary(a);
-    break;
-  case ITEM_CAST_SIGNED_INT:
-    res= new (session->mem_root) Item_func_signed(a);
-    break;
-  case ITEM_CAST_UNSIGNED_INT:
-    res= new (session->mem_root) Item_func_unsigned(a);
     break;
   case ITEM_CAST_DATE:
     res= new (session->mem_root) Item_date_typecast(a);

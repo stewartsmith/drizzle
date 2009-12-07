@@ -313,9 +313,9 @@ bool mysql_insert(Session *session,TableList *table_list,
     to NULL.
   */
   session->count_cuted_fields= ((values_list.elements == 1 &&
-                             !ignore) ?
-			    CHECK_FIELD_ERROR_FOR_NULL :
-			    CHECK_FIELD_WARN);
+                                 !ignore) ?
+                                CHECK_FIELD_ERROR_FOR_NULL :
+                                CHECK_FIELD_WARN);
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
@@ -341,7 +341,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     if (fields.elements || !value_count)
     {
       table->restoreRecordAsDefault();	// Get empty record
-      if (fill_record(session, fields, *values, 0))
+      if (fill_record(session, fields, *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -359,18 +359,9 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
     else
     {
-      if (session->used_tables)			// Column used in values()
-	table->restoreRecordAsDefault();	// Get empty record
-      else
-      {
-        /*
-          Fix delete marker. No need to restore rest of record since it will
-          be overwritten by fill_record() anyway (and fill_record() does not
-          use default values in this case).
-        */
-	table->record[0][0]= table->s->default_values[0];
-      }
-      if (fill_record(session, table->field, *values, 0))
+      table->restoreRecordAsDefault();	// Get empty record
+
+      if (fill_record(session, table->field, *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -768,7 +759,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           key_nr == table->s->next_number_index &&
 	  (insert_id_for_cur_row > 0))
 	goto err;
-      if (table->cursor->ha_table_flags() & HA_DUPLICATE_POS)
+      if (table->cursor->getEngine()->check_flag(HTON_BIT_DUPLICATE_POS))
       {
 	if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
 	  goto err;
@@ -817,7 +808,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->cursor->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
+        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
@@ -1296,9 +1287,9 @@ bool select_insert::send_data(List<Item> &values)
 void select_insert::store_values(List<Item> &values)
 {
   if (fields->elements)
-    fill_record(session, *fields, values, 1);
+    fill_record(session, *fields, values, true);
   else
-    fill_record(session, table->field, values, 1);
+    fill_record(session, table->field, values, true);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
@@ -1458,6 +1449,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      message::Table *table_proto,
                                       AlterInfo *alter_info,
                                       List<Item> *items,
+                                      bool is_if_not_exists,
                                       DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'CreateField()'
@@ -1470,11 +1462,13 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
+  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
+
+  if (!(lex_identified_temp_table) &&
       create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
-    if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+    if (is_if_not_exists)
     {
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -1522,6 +1516,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     alter_info->create_list.push_back(cr_field);
   }
 
+  TableIdentifier identifier(create_table->db,
+                             create_table->table_name,
+                             lex_identified_temp_table ?  TEMP_TABLE :
+                             NO_TMP_TABLE);
+
+
   /*
     Create and lock table.
 
@@ -1530,15 +1530,17 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     should not cause deadlocks or races.
   */
   {
-    if (!mysql_create_table_no_lock(session, create_table->db,
-                                    create_table->table_name,
+    if (!mysql_create_table_no_lock(session,
+                                    identifier,
                                     create_info,
 				    table_proto,
-				    alter_info, false,
-                                    select_field_count))
+				    alter_info,
+                                    false,
+                                    select_field_count,
+                                    is_if_not_exists))
     {
       if (create_info->table_existed &&
-          !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
+          !(lex_identified_temp_table))
       {
         /*
           This means that someone created table underneath server
@@ -1549,13 +1551,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         return NULL;
       }
 
-      if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
+      if (!(lex_identified_temp_table))
       {
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
         {
-          quick_rm_table(*session, create_table->db,
-                         create_table->table_name, false);
+          quick_rm_table(*session, identifier);
         }
         else
           table= create_table->table;
@@ -1602,6 +1603,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
+  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
+
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
     For row-based replication, the CREATE-SELECT statement is written
@@ -1633,6 +1636,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   if (!(table= create_table_from_items(session, create_info, create_table,
 				       table_proto,
                                        alter_info, &values,
+                                       is_if_not_exists,
                                        &extra_lock)))
     return(-1);				// abort() deletes table
 
@@ -1640,7 +1644,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   {
     assert(m_plock == NULL);
 
-    if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
+    if (lex_identified_temp_table)
       m_plock= &m_lock;
     else
       m_plock= &session->extra_lock;
@@ -1684,7 +1688,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
 void select_create::store_values(List<Item> &values)
 {
-  fill_record(session, field, values, 1);
+  fill_record(session, field, values, true);
 }
 
 

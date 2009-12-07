@@ -93,7 +93,7 @@ struct hash {
 template <>
 struct hash<const char*> {
   // Dummy, just to make derivative hash functions compile.
-  int operator()(const char* key) {
+  int operator()(const char*) {
     assert(0);
     return 0;
   }
@@ -107,12 +107,21 @@ template <typename Key, typename Data,
           typename HashFcn = hash<Key>,
           typename EqualKey = int >
 class hash_map : public std::map<Key, Data, HashFcn> {
+
+  void rehash(size_t buckets_in)
+  {
+    resize(buckets_in);
+  }
 };
 
 template <typename Key,
           typename HashFcn = hash<Key>,
           typename EqualKey = int >
 class hash_set : public std::set<Key, HashFcn> {
+  void rehash(size_t buckets_in)
+  {
+    resize(buckets_in);
+  }
 };
 
 #elif defined(_MSC_VER) && !defined(_STLPORT_VERSION)
@@ -140,6 +149,15 @@ template <typename Key, typename Data,
           typename EqualKey = int >
 class hash_map : public HASH_NAMESPACE::HASH_MAP_CLASS<
     Key, Data, HashFcn> {
+#if !defined(HASH_MAP_HAS_REHASH)
+public:
+  void rehash(size_t buckets_in)
+  {
+# if defined(HASH_MAP_HAS_RESIZE)
+    resize(buckets_in);
+# endif /* HASH_MAP_HAS_RESIZE */
+  }
+#endif /* HASH_MAP_HAS_REHASH */
 };
 
 template <typename Key,
@@ -147,6 +165,15 @@ template <typename Key,
           typename EqualKey = int >
 class hash_set : public HASH_NAMESPACE::HASH_SET_CLASS<
     Key, HashFcn> {
+#if !defined(HASH_MAP_HAS_REHASH)
+public:
+  void rehash(size_t buckets_in)
+  {
+# if defined(HASH_MAP_HAS_RESIZE)
+    resize(buckets_in);
+# endif /* HASH_MAP_HAS_RESIZE */
+  }
+#endif /* HASH_MAP_HAS_REHASH */
 };
 
 #else
@@ -171,6 +198,15 @@ template <typename Key, typename Data,
           typename EqualKey = std::equal_to<Key> >
 class hash_map : public HASH_NAMESPACE::HASH_MAP_CLASS<
     Key, Data, HashFcn, EqualKey> {
+#if !defined(HASH_MAP_HAS_REHASH)
+public:
+  void rehash(size_t buckets_in)
+  {
+# if defined(HASH_MAP_HAS_RESIZE)
+    HASH_NAMESPACE::HASH_MAP_CLASS<Key, Data, HashFcn, EqualKey>::resize(buckets_in);
+# endif /* HASH_MAP_HAS_RESIZE */
+  }
+#endif /* HASH_MAP_HAS_REHASH */
 };
 
 template <typename Key,
@@ -178,6 +214,15 @@ template <typename Key,
           typename EqualKey = std::equal_to<Key> >
 class hash_set : public HASH_NAMESPACE::HASH_SET_CLASS<
     Key, HashFcn, EqualKey> {
+#if !defined(HASH_MAP_HAS_REHASH)
+public:
+  void rehash(size_t buckets_in)
+  {
+# if defined(HASH_MAP_HAS_RESIZE)
+    HASH_NAMESPACE::HASH_SET_CLASS<Key, HashFcn, EqualKey>::resize(buckets_in);
+# endif /* HASH_MAP_HAS_RESIZE */
+  }
+#endif /* HASH_MAP_HAS_REHASH */
 };
 
 #endif

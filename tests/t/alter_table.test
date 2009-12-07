@@ -383,10 +383,10 @@ use test;
 drop table t1;
 
 #
-# BUG#23404 - ROW_FORMAT=FIXED option is lost is an index is added to the
+# BUG#23404 - ROW_FORMAT=COMPACT option is lost is an index is added to the
 # table
 #
-CREATE TABLE t1(a INT) ROW_FORMAT=FIXED;
+CREATE TABLE t1(a INT) ROW_FORMAT=COMPACT;
 CREATE INDEX i1 ON t1(a);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 SHOW CREATE TABLE t1;
@@ -491,7 +491,7 @@ drop table t1;
 # Bug#25262 Auto Increment lost when changing Engine type
 #
 
-create TEMPORARY table t1(id int primary key auto_increment) engine=heap;
+create TEMPORARY table t1(id int primary key auto_increment) engine=MEMORY;
 
 insert into t1 values (null);
 insert into t1 values (null);
@@ -508,8 +508,8 @@ alter table t1 engine = myisam;
 insert into t1 values (null);
 select * from t1;
 
-# Alter to heap again
-alter table t1 engine = heap;
+# Alter to MEMORY again
+alter table t1 engine = MEMORY;
 insert into t1 values (null);
 select * from t1;
 

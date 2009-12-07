@@ -408,7 +408,7 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     key is not updated
   */
   if (idx != table->s->primary_key && table->s->primary_key < MAX_KEY &&
-      (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX))
+      (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
     return is_key_used(table, table->s->primary_key, fields);
   return 0;
 }
@@ -543,14 +543,4 @@ next_loop:
     key_part++;
   } while (!result && ++i < key_parts);
   return(result);
-}
-
-Key::Key(const Key &rhs, MEM_ROOT *mem_root)
-  :type(rhs.type),
-  key_create_info(rhs.key_create_info),
-  columns(rhs.columns, mem_root),
-  name(rhs.name),
-  generated(rhs.generated)
-{
-  list_copy_and_replace_each_value(columns, mem_root);
 }

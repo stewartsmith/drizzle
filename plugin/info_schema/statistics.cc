@@ -72,128 +72,112 @@ vector<const plugin::ColumnInfo *> *StatisticsIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("TABLE_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
   
   columns->push_back(new plugin::ColumnInfo("TABLE_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Table",
-                                            OPEN_FRM_ONLY));
+                                            "Table"));
 
   columns->push_back(new plugin::ColumnInfo("NON_UNIQUE",
                                             1,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Non_unique",
-                                            OPEN_FRM_ONLY));
+                                            "Non_unique"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_SCHEMA",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "",
-                                            OPEN_FRM_ONLY));
+                                            ""));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Key_name",
-                                            OPEN_FRM_ONLY));
+                                            "Key_name"));
 
   columns->push_back(new plugin::ColumnInfo("SEQ_IN_INDEX",
                                             2,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Seq_in_index",
-                                            OPEN_FRM_ONLY));
+                                            "Seq_in_index"));
 
   columns->push_back(new plugin::ColumnInfo("COLUMN_NAME",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Column_name",
-                                            OPEN_FRM_ONLY));
+                                            "Column_name"));
 
   columns->push_back(new plugin::ColumnInfo("COLLATION",
                                             1,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Collation",
-                                            OPEN_FRM_ONLY));
+                                            "Collation"));
 
   columns->push_back(new plugin::ColumnInfo("CARDINALITY",
                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             1,
-                                            "Cardinality",
-                                            OPEN_FULL_TABLE));
+                                            "Cardinality"));
 
   columns->push_back(new plugin::ColumnInfo("SUB_PART",
                                             3,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             1,
-                                            "Sub_part",
-                                            OPEN_FRM_ONLY));
+                                            "Sub_part"));
 
   columns->push_back(new plugin::ColumnInfo("PACKED",
                                             10,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Packed",
-                                            OPEN_FRM_ONLY));
+                                            "Packed"));
 
   columns->push_back(new plugin::ColumnInfo("NULLABLE",
                                             3,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Null",
-                                            OPEN_FRM_ONLY));
+                                            "Null"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_TYPE",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Index_type",
-                                            OPEN_FULL_TABLE));
+                                            "Index_type"));
 
   columns->push_back(new plugin::ColumnInfo("COMMENT",
                                             16,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             1,
-                                            "Comment",
-                                            OPEN_FRM_ONLY));
+                                            "Comment"));
 
   columns->push_back(new plugin::ColumnInfo("INDEX_COMMENT",
                                             INDEX_COMMENT_MAXLEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Index_Comment",
-                                            OPEN_FRM_ONLY));
+                                            "Index_Comment"));
 
   return columns;
 }
@@ -235,12 +219,13 @@ void StatisticsIS::cleanup()
   delete columns;
 }
 
-int StatsISMethods::processTable(Session *session, 
+int StatsISMethods::processTable(plugin::InfoSchemaTable *store_table,
+                                 Session *session, 
                                  TableList *tables,
                                  Table *table, 
                                  bool res,
                                  LEX_STRING *db_name,
-                                 LEX_STRING *table_name) const
+                                 LEX_STRING *table_name)
 {
   const CHARSET_INFO * const cs= system_charset_info;
   if (res)
@@ -280,6 +265,19 @@ int StatsISMethods::processTable(Session *session,
       for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
       {
         table->restoreRecordAsDefault();
+        table->setWriteSet(1);
+        table->setWriteSet(2);
+        table->setWriteSet(3);
+        table->setWriteSet(4);
+        table->setWriteSet(5);
+        table->setWriteSet(6);
+        table->setWriteSet(8);
+        table->setWriteSet(9);
+        table->setWriteSet(10);
+        table->setWriteSet(12);
+        table->setWriteSet(13);
+        table->setWriteSet(14);
+        table->setWriteSet(15);
         table->field[1]->store(db_name->str, db_name->length, cs);
         table->field[2]->store(table_name->str, table_name->length, cs);
         table->field[3]->store((int64_t) ((key_info->flags &
@@ -292,7 +290,7 @@ int StatsISMethods::processTable(Session *session,
         table->field[7]->store(str, strlen(str), cs);
         if (show_table->cursor)
         {
-          if (show_table->cursor->index_flags(i, j, 0) & HA_READ_ORDER)
+          if (show_table->index_flags(i) & HA_READ_ORDER)
           {
             table->field[8]->store(((key_part->key_part_flag &
                                      HA_REVERSE_SORT) ?
@@ -337,10 +335,7 @@ int StatsISMethods::processTable(Session *session,
           table->field[15]->store(key_info->comment.str,
                                   key_info->comment.length, cs);
         }
-        if (schema_table_store_record(session, table))
-        {
-          return 1;
-        }
+        store_table->addRow(table->record[0], table->s->reclength);
       }
     }
   }

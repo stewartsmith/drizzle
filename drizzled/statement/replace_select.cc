@@ -35,8 +35,8 @@ bool statement::ReplaceSelect::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   Select_Lex_Unit *unit= &session->lex->unit;
   select_result *sel_result= NULL;
-  bool res= false;
-  bool need_start_waiting= false;
+  bool res;
+  bool need_start_waiting;
 
   if (insert_precheck(session, all_tables))
   {

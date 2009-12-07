@@ -21,7 +21,7 @@
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
-#include <drizzled/name_map.h>
+#include "drizzled/hash.h"
 #include "drizzled/plugin/function.h"
 
 using namespace std;
@@ -29,14 +29,27 @@ using namespace std;
 namespace drizzled
 {
 
-NameMap<const plugin::Function *> udf_registry;
+typedef hash_map<string, const plugin::Function *> UdfMap;
+static UdfMap udf_registry;
 
 bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
-  if (udf_registry.add(udf))
+  string lower_name(udf->getName());
+  transform(lower_name.begin(), lower_name.end(),
+            lower_name.begin(), ::tolower);
+  if (udf_registry.find(lower_name) != udf_registry.end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("Could not add Function!"));
+                  _("A function named %s already exists!\n"),
+                  udf->getName().c_str());
+    return true;
+  }
+  pair<UdfMap::iterator, bool> ret=
+    udf_registry.insert(make_pair(lower_name, udf));
+  if (ret.second == false)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Could not add Function!\n"));
     return true;
   }
   return false;
@@ -45,12 +58,23 @@ bool plugin::Function::addPlugin(const plugin::Function *udf)
 
 void plugin::Function::removePlugin(const plugin::Function *udf)
 {
-  udf_registry.remove(udf);
+  string lower_name(udf->getName());
+  transform(lower_name.begin(), lower_name.end(),
+            lower_name.begin(), ::tolower);
+  udf_registry.erase(lower_name);
 }
 
 const plugin::Function *plugin::Function::get(const char *name, size_t length)
 {
-  return udf_registry.find(name, length);
+  string lower_name(name, length);
+  transform(lower_name.begin(), lower_name.end(),
+            lower_name.begin(), ::tolower);
+  UdfMap::iterator iter= udf_registry.find(lower_name);
+  if (iter == udf_registry.end())
+  {
+    return NULL;
+  }
+  return (*iter).second;
 }
 
 } /* namespace drizzled */

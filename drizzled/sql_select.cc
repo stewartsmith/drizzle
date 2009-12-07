@@ -30,7 +30,6 @@
 #include <vector>
 
 #include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/table_map_iterator.h"
 
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
@@ -52,12 +51,14 @@
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/records.h"
 
 #include "drizzled/sql_union.h"
 #include "drizzled/optimizer/key_field.h"
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/sargable_param.h"
 #include "drizzled/optimizer/key_use.h"
+#include "drizzled/optimizer/range.h"
 
 using namespace std;
 using namespace drizzled;
@@ -474,7 +475,7 @@ static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *
   Create JoinTableS, make a guess about the table types,
   Approximate how many records will be used in each table
 *****************************************************************************/
-ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit)
+ha_rows get_quick_record_count(Session *session, optimizer::SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit)
 {
   int error;
   if (check_stack_overrun(session, STACK_MIN_SIZE, NULL))
@@ -4533,7 +4534,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
         the primary key as a suffix.
       */
       if (!on_primary_key &&
-          (table->cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
+          (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
           table->s->primary_key != MAX_KEY)
       {
         on_primary_key= true;
@@ -4567,7 +4568,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
   }
   *used_key_parts= on_primary_key ? table->key_info[idx].key_parts :
     (uint32_t) (key_part - table->key_info[idx].key_part);
-  if (reverse == -1 && !(table->cursor->index_flags(idx, *used_key_parts-1, 1) &
+  if (reverse == -1 && !(table->index_flags(idx) &
                          HA_READ_PREV))
     reverse= 0;                                 // Index can't be used
   return(reverse);
@@ -4790,9 +4791,9 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
   int order_direction;
   uint32_t used_key_parts;
   Table *table=tab->table;
-  SQL_SELECT *select=tab->select;
+  optimizer::SQL_SELECT *select= tab->select;
   key_map usable_keys;
-  QUICK_SELECT_I *save_quick= 0;
+  optimizer::QUICK_SELECT_I *save_quick= NULL;
 
   /*
     Keys disabled by ALTER Table ... DISABLE KEYS should have already
@@ -4822,7 +4823,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     if (tab->type == AM_REF_OR_NULL)
       return(0);
   }
-  else if (select && select->quick)		// Range found by opt_range
+  else if (select && select->quick)		// Range found by optimizer/range
   {
     int quick_type= select->quick->get_type();
     save_quick= select->quick;
@@ -4832,9 +4833,9 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       by clustered PK values.
     */
 
-    if (quick_type == QUICK_SELECT_I::QS_TYPE_INDEX_MERGE ||
-        quick_type == QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-        quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT)
+    if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE ||
+        quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
+        quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT)
       return(0);
     ref_key=	   select->quick->index;
     ref_key_parts= select->quick->used_key_parts;
@@ -5151,15 +5152,15 @@ check_reverse_order:
         Don't reverse the sort order, if it's already done.
         (In some cases test_if_order_by_key() can be called multiple times
       */
-      if (!select->quick->reverse_sorted())
+      if (! select->quick->reverse_sorted())
       {
-        QUICK_SELECT_DESC *tmp;
+        optimizer::QUICK_SELECT_DESC *tmp= NULL;
         bool error= false;
         int quick_type= select->quick->get_type();
-        if (quick_type == QUICK_SELECT_I::QS_TYPE_INDEX_MERGE ||
-            quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
-            quick_type == QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-            quick_type == QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
+        if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE ||
+            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
+            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
+            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
         {
           tab->limit= 0;
           select->quick= save_quick;
@@ -5167,8 +5168,8 @@ check_reverse_order:
         }
 
         /* order_st BY range_key DESC */
-        tmp= new QUICK_SELECT_DESC((QUICK_RANGE_SELECT*)(select->quick),
-                                          used_key_parts, &error);
+        tmp= new optimizer::QUICK_SELECT_DESC((optimizer::QUICK_RANGE_SELECT*)(select->quick),
+                                              used_key_parts, &error);
         if (!tmp || error)
         {
           delete tmp;
@@ -5230,7 +5231,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   uint32_t length= 0;
   ha_rows examined_rows;
   Table *table;
-  SQL_SELECT *select;
+  optimizer::SQL_SELECT *select= NULL;
   JoinTable *tab;
 
   if (join->tables == join->const_tables)
@@ -5247,7 +5248,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   */
   if ((order != join->group_list ||
        !(join->select_options & SELECT_BIG_RESULT) ||
-       (select && select->quick && (select->quick->get_type() == QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX))) &&
+       (select && select->quick && (select->quick->get_type() == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX))) &&
       test_if_skip_sort_order(tab,order,select_limit,0,
                               is_order_by ?  &table->keys_in_use_for_order_by :
                               &table->keys_in_use_for_group_by))
@@ -5287,16 +5288,15 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
         For impossible ranges (like when doing a lookup on NULL on a NOT NULL
         field, quick will contain an empty record set.
       */
-      if (!(select->quick= (get_quick_select_for_ref(session, table, &tab->ref,
-                                                     tab->found_records))))
+      if (! (select->quick= (optimizer::get_quick_select_for_ref(session, 
+                                                                 table, 
+                                                                 &tab->ref,
+                                                                 tab->found_records))))
+      {
         goto err;
+      }
     }
   }
-
-  /* Fill schema tables with data before filesort if it's necessary */
-  if ((join->select_lex->options & OPTION_SCHEMA_TABLE) &&
-      get_schema_tables_result(join, PROCESSED_BY_CREATE_SORT_INDEX))
-    goto err;
 
   if (table->s->tmp_table)
     table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
@@ -6660,7 +6660,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     {
       JoinTable *tab=join->join_tab+i;
       Table *table=tab->table;
-      TableList *table_list= tab->table->pos_in_table_list;
       char buff[512];
       char buff1[512], buff2[512], buff3[512];
       char keylen_str_buf[64];
@@ -6686,9 +6685,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       if (tab->type == AM_ALL && tab->select && tab->select->quick)
       {
         quick_type= tab->select->quick->get_type();
-        if ((quick_type == QUICK_SELECT_I::QS_TYPE_INDEX_MERGE) ||
-            (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT) ||
-            (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_UNION))
+        if ((quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE) ||
+            (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT) ||
+            (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION))
           tab->type = AM_INDEX_MERGE;
         else
 	  tab->type = AM_RANGE;
@@ -6777,72 +6776,38 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        if (table_list->schema_table && 
-            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
-        {
-          if (table_list->has_db_lookup_value)
-          {
-            int f_idx= table_list->schema_table->getFirstColumnIndex();
-            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
-            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
-          }
-          if (table_list->has_table_lookup_value)
-          {
-            if (table_list->has_db_lookup_value)
-              tmp2.append(',');
-            int f_idx= table_list->schema_table->getSecondColumnIndex();
-            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
-            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
-          }
-          if (tmp2.length())
-            item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
-          else
-            item_list.push_back(item_null);
-        }
-        else
-          item_list.push_back(item_null);
+        item_list.push_back(item_null);
 	item_list.push_back(item_null);
 	item_list.push_back(item_null);
       }
 
       /* Add "rows" field to item_list. */
-      if (table_list->schema_table)
-      {
-        /* in_rows */
-        if (join->session->lex->describe & DESCRIBE_EXTENDED)
-          item_list.push_back(item_null);
-        /* rows */
-        item_list.push_back(item_null);
-      }
+      double examined_rows;
+      if (tab->select && tab->select->quick)
+        examined_rows= rows2double(tab->select->quick->records);
+      else if (tab->type == AM_NEXT || tab->type == AM_ALL)
+        examined_rows= rows2double(tab->limit ? tab->limit :
+            tab->table->cursor->records());
       else
       {
-        double examined_rows;
-        if (tab->select && tab->select->quick)
-          examined_rows= rows2double(tab->select->quick->records);
-        else if (tab->type == AM_NEXT || tab->type == AM_ALL)
-          examined_rows= rows2double(tab->limit ? tab->limit :
-                                     tab->table->cursor->records());
-        else
+        optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
+        examined_rows= cur_pos.getFanout();
+      }
+
+      item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
+            MY_INT64_NUM_DECIMAL_DIGITS));
+
+      /* Add "filtered" field to item_list. */
+      if (join->session->lex->describe & DESCRIBE_EXTENDED)
+      {
+        float f= 0.0;
+        if (examined_rows)
         {
           optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
-          examined_rows= cur_pos.getFanout();
+          f= (float) (100.0 * cur_pos.getFanout() /
+              examined_rows);
         }
-
-        item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
-                                         MY_INT64_NUM_DECIMAL_DIGITS));
-
-        /* Add "filtered" field to item_list. */
-        if (join->session->lex->describe & DESCRIBE_EXTENDED)
-        {
-          float f= 0.0;
-          if (examined_rows)
-          {
-            optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
-            f= (float) (100.0 * cur_pos.getFanout() /
-                        examined_rows);
-          }
-          item_list.push_back(new Item_float(f, 2));
-        }
+        item_list.push_back(new Item_float(f, 2));
       }
 
       /* Build "Extra" field and add it to item_list. */
@@ -6850,8 +6815,8 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       if ((tab->type == AM_NEXT || tab->type == AM_CONST) &&
           table->covering_keys.test(tab->index))
 	key_read=1;
-      if (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT &&
-          !((QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
+      if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT &&
+          !((optimizer::QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
         key_read=1;
 
       if (tab->info)
@@ -6882,9 +6847,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else if (tab->select && tab->select->quick)
           keyno = tab->select->quick->index;
 
-        if (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-            quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
-            quick_type == QUICK_SELECT_I::QS_TYPE_INDEX_MERGE)
+        if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
+            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
+            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE)
         {
           extra.append(STRING_WITH_LEN("; Using "));
           tab->select->quick->add_info_string(&extra);
@@ -6923,7 +6888,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         }
         if (key_read)
         {
-          if (quick_type == QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
+          if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
             extra.append(STRING_WITH_LEN("; Using index for group-by"));
           else
             extra.append(STRING_WITH_LEN("; Using index"));
@@ -6931,24 +6896,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (table->reginfo.not_exists_optimize)
           extra.append(STRING_WITH_LEN("; Not exists"));
 
-        if (table_list->schema_table &&
-            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
-        {
-          if (!table_list->table_open_method)
-            extra.append(STRING_WITH_LEN("; Skip_open_table"));
-          else if (table_list->table_open_method == OPEN_FRM_ONLY)
-            extra.append(STRING_WITH_LEN("; Open_frm_only"));
-          else
-            extra.append(STRING_WITH_LEN("; Open_full_table"));
-          if (table_list->has_db_lookup_value &&
-              table_list->has_table_lookup_value)
-            extra.append(STRING_WITH_LEN("; Scanned 0 databases"));
-          else if (table_list->has_db_lookup_value ||
-                   table_list->has_table_lookup_value)
-            extra.append(STRING_WITH_LEN("; Scanned 1 database"));
-          else
-            extra.append(STRING_WITH_LEN("; Scanned all databases"));
-        }
         if (need_tmp_table)
         {
           need_tmp_table=0;

@@ -802,7 +802,6 @@ create table t2 select * from t1 union select 'abcdefghijkl';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
-alter table t2 ROW_FORMAT=fixed;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 drop table t1,t2;

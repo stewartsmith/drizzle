@@ -64,7 +64,7 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
 
 bool TableList::placeholder()
 {
-  return derived || schema_table || (create && !table->getDBStat()) || !table;
+  return derived || (create && !table->getDBStat()) || !table;
 }
 
 /*
@@ -292,16 +292,8 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
         str->append_identifier(db, db_length);
         str->append('.');
       }
-      if (schema_table)
-      {
-        str->append_identifier(schema_table_name, strlen(schema_table_name));
-        cmp_name= schema_table_name;
-      }
-      else
-      {
-        str->append_identifier(table_name, table_name_length);
-        cmp_name= table_name;
-      }
+      str->append_identifier(table_name, table_name_length);
+      cmp_name= table_name;
     }
     if (my_strcasecmp(table_alias_charset, cmp_name, alias))
     {

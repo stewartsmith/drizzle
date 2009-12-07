@@ -31,6 +31,7 @@
 #include "drizzled/function/math/int.h"
 #include "drizzled/function/numhybrid.h"
 #include "drizzled/session.h"
+#include "drizzled/common.h"
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;
@@ -41,6 +42,12 @@ class Item_row;
 typedef int (Arg_comparator::*arg_cmp_func)();
 
 typedef int (*Item_field_cmpfunc)(Item_field *f1, Item_field *f2, void *arg);
+
+uint64_t get_datetime_value(Session *session, 
+                            Item ***item_arg, 
+                            Item **cache_arg,
+                            Item *warn_item, 
+                            bool *is_null);
 
 class Arg_comparator: public Sql_alloc
 {
@@ -1685,6 +1692,8 @@ public:
   const char *func_name() const { return "xor"; }
   void top_level_item() {}
 };
+
+enum_field_types agg_field_type(Item **items, uint32_t nitems);
 
 
 /* Some useful inline functions */

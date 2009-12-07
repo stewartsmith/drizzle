@@ -327,27 +327,27 @@ DROP TABLE `è\è\è\`;
 DROP TABLE `ï\ï\ï\`;
 DROP TABLE `ó\ó\ó\`;
 DROP TABLE `ç\ç\ç\`;
-CREATE TABLE `±±±`(`∂∂∂` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `≤≤≤`(`∑∑∑` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `Ç†Ç†Ç†`(`Ç©Ç©Ç©` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `Ç¢Ç¢Ç¢`(`Ç´Ç´Ç´` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `É\É\É\`(`â\â\â\` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE `è\è\è\`(`é\é\é\` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `±±±`(`∂∂∂` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `≤≤≤`(`∑∑∑` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `Ç†Ç†Ç†`(`Ç©Ç©Ç©` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `Ç¢Ç¢Ç¢`(`Ç´Ç´Ç´` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `É\É\É\`(`â\â\â\` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `è\è\è\`(`é\é\é\` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `≥≥≥`(`∏∏∏` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `Ç§Ç§Ç§`(`Ç≠Ç≠Ç≠` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TABLE IF NOT EXISTS `ï\ï\ï\`(`ê\ê\ê\`char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TEMPORARY TABLE `¥¥¥`(`πππ` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TEMPORARY TABLE `µµµ`(`∫∫∫` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TEMPORARY TABLE `Ç¶Ç¶Ç¶`(`ÇØÇØÇØ` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TEMPORARY TABLE `Ç®Ç®Ç®`(`Ç±Ç±Ç±` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TEMPORARY TABLE `ó\ó\ó\`(`ì\ì\ì\` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
-CREATE TEMPORARY TABLE `ç\ç\ç\`(`î\î\î\` char(1)) DEFAULT CHARSET = sjis engine=HEAP;
+CREATE TABLE `±±±`(`∂∂∂` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `≤≤≤`(`∑∑∑` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `Ç†Ç†Ç†`(`Ç©Ç©Ç©` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `Ç¢Ç¢Ç¢`(`Ç´Ç´Ç´` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `É\É\É\`(`â\â\â\` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE `è\è\è\`(`é\é\é\` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `±±±`(`∂∂∂` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `≤≤≤`(`∑∑∑` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `Ç†Ç†Ç†`(`Ç©Ç©Ç©` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `Ç¢Ç¢Ç¢`(`Ç´Ç´Ç´` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `É\É\É\`(`â\â\â\` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `è\è\è\`(`é\é\é\` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `≥≥≥`(`∏∏∏` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `Ç§Ç§Ç§`(`Ç≠Ç≠Ç≠` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TABLE IF NOT EXISTS `ï\ï\ï\`(`ê\ê\ê\`char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TEMPORARY TABLE `¥¥¥`(`πππ` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TEMPORARY TABLE `µµµ`(`∫∫∫` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TEMPORARY TABLE `Ç¶Ç¶Ç¶`(`ÇØÇØÇØ` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TEMPORARY TABLE `Ç®Ç®Ç®`(`Ç±Ç±Ç±` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TEMPORARY TABLE `ó\ó\ó\`(`ì\ì\ì\` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
+CREATE TEMPORARY TABLE `ç\ç\ç\`(`î\î\î\` char(1)) DEFAULT CHARSET = sjis engine=MEMORY;
 DESC `±±±`;
 Field	Type	Null	Key	Default	Extra
 ∂∂∂	char(1)	YES		NULL	
@@ -397,77 +397,77 @@ SHOW CREATE TABLE `±±±`;
 Table	Create Table
 ±±±	CREATE TABLE `±±±` (
   `∂∂∂` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `≤≤≤`;
 Table	Create Table
 ≤≤≤	CREATE TABLE `≤≤≤` (
   `∑∑∑` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `≥≥≥`;
 Table	Create Table
 ≥≥≥	CREATE TABLE `≥≥≥` (
   `∏∏∏` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `¥¥¥`;
 Table	Create Table
 ¥¥¥	CREATE TEMPORARY TABLE `¥¥¥` (
   `πππ` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `µµµ`;
 Table	Create Table
 µµµ	CREATE TEMPORARY TABLE `µµµ` (
   `∫∫∫` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `Ç†Ç†Ç†`;
 Table	Create Table
 Ç†Ç†Ç†	CREATE TABLE `Ç†Ç†Ç†` (
   `Ç©Ç©Ç©` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `Ç¢Ç¢Ç¢`;
 Table	Create Table
 Ç¢Ç¢Ç¢	CREATE TABLE `Ç¢Ç¢Ç¢` (
   `Ç´Ç´Ç´` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `Ç§Ç§Ç§`;
 Table	Create Table
 Ç§Ç§Ç§	CREATE TABLE `Ç§Ç§Ç§` (
   `Ç≠Ç≠Ç≠` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `Ç¶Ç¶Ç¶`;
 Table	Create Table
 Ç¶Ç¶Ç¶	CREATE TEMPORARY TABLE `Ç¶Ç¶Ç¶` (
   `ÇØÇØÇØ` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `Ç®Ç®Ç®`;
 Table	Create Table
 Ç®Ç®Ç®	CREATE TEMPORARY TABLE `Ç®Ç®Ç®` (
   `Ç±Ç±Ç±` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `É\É\É\`;
 Table	Create Table
 É\É\É\	CREATE TABLE `É\É\É\` (
   `â\â\â\` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `è\è\è\`;
 Table	Create Table
 è\è\è\	CREATE TABLE `è\è\è\` (
   `é\é\é\` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `ï\ï\ï\`;
 Table	Create Table
 ï\ï\ï\	CREATE TABLE `ï\ï\ï\` (
   `ê\ê\ê\` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `ó\ó\ó\`;
 Table	Create Table
 ó\ó\ó\	CREATE TEMPORARY TABLE `ó\ó\ó\` (
   `ì\ì\ì\` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 SHOW CREATE TABLE `ç\ç\ç\`;
 Table	Create Table
 ç\ç\ç\	CREATE TEMPORARY TABLE `ç\ç\ç\` (
   `î\î\î\` char(1) default NULL
-) ENGINE=HEAP DEFAULT CHARSET=sjis
+) ENGINE=MEMORY DEFAULT CHARSET=sjis
 DROP TABLE `±±±`;
 DROP TABLE `≤≤≤`;
 DROP TABLE `≥≥≥`;

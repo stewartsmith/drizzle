@@ -7,23 +7,7 @@ insert into t1 values (1,2,2),(2,2,3),(3,2,4),(4,2,4);
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-check table t1 fast;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 fast;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 changed;
+check table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					Table	8	512	7	Y	0	31	45
 def					Op	8	40	5	Y	0	31	45
@@ -32,23 +16,7 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 insert into t1 values (5,5,5);
-check table t1 changed;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 medium;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 extended;
+check table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					Table	8	512	7	Y	0	31	45
 def					Op	8	40	5	Y	0	31	45
@@ -58,19 +26,19 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def			STATISTICS	NON_UNIQUE	Non_unique	5	1	1	N	32769	0	63
-def			STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	2	1	N	32769	0	63
-def			STATISTICS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
-def			STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def			STATISTICS	CARDINALITY	Cardinality	5	21	1	Y	32768	0	63
-def			STATISTICS	SUB_PART	Sub_part	5	3	0	Y	32768	0	63
-def			STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def			STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def			STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def			STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def			STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
+def	information_schema	statistics	STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
+def	information_schema	statistics	STATISTICS	NON_UNIQUE	Non_unique	5	20	1	N	32769	0	63
+def	information_schema	statistics	STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
+def	information_schema	statistics	STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
+def	information_schema	statistics	STATISTICS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
+def	information_schema	statistics	STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
+def	information_schema	statistics	STATISTICS	CARDINALITY	Cardinality	5	20	1	Y	32768	0	63
+def	information_schema	statistics	STATISTICS	SUB_PART	Sub_part	5	20	0	Y	32768	0	63
+def	information_schema	statistics	STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
+def	information_schema	statistics	STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
+def	information_schema	statistics	STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
+def	information_schema	statistics	STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
+def	information_schema	statistics	STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	a	A	5	NULL	NULL		BTREE		
 t1	1	b	1	b	A	5	NULL	NULL		BTREE		
@@ -80,69 +48,60 @@ ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-optimize table t1;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	8	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine="default";
+alter table t1 engine="default";
 drop table t1;
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
 show variables like "server_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
+def	information_schema	variables	VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def	information_schema	variables	VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
 Variable_name	Value
 server_id	1
 show variables like "SERVER_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
+def	information_schema	variables	VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def	information_schema	variables	VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
 Variable_name	Value
 server_id	1
 show variables like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	0	Y	0	0	45
+def	information_schema	variables	VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
+def	information_schema	variables	VARIABLES	VARIABLE_VALUE	Value	8	65200	0	Y	0	0	45
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			TABLES	TABLE_NAME	Name	8	256	0	N	1	0	45
-def			TABLES	ENGINE	Engine	8	256	0	Y	0	0	45
-def			TABLES	VERSION	Version	5	21	0	Y	32768	0	63
-def			TABLES	ROW_FORMAT	Row_format	8	40	0	Y	0	0	45
-def			TABLES	TABLE_ROWS	Rows	5	21	0	Y	32768	0	63
-def			TABLES	AVG_ROW_LENGTH	Avg_row_length	5	21	0	Y	32768	0	63
-def			TABLES	DATA_LENGTH	Data_length	5	21	0	Y	32768	0	63
-def			TABLES	MAX_DATA_LENGTH	Max_data_length	5	21	0	Y	32768	0	63
-def			TABLES	INDEX_LENGTH	Index_length	5	21	0	Y	32768	0	63
-def			TABLES	DATA_FREE	Data_free	5	21	0	Y	32768	0	63
-def			TABLES	AUTO_INCREMENT	Auto_increment	5	21	0	Y	32768	0	63
-def			TABLES	CREATE_TIME	Create_time	6	19	0	Y	128	0	63
-def			TABLES	UPDATE_TIME	Update_time	6	19	0	Y	128	0	63
-def			TABLES	CHECK_TIME	Check_time	6	19	0	Y	128	0	63
-def			TABLES	TABLE_COLLATION	Collation	8	256	0	Y	0	0	45
-def			TABLES	CHECKSUM	Checksum	5	21	0	Y	32768	0	63
-def			TABLES	CREATE_OPTIONS	Create_options	8	1020	0	Y	0	0	45
-def			TABLES	TABLE_COMMENT	Comment	8	8192	0	N	1	0	45
+def	information_schema	tables	TABLES	TABLE_NAME	Name	8	256	0	N	1	0	45
+def	information_schema	tables	TABLES	ENGINE	Engine	8	256	0	Y	0	0	45
+def	information_schema	tables	TABLES	VERSION	Version	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	ROW_FORMAT	Row_format	8	40	0	Y	0	0	45
+def	information_schema	tables	TABLES	TABLE_ROWS	Rows	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	AVG_ROW_LENGTH	Avg_row_length	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	DATA_LENGTH	Data_length	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	MAX_DATA_LENGTH	Max_data_length	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	INDEX_LENGTH	Index_length	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	DATA_FREE	Data_free	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	AUTO_INCREMENT	Auto_increment	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	CREATE_TIME	Create_time	6	19	0	Y	128	0	63
+def	information_schema	tables	TABLES	UPDATE_TIME	Update_time	6	19	0	Y	128	0	63
+def	information_schema	tables	TABLES	CHECK_TIME	Check_time	6	19	0	Y	128	0	63
+def	information_schema	tables	TABLES	TABLE_COLLATION	Collation	8	256	0	Y	0	0	45
+def	information_schema	tables	TABLES	CHECKSUM	Checksum	5	20	0	Y	32768	0	63
+def	information_schema	tables	TABLES	CREATE_OPTIONS	Create_options	8	1020	0	Y	0	0	45
+def	information_schema	tables	TABLES	TABLE_COMMENT	Comment	8	8192	0	N	1	0	45
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			SCHEMATA	SCHEMA_NAME	Database	8	256	18	N	1	0	45
+def	information_schema	schemata	SCHEMATA	SCHEMA_NAME	Database	8	256	18	N	1	0	45
 Database
 information_schema
 mysql
 test
 show databases like "test%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			SCHEMATA	SCHEMA_NAME	Database (test%)	8	256	4	N	1	0	45
+def	information_schema	schemata	SCHEMATA	SCHEMA_NAME	Database (test%)	8	256	4	N	1	0	45
 Database (test%)
 test
 create table t1 (f1 int not null, f2 int not null, f3 int not null, f4 int not null, primary key(f1,f2,f3,f4));
@@ -224,11 +183,13 @@ drop table t1;
 flush tables;
 show open tables;
 Database	Table	In_use	Name_locked
+information_schema	open_tables	0	0
 create table t1(n int);
 insert into t1 values (1);
 show open tables;
 Database	Table	In_use	Name_locked
 test	t1	0	0
+information_schema	open_tables	0	0
 drop table t1;
 create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="test" ENGINE=MYISAM ROW_FORMAT=fixed;
 show create table t1;
@@ -367,17 +328,17 @@ select @@max_heap_table_size;
 CREATE TEMPORARY TABLE t1 (
 a int default NULL,
 KEY a USING BTREE (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 CREATE TEMPORARY TABLE t2 (
 b int default NULL,
 index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 CREATE TEMPORARY TABLE t3 (
 a int default NULL,
 b int default NULL,
 KEY a USING BTREE (a),
 index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
@@ -490,19 +451,19 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def			STATISTICS	NON_UNIQUE	Non_unique	5	1	1	N	32769	0	63
-def			STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	2	1	N	32769	0	63
-def			STATISTICS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
-def			STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def			STATISTICS	CARDINALITY	Cardinality	5	21	1	Y	32768	0	63
-def			STATISTICS	SUB_PART	Sub_part	5	3	3	Y	32768	0	63
-def			STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def			STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def			STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def			STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def			STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
+def	information_schema	statistics	STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
+def	information_schema	statistics	STATISTICS	NON_UNIQUE	Non_unique	5	20	1	N	32769	0	63
+def	information_schema	statistics	STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
+def	information_schema	statistics	STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
+def	information_schema	statistics	STATISTICS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
+def	information_schema	statistics	STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
+def	information_schema	statistics	STATISTICS	CARDINALITY	Cardinality	5	20	1	Y	32768	0	63
+def	information_schema	statistics	STATISTICS	SUB_PART	Sub_part	5	20	3	Y	32768	0	63
+def	information_schema	statistics	STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
+def	information_schema	statistics	STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
+def	information_schema	statistics	STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
+def	information_schema	statistics	STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
+def	information_schema	statistics	STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	field1	A	0	180	NULL		BTREE		
 drop table t1;

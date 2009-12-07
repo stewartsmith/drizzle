@@ -154,7 +154,7 @@ timed_mutexes	OFF
 select * from information_schema.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
 TIMED_MUTEXES	OFF
-set storage_engine=MYISAM, storage_engine="HEAP";
+set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 Variable_name	Value
 storage_engine	MEMORY
@@ -185,13 +185,13 @@ set global drizzle_protocol_buffer_length=1024;
 show global variables like 'drizzle_protocol_buffer_%';
 Variable_name	Value
 drizzle_protocol_buffer_length	1024
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%' order by 1;
+select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
 DRIZZLE_PROTOCOL_BUFFER_LENGTH	1024
 show global variables like 'drizzle_protocol_buffer_%';
 Variable_name	Value
 drizzle_protocol_buffer_length	1024
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%' order by 1;
+select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
 DRIZZLE_PROTOCOL_BUFFER_LENGTH	1024
 set global drizzle_protocol_buffer_length=1;
@@ -214,7 +214,7 @@ query_prealloc_size	8192
 range_alloc_block_size	
 transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
-select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
+select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 INNODB_USE_SYS_MALLOC	ON
 QUERY_ALLOC_BLOCK_SIZE	8192
@@ -238,7 +238,7 @@ query_prealloc_size	18432
 range_alloc_block_size	
 transaction_alloc_block_size	19456
 transaction_prealloc_size	20480
-select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
+select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 INNODB_USE_SYS_MALLOC	ON
 QUERY_ALLOC_BLOCK_SIZE	17408
@@ -257,7 +257,7 @@ query_prealloc_size	8192
 range_alloc_block_size	
 transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
-select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
+select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 INNODB_USE_SYS_MALLOC	ON
 QUERY_ALLOC_BLOCK_SIZE	8192
@@ -324,7 +324,6 @@ Warnings:
 Error	1292	Truncated incorrect sort_buffer_size value: '100'
 set sql_big_selects=1;
 set sql_buffer_result=1;
-set sql_safe_updates=1;
 set sql_select_limit=1;
 set sql_select_limit=default;
 set sql_warnings=1;

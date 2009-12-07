@@ -37,6 +37,7 @@
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
 #include <drizzled/server_includes.h>
+#include <drizzled/foreign_key.h>
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function/locate.h>
 #include <drizzled/function/str/char.h>
@@ -108,7 +109,6 @@
 #include <drizzled/statement/insert_select.h>
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
-#include <drizzled/statement/optimize.h>
 #include <drizzled/statement/release_savepoint.h>
 #include <drizzled/statement/rename_table.h>
 #include <drizzled/statement/replace.h>
@@ -206,7 +206,7 @@ static void my_parse_error(const char *s)
   The parser will abort immediately after invoking this callback.
 
   This function is not for use in semantic actions and is internal to
-  the parser, as it performs some pre-return cleanup. 
+  the parser, as it performs some pre-return cleanup.
   In semantic actions, please use my_parse_error or my_error to
   push an error into the error stack and DRIZZLE_YYABORT
   to abort from the parser.
@@ -350,7 +350,7 @@ static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
    @return false if successful, true if an error was reported. In the latter
    case parsing should stop.
  */
-static bool setup_select_in_parentheses(LEX *lex) 
+static bool setup_select_in_parentheses(LEX *lex)
 {
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
@@ -473,7 +473,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BETWEEN_SYM                   /* SQL-2003-R */
 %token  BIGINT_SYM                    /* SQL-2003-R */
 %token  BINARY                        /* SQL-2003-R */
-%token  BINLOG_SYM
 %token  BIN_NUM
 %token  BIT_SYM                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
@@ -485,7 +484,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BTREE_SYM
 %token  BY                            /* SQL-2003-R */
 %token  BYTE_SYM
-%token  CACHE_SYM
 %token  CALL_SYM                      /* SQL-2003-R */
 %token  CASCADE                       /* SQL-2003-N */
 %token  CASCADED                      /* SQL-2003-R */
@@ -493,8 +491,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CAST_SYM                      /* SQL-2003-R */
 %token  CHAIN_SYM                     /* SQL-2003-N */
 %token  CHANGE
-%token  CHANGED
-%token  CHARSET
 %token  CHAR_SYM                      /* SQL-2003-R */
 %token  CHECKSUM_SYM
 %token  CHECK_SYM                     /* SQL-2003-R */
@@ -508,7 +504,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  COMMITTED_SYM                 /* SQL-2003-N */
 %token  COMMIT_SYM                    /* SQL-2003-R */
 %token  COMPACT_SYM
-%token  COMPLETION_SYM
 %token  COMPRESSED_SYM
 %token  CONCURRENT
 %token  CONDITION_SYM                 /* SQL-2003-N */
@@ -516,7 +511,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CONSISTENT_SYM
 %token  CONSTRAINT                    /* SQL-2003-R */
 %token  CONTAINS_SYM                  /* SQL-2003-N */
-%token  CONTEXT_SYM
 %token  CONTINUE_SYM                  /* SQL-2003-R */
 %token  CONVERT_SYM                   /* SQL-2003-N */
 %token  COUNT_SYM                     /* SQL-2003-N */
@@ -574,12 +568,9 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ESCAPE_SYM                    /* SQL-2003-R */
 %token  EXCLUSIVE_SYM
 %token  EXISTS                        /* SQL-2003-R */
-%token  EXIT_SYM
 %token  EXTENDED_SYM
-%token  EXTENT_SIZE_SYM
 %token  EXTRACT_SYM                   /* SQL-2003-N */
 %token  FALSE_SYM                     /* SQL-2003-R */
-%token  FAST_SYM
 %token  FETCH_SYM                     /* SQL-2003-R */
 %token  COLUMN_FORMAT_SYM
 %token  FILE_SYM
@@ -602,8 +593,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
-%token  HOST_SYM
-%token  HOSTS_SYM
 %token  HOUR_MICROSECOND_SYM
 %token  HOUR_MINUTE_SYM
 %token  HOUR_SECOND_SYM
@@ -621,8 +610,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  INOUT_SYM                     /* SQL-2003-R */
 %token  INSENSITIVE_SYM               /* SQL-2003-R */
 %token  INSERT                        /* SQL-2003-R */
-%token  INSERT_METHOD
-%token  INSTALL_SYM
 %token  INTERVAL_SYM                  /* SQL-2003-R */
 %token  INTO                          /* SQL-2003-R */
 %token  INT_SYM                       /* SQL-2003-R */
@@ -663,7 +650,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MEDIUM_SYM
 %token  MERGE_SYM                     /* SQL-2003-R */
 %token  MICROSECOND_SYM               /* MYSQL-FUNC */
-%token  MIGRATE_SYM
 %token  MINUTE_MICROSECOND_SYM
 %token  MINUTE_SECOND_SYM
 %token  MINUTE_SYM                    /* SQL-2003-R */
@@ -682,14 +668,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  NEG
 %token  NEW_SYM                       /* SQL-2003-R */
 %token  NEXT_SYM                      /* SQL-2003-N */
-%token  NODEGROUP_SYM
 %token  NONE_SYM                      /* SQL-2003-R */
 %token  NOT_SYM                       /* SQL-2003-R */
 %token  NOW_SYM
-%token  NOWAIT_SYM
 %token  NO_SYM                        /* SQL-2003-R */
-%token  NO_WAIT_SYM
-%token  NO_WRITE_TO_BINLOG
 %token  NULL_SYM                      /* SQL-2003-R */
 %token  NUM
 %token  NUMERIC_SYM                   /* SQL-2003-R */
@@ -700,8 +682,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ONE_SYM
 %token  ONLINE_SYM
 %token  OPEN_SYM                      /* SQL-2003-R */
-%token  OPTIMIZE
-%token  OPTIONS_SYM
+%token  OPTIMIZE                      /* Leave assuming we might add it back */
 %token  OPTION                        /* SQL-2003-N */
 %token  OPTIONALLY
 %token  ORDER_SYM                     /* SQL-2003-R */
@@ -710,47 +691,30 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  OUTFILE
 %token  OUT_SYM                       /* SQL-2003-R */
 %token  PAGE_SYM
-%token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
-%token  POINT_SYM
-%token  PORT_SYM
 %token  POSITION_SYM                  /* SQL-2003-N */
 %token  PRECISION                     /* SQL-2003-R */
 %token  PREV_SYM
 %token  PRIMARY_SYM                   /* SQL-2003-R */
 %token  PROCESS
 %token  PROCESSLIST_SYM
-%token  PURGE
 %token  QUARTER_SYM
 %token  QUERY_SYM
-%token  QUICK
 %token  RANGE_SYM                     /* SQL-2003-R */
 %token  READS_SYM                     /* SQL-2003-R */
 %token  READ_ONLY_SYM
 %token  READ_SYM                      /* SQL-2003-N */
 %token  READ_WRITE_SYM
 %token  REAL                          /* SQL-2003-R */
-%token  REBUILD_SYM
-%token  RECOVER_SYM
-%token  REDOFILE_SYM
-%token  REDO_BUFFER_SIZE_SYM
 %token  REDUNDANT_SYM
 %token  REFERENCES                    /* SQL-2003-R */
 %token  RELEASE_SYM                   /* SQL-2003-R */
-%token  RELOAD
-%token  REMOVE_SYM
 %token  RENAME
-%token  REORGANIZE_SYM
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
-%token  REPLICATION
-%token  REQUIRE_SYM
-%token  RESET_SYM
-%token  RESOURCES
 %token  RESTRICT
-%token  RESUME_SYM
 %token  RETURNS_SYM                   /* SQL-2003-R */
 %token  RETURN_SYM                    /* SQL-2003-R */
 %token  REVERSE_SYM
@@ -781,9 +745,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SNAPSHOT_SYM
-%token  SOCKET_SYM
-%token  SONAME_SYM
-%token  SOURCE_SYM
 %token  SPECIFIC_SYM                  /* SQL-2003-R */
 %token  SQLEXCEPTION_SYM              /* SQL-2003-R */
 %token  SQLSTATE_SYM                  /* SQL-2003-R */
@@ -794,7 +755,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SQL_SMALL_RESULT
 %token  SQL_SYM                       /* SQL-2003-R */
 %token  STARTING
-%token  STARTS_SYM
 %token  START_SYM                     /* SQL-2003-R */
 %token  STATUS_SYM
 %token  STDDEV_SAMP_SYM               /* SQL-2003-N */
@@ -817,11 +777,9 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
 %token  TEMPORARY_SYM                 /* SQL-2003-N */
-%token  TEMPTABLE_SYM
 %token  TERMINATED
 %token  TEXT_STRING
 %token  TEXT_SYM
-%token  THAN_SYM
 %token  THEN_SYM                      /* SQL-2003-R */
 %token  TIMESTAMP_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_ADD
@@ -836,14 +794,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TYPE_SYM                      /* SQL-2003-N */
 %token  ULONGLONG_NUM
 %token  UNCOMMITTED_SYM               /* SQL-2003-N */
-%token  UNDEFINED_SYM
 %token  UNDOFILE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
 %token  UNION_SYM                     /* SQL-2003-R */
 %token  UNIQUE_SYM
 %token  UNKNOWN_SYM                   /* SQL-2003-R */
 %token  UNLOCK_SYM
-%token  UNTIL_SYM
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  USAGE                         /* SQL-2003-N */
 %token  USER                          /* SQL-2003-R */
@@ -859,7 +815,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
 %token  VAR_SAMP_SYM
-%token  WAIT_SYM
 %token  WARNINGS
 %token  WEEK_SYM
 %token  WEIGHT_STRING_SYM
@@ -911,8 +866,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <num>
         type int_type real_type order_dir field_def
-        if_exists opt_table_options table_options
-        table_option opt_if_not_exists
+        if_exists opt_table_options
+        opt_if_not_exists
         opt_temporary all_or_any opt_distinct
         union_option
         start_transaction_opts opt_chain opt_release
@@ -926,7 +881,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         ws_nweights
         ws_level_flag_desc ws_level_flag_reverse ws_level_flags
         opt_ws_levels ws_level_list ws_level_list_item ws_level_number
-        ws_level_range ws_level_list_or_range  
+        ws_level_range ws_level_list_or_range 
 
 %type <ulonglong_number>
         ulonglong_num
@@ -999,7 +954,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <variable> internal_variable_name
 
 %type <select_lex> subselect
-        get_select_lex query_specification 
+        get_select_lex query_specification
         query_expression_body
 
 %type <boolfunc2creator> comp_op
@@ -1009,7 +964,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
-        show describe load alter optimize flush
+        show describe load alter flush
         begin commit rollback savepoint release
         analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
@@ -1024,7 +979,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_attribute opt_attribute_list attribute
         flush_options flush_option
         equal optional_braces
-        opt_mi_check_type opt_to mi_check_types normal_join
+        normal_join
         table_to_table_list table_to_table opt_table_list opt_as
         single_multi
         union_clause union_list
@@ -1079,7 +1034,7 @@ query:
             else
             {
               session->lex->sql_command= SQLCOM_EMPTY_QUERY;
-              session->lex->statement= 
+              session->lex->statement=
                 new(std::nothrow) statement::EmptyQuery(YYSession);
               if (session->lex->statement == NULL)
                 DRIZZLE_YYABORT;
@@ -1108,7 +1063,6 @@ statement:
         | insert
         | kill
         | load
-        | optimize
         | release
         | rename
         | replace
@@ -1142,15 +1096,15 @@ create:
               DRIZZLE_YYABORT;
             lex->col_list.empty();
             statement->change=NULL;
-            statement->create_info.options=$2 | $4;
+            statement->is_if_not_exists= $4;
             statement->create_info.db_type= NULL;
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
 	    message::Table *proto= &statement->create_table_proto;
-	    
+	   
 	    proto->set_name($5->table.str);
-	    if($2 & HA_LEX_CREATE_TMP_TABLE)
+	    if($2)
 	      proto->set_type(message::Table::TEMPORARY);
 	    else
 	      proto->set_type(message::Table::STANDARD);
@@ -1158,7 +1112,7 @@ create:
           create2
           {
             LEX *lex= YYSession->lex;
-            lex->current_select= &lex->select_lex; 
+            lex->current_select= &lex->select_lex;
           }
         | CREATE build_method
           {
@@ -1196,7 +1150,7 @@ create:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->create_info.options=$3;
+            statement->is_if_not_exists= $3;
           }
           opt_create_database_options
           {
@@ -1214,7 +1168,7 @@ create2:
             LEX *lex= session->lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->is_create_table_like= true;
             if (!lex->select_lex.add_table_to_list(session, $2, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1224,7 +1178,7 @@ create2:
             LEX *lex= session->lex;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->is_create_table_like= true;
             if (!lex->select_lex.add_table_to_list(session, $3, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1257,7 +1211,7 @@ create_select:
             {
               lex->sql_command= SQLCOM_INSERT_SELECT;
               delete lex->statement;
-              lex->statement= 
+              lex->statement=
                 new(std::nothrow) statement::InsertSelect(YYSession);
               if (lex->statement == NULL)
                 DRIZZLE_YYABORT;
@@ -1266,7 +1220,7 @@ create_select:
             {
               lex->sql_command= SQLCOM_REPLACE_SELECT;
               delete lex->statement;
-              lex->statement= 
+              lex->statement=
                 new(std::nothrow) statement::ReplaceSelect(YYSession);
               if (lex->statement == NULL)
                 DRIZZLE_YYABORT;
@@ -1304,22 +1258,13 @@ opt_create_database_options:
         ;
 
 opt_table_options:
-          /* empty */ { $$= 0; }
-        | table_options  { $$= $1;}
-        ;
-
-table_options:
-          table_option { $$=$1; }
-        | table_option table_options { $$= $1 | $2; }
-        ;
-
-table_option:
-          TEMPORARY_SYM { $$=HA_LEX_CREATE_TMP_TABLE; }
+          /* empty */ { $$= false; }
+        | TEMPORARY_SYM { $$= true; }
         ;
 
 opt_if_not_exists:
-          /* empty */ { $$= 0; }
-        | IF not EXISTS { $$=HA_LEX_CREATE_IF_NOT_EXISTS; }
+          /* empty */ { $$= false; }
+        | IF not EXISTS { $$= true; }
         ;
 
 opt_create_table_options:
@@ -1342,19 +1287,15 @@ create_table_option:
           ENGINE_SYM opt_equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            message::Table::StorageEngine *protoengine;
+            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
 
-            statement->create_info.db_type= NULL;
-            statement->create_info.used_fields|= HA_CREATE_USED_ENGINE;
+            statement->is_engine_set= true;
 
-	    {
-	      message::Table::StorageEngine *protoengine;
-	      protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
-
-	      protoengine->set_name($3.str);
-	    }
+            protoengine->set_name($3.str);
           }
-        | BLOCK_SIZE_SYM opt_equal ulong_num    
-          { 
+        | BLOCK_SIZE_SYM opt_equal ulong_num
+          {
 	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
@@ -1371,10 +1312,14 @@ create_table_option:
           }
         | AUTO_INC opt_equal ulonglong_num
           {
+	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
+	    tableopts->set_auto_increment_value($3);
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -1558,7 +1503,7 @@ field_spec:
             if (add_field_to_list(lex->session, &$1, (enum enum_field_types) $3,
                                   lex->length,lex->dec,lex->type,
                                   statement->column_format,
-                                  statement->default_value, statement->on_update_value, 
+                                  statement->default_value, statement->on_update_value,
                                   &statement->comment,
                                   statement->change, &lex->interval_list, lex->charset))
               DRIZZLE_YYABORT;
@@ -1877,14 +1822,14 @@ attribute:
               constraints->set_is_nullable(false);
             }
           }
-        | DEFAULT now_or_signed_literal 
-          { 
+        | DEFAULT now_or_signed_literal
+          {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->default_value=$2; 
+            statement->default_value=$2;
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
-        | ON UPDATE_SYM NOW_SYM optional_braces 
+        | ON UPDATE_SYM NOW_SYM optional_braces
           { ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local(); }
         | AUTO_INC
           {
@@ -1900,7 +1845,7 @@ attribute:
             }
           }
         | SERIAL_SYM DEFAULT VALUE_SYM
-          { 
+          {
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
@@ -1934,7 +1879,7 @@ attribute:
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            lex->type|= UNIQUE_FLAG; 
+            lex->type|= UNIQUE_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | UNIQUE_SYM KEY_SYM
@@ -1942,7 +1887,7 @@ attribute:
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            lex->type|= UNIQUE_KEY_FLAG; 
+            lex->type|= UNIQUE_KEY_FLAG;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | COMMENT_SYM TEXT_STRING_sys
@@ -2269,7 +2214,7 @@ alter:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->duplicates= DUP_ERROR; 
+            lex->duplicates= DUP_ERROR;
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
@@ -2277,15 +2222,13 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.db_type= 0;
-            statement->create_info.default_table_charset= NULL;
             statement->create_info.row_type= ROW_TYPE_NOT_USED;
             statement->alter_info.build_method= $2;
           }
           alter_commands
           {}
         | ALTER DATABASE ident_or_empty
-          { 
+          {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
             lex->statement= new(std::nothrow) statement::AlterSchema(YYSession);
@@ -2309,15 +2252,15 @@ ident_or_empty:
 
 alter_commands:
           /* empty */
-        | DISCARD TABLESPACE 
-          { 
+        | DISCARD TABLESPACE
+          {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->alter_info.tablespace_op= DISCARD_TABLESPACE; 
+            statement->alter_info.tablespace_op= DISCARD_TABLESPACE;
           }
-        | IMPORT TABLESPACE 
-          { 
+        | IMPORT TABLESPACE
+          {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            statement->alter_info.tablespace_op= IMPORT_TABLESPACE; 
+            statement->alter_info.tablespace_op= IMPORT_TABLESPACE;
           }
         | alter_list
         ;
@@ -2396,7 +2339,7 @@ alter_list_item:
                                   (enum enum_field_types) $5,
                                   lex->length, lex->dec, lex->type,
                                   statement->column_format,
-                                  statement->default_value, 
+                                  statement->default_value,
                                   statement->on_update_value,
                                   &statement->comment,
                                   $3.str, &lex->interval_list, lex->charset))
@@ -2575,14 +2518,8 @@ checksum:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
-          table_list opt_checksum_type
+          table_list
           {}
-        ;
-
-opt_checksum_type:
-          /* nothing */ { ((statement::Checksum *)Lex->statement)->check_opt.flags= 0; }
-        | QUICK         { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_QUICK; }
-        | EXTENDED_SYM  { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_EXTEND; }
         ;
 
 
@@ -2606,38 +2543,6 @@ check:
 
             lex->sql_command = SQLCOM_CHECK;
             lex->statement= new(std::nothrow) statement::Check(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list opt_mi_check_type
-          {}
-        ;
-
-opt_mi_check_type:
-          /* empty */ { ((statement::Check *)Lex->statement)->check_opt.flags = T_MEDIUM; }
-        | mi_check_types {}
-        ;
-
-mi_check_types:
-          mi_check_type {}
-        | mi_check_type mi_check_types {}
-        ;
-
-mi_check_type:
-          QUICK               { ((statement::Check *)Lex->statement)->check_opt.flags|= T_QUICK; }
-        | FAST_SYM            { ((statement::Check *)Lex->statement)->check_opt.flags|= T_FAST; }
-        | MEDIUM_SYM          { ((statement::Check *)Lex->statement)->check_opt.flags|= T_MEDIUM; }
-        | EXTENDED_SYM        { ((statement::Check *)Lex->statement)->check_opt.flags|= T_EXTEND; }
-        | CHANGED             { ((statement::Check *)Lex->statement)->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
-        ;
-
-optimize:
-          OPTIMIZE table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_OPTIMIZE;
-            statement::Optimize *statement= new(std::nothrow) statement::Optimize(YYSession);
-            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -2764,7 +2669,7 @@ select_from:
           opt_order_clause opt_limit_clause
           {
             Lex->current_select->context.table_list=
-              Lex->current_select->context.first_name_resolution_table= 
+              Lex->current_select->context.first_name_resolution_table=
                 reinterpret_cast<TableList *>(Lex->current_select->table_list.first);
           }
         ;
@@ -3036,7 +2941,7 @@ predicate:
             $$= handle_sql2003_note184_exception(YYSession, $1, true, $4);
           }
         | bit_expr IN_SYM '(' expr ',' expr_list ')'
-          { 
+          {
             $6->push_front($4);
             $6->push_front($1);
             $$= new (YYSession->mem_root) Item_func_in(*$6);
@@ -3137,7 +3042,7 @@ simple_expr:
         | '-' simple_expr %prec NEG
           { $$= new (YYSession->mem_root) Item_func_neg($2); }
         | '(' subselect ')'
-          { 
+          {
             $$= new (YYSession->mem_root) Item_singlerow_subselect($2);
           }
         | '(' expr ')' { $$= $2; }
@@ -3782,10 +3687,10 @@ join_table:
             DRIZZLE_YYABORT_UNLESS($1 && $5);
           }
           USING '(' using_list ')'
-          { 
-            add_join_natural($1,$5,$9,Lex->current_select); 
-            $5->outer_join|=JOIN_TYPE_LEFT; 
-            $$=$5; 
+          {
+            add_join_natural($1,$5,$9,Lex->current_select);
+            $5->outer_join|=JOIN_TYPE_LEFT;
+            $$=$5;
           }
         | table_ref NATURAL LEFT opt_outer JOIN_SYM table_factor
           {
@@ -3841,13 +3746,13 @@ normal_join:
         | CROSS JOIN_SYM {}
         ;
 
-/* 
+/*
    This is a flattening of the rules <table factor> and <table primary>
    in the SQL:2003 standard, since we don't have <sample clause>
 
    I.e.
    <table factor> ::= <table primary> [ <sample clause> ]
-*/   
+*/  
 /* Warning - may return NULL in case of incomplete SELECT */
 table_factor:
           {
@@ -3889,7 +3794,7 @@ table_factor:
             Represents a flattening of the following rules from the SQL:2003
             standard. This sub-rule corresponds to the sub-rule
             <table primary> ::= ... | <derived table> [ AS ] <correlation name>
-            
+           
             The following rules have been flattened into query_expression_body
             (since we have no <with clause>).
 
@@ -4079,7 +3984,7 @@ opt_outer:
 index_hint_clause:
           /* empty */
           {
-            $$= INDEX_HINT_MASK_ALL; 
+            $$= INDEX_HINT_MASK_ALL;
           }
         | FOR_SYM JOIN_SYM      { $$= INDEX_HINT_MASK_JOIN;  }
         | FOR_SYM ORDER_SYM BY  { $$= INDEX_HINT_MASK_ORDER; }
@@ -4088,7 +3993,7 @@ index_hint_clause:
 
 index_hint_type:
           FORCE_SYM  { $$= INDEX_HINT_FORCE; }
-        | IGNORE_SYM { $$= INDEX_HINT_IGNORE; } 
+        | IGNORE_SYM { $$= INDEX_HINT_IGNORE; }
         ;
 
 index_hint_definition:
@@ -4171,8 +4076,8 @@ interval:
 
 interval_time_stamp:
 	interval_time_st	{}
-	| FRAC_SECOND_SYM	{ 
-                                  $$=INTERVAL_MICROSECOND; 
+	| FRAC_SECOND_SYM	{
+                                  $$=INTERVAL_MICROSECOND;
                                   /*
                                     FRAC_SECOND was mistakenly implemented with
                                     a wrong resolution. According to the ODBC
@@ -4250,7 +4155,7 @@ having_clause:
         ;
 
 opt_escape:
-          ESCAPE_SYM simple_expr 
+          ESCAPE_SYM simple_expr
           {
             Lex->escape_used= true;
             $$= $2;
@@ -4358,8 +4263,8 @@ order_clause:
               */
               Select_Lex *first_sl= unit->first_select();
               if (!unit->is_union() &&
-                  (first_sl->order_list.elements || 
-                   first_sl->select_limit) &&            
+                  (first_sl->order_list.elements ||
+                   first_sl->select_limit) &&           
                   unit->add_fake_select_lex(lex->session))
                 DRIZZLE_YYABORT;
             }
@@ -4494,11 +4399,11 @@ select_var_list:
         | select_var_ident {}
         ;
 
-select_var_ident:  
+select_var_ident: 
           '@' ident_or_text
           {
             LEX *lex=Lex;
-            if (lex->result) 
+            if (lex->result)
               ((select_dumpvar *)lex->result)->var_list.push_back( new my_var($2,0,0,(enum_field_types)0));
             else
               /*
@@ -4615,7 +4520,7 @@ insert:
             lex->statement= new(std::nothrow) statement::Insert(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->duplicates= DUP_ERROR; 
+            lex->duplicates= DUP_ERROR;
             mysql_init_select(lex);
             /* for subselects */
             lex->lock_option= TL_READ;
@@ -4778,7 +4683,7 @@ update:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->lock_option= TL_UNLOCK; /* Will be set later */
-            lex->duplicates= DUP_ERROR; 
+            lex->duplicates= DUP_ERROR;
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
@@ -4824,7 +4729,7 @@ insert_update_elem:
           simple_ident_nospvar equal expr_or_default
           {
           LEX *lex= Lex;
-          if (lex->update_list.push_back($1) || 
+          if (lex->update_list.push_back($1) ||
               lex->value_list.push_back($3))
               DRIZZLE_YYABORT;
           }
@@ -4865,8 +4770,7 @@ opt_delete_options:
         ;
 
 opt_delete_option:
-          QUICK        { Lex->current_select->options|= OPTION_QUICK; }
-        | IGNORE_SYM   { Lex->ignore= 1; }
+         IGNORE_SYM   { Lex->ignore= 1; }
         ;
 
 truncate:
@@ -4951,9 +4855,9 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | ENGINE_SYM ident_or_text STATUS_SYM /* This should either go... well it should go */
-          { 
+          {
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
-            Lex->statement= 
+            Lex->statement=
               new(std::nothrow) statement::ShowEngineStatus(YYSession, $2.str);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
@@ -4984,30 +4888,30 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
-          { 
-            (void) create_select_for_variable("warning_count"); 
+          {
+            (void) create_select_for_variable("warning_count");
             LEX *lex= Lex;
             lex->statement= new(std::nothrow) statement::Select(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' ERRORS
-          { 
-            (void) create_select_for_variable("error_count"); 
+          {
+            (void) create_select_for_variable("error_count");
             LEX *lex= Lex;
             lex->statement= new(std::nothrow) statement::Select(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | WARNINGS opt_limit_clause_init
-          { 
+          {
             Lex->sql_command = SQLCOM_SHOW_WARNS;
             Lex->statement= new(std::nothrow) statement::ShowWarnings(YYSession);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | ERRORS opt_limit_clause_init
-          { 
+          {
             Lex->sql_command = SQLCOM_SHOW_ERRORS;
             Lex->statement= new(std::nothrow) statement::ShowErrors(YYSession);
             if (Lex->statement == NULL)
@@ -5027,9 +4931,9 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | opt_full PROCESSLIST_SYM
-          { 
+          {
             Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
-            Lex->statement= 
+            Lex->statement=
               new(std::nothrow) statement::ShowProcesslist(YYSession);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
@@ -5053,7 +4957,7 @@ show_param:
             Lex->statement= statement;
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->create_info.options=$3;
+            statement->is_if_not_exists= $3;
             Lex->name= $4;
           }
         | CREATE TABLE_SYM table_ident
@@ -5297,7 +5201,7 @@ field_term_list:
         ;
 
 field_term:
-          TERMINATED BY text_string 
+          TERMINATED BY text_string
           {
             assert(Lex->exchange != 0);
             Lex->exchange->field_term= $3;
@@ -5391,8 +5295,8 @@ text_literal:
           $$ = new Item_string($1.str, $1.length, session->variables.getCollation());
         }
         | text_literal TEXT_STRING_literal
-          { 
-            ((Item_string*) $1)->append($2.str, $2.length); 
+          {
+            ((Item_string*) $1)->append($2.str, $2.length);
           }
         ;
 
@@ -5697,8 +5601,6 @@ keyword:
           keyword_sp            {}
         | BEGIN_SYM             {}
         | BYTE_SYM              {}
-        | CACHE_SYM             {}
-        | CHARSET               {}
         | CHECKSUM_SYM          {}
         | CLOSE_SYM             {}
         | COMMENT_SYM           {}
@@ -5707,20 +5609,12 @@ keyword:
         | DEALLOCATE_SYM        {}
         | END                   {}
         | FLUSH_SYM             {}
-        | HOST_SYM              {}
-        | INSTALL_SYM           {}
         | NO_SYM                {}
         | OPEN_SYM              {}
-        | OPTIONS_SYM           {}
-        | PORT_SYM              {}
-        | REMOVE_SYM            {}
-        | RESET_SYM             {}
         | ROLLBACK_SYM          {}
         | SAVEPOINT_SYM         {}
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
-        | SOCKET_SYM            {}
-        | SONAME_SYM            {}
         | START_SYM             {}
         | STOP_SYM              {}
         | TRUNCATE_SYM          {}
@@ -5742,7 +5636,6 @@ keyword_sp:
         | AUTO_INC                 {}
         | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
-        | BINLOG_SYM               {}
         | BIT_SYM                  {}
         | BLOCK_SIZE_SYM           {}
         | BLOCK_SYM                {}
@@ -5751,19 +5644,16 @@ keyword_sp:
         | BTREE_SYM                {}
         | CASCADED                 {}
         | CHAIN_SYM                {}
-        | CHANGED                  {}
         | COALESCE                 {}
         | COLLATION_SYM            {}
         | COLUMN_FORMAT_SYM        {}
         | COLUMNS                  {}
         | COMMITTED_SYM            {}
         | COMPACT_SYM              {}
-        | COMPLETION_SYM           {}
         | COMPRESSED_SYM           {}
         | CONCURRENT               {}
         | CONNECTION_SYM           {}
         | CONSISTENT_SYM           {}
-        | CONTEXT_SYM              {}
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
         | DATAFILE_SYM             {}
@@ -5782,8 +5672,6 @@ keyword_sp:
         | ESCAPE_SYM               {}
         | EXCLUSIVE_SYM            {}
         | EXTENDED_SYM             {}
-        | EXTENT_SIZE_SYM          {}
-        | FAST_SYM                 {}
         | FOUND_SYM                {}
         | ENABLE_SYM               {}
         | FULL                     {}
@@ -5793,13 +5681,11 @@ keyword_sp:
         | FRAC_SECOND_SYM          {}
         | GLOBAL_SYM               {}
         | HASH_SYM                 {}
-        | HOSTS_SYM                {}
         | HOUR_SYM                 {}
         | IDENTIFIED_SYM           {}
         | IMPORT                   {}
         | INDEXES                  {}
         | ISOLATION                {}
-        | INSERT_METHOD            {}
         | KEY_BLOCK_SIZE           {}
         | LAST_SYM                 {}
         | LEVEL_SYM                {}
@@ -5813,7 +5699,6 @@ keyword_sp:
         | MEDIUM_SYM               {}
         | MERGE_SYM                {}
         | MICROSECOND_SYM          {}
-        | MIGRATE_SYM              {}
         | MINUTE_SYM               {}
         | MIN_ROWS                 {}
         | MODIFY_SYM               {}
@@ -5824,10 +5709,7 @@ keyword_sp:
         | NATIONAL_SYM             {}
         | NEXT_SYM                 {}
         | NEW_SYM                  {}
-        | NO_WAIT_SYM              {}
-        | NODEGROUP_SYM            {}
         | NONE_SYM                 {}
-        | NOWAIT_SYM               {}
         | OFFLINE_SYM              {}
         | OFFSET_SYM               {}
         | ONE_SHOT_SYM             {}
@@ -5836,25 +5718,14 @@ keyword_sp:
         | PAGE_SYM                 {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
-        | POINT_SYM                {}
         | PREV_SYM                 {}
         | PROCESS                  {}
         | PROCESSLIST_SYM          {}
         | QUARTER_SYM              {}
         | QUERY_SYM                {}
-        | QUICK                    {}
         | READ_ONLY_SYM            {}
-        | REBUILD_SYM              {}
-        | RECOVER_SYM              {}
-        | REDO_BUFFER_SIZE_SYM     {}
-        | REDOFILE_SYM             {}
         | REDUNDANT_SYM            {}
-        | RELOAD                   {}
-        | REORGANIZE_SYM           {}
         | REPEATABLE_SYM           {}
-        | REPLICATION              {}
-        | RESOURCES                {}
-        | RESUME_SYM               {}
         | RETURNS_SYM              {}
         | REVERSE_SYM              {}
         | ROLLUP_SYM               {}
@@ -5870,9 +5741,7 @@ keyword_sp:
         | SHARE_SYM                {}
         | SHUTDOWN                 {}
         | SNAPSHOT_SYM             {}
-        | SOURCE_SYM               {}
         | SQL_BUFFER_RESULT        {}
-        | STARTS_SYM               {}
         | STATUS_SYM               {}
         | STORAGE_SYM              {}
         | STRING_SYM               {}
@@ -5884,9 +5753,7 @@ keyword_sp:
         | TABLES                   {}
         | TABLESPACE               {}
         | TEMPORARY_SYM            {}
-        | TEMPTABLE_SYM            {}
         | TEXT_SYM                 {}
-        | THAN_SYM                 {}
         | TRANSACTION_SYM          {}
         | TIMESTAMP_SYM            {}
         | TIMESTAMP_ADD            {}
@@ -5894,15 +5761,12 @@ keyword_sp:
         | TYPES_SYM                {}
         | TYPE_SYM                 {}
         | UNCOMMITTED_SYM          {}
-        | UNDEFINED_SYM            {}
         | UNDOFILE_SYM             {}
         | UNKNOWN_SYM              {}
-        | UNTIL_SYM                {}
         | USER                     {}
         | VARIABLES                {}
         | VALUE_SYM                {}
         | WARNINGS                 {}
-        | WAIT_SYM                 {}
         | WEEK_SYM                 {}
         | WEIGHT_STRING_SYM        {}
         | WORK_SYM                 {}
@@ -6108,7 +5972,7 @@ commit:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->tx_chain= $3; 
+            statement->tx_chain= $3;
             statement->tx_release= $4;
           }
         ;
@@ -6122,7 +5986,7 @@ rollback:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            statement->tx_chain= $3; 
+            statement->tx_chain= $3;
             statement->tx_release= $4;
           }
         | ROLLBACK_SYM opt_work
@@ -6230,7 +6094,7 @@ union_option:
 
 query_specification:
           SELECT_SYM select_init2_derived
-          { 
+          {
             $$= Lex->current_select->master_unit()->first_select();
           }
         | '(' select_paren_derived ')'
@@ -6242,7 +6106,7 @@ query_specification:
 query_expression_body:
           query_specification
         | query_expression_body
-          UNION_SYM union_option 
+          UNION_SYM union_option
           {
             if (add_select_to_union_list(Lex, (bool)$3))
               DRIZZLE_YYABORT;
@@ -6257,7 +6121,7 @@ query_expression_body:
 /* Corresponds to <query expression> in the SQL:2003 standard. */
 subselect:
           subselect_start query_expression_body subselect_end
-          { 
+          {
             $$= $2;
           }
         ;
@@ -6270,11 +6134,11 @@ subselect_start:
               my_parse_error(ER(ER_SYNTAX_ERROR));
               DRIZZLE_YYABORT;
             }
-            /* 
+            /*
               we are making a "derived table" for the parenthesis
-              as we need to have a lex level to fit the union 
-              after the parenthesis, e.g. 
-              (SELECT .. ) UNION ...  becomes 
+              as we need to have a lex level to fit the union
+              after the parenthesis, e.g.
+              (SELECT .. ) UNION ...  becomes
               SELECT * FROM ((SELECT ...) UNION ...)
             */
             if (mysql_new_select(Lex, 1))

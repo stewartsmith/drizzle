@@ -279,11 +279,11 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-struct st_savepoint 
+struct st_savepoint
 {
   struct st_savepoint *prev;
   char *name;
-  uint32_t length;
+  size_t length;
   Ha_trx_info *ha_list;
 };
 
@@ -293,8 +293,8 @@ extern HASH xid_cache;
 #include <drizzled/security_context.h>
 #include <drizzled/open_tables_state.h>
 
-#include <drizzled/internal_error_handler.h> 
-#include <drizzled/diagnostics_area.h> 
+#include <drizzled/internal_error_handler.h>
+#include <drizzled/diagnostics_area.h>
 
 /**
   Storage engine specific thread local data.
@@ -770,15 +770,6 @@ public:
   inline const char* get_proc_info() const
   {
     return proc_info;
-  }
-
-  inline void setReplicationData (void *data)
-  {
-    replication_data= data;
-  }
-  inline void *getReplicationData () const
-  {
-    return replication_data;
   }
 
   /** Returns the current query ID */
@@ -1437,7 +1428,7 @@ public:
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
-  bool lock_table_name_if_not_cached(const char *db, 
+  bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
   /* Work with temporary tables */
@@ -1447,16 +1438,17 @@ public:
   void close_temporary_tables();
   void close_temporary_table(Table *table);
   // The method below just handles the de-allocation of the table. In
-  // a better memory type world, this would not be needed. 
+  // a better memory type world, this would not be needed.
 private:
   void close_temporary(Table *table);
 public:
 
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
-  Table *open_temporary_table(const char *path, const char *db,
-                              const char *table_name, bool link_in_list= true);
-  
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, drizzled::TableIdentifier &identifier);
+  Table *open_temporary_table(drizzled::TableIdentifier &identifier,
+                              bool link_in_list= true);
+
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);

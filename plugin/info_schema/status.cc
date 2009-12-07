@@ -74,16 +74,14 @@ vector<const plugin::ColumnInfo *> *GlobalStatusIS::createColumns()
                                                    DRIZZLE_TYPE_VARCHAR,
                                                    0,
                                                    0,
-                                                   "Variable_name",
-                                                   SKIP_OPEN_TABLE));
+                                                   "Variable_name"));
 
   status_columns->push_back(new plugin::ColumnInfo("VARIABLE_VALUE",
                                                    16300,
                                                    DRIZZLE_TYPE_VARCHAR,
                                                    0,
                                                    1,
-                                                   "Value",
-                                                   SKIP_OPEN_TABLE));
+                                                   "Value"));
 
   return status_columns;
 }
@@ -178,13 +176,15 @@ void StatusIS::cleanup()
   delete status_table;
 }
 
-int StatusISMethods::fillTable(Session *session, TableList *tables)
+int StatusISMethods::fillTable(Session *session, 
+                               Table *table,
+                               plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   int res= 0;
   STATUS_VAR *tmp1, tmp;
-  const string schema_table_name= tables->schema_table->getTableName();
+  const string schema_table_name= schema_table->getTableName();
   enum enum_var_type option_type;
   bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
 
@@ -218,8 +218,9 @@ int StatusISMethods::fillTable(Session *session, TableList *tables)
   }
   res= show_status_array(session, wild,
                          getFrontOfStatusVars(),
-                         option_type, tmp1, "", tables->table,
-                         upper_case_names);
+                         option_type, tmp1, "", table,
+                         upper_case_names,
+                         schema_table);
   pthread_mutex_unlock(&LOCK_status);
   return res;
 }

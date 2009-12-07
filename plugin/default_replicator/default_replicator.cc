@@ -33,10 +33,12 @@
  */
 
 #include <drizzled/server_includes.h>
-#include "default_replicator.h"
-
+#include <drizzled/plugin/registry.h>
+#include <drizzled/plugin.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>
+
+#include "default_replicator.h"
 
 #include <vector>
 #include <string>
@@ -72,14 +74,14 @@ void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, messag
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(plugin::Registry &registry)
 {
   default_replicator= new DefaultReplicator("default_replicator");
   registry.add(default_replicator);
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(plugin::Registry &registry)
 {
   if (default_replicator)
   {
@@ -98,12 +100,12 @@ static DRIZZLE_SYSVAR_BOOL(
   NULL, /* update func */
   false /* default */);
 
-static struct st_mysql_sys_var* default_replicator_system_variables[]= {
+static drizzle_sys_var* default_replicator_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "default_replicator",
   "0.1",
@@ -116,4 +118,4 @@ drizzle_declare_plugin
   default_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

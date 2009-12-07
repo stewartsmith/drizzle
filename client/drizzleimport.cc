@@ -1,4 +1,5 @@
-/* Copyright (C) 2008 Drizzle Open Source Development Team
+/* Copyright (C) 2000-2006 MySQL AB
+   Copyright (C) 2008-2009 Sun Microsystems, Inc
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -57,10 +58,10 @@ static char *add_load_option(char *ptr,const char *object,
 
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
-            ignore_unique= false, opt_compress= false, opt_low_priority= false,
+            ignore_unique= false, opt_low_priority= false,
             tty_password= false;
-static bool debug_info_flag= false, debug_check_flag= false;
-static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
+
+static uint32_t opt_use_threads= 0, opt_local_file= 0;
 static char  *opt_password= NULL, *current_user= NULL,
     *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
     *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
@@ -75,17 +76,8 @@ static struct my_option my_long_options[] =
    "Use only these columns to import the data to. Give the column names in a comma separated list. This is same as giving columns to LOAD DATA INFILE.",
    (char**) &opt_columns, (char**) &opt_columns, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
-  {"compress", 'C', "Use compression in server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"debug",'#', "Output debug log. Often this is 'd:t:o,filename'.", 0, 0, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delete", 'd', "First delete all rows from table.", (char**) &opt_delete,
    (char**) &opt_delete, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"fields-terminated-by", OPT_FTB,
@@ -254,10 +246,6 @@ static int get_options(int *argc, char ***argv)
 
   if ((ho_error=handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
 
   if (enclosed && opt_enclosed)
   {
@@ -672,6 +660,6 @@ int main(int argc, char **argv)
   }
   free(opt_password);
   free_defaults(argv_to_free);
-  my_end(my_end_arg);
+  my_end();
   return(exitcode);
 }

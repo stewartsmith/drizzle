@@ -167,6 +167,13 @@ using namespace drizzled;
 
 /* Constants */
 
+const string& drizzled_version()
+{
+  static const string DRIZZLED_VERSION(STRING_WITH_LEN(PANDORA_RELEASE_VERSION));
+  return DRIZZLED_VERSION;
+}
+
+
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
 static const char *optimizer_switch_names[]=
 {
@@ -231,7 +238,6 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool opt_endinfo;
 bool locked_in_memory;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
@@ -261,7 +267,7 @@ uint64_t session_startup_options;
 uint32_t back_log;
 uint32_t server_id;
 uint64_t table_cache_size;
-uint64_t table_def_size;
+size_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
@@ -530,14 +536,13 @@ void unireg_abort(int exit_code)
     usage();
   clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
-  my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
+  my_end();
   exit(exit_code);
 }
 
 
 static void clean_up(bool print_message)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
     return;
 
@@ -545,8 +550,9 @@ static void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin_shutdown(plugins);
   ha_end();
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugin_shutdown(plugins);
   xid_cache_free();
   free_status_vars();
   if (defaults_argv)
@@ -1142,7 +1148,6 @@ static SHOW_VAR com_status_vars[]= {
   {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
   {"kill",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
   {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
   {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
   {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
@@ -1291,7 +1296,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   defaults_argc=argc;
   get_options(&defaults_argc, defaults_argv);
 
-  current_pid=(ulong) getpid();		/* Save for later ref */
+  current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
   if (init_errmessage())	/* Read error messages from file */
@@ -1384,8 +1389,7 @@ static int init_server_components(plugin::Registry &plugins)
   */
   if (table_cache_init())
     unireg_abort(1);
-  if (TableShare::cacheStart())
-    unireg_abort(1);
+  TableShare::cacheStart();
 
   setup_fpu();
   init_thr_lock();
@@ -1658,7 +1662,7 @@ int main(int argc, char **argv)
   clean_up(1);
   plugin::Registry::shutdown();
   clean_up_mutexes();
-  my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
+  my_end();
   return 0;
 }
 
@@ -2075,7 +2079,7 @@ struct my_option my_long_options[] =
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
-   0, GET_ULL, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
+   0, GET_SIZE, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
@@ -2175,7 +2179,6 @@ static void drizzle_init_variables(void)
   dropping_tables= ha_open_options=0;
   test_flags.reset();
   wake_thread=0;
-  opt_endinfo= false;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
@@ -2243,9 +2246,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
                         char *argument)
 {
   switch(optid) {
-  case '#':
-    opt_endinfo=1;				/* unireg: memory allocation */
-    break;
   case 'a':
     global_system_variables.tx_isolation= ISO_SERIALIZABLE;
     break;
@@ -2289,7 +2289,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     {
       test_flags.set((uint32_t) atoi(argument));
     }
-    opt_endinfo=1;
     break;
   case (int) OPT_WANT_CORE:
     test_flags.set(TEST_CORE_ON_SIGNAL);

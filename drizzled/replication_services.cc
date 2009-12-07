@@ -40,7 +40,7 @@
  *
  * @see /drizzled/message/transaction.proto
  *
- * @TODO
+ * @todo
  *
  * We really should store the raw bytes in the messages, not the
  * String value of the Field.  But, to do that, the
@@ -94,15 +94,15 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
-  while (repl_iter != replicators.end())
+  for (Replicators::iterator repl_iter= replicators.begin();
+       repl_iter != replicators.end();
+       ++repl_iter)
   {
     if ((*repl_iter)->isEnabled())
     {
       tmp_is_active= true;
       break;
     }
-    ++repl_iter;
   }
   if (! tmp_is_active)
   {
@@ -118,15 +118,15 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  vector<plugin::TransactionApplier *>::iterator appl_iter= appliers.begin();
-  while (appl_iter != appliers.end())
+  for (Appliers::iterator appl_iter= appliers.begin();
+       appl_iter != appliers.end();
+       ++appl_iter)
   {
     if ((*appl_iter)->isEnabled())
     {
       is_active= true;
       return;
     }
-    ++appl_iter;
   }
   /* If we get here, there are no active appliers */
   is_active= false;
@@ -205,31 +205,44 @@ void ReplicationServices::cleanupTransaction(message::Transaction *in_transactio
   in_session->setTransactionMessage(NULL);
 }
 
-void ReplicationServices::startNormalTransaction(Session *in_session)
+bool ReplicationServices::transactionContainsBulkSegment(const message::Transaction &transaction) const
 {
-  if (! is_active)
-    return;
+  size_t num_statements= transaction.statement_size();
+  if (num_statements == 0)
+    return false;
 
-  /* Safeguard...other transactions should have already been closed */
-  message::Transaction *transaction= in_session->getTransactionMessage();
-  assert(transaction == NULL);
-  
-  /* 
-   * A "normal" transaction for the replication services component
-   * is simply a Transaction message, nothing more...so we create a
-   * new message and attach it to the Session object.
-   *
-   * Allocate and initialize a new transaction message 
-   * for this Session object.  This memory is deleted when the
-   * transaction is pushed out to replicators.  Session is NOT
-   * responsible for deleting this memory.
+  /*
+   * Only INSERT, UPDATE, and DELETE statements can possibly
+   * have bulk segments.  So, we loop through the statements
+   * checking for segment_id > 1 in those specific submessages.
    */
-  transaction= new (nothrow) message::Transaction();
-  initTransaction(*transaction, in_session);
-  in_session->setTransactionMessage(transaction);
-}
+  size_t x;
+  for (x= 0; x < num_statements; ++x)
+  {
+    const message::Statement &statement= transaction.statement(x);
+    message::Statement::Type type= statement.type();
 
-void ReplicationServices::commitNormalTransaction(Session *in_session)
+    switch (type)
+    {
+      case message::Statement::INSERT:
+        if (statement.insert_data().segment_id() > 1)
+          return true;
+        break;
+      case message::Statement::UPDATE:
+        if (statement.update_data().segment_id() > 1)
+          return true;
+        break;
+      case message::Statement::DELETE:
+        if (statement.delete_data().segment_id() > 1)
+          return true;
+        break;
+      default:
+        break;
+    }
+  }
+  return false;
+}
+void ReplicationServices::commitTransaction(Session *in_session)
 {
   if (! is_active)
     return;
@@ -276,22 +289,41 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
   
   message::Transaction *transaction= getActiveTransaction(in_session);
 
-  /* 
-   * We clear the current transaction, reset its transaction ID properly, 
-   * then set its type to ROLLBACK and push it out to the replicators.
+  /*
+   * OK, so there are two situations that we need to deal with here:
+   *
+   * 1) We receive an instruction to ROLLBACK the current transaction
+   *    and the currently-stored Transaction message is *self-contained*, 
+   *    meaning that no Statement messages in the Transaction message
+   *    contain a message having its segment_id member greater than 1.  If
+   *    no non-segment ID 1 members are found, we can simply clear the
+   *    current Transaction message and remove it from memory.
+   *
+   * 2) If the Transaction message does indeed have a non-end segment, that
+   *    means that a bulk update/delete/insert Transaction message segment
+   *    has previously been sent over the wire to replicators.  In this case, 
+   *    we need to package a Transaction with a Statement message of type
+   *    ROLLBACK to indicate to replicators that previously-transmitted
+   *    messages must be un-applied.
    */
-  transaction->Clear();
-  initTransaction(*transaction, in_session);
+  if (unlikely(transactionContainsBulkSegment(*transaction)))
+  {
+    /*
+     * Clear the transaction, create a Rollback statement message, 
+     * attach it to the transaction, and push it to replicators.
+     */
+    transaction->Clear();
+    initTransaction(*transaction, in_session);
 
-  message::Statement *statement= transaction->add_statement();
+    message::Statement *statement= transaction->add_statement();
 
-  initStatement(*statement, message::Statement::ROLLBACK, in_session);
-  finalizeStatement(*statement, in_session);
+    initStatement(*statement, message::Statement::ROLLBACK, in_session);
+    finalizeStatement(*statement, in_session);
 
-  finalizeTransaction(*transaction, in_session);
-  
-  push(*transaction);
-
+    finalizeTransaction(*transaction, in_session);
+    
+    push(*transaction);
+  }
   cleanupTransaction(transaction, in_session);
 }
 
@@ -532,17 +564,21 @@ void ReplicationServices::updateRecord(Session *in_session,
     }
 
     /* 
-     * Add the WHERE clause values now...the fields which return true
-     * for isReadSet() are in the WHERE clause.  For tables with no
-     * primary or unique key, all fields will be returned.
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
      */
-    if (current_field->isReadSet())
+    if (in_table->s->primary_key == current_field->field_index)
     {
-      string_value= current_field->val_str(string_value);
-      record->add_key_value(string_value->c_ptr(), string_value->length());
       /**
-       * @TODO Store optional old record value in the before data member
+       * To say the below is ugly is an understatement. But it works.
+       * 
+       * @todo Move this crap into a real Record API.
        */
+      string_value= current_field->val_str(string_value,
+                                           old_record + 
+                                           current_field->offset(const_cast<unsigned char *>(new_record)));
+      record->add_key_value(string_value->c_ptr(), string_value->length());
       string_value->free();
     }
 
@@ -644,6 +680,38 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
       string_value->free();
     }
   }
+}
+
+void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::TRUNCATE_TABLE, in_session);
+
+  /* 
+   * Construct the specialized TruncateTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
+  message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
+
+  const char *schema_name= in_table->getShare()->db.str;
+  const char *table_name= in_table->getShare()->table_name.str;
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
 }
 
 void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)

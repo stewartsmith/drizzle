@@ -28,10 +28,10 @@
 #ifndef DRIZZLED_JOIN_TABLE_H
 #define DRIZZLED_JOIN_TABLE_H
 
-#include <drizzled/enum_nested_loop_state.h>
-#include <drizzled/table_reference.h>
-#include <drizzled/opt_range.h>
-#include <drizzled/join_cache.h>
+#include "drizzled/enum_nested_loop_state.h"
+#include "drizzled/table_reference.h"
+#include "drizzled/optimizer/range.h"
+#include "drizzled/join_cache.h"
 #include "drizzled/optimizer/key_use.h"
 
 #include <bitset>
@@ -43,7 +43,6 @@
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
 
 class Table;
-class SQL_SELECT;
 
 
 /** Description of an access method */
@@ -68,12 +67,58 @@ enum access_method
 class JoinTable 
 {
 public:
-  JoinTable() {} /* Remove gcc warning */
+  JoinTable() :
+    table(NULL),
+    keyuse(NULL),
+    select(NULL),
+    select_cond(NULL),
+    quick(NULL),
+    pre_idx_push_select_cond(NULL),
+    on_expr_ref(NULL),
+    cond_equal(NULL),
+    first_inner(NULL),
+    found(false),
+    not_null_compl(false),
+    last_inner(NULL),
+    first_upper(NULL),
+    first_unmatched(NULL),
+    packed_info(0),
+    read_first_record(NULL),
+    next_select(NULL),
+    worst_seeks(0.0),
+    const_keys(0),
+    checked_keys(0),
+    needed_reg(0),
+    keys(0),
+    records(0),
+    found_records(0),
+    read_time(0),
+    dependent(0),
+    key_dependent(0),
+    use_quick(0),
+    index(0),
+    status(0),
+    used_fields(0),
+    used_fieldlength(0),
+    used_blobs(0),
+    type(AM_UNKNOWN),
+    cached_eq_ref_table(0),
+    eq_ref_table(0),
+    not_used_in_distinct(0),
+    sorted(0),
+    limit(0),
+    join(NULL),
+    insideout_match_tab(NULL),
+    insideout_buf(NULL),
+    found_match(false),
+    rowid_keep_flags(0),
+    embedding_map(0)
+  {}
   Table *table;
   drizzled::optimizer::KeyUse *keyuse; /**< pointer to first used key */
-  SQL_SELECT *select;
+  drizzled::optimizer::SQL_SELECT *select;
   COND *select_cond;
-  QUICK_SELECT_I *quick;
+  drizzled::optimizer::QUICK_SELECT_I *quick;
   /**
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
@@ -189,7 +234,7 @@ public:
   {
     return (select && select->quick &&
             (select->quick->get_type() ==
-             QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
+             drizzled::optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
   }
 
   void readCachedRecord();

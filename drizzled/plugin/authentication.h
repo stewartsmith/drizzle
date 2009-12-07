@@ -22,6 +22,8 @@
 #ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
 #define DRIZZLED_PLUGIN_AUTHENTICATION_H
 
+#include "drizzled/plugin/plugin.h"
+
 class Session;
 
 namespace drizzled

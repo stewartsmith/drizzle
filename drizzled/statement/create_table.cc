@@ -23,6 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
+#include <drizzled/table_identifier.h>
 
 namespace drizzled
 {
@@ -37,10 +38,11 @@ bool statement::CreateTable::execute()
   bool need_start_waiting= false;
   bool res= false;
   bool link_to_local= false;
+  bool lex_identified_temp_table= 
+    create_table_proto.type() == drizzled::message::Table::TEMPORARY;
 
-  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  if (is_engine_set)
   {
-
     create_info.db_type= 
       plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
@@ -71,7 +73,7 @@ bool statement::CreateTable::execute()
 
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+  if (! lex_identified_temp_table)
   {
     if (! session->endActiveTransaction())
     {
@@ -82,7 +84,16 @@ bool statement::CreateTable::execute()
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
-  if (create_table_precheck(session, select_tables, create_table))
+
+  /*
+    Now that we have the engine, we can figure out the table identifier. We need the engine in order
+    to determine if the table is transactional or not if it is temp.
+  */
+  TableIdentifier new_table_identifier(create_table->db,
+                                       create_table->table_name,
+                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE : TEMP_TABLE);
+
+  if (create_table_precheck(new_table_identifier))
   {
     /* put tables back for PS rexecuting */
     session->lex->link_first_table_back(create_table, link_to_local);
@@ -119,7 +130,7 @@ bool statement::CreateTable::execute()
     select_lex->options|= SELECT_NO_UNLOCK;
     unit->set_limit(select_lex);
 
-    if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+    if (! lex_identified_temp_table)
     {
       session->lex->link_first_table_back(create_table, link_to_local);
       create_table->create= true;
@@ -131,7 +142,7 @@ bool statement::CreateTable::execute()
          Is table which we are changing used somewhere in other parts
          of query
        */
-      if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+      if (! lex_identified_temp_table)
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
@@ -154,6 +165,7 @@ bool statement::CreateTable::execute()
          needs to be created for every execution of a PS/SP.
        */
       if ((result= new select_create(create_table,
+                                     is_if_not_exists,
                                      &create_info,
                                      &create_table_proto,
                                      &alter_info,
@@ -170,7 +182,7 @@ bool statement::CreateTable::execute()
         delete result;
       }
     }
-    else if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
+    else if (! lex_identified_temp_table)
     {
       create_table= session->lex->unlink_first_table(&link_to_local);
     }
@@ -178,13 +190,15 @@ bool statement::CreateTable::execute()
   else
   {
     /* regular create */
-    if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
+    if (is_create_table_like)
     {
       res= mysql_create_like_table(session, 
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
-                                   &create_info);
+                                   create_info.db_type, 
+                                   is_if_not_exists,
+                                   is_engine_set);
     }
     else
     {
@@ -197,13 +211,13 @@ bool statement::CreateTable::execute()
       }
 
       res= mysql_create_table(session, 
-                              create_table->db,
-                              create_table->table_name, 
+                              new_table_identifier,
                               &create_info,
                               &create_table_proto,
                               &alter_info, 
-                              0, 
-                              0);
+                              false, 
+                              0,
+                              is_if_not_exists);
     }
     if (! res)
     {

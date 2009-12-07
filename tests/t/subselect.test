@@ -154,7 +154,7 @@ CREATE TABLE `t8` (
   `email` varchar(60) NOT NULL default '',
   PRIMARY KEY  (`pseudo`),
   UNIQUE KEY `email` (`email`)
-) ROW_FORMAT=DYNAMIC;
+);
 
 INSERT INTO t8 (pseudo,email) VALUES ('joce','test');
 INSERT INTO t8 (pseudo,email) VALUES ('joce1','test1');
@@ -199,7 +199,7 @@ CREATE TABLE `t1` (
   `maxnumrep` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
-) ROW_FORMAT=FIXED;
+);
 
 INSERT INTO t1 (numeropost,maxnumrep) VALUES (40143,1),(43506,2);
 
@@ -209,7 +209,7 @@ CREATE TABLE `t2` (
       `date` date NULL,
       `pseudo` varchar(35) NOT NULL default '',
        PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`)
-    ) ROW_FORMAT=DYNAMIC;
+    );
 
 INSERT INTO t2 (mot,topic,date,pseudo) VALUES ('joce','40143','2002-10-22','joce'), ('joce','43506','2002-10-22','joce');
 select numeropost as a FROM t1 GROUP BY (SELECT 1 FROM t1 HAVING a=1);
@@ -242,7 +242,7 @@ CREATE TABLE `t1` (
   `maxnumrep` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
-) ROW_FORMAT=FIXED;
+);
 
 INSERT INTO t1 (numeropost,maxnumrep) VALUES (1,0),(2,1);
 -- error 1242

@@ -108,10 +108,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN enum row_type get_row_type() const;
 
 	UNIV_INTERN const char* index_type(uint key_number);
-	UNIV_INTERN uint32_t index_flags(uint idx, uint part, bool all_parts) const;
-	UNIV_INTERN uint32_t max_supported_keys() const;
-	UNIV_INTERN uint32_t max_supported_key_length() const;
-	UNIV_INTERN uint32_t max_supported_key_part_length() const;
 	UNIV_INTERN const key_map* keys_to_use_for_scanning();
 
 	UNIV_INTERN int open(const char *name, int mode, uint test_if_locked);
@@ -146,8 +142,7 @@ class ha_innobase: public Cursor
 
 	UNIV_INTERN void position(const unsigned char *record);
 	UNIV_INTERN int info(uint);
-	UNIV_INTERN int analyze(Session* session,HA_CHECK_OPT* check_opt);
-	UNIV_INTERN int optimize(Session* session,HA_CHECK_OPT* check_opt);
+	UNIV_INTERN int analyze(Session* session);
 	UNIV_INTERN int discard_or_import_tablespace(bool discard);
 	UNIV_INTERN int extra(enum ha_extra_function operation);
         UNIV_INTERN int reset();
@@ -159,7 +154,7 @@ class ha_innobase: public Cursor
 	UNIV_INTERN ha_rows estimate_rows_upper_bound();
 
 	UNIV_INTERN int delete_all_rows();
-	UNIV_INTERN int check(Session* session, HA_CHECK_OPT* check_opt);
+	UNIV_INTERN int check(Session* session);
 	UNIV_INTERN char* update_table_comment(const char* comment);
 	UNIV_INTERN char* get_foreign_key_create_info();
 	UNIV_INTERN int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);

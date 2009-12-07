@@ -99,7 +99,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(ulong version_arg)
+Open_tables_state::Open_tables_state(uint64_t version_arg)
   :version(version_arg), backups_available(false)
 {
   reset_open_tables_state();
@@ -167,12 +167,6 @@ extern "C"
 int session_tx_isolation(const Session *session)
 {
   return (int) session->variables.tx_isolation;
-}
-
-extern "C"
-void session_inc_row_count(Session *session)
-{
-  session->row_count++;
 }
 
 Session::Session(plugin::Client *client_arg)
@@ -1872,7 +1866,6 @@ void Session::close_temporary_tables()
 */
 
 void Session::close_temporary_table(Table *table)
-                         
 {
   if (table->prev)
   {
@@ -1914,6 +1907,7 @@ void Session::close_temporary(Table *table)
   rm_temporary_table(table_type, table->s->path.str);
 
   table->s->free_table_share();
+
   /* This makes me sad, but we're allocating it via malloc */
   free(table);
 }
@@ -2126,22 +2120,38 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
 {
-  bool error=0;
+  bool error= false;
+
+  assert(base);
+
+  if (plugin::StorageEngine::deleteDefinitionFromPath(identifier))
+    error= true;
+
+  if (base->doDropTable(*this, identifier.getPath()))
+  {
+    error= true;
+    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+                  identifier.getPath(), my_errno);
+  }
+  return error;
+}
+
+bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
+{
+  bool error= false;
 
   assert(base);
 
   if (delete_table_proto_file(path))
-    error=1;
+    error= true;
 
   if (base->doDropTable(*this, path))
   {
-    error=1;
+    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path, my_errno);
   }
-  return(error);
+  return error;
 }
-
-

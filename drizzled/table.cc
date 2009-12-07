@@ -247,7 +247,6 @@ int drizzled::parse_table_proto(Session& session,
                                 TableShare *share)
 {
   int error= 0;
-  Cursor *handler_file= NULL;
 
   share->setTableProto(new(nothrow) message::Table(table));
 
@@ -305,8 +304,6 @@ int drizzled::parse_table_proto(Session& session,
   share->db_record_offset= 1;
 
   share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
-
-  share->db_low_byte_first= true;
 
   share->keys= table.indexes_size();
 
@@ -390,14 +387,9 @@ int drizzled::parse_table_proto(Session& session,
     case message::Table::Index::BTREE:
       keyinfo->algorithm= HA_KEY_ALG_BTREE;
       break;
-    case message::Table::Index::RTREE:
-      keyinfo->algorithm= HA_KEY_ALG_RTREE;
-      break;
     case message::Table::Index::HASH:
       keyinfo->algorithm= HA_KEY_ALG_HASH;
       break;
-    case message::Table::Index::FULLTEXT:
-      keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
 
     default:
       /* TODO: suitable warning ? */
@@ -818,7 +810,7 @@ int drizzled::parse_table_proto(Session& session,
     memset(&temp_table, 0, sizeof(temp_table));
     temp_table.s= share;
     temp_table.in_use= &session;
-    temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
+    temp_table.s->db_low_byte_first= true; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
@@ -1015,16 +1007,11 @@ int drizzled::parse_table_proto(Session& session,
   free(field_pack_length);
   field_pack_length= NULL;
 
-  if (! (handler_file= share->db_type()->getCursor(*share, session.mem_root)))
-    abort(); // FIXME
-
   /* Fix key stuff */
   if (share->key_parts)
   {
     uint32_t primary_key= (uint32_t) (find_type((char*) "PRIMARY",
                                                 &share->keynames, 3) - 1); /* @TODO Huh? */
-
-    int64_t ha_option= handler_file->ha_table_flags();
 
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
@@ -1092,13 +1079,14 @@ int drizzled::parse_table_proto(Session& session,
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
-          if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
+          enum ha_key_alg algo= share->key_info[key].algorithm;
+          if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
           {
             share->keys_for_keyread.set(key);
             field->part_of_key.set(key);
             field->part_of_key_not_clustered.set(key);
           }
-          if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
+          if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
             field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
@@ -1112,7 +1100,7 @@ int drizzled::parse_table_proto(Session& session,
             If this field is part of the primary key and all keys contains
             the primary key, then we can use any key to find this column
           */
-          if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
+          if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
           {
             field->part_of_key= share->keys_in_use;
             if (field->part_of_sortkey.test(key))
@@ -1129,13 +1117,11 @@ int drizzled::parse_table_proto(Session& session,
       set_if_bigger(share->max_key_length,keyinfo->key_length+
                     keyinfo->key_parts);
       share->total_key_length+= keyinfo->key_length;
-      /*
-        MERGE tables do not have unique indexes. But every key could be
-        an unique index on the underlying MyISAM table. (Bug #10400)
-      */
-      if ((keyinfo->flags & HA_NOSAME) ||
-          (ha_option & HA_ANY_INDEX_MAY_BE_UNIQUE))
+
+      if (keyinfo->flags & HA_NOSAME)
+      {
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
+      }
     }
     if (primary_key < MAX_KEY &&
         (share->keys_in_use.test(primary_key)))
@@ -1196,7 +1182,7 @@ int drizzled::parse_table_proto(Session& session,
     }
   }
 
-  share->db_low_byte_first= handler_file->low_byte_first();
+  share->db_low_byte_first= true; // @todo Question this.
   share->column_bitmap_size= bitmap_buffer_size(share->fields);
 
   my_bitmap_map *bitmaps;
@@ -1207,8 +1193,6 @@ int drizzled::parse_table_proto(Session& session,
   share->all_set.init(bitmaps, share->fields);
   share->all_set.setAll();
 
-  if (handler_file)
-    delete handler_file;
   return (0);
 
 err:
@@ -1221,8 +1205,6 @@ err:
   share->open_errno= my_errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
-  if (handler_file)
-    delete handler_file;
   share->open_table_error(error, share->open_errno, 0);
 
   return error;
@@ -1495,11 +1477,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
                           HA_OPEN_ABORT_IF_LOCKED :
                            HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
-      /* Set a flag if the table is crashed and it can be auto. repaired */
-      share->crashed= ((ha_err == HA_ERR_CRASHED_ON_USAGE) &&
-                       outparam->cursor->auto_repair() &&
-                       !(ha_open_flags & HA_OPEN_FOR_REPAIR));
-
       switch (ha_err)
       {
         case HA_ERR_NO_SUCH_TABLE:
@@ -1813,15 +1790,10 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 
 
 
-void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
-                             message::Table *table_proto)
+void Table::updateCreateInfo(message::Table *table_proto)
 {
   message::Table::TableOptions *table_options= table_proto->mutable_options();
-  create_info->table_options= s->db_create_options;
   table_options->set_block_size(s->block_size);
-  create_info->row_type= s->row_type;
-  create_info->default_table_charset= s->table_charset;
-  create_info->table_charset= 0;
   table_options->set_comment(s->getComment());
 }
 
@@ -1882,8 +1854,7 @@ bool check_db_name(LEX_STRING *org_name)
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
 
-  if (name != any_db)
-    my_casedn_str(files_charset_info, name);
+  my_casedn_str(files_charset_info, name);
 
   return check_identifier_name(org_name);
 }
@@ -1977,7 +1948,7 @@ void Table::clear_column_bitmaps()
 void Table::prepare_for_position()
 {
 
-  if ((cursor->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
+  if ((cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
       s->primary_key < MAX_KEY)
   {
     mark_columns_used_by_index_no_reset(s->primary_key);
@@ -2108,7 +2079,7 @@ void Table::mark_columns_needed_for_delete()
     mark_columns_used_by_index_no_reset(s->primary_key);
 
   /* If we the engine wants all predicates we mark all keys */
-  if (cursor->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
+  if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
     Field **reg_field;
     for (reg_field= field ; *reg_field ; reg_field++)
@@ -2132,7 +2103,7 @@ void Table::mark_columns_needed_for_delete()
     if neeed, either the primary key column or all columns to be read.
     (see mark_columns_needed_for_delete() for details)
 
-    If the engine has HA_REQUIRES_KEY_COLUMNS_FOR_DELETE, we will
+    If the engine has HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE, we will
     mark all USED key columns as 'to-be-read'. This allows the engine to
     loop over the given record to find all changed keys and doesn't have to
     retrieve the row again.
@@ -2155,7 +2126,7 @@ void Table::mark_columns_needed_for_update()
   else
     mark_columns_used_by_index_no_reset(s->primary_key);
 
-  if (cursor->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
+  if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
     /* Mark all used key columns for read */
     Field **reg_field;
@@ -2271,39 +2242,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 
 
 /**
-  Create field for information schema table.
-
-  @param session		Thread Cursor
-  @param table		Temporary table
-  @param item		Item to create a field for
-
-  @retval
-    0			on error
-  @retval
-    new_created field
-*/
-
-static Field *create_tmp_field_for_schema(Item *item, Table *table)
-{
-  if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
-  {
-    Field *field;
-    if (item->max_length > MAX_FIELD_VARCHARLENGTH)
-      field= new Field_blob(item->max_length, item->maybe_null,
-                            item->name, item->collation.collation);
-    else
-      field= new Field_varstring(item->max_length, item->maybe_null,
-                                 item->name,
-                                 table->s, item->collation.collation);
-    if (field)
-      field->init(table);
-    return field;
-  }
-  return item->tmp_table_field_from_field_type(table, 0);
-}
-
-
-/**
   Create a temp table according to a field list.
 
   Given field pointers are changed to point at tmp_table for
@@ -2368,8 +2306,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   status_var_increment(session->status_var.created_tmp_tables);
 
   /* if we run out of slots or we are not using tempool */
-  sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-          session->thread_id, session->tmp_table++);
+  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+           session->thread_id, session->tmp_table++);
 
   /*
     No need to change table name to lower case as we are only creating
@@ -2567,8 +2505,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	We here distinguish between UNION and multi-table-updates by the fact
 	that in the later case group is set to the row pointer.
       */
-      Field *new_field= (param->schema_table) ?
-        create_tmp_field_for_schema(item, table) :
+      Field *new_field= 
         create_tmp_field(session, table, item, type, &copy_func,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,
@@ -2641,8 +2578,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     share->storage_engine= myisam_engine;
     table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
     if (group &&
-	(param->group_parts > table->cursor->max_key_parts() ||
-	 param->group_length > table->cursor->max_key_length()))
+	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
+	 param->group_length > table->cursor->getEngine()->max_key_length()))
       using_unique_constraint=1;
   }
   else
@@ -2947,7 +2884,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info->length=   (uint16_t) (*reg_field)->pack_length();
       /* TODO:
         The below method of computing the key format length of the
-        key part is a copy/paste from opt_range.cc, and table.cc.
+        key part is a copy/paste from optimizer/range.cc, and table.cc.
         This should be factored out, e.g. as a method of Field.
         In addition it is not clear if any of the Field::*_length
         methods is supposed to compute the same length. If so, it
@@ -3189,8 +3126,8 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       goto err;
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
-    if (keyinfo->key_length >= cursor->max_key_length() ||
-	keyinfo->key_parts > cursor->max_key_parts() ||
+    if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
+	keyinfo->key_parts > cursor->getEngine()->max_key_parts() ||
 	share->uniques)
     {
       /* Can't create a key; Make a unique constraint instead of a key */
@@ -3470,11 +3407,11 @@ bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
     return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
+  
   /* Compare null bits */
-  if (memcmp(null_flags,
-	     null_flags + s->rec_buff_length,
-	     s->null_bytes))
-    return true;				// Diff in NULL value
+  if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
+    return true; /* Diff in NULL value */
+
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {

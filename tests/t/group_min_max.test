@@ -704,7 +704,7 @@ drop table t1;
 
 CREATE TABLE t1 (a varchar(5), b int, PRIMARY KEY (a,b));
 INSERT INTO t1 VALUES ('AA',1), ('AA',2), ('AA',3), ('BB',1), ('AA',4);
-OPTIMIZE TABLE t1;
+ALTER TABLE t1 ENGINE="DEFAULT";
 
 SELECT a FROM t1 WHERE a='AA' GROUP BY a;
 SELECT a FROM t1 WHERE a='BB' GROUP BY a;

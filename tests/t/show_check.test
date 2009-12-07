@@ -18,13 +18,9 @@ insert into t1 values (1,2,2),(2,2,3),(3,2,4),(4,2,4);
 --echo -- after Bug#29394 is implemented.
 
 --enable_metadata
-check table t1 fast;
-check table t1 fast;
-check table t1 changed;
+check table t1;
 insert into t1 values (5,5,5);
-check table t1 changed;
-check table t1 medium;
-check table t1 extended;
+check table t1;
 show index from t1;
 --disable_metadata
 --error ER_DUP_ENTRY
@@ -35,9 +31,9 @@ insert into t1 values (5,5,5);
 --echo -- after Bug#29394 is implemented.
 
 --enable_metadata
-optimize table t1;
+alter table t1 engine="default";
 --disable_metadata
-optimize table t1;
+alter table t1 engine="default";
 drop table t1;
 
 #show variables;
@@ -195,7 +191,7 @@ DROP TABLE `a.1`;
 
 
 #
-# Test for bug #2719 "Heap tables status shows wrong or missing data."
+# Test for bug #2719 "MEMORY tables status shows wrong or missing data."
 #
 
 select @@max_heap_table_size;
@@ -203,19 +199,19 @@ select @@max_heap_table_size;
 CREATE TEMPORARY TABLE t1 (
  a int default NULL,
  KEY a USING BTREE (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 CREATE TEMPORARY TABLE t2 (
  b int default NULL,
  index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 CREATE TEMPORARY TABLE t3 (
  a int default NULL,
  b int default NULL,
  KEY a USING BTREE (a),
  index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);

@@ -21,7 +21,8 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_TABLE_H
 #define DRIZZLED_STATEMENT_CREATE_TABLE_H
 
-#include <drizzled/statement.h>
+#include "drizzled/statement.h"
+#include "drizzled/foreign_key.h"
 
 class Session;
 
@@ -35,7 +36,10 @@ class CreateTable : public Statement
 public:
   CreateTable(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session),
+      is_create_table_like(false),
+      is_if_not_exists(false),
+      is_engine_set(false)
   {
     memset(&create_info, 0, sizeof(create_info));
   }
@@ -63,6 +67,10 @@ public:
 
   /* Poly-use */
   LEX_STRING comment;
+
+  bool is_create_table_like;
+  bool is_if_not_exists;
+  bool is_engine_set;
 };
 
 } /* end namespace statement */

@@ -181,10 +181,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     disk_pos= my_n_base_info_read(disk_cache + base_pos, &share->base);
     share->state.state_length=base_pos;
 
-    if (!(open_flags & HA_OPEN_FOR_REPAIR) &&
-	((share->state.changed & STATE_CRASHED) ||
-	 ((open_flags & HA_OPEN_ABORT_IF_CRASHED) &&
-	  (share->state.open_count))))
+    if (share->state.changed & STATE_CRASHED)
     {
       my_errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
 		HA_ERR_CRASHED_ON_REPAIR : HA_ERR_CRASHED_ON_USAGE);

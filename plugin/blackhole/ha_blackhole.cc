@@ -29,8 +29,6 @@
 using namespace std;
 using namespace google;
 
-static const string engine_name("BLACKHOLE");
-
 #define BLACKHOLE_EXT ".blk"
 
 static const char *ha_blackhole_exts[] = {
@@ -41,14 +39,14 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_HAS_DATA_DICTIONARY) 
+   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
+                                     HTON_NULL_IN_KEY |
+                                     HTON_CAN_INDEX_BLOBS |
+                                     HTON_SKIP_STORE_LOCK |
+                                     HTON_AUTO_PART_KEY |
+                                     HTON_HAS_DATA_DICTIONARY)
   {
     table_definition_ext= BLACKHOLE_EXT;
-  }
-
-  uint64_t table_flags() const
-  {
-    return(HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -61,10 +59,12 @@ public:
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*, const char *, Table&,
-                    HA_CREATE_INFO&, drizzled::message::Table&);
+  int doCreateTable(Session*,
+                    const char *,
+                    Table&,
+                    drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name); 
+  int doDropTable(Session&, const string table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -77,7 +77,7 @@ public:
   {
     CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
       CachedDirectory::Entry *entry= *entry_iter;
@@ -97,11 +97,26 @@ public:
 
         file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
         // TODO: Remove need for memory copy here
-        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL 
+        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
         set_of_names.insert(uname);
       }
     }
   }
+
+  /* The following defines can be increased if necessary */
+  uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
+  uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
+
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
+  }
+
 };
 
 /* Static declarations for shared structures */
@@ -121,13 +136,6 @@ ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
   :Cursor(engine_arg, table_arg)
 { }
 
-uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
-{
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-          HA_READ_ORDER | HA_KEYREAD_ONLY);
-}
-
 int ha_blackhole::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name)))
@@ -144,7 +152,7 @@ int ha_blackhole::close(void)
 }
 
 int BlackholeEngine::doCreateTable(Session*, const char *path,
-                                   Table&, HA_CREATE_INFO&,
+                                   Table&,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
@@ -266,40 +274,6 @@ int ha_blackhole::info(uint32_t flag)
   return(0);
 }
 
-THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
-                                         THR_LOCK_DATA **to,
-                                         enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-  {
-    /*
-      Here is where we get into the guts of a row level lock.
-      If TL_UNLOCK is set
-      If we are not doing a LOCK Table or DISCARD/IMPORT
-      TABLESPACE, then allow multiple writers
-    */
-
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_tablespace_op(session))
-      lock_type = TL_WRITE_ALLOW_WRITE;
-
-    /*
-      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
-      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
-      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
-      to t2. Convert the lock to a normal read lock to allow
-      concurrent inserts to t2.
-    */
-
-    if (lock_type == TL_READ_NO_INSERT)
-      lock_type = TL_READ;
-
-    lock.type= lock_type;
-  }
-  *to++= &lock;
-  return(to);
-}
-
 
 int ha_blackhole::index_read_map(unsigned char *, const unsigned char *,
                                  key_part_map, enum ha_rkey_function)
@@ -405,7 +379,7 @@ static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 static int blackhole_init(drizzled::plugin::Registry &registry)
 {
 
-  blackhole_engine= new BlackholeEngine(engine_name);
+  blackhole_engine= new BlackholeEngine("BLACKHOLE");
   registry.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
@@ -427,7 +401,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "BLACKHOLE",
   "1.0",
@@ -440,4 +414,4 @@ drizzle_declare_plugin
   NULL,               /* system variables */
   NULL                /* config options   */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

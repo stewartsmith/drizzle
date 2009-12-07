@@ -42,10 +42,7 @@ public:
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
-  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   const key_map *keys_to_use_for_scanning() { return &btree_keys; }
-  uint32_t max_supported_keys()          const { return MAX_KEY; }
-  uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
   double read_time(uint32_t, uint32_t,
@@ -89,8 +86,6 @@ public:
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
   void drop_table(const char *name);
 
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
   int reset_auto_increment(uint64_t value)
   {

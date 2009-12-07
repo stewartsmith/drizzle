@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
+#include <drizzled/util/convert.h>
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -189,7 +190,10 @@ int main(int argc, char* argv[])
     {
       fprintf(stderr, _("Could not read transaction message.\n"));
       fprintf(stderr, _("GPB ERROR: %s.\n"), strerror(errno));
-      fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
+      string hexdump;
+      hexdump.reserve(length * 4);
+      bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
+      fprintf(stderr, _("HEXDUMP:\n\n%s\n"), hexdump.c_str());
       break;
     }
 
@@ -198,7 +202,12 @@ int main(int argc, char* argv[])
     {
       fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), transaction.InitializationErrorString().c_str());
       if (buffer != NULL)
-        fprintf(stderr, _("BUFFER: %s\n"), buffer);
+      {
+        string hexdump;
+        hexdump.reserve(length * 4);
+        bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);
+        fprintf(stderr, _("HEXDUMP:\n\n%s\n"), hexdump.c_str());
+      }
       break;
     }
 

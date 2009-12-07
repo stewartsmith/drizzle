@@ -71,32 +71,28 @@ vector<const plugin::ColumnInfo *> *OpenTablesIS::createColumns()
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Database",
-                                            SKIP_OPEN_TABLE));
+                                            "Database"));
 
   columns->push_back(new plugin::ColumnInfo("Table",
                                             NAME_CHAR_LEN,
                                             DRIZZLE_TYPE_VARCHAR,
                                             0,
                                             0,
-                                            "Table",
-                                            SKIP_OPEN_TABLE));
+                                            "Table"));
 
   columns->push_back(new plugin::ColumnInfo("In_use",
                                             1,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "In_use",
-                                            SKIP_OPEN_TABLE));
+                                            "In_use"));
 
   columns->push_back(new plugin::ColumnInfo("Name_locked",
                                             4,
                                             DRIZZLE_TYPE_LONGLONG,
                                             0,
                                             0,
-                                            "Name_locked",
-                                            SKIP_OPEN_TABLE));
+                                            "Name_locked"));
 
   return columns;
 }
@@ -137,25 +133,34 @@ void OpenTablesIS::cleanup()
   delete columns;
 }
 
-inline bool open_list_store(Table *table, open_table_list_st& open_list);
-inline bool open_list_store(Table *table, open_table_list_st& open_list)
+inline bool open_list_store(Table *table, 
+                            open_table_list_st& open_list,
+                            plugin::InfoSchemaTable *schema_table);
+inline bool open_list_store(Table *table, 
+                            open_table_list_st& open_list,
+                            plugin::InfoSchemaTable *schema_table)
 {
   table->restoreRecordAsDefault();
+  table->setWriteSet(0);
+  table->setWriteSet(1);
+  table->setWriteSet(2);
+  table->setWriteSet(3);
   table->field[0]->store(open_list.db.c_str(), open_list.db.length(), system_charset_info);
   table->field[1]->store(open_list.table.c_str(), open_list.table.length(), system_charset_info);
   table->field[2]->store((int64_t) open_list.in_use, true);
   table->field[3]->store((int64_t) open_list.locked, true);
-  if (schema_table_store_record(table->in_use, table))
-    return true;
+  schema_table->addRow(table->record[0], table->s->reclength);
 
   return false;
 }
 
-int OpenTablesISMethods::fillTable(Session *session, TableList *tables)
+int OpenTablesISMethods::fillTable(Session *session, 
+                                   Table *table,
+                                   plugin::InfoSchemaTable *schema_table)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
 
-  if ((list_open_tables(session->lex->select_lex.db, wild, open_list_store, tables->table) == true) && session->is_fatal_error)
+  if ((list_open_tables(session->lex->select_lex.db, wild, open_list_store, table, schema_table) == true) && session->is_fatal_error)
     return 1;
 
   return 0;

@@ -34,7 +34,7 @@ bool statement::ShowCreateSchema::execute()
     return false;
   }
   bool res= mysqld_show_create_db(session, session->lex->name.str,
-                                  create_info.options & HA_LEX_CREATE_IF_NOT_EXISTS);
+                                  is_if_not_exists);
   return res;
 }
 

@@ -36,15 +36,13 @@ using namespace std;
   Create right type of Cached_item for an item.
 */
 
-Cached_item *new_Cached_item(Session *session, Item *item,
-                             bool use_result_field)
+Cached_item *new_Cached_item(Session *session, Item *item)
 {
   if (item->real_item()->type() == Item::FIELD_ITEM &&
       !(((Item_field *) (item->real_item()))->field->flags & BLOB_FLAG))
   {
     Item_field *real_item= (Item_field *) item->real_item();
-    Field *cached_field= use_result_field ? real_item->result_field :
-                                            real_item->field;
+    Field *cached_field= real_item->field;
     return new Cached_item_field(cached_field);
   }
   switch (item->result_type()) {
@@ -133,6 +131,14 @@ bool Cached_item_int::cmp(void)
   return(false);
 }
 
+
+Cached_item_field::Cached_item_field(Field *arg_field) 
+  : 
+    field(arg_field)
+{
+  /* TODO: take the memory allocation below out of the constructor. */
+  buff= (unsigned char*) sql_calloc(length= field->pack_length());
+}
 
 bool Cached_item_field::cmp(void)
 {

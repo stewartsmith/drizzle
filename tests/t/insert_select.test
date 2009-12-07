@@ -353,7 +353,7 @@ DROP TABLE t1,t2;
 create table t1(f1 int);
 insert into t1 values(1),(2),(3);
 create temporary table t2 (key(f1)) engine=myisam select sql_buffer_result f1 from t1;
-check table t2 extended;
+check table t2;
 drop table t1,t2;
 --echo ##################################################################
 

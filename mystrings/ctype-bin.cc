@@ -470,22 +470,6 @@ skip:
 }
 
 
-MY_COLLATION_HANDLER my_collation_8bit_bin_handler =
-{
-  my_coll_init_8bit_bin,
-  my_strnncoll_8bit_bin,
-  my_strnncollsp_8bit_bin,
-  my_strnxfrm_8bit_bin,
-  my_strnxfrmlen_simple,
-  my_like_range_simple,
-  my_wildcmp_bin,
-  my_strcasecmp_bin,
-  my_instr_bin,
-  my_hash_sort_8bit_bin,
-  my_propagate_simple
-};
-
-
 static MY_COLLATION_HANDLER my_collation_binary_handler =
 {
   NULL,			/* init */

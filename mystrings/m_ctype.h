@@ -194,7 +194,6 @@ typedef struct my_collation_handler_st
 } MY_COLLATION_HANDLER;
 
 extern MY_COLLATION_HANDLER my_collation_mb_bin_handler;
-extern MY_COLLATION_HANDLER my_collation_8bit_bin_handler;
 extern MY_COLLATION_HANDLER my_collation_8bit_simple_ci_handler;
 extern MY_COLLATION_HANDLER my_collation_ucs2_uca_handler;
 
@@ -327,20 +326,11 @@ extern CHARSET_INFO my_charset_utf8mb4_unicode_ci;
 
 
 /* declarations for simple charsets */
-extern size_t my_strnxfrm_simple(const CHARSET_INFO * const,
-                                 unsigned char *dst, size_t dstlen, uint32_t nweights,
-                                 const unsigned char *src, size_t srclen, uint32_t flags);
 size_t my_strnxfrmlen_simple(const CHARSET_INFO * const, size_t);
-extern int  my_strnncoll_simple(const CHARSET_INFO * const, const unsigned char *, size_t,
-				const unsigned char *, size_t, bool);
 
 extern int  my_strnncollsp_simple(const CHARSET_INFO * const, const unsigned char *, size_t,
                                   const unsigned char *, size_t,
                                   bool diff_if_only_endspace_difference);
-
-extern void my_hash_sort_simple(const CHARSET_INFO * const cs,
-				const unsigned char *key, size_t len,
-				uint32_t *nr1, uint32_t *nr2);
 
 extern size_t my_lengthsp_8bit(const CHARSET_INFO * const cs, const char *ptr, size_t length);
 
@@ -351,18 +341,6 @@ extern uint32_t my_instr_simple(const CHARSET_INFO * const,
 
 
 /* Functions for 8bit */
-extern size_t my_caseup_str_8bit(const CHARSET_INFO * const, char *);
-extern size_t my_casedn_str_8bit(const CHARSET_INFO * const, char *);
-extern size_t my_caseup_8bit(const CHARSET_INFO * const, char *src, size_t srclen,
-                             char *dst, size_t dstlen);
-extern size_t my_casedn_8bit(const CHARSET_INFO * const, char *src, size_t srclen,
-                             char *dst, size_t dstlen);
-
-extern int my_strcasecmp_8bit(const CHARSET_INFO * const  cs, const char *, const char *);
-
-int my_mb_wc_8bit(const CHARSET_INFO * const cs,my_wc_t *wc, const unsigned char *s,const unsigned char *e);
-int my_wc_mb_8bit(const CHARSET_INFO * const cs,my_wc_t wc, unsigned char *s, unsigned char *e);
-
 int my_mb_ctype_8bit(const CHARSET_INFO * const,int *, const unsigned char *,const unsigned char *);
 int my_mb_ctype_mb(const CHARSET_INFO * const,int *, const unsigned char *,const unsigned char *);
 

@@ -60,7 +60,6 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
 
 extern size_t my_thread_stack_size;
 extern const CHARSET_INFO *character_set_filesystem;
-const char *any_db="*any*";	// Special symbol for check_access
 
 const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Sleep") },
@@ -137,7 +136,6 @@ void init_update_queries(void)
     The following admin table operations are allowed
     on log tables.
   */
-  sql_command_flags[SQLCOM_OPTIMIZE]=         CF_WRITE_LOGS_COMMAND;
   sql_command_flags[SQLCOM_ANALYZE]=          CF_WRITE_LOGS_COMMAND;
 }
 
@@ -1003,8 +1001,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
                ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
       return NULL;
     }
-    ptr->schema_table_name= ptr->table_name;
-    ptr->schema_table= schema_table;
   }
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
@@ -1659,20 +1655,15 @@ bool insert_precheck(Session *session, TableList *)
     true   Error
 */
 
-bool create_table_precheck(Session *, TableList *,
-                           TableList *create_table)
+bool create_table_precheck(TableIdentifier &identifier)
 {
-  bool error= true;                                 // Error message is given
-
-  if (create_table && (strcmp(create_table->db, "information_schema") == 0))
+  if (strcmp(identifier.getDBName(), "information_schema") == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
+    return true;
   }
 
-  error= false;
-
-  return(error);
+  return false;
 }
 
 

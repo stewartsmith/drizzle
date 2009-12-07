@@ -1,17 +1,22 @@
-/* Copyright (C) 2005 MySQL AB
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; version 2 of the License.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <plugin/information_engine/information_engine.h>
 #include <drizzled/session.h>
@@ -33,13 +38,15 @@ Cursor *InformationEngine::create(TableShare &table, MEM_ROOT *mem_root)
 
 
 int InformationEngine::doGetTableDefinition(Session &,
+                                            const char *path,
                                             const char *,
                                             const char *,
-                                            const char *table_name,
                                             const bool,
                                             message::Table *table_proto)
 {
-  if (! table_name)
+  string tab_name(path);
+  string i_s_prefix("./information_schema/");
+  if (tab_name.compare(0, i_s_prefix.length(), i_s_prefix) != 0)
   {
     return ENOENT;
   }
@@ -49,14 +56,15 @@ int InformationEngine::doGetTableDefinition(Session &,
     return EEXIST;
   }
 
-  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(table_name);
+  tab_name.erase(0, i_s_prefix.length());
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(tab_name.c_str());
 
   if (! schema_table)
   {
     return ENOENT;
   }
 
-  table_proto->set_name(table_name);
+  table_proto->set_name(tab_name);
   table_proto->set_type(message::Table::STANDARD);
 
   message::Table::StorageEngine *protoengine= table_proto->mutable_engine();
@@ -86,6 +94,11 @@ int InformationEngine::doGetTableDefinition(Session &,
     {
       field_options->set_default_null(true);
       field_constraints->set_is_nullable(true);
+    }
+    else
+    {
+      field_options->set_default_null(false);
+      field_constraints->set_is_nullable(false);
     }
 
     if (column->getFlags() & MY_I_S_UNSIGNED)
@@ -163,7 +176,7 @@ void InformationEngine::doGetTableNames(CachedDirectory&,
 
 InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
 {
-  InformationEngine::Share *share;
+  InformationEngine::Share *share= NULL;
   pthread_mutex_lock(&mutex);
 
   OpenTables::iterator it= open_tables.find(name_arg);
@@ -187,8 +200,9 @@ InformationEngine::Share *InformationEngine::getShare(const string &name_arg)
     }
 
     Record &value= *(returned.first);
-
     share= &(value.second);
+    share->setInfoSchemaTable(name_arg);
+    share->initThreadLock();
   }
 
 
@@ -207,6 +221,7 @@ void InformationEngine::freeShare(InformationEngine::Share *share)
   if (share->getUseCount() == 0)
   {
     open_tables.erase(share->getName());
+    share->deinitThreadLock();
   }
 
   pthread_mutex_unlock(&mutex);
@@ -236,7 +251,7 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "INFORMATION_ENGINE",
   "1.0",
@@ -249,4 +264,4 @@ drizzle_declare_plugin
   NULL,               /* system variables */
   NULL                /* config options   */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -22,6 +22,7 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
+#include <drizzled/table_identifier.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 
@@ -124,7 +125,7 @@ inline key_part_map make_prev_keypart_map(T a)
      storage engine
 
   2. KeyTupleFormat - used to pass index search tuples (aka "keys") to
-     storage engine. See opt_range.cc for description of this format.
+     storage engine. See optimizer/range.cc for description of this format.
 
   TableRecordFormat
   =================
@@ -170,7 +171,11 @@ protected:
   ha_rows estimation_rows_to_insert;
 public:
   drizzled::plugin::StorageEngine *engine;      /* storage engine of this Cursor */
-  unsigned char *ref;		  		/* Pointer to current row */
+  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return engine;
+  }
+  unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
   ha_statistics stats;
@@ -256,7 +261,6 @@ public:
 
   /* this is necessary in many places, e.g. in HANDLER command */
   int ha_index_or_rnd_end();
-  drizzled::plugin::StorageEngine::Table_flags ha_table_flags() const;
 
   /**
     These functions represent the public interface to *users* of the
@@ -275,11 +279,8 @@ public:
 
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
-  int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                         uint32_t *dup_key_found);
   int ha_delete_all_rows();
   int ha_reset_auto_increment(uint64_t value);
-  int ha_optimize(Session* session, HA_CHECK_OPT* check_opt);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
 
   int ha_disable_indexes(uint32_t mode);
@@ -353,48 +354,6 @@ public:
   uint32_t get_index(void) const { return active_index; }
   virtual int close(void)=0;
 
-  /**
-    @retval  0   Bulk update used by Cursor
-    @retval  1   Bulk update not used, normal operation used
-  */
-  virtual bool start_bulk_update() { return 1; }
-  /**
-    @retval  0   Bulk delete used by Cursor
-    @retval  1   Bulk delete not used, normal operation used
-  */
-  virtual bool start_bulk_delete() { return 1; }
-  /**
-    After this call all outstanding updates must be performed. The number
-    of duplicate key errors are reported in the duplicate key parameter.
-    It is allowed to continue to the batched update after this call, the
-    Cursor has to wait until end_bulk_update with changing state.
-
-    @param    dup_key_found       Number of duplicate keys found
-
-    @retval  0           Success
-    @retval  >0          Error code
-  */
-  virtual int exec_bulk_update(uint32_t *)
-  {
-    assert(false);
-    return HA_ERR_WRONG_COMMAND;
-  }
-  /**
-    Perform any needed clean-up, no outstanding updates are there at the
-    moment.
-  */
-  virtual void end_bulk_update() { return; }
-  /**
-    Execute all outstanding deletes and close down the bulk delete.
-
-    @retval 0             Success
-    @retval >0            Error code
-  */
-  virtual int end_bulk_delete()
-  {
-    assert(false);
-    return HA_ERR_WRONG_COMMAND;
-  }
   /**
      @brief
      Positions an index cursor to the index specified in the handle. Fetches the
@@ -550,8 +509,6 @@ public:
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open Cursor */
 
-  virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
-
   virtual int add_index(Table *, KEY *, uint32_t)
   { return (HA_ERR_WRONG_COMMAND); }
   virtual int prepare_drop_index(Table *, uint32_t *, uint32_t)
@@ -559,28 +516,7 @@ public:
   virtual int final_drop_index(Table *)
   { return (HA_ERR_WRONG_COMMAND); }
 
-  uint32_t max_record_length() const
-  { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
-  uint32_t max_keys() const
-  { return std::min((unsigned int)MAX_KEY, max_supported_keys()); }
-  uint32_t max_key_parts() const
-  { return std::min((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
-  uint32_t max_key_length() const
-  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
-  uint32_t max_key_part_length(void) const
-  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
-
-  virtual uint32_t max_supported_record_length(void) const
-  { return HA_MAX_REC_LENGTH; }
-  virtual uint32_t max_supported_keys(void) const { return 0; }
-  virtual uint32_t max_supported_key_parts(void) const { return MAX_REF_PARTS; }
-  virtual uint32_t max_supported_key_length(void) const { return MAX_KEY_LENGTH; }
-  virtual uint32_t max_supported_key_part_length(void) const { return 255; }
-
-  virtual bool low_byte_first(void) const { return 1; }
   virtual uint32_t checksum(void) const { return 0; }
-  virtual bool is_crashed(void) const  { return 0; }
-  virtual bool auto_repair(void) const { return 0; }
 
   /**
     Is not invoked for non-transactional temporary tables.
@@ -595,9 +531,14 @@ public:
     than lock_count() claimed. This can happen when the MERGE children
     are not attached when this is called from another thread.
   */
-  virtual THR_LOCK_DATA **store_lock(Session *session,
+  virtual THR_LOCK_DATA **store_lock(Session *,
                                      THR_LOCK_DATA **to,
-                                     enum thr_lock_type lock_type)=0;
+                                     enum thr_lock_type)
+  {
+    assert(0); // Impossible programming situation
+
+    return(to);
+  }
 
  /*
    @retval true   Primary key (if there is one) is clustered
@@ -694,7 +635,7 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check(Session *, HA_CHECK_OPT *)
+  virtual int check(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual void start_bulk_insert(ha_rows)
@@ -705,24 +646,6 @@ private:
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_read_last(unsigned char *, const unsigned char *, uint32_t)
    { return (my_errno= HA_ERR_WRONG_COMMAND); }
-  /**
-    This method is similar to update_row, however the Cursor doesn't need
-    to execute the updates at this point in time. The Cursor can be certain
-    that another call to bulk_update_row will occur OR a call to
-    exec_bulk_update before the set of updates in this query is concluded.
-
-    @param    old_data       Old record
-    @param    new_data       New record
-    @param    dup_key_found  Number of duplicate keys found
-
-    @retval  0   Bulk delete used by Cursor
-    @retval  1   Bulk delete not used, normal operation used
-  */
-  virtual int bulk_update_row(const unsigned char *, unsigned char *, uint32_t *)
-  {
-    assert(false);
-    return HA_ERR_WRONG_COMMAND;
-  }
   /**
     This is called to delete all rows in a table
     If the Cursor don't support this, then this function will
@@ -740,10 +663,7 @@ private:
   virtual int reset_auto_increment(uint64_t)
   { return HA_ERR_WRONG_COMMAND; }
 
-  virtual int optimize(Session *, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
-
-  virtual int analyze(Session *, HA_CHECK_OPT *)
+  virtual int analyze(Session *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
   virtual int disable_indexes(uint32_t)
@@ -842,27 +762,35 @@ bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
-                         int *timestamps, int *timestamps_with_niladic,
-                         int64_t table_flags);
-bool mysql_create_table(Session *session,const char *db, const char *table_name,
+                         int *timestamps, int *timestamps_with_niladic);
+
+bool mysql_create_table(Session *session,
+                        drizzled::TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
                         AlterInfo *alter_info,
-                        bool tmp_table, uint32_t select_field_count);
-bool mysql_create_table_no_lock(Session *session, const char *db,
-                                const char *table_name,
+                        bool tmp_table, uint32_t select_field_count,
+                        bool is_if_not_exists);
+
+bool mysql_create_table_no_lock(Session *session,
+                                drizzled::TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table, uint32_t select_field_count);
+                                bool tmp_table,
+                                uint32_t select_field_count,
+                                bool is_if_not_exists);
 
-bool mysql_recreate_table(Session *session, TableList *table_list);
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              drizzled::message::Table& create_table_proto,
-                             HA_CREATE_INFO *create_info);
+                             drizzled::plugin::StorageEngine*,
+                             bool is_if_not_exists,
+                             bool is_engine_set);
+
 bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
+
 bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, order_st *order);
 int mysql_update(Session *session,TableList *tables,List<Item> &fields,

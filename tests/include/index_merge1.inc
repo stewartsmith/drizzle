@@ -414,7 +414,7 @@ UNLOCK TABLES;
 DROP TABLE t1, t2;
 
 #
-# BUG#29740: HA_KEY_SCAN_NOT_ROR wasn't set for HEAP engine
+# BUG#29740: HA_KEY_SCAN_NOT_ROR wasn't set for MEMORY engine
 # 
 CREATE TABLE `t1` (
   `a` int(11) DEFAULT NULL,

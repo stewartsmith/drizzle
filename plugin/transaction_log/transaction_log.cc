@@ -63,10 +63,20 @@
  * Possibly look at a scoreboard approach with multiple file segments.  For
  * right now, though, this is just a quick simple implementation to serve
  * as a skeleton and a springboard.
+ *
+ * @todo
+ *
+ * Move the Applier piece of this code out into its own source file and leave
+ * this for all the glue code of the module.
  */
 
 #include <drizzled/server_includes.h>
 #include "transaction_log.h"
+#include "transaction_log_index.h"
+#include "info_schema.h"
+#include "print_transaction_message.h"
+#include "hexdump_transaction_message.h"
+#include "background_worker.h"
 
 #include <unistd.h>
 
@@ -106,25 +116,53 @@ static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... *
  */
 static bool sysvar_transaction_log_checksum_enabled= false;
 
+/** Views defined in info_schema.cc */
+extern plugin::InfoSchemaTable *transaction_log_view;
+extern plugin::InfoSchemaTable *transaction_log_entries_view;
+extern plugin::InfoSchemaTable *transaction_log_transactions_view;
+
+/** Index defined in transaction_log_index.cc */
+extern TransactionLogIndex *transaction_log_index;
+
+/** Defined in print_transaction_message.cc */
+extern plugin::Create_function<PrintTransactionMessageFunction> *print_transaction_message_func_factory;
+extern plugin::Create_function<HexdumpTransactionMessageFunction> *hexdump_transaction_message_func_factory;
+
 TransactionLog::TransactionLog(string name_arg,
-                               const char *in_log_file_path,
+                               const string &in_log_file_path,
                                bool in_do_checksum)
   : plugin::TransactionApplier(name_arg),
     state(OFFLINE),
-    log_file_path(in_log_file_path)
+    log_file_path(in_log_file_path),
+    has_error(false),
+    error_message()
 {
   do_checksum= in_do_checksum; /* Have to do here, not in initialization list b/c atomic<> */
 
   /* Setup our log file and determine the next write offset... */
-  log_file= open(log_file_path, O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
+  log_file= open(log_file_path.c_str(), O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open transaction log file %s.  Got error: %s\n"), 
-                  log_file_path, 
-                  strerror(errno));
+    error_message.assign(_("Failed to open transaction log file "));
+    error_message.append(log_file_path);
+    error_message.append("  Got error: ");
+    error_message.append(strerror(errno));
+    error_message.push_back('\n');
+    has_error= true;
     deactivate();
     return;
   }
+
+  /* For convenience, grab the log file name from the path */
+  if (log_file_path.find_first_of('/') != string::npos)
+  {
+    /* Strip to last / */
+    string tmp;
+    tmp= log_file_path.substr(log_file_path.find_last_of('/') + 1);
+    log_file_name.assign(tmp);
+  }
+  else
+    log_file_name.assign(log_file_path);
 
   /* 
    * The offset of the next write is the current position of the log
@@ -251,12 +289,28 @@ void TransactionLog::apply(const message::Transaction &to_apply)
 
   error_code= my_sync(log_file, 0);
 
+  transaction_log_index->addEntry(TransactionLogEntry(ReplicationServices::TRANSACTION,
+                                                     cur_offset,
+                                                     total_envelope_length),
+                                  to_apply,
+                                  checksum);
+
   if (unlikely(error_code != 0))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to sync log file. Got error: %s\n"), 
                   strerror(errno));
   }
+}
+
+const string &TransactionLog::getLogFilename()
+{
+  return log_file_name;
+}
+
+const string &TransactionLog::getLogFilepath()
+{
+  return log_file_path;
 }
 
 void TransactionLog::truncate()
@@ -288,7 +342,7 @@ void TransactionLog::truncate()
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
-                                                        string &out_filename) const
+                                                            string &out_filename) const
 {
   /* 
    * Currently, we simply return the single logfile name
@@ -299,32 +353,129 @@ bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationSer
   return true;
 }
 
-static TransactionLog *transaction_log= NULL; /* The singleton transaction log */
+bool TransactionLog::hasError() const
+{
+  return has_error;
+}
+
+void TransactionLog::clearError()
+{
+  has_error= false;
+  error_message.clear();
+}
+
+const std::string &TransactionLog::getErrorMessage() const
+{
+  return error_message;
+}
+
+TransactionLog *transaction_log= NULL; /* The singleton transaction log */
 
 static int init(drizzled::plugin::Registry &registry)
 {
+  /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)
   {
-    transaction_log= new TransactionLog("transaction_log",
-                                        sysvar_transaction_log_file, 
-                                        sysvar_transaction_log_checksum_enabled);
+    transaction_log= new (nothrow) TransactionLog("transaction_log_applier",
+                                                  string(sysvar_transaction_log_file), 
+                                                  sysvar_transaction_log_checksum_enabled);
+
+    if (transaction_log == NULL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLog instance.  Got error: %s\n"), 
+                    strerror(errno));
+      return 1;
+    }
+    else
+    {
+      /* Check to see if the log was not created properly */
+      if (transaction_log->hasError())
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log.  Got error: %s\n"), 
+                      transaction_log->getErrorMessage().c_str());
+        return 1;
+      }
+    }
     registry.add(transaction_log);
+
+    /* Setup the INFORMATION_SCHEMA views for the transaction log */
+    if (initViewMethods() ||
+        initViewColumns() || 
+        initViews())
+      return 1; /* Error message output handled in functions above */
+
+    registry.add(transaction_log_view);
+    registry.add(transaction_log_entries_view);
+    registry.add(transaction_log_transactions_view);
+
+    /* Setup the module's UDFs */
+    print_transaction_message_func_factory=
+      new plugin::Create_function<PrintTransactionMessageFunction>("print_transaction_message");
+    registry.add(print_transaction_message_func_factory);
+
+    hexdump_transaction_message_func_factory=
+      new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
+    registry.add(hexdump_transaction_message_func_factory);
+
+    /* Create and initialize the transaction log index */
+    transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
+    if (transaction_log_index == NULL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"), 
+                    strerror(errno));
+      return 1;
+    }
+    else
+    {
+      /* Check to see if the index was not created properly */
+      if (transaction_log_index->hasError())
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
+                      transaction_log_index->getErrorMessage().c_str());
+        return 1;
+      }
+    }
+
+    /* 
+     * Setup the background worker thread which maintains
+     * summary information about the transaction log.
+     */
+    if (initTransactionLogBackgroundWorker())
+      return 1; /* Error message output handled in function above */
   }
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
+  /* Cleanup the transaction log itself */
   if (transaction_log)
   {
     registry.remove(transaction_log);
     delete transaction_log;
+    delete transaction_log_index;
+
+    /* Cleanup the INFORMATION_SCHEMA views */
+    registry.remove(transaction_log_view);
+    registry.remove(transaction_log_entries_view);
+    registry.remove(transaction_log_transactions_view);
+
+    cleanupViewMethods();
+    cleanupViewColumns();
+    cleanupViews();
+
+    /* Cleanup module UDFs */
+    registry.remove(print_transaction_message_func_factory);
+    delete print_transaction_message_func_factory;
+    registry.remove(hexdump_transaction_message_func_factory);
+    delete hexdump_transaction_message_func_factory;
   }
+
   return 0;
 }
 
 static void set_truncate_debug(Session *,
-                               struct st_mysql_sys_var *, 
+                               drizzle_sys_var *, 
                                void *, 
                                const void *save)
 {
@@ -369,7 +520,7 @@ static DRIZZLE_SYSVAR_BOOL(enable_checksum,
                           NULL, /* update func */
                           false /* default */);
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(truncate_debug),
   DRIZZLE_SYSVAR(log_file),
@@ -377,7 +528,7 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "transaction_log",
   "0.1",
@@ -390,4 +541,4 @@ drizzle_declare_plugin
   system_variables, /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

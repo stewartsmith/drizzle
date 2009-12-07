@@ -40,20 +40,15 @@ class HeapEngine : public drizzled::plugin::StorageEngine
 {
 public:
   HeapEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, 
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_STATS_RECORDS_IS_EXACT |
+                                     HTON_NULL_IN_KEY |
+                                     HTON_FAST_KEY_READ |
+                                     HTON_NO_BLOBS |
+                                     HTON_HAS_RECORDS |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_TEMPORARY_ONLY)
-  {
-    addAlias("HEAP");
-  }
-
-  uint64_t table_flags() const
-  {
-    return (HA_FAST_KEY_READ |
-            HA_NO_BLOBS | HA_NULL_IN_KEY |
-            HA_NO_TRANSACTIONS |
-            HA_HAS_RECORDS |
-            HA_STATS_RECORDS_IS_EXACT);
-  }
+  { }
 
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
@@ -65,20 +60,20 @@ public:
     return ha_heap_exts;
   }
 
-  int doCreateTable(Session *session, 
+  int doCreateTable(Session *session,
                     const char *table_name,
-                    Table& table_arg, 
-                    HA_CREATE_INFO& create_info,
-                    drizzled::message::Table&);
+                    Table& table_arg,
+                    drizzled::message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
-     for HEAP.
+     for MEMORY.
      Instead of diving down a rat hole, let's just cry ourselves to sleep
      at night with this odd hackish workaround.
    */
   int heap_create_table(Session *session, const char *table_name,
-                        Table *table_arg, HA_CREATE_INFO& create_info,
+                        Table *table_arg,
                         bool internal_table,
+                        drizzled::message::Table &create_proto,
                         HP_SHARE **internal_share);
 
   int doRenameTable(Session*, const char * from, const char * to);
@@ -94,6 +89,20 @@ public:
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+
+  uint32_t max_supported_keys()          const { return MAX_KEY; }
+  uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
+
+  uint32_t index_flags(enum  ha_key_alg algorithm) const
+  {
+    return ((algorithm == HA_KEY_ALG_BTREE) ?
+            HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_ORDER |
+            HA_READ_RANGE :
+            HA_ONLY_WHOLE_INDEX |
+            HA_KEY_SCAN_NOT_ROR);
+  }
 
 };
 
@@ -121,7 +130,7 @@ int HeapEngine::doGetTableDefinition(Session&,
   return error;
 }
 /*
-  We have to ignore ENOENT entries as the HEAP table is created on open and
+  We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
 int HeapEngine::doDropTable(Session&, const string table_path)
@@ -163,7 +172,7 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 
 
 /*****************************************************************************
-** HEAP tables
+** MEMORY tables
 *****************************************************************************/
 
 ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
@@ -174,7 +183,7 @@ ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
 
 /*
   Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to
-  rec_per_key) after 1/HEAP_STATS_UPDATE_THRESHOLD fraction of table records
+  rec_per_key) after 1/MEMORY_STATS_UPDATE_THRESHOLD fraction of table records
   have been inserted/updated/deleted. delete_all_rows() and table flush cause
   immediate update.
 
@@ -183,7 +192,7 @@ ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
    from 0 to non-zero value and vice versa. Otherwise records_in_range may
    erroneously return 0 and 'range' may miss records.
 */
-#define HEAP_STATS_UPDATE_THRESHOLD 10
+#define MEMORY_STATS_UPDATE_THRESHOLD 10
 
 int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
 {
@@ -194,9 +203,12 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     memset(&create_info, 0, sizeof(create_info));
     file= 0;
     HP_SHARE *internal_share= NULL;
+    drizzled::message::Table create_proto;
+
     if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
-                                                create_info,
-                                                internal_table,&internal_share))
+                                                internal_table,
+                                                create_proto,
+                                                &internal_share))
     {
         file= internal_table ?
           heap_open_from_share(internal_share, mode) :
@@ -260,14 +272,6 @@ const char *ha_heap::index_type(uint32_t inx)
 {
   return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
           "BTREE" : "HASH");
-}
-
-
-uint32_t ha_heap::index_flags(uint32_t inx, uint32_t, bool) const
-{
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
-          HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
-          HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
 }
 
 
@@ -335,7 +339,7 @@ int ha_heap::write_row(unsigned char * buf)
       return res;
   }
   res= heap_write(file,buf);
-  if (!res && (++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
+  if (!res && (++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
                file->s->records))
   {
     /*
@@ -354,7 +358,7 @@ int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
   res= heap_update(file,old_data,new_data);
-  if (!res && ++records_changed*HEAP_STATS_UPDATE_THRESHOLD >
+  if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
               file->s->records)
   {
     /*
@@ -372,7 +376,7 @@ int ha_heap::delete_row(const unsigned char * buf)
   ha_statistic_increment(&SSV::ha_delete_count);
   res= heap_delete(file,buf);
   if (!res && table->s->tmp_table == NO_TMP_TABLE &&
-      ++records_changed*HEAP_STATS_UPDATE_THRESHOLD > file->s->records)
+      ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
        We can perform this safely since only one writer at the time is
@@ -647,16 +651,6 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(Session *,
-                                    THR_LOCK_DATA **to,
-                                    enum thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
-    file->lock.type=lock_type;
-  *to++= &file->lock;
-  return to;
-}
-
 void ha_heap::drop_table(const char *)
 {
   file->s->delete_on_close= 1;
@@ -696,14 +690,15 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
                               Table &table_arg,
-                              HA_CREATE_INFO& create_info,
                               drizzled::message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
 
-  error= heap_create_table(session, table_name, &table_arg, create_info,
-                           false, &internal_share);
+  error= heap_create_table(session, table_name, &table_arg,
+                           false, 
+                           create_proto,
+                           &internal_share);
 
   if (error == 0)
   {
@@ -717,8 +712,10 @@ int HeapEngine::doCreateTable(Session *session,
 
 
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
-                                  Table *table_arg, HA_CREATE_INFO& create_info,
-                                  bool internal_table, HP_SHARE **internal_share)
+                                  Table *table_arg,
+                                  bool internal_table, 
+                                  drizzled::message::Table &create_proto,
+                                  HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
   uint32_t auto_key= 0, auto_key_type= 0;
@@ -887,8 +884,8 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   HP_CREATE_INFO hp_create_info;
   hp_create_info.auto_key= auto_key;
   hp_create_info.auto_key_type= auto_key_type;
-  hp_create_info.auto_increment= (create_info.auto_increment_value ?
-				  create_info.auto_increment_value - 1 : 0);
+  hp_create_info.auto_increment= (create_proto.options().has_auto_increment_value() ?
+				  create_proto.options().auto_increment_value() - 1 : 0);
   hp_create_info.max_table_size=session->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
@@ -929,7 +926,7 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 }
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "MEMORY",
   "1.0",
@@ -942,4 +939,4 @@ drizzle_declare_plugin
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

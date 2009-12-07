@@ -75,7 +75,6 @@ extern "C"
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
-#define MAX_EMBEDDED_SERVER_ARGS 64
 #define MAX_DELIMITER_LENGTH 16
 /* Flags controlling send and reap */
 #define QUERY_SEND_FLAG  1
@@ -98,8 +97,7 @@ const char *opt_include= NULL, *opt_charsets_dir;
 const char *opt_testdir= NULL;
 static uint32_t opt_port= 0;
 static int opt_max_connect_retries;
-static bool opt_compress= false, silent= false, verbose= false;
-static bool debug_info_flag= false, debug_check_flag= false;
+static bool silent= false, verbose= false;
 static bool tty_password= false;
 static bool opt_mark_progress= false;
 static bool parsing_disabled= false;
@@ -116,7 +114,6 @@ static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 static uint32_t start_lineno= 0; /* Start line of current command */
-static uint32_t my_end_arg= 0;
 
 /* Number of lines of the result to include in failure report */
 static uint32_t opt_tail_lines= 0;
@@ -157,9 +154,6 @@ static struct st_test_file* file_stack_end;
 
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci; /* Default charset */
-
-static int embedded_server_arg_count=0;
-static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
 
 /*
   Timer related variables
@@ -916,8 +910,6 @@ static void free_used_memory(void)
     if (var_reg[i].alloced_len)
       free(var_reg[i].str_val);
   }
-  while (embedded_server_arg_count > 1)
-    free(embedded_server_args[--embedded_server_arg_count]);
 
   free_all_replace();
   free(opt_pass);
@@ -930,7 +922,7 @@ static void free_used_memory(void)
 static void cleanup_and_exit(int exit_code)
 {
   free_used_memory();
-  my_end(my_end_arg);
+  my_end();
 
   if (!silent) {
     switch (exit_code) {
@@ -4151,6 +4143,27 @@ static bool end_of_query(int c)
 
 */
 
+
+static int my_strnncoll_simple(const CHARSET_INFO * const  cs, const unsigned char *s, size_t slen,
+                               const unsigned char *t, size_t tlen,
+                               bool t_is_prefix)
+{
+  size_t len = ( slen > tlen ) ? tlen : slen;
+  unsigned char *map= cs->sort_order;
+  if (t_is_prefix && slen > tlen)
+    slen=tlen;
+  while (len--)
+  {
+    if (map[*s++] != map[*t++])
+      return ((int) map[s[-1]] - (int) map[t[-1]]);
+  }
+  /*
+    We can't use (slen - tlen) here as the result may be outside of the
+    precision of a signed int
+  */
+  return slen > tlen ? 1 : slen < tlen ? -1 : 0 ;
+}
+
 static int read_line(char *buf, int size)
 {
   char c, last_quote= 0;
@@ -4565,17 +4578,8 @@ static struct my_option my_long_options[] =
   {"character-sets-dir", OPT_CHARSETS_DIR,
    "Directory where character sets are.", (char**) &opt_charsets_dir,
    (char**) &opt_charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"compress", 'C', "Use the compressed server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"database", 'D', "Database to use.", (char**) &opt_db, (char**) &opt_db, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', "Connect to host.", (char**) &opt_host, (char**) &opt_host, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"include", 'i', "Include SQL before each test case.", (char**) &opt_include,
@@ -4606,10 +4610,6 @@ static struct my_option my_long_options[] =
   {"result-file", 'R', "Read/Store result from/in this file.",
    (char**) &result_file_name, (char**) &result_file_name, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-arg", 'A', "Send option value to embedded server as a parameter.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-file", 'F', "Read embedded server arguments from file.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Suppress all normal output. Synonym for --quiet.",
    (char**) &silent, (char**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"sleep", 'T', "Sleep always this many seconds on sleep commands.",
@@ -4645,6 +4645,7 @@ static void usage(void)
 {
   print_version();
   printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
+  printf("Drizzle version modified by Brian, Jay, Monty Taylor, PatG and Stewart\n");
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
   printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
   printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
@@ -4652,52 +4653,6 @@ static void usage(void)
   printf("  --no-defaults       Don't read default options from any options file.\n");
   my_print_variables(my_long_options);
 }
-
-/*
-  Read arguments for embedded server and put them into
-  embedded_server_args[]
-*/
-
-static void read_embedded_server_arguments(const char *name)
-{
-  char argument[1024],buff[FN_REFLEN], *str=0;
-  FILE *file;
-
-  if (!test_if_hard_path(name))
-  {
-    sprintf(buff,"%s%s",opt_basedir,name);
-    name=buff;
-  }
-  fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
-
-  if (!embedded_server_arg_count)
-  {
-    embedded_server_arg_count=1;
-    embedded_server_args[0]= (char*) "";    /* Progname */
-  }
-  if (!(file= fopen(buff, "r")))
-    die("Failed to open file '%s'", buff);
-
-  while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
-         (str=fgets(argument,sizeof(argument), file)))
-  {
-    *(strchr(str, '\0')-1)=0;        /* Remove end newline */
-    if (!(embedded_server_args[embedded_server_arg_count]=
-          (char*) strdup(str)))
-    {
-      fclose(file);
-      die("Out of memory");
-
-    }
-    embedded_server_arg_count++;
-  }
-  fclose(file);
-  if (str)
-    die("Too many arguments in option file: %s",name);
-
-  return;
-}
-
 
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
@@ -4780,22 +4735,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   case 't':
     strncpy(TMPDIR, argument, sizeof(TMPDIR));
     break;
-  case 'A':
-    if (!embedded_server_arg_count)
-    {
-      embedded_server_arg_count=1;
-      embedded_server_args[0]= (char*) "";
-    }
-    if (embedded_server_arg_count == MAX_EMBEDDED_SERVER_ARGS-1 ||
-        !(embedded_server_args[embedded_server_arg_count++]=
-          strdup(argument)))
-    {
-      die("Can't use server argument");
-    }
-    break;
-  case 'F':
-    read_embedded_server_arguments(argument);
-    break;
   case 'V':
     print_version();
     exit(0);
@@ -4824,10 +4763,6 @@ static int parse_args(int argc, char **argv)
     opt_db= *argv;
   if (tty_password)
     opt_pass= client_get_tty_password(NULL);          /* purify tested */
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
 
   return 0;
 }
@@ -6305,6 +6240,8 @@ struct st_regex
   char* pattern; /* Pattern to be replaced */
   char* replace; /* String or expression to replace the pattern with */
   int icase; /* true if the match is case insensitive */
+  int global; /* true if the match should be global -- 
+                 i.e. repeat the matching until the end of the string */
 };
 
 struct st_replace_regex
@@ -6328,7 +6265,7 @@ struct st_replace_regex
 struct st_replace_regex *glob_replace_regex= 0;
 
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
-                char *string, int icase);
+                char *string, int icase, int global);
 
 
 
@@ -6429,7 +6366,17 @@ static struct st_replace_regex* init_replace_regex(char* expr)
 
     /* Check if we should do matching case insensitive */
     if (p < expr_end && *p == 'i')
+    {
+      p++;
       reg.icase= 1;
+    }
+
+    /* Check if we should do matching globally */
+    if (p < expr_end && *p == 'g')
+    {
+      p++;
+      reg.global= 1;
+    }
 
     /* done parsing the statement, now place it in regex_arr */
     if (insert_dynamic(&res->regex_arr,(unsigned char*) &reg))
@@ -6487,7 +6434,7 @@ static int multi_reg_replace(struct st_replace_regex* r,char* val)
     get_dynamic(&r->regex_arr,(unsigned char*)&re,i);
 
     if (!reg_replace(&out_buf, buf_len_p, re.pattern, re.replace,
-                     in_buf, re.icase))
+                     in_buf, re.icase, re.global))
     {
       /* if the buffer has been reallocated, make adjustements */
       if (save_out_buf != out_buf)
@@ -6557,48 +6504,80 @@ void free_replace_regex()
   icase - flag, if set to 1 the match is case insensitive
 */
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
-                char *replace, char *in_string, int icase)
+                char *replace, char *in_string, int icase, int global)
 {
-  string string_to_match(in_string);
   const char *error= NULL;
   int erroffset;
   int ovector[3];
   pcre *re= pcre_compile(pattern,
-                         icase ? PCRE_CASELESS : 0,
+                         icase ? PCRE_CASELESS | PCRE_MULTILINE : PCRE_MULTILINE,
                          &error, &erroffset, NULL);
   if (re == NULL)
     return 1;
 
-  int rc= pcre_exec(re, NULL, in_string, (int)strlen(in_string),
-                    0, 0, ovector, 3);
-  if (rc < 0)
+  if (! global)
   {
-    pcre_free(re);
-    return 1;
-  }
 
-  char *substring_to_replace= in_string + ovector[0];
-  int substring_length= ovector[1] - ovector[0];
-  *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
-  char * new_buf = (char *)malloc(*buf_len_p+1);
-  if (new_buf == NULL)
+    int rc= pcre_exec(re, NULL, in_string, (int)strlen(in_string),
+                      0, 0, ovector, 3);
+    if (rc < 0)
+    {
+      pcre_free(re);
+      return 1;
+    }
+
+    char *substring_to_replace= in_string + ovector[0];
+    int substring_length= ovector[1] - ovector[0];
+    *buf_len_p= strlen(in_string) - substring_length + strlen(replace);
+    char * new_buf = (char *)malloc(*buf_len_p+1);
+    if (new_buf == NULL)
+    {
+      pcre_free(re);
+      return 1;
+    }
+
+    memset(new_buf, 0, *buf_len_p+1);
+    strncpy(new_buf, in_string, substring_to_replace-in_string);
+    strncpy(new_buf+(substring_to_replace-in_string), replace, strlen(replace));
+    strncpy(new_buf+(substring_to_replace-in_string)+strlen(replace),
+            substring_to_replace + substring_length,
+            strlen(in_string)
+              - substring_length
+              - (substring_to_replace-in_string));
+    *buf_p= new_buf;
+
+    pcre_free(re);
+    return 0;
+  }
+  else
   {
+    /* Repeatedly replace the string with the matched regex */
+    string subject(in_string);
+    size_t replace_length= strlen(replace);
+    size_t current_position= 0;
+    int rc= 0;
+    while(0 >= (rc= pcre_exec(re, NULL, subject.c_str() + current_position, subject.length() - current_position,
+                      0, 0, ovector, 3)))
+    {
+      current_position= static_cast<size_t>(ovector[0]);
+      replace_length= static_cast<size_t>(ovector[1] - ovector[0]);
+      subject.replace(current_position, replace_length, replace, replace_length);
+    }
+
+    char *new_buf = (char *) malloc(subject.length() + 1);
+    if (new_buf == NULL)
+    {
+      pcre_free(re);
+      return 1;
+    }
+    memset(new_buf, 0, subject.length() + 1);
+    strncpy(new_buf, subject.c_str(), subject.length());
+    *buf_len_p= subject.length() + 1;
+    *buf_p= new_buf;
+          
     pcre_free(re);
-    return 1;
+    return 0;
   }
-
-  memset(new_buf, 0, *buf_len_p+1);
-  strncpy(new_buf, in_string, substring_to_replace-in_string);
-  strncpy(new_buf+(substring_to_replace-in_string), replace, strlen(replace));
-  strncpy(new_buf+(substring_to_replace-in_string)+strlen(replace),
-          substring_to_replace + substring_length,
-          strlen(in_string)
-            - substring_length
-            - (substring_to_replace-in_string));
-  *buf_p= new_buf;
-
-  pcre_free(re);
-  return 0;
 }
 
 

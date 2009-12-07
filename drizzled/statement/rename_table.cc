@@ -151,13 +151,10 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   plugin::StorageEngine *engine= NULL;
   message::Table table_proto;
-  char path[FN_REFLEN];
-  size_t length;
 
-  length= build_table_filename(path, sizeof(path),
-                               ren_table->db, old_alias, false);
+  TableIdentifier old_identifier(ren_table->db, old_alias, NO_TMP_TABLE);
 
-  if (plugin::StorageEngine::getTableDefinition(*session, path, ren_table->db, old_alias, false, &table_proto) != EEXIST)
+  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, &table_proto) != EEXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
     return true;
@@ -165,10 +162,8 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
 
-  length= build_table_filename(path, sizeof(path),
-                               new_db, new_alias, false);
-
-  if (plugin::StorageEngine::getTableDefinition(*session, path, new_db, new_alias, false) != ENOENT)
+  TableIdentifier new_identifier(new_db, new_alias, NO_TMP_TABLE);
+  if (plugin::StorageEngine::getTableDefinition(*session, new_identifier) != ENOENT)
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return 1; // This can't be skipped
@@ -195,6 +190,6 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
       return ren_table;
   }
   return 0;
-} 
+}
 
 } /* namespace drizzled */

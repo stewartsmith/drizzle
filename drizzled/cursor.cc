@@ -112,11 +112,6 @@ int Cursor::ha_index_or_rnd_end()
   return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
 }
 
-plugin::StorageEngine::Table_flags Cursor::ha_table_flags() const
-{
-  return engine->table_flags();
-}
-
 void Cursor::ha_start_bulk_insert(ha_rows rows)
 {
   estimation_rows_to_insert= rows;
@@ -142,7 +137,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0;
+  return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(ulong SSV::*offset) const
@@ -260,7 +255,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
     TODO remove the test for HA_READ_ORDER
   */
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
-      !(index_flags(primary_key, 0, 0) & HA_READ_ORDER))
+      !(table->index_flags(primary_key) & HA_READ_ORDER))
   {
     (void) ha_rnd_init(1);
     while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;
@@ -700,26 +695,15 @@ Cursor::mark_trx_read_write()
   }
 }
 
-/**
-  Bulk update row: public interface.
-
-  @sa Cursor::bulk_update_row()
-*/
-
-int
-Cursor::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
-                            uint32_t *dup_key_found)
-{
-  mark_trx_read_write();
-
-  return bulk_update_row(old_data, new_data, dup_key_found);
-}
-
 
 /**
   Delete all rows: public interface.
 
   @sa Cursor::delete_all_rows()
+
+  @note
+
+  This is now equalivalent to TRUNCATE TABLE.
 */
 
 int
@@ -727,7 +711,22 @@ Cursor::ha_delete_all_rows()
 {
   mark_trx_read_write();
 
-  return delete_all_rows();
+  int result= delete_all_rows();
+
+  if (result == 0)
+  {
+    /** 
+     * Trigger post-truncate notification to plugins... 
+     *
+     * @todo Make ReplicationServices generic to AfterTriggerServices
+     * or similar...
+     */
+    Session *const session= table->in_use;
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    replication_services.truncateTable(session, table);
+  }
+
+  return result;
 }
 
 
@@ -747,32 +746,17 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 
 
 /**
-  Optimize table: public interface.
-
-  @sa Cursor::optimize()
-*/
-
-int
-Cursor::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
-{
-  mark_trx_read_write();
-
-  return optimize(session, check_opt);
-}
-
-
-/**
   Analyze table: public interface.
 
   @sa Cursor::analyze()
 */
 
 int
-Cursor::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
+Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
 {
   mark_trx_read_write();
 
-  return analyze(session, check_opt);
+  return analyze(session);
 }
 
 /**
@@ -1488,9 +1472,9 @@ int Cursor::ha_write_row(unsigned char *buf)
 {
   int error;
 
-  /* 
-   * If we have a timestamp column, update it to the current time 
-   * 
+  /*
+   * If we have a timestamp column, update it to the current time
+   *
    * @TODO Technically, the below two lines can be take even further out of the
    * Cursor interface and into the fill_record() method.
    */

@@ -36,23 +36,27 @@
 #include <mysys/my_sys.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
+#include <drizzled/sql_string.h>
 
-/* Range optimization API/library */
-#include <drizzled/opt_range.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 
+/* for List */
+#include <drizzled/sql_list.h>
+
 #include <string>
+#include <vector>
 #include <sstream>
 #include <bitset>
 
 typedef struct st_ha_create_information HA_CREATE_INFO;
+typedef struct drizzle_lex_string LEX_STRING;
 
 /* information schema */
-static const std::string INFORMATION_SCHEMA_NAME("information_schema");
+extern const std::string INFORMATION_SCHEMA_NAME;
 
 /* drizzled.cc */
 void refresh_status(Session *session);
@@ -60,7 +64,6 @@ void unlink_session(Session *session);
 
 /* item_func.cc */
 extern bool check_reserved_words(LEX_STRING *name);
-extern enum_field_types agg_field_type(Item **items, uint32_t nitems);
 
 /* strfunc.cc */
 uint64_t find_set(TYPELIB *lib, const char *x, uint32_t length, const CHARSET_INFO * const cs,
@@ -69,6 +72,8 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
                bool part_match);
 uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
                 const CHARSET_INFO *cs);
+
+extern const std::string &drizzled_version();
 
 /*
   External variables
@@ -92,13 +97,12 @@ extern char pidfile_name[FN_REFLEN];
 extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern const double log_10[309];
-extern uint64_t log_10_int[20];
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
-extern uint64_t table_def_size;
+extern size_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;
 extern pid_t current_pid;
@@ -137,9 +141,13 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
-extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
+
+namespace drizzled { namespace plugin { class StorageEngine; } }
+class TableList;
+class TableShare;
+class DRIZZLE_ERROR;
 
 extern drizzled::plugin::StorageEngine *myisam_engine;
 extern drizzled::plugin::StorageEngine *heap_engine;
@@ -160,46 +168,27 @@ void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);
 uint32_t convert_month_to_period(uint32_t month);
-void get_date_from_daynr(long daynr,uint32_t *year, uint32_t *month,
-			 uint32_t *day);
-bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time);
-enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
-                                         DRIZZLE_TIME *l_time, uint32_t flags);
-void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
-
-void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
-                                  const char *str_val,
-				  uint32_t str_length, enum enum_drizzle_timestamp_type time_type,
-                                  const char *field_name);
-
-bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
-                    int64_t *seconds_out, long *microseconds_out);
-
-void make_datetime(const DRIZZLE_TIME *l_time, String *str);
-void make_date(const DRIZZLE_TIME *l_time, String *str);
-uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
-                             Item *warn_item, bool *is_null);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
-void init_read_record(READ_RECORD *info, Session *session, Table *reg_form,
-		      SQL_SELECT *select,
-		      int use_record_cache, bool print_errors);
-void init_read_record_idx(READ_RECORD *info, Session *session, Table *table,
-                          bool print_error, uint32_t idx);
-void end_read_record(READ_RECORD *info);
-ha_rows filesort(Session *session, Table *form,struct st_sort_field *sortorder,
-		 uint32_t s_length, SQL_SELECT *select,
-		 ha_rows max_rows, bool sort_positions,
+
+namespace drizzled { namespace optimizer { class SQL_SELECT; } }
+
+ha_rows filesort(Session *session, 
+                 Table *form,
+                 struct st_sort_field *sortorder,
+		             uint32_t s_length, 
+                 drizzled::optimizer::SQL_SELECT *select,
+		             ha_rows max_rows, 
+                 bool sort_positions,
                  ha_rows *examined_rows);
+
 void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
-int get_quick_record(SQL_SELECT *select);
+int get_quick_record(drizzled::optimizer::SQL_SELECT *select);
 
-int calc_weekday(long daynr,bool sunday_first_day_of_week);
-uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
@@ -214,14 +203,13 @@ bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
 
 /* Conversion functions */
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
+size_t build_tmptable_filename(char *buff, size_t bufflen);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db,
                             const char *table_name, bool is_tmp);
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)
 #define FN_TO_IS_TMP    (1 << 1)
-#define FN_IS_TMP       (FN_FROM_IS_TMP | FN_TO_IS_TMP)
-#define NO_FRM_RENAME   (1 << 2)
 
 inline uint32_t sql_rnd()
 {
