@@ -88,18 +88,28 @@ const CHARSET_INFO *get_default_db_collation(const char *db_name)
   return default_charset_info;
 }
 
-/* path is path to database, not schema file */
-static int write_schema_file(Session *session,
-			     const char *path, const char *name,
-			     HA_CREATE_INFO *create)
+static int fill_schema_message(Session *session, const NormalisedDatabaseName &name, HA_CREATE_INFO *create, drizzled::message::Schema *schema_message)
 {
-  message::Schema db;
+  assert(schema_message);
+  assert(create);
+  assert(name.is_valid());
+
+  if (!create->default_table_charset)
+    create->default_table_charset= session->variables.collation_server;
+
+  schema_message->set_name(name.to_string());
+  schema_message->set_collation(create->default_table_charset->name);
+
+  return 0;
+}
+
+/* path is path to database, not schema file */
+static int write_schema_file(const char *path, const message::Schema &db)
+{
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
 
   assert(path);
-  assert(name);
-  assert(create);
 
   snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
 
@@ -111,11 +121,6 @@ static int write_schema_file(Session *session,
   if (fd==-1)
     return errno;
 
-  if (!create->default_table_charset)
-    create->default_table_charset= session->variables.collation_server;
-
-  db.set_name(name);
-  db.set_collation(create->default_table_charset->name);
 
   if (!db.SerializeToFileDescriptor(fd))
   {
@@ -191,6 +196,7 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
   int error_erno;
   bool error= false;
   uint32_t path_len;
+  message::Schema schema_message;
 
   /* do not create 'information_schema' db */
   if (!my_strcasecmp(system_charset_info, database_name.to_string().c_str(), INFORMATION_SCHEMA_NAME.c_str()))
@@ -246,7 +252,9 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
     goto exit;
   }
 
-  error_erno= write_schema_file(session, path, database_name.to_string().c_str(), create_info);
+  fill_schema_message(session, database_name, create_info, &schema_message);
+
+  error_erno= write_schema_file(path, schema_message);
   if (error_erno && error_erno != EEXIST)
   {
     if (rmdir(path) >= 0)
@@ -278,6 +286,7 @@ bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_nam
   int error= 0;
   char	 path[FN_REFLEN+16];
   uint32_t path_len;
+  message::Schema schema_message;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -300,7 +309,9 @@ bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_nam
   path_len= build_table_filename(path, sizeof(path), database_name.to_string().c_str(), "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
-  error= write_schema_file(session, path, database_name.to_string().c_str(), create_info);
+  fill_schema_message(session, database_name, create_info, &schema_message);
+
+  error= write_schema_file(path, schema_message);
   if (error && error != EEXIST)
   {
     /* TODO: find some witty way of getting back an error message */
