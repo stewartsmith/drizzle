@@ -34,6 +34,8 @@ SUBDIRS = ${po} \
 	  gnulib \
 	  .
 
+DIST_SUBDIRS = ${SUBDIRS} tests
+
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/autorun.sh Doxyfile \
