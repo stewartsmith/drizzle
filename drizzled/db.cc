@@ -816,7 +816,9 @@ bool mysql_change_db(Session *session, const NormalisedDatabaseName &normalised_
     return true;
   }
 
-  if (check_db_dir_existence(normalised_database_name.to_string().c_str()))
+  DatabasePathName database_path(normalised_database_name);
+
+  if (! database_path.exists())
   {
     if (force_switch)
     {
@@ -854,34 +856,6 @@ bool mysql_change_db(Session *session, const NormalisedDatabaseName &normalised_
   return false;
 }
 
-/*
-  Check if there is directory for the database name.
-
-  SYNOPSIS
-    check_db_dir_existence()
-    db_name   database name
-
-  RETURN VALUES
-    false   There is directory for the specified database name.
-    true    The directory does not exist.
-*/
-
-bool check_db_dir_existence(const char *db_name)
-{
-  char db_dir_path[FN_REFLEN];
-  uint32_t db_dir_path_len;
-
-  db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", false);
-
-  if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
-    db_dir_path[db_dir_path_len - 1]= 0;
-
-  /* Check access. */
-
-  return my_access(db_dir_path, F_OK);
-}
-
 NormalisedDatabaseName::NormalisedDatabaseName(const NonNormalisedDatabaseName &dbname)
 {
   const std::string &non_norm_string= dbname.to_string();
@@ -912,4 +886,25 @@ bool NormalisedDatabaseName::is_valid() const
     return false;
 
   return (! check_identifier_name(&db_lexstring));
+}
+
+DatabasePathName::DatabasePathName(const NormalisedDatabaseName &database_name)
+{
+  char db_dir_path[FN_REFLEN];
+  uint32_t db_dir_path_len;
+
+  db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
+                                        database_name.to_string().c_str(),
+                                        "", false);
+
+  if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
+    db_dir_path[db_dir_path_len - 1]= 0;
+
+  database_path.assign(db_dir_path);
+}
+
+bool DatabasePathName::exists() const
+{
+  /* TODO: handle EIO and other fun errors */
+  return access(database_path.c_str(), F_OK) == 0;
 }

@@ -82,4 +82,19 @@ public:
   bool is_valid() const;
 };
 
+class DatabasePathName
+{
+private:
+  std::string database_path;
+public:
+  explicit DatabasePathName(const NormalisedDatabaseName &database_name);
+
+  const std::string to_string() const
+    {
+      return database_path;
+    }
+
+  bool exists() const;
+};
+
 #endif /* DRIZZLED_DB_H */
