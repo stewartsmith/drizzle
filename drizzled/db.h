@@ -49,13 +49,13 @@ private:
 public:
   explicit NonNormalisedDatabaseName(const std::string db) :
     database_name(db)
-    {
-    }
+  {
+  }
 
   const std::string &to_string(void) const
-    {
-      return database_name;
-    }
+  {
+    return database_name;
+  }
 };
 
 class NormalisedDatabaseName
@@ -74,10 +74,10 @@ public:
   ~NormalisedDatabaseName();
 
   const std::string to_string() const
-    {
-      std::string tmp(database_name);
-      return tmp;
-    }
+  {
+    std::string tmp(database_name);
+    return tmp;
+  }
 
   bool is_valid() const;
 };
@@ -96,9 +96,9 @@ public:
   explicit DatabasePathName(const NormalisedDatabaseName &database_name);
 
   const std::string to_string() const
-    {
-      return database_path;
-    }
+  {
+    return database_path;
+  }
 
   bool exists() const;
 };
