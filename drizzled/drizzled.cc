@@ -1579,7 +1579,7 @@ int main(int argc, char **argv)
 
   if (chdir(drizzle_real_data_home) && !opt_help)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, "Data directory %s does not exist\n", drizzle_real_data_home);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
     unireg_abort(1);
   }
   drizzle_data_home= drizzle_data_home_buff;
