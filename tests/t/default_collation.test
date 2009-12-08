@@ -9,6 +9,10 @@
 
 create database mysqltest collate = utf8_bin;
 show create database mysqltest;
+alter database mysqltest collate = utf8_general_ci;
+show create database mysqltest;
+alter database mysqltest collate = utf8_bin;
+show create database mysqltest;
 
 use mysqltest;
 

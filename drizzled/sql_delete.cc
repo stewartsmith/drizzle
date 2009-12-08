@@ -45,7 +45,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 {
   int		error;
   Table		*table;
-  optimizer::SQL_SELECT *select= NULL;
+  optimizer::SqlSelect *select= NULL;
   READ_RECORD	info;
   bool          using_limit=limit != HA_POS_ERROR;
   bool		transactional_table, const_cond;

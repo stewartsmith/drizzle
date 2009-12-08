@@ -64,7 +64,7 @@ void init_read_record_idx(READ_RECORD *info,
 void init_read_record(READ_RECORD *info,
                       Session *session, 
                       Table *table,
-                      optimizer::SQL_SELECT *select,
+                      optimizer::SqlSelect *select,
                       int use_record_cache, 
                       bool print_error)
 {

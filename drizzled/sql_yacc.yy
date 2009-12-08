@@ -88,6 +88,7 @@
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
+#include <drizzled/message/schema.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/alter_table.h>
@@ -129,6 +130,7 @@
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
+#include <drizzled/db.h>
 
 using namespace drizzled;
 
@@ -1366,8 +1368,8 @@ default_collation_schema:
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
 
-            statement->create_info.default_table_charset= $4;
-            statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+            message::Schema &schema_message= statement->schema_message;
+            schema_message.set_collation($4->name);
           }
         ;
 
@@ -2416,10 +2418,23 @@ alter_list_item:
             {
               DRIZZLE_YYABORT;
             }
-            if (check_table_name($3->table.str,$3->table.length) || ($3->db.str && check_db_name(&$3->db)))
+
+            if (check_table_name($3->table.str,$3->table.length))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
               DRIZZLE_YYABORT;
+            }
+
+            if ($3->db.str)
+            {
+              std::string database_name($3->db.str);
+              NonNormalisedDatabaseName non_normalised_database_name(database_name);
+              NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+              if (! normalised_database_name.isValid())
+              {
+                my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
+                DRIZZLE_YYABORT;
+              }
             }
             lex->name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);

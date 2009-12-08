@@ -49,9 +49,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  const char *db, const char *path,
                                  TableList **dropped_tables);
 
-static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
-            
-
 /**
   Return default database collation.
 
@@ -92,19 +89,12 @@ const CHARSET_INFO *get_default_db_collation(const char *db_name)
 }
 
 /* path is path to database, not schema file */
-static int write_schema_file(Session *session,
-			     const char *path, const char *name,
-			     HA_CREATE_INFO *create)
+static int write_schema_file(const DatabasePathName &path, const message::Schema &db)
 {
-  message::Schema db;
   char schema_file_tmp[FN_REFLEN];
-  string schema_file(path);
+  string schema_file(path.to_string());
 
-  assert(path);
-  assert(name);
-  assert(create);
-
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
+  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path.to_string().c_str(), FN_LIBCHAR, MY_DB_OPT_FILE);
 
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
@@ -114,11 +104,6 @@ static int write_schema_file(Session *session,
   if (fd==-1)
     return errno;
 
-  if (!create->default_table_charset)
-    create->default_table_charset= session->variables.collation_server;
-
-  db.set_name(name);
-  db.set_collation(create->default_table_charset->name);
 
   if (!db.SerializeToFileDescriptor(fd))
   {
@@ -186,21 +171,23 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 */
 
-bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  char	 path[FN_REFLEN+16];
   long result= 1;
   int error_erno;
   bool error= false;
-  uint32_t path_len;
+  DatabasePathName database_path(database_name);
 
   /* do not create 'information_schema' db */
-  if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.c_str()))
+  if (!my_strcasecmp(system_charset_info, database_name.to_string().c_str(), INFORMATION_SCHEMA_NAME.c_str()))
   {
-    my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
+    my_error(ER_DB_CREATE_EXISTS, MYF(0), database_name.to_string().c_str());
     return(-1);
   }
+
+  assert(database_name.isValid());
+  schema_message->set_name(database_name.to_string());
 
   /*
     Do not create database if another thread is holding read lock.
@@ -222,36 +209,33 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* Check directory */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
-
-  if (mkdir(path,0777) == -1)
+  if (mkdir(database_path.to_string().c_str(),0777) == -1)
   {
     if (errno == EEXIST)
     {
       if (! is_if_not_exists)
       {
-	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
+	my_error(ER_DB_CREATE_EXISTS, MYF(0), database_name.to_string().c_str());
 	error= true;
 	goto exit;
       }
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
+			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
+                          database_name.to_string().c_str());
       session->my_ok();
       error= false;
       goto exit;
     }
 
-    my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
+    my_error(ER_CANT_CREATE_DB, MYF(0), database_name.to_string().c_str(), my_errno);
     error= true;
     goto exit;
   }
 
-  error_erno= write_schema_file(session, path, db, create_info);
+  error_erno= write_schema_file(database_path, *schema_message);
   if (error_erno && error_erno != EEXIST)
   {
-    if (rmdir(path) >= 0)
+    if (rmdir(database_path.to_string().c_str()) >= 0)
     {
       error= true;
       goto exit;
@@ -273,13 +257,12 @@ exit2:
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
+bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   long result=1;
   int error= 0;
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
+  DatabasePathName database_path(database_name);
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -296,13 +279,14 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   if ((error=wait_if_global_read_lock(session,0,1)))
     goto exit;
 
+  assert(schema_message);
+  assert(database_name.isValid());
+
+  schema_message->set_name(database_name.to_string());
+
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
-
-  error= write_schema_file(session, path, db, create_info);
+  error= write_schema_file(database_path, *schema_message);
   if (error && error != EEXIST)
   {
     /* TODO: find some witty way of getting back an error message */
@@ -337,7 +321,7 @@ exit:
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session,char *db,bool if_exists)
+bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, bool if_exists)
 {
   long deleted=0;
   int error= false;
@@ -346,7 +330,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
   uint32_t length;
   TableList *dropped_tables= NULL;
 
-  if (db && (strcmp(db, "information_schema") == 0))
+  if (database_name.to_string().compare(INFORMATION_SCHEMA_NAME) == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return true;
@@ -372,7 +356,8 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  length= build_table_filename(path, sizeof(path), db, "", false);
+  length= build_table_filename(path, sizeof(path),
+                               database_name.to_string().c_str(), "", false);
   strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
   unlink(path);
   path[length]= '\0';				// Remove file name
@@ -383,22 +368,23 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     if (!if_exists)
     {
       error= -1;
-      my_error(ER_DB_DROP_EXISTS, MYF(0), db);
+      my_error(ER_DB_DROP_EXISTS, MYF(0), database_name.to_string().c_str());
       goto exit;
     }
     else
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS), db);
+			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
+                          database_name.to_string().c_str());
   }
   else
   {
     pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
-    remove_db_from_cache(db);
+    remove_db_from_cache(database_name.to_string().c_str());
     pthread_mutex_unlock(&LOCK_open);
 
 
     error= -1;
-    if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
+    if ((deleted= mysql_rm_known_files(session, dirp, database_name.to_string().c_str(), path, &dropped_tables)) >= 0)
     {
       plugin::StorageEngine::dropDatabase(path);
       error = 0;
@@ -408,17 +394,12 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
   {
     const char *query;
     uint32_t query_length;
-    if (!session->query)
-    {
-      /* The client used the old obsolete mysql_drop_db() call */
-      query= path;
-      query_length= sprintf(path, "drop database `%s`", db);
-    }
-    else
-    {
-      query= session->query;
-      query_length= session->query_length;
-    }
+
+    assert(session->query);
+
+    query= session->query;
+    query_length= session->query_length;
+
     ReplicationServices &replication_services= ReplicationServices::singleton();
     replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
     session->clear_error();
@@ -436,7 +417,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
       goto exit; /* not much else we can do */
     query_pos= query_data_start= strcpy(query,"drop table ")+11;
     query_end= query + MAX_DROP_TABLE_Q_LEN;
-    db_len= strlen(db);
+    db_len= database_name.to_string().length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
@@ -472,8 +453,8 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (! session->db.empty() && ! strcmp(session->db.c_str(), db))
-    mysql_change_db_impl(session, NULL);
+  if (! session->db.empty() && session->db.compare(database_name.to_string()) == 0)
+    session->clear_db();
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 exit2:
@@ -729,66 +710,6 @@ err:
 }
 
 /**
-  @brief Internal implementation: switch current database to a valid one.
-
-  @param session            Thread context.
-  @param new_db_name    Name of the database to switch to. The function will
-                        take ownership of the name (the caller must not free
-                        the allocated memory). If the name is NULL, we're
-                        going to switch to NULL db.
-  @param new_db_charset Character set of the new database.
-*/
-
-static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
-{
-  /* 1. Change current database in Session. */
-
-  if (new_db_name == NULL)
-  {
-    /*
-      Session::set_db() does all the job -- it frees previous database name and
-      sets the new one.
-    */
-
-    session->set_db(NULL, 0);
-  }
-  else
-  {
-    /*
-      Here we already have a copy of database name to be used in Session. So,
-      we just call Session::reset_db(). Since Session::reset_db() does not releases
-      the previous database name, we should do it explicitly.
-    */
-
-    session->set_db(new_db_name->str, new_db_name->length);
-  }
-}
-
-/**
-  Return true if db1_name is equal to db2_name, false otherwise.
-
-  The function allows to compare database names according to the MySQL
-  rules. The database names db1 and db2 are equal if:
-     - db1 is NULL and db2 is NULL;
-     or
-     - db1 is not-NULL, db2 is not-NULL, db1 is equal (ignoring case) to
-       db2 in system character set (UTF8).
-*/
-
-static inline bool
-cmp_db_names(const char *db1_name,
-             const char *db2_name)
-{
-  return
-         /* db1 is NULL and db2 is NULL */
-         (!db1_name && !db2_name) ||
-
-         /* db1 is not-NULL, db2 is not-NULL, db1 == db2. */
-         (db1_name && db2_name && my_strcasecmp(system_charset_info, db1_name, db2_name) == 0);
-}
-
-
-/**
   @brief Change the current database and its attributes unconditionally.
 
   @param session          thread handle
@@ -850,40 +771,19 @@ cmp_db_names(const char *db1_name,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const NormalisedDatabaseName &normalised_database_name, bool force_switch)
 {
-  LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  assert(new_db_name);
-  assert(new_db_name->length);
-
-  if (my_strcasecmp(system_charset_info, new_db_name->str,
+  if (my_strcasecmp(system_charset_info, normalised_database_name.to_string().c_str(),
                     INFORMATION_SCHEMA_NAME.c_str()) == 0)
   {
-    /* Switch the current database to INFORMATION_SCHEMA. */
-    /* const_cast<> is safe here: mysql_change_db_impl does a copy */
-    LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
-                          INFORMATION_SCHEMA_NAME.length() };
-    mysql_change_db_impl(session, &is_name);
+    NonNormalisedDatabaseName non_normalised_i_s(INFORMATION_SCHEMA_NAME);
+    NormalisedDatabaseName is_name(non_normalised_i_s);
 
+    session->set_db(is_name);
     return false;
   }
-
-  /*
-    Now we need to make a copy because check_db_name requires a
-    non-constant argument. Actually, it takes database file name.
-
-    TODO: fix check_db_name().
-  */
-
-  new_db_file_name.length= new_db_name->length;
-  new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
-  if (new_db_file_name.str == NULL)
-    return true;                             /* the error is set */
-  memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
-  new_db_file_name.str[new_db_name->length]= 0;
-
 
   /*
     NOTE: if check_db_name() fails, we should throw an error in any case,
@@ -893,19 +793,20 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     from sp_head::execute(). But let's switch the current database to NULL
     in this case to be sure.
   */
-
-  if (check_db_name(&new_db_file_name))
+  if (! normalised_database_name.isValid())
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
-    free(new_db_file_name.str);
+    my_error(ER_WRONG_DB_NAME, MYF(0),
+             normalised_database_name.to_string().c_str());
 
     if (force_switch)
-      mysql_change_db_impl(session, NULL);
+      session->clear_db();
 
     return true;
   }
 
-  if (check_db_dir_existence(new_db_file_name.str))
+  DatabasePathName database_path(normalised_database_name);
+
+  if (! database_path.exists())
   {
     if (force_switch)
     {
@@ -913,13 +814,11 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
-                          new_db_file_name.str);
-
-      free(new_db_file_name.str);
+                          normalised_database_name.to_string().c_str());
 
       /* Change db to NULL. */
 
-      mysql_change_db_impl(session, NULL);
+      session->clear_db();
 
       /* The operation succeed. */
 
@@ -929,8 +828,8 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     {
       /* Report an error and free new_db_file_name. */
 
-      my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-      free(new_db_file_name.str);
+      my_error(ER_BAD_DB_ERROR, MYF(0),
+               normalised_database_name.to_string().c_str());
 
       /* The operation failed. */
 
@@ -938,38 +837,62 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     }
   }
 
-  db_default_cl= get_default_db_collation(new_db_file_name.str);
+  db_default_cl= get_default_db_collation(normalised_database_name.to_string().c_str());
 
-  mysql_change_db_impl(session, &new_db_file_name);
-  free(new_db_file_name.str);
+  session->set_db(normalised_database_name);
 
   return false;
 }
 
-/*
-  Check if there is directory for the database name.
+NormalisedDatabaseName::NormalisedDatabaseName(const NonNormalisedDatabaseName &dbname)
+{
+  const std::string &non_norm_string= dbname.to_string();
+  database_name= (char*)malloc(non_norm_string.size()+1);
 
-  SYNOPSIS
-    check_db_dir_existence()
-    db_name   database name
+  assert(database_name); /* FIXME: should throw exception */
 
-  RETURN VALUES
-    false   There is directory for the specified database name.
-    true    The directory does not exist.
-*/
+  strncpy(database_name, non_norm_string.c_str(), non_norm_string.size()+1);
 
-bool check_db_dir_existence(const char *db_name)
+  my_casedn_str(files_charset_info, database_name);
+}
+
+NormalisedDatabaseName::~NormalisedDatabaseName()
+{
+  free(database_name);
+}
+
+bool NormalisedDatabaseName::isValid() const
+{
+  LEX_STRING db_lexstring;
+
+  db_lexstring.str= database_name;
+  db_lexstring.length= strlen(database_name);
+
+  if (db_lexstring.length == 0
+      || db_lexstring.length > NAME_LEN
+      || database_name[db_lexstring.length - 1] == ' ')
+    return false;
+
+  return (! check_identifier_name(&db_lexstring));
+}
+
+DatabasePathName::DatabasePathName(const NormalisedDatabaseName &database_name)
 {
   char db_dir_path[FN_REFLEN];
   uint32_t db_dir_path_len;
 
   db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", false);
+                                        database_name.to_string().c_str(),
+                                        "", false);
 
   if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
     db_dir_path[db_dir_path_len - 1]= 0;
 
-  /* Check access. */
+  database_path.assign(db_dir_path);
+}
 
-  return my_access(db_dir_path, F_OK);
+bool DatabasePathName::exists() const
+{
+  /* TODO: handle EIO and other fun errors */
+  return access(database_path.c_str(), F_OK) == 0;
 }
