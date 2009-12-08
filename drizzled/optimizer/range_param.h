@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_OPTIMIZER_RANGE_PARAM_H
-#define DRIZZLE_OPTIMIZER_RANGE_PARAM_H
+#ifndef DRIZZLED_OPTIMIZER_RANGE_PARAM_H
+#define DRIZZLED_OPTIMIZER_RANGE_PARAM_H
 
 #include "drizzled/field.h"
 
@@ -101,4 +101,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLE_OPTIMIZER_RANGE_PARAM_H */
+#endif /* DRIZZLED_OPTIMIZER_RANGE_PARAM_H */
