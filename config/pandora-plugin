@@ -417,8 +417,8 @@ if not os.path.exists("config/pandora-plugin.am") or "write" in actions:
   plugin_am_file = ChangeProtectedFile(os.path.join('config', 'pandora-plugin.am'))
   plugin_am_file.write("""
 # always the current list, generated every build so keep this lean.
-# plugin.list: datestamp preserved list
-${srcdir}/config/plugin.list: .plugin.scan
+# pandora-plugin.list: datestamp preserved list
+${srcdir}/config/pandora-plugin.list: .plugin.scan
 .plugin.scan:
 	@cd ${top_srcdir} && python config/pandora-plugin plugin-list
 
@@ -456,7 +456,7 @@ else:
   plugin_list_file.close()
 
 if not os.path.exists("config/pandora-plugin.am") or 'write' in actions:
-  plugin_am_file.write("\nconfig/pandora-plugin.am: ${top_srcdir}/config/plugin.list ${top_srcdir}/config/pandora-plugin ")
+  plugin_am_file.write("\n${top_srcdir}/config/pandora-plugin.am: ${top_srcdir}/config/pandora-plugin.list ${top_srcdir}/config/pandora-plugin ")
   for plugin_dir in plugin_list:
     plugin_am_file.write("\\\n\t%s/plugin.ini " % plugin_dir)
   plugin_am_file.write("\n\tcd ${top_srcdir} && python config/pandora-plugin write\n")
