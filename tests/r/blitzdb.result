@@ -1,0 +1,87 @@
+drop table if exists t1, t2;
+create table t1 (a int, b double, c float) engine = blitzdb;
+create table t2 (a int, b text, c blob) engine = blitzdb;
+create table t1 (a int, b double, c float) engine = blitzdb;
+ERROR 42S01: Table 't1' already exists
+create table t2 (a int, b text, c blob) engine = blitzdb;
+ERROR 42S01: Table 't2' already exists
+create table t1 (a int) engine = blitzdb;
+ERROR 42S01: Table 't1' already exists
+create table t2 (a int) engine = blitzdb;
+ERROR 42S01: Table 't2' already exists
+drop table t1, t2;
+create table t1 (a int, b int, c varchar(255)) engine = blitzdb;
+insert into t1 values (1, 8, "one");
+insert into t1 values (2, 7, "two");
+insert into t1 values (3, 6, "three");
+insert into t1 values (4, 5, "four");
+insert into t1 values (5, 4, "five");
+insert into t1 values (6, 3, "six");
+insert into t1 values (7, 2, "seven");
+insert into t1 values (8, 1, "eight");
+select count(*) from t1;
+count(*)
+8
+select c from t1 where a = 4;
+c
+four
+select c from t1 where a > 5;
+c
+six
+seven
+eight
+select * from t1;
+a	b	c
+1	8	one
+2	7	two
+3	6	three
+4	5	four
+5	4	five
+6	3	six
+7	2	seven
+8	1	eight
+select * from t1 where a = 1 or b = 1;
+a	b	c
+1	8	one
+8	1	eight
+update t1 set c = "first half" where a <= 4;
+update t1 set c = "second half" where a > 4;
+select * from t1;
+a	b	c
+1	8	first half
+2	7	first half
+3	6	first half
+4	5	first half
+5	4	second half
+6	3	second half
+7	2	second half
+8	1	second half
+create table t2 (a int, b int, c varchar(255))
+engine = blitzdb (select * from t1);
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` int DEFAULT NULL,
+  `b` int DEFAULT NULL,
+  `c` varchar(255) DEFAULT NULL
+) ENGINE=BLITZDB
+select count(*) from t2;
+count(*)
+8
+delete from t1 where c = "first half";
+delete from t1 where c = "second half";
+select count(*) from t1;
+count(*)
+0
+drop table t1;
+rename table t2 to t1;
+select * from t1;
+a	b	c
+1	8	first half
+2	7	first half
+3	6	first half
+4	5	first half
+5	4	second half
+6	3	second half
+7	2	second half
+8	1	second half

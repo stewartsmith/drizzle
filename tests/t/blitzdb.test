@@ -1,0 +1,59 @@
+# Test Routine for BlitzDB
+
+--disable_warnings
+drop table if exists t1, t2;
+--enable_warnings
+
+# Test(1): Table creation routine
+create table t1 (a int, b double, c float) engine = blitzdb;
+create table t2 (a int, b text, c blob) engine = blitzdb;
+
+--error 1050
+create table t1 (a int, b double, c float) engine = blitzdb;
+--error 1050
+create table t2 (a int, b text, c blob) engine = blitzdb;
+--error 1050
+create table t1 (a int) engine = blitzdb;
+--error 1050
+create table t2 (a int) engine = blitzdb;
+
+drop table t1, t2;
+
+# Test(2): Simple row insertion
+create table t1 (a int, b int, c varchar(255)) engine = blitzdb;
+
+insert into t1 values (1, 8, "one");
+insert into t1 values (2, 7, "two");
+insert into t1 values (3, 6, "three");
+insert into t1 values (4, 5, "four");
+insert into t1 values (5, 4, "five");
+insert into t1 values (6, 3, "six");
+insert into t1 values (7, 2, "seven");
+insert into t1 values (8, 1, "eight");
+
+# Test(3): Simple table scan based row reading
+select count(*) from t1;
+select c from t1 where a = 4;
+select c from t1 where a > 5;
+select * from t1;
+select * from t1 where a = 1 or b = 1;
+
+# Test(4): Update Rows
+update t1 set c = "first half" where a <= 4;
+update t1 set c = "second half" where a > 4;
+select * from t1;
+
+# Test(5): Delete Rows. Backup t1 to t2 first.
+create table t2 (a int, b int, c varchar(255))
+  engine = blitzdb (select * from t1);
+
+show create table t2;
+select count(*) from t2;
+
+delete from t1 where c = "first half";
+delete from t1 where c = "second half";
+select count(*) from t1;
+drop table t1;
+
+rename table t2 to t1;
+select * from t1;
