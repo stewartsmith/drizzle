@@ -750,10 +750,6 @@ bool mysql_select(Session *session, Item ***rref_pointer_array,
                   select_result *result, Select_Lex_Unit *unit,
                   Select_Lex *select_lex);
 void free_underlaid_joins(Session *session, Select_Lex *select);
-bool mysql_explain_union(Session *session, Select_Lex_Unit *unit,
-                         select_result *result);
-int mysql_explain_select(Session *session, Select_Lex *sl, char const *type,
-                         select_result *result);
 
 bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,

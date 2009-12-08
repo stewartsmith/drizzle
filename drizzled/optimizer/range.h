@@ -260,7 +260,7 @@ public:
    * Append comma-separated list of keys this quick select uses to key_names;
    * append comma-separated list of corresponding used lengths to used_lengths.
    * 
-   * @note This is used by select_describe.
+   * @note This is used by during explain plan.
    */
   virtual void add_keys_and_lengths(String *key_names, String *used_lengths)=0;
 
@@ -406,8 +406,6 @@ private:
   friend uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
   friend range_seq_t quick_range_seq_init(void *init_param,
                                           uint32_t n_ranges, uint32_t flags);
-  friend void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
-                              bool distinct,const char *message);
 };
 
 /**

@@ -138,7 +138,6 @@ bool change_refs_to_tmp_fields(Session *session,
                                List<Item> &res_all_fields,
                                uint32_t elements,
 			                         List<Item> &all_fields);
-void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool distinct, const char *message= NULL);
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
