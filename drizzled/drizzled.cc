@@ -38,7 +38,6 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
 #include <drizzled/item/create.h>
 #include <drizzled/unireg.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
