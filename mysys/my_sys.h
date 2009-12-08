@@ -277,7 +277,6 @@ extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
 extern int _sanity(const char *sFile, uint32_t uLine);
 
-#define my_access access
 extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
 

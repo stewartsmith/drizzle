@@ -174,12 +174,12 @@ void change_byte(unsigned char *,uint,char,char);
 
 namespace drizzled { namespace optimizer { class SqlSelect; } }
 
-ha_rows filesort(Session *session, 
+ha_rows filesort(Session *session,
                  Table *form,
                  struct st_sort_field *sortorder,
-		             uint32_t s_length, 
+		             uint32_t s_length,
                  drizzled::optimizer::SqlSelect *select,
-		             ha_rows max_rows, 
+		             ha_rows max_rows,
                  bool sort_positions,
                  ha_rows *examined_rows);
 
@@ -198,7 +198,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 
 int rename_file_ext(const char * from,const char * to,const char * ext);
-bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
 

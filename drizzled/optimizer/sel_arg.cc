@@ -58,7 +58,7 @@ static void right_rotate(optimizer::SEL_ARG **root, optimizer::SEL_ARG *leaf)
 
 /* Get overlapping range */
 optimizer::SEL_ARG *optimizer::SEL_ARG::clone_and(optimizer::SEL_ARG *arg)
-{ 
+{
   unsigned char *new_min= NULL;
   unsigned char *new_max= NULL;
   uint8_t flag_min= 0;
@@ -75,19 +75,19 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone_and(optimizer::SEL_ARG *arg)
   }
   if (cmp_max_to_max(arg) <= 0)
   {
-    new_max= max_value; 
+    new_max= max_value;
     flag_max= max_flag;
   }
   else
   {
-    new_max= arg->max_value; 
+    new_max= arg->max_value;
     flag_max= arg->max_flag;
   }
-  return (new SEL_ARG(field, 
-                      part, 
-                      new_min, 
-                      new_max, 
-                      flag_min, 
+  return (new SEL_ARG(field,
+                      part,
+                      new_min,
+                      new_max,
+                      flag_min,
                       flag_max,
                       test(maybe_flag && arg->maybe_flag)));
 }
@@ -96,10 +96,10 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone_and(optimizer::SEL_ARG *arg)
 /* min <= X , arg->min */
 optimizer::SEL_ARG *optimizer::SEL_ARG::clone_first(optimizer::SEL_ARG *arg)
 {
-  return (new SEL_ARG(field,part, 
-                      min_value, 
+  return (new SEL_ARG(field,part,
+                      min_value,
                       arg->min_value,
-                      min_flag, 
+                      min_flag,
                       arg->min_flag & NEAR_MIN ? 0 : NEAR_MAX,
 		                                     maybe_flag | arg->maybe_flag));
 }
@@ -108,12 +108,12 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone_first(optimizer::SEL_ARG *arg)
 /* min <= X <= key_max */
 optimizer::SEL_ARG *optimizer::SEL_ARG::clone_last(optimizer::SEL_ARG *arg)
 {
-  return (new SEL_ARG(field, 
-                      part, 
-                      min_value, 
+  return (new SEL_ARG(field,
+                      part,
+                      min_value,
                       arg->max_value,
-                      min_flag, 
-                      arg->max_flag, 
+                      min_flag,
+                      arg->max_flag,
                       maybe_flag | arg->maybe_flag));
 }
 
@@ -219,7 +219,7 @@ int optimizer::SEL_ARG::store_min_key(KEY_PART *key, unsigned char **range_key, 
 {
   optimizer::SEL_ARG *key_tree= first();
   uint32_t res= key_tree->store_min(key[key_tree->part].store_length,
-                                    range_key, 
+                                    range_key,
                                     *range_key_flag);
   *range_key_flag|= key_tree->min_flag;
 
@@ -228,7 +228,7 @@ int optimizer::SEL_ARG::store_min_key(KEY_PART *key, unsigned char **range_key, 
       ! (*range_key_flag & (NO_MIN_RANGE | NEAR_MIN)) &&
       key_tree->next_key_part->type == optimizer::SEL_ARG::KEY_RANGE)
   {
-    res+= key_tree->next_key_part->store_min_key(key, 
+    res+= key_tree->next_key_part->store_min_key(key,
                                                  range_key,
                                                  range_key_flag);
   }
@@ -239,14 +239,14 @@ int optimizer::SEL_ARG::store_max_key(KEY_PART *key, unsigned char **range_key, 
 {
   SEL_ARG *key_tree= last();
   uint32_t res= key_tree->store_max(key[key_tree->part].store_length,
-                                    range_key, 
+                                    range_key,
                                     *range_key_flag);
   (*range_key_flag)|= key_tree->max_flag;
   if (key_tree->next_key_part &&
       key_tree->next_key_part->part == key_tree->part+1 &&
       ! (*range_key_flag & (NO_MAX_RANGE | NEAR_MAX)) &&
       key_tree->next_key_part->type == SEL_ARG::KEY_RANGE)
-    res+= key_tree->next_key_part->store_max_key(key, 
+    res+= key_tree->next_key_part->store_max_key(key,
                                                  range_key,
                                                  range_key_flag);
   return res;
@@ -266,7 +266,7 @@ optimizer::SEL_ARG::SEL_ARG(optimizer::SEL_ARG &arg)
   min_value= arg.min_value;
   max_value= arg.max_value;
   next_key_part= arg.next_key_part;
-  use_count=1; 
+  use_count=1;
   elements=1;
 }
 
@@ -276,7 +276,7 @@ void optimizer::SEL_ARG::make_root()
   left= right= &optimizer::null_element;
   color= BLACK;
   next= prev =0;
-  use_count= 0; 
+  use_count= 0;
   elements= 1;
 }
 
@@ -284,15 +284,15 @@ optimizer::SEL_ARG::SEL_ARG(Field *f,
                             const unsigned char *min_value_arg,
                             const unsigned char *max_value_arg)
   :
-    min_flag(0), 
-    max_flag(0), 
-    maybe_flag(0), 
+    min_flag(0),
+    max_flag(0),
+    maybe_flag(0),
     maybe_null(f->real_maybe_null()),
-    elements(1), 
-    use_count(1), 
-    field(f), 
+    elements(1),
+    use_count(1),
+    field(f),
     min_value((unsigned char*) min_value_arg),
-    max_value((unsigned char*) max_value_arg), 
+    max_value((unsigned char*) max_value_arg),
     next(0),
     prev(0),
     next_key_part(0),
@@ -304,7 +304,7 @@ optimizer::SEL_ARG::SEL_ARG(Field *f,
 
 optimizer::SEL_ARG::SEL_ARG(Field *field_,
                             uint8_t part_,
-                            unsigned char *min_value_, 
+                            unsigned char *min_value_,
                             unsigned char *max_value_,
 		            uint8_t min_flag_,
                             uint8_t max_flag_,
@@ -314,11 +314,11 @@ optimizer::SEL_ARG::SEL_ARG(Field *field_,
     max_flag(max_flag_),
     maybe_flag(maybe_flag_),
     part(part_),
-    maybe_null(field_->real_maybe_null()), 
+    maybe_null(field_->real_maybe_null()),
     elements(1),
     use_count(1),
-    field(field_), 
-    min_value(min_value_), 
+    field(field_),
+    min_value(min_value_),
     max_value(max_value_),
     next(0),
     prev(0),
@@ -329,7 +329,7 @@ optimizer::SEL_ARG::SEL_ARG(Field *field_,
   left= right= &optimizer::null_element;
 }
 
-optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param, 
+optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param,
                                               optimizer::SEL_ARG *new_parent,
                                               optimizer::SEL_ARG **next_arg)
 {
@@ -350,11 +350,11 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param,
   else
   {
     if (! (tmp= new (param->mem_root) optimizer::SEL_ARG(field,
-                                                         part, 
+                                                         part,
                                                          min_value,
                                                          max_value,
-                                                         min_flag, 
-                                                         max_flag, 
+                                                         min_flag,
+                                                         max_flag,
                                                          maybe_flag)))
       return 0; // OOM
     tmp->parent= new_parent;
@@ -576,7 +576,7 @@ optimizer::SEL_ARG::rb_insert(optimizer::SEL_ARG *leaf)
   optimizer::SEL_ARG *par2= NULL;
   optimizer::SEL_ARG *root= NULL;
 
-  root= this; 
+  root= this;
   root->parent= 0;
 
   leaf->color= RED;
@@ -656,7 +656,7 @@ optimizer::SEL_ARG *optimizer::rb_delete_fixup(optimizer::SEL_ARG *root,
         left_rotate(&root, par);
         w= par->right;
       }
-      if (w->left->color == optimizer::SEL_ARG::BLACK && 
+      if (w->left->color == optimizer::SEL_ARG::BLACK &&
           w->right->color == optimizer::SEL_ARG::BLACK)
       {
         w->color= optimizer::SEL_ARG::RED;
@@ -689,7 +689,7 @@ optimizer::SEL_ARG *optimizer::rb_delete_fixup(optimizer::SEL_ARG *root,
         right_rotate(&root, par);
         w= par->left;
       }
-      if (w->right->color == optimizer::SEL_ARG::BLACK && 
+      if (w->right->color == optimizer::SEL_ARG::BLACK &&
           w->left->color == optimizer::SEL_ARG::BLACK)
       {
         w->color= optimizer::SEL_ARG::RED;

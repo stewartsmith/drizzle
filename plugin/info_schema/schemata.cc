@@ -27,7 +27,7 @@
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/join_table.h"
-
+#include "drizzled/db.h"
 #include "helper_methods.h"
 #include "schemata.h"
 

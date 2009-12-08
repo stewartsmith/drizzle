@@ -38,7 +38,6 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
 #include <drizzled/item/create.h>
 #include <drizzled/unireg.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
@@ -1564,7 +1563,10 @@ int main(int argc, char **argv)
   select_thread_in_use=1;
 
   if (chdir(drizzle_real_data_home) && !opt_help)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
     unireg_abort(1);
+  }
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;

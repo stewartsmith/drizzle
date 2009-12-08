@@ -28,10 +28,10 @@ using namespace std;
 using namespace drizzled;
 
 
-optimizer::QuickRangeSelect::QuickRangeSelect(Session *session, 
-                                              Table *table, 
+optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
+                                              Table *table,
                                               uint32_t key_nr,
-                                              bool no_alloc, 
+                                              bool no_alloc,
                                               MEM_ROOT *parent_alloc,
                                               bool *create_error)
   :
@@ -268,9 +268,9 @@ int optimizer::QuickRangeSelect::reset()
   {
     buf_size= mrr_buf_size;
     while (buf_size && ! memory::multi_malloc(false,
-                                              &mrr_buf_desc, 
+                                              &mrr_buf_desc,
                                               sizeof(*mrr_buf_desc),
-                                              &mrange_buff, 
+                                              &mrange_buff,
                                               buf_size,
                                               NULL))
     {
@@ -300,13 +300,13 @@ int optimizer::QuickRangeSelect::reset()
      mrr_flags|= HA_MRR_SORTED;
   }
   RANGE_SEQ_IF seq_funcs= {
-    optimizer::quick_range_seq_init, 
+    optimizer::quick_range_seq_init,
     optimizer::quick_range_seq_next
   };
-  error= cursor->multi_range_read_init(&seq_funcs, 
-                                       (void*) this, 
+  error= cursor->multi_range_read_init(&seq_funcs,
+                                       (void*) this,
                                        ranges.elements,
-                                       mrr_flags, 
+                                       mrr_flags,
                                        mrr_buf_desc ? mrr_buf_desc : &empty_buf);
   return error;
 }
@@ -347,8 +347,8 @@ int optimizer::QuickRangeSelect::get_next_prefix(uint32_t prefix_length,
     {
       /* Read the next record in the same range with prefix after cur_prefix. */
       assert(cur_prefix != 0);
-      result= cursor->index_read_map(record, 
-                                     cur_prefix, 
+      result= cursor->index_read_map(record,
+                                     cur_prefix,
                                      keypart_map,
                                      HA_READ_AFTER_KEY);
       if (result || (cursor->compare_key(cursor->end_range) <= 0))
@@ -459,7 +459,7 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
   if (range_arg->flag & NO_MIN_RANGE)
     return 0;					/* key can't be to small */
 
-  cmp= key_cmp(key_part_info, 
+  cmp= key_cmp(key_part_info,
                range_arg->min_key,
                range_arg->min_length);
   if (cmp > 0 || (cmp == 0 && (range_arg->flag & NEAR_MIN) == false))
@@ -498,7 +498,7 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
  */
 optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t, bool *)
   :
-    optimizer::QuickRangeSelect(*q), 
+    optimizer::QuickRangeSelect(*q),
     rev_it(rev_ranges)
 {
   optimizer::QuickRange *r= NULL;
@@ -567,7 +567,7 @@ int optimizer::QuickSelectDescending::get_next()
 
     if (last_range->flag & EQ_RANGE)
     {
-      result = cursor->index_read_map(record, 
+      result = cursor->index_read_map(record,
                                       last_range->max_key,
                                       last_range->max_keypart_map,
                                       HA_READ_KEY_EXACT);
@@ -576,7 +576,7 @@ int optimizer::QuickSelectDescending::get_next()
     {
       assert(last_range->flag & NEAR_MAX ||
              range_reads_after_key(last_range));
-      result= cursor->index_read_map(record, 
+      result= cursor->index_read_map(record,
                                      last_range->max_key,
                                      last_range->max_keypart_map,
                                      ((last_range->flag & NEAR_MAX) ?

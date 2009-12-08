@@ -29,6 +29,6 @@ optimizer::QuickRange::QuickRange()
     min_length(0),
     max_length(0),
     flag(NO_MIN_RANGE | NO_MAX_RANGE),
-    min_keypart_map(0), 
+    min_keypart_map(0),
     max_keypart_map(0)
 {}

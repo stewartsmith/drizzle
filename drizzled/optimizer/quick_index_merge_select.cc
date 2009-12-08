@@ -34,7 +34,7 @@ static int refpos_order_cmp(void *arg, const void *a, const void *b)
 optimizer::QuickIndexMergeSelect::QuickIndexMergeSelect(Session *session_param,
                                                         Table *table)
   :
-    pk_quick_select(NULL), 
+    pk_quick_select(NULL),
     session(session_param)
 {
   index= MAX_KEY;
@@ -111,7 +111,7 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
   if (cur_quick->init() || cur_quick->reset())
     return 0;
 
-  unique= new Unique(refpos_order_cmp, 
+  unique= new Unique(refpos_order_cmp,
                      (void *)cursor,
                      cursor->ref_length,
                      session->variables.sortbuff_size);
