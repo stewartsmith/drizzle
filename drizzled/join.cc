@@ -2388,7 +2388,7 @@ bool JOIN::change_result(select_result *res)
 
 void JOIN::cache_const_exprs()
 {
-  bool cache_flag= FALSE;
+  bool cache_flag= false;
   bool *analyzer_arg= &cache_flag;
 
   /* No need in cache if all tables are constant. */
@@ -2396,22 +2396,22 @@ void JOIN::cache_const_exprs()
     return;
 
   if (conds)
-    conds->compile(&Item::cache_const_expr_analyzer, (uchar **)&analyzer_arg,
-                  &Item::cache_const_expr_transformer, (uchar *)&cache_flag);
-  cache_flag= FALSE;
+    conds->compile(&Item::cache_const_expr_analyzer, (void **)&analyzer_arg,
+                  &Item::cache_const_expr_transformer, (void *)&cache_flag);
+  cache_flag= false;
   if (having)
-    having->compile(&Item::cache_const_expr_analyzer, (uchar **)&analyzer_arg,
-                    &Item::cache_const_expr_transformer, (uchar *)&cache_flag);
+    having->compile(&Item::cache_const_expr_analyzer, (void **)&analyzer_arg,
+                    &Item::cache_const_expr_transformer, (void *)&cache_flag);
 
-  for (JOIN_TAB *tab= join_tab + const_tables; tab < join_tab + tables ; tab++)
+  for (JoinTable *tab= join_tab + const_tables; tab < join_tab + tables ; tab++)
   {
     if (*tab->on_expr_ref)
     {
-      cache_flag= FALSE;
+      cache_flag= false;
       (*tab->on_expr_ref)->compile(&Item::cache_const_expr_analyzer,
-                                 (uchar **)&analyzer_arg,
+                                 (void **)&analyzer_arg,
                                  &Item::cache_const_expr_transformer,
-                                 (uchar *)&cache_flag);
+                                 (void *)&cache_flag);
     }
   }
 }
