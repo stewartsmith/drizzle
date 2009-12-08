@@ -66,7 +66,7 @@ public:
   bool fix_fields(Session *session, Item **ref);
   void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
-  void print_as_stmt(String *str, enum_query_type query_type);
+
   const char *func_name() const { return "set_user_var"; }
   int save_in_field(Field *field, bool no_conversions,
                     bool can_use_result_field);
