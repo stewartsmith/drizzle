@@ -472,6 +472,8 @@ public:
            sizeof(drizzled::optimizer::Position) * size);
   }
 
+  void cache_const_exprs();
+
   /**
    * @param[in] index the index of the position to retrieve
    * @return a reference to the specified position in the optimal
