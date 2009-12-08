@@ -61,7 +61,7 @@ typedef struct st_join_cache
   uint32_t blobs;
   CACHE_FIELD *field;
   CACHE_FIELD **blob_ptr;
-  drizzled::optimizer::SQL_SELECT *select;
+  drizzled::optimizer::SqlSelect *select;
 } JOIN_CACHE;
 
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);

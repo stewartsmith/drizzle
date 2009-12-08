@@ -172,13 +172,13 @@ uint32_t convert_month_to_period(uint32_t month);
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
 
-namespace drizzled { namespace optimizer { class SQL_SELECT; } }
+namespace drizzled { namespace optimizer { class SqlSelect; } }
 
 ha_rows filesort(Session *session, 
                  Table *form,
                  struct st_sort_field *sortorder,
 		             uint32_t s_length, 
-                 drizzled::optimizer::SQL_SELECT *select,
+                 drizzled::optimizer::SqlSelect *select,
 		             ha_rows max_rows, 
                  bool sort_positions,
                  ha_rows *examined_rows);
@@ -187,7 +187,7 @@ void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
-int get_quick_record(drizzled::optimizer::SQL_SELECT *select);
+int get_quick_record(drizzled::optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);

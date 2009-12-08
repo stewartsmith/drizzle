@@ -46,7 +46,7 @@ static unsigned char *read_buffpek_from_file(IO_CACHE *buffer_file, uint32_t cou
                                      unsigned char *buf);
 
 static ha_rows find_all_keys(SORTPARAM *param,
-                             optimizer::SQL_SELECT *select,
+                             optimizer::SqlSelect *select,
 			     unsigned char * *sort_keys, 
                              IO_CACHE *buffer_file,
 			     IO_CACHE *tempfile,
@@ -107,7 +107,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
 */
 
 ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t s_length,
-		 optimizer::SQL_SELECT *select, ha_rows max_rows,
+		 optimizer::SqlSelect *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
   int error;
@@ -134,7 +134,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 
   /*
     Don't use table->sort in filesort as it is also used by
-    QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end
+    QuickIndexMergeSelect. Work with a copy and put it back at the end
     when index_merge select has finished with it.
   */
   memcpy(&table_sort, &table->sort, sizeof(filesort_info_st));
@@ -452,7 +452,7 @@ static unsigned char *read_buffpek_from_file(IO_CACHE *buffpek_pointers, uint32_
 */
 
 static ha_rows find_all_keys(SORTPARAM *param, 
-                             optimizer::SQL_SELECT *select,
+                             optimizer::SqlSelect *select,
 			     unsigned char **sort_keys,
 			     IO_CACHE *buffpek_pointers,
 			     IO_CACHE *tempfile, IO_CACHE *indexfile)

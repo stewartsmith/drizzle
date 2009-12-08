@@ -119,7 +119,7 @@ struct RegInfo {		/* Extra info about reg */
 struct st_read_record;				/* For referense later */
 class Session;
 class Cursor;
-namespace drizzled { namespace optimizer { class SQL_SELECT; } }
+namespace drizzled { namespace optimizer { class SqlSelect; } }
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
@@ -127,7 +127,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;
-  drizzled::optimizer::SQL_SELECT *select;
+  drizzled::optimizer::SqlSelect *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
   uint32_t index;
