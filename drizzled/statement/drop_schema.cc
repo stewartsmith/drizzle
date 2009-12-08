@@ -41,7 +41,7 @@ bool statement::DropSchema::execute()
   {
     return true;
   }
-  if (! normalised_database_name.is_valid())
+  if (! normalised_database_name.isValid())
   {
     my_error(ER_WRONG_DB_NAME, MYF(0),
              normalised_database_name.to_string().c_str());

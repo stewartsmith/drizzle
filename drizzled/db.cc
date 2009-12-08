@@ -186,7 +186,7 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
     return(-1);
   }
 
-  assert(database_name.is_valid());
+  assert(database_name.isValid());
   schema_message->set_name(database_name.to_string());
 
   /*
@@ -280,7 +280,7 @@ bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_nam
     goto exit;
 
   assert(schema_message);
-  assert(database_name.is_valid());
+  assert(database_name.isValid());
 
   schema_message->set_name(database_name.to_string());
 
@@ -793,7 +793,7 @@ bool mysql_change_db(Session *session, const NormalisedDatabaseName &normalised_
     from sp_head::execute(). But let's switch the current database to NULL
     in this case to be sure.
   */
-  if (! normalised_database_name.is_valid())
+  if (! normalised_database_name.isValid())
   {
     my_error(ER_WRONG_DB_NAME, MYF(0),
              normalised_database_name.to_string().c_str());
@@ -861,7 +861,7 @@ NormalisedDatabaseName::~NormalisedDatabaseName()
   free(database_name);
 }
 
-bool NormalisedDatabaseName::is_valid() const
+bool NormalisedDatabaseName::isValid() const
 {
   LEX_STRING db_lexstring;
 

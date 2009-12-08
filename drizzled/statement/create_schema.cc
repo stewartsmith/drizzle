@@ -43,7 +43,7 @@ bool statement::CreateSchema::execute()
     return true;
   }
   if (! session->lex->name.str ||
-      ! normalised_database_name.is_valid())
+      ! normalised_database_name.isValid())
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;

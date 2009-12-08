@@ -79,7 +79,7 @@ public:
     return tmp;
   }
 
-  bool is_valid() const;
+  bool isValid() const;
 };
 
 class DatabasePathName
