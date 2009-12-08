@@ -81,6 +81,7 @@ public:
     which are used as backup storage.
   */
   Open_tables_state() : backups_available(false) { }
+  virtual ~Open_tables_state() {}
 
   Open_tables_state(uint64_t version_arg);
 
