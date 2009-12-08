@@ -199,7 +199,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
 
-    if (!mysql_change_db(session, normalised_database_name, false))
+    if (! mysql_change_db(session, normalised_database_name, false))
     {
       session->my_ok();
     }
