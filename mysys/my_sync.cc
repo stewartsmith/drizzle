@@ -57,11 +57,8 @@ int my_sync(File fd, myf my_flags)
 #endif
 #if defined(HAVE_FDATASYNC)
     res= fdatasync(fd);
-#elif defined(HAVE_FSYNC)
-    res= fsync(fd);
 #else
-#error Cannot find a way to sync a file, durability in danger
-    res= 0;					/* No sync (strange OS) */
+    res= fsync(fd);
 #endif
   } while (res == -1 && errno == EINTR);
 

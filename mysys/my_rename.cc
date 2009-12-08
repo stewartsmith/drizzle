@@ -40,11 +40,7 @@ int my_rename(const char *from, const char *to, myf MyFlags)
     my_errno=save_errno;
   }
 #endif
-#if defined(HAVE_RENAME)
   if (rename(from,to))
-#else
-  if (link(from, to) || unlink(from))
-#endif
   {
     my_errno=errno;
     error = -1;

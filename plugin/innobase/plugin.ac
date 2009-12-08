@@ -24,7 +24,7 @@ AC_DEFUN([AC_INNODB_ACTIONS],[
   AC_CHECK_SIZEOF(int, 4)
   AC_CHECK_SIZEOF(long, 4)
   AC_CHECK_SIZEOF(void*, 4)
-  AC_CHECK_FUNCS(sched_yield fdatasync localtime_r)
+  AC_CHECK_FUNCS(sched_yield fdatasync localtime_r pread)
   AC_CHECK_FUNCS([uname munmap memchr getpagesize bzero])
   AC_C_BIGENDIAN
   case "$target_os" in

@@ -286,3 +286,5 @@ config/plugin-list.am
 config/plugin.list
 lint-rules.am
 *.linted
+config/pandora-plugin.list
+config/plugin.stamp

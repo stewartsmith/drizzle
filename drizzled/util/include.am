@@ -13,8 +13,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-utilincludedir = ${includedir}/drizzled/util
-dist_utilinclude_HEADERS= convert.h test.h
+nobase_dist_include_HEADERS= drizzled/util/convert.h drizzled/util/test.h
 
-noinst_LTLIBRARIES= libutil.la
-libutil_la_SOURCES= convert.cc
+noinst_LTLIBRARIES+= drizzled/util/libutil.la
+drizzled_util_libutil_la_SOURCES= drizzled/util/convert.cc
+

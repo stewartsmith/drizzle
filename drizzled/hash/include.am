@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 hashincludedir = ${includedir}/drizzled/hash
-dist_hashinclude_HEADERS= crc32.h
+dist_hashinclude_HEADERS= drizzled/hash/crc32.h
 
-noinst_LTLIBRARIES= libhash.la
-libhash_la_SOURCES= crc32.cc
+noinst_LTLIBRARIES+= drizzled/hash/libhash.la
+drizzled_hash_libhash_la_SOURCES= drizzled/hash/crc32.cc
