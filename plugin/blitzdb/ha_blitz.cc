@@ -276,37 +276,39 @@ int ha_blitz::rnd_end() {
   return 0;
 }
 
-int ha_blitz::rnd_pos(unsigned char *pos_buf, unsigned char *copy_row_to) {
-  unsigned char *key = NULL;
-  uint16_t key_length;
-  char *fetched_row;
-  int row_length;
+int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
+  char *row;
+  char *key = NULL;
+  int key_length, row_length;
 
-  key_length = share->dict.fetch_position(pos_buf, key);
-  fetched_row = share->dict.get_row((char*)key, (size_t)key_length,
-                                    &row_length);
-  if (fetched_row == NULL)
+  memcpy(&key_length, pos, sizeof(key_length));
+  key = reinterpret_cast<char *>(pos + sizeof(key_length));
+
+  /* TODO: Find a better error type. */
+  if (key == NULL)
     return HA_ERR_KEY_NOT_FOUND;
 
-  unpack_row(copy_row_to, fetched_row);
-  free(fetched_row);
+  row = share->dict.get_row(key, key_length, &row_length);
+
+  if (row == NULL)
+    return HA_ERR_KEY_NOT_FOUND;
+
+  unpack_row(copy_to, row);
+  free(row);
   return 0;
 }
 
 void ha_blitz::position(const unsigned char *) {
-  /* By the time this function is called, 'current_key' is
-     pointing at the next key to fetch. Therefore store the content
-     of the key buffer. The key buffer still contains the key data
-     from the previous fetch, which we want to keep aside */
-  share->dict.store_position(ref, key_buffer, generated_key_length);
-  return;
+  int length = sizeof(updateable_key_length);
+  memcpy(ref, &updateable_key_length, length);
+  memcpy(ref + length, reinterpret_cast<unsigned char *>(updateable_key),
+         updateable_key_length);
 }
-
 
 int ha_blitz::write_row(unsigned char *drizzle_row) {
   unsigned char *buffer_pos = get_pack_buffer();
   uint32_t row_length = max_row_length();
-  bool rv = false;
+  bool rv;
   
   ha_statistic_increment(&SSV::ha_write_count);
   generated_key_length = share->dict.generate_table_key(key_buffer);
@@ -342,10 +344,6 @@ int ha_blitz::delete_row(const unsigned char *) {
 
 int ha_blitz::delete_all_rows(void) {
   return (share->dict.delete_all_rows()) ? 0 : -1;
-}
-
-uint32_t ha_blitz::index_flags(uint32_t, uint32_t, bool) const {
-  return 0;
 }
 
 uint32_t ha_blitz::max_row_length(void) {

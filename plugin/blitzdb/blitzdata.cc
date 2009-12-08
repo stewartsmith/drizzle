@@ -187,26 +187,6 @@ char *BlitzData::next_key_and_row(const char *key, const size_t klen,
                        value, value_length);
 }
 
-/* Set key_ptr to the beginning of the key on memory and return
-   the length of the key */
-uint16_t BlitzData::fetch_position(unsigned char *position_buf,
-                                   unsigned char *key_ptr) {
-  uint16_t key_length;
-  memcpy(&key_length, position_buf, sizeof(uint16_t));
-  key_ptr = position_buf + sizeof(uint16_t);
-  return key_length;
-}
-
-/* Store the position of the most recently fetched record so
-   that drizzled can directly fetch the row later on for some
-   arbitrary reason. */
-void BlitzData::store_position(unsigned char *ref, char *key,
-                               const size_t klen) {
-  uint16_t key_length = (uint16_t)klen;
-  memcpy(ref, &key_length, sizeof(uint16_t));
-  memcpy(ref + sizeof(uint16_t), key, klen);
-}
-
 uint64_t BlitzData::next_hidden_row_id(void) {
   pthread_mutex_lock(&id_lock);
   uint64_t rv = ++current_hidden_id;
@@ -214,9 +194,12 @@ uint64_t BlitzData::next_hidden_row_id(void) {
   return rv;
 }
 
+/* For now only worry about auto generated keys here. This function
+   will be worked on when I start hacking on index support. */
 size_t BlitzData::generate_table_key(char *key_buffer) {
-  int8store(key_buffer, next_hidden_row_id());
-  return sizeof(uint64_t);
+  uint64_t next_id = next_hidden_row_id();
+  int8store(key_buffer, next_id);
+  return sizeof(next_id);
 }
 
 bool BlitzData::overwrite_row(const char *key, const size_t klen,

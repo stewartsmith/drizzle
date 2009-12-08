@@ -104,9 +104,6 @@ public:
   char *next_key_and_row(const char *key, const size_t klen,
                          int *next_key_len, const char **value,
                          int *value_length);
-  uint16_t fetch_position(unsigned char *position_buf,
-                          unsigned char *key_ptr);
-  void store_position(unsigned char *ref, char *key, const size_t klen);
 
   /* DATA DICTIONARY WRITE RELATED */
   uint64_t next_hidden_row_id(void);
@@ -164,11 +161,8 @@ public:
   ha_blitz(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg);
   ~ha_blitz() {}
 
-  const char *table_type() const { return "BLITZ"; }
-  const char *index_type(uint32_t) { return "BTREE"; };
+  const char *index_type(uint32_t) { return "NONE"; };
   const char **bas_ext() const;
-
-  uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
 
   int open(const char *name, int mode, uint32_t open_options);
   int close(void);
@@ -208,7 +202,6 @@ public:
                                       HTON_HAS_RECORDS |
                                       HTON_HAS_DATA_DICTIONARY) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
-    addAlias("BLITZ");
   }
 
   virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root) {
@@ -237,6 +230,10 @@ public:
   uint32_t max_supported_key_length() const { return 0; }
   uint32_t max_supported_key_parts() const { return 0; }
   uint32_t max_supported_key_part_length() const { return 0; }
+
+  uint32_t index_flags(enum ha_key_alg) const {
+    return HA_ONLY_WHOLE_INDEX;
+  }
 };
 
 #endif /* STORAGE_BLITZ_HA_BLITZ_H */
