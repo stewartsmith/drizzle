@@ -263,6 +263,7 @@ TinaShare::TinaShare(const char *table_name_arg)
     update_file_opened(false), tina_write_opened(false),
     crashed(false), rows_recorded(0), data_file_version(0)
 {
+  thr_lock_init(&lock);
   fn_format(data_file_name, table_name_arg, "", CSV_EXT,
             MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 }
@@ -313,7 +314,6 @@ TinaShare *ha_tina::get_share(const char *table_name)
     share->saved_data_file_length= file_stat.st_size;
 
     a_tina->addOpenTable(share->table_name, share);
-    thr_lock_init(&share->lock);
 
     pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
 
