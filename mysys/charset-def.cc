@@ -44,8 +44,6 @@ extern CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci;
 
 bool init_compiled_charsets(myf)
 {
-  CHARSET_INFO *cs;
-
   add_compiled_collation(&my_charset_bin);
 
   add_compiled_collation(&my_charset_utf8mb4_general_ci);
@@ -70,10 +68,6 @@ bool init_compiled_charsets(myf)
   add_compiled_collation(&my_charset_utf8mb4_esperanto_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_hungarian_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_sinhala_uca_ci);
-
-  /* Copy compiled charsets */
-  for (cs=compiled_charsets; cs->name; cs++)
-    add_compiled_collation(cs);
 
   return false;
 }

@@ -35,10 +35,3 @@ MEM_ROOT *current_mem_root(void)
 {
   return *(static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root)));
 }
-
-
-MEM_ROOT **current_mem_root_ptr(void)
-{
-  return static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root));
-}
-

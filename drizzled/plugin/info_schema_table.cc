@@ -28,6 +28,8 @@
 
 using namespace std;
 
+const std::string INFORMATION_SCHEMA_NAME("information_schema");
+
 namespace drizzled
 {
 

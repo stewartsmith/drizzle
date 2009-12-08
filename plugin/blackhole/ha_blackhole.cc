@@ -29,8 +29,6 @@
 using namespace std;
 using namespace google;
 
-static const string engine_name("BLACKHOLE");
-
 #define BLACKHOLE_EXT ".blk"
 
 static const char *ha_blackhole_exts[] = {
@@ -109,6 +107,16 @@ public:
   uint32_t max_supported_keys()          const { return BLACKHOLE_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return BLACKHOLE_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return BLACKHOLE_MAX_KEY_LENGTH; }
+
+  uint32_t index_flags(enum  ha_key_alg) const
+  {
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_RANGE |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
+  }
+
 };
 
 /* Static declarations for shared structures */
@@ -127,13 +135,6 @@ ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
   :Cursor(engine_arg, table_arg)
 { }
-
-uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
-{
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
-          0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
-          HA_READ_ORDER | HA_KEYREAD_ONLY);
-}
 
 int ha_blackhole::open(const char *name, int, uint32_t)
 {
@@ -378,7 +379,7 @@ static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 static int blackhole_init(drizzled::plugin::Registry &registry)
 {
 
-  blackhole_engine= new BlackholeEngine(engine_name);
+  blackhole_engine= new BlackholeEngine("BLACKHOLE");
   registry.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
@@ -400,7 +401,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "BLACKHOLE",
   "1.0",
@@ -413,4 +414,4 @@ drizzle_declare_plugin
   NULL,               /* system variables */
   NULL                /* config options   */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

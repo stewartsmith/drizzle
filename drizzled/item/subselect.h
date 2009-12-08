@@ -23,9 +23,10 @@
 /* subselect Item */
 
 
-#include <drizzled/comp_creator.h>
-#include <drizzled/item/ref.h>
-#include <drizzled/item/field.h>
+#include "drizzled/comp_creator.h"
+#include "drizzled/item/ref.h"
+#include "drizzled/item/field.h"
+#include "drizzled/item/bin_string.h"
 
 class Select_Lex;
 class Select_Lex_Unit;

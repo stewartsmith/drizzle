@@ -55,8 +55,6 @@ TODO:
 
 using namespace std;
 
-static const string engine_name("CSV");
-
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
 */
@@ -221,7 +219,7 @@ static Tina *tina_engine= NULL;
 static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
-  tina_engine= new Tina(engine_name);
+  tina_engine= new Tina("CSV");
   registry.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
@@ -865,12 +863,12 @@ void ha_tina::update_status()
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int, uint32_t open_options)
+int ha_tina::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name, table)))
     return(ENOENT);
 
-  if (share->crashed && !(open_options & HA_OPEN_FOR_REPAIR))
+  if (share->crashed)
   {
     free_share(share);
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -1408,7 +1406,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
 }
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "CSV",
   "1.0",
@@ -1421,5 +1419,5 @@ drizzle_declare_plugin
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;
 

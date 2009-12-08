@@ -22,13 +22,14 @@
 #define DRIZZLED_KEY_H
 
 
-#include <drizzled/sql_alloc.h>
-#include <drizzled/key_part_spec.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/handler_structs.h>
+#include "drizzled/sql_alloc.h"
+#include "drizzled/key_part_spec.h"
+#include "drizzled/sql_list.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/handler_structs.h"
 
 class Item;
+class MyBitmap;
 typedef struct st_mem_root MEM_ROOT;
 
 class Key :public Sql_alloc {
@@ -52,26 +53,13 @@ public:
     :type(type_par), key_create_info(*key_info_arg), columns(cols),
     generated(generated_arg)
   {
-    name.str= (char *)name_arg;
+    name.str= const_cast<char *>(name_arg);
     name.length= name_len_arg;
   }
 
-  /**
-   * Construct an (almost) deep copy of this key. Only those
-   * elements that are known to never change are not copied.
-   * If out of memory, a partial copy is returned and an error is set
-   * in Session.
-   */
-  Key(const Key &rhs, MEM_ROOT *mem_root);
   virtual ~Key() {}
   /* Equality comparison of keys (ignoring name) */
   friend bool foreign_key_prefix(Key *a, Key *b);
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  virtual Key *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Key(*this, mem_root); }
 };
 
 

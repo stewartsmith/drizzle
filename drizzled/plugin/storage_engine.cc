@@ -40,16 +40,14 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/name_map.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
-#include "drizzled/name_map.h"
 #include "drizzled/xid.h"
 
 #include <drizzled/table_proto.h>
 
-#include <drizzled/hash.h>
+#include "drizzled/hash.h"
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -61,9 +59,11 @@ namespace drizzled
 typedef hash_map<std::string, plugin::StorageEngine *> EngineMap;
 typedef std::vector<plugin::StorageEngine *> EngineVector;
 
-static EngineMap engine_map;
 static EngineVector vector_of_engines;
 static EngineVector vector_of_transactional_engines;
+
+const std::string plugin::UNKNOWN_STRING("UNKNOWN");
+const std::string plugin::DEFAULT_DEFINITION_FILE_EXT(".dfe");
 
 static std::set<std::string> set_of_table_definition_ext;
 
@@ -199,22 +199,6 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 
 bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 {
-  vector<string> aliases= engine->getAliases();
-
-  string name= engine->getName();
-  transform(name.begin(), name.end(),
-            name.begin(), ::tolower);
-  engine_map.insert(make_pair(name, engine));
-
-  for (vector<string>::iterator iter= aliases.begin();
-       iter != aliases.end(); iter++)
-  {
-    string alias= *iter;
-    transform(alias.begin(), alias.end(),
-              alias.begin(), ::tolower);
-    engine_map.insert(make_pair(alias, engine));
-  }
-
 
   vector_of_engines.push_back(engine);
 
@@ -234,7 +218,6 @@ void plugin::StorageEngine::removePlugin(plugin::StorageEngine *)
 {
   if (shutdown_has_begun == false)
   {
-    engine_map.clear();
     vector_of_engines.clear();
     vector_of_transactional_engines.clear();
 
@@ -242,15 +225,36 @@ void plugin::StorageEngine::removePlugin(plugin::StorageEngine *)
   }
 }
 
+class FindEngineByName
+  : public unary_function<plugin::StorageEngine *, bool>
+{
+  const string target;
+public:
+  explicit FindEngineByName(const string target_arg)
+    : target(target_arg)
+  {}
+  result_type operator() (argument_type engine)
+  {
+    string engine_name(engine->getName());
+
+    transform(engine_name.begin(), engine_name.end(),
+              engine_name.begin(), ::tolower);
+    return engine_name == target;
+  }
+};
+
 plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
 {
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
 
-  EngineMap::iterator iter= engine_map.find(find_str);
-  if (iter != engine_map.end())
+  
+  EngineVector::iterator iter= find_if(vector_of_engines.begin(),
+                                       vector_of_engines.end(),
+                                       FindEngineByName(find_str));
+  if (iter != vector_of_engines.end())
   {
-    StorageEngine *engine= (*iter).second;
+    StorageEngine *engine= *iter;
     if (engine->is_user_selectable())
       return engine;
   }
@@ -268,10 +272,12 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
   if (find_str.compare("default") == 0)
     return session.getDefaultStorageEngine();
 
-  EngineMap::iterator iter= engine_map.find(find_str);
-  if (iter != engine_map.end())
+  EngineVector::iterator iter= find_if(vector_of_engines.begin(),
+                                       vector_of_engines.end(),
+                                       FindEngineByName(find_str));
+  if (iter != vector_of_engines.end())
   {
-    StorageEngine *engine= (*iter).second;
+    StorageEngine *engine= *iter;
     if (engine->is_user_selectable())
       return engine;
   }
@@ -714,9 +720,13 @@ int plugin::StorageEngine::dropTable(Session& session,
     if (error == 0)
     {
       if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-        delete_table_proto_file(identifier.getPath());
+      {
+        deleteDefinitionFromPath(identifier);
+      }
       else
-        error= delete_table_proto_file(identifier.getPath());
+      {
+        error= deleteDefinitionFromPath(identifier);
+      }
     }
   }
 
@@ -790,13 +800,13 @@ int plugin::StorageEngine::createTable(Session& session,
   /* Check for legal operations against the Engine using the proto (if used) */
   if (proto_used)
   {
-    if (table_proto.type() == message::Table::TEMPORARY && 
+    if (table_proto.type() == message::Table::TEMPORARY &&
         share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
     {
       error= HA_ERR_UNSUPPORTED;
       goto err2;
     }
-    else if (table_proto.type() != message::Table::TEMPORARY && 
+    else if (table_proto.type() != message::Table::TEMPORARY &&
              share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
     {
       error= HA_ERR_UNSUPPORTED;
@@ -819,7 +829,7 @@ int plugin::StorageEngine::createTable(Session& session,
 
     share.storage_engine->setTransactionReadWrite(session);
 
-    error= share.storage_engine->doCreateTable(&session, 
+    error= share.storage_engine->doCreateTable(&session,
                                                table_name_arg,
                                                table,
                                                table_proto);
@@ -1287,6 +1297,52 @@ void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg,
   }
 }
 
+
+int plugin::StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
+{
+  string path(identifier.getPath());
+
+  path.append(DEFAULT_DEFINITION_FILE_EXT);
+
+  return my_delete(path.c_str(), MYF(0));
+}
+
+int plugin::StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
+{
+  string src_path(src.getPath());
+  string dest_path(dest.getPath());
+
+  src_path.append(DEFAULT_DEFINITION_FILE_EXT);
+  dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
+
+  return my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
+}
+
+int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_proto)
+{
+  string file_name(identifier.getPath());
+
+  file_name.append(DEFAULT_DEFINITION_FILE_EXT);
+
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+
+  if (fd == -1)
+    return errno;
+
+  google::protobuf::io::ZeroCopyOutputStream* output=
+    new google::protobuf::io::FileOutputStream(fd);
+
+  if (table_proto.SerializeToZeroCopyStream(output) == false)
+  {
+    delete output;
+    close(fd);
+    return errno;
+  }
+
+  delete output;
+  close(fd);
+  return 0;
+}
 
 
 } /* namespace drizzled */

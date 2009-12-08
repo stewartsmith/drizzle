@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ITEM_IDENT_H
 #define DRIZZLED_ITEM_IDENT_H
 
+#include "drizzled/item.h"
+
 extern uint32_t lower_case_table_names;
 
 class Item_ident :public Item

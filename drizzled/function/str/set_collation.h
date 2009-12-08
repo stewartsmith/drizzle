@@ -32,11 +32,6 @@ public:
   const char *func_name() const { return "collate"; }
   enum Functype functype() const { return COLLATE_FUNC; }
   virtual void print(String *str, enum_query_type query_type);
-  Item_field *filed_for_view_update()
-  {
-    /* this function is transparent for view updating */
-    return args[0]->filed_for_view_update();
-  }
 };
 
 #endif /* DRIZZLED_FUNCTION_STR_SET_COLLATION_H */

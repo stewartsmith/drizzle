@@ -21,6 +21,7 @@
 #define DRIZZLED_SQL_SORT_H
 
 typedef struct st_sort_field SORT_FIELD;
+class Field;
 
 /* Defines used by filesort and uniques */
 

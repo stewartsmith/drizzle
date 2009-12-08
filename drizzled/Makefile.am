@@ -124,7 +124,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/row_count.h \
 		function/set_user_var.h \
 		function/sign.h \
-		function/signed.h \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
@@ -184,7 +183,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/weekday.h \
 		function/time/year.h  \
 		function/units.h \
-		function/unsigned.h \
 		function/user_var_as_out_param.h \
 		function_hash.h \
 		ha_statistics.h \
@@ -251,17 +249,17 @@ nobase_dist_drizzledinclude_HEADERS = \
 		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
-		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
-		opt_range.h \
 		optimizer/key_field.h \
 		optimizer/key_use.h \
 		optimizer/position.h \
+		optimizer/range.h \
 		optimizer/sargable_param.h \
+		optimizer/sum.h \
 		order.h \
 		plugin.h \
 		plugin/authentication.h \
@@ -286,6 +284,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
+		records.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -370,13 +369,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_ident.h \
 		table_identifier.h \
 		table_list.h \
-		table_map_iterator.h \
 		table_proto.h \
 		table_reference.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
 		temporal_interval.h \
+		time_functions.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -414,9 +413,7 @@ noinst_HEADERS = \
 		hash.h \
 		gettext.h \
 		global.h \
-		server_includes.h \
-		util/convert.h \
-		util/test.h
+		server_includes.h
 
 drizzled_SOURCES = \
 		alter_info.cc \
@@ -498,7 +495,6 @@ drizzled_SOURCES = \
 		function/row_count.cc \
 		function/set_user_var.cc \
 		function/sign.cc \
-		function/signed.cc \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \
@@ -558,7 +554,6 @@ drizzled_SOURCES = \
 		function/time/weekday.cc \
 		function/time/year.cc \
 		function/units.cc \
-		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
 		ha_commands.cc \
 		ha_trx_info.cc \
@@ -610,14 +605,15 @@ drizzled_SOURCES = \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
-		opt_range.cc \
-		opt_sum.cc \
 		optimizer/key_field.cc \
+		optimizer/range.cc \
+		optimizer/sum.cc \
 		plugin/authentication.cc \
 		plugin/client.cc \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \
+		plugin/library.cc \
 		plugin/listen.cc \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
@@ -697,16 +693,14 @@ drizzled_SOURCES = \
 		table.cc \
 		table_identifier.cc \
 		table_list.cc \
-		table_map_iterator.cc \
 		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		temporal_interval.cc \
-		time.cc \
+		time_functions.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \
-		util/convert.cc \
 		xid.cc
 
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
@@ -722,9 +716,7 @@ PCHHEADERS = \
 		definitions.h.gch \
 		plugin/storage_engine.h.gch  \
 		sql_base.h.gch \
-		sql_parse.h.gch \
-		util/convert.h.gch \
-		util/test.h.gch
+		sql_parse.h.gch
 else
 PCHHEADERS = 
 endif

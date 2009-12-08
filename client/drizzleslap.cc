@@ -129,11 +129,10 @@ const char *delimiter= "\n";
 const char *create_schema_string= "drizzleslap";
 
 static bool opt_preserve= true;
-static bool debug_info_flag= false, debug_check_flag= false;
 static bool opt_only_print= false;
 static bool opt_burnin= false;
 static bool opt_ignore_sql_errors= false;
-static bool opt_compress= false, tty_password= false,
+static bool tty_password= false,
   opt_silent= false,
   auto_generate_sql_autoincrement= false,
   auto_generate_sql_guid_primary= false,
@@ -162,7 +161,6 @@ static unsigned int num_blob_cols_size_min;
 static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
-static uint32_t my_end_arg= 0;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -327,7 +325,7 @@ int main(int argc, char **argv)
   if (get_options(&argc,&argv))
   {
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(1);
   }
 
@@ -346,7 +344,7 @@ int main(int argc, char **argv)
   {
     fprintf(stderr,"%s: Too many arguments\n",my_progname);
     free_defaults(defaults_argv);
-    my_end(0);
+    my_end();
     exit(1);
   }
 
@@ -422,7 +420,7 @@ burnin:
     free(shared_memory_base_name);
 #endif
   free_defaults(defaults_argv);
-  my_end(my_end_arg);
+  my_end();
 
   return 0;
 }
@@ -588,9 +586,6 @@ static struct my_option my_long_options[] =
   {"commit", OPT_SLAP_COMMIT, "Commit records every X number of statements.",
    (char**) &commit_rate, (char**) &commit_rate, 0, GET_UINT, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"compress", 'C', "Use compression in server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"concurrency", 'c', "Number of clients to simulate for query to run.",
    (char**) &concurrency_str, (char**) &concurrency_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -604,11 +599,6 @@ static struct my_option my_long_options[] =
    "Generate CSV output to named file or to stdout if no file is named.",
    (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", 'T', "Print some debug info at exit.", (char**) &debug_info_flag,
-    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-start", OPT_SLAP_DELAYED_START,
    "Delay the startup of threads by a random number of microsends (the maximum of the delay)",
    (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT,
@@ -1287,10 +1277,6 @@ get_options(int *argc,char ***argv)
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
 
   if (!user)
     user= (char *)"root";

@@ -399,10 +399,6 @@ int fill_table_proto(message::Table *table_proto,
       idx->set_type(message::Table::Index::BTREE);
       break;
 
-    case HA_KEY_ALG_RTREE:
-      idx->set_type(message::Table::Index::RTREE);
-    case HA_KEY_ALG_FULLTEXT:
-      idx->set_type(message::Table::Index::FULLTEXT);
     case HA_KEY_ALG_UNDEF:
       idx->set_type(message::Table::Index::UNKNOWN_INDEX);
       break;
@@ -583,7 +579,7 @@ int rea_create_table(Session *session,
 
 err_handler:
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    delete_table_proto_file(identifier.getPath());
+    plugin::StorageEngine::deleteDefinitionFromPath(identifier);
 
   return 1;
 } /* rea_create_table */

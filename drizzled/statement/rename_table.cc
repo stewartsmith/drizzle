@@ -151,12 +151,8 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   plugin::StorageEngine *engine= NULL;
   message::Table table_proto;
-  char path[FN_REFLEN];
-  size_t length;
 
   TableIdentifier old_identifier(ren_table->db, old_alias, NO_TMP_TABLE);
-  length= build_table_filename(path, sizeof(path),
-                               ren_table->db, old_alias, false);
 
   if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, &table_proto) != EEXIST)
   {
@@ -165,9 +161,6 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
-
-  length= build_table_filename(path, sizeof(path),
-                               new_db, new_alias, false);
 
   TableIdentifier new_identifier(new_db, new_alias, NO_TMP_TABLE);
   if (plugin::StorageEngine::getTableDefinition(*session, new_identifier) != ENOENT)
@@ -197,6 +190,6 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
       return ren_table;
   }
   return 0;
-} 
+}
 
 } /* namespace drizzled */

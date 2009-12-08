@@ -33,7 +33,7 @@ class Item_empty_string :public Item_string
 public:
   Item_empty_string(const char *header,uint32_t length, const CHARSET_INFO * cs= NULL) :
     Item_string("",0, cs ? cs : &my_charset_utf8_general_ci)
-    { name=(char*) header; max_length= cs ? length * cs->mbmaxlen : length; }
+    { name= const_cast<char*>(header); max_length= cs ? length * cs->mbmaxlen : length; }
   void make_field(SendField *field);
 };
   

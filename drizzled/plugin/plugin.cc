@@ -26,7 +26,6 @@ namespace drizzled
 
 plugin::Plugin::Plugin(std::string in_name, std::string in_type_name)
   : name(in_name),
-    aliases(),
     is_active(true),
     module(NULL),
     type_name(in_type_name)

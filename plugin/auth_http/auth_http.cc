@@ -165,14 +165,14 @@ static DRIZZLE_SYSVAR_STR(
   NULL, /* update func*/
   "http://localhost/" /* default */);
 
-static struct st_mysql_sys_var* auth_http_system_variables[]= {
+static drizzle_sys_var* auth_http_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(url),
   NULL
 };
 
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "auth_http",
   "0.1",
@@ -185,4 +185,4 @@ drizzle_declare_plugin
   auth_http_system_variables,
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

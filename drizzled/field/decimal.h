@@ -25,8 +25,6 @@
 
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_decimal :public Field_num {
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 public:
 
   using Field::store;

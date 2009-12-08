@@ -1672,7 +1672,7 @@ bool mysql_create_table_no_lock(Session *session,
   session->set_proc_info("creating table");
   create_info->table_existed= 0;		// Mark that table is created
 
-  create_info->table_options=db_options;
+  create_info->table_options= db_options;
 
   if (rea_create_table(session, identifier,
 		       table_proto,
@@ -1956,10 +1956,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
-                              bool no_warnings_for_error,
-                              uint32_t extra_open_options,
-                              int (*prepare_func)(Session *, TableList *,
-                                                  HA_CHECK_OPT *),
                               int (Cursor::*operator_func)(Session *,
                                                             HA_CHECK_OPT *))
 {
@@ -1993,7 +1989,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     bool fatal_error=0;
 
     sprintf(table_name,"%s.%s",db,table->table_name);
-    session->open_options|= extra_open_options;
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -2012,28 +2007,12 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       lex->query_tables= table;
       lex->query_tables_last= &table->next_global;
       lex->query_tables_own_last= 0;
-      session->no_warnings_for_error= no_warnings_for_error;
+      session->no_warnings_for_error= 0;
 
       session->openTablesLock(table);
       session->no_warnings_for_error= 0;
       table->next_global= save_next_global;
       table->next_local= save_next_local;
-      session->open_options&= ~extra_open_options;
-    }
-
-    if (prepare_func)
-    {
-      switch ((*prepare_func)(session, table, check_opt)) {
-      case  1:           // error, message written to net
-        ha_autocommit_or_rollback(session, 1);
-        session->endTransaction(ROLLBACK);
-        session->close_thread_tables();
-        continue;
-      case -1:           // error, message could be written to net
-        goto err;
-      default:           // should be 0 otherwise
-        ;
-      }
     }
 
     /*
@@ -2481,7 +2460,7 @@ bool mysql_analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* chec
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
   return(mysql_admin_table(session, tables, check_opt,
-				"analyze", lock_type, 1, 0, 0, 0,
+				"analyze", lock_type, true,
 				&Cursor::ha_analyze));
 }
 
@@ -2492,7 +2471,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 
   return(mysql_admin_table(session, tables, check_opt,
 				"check", lock_type,
-				0, 0, HA_OPEN_FOR_REPAIR, 0,
+				false,
 				&Cursor::ha_check));
 }
 

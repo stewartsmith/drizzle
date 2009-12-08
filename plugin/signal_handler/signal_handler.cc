@@ -17,6 +17,8 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/cursor.h> /* for refresh_version */
 
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
@@ -244,11 +246,11 @@ static int deinit(drizzled::plugin::Registry&)
   return 0;
 }
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "signal_handler",
   "0.1",
@@ -261,4 +263,4 @@ drizzle_declare_plugin
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

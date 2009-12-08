@@ -41,6 +41,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/time_functions.h"
 
 /*****************************************************************************
   Instansiate templates and static variables
@@ -405,11 +406,6 @@ uint32_t Field::row_pack_length()
   return 0;
 }
 
-int Field::save_field_metadata(unsigned char *first_byte)
-{
-  return do_save_field_metadata(first_byte);
-}
-
 uint32_t Field::data_length()
 {
   return pack_length();
@@ -733,22 +729,6 @@ const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
   return(result);
 }
 
-uint32_t Field::packed_col_length(const unsigned char *, uint32_t length)
-{
-  return length;
-}
-
-int Field::pack_cmp(const unsigned char *a, const unsigned char *b,
-                    uint32_t, bool)
-{
-  return cmp(a,b);
-}
-
-int Field::pack_cmp(const unsigned char *b, uint32_t, bool)
-{
-  return cmp(ptr,b);
-}
-
 my_decimal *Field::val_decimal(my_decimal *)
 {
   /* This never have to be called */
@@ -846,9 +826,9 @@ int Field::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
   return store(buff, length, &my_charset_bin);
 }
 
-bool Field::optimize_range(uint32_t idx, uint32_t part)
+bool Field::optimize_range(uint32_t idx, uint32_t)
 {
-  return test(table->cursor->index_flags(idx, part, 1) & HA_READ_RANGE);
+  return test(table->index_flags(idx) & HA_READ_RANGE);
 }
 
 Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)

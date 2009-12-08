@@ -52,7 +52,7 @@ static int compressionudf_plugin_deinit(plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin
+DRIZZLE_DECLARE_PLUGIN
 {
   "compression",
   "1.1",
@@ -65,4 +65,4 @@ drizzle_declare_plugin
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

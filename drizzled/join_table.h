@@ -28,10 +28,10 @@
 #ifndef DRIZZLED_JOIN_TABLE_H
 #define DRIZZLED_JOIN_TABLE_H
 
-#include <drizzled/enum_nested_loop_state.h>
-#include <drizzled/table_reference.h>
-#include <drizzled/opt_range.h>
-#include <drizzled/join_cache.h>
+#include "drizzled/enum_nested_loop_state.h"
+#include "drizzled/table_reference.h"
+#include "drizzled/optimizer/range.h"
+#include "drizzled/join_cache.h"
 #include "drizzled/optimizer/key_use.h"
 
 #include <bitset>
@@ -43,7 +43,6 @@
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
 
 class Table;
-class SQL_SELECT;
 
 
 /** Description of an access method */
@@ -117,9 +116,9 @@ public:
   {}
   Table *table;
   drizzled::optimizer::KeyUse *keyuse; /**< pointer to first used key */
-  SQL_SELECT *select;
+  drizzled::optimizer::SQL_SELECT *select;
   COND *select_cond;
-  QUICK_SELECT_I *quick;
+  drizzled::optimizer::QUICK_SELECT_I *quick;
   /**
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
@@ -235,7 +234,7 @@ public:
   {
     return (select && select->quick &&
             (select->quick->get_type() ==
-             QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
+             drizzled::optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
   }
 
   void readCachedRecord();

@@ -21,7 +21,10 @@
 #ifndef DRIZZLED_FIELD_NUM_H
 #define DRIZZLED_FIELD_NUM_H
 
-class Field_num :public Field {
+#include "drizzled/field.h"
+
+class Field_num :public Field 
+{
 public:
   const uint8_t dec;
   bool decimal_precision;       // Purify cannot handle bit fields & only for decimal type

@@ -814,7 +814,9 @@ void Session::drop_open_table(Table *table, const char *db_name,
                               const char *table_name)
 {
   if (table->s->tmp_table)
+  {
     close_temporary_table(table);
+  }
   else
   {
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
@@ -4254,7 +4256,6 @@ err_no_arena:
 
   SYNOPSIS
   fill_record()
-  session           thread Cursor
   fields        Item_fields list to be filled
   values        values to fill with
   ignore_errors true if we should ignore errors
@@ -4270,15 +4271,12 @@ err_no_arena:
 */
 
 bool
-fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors)
+fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignore_errors)
 {
   List_iterator_fast<Item> f(fields),v(values);
-  Item *value, *fld;
+  Item *value;
   Item_field *field;
-  Table *table= 0;
-  List<Table> tbl_list;
-  bool abort_on_warning_saved= session->abort_on_warning;
-  tbl_list.empty();
+  Table *table;
 
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
@@ -4290,26 +4288,19 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
       On INSERT or UPDATE fields are checked to be from the same table,
       thus we safely can take table from the first field.
     */
-    fld= (Item_field*)f++;
-    if (!(field= fld->filed_for_view_update()))
-    {
-      my_error(ER_NONUPDATEABLE_COLUMN, MYF(0), fld->name);
-      goto err;
-    }
+    field= static_cast<Item_field *>(f++);
     table= field->field->table;
     table->auto_increment_field_not_null= false;
     f.rewind();
   }
-  while ((fld= f++))
+
+  while ((field= static_cast<Item_field *>(f++)))
   {
-    if (!(field= fld->filed_for_view_update()))
-    {
-      my_error(ER_NONUPDATEABLE_COLUMN, MYF(0), fld->name);
-      goto err;
-    }
-    value=v++;
+    value= v++;
+
     Field *rfield= field->field;
     table= rfield->table;
+
     if (rfield == table->next_number_field)
       table->auto_increment_field_not_null= true;
     if ((value->save_in_field(rfield, 0) < 0) && !ignore_errors)
@@ -4317,30 +4308,14 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
       my_message(ER_UNKNOWN_ERROR, ER(ER_UNKNOWN_ERROR), MYF(0));
       goto err;
     }
-    tbl_list.push_back(table);
   }
-  /* Update virtual fields*/
-  session->abort_on_warning= false;
-  if (tbl_list.head())
-  {
-    List_iterator_fast<Table> t(tbl_list);
-    Table *prev_table= 0;
-    while ((table= t++))
-    {
-      /*
-        Do simple optimization to prevent unnecessary re-generating
-        values for virtual fields
-      */
-      if (table != prev_table)
-        prev_table= table;
-    }
-  }
-  session->abort_on_warning= abort_on_warning_saved;
-  return(session->is_error());
+
+  return session->is_error();
+
 err:
-  session->abort_on_warning= abort_on_warning_saved;
   if (table)
     table->auto_increment_field_not_null= false;
+
   return true;
 }
 
@@ -4350,7 +4325,6 @@ err:
 
   SYNOPSIS
   fill_record()
-  session           thread Cursor
   ptr           pointer on pointer to record
   values        list of fields
   ignore_errors true if we should ignore errors
@@ -4365,18 +4339,13 @@ err:
   true    error occured
 */
 
-bool
-fill_record(Session *session, Field **ptr, List<Item> &values,
-            bool )
+bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
 {
   List_iterator_fast<Item> v(values);
   Item *value;
   Table *table= 0;
   Field *field;
-  List<Table> tbl_list;
-  bool abort_on_warning_saved= session->abort_on_warning;
 
-  tbl_list.empty();
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
     only one row.
@@ -4398,33 +4367,14 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
       table->auto_increment_field_not_null= true;
     if (value->save_in_field(field, 0) < 0)
       goto err;
-    tbl_list.push_back(table);
   }
-  /* Update virtual fields*/
-  session->abort_on_warning= false;
-  if (tbl_list.head())
-  {
-    List_iterator_fast<Table> t(tbl_list);
-    Table *prev_table= 0;
-    while ((table= t++))
-    {
-      /*
-        Do simple optimization to prevent unnecessary re-generating
-        values for virtual fields
-      */
-      if (table != prev_table)
-      {
-        prev_table= table;
-      }
-    }
-  }
-  session->abort_on_warning= abort_on_warning_saved;
+
   return(session->is_error());
 
 err:
-  session->abort_on_warning= abort_on_warning_saved;
   if (table)
     table->auto_increment_field_not_null= false;
+
   return true;
 }
 
