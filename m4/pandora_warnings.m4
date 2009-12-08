@@ -50,6 +50,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
 
     AS_IF([test "$ac_profiling" = "yes"],[
       CC_PROFILING="-pg"
+      GCOV_LIBS="-pg -lgcov"
       save_LIBS="${LIBS}"
       LIBS=""
       AC_CHECK_LIB(c_p, read)
@@ -61,7 +62,12 @@ AC_DEFUN([PANDORA_WARNINGS],[
     ])
 
     AS_IF([test "$ac_coverage" = "yes"],
-          [CC_COVERAGE="-fprofile-arcs -ftest-coverage"])
+          [
+            CC_COVERAGE="--coverage"
+            GCOV_LIBS="-lgcov"
+          ])
+
+
 	 
     AS_IF([test "$ac_cv_warnings_as_errors" = "yes"],
           [W_FAIL="-Werror"])
@@ -339,5 +345,6 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
   AC_SUBST(PROTOSKIP_WARNINGS)
   AC_SUBST(INNOBASE_SKIP_WARNINGS)
   AC_SUBST(NO_WERROR)
+  AC_SUBST([GCOV_LIBS])
 
 ])

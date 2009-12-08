@@ -141,7 +141,7 @@ EXTRA_DIST = %(rel_path)s/plugin.ini
       plugin_file.write("EXTRA_DIST += %(rel_path)s/%(testsuitedir)s\n" % plugin)
   plugin_file.write("""
 pkgplugin_LTLIBRARIES=lib%(name)s_plugin.la
-lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s
+lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
 lib%(name)s_plugin_la_LIBADD=%(libs)s
 lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
 lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
@@ -361,7 +361,7 @@ if %(build_conditional_tag)s
   noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
   plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-  plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s
+  plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)  
   plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
@@ -376,7 +376,7 @@ plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
   pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s
+  plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
   plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
   plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
   plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
