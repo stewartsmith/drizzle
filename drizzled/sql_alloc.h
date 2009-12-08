@@ -59,14 +59,8 @@ public:
   { /* never called */ }
   static void operator delete[](void *, size_t)
   {  }
-#ifdef HAVE_purify
-  bool dummy;
-  inline Sql_alloc() :dummy(0) {}
-  inline ~Sql_alloc() {}
-#else
-  inline Sql_alloc() {}
-  inline ~Sql_alloc() {}
-#endif
+  Sql_alloc() {}
+  virtual ~Sql_alloc() {}
 
 };
 
