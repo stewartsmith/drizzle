@@ -56,7 +56,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class PARAM;
+class Parameter;
 class SEL_ARG;
 
 /**
@@ -566,7 +566,7 @@ QuickRangeSelect *get_quick_select_for_ref(Session *session,
     NULL on error
     otherwise created quick select
 */
-QuickRangeSelect *get_quick_select(PARAM *param,
+QuickRangeSelect *get_quick_select(Parameter *param,
                                    uint32_t index,
                                    SEL_ARG *key_tree, 
                                    uint32_t mrr_flags,
@@ -582,7 +582,7 @@ SqlSelect *make_select(Table *head,
                         bool allow_null_cond,
                         int *error);
 
-bool get_quick_keys(PARAM *param, 
+bool get_quick_keys(Parameter *param, 
                     QuickRangeSelect *quick,
                     KEY_PART *key,
                     SEL_ARG *key_tree, 

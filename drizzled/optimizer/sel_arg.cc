@@ -329,7 +329,7 @@ optimizer::SEL_ARG::SEL_ARG(Field *field_,
   left= right= &optimizer::null_element;
 }
 
-optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RANGE_OPT_PARAM *param, 
+optimizer::SEL_ARG *optimizer::SEL_ARG::clone(RangeParameter *param, 
                                               optimizer::SEL_ARG *new_parent,
                                               optimizer::SEL_ARG **next_arg)
 {
@@ -398,7 +398,7 @@ optimizer::SEL_ARG *optimizer::SEL_ARG::last()
 }
 
 
-optimizer::SEL_ARG *optimizer::SEL_ARG::clone_tree(RANGE_OPT_PARAM *param)
+optimizer::SEL_ARG *optimizer::SEL_ARG::clone_tree(RangeParameter *param)
 {
   optimizer::SEL_ARG tmp_link;
   optimizer::SEL_ARG*next_arg= NULL;

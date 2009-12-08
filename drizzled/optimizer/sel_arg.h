@@ -26,7 +26,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class RANGE_OPT_PARAM;
+class RangeParameter;
 
 /*
   A construction block of the SEL_ARG-graph.
@@ -311,7 +311,7 @@ public:
 
   SEL_ARG *clone_last(SEL_ARG *arg);
 
-  SEL_ARG *clone(RANGE_OPT_PARAM *param, SEL_ARG *new_parent, SEL_ARG **next);
+  SEL_ARG *clone(RangeParameter *param, SEL_ARG *new_parent, SEL_ARG **next);
 
   bool copy_min(SEL_ARG *arg);
 
@@ -422,7 +422,7 @@ public:
     return ! field->key_cmp(min_val, max_val);
   }
 
-  SEL_ARG *clone_tree(RANGE_OPT_PARAM *param);
+  SEL_ARG *clone_tree(RangeParameter *param);
 
 private:
 

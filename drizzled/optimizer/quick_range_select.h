@@ -233,7 +233,7 @@ private:
                                              struct table_reference_st *ref,
                                              ha_rows records);
 
-  friend bool get_quick_keys(PARAM *param, 
+  friend bool get_quick_keys(Parameter *param, 
                              QuickRangeSelect *quick,
                              KEY_PART *key, 
                              SEL_ARG *key_tree,
@@ -242,7 +242,8 @@ private:
                              unsigned char *max_key, 
                              uint32_t max_key_flag);
 
-  friend QuickRangeSelect *get_quick_select(PARAM*,uint32_t idx,
+  friend QuickRangeSelect *get_quick_select(Parameter *,
+                                            uint32_t idx,
                                             SEL_ARG *key_tree,
                                             uint32_t mrr_flags,
                                             uint32_t mrr_buf_size,

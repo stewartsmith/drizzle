@@ -283,25 +283,25 @@ class TRP_GROUP_MIN_MAX;
 
 struct st_ror_scan_info;
 
-static SEL_TREE * get_mm_parts(optimizer::RANGE_OPT_PARAM *param,
+static SEL_TREE * get_mm_parts(optimizer::RangeParameter *param,
                                COND *cond_func,
                                Field *field,
 			                         Item_func::Functype type,
                                Item *value,
 			                         Item_result cmp_type);
 
-static optimizer::SEL_ARG *get_mm_leaf(optimizer::RANGE_OPT_PARAM *param,
+static optimizer::SEL_ARG *get_mm_leaf(optimizer::RangeParameter *param,
                                        COND *cond_func,
                                        Field *field,
                                        KEY_PART *key_part,
 			                                 Item_func::Functype type,
                                        Item *value);
 
-static SEL_TREE *get_mm_tree(optimizer::RANGE_OPT_PARAM *param, COND *cond);
+static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond);
 
-static bool is_key_scan_ror(optimizer::PARAM *param, uint32_t keynr, uint8_t nparts);
+static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts);
 
-static ha_rows check_quick_select(optimizer::PARAM *param, 
+static ha_rows check_quick_select(optimizer::Parameter *param, 
                                   uint32_t idx, 
                                   bool index_only,
                                   optimizer::SEL_ARG *tree, 
@@ -310,32 +310,32 @@ static ha_rows check_quick_select(optimizer::PARAM *param,
                                   uint32_t *bufsize,
                                   COST_VECT *cost);
 
-static TRP_RANGE *get_key_scans_params(optimizer::PARAM *param, 
+static TRP_RANGE *get_key_scans_params(optimizer::Parameter *param, 
                                        SEL_TREE *tree,
                                        bool index_read_must_be_used,
                                        bool update_tbl_stats,
                                        double read_time);
 
 static
-TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::PARAM *param, 
+TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param, 
                                           SEL_TREE *tree,
                                           double read_time,
                                           bool *are_all_covering);
 
 static
-TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::PARAM *param,
+TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
                                                    SEL_TREE *tree,
                                                    double read_time);
 
 static
-TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::PARAM *param, 
+TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param, 
                                          SEL_IMERGE *imerge,
                                          double read_time);
 
 static
-TRP_GROUP_MIN_MAX *get_best_group_min_max(optimizer::PARAM *param, SEL_TREE *tree);
+TRP_GROUP_MIN_MAX *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
 
-static void print_sel_tree(optimizer::PARAM *param, 
+static void print_sel_tree(optimizer::Parameter *param, 
                            SEL_TREE *tree, 
                            key_map *tree_map,
                            const char *msg);
@@ -345,15 +345,15 @@ static void print_ror_scans_arr(Table *table,
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end);
 
-static SEL_TREE *tree_and(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree1, SEL_TREE *tree2);
+static SEL_TREE *tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
 
-static SEL_TREE *tree_or(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree1, SEL_TREE *tree2);
+static SEL_TREE *tree_or(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
 
 static optimizer::SEL_ARG *sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
 
-static optimizer::SEL_ARG *key_or(optimizer::RANGE_OPT_PARAM *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
+static optimizer::SEL_ARG *key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
 
-static optimizer::SEL_ARG *key_and(optimizer::RANGE_OPT_PARAM *param, 
+static optimizer::SEL_ARG *key_and(optimizer::RangeParameter *param, 
                                    optimizer::SEL_ARG *key1, 
                                    optimizer::SEL_ARG *key2,
                                    uint32_t clone_flag);
@@ -368,7 +368,7 @@ static bool null_part_in_key(KEY_PART *key_part,
                              const unsigned char *key,
                              uint32_t length);
 
-bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2, optimizer::RANGE_OPT_PARAM *param);
+bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2, optimizer::RangeParameter *param);
 
 
 /*
@@ -400,9 +400,9 @@ public:
     trees_next(trees),
     trees_end(trees + PREALLOCED_TREES)
   {}
-  int or_sel_tree(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree);
-  int or_sel_tree_with_checks(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *new_tree);
-  int or_sel_imerge_with_checks(optimizer::RANGE_OPT_PARAM *param, SEL_IMERGE* imerge);
+  int or_sel_tree(optimizer::RangeParameter *param, SEL_TREE *tree);
+  int or_sel_tree_with_checks(optimizer::RangeParameter *param, SEL_TREE *new_tree);
+  int or_sel_imerge_with_checks(optimizer::RangeParameter *param, SEL_IMERGE* imerge);
 };
 
 
@@ -417,7 +417,7 @@ public:
      0 - OK
     -1 - Out of memory.
 */
-int SEL_IMERGE::or_sel_tree(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree)
+int SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, SEL_TREE *tree)
 {
   if (trees_next == trees_end)
   {
@@ -445,7 +445,7 @@ int SEL_IMERGE::or_sel_tree(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree)
 
   SYNOPSIS
     or_sel_tree_with_checks()
-      param    PARAM from SqlSelect::test_quick_select
+      param    Parameter from SqlSelect::test_quick_select
       new_tree SEL_TREE with type KEY or KEY_SMALLER.
 
   NOTES
@@ -467,7 +467,7 @@ int SEL_IMERGE::or_sel_tree(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree)
        and (*this) should be discarded.
    -1  An error occurred.
 */
-int SEL_IMERGE::or_sel_tree_with_checks(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *new_tree)
+int SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *param, SEL_TREE *new_tree)
 {
   for (SEL_TREE** tree = trees;
        tree != trees_next;
@@ -501,7 +501,7 @@ int SEL_IMERGE::or_sel_tree_with_checks(optimizer::RANGE_OPT_PARAM *param, SEL_T
    -1 - An error occurred
 */
 
-int SEL_IMERGE::or_sel_imerge_with_checks(optimizer::RANGE_OPT_PARAM *param, SEL_IMERGE* imerge)
+int SEL_IMERGE::or_sel_imerge_with_checks(optimizer::RangeParameter *param, SEL_IMERGE* imerge)
 {
   for (SEL_TREE** tree= imerge->trees;
        tree != imerge->trees_next;
@@ -547,7 +547,7 @@ inline void imerge_list_and_list(List<SEL_IMERGE> *im1, List<SEL_IMERGE> *im2)
     other Error, both passed lists are unusable
 */
 
-static int imerge_list_or_list(optimizer::RANGE_OPT_PARAM *param,
+static int imerge_list_or_list(optimizer::RangeParameter *param,
                                List<SEL_IMERGE> *im1,
                                List<SEL_IMERGE> *im2)
 {
@@ -567,7 +567,7 @@ static int imerge_list_or_list(optimizer::RANGE_OPT_PARAM *param,
      other Error
  */
  
-static int imerge_list_or_tree(optimizer::RANGE_OPT_PARAM *param,
+static int imerge_list_or_tree(optimizer::RangeParameter *param,
                                List<SEL_IMERGE> *im1,
                                SEL_TREE *tree)
 {
@@ -1101,7 +1101,7 @@ public:
       created quick select
       NULL on any error.
   */
-  virtual optimizer::QuickSelectInterface *make_quick(optimizer::PARAM *param,
+  virtual optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param,
                                                       bool retrieve_full_rows,
                                                       MEM_ROOT *parent_alloc=NULL) = 0;
 
@@ -1132,7 +1132,7 @@ class TRP_RANGE : public TABLE_READ_PLAN
 {
 public:
   optimizer::SEL_ARG *key; /* set of intervals to be used in "range" method retrieval */
-  uint32_t     key_idx; /* key number in PARAM::key */
+  uint32_t     key_idx; /* key number in Parameter::key */
   uint32_t     mrr_flags;
   uint32_t     mrr_buf_size;
 
@@ -1144,7 +1144,7 @@ public:
   {}
   virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
 
-  optimizer::QuickSelectInterface *make_quick(optimizer::PARAM *param, bool, MEM_ROOT *parent_alloc)
+  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
   {
     optimizer::QuickRangeSelect *quick= NULL;
     if ((quick= optimizer::get_quick_select(param, 
@@ -1169,7 +1169,7 @@ class TRP_ROR_INTERSECT : public TABLE_READ_PLAN
 public:
   TRP_ROR_INTERSECT() {}                      /* Remove gcc warning */
   virtual ~TRP_ROR_INTERSECT() {}             /* Remove gcc warning */
-  optimizer::QuickSelectInterface *make_quick(optimizer::PARAM *param, 
+  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param, 
                                               bool retrieve_full_rows,
                                               MEM_ROOT *parent_alloc);
 
@@ -1193,7 +1193,7 @@ class TRP_ROR_UNION : public TABLE_READ_PLAN
 public:
   TRP_ROR_UNION() {}                          /* Remove gcc warning */
   virtual ~TRP_ROR_UNION() {}                 /* Remove gcc warning */
-  optimizer::QuickSelectInterface *make_quick(optimizer::PARAM *param, 
+  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param, 
                                               bool retrieve_full_rows,
                                               MEM_ROOT *parent_alloc);
   TABLE_READ_PLAN **first_ror; /* array of ptrs to plans for merged scans */
@@ -1212,7 +1212,7 @@ class TRP_INDEX_MERGE : public TABLE_READ_PLAN
 public:
   TRP_INDEX_MERGE() {}                        /* Remove gcc warning */
   virtual ~TRP_INDEX_MERGE() {}               /* Remove gcc warning */
-  optimizer::QuickSelectInterface *make_quick(optimizer::PARAM *param, 
+  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param, 
                                               bool retrieve_full_rows,
                                               MEM_ROOT *parent_alloc);
   TRP_RANGE **range_scans; /* array of ptrs to plans of merged scans */
@@ -1271,7 +1271,7 @@ public:
     }
   virtual ~TRP_GROUP_MIN_MAX() {}             /* Remove gcc warning */
 
-  optimizer::QuickSelectInterface *make_quick(optimizer::PARAM *param, 
+  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param, 
                                               bool retrieve_full_rows,
                                               MEM_ROOT *parent_alloc);
 };
@@ -1291,7 +1291,7 @@ public:
     1  Out of memory.
 */
 
-static int fill_used_fields_bitmap(optimizer::PARAM *param)
+static int fill_used_fields_bitmap(optimizer::Parameter *param)
 {
   Table *table= param->table;
   my_bitmap_map *tmp;
@@ -1420,7 +1420,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     SEL_TREE *tree= NULL;
     KEY_PART *key_parts;
     KEY *key_info;
-    optimizer::PARAM param;
+    optimizer::Parameter param;
 
     if (check_stack_overrun(session, 2*STACK_MIN_SIZE, NULL))
       return 0;                           // Fatal error flag is set
@@ -1696,7 +1696,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 */
 
 static
-TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::PARAM *param, 
+TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param, 
                                          SEL_IMERGE *imerge,
                                          double read_time)
 {
@@ -1969,7 +1969,7 @@ typedef struct st_ror_scan_info
 */
 
 static
-ROR_SCAN_INFO *make_ror_scan(const optimizer::PARAM *param, int idx, optimizer::SEL_ARG *sel_arg)
+ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimizer::SEL_ARG *sel_arg)
 {
   ROR_SCAN_INFO *ror_scan;
   my_bitmap_map *bitmap_buf;
@@ -2069,7 +2069,7 @@ static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
 /* Auxiliary structure for incremental ROR-intersection creation */
 typedef struct
 {
-  const optimizer::PARAM *param;
+  const optimizer::Parameter *param;
   MyBitmap covered_fields; /* union of fields covered by all scans */
   /*
     Fraction of table records that satisfies conditions of all scans.
@@ -2099,7 +2099,7 @@ typedef struct
 */
 
 static
-ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::PARAM *param)
+ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::Parameter *param)
 {
   ROR_INTERSECT_INFO *info;
   my_bitmap_map* buf;
@@ -2446,7 +2446,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
 */
 
 static
-TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::PARAM *param, 
+TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param, 
                                           SEL_TREE *tree,
                                           double read_time,
                                           bool *are_all_covering)
@@ -2632,7 +2632,7 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::PARAM *param,
 */
 
 static
-TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::PARAM *param,
+TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
                                                    SEL_TREE *tree,
                                                    double read_time)
 {
@@ -2770,7 +2770,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::PARAM *param,
     NULL if no plan found or error occurred
 */
 
-static TRP_RANGE *get_key_scans_params(optimizer::PARAM *param, 
+static TRP_RANGE *get_key_scans_params(optimizer::Parameter *param, 
                                        SEL_TREE *tree,
                                        bool index_read_must_be_used,
                                        bool update_tbl_stats,
@@ -2843,7 +2843,7 @@ static TRP_RANGE *get_key_scans_params(optimizer::PARAM *param,
 }
 
 
-optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::PARAM *param, bool, MEM_ROOT *)
+optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
 {
   optimizer::QuickIndexMergeSelect *quick_imerge;
   optimizer::QuickRangeSelect *quick= NULL;
@@ -2870,7 +2870,7 @@ optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::PARAM *p
   return quick_imerge;
 }
 
-optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::PARAM *param,
+optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::Parameter *param,
                                                          bool retrieve_full_rows,
                                                          MEM_ROOT *parent_alloc)
 {
@@ -2925,7 +2925,7 @@ optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::PARAM 
 }
 
 
-optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::PARAM *param, bool, MEM_ROOT *)
+optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
 {
   optimizer::QUICK_ROR_UNION_SELECT *quick_roru;
   TABLE_READ_PLAN **scan;
@@ -2956,7 +2956,7 @@ optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::PARAM *par
 
   SYNOPSIS
     get_ne_mm_tree()
-      param       PARAM from SqlSelect::test_quick_select
+      param       Parameter from SqlSelect::test_quick_select
       cond_func   item for the predicate
       field       field in the predicate
       lt_value    constant that field should be smaller
@@ -2968,7 +2968,7 @@ optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::PARAM *par
     0  on error
 */
 
-static SEL_TREE *get_ne_mm_tree(optimizer::RANGE_OPT_PARAM *param, 
+static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param, 
                                 Item_func *cond_func,
                                 Field *field,
                                 Item *lt_value, Item *gt_value,
@@ -2995,7 +2995,7 @@ static SEL_TREE *get_ne_mm_tree(optimizer::RANGE_OPT_PARAM *param,
 
   SYNOPSIS
     get_func_mm_tree()
-      param       PARAM from SqlSelect::test_quick_select
+      param       Parameter from SqlSelect::test_quick_select
       cond_func   item for the predicate
       field       field in the predicate
       value       constant in the predicate
@@ -3007,7 +3007,7 @@ static SEL_TREE *get_ne_mm_tree(optimizer::RANGE_OPT_PARAM *param,
     Pointer to the tree built tree
 */
 
-static SEL_TREE *get_func_mm_tree(optimizer::RANGE_OPT_PARAM *param, 
+static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param, 
                                   Item_func *cond_func,
                                   Field *field, Item *value,
                                   Item_result cmp_type, bool inv)
@@ -3236,7 +3236,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RANGE_OPT_PARAM *param,
 
   SYNOPSIS
     get_full_func_mm_tree()
-      param       PARAM from SqlSelect::test_quick_select
+      param       Parameter from SqlSelect::test_quick_select
       cond_func   item for the predicate
       field_item  field in the predicate
       value       constant in the predicate
@@ -3301,7 +3301,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RANGE_OPT_PARAM *param,
     Pointer to the tree representing the built conjunction of SEL_TREEs
 */
 
-static SEL_TREE *get_full_func_mm_tree(optimizer::RANGE_OPT_PARAM *param,
+static SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *param,
                                        Item_func *cond_func,
                                        Item_field *field_item, Item *value,
                                        bool inv)
@@ -3349,7 +3349,7 @@ static SEL_TREE *get_full_func_mm_tree(optimizer::RANGE_OPT_PARAM *param,
 
 	/* make a select tree of all keys in condition */
 
-static SEL_TREE *get_mm_tree(optimizer::RANGE_OPT_PARAM *param, COND *cond)
+static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
 {
   SEL_TREE *tree=0;
   SEL_TREE *ftree= 0;
@@ -3521,7 +3521,7 @@ static SEL_TREE *get_mm_tree(optimizer::RANGE_OPT_PARAM *param, COND *cond)
 
 
 static SEL_TREE *
-get_mm_parts(optimizer::RANGE_OPT_PARAM *param, 
+get_mm_parts(optimizer::RangeParameter *param, 
              COND *cond_func, 
              Field *field,
 	           Item_func::Functype type,
@@ -3572,7 +3572,7 @@ get_mm_parts(optimizer::RANGE_OPT_PARAM *param,
 
 
 static optimizer::SEL_ARG *
-get_mm_leaf(optimizer::RANGE_OPT_PARAM *param, 
+get_mm_leaf(optimizer::RangeParameter *param, 
             COND *conf_func, 
             Field *field,
             KEY_PART *key_part, 
@@ -4040,7 +4040,7 @@ sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
 
 
 static SEL_TREE *
-tree_and(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree1, SEL_TREE *tree2)
+tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2)
 {
   if (!tree1)
     return(tree2);
@@ -4106,7 +4106,7 @@ tree_and(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree1, SEL_TREE *tree2)
 */
 
 bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2,
-                           optimizer::RANGE_OPT_PARAM* param)
+                           optimizer::RangeParameter* param)
 {
   key_map common_keys= tree1->keys_map;
   common_keys&= tree2->keys_map;
@@ -4187,7 +4187,7 @@ bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2,
     1  No tree->keys[] left.
 */
 
-static bool remove_nonrange_trees(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *tree)
+static bool remove_nonrange_trees(optimizer::RangeParameter *param, SEL_TREE *tree)
 {
   bool res= false;
   for (uint32_t i=0; i < param->keys; i++)
@@ -4208,7 +4208,7 @@ static bool remove_nonrange_trees(optimizer::RANGE_OPT_PARAM *param, SEL_TREE *t
 
 
 static SEL_TREE *
-tree_or(optimizer::RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
+tree_or(optimizer::RangeParameter *param,SEL_TREE *tree1,SEL_TREE *tree2)
 {
   if (!tree1 || !tree2)
     return 0;
@@ -4292,7 +4292,7 @@ tree_or(optimizer::RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
 /* And key trees where key1->part < key2 -> part */
 
 static optimizer::SEL_ARG *
-and_all_keys(optimizer::RANGE_OPT_PARAM *param, 
+and_all_keys(optimizer::RangeParameter *param, 
              optimizer::SEL_ARG *key1, 
              optimizer::SEL_ARG *key2,
              uint32_t clone_flag)
@@ -4352,7 +4352,7 @@ and_all_keys(optimizer::RANGE_OPT_PARAM *param,
 */
 
 static optimizer::SEL_ARG *
-key_and(optimizer::RANGE_OPT_PARAM *param, 
+key_and(optimizer::RangeParameter *param, 
         optimizer::SEL_ARG *key1, 
         optimizer::SEL_ARG *key2, 
         uint32_t clone_flag)
@@ -4485,7 +4485,7 @@ get_range(optimizer::SEL_ARG **e1, optimizer::SEL_ARG **e2, optimizer::SEL_ARG *
 
 
 static optimizer::SEL_ARG *
-key_or(optimizer::RANGE_OPT_PARAM *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
+key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
 {
   if (! key1)
   {
@@ -4812,7 +4812,7 @@ typedef struct st_sel_arg_range_seq
 {
   uint32_t keyno;      /* index of used tree in SEL_TREE structure */
   uint32_t real_keyno; /* Number of the index in tables */
-  optimizer::PARAM *param;
+  optimizer::Parameter *param;
   optimizer::SEL_ARG *start; /* Root node of the traversed SEL_ARG* graph */
 
   RANGE_SEQ_ENTRY stack[MAX_REF_PARTS];
@@ -5052,7 +5052,7 @@ walk_up_n_right:
   SYNOPSIS
     check_quick_select()
       param             Parameter from test_quick_select
-      idx               Number of index to use in PARAM::key SEL_TREE::key
+      idx               Number of index to use in Parameter::key SEL_TREE::key
       index_only        true  - assume only index tuples will be accessed
                         false - assume full table rows will be read
       tree              Transformed selection condition, tree->key[idx] holds
@@ -5074,7 +5074,7 @@ walk_up_n_right:
 */
 
 static
-ha_rows check_quick_select(optimizer::PARAM *param, 
+ha_rows check_quick_select(optimizer::Parameter *param, 
                            uint32_t idx, 
                            bool index_only,
                            optimizer::SEL_ARG *tree, 
@@ -5195,7 +5195,7 @@ ha_rows check_quick_select(optimizer::PARAM *param,
     false  Otherwise
 */
 
-static bool is_key_scan_ror(optimizer::PARAM *param, uint32_t keynr, uint8_t nparts)
+static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts)
 {
   KEY *table_key= param->table->key_info + keynr;
   KEY_PART_INFO *key_part= table_key->key_part + nparts;
@@ -5234,7 +5234,7 @@ static bool is_key_scan_ror(optimizer::PARAM *param, uint32_t keynr, uint8_t npa
 
 
 optimizer::QuickRangeSelect *
-optimizer::get_quick_select(PARAM *param,
+optimizer::get_quick_select(Parameter *param,
                             uint32_t idx,
                             optimizer::SEL_ARG *key_tree, 
                             uint32_t mrr_flags,
@@ -5285,7 +5285,7 @@ optimizer::get_quick_select(PARAM *param,
 ** Fix this to get all possible sub_ranges
 */
 bool
-optimizer::get_quick_keys(optimizer::PARAM *param,
+optimizer::get_quick_keys(optimizer::Parameter *param,
                           optimizer::QuickRangeSelect *quick,
                           KEY_PART *key,
 	                        optimizer::SEL_ARG *key_tree, 
@@ -5950,7 +5950,7 @@ static inline uint32_t get_field_keypart(KEY *index, Field *field);
 
 static inline optimizer::SEL_ARG * get_index_range_tree(uint32_t index, 
                                                         SEL_TREE *range_tree,
-                                                        optimizer::PARAM *param, 
+                                                        optimizer::Parameter *param, 
                                                         uint32_t *param_idx);
 
 static bool get_constant_key_infix(KEY *index_info, 
@@ -6107,7 +6107,7 @@ cost_group_min_max(Table* table,
     - NULL
 */
 static TRP_GROUP_MIN_MAX *
-get_best_group_min_max(optimizer::PARAM *param, SEL_TREE *tree)
+get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
 {
   Session *session= param->session;
   JOIN *join= session->lex->current_select->join;
@@ -6816,15 +6816,15 @@ get_field_keypart(KEY *index, Field *field)
     get_index_range_tree()
     index     [in]  The ID of the index being looked for
     range_tree[in]  Tree of ranges being searched
-    param     [in]  PARAM from SqlSelect::test_quick_select
-    param_idx [out] Index in the array PARAM::key that corresponds to 'index'
+    param     [in]  Parameter from SqlSelect::test_quick_select
+    param_idx [out] Index in the array Parameter::key that corresponds to 'index'
 
   DESCRIPTION
 
     A SEL_TREE contains range trees for all usable indexes. This procedure
     finds the SEL_ARG sub-tree for 'index'. The members of a SEL_TREE are
-    ordered in the same way as the members of PARAM::key, thus we first find
-    the corresponding index in the array PARAM::key. This index is returned
+    ordered in the same way as the members of Parameter::key, thus we first find
+    the corresponding index in the array Parameter::key. This index is returned
     through the variable param_idx, to be used later as argument of
     check_quick_select().
 
@@ -6833,7 +6833,7 @@ get_field_keypart(KEY *index, Field *field)
 */
 optimizer::SEL_ARG * get_index_range_tree(uint32_t index, 
                                SEL_TREE* range_tree, 
-                               optimizer::PARAM *param,
+                               optimizer::Parameter *param,
                                uint32_t *param_idx)
 {
   uint32_t idx= 0; /* Index nr in param->key_parts */
@@ -7008,7 +7008,7 @@ void cost_group_min_max(Table* table,
     NULL otherwise.
 */
 optimizer::QuickSelectInterface *
-TRP_GROUP_MIN_MAX::make_quick(optimizer::PARAM *param, bool, MEM_ROOT *parent_alloc)
+TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
 {
   optimizer::QUICK_GROUP_MIN_MAX_SELECT *quick= NULL;
 
@@ -8097,7 +8097,7 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_nam
   used_lengths->append(buf, length);
 }
 
-static void print_sel_tree(optimizer::PARAM *param, SEL_TREE *tree, key_map *tree_map, const char *)
+static void print_sel_tree(optimizer::Parameter *param, SEL_TREE *tree, key_map *tree_map, const char *)
 {
   optimizer::SEL_ARG **key= NULL;
   optimizer::SEL_ARG **end= NULL;

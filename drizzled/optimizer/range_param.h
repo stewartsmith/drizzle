@@ -31,7 +31,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class RANGE_OPT_PARAM
+class RangeParameter
 {
 public:
   Session	*session;   /* Current thread handle */
@@ -71,7 +71,7 @@ public:
   bool force_default_mrr;
 };
 
-class PARAM : public RANGE_OPT_PARAM
+class Parameter : public RangeParameter
 {
 public:
   KEY_PART *key[MAX_KEY]; /* First key parts of keys used in the query */
