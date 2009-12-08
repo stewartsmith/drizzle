@@ -25,7 +25,11 @@
 
 using namespace drizzled;
 
-static int refpos_order_cmp(void *arg, const void *a, const void *b)
+extern "C"
+int refpos_order_cmp(void *arg, const void *a, const void *b);
+
+extern "C"
+int refpos_order_cmp(void *arg, const void *a, const void *b)
 {
   Cursor *cursor= (Cursor*)arg;
   return cursor->cmp_ref((const unsigned char *) a, (const unsigned char *) b);
