@@ -174,12 +174,12 @@ void change_byte(unsigned char *,uint,char,char);
 
 namespace drizzled { namespace optimizer { class SqlSelect; } }
 
-ha_rows filesort(Session *session, 
+ha_rows filesort(Session *session,
                  Table *form,
                  struct st_sort_field *sortorder,
-		             uint32_t s_length, 
+		             uint32_t s_length,
                  drizzled::optimizer::SqlSelect *select,
-		             ha_rows max_rows, 
+		             ha_rows max_rows,
                  bool sort_positions,
                  ha_rows *examined_rows);
 
