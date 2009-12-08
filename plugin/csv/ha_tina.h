@@ -125,6 +125,8 @@ public:
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   int rnd_end();
+  TINA_SHARE *get_share(const char *table_name);
+  int free_share();
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   void position(const unsigned char *record);
