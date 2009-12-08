@@ -257,8 +257,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/optimizer/key_field.h \
 		drizzled/optimizer/key_use.h \
 		drizzled/optimizer/position.h \
+		drizzled/optimizer/quick_index_merge_select.h \
+		drizzled/optimizer/quick_range.h \
+		drizzled/optimizer/quick_range_select.h \
 		drizzled/optimizer/range.h \
+		drizzled/optimizer/range_param.h \
 		drizzled/optimizer/sargable_param.h \
+		drizzled/optimizer/sel_arg.h \
 		drizzled/optimizer/sum.h \
 		drizzled/order.h \
 		drizzled/plugin.h \
@@ -607,7 +612,11 @@ drizzled_drizzled_SOURCES = \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
 		drizzled/optimizer/key_field.cc \
+		drizzled/optimizer/quick_index_merge_select.cc \
+		drizzled/optimizer/quick_range.cc \
+		drizzled/optimizer/quick_range_select.cc \
 		drizzled/optimizer/range.cc \
+		drizzled/optimizer/sel_arg.cc \
 		drizzled/optimizer/sum.cc \
 		drizzled/plugin/authentication.cc \
 		drizzled/plugin/client.cc \

@@ -112,7 +112,7 @@ void init_read_record_idx(READ_RECORD *info,
 void init_read_record(READ_RECORD *info, 
                       Session *session, 
                       Table *reg_form,
-                      drizzled::optimizer::SQL_SELECT *select,
+                      drizzled::optimizer::SqlSelect *select,
                       int use_record_cache, 
                       bool print_errors);
 

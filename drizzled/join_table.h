@@ -116,9 +116,9 @@ public:
   {}
   Table *table;
   drizzled::optimizer::KeyUse *keyuse; /**< pointer to first used key */
-  drizzled::optimizer::SQL_SELECT *select;
+  drizzled::optimizer::SqlSelect *select;
   COND *select_cond;
-  drizzled::optimizer::QUICK_SELECT_I *quick;
+  drizzled::optimizer::QuickSelectInterface *quick;
   /**
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
@@ -234,7 +234,7 @@ public:
   {
     return (select && select->quick &&
             (select->quick->get_type() ==
-             drizzled::optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
+             drizzled::optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX));
   }
 
   void readCachedRecord();

@@ -134,7 +134,7 @@ int mysql_update(Session *session, TableList *table_list,
   ha_rows	updated, found;
   key_map	old_covering_keys;
   Table		*table;
-  optimizer::SQL_SELECT *select= NULL;
+  optimizer::SqlSelect *select= NULL;
   READ_RECORD	info;
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
@@ -383,7 +383,7 @@ int mysql_update(Session *session, TableList *table_list,
       }
       else
       {
-	select= new optimizer::SQL_SELECT;
+	select= new optimizer::SqlSelect;
 	select->head=table;
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))

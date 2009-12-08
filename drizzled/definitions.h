@@ -451,13 +451,6 @@ enum start_transaction_option_t
 */
 #define HA_MRR_USE_DEFAULT_IMPL 64
 
-/*
-  Used only as parameter to multi_range_read_info():
-  Flag set <=> the caller guarantees that the bounds of the scanned ranges
-  will not have NULL values.
-*/
-#define HA_MRR_NO_NULL_ENDPOINTS 128
-
 typedef int myf;
 #define MYF(v)		(myf) (v)
 
