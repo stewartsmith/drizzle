@@ -145,10 +145,15 @@ const char *get_session_proc_info(Session *session)
   return session->get_proc_info();
 }
 
-extern "C"
-void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
+void **Session::getEngineData(const plugin::StorageEngine *engine)
 {
-  return (void **) &session->ha_data[engine->slot].ha_ptr;
+  return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
+}
+
+Ha_trx_info *Session::getEngineInfo(const plugin::StorageEngine *engine,
+                                    size_t index)
+{
+  return &ha_data[engine->getSlot()].ha_info[index];
 }
 
 extern "C"

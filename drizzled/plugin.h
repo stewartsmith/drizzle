@@ -408,7 +408,6 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine);
 int session_tx_isolation(const Session *session);
 
 LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
@@ -513,29 +512,6 @@ void mysql_query_cache_invalidate4(Session *session,
                                    int using_trx);
 
 #ifdef __cplusplus
-}
-#endif
-
-#ifdef __cplusplus
-/**
-  Provide a handler data getter to simplify coding
-*/
-inline
-void *
-session_get_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine)
-{
-  return *session_ha_data(session, engine);
-}
-
-/**
-  Provide a handler data setter to simplify coding
-*/
-inline
-void
-session_set_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine,
-                const void *ha_data)
-{
-  *session_ha_data(session, engine)= (void*) ha_data;
 }
 #endif
 

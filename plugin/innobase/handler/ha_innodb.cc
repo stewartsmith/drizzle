@@ -748,7 +748,7 @@ session_to_trx(
 /*=======*/
 	Session*	session)	/*!< in: Drizzle Session */
 {
-	return(*(trx_t**) session_ha_data(session, innodb_engine_ptr));
+	return *(trx_t**) session->getEngineData(innodb_engine_ptr);
 }
 
 /********************************************************************//**
