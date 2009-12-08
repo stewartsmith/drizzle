@@ -261,7 +261,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		optimizer/quick_range.h \
 		optimizer/quick_range_select.h \
 		optimizer/range.h \
+		optimizer/range_param.h \
 		optimizer/sargable_param.h \
+		optimizer/sel_arg.h \
 		optimizer/sum.h \
 		order.h \
 		plugin.h \
@@ -613,6 +615,7 @@ drizzled_SOURCES = \
 		optimizer/quick_range.cc \
 		optimizer/quick_range_select.cc \
 		optimizer/range.cc \
+		optimizer/sel_arg.cc \
 		optimizer/sum.cc \
 		plugin/authentication.cc \
 		plugin/client.cc \

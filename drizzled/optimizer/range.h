@@ -27,7 +27,6 @@
 
 #include <queue>
 
-class PARAM;
 class JOIN;
 class TRP_ROR_INTERSECT; 
 typedef class Item COND;
@@ -50,13 +49,15 @@ typedef struct st_key_part
   Field *field;
 } KEY_PART;
 
-class SEL_ARG;
 
 namespace drizzled
 {
 
 namespace optimizer
 {
+
+class PARAM;
+class SEL_ARG;
 
 /**
   Quick select interface.
@@ -566,11 +567,11 @@ QuickRangeSelect *get_quick_select_for_ref(Session *session,
     otherwise created quick select
 */
 QuickRangeSelect *get_quick_select(PARAM *param,
-                                     uint32_t index,
-                                     SEL_ARG *key_tree, 
-                                     uint32_t mrr_flags,
-                                     uint32_t mrr_buf_size, 
-                                     MEM_ROOT *alloc);
+                                   uint32_t index,
+                                   SEL_ARG *key_tree, 
+                                   uint32_t mrr_flags,
+                                   uint32_t mrr_buf_size, 
+                                   MEM_ROOT *alloc);
 
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
@@ -582,7 +583,8 @@ SqlSelect *make_select(Table *head,
                         int *error);
 
 bool get_quick_keys(PARAM *param, 
-                    QuickRangeSelect *quick,KEY_PART *key,
+                    QuickRangeSelect *quick,
+                    KEY_PART *key,
                     SEL_ARG *key_tree, 
                     unsigned char *min_key,
                     uint32_t min_key_flag,
