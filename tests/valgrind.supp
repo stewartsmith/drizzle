@@ -902,7 +902,7 @@
 }
 
 {
-   <insert_a_suppression_name_here>
+   NSS database lookup in static space.
    Memcheck:Leak
    fun:malloc
    fun:nss_parse_service_list
@@ -913,4 +913,3 @@
    fun:getpwnam
    fun:main
 }
-
