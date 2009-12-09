@@ -183,9 +183,9 @@ void optimizer::ExplainPlan::printPlan()
       if (tab->type == AM_ALL && tab->select && tab->select->quick)
       {
         quick_type= tab->select->quick->get_type();
-        if ((quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE) ||
-            (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT) ||
-            (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION))
+        if ((quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE) ||
+            (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT) ||
+            (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION))
           tab->type = AM_INDEX_MERGE;
         else
           tab->type = AM_RANGE;
@@ -316,7 +316,7 @@ void optimizer::ExplainPlan::printPlan()
       if ((tab->type == AM_NEXT || tab->type == AM_CONST) &&
           table->covering_keys.test(tab->index))
         key_read= 1;
-      if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT &&
+      if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT &&
           ! ((optimizer::QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
         key_read= 1;
 
@@ -348,9 +348,9 @@ void optimizer::ExplainPlan::printPlan()
         else if (tab->select && tab->select->quick)
           keyno = tab->select->quick->index;
 
-        if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE)
+        if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE)
         {
           extra.append(STRING_WITH_LEN("; Using "));
           tab->select->quick->add_info_string(&extra);
@@ -389,7 +389,7 @@ void optimizer::ExplainPlan::printPlan()
         }
         if (key_read)
         {
-          if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
+          if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX)
             extra.append(STRING_WITH_LEN("; Using index for group-by"));
           else
             extra.append(STRING_WITH_LEN("; Using index"));
