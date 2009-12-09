@@ -1504,9 +1504,6 @@ int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t 
     Buffer+=length;
     pos+=  length;
     Count-= length;
-#ifndef HAVE_PREAD
-    info->seek_not_done=1;
-#endif
   }
 
   /* Check if we want to write inside the used part of the buffer.*/
