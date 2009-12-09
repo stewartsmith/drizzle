@@ -102,7 +102,8 @@ void BlitzLock::scan_update_end() {
 int ha_blitz::scan_lock() {
   if (sql_command_type == SQLCOM_UPDATE ||
       sql_command_type == SQLCOM_DELETE ||
-      sql_command_type == SQLCOM_REPLACE) {
+      sql_command_type == SQLCOM_REPLACE ||
+      sql_command_type == SQLCOM_REPLACE_SELECT) {
     share->blitz_lock.scan_update_begin();
   } else {
     share->blitz_lock.scan_begin();

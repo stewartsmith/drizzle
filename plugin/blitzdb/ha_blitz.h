@@ -128,6 +128,7 @@ public:
   std::string table_name;  /* Name and Length of the table */
   uint32_t use_count;      /* Reference counter of this object */
   bool fixed_length_table; /* Whether the table is fixed length */
+  bool primary_key_exists; /* Whether a PK exists in this table */
 };
 
 class ha_blitz: public Cursor {
@@ -136,7 +137,7 @@ private:
   THR_LOCK_DATA lock;                    /* Drizzle Lock */
 
   /* THREAD STATE */
-  bool table_scan;                       /* Whether a scan is occuring */
+  bool table_scan;                       /* Whether a table scan is occuring */
   bool thread_locked;                    /* Whether the thread is locked */
   uint32_t sql_command_type;             /* Type of SQL command to process */
 

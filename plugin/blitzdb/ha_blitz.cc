@@ -184,6 +184,16 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
 
   share->fixed_length_table = !(table->s->db_create_options
                                 & HA_OPTION_PACK_RECORD);
+
+  if (table->s->primary_key >= MAX_KEY) {
+    share->primary_key_exists = false;
+    ref_length = sizeof(updateable_key_length) + sizeof(uint64_t);
+  } else {
+    share->primary_key_exists = true;
+    /* TODO: Set ref_length to something safe and appropriate
+             when BlitzDB supports indexes. */
+  }
+
   thr_lock_data_init(&share->lock, &lock, NULL);
   pthread_mutex_unlock(&blitz_utility_mutex);
   return 0;
@@ -202,19 +212,20 @@ int ha_blitz::info(uint32_t flag) {
 }
 
 int ha_blitz::rnd_init(bool scan) {
-  /* Store this value in the thread for later use */
+  /* Store this information in the thread for later use */
   table_scan = scan;
 
   /* Obtain the most suitable lock for the given statement type */
-  if (table_scan)
-    scan_lock();
+  scan_lock();
 
-  /* Get the first key and the row from TCHDB. Let the scanner take
+  /* Get the first record from TCHDB. Let the scanner take
      care of checking return value errors. */
-  current_key = share->dict.next_key_and_row(NULL, 0,
-                                             &current_key_length,
-                                             &current_row,
-                                             &current_row_length);
+  if (scan) {
+    current_key = share->dict.next_key_and_row(NULL, 0,
+                                               &current_key_length,
+                                               &current_row,
+                                               &current_row_length);
+  }
   return 0;
 }
 
@@ -269,8 +280,9 @@ int ha_blitz::rnd_end() {
   updateable_key = NULL;
   current_key_length = 0;
   updateable_key_length = 0;
+  table_scan = false;
   
-  if (table_scan)
+  if (thread_locked)
     scan_unlock();
 
   return 0;
@@ -325,7 +337,39 @@ int ha_blitz::update_row(const unsigned char *,
   unsigned char *buffer_pos = get_pack_buffer();
   bool rv = false;
 
+  ha_statistic_increment(&SSV::ha_update_count);
+
+  /* This is a really simple case where an UPDATE statement is
+     requested to be processed in middle of a table scan. */
   if (table_scan && thread_locked) {
+    row_length = pack_row(buffer_pos, new_row);
+    rv = share->dict.overwrite_row(updateable_key, updateable_key_length,
+                                   buffer_pos, row_length); 
+    return (rv) ? 0 : 1;
+  }
+
+  /* When updating cached rows, Drizzle and MySQL calls rnd_pos()
+     prior to calling update_row(). The key value we're using here
+     was cached in BlitzDB's own memory inside rnd_pos().
+
+     Furthermore, it is impossible for the key value to have updated 
+     if a primary key isn't defined. This is because Drizzle knows
+     nothing about BlitzDB's internal row id for keyless tables. */
+  if (!share->primary_key_exists) {
+  } else {
+    /* Take a diff beween primary keys of the old row and the new row.
+       If it has changed then do the appropriate thing:
+
+       (1) If updated, then see if the new primary key doesn't clash
+           with an existing row. If it doesn't then write a new row
+           with it then delete a row from BlitzDB based on the old
+           primary key.
+
+       This is unimplemented at the moment because index support for
+       BlitzDB hasn't begun yet. */
+  }
+
+  if (thread_locked) {
     row_length = pack_row(buffer_pos, new_row);
     rv = share->dict.overwrite_row(updateable_key, updateable_key_length,
                                    buffer_pos, row_length); 
@@ -336,7 +380,7 @@ int ha_blitz::update_row(const unsigned char *,
 int ha_blitz::delete_row(const unsigned char *) {
   bool rv = false;
 
-  if (table_scan && thread_locked)
+  if (thread_locked)
     rv = share->dict.delete_row(updateable_key, updateable_key_length);
 
   return (rv) ? 0 : -1;
