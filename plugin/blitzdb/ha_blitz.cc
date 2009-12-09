@@ -212,15 +212,15 @@ int ha_blitz::info(uint32_t flag) {
 }
 
 int ha_blitz::rnd_init(bool scan) {
+  /* Obtain the most suitable lock for the given statement type */
+  critical_section_enter();
+
   /* Store this information in the thread for later use */
   table_scan = scan;
 
-  /* Obtain the most suitable lock for the given statement type */
-  scan_lock();
-
   /* Get the first record from TCHDB. Let the scanner take
      care of checking return value errors. */
-  if (scan) {
+  if (table_scan) {
     current_key = share->dict.next_key_and_row(NULL, 0,
                                                &current_key_length,
                                                &current_row,
@@ -283,7 +283,7 @@ int ha_blitz::rnd_end() {
   table_scan = false;
   
   if (thread_locked)
-    scan_unlock();
+    critical_section_exit();
 
   return 0;
 }
@@ -306,6 +306,16 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
     return HA_ERR_KEY_NOT_FOUND;
 
   unpack_row(copy_to, row);
+
+  /* Let the thread remember the key location on memory if
+     the thread is not doing a table scan. This is because
+     either update_row() or delete_row() might be called
+     after this function. */
+  if (!table_scan) {
+    current_key = key;
+    current_key_length = key_length;
+  }
+
   free(row);
   return 0;
 }
@@ -328,7 +338,7 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
   rv = share->dict.overwrite_row(key_buffer, generated_key_length,
                                  buffer_pos, row_length);
-  return (rv) ? 0 : 1;
+  return (rv) ? 0 : -1;
 }
 
 int ha_blitz::update_row(const unsigned char *,
@@ -339,40 +349,46 @@ int ha_blitz::update_row(const unsigned char *,
 
   ha_statistic_increment(&SSV::ha_update_count);
 
-  /* This is a really simple case where an UPDATE statement is
-     requested to be processed in middle of a table scan. */
-  if (table_scan && thread_locked) {
-    row_length = pack_row(buffer_pos, new_row);
-    rv = share->dict.overwrite_row(updateable_key, updateable_key_length,
-                                   buffer_pos, row_length); 
-    return (rv) ? 0 : 1;
-  }
-
-  /* When updating cached rows, Drizzle and MySQL calls rnd_pos()
-     prior to calling update_row(). The key value we're using here
-     was cached in BlitzDB's own memory inside rnd_pos().
-
-     Furthermore, it is impossible for the key value to have updated 
-     if a primary key isn't defined. This is because Drizzle knows
-     nothing about BlitzDB's internal row id for keyless tables. */
-  if (!share->primary_key_exists) {
-  } else {
-    /* Take a diff beween primary keys of the old row and the new row.
-       If it has changed then do the appropriate thing:
-
-       (1) If updated, then see if the new primary key doesn't clash
-           with an existing row. If it doesn't then write a new row
-           with it then delete a row from BlitzDB based on the old
-           primary key.
-
-       This is unimplemented at the moment because index support for
-       BlitzDB hasn't begun yet. */
-  }
-
   if (thread_locked) {
+    /* This is a really simple case where an UPDATE statement is
+       requested to be processed in middle of a table scan. */
+    if (table_scan) {
+      row_length = pack_row(buffer_pos, new_row);
+      rv = share->dict.overwrite_row(updateable_key, updateable_key_length,
+                                     buffer_pos, row_length); 
+      return (rv) ? 0 : -1;
+    }
+
+    /* When updating cached rows, Drizzle and MySQL calls rnd_pos()
+       prior to calling update_row(). If this is a keyless table,
+       BlitzDB has kept a pointer to the key on memory and the length
+       of it in 'current_key' and 'current_key_length'.
+
+       Furthermore, it is impossible for the key value to have updated 
+       if a primary key isn't defined. This is because Drizzle knows
+       nothing about BlitzDB's internal row-id for keyless tables. */
+    if (share->primary_key_exists) {
+      /* Take a diff beween primary keys of the old row and the new row.
+         If it has changed then do the appropriate thing:
+
+         (1) If updated, then see if the new primary key doesn't clash
+             with an existing row. If it doesn't then write a new row
+             with it then delete a row from BlitzDB based on the old
+             primary key.
+
+         This is unimplemented at the moment because index support for
+         BlitzDB hasn't been worked on yet. */
+    }
+
     row_length = pack_row(buffer_pos, new_row);
-    rv = share->dict.overwrite_row(updateable_key, updateable_key_length,
+    rv = share->dict.overwrite_row(current_key, current_key_length,
                                    buffer_pos, row_length); 
+
+    /* Don't free this pointer because drizzled will */
+    if (current_key) {
+      current_key = NULL;
+      current_key_length = 0;
+    }
   }
   return (rv) ? 0 : -1;
 }

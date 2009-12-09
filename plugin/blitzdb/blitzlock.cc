@@ -99,7 +99,7 @@ void BlitzLock::scan_update_end() {
   pthread_mutex_unlock(&mutex);
 }
 
-int ha_blitz::scan_lock() {
+int ha_blitz::critical_section_enter() {
   if (sql_command_type == SQLCOM_UPDATE ||
       sql_command_type == SQLCOM_DELETE ||
       sql_command_type == SQLCOM_REPLACE ||
@@ -112,7 +112,7 @@ int ha_blitz::scan_lock() {
   return 0;
 }
 
-int ha_blitz::scan_unlock() {
+int ha_blitz::critical_section_exit() {
   if (sql_command_type == SQLCOM_UPDATE ||
       sql_command_type == SQLCOM_DELETE ||
       sql_command_type == SQLCOM_REPLACE) {

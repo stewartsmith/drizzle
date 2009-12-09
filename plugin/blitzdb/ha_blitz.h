@@ -181,8 +181,8 @@ public:
   int delete_row(const unsigned char *buf);
   int delete_all_rows(void);
 
-  int scan_lock();
-  int scan_unlock();
+  int critical_section_enter();
+  int critical_section_exit();
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);

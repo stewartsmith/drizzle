@@ -85,3 +85,15 @@ a	b	c
 6	3	second half
 7	2	second half
 8	1	second half
+drop table t1;
+create table t1 (id int) engine = blitzdb;
+insert into t1 values (100), (100);
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+update t1 set id = id+1 ORDER BY id LIMIT 2;
+select * from t1;
+id
+104
+104
+drop table t1;
