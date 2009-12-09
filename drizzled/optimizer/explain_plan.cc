@@ -465,29 +465,75 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
     uint8_t uncacheable= (sl->uncacheable & ~UNCACHEABLE_EXPLAIN);
-    sl->type= (((&session->lex->select_lex) == sl) ?
-	       (sl->first_inner_unit() || sl->next_select() ?
-		"PRIMARY" : "SIMPLE"):
-	       ((sl == first)?
-		((sl->linkage == DERIVED_TABLE_TYPE) ?
-		 "DERIVED":
-		 ((uncacheable & UNCACHEABLE_DEPENDENT) ?
-		  "DEPENDENT SUBQUERY":
-		  (uncacheable?"UNCACHEABLE SUBQUERY":
-		   "SUBQUERY"))):
-		((uncacheable & UNCACHEABLE_DEPENDENT) ?
-		 "DEPENDENT UNION":
-		 uncacheable?"UNCACHEABLE UNION":
-		 "UNION")));
+    if (&session->lex->select_lex == sl)
+    {
+      if (sl->first_inner_unit() || sl->next_select())
+      {
+        sl->type= "PRIMARY";
+      }
+      else
+      {
+        sl->type= "SIMPLE";
+      }
+    }
+    else
+    {
+      if (sl == first)
+      {
+        if (sl->linkage == DERIVED_TABLE_TYPE)
+        {
+          sl->type= "DERIVED";
+        }
+        else
+        {
+          if (uncacheable & UNCACHEABLE_DEPENDENT)
+          {
+            sl->type= "DEPENDENT SUBQUERY";
+          }
+          else
+          {
+            if (uncacheable)
+            {
+              sl->type= "UNCACHEABLE SUBQUERY";
+            }
+            else
+            {
+              sl->type= "SUBQUERY";
+            }
+          }
+        }
+      }
+      else
+      {
+        if (uncacheable & UNCACHEABLE_DEPENDENT)
+        {
+          sl->type= "DEPENDENT UNION";
+        }
+        else
+        {
+          if (uncacheable)
+          {
+            sl->type= "UNCACHEABLE_UNION";
+          }
+          else
+          {
+            sl->type= "UNION";
+          }
+        }
+      }
+    }
     sl->options|= SELECT_DESCRIBE;
   }
+
   if (unit->is_union())
   {
-    unit->fake_select_lex->select_number= UINT_MAX; // jost for initialization
+    unit->fake_select_lex->select_number= UINT_MAX; // just for initialization
     unit->fake_select_lex->type= "UNION RESULT";
     unit->fake_select_lex->options|= SELECT_DESCRIBE;
     if (! (res= unit->prepare(session, result, SELECT_NO_UNLOCK | SELECT_DESCRIBE)))
+    {
       res= unit->exec();
+    }
     res|= unit->cleanup();
   }
   else
