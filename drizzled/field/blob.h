@@ -85,15 +85,7 @@ public:
                   l_char_length <= 16777215 ? 3 : 4;
     }
   }
-  Field_blob(uint32_t packlength_arg)
-    :Field_str((unsigned char*) 0,
-               0,
-               (unsigned char*) "",
-               0,
-               "temp",
-               system_charset_info),
-    packlength(packlength_arg) 
-  {}
+
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
