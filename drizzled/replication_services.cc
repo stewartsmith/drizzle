@@ -460,8 +460,6 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
-  string_value->set_charset(system_charset_info);
 
   message::FieldMetadata *field_metadata;
 
