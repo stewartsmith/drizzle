@@ -19,13 +19,7 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 
-#ifdef USE_SYSTEM_WRAPPERS
-#include "system_wrappers.h"
-#endif
-
-#ifdef HAVE_GETRUSAGE
 #include <sys/resource.h>
-#endif
 
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>

@@ -85,7 +85,7 @@ static bool best_extension_by_limited_search(JOIN *join,
 static uint32_t determine_search_depth(JOIN* join);
 static bool make_simple_join(JOIN *join,Table *tmp_table);
 static void make_outerjoin_info(JOIN *join);
-static bool make_join_select(JOIN *join, optimizer::SQL_SELECT *select,COND *item);
+static bool make_join_select(JOIN *join, optimizer::SqlSelect *select,COND *item);
 static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after);
 static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, order_st *order);
@@ -661,11 +661,11 @@ int JOIN::optimize()
      The FROM clause must contain a single non-constant table.
   */
   if (tables - const_tables == 1 && (group_list || select_distinct) &&
-      !tmp_table_param.sum_func_count &&
-      (!join_tab[const_tables].select ||
-       !join_tab[const_tables].select->quick ||
+      ! tmp_table_param.sum_func_count &&
+      (! join_tab[const_tables].select ||
+       ! join_tab[const_tables].select->quick ||
        join_tab[const_tables].select->quick->get_type() !=
-       optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX))
+       optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX))
   {
     if (group_list && list_contains_unique_index(join_tab[const_tables].table, find_field_in_order_list, (void *) group_list))
     {
@@ -684,7 +684,7 @@ int JOIN::optimize()
           If GROUP BY is a prefix of order_st BY, then it is safe to leave
           'order' as is.
        */
-      if (!order || test_if_subpart(group_list, order))
+      if (! order || test_if_subpart(group_list, order))
           order= skip_sort_order ? 0 : group_list;
       /*
         If we have an IGNORE INDEX FOR GROUP BY(fields) clause, this must be
@@ -1564,7 +1564,7 @@ void JOIN::exec()
       if (sort_table_cond)
       {
         if (!curr_table->select)
-          if (!(curr_table->select= new optimizer::SQL_SELECT))
+          if (!(curr_table->select= new optimizer::SqlSelect))
             return;
         if (!curr_table->select->cond)
           curr_table->select->cond= sort_table_cond;
@@ -2622,7 +2622,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
       join->session->send_kill_message();
       return NESTED_LOOP_KILLED;
     }
-    optimizer::SQL_SELECT *select= join_tab->select;
+    optimizer::SqlSelect *select= join_tab->select;
     if (rc == NESTED_LOOP_OK &&
         (!join_tab->cache.select || !join_tab->cache.select->skip_record()))
     {
@@ -4440,7 +4440,7 @@ static void make_outerjoin_info(JOIN *join)
 }
 
 static bool make_join_select(JOIN *join,
-                             optimizer::SQL_SELECT *select,
+                             optimizer::SqlSelect *select,
                              COND *cond)
 {
   Session *session= join->session;
@@ -4562,7 +4562,7 @@ static bool make_join_select(JOIN *join,
       if (tmp || !cond || tab->type == AM_REF || tab->type == AM_REF_OR_NULL ||
           tab->type == AM_EQ_REF)
       {
-        optimizer::SQL_SELECT *sel= tab->select= ((optimizer::SQL_SELECT*)
+        optimizer::SqlSelect *sel= tab->select= ((optimizer::SqlSelect*)
             session->memdup((unsigned char*) select,
               sizeof(*select)));
         if (! sel)
@@ -4700,8 +4700,8 @@ static bool make_join_select(JOIN *join,
                                          current_map,
                                          current_map, 0)))
             {
-              tab->cache.select= (optimizer::SQL_SELECT*)
-                session->memdup((unsigned char*) sel, sizeof(optimizer::SQL_SELECT));
+              tab->cache.select= (optimizer::SqlSelect*)
+                session->memdup((unsigned char*) sel, sizeof(optimizer::SqlSelect));
               tab->cache.select->cond= tmp;
               tab->cache.select->read_tables= join->const_table_map;
             }
@@ -5899,7 +5899,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         !s->table->pos_in_table_list->embedding)
     {
       ha_rows records;
-      optimizer::SQL_SELECT *select= NULL;
+      optimizer::SqlSelect *select= NULL;
       select= optimizer::make_select(s->table, found_const_table_map, found_const_table_map, *s->on_expr_ref ? *s->on_expr_ref : conds, 1, &error);
       if (! select)
         return 1;

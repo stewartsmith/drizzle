@@ -26,11 +26,17 @@
 /*
   Shared structure for correct LOCK operation
 */
-struct st_blackhole_share {
+class BlackholeShare
+{
+  BlackholeShare();
+  BlackholeShare(const BlackholeShare &);
+  BlackholeShare& operator=(const BlackholeShare &);
+public:
+  explicit BlackholeShare(const std::string table_name_arg);
+  ~BlackholeShare();
   THR_LOCK lock;
   uint32_t use_count;
-  uint32_t table_name_length;
-  char table_name[1];
+  const std::string table_name;
 };
 
 
@@ -41,7 +47,7 @@ struct st_blackhole_share {
 class ha_blackhole: public Cursor
 {
   THR_LOCK_DATA lock;      /* MySQL lock */
-  st_blackhole_share *share;
+  BlackholeShare *share;
 
 public:
   ha_blackhole(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
@@ -60,6 +66,8 @@ public:
   int rnd_init(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
+  BlackholeShare *get_share(const char *table_name);
+  void free_share();
   int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
                      enum ha_rkey_function find_flag);
   int index_read_idx_map(unsigned char * buf, uint32_t idx, const unsigned char * key,

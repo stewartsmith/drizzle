@@ -81,7 +81,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       {
 	if (share->changed && !share->w_locks)
 	{
-#ifdef HAVE_MMAP
     if ((info->s->mmaped_length != info->s->state.state.data_file_length) &&
         (info->s->nonmmaped_inserts > MAX_NONMAPPED_INSERTS))
     {
@@ -92,7 +91,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       if (info->s->concurrent_insert)
         pthread_rwlock_unlock(&info->s->mmap_lock);
     }
-#endif
 	  share->state.process= share->last_process=share->this_process;
 	  share->state.unique=   info->last_unique=  info->this_unique;
 	  share->state.update_count= info->last_loop= ++info->this_loop;

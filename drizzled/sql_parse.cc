@@ -16,7 +16,6 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <mysys/hash.h>
-#include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
@@ -24,6 +23,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
+#include <drizzled/db.h>
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
@@ -194,11 +194,13 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    LEX_STRING tmp;
+    string database_name(packet);
+    NonNormalisedDatabaseName non_normalised_database_name(database_name);
+    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    tmp.str= packet;
-    tmp.length= packet_length;
-    if (!mysql_change_db(session, &tmp, false))
+
+    if (! mysql_change_db(session, normalised_database_name, false))
     {
       session->my_ok();
     }
@@ -357,7 +359,6 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   if (schema_table_name.compare("TABLES") == 0 ||
       schema_table_name.compare("TABLE_NAMES") == 0)
   {
-    LEX_STRING db;
     size_t dummy;
     if (lex->select_lex.db == NULL &&
         lex->copy_db_to(&lex->select_lex.db, &dummy))
@@ -365,13 +366,18 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       return (1);
     }
     schema_select_lex= new Select_Lex();
-    db.str= schema_select_lex->db= lex->select_lex.db;
-    schema_select_lex->table_list.first= NULL;
-    db.length= strlen(db.str);
+    schema_select_lex->db= lex->select_lex.db;
 
-    if (check_db_name(&db))
+    string database_name(schema_select_lex->db);
+    NonNormalisedDatabaseName non_normalised_database_name(database_name);
+    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+    schema_select_lex->table_list.first= NULL;
+
+    if (! normalised_database_name.isValid())
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
+      my_error(ER_WRONG_DB_NAME, MYF(0),
+               normalised_database_name.to_string().c_str());
       return (1);
     }
   }
@@ -944,11 +950,20 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str &&
-      check_db_name(&table->db))
+  if (table->is_derived_table() == false && table->db.str)
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
-    return NULL;
+    string database_name(table->db.str);
+    NonNormalisedDatabaseName non_normalised_database_name(database_name);
+    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+    if (! normalised_database_name.isValid())
+    {
+      my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
+      return NULL;
+    }
+
+    strncpy(table->db.str, normalised_database_name.to_string().c_str(),
+            table->db.length);
   }
 
   if (!alias)					/* Alias is case sensitive */
