@@ -32,7 +32,6 @@
  */
 class Field_blob :public Field_str {
 protected:
-  uint32_t packlength;
   String value;				// For temporaries
 public:
 
@@ -58,8 +57,7 @@ public:
                maybe_null_arg ? (unsigned char *) "": 0,
                0,
                field_name_arg,
-               cs),
-    packlength(4)
+               cs)
   {
     flags|= BLOB_FLAG;
   }
@@ -97,26 +95,24 @@ public:
      @returns The length of the raw data itself without the pointer.
   */
   uint32_t pack_length_no_ptr() const
-  { return (uint32_t) (packlength); }
+  { return (uint32_t) (sizeof(uint32_t)); }
   uint32_t row_pack_length() { return pack_length_no_ptr(); }
   uint32_t sort_length() const;
   virtual uint32_t max_data_length() const
   {
-    return (uint32_t) (((uint64_t) 1 << (packlength*8)) -1);
+    return (uint32_t) (((uint64_t) 1 << 32) -1);
   }
-  int reset(void) { memset(ptr, 0, packlength+sizeof(unsigned char*)); return 0; }
+  int reset(void) { memset(ptr, 0, sizeof(uint32_t)+sizeof(unsigned char*)); return 0; }
   void reset_fields() { memset(&value, 0, sizeof(value)); }
 #ifndef WORDS_BIGENDIAN
   static
 #endif
-  void store_length(unsigned char *i_ptr, uint32_t i_packlength,
-                    uint32_t i_number, bool low_byte_first);
-  void store_length(unsigned char *i_ptr, uint32_t i_packlength,
-                    uint32_t i_number);
+  void store_length(unsigned char *i_ptr, uint32_t i_number, bool low_byte_first);
+  void store_length(unsigned char *i_ptr, uint32_t i_number);
 
   inline void store_length(uint32_t number)
   {
-    store_length(ptr, packlength, number);
+    store_length(ptr, number);
   }
 
   /**
@@ -130,28 +126,27 @@ public:
   uint32_t get_packed_size(const unsigned char *ptr_arg, bool low_byte_first);
 
   uint32_t get_length(uint32_t row_offset= 0);
-  uint32_t get_length(const unsigned char *ptr, uint32_t packlength,
-                      bool low_byte_first);
+  uint32_t get_length(const unsigned char *ptr, bool low_byte_first);
   uint32_t get_length(const unsigned char *ptr_arg);
   void put_length(unsigned char *pos, uint32_t length);
   inline void get_ptr(unsigned char **str)
     {
-      memcpy(str,ptr+packlength,sizeof(unsigned char*));
+      memcpy(str,ptr+sizeof(uint32_t),sizeof(unsigned char*));
     }
   inline void get_ptr(unsigned char **str, uint32_t row_offset)
     {
-      memcpy(str,ptr+packlength+row_offset,sizeof(char*));
+      memcpy(str,ptr+sizeof(uint32_t)+row_offset,sizeof(char*));
     }
   inline void set_ptr(unsigned char *length, unsigned char *data)
     {
-      memcpy(ptr,length,packlength);
-      memcpy(ptr+packlength,&data,sizeof(char*));
+      memcpy(ptr,length,sizeof(uint32_t));
+      memcpy(ptr+sizeof(uint32_t),&data,sizeof(char*));
     }
   void set_ptr_offset(ptrdiff_t ptr_diff, uint32_t length, unsigned char *data)
     {
       unsigned char *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,unsigned char*);
-      store_length(ptr_ofs, packlength, length);
-      memcpy(ptr_ofs+packlength,&data,sizeof(char*));
+      store_length(ptr_ofs, length);
+      memcpy(ptr_ofs+sizeof(uint32_t),&data,sizeof(char*));
     }
   inline void set_ptr(uint32_t length, unsigned char *data)
     {
@@ -171,7 +166,7 @@ public:
       return 1;
     }
     tmp=(unsigned char*) value.ptr();
-    memcpy(ptr+packlength,&tmp,sizeof(char*));
+    memcpy(ptr+sizeof(uint32_t),&tmp,sizeof(char*));
     return 0;
   }
   virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
@@ -179,7 +174,7 @@ public:
   unsigned char *pack_key(unsigned char *to, const unsigned char *from,
                   uint32_t max_length, bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char *to, const unsigned char *from,
-                              uint32_t param_data, bool low_byte_first);
+                              uint32_t , bool low_byte_first);
   void free() { value.free(); }
   inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
