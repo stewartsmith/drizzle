@@ -120,6 +120,7 @@
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_index_merge_select.h"
+#include "drizzled/optimizer/quick_ror_intersect_select.h"
 #include "drizzled/optimizer/sel_arg.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/records.h"
@@ -678,157 +679,6 @@ optimizer::QuickSelectInterface::QuickSelectInterface()
     max_used_key_length(0),
     used_key_parts(0)
 {}
-
-
-
-optimizer::QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *session_param,
-                                                                  Table *table,
-                                                                  bool retrieve_full_rows,
-                                                                  MEM_ROOT *parent_alloc)
-  :
-    cpk_quick(NULL),
-    session(session_param),
-    need_to_fetch_row(retrieve_full_rows),
-    scans_inited(false)
-{
-  index= MAX_KEY;
-  head= table;
-  record= head->record[0];
-  if (! parent_alloc)
-  {
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  }
-  else
-  {
-    memset(&alloc, 0, sizeof(MEM_ROOT));
-  }
-  last_rowid= (unsigned char*) alloc_root(parent_alloc? parent_alloc : &alloc,
-                                  head->cursor->ref_length);
-}
-
-
-/*
-  Do post-constructor initialization.
-  SYNOPSIS
-    QUICK_ROR_INTERSECT_SELECT::init()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_INTERSECT_SELECT::init()
-{
- /* Check if last_rowid was successfully allocated in ctor */
-  return (! last_rowid);
-}
-
-
-/*
-  Initialize this quick select to be a part of a ROR-merged scan.
-  SYNOPSIS
-    QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan()
-      reuse_handler If true, use head->cursor, otherwise create separate
-                    Cursor object.
-  RETURN
-    0     OK
-    other error code
-*/
-int optimizer::QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
-{
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect *quick= NULL;
-
-  /* Initialize all merged "children" quick selects */
-  assert(!need_to_fetch_row || reuse_handler);
-  if (! need_to_fetch_row && reuse_handler)
-  {
-    quick= quick_it++;
-    /*
-      There is no use of this->cursor. Use it for the first of merged range
-      selects.
-    */
-    if (quick->init_ror_merged_scan(true))
-      return 0;
-    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
-  }
-  while ((quick= quick_it++))
-  {
-    if (quick->init_ror_merged_scan(false))
-    {
-      return 0;
-    }
-    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
-    /* All merged scans share the same record buffer in intersection. */
-    quick->record= head->record[0];
-  }
-
-  if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
-  {
-    return 0;
-  }
-  return 0;
-}
-
-
-/*
-  Initialize quick select for row retrieval.
-  SYNOPSIS
-    reset()
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
-{
-  if (! scans_inited && init_ror_merged_scan(true))
-  {
-    return 0;
-  }
-  scans_inited= true;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  optimizer::QuickRangeSelect *quick= NULL;
-  while ((quick= it++))
-  {
-    quick->reset();
-  }
-  return 0;
-}
-
-
-/*
-  Add a merged quick select to this ROR-intersection quick select.
-
-  SYNOPSIS
-    QUICK_ROR_INTERSECT_SELECT::push_quick_back()
-      quick Quick select to be added. The quick select must return
-            rows in rowid order.
-  NOTES
-    This call can only be made before init() is called.
-
-  RETURN
-    false OK
-    true  Out of memory.
-*/
-
-bool
-optimizer::QUICK_ROR_INTERSECT_SELECT::push_quick_back(optimizer::QuickRangeSelect *quick)
-{
-  return quick_selects.push_back(quick);
-}
-
-optimizer::QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
-{
-  quick_selects.delete_elements();
-  delete cpk_quick;
-  free_root(&alloc,MYF(0));
-  if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
-  {
-    head->cursor->ha_rnd_end();
-  }
-  return;
-}
 
 
 optimizer::QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
@@ -5476,18 +5326,6 @@ bool optimizer::QuickSelectInterface::is_keys_used(const MyBitmap *fields)
 }
 
 
-bool optimizer::QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
-{
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (is_key_used(head, quick->index, fields))
-      return 1;
-  }
-  return 0;
-}
-
 bool optimizer::QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
 {
   optimizer::QuickSelectInterface *quick;
@@ -5617,96 +5455,6 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
 err:
   delete quick;
   return 0;
-}
-
-
-/*
-  Retrieve next record.
-  SYNOPSIS
-     QUICK_ROR_INTERSECT_SELECT::get_next()
-
-  NOTES
-    Invariant on enter/exit: all intersected selects have retrieved all index
-    records with rowid <= some_rowid_val and no intersected select has
-    retrieved any index records with rowid > some_rowid_val.
-    We start fresh and loop until we have retrieved the same rowid in each of
-    the key scans or we got an error.
-
-    If a Clustered PK scan is present, it is used only to check if row
-    satisfies its condition (and never used for row retrieval).
-
-  RETURN
-   0     - Ok
-   other - Error code if any error occurred.
-*/
-
-int optimizer::QUICK_ROR_INTERSECT_SELECT::get_next()
-{
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect* quick;
-  int error, cmp;
-  uint32_t last_rowid_count=0;
-
-  do
-  {
-    /* Get a rowid for first quick and save it as a 'candidate' */
-    quick= quick_it++;
-    error= quick->get_next();
-    if (cpk_quick)
-    {
-      while (!error && !cpk_quick->row_in_ranges())
-        error= quick->get_next();
-    }
-    if (error)
-      return(error);
-
-    quick->cursor->position(quick->record);
-    memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
-    last_rowid_count= 1;
-
-    while (last_rowid_count < quick_selects.elements)
-    {
-      if (!(quick= quick_it++))
-      {
-        quick_it.rewind();
-        quick= quick_it++;
-      }
-
-      do
-      {
-        if ((error= quick->get_next()))
-          return(error);
-        quick->cursor->position(quick->record);
-        cmp= head->cursor->cmp_ref(quick->cursor->ref, last_rowid);
-      } while (cmp < 0);
-
-      /* Ok, current select 'caught up' and returned ref >= cur_ref */
-      if (cmp > 0)
-      {
-        /* Found a row with ref > cur_ref. Make it a new 'candidate' */
-        if (cpk_quick)
-        {
-          while (!cpk_quick->row_in_ranges())
-          {
-            if ((error= quick->get_next()))
-              return(error);
-          }
-        }
-        memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
-        last_rowid_count= 1;
-      }
-      else
-      {
-        /* current 'candidate' row confirmed by this select */
-        last_rowid_count++;
-      }
-    }
-
-    /* We get here if we got the same row ref in all scans. */
-    if (need_to_fetch_row)
-      error= head->cursor->rnd_pos(head->record[0], last_rowid);
-  } while (error == HA_ERR_RECORD_DELETED);
-  return(error);
 }
 
 
@@ -5844,31 +5592,6 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
 }
 
 
-void optimizer::QUICK_ROR_INTERSECT_SELECT::add_info_string(String *str)
-{
-  bool first= true;
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  str->append(STRING_WITH_LEN("intersect("));
-  while ((quick= it++))
-  {
-    KEY *key_info= head->key_info + quick->index;
-    if (! first)
-      str->append(',');
-    else
-      first= false;
-    str->append(key_info->name);
-  }
-  if (cpk_quick)
-  {
-    KEY *key_info= head->key_info + cpk_quick->index;
-    str->append(',');
-    str->append(key_info->name);
-  }
-  str->append(')');
-}
-
-
 void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
 {
   bool first= true;
@@ -5884,41 +5607,6 @@ void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
     quick->add_info_string(str);
   }
   str->append(')');
-}
-
-
-void optimizer::QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
-                                                                 String *used_lengths)
-{
-  char buf[64];
-  uint32_t length;
-  bool first= true;
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
-  {
-    KEY *key_info= head->key_info + quick->index;
-    if (first)
-      first= false;
-    else
-    {
-      key_names->append(',');
-      used_lengths->append(',');
-    }
-    key_names->append(key_info->name);
-    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(buf, length);
-  }
-
-  if (cpk_quick)
-  {
-    KEY *key_info= head->key_info + cpk_quick->index;
-    key_names->append(',');
-    key_names->append(key_info->name);
-    length= int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
-    used_lengths->append(buf, length);
-  }
 }
 
 

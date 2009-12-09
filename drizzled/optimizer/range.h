@@ -184,8 +184,9 @@ public:
   /** Range end should be called when we have looped over the whole index */
   virtual void range_end() {}
 
-  virtual bool reverse_sorted() = 0;
-  virtual bool unique_key_range()
+  virtual bool reverse_sorted() const = 0;
+
+  virtual bool unique_key_range() const
   {
     return false;
   }
@@ -201,7 +202,7 @@ public:
   };
 
   /** Returns the type of this quick select - one of the QS_TYPE_* values */
-  virtual int get_type() = 0;
+  virtual int get_type() const = 0;
 
   /**
    * Initialize this quick select as a merged scan inside a ROR-union or a ROR-
@@ -275,72 +276,6 @@ range_seq_t quick_range_seq_init(void *init_param, uint32_t n_ranges, uint32_t f
 uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
 
 
-/**
-  Rowid-Ordered Retrieval (ROR) index intersection quick select.
-  This quick select produces intersection of row sequences returned
-  by several QuickRangeSelects it "merges".
-
-  All merged QuickRangeSelects must return rowids in rowid order.
-  QUICK_ROR_INTERSECT_SELECT will return rows in rowid order, too.
-
-  All merged quick selects retrieve {rowid, covered_fields} tuples (not full
-  table records).
-  QUICK_ROR_INTERSECT_SELECT retrieves full records if it is not being used
-  by QUICK_ROR_INTERSECT_SELECT and all merged quick selects together don't
-  cover needed all fields.
-
-  If one of the merged quick selects is a Clustered PK range scan, it is
-  used only to filter rowid sequence produced by other merged quick selects.
-*/
-class QUICK_ROR_INTERSECT_SELECT : public QuickSelectInterface
-{
-public:
-  QUICK_ROR_INTERSECT_SELECT(Session *session, Table *table,
-                             bool retrieve_full_rows,
-                             MEM_ROOT *parent_alloc);
-  ~QUICK_ROR_INTERSECT_SELECT();
-
-  int init();
-  int reset(void);
-  int get_next();
-  bool reverse_sorted()
-  {
-    return false;
-  }
-  bool unique_key_range()
-  {
-    return false;
-  }
-  int get_type()
-  {
-    return QS_TYPE_ROR_INTERSECT;
-  }
-  void add_keys_and_lengths(String *key_names, String *used_lengths);
-  void add_info_string(String *str);
-  bool is_keys_used(const MyBitmap *fields);
-  int init_ror_merged_scan(bool reuse_handler);
-  bool push_quick_back(QuickRangeSelect *quick_sel_range);
-
-  /**
-   * Range quick selects this intersection consists of, not including
-   * cpk_quick.
-   */
-  List<QuickRangeSelect> quick_selects;
-
-  /**
-   * Merged quick select that uses Clustered PK, if there is one. This quick
-   * select is not used for row retrieval, it is used for row retrieval.
-   */
-  QuickRangeSelect *cpk_quick;
-
-  MEM_ROOT alloc; /**< Memory pool for this and merged quick selects data. */
-  Session *session; /**< Pointer to the current session */
-  bool need_to_fetch_row; /**< if true, do retrieve full table records. */
-  /** in top-level quick select, true if merged scans where initialized */
-  bool scans_inited;
-};
-
-
 /*
  * This function object is defined in drizzled/optimizer/range.cc
  * We need this here for the priority_queue definition in the
@@ -369,18 +304,22 @@ public:
   int  init();
   int  reset(void);
   int  get_next();
-  bool reverse_sorted()
+
+  bool reverse_sorted() const
   {
     return false;
   }
-  bool unique_key_range()
+
+  bool unique_key_range() const
   {
     return false;
   }
-  int get_type()
+
+  int get_type() const
   {
     return QS_TYPE_ROR_UNION;
   }
+
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MyBitmap *fields);
@@ -491,18 +430,22 @@ public:
   int init();
   int reset();
   int get_next();
-  bool reverse_sorted()
+
+  bool reverse_sorted() const
   {
     return false;
   }
-  bool unique_key_range()
+
+  bool unique_key_range() const
   {
     return false;
   }
-  int get_type()
+
+  int get_type() const
   {
     return QS_TYPE_GROUP_MIN_MAX;
   }
+
   void add_keys_and_lengths(String *key_names, String *used_lengths);
 };
 

@@ -233,7 +233,7 @@ void optimizer::QuickRangeSelect::save_last_pos()
 }
 
 
-bool optimizer::QuickRangeSelect::unique_key_range()
+bool optimizer::QuickRangeSelect::unique_key_range() const
 {
   if (ranges.elements == 1)
   {

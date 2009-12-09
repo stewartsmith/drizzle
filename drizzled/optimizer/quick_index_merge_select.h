@@ -107,17 +107,17 @@ public:
    */
   int get_next();
 
-  bool reverse_sorted()
+  bool reverse_sorted() const
   {
     return false;
   }
 
-  bool unique_key_range()
+  bool unique_key_range() const
   {
     return false;
   }
 
-  int get_type()
+  int get_type() const
   {
     return QS_TYPE_INDEX_MERGE;
   }
