@@ -1004,7 +1004,6 @@ Field *make_field(TableShare *share,
                                    null_bit,
                                    field_name,
                                    share,
-                                   calc_pack_length(DRIZZLE_TYPE_LONG, 0),
                                    field_charset);
     }
 

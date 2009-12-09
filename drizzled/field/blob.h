@@ -48,7 +48,6 @@ public:
              unsigned char null_bit_arg,
              const char *field_name_arg,
              TableShare *share,
-             uint32_t blob_pack_length,
              const CHARSET_INFO * const cs);
   Field_blob(uint32_t len_arg,
              bool maybe_null_arg,
