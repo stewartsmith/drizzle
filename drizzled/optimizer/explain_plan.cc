@@ -70,8 +70,8 @@ void optimizer::ExplainPlan::printPlan()
   {
     item_list.push_back(new Item_int((int32_t)
                         join->select_lex->select_number));
-    item_list.push_back(new Item_string(join->select_lex->type,
-                                        strlen(join->select_lex->type), 
+    item_list.push_back(new Item_string(join->select_lex->type.c_str(),
+                                        join->select_lex->type.length(),
                                         cs));
     for (uint32_t i= 0; i < 7; i++)
       item_list.push_back(item_null);
@@ -97,8 +97,8 @@ void optimizer::ExplainPlan::printPlan()
     /* id */
     item_list.push_back(new Item_null);
     /* select_type */
-    item_list.push_back(new Item_string(join->select_lex->type,
-                                        strlen(join->select_lex->type),
+    item_list.push_back(new Item_string(join->select_lex->type.c_str(),
+                                        join->select_lex->type.length(),
                                         cs));
     /* table */
     {
@@ -177,8 +177,8 @@ void optimizer::ExplainPlan::printPlan()
       item_list.push_back(new Item_uint((uint32_t)
             join->select_lex->select_number));
       /* select_type */
-      item_list.push_back(new Item_string(join->select_lex->type,
-                                          strlen(join->select_lex->type),
+      item_list.push_back(new Item_string(join->select_lex->type.c_str(),
+                                          join->select_lex->type.length(),
                                           cs));
       if (tab->type == AM_ALL && tab->select && tab->select->quick)
       {
@@ -204,8 +204,8 @@ void optimizer::ExplainPlan::printPlan()
       {
         TableList *real_table= table->pos_in_table_list;
         item_list.push_back(new Item_string(real_table->alias,
-              strlen(real_table->alias),
-              cs));
+                                            strlen(real_table->alias),
+                                            cs));
       }
       /* "type" column */
       item_list.push_back(new Item_string(access_method_str[tab->type].c_str(),
@@ -235,12 +235,11 @@ void optimizer::ExplainPlan::printPlan()
       if (tab->ref.key_parts)
       {
         KEY *key_info= table->key_info+ tab->ref.key;
-        register uint32_t length;
         item_list.push_back(new Item_string(key_info->name,
                                             strlen(key_info->name),
                                             system_charset_info));
-        length= int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
-                            keylen_str_buf;
+        uint32_t length= int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
+                                     keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, 
                                             length,
                                             system_charset_info));
@@ -257,11 +256,10 @@ void optimizer::ExplainPlan::printPlan()
       else if (tab->type == AM_NEXT)
       {
         KEY *key_info=table->key_info+ tab->index;
-        register uint32_t length;
         item_list.push_back(new Item_string(key_info->name,
               strlen(key_info->name),cs));
-        length= int64_t2str(key_info->key_length, keylen_str_buf, 10) -
-          keylen_str_buf;
+        uint32_t length= int64_t2str(key_info->key_length, keylen_str_buf, 10) -
+                                     keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf,
                                             length,
                                             system_charset_info));
@@ -284,10 +282,14 @@ void optimizer::ExplainPlan::printPlan()
       /* Add "rows" field to item_list. */
       double examined_rows;
       if (tab->select && tab->select->quick)
+      {
         examined_rows= rows2double(tab->select->quick->records);
+      }
       else if (tab->type == AM_NEXT || tab->type == AM_ALL)
+      {
         examined_rows= rows2double(tab->limit ? tab->limit :
-            tab->table->cursor->records());
+                                                tab->table->cursor->records());
+      }
       else
       {
         optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
@@ -295,7 +297,7 @@ void optimizer::ExplainPlan::printPlan()
       }
 
       item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
-            MY_INT64_NUM_DECIMAL_DIGITS));
+                                       MY_INT64_NUM_DECIMAL_DIGITS));
 
       /* Add "filtered" field to item_list. */
       if (join->session->lex->describe & DESCRIBE_EXTENDED)
@@ -304,8 +306,7 @@ void optimizer::ExplainPlan::printPlan()
         if (examined_rows)
         {
           optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
-          f= (float) (100.0 * cur_pos.getFanout() /
-              examined_rows);
+          f= static_cast<float>(100.0 * cur_pos.getFanout() / examined_rows);
         }
         item_list.push_back(new Item_float(f, 2));
       }
@@ -469,11 +470,11 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
     {
       if (sl->first_inner_unit() || sl->next_select())
       {
-        sl->type= "PRIMARY";
+        sl->type.assign("PRIMARY");
       }
       else
       {
-        sl->type= "SIMPLE";
+        sl->type.assign("SIMPLE");
       }
     }
     else
@@ -482,23 +483,23 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
       {
         if (sl->linkage == DERIVED_TABLE_TYPE)
         {
-          sl->type= "DERIVED";
+          sl->type.assign("DERIVED");
         }
         else
         {
           if (uncacheable & UNCACHEABLE_DEPENDENT)
           {
-            sl->type= "DEPENDENT SUBQUERY";
+            sl->type.assign("DEPENDENT SUBQUERY");
           }
           else
           {
             if (uncacheable)
             {
-              sl->type= "UNCACHEABLE SUBQUERY";
+              sl->type.assign("UNCACHEABLE SUBQUERY");
             }
             else
             {
-              sl->type= "SUBQUERY";
+              sl->type.assign("SUBQUERY");
             }
           }
         }
@@ -507,17 +508,17 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
       {
         if (uncacheable & UNCACHEABLE_DEPENDENT)
         {
-          sl->type= "DEPENDENT UNION";
+          sl->type.assign("DEPENDENT UNION");
         }
         else
         {
           if (uncacheable)
           {
-            sl->type= "UNCACHEABLE_UNION";
+            sl->type.assign("UNCACHEABLE_UNION");
           }
           else
           {
-            sl->type= "UNION";
+            sl->type.assign("UNION");
           }
         }
       }
@@ -528,7 +529,7 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   if (unit->is_union())
   {
     unit->fake_select_lex->select_number= UINT_MAX; // just for initialization
-    unit->fake_select_lex->type= "UNION RESULT";
+    unit->fake_select_lex->type.assign("UNION RESULT");
     unit->fake_select_lex->options|= SELECT_DESCRIBE;
     if (! (res= unit->prepare(session, result, SELECT_NO_UNLOCK | SELECT_DESCRIBE)))
     {
