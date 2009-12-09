@@ -1,5 +1,5 @@
 #
-# Tests simple DELETE statements and the transaction log
+# Tests SELECT FOR UPDATE 
 #
 
 # Populate log with some records...
