@@ -85,17 +85,4 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  "crc32",
-  "1.0",
-  "Stewart Smith",
-  "UDF for computing CRC32",
-  PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL, NULL);

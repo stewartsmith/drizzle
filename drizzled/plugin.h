@@ -52,18 +52,24 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
 */
 
 
-#if defined(PANDORA_DYNAMIC_PLUGIN)
-# define DRIZZLE_DECLARE_PLUGIN \
-    drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
-#else
-# define PANDORA_BUILTIN_NAME(x) builtin_ ## x ## _plugin
-# define PANDORA_NAME(x) PANDORA_BUILTIN_NAME(x)
-# define DRIZZLE_DECLARE_PLUGIN \
-           drizzled::plugin::Manifest PANDORA_NAME(PANDORA_MODULE_NAME)[]= {
-#endif
+#define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
+#define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
+#define DRIZZLE_DECLARE_PLUGIN \
+           drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)[]= {
 
 
-#define DRIZZLE_DECLARE_PLUGIN_END ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
+#define DRIZZLE_DECLARE_PLUGIN_END ,{NULL,NULL,NULL,NULL,PLUGIN_LICENSE_GPL,NULL,NULL,NULL,NULL,NULL}}
+#define DRIZZLE_PLUGIN(init,deinit,status,system,config) \
+  DRIZZLE_DECLARE_PLUGIN \
+  { \
+    STRINGIFY_ARG(PANDORA_MODULE_NAME), \
+    STRINGIFY_ARG(PANDORA_MODULE_VERSION), \
+    STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
+    STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
+    PANDORA_MODULE_LICENSE, \
+    init, deinit, status, system, config \
+  } \
+  DRIZZLE_DECLARE_PLUGIN_END
 
 
 
