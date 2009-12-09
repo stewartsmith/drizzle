@@ -63,28 +63,6 @@ public:
   {
     flags|= BLOB_FLAG;
   }
-  Field_blob(uint32_t len_arg,
-             bool maybe_null_arg,
-             const char *field_name_arg,
-             const CHARSET_INFO * const cs,
-             bool set_packlength)
-    :Field_str((unsigned char*) NULL,
-               len_arg,
-               maybe_null_arg ? (unsigned char*) "": 0,
-               0,
-               field_name_arg,
-               cs),
-    packlength(4)
-  {
-    flags|= BLOB_FLAG;
-    if (set_packlength)
-    {
-      uint32_t l_char_length= len_arg/cs->mbmaxlen;
-      packlength= l_char_length <= 255 ? 1 :
-                  l_char_length <= 65535 ? 2 :
-                  l_char_length <= 16777215 ? 3 : 4;
-    }
-  }
 
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
