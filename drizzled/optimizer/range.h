@@ -519,11 +519,11 @@ QuickRangeSelect *get_quick_select(Parameter *param,
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
 SqlSelect *make_select(Table *head, 
-                        table_map const_tables,
-			                  table_map read_tables, 
-                        COND *conds,
-                        bool allow_null_cond,
-                        int *error);
+                       table_map const_tables,
+                       table_map read_tables, 
+                       COND *conds,
+                       bool allow_null_cond,
+                       int *error);
 
 bool get_quick_keys(Parameter *param, 
                     QuickRangeSelect *quick,

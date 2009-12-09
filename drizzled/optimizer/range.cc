@@ -594,11 +594,11 @@ static int imerge_list_or_tree(optimizer::RangeParameter *param,
 	   */
 
 optimizer::SqlSelect *optimizer::make_select(Table *head,
-                                              table_map const_tables,
-                                              table_map read_tables,
-                                              COND *conds,
-                                              bool allow_null_cond,
-                                              int *error)
+                                             table_map const_tables,
+                                             table_map read_tables,
+                                             COND *conds,
+                                             bool allow_null_cond,
+                                             int *error)
 {
   optimizer::SqlSelect *select= NULL;
 
@@ -630,7 +630,11 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 }
 
 
-optimizer::SqlSelect::SqlSelect() :quick(0),cond(0),free_cond(0)
+optimizer::SqlSelect::SqlSelect() 
+  :
+    quick(NULL),
+    cond(NULL),
+    free_cond(NULL)
 {
   quick_keys.reset();
   needed_reg.reset();
@@ -644,7 +648,7 @@ void optimizer::SqlSelect::cleanup()
   quick= 0;
   if (free_cond)
   {
-    free_cond=0;
+    free_cond= 0;
     delete cond;
     cond= 0;
   }
@@ -658,19 +662,24 @@ optimizer::SqlSelect::~SqlSelect()
 }
 
 
-bool optimizer::SqlSelect::check_quick(Session *session, bool force_quick_range,
-                             ha_rows limit)
+bool optimizer::SqlSelect::check_quick(Session *session, 
+                                       bool force_quick_range,
+                                       ha_rows limit)
 {
   key_map tmp;
   tmp.set();
-  return test_quick_select(session, tmp, 0, limit,
-                           force_quick_range, false) < 0;
+  return (test_quick_select(session, 
+                           tmp, 
+                           0, 
+                           limit,
+                           force_quick_range, 
+                           false) < 0);
 }
 
 
 bool optimizer::SqlSelect::skip_record()
 {
-  return cond ? cond->val_int() == 0 : 0;
+  return (cond ? cond->val_int() == 0 : 0);
 }
 
 
@@ -1012,7 +1021,7 @@ public:
 };
 
 
-/* Plan for QUICK_ROR_INTERSECT_SELECT scan. */
+/* Plan for QuickRorIntersectSelect scan. */
 
 class TRP_ROR_INTERSECT : public TABLE_READ_PLAN
 {
@@ -1053,7 +1062,7 @@ public:
 
 /*
   Plan for QuickIndexMergeSelect scan.
-  QUICK_ROR_INTERSECT_SELECT always retrieves full rows, so retrieve_full_rows
+  QuickRorIntersectSelect always retrieves full rows, so retrieve_full_rows
   is ignored by make_quick.
 */
 
@@ -1237,11 +1246,11 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
 */
 
 int optimizer::SqlSelect::test_quick_select(Session *session,
-                                             key_map keys_to_use,
-				                                     table_map prev_tables,
-				                                     ha_rows limit,
-                                             bool force_quick_range,
-                                             bool ordered_output)
+                                            key_map keys_to_use,
+				                                    table_map prev_tables,
+				                                    ha_rows limit,
+                                            bool force_quick_range,
+                                            bool ordered_output)
 {
   uint32_t idx;
   double scan_time;
@@ -2724,15 +2733,15 @@ optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::Parame
                                                          bool retrieve_full_rows,
                                                          MEM_ROOT *parent_alloc)
 {
-  optimizer::QUICK_ROR_INTERSECT_SELECT *quick_intersect= NULL;
+  optimizer::QuickRorIntersectSelect *quick_intersect= NULL;
   optimizer::QuickRangeSelect *quick= NULL;
   MEM_ROOT *alloc= NULL;
 
   if ((quick_intersect=
-         new optimizer::QUICK_ROR_INTERSECT_SELECT(param->session,
-                                                   param->table,
-                                                   (retrieve_full_rows? (! is_covering) : false),
-                                                   parent_alloc)))
+         new optimizer::QuickRorIntersectSelect(param->session,
+                                                param->table,
+                                                (retrieve_full_rows? (! is_covering) : false),
+                                                parent_alloc)))
   {
     print_ror_scans_arr(param->table,
                         "creating ROR-intersect",
@@ -6519,10 +6528,10 @@ get_field_keypart(KEY *index, Field *field)
   RETURN
     Pointer to the SEL_ARG subtree that corresponds to index.
 */
-optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
-                               SEL_TREE* range_tree,
-                               optimizer::Parameter *param,
-                               uint32_t *param_idx)
+optimizer::SEL_ARG *get_index_range_tree(uint32_t index,
+                                         SEL_TREE* range_tree,
+                                         optimizer::Parameter *param,
+                                         uint32_t *param_idx)
 {
   uint32_t idx= 0; /* Index nr in param->key_parts */
   while (idx < param->keys)

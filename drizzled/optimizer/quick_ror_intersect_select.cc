@@ -26,10 +26,10 @@
 using namespace drizzled;
 
 
-optimizer::QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *session_param,
-                                                                  Table *table,
-                                                                  bool retrieve_full_rows,
-                                                                  MEM_ROOT *parent_alloc)
+optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_param,
+                                                            Table *table,
+                                                            bool retrieve_full_rows,
+                                                            MEM_ROOT *parent_alloc)
   :
     cpk_quick(NULL),
     session(session_param),
@@ -52,7 +52,7 @@ optimizer::QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *sessi
 }
 
 
-optimizer::QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
+optimizer::QuickRorIntersectSelect::~QuickRorIntersectSelect()
 {
   quick_selects.delete_elements();
   delete cpk_quick;
@@ -65,14 +65,14 @@ optimizer::QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
 }
 
 
-int optimizer::QUICK_ROR_INTERSECT_SELECT::init()
+int optimizer::QuickRorIntersectSelect::init()
 {
  /* Check if last_rowid was successfully allocated in ctor */
   return (! last_rowid);
 }
 
 
-int optimizer::QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
+int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
 {
   List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
   optimizer::QuickRangeSelect *quick= NULL;
@@ -109,7 +109,7 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handl
 }
 
 
-int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
+int optimizer::QuickRorIntersectSelect::reset()
 {
   if (! scans_inited && init_ror_merged_scan(true))
   {
@@ -127,13 +127,13 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
 
 
 bool
-optimizer::QUICK_ROR_INTERSECT_SELECT::push_quick_back(optimizer::QuickRangeSelect *quick)
+optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect *quick)
 {
   return quick_selects.push_back(quick);
 }
 
 
-bool optimizer::QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickRorIntersectSelect::is_keys_used(const MyBitmap *fields)
 {
   optimizer::QuickRangeSelect *quick;
   List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
@@ -146,7 +146,7 @@ bool optimizer::QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
 }
 
 
-int optimizer::QUICK_ROR_INTERSECT_SELECT::get_next()
+int optimizer::QuickRorIntersectSelect::get_next()
 {
   List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
   optimizer::QuickRangeSelect *quick= NULL;
@@ -217,7 +217,7 @@ int optimizer::QUICK_ROR_INTERSECT_SELECT::get_next()
 }
 
 
-void optimizer::QUICK_ROR_INTERSECT_SELECT::add_info_string(String *str)
+void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
 {
   bool first= true;
   optimizer::QuickRangeSelect *quick= NULL;
@@ -242,8 +242,8 @@ void optimizer::QUICK_ROR_INTERSECT_SELECT::add_info_string(String *str)
 }
 
 
-void optimizer::QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
-                                                                 String *used_lengths)
+void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
+                                                              String *used_lengths)
 {
   char buf[64];
   uint32_t length;

@@ -34,32 +34,32 @@ namespace optimizer
   by several QuickRangeSelects it "merges".
 
   All merged QuickRangeSelects must return rowids in rowid order.
-  QUICK_ROR_INTERSECT_SELECT will return rows in rowid order, too.
+  QuickRorIntersectSelect will return rows in rowid order, too.
 
   All merged quick selects retrieve {rowid, covered_fields} tuples (not full
   table records).
-  QUICK_ROR_INTERSECT_SELECT retrieves full records if it is not being used
-  by QUICK_ROR_INTERSECT_SELECT and all merged quick selects together don't
+  QuickRorIntersectSelect retrieves full records if it is not being used
+  by QuickRorIntersectSelect and all merged quick selects together don't
   cover needed all fields.
 
   If one of the merged quick selects is a Clustered PK range scan, it is
   used only to filter rowid sequence produced by other merged quick selects.
 */
-class QUICK_ROR_INTERSECT_SELECT : public QuickSelectInterface
+class QuickRorIntersectSelect : public QuickSelectInterface
 {
 public:
 
-  QUICK_ROR_INTERSECT_SELECT(Session *session, 
+  QuickRorIntersectSelect(Session *session, 
                              Table *table,
                              bool retrieve_full_rows,
                              MEM_ROOT *parent_alloc);
 
-  ~QUICK_ROR_INTERSECT_SELECT();
+  ~QuickRorIntersectSelect();
 
   /**
    * Do post-constructor initialization.
    * SYNOPSIS
-   * QUICK_ROR_INTERSECT_SELECT::init()
+   * QuickRorIntersectSelect::init()
    *
    * RETURN
    * @retval 0      OK
@@ -80,7 +80,7 @@ public:
   /**
    * Retrieve next record.
    * SYNOPSIS
-   * QUICK_ROR_INTERSECT_SELECT::get_next()
+   * QuickRorIntersectSelect::get_next()
    *
    * NOTES
    * Invariant on enter/exit: all intersected selects have retrieved all index
@@ -120,7 +120,7 @@ public:
   /**
    * Initialize this quick select to be a part of a ROR-merged scan.
    * SYNOPSIS
-   * QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan()
+   * QuickRorIntersectSelect::init_ror_merged_scan()
    * reuse_handler If true, use head->cursor, otherwise create separate
    * Cursor object.
    * RETURN
@@ -133,7 +133,7 @@ public:
    * Add a merged quick select to this ROR-intersection quick select.
    *
    * SYNOPSIS
-   * QUICK_ROR_INTERSECT_SELECT::push_quick_back()
+   * QuickRorIntersectSelect::push_quick_back()
    * quick Quick select to be added. The quick select must return
    * rows in rowid order.
    * NOTES

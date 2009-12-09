@@ -252,7 +252,7 @@ private:
 
   friend class QuickIndexMergeSelect;
 
-  friend class QUICK_ROR_INTERSECT_SELECT;
+  friend class QuickRorIntersectSelect;
 
   friend class QUICK_GROUP_MIN_MAX_SELECT;
 

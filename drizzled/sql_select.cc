@@ -6819,7 +6819,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           table->covering_keys.test(tab->index))
 	key_read=1;
       if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT &&
-          !((optimizer::QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
+          ! ((optimizer::QuickRorIntersectSelect *) tab->select->quick)->need_to_fetch_row)
         key_read=1;
 
       if (tab->info)
