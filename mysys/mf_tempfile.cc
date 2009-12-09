@@ -52,82 +52,41 @@ using namespace std;
 
 */
 
-File create_temp_file(char *to, const char *dir, const char *prefix, myf MyFlags)
+File create_temp_file(char *to, const char *dir, const char *prefix,
+                      myf MyFlags)
 {
   File file= -1;
 
-#if defined(_ZTC__)
-  if (!dir)
-    dir=getenv("TMPDIR");
-  if ((res=tempnam((char*) dir,(char *) prefix)))
+  File org_file;
+  string prefix_str;
+
+  prefix_str= prefix ? prefix : "tmp.";
+  prefix_str.append("XXXXXX");
+
+  if (!dir && ! (dir =getenv("TMPDIR")))
+    dir= P_tmpdir;
+  if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
   {
-    strncpy(to,res,FN_REFLEN-1);
-    (*free)(res);
-    file=my_create(to, 0, mode | O_EXCL, MyFlags);
+    errno=my_errno= ENAMETOOLONG;
+    return(file);
   }
-#elif defined(HAVE_MKSTEMP)
+  strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());
+  org_file=mkstemp(to);
+  /* TODO: This was old behavior, but really don't we want to
+   * unlink files immediately under all circumstances?
+   * if (mode & O_TEMPORARY)
+    (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
+  */
+  file=my_register_filename(org_file, to, EE_CANTCREATEFILE, MyFlags);
+
+  /* If we didn't manage to register the name, remove the temp file */
+  if (org_file >= 0 && file < 0)
   {
-    File org_file;
-    string prefix_str;
-
-    prefix_str= prefix ? prefix : "tmp.";
-    prefix_str.append("XXXXXX");
-
-    if (!dir && ! (dir =getenv("TMPDIR")))
-      dir= P_tmpdir;
-    if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
-    {
-      errno=my_errno= ENAMETOOLONG;
-      return(file);
-    }
-    strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());
-    org_file=mkstemp(to);
-    /* TODO: This was old behavior, but really don't we want to
-     * unlink files immediately under all circumstances?
-     * if (mode & O_TEMPORARY)
-      (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
-     */
-    file=my_register_filename(org_file, to, EE_CANTCREATEFILE, MyFlags);
-
-    /* If we didn't manage to register the name, remove the temp file */
-    if (org_file >= 0 && file < 0)
-    {
-      int tmp=my_errno;
-      close(org_file);
-      (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
-      my_errno=tmp;
-    }
+    int tmp=my_errno;
+    close(org_file);
+    (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
+    my_errno=tmp;
   }
-#elif defined(HAVE_TEMPNAM)
-  {
-    (void)MyFlags;
-    char *res,**old_env,*temp_env[1];
-    if (dir && !dir[0])
-    {				/* Change empty string to current dir */
-      to[0]= FN_CURLIB;
-      to[1]= 0;
-      dir=to;
-    }
-    old_env= (char**) environ;
-    if (dir)
-    {				/* Don't use TMPDIR if dir is given */
-      environ=(const char**) temp_env;
-      temp_env[0]=0;
-    }
-    if ((res=tempnam((char*) dir, (char*) prefix)))
-    {
-      strncpy(to,res,FN_REFLEN-1);
-      (*free)(res);
-      file=my_create(to,0,
-		     (int) (O_RDWR | O_TRUNC | O_EXCL),
-		     MYF(MY_WME));
-
-    }
-    environ=(const char**) old_env;
-  }
-#else
-#error No implementation found for create_temp_file
-#endif
   if (file >= 0)
     my_tmp_file_created++;
 

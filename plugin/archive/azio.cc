@@ -1072,7 +1072,7 @@ static void get_block(azio_stream *s)
     }
     s->pos+= s->stream.avail_in;
     s->inbuf= (Byte *)s->container.buffer;
-    /* We only aio_read when we know there is more data to be read */
+    /* We only azio_read when we know there is more data to be read */
     if (s->pos >= s->check_point)
     {
       s->aio_inited= 0;

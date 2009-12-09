@@ -26,7 +26,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class QuickRange : public Sql_alloc 
+class QuickRange : public Sql_alloc
 {
 public:
   unsigned char *min_key;
@@ -41,11 +41,11 @@ public:
   QuickRange(const unsigned char *min_key_arg,
               uint32_t min_length_arg,
               key_part_map min_keypart_map_arg,
-	            const unsigned char *max_key_arg, 
+	            const unsigned char *max_key_arg,
               uint32_t max_length_arg,
               key_part_map max_keypart_map_arg,
 	            uint32_t flag_arg)
-    : 
+    :
       min_key((unsigned char*) sql_memdup(min_key_arg,min_length_arg+1)),
       max_key((unsigned char*) sql_memdup(max_key_arg,max_length_arg+1)),
       min_length((uint16_t) min_length_arg),

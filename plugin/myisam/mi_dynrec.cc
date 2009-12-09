@@ -53,7 +53,6 @@ static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos
 
 	/* Interface function from MI_INFO */
 
-#ifdef HAVE_MMAP
 
 /*
   Create mmaped area for MyISAM handler
@@ -82,18 +81,18 @@ bool mi_dynmap_file(MI_INFO *info, my_off_t size)
       upon a write if no physical memory is available.
   */
   info->s->file_map= (unsigned char*)
-                  my_mmap(0, (size_t)(size + MEMMAP_EXTRA_MARGIN),
-                          info->s->mode==O_RDONLY ? PROT_READ :
-                          PROT_READ | PROT_WRITE,
-                          MAP_SHARED | MAP_NORESERVE,
-                          info->dfile, 0L);
+                  mmap(NULL, (size_t)(size + MEMMAP_EXTRA_MARGIN),
+                       info->s->mode==O_RDONLY ? PROT_READ :
+                       PROT_READ | PROT_WRITE,
+                       MAP_SHARED | MAP_NORESERVE,
+                       info->dfile, 0L);
   if (info->s->file_map == (unsigned char*) MAP_FAILED)
   {
     info->s->file_map= NULL;
     return(1);
   }
 /* per krow we should look at removing the following code */
-#if defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
+#if !defined(TARGET_OS_SOLARIS)
   madvise((char*) info->s->file_map, size, MADV_RANDOM);
 #endif
   info->s->mmaped_length= size;
@@ -115,12 +114,11 @@ void mi_remap_file(MI_INFO *info, my_off_t size)
 {
   if (info->s->file_map)
   {
-    my_munmap((char*) info->s->file_map,
-              (size_t) info->s->mmaped_length + MEMMAP_EXTRA_MARGIN);
+    munmap((char*) info->s->file_map,
+           (size_t) info->s->mmaped_length + MEMMAP_EXTRA_MARGIN);
     mi_dynmap_file(info, size);
   }
 }
-#endif
 
 
 /*

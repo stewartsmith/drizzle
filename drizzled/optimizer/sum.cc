@@ -60,18 +60,18 @@
 namespace drizzled
 {
 
-static bool find_key_for_maxmin(bool max_fl, 
-                                table_reference_st *ref, 
+static bool find_key_for_maxmin(bool max_fl,
+                                table_reference_st *ref,
                                 Field* field,
-                                COND *cond, 
+                                COND *cond,
                                 uint32_t *range_fl,
                                 uint32_t *key_prefix_length);
 
-static int reckey_in_range(bool max_fl, 
-                           table_reference_st *ref, 
+static int reckey_in_range(bool max_fl,
+                           table_reference_st *ref,
                            Field* field,
-                           COND *cond, 
-                           uint32_t range_fl, 
+                           COND *cond,
+                           uint32_t range_fl,
                            uint32_t prefix_len);
 
 static int maxmin_in_range(bool max_fl, Field *field, COND *cond);
@@ -114,7 +114,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
   int const_result= 1;
   bool recalc_const_item= false;
   uint64_t count= 1;
-  bool is_exact_count= true; 
+  bool is_exact_count= true;
   bool maybe_exact_count= true;
   table_map removed_tables= 0;
   table_map outer_tables= 0;
@@ -194,7 +194,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
     if (item->type() == Item::SUM_FUNC_ITEM)
     {
       Item_sum *item_sum= (((Item_sum*) item));
-      switch (item_sum->sum_func()) 
+      switch (item_sum->sum_func())
       {
         case Item_sum::COUNT_FUNC:
           /*
@@ -249,13 +249,13 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                  Type of range for the key part for this field will be
                  returned in range_fl.
                */
-              if (table->cursor->inited || 
+              if (table->cursor->inited ||
                   (outer_tables & table->map) ||
-                  ! find_key_for_maxmin(0, 
-                                        &ref, 
-                                        item_field->field, 
+                  ! find_key_for_maxmin(0,
+                                        &ref,
+                                        item_field->field,
                                         conds,
-                                        &range_fl, 
+                                        &range_fl,
                                         &prefix_len))
               {
                 const_result= 0;
@@ -336,12 +336,12 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 }
               }
               /* Verify that the read tuple indeed matches the search key */
-              if (! error && 
-                  reckey_in_range(0, 
-                                  &ref, 
+              if (! error &&
+                  reckey_in_range(0,
+                                  &ref,
                                   item_field->field,
-                                  conds, 
-                                  range_fl, 
+                                  conds,
+                                  range_fl,
                                   prefix_len))
               {
                 error= HA_ERR_KEY_NOT_FOUND;
@@ -417,13 +417,13 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                  Type of range for the key part for this field will be
                  returned in range_fl.
                */
-              if (table->cursor->inited || 
+              if (table->cursor->inited ||
                   (outer_tables & table->map) ||
-                  ! find_key_for_maxmin(1, 
-                                        &ref, 
-                                        item_field->field, 
+                  ! find_key_for_maxmin(1,
+                                        &ref,
+                                        item_field->field,
                                         conds,
-                                        &range_fl, 
+                                        &range_fl,
                                         &prefix_len))
               {
                 const_result= 0;
@@ -437,19 +437,19 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
               }
               else
               {
-                error= table->cursor->index_read_map(table->record[0], 
+                error= table->cursor->index_read_map(table->record[0],
                                                      key_buff,
                                                      make_prev_keypart_map(ref.key_parts),
                                                      range_fl & NEAR_MAX ?
                                                      HA_READ_BEFORE_KEY :
                                                      HA_READ_PREFIX_LAST_OR_PREV);
               }
-              if (! error && 
-                  reckey_in_range(1, 
-                                  &ref, 
+              if (! error &&
+                  reckey_in_range(1,
+                                  &ref,
                                   item_field->field,
-                                  conds, 
-                                  range_fl, 
+                                  conds,
+                                  range_fl,
                                   prefix_len))
               {
                 error= HA_ERR_KEY_NOT_FOUND;
@@ -535,7 +535,7 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
 {
   Item *item= NULL;
   inv_order= false;
-  switch (func_item->argument_count()) 
+  switch (func_item->argument_count())
   {
   case 0:
     /* MULT_EQUAL_FUNC */
@@ -645,12 +645,12 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
   @retval
     1        We can use index to get MIN/MAX value
 */
-static bool matching_cond(bool max_fl, 
-                          table_reference_st *ref, 
+static bool matching_cond(bool max_fl,
+                          table_reference_st *ref,
                           KEY *keyinfo,
-                          KEY_PART_INFO *field_part, 
+                          KEY_PART_INFO *field_part,
                           COND *cond,
-                          key_part_map *key_part_used, 
+                          key_part_map *key_part_used,
                           uint32_t *range_fl,
                           uint32_t *prefix_len)
 {
@@ -679,13 +679,13 @@ static bool matching_cond(bool max_fl,
     Item *item;
     while ((item= li++))
     {
-      if (! matching_cond(max_fl, 
-                          ref, 
-                          keyinfo, 
-                          field_part, 
+      if (! matching_cond(max_fl,
+                          ref,
+                          keyinfo,
+                          field_part,
                           item,
-                          key_part_used, 
-                          range_fl, 
+                          key_part_used,
+                          range_fl,
                           prefix_len))
       {
         return 0;
@@ -705,7 +705,7 @@ static bool matching_cond(bool max_fl,
   bool is_null= false;
   bool between= false;
 
-  switch (((Item_func*) cond)->functype()) 
+  switch (((Item_func*) cond)->functype())
   {
   case Item_func::ISNULL_FUNC:
     is_null= 1;     /* fall through */
@@ -895,11 +895,11 @@ static bool matching_cond(bool max_fl,
     1   Can use key to optimize MIN()/MAX().
     In this case ref, range_fl and prefix_len are updated
 */
-static bool find_key_for_maxmin(bool max_fl, 
+static bool find_key_for_maxmin(bool max_fl,
                                 table_reference_st *ref,
-                                Field* field, 
+                                Field* field,
                                 COND *cond,
-                                uint32_t *range_fl, 
+                                uint32_t *range_fl,
                                 uint32_t *prefix_len)
 {
   if (! (field->flags & PART_KEY_FLAG))
@@ -954,13 +954,13 @@ static bool find_key_for_maxmin(bool max_fl,
         ref->key_parts= 0;
         key_part_map key_part_used= 0;
         *range_fl= NO_MIN_RANGE | NO_MAX_RANGE;
-        if (matching_cond(max_fl, 
-                          ref, 
-                          keyinfo, 
-                          part, 
+        if (matching_cond(max_fl,
+                          ref,
+                          keyinfo,
+                          part,
                           cond,
-                          &key_part_used, 
-                          range_fl, 
+                          &key_part_used,
+                          range_fl,
                           prefix_len) &&
             ! (key_part_to_use & ~key_part_used))
         {
@@ -1021,11 +1021,11 @@ static bool find_key_for_maxmin(bool max_fl,
   @retval
     1        WHERE was not true for the found row
 */
-static int reckey_in_range(bool max_fl, 
-                           table_reference_st *ref, 
+static int reckey_in_range(bool max_fl,
+                           table_reference_st *ref,
                            Field* field,
-                           COND *cond, 
-                           uint32_t range_fl, 
+                           COND *cond,
+                           uint32_t range_fl,
                            uint32_t prefix_len)
 {
   if (key_cmp_if_same(field->table, ref->key_buff, ref->key, prefix_len))
@@ -1074,7 +1074,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
     return 0;
   }
   bool less_fl= false;
-  switch (((Item_func*) cond)->functype()) 
+  switch (((Item_func*) cond)->functype())
   {
   case Item_func::BETWEEN:
     return cond->val_int() == 0;                // Return 1 if WHERE is false

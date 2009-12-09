@@ -38,7 +38,6 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/session.h>
-#include <drizzled/db.h>
 #include <drizzled/item/create.h>
 #include <drizzled/unireg.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
@@ -84,12 +83,8 @@ extern "C" {					// Because of SCO 3.2V4.2
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
-#ifdef HAVE_PWD_H
 #include <pwd.h>				// For getpwent
-#endif
-#ifdef HAVE_GRP_H
 #include <grp.h>
-#endif
 
 #include <sys/resource.h>
 
@@ -109,9 +104,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
-#ifdef HAVE_FP_EXCEPT				// Fix type conflict
-typedef fp_except fp_except_t;
-#endif
 #endif /* __FreeBSD__ && HAVE_IEEEFP_H */
 
 #ifdef HAVE_FPU_CONTROL_H
@@ -255,9 +247,7 @@ plugin::StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
 
-#ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
-#endif
 
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
@@ -671,7 +661,6 @@ err:
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-#ifdef HAVE_INITGROUPS
   /*
     We can get a SIGSEGV when calling initgroups() on some systems when NSS
     is configured to use LDAP and the server is statically linked.  We set
@@ -681,7 +670,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
   calling_initgroups= true;
   initgroups((char*) user, user_info_arg->pw_gid);
   calling_initgroups= false;
-#endif
   if (setgid(user_info_arg->pw_gid) == -1)
   {
     sql_perror("setgid");
@@ -890,7 +878,6 @@ extern "C" void handle_segfault(int sig)
   fflush(stderr);
 #endif /* HAVE_STACKTRACE */
 
-#ifdef HAVE_INITGROUPS
   if (calling_initgroups)
     fprintf(stderr, _("\nThis crash occurred while the server was calling "
                       "initgroups(). This is\n"
@@ -903,7 +890,6 @@ extern "C" void handle_segfault(int sig)
                       "later when used with nscd), disable LDAP in your "
                       "nsswitch.conf, or use a\n"
                       "drizzled that is not statically linked.\n"));
-#endif
 
   if (thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
     fprintf(stderr,
@@ -974,18 +960,17 @@ static void init_signals(void)
     sigaction(SIGFPE, &sa, NULL);
   }
 
-#ifdef HAVE_GETRLIMIT
   if (test_flags.test(TEST_CORE_ON_SIGNAL))
   {
     /* Change limits so that we will get a core file */
     struct rlimit rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN, _("setrlimit could not change the size of core files "
-                          "to 'infinity';  We may not be able to generate a "
-                          "core file on signals"));
+        errmsg_printf(ERRMSG_LVL_WARN,
+                      _("setrlimit could not change the size of core files "
+                        "to 'infinity';  We may not be able to generate a "
+                        "core file on signals"));
   }
-#endif
   (void) sigemptyset(&set);
   my_sigset(SIGPIPE,SIG_IGN);
   sigaddset(&set,SIGPIPE);
@@ -1517,7 +1502,7 @@ static int init_server_components(plugin::Registry &plugins)
     unireg_abort(1);
   }
 
-#if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
+#if defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())
   {
     if (setreuid((uid_t)-1, 0) == -1)
@@ -1578,7 +1563,10 @@ int main(int argc, char **argv)
   select_thread_in_use=1;
 
   if (chdir(drizzle_real_data_home) && !opt_help)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
     unireg_abort(1);
+  }
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
@@ -1586,7 +1574,7 @@ int main(int argc, char **argv)
 
   if ((user_info= check_user(drizzled_user)))
   {
-#if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
+#if defined(MCL_CURRENT)
     if (locked_in_memory) // getuid() == 0 here
       set_effective_user(user_info);
     else
@@ -1914,7 +1902,7 @@ struct my_option my_long_options[] =
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
    0, (GET_ULL),
-   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
+   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_MAX, MALLOC_OVERHEAD,
    IO_SIZE, 0},
   {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
    N_("This characterizes the number of hits a hot block has to be untouched "
