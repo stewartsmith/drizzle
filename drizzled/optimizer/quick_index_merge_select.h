@@ -132,7 +132,7 @@ public:
   List<QuickRangeSelect> quick_selects;
 
   /* quick select that uses clustered primary key (NULL if none) */
-  QuickRangeSelect* pk_quick_select;
+  QuickRangeSelect *pk_quick_select;
 
   /* true if this select is currently doing a clustered PK scan */
   bool  doing_pk_scan;

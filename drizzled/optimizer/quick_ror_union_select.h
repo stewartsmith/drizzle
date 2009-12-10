@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 namespace drizzled
 {
 
@@ -107,7 +109,7 @@ public:
 
   bool push_quick_back(QuickSelectInterface *quick_sel_range);
 
-  List<QuickSelectInterface> quick_selects; /**< Merged quick selects */
+  std::vector<QuickSelectInterface *> quick_selects; /**< Merged quick selects */
 
   /** Priority queue for merge operation */
   std::priority_queue<QuickSelectInterface *, std::vector<QuickSelectInterface *>, compare_functor > *queue;

@@ -2574,8 +2574,8 @@ optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::Paramete
   for (TRP_RANGE **range_scan= range_scans; range_scan != range_scans_end;
        range_scan++)
   {
-    if (!(quick= (optimizer::QuickRangeSelect*)
-          ((*range_scan)->make_quick(param, false, &quick_imerge->alloc)))||
+    if (! (quick= (optimizer::QuickRangeSelect*)
+          ((*range_scan)->make_quick(param, false, &quick_imerge->alloc))) ||
         quick_imerge->push_quick_back(quick))
     {
       delete quick;
