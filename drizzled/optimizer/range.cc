@@ -636,7 +636,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    free_cond(NULL)
+    free_cond(false)
 {
   quick_keys.reset();
   needed_reg.reset();
