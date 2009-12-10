@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 namespace drizzled
 {
 
@@ -149,7 +151,7 @@ public:
    * Range quick selects this intersection consists of, not including
    * cpk_quick.
    */
-  List<QuickRangeSelect> quick_selects;
+  std::vector<QuickRangeSelect *> quick_selects;
 
   /**
    * Merged quick select that uses Clustered PK, if there is one. This quick

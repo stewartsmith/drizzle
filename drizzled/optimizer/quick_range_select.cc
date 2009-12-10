@@ -503,7 +503,7 @@ optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSel
 {
   optimizer::QuickRange *r= NULL;
 
-  optimizer::QuickRange **pr= (optimizer::QuickRange**)ranges.buffer;
+  optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
   optimizer::QuickRange **end_range= pr + ranges.elements;
   for (; pr != end_range; pr++)
     rev_ranges.push_front(*pr);

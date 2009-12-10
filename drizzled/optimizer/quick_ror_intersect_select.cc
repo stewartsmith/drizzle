@@ -19,10 +19,14 @@
 
 #include "drizzled/server_includes.h"
 #include "drizzled/session.h"
+#include "drizzled/util/functors.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
 
+#include <vector>
+
+using namespace std;
 using namespace drizzled;
 
 
@@ -54,7 +58,10 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
 
 optimizer::QuickRorIntersectSelect::~QuickRorIntersectSelect()
 {
-  quick_selects.delete_elements();
+  for_each(quick_selects.begin(),
+           quick_selects.end(),
+           DeletePtr());
+  quick_selects.clear();
   delete cpk_quick;
   free_root(&alloc,MYF(0));
   if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
@@ -74,14 +81,14 @@ int optimizer::QuickRorIntersectSelect::init()
 
 int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
 {
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect *quick= NULL;
+  vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
 
   /* Initialize all merged "children" quick selects */
-  assert(!need_to_fetch_row || reuse_handler);
+  assert(! need_to_fetch_row || reuse_handler);
   if (! need_to_fetch_row && reuse_handler)
   {
-    quick= quick_it++;
+    optimizer::QuickRangeSelect *quick= *it;
+    ++it;
     /*
       There is no use of this->cursor. Use it for the first of merged range
       selects.
@@ -90,15 +97,16 @@ int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
       return 0;
     quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
   }
-  while ((quick= quick_it++))
+  while (it != quick_selects.end())
   {
-    if (quick->init_ror_merged_scan(false))
+    if ((*it)->init_ror_merged_scan(false))
     {
       return 0;
     }
-    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
+    (*it)->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
     /* All merged scans share the same record buffer in intersection. */
-    quick->record= head->record[0];
+    (*it)->record= head->record[0];
+    ++it;
   }
 
   if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
@@ -116,11 +124,11 @@ int optimizer::QuickRorIntersectSelect::reset()
     return 0;
   }
   scans_inited= true;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  optimizer::QuickRangeSelect *quick= NULL;
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
-    quick->reset();
+    (*it)->reset();
   }
   return 0;
 }
@@ -129,18 +137,21 @@ int optimizer::QuickRorIntersectSelect::reset()
 bool
 optimizer::QuickRorIntersectSelect::push_quick_back(optimizer::QuickRangeSelect *quick)
 {
-  return quick_selects.push_back(quick);
+  quick_selects.push_back(quick);
+  return false;
 }
 
 
 bool optimizer::QuickRorIntersectSelect::is_keys_used(const MyBitmap *fields)
 {
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
-    if (is_key_used(head, quick->index, fields))
+    if (is_key_used(head, (*it)->index, fields))
+    {
       return 1;
+    }
   }
   return 0;
 }
@@ -148,16 +159,17 @@ bool optimizer::QuickRorIntersectSelect::is_keys_used(const MyBitmap *fields)
 
 int optimizer::QuickRorIntersectSelect::get_next()
 {
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
   optimizer::QuickRangeSelect *quick= NULL;
+  vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
   int error;
-  int  cmp;
+  int cmp;
   uint32_t last_rowid_count= 0;
 
   do
   {
     /* Get a rowid for first quick and save it as a 'candidate' */
-    quick= quick_it++;
+    quick= *it;
+    ++it;
     error= quick->get_next();
     if (cpk_quick)
     {
@@ -171,18 +183,25 @@ int optimizer::QuickRorIntersectSelect::get_next()
     memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
     last_rowid_count= 1;
 
-    while (last_rowid_count < quick_selects.elements)
+    while (last_rowid_count < quick_selects.size())
     {
-      if (! (quick= quick_it++))
+      /** @todo: fix this madness!!!! */
+      if (it != quick_selects.end())
       {
-        quick_it.rewind();
-        quick= quick_it++;
+        quick= *it;
+        ++it;
+      }
+      else
+      {
+        it= quick_selects.begin();
+        quick= *it;
+        ++it;
       }
 
       do
       {
         if ((error= quick->get_next()))
-          return(error);
+          return error;
         quick->cursor->position(quick->record);
         cmp= head->cursor->cmp_ref(quick->cursor->ref, last_rowid);
       } while (cmp < 0);
@@ -220,12 +239,12 @@ int optimizer::QuickRorIntersectSelect::get_next()
 void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
 {
   bool first= true;
-  optimizer::QuickRangeSelect *quick= NULL;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   str->append(STRING_WITH_LEN("intersect("));
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
-    KEY *key_info= head->key_info + quick->index;
+    KEY *key_info= head->key_info + (*it)->index;
     if (! first)
       str->append(',');
     else
@@ -248,11 +267,11 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
   char buf[64];
   uint32_t length;
   bool first= true;
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
-    KEY *key_info= head->key_info + quick->index;
+    KEY *key_info= head->key_info + (*it)->index;
     if (first)
     {
       first= false;
@@ -263,7 +282,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
     key_names->append(key_info->name);
-    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 
