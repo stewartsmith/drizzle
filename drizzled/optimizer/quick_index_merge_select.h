@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 namespace drizzled
 {
 
@@ -129,7 +131,7 @@ public:
   bool push_quick_back(QuickRangeSelect *quick_sel_range);
 
   /* range quick selects this index_merge read consists of */
-  List<QuickRangeSelect> quick_selects;
+  std::vector<QuickRangeSelect *> quick_selects;
 
   /* quick select that uses clustered primary key (NULL if none) */
   QuickRangeSelect *pk_quick_select;
