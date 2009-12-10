@@ -899,8 +899,8 @@ public:
 
 
 /*
-  Plan for QUICK_ROR_UNION_SELECT scan.
-  QUICK_ROR_UNION_SELECT always retrieves full rows, so retrieve_full_rows
+  Plan for QuickRorUnionSelect scan.
+  QuickRorUnionSelect always retrieves full rows, so retrieve_full_rows
   is ignored by make_quick.
 */
 
@@ -2643,14 +2643,14 @@ optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::Parame
 
 optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
 {
-  optimizer::QUICK_ROR_UNION_SELECT *quick_roru= NULL;
-  TABLE_READ_PLAN **scan;
-  optimizer::QuickSelectInterface *quick;
+  optimizer::QuickRorUnionSelect *quick_roru= NULL;
+  TABLE_READ_PLAN **scan= NULL;
+  optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
     rows, ignore retrieve_full_rows parameter.
   */
-  if ((quick_roru= new optimizer::QUICK_ROR_UNION_SELECT(param->session, param->table)))
+  if ((quick_roru= new optimizer::QuickRorUnionSelect(param->session, param->table)))
   {
     for (scan= first_ror; scan != last_ror; scan++)
     {
@@ -2663,7 +2663,7 @@ optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter 
     quick_roru->records= records;
     quick_roru->read_time= read_cost;
   }
-  return(quick_roru);
+  return quick_roru;
 }
 
 
@@ -2683,7 +2683,6 @@ optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter 
     #  Pointer to tree built tree
     0  on error
 */
-
 static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
                                 Item_func *cond_func,
                                 Field *field,
@@ -2722,15 +2721,17 @@ static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
   RETURN
     Pointer to the tree built tree
 */
-
 static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
                                   Item_func *cond_func,
-                                  Field *field, Item *value,
-                                  Item_result cmp_type, bool inv)
+                                  Field *field, 
+                                  Item *value,
+                                  Item_result cmp_type, 
+                                  bool inv)
 {
-  SEL_TREE *tree= 0;
+  SEL_TREE *tree= NULL;
 
-  switch (cond_func->functype()) {
+  switch (cond_func->functype()) 
+  {
 
   case Item_func::NE_FUNC:
     tree= get_ne_mm_tree(param, cond_func, field, value, value, cmp_type);
@@ -2738,46 +2739,59 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
 
   case Item_func::BETWEEN:
   {
-    if (!value)
+    if (! value)
     {
       if (inv)
       {
-        tree= get_ne_mm_tree(param, cond_func, field, cond_func->arguments()[1],
-                             cond_func->arguments()[2], cmp_type);
+        tree= get_ne_mm_tree(param, 
+                             cond_func, 
+                             field, 
+                             cond_func->arguments()[1],
+                             cond_func->arguments()[2], 
+                             cmp_type);
       }
       else
       {
-        tree= get_mm_parts(param, cond_func, field, Item_func::GE_FUNC,
-		           cond_func->arguments()[1],cmp_type);
+        tree= get_mm_parts(param, 
+                           cond_func, 
+                           field, 
+                           Item_func::GE_FUNC,
+		                       cond_func->arguments()[1],
+                           cmp_type);
         if (tree)
         {
-          tree= tree_and(param, tree, get_mm_parts(param, cond_func, field,
-					           Item_func::LE_FUNC,
-					           cond_func->arguments()[2],
-                                                   cmp_type));
+          tree= tree_and(param, 
+                         tree, 
+                         get_mm_parts(param, cond_func, field,
+					               Item_func::LE_FUNC,
+					               cond_func->arguments()[2],
+                         cmp_type));
         }
       }
     }
     else
-      tree= get_mm_parts(param, cond_func, field,
+      tree= get_mm_parts(param, 
+                         cond_func, 
+                         field,
                          (inv ?
                           (value == (Item*)1 ? Item_func::GT_FUNC :
                                                Item_func::LT_FUNC):
                           (value == (Item*)1 ? Item_func::LE_FUNC :
                                                Item_func::GE_FUNC)),
-                         cond_func->arguments()[0], cmp_type);
+                         cond_func->arguments()[0], 
+                         cmp_type);
     break;
   }
   case Item_func::IN_FUNC:
   {
-    Item_func_in *func=(Item_func_in*) cond_func;
+    Item_func_in *func= (Item_func_in*) cond_func;
 
     /*
       Array for IN() is constructed when all values have the same result
       type. Tree won't be built for values with different result types,
       so we check it here to avoid unnecessary work.
     */
-    if (!func->arg_types_compatible)
+    if (! func->arg_types_compatible)
       break;
 
     if (inv)
@@ -2825,7 +2839,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         Item *value_item= func->array->create_item();
         param->session->mem_root= tmp_root;
 
-        if (func->array->count > NOT_IN_IGNORE_THRESHOLD || !value_item)
+        if (func->array->count > NOT_IN_IGNORE_THRESHOLD || ! value_item)
           break;
 
         /* Get a SEL_TREE for "(-inf|NULL) < X < c_0" interval.  */
@@ -2833,9 +2847,12 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         do
         {
           func->array->value_to_item(i, value_item);
-          tree= get_mm_parts(param, cond_func, field, Item_func::LT_FUNC,
-                             value_item, cmp_type);
-          if (!tree)
+          tree= get_mm_parts(param, 
+                             cond_func, 
+                             field, Item_func::LT_FUNC,
+                             value_item, 
+                             cmp_type);
+          if (! tree)
             break;
           i++;
         } while (i < func->array->count && tree->type == SEL_TREE::IMPOSSIBLE);

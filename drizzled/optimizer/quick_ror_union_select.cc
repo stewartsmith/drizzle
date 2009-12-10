@@ -29,8 +29,8 @@ using namespace std;
 using namespace drizzled;
 
 
-optimizer::QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
-                                                          Table *table)
+optimizer::QuickRorUnionSelect::QuickRorUnionSelect(Session *session_param,
+                                                    Table *table)
   :
     session(session_param),
     scans_inited(false)
@@ -45,14 +45,14 @@ optimizer::QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param
 
 /*
  * Function object that is used as the comparison function
- * for the priority queue in the QUICK_ROR_UNION_SELECT
+ * for the priority queue in the QuickRorUnionSelect
  * class.
  */
 class optimizer::compare_functor
 {
-  optimizer::QUICK_ROR_UNION_SELECT *self;
+  optimizer::QuickRorUnionSelect *self;
   public:
-  compare_functor(optimizer::QUICK_ROR_UNION_SELECT *in_arg)
+  compare_functor(optimizer::QuickRorUnionSelect *in_arg)
     : self(in_arg) { }
   inline bool operator()(const optimizer::QuickSelectInterface *i, const optimizer::QuickSelectInterface *j) const
   {
@@ -62,16 +62,8 @@ class optimizer::compare_functor
   }
 };
 
-/*
-  Do post-constructor initialization.
-  SYNOPSIS
-    QUICK_ROR_UNION_SELECT::init()
 
-  RETURN
-    0      OK
-    other  Error code
-*/
-int optimizer::QUICK_ROR_UNION_SELECT::init()
+int optimizer::QuickRorUnionSelect::init()
 {
   queue=
     new priority_queue<optimizer::QuickSelectInterface *,
@@ -86,16 +78,7 @@ int optimizer::QUICK_ROR_UNION_SELECT::init()
 }
 
 
-/*
-  Initialize quick select for row retrieval.
-  SYNOPSIS
-    reset()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-int optimizer::QUICK_ROR_UNION_SELECT::reset()
+int optimizer::QuickRorUnionSelect::reset()
 {
   QuickSelectInterface *quick= NULL;
   int error;
@@ -149,13 +132,13 @@ int optimizer::QUICK_ROR_UNION_SELECT::reset()
 
 
 bool
-optimizer::QUICK_ROR_UNION_SELECT::push_quick_back(QuickSelectInterface *quick_sel_range)
+optimizer::QuickRorUnionSelect::push_quick_back(QuickSelectInterface *quick_sel_range)
 {
   return quick_selects.push_back(quick_sel_range);
 }
 
 
-optimizer::QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
+optimizer::QuickRorUnionSelect::~QuickRorUnionSelect()
 {
   while (! queue->empty())
   {
@@ -172,7 +155,7 @@ optimizer::QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
 }
 
 
-bool optimizer::QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
+bool optimizer::QuickRorUnionSelect::is_keys_used(const MyBitmap *fields)
 {
   optimizer::QuickSelectInterface *quick;
   List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
@@ -185,32 +168,19 @@ bool optimizer::QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
 }
 
 
-/*
-  Retrieve next record.
-  SYNOPSIS
-    QUICK_ROR_UNION_SELECT::get_next()
-
-  NOTES
-    Enter/exit invariant:
-    For each quick select in the queue a {key,rowid} tuple has been
-    retrieved but the corresponding row hasn't been passed to output.
-
-  RETURN
-   0     - Ok
-   other - Error code if any error occurred.
-*/
-int optimizer::QUICK_ROR_UNION_SELECT::get_next()
+int optimizer::QuickRorUnionSelect::get_next()
 {
-  int error, dup_row;
-  optimizer::QuickSelectInterface *quick;
-  unsigned char *tmp;
+  int error;
+  int dup_row;
+  optimizer::QuickSelectInterface *quick= NULL;
+  unsigned char *tmp= NULL;
 
   do
   {
     do
     {
       if (queue->empty())
-        return(HA_ERR_END_OF_FILE);
+        return HA_ERR_END_OF_FILE;
       /* Ok, we have a queue with >= 1 scans */
 
       quick= queue->top();
@@ -237,7 +207,7 @@ int optimizer::QUICK_ROR_UNION_SELECT::get_next()
         have_prev_rowid= true;
       }
       else
-        dup_row= !head->cursor->cmp_ref(cur_rowid, prev_rowid);
+        dup_row= ! head->cursor->cmp_ref(cur_rowid, prev_rowid);
     } while (dup_row);
 
     tmp= cur_rowid;
@@ -246,14 +216,14 @@ int optimizer::QUICK_ROR_UNION_SELECT::get_next()
 
     error= head->cursor->rnd_pos(quick->record, prev_rowid);
   } while (error == HA_ERR_RECORD_DELETED);
-  return(error);
+  return error;
 }
 
 
-void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
+void optimizer::QuickRorUnionSelect::add_info_string(String *str)
 {
   bool first= true;
-  optimizer::QuickSelectInterface *quick;
+  optimizer::QuickSelectInterface *quick= NULL;
   List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
   str->append(STRING_WITH_LEN("union("));
   while ((quick= it++))
@@ -268,11 +238,11 @@ void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
 }
 
 
-void optimizer::QUICK_ROR_UNION_SELECT::add_keys_and_lengths(String *key_names,
-                                                             String *used_lengths)
+void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
+                                                          String *used_lengths)
 {
   bool first= true;
-  optimizer::QuickSelectInterface *quick;
+  optimizer::QuickSelectInterface *quick= NULL;
   List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
   while ((quick= it++))
   {

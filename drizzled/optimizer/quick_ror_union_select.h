@@ -28,11 +28,6 @@ namespace drizzled
 namespace optimizer
 {
 
-/*
- * This function object is defined in drizzled/optimizer/range.cc
- * We need this here for the priority_queue definition in the
- * QUICK_ROR_UNION_SELECT class.
- */
 class compare_functor;
 
 /**
@@ -41,20 +36,54 @@ class compare_functor;
   quick select it "merges".
 
   All merged quick selects must return rowids in rowid order.
-  QUICK_ROR_UNION_SELECT will return rows in rowid order, too.
+  QuickRorUnionSelect will return rows in rowid order, too.
 
   All merged quick selects are set not to retrieve full table records.
   ROR-union quick select always retrieves full records.
 
 */
-class QUICK_ROR_UNION_SELECT : public QuickSelectInterface
+class QuickRorUnionSelect : public QuickSelectInterface
 {
 public:
-  QUICK_ROR_UNION_SELECT(Session *session, Table *table);
-  ~QUICK_ROR_UNION_SELECT();
+  QuickRorUnionSelect(Session *session, Table *table);
+  ~QuickRorUnionSelect();
 
+  /**
+   * Do post-constructor initialization.
+   * SYNOPSIS
+   * QuickRorUnionSelect::init()
+   *
+   * RETURN
+   * @retval 0      OK
+   * @retval other  Error code
+   */
   int  init();
+
+  /**
+   * Initialize quick select for row retrieval.
+   * SYNOPSIS
+   * reset()
+   *
+   * RETURN
+   * @retval 0      OK
+   * @retval other  Error code
+   */
   int  reset(void);
+
+  /**
+   * Retrieve next record.
+   * SYNOPSIS
+   * QuickRorUnionSelect::get_next()
+   *
+   * NOTES
+   * Enter/exit invariant:
+   * For each quick select in the queue a {key,rowid} tuple has been
+   * retrieved but the corresponding row hasn't been passed to output.
+   *
+   * RETURN
+   * @retval 0     - Ok
+   * @retval other - Error code if any error occurred.
+   */
   int  get_next();
 
   bool reverse_sorted() const
