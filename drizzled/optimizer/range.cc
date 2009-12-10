@@ -121,6 +121,7 @@
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_index_merge_select.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include "drizzled/optimizer/quick_ror_union_select.h"
 #include "drizzled/optimizer/sel_arg.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/records.h"
@@ -688,150 +689,6 @@ optimizer::QuickSelectInterface::QuickSelectInterface()
     max_used_key_length(0),
     used_key_parts(0)
 {}
-
-
-optimizer::QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
-                                                          Table *table)
-  :
-    session(session_param),
-    scans_inited(false)
-{
-  index= MAX_KEY;
-  head= table;
-  rowid_length= table->cursor->ref_length;
-  record= head->record[0];
-  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  session_param->mem_root= &alloc;
-}
-
-/*
- * Function object that is used as the comparison function
- * for the priority queue in the QUICK_ROR_UNION_SELECT
- * class.
- */
-class optimizer::compare_functor
-{
-  optimizer::QUICK_ROR_UNION_SELECT *self;
-  public:
-  compare_functor(optimizer::QUICK_ROR_UNION_SELECT *in_arg)
-    : self(in_arg) { }
-  inline bool operator()(const optimizer::QuickSelectInterface *i, const optimizer::QuickSelectInterface *j) const
-  {
-    int val= self->head->cursor->cmp_ref(i->last_rowid,
-                                         j->last_rowid);
-    return (val >= 0);
-  }
-};
-
-/*
-  Do post-constructor initialization.
-  SYNOPSIS
-    QUICK_ROR_UNION_SELECT::init()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_UNION_SELECT::init()
-{
-  queue=
-    new priority_queue<optimizer::QuickSelectInterface *,
-                       vector<optimizer::QuickSelectInterface *>,
-                       optimizer::compare_functor >(optimizer::compare_functor(this));
-  if (! (cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->cursor->ref_length)))
-  {
-    return 0;
-  }
-  prev_rowid= cur_rowid + head->cursor->ref_length;
-  return 0;
-}
-
-
-/*
-  Initialize quick select for row retrieval.
-  SYNOPSIS
-    reset()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_UNION_SELECT::reset()
-{
-  QuickSelectInterface *quick= NULL;
-  int error;
-  have_prev_rowid= false;
-  if (! scans_inited)
-  {
-    List_iterator_fast<QuickSelectInterface> it(quick_selects);
-    while ((quick= it++))
-    {
-      if (quick->init_ror_merged_scan(false))
-      {
-        return 0;
-      }
-    }
-    scans_inited= true;
-  }
-  while (! queue->empty())
-  {
-    queue->pop();
-  }
-  /*
-    Initialize scans for merged quick selects and put all merged quick
-    selects into the queue.
-  */
-  List_iterator_fast<QuickSelectInterface> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (quick->reset())
-    {
-      return 0;
-    }
-    if ((error= quick->get_next()))
-    {
-      if (error == HA_ERR_END_OF_FILE)
-      {
-        continue;
-      }
-      return(error);
-    }
-    quick->save_last_pos();
-    queue->push(quick);
-  }
-
-  if (head->cursor->ha_rnd_init(1))
-  {
-    return 0;
-  }
-
-  return 0;
-}
-
-
-bool
-optimizer::QUICK_ROR_UNION_SELECT::push_quick_back(QuickSelectInterface *quick_sel_range)
-{
-  return quick_selects.push_back(quick_sel_range);
-}
-
-optimizer::QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
-{
-  while (! queue->empty())
-  {
-    queue->pop();
-  }
-  delete queue;
-  quick_selects.delete_elements();
-  if (head->cursor->inited != Cursor::NONE)
-  {
-    head->cursor->ha_rnd_end();
-  }
-  free_root(&alloc,MYF(0));
-  return;
-}
 
 
 /*
@@ -2786,7 +2643,7 @@ optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::Parame
 
 optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
 {
-  optimizer::QUICK_ROR_UNION_SELECT *quick_roru;
+  optimizer::QUICK_ROR_UNION_SELECT *quick_roru= NULL;
   TABLE_READ_PLAN **scan;
   optimizer::QuickSelectInterface *quick;
   /*
@@ -5335,19 +5192,6 @@ bool optimizer::QuickSelectInterface::is_keys_used(const MyBitmap *fields)
 }
 
 
-bool optimizer::QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
-{
-  optimizer::QuickSelectInterface *quick;
-  List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (quick->is_keys_used(fields))
-      return 1;
-  }
-  return 0;
-}
-
-
 /*
   Create quick select from ref/ref_or_null scan.
 
@@ -5468,72 +5312,6 @@ err:
 
 
 /*
-  Retrieve next record.
-  SYNOPSIS
-    QUICK_ROR_UNION_SELECT::get_next()
-
-  NOTES
-    Enter/exit invariant:
-    For each quick select in the queue a {key,rowid} tuple has been
-    retrieved but the corresponding row hasn't been passed to output.
-
-  RETURN
-   0     - Ok
-   other - Error code if any error occurred.
-*/
-
-int optimizer::QUICK_ROR_UNION_SELECT::get_next()
-{
-  int error, dup_row;
-  optimizer::QuickSelectInterface *quick;
-  unsigned char *tmp;
-
-  do
-  {
-    do
-    {
-      if (queue->empty())
-        return(HA_ERR_END_OF_FILE);
-      /* Ok, we have a queue with >= 1 scans */
-
-      quick= queue->top();
-      memcpy(cur_rowid, quick->last_rowid, rowid_length);
-
-      /* put into queue rowid from the same stream as top element */
-      if ((error= quick->get_next()))
-      {
-        if (error != HA_ERR_END_OF_FILE)
-          return(error);
-        queue->pop();
-      }
-      else
-      {
-        quick->save_last_pos();
-        queue->pop();
-        queue->push(quick);
-      }
-
-      if (!have_prev_rowid)
-      {
-        /* No rows have been returned yet */
-        dup_row= false;
-        have_prev_rowid= true;
-      }
-      else
-        dup_row= !head->cursor->cmp_ref(cur_rowid, prev_rowid);
-    } while (dup_row);
-
-    tmp= cur_rowid;
-    cur_rowid= prev_rowid;
-    prev_rowid= tmp;
-
-    error= head->cursor->rnd_pos(quick->record, prev_rowid);
-  } while (error == HA_ERR_RECORD_DELETED);
-  return(error);
-}
-
-
-/*
   Range sequence interface implementation for array<QuickRange>: initialize
 
   SYNOPSIS
@@ -5598,44 +5376,6 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
   range->range_flag= cur->flag;
   ctx->cur++;
   return 0;
-}
-
-
-void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
-{
-  bool first= true;
-  optimizer::QuickSelectInterface *quick;
-  List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
-  str->append(STRING_WITH_LEN("union("));
-  while ((quick= it++))
-  {
-    if (! first)
-      str->append(',');
-    else
-      first= false;
-    quick->add_info_string(str);
-  }
-  str->append(')');
-}
-
-
-void optimizer::QUICK_ROR_UNION_SELECT::add_keys_and_lengths(String *key_names,
-                                                             String *used_lengths)
-{
-  bool first= true;
-  optimizer::QuickSelectInterface *quick;
-  List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (first)
-      first= false;
-    else
-    {
-      used_lengths->append(',');
-      key_names->append(',');
-    }
-    quick->add_keys_and_lengths(key_names, used_lengths);
-  }
 }
 
 

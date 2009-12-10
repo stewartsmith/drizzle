@@ -261,6 +261,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/optimizer/quick_range.h \
 		drizzled/optimizer/quick_range_select.h \
 		drizzled/optimizer/quick_ror_intersect_select.h \
+		drizzled/optimizer/quick_ror_union_select.h \
 		drizzled/optimizer/range.h \
 		drizzled/optimizer/range_param.h \
 		drizzled/optimizer/sargable_param.h \
@@ -617,6 +618,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/optimizer/quick_range.cc \
 		drizzled/optimizer/quick_range_select.cc \
 		drizzled/optimizer/quick_ror_intersect_select.cc \
+		drizzled/optimizer/quick_ror_union_select.cc \
 		drizzled/optimizer/range.cc \
 		drizzled/optimizer/sel_arg.cc \
 		drizzled/optimizer/sum.cc \
