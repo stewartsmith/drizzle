@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/function/math/pow.h>
 
 double Item_func_pow::val_real()

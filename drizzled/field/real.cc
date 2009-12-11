@@ -23,6 +23,8 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 
+#include <math.h>
+
 #include <limits>
 
 using namespace std;

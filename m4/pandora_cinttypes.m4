@@ -21,11 +21,11 @@ AC_DEFUN([PANDORA_CXX_CINTTYPES],
    if test -n "$ac_cv_cxx_cinttypes"; then
       AC_MSG_RESULT([$ac_cv_cxx_cinttypes])
    else
-      AC_DEFINE([__STDC_LIMIT_MACROS],[1],[Use STDC Limit Macros in C++])
       ac_cv_cxx_cinttypes="<inttypes.h>"
       AC_MSG_RESULT()
       AC_MSG_WARN([Could not find a cinttypes header.])
    fi
+   AC_DEFINE([__STDC_LIMIT_MACROS],[1],[Use STDC Limit Macros in C++])
    AC_DEFINE_UNQUOTED(CINTTYPES_H,$ac_cv_cxx_cinttypes,
                       [the location of <cinttypes>])
 ])

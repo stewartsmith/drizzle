@@ -16,6 +16,7 @@
 /* close a heap-database */
 
 #include "heap_priv.h"
+#include <cstdlib>
 
 using namespace std;
 

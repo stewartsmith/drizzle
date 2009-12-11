@@ -26,6 +26,9 @@ struct utimbuf {
   time_t modtime;
 };
 #endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 	/*
 	  Rename with copy stat form old file

@@ -22,7 +22,7 @@
 
 static ha_rows _mi_record_pos(MI_INFO *, const unsigned char *, key_part_map,
                               enum ha_rkey_function);
-static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,unsigned char *, uint,uint,my_off_t);
+static double _mi_search_pos(MI_INFO *,MI_KEYDEF *,unsigned char *, uint,uint,uint64_t);
 static uint32_t _mi_keynr(MI_INFO *info,MI_KEYDEF *,unsigned char *, unsigned char *,uint32_t *);
 
 /*
@@ -151,7 +151,7 @@ static ha_rows _mi_record_pos(MI_INFO *info, const unsigned char *key,
 static double _mi_search_pos(register MI_INFO *info,
 			     register MI_KEYDEF *keyinfo,
 			     unsigned char *key, uint32_t key_len, uint32_t nextflag,
-			     register my_off_t pos)
+			     register uint64_t pos)
 {
   int flag;
   uint32_t nod_flag, keynr, max_keynr= 0;

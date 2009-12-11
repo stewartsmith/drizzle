@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/function/math/acos.h>
 
 double Item_func_acos::val_real()

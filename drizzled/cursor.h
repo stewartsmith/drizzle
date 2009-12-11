@@ -242,7 +242,7 @@ public:
     estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
-    ref_length(sizeof(my_off_t)),
+    ref_length(sizeof(uint64_t)),
     inited(NONE),
     locked(false), implicit_emptied(0),
     next_insert_id(0), insert_id_for_cur_row(0)

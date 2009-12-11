@@ -27,12 +27,12 @@
 
 static int w_search(MI_INFO *info,MI_KEYDEF *keyinfo,
 		    uint32_t comp_flag, unsigned char *key,
-		    uint32_t key_length, my_off_t pos, unsigned char *father_buff,
-		    unsigned char *father_keypos, my_off_t father_page,
+		    uint32_t key_length, uint64_t pos, unsigned char *father_buff,
+		    unsigned char *father_keypos, uint64_t father_page,
 		    bool insert_last);
 static int _mi_balance_page(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
 			    unsigned char *curr_buff,unsigned char *father_buff,
-			    unsigned char *father_keypos,my_off_t father_page);
+			    unsigned char *father_keypos,uint64_t father_page);
 static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
 				unsigned char *key, uint32_t *return_key_length,
 				unsigned char **after_key);
@@ -48,7 +48,7 @@ int mi_write(MI_INFO *info, unsigned char *record)
   MYISAM_SHARE *share=info->s;
   uint32_t i;
   int save_errno;
-  my_off_t filepos;
+  uint64_t filepos;
   unsigned char *buff;
   bool lock_tree= share->concurrent_insert;
 
@@ -223,7 +223,7 @@ int _mi_ck_write_btree(register MI_INFO *info, uint32_t keynr, unsigned char *ke
   uint32_t error;
   uint32_t comp_flag;
   MI_KEYDEF *keyinfo=info->s->keyinfo+keynr;
-  my_off_t  *root=&info->s->state.key_root[keynr];
+  uint64_t  *root=&info->s->state.key_root[keynr];
 
   if (keyinfo->flag & HA_SORT_ALLOWS_SAME)
     comp_flag=SEARCH_BIGGER;			/* Put after same key */
@@ -242,14 +242,14 @@ int _mi_ck_write_btree(register MI_INFO *info, uint32_t keynr, unsigned char *ke
 } /* _mi_ck_write_btree */
 
 int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
-    unsigned char *key, uint32_t key_length, my_off_t *root, uint32_t comp_flag)
+    unsigned char *key, uint32_t key_length, uint64_t *root, uint32_t comp_flag)
 {
   int error;
   /* key_length parameter is used only if comp_flag is SEARCH_FIND */
   if (*root == HA_OFFSET_ERROR ||
       (error=w_search(info, keyinfo, comp_flag, key, key_length,
 		      *root, (unsigned char *) 0, (unsigned char*) 0,
-		      (my_off_t) 0, 1)) > 0)
+		      (uint64_t) 0, 1)) > 0)
     error=_mi_enlarge_root(info,keyinfo,key,root);
   return(error);
 } /* _mi_ck_real_write_btree */
@@ -258,7 +258,7 @@ int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
 	/* Make a new root with key as only pointer */
 
 int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *key,
-                     my_off_t *root)
+                     uint64_t *root)
 {
   uint32_t t_length,nod_flag;
   MI_KEY_PARAM s_temp;
@@ -286,16 +286,16 @@ int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *key,
 	*/
 
 static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-		    uint32_t comp_flag, unsigned char *key, uint32_t key_length, my_off_t page,
+		    uint32_t comp_flag, unsigned char *key, uint32_t key_length, uint64_t page,
 		    unsigned char *father_buff, unsigned char *father_keypos,
-		    my_off_t father_page, bool insert_last)
+		    uint64_t father_page, bool insert_last)
 {
   int error,flag;
   uint32_t nod_flag, search_key_length;
   unsigned char *temp_buff,*keypos;
   unsigned char keybuff[MI_MAX_KEY_BUFF];
   bool was_last_key;
-  my_off_t next_page, dupp_key_pos;
+  uint64_t next_page, dupp_key_pos;
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
   if (!(temp_buff= (unsigned char*) malloc(keyinfo->block_length+
@@ -373,7 +373,7 @@ err:
 
 int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 	       unsigned char *key, unsigned char *anc_buff, unsigned char *key_pos, unsigned char *key_buff,
-               unsigned char *father_buff, unsigned char *father_key_pos, my_off_t father_page,
+               unsigned char *father_buff, unsigned char *father_key_pos, uint64_t father_page,
 	       bool insert_last)
 {
   uint32_t a_length,nod_flag;
@@ -436,7 +436,7 @@ int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 {
   uint32_t length,a_length,key_ref_length,t_length,nod_flag,key_length;
   unsigned char *key_pos,*pos, *after_key= NULL;
-  my_off_t new_pos;
+  uint64_t new_pos;
   MI_KEY_PARAM s_temp;
 
   if (info->s->keyinfo+info->lastinx == keyinfo)
@@ -590,14 +590,14 @@ static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
 
 static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 			    unsigned char *key, unsigned char *curr_buff, unsigned char *father_buff,
-			    unsigned char *father_key_pos, my_off_t father_page)
+			    unsigned char *father_key_pos, uint64_t father_page)
 {
   bool right;
   uint32_t k_length,father_length,father_keylength,nod_flag,curr_keylength,
        right_length,left_length,new_right_length,new_left_length,extra_length,
        length,keys;
   unsigned char *pos,*buff,*extra_buff;
-  my_off_t next_page,new_pos;
+  uint64_t next_page,new_pos;
   unsigned char tmp_part_key[MI_MAX_KEY_BUFF];
 
   k_length=keyinfo->keylength;

@@ -85,7 +85,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
-  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  uint64_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;
 
   kfile= -1;
@@ -220,8 +220,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       my_errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-    share->base.max_data_file_length=(my_off_t) max_data_file_length;
-    share->base.max_key_file_length=(my_off_t) max_key_file_length;
+    share->base.max_data_file_length=(uint64_t) max_data_file_length;
+    share->base.max_key_file_length=(uint64_t) max_key_file_length;
 
     if (share->options & HA_OPTION_COMPRESS_RECORD)
       share->base.max_key_length+=2;	/* For safety */
@@ -253,9 +253,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     memcpy(share->state.rec_per_key_part, rec_per_key_part,
            sizeof(long)*key_parts);
     memcpy(share->state.key_root, key_root,
-           sizeof(my_off_t)*keys);
+           sizeof(uint64_t)*keys);
     memcpy(share->state.key_del, key_del,
-           sizeof(my_off_t) * share->state.header.max_block_size_index);
+           sizeof(uint64_t) * share->state.header.max_block_size_index);
     strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
     strcpy(share->index_file_name,  index_name);
@@ -586,7 +586,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
-  uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
+  uint64_t max_val= ~ (uint64_t) 0;		/* uint64_t is unsigned */
 
   if (!a || max_val / a < b)
     return max_val;
@@ -693,7 +693,7 @@ static void setup_key_functions(register MI_KEYDEF *keyinfo)
    Function to save and store the header in the index file (.MYI)
 */
 
-uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
+uint32_t mi_state_info_write(int file, MI_STATE_INFO *state, uint32_t pWrite)
 {
   unsigned char  buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
   unsigned char *ptr=buff;
@@ -809,7 +809,7 @@ static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *stat
 }
 
 
-uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
+uint32_t mi_state_info_read_dsk(int file, MI_STATE_INFO *state, bool pRead)
 {
   unsigned char	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 
@@ -830,7 +830,7 @@ uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 **  store and read of MI_BASE_INFO
 ****************************************************************************/
 
-uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
+uint32_t mi_base_info_write(int file, MI_BASE_INFO *base)
 {
   unsigned char buff[MI_BASE_INFO_SIZE], *ptr=buff;
 
@@ -905,7 +905,7 @@ static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base
   mi_keydef
 ---------------------------------------------------------------------------*/
 
-uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
+uint32_t mi_keydef_write(int file, MI_KEYDEF *keydef)
 {
   unsigned char buff[MI_KEYDEF_SIZE];
   unsigned char *ptr=buff;
@@ -940,7 +940,7 @@ static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 **  mi_keyseg
 ***************************************************************************/
 
-int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
+int mi_keyseg_write(int file, const HA_KEYSEG *keyseg)
 {
   unsigned char buff[HA_KEYSEG_SIZE];
   unsigned char *ptr=buff;
@@ -990,7 +990,7 @@ static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
   mi_uniquedef
 ---------------------------------------------------------------------------*/
 
-uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
+uint32_t mi_uniquedef_write(int file, MI_UNIQUEDEF *def)
 {
   unsigned char buff[MI_UNIQUEDEF_SIZE];
   unsigned char *ptr=buff;
@@ -1014,7 +1014,7 @@ static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 **  MI_COLUMNDEF
 ***************************************************************************/
 
-uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
+uint32_t mi_recinfo_write(int file, MI_COLUMNDEF *recinfo)
 {
   unsigned char buff[MI_COLUMNDEF_SIZE];
   unsigned char *ptr=buff;
@@ -1044,7 +1044,7 @@ The argument file_to_dup is here for the future if there would on some OS
 exist a dup()-like call that would give us two different file descriptors.
 *************************************************************************/
 
-int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, File file_to_dup)
+int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup)
 {
   (void)file_to_dup; 
   info->dfile=my_open(share->data_file_name, share->mode,

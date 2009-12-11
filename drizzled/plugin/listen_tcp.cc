@@ -22,6 +22,8 @@
 #include <drizzled/error.h>
 #include <drizzled/plugin/listen_tcp.h>
 
+#include <sys/socket.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 

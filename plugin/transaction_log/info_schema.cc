@@ -67,6 +67,9 @@
 #include "transaction_log_index.h"
 #include "info_schema.h"
 
+#include <fcntl.h>
+#include <sys/stat.h>
+
 #include <string>
 #include <vector>
 #include <functional>

@@ -73,6 +73,7 @@
   we are forced to use mysql_lock_merge.
 */
 #include <drizzled/server_includes.h>
+#include <fcntl.h>
 #include <drizzled/error.h>
 #include <mysys/hash.h>
 #include <mysys/thr_lock.h>

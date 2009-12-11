@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_CONFIG_H
-#define DRIZZLED_PLUGIN_CONFIG_H
+#ifndef DRIZZLED_PLUGIN_LOAD_LIST_H
+#define DRIZZLED_PLUGIN_LOAD_LIST_H
 
 /* The list of builtin plugins */
 #define  PANDORA_BUILTIN_LIST @PANDORA_BUILTIN_LIST@
@@ -26,5 +26,5 @@
  * value is given for --plugin-load */
 #define PANDORA_PLUGIN_LIST "@PANDORA_PLUGIN_LIST@"
 
-#endif /* DRIZZLED_PLUGIN_CONFIG_H */
+#endif /* DRIZZLED_PLUGIN_LOAD_LIST_H */
 

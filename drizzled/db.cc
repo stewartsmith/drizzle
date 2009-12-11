@@ -15,14 +15,11 @@
 
 
 /* create and drop of databases */
-#include <drizzled/global.h>
-#include CSTDINT_H
-#include CINTTYPES_H
+#include <drizzled/server_includes.h>
 #include <string>
 #include <fstream>
+#include <fcntl.h>
 #include <drizzled/message/schema.pb.h>
-using namespace std;
-#include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
@@ -36,6 +33,7 @@ using namespace std;
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 
+using namespace std;
 using namespace drizzled;
 
 #define MY_DB_OPT_FILE "db.opt"

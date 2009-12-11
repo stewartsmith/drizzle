@@ -501,10 +501,7 @@ public:
   {
     return COND_OK;
   }
-  inline uint32_t float_length(uint32_t decimals_par) const
-  {
-    return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
-  }
+  uint32_t float_length(uint32_t decimals_par) const;
   virtual uint32_t decimal_precision() const;
   int decimal_int_part() const;
 

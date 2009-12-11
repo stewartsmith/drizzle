@@ -33,6 +33,7 @@
 #endif
 #include <drizzled/util/test.h>
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
@@ -42,13 +43,13 @@ static char zero_string[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 static int write_dynamic_record(MI_INFO *info,const unsigned char *record,
 				ulong reclength);
-static int _mi_find_writepos(MI_INFO *info,ulong reclength,my_off_t *filepos,
+static int _mi_find_writepos(MI_INFO *info,ulong reclength,uint64_t *filepos,
 			     ulong *length);
-static int update_dynamic_record(MI_INFO *info,my_off_t filepos,unsigned char *record,
+static int update_dynamic_record(MI_INFO *info,uint64_t filepos,unsigned char *record,
 				 ulong reclength);
-static int delete_dynamic_record(MI_INFO *info,my_off_t filepos,
+static int delete_dynamic_record(MI_INFO *info,uint64_t filepos,
 				 uint32_t second_read);
-static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
+static int _mi_cmp_buffer(int file, const unsigned char *buff, uint64_t filepos,
 			  uint32_t length);
 
 	/* Interface function from MI_INFO */
@@ -66,9 +67,9 @@ static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos
     1  error.
 */
 
-bool mi_dynmap_file(MI_INFO *info, my_off_t size)
+bool mi_dynmap_file(MI_INFO *info, uint64_t size)
 {
-  if (size > (my_off_t) (~((size_t) 0)) - MEMMAP_EXTRA_MARGIN)
+  if (size > (uint64_t) (~((size_t) 0)) - MEMMAP_EXTRA_MARGIN)
   {
     return(1);
   }
@@ -110,7 +111,7 @@ bool mi_dynmap_file(MI_INFO *info, my_off_t size)
   RETURN
 */
 
-void mi_remap_file(MI_INFO *info, my_off_t size)
+void mi_remap_file(MI_INFO *info, uint64_t size)
 {
   if (info->s->file_map)
   {
@@ -137,7 +138,7 @@ void mi_remap_file(MI_INFO *info, my_off_t size)
 */
 
 size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
-                    size_t Count, my_off_t offset, myf MyFlags)
+                    size_t Count, uint64_t offset, myf MyFlags)
 {
   if (info->s->concurrent_insert)
     pthread_rwlock_rdlock(&info->s->mmap_lock);
@@ -168,7 +169,7 @@ size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
         /* wrapper for my_pread in case if mmap isn't used */
 
 size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
-                       size_t Count, my_off_t offset, myf MyFlags)
+                       size_t Count, uint64_t offset, myf MyFlags)
 {
   return my_pread(info->dfile, Buffer, Count, offset, MyFlags);
 }
@@ -191,7 +192,7 @@ size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
 */
 
 size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
-                      size_t Count, my_off_t offset, myf MyFlags)
+                      size_t Count, uint64_t offset, myf MyFlags)
 {
   if (info->s->concurrent_insert)
     pthread_rwlock_rdlock(&info->s->mmap_lock);
@@ -224,7 +225,7 @@ size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
         /* wrapper for my_pwrite in case if mmap isn't used */
 
 size_t mi_nommap_pwrite(MI_INFO *info, const unsigned char *Buffer,
-                      size_t Count, my_off_t offset, myf MyFlags)
+                      size_t Count, uint64_t offset, myf MyFlags)
 {
   return my_pwrite(info->dfile, Buffer, Count, offset, MyFlags);
 }
@@ -236,7 +237,7 @@ int _mi_write_dynamic_record(MI_INFO *info, const unsigned char *record)
   return (write_dynamic_record(info,info->rec_buff,reclength));
 }
 
-int _mi_update_dynamic_record(MI_INFO *info, my_off_t pos, const unsigned char *record)
+int _mi_update_dynamic_record(MI_INFO *info, uint64_t pos, const unsigned char *record)
 {
   uint32_t length=_mi_rec_pack(info,info->rec_buff,record);
   return (update_dynamic_record(info,pos,info->rec_buff,length));
@@ -274,7 +275,7 @@ int _mi_write_blob_record(MI_INFO *info, const unsigned char *record)
 }
 
 
-int _mi_update_blob_record(MI_INFO *info, my_off_t pos, const unsigned char *record)
+int _mi_update_blob_record(MI_INFO *info, uint64_t pos, const unsigned char *record)
 {
   unsigned char *rec_buff;
   int error;
@@ -319,7 +320,7 @@ static int write_dynamic_record(MI_INFO *info, const unsigned char *record,
 {
   int flag;
   ulong length;
-  my_off_t filepos;
+  uint64_t filepos;
 
   flag=0;
 
@@ -366,7 +367,7 @@ err:
 
 static int _mi_find_writepos(MI_INFO *info,
 			     ulong reclength, /* record length */
-			     my_off_t *filepos, /* Return file pos */
+			     uint64_t *filepos, /* Return file pos */
 			     ulong *length)   /* length of block at filepos */
 {
   MI_BLOCK_INFO block_info;
@@ -487,8 +488,8 @@ static bool unlink_deleted_block(MI_INFO *info, MI_BLOCK_INFO *block_info)
     1  error.  In this case my_error is set.
 */
 
-static int update_backward_delete_link(MI_INFO *info, my_off_t delete_block,
-				       my_off_t filepos)
+static int update_backward_delete_link(MI_INFO *info, uint64_t delete_block,
+				       uint64_t filepos)
 {
   MI_BLOCK_INFO block_info;
 
@@ -515,7 +516,7 @@ static int update_backward_delete_link(MI_INFO *info, my_off_t delete_block,
 	/* Delete datarecord from database */
 	/* info->rec_cache.seek_not_done is updated in cmp_record */
 
-static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
+static int delete_dynamic_record(MI_INFO *info, uint64_t filepos,
 				 uint32_t second_read)
 {
   uint32_t length,b_type;
@@ -577,16 +578,16 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
 	/* Write a block to datafile */
 
 int _mi_write_part_record(MI_INFO *info,
-			  my_off_t filepos,	/* points at empty block */
+			  uint64_t filepos,	/* points at empty block */
 			  ulong length,		/* length of block */
-			  my_off_t next_filepos,/* Next empty block */
+			  uint64_t next_filepos,/* Next empty block */
 			  unsigned char **record,	/* pointer to record ptr */
 			  ulong *reclength,	/* length of *record */
 			  int *flag)		/* *flag == 0 if header */
 {
   ulong head_length,res_length,extra_length,long_block,del_length;
   unsigned char *pos,*record_end;
-  my_off_t  next_delete_block;
+  uint64_t  next_delete_block;
   unsigned char temp[MI_SPLIT_LENGTH+MI_DYN_DELETE_BLOCK_HEADER];
 
   next_delete_block=HA_OFFSET_ERROR;
@@ -693,7 +694,7 @@ int _mi_write_part_record(MI_INFO *info,
   {
     /* Check first if we can join this block with the next one */
     MI_BLOCK_INFO del_block;
-    my_off_t next_block=filepos+length+extra_length+res_length;
+    uint64_t next_block=filepos+length+extra_length+res_length;
 
     del_block.second_read=0;
     if (next_block < info->state->data_file_length &&
@@ -763,7 +764,7 @@ err:
 
 	/* update record from datafile */
 
-static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *record,
+static int update_dynamic_record(MI_INFO *info, uint64_t filepos, unsigned char *record,
 				 ulong reclength)
 {
   int flag;
@@ -873,7 +874,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
 		New block was too big, link overflow part back to
 		delete list
 	      */
-	      my_off_t next_pos;
+	      uint64_t next_pos;
 	      ulong rest_length= length-MI_MAX_BLOCK_LENGTH;
 	      set_if_bigger(rest_length, (ulong)MI_MIN_BLOCK_LENGTH);
 	      next_pos= del_block.filepos+ del_block.block_len - rest_length;
@@ -1395,13 +1396,13 @@ void _my_store_blob_length(unsigned char *pos,uint32_t pack_length,uint32_t leng
     -1          Error
 */
 
-int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
+int _mi_read_dynamic_record(MI_INFO *info, uint64_t filepos, unsigned char *buf)
 {
   int block_of_record;
   uint32_t b_type, left_length= 0;
   unsigned char *to= NULL;
   MI_BLOCK_INFO block_info;
-  File file;
+  int file;
 
   if (filepos != HA_OFFSET_ERROR)
   {
@@ -1497,7 +1498,7 @@ err:
 	/* compare unique constraint between stored rows */
 
 int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			   const unsigned char *record, my_off_t pos)
+			   const unsigned char *record, uint64_t pos)
 {
   unsigned char *rec_buff,*old_record;
   int error;
@@ -1529,7 +1530,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char *record)
 {
   uint32_t flag,reclength,b_type;
-  my_off_t filepos;
+  uint64_t filepos;
   unsigned char *buffer;
   MI_BLOCK_INFO block_info;
 
@@ -1603,7 +1604,7 @@ err:
 
 	/* Compare file to buffert */
 
-static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
+static int _mi_cmp_buffer(int file, const unsigned char *buff, uint64_t filepos,
 			  uint32_t length)
 {
   uint32_t next_length;
@@ -1664,7 +1665,7 @@ err:
 */
 
 int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
-				register my_off_t filepos,
+				register uint64_t filepos,
 				bool skip_deleted_blocks)
 {
   int block_of_record, info_read, save_errno;
@@ -1833,7 +1834,7 @@ err:
 
 	/* Read and process header from a dynamic-record-file */
 
-uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
+uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, int file, uint64_t filepos)
 {
   uint32_t return_val=0;
   unsigned char *header=info->header;

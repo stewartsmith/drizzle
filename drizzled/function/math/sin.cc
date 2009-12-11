@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/function/math/sin.h>
 
 double Item_func_sin::val_real()

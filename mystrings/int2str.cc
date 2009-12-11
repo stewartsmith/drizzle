@@ -13,16 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/global.h"
-#include "m_string.h"
-
-/*
-  _dig_vec arrays are public because they are used in several outer places.
-*/
-char _dig_vec_upper[] =
-  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-char _dig_vec_lower[] =
-  "0123456789abcdefghijklmnopqrstuvwxyz";
+#include "config.h"
+#include "mystrings/m_string.h"
 
 
 /*

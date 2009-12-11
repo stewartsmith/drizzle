@@ -25,6 +25,7 @@
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/module.h>
 
+
 class Session;
 class Item;
 struct charset_info_st;

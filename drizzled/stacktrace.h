@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_STACKTRACE_H
 #define DRIZZLED_STACKTRACE_H
 
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -27,7 +27,7 @@
 #define DRIZZLED_SERVER_INCLUDES_H
 
 /* Cross-platform portability code and standard includes */
-#include <drizzled/global.h>
+#include "config.h"
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 
@@ -192,7 +192,7 @@ int get_quick_record(drizzled::optimizer::SqlSelect *select);
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
-ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
+ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 

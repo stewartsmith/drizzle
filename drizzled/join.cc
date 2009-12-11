@@ -28,6 +28,10 @@
  */
 
 #include "drizzled/server_includes.h"
+
+#include <float.h>
+#include <math.h>
+
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"

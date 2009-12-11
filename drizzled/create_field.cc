@@ -23,6 +23,7 @@
 
 #include "drizzled/server_includes.h"
 #include <errno.h>
+#include <float.h>
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"

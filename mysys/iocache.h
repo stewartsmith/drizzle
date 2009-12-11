@@ -36,7 +36,7 @@ typedef struct st_io_cache_share
   pthread_cond_t        cond;            /* To wait for signals. */
   pthread_cond_t        cond_writer;     /* For a synchronized writer. */
   /* Offset in file corresponding to the first byte of buffer. */
-  my_off_t              pos_in_file;
+  uint64_t              pos_in_file;
   /* If a synchronized write cache is the source of the data. */
   struct st_io_cache    *source_cache;
   unsigned char                 *buffer;         /* The read buffer. */
@@ -49,13 +49,13 @@ typedef struct st_io_cache_share
 typedef struct st_io_cache    /* Used when cacheing files */
 {
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
-  my_off_t pos_in_file;
+  uint64_t pos_in_file;
   /*
     The offset of end of file for READ_CACHE and WRITE_CACHE.
     For SEQ_READ_APPEND it the maximum of the actual end of file and
     the position represented by read_end.
   */
-  my_off_t end_of_file;
+  uint64_t end_of_file;
   /* Points to current read position in the buffer */
   unsigned char  *read_pos;
   /* the non-inclusive boundary in the buffer for the currently valid read */
@@ -132,7 +132,7 @@ typedef struct st_io_cache    /* Used when cacheing files */
   void* arg;        /* for use by pre/post_read */
   char *file_name;      /* if used with 'open_cached_file' */
   char *dir,*prefix;
-  File file; /* file descriptor */
+  int file; /* file descriptor */
   /*
     seek_not_done is set by my_b_seek() to inform the upcoming read/write
     operation that a seek needs to be preformed prior to the actual I/O
@@ -159,16 +159,16 @@ typedef struct st_io_cache    /* Used when cacheing files */
     used (because it's not reliable on all systems)
   */
   uint32_t inited;
-  my_off_t aio_read_pos;
+  uint64_t aio_read_pos;
   my_aio_result aio_result;
 #endif
 } IO_CACHE;
 
-extern int init_io_cache(IO_CACHE *info,File file,size_t cachesize,
-                         enum cache_type type,my_off_t seek_offset,
+extern int init_io_cache(IO_CACHE *info,int file,size_t cachesize,
+                         enum cache_type type,uint64_t seek_offset,
                          bool use_async_io, myf cache_myflags);
 extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
-                            my_off_t seek_offset,bool use_async_io,
+                            uint64_t seek_offset,bool use_async_io,
                             bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
 extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
@@ -178,7 +178,7 @@ extern int _my_b_get(IO_CACHE *info);
 extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 
 extern int my_block_write(IO_CACHE *info, const unsigned char *Buffer,
-                          size_t Count, my_off_t pos);
+                          size_t Count, uint64_t pos);
 extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
 
 #define flush_io_cache(info) my_b_flush_io_cache((info),1)

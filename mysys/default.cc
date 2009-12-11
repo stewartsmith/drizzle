@@ -41,8 +41,13 @@
 
 #include <mysys/cached_directory.h>
 
-#include <stdio.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#include <cstdio>
 #include <algorithm>
+
 
 using namespace std;
 

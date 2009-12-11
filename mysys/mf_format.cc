@@ -14,9 +14,16 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include <mystrings/m_string.h>
+
+#include <fcntl.h>
+
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #include <algorithm>
+
+#include <mystrings/m_string.h>
 
 using namespace std;
 

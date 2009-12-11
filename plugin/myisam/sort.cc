@@ -138,8 +138,8 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   while (memavl >= MIN_SORT_MEMORY)
   {
     if ((records < UINT32_MAX) &&
-       ((my_off_t) (records + 1) *
-        (sort_length + sizeof(char*)) <= (my_off_t) memavl))
+       ((uint64_t) (records + 1) *
+        (sort_length + sizeof(char*)) <= (uint64_t) memavl))
       keys= (uint)records+1;
     else
       do
@@ -349,8 +349,8 @@ pthread_handler_t thr_find_all_keys(void *arg)
 
     while (memavl >= MIN_SORT_MEMORY)
     {
-      if ((my_off_t) (idx+1)*(sort_length+sizeof(char*)) <=
-          (my_off_t) memavl)
+      if ((uint64_t) (idx+1)*(sort_length+sizeof(char*)) <=
+          (uint64_t) memavl)
         keys= idx+1;
       else
       {
@@ -896,7 +896,7 @@ merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
   int error;
   uint32_t sort_length,maxcount;
   ha_rows count;
-  my_off_t to_start_filepos= 0;
+  uint64_t to_start_filepos= 0;
   unsigned char *strpos;
   BUFFPEK *buffpek;
   priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 

@@ -19,15 +19,15 @@
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)
 {
-  buff= (unsigned char *) malloc(buff_size*sizeof(unsigned char));
+  buff= static_cast<unsigned char *>(malloc(buff_size*sizeof(unsigned char)));
 }
 
 Transparent_file::~Transparent_file()
 {
-  free((unsigned char*)buff);
+  free(buff);
 }
 
-void Transparent_file::init_buff(File filedes_arg)
+void Transparent_file::init_buff(int filedes_arg)
 {
   filedes= filedes_arg;
   /* read the beginning of the file */

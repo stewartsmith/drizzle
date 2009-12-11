@@ -390,9 +390,7 @@ enum ha_base_keytype {
 
 	/* Other constants */
 
-#define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
-
-typedef ulong key_part_map;
+typedef unsigned long key_part_map;
 #define HA_WHOLE_KEY  (~(key_part_map)0)
 
 	/* Intern constants in databases */
@@ -506,7 +504,7 @@ typedef uint64_t	ha_rows;
 #define rows2double(A)	uint64_t2double(A)
 
 #define HA_POS_ERROR	(~ (ha_rows) 0)
-#define HA_OFFSET_ERROR	(~ (my_off_t) 0)
+#define HA_OFFSET_ERROR	(~ (uint64_t) 0)
 
 #if SIZEOF_OFF_T == 4
 #define MAX_FILE_SIZE	INT32_MAX

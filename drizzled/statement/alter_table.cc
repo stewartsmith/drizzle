@@ -19,6 +19,9 @@
  */
 
 #include "drizzled/server_includes.h"
+
+#include <fcntl.h>
+
 #include "drizzled/show.h"
 #include "drizzled/lock.h"
 #include "drizzled/session.h"

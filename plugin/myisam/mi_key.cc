@@ -20,6 +20,8 @@
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
+#include <math.h>
+#include <cassert>
 
 #define CHECK_KEYS                              /* Enable safety checks */
 
@@ -48,7 +50,7 @@ static int _mi_put_key_in_record(MI_INFO *info,uint32_t keynr,unsigned char *rec
 */
 
 uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key,
-		  const unsigned char *record, my_off_t filepos)
+		  const unsigned char *record, uint64_t filepos)
 {
   unsigned char *pos;
   unsigned char *start;
@@ -370,7 +372,7 @@ err:
 
 	/* Here when key reads are used */
 
-int _mi_read_key_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
+int _mi_read_key_record(MI_INFO *info, uint64_t filepos, unsigned char *buf)
 {
   fast_mi_writeinfo(info);
   if (filepos != HA_OFFSET_ERROR)

@@ -28,7 +28,7 @@
  * Implementation of the server's date and time string matching utility.
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "drizzled/temporal_format.h"
 #include "drizzled/temporal.h"

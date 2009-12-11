@@ -787,10 +787,7 @@ public:
 class sys_var_key_buffer_size :public sys_var_key_cache_param
 {
 public:
-  sys_var_key_buffer_size(sys_var_chain *chain, const char *name_arg)
-    :sys_var_key_cache_param(chain, name_arg,
-                             offsetof(KEY_CACHE, param_buff_size))
-  {}
+  sys_var_key_buffer_size(sys_var_chain *chain, const char *name_arg);
   bool update(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
 };

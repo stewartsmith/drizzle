@@ -26,6 +26,8 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <math.h>
+
 #include "drizzled/temporal.h"
 
 /**

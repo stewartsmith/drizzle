@@ -78,6 +78,8 @@
 #include "hexdump_transaction_message.h"
 #include "background_worker.h"
 
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <vector>

@@ -21,6 +21,7 @@
 #include "drizzled/hybrid_type_traits.h"
 #include "drizzled/hybrid_type.h"
 #include "drizzled/item.h"
+#include <math.h>
 
 static const Hybrid_type_traits real_traits_instance;
 

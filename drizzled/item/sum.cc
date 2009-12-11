@@ -21,6 +21,7 @@
   Sum functions (COUNT, MIN...)
 */
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/hybrid_type_traits.h>

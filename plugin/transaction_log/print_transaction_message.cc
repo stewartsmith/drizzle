@@ -34,6 +34,8 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
 
+#include <fcntl.h>
+
 #include "transaction_log.h"
 #include "print_transaction_message.h"
 

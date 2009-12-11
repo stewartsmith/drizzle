@@ -20,6 +20,9 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/cursor.h> /* for refresh_version */
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
 extern int cleanup_done;

@@ -21,6 +21,7 @@
 
 #include <drizzled/util/test.h>
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
@@ -35,7 +36,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 	      MI_CREATE_INFO *ci,uint32_t flags)
 {
   register uint32_t i, j;
-  File dfile= 0, file= 0;
+  int dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
   uint32_t fields,length,max_key_length,packed,pointer,real_length_diff,
@@ -54,7 +55,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   HA_KEYSEG *keyseg,tmp_keyseg;
   MI_COLUMNDEF *rec;
   ulong *rec_per_key_part;
-  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  uint64_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   MI_CREATE_INFO tmp_create_info;
 
   if (!ci)
@@ -454,7 +455,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   /* max_data_file_length and max_key_file_length are recalculated on open */
   if (options & HA_OPTION_TMP_TABLE)
-    share.base.max_data_file_length=(my_off_t) ci->data_file_length;
+    share.base.max_data_file_length=(uint64_t) ci->data_file_length;
 
   share.base.min_block_length=
     (share.base.pack_reclength+3 < MI_EXTEND_BLOCK_LENGTH &&

@@ -56,7 +56,7 @@ int _mi_check_index(MI_INFO *info, int inx)
         */
 
 int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-               unsigned char *key, uint32_t key_len, uint32_t nextflag, register my_off_t pos)
+               unsigned char *key, uint32_t key_len, uint32_t nextflag, register uint64_t pos)
 {
   bool last_key;
   int error,flag;
@@ -527,7 +527,7 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char 
 
         /* Get pos to a key_block */
 
-my_off_t _mi_kpos(uint32_t nod_flag, unsigned char *after_key)
+uint64_t _mi_kpos(uint32_t nod_flag, unsigned char *after_key)
 {
   after_key-=nod_flag;
   switch (nod_flag) {
@@ -547,11 +547,11 @@ my_off_t _mi_kpos(uint32_t nod_flag, unsigned char *after_key)
     after_key++;
 #endif
   case 4:
-    return ((my_off_t) mi_uint4korr(after_key))*MI_MIN_KEY_BLOCK_LENGTH;
+    return ((uint64_t) mi_uint4korr(after_key))*MI_MIN_KEY_BLOCK_LENGTH;
   case 3:
-    return ((my_off_t) mi_uint3korr(after_key))*MI_MIN_KEY_BLOCK_LENGTH;
+    return ((uint64_t) mi_uint3korr(after_key))*MI_MIN_KEY_BLOCK_LENGTH;
   case 2:
-    return (my_off_t) (mi_uint2korr(after_key)*MI_MIN_KEY_BLOCK_LENGTH);
+    return (uint64_t) (mi_uint2korr(after_key)*MI_MIN_KEY_BLOCK_LENGTH);
   case 1:
     return (uint) (*after_key)*MI_MIN_KEY_BLOCK_LENGTH;
   case 0:                                       /* At leaf page */
@@ -563,7 +563,7 @@ my_off_t _mi_kpos(uint32_t nod_flag, unsigned char *after_key)
 
         /* Save pos to a key_block */
 
-void _mi_kpointer(register MI_INFO *info, register unsigned char *buff, my_off_t pos)
+void _mi_kpointer(register MI_INFO *info, register unsigned char *buff, uint64_t pos)
 {
   pos/=MI_MIN_KEY_BLOCK_LENGTH;
   switch (info->s->base.key_reflength) {
@@ -591,25 +591,25 @@ void _mi_kpointer(register MI_INFO *info, register unsigned char *buff, my_off_t
         /* Calc pos to a data-record from a key */
 
 
-my_off_t _mi_dpos(MI_INFO *info, uint32_t nod_flag, unsigned char *after_key)
+uint64_t _mi_dpos(MI_INFO *info, uint32_t nod_flag, unsigned char *after_key)
 {
-  my_off_t pos;
+  uint64_t pos;
   after_key-=(nod_flag + info->s->rec_reflength);
   switch (info->s->rec_reflength) {
 #if SIZEOF_OFF_T > 4
-  case 8:  pos= (my_off_t) mi_uint8korr(after_key);  break;
-  case 7:  pos= (my_off_t) mi_uint7korr(after_key);  break;
-  case 6:  pos= (my_off_t) mi_uint6korr(after_key);  break;
-  case 5:  pos= (my_off_t) mi_uint5korr(after_key);  break;
+  case 8:  pos= (uint64_t) mi_uint8korr(after_key);  break;
+  case 7:  pos= (uint64_t) mi_uint7korr(after_key);  break;
+  case 6:  pos= (uint64_t) mi_uint6korr(after_key);  break;
+  case 5:  pos= (uint64_t) mi_uint5korr(after_key);  break;
 #else
-  case 8:  pos= (my_off_t) mi_uint4korr(after_key+4);   break;
-  case 7:  pos= (my_off_t) mi_uint4korr(after_key+3);   break;
-  case 6:  pos= (my_off_t) mi_uint4korr(after_key+2);   break;
-  case 5:  pos= (my_off_t) mi_uint4korr(after_key+1);   break;
+  case 8:  pos= (uint64_t) mi_uint4korr(after_key+4);   break;
+  case 7:  pos= (uint64_t) mi_uint4korr(after_key+3);   break;
+  case 6:  pos= (uint64_t) mi_uint4korr(after_key+2);   break;
+  case 5:  pos= (uint64_t) mi_uint4korr(after_key+1);   break;
 #endif
-  case 4:  pos= (my_off_t) mi_uint4korr(after_key);  break;
-  case 3:  pos= (my_off_t) mi_uint3korr(after_key);  break;
-  case 2:  pos= (my_off_t) mi_uint2korr(after_key);  break;
+  case 4:  pos= (uint64_t) mi_uint4korr(after_key);  break;
+  case 3:  pos= (uint64_t) mi_uint3korr(after_key);  break;
+  case 2:  pos= (uint64_t) mi_uint2korr(after_key);  break;
   default:
     pos=0L;                                     /* Shut compiler up */
   }
@@ -621,29 +621,29 @@ my_off_t _mi_dpos(MI_INFO *info, uint32_t nod_flag, unsigned char *after_key)
 
 /* Calc position from a record pointer ( in delete link chain ) */
 
-my_off_t _mi_rec_pos(MYISAM_SHARE *s, unsigned char *ptr)
+uint64_t _mi_rec_pos(MYISAM_SHARE *s, unsigned char *ptr)
 {
-  my_off_t pos;
+  uint64_t pos;
   switch (s->rec_reflength) {
 #if SIZEOF_OFF_T > 4
   case 8:
-    pos= (my_off_t) mi_uint8korr(ptr);
+    pos= (uint64_t) mi_uint8korr(ptr);
     if (pos == HA_OFFSET_ERROR)
       return HA_OFFSET_ERROR;                   /* end of list */
     break;
   case 7:
-    pos= (my_off_t) mi_uint7korr(ptr);
-    if (pos == (((my_off_t) 1) << 56) -1)
+    pos= (uint64_t) mi_uint7korr(ptr);
+    if (pos == (((uint64_t) 1) << 56) -1)
       return HA_OFFSET_ERROR;                   /* end of list */
     break;
   case 6:
-    pos= (my_off_t) mi_uint6korr(ptr);
-    if (pos == (((my_off_t) 1) << 48) -1)
+    pos= (uint64_t) mi_uint6korr(ptr);
+    if (pos == (((uint64_t) 1) << 48) -1)
       return HA_OFFSET_ERROR;                   /* end of list */
     break;
   case 5:
-    pos= (my_off_t) mi_uint5korr(ptr);
-    if (pos == (((my_off_t) 1) << 40) -1)
+    pos= (uint64_t) mi_uint5korr(ptr);
+    if (pos == (((uint64_t) 1) << 40) -1)
       return HA_OFFSET_ERROR;                   /* end of list */
     break;
 #else
@@ -655,18 +655,18 @@ my_off_t _mi_rec_pos(MYISAM_SHARE *s, unsigned char *ptr)
     /* fall through */
 #endif
   case 4:
-    pos= (my_off_t) mi_uint4korr(ptr);
-    if (pos == (my_off_t) UINT32_MAX)
+    pos= (uint64_t) mi_uint4korr(ptr);
+    if (pos == (uint64_t) UINT32_MAX)
       return  HA_OFFSET_ERROR;
     break;
   case 3:
-    pos= (my_off_t) mi_uint3korr(ptr);
-    if (pos == (my_off_t) (1 << 24) -1)
+    pos= (uint64_t) mi_uint3korr(ptr);
+    if (pos == (uint64_t) (1 << 24) -1)
       return HA_OFFSET_ERROR;
     break;
   case 2:
-    pos= (my_off_t) mi_uint2korr(ptr);
-    if (pos == (my_off_t) (1 << 16) -1)
+    pos= (uint64_t) mi_uint2korr(ptr);
+    if (pos == (uint64_t) (1 << 16) -1)
       return HA_OFFSET_ERROR;
     break;
   default: abort();                             /* Impossible */
@@ -679,7 +679,7 @@ my_off_t _mi_rec_pos(MYISAM_SHARE *s, unsigned char *ptr)
 
         /* save position to record */
 
-void _mi_dpointer(MI_INFO *info, unsigned char *buff, my_off_t pos)
+void _mi_dpointer(MI_INFO *info, unsigned char *buff, uint64_t pos)
 {
   if (!(info->s->options &
         (HA_OPTION_PACK_RECORD | HA_OPTION_COMPRESS_RECORD)) &&
@@ -1174,7 +1174,7 @@ unsigned char *_mi_move_key(MI_KEYDEF *keyinfo, unsigned char *to, unsigned char
         /* This can't be used when database is touched after last read */
 
 int _mi_search_next(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-                    unsigned char *key, uint32_t key_length, uint32_t nextflag, my_off_t pos)
+                    unsigned char *key, uint32_t key_length, uint32_t nextflag, uint64_t pos)
 {
   int error;
   uint32_t nod_flag;
@@ -1207,7 +1207,7 @@ int _mi_search_next(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
   if (nextflag & SEARCH_BIGGER)                                 /* Next key */
   {
-    my_off_t tmp_pos=_mi_kpos(nod_flag,info->int_keypos);
+    uint64_t tmp_pos=_mi_kpos(nod_flag,info->int_keypos);
     if (tmp_pos != HA_OFFSET_ERROR)
     {
       if ((error=_mi_search(info,keyinfo,key, USE_WHOLE_KEY,
@@ -1250,7 +1250,7 @@ int _mi_search_next(register MI_INFO *info, register MI_KEYDEF *keyinfo,
         /* This is stored in info->lastpos */
 
 int _mi_search_first(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-                     register my_off_t pos)
+                     register uint64_t pos)
 {
   uint32_t nod_flag;
   unsigned char *page;
@@ -1292,7 +1292,7 @@ int _mi_search_first(register MI_INFO *info, register MI_KEYDEF *keyinfo,
         /* This is stored in info->lastpos */
 
 int _mi_search_last(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-                    register my_off_t pos)
+                    register uint64_t pos)
 {
   uint32_t nod_flag;
   unsigned char *buff,*page;

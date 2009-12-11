@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/function/numhybrid.h>
 
 void Item_func_numhybrid::fix_num_length_and_dec()

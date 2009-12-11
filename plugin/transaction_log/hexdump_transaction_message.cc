@@ -35,6 +35,8 @@
 #include <drizzled/error.h>
 #include <drizzled/hash/crc32.h>
 
+#include <fcntl.h>
+
 #include "transaction_log.h"
 #include "hexdump_transaction_message.h"
 

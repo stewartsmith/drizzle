@@ -19,6 +19,7 @@
 
 #include "heap_priv.h"
 #include <string.h>
+#include <cstdlib>
 
 int heap_rename(const char *old_name, const char *new_name)
 {

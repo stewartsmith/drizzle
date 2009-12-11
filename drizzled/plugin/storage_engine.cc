@@ -19,7 +19,9 @@
 
 #include <drizzled/server_includes.h>
 
-#include CSTDINT_H
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <string>
 #include <vector>
 #include <set>

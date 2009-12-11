@@ -158,13 +158,13 @@ init_functions(IO_CACHE* info)
     #  error
 */
 
-int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
-		  enum cache_type type, my_off_t seek_offset,
+int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
+		  enum cache_type type, uint64_t seek_offset,
 		  bool use_async_io, myf cache_myflags)
 {
   size_t min_cache;
   off_t pos;
-  my_off_t end_of_file= ~(my_off_t) 0;
+  uint64_t end_of_file= ~(uint64_t) 0;
 
   info->file= file;
   info->type= TYPE_NOT_SET;	    /* Don't set it until mutex are created */
@@ -193,7 +193,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
       assert(seek_offset == 0);
     }
     else
-      info->seek_not_done= test(seek_offset != (my_off_t)pos);
+      info->seek_not_done= test(seek_offset != (uint64_t)pos);
   }
 
   info->share=0;
@@ -212,7 +212,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
       if (end_of_file < seek_offset)
 	end_of_file=seek_offset;
       /* Trim cache size if the file is very small */
-      if ((my_off_t) cachesize > end_of_file-seek_offset+IO_SIZE*2-1)
+      if ((uint64_t) cachesize > end_of_file-seek_offset+IO_SIZE*2-1)
       {
 	cachesize= (size_t) (end_of_file-seek_offset)+IO_SIZE*2-1;
 	use_async_io=0;				/* No need to use async */
@@ -315,7 +315,7 @@ static void my_aiowait(my_aio_result *result)
 */
 
 bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
-			my_off_t seek_offset,
+			uint64_t seek_offset,
 			bool use_async_io,
 			bool clear_cache)
 {
@@ -348,7 +348,7 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 	info->write_end=info->write_buffer+info->buffer_length;
 	info->seek_not_done=1;
       }
-      info->end_of_file = ~(my_off_t) 0;
+      info->end_of_file = ~(uint64_t) 0;
     }
     pos=info->request_pos+(seek_offset-info->pos_in_file);
     if (type == WRITE_CACHE)
@@ -382,7 +382,7 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
     {
       info->write_end=(info->buffer + info->buffer_length -
 		       (seek_offset & (IO_SIZE-1)));
-      info->end_of_file= ~(my_off_t) 0;
+      info->end_of_file= ~(uint64_t) 0;
     }
   }
   info->type=type;
@@ -423,7 +423,7 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 
     When changing this function, be careful with handling file offsets
     (end-of_file, pos_in_file). Do not cast them to possibly smaller
-    types than my_off_t unless you can be sure that their value fits.
+    types than uint64_t unless you can be sure that their value fits.
     Same applies to differences of file offsets.
 
     When changing this function, check _my_b_read_r(). It might need the
@@ -437,7 +437,7 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length,diff_length,left_length, max_length;
-  my_off_t pos_in_file;
+  uint64_t pos_in_file;
 
   if ((left_length= (size_t) (info->read_end-info->read_pos)))
   {
@@ -721,7 +721,7 @@ void remove_io_thread(IO_CACHE *cache)
     0           OK, unlocked, another thread did the read.
 */
 
-static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
+static int lock_io_cache(IO_CACHE *cache, uint64_t pos)
 {
   IO_CACHE_SHARE *cshare= cache->share;
 
@@ -883,7 +883,7 @@ static void unlock_io_cache(IO_CACHE *cache)
 
     When changing this function, be careful with handling file offsets
     (end-of_file, pos_in_file). Do not cast them to possibly smaller
-    types than my_off_t unless you can be sure that their value fits.
+    types than uint64_t unless you can be sure that their value fits.
     Same applies to differences of file offsets. (Bug #11527)
 
     When changing this function, check _my_b_read(). It might need the
@@ -896,7 +896,7 @@ static void unlock_io_cache(IO_CACHE *cache)
 
 extern "C" int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
 {
-  my_off_t pos_in_file;
+  uint64_t pos_in_file;
   size_t length, diff_length, left_length;
   IO_CACHE_SHARE *cshare= cache->share;
 
@@ -1065,7 +1065,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
 extern "C" int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length, diff_length, left_length, save_count, max_length;
-  my_off_t pos_in_file;
+  uint64_t pos_in_file;
   save_count=Count;
 
   /* first, read the regular buffer */
@@ -1228,7 +1228,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
 {
   size_t length,read_length,diff_length,left_length,use_length,org_Count;
   size_t max_length;
-  my_off_t next_pos_in_file;
+  uint64_t next_pos_in_file;
   unsigned char *read_buffer;
 
   memcpy(Buffer,info->read_pos,
@@ -1280,7 +1280,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
       }
       else
       {
-	my_off_t offset= (info->pos_in_file - info->aio_read_pos);
+	uint64_t offset= (info->pos_in_file - info->aio_read_pos);
 	info->pos_in_file=info->aio_read_pos; /* Whe are here */
 	info->read_pos=info->request_pos+offset;
 	read_length-=offset;			/* Bytes left from read_pos */
@@ -1364,7 +1364,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
   {
     info->aio_result.result.aio_errno=AIO_INPROGRESS;	/* Marker for test */
     if (aioread(info->file,read_buffer, max_length,
-		(my_off_t) next_pos_in_file,SEEK_SET,
+		(uint64_t) next_pos_in_file,SEEK_SET,
 		&info->aio_result.result))
     {						/* Skip async io */
       my_errno=errno;
@@ -1481,7 +1481,7 @@ extern "C" int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer,
 */
 
 int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count,
-		   my_off_t pos)
+		   uint64_t pos)
 {
   size_t length;
   int error=0;
@@ -1541,7 +1541,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 {
   size_t length;
   bool append_cache;
-  my_off_t pos_in_file;
+  uint64_t pos_in_file;
 
   if (!(append_cache = (info->type == SEQ_READ_APPEND)))
     need_append_buffer_lock=0;
@@ -1598,7 +1598,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       else
       {
 	info->end_of_file+=(info->write_pos-info->append_read_pos);
-	my_off_t tell_ret= lseek(info->file, 0, SEEK_CUR);
+	uint64_t tell_ret= lseek(info->file, 0, SEEK_CUR);
 	assert(info->end_of_file == tell_ret);
       }
 

@@ -18,13 +18,16 @@
  */
 
 #include <drizzled/server_includes.h>
+
+#include <float.h>
+
+#include <algorithm>
+
 #include <drizzled/error.h>
 #include <drizzled/function/func.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/field/enum.h>
-
-#include <algorithm>
 
 using namespace std;
 

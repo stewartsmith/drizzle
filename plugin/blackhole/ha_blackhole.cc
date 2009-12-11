@@ -20,6 +20,8 @@
 
 #include "ha_blackhole.h"
 
+#include <fcntl.h>
+
 #include <string>
 #include <map>
 #include <fstream>

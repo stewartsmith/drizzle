@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/function/math/sqrt.h>
 
 double Item_func_sqrt::val_real()

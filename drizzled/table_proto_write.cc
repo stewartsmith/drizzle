@@ -21,6 +21,7 @@
 /* For proto */
 #include <string>
 #include <fstream>
+#include <fcntl.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>

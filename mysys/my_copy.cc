@@ -15,6 +15,8 @@
 
 #include "mysys/mysys_priv.h"
 
+#include <fcntl.h>
+
 #include <mystrings/m_string.h>
 #if defined(HAVE_UTIME_H)
 #include <utime.h>
@@ -26,6 +28,10 @@ struct utimbuf {
   time_t actime;
   time_t modtime;
 };
+#endif
+
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
 #endif
 
 #include <drizzled/util/test.h>
@@ -54,7 +60,7 @@ int my_copy(const char *from, const char *to, myf MyFlags)
   uint32_t Count;
   bool new_file_stat= 0; /* 1 if we could stat "to" */
   int create_flag;
-  File from_file,to_file;
+  int from_file,to_file;
   unsigned char buff[IO_SIZE];
   struct stat stat_buff,new_stat_buff;
 

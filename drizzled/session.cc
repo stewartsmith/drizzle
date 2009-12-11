@@ -43,6 +43,7 @@
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
 
+#include <fcntl.h>
 #include <algorithm>
 
 using namespace std;
@@ -112,7 +113,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  File fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -1098,9 +1099,9 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
+static int create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
 {
-  File file;
+  int file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS

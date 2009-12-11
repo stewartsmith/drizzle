@@ -120,7 +120,7 @@ void init_read_record(READ_RECORD *info,
                                                 table->cursor->stats.deleted) >
         (uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
         info->io_cache->end_of_file/info->ref_length * table->s->reclength >
-        (my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
+        (uint64_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
         !table->s->blob_fields &&
         info->ref_length <= MAX_REFLENGTH)
     {
@@ -410,7 +410,7 @@ static int rr_from_cache(READ_RECORD *info)
 {
   register uint32_t i;
   uint32_t length;
-  my_off_t rest_of_file;
+  uint64_t rest_of_file;
   int16_t error;
   unsigned char *position,*ref_position,*record_pos;
   uint32_t record;
@@ -435,7 +435,7 @@ static int rr_from_cache(READ_RECORD *info)
     }
     length=info->rec_cache_size;
     rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
-    if ((my_off_t) length > rest_of_file)
+    if ((uint64_t) length > rest_of_file)
       length= (uint32_t) rest_of_file;
     if (!length || my_b_read(info->io_cache,info->cache,length))
     {

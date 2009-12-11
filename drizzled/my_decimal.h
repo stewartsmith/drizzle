@@ -32,18 +32,9 @@
 #ifndef DRIZZLED_MY_DECIMAL_H
 #define DRIZZLED_MY_DECIMAL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <mystrings/decimal.h>
 #include <mysys/my_time.h>
 #include <drizzled/sql_string.h>
-
-#ifdef __cplusplus
-}
-#endif
-
 
 #define DECIMAL_LONGLONG_DIGITS 22
 #define DECIMAL_LONG_DIGITS 10

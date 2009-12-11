@@ -26,7 +26,7 @@ Created 4/24/1996 Heikki Tuuri
 
 #include "dict0load.h"
 #if defined(BUILD_DRIZZLE)
-# include "drizzled/global.h"
+# include "config.h"
 #else
 # include "mysql_version.h"
 #endif /* BUILD_DRIZZLE */

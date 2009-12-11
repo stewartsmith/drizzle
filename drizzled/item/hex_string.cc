@@ -27,6 +27,9 @@
 
 using namespace std;
 
+static char _dig_vec_lower[] =
+  "0123456789abcdefghijklmnopqrstuvwxyz";
+
 inline uint32_t char_val(char X)
 {
   return (uint32_t) (X >= '0' && X <= '9' ? X-'0' :

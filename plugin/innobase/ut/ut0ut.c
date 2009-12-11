@@ -59,6 +59,8 @@ Created 5/11/1994 Heikki Tuuri
 #  include "mysql_com.h" /* NAME_LEN */
 # endif /* DRIZZLE */
 #endif /* UNIV_HOTBACKUP */
+#include <errno.h>
+#include <assert.h>
 
 /** A constant to prevent the compiler from optimizing ut_delay() away. */
 UNIV_INTERN ibool	ut_always_false	= FALSE;

@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <math.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/math/exp.h>
 

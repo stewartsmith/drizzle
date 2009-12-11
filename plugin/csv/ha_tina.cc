@@ -50,6 +50,8 @@ TODO:
 
 #include "ha_tina.h"
 
+#include <fcntl.h>
+
 #include <string>
 #include <map>
 
@@ -69,8 +71,8 @@ using namespace std;
 #define CSM_EXT ".CSM"               // Meta file
 
 
-static int read_meta_file(File meta_file, ha_rows *rows);
-static int write_meta_file(File meta_file, ha_rows rows, bool dirty);
+static int read_meta_file(int meta_file, ha_rows *rows);
+static int write_meta_file(int meta_file, ha_rows rows, bool dirty);
 
 extern "C" void tina_get_status(void* param, int concurrent_insert);
 extern "C" void tina_update_status(void* param);
@@ -360,7 +362,7 @@ TinaShare *ha_tina::get_share(const char *table_name)
     non-zero - error occurred
 */
 
-static int read_meta_file(File meta_file, ha_rows *rows)
+static int read_meta_file(int meta_file, ha_rows *rows)
 {
   unsigned char meta_buffer[META_BUFFER_SIZE];
   unsigned char *ptr= meta_buffer;
@@ -413,7 +415,7 @@ static int read_meta_file(File meta_file, ha_rows *rows)
     non-zero - error occurred
 */
 
-static int write_meta_file(File meta_file, ha_rows rows, bool dirty)
+static int write_meta_file(int meta_file, ha_rows rows, bool dirty)
 {
   unsigned char meta_buffer[META_BUFFER_SIZE];
   unsigned char *ptr= meta_buffer;
@@ -1385,7 +1387,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
                         drizzled::message::Table& create_proto)
 {
   char name_buff[FN_REFLEN];
-  File create_file;
+  int create_file;
 
   /*
     check columns

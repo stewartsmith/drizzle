@@ -24,7 +24,20 @@
  * Common functions for dealing with calendrical calculations
  */
 
-#include "drizzled/global.h"
+#include "config.h"
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+#include <cstdlib>
+
 #include "drizzled/calendar.h"
 
 /** Static arrays for number of days in a month and their "day ends" */

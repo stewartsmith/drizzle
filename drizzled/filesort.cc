@@ -22,6 +22,12 @@
 */
 
 #include "drizzled/server_includes.h"
+
+#include <float.h>
+
+#include <queue>
+#include <algorithm>
+
 #include "drizzled/sql_sort.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -30,9 +36,6 @@
 #include "drizzled/table_list.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
-
-#include <queue>
-#include <algorithm>
 
 using namespace std;
 using namespace drizzled;
@@ -319,7 +322,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     if (flush_io_cache(outfile))
       error=1;
     {
-      my_off_t save_pos=outfile->pos_in_file;
+      uint64_t save_pos=outfile->pos_in_file;
       /* For following reads */
       if (reinit_io_cache(outfile,READ_CACHE,0L,0,0))
 	error=1;
@@ -460,7 +463,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
   int error,flag,quick_select;
   uint32_t idx,indexpos,ref_length;
   unsigned char *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
-  my_off_t record;
+  uint64_t record;
   Table *sort_form;
   Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
@@ -1109,7 +1112,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   size_t sort_length;
   uint32_t maxcount;
   ha_rows max_rows,org_max_rows;
-  my_off_t to_start_filepos;
+  uint64_t to_start_filepos;
   unsigned char *strpos;
   BUFFPEK *buffpek;
   qsort2_cmp cmp;

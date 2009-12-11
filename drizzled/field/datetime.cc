@@ -25,6 +25,8 @@
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
 
+#include <math.h>
+
 #include <sstream>
 #include <string>
 

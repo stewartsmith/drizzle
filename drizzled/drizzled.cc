@@ -63,6 +63,7 @@
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
 #endif
+#include <sys/socket.h>
 
 #include <locale.h>
 
@@ -76,7 +77,6 @@
 
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
-extern "C" {					// Because of SCO 3.2V4.2
 #include <errno.h>
 #include <sys/stat.h>
 #include <mysys/my_getopt.h>
@@ -143,8 +143,6 @@ inline void setup_fpu()
   _FPU_SETCW(cw);
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
-
-} /* cplusplus */
 
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 

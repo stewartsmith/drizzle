@@ -108,6 +108,14 @@
 */
 
 #include "drizzled/server_includes.h"
+
+#include <math.h>
+#include <float.h>
+
+#include <string>
+#include <vector>
+#include <algorithm>
+
 #include "drizzled/sql_base.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
@@ -125,10 +133,6 @@
 #include "drizzled/records.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
-
-#include <string>
-#include <vector>
-#include <algorithm>
 
 #include "drizzled/memory/multi_malloc.h"
 

@@ -58,6 +58,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include "drizzled/server_includes.h"
+
+#include <fcntl.h>
+
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
 #include "mystrings/m_ctype.h"
@@ -1165,7 +1168,7 @@ innobase_mysql_tmpfile(void)
 /*========================*/
 {
 	int	fd2 = -1;
-	File	fd = mysql_tmpfile("ib");
+	int	fd = mysql_tmpfile("ib");
 	if (fd >= 0) {
 		/* Copy the file descriptor, so that the additional resources
 		allocated by create_temp_file() can be freed by invoking

@@ -18,6 +18,8 @@
 
 #include "heap_priv.h"
 
+#include <cassert>
+
 
 /*
   MySQL Heap tables keep data in arrays of fixed-size chunks.

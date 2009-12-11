@@ -68,6 +68,7 @@
 
 #include "drizzled/calendar.h"
 
+#include <cassert>
 #include <ostream>
 
 /* Outside forward declarations */

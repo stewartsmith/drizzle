@@ -128,10 +128,10 @@ typedef struct st_mi_isaminfo		/* Struct from h_info */
 {
   ha_rows records;			/* Records in database */
   ha_rows deleted;			/* Deleted records in database */
-  my_off_t recpos;			/* Pos for last used record */
-  my_off_t newrecpos;			/* Pos if we write new record */
-  my_off_t dupp_key_pos;		/* Position to record with dupp key */
-  my_off_t data_file_length,		/* Length of data file */
+  uint64_t recpos;			/* Pos for last used record */
+  uint64_t newrecpos;			/* Pos if we write new record */
+  uint64_t dupp_key_pos;		/* Position to record with dupp key */
+  uint64_t data_file_length,		/* Length of data file */
            max_data_file_length,
            index_file_length,
            max_index_file_length,
@@ -145,7 +145,7 @@ typedef struct st_mi_isaminfo		/* Struct from h_info */
   uint	options;			/* HA_OPTION_... used */
   int	errkey,				/* With key was dupplicated on err */
 	sortkey;			/* clustered by this key */
-  File	filenr;				/* (uniq) filenr for datafile */
+  int	filenr;				/* (uniq) filenr for datafile */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
@@ -270,14 +270,14 @@ extern int mi_rlast(struct st_myisam_info *file,unsigned char *buf,int inx);
 extern int mi_rnext(struct st_myisam_info *file,unsigned char *buf,int inx);
 extern int mi_rnext_same(struct st_myisam_info *info, unsigned char *buf);
 extern int mi_rprev(struct st_myisam_info *file,unsigned char *buf,int inx);
-extern int mi_rrnd(struct st_myisam_info *file,unsigned char *buf, my_off_t pos);
+extern int mi_rrnd(struct st_myisam_info *file,unsigned char *buf, uint64_t pos);
 extern int mi_scan_init(struct st_myisam_info *file);
 extern int mi_scan(struct st_myisam_info *file,unsigned char *buf);
 extern int mi_rsame(struct st_myisam_info *file,unsigned char *record,int inx);
 extern int mi_update(struct st_myisam_info *file,const unsigned char *old,
 		     unsigned char *new_record);
 extern int mi_write(struct st_myisam_info *file,unsigned char *buff);
-extern my_off_t mi_position(struct st_myisam_info *file);
+extern uint64_t mi_position(struct st_myisam_info *file);
 extern int mi_status(struct st_myisam_info *info, MI_ISAMINFO *x, uint32_t flag);
 extern int mi_lock_database(struct st_myisam_info *file,int lock_type);
 extern int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydef,
@@ -384,9 +384,9 @@ typedef struct st_mi_check_param
   uint64_t max_data_file_length;
   uint64_t keys_in_use;
   uint64_t max_record_length;
-  my_off_t search_after_block;
-  my_off_t new_file_pos,key_file_blocks;
-  my_off_t keydata,totaldata,key_blocks,start_check_pos;
+  uint64_t search_after_block;
+  uint64_t new_file_pos,key_file_blocks;
+  uint64_t keydata,totaldata,key_blocks,start_check_pos;
   ha_rows total_records,total_deleted;
   ha_checksum record_checksum,glob_crc;
   uint64_t use_buffers;
@@ -420,7 +420,7 @@ typedef struct st_mi_check_param
 
 typedef struct st_sort_info
 {
-  my_off_t filelength,dupp,buff_length;
+  uint64_t filelength,dupp,buff_length;
   ha_rows max_records;
   uint32_t current_key, total_keys;
   myf myf_rw;
@@ -459,10 +459,10 @@ int update_state_info(MI_CHECK *param, MI_INFO *info,uint32_t update);
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
                       uint64_t *unique, uint64_t *notnull,
                       uint64_t records);
-int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
-	     my_off_t length, const char *type);
-int movepoint(MI_INFO *info,unsigned char *record,my_off_t oldpos,
-	      my_off_t newpos, uint32_t prot_key);
+int filecopy(MI_CHECK *param, int to,int from,uint64_t start,
+	     uint64_t length, const char *type);
+int movepoint(MI_INFO *info,unsigned char *record,uint64_t oldpos,
+	      uint64_t newpos, uint32_t prot_key);
 int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile);
 int test_if_almost_full(MI_INFO *info);
 int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);

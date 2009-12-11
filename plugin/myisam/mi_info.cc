@@ -16,13 +16,11 @@
 /* Return useful base information for an open table */
 
 #include "myisam_priv.h"
-#ifdef	__WIN__
 #include <sys/stat.h>
-#endif
 
 	/* Get position to last record */
 
-my_off_t mi_position(MI_INFO *info)
+uint64_t mi_position(MI_INFO *info)
 {
   return info->lastpos;
 }

@@ -25,6 +25,7 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+extern char _dig_vec_upper[];
 
 Field_str::Field_str(unsigned char *ptr_arg,
                      uint32_t len_arg,

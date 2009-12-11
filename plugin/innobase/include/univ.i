@@ -105,7 +105,7 @@ in compiling more Posix-compatible. These headers also define __WIN__
 if we are compiling on Windows. */
 
 # if defined(BUILD_DRIZZLE)
-#  include <drizzled/global.h>
+#  include "config.h"
 #  include <mysys/my_pthread.h>
 # else
 #  ifndef UNIV_HOTBACKUP

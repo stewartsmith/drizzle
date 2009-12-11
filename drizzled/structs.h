@@ -36,7 +36,7 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
   unsigned char dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
   uint32_t ref_length;			/* Length of ref (1-8) */
   uint32_t block_size;			/* index block size */
-  File filenr;				/* (uniq) filenr for table */
+  int filenr;				/* (uniq) filenr for table */
   ha_rows records;			/* Records i datafilen */
   ha_rows deleted;			/* Deleted records */
   uint64_t data_file_length;		/* Length off data file */

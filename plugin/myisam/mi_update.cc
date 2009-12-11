@@ -21,7 +21,7 @@
 int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char *newrec)
 {
   int flag,key_changed,save_errno;
-  register my_off_t pos;
+  register uint64_t pos;
   uint32_t i;
   unsigned char old_key[MI_MAX_KEY_BUFF],*new_key;
   bool auto_key_changed=0;
@@ -123,7 +123,7 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
     */
     MI_STATUS_INFO state;
     ha_rows org_split;
-    my_off_t org_delete_link;
+    uint64_t org_delete_link;
 
     memcpy(&state, info->state, sizeof(state));
     org_split=	     share->state.split;

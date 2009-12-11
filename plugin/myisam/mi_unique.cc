@@ -19,9 +19,9 @@
 #include <mystrings/m_ctype.h>
 
 bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
-			ha_checksum unique_hash, my_off_t disk_pos)
+			ha_checksum unique_hash, uint64_t disk_pos)
 {
-  my_off_t lastpos=info->lastpos;
+  uint64_t lastpos=info->lastpos;
   MI_KEYDEF *key= &info->s->keyinfo[def->key];
   unsigned char *key_buff=info->lastkey2;
 

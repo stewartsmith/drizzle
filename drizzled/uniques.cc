@@ -31,6 +31,9 @@
 */
 
 #include <drizzled/server_includes.h>
+
+#include <math.h>
+
 #include <drizzled/sql_sort.h>
 #include <drizzled/session.h>
 #include <queue>
@@ -626,7 +629,7 @@ bool Unique::get(Table *table)
   BUFFPEK *file_ptr= (BUFFPEK*) file_ptrs.buffer;
   uint32_t maxbuffer= file_ptrs.elements - 1;
   unsigned char *sort_buffer;
-  my_off_t save_pos;
+  uint64_t save_pos;
   bool error=1;
 
       /* Open cached file if it isn't open */

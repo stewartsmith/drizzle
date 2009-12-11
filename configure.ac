@@ -99,23 +99,12 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
                    [Comment about compilation environment])
 
 
-AC_ARG_WITH([max-indexes],
-            AS_HELP_STRING([--with-max-indexes=N],
-                           [Sets the maximum number of indexes per table, default 64]),
-            [max_indexes="$withval"],
-            [max_indexes=64])
-AC_MSG_CHECKING([max indexes per table])
-AC_DEFINE_UNQUOTED([MAX_INDEXES], [$max_indexes],
-                   [Maximum number of indexes per table])
-AC_MSG_RESULT([$max_indexes])
-
-
 #########################################################################
 
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS([drizzled/plugin/config.h])
+PANDORA_PLUGINS([drizzled/plugin/load_list.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later

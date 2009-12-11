@@ -418,7 +418,6 @@ drizzled_drizzled_LDFLAGS = -export-dynamic
 noinst_HEADERS += \
 		drizzled/hash.h \
 		drizzled/gettext.h \
-		drizzled/global.h \
 		drizzled/server_includes.h
 
 drizzled_drizzled_SOURCES = \

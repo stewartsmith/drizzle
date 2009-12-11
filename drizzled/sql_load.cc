@@ -25,12 +25,14 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/db.h>
 
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <algorithm>
 
 using namespace std;
 
 class READ_INFO {
-  File	cursor;
+  int	cursor;
   unsigned char	*buffer;                /* Buffer for read text */
   unsigned char *end_of_buff;           /* Data in bufferts ends here */
   size_t buff_length;                   /* Length of buffert */
@@ -49,7 +51,7 @@ public:
 	*row_end;			/* Found row ends here */
   const CHARSET_INFO *read_charset;
 
-  READ_INFO(File cursor, size_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(int cursor, size_t tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -116,7 +118,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
                 enum enum_duplicates handle_duplicates, bool ignore)
 {
   char name[FN_REFLEN];
-  File file;
+  int file;
   Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
@@ -730,7 +732,7 @@ READ_INFO::unescape(char chr)
 */
 
 
-READ_INFO::READ_INFO(File file_par, size_t tot_length,
+READ_INFO::READ_INFO(int file_par, size_t tot_length,
                      const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
