@@ -121,13 +121,11 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
     blitz.close_table(system_table);
 
     if (proto_string == NULL) {
-      tchdbdel(system_table);
       pthread_mutex_unlock(&proto_cache_mutex);
       return ENOMEM;
     }
 
     if (!proto->ParseFromArray(proto_string, proto_string_length)) {
-      tchdbdel(system_table);
       free(proto_string);
       pthread_mutex_unlock(&proto_cache_mutex);
       return HA_ERR_CRASHED_ON_USAGE;      

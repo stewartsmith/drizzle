@@ -26,6 +26,7 @@
 #include <drizzled/table.h>
 #include <drizzled/field.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/atomics.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <mysys/thr_lock.h>
@@ -78,13 +79,12 @@ class BlitzData {
 private:
   TCHDB *data_table;          /* Where the actual row data lives */
   TCHDB *system_table;        /* Keeps track of system info */
-  pthread_mutex_t id_lock;    /* Lock for hidden id generation */
   char *tc_meta_buffer;       /* Tokyo Cabinet's Persistent Meta Buffer */
-  uint64_t current_hidden_id; /* Current row id */
+  drizzled::atomic<uint64_t> current_hidden_row_id;
 
 public:
-  BlitzData();
-  ~BlitzData();
+  BlitzData() {};
+  ~BlitzData() {};
   bool startup(const char *table_path);
   bool shutdown(void);
 
@@ -200,8 +200,7 @@ public:
     : drizzled::plugin::StorageEngine(name_arg,
                                       HTON_FILE_BASED |
                                       HTON_STATS_RECORDS_IS_EXACT |
-                                      HTON_HAS_RECORDS |
-                                      HTON_HAS_DATA_DICTIONARY) {
+                                      HTON_HAS_RECORDS) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 
