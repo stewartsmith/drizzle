@@ -254,7 +254,7 @@ private:
 
   friend class QuickRorIntersectSelect;
 
-  friend class QUICK_GROUP_MIN_MAX_SELECT;
+  friend class QuickGroupMinMaxSelect;
 
   friend uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
 

@@ -31,45 +31,22 @@ using namespace std;
 using namespace drizzled;
 
 
-/*
-  Construct new quick select for group queries with min/max.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::QUICK_GROUP_MIN_MAX_SELECT()
-    table             The table being accessed
-    join              Descriptor of the current query
-    have_min          true if the query selects a MIN function
-    have_max          true if the query selects a MAX function
-    min_max_arg_part  The only argument field of all MIN/MAX functions
-    group_prefix_len  Length of all key parts in the group prefix
-    prefix_key_parts  All key parts in the group prefix
-    index_info        The index chosen for data access
-    use_index         The id of index_info
-    read_cost         Cost of this access method
-    records           Number of records returned
-    key_infix_len     Length of the key infix appended to the group prefix
-    key_infix         Infix of constants from equality predicates
-    parent_alloc      Memory pool for this and quick_prefix_select data
-
-  RETURN
-    None
-*/
-optimizer::QUICK_GROUP_MIN_MAX_SELECT::
-QUICK_GROUP_MIN_MAX_SELECT(Table *table,
-                           JOIN *join_arg,
-                           bool have_min_arg,
-                           bool have_max_arg,
-                           KEY_PART_INFO *min_max_arg_part_arg,
-                           uint32_t group_prefix_len_arg,
-                           uint32_t group_key_parts_arg,
-                           uint32_t used_key_parts_arg,
-                           KEY *index_info_arg,
-                           uint32_t use_index,
-                           double read_cost_arg,
-                           ha_rows records_arg,
-                           uint32_t key_infix_len_arg,
-                           unsigned char *key_infix_arg,
-                           MEM_ROOT *parent_alloc)
+optimizer::QuickGroupMinMaxSelect::
+QuickGroupMinMaxSelect(Table *table,
+                       JOIN *join_arg,
+                       bool have_min_arg,
+                       bool have_max_arg,
+                       KEY_PART_INFO *min_max_arg_part_arg,
+                       uint32_t group_prefix_len_arg,
+                       uint32_t group_key_parts_arg,
+                       uint32_t used_key_parts_arg,
+                       KEY *index_info_arg,
+                       uint32_t use_index,
+                       double read_cost_arg,
+                       ha_rows records_arg,
+                       uint32_t key_infix_len_arg,
+                       unsigned char *key_infix_arg,
+                       MEM_ROOT *parent_alloc)
   :
     join(join_arg),
     index_info(index_info_arg),
@@ -112,23 +89,7 @@ QUICK_GROUP_MIN_MAX_SELECT(Table *table,
 }
 
 
-/*
-  Do post-constructor initialization.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::init()
-
-  DESCRIPTION
-    The method performs initialization that cannot be done in the constructor
-    such as memory allocations that may fail. It allocates memory for the
-    group prefix and inifix buffers, and for the lists of MIN/MAX item to be
-    updated during execution.
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::init()
+int optimizer::QuickGroupMinMaxSelect::init()
 {
   if (group_prefix) /* Already initialized. */
     return 0;
@@ -205,7 +166,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::init()
 }
 
 
-optimizer::QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
+optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
 {
   if (cursor->inited != Cursor::NONE)
   {
@@ -222,24 +183,7 @@ optimizer::QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
 }
 
 
-/*
-  Eventually create and add a new quick range object.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::add_range()
-    sel_range  Range object from which a
-
-  NOTES
-    Construct a new QuickRange object from a SEL_ARG object, and
-    add it to the array min_max_ranges. If sel_arg is an infinite
-    range, e.g. (x < 5 or x > 4), then skip it and do not construct
-    a quick range.
-
-  RETURN
-    false on success
-    true  otherwise
-*/
-bool optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_range(SEL_ARG *sel_range)
+bool optimizer::QuickGroupMinMaxSelect::add_range(optimizer::SEL_ARG *sel_range)
 {
   optimizer::QuickRange *range= NULL;
   uint32_t range_flag= sel_range->min_flag | sel_range->max_flag;
@@ -273,24 +217,7 @@ bool optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_range(SEL_ARG *sel_range)
 }
 
 
-/*
-  Opens the ranges if there are more conditions in quick_prefix_select than
-  the ones used for jumping through the prefixes.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::adjust_prefix_ranges()
-
-  NOTES
-    quick_prefix_select is made over the conditions on the whole key.
-    It defines a number of ranges of length x.
-    However when jumping through the prefixes we use only the the first
-    few most significant keyparts in the range key. However if there
-    are more keyparts to follow the ones we are using we must make the
-    condition on the key inclusive (because x < "ab" means
-    x[0] < 'a' OR (x[0] == 'a' AND x[1] < 'b').
-    To achive the above we must turn off the NEAR_MIN/NEAR_MAX
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::adjust_prefix_ranges()
+void optimizer::QuickGroupMinMaxSelect::adjust_prefix_ranges()
 {
   if (quick_prefix_select &&
       group_prefix_len < quick_prefix_select->max_used_key_length)
@@ -309,27 +236,7 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::adjust_prefix_ranges()
 }
 
 
-/*
-  Determine the total number and length of the keys that will be used for
-  index lookup.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::update_key_stat()
-
-  DESCRIPTION
-    The total length of the keys used for index lookup depends on whether
-    there are any predicates referencing the min/max argument, and/or if
-    the min/max argument field can be NULL.
-    This function does an optimistic analysis whether the search key might
-    be extended by a constant for the min/max keypart. It is 'optimistic'
-    because during actual execution it may happen that a particular range
-    is skipped, and then a shorter key will be used. However this is data
-    dependent and can't be easily estimated here.
-
-  RETURN
-    None
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_key_stat()
+void optimizer::QuickGroupMinMaxSelect::update_key_stat()
 {
   max_used_key_length= real_prefix_len;
   if (min_max_ranges.elements > 0)
@@ -375,21 +282,7 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_key_stat()
 }
 
 
-/*
-  Initialize a quick group min/max select for key retrieval.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::reset()
-
-  DESCRIPTION
-    Initialize the index chosen for access and find and store the prefix
-    of the last group. The method is expensive since it performs disk access.
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::reset(void)
+int optimizer::QuickGroupMinMaxSelect::reset(void)
 {
   int result;
 
@@ -408,34 +301,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::reset(void)
 }
 
 
-
-/*
-  Get the next key containing the MIN and/or MAX key for the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::get_next()
-
-  DESCRIPTION
-    The method finds the next subsequent group of records that satisfies the
-    query conditions and finds the keys that contain the MIN/MAX values for
-    the key part referenced by the MIN/MAX function(s). Once a group and its
-    MIN/MAX values are found, store these values in the Item_sum objects for
-    the MIN/MAX functions. The rest of the values in the result row are stored
-    in the Item_field::result_field of each select field. If the query does
-    not contain MIN and/or MAX functions, then the function only finds the
-    group prefix, which is a query answer itself.
-
-  NOTES
-    If both MIN and MAX are computed, then we use the fact that if there is
-    no MIN key, there can't be a MAX key as well, so we can skip looking
-    for a MAX key in this case.
-
-  RETURN
-    0                  on success
-    HA_ERR_END_OF_FILE if returned all keys
-    other              if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::get_next()
+int optimizer::QuickGroupMinMaxSelect::get_next()
 {
   int min_res= 0;
   int max_res= 0;
@@ -515,29 +381,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::get_next()
 }
 
 
-/*
-  Retrieve the minimal key in the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_min()
-
-  DESCRIPTION
-    Find the minimal key within this group such that the key satisfies the query
-    conditions and NULL semantics. The found key is loaded into this->record.
-
-  IMPLEMENTATION
-    Depending on the values of min_max_ranges.elements, key_infix_len, and
-    whether there is a  NULL in the MIN field, this function may directly
-    return without any data access. In this case we use the key loaded into
-    this->record by the call to this->next_prefix() just before this call.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if no MIN key was found that fulfills all conditions.
-    HA_ERR_END_OF_FILE   - "" -
-    other                if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min()
+int optimizer::QuickGroupMinMaxSelect::next_min()
 {
   int result= 0;
 
@@ -602,22 +446,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min()
 }
 
 
-/*
-  Retrieve the maximal key in the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_max()
-
-  DESCRIPTION
-    Lookup the maximal key of the group, and store it into this->record.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if no MAX key was found that fulfills all conditions.
-    HA_ERR_END_OF_FILE	 - "" -
-    other                if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max()
+int optimizer::QuickGroupMinMaxSelect::next_max()
 {
   int result= 0;
 
@@ -633,28 +462,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max()
 }
 
 
-/*
-  Determine the prefix of the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
-
-  DESCRIPTION
-    Determine the prefix of the next group that satisfies the query conditions.
-    If there is a range condition referencing the group attributes, use a
-    QuickRangeSelect object to retrieve the *first* key that satisfies the
-    condition. If there is a key infix of constants, append this infix
-    immediately after the group attributes. The possibly extended prefix is
-    stored in this->group_prefix. The first key of the found group is stored in
-    this->record, on which relies this->next_min().
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if there is no key with the formed prefix
-    HA_ERR_END_OF_FILE   if there are no more keys
-    other                if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
+int optimizer::QuickGroupMinMaxSelect::next_prefix()
 {
   int result= 0;
 
@@ -700,27 +508,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
 }
 
 
-/*
-  Find the minimal key in a group that satisfies some range conditions for the
-  min/max argument field.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
-
-  DESCRIPTION
-    Given the sequence of ranges min_max_ranges, find the minimal key that is
-    in the left-most possible range. If there is no such key, then the current
-    group does not have a MIN key that satisfies the WHERE clause. If a key is
-    found, its value is stored in this->record.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if there is no key with the given prefix in any of
-                         the ranges
-    HA_ERR_END_OF_FILE   - "" -
-    other                if some error
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
+int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
 {
   ha_rkey_function find_flag;
   key_part_map keypart_map;
@@ -837,27 +625,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
 }
 
 
-/*
-  Find the maximal key in a group that satisfies some range conditions for the
-  min/max argument field.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
-
-  DESCRIPTION
-    Given the sequence of ranges min_max_ranges, find the maximal key that is
-    in the right-most possible range. If there is no such key, then the current
-    group does not have a MAX key that satisfies the WHERE clause. If a key is
-    found, its value is stored in this->record.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if there is no key with the given prefix in any of
-                         the ranges
-    HA_ERR_END_OF_FILE   - "" -
-    other                if some error
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
+int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
 {
   ha_rkey_function find_flag;
   key_part_map keypart_map;
@@ -945,29 +713,7 @@ int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
 }
 
 
-/*
-  Update all MIN function results with the newly found value.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::update_min_result()
-
-  DESCRIPTION
-    The method iterates through all MIN functions and updates the result value
-    of each function by calling Item_sum::reset(), which in turn picks the new
-    result value from this->head->record[0], previously updated by
-    next_min(). The updated value is stored in a member variable of each of the
-    Item_sum objects, depending on the value type.
-
-  IMPLEMENTATION
-    The update must be done separately for MIN and MAX, immediately after
-    next_min() was called and before next_max() is called, because both MIN and
-    MAX take their result value from the same buffer this->head->record[0]
-    (i.e.  this->record).
-
-  RETURN
-    None
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_min_result()
+void optimizer::QuickGroupMinMaxSelect::update_min_result()
 {
   Item_sum *min_func= NULL;
 
@@ -977,28 +723,7 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_min_result()
 }
 
 
-/*
-  Update all MAX function results with the newly found value.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::update_max_result()
-
-  DESCRIPTION
-    The method iterates through all MAX functions and updates the result value
-    of each function by calling Item_sum::reset(), which in turn picks the new
-    result value from this->head->record[0], previously updated by
-    next_max(). The updated value is stored in a member variable of each of the
-    Item_sum objects, depending on the value type.
-
-  IMPLEMENTATION
-    The update must be done separately for MIN and MAX, immediately after
-    next_max() was called, because both MIN and MAX take their result value
-    from the same buffer this->head->record[0] (i.e.  this->record).
-
-  RETURN
-    None
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_max_result()
+void optimizer::QuickGroupMinMaxSelect::update_max_result()
 {
   Item_sum *max_func= NULL;
 
@@ -1008,27 +733,12 @@ void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_max_result()
 }
 
 
-/*
-  Append comma-separated list of keys this quick select uses to key_names;
-  append comma-separated list of corresponding used lengths to used_lengths.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths()
-    key_names    [out] Names of used indexes
-    used_lengths [out] Corresponding lengths of the index names
-
-  DESCRIPTION
-    This method is used by select_describe to extract the names of the
-    indexes used by a quick select.
-
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_names,
-                                                                 String *used_lengths)
+void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(String *key_names,
+                                                             String *used_lengths)
 {
   char buf[64];
-  uint32_t length;
   key_names->append(index_info->name);
-  length= int64_t2str(max_used_key_length, buf, 10) - buf;
+  uint32_t length= int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
