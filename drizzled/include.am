@@ -268,6 +268,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/optimizer/sargable_param.h \
 		drizzled/optimizer/sel_arg.h \
 		drizzled/optimizer/sum.h \
+		drizzled/optimizer/table_read_plan.h \
 		drizzled/order.h \
 		drizzled/plugin.h \
 		drizzled/plugin/authentication.h \
