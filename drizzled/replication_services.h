@@ -294,8 +294,11 @@ public:
    *
    * @param Pointer to the Session which has inserted a record
    * @param Pointer to the Table containing insert information
+   *
+   * Grr, returning "true" here on error because of the cursor
+   * reversed bool return crap...fix that.
    */
-  void insertRecord(Session *in_session, Table *in_table);
+  bool insertRecord(Session *in_session, Table *in_table);
   /**
    * Creates a new UpdateRecord GPB message and pushes it to
    * replicators.

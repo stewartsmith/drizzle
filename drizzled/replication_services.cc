@@ -58,6 +58,7 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
+#include "drizzled/error.h"
 
 #include <vector>
 
@@ -328,7 +329,7 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
 }
 
 message::Statement &ReplicationServices::getInsertStatement(Session *in_session,
-                                                            Table *in_table) const
+                                                                 Table *in_table) const
 {
   message::Statement *statement= in_session->getStatementMessage();
 
@@ -384,10 +385,23 @@ void ReplicationServices::setInsertHeader(message::Statement &statement,
   }
 }
 
-void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
+bool ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 {
   if (! is_active)
-    return;
+    return false;
+  /**
+   * We do this check here because we don't want to even create a 
+   * statement if there isn't a primary key on the table...
+   *
+   * @todo
+   *
+   * Multi-column primary keys are handled how exactly?
+   */
+  if (in_table->s->primary_key == MAX_KEY)
+  {
+    my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
+    return true;
+  }
 
   message::Statement &statement= getInsertStatement(in_session, in_table);
 
@@ -411,6 +425,7 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
     record->add_insert_value(string_value->c_ptr(), string_value->length());
     string_value->free();
   }
+  return false;
 }
 
 message::Statement &ReplicationServices::getUpdateStatement(Session *in_session,
