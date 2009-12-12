@@ -382,9 +382,9 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-int plugin_init(plugin::Registry &registry,
-                int *argc, char **argv,
-                bool skip_init)
+bool plugin_init(plugin::Registry &registry,
+                 int *argc, char **argv,
+                 bool skip_init)
 {
   plugin::Manifest **builtins;
   plugin::Manifest *manifest;
@@ -392,7 +392,7 @@ int plugin_init(plugin::Registry &registry,
   MEM_ROOT tmp_root;
 
   if (initialized)
-    return(0);
+    return false;
 
   init_alloc_root(&plugin_mem_root, 4096, 4096);
   init_alloc_root(&tmp_root, 4096, 4096);
@@ -401,7 +401,7 @@ int plugin_init(plugin::Registry &registry,
                   get_bookmark_hash_key, NULL, HASH_UNIQUE))
   {
     free_root(&tmp_root, MYF(0));
-    return(1);
+    return true;
   }
 
 
@@ -431,17 +431,19 @@ int plugin_init(plugin::Registry &registry,
         if (plugin_initialize(registry, module))
         {
           free_root(&tmp_root, MYF(0));
-          return(1);
+          return true;
         }
       }
     }
   }
 
 
+  bool load_failed= false;
   /* Register all dynamic plugins */
   if (opt_plugin_load)
   {
-    plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
+    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                  opt_plugin_load);
   }
   else
   {
@@ -451,13 +453,19 @@ int plugin_init(plugin::Registry &registry,
       tmp_plugin_list.push_back(',');
       tmp_plugin_list.append(opt_plugin_add);
     }
-    plugin_load_list(registry, &tmp_root, argc, argv, tmp_plugin_list);
+    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                  tmp_plugin_list);
+  }
+  if (load_failed)
+  {
+    free_root(&tmp_root, MYF(0));
+    return true;
   }
 
   if (skip_init)
   {
     free_root(&tmp_root, MYF(0));
-    return(0);
+    return false;
   }
 
   /*
@@ -482,7 +490,7 @@ int plugin_init(plugin::Registry &registry,
 
   free_root(&tmp_root, MYF(0));
 
-  return(0);
+  return false;
 }
 
 

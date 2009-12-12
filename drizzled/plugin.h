@@ -388,9 +388,9 @@ struct drizzle_value
 extern "C" {
 #endif
 
-extern int plugin_init(drizzled::plugin::Registry &registry,
-                       int *argc, char **argv,
-                       bool skip_init);
+extern bool plugin_init(drizzled::plugin::Registry &registry,
+                        int *argc, char **argv,
+                        bool skip_init);
 extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
