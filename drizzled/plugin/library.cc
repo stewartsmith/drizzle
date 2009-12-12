@@ -110,6 +110,17 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name)
   }
 
   const Manifest *manifest= static_cast<plugin::Manifest *>(sym); 
+  if (manifest->drizzle_version != DRIZZLE_VERSION_ID)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Plugin module %s was compiled for version %" PRIu64 ", "
+                    "which does not match the current running version of "
+                    "Drizzle: %" PRIu64"."),
+                 dlpath.c_str(), manifest->drizzle_version,
+                 DRIZZLE_VERSION_ID);
+    return NULL;
+  }
+
   return new (nothrow) plugin::Library(plugin_name, handle, manifest);
 }
 
