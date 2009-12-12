@@ -1616,11 +1616,11 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 
 
 static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
-                             my_option *options, bool can_disable)
+                             my_option *options)
 {
   const char *plugin_name= tmp->getManifest().name;
   uint32_t namelen= strlen(plugin_name), optnamelen;
-  uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
+  uint32_t buffer_length= namelen * 4 +  75;
   char *name= (char*) alloc_root(mem_root, buffer_length);
   bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
   char *optname, *p;
@@ -1638,18 +1638,15 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
     if (*p == '_')
       *p= '-';
 
-  if (can_disable)
-  {
-    sprintf(name+namelen*2+10,
-            "Enable %s plugin. Disable with --skip-%s (will save memory).",
-            plugin_name, name);
-    /*
-      Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
-      20 + namelen + 20 + 1 == namelen * 4 + 67.
-    */
+  sprintf(name+namelen*2+10,
+          "Enable %s plugin. Disable with --skip-%s (will save memory).",
+          plugin_name, name);
+  /*
+    Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
+    20 + namelen + 20 + 1 == namelen * 4 + 67.
+  */
 
-    options[0].comment= name + namelen*2 + 10;
-  }
+  options[0].comment= name + namelen*2 + 10;
 
   /*
     This whole code around variables and command line parameters is turd
@@ -1847,7 +1844,6 @@ static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
 {
   drizzle_sys_var **opt;
   my_option *opts;
-  bool can_disable;
   uint32_t count= EXTRA_OPTIONS;
 
   for (opt= p->getManifest().system_vars; opt && *opt; opt++, count+= 2) {};
@@ -1858,15 +1854,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
 
   memset(opts, 0, sizeof(my_option) * count);
 
-  if ((my_strcasecmp(&my_charset_utf8_general_ci, p->getName().c_str(), "MyISAM") == 0))
-    can_disable= false;
-  else if ((my_strcasecmp(&my_charset_utf8_general_ci, p->getName().c_str(), "MEMORY") == 0))
-    can_disable= false;
-  else
-    can_disable= true;
-
-
-  if (construct_options(mem_root, p, opts, can_disable))
+  if (construct_options(mem_root, p, opts))
     return NULL;
 
   return(opts);
@@ -1905,7 +1893,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  bool can_disable;
   drizzle_sys_var **opt;
   my_option *opts= NULL;
   int error;
@@ -1916,12 +1903,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
   for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->getName().c_str(), "MyISAM") == 0))
-    can_disable= false;
-  else if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->getName().c_str(), "MEMORY") == 0))
-    can_disable= false;
-  else
-    can_disable= true;
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
@@ -1932,7 +1913,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
     }
     memset(opts, 0, sizeof(my_option) * count);
 
-    if (construct_options(tmp_root, tmp, opts, can_disable))
+    if (construct_options(tmp_root, tmp, opts))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Bad options for plugin '%s'."), tmp->getName().c_str());
       return(-1);
