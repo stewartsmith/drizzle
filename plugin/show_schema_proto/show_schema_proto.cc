@@ -120,6 +120,7 @@ static int finalize(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "show_schema_proto",
   "1.0",
   "Stewart Smith",

@@ -45,6 +45,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "single_thread",
   "0.1",
   "Brian Aker",

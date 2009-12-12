@@ -928,6 +928,7 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "MEMORY",
   "1.0",
   "MySQL AB",

@@ -62,6 +62,7 @@ static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "hello_world",
   "1.0",
   "Mark Atwood",

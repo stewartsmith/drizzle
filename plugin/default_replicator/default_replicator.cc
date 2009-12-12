@@ -107,6 +107,7 @@ static drizzle_sys_var* default_replicator_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "default_replicator",
   "0.1",
   "Jay Pipes",

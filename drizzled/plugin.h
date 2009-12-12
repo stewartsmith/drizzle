@@ -24,6 +24,7 @@
 #include <drizzled/xid.h>
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/module.h>
+#include "drizzled/configmake.h"
 
 class Session;
 class Item;
@@ -58,29 +59,20 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
            drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)[]= {
 
 
-#define DRIZZLE_DECLARE_PLUGIN_END ,{NULL,NULL,NULL,NULL,PLUGIN_LICENSE_GPL,NULL,NULL,NULL,NULL,NULL}}
-#define DRIZZLE_PLUGIN(init,deinit,status,system,config) \
+#define DRIZZLE_DECLARE_PLUGIN_END ,{0, NULL,NULL,NULL,NULL,PLUGIN_LICENSE_GPL,NULL,NULL,NULL,NULL,NULL}}
+#define DRIZZLE_PLUGIN(init,deinit,status,system) \
   DRIZZLE_DECLARE_PLUGIN \
   { \
+    DRIZZLE_VERSION_ID, \
     STRINGIFY_ARG(PANDORA_MODULE_NAME), \
     STRINGIFY_ARG(PANDORA_MODULE_VERSION), \
     STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
-    init, deinit, status, system, config \
+    init, deinit, status, system, NULL \
   } \
   DRIZZLE_DECLARE_PLUGIN_END
 
-
-
-/*
-  the following flags are valid for plugin_init()
-*/
-#define PLUGIN_INIT_SKIP_DYNAMIC_LOADING 1
-#define PLUGIN_INIT_SKIP_PLUGIN_TABLE    2
-#define PLUGIN_INIT_SKIP_INITIALIZATION  4
-
-#define INITIAL_LEX_PLUGIN_LIST_SIZE    16
 
 /*
   declarations for SHOW STATUS support in plugins
@@ -396,8 +388,9 @@ struct drizzle_value
 extern "C" {
 #endif
 
-extern int plugin_init(drizzled::plugin::Registry &plugins,
-                       int *argc, char **argv, int init_flags);
+extern int plugin_init(drizzled::plugin::Registry &registry,
+                       int *argc, char **argv,
+                       bool skip_init);
 extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);

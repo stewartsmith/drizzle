@@ -174,6 +174,7 @@ static drizzle_sys_var* auth_http_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "auth_http",
   "0.1",
   "Mark Atwood",

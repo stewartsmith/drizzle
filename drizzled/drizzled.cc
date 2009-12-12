@@ -1392,7 +1392,7 @@ static int init_server_components(plugin::Registry &plugins)
     return(1);
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+                  ((opt_help) ? true : false)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);

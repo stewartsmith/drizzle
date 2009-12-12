@@ -1566,6 +1566,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "MyISAM",
   "1.0",
   "MySQL AB",

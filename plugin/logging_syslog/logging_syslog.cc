@@ -272,6 +272,7 @@ static drizzle_sys_var* logging_syslog_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "logging_syslog",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",

@@ -530,6 +530,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "transaction_log",
   "0.1",
   "Jay Pipes",

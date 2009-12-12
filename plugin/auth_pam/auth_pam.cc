@@ -150,6 +150,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pam",
   "0.1",
   "Brian Aker",

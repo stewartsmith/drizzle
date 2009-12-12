@@ -253,6 +253,7 @@ static int finalize(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "INFORMATION_ENGINE",
   "1.0",
   "Padraig O'Sullivan, Brian Aker",

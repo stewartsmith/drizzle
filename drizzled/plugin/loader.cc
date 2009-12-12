@@ -382,7 +382,9 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
+int plugin_init(plugin::Registry &registry,
+                int *argc, char **argv,
+                bool skip_init)
 {
   plugin::Manifest **builtins;
   plugin::Manifest *manifest;
@@ -424,7 +426,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
       plugin_initialize_vars(module);
 
-      if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
+      if (! skip_init)
       {
         if (plugin_initialize(registry, module))
         {
@@ -437,25 +439,22 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
 
   /* Register all dynamic plugins */
-  if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
+  if (opt_plugin_load)
   {
-    if (opt_plugin_load)
+    plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
+  }
+  else
+  {
+    string tmp_plugin_list(opt_plugin_load_default);
+    if (opt_plugin_add)
     {
-      plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
+      tmp_plugin_list.push_back(',');
+      tmp_plugin_list.append(opt_plugin_add);
     }
-    else
-    {
-      string tmp_plugin_list(opt_plugin_load_default);
-      if (opt_plugin_add)
-      {
-        tmp_plugin_list.push_back(',');
-        tmp_plugin_list.append(opt_plugin_add);
-      }
-      plugin_load_list(registry, &tmp_root, argc, argv, tmp_plugin_list);
-    }
+    plugin_load_list(registry, &tmp_root, argc, argv, tmp_plugin_list);
   }
 
-  if (flags & PLUGIN_INIT_SKIP_INITIALIZATION)
+  if (skip_init)
   {
     free_root(&tmp_root, MYF(0));
     return(0);

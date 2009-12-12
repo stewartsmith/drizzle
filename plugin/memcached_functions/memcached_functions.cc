@@ -349,6 +349,7 @@ static int memcachedDone(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "memcached_functions",
   "0.1",
   "Patrick Galbraith, Ronald Bradford, Padraig O'Sullivan",

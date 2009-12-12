@@ -645,6 +645,7 @@ static drizzle_sys_var* filtered_replicator_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "filtered_replicator",
   "0.2",
   "Padraig O'Sullivan",
