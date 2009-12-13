@@ -47,15 +47,13 @@ TODO:
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "drizzled/memory/multi_malloc.h"
 
 #include "ha_tina.h"
 
 #include <string>
+#include <map>
 
 using namespace std;
-
-static const string engine_name("CSV");
 
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
@@ -71,8 +69,6 @@ static const string engine_name("CSV");
 #define CSM_EXT ".CSM"               // Meta file
 
 
-static TINA_SHARE *get_share(const char *table_name, Table *table);
-static int free_share(TINA_SHARE *share);
 static int read_meta_file(File meta_file, ha_rows *rows);
 static int write_meta_file(File meta_file, ha_rows rows, bool dirty);
 
@@ -82,7 +78,6 @@ extern "C" bool tina_check_status(void* param);
 
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
-static HASH tina_open_tables;
 
 /*****************************************************************************
  ** TINA tables
@@ -100,12 +95,6 @@ static int sort_set (tina_set *a, tina_set *b)
   return ( a->begin > b->begin ? 1 : ( a->begin < b->begin ? -1 : 0 ) );
 }
 
-static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
-{
-  *length=share->table_name_length;
-  return (unsigned char*) share->table_name;
-}
-
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -119,6 +108,8 @@ static const char *ha_tina_exts[] = {
 
 class Tina : public drizzled::plugin::StorageEngine
 {
+  typedef std::map<string, TinaShare*> TinaMap;
+  TinaMap tina_open_tables;
 public:
   Tina(const string& name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
@@ -126,7 +117,9 @@ public:
                                      HTON_NO_AUTO_INCREMENT |
                                      HTON_HAS_DATA_DICTIONARY |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED) {}
+                                     HTON_FILE_BASED),
+    tina_open_tables()
+  {}
   virtual Cursor *create(TableShare &table,
                           MEM_ROOT *mem_root)
   {
@@ -153,6 +146,10 @@ public:
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
   int doDropTable(Session&, const string table_path);
+  TinaShare *findOpenTable(const string table_name);
+  void addOpenTable(const string &table_name, TinaShare *);
+  void deleteOpenTable(const string &table_name);
+
 
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
@@ -191,6 +188,28 @@ int Tina::doDropTable(Session&,
   return error;
 }
 
+TinaShare *Tina::findOpenTable(const string table_name)
+{
+  TinaMap::iterator find_iter=
+    tina_open_tables.find(table_name);
+
+  if (find_iter != tina_open_tables.end())
+    return (*find_iter).second;
+  else
+    return NULL;
+}
+
+void Tina::addOpenTable(const string &table_name, TinaShare *share)
+{
+  tina_open_tables[table_name]= share;
+}
+
+void Tina::deleteOpenTable(const string &table_name)
+{
+  tina_open_tables.erase(table_name);
+}
+
+
 int Tina::doGetTableDefinition(Session&,
                                const char* path,
                                const char *,
@@ -221,12 +240,10 @@ static Tina *tina_engine= NULL;
 static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
-  tina_engine= new Tina(engine_name);
+  tina_engine= new Tina("CSV");
   registry.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
-  (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
-                   (hash_get_key) tina_get_key,0,0);
   return 0;
 }
 
@@ -235,65 +252,69 @@ static int tina_done_func(drizzled::plugin::Registry &registry)
   registry.remove(tina_engine);
   delete tina_engine;
 
-  hash_free(&tina_open_tables);
   pthread_mutex_destroy(&tina_mutex);
 
   return 0;
 }
 
 
+TinaShare::TinaShare(const char *table_name_arg)
+  : table_name(table_name_arg), use_count(0), saved_data_file_length(0),
+    update_file_opened(false), tina_write_opened(false),
+    crashed(false), rows_recorded(0), data_file_version(0)
+{
+  thr_lock_init(&lock);
+  fn_format(data_file_name, table_name_arg, "", CSV_EXT,
+            MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+}
+
+TinaShare::~TinaShare()
+{
+  thr_lock_delete(&lock);
+  pthread_mutex_destroy(&mutex);
+}
+
 /*
   Simple lock controls.
 */
-static TINA_SHARE *get_share(const char *table_name, Table *)
+TinaShare *ha_tina::get_share(const char *table_name)
 {
-  TINA_SHARE *share;
+  pthread_mutex_lock(&tina_mutex);
+
+  Tina *a_tina= static_cast<Tina *>(engine);
+  share= a_tina->findOpenTable(table_name);
+
   char meta_file_name[FN_REFLEN];
   struct stat file_stat;
-  char *tmp_name;
-  uint32_t length;
-
-  pthread_mutex_lock(&tina_mutex);
-  length=(uint) strlen(table_name);
 
   /*
     If share is not present in the hash, create a new share and
     initialize its members.
   */
-  if (!(share=(TINA_SHARE*) hash_search(&tina_open_tables,
-                                        (unsigned char*) table_name,
-                                       length)))
+  if (! share)
   {
-    if (!drizzled::memory::multi_malloc(true,
-                         &share, sizeof(*share),
-                         &tmp_name, length+1,
-                         NULL))
+    share= new TinaShare(table_name);
+
+    if (share == NULL)
     {
       pthread_mutex_unlock(&tina_mutex);
       return NULL;
     }
 
-    share->use_count= 0;
-    share->table_name_length= length;
-    share->table_name= tmp_name;
-    share->crashed= false;
-    share->rows_recorded= 0;
-    share->update_file_opened= false;
-    share->tina_write_opened= false;
-    share->data_file_version= 0;
-    strcpy(share->table_name, table_name);
-    fn_format(share->data_file_name, table_name, "", CSV_EXT,
-              MY_REPLACE_EXT|MY_UNPACK_FILENAME);
     fn_format(meta_file_name, table_name, "", CSM_EXT,
               MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
     if (stat(share->data_file_name, &file_stat))
-      goto error;
+    {
+      pthread_mutex_unlock(&tina_mutex);
+      delete share;
+      return NULL;
+    }
+  
     share->saved_data_file_length= file_stat.st_size;
 
-    if (my_hash_insert(&tina_open_tables, (unsigned char*) share))
-      goto error;
-    thr_lock_init(&share->lock);
+    a_tina->addOpenTable(share->table_name, share);
+
     pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
 
     /*
@@ -317,12 +338,6 @@ static TINA_SHARE *get_share(const char *table_name, Table *)
   pthread_mutex_unlock(&tina_mutex);
 
   return share;
-
-error:
-  pthread_mutex_unlock(&tina_mutex);
-  free((unsigned char*) share);
-
-  return NULL;
 }
 
 
@@ -451,7 +466,7 @@ int ha_tina::init_tina_writer()
 /*
   Free lock controls.
 */
-static int free_share(TINA_SHARE *share)
+int ha_tina::free_share()
 {
   pthread_mutex_lock(&tina_mutex);
   int result_code= 0;
@@ -468,10 +483,9 @@ static int free_share(TINA_SHARE *share)
       share->tina_write_opened= false;
     }
 
-    hash_delete(&tina_open_tables, (unsigned char*) share);
-    thr_lock_delete(&share->lock);
-    pthread_mutex_destroy(&share->mutex);
-    free((unsigned char*) share);
+    Tina *a_tina= static_cast<Tina *>(engine);
+    a_tina->deleteOpenTable(share->table_name);
+    delete share;
   }
   pthread_mutex_unlock(&tina_mutex);
 
@@ -867,12 +881,12 @@ void ha_tina::update_status()
 */
 int ha_tina::open(const char *name, int, uint32_t)
 {
-  if (!(share= get_share(name, table)))
+  if (!(share= get_share(name)))
     return(ENOENT);
 
   if (share->crashed)
   {
-    free_share(share);
+    free_share();
     return(HA_ERR_CRASHED_ON_USAGE);
   }
 
@@ -904,7 +918,7 @@ int ha_tina::close(void)
 {
   int rc= 0;
   rc= my_close(data_file, MYF(0));
-  return(free_share(share) || rc);
+  return(free_share() || rc);
 }
 
 /*
@@ -953,7 +967,7 @@ int ha_tina::open_update_temp_file_if_needed()
   if (!share->update_file_opened)
   {
     if ((update_temp_file=
-           my_create(fn_format(updated_fname, share->table_name,
+           my_create(fn_format(updated_fname, share->table_name.c_str(),
                                "", CSN_EXT,
                                MY_REPLACE_EXT | MY_UNPACK_FILENAME),
                      0, O_RDWR | O_TRUNC, MYF(MY_WME))) < 0)
@@ -1294,7 +1308,8 @@ int ha_tina::rnd_end()
       of the old datafile.
     */
     if (my_close(data_file, MYF(0)) ||
-        my_rename(fn_format(updated_fname, share->table_name, "", CSN_EXT,
+        my_rename(fn_format(updated_fname, share->table_name.c_str(),
+                            "", CSN_EXT,
                             MY_REPLACE_EXT | MY_UNPACK_FILENAME),
                   share->data_file_name, MYF(0)))
       return(-1);

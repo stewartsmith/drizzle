@@ -40,7 +40,7 @@ namespace optimizer
   @retval
     1        Otherwise
 */
-bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
+bool simple_pred(Item_func *func_item, Item **args, bool &inv_order);
 
 /**
   Substitutes constants for some COUNT(), MIN() and MAX() functions.

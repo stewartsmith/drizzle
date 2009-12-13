@@ -32,13 +32,13 @@ using namespace std;
 namespace drizzled
 {
 
-void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array, 
+void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
                              optimizer::KeyField *key_field)
 {
   Field *field= key_field->getField();
   Table *form= field->table;
 
-  if (key_field->isEqualityCondition() && 
+  if (key_field->isEqualityCondition() &&
       ! (key_field->getOptimizeFlags() & KEY_OPTIMIZE_EXISTS))
   {
     for (uint32_t key= 0; key < form->sizeKeys(); key++)
@@ -102,10 +102,10 @@ void optimizer::add_key_fields_for_nj(JOIN *join,
   }
   if (nested_join_table->on_expr)
   {
-    add_key_fields(join, 
-                   end, 
-                   and_level, 
-                   nested_join_table->on_expr, 
+    add_key_fields(join,
+                   end,
+                   and_level,
+                   nested_join_table->on_expr,
                    tables,
                    sargables);
   }
@@ -113,7 +113,7 @@ void optimizer::add_key_fields_for_nj(JOIN *join,
 
 optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
                                                  optimizer::KeyField *new_fields,
-                                                 optimizer::KeyField *end, 
+                                                 optimizer::KeyField *end,
                                                  uint32_t and_level)
 {
   if (start == new_fields)
@@ -151,7 +151,7 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
           if (old->getValue()->eq(new_fields->getValue(), old->getField()->binary()))
           {
             old->setLevel(and_level);
-            old->setOptimizeFlags(((old->getOptimizeFlags() & 
+            old->setOptimizeFlags(((old->getOptimizeFlags() &
                                     new_fields->getOptimizeFlags() &
                                     KEY_OPTIMIZE_EXISTS) |
                                    ((old->getOptimizeFlags() |
@@ -161,7 +161,7 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
                                      new_fields->rejectNullValues());
           }
         }
-        else if (old->isEqualityCondition() && 
+        else if (old->isEqualityCondition() &&
                  new_fields->isEqualityCondition() &&
                  old->getValue()->eq_by_collation(new_fields->getValue(),
                                                   old->getField()->binary(),
@@ -169,18 +169,18 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
 
         {
           old->setLevel(and_level);
-          old->setOptimizeFlags(((old->getOptimizeFlags() & 
+          old->setOptimizeFlags(((old->getOptimizeFlags() &
                                   new_fields->getOptimizeFlags() &
                                   KEY_OPTIMIZE_EXISTS) |
-                                 ((old->getOptimizeFlags() | 
+                                 ((old->getOptimizeFlags() |
                                    new_fields->getOptimizeFlags()) &
                                  KEY_OPTIMIZE_REF_OR_NULL)));
           old->setRejectNullValues(old->rejectNullValues() &&
                                    new_fields->rejectNullValues());
         }
-        else if (old->isEqualityCondition() && 
+        else if (old->isEqualityCondition() &&
                  new_fields->isEqualityCondition() &&
-                 ((old->getValue()->const_item() && 
+                 ((old->getValue()->const_item() &&
                    old->getValue()->is_null()) ||
                    new_fields->getValue()->is_null()))
         {
@@ -191,7 +191,7 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
             Remember the NOT NULL value unless the value does not depend
             on other tables.
            */
-          if (! old->getValue()->used_tables() && 
+          if (! old->getValue()->used_tables() &&
               old->getValue()->is_null())
           {
             old->setValue(new_fields->getValue());
@@ -413,7 +413,7 @@ void optimizer::add_key_equal_fields(optimizer::KeyField **key_fields,
   }
 }
 
-void optimizer::add_key_fields(JOIN *join, 
+void optimizer::add_key_fields(JOIN *join,
                                optimizer::KeyField **key_fields,
                                uint32_t *and_level,
                                COND *cond,
@@ -430,10 +430,10 @@ void optimizer::add_key_fields(JOIN *join,
       Item *item;
       while ((item= li++))
       {
-        add_key_fields(join, 
-                       key_fields, 
-                       and_level, 
-                       item, 
+        add_key_fields(join,
+                       key_fields,
+                       and_level,
+                       item,
                        usable_tables,
                        sargables);
       }
@@ -443,10 +443,10 @@ void optimizer::add_key_fields(JOIN *join,
     else
     {
       (*and_level)++;
-      add_key_fields(join, 
-                     key_fields, 
-                     and_level, 
-                     li++, 
+      add_key_fields(join,
+                     key_fields,
+                     and_level,
+                     li++,
                      usable_tables,
                      sargables);
       Item *item;
@@ -454,10 +454,10 @@ void optimizer::add_key_fields(JOIN *join,
       {
         optimizer::KeyField *start_key_fields= *key_fields;
         (*and_level)++;
-        add_key_fields(join, 
-                       key_fields, 
-                       and_level, 
-                       item, 
+        add_key_fields(join,
+                       key_fields,
+                       and_level,
+                       item,
                        usable_tables,
                        sargables);
         *key_fields= merge_key_fields(org_key_fields, start_key_fields,
@@ -477,17 +477,17 @@ void optimizer::add_key_fields(JOIN *join,
         ((Item_func*)cond)->functype() == Item_func::TRIG_COND_FUNC)
     {
       Item *cond_arg= ((Item_func*)cond)->arguments()[0];
-      if (! join->group_list && 
+      if (! join->group_list &&
           ! join->order &&
           join->unit->item &&
           join->unit->item->substype() == Item_subselect::IN_SUBS &&
           ! join->unit->is_union())
       {
         optimizer::KeyField *save= *key_fields;
-        add_key_fields(join, 
-                       key_fields, 
-                       and_level, 
-                       cond_arg, 
+        add_key_fields(join,
+                       key_fields,
+                       and_level,
+                       cond_arg,
                        usable_tables,
                        sargables);
         /* Indicate that this ref access candidate is for subquery lookup */
@@ -502,7 +502,7 @@ void optimizer::add_key_fields(JOIN *join,
   if (cond->type() != Item::FUNC_ITEM)
     return;
   Item_func *cond_func= (Item_func*) cond;
-  switch (cond_func->select_optimize()) 
+  switch (cond_func->select_optimize())
   {
   case Item_func::OPTIMIZE_NONE:
     break;

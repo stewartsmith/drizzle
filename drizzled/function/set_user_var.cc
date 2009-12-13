@@ -315,17 +315,6 @@ void Item_func_set_user_var::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
-
-void Item_func_set_user_var::print_as_stmt(String *str,
-                                           enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("set @"));
-  str->append(name.str, name.length);
-  str->append(STRING_WITH_LEN(":="));
-  args[0]->print(str, query_type);
-  str->append(')');
-}
-
 bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
 {
   if (result_field)

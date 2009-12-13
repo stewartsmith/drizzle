@@ -128,7 +128,6 @@ private:
   uint64_t min_transaction_id; ///< Minimum transaction ID in log
   uint64_t max_transaction_id; ///< Maximum transaction ID in log
   uint64_t num_log_entries; ///< Total number of log entries in log
-  uint64_t num_transaction_entries; ///< Total number of transaction log entries in log
 
   TransactionLog::Entries entries; ///< Collection of information about the entries in the log
   TransactionLog::TransactionEntries transaction_entries; ///<
