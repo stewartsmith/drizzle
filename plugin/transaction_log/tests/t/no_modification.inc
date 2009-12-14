@@ -1,6 +1,7 @@
 # 
 # Simple test of the transaction log for when a START TRANSACTION ... COMMIT
-# is issued, but no data modifications actually occurred.
+# is issued, but no data modifications actually occurred. Also tested is
+# a update that does not update anything. 
 # 
 # This situation occurs in, for instance, sysbench, which wraps even SELECTs
 # in a transaction.
@@ -17,6 +18,8 @@ CREATE TABLE t1 (
 
 INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
+
+UPDATE t1 SET id=1 WHERE padding='I love testing.';
 
 START TRANSACTION;
 
