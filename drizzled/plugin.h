@@ -395,9 +395,6 @@ extern bool plugin_init(drizzled::plugin::Registry &registry,
 extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
-extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
-                                 const LEX_STRING *dl);
-extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
@@ -410,10 +407,6 @@ int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
 void **session_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine);
 int session_tx_isolation(const Session *session);
-
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                    const char *str, unsigned int size,
-                                    int allocate_lex_string);
 
 
 
@@ -516,28 +509,6 @@ void mysql_query_cache_invalidate4(Session *session,
 }
 #endif
 
-#ifdef __cplusplus
-/**
-  Provide a handler data getter to simplify coding
-*/
-inline
-void *
-session_get_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine)
-{
-  return *session_ha_data(session, engine);
-}
-
-/**
-  Provide a handler data setter to simplify coding
-*/
-inline
-void
-session_set_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine,
-                const void *ha_data)
-{
-  *session_ha_data(session, engine)= (void*) ha_data;
-}
-#endif
 
 #endif /* DRIZZLED_PLUGIN_H */
 
