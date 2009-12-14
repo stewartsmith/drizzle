@@ -66,6 +66,9 @@ int MemcachedStatsISMethods::fillTable(Session *,
     char **list= memcached_stat_get_keys(serv, &stats[i], &rc);
     char **ptr= NULL;
 
+    table->setWriteSet(0);
+    table->setWriteSet(1);
+
     table->field[0]->store(memcached_server_name(serv, servers[i]),
                            64,
                            scs);
@@ -74,6 +77,8 @@ int MemcachedStatsISMethods::fillTable(Session *,
     for (ptr= list; *ptr; ptr++)
     {
       char *value= memcached_stat_get_value(serv, &stats[i], *ptr, &rc);
+
+      table->setWriteSet(col);
       table->field[col]->store(value,
                                64,
                                scs);

@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 failed=0
 
 if test -z $BINDIR ; then
-  BINDIR=.
+  BINDIR=drizzled/message
 fi
 
 check_encode () {

@@ -19,20 +19,7 @@
 #include	<mystrings/m_string.h>
 #include	"mysys/mysys_err.h"
 #include	"my_dir.h"	/* Structs used by my_dir,includes sys/types */
-#if defined(HAVE_DIRENT_H)
-# include <dirent.h>
-#else
-# define dirent direct
-# if defined(HAVE_SYS_NDIR_H)
-#  include <sys/ndir.h>
-# endif
-# if defined(HAVE_SYS_DIR_H)
-#  include <sys/dir.h>
-# endif
-# if defined(HAVE_NDIR_H)
-#  include <ndir.h>
-# endif
-#endif
+#include <dirent.h>
 
 #if defined(HAVE_READDIR_R)
 #define READDIR(A,B,C) ((errno=readdir_r(A,B,&C)) != 0 || !C)

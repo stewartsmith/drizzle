@@ -31,10 +31,18 @@
 
 #define TINA_VERSION 1
 
-typedef struct st_tina_share {
-  char *table_name;
+class TinaShare
+{
+  TinaShare();
+  TinaShare(const TinaShare &);
+  TinaShare& operator=(const TinaShare &);
+public:
+  explicit TinaShare(const char *name);
+  ~TinaShare();
+
+  std::string table_name;
   char data_file_name[FN_REFLEN];
-  uint32_t table_name_length, use_count;
+  uint32_t use_count;
   /*
     Here we save the length of the file for readers. This is updated by
     inserts, updates and deletes. The var is initialized along with the
@@ -50,7 +58,7 @@ typedef struct st_tina_share {
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
   uint32_t data_file_version;   /* Version of the data file used */
-} TINA_SHARE;
+};
 
 struct tina_set {
   off_t begin;
@@ -60,7 +68,7 @@ struct tina_set {
 class ha_tina: public Cursor
 {
   THR_LOCK_DATA lock;      /* MySQL lock */
-  TINA_SHARE *share;       /* Shared lock info */
+  TinaShare *share;       /* Shared lock info */
   off_t current_position;  /* Current position in the file during a file scan */
   off_t next_position;     /* Next position in the file scan */
   off_t local_saved_data_file_length; /* save position for reads */
@@ -125,6 +133,8 @@ public:
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   int rnd_end();
+  TinaShare *get_share(const char *table_name);
+  int free_share();
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   void position(const unsigned char *record);
