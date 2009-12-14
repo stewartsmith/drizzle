@@ -210,10 +210,11 @@ int ha_blitz::info(uint32_t flag) {
 
 int ha_blitz::rnd_init(bool scan) {
   /* Obtain the most suitable lock for the given statement type */
-  critical_section_enter();
-
-  /* Store this information in the thread for later use */
+  sql_command_type = session_sql_command(current_session);
   table_scan = scan;
+
+  /* This is unlocked at rnd_end() */
+  critical_section_enter();
 
   /* Get the first record from TCHDB. Let the scanner take
      care of checking return value errors. */
@@ -488,27 +489,6 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
     }
   }
   return buf;
-}
-
-THR_LOCK_DATA **ha_blitz::store_lock(Session *session,
-                                     THR_LOCK_DATA **to,
-                                     enum thr_lock_type lock_type) {
-
-  sql_command_type = session_sql_command(session);
-
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK) {
-    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT && lock_type <= TL_WRITE)
-        && !session_tablespace_op(session)) {
-      lock_type = TL_WRITE_ALLOW_WRITE;
-    } else if (lock_type == TL_READ_NO_INSERT) {
-      lock_type = TL_READ_NO_INSERT;
-    }
-
-    lock.type = lock_type;
-  }
-
-  *to++ = &lock;
-  return to;
 }
 
 static BlitzEngine *blitz_engine = NULL;

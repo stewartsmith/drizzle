@@ -184,9 +184,6 @@ public:
   int critical_section_enter();
   int critical_section_exit();
 
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
-
   /* BLITZDB SPECIFIC THREAD SPECIFIC FUNCTIONS */
   uint32_t max_row_length(void);
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
@@ -197,7 +194,9 @@ public:
 class BlitzEngine : public drizzled::plugin::StorageEngine {
 public:
   BlitzEngine(const string &name_arg)
-    : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED) {
+    : drizzled::plugin::StorageEngine(name_arg,
+                                      HTON_FILE_BASED |
+                                      HTON_SKIP_STORE_LOCK) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 
