@@ -529,7 +529,11 @@ template <class T> void set_if_smaller(T &a, const T &b)
 #endif
 #endif
 
-#define array_elements(A) ((size_t) (sizeof(A)/sizeof(A[0])))
+
+#define array_elements(a) \
+  ((sizeof(a) / sizeof(*(a))) / \
+   static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+
 
 /* Some types that is different between systems */
 
