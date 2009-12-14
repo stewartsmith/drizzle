@@ -10,10 +10,7 @@ dnl are set.
 AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 
   dnl We need to turn on our CXXFLAGS to make sure it shows up correctly
-  save_CXXFLAGS="${CXXFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${AM_CXXFLAGS}"
   PANDORA_CXX_STL_HASH
-  CXXFLAGS="${save_CXXFLAGS}"
 
   PANDORA_CXX_CSTDINT
   PANDORA_CXX_CINTTYPES
