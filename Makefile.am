@@ -20,6 +20,7 @@ SUFFIXES =
 TESTS = 
 check_PROGRAMS =
 noinst_HEADERS =
+lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
 
