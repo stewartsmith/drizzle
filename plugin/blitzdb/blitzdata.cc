@@ -181,7 +181,7 @@ char *BlitzData::next_key_and_row(const char *key, const size_t klen,
 
 uint64_t BlitzData::next_hidden_row_id(void) {
   /* current_hidden_row_id is an atomic type */
-  uint64_t rv = ++current_hidden_row_id;
+  uint64_t rv = current_hidden_row_id++;
   return rv;
 }
 

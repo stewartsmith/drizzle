@@ -83,8 +83,8 @@ private:
   drizzled::atomic<uint64_t> current_hidden_row_id;
 
 public:
-  BlitzData() {};
-  ~BlitzData() {};
+  BlitzData() { current_hidden_row_id = 0; }
+  ~BlitzData() {}
   bool startup(const char *table_path);
   bool shutdown(void);
 
@@ -190,17 +190,14 @@ public:
   /* BLITZDB SPECIFIC THREAD SPECIFIC FUNCTIONS */
   uint32_t max_row_length(void);
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
-  bool unpack_row(unsigned char *to, const char *from);
-  unsigned char *get_pack_buffer(void);
+  bool unpack_row(unsigned char *to, const char *from, const size_t from_len);
+  unsigned char *get_pack_buffer(const size_t size);
 };
 
 class BlitzEngine : public drizzled::plugin::StorageEngine {
 public:
   BlitzEngine(const string &name_arg)
-    : drizzled::plugin::StorageEngine(name_arg,
-                                      HTON_FILE_BASED |
-                                      HTON_STATS_RECORDS_IS_EXACT |
-                                      HTON_HAS_RECORDS) {
+    : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 

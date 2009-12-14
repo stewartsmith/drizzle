@@ -94,7 +94,6 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
 
   snprintf(name_buffer, FN_REFLEN, "%s%s", file_path, BLITZ_SYSTEM_EXT);
 
-  /* Check if the system table exists */
   if (stat(name_buffer, &stat_info)) {
     pthread_mutex_unlock(&proto_cache_mutex);
     return errno;
@@ -239,8 +238,10 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   if (current_key == NULL)
     return HA_ERR_END_OF_FILE;
 
+  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+
   /* Unpack and copy the current row to Drizzle's result buffer */
-  unpack_row(drizzle_buf, current_row);
+  unpack_row(drizzle_buf, current_row, current_row_length);
 
   /* Retrieve both key and row of the next record with one allocation */
   next_key = share->dict.next_key_and_row(current_key, current_key_length,
@@ -303,7 +304,7 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
   if (row == NULL)
     return HA_ERR_KEY_NOT_FOUND;
 
-  unpack_row(copy_to, row);
+  unpack_row(copy_to, row, row_length);
 
   /* Let the thread remember the key location on memory if
      the thread is not doing a table scan. This is because
@@ -326,8 +327,8 @@ void ha_blitz::position(const unsigned char *) {
 }
 
 int ha_blitz::write_row(unsigned char *drizzle_row) {
-  unsigned char *buffer_pos = get_pack_buffer();
-  uint32_t row_length = max_row_length();
+  size_t row_length = max_row_length();
+  unsigned char *buffer_pos = get_pack_buffer(row_length);
   bool rv;
   
   ha_statistic_increment(&SSV::ha_write_count);
@@ -341,8 +342,8 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
 int ha_blitz::update_row(const unsigned char *,
                          unsigned char *new_row) {
-  uint32_t row_length = max_row_length();
-  unsigned char *buffer_pos = get_pack_buffer();
+  size_t row_length = max_row_length();
+  unsigned char *buffer_pos = get_pack_buffer(row_length);
   bool rv = false;
 
   ha_statistic_increment(&SSV::ha_update_count);
@@ -394,6 +395,8 @@ int ha_blitz::update_row(const unsigned char *,
 int ha_blitz::delete_row(const unsigned char *) {
   bool rv = false;
 
+  ha_statistic_increment(&SSV::ha_delete_count);
+
   if (thread_locked)
     rv = share->dict.delete_row(updateable_key, updateable_key_length);
 
@@ -440,12 +443,13 @@ size_t ha_blitz::pack_row(unsigned char *row_buffer,
   return (size_t)(pos - row_buffer);
 }
 
-bool ha_blitz::unpack_row(unsigned char *to, const char *from) {
+bool ha_blitz::unpack_row(unsigned char *to, const char *from,
+                          const size_t from_len) {
   const unsigned char *pos;
 
   /* Nothing special to do */
   if (share->fixed_length_table) {
-    memcpy(to, from, table->s->reclength);
+    memcpy(to, from, from_len);
     return true;
   }
 
@@ -465,21 +469,20 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from) {
   return true;
 }
 
-unsigned char *ha_blitz::get_pack_buffer(void) {
-  uint32_t row_length = max_row_length();
+unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
   unsigned char *buf = pack_buffer;
 
   /* This is a shitty case where the row size is larger than 2KB. */
-  if (row_length > BLITZ_MAX_ROW_STACK) {
-    if (row_length > secondary_row_buffer_size) {
-      void *new_ptr = realloc(secondary_row_buffer, row_length);
+  if (size > BLITZ_MAX_ROW_STACK) {
+    if (size > secondary_row_buffer_size) {
+      void *new_ptr = realloc(secondary_row_buffer, size);
 
       if (new_ptr == NULL) {
         errno = HA_ERR_OUT_OF_MEM;
         return NULL;
       }
 
-      secondary_row_buffer_size = row_length;
+      secondary_row_buffer_size = size;
       secondary_row_buffer = (unsigned char *)new_ptr;
       buf = secondary_row_buffer;
     }
