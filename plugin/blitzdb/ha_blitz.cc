@@ -18,8 +18,7 @@
  */
 
 #include "ha_blitz.h"
-
-static const string engine_name("BLITZDB");
+#include <sys/stat.h>
 
 static BlitzShare *get_share(const char *table_name);
 static int free_share(BlitzShare *share);
@@ -568,7 +567,7 @@ static int free_share(BlitzShare *share) {
 }
 
 static int blitz_init(drizzled::plugin::Registry &registry) {
-  blitz_engine = new BlitzEngine(engine_name); 
+  blitz_engine = new BlitzEngine("BLITZDB"); 
   if ((blitz_table_cache = tcmapnew()) == NULL) {
     delete blitz_engine;
     return HA_ERR_OUT_OF_MEM;
@@ -586,16 +585,5 @@ static int blitz_deinit(drizzled::plugin::Registry &registry) {
   return 0;
 }
 
-DRIZZLE_DECLARE_PLUGIN {
-  "BLITZDB",
-  "0.2",
-  "Toru Maesaka",
-  "BlitzDB Storage Engine",
-  PLUGIN_LICENSE_GPL,
-  blitz_init,    /*  Plugin Init      */
-  blitz_deinit,  /*  Plugin Deinit    */
-  NULL,          /*  status variables */
-  NULL,          /*  system variables */
-  NULL           /*  config options   */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+__attribute__ ((visibility("default")))
+DRIZZLE_PLUGIN(blitz_init, blitz_deinit, NULL, NULL);
