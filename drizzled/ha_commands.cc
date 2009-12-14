@@ -502,7 +502,7 @@ void trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[engine->getSlot()].ha_info + static_cast<unsigned>(all);
+  ha_info= session->getEngineInfo(engine, all ? 1 : 0);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -544,7 +544,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->getSlot()].ha_info[1];
+      Ha_trx_info *ha_info_all= session->getEngineInfo(ha_info->engine(), 1);
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement

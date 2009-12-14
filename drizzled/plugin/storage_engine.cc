@@ -100,7 +100,8 @@ plugin::StorageEngine::~StorageEngine()
 
 void plugin::StorageEngine::setTransactionReadWrite(Session& session)
 {
-  Ha_trx_info *ha_info= &session.ha_data[getSlot()].ha_info[0];
+  Ha_trx_info *ha_info= session.getEngineInfo(this);
+
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -299,7 +300,7 @@ public:
   */
   inline result_type operator() (argument_type engine)
   {
-    if (engine->is_enabled() && *session_ha_data(session, engine))
+    if (engine->is_enabled() && (*session->getEngineData(engine)))
       engine->close_connection(session);
   }
 };

@@ -249,6 +249,7 @@ public:
   uint32_t slot;
 
   inline uint32_t getSlot (void) { return slot; }
+  inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
   bool has_2pc()

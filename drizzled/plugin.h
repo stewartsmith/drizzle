@@ -405,7 +405,6 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine);
 int session_tx_isolation(const Session *session);
 
 
@@ -508,7 +507,6 @@ void mysql_query_cache_invalidate4(Session *session,
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* DRIZZLED_PLUGIN_H */
 
