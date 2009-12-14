@@ -86,6 +86,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "charlength",
   "1.0",
   "Devananda van der Veen",

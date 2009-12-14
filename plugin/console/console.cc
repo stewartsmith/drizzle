@@ -332,6 +332,7 @@ static drizzle_sys_var* vars[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "console",
   "0.1",
   "Eric Day",

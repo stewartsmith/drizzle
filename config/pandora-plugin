@@ -19,6 +19,7 @@
 # Find plugins in the tree and add them to the build system 
 
 import ConfigParser, os, sys
+import datetime, time
 
 top_srcdir='.'
 top_builddir='.'
@@ -144,7 +145,7 @@ pkgplugin_LTLIBRARIES=lib%(name)s_plugin.la
 lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
 lib%(name)s_plugin_la_LIBADD=%(libs)s
 lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
+lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
 lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
 lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
@@ -235,7 +236,7 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
   if plugin['static']:
     #pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
     plugin_ac.write("""
-        pandora_builtin_list="builtin_%(name)s_plugin,${pandora_builtin_list}"
+        pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
         pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
 	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
 """ % plugin)
@@ -297,11 +298,23 @@ def find_testsuite(plugin_dir):
 
 def read_plugin_ini(plugin_dir):
     plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
-    parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
+    plugin_defaults= dict(sources="",
+                          headers="",
+                          cflags="",
+                          cppflags="",
+                          cxxflags="",
+                          libs="",
+                          ldflags="",
+                          author="",
+                          title="",
+                          description="",
+                          license="PLUGIN_LICENSE_GPL",
+                          name=os.path.basename(plugin_dir),
+                          load_by_default="False",
+                          static="False")
+    parser=ConfigParser.ConfigParser(defaults= plugin_defaults)
     parser.read(plugin_file)
     plugin=dict(parser.items('plugin'))
-    if not plugin.has_key('name'):
-      plugin['name']= os.path.basename(plugin_dir)
     if plugin_dir == '.':
       if not plugin.has_key('url'):
         print "External Plugins are required to specifiy a url"
@@ -310,15 +323,13 @@ def read_plugin_ini(plugin_dir):
       if plugin_dir == '.' and not plugin.has_key('version'):
         print "External Plugins are required to specifiy a version"
         sys.exit(1)
+    if not plugin.has_key('version'):
+      plugin['version']=datetime.date.fromtimestamp(time.time()).isoformat()
    
     if plugin.has_key('load_by_default'):
       plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
-    else:
-      plugin['load_by_default']=False
     if plugin.has_key('static'):
       plugin['static']= parser.getboolean('plugin','static')
-    else:
-      plugin['static']= False
     if plugin.has_key('testsuite'):
       if plugin['testsuite'] == 'disable':
         plugin['testsuite']= False
@@ -362,7 +373,7 @@ if %(build_conditional_tag)s
   plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
   plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
   plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)  
-  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
+  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
@@ -379,7 +390,7 @@ if %(build_conditional_tag)s
   plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
   plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
   plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s %(cppflags)s
+  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 

@@ -72,6 +72,7 @@ static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "gearman_udf",
   "0.1",
   "Eric Day",

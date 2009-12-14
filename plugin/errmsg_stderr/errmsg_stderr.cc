@@ -75,6 +75,7 @@ static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "errmsg_stderr",
   "0.1",
   "Mark Atwood <mark@fallenpegasus.com>",

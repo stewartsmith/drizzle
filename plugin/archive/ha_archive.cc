@@ -1464,6 +1464,7 @@ static drizzle_sys_var* archive_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",

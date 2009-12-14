@@ -54,6 +54,7 @@ static int compressionudf_plugin_deinit(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "compression",
   "1.1",
   "Stewart Smith",

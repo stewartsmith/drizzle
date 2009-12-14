@@ -106,6 +106,7 @@ static int finalize(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "md5",
   "1.0",
   "Stewart Smith",

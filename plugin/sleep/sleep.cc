@@ -146,6 +146,7 @@ static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "sleep",
   "1.0",
   "Patrick Galbraith",

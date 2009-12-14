@@ -1427,6 +1427,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "CSV",
   "1.0",
   "Brian Aker, MySQL AB",

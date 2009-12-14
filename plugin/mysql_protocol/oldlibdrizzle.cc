@@ -836,6 +836,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "mysql_protocol",
   "0.1",
   "Eric Day",

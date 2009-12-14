@@ -9050,6 +9050,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   innobase_engine_name,
   INNODB_VERSION_STR,
   "Innobase Oy",

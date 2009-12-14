@@ -674,6 +674,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pool_of_threads",
   "0.1",
   "Brian Aker",

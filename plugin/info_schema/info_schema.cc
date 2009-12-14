@@ -160,6 +160,7 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "info_schema",
   "1.1",
   "Padraig O'Sullivan",

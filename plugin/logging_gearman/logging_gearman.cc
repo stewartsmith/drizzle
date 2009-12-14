@@ -335,6 +335,7 @@ static drizzle_sys_var* logging_gearman_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
     "logging_gearman",
     "0.1",
     "Mark Atwood <mark@fallenpegasus.com>",

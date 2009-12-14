@@ -423,6 +423,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",
