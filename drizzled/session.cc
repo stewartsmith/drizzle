@@ -1727,15 +1727,6 @@ extern "C" unsigned long session_get_thread_id(const Session *session)
 }
 
 
-extern "C"
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                const char *str, unsigned int size,
-                                int allocate_lex_string)
-{
-  return session->make_lex_string(lex_str, str, size,
-                              (bool) allocate_lex_string);
-}
-
 const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());

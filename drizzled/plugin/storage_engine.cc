@@ -297,9 +297,8 @@ public:
   */
   inline result_type operator() (argument_type engine)
   {
-    if (engine->is_enabled() && 
-        session_get_ha_data(session, engine))
-    engine->close_connection(session);
+    if (engine->is_enabled() && *session_ha_data(session, engine))
+      engine->close_connection(session);
   }
 };
 

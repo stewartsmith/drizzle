@@ -1270,8 +1270,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /*
     Add server status variables to the dynamic list of
     status variables that is shown by SHOW STATUS.
-    Later, in plugin_init, and mysql_install_plugin
-    new entries could be added to that list.
+    Later, in plugin_init, new entries could be added to that list.
   */
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
