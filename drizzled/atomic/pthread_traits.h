@@ -31,9 +31,10 @@ private:
   pthread_mutex_t the_mutex;
   bool locked;
 public:
-  mutex_wrapper(void): locked(false)
+  mutex_wrapper(void)
+   : the_mutex(),
+     locked(false)
   {
-    locked= false;
     (void) pthread_mutex_init(&the_mutex,  NULL);
   }
   ~mutex_wrapper(void)
