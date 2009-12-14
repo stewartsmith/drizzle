@@ -264,7 +264,6 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
   if (!test_plugin_options(tmp_root, tmp, argc, argv))
   {
     registry.add(tmp);
-    init_alloc_root(&tmp->mem_root, 4096, 4096);
     return false;
   }
   errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
