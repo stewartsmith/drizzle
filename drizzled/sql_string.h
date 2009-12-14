@@ -62,43 +62,19 @@ class String
   const CHARSET_INFO *str_charset;
 
 public:
-  String()
-  {
-    Ptr=0; str_length=Alloced_length=0; alloced=0;
-    str_charset= &my_charset_bin;
-  }
-  String(uint32_t length_arg)
-  {
-    alloced=0; Alloced_length=0; (void) real_alloc(length_arg);
-    str_charset= &my_charset_bin;
-  }
-  String(const char *str, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; str_length=(uint32_t) strlen(str); Alloced_length=0; alloced=0;
-    str_charset=cs;
-  }
-  String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
-    str_charset=cs;
-  }
-  String(char *str,uint32_t len, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
-    str_charset=cs;
-  }
-  String(const String &str)
-  {
-    Ptr=str.Ptr ; str_length=str.str_length ;
-    Alloced_length=str.Alloced_length; alloced=0;
-    str_charset=str.str_charset;
-  }
+  String();
+  String(uint32_t length_arg);
+  String(const char *str, const CHARSET_INFO * const cs);
+  String(const char *str,uint32_t len, const CHARSET_INFO * const cs);
+  String(char *str,uint32_t len, const CHARSET_INFO * const cs);
+  String(const String &str);
+
+  static void operator delete(void *, size_t)
+  { }
+  static void operator delete(void *, MEM_ROOT *)
+  { }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); } 
-  static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* never called */ }
   ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)
