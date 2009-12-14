@@ -83,7 +83,7 @@ AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42)
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42,skip-visibility)
 
 PANDORA_REQUIRE_LIBPROTOBUF
 PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
