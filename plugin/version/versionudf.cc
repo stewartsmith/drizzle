@@ -66,4 +66,4 @@ static int finalize(plugin::Registry &registry)
    return 0;
 }
 
-DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL)
+DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL);

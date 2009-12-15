@@ -144,4 +144,4 @@ static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 }
 
 
-DRIZZLE_PLUGIN(sleep_plugin_init, sleep_plugin_deinit, NULL, NULL)
+DRIZZLE_PLUGIN(sleep_plugin_init, sleep_plugin_deinit, NULL, NULL);
