@@ -332,6 +332,17 @@ message::Statement &ReplicationServices::getInsertStatement(Session *in_session,
                                                                  Table *in_table) const
 {
   message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type INSERT.
+   * If it is not, we finalize the current Statement and ensure a new
+   * InsertStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::INSERT)
+  {
+    finalizeStatement(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
 
   if (statement == NULL)
   {
@@ -434,6 +445,17 @@ message::Statement &ReplicationServices::getUpdateStatement(Session *in_session,
                                                             const unsigned char *new_record) const
 {
   message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type UPDATE.
+   * If it is not, we finalize the current Statement and ensure a new
+   * UpdateStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::UPDATE)
+  {
+    finalizeStatement(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
 
   if (statement == NULL)
   {
@@ -602,6 +624,17 @@ message::Statement &ReplicationServices::getDeleteStatement(Session *in_session,
                                                             Table *in_table) const
 {
   message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type DELETE.
+   * If it is not, we finalize the current Statement and ensure a new
+   * DeleteStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::DELETE)
+  {
+    finalizeStatement(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
 
   if (statement == NULL)
   {
