@@ -22,16 +22,24 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/db.h>
+
+#include <string>
+
+using namespace std;
 
 namespace drizzled
 {
 
 bool statement::AlterSchema::execute()
 {
-  LEX_STRING *db= &session->lex->name;
-  if (check_db_name(db))
+  string database_name(session->lex->name.str);
+  NonNormalisedDatabaseName non_normalised_database_name(database_name);
+  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+  if (! normalised_database_name.isValid())
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
+    my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
     return false;
   }
   if (session->inTransaction())
@@ -41,7 +49,7 @@ bool statement::AlterSchema::execute()
                MYF(0));
     return true;
   }
-  bool res= mysql_alter_db(session, db->str, &create_info);
+  bool res= mysql_alter_db(session, normalised_database_name, &schema_message);
   return res;
 }
 

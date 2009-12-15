@@ -128,9 +128,6 @@ int my_delete_with_symlink(const char *name, myf MyFlags)
 
 int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
 {
-#ifndef HAVE_READLINK
-  return my_rename(from, to, MyFlags);
-#else
   char link_name[FN_REFLEN], tmp_name[FN_REFLEN];
   int sym_link_size= -1;
   int was_symlink= (!my_disable_symlinks &&
@@ -189,5 +186,4 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     result= 1;
   }
   return(result);
-#endif /* HAVE_READLINK */
 }

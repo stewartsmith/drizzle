@@ -52,7 +52,8 @@ namespace plugin
 class Table;
 typedef class Item COND;
 
-typedef drizzle_show_var SHOW_VAR;
+class NormalisedDatabaseName;
+
 typedef struct system_status_var STATUS_VAR;
 
 typedef struct st_lookup_field_values
@@ -85,7 +86,7 @@ bool mysqld_show_logs(Session *session);
 void mysqld_list_fields(Session *session,TableList *table, const char *wild);
 int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
 bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
-bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists);
+bool mysqld_show_create_db(Session *session, const NormalisedDatabaseName &database_name, bool if_not_exists);
 
 int mysqld_show_status(Session *session);
 int mysqld_show_variables(Session *session,const char *wild);

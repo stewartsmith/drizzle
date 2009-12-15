@@ -59,6 +59,7 @@
 #include "drizzled/optimizer/sargable_param.h"
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/optimizer/quick_range_select.h"
 
 using namespace std;
 using namespace drizzled;
@@ -475,7 +476,7 @@ static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *
   Create JoinTableS, make a guess about the table types,
   Approximate how many records will be used in each table
 *****************************************************************************/
-ha_rows get_quick_record_count(Session *session, optimizer::SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit)
+ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, Table *table, const key_map *keys,ha_rows limit)
 {
   int error;
   if (check_stack_overrun(session, STACK_MIN_SIZE, NULL))
@@ -4791,9 +4792,9 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
   int order_direction;
   uint32_t used_key_parts;
   Table *table=tab->table;
-  optimizer::SQL_SELECT *select= tab->select;
+  optimizer::SqlSelect *select= tab->select;
   key_map usable_keys;
-  optimizer::QUICK_SELECT_I *save_quick= NULL;
+  optimizer::QuickSelectInterface *save_quick= NULL;
 
   /*
     Keys disabled by ALTER Table ... DISABLE KEYS should have already
@@ -4833,9 +4834,9 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       by clustered PK values.
     */
 
-    if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE ||
-        quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-        quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT)
+    if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE ||
+        quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
+        quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT)
       return(0);
     ref_key=	   select->quick->index;
     ref_key_parts= select->quick->used_key_parts;
@@ -4885,7 +4886,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         else
         {
           /*
-            The range optimizer constructed QUICK_RANGE for ref_key, and
+            The range optimizer constructed QuickRange for ref_key, and
             we want to use instead new_ref_key as the index. We can't
             just change the index of the quick select, because this may
             result in an incosistent QUICK_SELECT object. Below we
@@ -5154,28 +5155,29 @@ check_reverse_order:
       */
       if (! select->quick->reverse_sorted())
       {
-        optimizer::QUICK_SELECT_DESC *tmp= NULL;
+        optimizer::QuickSelectDescending *tmp= NULL;
         bool error= false;
         int quick_type= select->quick->get_type();
-        if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
+        if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX)
         {
           tab->limit= 0;
           select->quick= save_quick;
-          return(0);                   // Use filesort
+          return 0; // Use filesort
         }
 
         /* order_st BY range_key DESC */
-        tmp= new optimizer::QUICK_SELECT_DESC((optimizer::QUICK_RANGE_SELECT*)(select->quick),
-                                              used_key_parts, &error);
-        if (!tmp || error)
+        tmp= new optimizer::QuickSelectDescending((optimizer::QuickRangeSelect*)(select->quick),
+                                                  used_key_parts, 
+                                                  &error);
+        if (! tmp || error)
         {
           delete tmp;
-                select->quick= save_quick;
-                tab->limit= 0;
-          return(0);		// Reverse sort not supported
+          select->quick= save_quick;
+          tab->limit= 0;
+          return 0; // Reverse sort not supported
         }
         select->quick=tmp;
       }
@@ -5195,7 +5197,7 @@ check_reverse_order:
   }
   else if (select && select->quick)
     select->quick->sorted= 1;
-  return(1);
+  return 1;
 }
 
 /*
@@ -5231,7 +5233,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   uint32_t length= 0;
   ha_rows examined_rows;
   Table *table;
-  optimizer::SQL_SELECT *select= NULL;
+  optimizer::SqlSelect *select= NULL;
   JoinTable *tab;
 
   if (join->tables == join->const_tables)
@@ -5248,7 +5250,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   */
   if ((order != join->group_list ||
        !(join->select_options & SELECT_BIG_RESULT) ||
-       (select && select->quick && (select->quick->get_type() == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX))) &&
+       (select && select->quick && (select->quick->get_type() == optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX))) &&
       test_if_skip_sort_order(tab,order,select_limit,0,
                               is_order_by ?  &table->keys_in_use_for_order_by :
                               &table->keys_in_use_for_group_by))
@@ -6685,9 +6687,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       if (tab->type == AM_ALL && tab->select && tab->select->quick)
       {
         quick_type= tab->select->quick->get_type();
-        if ((quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE) ||
-            (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT) ||
-            (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION))
+        if ((quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE) ||
+            (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT) ||
+            (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION))
           tab->type = AM_INDEX_MERGE;
         else
 	  tab->type = AM_RANGE;
@@ -6815,7 +6817,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       if ((tab->type == AM_NEXT || tab->type == AM_CONST) &&
           table->covering_keys.test(tab->index))
 	key_read=1;
-      if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT &&
+      if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT &&
           !((optimizer::QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
         key_read=1;
 
@@ -6847,9 +6849,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else if (tab->select && tab->select->quick)
           keyno = tab->select->quick->index;
 
-        if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
-            quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_INDEX_MERGE)
+        if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_UNION ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT ||
+            quick_type == optimizer::QuickSelectInterface::QS_TYPE_INDEX_MERGE)
         {
           extra.append(STRING_WITH_LEN("; Using "));
           tab->select->quick->add_info_string(&extra);
@@ -6888,7 +6890,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         }
         if (key_read)
         {
-          if (quick_type == optimizer::QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX)
+          if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX)
             extra.append(STRING_WITH_LEN("; Using index for group-by"));
           else
             extra.append(STRING_WITH_LEN("; Using index"));

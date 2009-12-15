@@ -14,11 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
+
+#include <pwd.h>
+
 #include <mystrings/m_string.h>
 #include "my_static.h"
-#ifdef HAVE_PWD_H
-#include <pwd.h>
-#endif
 
 static char * expand_tilde(char * *path);
 static size_t system_filename(char * to, const char *from);
@@ -224,24 +224,20 @@ static char * expand_tilde(char * *path)
 {
   if (path[0][0] == FN_LIBCHAR)
     return home_dir;			/* ~/ expanded to home */
-#ifdef HAVE_GETPWNAM
-  {
-    char *str,save;
-    struct passwd *user_entry;
+  char *str,save;
+  struct passwd *user_entry;
 
-    if (!(str=strchr(*path,FN_LIBCHAR)))
-      str= strchr(*path, '\0');
-    save= *str; *str= '\0';
-    user_entry=getpwnam(*path);
-    *str=save;
-    endpwent();
-    if (user_entry)
-    {
-      *path=str;
-      return user_entry->pw_dir;
-    }
+  if (!(str=strchr(*path,FN_LIBCHAR)))
+    str= strchr(*path, '\0');
+  save= *str; *str= '\0';
+  user_entry=getpwnam(*path);
+  *str=save;
+  endpwent();
+  if (user_entry)
+  {
+    *path=str;
+    return user_entry->pw_dir;
   }
-#endif
   return NULL;
 }
 

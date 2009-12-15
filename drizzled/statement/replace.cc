@@ -32,14 +32,13 @@ bool statement::Replace::execute()
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool need_start_waiting;
 
   if (insert_precheck(session, all_tables))
   {
     return true;
   }
 
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (wait_if_global_read_lock(session, false, true))
   {
     return true;
   }
