@@ -622,9 +622,6 @@ int JOIN::optimize()
     conds=new Item_int((int64_t) 0,1);  // Always false
   }
 
-  /* Cache constant expressions in WHERE, HAVING, ON clauses. */
-  cache_const_exprs();
-
   if (make_join_select(this, select, conds))
   {
     zero_result_cause=
@@ -831,6 +828,9 @@ int JOIN::optimize()
   /* Create all structures needed for materialized subquery execution. */
   if (setup_subquery_materialization())
     return 1;
+
+  /* Cache constant expressions in WHERE, HAVING, ON clauses. */
+  cache_const_exprs();
 
   /*
     is this simple IN subquery?
