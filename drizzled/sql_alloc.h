@@ -39,6 +39,9 @@ char* query_table_status(Session *session,const char *db,const char *table_name)
 class Sql_alloc
 {
 public:
+  /* Base classes should have virtual destructor */
+  virtual ~Sql_alloc() {}
+
   static void *operator new(size_t size) throw ()
   {
     return sql_alloc(size);
@@ -62,10 +65,8 @@ public:
 #ifdef HAVE_purify
   bool dummy;
   inline Sql_alloc() :dummy(0) {}
-  inline ~Sql_alloc() {}
 #else
   inline Sql_alloc() {}
-  inline ~Sql_alloc() {}
 #endif
 
 };
