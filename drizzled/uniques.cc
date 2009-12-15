@@ -629,7 +629,7 @@ bool Unique::get(Table *table)
   BUFFPEK *file_ptr= (BUFFPEK*) file_ptrs.buffer;
   uint32_t maxbuffer= file_ptrs.elements - 1;
   unsigned char *sort_buffer;
-  uint64_t save_pos;
+  my_off_t save_pos;
   bool error=1;
 
       /* Open cached file if it isn't open */

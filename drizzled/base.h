@@ -504,7 +504,7 @@ typedef uint64_t	ha_rows;
 #define rows2double(A)	uint64_t2double(A)
 
 #define HA_POS_ERROR	(~ (ha_rows) 0)
-#define HA_OFFSET_ERROR	(~ (uint64_t) 0)
+#define HA_OFFSET_ERROR	(~ (my_off_t) 0)
 
 #if SIZEOF_OFF_T == 4
 #define MAX_FILE_SIZE	INT32_MAX

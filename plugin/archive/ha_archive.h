@@ -74,7 +74,7 @@ class ha_archive: public Cursor
   ArchiveShare *share;      /* Shared lock info */
 
   azio_stream archive;            /* Archive file we are working with */
-  uint64_t current_position;  /* The position of the row we just read */
+  my_off_t current_position;  /* The position of the row we just read */
   unsigned char byte_buffer[IO_SIZE]; /* Initial buffer for our string */
   String buffer;             /* Buffer used for blob storage */
   ha_rows scan_rows;         /* Number of rows left in scan */

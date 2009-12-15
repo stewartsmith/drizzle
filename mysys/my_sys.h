@@ -146,6 +146,8 @@ extern "C" {
 typedef int  (*qsort_cmp)(const void *,const void *);
 typedef int  (*qsort_cmp2)(void*, const void *,const void *);
 
+typedef uint64_t my_off_t;
+
 #define TRASH(A,B) /* nothing */
 
 extern char *home_dir;			/* Home directory for user */
@@ -217,7 +219,7 @@ typedef struct st_record_cache	/* Used when cacheing records */
   int file;
   int	rc_seek,error,inited;
   uint	rc_length,read_length,reclength;
-  uint64_t rc_record_pos,end_of_file;
+  my_off_t rc_record_pos,end_of_file;
   unsigned char *rc_buff,*rc_buff2,*rc_pos,*rc_end,*rc_request_pos;
 #ifdef HAVE_AIOWAIT
   int	use_async_io;
@@ -270,6 +272,8 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 
 int handle_default_option(void *in_ctx, const char *group_name,
                           const char *option);
+
+#include <mysys/my_alloc.h>
 
 
 	/* Prototypes for mysys and my_func functions */
@@ -349,7 +353,7 @@ extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
 			     bool use_async_io);
 extern int read_cache_record(RECORD_CACHE *info,unsigned char *to);
 extern int end_record_cache(RECORD_CACHE *info);
-extern int write_cache_record(RECORD_CACHE *info,uint64_t filepos,
+extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
 			      const unsigned char *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
 extern void sigtstp_handler(int signal_number);
@@ -364,9 +368,11 @@ extern void my_qsort(void *base_ptr, size_t total_elems, size_t size,
 extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
                       qsort2_cmp cmp, void *cmp_argument);
 extern qsort2_cmp get_ptr_compare(size_t);
-void my_store_ptr(unsigned char *buff, size_t pack_length, uint64_t pos);
-uint64_t my_get_ptr(unsigned char *ptr, size_t pack_length);
+void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
+my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
+
+#include <mysys/dynamic_array.h>
 
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
