@@ -33,7 +33,7 @@ int BlitzEngine::doCreateTable(Session *, const char *table_path,
   BlitzData dict;
   int ecode;
 
-  if ((ecode = dict.create_table(table_path, BLITZ_DATAFILE_EXT)) != 0) {
+  if ((ecode = dict.create_table(table_path, BLITZ_DATA_EXT)) != 0) {
     return ecode; 
   }
 
@@ -68,7 +68,7 @@ int BlitzEngine::doDropTable(Session &, const string table_path) {
   char name_buffer[FN_REFLEN];
 
   snprintf(name_buffer, FN_REFLEN, "%s%s", table_path.c_str(),
-           BLITZ_DATAFILE_EXT);
+           BLITZ_DATA_EXT);
 
   if ((err = unlink(name_buffer)) == -1) {
     return err;
@@ -156,7 +156,7 @@ void BlitzEngine::doGetTableNames(CachedDirectory &directory, string&,
 
       file_name_len = filename_to_tablename(filename->c_str(), uname,
                                             sizeof(uname));
-      uname[file_name_len - sizeof(BLITZ_DATAFILE_EXT) + 1]= '\0';  
+      uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';  
       set_of_names.insert(uname);
     }
   }
@@ -333,7 +333,7 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   bool rv;
   
   ha_statistic_increment(&SSV::ha_write_count);
-  generated_key_length = share->dict.generate_table_key(key_buffer);
+  generated_key_length = generate_table_key();
   row_length = pack_row(buffer_pos, drizzle_row);
 
   rv = share->dict.overwrite_row(key_buffer, generated_key_length,
@@ -419,6 +419,16 @@ uint32_t ha_blitz::max_row_length(void) {
   }
 
   return length;
+}
+
+/* Note that key_buffer is a thread local buffer */
+size_t ha_blitz::generate_table_key(void) {
+  if (!share->primary_key_exists) {
+    uint64_t next_id = share->dict.next_hidden_row_id();
+    int8store(key_buffer, next_id);
+    return sizeof(next_id);
+  }
+  return 0;
 }
 
 size_t ha_blitz::pack_row(unsigned char *row_buffer,

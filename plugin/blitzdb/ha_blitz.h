@@ -31,13 +31,15 @@
 #include <drizzled/gettext.h>
 #include <mysys/thr_lock.h>
 #include <tchdb.h>
+#include <tcbdb.h>
 
 #include <string>
 
-#define BLITZ_DATAFILE_EXT    ".bzd"
-#define BLITZ_INDEX_FILE_EXT  ".bzx"
+#define BLITZ_DATA_EXT        ".bzd"
+#define BLITZ_INDEX_EXT       ".bzx"
 #define BLITZ_SYSTEM_EXT      ".bzs"
 #define BLITZ_MAX_ROW_STACK   2048
+#define BLITZ_MAX_INDEX       1
 #define BLITZ_MAX_KEY_LENGTH  128
 
 using namespace std;
@@ -46,8 +48,8 @@ const string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
 static const char *ha_blitz_exts[] = {
-  BLITZ_DATAFILE_EXT,
-  BLITZ_INDEX_FILE_EXT,
+  BLITZ_DATA_EXT,
+  BLITZ_INDEX_EXT,
   BLITZ_SYSTEM_EXT,
   NULL
 };
@@ -73,13 +75,13 @@ public:
   void scan_update_end();
 };
 
-/* Handler that takes care of all I/O to the the data dictionary
+/* Handler that takes care of all I/O to the data dictionary
    that holds actual rows. */
 class BlitzData {
 private:
-  TCHDB *data_table;          /* Where the actual row data lives */
-  TCHDB *system_table;        /* Keeps track of system info */
-  char *tc_meta_buffer;       /* Tokyo Cabinet's Persistent Meta Buffer */
+  TCHDB *data_table;    /* Where the actual row data lives */
+  TCHDB *system_table;  /* Keeps track of system info */
+  char *tc_meta_buffer; /* Tokyo Cabinet's Persistent Meta Buffer */
   drizzled::atomic<uint64_t> current_hidden_row_id;
 
 public:
@@ -96,7 +98,7 @@ public:
   bool write_table_definition(TCHDB *system_table,
                               drizzled::message::Table &proto);
 
-  /* DATA DICTIONARY META INFO RELATED */
+  /* DATA DICTIONARY METADATA RELATED */
   uint64_t nrecords(void);
 
   /* DATA DICTIONARY READ RELATED*/
@@ -107,11 +109,31 @@ public:
 
   /* DATA DICTIONARY WRITE RELATED */
   uint64_t next_hidden_row_id(void);
-  size_t generate_table_key(char *key_buffer);
   bool overwrite_row(const char *key, const size_t klen,
                      const unsigned char *row, const size_t rlen);
   bool delete_row(const char *key, const size_t klen);
   bool delete_all_rows(void);
+};
+
+/* Class that reprensents a BTREE index. Takes care of all I/O
+   to the b+tree index structure */
+class BlitzTree {
+private:
+  TCBDB *btree;
+  std::string filename;
+
+public:
+  BlitzTree() {}
+  ~BlitzTree() {}
+
+  /* BTREE INDEX CREATION RELATED */
+  int open(const char *path, int mode);
+  int create(const char *path);
+  int rename(const char *from, const char *to);
+  int close(void);
+  
+  /* BTREE METADATA RELATED */
+  uint64_t records(void); 
 };
 
 /* Object shared among all worker threads. Try to only add
@@ -125,6 +147,7 @@ public:
   THR_LOCK lock;           /* Shared Drizzle Lock */
   BlitzLock blitz_lock;    /* Handler level lock for BlitzDB */
   BlitzData dict;          /* Utility class of BlitzDB */
+  BlitzTree **btrees;      /* Array of BTREE indexes */
   std::string table_name;  /* Name and Length of the table */
   uint32_t use_count;      /* Reference counter of this object */
   bool fixed_length_table; /* Whether the table is fixed length */
@@ -184,8 +207,9 @@ public:
   int critical_section_enter();
   int critical_section_exit();
 
-  /* BLITZDB SPECIFIC THREAD SPECIFIC FUNCTIONS */
+  /* BLITZDB THREAD SPECIFIC FUNCTIONS */
   uint32_t max_row_length(void);
+  size_t generate_table_key(void);
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
   bool unpack_row(unsigned char *to, const char *from, const size_t from_len);
   unsigned char *get_pack_buffer(const size_t size);
