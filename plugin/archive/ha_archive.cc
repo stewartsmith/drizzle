@@ -364,7 +364,7 @@ ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);
 
   /* The size of the offset value we will use for position() */
-  ref_length= sizeof(uint64_t);
+  ref_length= sizeof(my_off_t);
   archive_reader_open= false;
 }
 
@@ -1099,7 +1099,7 @@ void ha_archive::position(const unsigned char *)
 int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-  current_position= (uint64_t)my_get_ptr(pos, ref_length);
+  current_position= (my_off_t)my_get_ptr(pos, ref_length);
   if (azseek(&archive, (size_t)current_position, SEEK_SET) == (size_t)(-1L))
     return(HA_ERR_CRASHED_ON_USAGE);
   return(get_row(&archive, buf));

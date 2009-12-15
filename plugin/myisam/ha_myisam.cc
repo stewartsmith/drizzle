@@ -1188,7 +1188,7 @@ int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 
 void ha_myisam::position(const unsigned char *)
 {
-  uint64_t row_position= mi_position(file);
+  my_off_t row_position= mi_position(file);
   my_store_ptr(ref, ref_length, row_position);
 }
 

@@ -85,7 +85,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
-  uint64_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;
 
   kfile= -1;
@@ -220,8 +220,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       my_errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-    share->base.max_data_file_length=(uint64_t) max_data_file_length;
-    share->base.max_key_file_length=(uint64_t) max_key_file_length;
+    share->base.max_data_file_length=(my_off_t) max_data_file_length;
+    share->base.max_key_file_length=(my_off_t) max_key_file_length;
 
     if (share->options & HA_OPTION_COMPRESS_RECORD)
       share->base.max_key_length+=2;	/* For safety */
@@ -253,9 +253,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     memcpy(share->state.rec_per_key_part, rec_per_key_part,
            sizeof(long)*key_parts);
     memcpy(share->state.key_root, key_root,
-           sizeof(uint64_t)*keys);
+           sizeof(my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
-           sizeof(uint64_t) * share->state.header.max_block_size_index);
+           sizeof(my_off_t) * share->state.header.max_block_size_index);
     strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
     strcpy(share->index_file_name,  index_name);
@@ -586,7 +586,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
-  uint64_t max_val= ~ (uint64_t) 0;		/* uint64_t is unsigned */
+  uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
 
   if (!a || max_val / a < b)
     return max_val;

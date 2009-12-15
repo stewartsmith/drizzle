@@ -153,7 +153,7 @@ typedef pthread_cond_t KEYCACHE_CONDVAR;
 struct st_keycache_page
 {
   int file;               /* file to which the page belongs to  */
-  uint64_t filepos;       /* position of the page in the file   */
+  my_off_t filepos;       /* position of the page in the file   */
 };
 
 /* element in the chain of a hash table bucket */
@@ -161,9 +161,9 @@ struct st_hash_link
 {
   struct st_hash_link *next, **prev; /* to connect links in the same bucket  */
   struct st_block_link *block;       /* reference to the block for the page: */
-  int file;                          /* from such a file                     */
-  uint64_t diskpos;                  /* with such an offset                  */
-  uint32_t requests;                 /* number of requests for the page      */
+  int file;                         /* from such a file                     */
+  my_off_t diskpos;                  /* with such an offset                  */
+  uint32_t requests;                     /* number of requests for the page      */
 };
 
 /* simple states of a block */
@@ -1303,7 +1303,7 @@ static void unlink_hash(KEY_CACHE *keycache, HASH_LINK *hash_link)
 */
 
 static HASH_LINK *get_hash_link(KEY_CACHE *keycache,
-                                int file, uint64_t filepos)
+                                int file, my_off_t filepos)
 {
   register HASH_LINK *hash_link, **start;
 
@@ -1394,7 +1394,7 @@ restart:
 */
 
 static BLOCK_LINK *find_key_block(KEY_CACHE *keycache,
-                                  int file, uint64_t filepos,
+                                  int file, my_off_t filepos,
                                   int init_hits_left,
                                   int wrmode, int *page_st)
 {
@@ -2193,7 +2193,7 @@ static void read_block(KEY_CACHE *keycache,
 */
 
 unsigned char *key_cache_read(KEY_CACHE *keycache,
-                      int file, uint64_t filepos, int level,
+                      int file, my_off_t filepos, int level,
                       unsigned char *buff, uint32_t length,
                       uint32_t block_length,
                       int return_buffer)
@@ -2387,7 +2387,7 @@ end:
 */
 
 int key_cache_insert(KEY_CACHE *keycache,
-                     int file, uint64_t filepos, int level,
+                     int file, my_off_t filepos, int level,
                      unsigned char *buff, uint32_t length)
 {
   int error= 0;
@@ -2621,7 +2621,7 @@ int key_cache_insert(KEY_CACHE *keycache,
 */
 
 int key_cache_write(KEY_CACHE *keycache,
-                    int file, uint64_t filepos, int level,
+                    int file, my_off_t filepos, int level,
                     unsigned char *buff, uint32_t length,
                     uint32_t block_length,
                     int dont_write)
@@ -3466,7 +3466,7 @@ restart:
                                    BLOCK_REASSIGNED)))
             {
               struct st_hash_link *next_hash_link= NULL;
-              uint64_t            next_diskpos= 0;
+              my_off_t            next_diskpos= 0;
               int                next_file= 0;
               uint32_t                next_status= 0;
               uint32_t                hash_requests= 0;

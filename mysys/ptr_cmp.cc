@@ -156,7 +156,7 @@ static int ptr_compare_3(size_t *compare_length,unsigned char **a, unsigned char
   return (0);
 }
 
-void my_store_ptr(unsigned char *buff, size_t pack_length, uint64_t pos)
+void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos)
 {
   switch (pack_length) {
 #if SIZEOF_OFF_T > 4
@@ -174,20 +174,20 @@ void my_store_ptr(unsigned char *buff, size_t pack_length, uint64_t pos)
   return;
 }
 
-uint64_t my_get_ptr(unsigned char *ptr, size_t pack_length)
+my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length)
 {
-  uint64_t pos;
+  my_off_t pos;
   switch (pack_length) {
 #if SIZEOF_OFF_T > 4
-  case 8: pos= (uint64_t) mi_uint8korr(ptr); break;
-  case 7: pos= (uint64_t) mi_uint7korr(ptr); break;
-  case 6: pos= (uint64_t) mi_uint6korr(ptr); break;
-  case 5: pos= (uint64_t) mi_uint5korr(ptr); break;
+  case 8: pos= (my_off_t) mi_uint8korr(ptr); break;
+  case 7: pos= (my_off_t) mi_uint7korr(ptr); break;
+  case 6: pos= (my_off_t) mi_uint6korr(ptr); break;
+  case 5: pos= (my_off_t) mi_uint5korr(ptr); break;
 #endif
-  case 4: pos= (uint64_t) mi_uint4korr(ptr); break;
-  case 3: pos= (uint64_t) mi_uint3korr(ptr); break;
-  case 2: pos= (uint64_t) mi_uint2korr(ptr); break;
-  case 1: pos= (uint64_t) *(unsigned char*) ptr; break;
+  case 4: pos= (my_off_t) mi_uint4korr(ptr); break;
+  case 3: pos= (my_off_t) mi_uint3korr(ptr); break;
+  case 2: pos= (my_off_t) mi_uint2korr(ptr); break;
+  case 1: pos= (my_off_t) *(unsigned char*) ptr; break;
   default: assert(0); return 0;
   }
  return pos;
