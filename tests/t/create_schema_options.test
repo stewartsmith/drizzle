@@ -1,0 +1,7 @@
+--error 1692
+CREATE DATABASE foo unknown_key=value;
+--error 1692
+CREATE DATABASE foo unknown_key=value, anotheR_unknown_key;
+SHOW WARNINGS;
+--error 1692
+CREATE DATABASE foo unknown_key=42;

@@ -23,6 +23,7 @@
 
 #include <drizzled/statement.h>
 #include <drizzled/message/schema.pb.h>
+#include <list>
 
 class Session;
 
@@ -44,6 +45,7 @@ public:
   bool execute();
   bool is_if_not_exists;
   drizzled::message::Schema schema_message;
+  std::list<drizzled::message::Schema::SchemaOption> parsed_schema_options;
 };
 
 } /* end namespace statement */

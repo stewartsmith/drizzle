@@ -4,4 +4,11 @@ option optimize_for = SPEED;
 message Schema {
   required string name = 1;
   optional string collation = 2;
+
+  message SchemaOption {
+    required string option_name = 1;
+    optional string option_value = 2;
+  }
+
+  repeated SchemaOption options = 3;
 }
