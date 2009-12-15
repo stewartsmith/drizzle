@@ -144,18 +144,4 @@ static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 }
 
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "sleep",
-  "1.0",
-  "Patrick Galbraith",
-  "sleep()",
-  PLUGIN_LICENSE_GPL,
-  sleep_plugin_init, /* Plugin Init */
-  sleep_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(sleep_plugin_init, sleep_plugin_deinit, NULL, NULL)

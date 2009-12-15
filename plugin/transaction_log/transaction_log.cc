@@ -530,18 +530,4 @@ static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "transaction_log",
-  "0.1",
-  "Jay Pipes",
-  N_("Transaction Message Log"),
-  PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
-  NULL, /* status variables */
-  system_variables, /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(init, deinit, NULL, system_variables)
