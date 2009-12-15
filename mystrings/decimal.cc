@@ -270,7 +270,7 @@ void max_decimal(int precision, int frac, decimal_t *to)
 }
 
 
-static dec1 *remove_leading_zeroes(decimal_t *from, int *intg_result)
+static dec1 *remove_leading_zeroes(const decimal_t *from, int *intg_result)
 {
   int intg= from->intg, i;
   dec1 *buf0= from->buf;
@@ -346,7 +346,7 @@ int decimal_actual_fraction(decimal_t *from)
     E_DEC_OK/E_DEC_TRUNCATED/E_DEC_OVERFLOW
 */
 
-int decimal2string(decimal_t *from, char *to, int *to_len,
+int decimal2string(const decimal_t *from, char *to, int *to_len,
                    int fixed_precision, int fixed_decimals,
                    char filler)
 {
@@ -964,7 +964,7 @@ fatal_error:
     E_DEC_OK/E_DEC_OVERFLOW/E_DEC_TRUNCATED
 */
 
-int decimal2double(decimal_t *from, double *to)
+int decimal2double(const decimal_t *from, double *to)
 {
   char strbuf[FLOATING_POINT_BUFFER], *end;
   int len= sizeof(strbuf);
@@ -990,7 +990,7 @@ int decimal2double(decimal_t *from, double *to)
     E_DEC_OK/E_DEC_OVERFLOW/E_DEC_TRUNCATED
 */
 
-int double2decimal(double from, decimal_t *to)
+int double2decimal(const double from, decimal_t *to)
 {
   char buff[FLOATING_POINT_BUFFER], *end;
   int res;
@@ -1026,20 +1026,20 @@ static int ull2dec(uint64_t from, decimal_t *to)
   return error;
 }
 
-int uint64_t2decimal(uint64_t from, decimal_t *to)
+int uint64_t2decimal(const uint64_t from, decimal_t *to)
 {
   to->sign=0;
   return ull2dec(from, to);
 }
 
-int int64_t2decimal(int64_t from, decimal_t *to)
+int int64_t2decimal(const int64_t from, decimal_t *to)
 {
   if ((to->sign= from < 0))
     return ull2dec(-from, to);
   return ull2dec(from, to);
 }
 
-int decimal2uint64_t(decimal_t *from, uint64_t *to)
+int decimal2uint64_t(const decimal_t *from, uint64_t *to)
 {
   dec1 *buf=from->buf;
   uint64_t x=0;
@@ -1068,7 +1068,7 @@ int decimal2uint64_t(decimal_t *from, uint64_t *to)
   return E_DEC_OK;
 }
 
-int decimal2int64_t(decimal_t *from, int64_t *to)
+int decimal2int64_t(const decimal_t *from, int64_t *to)
 {
   dec1 *buf=from->buf;
   int64_t x=0;
@@ -1187,7 +1187,7 @@ int decimal2int64_t(decimal_t *from, int64_t *to)
 
                 7E F2 04 37 2D FB 2D
 */
-int decimal2bin(decimal_t *from, unsigned char *to, int precision, int frac)
+int decimal2bin(const decimal_t *from, unsigned char *to, int precision, int frac)
 {
   dec1 mask=from->sign ? -1 : 0, *buf1=from->buf, *stop1;
   int error=E_DEC_OK, intg=precision-frac,
@@ -1461,7 +1461,7 @@ int decimal_bin_size(int precision, int scale)
 */
 
 int
-decimal_round(decimal_t *from, decimal_t *to, int scale,
+decimal_round(const decimal_t *from, decimal_t *to, int scale,
               decimal_round_mode mode)
 {
   int frac0=scale>0 ? ROUND_UP(scale) : scale/DIG_PER_DEC1,
@@ -1653,7 +1653,7 @@ done:
   return error;
 }
 
-static int do_add(decimal_t *from1, decimal_t *from2, decimal_t *to)
+static int do_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   int intg1=ROUND_UP(from1->intg), intg2=ROUND_UP(from2->intg),
       frac1=ROUND_UP(from1->frac), frac2=ROUND_UP(from2->frac),
@@ -1735,7 +1735,7 @@ static int do_add(decimal_t *from1, decimal_t *from2, decimal_t *to)
 
 /* to=from1-from2.
    if to==0, return -1/0/+1 - the result of the comparison */
-static int do_sub(decimal_t *from1, decimal_t *from2, decimal_t *to)
+static int do_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   int intg1=ROUND_UP(from1->intg), intg2=ROUND_UP(from2->intg),
       frac1=ROUND_UP(from1->frac), frac2=ROUND_UP(from2->frac);
@@ -1804,7 +1804,7 @@ static int do_sub(decimal_t *from1, decimal_t *from2, decimal_t *to)
   /* ensure that always from1 > from2 (and intg1 >= intg2) */
   if (carry)
   {
-    swap_variables(decimal_t *,from1,from1);
+    swap_variables(const decimal_t *,from1, from2);
     swap_variables(dec1 *,start1, start2);
     swap_variables(int,intg1,intg2);
     swap_variables(int,frac1,frac2);
@@ -1870,7 +1870,7 @@ static int do_sub(decimal_t *from1, decimal_t *from2, decimal_t *to)
   return error;
 }
 
-int decimal_intg(decimal_t *from)
+int decimal_intg(const decimal_t *from)
 {
   int res;
   dec1 *tmp_res;
@@ -1878,28 +1878,28 @@ int decimal_intg(decimal_t *from)
   return res;
 }
 
-int decimal_add(decimal_t *from1, decimal_t *from2, decimal_t *to)
+int decimal_add(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   if (likely(from1->sign == from2->sign))
     return do_add(from1, from2, to);
   return do_sub(from1, from2, to);
 }
 
-int decimal_sub(decimal_t *from1, decimal_t *from2, decimal_t *to)
+int decimal_sub(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   if (likely(from1->sign == from2->sign))
     return do_sub(from1, from2, to);
   return do_add(from1, from2, to);
 }
 
-int decimal_cmp(decimal_t *from1, decimal_t *from2)
+int decimal_cmp(const decimal_t *from1, const decimal_t *from2)
 {
   if (likely(from1->sign == from2->sign))
     return do_sub(from1, from2, 0);
   return from1->sign > from2->sign ? -1 : 1;
 }
 
-int decimal_is_zero(decimal_t *from)
+int decimal_is_zero(const decimal_t *from)
 {
   dec1 *buf1=from->buf,
        *end=buf1+ROUND_UP(from->intg)+ROUND_UP(from->frac);
@@ -1930,7 +1930,7 @@ int decimal_is_zero(decimal_t *from)
     XXX if this library is to be used with huge numbers of thousands of
     digits, fast multiplication must be implemented.
 */
-int decimal_mul(decimal_t *from1, decimal_t *from2, decimal_t *to)
+int decimal_mul(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   int intg1=ROUND_UP(from1->intg), intg2=ROUND_UP(from2->intg),
       frac1=ROUND_UP(from1->frac), frac2=ROUND_UP(from2->frac),
@@ -2046,7 +2046,7 @@ int decimal_mul(decimal_t *from1, decimal_t *from2, decimal_t *to)
   changed to malloc (or at least fallback to malloc if alloca() fails)
   but then, decimal_mul() should be rewritten too :(
 */
-static int do_div_mod(decimal_t *from1, decimal_t *from2,
+static int do_div_mod(const decimal_t *from1, const decimal_t *from2,
                        decimal_t *to, decimal_t *mod, int scale_incr)
 {
   int frac1=ROUND_UP(from1->frac)*DIG_PER_DEC1, prec1=from1->intg+frac1,
@@ -2305,7 +2305,7 @@ done:
 */
 
 int
-decimal_div(decimal_t *from1, decimal_t *from2, decimal_t *to, int scale_incr)
+decimal_div(const decimal_t *from1, const decimal_t *from2, decimal_t *to, int scale_incr)
 {
   return do_div_mod(from1, from2, to, 0, scale_incr);
 }
@@ -2337,7 +2337,7 @@ decimal_div(decimal_t *from1, decimal_t *from2, decimal_t *to, int scale_incr)
    thus, there's no requirement for M or N to be integers
 */
 
-int decimal_mod(decimal_t *from1, decimal_t *from2, decimal_t *to)
+int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
 {
   return do_div_mod(from1, from2, 0, to, 0);
 }
