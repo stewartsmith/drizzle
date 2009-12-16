@@ -18,8 +18,7 @@
  */
 
 #include "ha_blitz.h"
-
-static const string engine_name("BLITZDB");
+#include <sys/stat.h>
 
 static BlitzShare *get_share(const char *table_name);
 static int free_share(BlitzShare *share);
@@ -179,6 +178,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
   secondary_row_buffer = NULL;
   secondary_row_buffer_size = 0;
 
+  share->nkeys = table->s->keys;
   share->fixed_length_table = !(table->s->db_create_options
                                 & HA_OPTION_PACK_RECORD);
 
@@ -187,8 +187,12 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
     ref_length = sizeof(updateable_key_length) + sizeof(uint64_t);
   } else {
     share->primary_key_exists = true;
-    /* TODO: Set ref_length to something safe and appropriate
-             when BlitzDB supports indexes. */
+
+    /* TODO: This makes sense but it is asking for more memory
+             than it should need in general. Investigate how to
+             optimize it. One idea is to find the largest possible
+             key size within the array. */
+    ref_length = BLITZ_MAX_KEY_LENGTH;
   }
 
   thr_lock_data_init(&share->lock, &lock, NULL);
@@ -561,7 +565,7 @@ static int free_share(BlitzShare *share) {
 }
 
 static int blitz_init(drizzled::plugin::Registry &registry) {
-  blitz_engine = new BlitzEngine(engine_name); 
+  blitz_engine = new BlitzEngine("BLITZDB"); 
   if ((blitz_table_cache = tcmapnew()) == NULL) {
     delete blitz_engine;
     return HA_ERR_OUT_OF_MEM;

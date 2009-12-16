@@ -40,7 +40,7 @@
 #define BLITZ_SYSTEM_EXT      ".bzs"
 #define BLITZ_MAX_ROW_STACK   2048
 #define BLITZ_MAX_INDEX       1
-#define BLITZ_MAX_KEY_LENGTH  128
+#define BLITZ_MAX_KEY_LENGTH  512
 
 using namespace std;
 
@@ -121,9 +121,10 @@ class BlitzTree {
 private:
   TCBDB *btree;
   std::string filename;
+  int idx_number;
 
 public:
-  BlitzTree() {}
+  BlitzTree() : idx_number(0) {}
   ~BlitzTree() {}
 
   /* BTREE INDEX CREATION RELATED */
@@ -131,6 +132,12 @@ public:
   int create(const char *path);
   int rename(const char *from, const char *to);
   int close(void);
+
+  /* BTREE INDEX WRITE RELATED */
+  int write(const char *key, const size_t klen, const char *val,
+            const size_t vlen);
+  int write_unique(const char *key, const size_t klen, const char *val,
+                   const size_t vlen);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
@@ -141,7 +148,7 @@ public:
    do not require locking. */
 class BlitzShare {
 public:
-  BlitzShare() : blitz_lock(), use_count(0) {}
+  BlitzShare() : blitz_lock(), use_count(0), nkeys(0) {}
   ~BlitzShare() {}
 
   THR_LOCK lock;           /* Shared Drizzle Lock */
@@ -150,6 +157,7 @@ public:
   BlitzTree **btrees;      /* Array of BTREE indexes */
   std::string table_name;  /* Name and Length of the table */
   uint32_t use_count;      /* Reference counter of this object */
+  uint32_t nkeys;          /* Number of indexes in this table */
   bool fixed_length_table; /* Whether the table is fixed length */
   bool primary_key_exists; /* Whether a PK exists in this table */
 };
@@ -246,10 +254,9 @@ public:
   void doGetTableNames(CachedDirectory &directory, string&,
                        set<string>& set_of_names);
 
-  uint32_t max_supported_keys() const { return 0; }
-  uint32_t max_supported_key_length() const { return 0; }
-  uint32_t max_supported_key_parts() const { return 0; }
-  uint32_t max_supported_key_part_length() const { return 0; }
+  uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
+  uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LENGTH; }
 
   uint32_t index_flags(enum ha_key_alg) const {
     return HA_ONLY_WHOLE_INDEX;
