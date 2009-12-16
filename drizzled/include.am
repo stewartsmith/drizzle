@@ -16,8 +16,7 @@
 
 sbin_PROGRAMS= drizzled/drizzled
 
-DTRACEFILES = drizzled/cursor.o \
-	      drizzled/filesort.o \
+DTRACEFILES = drizzled/filesort.o \
 	      drizzled/drizzled.o \
 	      drizzled/session.o \
 	      drizzled/sql_delete.o \
@@ -408,7 +407,7 @@ drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS)
+		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
@@ -790,6 +789,7 @@ endif
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
+	mv probes.o drizzled/probes.o
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
