@@ -49,26 +49,7 @@ bool statement::CreateSchema::execute()
     return false;
   }
 
-  if (parsed_schema_options.size() > 0)
-  {
-    list<drizzled::message::Schema::SchemaOption>::iterator it;
-    it= parsed_schema_options.begin();
-
-    my_error(ER_UNKNOWN_OPTION, MYF(0), (*it).option_name().c_str());
-
-    it++;
-
-    while (it != parsed_schema_options.end())
-    {
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                          ER_UNKNOWN_OPTION, ER(ER_UNKNOWN_OPTION),
-                          (*it).option_name().c_str());
-      it++;
-    }
-    return false;
-  }
-
-  bool res= mysql_create_db(session, normalised_database_name, &schema_message, is_if_not_exists);
+  bool res= mysql_create_db(session, normalised_database_name, &schema_message, &parsed_schema_options, is_if_not_exists);
   return res;
 }
 
