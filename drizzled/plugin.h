@@ -57,10 +57,10 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
 #define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
 #define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
 #define DRIZZLE_DECLARE_PLUGIN \
-           drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)[]= {
+           drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
-#define DRIZZLE_DECLARE_PLUGIN_END ,{0, NULL,NULL,NULL,NULL,PLUGIN_LICENSE_GPL,NULL,NULL,NULL,NULL,NULL}}
+#define DRIZZLE_DECLARE_PLUGIN_END
 #define DRIZZLE_PLUGIN(init,deinit,status,system) \
   DRIZZLE_DECLARE_PLUGIN \
   { \
@@ -71,8 +71,7 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
     init, deinit, status, system, NULL \
-  } \
-  DRIZZLE_DECLARE_PLUGIN_END
+  } 
 
 
 /*
