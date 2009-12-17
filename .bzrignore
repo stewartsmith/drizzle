@@ -109,6 +109,7 @@ plugin/archive/archive_performance
 plugin/archive/archive_reader
 plugin/archive/archive_test
 plugin/archive/concurrency_test
+plugin/memcached_functions/tests/start_mc.sh
 plugin/myisam/myisamchk
 plugin/myisam/myisamlog
 plugin/myisam/myisampack
