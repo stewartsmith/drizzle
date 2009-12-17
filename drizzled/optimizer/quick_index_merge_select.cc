@@ -20,9 +20,13 @@
 #include "drizzled/server_includes.h"
 #include "drizzled/session.h"
 #include "drizzled/records.h"
+#include "drizzled/util/functors.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_index_merge_select.h"
 
+#include <vector>
+
+using namespace std;
 using namespace drizzled;
 
 extern "C"
@@ -72,21 +76,23 @@ optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *q
   }
   else
   {
-    return quick_selects.push_back(quick_sel_range);
+    quick_selects.push_back(quick_sel_range);
   }
-  return 0;
+  return false;
 }
 
 optimizer::QuickIndexMergeSelect::~QuickIndexMergeSelect()
 {
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect* quick;
-  quick_it.rewind();
-  while ((quick= quick_it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
-    quick->cursor= NULL;
+    (*it)->cursor= NULL;
   }
-  quick_selects.delete_elements();
+  for_each(quick_selects.begin(),
+           quick_selects.end(),
+           DeletePtr());
+  quick_selects.clear();
   delete pk_quick_select;
   free_root(&alloc,MYF(0));
   return;
@@ -95,17 +101,17 @@ optimizer::QuickIndexMergeSelect::~QuickIndexMergeSelect()
 
 int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
 {
-  List_iterator_fast<optimizer::QuickRangeSelect> cur_quick_it(quick_selects);
-  optimizer::QuickRangeSelect* cur_quick;
+  vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+  optimizer::QuickRangeSelect *cur_quick= NULL;
   int result;
-  Unique *unique;
+  Unique *unique= NULL;
   Cursor *cursor= head->cursor;
 
   cursor->extra(HA_EXTRA_KEYREAD);
   head->prepare_for_position();
 
-  cur_quick_it.rewind();
-  cur_quick= cur_quick_it++;
+  cur_quick= *it;
+  ++it;
   assert(cur_quick != 0);
 
   /*
@@ -116,18 +122,23 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
     return 0;
 
   unique= new Unique(refpos_order_cmp,
-                     (void *)cursor,
+                     (void *) cursor,
                      cursor->ref_length,
                      session->variables.sortbuff_size);
-  if (!unique)
+  if (! unique)
     return 0;
   for (;;)
   {
     while ((result= cur_quick->get_next()) == HA_ERR_END_OF_FILE)
     {
       cur_quick->range_end();
-      cur_quick= cur_quick_it++;
-      if (!cur_quick)
+      if (it == quick_selects.end())
+      {
+        break;
+      }
+      cur_quick= *it;
+      ++it;
+      if (! cur_quick)
         break;
 
       if (cur_quick->cursor->inited != Cursor::NONE)
@@ -154,7 +165,7 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
       continue;
 
     cur_quick->cursor->position(cur_quick->record);
-    result= unique->unique_add((char*)cur_quick->cursor->ref);
+    result= unique->unique_add((char*) cur_quick->cursor->ref);
     if (result)
       return 0;
 
@@ -199,12 +210,14 @@ int optimizer::QuickIndexMergeSelect::get_next()
 
 bool optimizer::QuickIndexMergeSelect::is_keys_used(const MyBitmap *fields)
 {
-  optimizer::QuickRangeSelect *quick= NULL;
-  List_iterator_fast<QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
-    if (is_key_used(head, quick->index, fields))
+    if (is_key_used(head, (*it)->index, fields))
+    {
       return 1;
+    }
   }
   return 0;
 }
@@ -212,17 +225,17 @@ bool optimizer::QuickIndexMergeSelect::is_keys_used(const MyBitmap *fields)
 
 void optimizer::QuickIndexMergeSelect::add_info_string(String *str)
 {
-  optimizer::QuickRangeSelect *quick= NULL;
   bool first= true;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
   str->append(STRING_WITH_LEN("sort_union("));
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
     if (! first)
       str->append(',');
     else
       first= false;
-    quick->add_info_string(str);
+    (*it)->add_info_string(str);
   }
   if (pk_quick_select)
   {
@@ -237,12 +250,12 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
                                                             String *used_lengths)
 {
   char buf[64];
-  uint32_t length;
+  uint32_t length= 0;
   bool first= true;
-  optimizer::QuickRangeSelect *quick= NULL;
 
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
+  for (vector<optimizer::QuickRangeSelect *>::iterator it= quick_selects.begin();
+       it != quick_selects.end();
+       ++it)
   {
     if (first)
       first= false;
@@ -252,9 +265,9 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
 
-    KEY *key_info= head->key_info + quick->index;
+    KEY *key_info= head->key_info + (*it)->index;
     key_names->append(key_info->name);
-    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)

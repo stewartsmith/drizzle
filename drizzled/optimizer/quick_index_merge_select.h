@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 namespace drizzled
 {
 
@@ -107,17 +109,17 @@ public:
    */
   int get_next();
 
-  bool reverse_sorted()
+  bool reverse_sorted() const
   {
     return false;
   }
 
-  bool unique_key_range()
+  bool unique_key_range() const
   {
     return false;
   }
 
-  int get_type()
+  int get_type() const
   {
     return QS_TYPE_INDEX_MERGE;
   }
@@ -129,10 +131,10 @@ public:
   bool push_quick_back(QuickRangeSelect *quick_sel_range);
 
   /* range quick selects this index_merge read consists of */
-  List<QuickRangeSelect> quick_selects;
+  std::vector<QuickRangeSelect *> quick_selects;
 
   /* quick select that uses clustered primary key (NULL if none) */
-  QuickRangeSelect* pk_quick_select;
+  QuickRangeSelect *pk_quick_select;
 
   /* true if this select is currently doing a clustered PK scan */
   bool  doing_pk_scan;
