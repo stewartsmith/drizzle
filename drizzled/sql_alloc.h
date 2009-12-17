@@ -60,7 +60,7 @@ public:
   static void operator delete[](void *, size_t)
   {  }
   Sql_alloc() {}
-  virtual ~Sql_alloc() {}
+  ~Sql_alloc() {}
 
 };
 
