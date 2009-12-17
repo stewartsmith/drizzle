@@ -1436,12 +1436,51 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   */
   assert(next_insert_id == 0);
 
+  if (DRIZZLE_CURSOR_RDLOCK_START_ENABLED() ||
+      DRIZZLE_CURSOR_WRLOCK_START_ENABLED() ||
+      DRIZZLE_CURSOR_UNLOCK_START_ENABLED())
+  {
+    if (lock_type == F_RDLCK)
+    {
+      DRIZZLE_CURSOR_RDLOCK_START(table_share->db.str,
+                                  table_share->table_name.str);
+    }
+    else if (lock_type == F_WRLCK)
+    {
+      DRIZZLE_CURSOR_WRLOCK_START(table_share->db.str,
+                                  table_share->table_name.str);
+    }
+    else if (lock_type == F_UNLCK)
+    {
+      DRIZZLE_CURSOR_UNLOCK_START(table_share->db.str,
+                                  table_share->table_name.str);
+    }
+  }
+
   /*
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
 
   int error= external_lock(session, lock_type);
+
+  if (DRIZZLE_CURSOR_RDLOCK_DONE_ENABLED() ||
+      DRIZZLE_CURSOR_WRLOCK_DONE_ENABLED() ||
+      DRIZZLE_CURSOR_UNLOCK_DONE_ENABLED())
+  {
+    if (lock_type == F_RDLCK)
+    {
+      DRIZZLE_CURSOR_RDLOCK_DONE(error);
+    }
+    else if (lock_type == F_WRLCK)
+    {
+      DRIZZLE_CURSOR_WRLOCK_DONE(error);
+    }
+    else if (lock_type == F_UNLCK)
+    {
+      DRIZZLE_CURSOR_UNLOCK_DONE(error);
+    }
+  }
 
   return error;
 }
