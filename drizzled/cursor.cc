@@ -1481,9 +1481,12 @@ int Cursor::ha_write_row(unsigned char *buf)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
 
+  DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
   mark_trx_read_write();
+  error= write_row(buf);
+  DRIZZLE_INSERT_ROW_DONE(error);
 
-  if (unlikely(error= write_row(buf)))
+  if (unlikely(error))
   {
     return error;
   }
@@ -1505,9 +1508,12 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
    */
   assert(new_data == table->record[0]);
 
+  DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
   mark_trx_read_write();
+  error= update_row(old_data, new_data);
+  DRIZZLE_UPDATE_ROW_DONE(error);
 
-  if (unlikely(error= update_row(old_data, new_data)))
+  if (unlikely(error))
   {
     return error;
   }
@@ -1522,9 +1528,12 @@ int Cursor::ha_delete_row(const unsigned char *buf)
 {
   int error;
 
+  DRIZZLE_DELETE_ROW_START(table_share->db.str, table_share->table_name.str);
   mark_trx_read_write();
+  error= delete_row(buf);
+  DRIZZLE_DELETE_ROW_DONE(error);
 
-  if (unlikely(error= delete_row(buf)))
+  if (unlikely(error))
     return error;
 
   if (unlikely(log_row_for_replication(table, buf, NULL)))

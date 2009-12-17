@@ -16,7 +16,8 @@
 
 sbin_PROGRAMS= drizzled/drizzled
 
-DTRACEFILES = drizzled/filesort.o \
+DTRACEFILES = drizzled/.libs/cursor.o \
+	      drizzled/filesort.o \
 	      drizzled/drizzled.o \
 	      drizzled/session.o \
 	      drizzled/sql_delete.o \
