@@ -109,8 +109,10 @@ public:
 
   /* DATA DICTIONARY WRITE RELATED */
   uint64_t next_hidden_row_id(void);
-  bool overwrite_row(const char *key, const size_t klen,
-                     const unsigned char *row, const size_t rlen);
+  int write_row(const char *key, const size_t klen,
+                const unsigned char *row, const size_t rlen);
+  int write_unique_row(const char *key, const size_t klen,
+                       const unsigned char *row, const size_t rlen);
   bool delete_row(const char *key, const size_t klen);
   bool delete_all_rows(void);
 };

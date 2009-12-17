@@ -333,23 +333,49 @@ void ha_blitz::position(const unsigned char *) {
 
 int ha_blitz::write_row(unsigned char *drizzle_row) {
   size_t row_length = max_row_length();
-  unsigned char *buffer_pos = get_pack_buffer(row_length);
-  bool rv;
+  unsigned char *row_buf = get_pack_buffer(row_length);
+  int rv;
   
   ha_statistic_increment(&SSV::ha_write_count);
   generated_key_length = generate_table_key();
-  row_length = pack_row(buffer_pos, drizzle_row);
+  row_length = pack_row(row_buf, drizzle_row);
 
-  rv = share->dict.overwrite_row(key_buffer, generated_key_length,
-                                 buffer_pos, row_length);
-  return (rv) ? 0 : -1;
+  /* Write index key(s) to the appropriate BlitzTree object
+     EXCEPT for the PRIMARY KEY. This is because PK is treated
+     as a data-dictionary-key in BlitzDB. The internal key ID
+     for a PK (if it exists) seems guaranteed to be 0. Therefore
+     if a PK exists in this table, we skip the first element of
+     the KEY array. */
+  uint32_t i = (share->primary_key_exists) ? 1 : 0;
+
+  while (i < share->nkeys) {
+    /* This is where we iterate over the keys and write them
+       to the appropriate BTREE file(s). Don't implement this
+       body yet since we're only interested in supporting one
+       index to begin with, which is PK.
+
+       KEY *current_index = &table->key_info[i]; */
+    i++;
+  }
+
+  /* Write the 'real' row to the Data Dictionary. If a primary key exists,
+     it will be used as the key _and_ checked for key duplication. */
+  if (share->primary_key_exists) {
+    rv = share->dict.write_unique_row(key_buffer, generated_key_length,
+                                      row_buf, row_length);
+  } else {
+    rv = share->dict.write_row(key_buffer, generated_key_length,
+                               row_buf, row_length);
+  }
+
+  return rv;
 }
 
 int ha_blitz::update_row(const unsigned char *,
                          unsigned char *new_row) {
   size_t row_length = max_row_length();
-  unsigned char *buffer_pos = get_pack_buffer(row_length);
-  bool rv = false;
+  unsigned char *row_buf = get_pack_buffer(row_length);
+  int rv = -1;
 
   ha_statistic_increment(&SSV::ha_update_count);
 
@@ -357,10 +383,10 @@ int ha_blitz::update_row(const unsigned char *,
     /* This is a really simple case where an UPDATE statement is
        requested to be processed in middle of a table scan. */
     if (table_scan) {
-      row_length = pack_row(buffer_pos, new_row);
-      rv = share->dict.overwrite_row(updateable_key, updateable_key_length,
-                                     buffer_pos, row_length); 
-      return (rv) ? 0 : -1;
+      row_length = pack_row(row_buf, new_row);
+      rv = share->dict.write_row(updateable_key, updateable_key_length,
+                                 row_buf, row_length); 
+      return rv;
     }
 
     /* When updating cached rows, Drizzle and MySQL calls rnd_pos()
@@ -384,9 +410,9 @@ int ha_blitz::update_row(const unsigned char *,
          BlitzDB hasn't been worked on yet. */
     }
 
-    row_length = pack_row(buffer_pos, new_row);
-    rv = share->dict.overwrite_row(current_key, current_key_length,
-                                   buffer_pos, row_length); 
+    row_length = pack_row(row_buf, new_row);
+    rv = share->dict.write_row(current_key, current_key_length,
+                               row_buf, row_length); 
 
     /* Don't free this pointer because drizzled will */
     if (current_key) {
@@ -394,7 +420,7 @@ int ha_blitz::update_row(const unsigned char *,
       current_key_length = 0;
     }
   }
-  return (rv) ? 0 : -1;
+  return rv;
 }
 
 int ha_blitz::delete_row(const unsigned char *) {

@@ -185,9 +185,23 @@ uint64_t BlitzData::next_hidden_row_id(void) {
   return rv;
 }
 
-bool BlitzData::overwrite_row(const char *key, const size_t klen,
-                              const unsigned char *row, const size_t rlen) {
-  return tchdbput(data_table, key, klen, row, rlen);
+int BlitzData::write_row(const char *key, const size_t klen,
+                         const unsigned char *row, const size_t rlen) {
+  bool success = tchdbput(data_table, key, klen, row, rlen);
+  return (success) ? 0 : 1; 
+}
+
+int BlitzData::write_unique_row(const char *key, const size_t klen,
+                                const unsigned char *row, const size_t rlen) {
+  int rv = 0;
+
+  if (!tchdbputkeep(data_table, key, klen, row, rlen)) {
+    if (tchdbecode(data_table) == TCEKEEP) {
+      my_errno = HA_ERR_FOUND_DUPP_KEY;
+      rv = HA_ERR_FOUND_DUPP_KEY;
+    }
+  }
+  return rv;
 }
 
 bool BlitzData::delete_row(const char *key, const size_t klen) {
