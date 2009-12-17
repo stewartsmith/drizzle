@@ -611,8 +611,13 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 #define ALIGN_PTR(A, t) ((t*) MY_ALIGN((A),sizeof(t)))
 /* Offset of field f in structure t */
 #define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
-#define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
-#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
+#ifdef __cplusplus
+#define ADD_TO_PTR(ptr,size,type) (type) (reinterpret_cast<const unsigned char*>(ptr)+size)
+#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
+#else
+ #define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
+ #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
+#endif
 
 #define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
 #define MY_ALIGNED_BYTE_ARRAY(N, S, T) T N[MY_DIV_UP(S, sizeof(T))]

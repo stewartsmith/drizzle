@@ -348,9 +348,6 @@ public:
     return false;
   }
 
-  /* args: current_session, tables, cond */
-  virtual int fill_files_table(Session *, TableList *,
-                               Item *) { return 0; }
   virtual int release_temporary_latches(Session *) { return false; }
 
   /**
