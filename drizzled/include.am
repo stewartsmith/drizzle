@@ -17,12 +17,13 @@
 sbin_PROGRAMS= drizzled/drizzled
 
 DTRACEFILES = drizzled/.libs/cursor.o \
+	      drizzled/sql_select.o \
 	      drizzled/filesort.o \
 	      drizzled/drizzled.o \
+	      drizzled/join.o \
 	      drizzled/session.o \
 	      drizzled/sql_delete.o \
 	      drizzled/sql_insert.o \
-	      drizzled/sql_select.o \
 	      drizzled/sql_update.o \
 	      drizzled/sql_parse.o \
 	      drizzled/statement/delete.o \

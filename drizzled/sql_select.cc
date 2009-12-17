@@ -422,9 +422,10 @@ bool mysql_select(Session *session,
     }
   }
 
-  if ((err= join->optimize()))
+  err= join->optimize();
+  if (err)
   {
-    goto err;					// 1
+    goto err; // 1
   }
 
   if (session->lex->describe & DESCRIBE_EXTENDED)

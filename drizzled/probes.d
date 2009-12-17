@@ -79,6 +79,16 @@ provider drizzle {
                            const char *db_name);
   probe query__exec__done(int status);
 
+  /*
+   * These probes fire in the query optimizer
+   */
+  probe query__opt__start(const char *query,
+                          unsigned long connid);
+  probe query__opt__done(int status);
+  probe query__opt__choose__plan__start(const char *query,
+                                        unsigned long connid);
+  probe query__opt__choose__plan__done(int status);
+
   /* These probes fire when performing write operations towards any Cursor */
   probe insert__row__start(const char *db, const char *table);
   probe insert__row__done(int status);

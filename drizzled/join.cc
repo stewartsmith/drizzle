@@ -47,6 +47,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/sum.h"
 #include "drizzled/records.h"
+#include "drizzled/probes.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
@@ -5928,8 +5929,11 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   if (join->const_tables != join->tables)
   {
     optimize_keyuse(join, keyuse_array);
-    if (choose_plan(join, all_table_map & ~join->const_table_map))
-      return(true);
+    DRIZZLE_QUERY_OPT_CHOOSE_PLAN_START(join->session->query, join->session->thread_id);
+    bool res= choose_plan(join, all_table_map & ~join->const_table_map);
+    DRIZZLE_QUERY_OPT_CHOOSE_PLAN_DONE(res ? 1 : 0);
+    if (res)
+      return true;
   }
   else
   {
