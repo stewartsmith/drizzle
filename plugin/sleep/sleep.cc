@@ -21,11 +21,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+ 
+#include <drizzled/server_includes.h>
 
 #include <unistd.h>
 #include <time.h>
 
-#include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
 #include <mysys/my_pthread.h>

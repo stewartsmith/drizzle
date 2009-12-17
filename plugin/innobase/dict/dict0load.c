@@ -24,12 +24,12 @@ from dictionary tables
 Created 4/24/1996 Heikki Tuuri
 *******************************************************/
 
-#include "dict0load.h"
 #if defined(BUILD_DRIZZLE)
 # include "config.h"
 #else
 # include "mysql_version.h"
 #endif /* BUILD_DRIZZLE */
+#include "dict0load.h"
 
 #ifdef UNIV_NONINL
 #include "dict0load.ic"
