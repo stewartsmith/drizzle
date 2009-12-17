@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 PORT=19191
 if [ $MC_PORT ]; then
