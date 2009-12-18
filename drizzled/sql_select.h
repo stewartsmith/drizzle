@@ -205,6 +205,12 @@ ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SqlSelect 
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
+bool mysql_select(Session *session, Item ***rref_pointer_array,
+                  TableList *tables, uint32_t wild_num,  List<Item> &list,
+                  COND *conds, uint32_t og_num, order_st *order, order_st *group,
+                  Item *having, uint64_t select_type,
+                  select_result *result, Select_Lex_Unit *unit,
+                  Select_Lex *select_lex);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);

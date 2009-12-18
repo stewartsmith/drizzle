@@ -16,13 +16,14 @@
 
 sbin_PROGRAMS= drizzled/drizzled
 
-DTRACEFILES = drizzled/cursor.o \
+DTRACEFILES = drizzled/.libs/cursor.o \
+	      drizzled/sql_select.o \
 	      drizzled/filesort.o \
 	      drizzled/drizzled.o \
+	      drizzled/join.o \
 	      drizzled/session.o \
 	      drizzled/sql_delete.o \
 	      drizzled/sql_insert.o \
-	      drizzled/sql_select.o \
 	      drizzled/sql_update.o \
 	      drizzled/sql_parse.o \
 	      drizzled/statement/delete.o \
@@ -412,7 +413,7 @@ drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS)
+		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
@@ -778,10 +779,10 @@ DISTCLEANFILES += $(EXTRA_PROGRAMS) \
 
 MAINTAINERCLEANFILES += $(BUILT_MAINT_SRC)
 
-generated_probes.h : probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o generated_probes.h
+drizzled/generated_probes.h : drizzled/probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s drizzled/probes.d -o drizzled/generated_probes.h
 	mv drizzled/generated_probes.h drizzled/generated_probes.h.bak
-	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drzzled/generated_probes.h
+	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drizzled/generated_probes.h
 	rm drizzled/generated_probes.h.bak
 	sed -e 's,void \*,const void \*,g' drizzled/generated_probes.h | \
 		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
@@ -797,6 +798,7 @@ endif
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
+	mv probes.o drizzled/probes.o
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
