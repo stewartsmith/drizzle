@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS t1;
 --enable_warnings
 
 CREATE TABLE t1 (
-  id INT NOT NULL
+  id INT NOT NULL PRIMARY KEY
 , padding VARCHAR(200) NOT NULL
 );
 

@@ -66,9 +66,9 @@ inline uint32_t get_enum_pack_length(int elements)
  *
  * @details
  *
- * The value stored in the Field object is stored in the 
+ * The value stored in the Field object is stored in the
  * unsigned char pointer member variable called ptr.  The
- * val_xxx() methods retrieve this raw byte value and 
+ * val_xxx() methods retrieve this raw byte value and
  * convert the byte into the appropriate output (int, decimal, etc).
  *
  * The store_xxx() methods take various input and convert
@@ -77,19 +77,19 @@ inline uint32_t get_enum_pack_length(int elements)
 class Field
 {
   /* Prevent use of these */
-  Field(const Field&); 
+  Field(const Field&);
   void operator=(Field &);
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
 
   /**
-   * Pointer to the Table object containing this Field 
+   * Pointer to the Table object containing this Field
    *
    * @note You can use table->in_use as replacement for current_session member
    * only inside of val_*() and store() members (e.g. you can't use it in cons)
    */
-  Table *table; 
+  Table *table;
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char **table_name; /**< Pointer to the name of the table. @TODO This is redundant with Table::table_name. */
   const char *field_name; /**< Name of the field */
@@ -110,7 +110,7 @@ public:
     See also comment for Field_timestamp::Field_timestamp().
   */
   enum utype
-  { 
+  {
     NONE,
     NEXT_NUMBER,
     TIMESTAMP_OLD_FIELD,
@@ -136,7 +136,7 @@ public:
 
   static void *operator new(size_t size) {return sql_alloc(size); }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
+  { return alloc_root(mem_root, static_cast<uint32_t>(size)); }
   static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
 
@@ -148,13 +148,13 @@ public:
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
-  virtual int store(const char *to, 
-                    uint32_t length, 
+  virtual int store(const char *to,
+                    uint32_t length,
                     const CHARSET_INFO * const cs)=0;
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
   virtual int store_decimal(const my_decimal *d)=0;
-  int store(const char *to, 
+  int store(const char *to,
             uint32_t length,
             const CHARSET_INFO * const cs,
             enum_check_fields check_level);
@@ -168,7 +168,7 @@ public:
   virtual double val_real(void)=0;
   virtual int64_t val_int(void)=0;
   virtual my_decimal *val_decimal(my_decimal *);
-  inline String *val_str(String *str) 
+  inline String *val_str(String *str)
   {
     return val_str(str, str);
   }
@@ -289,7 +289,7 @@ public:
   virtual uint32_t row_pack_length();
 
   /**
-   * Return the "real size" of the data in memory. 
+   * Return the "real size" of the data in memory.
    * For varstrings, this does _not_ include the length bytes.
    */
   virtual uint32_t data_length();
@@ -358,16 +358,16 @@ public:
    * use field->val_int() for comparison.  Used to optimize clauses like
    * 'a_column BETWEEN date_const AND date_const'.
    */
-  virtual bool can_be_compared_as_int64_t() const 
+  virtual bool can_be_compared_as_int64_t() const
   {
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root, 
+  virtual Field *new_field(MEM_ROOT *root,
                            Table *new_table,
                            bool keep_type);
   virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
-                               unsigned char *new_ptr, 
+                               unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
@@ -418,7 +418,7 @@ public:
    * characters have maximal possible size (mbmaxlen). In the other words,
    * "length" parameter is a number of characters multiplied by
    * field_charset->mbmaxlen.
-   * 
+   *
    * @retval
    *   Number of copied bytes (excluding padded zero bytes -- see above).
    */
@@ -448,7 +448,7 @@ public:
   {
     unsigned char *old_ptr= ptr;
     int64_t return_value;
-    ptr= (unsigned char*) new_ptr;
+    ptr= const_cast<unsigned char*>(new_ptr);
     return_value= val_int();
     ptr= old_ptr;
     return return_value;
@@ -456,7 +456,7 @@ public:
   inline String *val_str(String *str, const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
-    ptr= (unsigned char*) new_ptr;
+    ptr= const_cast<unsigned char*>(new_ptr);
     val_str(str);
     ptr= old_ptr;
     return str;
@@ -549,7 +549,7 @@ public:
 
   virtual unsigned char *pack_key(unsigned char* to,
                                   const unsigned char *from,
-                                  uint32_t max_length, 
+                                  uint32_t max_length,
                                   bool low_byte_first)
   {
     return pack(to, from, max_length, low_byte_first);
@@ -604,7 +604,7 @@ public:
     @retval
       0 otherwise
   */
-  bool set_warning(DRIZZLE_ERROR::enum_warning_level, 
+  bool set_warning(DRIZZLE_ERROR::enum_warning_level,
                    unsigned int code,
                    int cuted_increment);
   /**
@@ -622,11 +622,11 @@ public:
       fields counter if count_cuted_fields ==FIELD_CHECK_IGNORE for current
       thread.
   */
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
                             uint32_t code,
-                            const char *str, 
+                            const char *str,
                             uint32_t str_len,
-                            enum enum_drizzle_timestamp_type ts_type, 
+                            enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about integer datetime value saved into field.
@@ -642,9 +642,9 @@ public:
       fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
       thread.
   */
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
                             uint32_t code,
-                            int64_t nr, 
+                            int64_t nr,
                             enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
   /**
@@ -660,9 +660,9 @@ public:
       fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
       thread.
   */
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
                             const uint32_t code,
-                            double nr, 
+                            double nr,
                             enum enum_drizzle_timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {
@@ -698,7 +698,7 @@ public:
     @return
       value converted from val
   */
-  int64_t convert_decimal2int64_t(const my_decimal *val, 
+  int64_t convert_decimal2int64_t(const my_decimal *val,
                                   bool unsigned_flag,
                                   int *err);
   /* The max. number of characters */
@@ -746,7 +746,7 @@ public:
  * Send_field is basically a stripped-down POD class for
  * representing basic information about a field...
  */
-class SendField 
+class SendField
 {
 public:
   const char *db_name;

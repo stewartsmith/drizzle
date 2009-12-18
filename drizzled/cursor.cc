@@ -1359,6 +1359,8 @@ static bool log_row_for_replication(Table* table,
   if (table->s->tmp_table || ! replication_services.isActive())
     return false;
 
+  bool result= false;
+
   switch (session->lex->sql_command)
   {
   case SQLCOM_REPLACE:
@@ -1394,7 +1396,7 @@ static bool log_row_for_replication(Table* table,
     else
     {
       if (before_record == NULL)
-        replication_services.insertRecord(session, table);
+        result= replication_services.insertRecord(session, table);
       else
         replication_services.updateRecord(session, table, before_record, after_record);
     }
@@ -1408,7 +1410,7 @@ static bool log_row_for_replication(Table* table,
      * an update.
      */
     if (before_record == NULL)
-      replication_services.insertRecord(session, table);
+      result= replication_services.insertRecord(session, table);
     else
       replication_services.updateRecord(session, table, before_record, after_record);
     break;
@@ -1424,7 +1426,7 @@ static bool log_row_for_replication(Table* table,
     break;
   }
 
-  return false;
+  return result;
 }
 
 int Cursor::ha_external_lock(Session *session, int lock_type)

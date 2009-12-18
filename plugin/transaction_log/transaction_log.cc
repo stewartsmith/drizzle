@@ -115,6 +115,15 @@ static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... *
  * each written Transaction message?
  */
 static bool sysvar_transaction_log_checksum_enabled= false;
+/**
+ * Numeric option controlling the sync/flush behaviour of the transaction
+ * log.  Options are:
+ *
+ * TransactionLog::SYNC_METHOD_OS == 0            ... let OS do sync'ing
+ * TransactionLog::SYNC_METHOD_EVERY_WRITE == 1   ... sync on every write
+ * TransactionLog::SYNC_METHOD_EVERY_SECOND == 2  ... sync at most once a second
+ */
+static uint32_t sysvar_transaction_log_sync_method= 0;
 
 /** Views defined in info_schema.cc */
 extern plugin::InfoSchemaTable *transaction_log_view;
@@ -188,7 +197,6 @@ void TransactionLog::apply(const message::Transaction &to_apply)
                       message and trailing checksum to */
   uint8_t *orig_buffer;
 
-  int error_code;
   size_t message_byte_length= to_apply.ByteSize();
   ssize_t written;
   off_t cur_offset;
@@ -287,7 +295,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
   }
   free(orig_buffer);
 
-  error_code= my_sync(log_file, 0);
+  int error_code= syncLogFile();
 
   transaction_log_index->addEntry(TransactionLogEntry(ReplicationServices::TRANSACTION,
                                                      cur_offset,
@@ -300,6 +308,28 @@ void TransactionLog::apply(const message::Transaction &to_apply)
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to sync log file. Got error: %s\n"), 
                   strerror(errno));
+  }
+}
+
+int TransactionLog::syncLogFile()
+{
+  switch (sysvar_transaction_log_sync_method)
+  {
+  case SYNC_METHOD_EVERY_WRITE:
+    return my_sync(log_file, 0);
+  case SYNC_METHOD_EVERY_SECOND:
+    {
+      time_t now_time= time(NULL);
+      if (last_sync_time <= (now_time - 1))
+      {
+        last_sync_time= now_time;
+        return my_sync(log_file, 0);
+      }
+      return 0;
+    }
+  case SYNC_METHOD_OS:
+  default:
+    return 0;
   }
 }
 
@@ -489,42 +519,56 @@ static void set_truncate_debug(Session *,
 }
 
 static DRIZZLE_SYSVAR_BOOL(enable,
-                          sysvar_transaction_log_enabled,
-                          PLUGIN_VAR_NOCMDARG,
-                          N_("Enable transaction log"),
-                          NULL, /* check func */
-                          NULL, /* update func */
-                          false /* default */);
+                           sysvar_transaction_log_enabled,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("Enable transaction log"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           false /* default */);
 
 static DRIZZLE_SYSVAR_BOOL(truncate_debug,
-                          sysvar_transaction_log_truncate_debug,
-                          PLUGIN_VAR_NOCMDARG,
-                          N_("DEBUGGING - Truncate transaction log"),
-                          NULL, /* check func */
-                          set_truncate_debug, /* update func */
-                          false /* default */);
+                           sysvar_transaction_log_truncate_debug,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("DEBUGGING - Truncate transaction log"),
+                           NULL, /* check func */
+                           set_truncate_debug, /* update func */
+                           false /* default */);
 
 static DRIZZLE_SYSVAR_STR(log_file,
                           sysvar_transaction_log_file,
                           PLUGIN_VAR_READONLY,
-                          N_("Path to the file to use for transaction log."),
+                          N_("Path to the file to use for transaction log"),
                           NULL, /* check func */
                           NULL, /* update func*/
                           DEFAULT_LOG_FILE_PATH /* default */);
 
 static DRIZZLE_SYSVAR_BOOL(enable_checksum,
-                          sysvar_transaction_log_checksum_enabled,
-                          PLUGIN_VAR_NOCMDARG,
-                          N_("Enable CRC32 Checksumming"),
-                          NULL, /* check func */
-                          NULL, /* update func */
-                          false /* default */);
+                           sysvar_transaction_log_checksum_enabled,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("Enable CRC32 Checksumming of each written transaction log entry"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           false /* default */);
+
+static DRIZZLE_SYSVAR_UINT(sync_method,
+                           sysvar_transaction_log_sync_method,
+                           PLUGIN_VAR_OPCMDARG,
+                           N_("0 == rely on operating system to sync log file (default), "
+                              "1 == sync file at each transaction write, "
+                              "2 == sync log file once per second"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           0, /* default */
+                           0,
+                           2,
+                           0);
 
 static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(truncate_debug),
   DRIZZLE_SYSVAR(log_file),
   DRIZZLE_SYSVAR(enable_checksum),
+  DRIZZLE_SYSVAR(sync_method),
   NULL
 };
 
