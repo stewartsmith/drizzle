@@ -186,6 +186,20 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
     return(-1);
   }
 
+  list<drizzled::message::Schema::SchemaOption>::iterator it= parsed_schema_options->begin();
+
+  while (it != parsed_schema_options->end())
+  {
+    if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                      "super_secret_extra_database_option") == 0)
+    {
+      message::Schema::SchemaOption *opt= schema_message->add_options();
+      *opt= *it;
+      it= parsed_schema_options->erase(it);
+    }
+    it++;
+  }
+
   if (parsed_schema_options->size() > 0)
   {
     list<drizzled::message::Schema::SchemaOption>::iterator it;

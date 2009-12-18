@@ -8,3 +8,15 @@ Error	1692	Unknown option 'unknown_key'.
 Error	1692	Unknown option 'anotheR_unknown_key'.
 CREATE DATABASE foo unknown_key=42;
 ERROR HY000: Unknown option 'unknown_key'.
+CREATE DATABASE foo super_secret_extra_database_option;
+schema_reader:
+CREATE SCHEMA `foo`  super_secret_extra_database_option = '';
+DROP DATABASE foo;
+CREATE DATABASE foo super_secret_extra_database_option=42;
+schema_reader:
+CREATE SCHEMA `foo`  super_secret_extra_database_option = '42';
+DROP DATABASE foo;
+CREATE DATABASE foo super_secret_extra_database_option='Hello World!';
+schema_reader:
+CREATE SCHEMA `foo`  super_secret_extra_database_option = 'Hello World!';
+DROP DATABASE foo;
