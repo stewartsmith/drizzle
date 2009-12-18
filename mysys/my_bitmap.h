@@ -28,7 +28,7 @@ typedef uint32_t my_bitmap_map;
  * @brief Represents a dynamically sized bitmap.
  *
  * Handling of unsigned char arrays as large bitmaps.
- * 
+ *
  * API limitations (or, rather asserted safety assumptions,
  * to encourage correct programming)
  *   - the internal size is a set of 32 bit words
@@ -36,8 +36,8 @@ typedef uint32_t my_bitmap_map;
  *     greater than 0
  *
  * Original version created by Sergei Golubchik 2001 - 2004.
- * New version written and test program added and some changes to the 
- * interface was made by Mikael Ronström 2005, with assistance of Tomas 
+ * New version written and test program added and some changes to the
+ * interface was made by Mikael Ronström 2005, with assistance of Tomas
  * Ulin and Mats Kindahl.
  */
 class MyBitmap
@@ -161,7 +161,7 @@ public:
    */
   bool isBitSet(const uint32_t bit) const
   {
-    return (bool)(((unsigned char *)bitmap)[bit / 8] &  (1 << ((bit) & 7)));
+     return (bool)((reinterpret_cast<unsigned char *>(bitmap))[bit / 8] &  (1 << ((bit) & 7)));
   }
 
   /**
@@ -171,9 +171,9 @@ public:
    */
   void setBit(const uint32_t bit)
   {
-    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]= 
+    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]=
       static_cast<unsigned char>(
-      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] | 
+      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] |
       (1 << ((bit) & 7)));
   }
 
@@ -184,9 +184,9 @@ public:
    */
   void flipBit(const uint32_t bit)
   {
-    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]= 
+    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]=
       static_cast<unsigned char>(
-      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] ^ 
+      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] ^
       (1 << ((bit) & 7)));
   }
 
@@ -197,9 +197,9 @@ public:
    */
   void clearBit(const uint32_t bit)
   {
-    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]= 
+    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]=
       static_cast<unsigned char>(
-      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] & 
+      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] &
       ~ (1 << ((bit) & 7)));
   }
 
@@ -268,7 +268,7 @@ public:
   /**
    * Obtains the number of used bits (1..8) in the last
    * byte and creates a mask with the upper 'unused' bits
-   * set and the lower 'used' bits clear. 
+   * set and the lower 'used' bits clear.
    */
   void createLastWordMask();
 
@@ -341,7 +341,7 @@ static inline bool bitmap_cmp(const MyBitmap *map1, const MyBitmap *map2)
 {
   map1->addMaskToLastWord();
   map2->addMaskToLastWord();
-  return memcmp((map1)->getBitmap(), 
+  return memcmp((map1)->getBitmap(),
                 (map2)->getBitmap(),
                 4*map1->numOfWordsInMap()) == 0;
 }

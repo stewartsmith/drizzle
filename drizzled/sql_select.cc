@@ -60,6 +60,7 @@
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/quick_range_select.h"
+#include "drizzled/optimizer/quick_ror_intersect_select.h"
 
 using namespace std;
 using namespace drizzled;
@@ -6819,7 +6820,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           table->covering_keys.test(tab->index))
 	key_read=1;
       if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT &&
-          !((optimizer::QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
+          ! ((optimizer::QuickRorIntersectSelect *) tab->select->quick)->need_to_fetch_row)
         key_read=1;
 
       if (tab->info)

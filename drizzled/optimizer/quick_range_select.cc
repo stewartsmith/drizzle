@@ -233,7 +233,7 @@ void optimizer::QuickRangeSelect::save_last_pos()
 }
 
 
-bool optimizer::QuickRangeSelect::unique_key_range()
+bool optimizer::QuickRangeSelect::unique_key_range() const
 {
   if (ranges.elements == 1)
   {
@@ -503,7 +503,7 @@ optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSel
 {
   optimizer::QuickRange *r= NULL;
 
-  optimizer::QuickRange **pr= (optimizer::QuickRange**)ranges.buffer;
+  optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
   optimizer::QuickRange **end_range= pr + ranges.elements;
   for (; pr != end_range; pr++)
     rev_ranges.push_front(*pr);
