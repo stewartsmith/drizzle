@@ -23,6 +23,7 @@
 #include "drizzled/item/float.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/optimizer/position.h"
+#include "drizzled/optimizer/quick_ror_intersect_select.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/join.h"
@@ -317,7 +318,7 @@ void optimizer::ExplainPlan::printPlan()
           table->covering_keys.test(tab->index))
         key_read= 1;
       if (quick_type == optimizer::QuickSelectInterface::QS_TYPE_ROR_INTERSECT &&
-          ! ((optimizer::QUICK_ROR_INTERSECT_SELECT*)tab->select->quick)->need_to_fetch_row)
+          ! ((optimizer::QuickRorIntersectSelect *) tab->select->quick)->need_to_fetch_row)
         key_read= 1;
 
       if (tab->info)
