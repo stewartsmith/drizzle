@@ -190,6 +190,7 @@ private:
   unsigned char pack_buffer[BLITZ_MAX_ROW_STACK]; /* Pack Buffer */
   unsigned char *secondary_row_buffer;            /* For big rows */
   size_t secondary_row_buffer_size;               /* Reserved buffer size */
+  int errkey_id;
 
 public:
   ha_blitz(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg);

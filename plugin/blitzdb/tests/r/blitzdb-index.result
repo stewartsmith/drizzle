@@ -1,0 +1,12 @@
+drop table if exists t1, t2;
+create table t1(id int primary key, a int, b int) engine = blitzdb;
+insert into t1 values (1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4);
+insert into t1 values (1, 0, 0);
+ERROR 23000: Duplicate entry '1' for key 'PRIMARY'
+insert into t1 values (2, 0, 0);
+ERROR 23000: Duplicate entry '2' for key 'PRIMARY'
+insert into t1 values (3, 0, 0);
+ERROR 23000: Duplicate entry '3' for key 'PRIMARY'
+insert into t1 values (4, 0, 0);
+ERROR 23000: Duplicate entry '4' for key 'PRIMARY'
+drop table t1;

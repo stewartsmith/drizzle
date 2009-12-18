@@ -167,7 +167,8 @@ ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                                             current_key(NULL),
                                             current_key_length(0),
                                             updateable_key(NULL),
-                                            updateable_key_length(0) {}
+                                            updateable_key_length(0),
+                                            errkey_id(0) {}
 
 int ha_blitz::open(const char *table_name, int, uint32_t) {
   if ((share = get_share(table_name)) == NULL)
@@ -208,6 +209,9 @@ int ha_blitz::close(void) {
 int ha_blitz::info(uint32_t flag) {
   if (flag & HA_STATUS_VARIABLE)
     stats.records = share->dict.nrecords(); 
+
+  if (flag & HA_STATUS_ERRKEY)
+    errkey = errkey_id;
 
   return 0;
 }
@@ -359,10 +363,14 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   }
 
   /* Write the 'real' row to the Data Dictionary. If a primary key exists,
-     it will be used as the key _and_ checked for key duplication. */
+     it will be used as the key _and_ checked for key duplication. Otherwise
+     a hidden 8 byte key (incremental uint64_t) will be used as the key. */
   if (share->primary_key_exists) {
     rv = share->dict.write_unique_row(key_buffer, generated_key_length,
                                       row_buf, row_length);
+    if (rv == HA_ERR_FOUND_DUPP_KEY)
+      this->errkey_id = table->s->primary_key;
+
   } else {
     rv = share->dict.write_row(key_buffer, generated_key_length,
                                row_buf, row_length);
@@ -458,7 +466,27 @@ size_t ha_blitz::generate_table_key(void) {
     int8store(key_buffer, next_id);
     return sizeof(next_id);
   }
-  return 0;
+
+  /* Getting here means that there is a PK in this table. Get the
+     binary representation of the PK, pack it to BlitzDB's key buffer
+     and return the size of the packed key. */
+  KEY *pk_info = &table->key_info[table->s->primary_key];
+  KEY_PART_INFO *pk_part = pk_info->key_part;
+  KEY_PART_INFO *pk_part_end = pk_part + pk_info->key_parts;
+  size_t packed_length = 0;
+
+  /* Loop through key part(s) and pack them. Don't worry about NULL key
+     values since this functionality is currently disabled in BlitzDB.*/
+  for (; pk_part != pk_part_end; pk_part++) {
+    Field *f = pk_part->field;
+    f->pack((unsigned char *)key_buffer, f->ptr);
+    packed_length += f->pack_length();
+
+    /* NOTE: This means that the key is UNIQUE. Remeber it for future
+       usage. if (key->flags & HA_NOSAME) { no duplicates } */
+  }
+
+  return packed_length;
 }
 
 size_t ha_blitz::pack_row(unsigned char *row_buffer,

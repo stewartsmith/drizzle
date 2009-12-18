@@ -1,4 +1,4 @@
-# Test Routine for BlitzDB
+# Basic Test Routine for BlitzDB
 
 --disable_warnings
 drop table if exists t1, t2;
