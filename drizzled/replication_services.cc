@@ -58,6 +58,7 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
+#include "drizzled/error.h"
 
 #include <vector>
 
@@ -328,9 +329,20 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
 }
 
 message::Statement &ReplicationServices::getInsertStatement(Session *in_session,
-                                                            Table *in_table) const
+                                                                 Table *in_table) const
 {
   message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type INSERT.
+   * If it is not, we finalize the current Statement and ensure a new
+   * InsertStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::INSERT)
+  {
+    finalizeStatement(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
 
   if (statement == NULL)
   {
@@ -384,10 +396,23 @@ void ReplicationServices::setInsertHeader(message::Statement &statement,
   }
 }
 
-void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
+bool ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 {
   if (! is_active)
-    return;
+    return false;
+  /**
+   * We do this check here because we don't want to even create a 
+   * statement if there isn't a primary key on the table...
+   *
+   * @todo
+   *
+   * Multi-column primary keys are handled how exactly?
+   */
+  if (in_table->s->primary_key == MAX_KEY)
+  {
+    my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
+    return true;
+  }
 
   message::Statement &statement= getInsertStatement(in_session, in_table);
 
@@ -411,6 +436,7 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
     record->add_insert_value(string_value->c_ptr(), string_value->length());
     string_value->free();
   }
+  return false;
 }
 
 message::Statement &ReplicationServices::getUpdateStatement(Session *in_session,
@@ -419,6 +445,17 @@ message::Statement &ReplicationServices::getUpdateStatement(Session *in_session,
                                                             const unsigned char *new_record) const
 {
   message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type UPDATE.
+   * If it is not, we finalize the current Statement and ensure a new
+   * UpdateStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::UPDATE)
+  {
+    finalizeStatement(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
 
   if (statement == NULL)
   {
@@ -460,8 +497,6 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
-  string_value->set_charset(system_charset_info);
 
   message::FieldMetadata *field_metadata;
 
@@ -589,6 +624,17 @@ message::Statement &ReplicationServices::getDeleteStatement(Session *in_session,
                                                             Table *in_table) const
 {
   message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type DELETE.
+   * If it is not, we finalize the current Statement and ensure a new
+   * DeleteStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::DELETE)
+  {
+    finalizeStatement(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
 
   if (statement == NULL)
   {
