@@ -233,7 +233,7 @@ public:
    * Append comma-separated list of keys this quick select uses to key_names;
    * append comma-separated list of corresponding used lengths to used_lengths.
    * 
-   * @note This is used by select_describe.
+   * @note This is used by during explain plan.
    */
   virtual void add_keys_and_lengths(String *key_names, String *used_lengths)=0;
 

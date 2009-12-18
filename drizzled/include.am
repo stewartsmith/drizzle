@@ -257,6 +257,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/open_tables_state.h \
 		drizzled/optimizer/key_field.h \
 		drizzled/optimizer/key_use.h \
+		drizzled/optimizer/explain_plan.h \
 		drizzled/optimizer/position.h \
 		drizzled/optimizer/quick_group_min_max_select.h \
 		drizzled/optimizer/quick_index_merge_select.h \
@@ -616,6 +617,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/my_decimal.cc \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
+		drizzled/optimizer/explain_plan.cc \
 		drizzled/optimizer/key_field.cc \
 		drizzled/optimizer/quick_group_min_max_select.cc \
 		drizzled/optimizer/quick_index_merge_select.cc \

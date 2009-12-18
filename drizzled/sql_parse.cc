@@ -40,6 +40,7 @@
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/optimizer/explain_plan.h"
 
 #include <bitset>
 #include <algorithm>
@@ -538,7 +539,8 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       if (!(result= new select_send()))
         return true;
       session->send_explain_fields(result);
-      res= mysql_explain_union(session, &session->lex->unit, result);
+      optimizer::ExplainPlan planner;
+      res= planner.explainUnion(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];

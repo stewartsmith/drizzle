@@ -46,6 +46,7 @@
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/sum.h"
+#include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/records.h"
 #include "drizzled/probes.h"
 #include "mysys/my_bit.h"
@@ -1197,7 +1198,14 @@ void JOIN::exec()
   {                                           
     /* Only test of functions */
     if (select_options & SELECT_DESCRIBE)
-      select_describe(this, false, false, false, (zero_result_cause?zero_result_cause:"No tables used"));
+    {
+      optimizer::ExplainPlan planner(this, 
+                                     false,
+                                     false,
+                                     false,
+                                     (zero_result_cause ? zero_result_cause : "No tables used"));
+      planner.printPlan();
+    }
     else
     {
       result->send_fields(*columns_list);
@@ -1270,7 +1278,12 @@ void JOIN::exec()
       order= 0;
     }
     having= tmp_having;
-    select_describe(this, need_tmp, order != 0 && !skip_sort_order,  select_distinct, !tables ? "No tables used" : NULL);
+    optimizer::ExplainPlan planner(this,
+                                   need_tmp,
+                                   order != 0 && ! skip_sort_order,
+                                   select_distinct,
+                                   ! tables ? "No tables used" : NULL);
+    planner.printPlan();
     return;
   }
 
@@ -5125,8 +5138,13 @@ static int return_zero_rows(JOIN *join,
 {
   if (select_options & SELECT_DESCRIBE)
   {
-    select_describe(join, false, false, false, info);
-    return(0);
+    optimizer::ExplainPlan planner(join,
+                                   false,
+                                   false,
+                                   false,
+                                   info);
+    planner.printPlan();
+    return 0;
   }
 
   join->join_free();

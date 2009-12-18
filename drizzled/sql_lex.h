@@ -38,6 +38,7 @@
 #include "drizzled/statement.h"
 
 #include <bitset>
+#include <string>
 
 class select_result_interceptor;
 
@@ -423,7 +424,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  const char *type;               /* type of select for EXPLAIN          */
+  std::string type; /* type of select for EXPLAIN          */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
