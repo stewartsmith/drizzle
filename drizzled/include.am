@@ -762,6 +762,7 @@ CLEANFILES += \
 		drizzled/sql_yacc.output \
 		drizzled/symbol_hash.h \
 		drizzled/symbol_hash.stamp-h \
+		drizzled/plugin/config.h \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
