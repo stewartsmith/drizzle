@@ -623,6 +623,7 @@ int JOIN::optimize()
   {
     conds=new Item_int((int64_t) 0,1);  // Always false
   }
+
   if (make_join_select(this, select, conds))
   {
     zero_result_cause=
@@ -829,6 +830,9 @@ int JOIN::optimize()
   /* Create all structures needed for materialized subquery execution. */
   if (setup_subquery_materialization())
     return 1;
+
+  /* Cache constant expressions in WHERE, HAVING, ON clauses. */
+  cache_const_exprs();
 
   /*
     is this simple IN subquery?
@@ -2390,6 +2394,40 @@ bool JOIN::change_result(select_result *res)
     return(true);
   }
   return(false);
+}
+
+/**
+  Cache constant expressions in WHERE, HAVING, ON conditions.
+*/
+
+void JOIN::cache_const_exprs()
+{
+  bool cache_flag= false;
+  bool *analyzer_arg= &cache_flag;
+
+  /* No need in cache if all tables are constant. */
+  if (const_tables == tables)
+    return;
+
+  if (conds)
+    conds->compile(&Item::cache_const_expr_analyzer, (unsigned char **)&analyzer_arg,
+                  &Item::cache_const_expr_transformer, (unsigned char *)&cache_flag);
+  cache_flag= false;
+  if (having)
+    having->compile(&Item::cache_const_expr_analyzer, (unsigned char **)&analyzer_arg,
+                    &Item::cache_const_expr_transformer, (unsigned char *)&cache_flag);
+
+  for (JoinTable *tab= join_tab + const_tables; tab < join_tab + tables ; tab++)
+  {
+    if (*tab->on_expr_ref)
+    {
+      cache_flag= false;
+      (*tab->on_expr_ref)->compile(&Item::cache_const_expr_analyzer,
+                                 (unsigned char **)&analyzer_arg,
+                                 &Item::cache_const_expr_transformer,
+                                 (unsigned char *)&cache_flag);
+    }
+  }
 }
 
 /**
