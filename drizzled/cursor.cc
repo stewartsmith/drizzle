@@ -1438,12 +1438,51 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   */
   assert(next_insert_id == 0);
 
+  if (DRIZZLE_CURSOR_RDLOCK_START_ENABLED() ||
+      DRIZZLE_CURSOR_WRLOCK_START_ENABLED() ||
+      DRIZZLE_CURSOR_UNLOCK_START_ENABLED())
+  {
+    if (lock_type == F_RDLCK)
+    {
+      DRIZZLE_CURSOR_RDLOCK_START(table_share->db.str,
+                                  table_share->table_name.str);
+    }
+    else if (lock_type == F_WRLCK)
+    {
+      DRIZZLE_CURSOR_WRLOCK_START(table_share->db.str,
+                                  table_share->table_name.str);
+    }
+    else if (lock_type == F_UNLCK)
+    {
+      DRIZZLE_CURSOR_UNLOCK_START(table_share->db.str,
+                                  table_share->table_name.str);
+    }
+  }
+
   /*
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
 
   int error= external_lock(session, lock_type);
+
+  if (DRIZZLE_CURSOR_RDLOCK_DONE_ENABLED() ||
+      DRIZZLE_CURSOR_WRLOCK_DONE_ENABLED() ||
+      DRIZZLE_CURSOR_UNLOCK_DONE_ENABLED())
+  {
+    if (lock_type == F_RDLCK)
+    {
+      DRIZZLE_CURSOR_RDLOCK_DONE(error);
+    }
+    else if (lock_type == F_WRLCK)
+    {
+      DRIZZLE_CURSOR_WRLOCK_DONE(error);
+    }
+    else if (lock_type == F_UNLCK)
+    {
+      DRIZZLE_CURSOR_UNLOCK_DONE(error);
+    }
+  }
 
   return error;
 }
@@ -1483,9 +1522,12 @@ int Cursor::ha_write_row(unsigned char *buf)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
 
+  DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
   mark_trx_read_write();
+  error= write_row(buf);
+  DRIZZLE_INSERT_ROW_DONE(error);
 
-  if (unlikely(error= write_row(buf)))
+  if (unlikely(error))
   {
     return error;
   }
@@ -1507,9 +1549,12 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
    */
   assert(new_data == table->record[0]);
 
+  DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
   mark_trx_read_write();
+  error= update_row(old_data, new_data);
+  DRIZZLE_UPDATE_ROW_DONE(error);
 
-  if (unlikely(error= update_row(old_data, new_data)))
+  if (unlikely(error))
   {
     return error;
   }
@@ -1524,9 +1569,12 @@ int Cursor::ha_delete_row(const unsigned char *buf)
 {
   int error;
 
+  DRIZZLE_DELETE_ROW_START(table_share->db.str, table_share->table_name.str);
   mark_trx_read_write();
+  error= delete_row(buf);
+  DRIZZLE_DELETE_ROW_DONE(error);
 
-  if (unlikely(error= delete_row(buf)))
+  if (unlikely(error))
     return error;
 
   if (unlikely(log_row_for_replication(table, buf, NULL)))
