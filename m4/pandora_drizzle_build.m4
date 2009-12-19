@@ -79,10 +79,6 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 #define __i386__
 #endif
 
-#if defined(__sun) && defined(_FILE_OFFSET_BITS)
-#undef _FILE_OFFSET_BITS
-#endif
-
   ])
   AH_BOTTOM([
 #if defined(__cplusplus)
