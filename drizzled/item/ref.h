@@ -146,7 +146,10 @@ public:
     if (ref && result_type() == ROW_RESULT)
       (*ref)->bring_value();
   }
-
+  bool basic_const_item() const
+  {
+    return (*ref)->basic_const_item();
+  }
 };
 
 #endif /* DRIZZLED_ITEM_REF_H */

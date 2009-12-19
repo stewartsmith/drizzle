@@ -684,6 +684,9 @@ public:
   virtual bool register_field_in_read_map(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
 
+  virtual bool cache_const_expr_analyzer(unsigned char **arg);
+  virtual Item* cache_const_expr_transformer(unsigned char *arg);
+
   virtual Item *equal_fields_propagator(unsigned char * arg);
   virtual bool set_no_const_sub(unsigned char *arg);
   virtual Item *replace_equal_field(unsigned char * arg);
