@@ -67,17 +67,6 @@ extern pthread_key_t THR_Mem_root;
 extern uint32_t max_used_connections;
 extern drizzled::atomic<uint32_t> connection_count;
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-/* Used templates */
-template class List<Key>;
-template class List_iterator<Key>;
-template class List<Key_part_spec>;
-template class List_iterator<Key_part_spec>;
-template class List<AlterDrop>;
-template class List_iterator<AlterDrop>;
-template class List<AlterColumn>;
-template class List_iterator<AlterColumn>;
-#endif
 
 /****************************************************************************
 ** User variables

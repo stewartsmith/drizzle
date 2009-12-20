@@ -6400,11 +6400,3 @@ static void print_ror_scans_arr(Table *table,
     tmp.append(STRING_WITH_LEN("(empty)"));
 }
 
-/*****************************************************************************
-** Instantiate templates
-*****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<optimizer::QuickRange>;
-template class List_iterator<optimizer::QuickRange>;
-#endif

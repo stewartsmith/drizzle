@@ -3552,7 +3552,3 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   return false;
 }
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<String>;
-template class List_iterator<String>;
-#endif

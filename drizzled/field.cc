@@ -47,10 +47,6 @@
   Instansiate templates and static variables
 *****************************************************************************/
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<CreateField>;
-template class List_iterator<CreateField>;
-#endif
 
 static enum_field_types
 field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
