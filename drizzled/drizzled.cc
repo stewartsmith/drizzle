@@ -2541,14 +2541,3 @@ static void fix_paths(string &progname)
   }
 }
 
-/*****************************************************************************
-  Instantiate templates
-*****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-/* Used templates */
-template class I_List<i_string>;
-template class I_List<i_string_pair>;
-template class I_List<Statement>;
-template class I_List_iterator<Statement>;
-#endif
