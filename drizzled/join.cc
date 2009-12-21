@@ -60,6 +60,8 @@
 using namespace std;
 using namespace drizzled;
 
+extern std::bitset<12> test_flags;
+
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static void calc_group_buffer(JOIN *join,order_st *group);

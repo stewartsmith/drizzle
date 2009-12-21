@@ -53,7 +53,6 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <bitset>
 
 typedef struct drizzle_lex_string LEX_STRING;
 typedef struct st_typelib TYPELIB;
@@ -92,7 +91,6 @@ extern size_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;
 extern pid_t current_pid;
-extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
 extern uint32_t drizzled_bind_timeout;
@@ -126,7 +124,6 @@ extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
 extern struct my_option my_long_options[];
-extern std::bitset<5> sql_command_flags[];
 
 
 extern drizzled::plugin::StorageEngine *myisam_engine;

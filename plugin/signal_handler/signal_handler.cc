@@ -28,6 +28,7 @@ static bool volatile signal_thread_in_use= false;
 extern int cleanup_done;
 extern "C" pthread_handler_t signal_hand(void *);
 
+extern std::bitset<12> test_flags;
 
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
