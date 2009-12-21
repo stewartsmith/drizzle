@@ -148,7 +148,6 @@
 /***************************************************************************
   Configuration parameters
 ****************************************************************************/
-#define MAX_ACCEPT_RETRY	10	// Test accept this many times
 #define MAX_FIELDS_BEFORE_HASH	32
 #define USER_VARS_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    64

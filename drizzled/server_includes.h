@@ -22,8 +22,5 @@
 
 /* Cross-platform portability code and standard includes */
 #include "config.h"
-/* Contains system-wide constants and #defines */
-#include <drizzled/definitions.h>
-
 
 #endif /* DRIZZLED_SERVER_INCLUDES_H */

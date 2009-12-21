@@ -34,6 +34,8 @@ extern uint32_t drizzled_bind_timeout;
 
 using namespace std;
 
+#define MAX_ACCEPT_RETRY	10	// Test accept this many times
+
 namespace drizzled
 {
 

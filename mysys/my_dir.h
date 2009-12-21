@@ -16,12 +16,12 @@
 #ifndef MYSYS_MY_DIR_H
 #define MYSYS_MY_DIR_H
 
+#include <drizzled/definitions.h>
+#include <sys/stat.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#include <drizzled/definitions.h>
-#include <sys/stat.h>
 
 #define MY_DONT_SORT	512	/* my_lib; Don't sort files */
 #define MY_WANT_STAT	1024	/* my_lib; stat files */
