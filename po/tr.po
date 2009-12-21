@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-11-20 13:49+0000\n"
-"Last-Translator: SerdarGULER <guler_serdar@yahoo.com>\n"
+"PO-Revision-Date: 2009-12-20 07:43+0000\n"
+"Last-Translator: zeugma <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-11-21 04:45+0000\n"
+"X-Launchpad-Export-Date: 2009-12-21 04:42+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -220,7 +220,7 @@ msgstr "Çıkışta debug bilgisi yazdır."
 
 #: client/drizzle.cc:1453
 msgid "Database to use."
-msgstr ""
+msgstr "Kullanılacak veritabanı."
 
 #: client/drizzle.cc:1456
 msgid "(not used)"
@@ -274,7 +274,7 @@ msgstr "Hatada sesli uyarıyı kapat"
 
 #: client/drizzle.cc:1482
 msgid "Connect to host."
-msgstr ""
+msgstr "Sunucuya bağlan"
 
 #: client/drizzle.cc:1484
 msgid "Write line numbers for errors."
