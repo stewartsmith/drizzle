@@ -16,13 +16,14 @@
 
 sbin_PROGRAMS= drizzled/drizzled
 
-DTRACEFILES = drizzled/cursor.o \
+DTRACEFILES = drizzled/.libs/cursor.o \
+	      drizzled/sql_select.o \
 	      drizzled/filesort.o \
 	      drizzled/drizzled.o \
+	      drizzled/join.o \
 	      drizzled/session.o \
 	      drizzled/sql_delete.o \
 	      drizzled/sql_insert.o \
-	      drizzled/sql_select.o \
 	      drizzled/sql_update.o \
 	      drizzled/sql_parse.o \
 	      drizzled/statement/delete.o \
@@ -256,15 +257,20 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/open_tables_state.h \
 		drizzled/optimizer/key_field.h \
 		drizzled/optimizer/key_use.h \
+		drizzled/optimizer/explain_plan.h \
 		drizzled/optimizer/position.h \
+		drizzled/optimizer/quick_group_min_max_select.h \
 		drizzled/optimizer/quick_index_merge_select.h \
 		drizzled/optimizer/quick_range.h \
 		drizzled/optimizer/quick_range_select.h \
+		drizzled/optimizer/quick_ror_intersect_select.h \
+		drizzled/optimizer/quick_ror_union_select.h \
 		drizzled/optimizer/range.h \
 		drizzled/optimizer/range_param.h \
 		drizzled/optimizer/sargable_param.h \
 		drizzled/optimizer/sel_arg.h \
 		drizzled/optimizer/sum.h \
+		drizzled/optimizer/table_read_plan.h \
 		drizzled/order.h \
 		drizzled/plugin.h \
 		drizzled/plugin/authentication.h \
@@ -408,7 +414,7 @@ drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS)
+		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
@@ -611,10 +617,14 @@ drizzled_drizzled_SOURCES = \
 		drizzled/my_decimal.cc \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
+		drizzled/optimizer/explain_plan.cc \
 		drizzled/optimizer/key_field.cc \
+		drizzled/optimizer/quick_group_min_max_select.cc \
 		drizzled/optimizer/quick_index_merge_select.cc \
 		drizzled/optimizer/quick_range.cc \
 		drizzled/optimizer/quick_range_select.cc \
+		drizzled/optimizer/quick_ror_intersect_select.cc \
+		drizzled/optimizer/quick_ror_union_select.cc \
 		drizzled/optimizer/range.cc \
 		drizzled/optimizer/sel_arg.cc \
 		drizzled/optimizer/sum.cc \
@@ -771,10 +781,10 @@ DISTCLEANFILES += $(EXTRA_PROGRAMS) \
 
 MAINTAINERCLEANFILES += $(BUILT_MAINT_SRC)
 
-generated_probes.h : probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o generated_probes.h
+drizzled/generated_probes.h : drizzled/probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s drizzled/probes.d -o drizzled/generated_probes.h
 	mv drizzled/generated_probes.h drizzled/generated_probes.h.bak
-	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drzzled/generated_probes.h
+	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drizzled/generated_probes.h
 	rm drizzled/generated_probes.h.bak
 	sed -e 's,void \*,const void \*,g' drizzled/generated_probes.h | \
 		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
@@ -790,6 +800,7 @@ endif
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
+	mv probes.o drizzled/probes.o
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h
