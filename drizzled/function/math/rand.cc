@@ -18,9 +18,14 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/math/rand.h>
 #include <drizzled/session.h>
+
+static uint32_t sql_rnd()
+{
+  return (uint32_t) (rand() * 0xffffffff); /* make all bits random */
+}
+
 
 void Item_func_rand::seed_random(Item *arg)
 {

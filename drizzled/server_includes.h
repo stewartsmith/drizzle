@@ -142,31 +142,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
 
-/* Conversion functions */
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                            const char *table_name, bool is_tmp);
 
-/* Flags for conversion functions. */
-#define FN_FROM_IS_TMP  (1 << 0)
-#define FN_TO_IS_TMP    (1 << 1)
-
-inline uint32_t sql_rnd()
-{
-  return (uint32_t) (rand() * 0xffffffff); /* make all bits random */
-}
-
-/**
-  convert a hex digit into number.
-*/
-inline int hexchar_to_int(char c)
-{
-  if (c <= '9' && c >= '0')
-    return c-'0';
-  c|=32;
-  if (c <= 'f' && c >= 'a')
-    return c-'a'+10;
-  return -1;
-}
 
 #endif /* DRIZZLED_SERVER_INCLUDES_H */

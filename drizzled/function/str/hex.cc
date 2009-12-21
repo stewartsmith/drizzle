@@ -22,6 +22,19 @@
 #include CSTDINT_H
 #include <drizzled/function/str/hex.h>
 
+/**
+  convert a hex digit into number.
+*/
+static int hexchar_to_int(char c)
+{
+  if (c <= '9' && c >= '0')
+    return c-'0';
+  c|=32;
+  if (c <= 'f' && c >= 'a')
+    return c-'a'+10;
+  return -1;
+}
+
 String *Item_func_hex::val_str(String *str)
 {
   String *res;
