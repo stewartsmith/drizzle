@@ -26,6 +26,7 @@
 typedef struct st_sort_field SORT_FIELD;
 typedef struct st_io_cache IO_CACHE;
 class Field;
+class Table;
 
 /* Defines used by filesort and uniques */
 

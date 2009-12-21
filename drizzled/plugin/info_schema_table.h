@@ -32,6 +32,7 @@
 
 class Session;
 class TableList;
+class Table;
 
 typedef struct drizzle_lex_string LEX_STRING;
 

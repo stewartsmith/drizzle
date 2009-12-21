@@ -38,7 +38,6 @@
 
 
 namespace drizzled { namespace plugin { class StorageEngine; } }
-class Table;
 
 
 extern char *drizzle_tmpdir;
@@ -89,18 +88,11 @@ extern pthread_cond_t COND_refresh;
 extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
-
-extern Table *unused_tables;
+extern pthread_t signal_thread;
 
 
 extern drizzled::plugin::StorageEngine *myisam_engine;
 extern drizzled::plugin::StorageEngine *heap_engine;
-
-extern SHOW_COMP_OPTION have_symlink;
-
-extern pthread_t signal_thread;
-
-
 
 
 #endif /* DRIZZLED_SERVER_INCLUDES_H */

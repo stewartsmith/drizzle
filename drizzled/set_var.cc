@@ -311,6 +311,7 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
 /* Read only variables */
 
+extern SHOW_COMP_OPTION have_symlink;
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
