@@ -41,9 +41,6 @@
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
-/* for List */
-#include <drizzled/sql_list.h>
-
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 

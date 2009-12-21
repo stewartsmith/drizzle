@@ -17,8 +17,10 @@
 /* Mallocs for used in threads */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/current_session.h>
-#include <drizzled/error.h>
+
+#include "drizzled/sql_alloc.h"
+#include "drizzled/current_session.h"
+#include "drizzled/error.h"
 
 extern "C" void sql_alloc_error_handler(void);
 
