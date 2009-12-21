@@ -49,8 +49,6 @@
 
 #include "drizzled/global_charset_info.h"
 
-#include <cstdlib>
-
 typedef struct drizzle_lex_string LEX_STRING;
 typedef struct st_typelib TYPELIB;
 
