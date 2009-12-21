@@ -28,7 +28,7 @@
  * Implements the PRINT_TRANSACTION_MESSAGE(filename, offset) UDF.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>

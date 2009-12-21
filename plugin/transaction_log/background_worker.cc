@@ -56,7 +56,7 @@
  *    building the index as it reads the log file.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
 

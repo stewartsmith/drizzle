@@ -15,7 +15,7 @@
 
 
 /* create and drop of databases */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <string>
 #include <fstream>
 #include <fcntl.h>

@@ -23,7 +23,7 @@
  *   I_S plugin implementation.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 

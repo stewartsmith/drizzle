@@ -23,7 +23,7 @@
     - add function from mysql_select that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cache.h>

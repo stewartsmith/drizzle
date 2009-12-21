@@ -20,7 +20,7 @@
   @brief
   Sum functions (COUNT, MIN...)
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <math.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>

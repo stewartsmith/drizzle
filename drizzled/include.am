@@ -186,11 +186,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/function/units.h \
 		drizzled/function/user_var_as_out_param.h \
 		drizzled/function_hash.h \
+		drizzled/gettext.h \
 		drizzled/global_charset_info.h \
 		drizzled/ha_statistics.h \
 		drizzled/ha_trx_info.h \
 		drizzled/cursor.h \
 		drizzled/handler_structs.h \
+		drizzled/hash.h \
 		drizzled/hybrid_type.h \
 		drizzled/hybrid_type_traits.h \
 		drizzled/hybrid_type_traits_decimal.h \
@@ -425,12 +427,6 @@ drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_drizzled_LDFLAGS = -export-dynamic
-
-
-noinst_HEADERS += \
-		drizzled/hash.h \
-		drizzled/gettext.h \
-		drizzled/server_includes.h
 
 drizzled_drizzled_SOURCES = \
 		drizzled/alter_info.cc \

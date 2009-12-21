@@ -21,7 +21,7 @@
 #include "mystrings/m_string.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/function/time/date.h"
 #include "drizzled/temporal_interval.h"
 #include "drizzled/time_functions.h"

@@ -107,7 +107,7 @@
            subject and may omit some details.
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <math.h>
 #include <float.h>

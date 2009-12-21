@@ -21,7 +21,7 @@
   This file defines all compare functions
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"

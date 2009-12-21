@@ -34,7 +34,7 @@
 #ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_PREPEND_BY_KEY_H
 #define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_PREPEND_BY_KEY_H
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
 #include <string>

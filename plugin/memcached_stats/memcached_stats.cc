@@ -27,7 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/show.h"
 #include "drizzled/gettext.h"
 #include "drizzled/plugin/info_schema_table.h"

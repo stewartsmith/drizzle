@@ -19,7 +19,7 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/str.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>

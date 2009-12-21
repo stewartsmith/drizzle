@@ -70,7 +70,7 @@
  * this for all the glue code of the module.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include "transaction_log.h"
 #include "transaction_log_index.h"
 #include "info_schema.h"

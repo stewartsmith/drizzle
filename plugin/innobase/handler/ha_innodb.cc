@@ -57,7 +57,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     in Windows?
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <limits.h>
 #include <fcntl.h>

@@ -15,7 +15,7 @@
 
 
 /* Basic functions needed by many modules */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <assert.h>
 
 #include <signal.h>

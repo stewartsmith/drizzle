@@ -23,7 +23,7 @@
   Handler-calling-functions
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "mysys/hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"

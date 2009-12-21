@@ -17,7 +17,7 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #define DRIZZLE_LEX 1
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"

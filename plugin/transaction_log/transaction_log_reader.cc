@@ -41,7 +41,7 @@
  * the log file(s)
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include <fcntl.h>
 

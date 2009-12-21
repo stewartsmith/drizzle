@@ -43,7 +43,7 @@
     example).
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <mysys/my_getopt.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/error.h>

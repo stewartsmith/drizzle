@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define DRIZZLE_LEX 1
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <mysys/hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>

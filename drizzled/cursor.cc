@@ -23,7 +23,7 @@
   Handler-calling-functions
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <fcntl.h>
 

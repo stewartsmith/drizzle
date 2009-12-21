@@ -16,7 +16,7 @@
 
 /* Some general useful functions */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include <float.h>
 #include <fcntl.h>

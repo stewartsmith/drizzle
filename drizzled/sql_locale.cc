@@ -17,7 +17,7 @@
   The beginnings of locale(7) support.
   Sponsored for subset of LC_TIME support,  WorkLog entry 2928, -- Josh Chamas
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <cassert>
 #include "drizzled/sql_locale.h"
 #include "mysys/typelib.h"

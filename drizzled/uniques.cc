@@ -30,7 +30,7 @@
   deletes in disk order.
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include <math.h>
 

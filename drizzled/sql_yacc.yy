@@ -36,7 +36,7 @@
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/foreign_key.h>
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function/locate.h>

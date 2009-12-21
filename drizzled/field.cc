@@ -22,7 +22,7 @@
  * @file This file implements the Field class and API
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include <errno.h>
 #include <float.h>
 #include "drizzled/sql_select.h"

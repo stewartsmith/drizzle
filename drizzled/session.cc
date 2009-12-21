@@ -21,7 +21,7 @@
  * @file Implementation of the Session class and API
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/session.h>
 #include "drizzled/session_list.h"
 #include <sys/stat.h>

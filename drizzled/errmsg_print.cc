@@ -22,7 +22,7 @@
    errmsg_printf()
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/registry.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/current_session.h>

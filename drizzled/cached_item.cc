@@ -24,7 +24,7 @@
   Buffers to save and compare item values
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/session.h>

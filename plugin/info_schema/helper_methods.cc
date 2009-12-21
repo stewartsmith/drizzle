@@ -23,7 +23,7 @@
  *   Implementation of helper methods for I_S tables.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/sql_base.h"
