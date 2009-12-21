@@ -144,7 +144,6 @@ public:
   /** select that processed */
   Select_Lex *select_lex;
   drizzled::optimizer::SqlSelect *select; /**< created in optimization phase */
-  Array<Item_in_subselect> sj_subselects;
 
   /**
     Bitmap of nested joins embedding the position at the end of the current
@@ -271,7 +270,6 @@ public:
       unit(NULL),
       select_lex(NULL),
       select(NULL),
-      sj_subselects(session_arg->mem_root, 4),
       exec_tmp_table1(NULL),
       exec_tmp_table2(NULL),
       sum_funcs(NULL),
