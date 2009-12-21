@@ -36,7 +36,6 @@
 #include <mysys/my_sys.h>
 /* Custom C string functions */
 #include <mystrings/m_string.h>
-#include <drizzled/sql_string.h>
 
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
