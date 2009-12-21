@@ -31,9 +31,7 @@
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 
-/* Lots of system-wide struct definitions like IO_CACHE,
-   prototypes for all my_* functions */
-#include <mysys/my_sys.h>
+#include <pthread.h>
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
@@ -81,7 +79,6 @@ extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
 
-extern FILE *stderror_file;
 extern pthread_mutex_t LOCK_create_db;
 extern pthread_mutex_t LOCK_open;
 extern pthread_mutex_t LOCK_thread_count;
@@ -98,7 +95,6 @@ extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
-extern struct my_option my_long_options[];
 
 
 extern drizzled::plugin::StorageEngine *myisam_engine;

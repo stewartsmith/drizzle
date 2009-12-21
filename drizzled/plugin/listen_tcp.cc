@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <cerrno>
 
 using namespace std;
 

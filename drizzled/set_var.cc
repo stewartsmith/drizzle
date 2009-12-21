@@ -68,6 +68,8 @@
 using namespace std;
 using namespace drizzled;
 
+
+extern struct my_option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 

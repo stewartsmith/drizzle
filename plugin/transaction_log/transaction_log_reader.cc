@@ -46,6 +46,7 @@
 #include <fcntl.h>
 
 #include <climits>
+#include <cerrno>
 
 #include "transaction_log_reader.h"
 
