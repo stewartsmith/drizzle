@@ -29,6 +29,8 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/join_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 

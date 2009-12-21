@@ -28,6 +28,8 @@
 #include "drizzled/lock.h"
 #include "drizzled/session.h"
 #include "drizzled/statement/alter_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/gettext.h"
 #include "drizzled/data_home.h"

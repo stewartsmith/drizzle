@@ -46,6 +46,8 @@
 #include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+
 #include <sys/stat.h>
 
 #include <string>

@@ -36,8 +36,6 @@
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 
-#include "drizzled/global_charset_info.h"
-
 
 namespace drizzled { namespace plugin { class StorageEngine; } }
 class Table;

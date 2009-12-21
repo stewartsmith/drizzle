@@ -26,6 +26,8 @@
 #include "drizzled/server_includes.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 #include "columns.h"

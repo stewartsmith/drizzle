@@ -35,6 +35,8 @@
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 using namespace std;
 using namespace drizzled;

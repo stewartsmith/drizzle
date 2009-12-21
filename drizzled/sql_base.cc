@@ -48,6 +48,8 @@
 #include <drizzled/field/null.h>
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 using namespace std;
 using namespace drizzled;

@@ -18,6 +18,8 @@
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 /* For proto */
 #include <string>

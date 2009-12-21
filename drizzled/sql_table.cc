@@ -37,6 +37,8 @@
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
 #include "mystrings/m_string.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/plugin/info_schema_table.h"

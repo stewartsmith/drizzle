@@ -29,6 +29,8 @@
 #include "mystrings/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include "drizzled/global_charset_info.h"
+
 
 using namespace std;
 using namespace google;

@@ -21,6 +21,8 @@
 #define DRIZZLED_FUNCTION_STR_USER_H
 
 #include <drizzled/function/str/strfunc.h>
+#include "drizzled/global_charset_info.h"
+
 
 class Item_func_user :public Item_str_func
 {

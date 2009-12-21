@@ -131,6 +131,8 @@
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
 #include <drizzled/db.h>
+#include "drizzled/global_charset_info.h"
+
 
 using namespace drizzled;
 

@@ -38,6 +38,8 @@
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
