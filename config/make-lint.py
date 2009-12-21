@@ -142,6 +142,7 @@ def accumulate_sources(arg, dirname, fnames):
 
 sources_list = []
 os.path.walk(srcdir,accumulate_sources,sources_list)
+sources_list.sort()
 for path in sources_list:
     lint_path(path)
 clean_lints(sources_list)
