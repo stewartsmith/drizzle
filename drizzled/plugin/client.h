@@ -130,7 +130,7 @@ public:
   virtual bool store(const DRIZZLE_TIME *from);
   virtual bool store(const char *from);
   virtual bool store(const char *from, size_t length)= 0;
-  bool store(const std::string &from)
+  virtual bool store(const std::string &from)
   {
     return store(from.c_str(), from.size());
   }
