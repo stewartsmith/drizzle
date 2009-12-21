@@ -100,6 +100,9 @@ test-drizzle:
 test-valgrind:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --force --suite=main,$(PLUGIN_TESTS))
 
+test-valgrind-suppressions:
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --valgrind --valgrind-option='--gen-suppressions=all' --valgrind-option='--show-reachable=yes' --force --suite=main,$(PLUGIN_TESTS))
+
 test-junitxml:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml )
 

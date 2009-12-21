@@ -460,7 +460,6 @@ SELECT id FROM t1 WHERE id IN(4564, (SELECT IF(1=0,1,1/0)) );
 id
 Warnings:
 Error	1365	Division by 0
-Error	1365	Division by 0
 DROP TABLE t1;
 End of 5.0 tests
 create TEMPORARY table t1(f1 char(1)) ENGINE=MYISAM;

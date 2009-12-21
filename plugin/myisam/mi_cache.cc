@@ -40,17 +40,17 @@
 using namespace std;
 
 
-int _mi_read_cache(IO_CACHE *info, unsigned char *buff, uint64_t pos, uint32_t length,
+int _mi_read_cache(IO_CACHE *info, unsigned char *buff, my_off_t pos, uint32_t length,
 		   int flag)
 {
   uint32_t read_length,in_buff_length;
-  uint64_t offset;
+  my_off_t offset;
   unsigned char *in_buff_pos;
 
   if (pos < info->pos_in_file)
   {
     read_length=length;
-    if ((uint64_t) read_length > (uint64_t) (info->pos_in_file-pos))
+    if ((my_off_t) read_length > (my_off_t) (info->pos_in_file-pos))
       read_length=(uint) (info->pos_in_file-pos);
     info->seek_not_done=1;
     if (my_pread(info->file,buff,read_length,pos,MYF(MY_NABP)))
@@ -61,8 +61,8 @@ int _mi_read_cache(IO_CACHE *info, unsigned char *buff, uint64_t pos, uint32_t l
     buff+=read_length;
   }
   if (pos >= info->pos_in_file &&
-      (offset= (uint64_t) (pos - info->pos_in_file)) <
-      (uint64_t) (info->read_end - info->request_pos))
+      (offset= (my_off_t) (pos - info->pos_in_file)) <
+      (my_off_t) (info->read_end - info->request_pos))
   {
     in_buff_pos=info->request_pos+(uint) offset;
     in_buff_length= min(length, (uint32_t) (info->read_end-in_buff_pos));

@@ -79,7 +79,17 @@ provider drizzle {
                            const char *db_name);
   probe query__exec__done(int status);
 
-  /* These probes fire when performing write operations towards any handler */
+  /*
+   * These probes fire in the query optimizer
+   */
+  probe query__opt__start(const char *query,
+                          unsigned long connid);
+  probe query__opt__done(int status);
+  probe query__opt__choose__plan__start(const char *query,
+                                        unsigned long connid);
+  probe query__opt__choose__plan__done(int status);
+
+  /* These probes fire when performing write operations towards any Cursor */
   probe insert__row__start(const char *db, const char *table);
   probe insert__row__done(int status);
   probe update__row__start(const char *db, const char *table);
@@ -88,15 +98,15 @@ provider drizzle {
   probe delete__row__done(int status);
 
   /*
-   * These probes fire when calling external_lock for any handler
+   * These probes fire when calling external_lock for any Cursor 
    * depending on the lock type being acquired or released.
    */
-  probe handler__rdlock__start(const char *db, const char *table);
-  probe handler__wrlock__start(const char *db, const char *table);
-  probe handler__unlock__start(const char *db, const char *table);
-  probe handler__rdlock__done(int status);
-  probe handler__wrlock__done(int status);
-  probe handler__unlock__done(int status);
+  probe cursor__rdlock__start(const char *db, const char *table);
+  probe cursor__wrlock__start(const char *db, const char *table);
+  probe cursor__unlock__start(const char *db, const char *table);
+  probe cursor__rdlock__done(int status);
+  probe cursor__wrlock__done(int status);
+  probe cursor__unlock__done(int status);
   
   /*
    * These probes fire when a filesort activity happens in a query.

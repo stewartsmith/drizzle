@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.85])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.86])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl Force dependency tracking on for Sun Studio builds
@@ -169,12 +169,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   dnl alloca - but we need to know it anyway for check_stack_overrun.
   PANDORA_STACK_DIRECTION
 
-  save_LIBS="${LIBS}"
-  LIBS=""
-  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
-  LIBM="${LIBS}"
-  LIBS="${save_LIBS}"
-  AC_SUBST([LIBM])
+  AC_CHECK_LIBM
   
   AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
   AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])

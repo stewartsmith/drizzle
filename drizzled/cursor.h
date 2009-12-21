@@ -242,7 +242,7 @@ public:
     estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
-    ref_length(sizeof(uint64_t)),
+    ref_length(sizeof(my_off_t)),
     inited(NONE),
     locked(false), implicit_emptied(0),
     next_insert_id(0), insert_id_for_cur_row(0)
@@ -743,17 +743,7 @@ bool fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select
 
 bool handle_select(Session *session, LEX *lex, select_result *result,
                    uint64_t setup_tables_done_option);
-bool mysql_select(Session *session, Item ***rref_pointer_array,
-                  TableList *tables, uint32_t wild_num,  List<Item> &list,
-                  COND *conds, uint32_t og_num, order_st *order, order_st *group,
-                  Item *having, uint64_t select_type,
-                  select_result *result, Select_Lex_Unit *unit,
-                  Select_Lex *select_lex);
 void free_underlaid_joins(Session *session, Select_Lex *select);
-bool mysql_explain_union(Session *session, Select_Lex_Unit *unit,
-                         select_result *result);
-int mysql_explain_select(Session *session, Select_Lex *sl, char const *type,
-                         select_result *result);
 
 bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,

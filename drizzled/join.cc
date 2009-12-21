@@ -50,7 +50,9 @@
 #include "drizzled/optimizer/key_use.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/sum.h"
+#include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/records.h"
+#include "drizzled/probes.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
@@ -625,6 +627,7 @@ int JOIN::optimize()
   {
     conds=new Item_int((int64_t) 0,1);  // Always false
   }
+
   if (make_join_select(this, select, conds))
   {
     zero_result_cause=
@@ -831,6 +834,9 @@ int JOIN::optimize()
   /* Create all structures needed for materialized subquery execution. */
   if (setup_subquery_materialization())
     return 1;
+
+  /* Cache constant expressions in WHERE, HAVING, ON clauses. */
+  cache_const_exprs();
 
   /*
     is this simple IN subquery?
@@ -1200,7 +1206,14 @@ void JOIN::exec()
   {                                           
     /* Only test of functions */
     if (select_options & SELECT_DESCRIBE)
-      select_describe(this, false, false, false, (zero_result_cause?zero_result_cause:"No tables used"));
+    {
+      optimizer::ExplainPlan planner(this, 
+                                     false,
+                                     false,
+                                     false,
+                                     (zero_result_cause ? zero_result_cause : "No tables used"));
+      planner.printPlan();
+    }
     else
     {
       result->send_fields(*columns_list);
@@ -1273,7 +1286,12 @@ void JOIN::exec()
       order= 0;
     }
     having= tmp_having;
-    select_describe(this, need_tmp, order != 0 && !skip_sort_order,  select_distinct, !tables ? "No tables used" : NULL);
+    optimizer::ExplainPlan planner(this,
+                                   need_tmp,
+                                   order != 0 && ! skip_sort_order,
+                                   select_distinct,
+                                   ! tables ? "No tables used" : NULL);
+    planner.printPlan();
     return;
   }
 
@@ -2380,6 +2398,40 @@ bool JOIN::change_result(select_result *res)
     return(true);
   }
   return(false);
+}
+
+/**
+  Cache constant expressions in WHERE, HAVING, ON conditions.
+*/
+
+void JOIN::cache_const_exprs()
+{
+  bool cache_flag= false;
+  bool *analyzer_arg= &cache_flag;
+
+  /* No need in cache if all tables are constant. */
+  if (const_tables == tables)
+    return;
+
+  if (conds)
+    conds->compile(&Item::cache_const_expr_analyzer, (unsigned char **)&analyzer_arg,
+                  &Item::cache_const_expr_transformer, (unsigned char *)&cache_flag);
+  cache_flag= false;
+  if (having)
+    having->compile(&Item::cache_const_expr_analyzer, (unsigned char **)&analyzer_arg,
+                    &Item::cache_const_expr_transformer, (unsigned char *)&cache_flag);
+
+  for (JoinTable *tab= join_tab + const_tables; tab < join_tab + tables ; tab++)
+  {
+    if (*tab->on_expr_ref)
+    {
+      cache_flag= false;
+      (*tab->on_expr_ref)->compile(&Item::cache_const_expr_analyzer,
+                                 (unsigned char **)&analyzer_arg,
+                                 &Item::cache_const_expr_transformer,
+                                 (unsigned char *)&cache_flag);
+    }
+  }
 }
 
 /**
@@ -5128,8 +5180,13 @@ static int return_zero_rows(JOIN *join,
 {
   if (select_options & SELECT_DESCRIBE)
   {
-    select_describe(join, false, false, false, info);
-    return(0);
+    optimizer::ExplainPlan planner(join,
+                                   false,
+                                   false,
+                                   false,
+                                   info);
+    planner.printPlan();
+    return 0;
   }
 
   join->join_free();
@@ -5932,8 +5989,11 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   if (join->const_tables != join->tables)
   {
     optimize_keyuse(join, keyuse_array);
-    if (choose_plan(join, all_table_map & ~join->const_table_map))
-      return(true);
+    DRIZZLE_QUERY_OPT_CHOOSE_PLAN_START(join->session->query, join->session->thread_id);
+    bool res= choose_plan(join, all_table_map & ~join->const_table_map);
+    DRIZZLE_QUERY_OPT_CHOOSE_PLAN_DONE(res ? 1 : 0);
+    if (res)
+      return true;
   }
   else
   {

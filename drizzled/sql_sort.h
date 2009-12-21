@@ -55,7 +55,7 @@ typedef struct st_sort_addon_field {  /* Sort addon packed field */
 } SORT_ADDON_FIELD;
 
 typedef struct st_buffpek {		/* Struktur om sorteringsbuffrarna */
-  uint64_t file_pos;			/* Where we are in the sort file */
+  my_off_t file_pos;			/* Where we are in the sort file */
   unsigned char *base,*key;			/* key pointers */
   ha_rows count;			/* Number of rows in table */
   ulong mem_count;			/* numbers of keys in memory */

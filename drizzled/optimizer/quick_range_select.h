@@ -163,7 +163,7 @@ public:
                       key_part_map keypart_map,
                       unsigned char *cur_prefix);
 
-  bool reverse_sorted()
+  bool reverse_sorted() const
   {
     return false;
   }
@@ -171,7 +171,7 @@ public:
   /**
    * @return true if there is only one range and this uses the whole primary key
    */
-  bool unique_key_range();
+  bool unique_key_range() const;
 
   /**
    * Initialize this quick select to be a ROR-merged scan.
@@ -197,7 +197,7 @@ public:
 
   void save_last_pos();
 
-  int get_type()
+  int get_type() const
   {
     return QS_TYPE_RANGE;
   }
@@ -252,9 +252,9 @@ private:
 
   friend class QuickIndexMergeSelect;
 
-  friend class QUICK_ROR_INTERSECT_SELECT;
+  friend class QuickRorIntersectSelect;
 
-  friend class QUICK_GROUP_MIN_MAX_SELECT;
+  friend class QuickGroupMinMaxSelect;
 
   friend uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
 
@@ -279,12 +279,12 @@ public:
 
   int get_next();
 
-  bool reverse_sorted() 
+  bool reverse_sorted() const
   { 
     return true; 
   }
 
-  int get_type() 
+  int get_type() const
   { 
     return QS_TYPE_RANGE_DESC;
   }

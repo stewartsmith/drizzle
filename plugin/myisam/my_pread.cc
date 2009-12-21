@@ -39,7 +39,7 @@
     #             Number of bytes read
 */
 
-size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, uint64_t offset,
+size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, my_off_t offset,
                 myf MyFlags)
 {
   size_t readbytes;
@@ -94,7 +94,7 @@ size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, uint64_t offse
 */
 
 size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
-                 uint64_t offset, myf MyFlags)
+                 my_off_t offset, myf MyFlags)
 {
   size_t writenbytes, written;
   uint32_t errors;

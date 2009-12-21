@@ -49,8 +49,8 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   MYISAM_SHARE* share= info->s;
   uint32_t keys= share->state.header.keys;
   MI_KEYDEF *keyinfo= share->keyinfo;
-  uint64_t key_file_length= share->state.state.key_file_length;
-  uint64_t pos= share->base.keystart;
+  my_off_t key_file_length= share->state.state.key_file_length;
+  my_off_t pos= share->base.keystart;
 
   if (!keys || !mi_is_any_key_active(key_map) || key_file_length == pos)
     return(0);
@@ -81,7 +81,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   do
   {
     /* Read the next block of index file into the preload buffer */
-    if ((uint64_t) length > (key_file_length-pos))
+    if ((my_off_t) length > (key_file_length-pos))
       length= (uint32_t) (key_file_length-pos);
     if (my_pread(share->kfile, (unsigned char*) buff, length, pos, MYF(MY_FAE|MY_FNABP)))
       goto err;

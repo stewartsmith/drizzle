@@ -78,6 +78,10 @@ public:
   {
     return this == item;
   }
+  bool basic_const_item() const
+  {
+    return test(example && example->basic_const_item());
+  }
 };
 
 #endif /* DRIZZLED_ITEM_CACHE_H */

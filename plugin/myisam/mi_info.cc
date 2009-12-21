@@ -20,7 +20,7 @@
 
 	/* Get position to last record */
 
-uint64_t mi_position(MI_INFO *info)
+my_off_t mi_position(MI_INFO *info)
 {
   return info->lastpos;
 }

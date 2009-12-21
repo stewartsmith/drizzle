@@ -412,7 +412,8 @@ bool plugin_init(plugin::Registry &registry,
   */
   for (builtins= drizzled_builtins; *builtins; builtins++)
   {
-    for (manifest= *builtins; manifest->name; manifest++)
+    manifest= *builtins;
+    if (manifest->name != NULL)
     {
       module= new (std::nothrow) plugin::Module(manifest);
       if (module == NULL)
