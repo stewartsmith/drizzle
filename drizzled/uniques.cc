@@ -34,9 +34,11 @@
 
 #include <math.h>
 
-#include <drizzled/sql_sort.h>
-#include <drizzled/session.h>
 #include <queue>
+
+#include "drizzled/sql_sort.h"
+#include "drizzled/session.h"
+#include "drizzled/sql_list.h"
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

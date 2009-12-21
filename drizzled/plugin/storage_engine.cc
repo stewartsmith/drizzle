@@ -46,6 +46,7 @@
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
 #include "drizzled/xid.h"
+#include "drizzled/sql_table.h"
 
 #include <drizzled/table_proto.h>
 

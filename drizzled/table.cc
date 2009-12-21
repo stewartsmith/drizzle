@@ -41,6 +41,7 @@
 #include <drizzled/field/double.h>
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
+#include "drizzled/sql_table.h"
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>

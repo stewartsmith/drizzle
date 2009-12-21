@@ -21,6 +21,7 @@
 #define DRIZZLED_SQL_SORT_H
 
 #include "mysys/my_sys.h"
+#include "drizzled/base.h"
 
 typedef struct st_sort_field SORT_FIELD;
 typedef struct st_io_cache IO_CACHE;

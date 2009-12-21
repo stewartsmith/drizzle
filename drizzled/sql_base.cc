@@ -47,6 +47,7 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/sql_table.h"
 
 using namespace std;
 using namespace drizzled;

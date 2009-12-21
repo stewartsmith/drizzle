@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/checksum.h>
+#include "drizzled/sql_table.h"
 
 namespace drizzled
 {

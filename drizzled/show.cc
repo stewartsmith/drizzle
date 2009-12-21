@@ -45,6 +45,7 @@
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
+#include "drizzled/sql_table.h"
 #include <sys/stat.h>
 
 #include <string>

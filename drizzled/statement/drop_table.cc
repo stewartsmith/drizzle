@@ -24,6 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/plugin/info_schema_table.h>
+#include "drizzled/sql_table.h"
 
 namespace drizzled
 {

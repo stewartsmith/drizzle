@@ -37,9 +37,6 @@
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 
-/* Routines for dropping, repairing, checking schema tables */
-#include <drizzled/sql_table.h>
-
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 

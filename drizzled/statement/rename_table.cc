@@ -23,6 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/rename_table.h>
+#include "drizzled/sql_table.h"
 
 namespace drizzled
 {
