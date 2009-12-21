@@ -41,6 +41,7 @@
 #include "drizzled/plugin/info_schema_table.h"
 
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 using namespace drizzled;

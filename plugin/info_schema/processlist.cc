@@ -27,6 +27,7 @@
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/session_list.h"
 
 #include "helper_methods.h"
 #include "processlist.h"
@@ -184,7 +185,7 @@ int ProcessListISMethods::fillTable(Session* session,
   {
     Session* tmp;
 
-    for (vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it)
+    for (vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;

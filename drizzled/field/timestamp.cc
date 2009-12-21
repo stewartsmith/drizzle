@@ -28,6 +28,8 @@
 
 #include <math.h>
 
+#include <sstream>
+
 #include "drizzled/temporal.h"
 
 /**

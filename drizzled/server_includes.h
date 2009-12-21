@@ -51,8 +51,6 @@
 
 #include <cstdlib>
 #include <string>
-#include <vector>
-#include <sstream>
 
 typedef struct drizzle_lex_string LEX_STRING;
 typedef struct st_typelib TYPELIB;
@@ -118,7 +116,6 @@ extern pthread_cond_t COND_refresh;
 extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
-extern std::vector<Session *> session_list;
 extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 

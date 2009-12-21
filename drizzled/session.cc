@@ -23,6 +23,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
+#include "drizzled/session_list.h"
 #include <sys/stat.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
@@ -618,7 +619,7 @@ bool Session::schedule()
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.push_back(this);
+  getSessionList().push_back(this);
   pthread_mutex_unlock(&LOCK_thread_count);
 
   if (scheduler->addSession(this))

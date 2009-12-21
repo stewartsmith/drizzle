@@ -314,6 +314,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/select_to_file.h \
 		drizzled/select_union.h \
 		drizzled/session.h \
+		drizzled/session_list.h \
 		drizzled/set_var.h \
 		drizzled/show.h \
 		drizzled/sql_alloc.h \
@@ -650,6 +651,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/records.cc \
 		drizzled/replication_services.cc \
 		drizzled/session.cc \
+		drizzled/session_list.cc \
 		drizzled/set_var.cc \
 		drizzled/show.cc \
 		drizzled/sql_alloc.cc \

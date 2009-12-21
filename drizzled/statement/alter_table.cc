@@ -22,6 +22,8 @@
 
 #include <fcntl.h>
 
+#include <sstream>
+
 #include "drizzled/show.h"
 #include "drizzled/lock.h"
 #include "drizzled/session.h"

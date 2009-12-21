@@ -29,6 +29,7 @@
 #include "drizzled/join.h"
 
 #include <string>
+#include <sstream>
 
 using namespace std;
 using namespace drizzled;

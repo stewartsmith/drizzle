@@ -46,6 +46,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
+#include "drizzled/session_list.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -319,8 +320,6 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-vector<Session*> session_list;
-
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
@@ -430,7 +429,7 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
@@ -462,12 +461,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (session_list.empty())
+    if (getSessionList().empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    tmp= session_list.front();
+    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -737,9 +736,9 @@ void Session::unlink(Session *session)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
 
-  session_list.erase(remove(session_list.begin(),
-                     session_list.end(),
-                     session));
+  getSessionList().erase(remove(getSessionList().begin(),
+                         getSessionList().end(),
+                         session));
 
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -2179,7 +2178,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  session_list.clear();
+  getSessionList().clear();
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
