@@ -317,7 +317,6 @@ enum test_flag_bit
 #define IS_EQUAL_PACK_LENGTH 2
 
 
-typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };

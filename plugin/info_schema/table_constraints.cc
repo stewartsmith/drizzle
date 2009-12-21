@@ -26,6 +26,7 @@
 #include "drizzled/server_includes.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/sql_table.h"
 
 #include "helper_methods.h"
 #include "table_constraints.h"

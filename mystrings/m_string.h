@@ -80,8 +80,6 @@ extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
 #endif
 
-extern int is_prefix(const char *, const char *);
-
 /* Conversion routines */
 typedef enum {
   MY_GCVT_ARG_FLOAT,

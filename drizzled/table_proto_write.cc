@@ -17,6 +17,7 @@
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
+#include "drizzled/sql_table.h"
 
 /* For proto */
 #include <string>

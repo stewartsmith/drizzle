@@ -25,6 +25,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <mysys/hash.h>
+#include "mystrings/m_string.h"
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/sql_base.h>
@@ -32,6 +33,7 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
+#include "drizzled/sql_table.h"
 
 using namespace std;
 using namespace drizzled;
@@ -664,8 +666,10 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       table_list->table_name= strcpy(table_list->db, db) + db_len + 1;
       filename_to_tablename(file->name, table_list->table_name,
                             strlen(file->name) + 1);
-      table_list->alias= table_list->table_name;	// If lower_case_table_names=2
-      table_list->internal_tmp_table= is_prefix(file->name, TMP_FILE_PREFIX);
+      table_list->alias= table_list->table_name;  // If lower_case_table_names=2
+      table_list->internal_tmp_table= (strncmp(file->name,
+                                               TMP_FILE_PREFIX,
+                                               strlen(TMP_FILE_PREFIX)) == 0);
       /* Link into list */
       (*tot_list_next)= table_list;
       tot_list_next= &table_list->next_local;

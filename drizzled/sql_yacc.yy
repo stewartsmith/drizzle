@@ -171,6 +171,15 @@ int yylex(void *yylval, void *yysession);
 
 #define YYDEBUG 0
 
+static bool check_reserved_words(LEX_STRING *name)
+{
+  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
+    return true;
+  return false;
+}
+
 /**
   @brief Push an error message into MySQL error stack with line
   and position information.

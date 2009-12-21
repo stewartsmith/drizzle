@@ -75,7 +75,7 @@ bool initTransactionLogBackgroundWorker()
   return false;
 }
 
-pthread_handler_t collectTransactionLogStats(void *)
+void *collectTransactionLogStats(void *)
 {
   /* Check to see if there is an index file on disk */
 

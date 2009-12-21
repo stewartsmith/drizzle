@@ -24,6 +24,7 @@
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
+#include "drizzled/strfunc.h"
 
 #include <sstream>
 #include <string>

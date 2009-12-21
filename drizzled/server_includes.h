@@ -41,47 +41,29 @@
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
-/* Routines for printing error messages */
-#include <drizzled/errmsg_print.h>
-
 /* for List */
 #include <drizzled/sql_list.h>
 
+/* Routines for printing error messages */
+#include <drizzled/errmsg_print.h>
+
+#include "drizzled/global_charset_info.h"
+
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <bitset>
 
-typedef struct st_ha_create_information HA_CREATE_INFO;
 typedef struct drizzle_lex_string LEX_STRING;
+typedef struct st_typelib TYPELIB;
+
 
 /* information schema */
 extern const std::string INFORMATION_SCHEMA_NAME;
 
-/* drizzled.cc */
-void refresh_status(Session *session);
-void unlink_session(Session *session);
-
-/* item_func.cc */
-extern bool check_reserved_words(LEX_STRING *name);
-
-/* strfunc.cc */
-uint64_t find_set(TYPELIB *lib, const char *x, uint32_t length, const CHARSET_INFO * const cs,
-		   char **err_pos, uint32_t *err_len, bool *set_warning);
-uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
-               bool part_match);
-uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
-                const CHARSET_INFO *cs);
-
-extern const std::string &drizzled_version();
-
-/*
-  External variables
-*/
-
-extern const CHARSET_INFO *system_charset_info;
-extern const CHARSET_INFO *files_charset_info;
-extern const CHARSET_INFO *table_alias_charset;
+class Session;
+class Table;
 
 extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];
@@ -135,8 +117,6 @@ extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
 extern std::vector<Session *> session_list;
-extern String my_empty_string;
-extern const String my_null_string;
 extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
@@ -156,45 +136,6 @@ extern SHOW_COMP_OPTION have_symlink;
 
 extern pthread_t signal_thread;
 
-/* table.cc */
-TableShare *alloc_table_share(TableList *table_list, char *key,
-                               uint32_t key_length);
-int open_table_def(Session& session, TableShare *share);
-void open_table_error(TableShare *share, int error, int db_errno, int errarg);
-int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
-                          Table *outparam);
-void free_blobs(Table *table);
-int set_zone(int nr,int min_zone,int max_zone);
-uint32_t convert_period_to_month(uint32_t period);
-uint32_t convert_month_to_period(uint32_t month);
-
-int test_if_number(char *str,int *res,bool allow_wildcards);
-void change_byte(unsigned char *,uint,char,char);
-
-namespace drizzled { namespace optimizer { class SqlSelect; } }
-
-ha_rows filesort(Session *session,
-                 Table *form,
-                 struct st_sort_field *sortorder,
-		             uint32_t s_length,
-                 drizzled::optimizer::SqlSelect *select,
-		             ha_rows max_rows,
-                 bool sort_positions,
-                 ha_rows *examined_rows);
-
-void filesort_free_buffers(Table *table, bool full);
-void change_double_for_sort(double nr,unsigned char *to);
-double my_double_round(double value, int64_t dec, bool dec_unsigned,
-                       bool truncate);
-int get_quick_record(drizzled::optimizer::SqlSelect *select);
-
-void find_date(char *pos,uint32_t *vek,uint32_t flag);
-TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
-ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
-ulong next_io_size(ulong pos);
-void append_unescaped(String *res, const char *pos, uint32_t length);
 
 
 int rename_file_ext(const char * from,const char * to,const char * ext);

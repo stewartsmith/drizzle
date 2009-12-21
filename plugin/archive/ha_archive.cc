@@ -227,7 +227,7 @@ void ArchiveEngine::doGetTableNames(CachedDirectory &directory,
     const char *ext= strchr(filename->c_str(), '.');
 
     if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
-        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     {  }
     else
     {

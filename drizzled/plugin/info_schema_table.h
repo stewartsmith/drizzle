@@ -23,7 +23,9 @@
 
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/hash/crc32.h"
+#include "drizzled/common.h"
 
+#include <cstring>
 #include <string>
 #include <set>
 #include <algorithm>
@@ -199,34 +201,9 @@ public:
 class InfoSchemaRecord
 {
 public:
-  InfoSchemaRecord()
-    :
-      record(NULL),
-      rec_len(0),
-      checksum(0)
-  {}
-
-  InfoSchemaRecord(unsigned char *buf,
-                   size_t in_len)
-    :
-      record(NULL),
-      rec_len(in_len),
-      checksum(0)
-  {
-    record= new unsigned char[rec_len];
-    memcpy(record, buf, rec_len);
-    checksum= drizzled::hash::crc32((const char *) record, rec_len);
-  }
-
-  InfoSchemaRecord(const InfoSchemaRecord &rhs)
-    :
-      record(NULL),
-      rec_len(rhs.rec_len)
-  {
-    record= new(std::nothrow) unsigned char[rec_len];
-    memcpy(record, rhs.record, rec_len);
-    checksum= drizzled::hash::crc32((const char *) record, rec_len);
-  }
+  InfoSchemaRecord();
+  InfoSchemaRecord(unsigned char *buf, size_t in_len);
+  InfoSchemaRecord(const InfoSchemaRecord &rhs);
 
   ~InfoSchemaRecord()
   {

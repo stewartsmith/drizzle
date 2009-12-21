@@ -17,15 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_STRFUNC_H
+#define DRIZZLED_STRFUNC_H
 
-#ifndef DRIZZLED_CURRENT_SESSION_H
-#define DRIZZLED_CURRENT_SESSION_H
+typedef struct charset_info_st CHARSET_INFO;
+typedef struct st_typelib TYPELIB;
 
-class Session;
-typedef struct st_mem_root MEM_ROOT;
-
-Session *_current_session(void);
-#define current_session _current_session()
-MEM_ROOT *current_mem_root(void);
-
-#endif /* DRIZZLED_CURRENT_SESSION_H */
+uint64_t find_set(TYPELIB *lib, const char *x, uint32_t length,
+                  const CHARSET_INFO * const cs,
+                  char **err_pos, uint32_t *err_len, bool *set_warning);
+uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
+                   bool part_match);
+uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
+                    const CHARSET_INFO *cs);
+#endif /* DRIZZLED_STRFUNC_H */

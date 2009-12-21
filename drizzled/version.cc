@@ -17,15 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+#include "drizzled/configmake.h"
+#include "drizzled/version.h"
+#include <string>
 
-#ifndef DRIZZLED_CURRENT_SESSION_H
-#define DRIZZLED_CURRENT_SESSION_H
+using namespace std;
 
-class Session;
-typedef struct st_mem_root MEM_ROOT;
+namespace drizzled
+{
 
-Session *_current_session(void);
-#define current_session _current_session()
-MEM_ROOT *current_mem_root(void);
+const string& version()
+{
+  static const string DRIZZLED_VERSION(PANDORA_RELEASE_VERSION);
+  return DRIZZLED_VERSION;
+}
 
-#endif /* DRIZZLED_CURRENT_SESSION_H */
+} /* namespace drizzled */

@@ -34,6 +34,7 @@
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/xid.h>
+#include "drizzled/query_id.h"
 
 #include <netdb.h>
 #include <map>
@@ -1480,6 +1481,9 @@ public:
       return variables.storage_engine;
     return global_system_variables.storage_engine;
   };
+
+  static void unlink(Session *session);
+
 };
 
 class JOIN;

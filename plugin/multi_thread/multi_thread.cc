@@ -66,7 +66,7 @@ bool MultiThreadScheduler::addSession(Session *session)
 void MultiThreadScheduler::killSessionNow(Session *session)
 {
   /* Locks LOCK_thread_count and deletes session */
-  unlink_session(session);
+  Session::unlink(session);
   thread_count--;
   my_thread_end();
   pthread_exit(0);

@@ -15,12 +15,13 @@
 
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <mysys/my_bit.h>
 #include "myisampack.h"
 #include "ha_myisam.h"
 #include "myisam_priv.h"
 #include "mysys/my_bit.h"
+#include "mystrings/m_string.h"
 #include "drizzled/util/test.h"
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
@@ -32,6 +33,7 @@
 #include "drizzled/memory/multi_malloc.h"
 
 #include <string>
+#include <sstream>
 #include <map>
 #include <algorithm>
 

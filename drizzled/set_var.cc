@@ -58,6 +58,8 @@
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 #include <drizzled/plugin.h>
+#include "drizzled/version.h"
+#include "drizzled/strfunc.h"
 
 #include <map>
 #include <algorithm>
@@ -225,7 +227,7 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str  sys_version(&vars, "version", drizzled_version().c_str());
+static sys_var_const_str  sys_version(&vars, "version", drizzled::version().c_str());
 
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);

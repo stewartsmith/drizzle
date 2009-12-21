@@ -28,8 +28,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/plugin/error_message.h>
 
-// need this for stderr
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 
 using namespace drizzled;
 

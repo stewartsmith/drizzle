@@ -875,7 +875,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
     const char *ext= strchr(filename->c_str(), '.');
 
     if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_DEFINITION_FILE_EXT.c_str()) ||
-        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     { }
     else
     {

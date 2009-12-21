@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_SQL_SORT_H
 #define DRIZZLED_SQL_SORT_H
 
+#include "mysys/my_sys.h"
+
 typedef struct st_sort_field SORT_FIELD;
 class Field;
 

@@ -26,6 +26,7 @@
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
+#include "mystrings/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
@@ -99,7 +100,7 @@ public:
       const char *ext= strchr(filename->c_str(), '.');
 
       if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
-          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
       {  }
       else
       {

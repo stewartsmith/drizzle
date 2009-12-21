@@ -128,7 +128,6 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/decimal.cc \
 		mystrings/dtoa.cc \
 		mystrings/int2str.cc \
-		mystrings/is_prefix.cc \
 		mystrings/llstr.cc \
 		mystrings/longlong2str.cc \
 		mystrings/my_strtoll10.cc

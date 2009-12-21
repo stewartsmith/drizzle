@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/plugin/function.h>
+#include "drizzled/version.h"
 
 using namespace std;
 using namespace drizzled;
@@ -45,7 +46,7 @@ public:
 
 String *VersionFunction::val_str(String *str)
 {
-  str->set(drizzled_version().c_str(), drizzled_version().size(),
+  str->set(version().c_str(), version().size(),
            system_charset_info);
   return str;
 }

@@ -26,6 +26,8 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/sql_string.h"
+#include "drizzled/table_identifier.h"
 
 #include "mysys/cached_directory.h"
 

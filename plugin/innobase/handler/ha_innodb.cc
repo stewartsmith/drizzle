@@ -59,11 +59,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "drizzled/server_includes.h"
 
+#include <limits.h>
 #include <fcntl.h>
 
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
 #include "mystrings/m_ctype.h"
+#include "mystrings/m_string.h"
 #include "mysys/my_sys.h"
 #include "mysys/hash.h"
 #include "mysys/mysys_err.h"

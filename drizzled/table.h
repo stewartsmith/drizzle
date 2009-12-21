@@ -35,6 +35,7 @@
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
 #include "drizzled/atomics.h"
+#include "drizzled/query_id.h"
 
 class Item;
 class Item_subselect;
@@ -511,4 +512,42 @@ struct open_table_list_st
 
 };
 
+TableShare *alloc_table_share(TableList *table_list, char *key,
+                               uint32_t key_length);
+int open_table_def(Session& session, TableShare *share);
+void open_table_error(TableShare *share, int error, int db_errno, int errarg);
+int open_table_from_share(Session *session, TableShare *share, const char *alias,
+                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          Table *outparam);
+void free_blobs(Table *table);
+int set_zone(int nr,int min_zone,int max_zone);
+uint32_t convert_period_to_month(uint32_t period);
+uint32_t convert_month_to_period(uint32_t month);
+
+int test_if_number(char *str,int *res,bool allow_wildcards);
+void change_byte(unsigned char *,uint,char,char);
+
+namespace drizzled { namespace optimizer { class SqlSelect; } }
+
+ha_rows filesort(Session *session,
+                 Table *form,
+                 struct st_sort_field *sortorder,
+		             uint32_t s_length,
+                 drizzled::optimizer::SqlSelect *select,
+		             ha_rows max_rows,
+                 bool sort_positions,
+                 ha_rows *examined_rows);
+
+void filesort_free_buffers(Table *table, bool full);
+void change_double_for_sort(double nr,unsigned char *to);
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
+                       bool truncate);
+int get_quick_record(drizzled::optimizer::SqlSelect *select);
+
+void find_date(char *pos,uint32_t *vek,uint32_t flag);
+TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
+TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
+ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
+ulong next_io_size(ulong pos);
+void append_unescaped(String *res, const char *pos, uint32_t length);
 #endif /* DRIZZLED_TABLE_H */

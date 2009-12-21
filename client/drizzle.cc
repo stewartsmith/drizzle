@@ -1028,13 +1028,6 @@ extern "C" void handle_sigint(int sig);
 static void window_resize(int sig);
 #endif
 
-static inline int is_prefix(const char *s, const char *t)
-{
-  while (*t)
-    if (*s++ != *t++) return 0;
-  return 1;                                     /* WRONG */
-}
-
 /**
   Shutdown the server that we are currently connected to.
 

@@ -35,6 +35,9 @@
 
 class String;
 
+extern String my_empty_string;
+extern const String my_null_string;
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

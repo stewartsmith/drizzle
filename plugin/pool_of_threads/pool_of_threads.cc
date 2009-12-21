@@ -274,7 +274,7 @@ static void libevent_connection_close(Session *session)
   delete sched;
   session->scheduler_arg= NULL;
 
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  Session::unlink(session);   /* locks LOCK_thread_count and deletes session */
 
   return;
 }

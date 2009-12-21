@@ -17,15 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_VERSION_H
+#define DRIZZLED_VERSION_H
 
-#ifndef DRIZZLED_CURRENT_SESSION_H
-#define DRIZZLED_CURRENT_SESSION_H
+#include <string>
 
-class Session;
-typedef struct st_mem_root MEM_ROOT;
+namespace drizzled
+{
 
-Session *_current_session(void);
-#define current_session _current_session()
-MEM_ROOT *current_mem_root(void);
+const std::string& version();
 
-#endif /* DRIZZLED_CURRENT_SESSION_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_VERSION_H */

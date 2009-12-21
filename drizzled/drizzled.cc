@@ -157,12 +157,6 @@ using namespace drizzled;
 
 /* Constants */
 
-const string& drizzled_version()
-{
-  static const string DRIZZLED_VERSION(STRING_WITH_LEN(PANDORA_RELEASE_VERSION));
-  return DRIZZLED_VERSION;
-}
-
 
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
 static const char *optimizer_switch_names[]=
@@ -727,14 +721,14 @@ extern "C" void end_thread_signal(int )
   Unlink session from global list of available connections and free session
 
   SYNOPSIS
-    unlink_session()
+    Session::unlink()
     session		 Thread handler
 
   NOTES
     LOCK_thread_count is locked and left locked
 */
 
-void unlink_session(Session *session)
+void Session::unlink(Session *session)
 {
   connection_count--;
 
@@ -756,7 +750,6 @@ void unlink_session(Session *session)
 
 #ifdef THREAD_SPECIFIC_SIGPIPE
 /**
-  Aborts a thread nicely. Comes here on SIGPIPE.
 
   @todo
     One should have to fix that thr_alarm know about this thread too.
@@ -1627,7 +1620,7 @@ int main(int argc, char **argv)
 
     /* If we error on creation we drop the connection and delete the session. */
     if (session->schedule())
-      unlink_session(session);
+      Session::unlink(session);
   }
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
@@ -2400,7 +2393,7 @@ static void get_options(int *argc,char **argv)
 static const char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,PREFIX) &&
+      (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
       strcmp(PREFIX,FN_ROOTDIR))
   {
     if (strlen(PREFIX) < strlen(path))
