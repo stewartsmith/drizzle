@@ -24,6 +24,9 @@
 #include "drizzled/sql_alloc.h"
 #include "drizzled/current_session.h"
 #include "drizzled/error.h"
+#include "drizzled/definitions.h"
+
+#include "mysys/my_sys.h"
 
 extern "C" void sql_alloc_error_handler(void);
 
@@ -85,3 +88,22 @@ void* sql_memdup(const void *ptr, size_t len)
   return pos;
 }
 
+void *Sql_alloc::operator new(size_t size)
+{
+  return sql_alloc(size);
+}
+
+void *Sql_alloc::operator new[](size_t size)
+{
+  return sql_alloc(size);
+}
+
+void *Sql_alloc::operator new[](size_t size, MEM_ROOT *mem_root)
+{
+  return alloc_root(mem_root, size);
+}
+
+void *Sql_alloc::operator new(size_t size, MEM_ROOT *mem_root)
+{
+  return alloc_root(mem_root, size);
+}

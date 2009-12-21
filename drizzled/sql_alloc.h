@@ -20,9 +20,9 @@
 #ifndef DRIZZLED_SQL_ALLOC_H
 #define DRIZZLED_SQL_ALLOC_H
 
-#include <mysys/my_alloc.h>
-#include <mystrings/m_ctype.h>
+#include <unistd.h>
 
+typedef struct st_mem_root MEM_ROOT;
 class Session;
 
 void init_sql_alloc(MEM_ROOT *root, size_t block_size, size_t pre_alloc_size);
@@ -39,24 +39,16 @@ char* query_table_status(Session *session,const char *db,const char *table_name)
 class Sql_alloc
 {
 public:
-  static void *operator new(size_t size) throw ()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new[](size_t size)
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new[](size_t size, MEM_ROOT *mem_root) throw ()
-  { return alloc_root(mem_root, size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
-  { return alloc_root(mem_root, size); }
+  static void *operator new(size_t size);
+  static void *operator new[](size_t size);
+  static void *operator new[](size_t size, MEM_ROOT *mem_root);
+  static void *operator new(size_t size, MEM_ROOT *mem_root);
   static void operator delete(void *, size_t)
   {  }
   static void operator delete(void *, MEM_ROOT *)
-  { /* never called */ }
+  {  }
   static void operator delete[](void *, MEM_ROOT *)
-  { /* never called */ }
+  {  }
   static void operator delete[](void *, size_t)
   {  }
   Sql_alloc() {}
