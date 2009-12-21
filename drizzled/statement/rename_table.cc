@@ -24,6 +24,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/rename_table.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
 
 namespace drizzled
 {

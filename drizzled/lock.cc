@@ -80,6 +80,7 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include "drizzled/pthread_globals.h"
 
 /**
   @defgroup Locking Locking

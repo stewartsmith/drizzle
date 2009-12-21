@@ -39,6 +39,9 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/records.h"
+#include "drizzled/pthread_globals.h"
+
+extern pid_t current_pid;
 
 using namespace std;
 

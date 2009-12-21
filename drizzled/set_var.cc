@@ -61,6 +61,7 @@
 #include "drizzled/version.h"
 #include "drizzled/strfunc.h"
 #include "mystrings/m_string.h"
+#include "drizzled/pthread_globals.h"
 
 #include <map>
 #include <algorithm>

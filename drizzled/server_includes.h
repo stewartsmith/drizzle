@@ -1,4 +1,4 @@
-/*
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
@@ -31,7 +31,7 @@
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 
-#include <pthread.h>
+#include <stddef.h>
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
@@ -61,7 +61,6 @@ extern uint64_t table_cache_size;
 extern size_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;
-extern pid_t current_pid;
 extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
 extern uint32_t drizzled_bind_timeout;
@@ -75,20 +74,6 @@ extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
-
-extern pthread_mutex_t LOCK_create_db;
-extern pthread_mutex_t LOCK_open;
-extern pthread_mutex_t LOCK_thread_count;
-extern pthread_mutex_t LOCK_status;
-extern pthread_mutex_t LOCK_global_read_lock;
-extern pthread_mutex_t LOCK_global_system_variables;
-
-extern pthread_rwlock_t LOCK_system_variables_hash;
-extern pthread_cond_t COND_refresh;
-extern pthread_cond_t COND_thread_count;
-extern pthread_cond_t COND_global_read_lock;
-extern pthread_attr_t connection_attrib;
-extern pthread_t signal_thread;
 
 
 extern drizzled::plugin::StorageEngine *myisam_engine;

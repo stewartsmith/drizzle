@@ -27,6 +27,7 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
 
 using namespace drizzled;
 

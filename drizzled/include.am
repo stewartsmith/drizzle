@@ -294,6 +294,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_applier.h \
 		drizzled/plugin/transaction_reader.h \
 		drizzled/plugin/transaction_replicator.h \
+		drizzled/pthread_globals.h \
 		drizzled/probes.h \
 		drizzled/query_id.h \
 		drizzled/records.h \

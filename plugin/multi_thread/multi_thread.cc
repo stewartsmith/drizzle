@@ -15,6 +15,7 @@
 
 #include <drizzled/server_includes.h>
 #include <plugin/multi_thread/multi_thread.h>
+#include "drizzled/pthread_globals.h"
 
 using namespace std;
 using namespace drizzled;

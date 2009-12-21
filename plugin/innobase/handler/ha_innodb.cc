@@ -83,6 +83,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/pthread_globals.h"
 
 /** @file ha_innodb.cc */
 

@@ -49,6 +49,7 @@
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
 
 
 using namespace std;

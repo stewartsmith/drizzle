@@ -39,6 +39,7 @@
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/library.h"
 #include "drizzled/strfunc.h"
+#include "drizzled/pthread_globals.h"
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW

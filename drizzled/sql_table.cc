@@ -43,12 +43,15 @@
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
 
 #include <algorithm>
 #include <sstream>
 
 using namespace std;
 using namespace drizzled;
+
+extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)

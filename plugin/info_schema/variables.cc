@@ -32,6 +32,8 @@
 
 #include <vector>
 
+#include "drizzled/pthread_globals.h"
+
 using namespace drizzled;
 using namespace std;
 

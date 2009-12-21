@@ -30,6 +30,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/join_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
 
 
 #include "helper_methods.h"

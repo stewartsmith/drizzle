@@ -21,6 +21,7 @@
 #include <drizzled/server_includes.h>
 #include <fcntl.h>
 #include <plugin/pool_of_threads/pool_of_threads.h>
+#include "drizzled/pthread_globals.h"
 
 using namespace std;
 using namespace drizzled;

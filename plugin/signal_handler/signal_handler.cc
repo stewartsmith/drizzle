@@ -19,6 +19,7 @@
 #include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/cursor.h> /* for refresh_version */
+#include "drizzled/pthread_globals.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>

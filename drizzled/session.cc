@@ -43,6 +43,8 @@
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
+#include "drizzled/pthread_globals.h"
+
 
 #include <fcntl.h>
 #include <algorithm>

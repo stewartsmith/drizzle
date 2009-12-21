@@ -44,6 +44,7 @@
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/optimizer/explain_plan.h"
+#include "drizzled/pthread_globals.h"
 
 #include <bitset>
 #include <algorithm>

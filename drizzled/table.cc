@@ -55,6 +55,8 @@
 using namespace std;
 using namespace drizzled;
 
+extern pid_t current_pid;
+
 /* Functions defined in this cursor */
 
 void open_table_error(TableShare *share, int error, int db_errno,
