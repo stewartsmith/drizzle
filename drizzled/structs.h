@@ -55,8 +55,8 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
 
 typedef struct st_key_part_info {	/* Info about a key part */
   Field *field;
-  uint	offset;				/* offset in record (from 0) */
-  uint	null_offset;			/* Offset to null_bit in record */
+  unsigned int	offset;				/* offset in record (from 0) */
+  unsigned int	null_offset;			/* Offset to null_bit in record */
   /* Length of key part in bytes, excluding NULL flag and length bytes */
   uint16_t length;
   /*
@@ -77,12 +77,12 @@ typedef struct st_key_part_info {	/* Info about a key part */
 
 
 typedef struct st_key {
-  uint	key_length;			/* Tot length of key */
+  unsigned int	key_length;		/* Tot length of key */
   enum  ha_key_alg algorithm;
-  ulong flags;                          /* dupp key and pack flags */
-  uint	key_parts;			/* How many key_parts */
+  unsigned long flags;			/* dupp key and pack flags */
+  unsigned int key_parts;		/* How many key_parts */
   uint32_t  extra_length;
-  uint	usable_key_parts;		/* Should normally be = key_parts */
+  unsigned int usable_key_parts;	/* Should normally be = key_parts */
   uint32_t  block_size;
   KEY_PART_INFO *key_part;
   char	*name;				/* Name of key */

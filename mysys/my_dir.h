@@ -42,7 +42,7 @@ typedef struct st_my_dir	/* Struct returned from my_dir */
     we don't want to change code that uses my_dir.
   */
   struct fileinfo	*dir_entry;
-  uint			number_off_files;
+  unsigned int		number_off_files;
 } MY_DIR;
 
 extern MY_DIR *my_dir(const char *path, myf MyFlags);
