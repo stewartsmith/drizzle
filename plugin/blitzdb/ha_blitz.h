@@ -105,7 +105,8 @@ public:
   char *get_row(const char *key, const size_t klen, int *value_len);
   char *next_key_and_row(const char *key, const size_t klen,
                          int *next_key_len, const char **value,
-                         int *value_length);
+                         int *value_len);
+  char *first_row(int *row_len);
 
   /* DATA DICTIONARY WRITE RELATED */
   uint64_t next_hidden_row_id(void);
@@ -173,6 +174,7 @@ private:
   bool table_scan;                       /* Whether a table scan is occuring */
   bool thread_locked;                    /* Whether the thread is locked */
   uint32_t sql_command_type;             /* Type of SQL command to process */
+  uint32_t current_index;                /* Index Number to work with */
 
   /* KEY GENERATION SPECIFIC VARIABLES */
   char primary_key_buffer[BLITZ_MAX_KEY_LENGTH];
@@ -206,22 +208,28 @@ public:
   int close(void);
   int info(uint32_t flag);
 
+  /* TABLE SCANNER RELATED FUNCTIONS */
   int rnd_init(bool scan);
   int rnd_next(unsigned char *buf);
-  int rnd_end();
+  int rnd_end(void);
   int rnd_pos(unsigned char *buf, unsigned char *pos);
 
   void position(const unsigned char *record);
 
+  /* INDEX RELATED FUNCTIONS */
+  int index_init(uint32_t key_num, bool sorted);
+  int index_first(unsigned char *buf);
+  int index_end(void);
+
+  /* UPDATE RELATED FUNCTIONS */
   int write_row(unsigned char *buf);
   int update_row(const unsigned char *old_data, unsigned char *new_data);
   int delete_row(const unsigned char *buf);
   int delete_all_rows(void);
 
+  /* BLITZDB THREAD SPECIFIC FUNCTIONS */
   int critical_section_enter();
   int critical_section_exit();
-
-  /* BLITZDB THREAD SPECIFIC FUNCTIONS */
   uint32_t max_row_length(void);
   size_t generate_table_key(void);
   size_t pack_index_key(char *pack_to, int key_num);

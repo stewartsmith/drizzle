@@ -335,6 +335,30 @@ void ha_blitz::position(const unsigned char *) {
          updateable_key_length);
 }
 
+int ha_blitz::index_init(uint32_t key_num, bool) {
+  current_index = key_num;
+  return 0;
+}
+
+int ha_blitz::index_first(unsigned char *buf) {
+  if (current_index == table->s->primary_key) {
+    int length;
+    char *first_row = share->dict.first_row(&length);
+
+    if (first_row == NULL)
+      return HA_ERR_KEY_NOT_FOUND;
+
+    memcpy((char *)buf, first_row, length);
+    free(first_row);
+    return 0;
+  }
+  return HA_ERR_UNSUPPORTED;
+}
+
+int ha_blitz::index_end(void) {
+  return 0;
+}
+
 int ha_blitz::write_row(unsigned char *drizzle_row) {
   size_t row_length = max_row_length();
   unsigned char *row_buf = get_pack_buffer(row_length);
