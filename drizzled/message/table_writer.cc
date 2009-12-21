@@ -54,7 +54,6 @@ static void fill_engine(message::Table::StorageEngine *engine)
     option= engine->add_option();
     option->set_option_name(option_names[x]);
     option->set_option_value(option_values[x]);
-    option->set_option_type(message::Table::StorageEngine::EngineOption::STRING);
   }
 }
 
