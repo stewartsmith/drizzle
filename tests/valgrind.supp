@@ -697,6 +697,80 @@
 }
 
 {
+   InnoDB Garbage
+   Memcheck:Value8
+   ...
+   fun:ut_print_buf
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN6Cursor12ha_write_rowEPh
+   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
+   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZL21mysql_execute_commandP7Session
+}
+
+{
+   More InnoDB Garbage
+   Memcheck:Cond
+   ...
+   fun:ut_print_buf
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN6Cursor12ha_write_rowEPh
+   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
+   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZL21mysql_execute_commandP7Session
+   fun:_ZL11mysql_parseP7SessionPKcjPS2_
+}
+
+{
+   InnoDB Craptasticness
+   Memcheck:Value8
+   ...
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN6Cursor12ha_write_rowEPh
+   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
+   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZL21mysql_execute_commandP7Session
+   fun:_ZL11mysql_parseP7SessionPKcjPS2_
+   fun:_Z16dispatch_command19enum_server_commandP7SessionPcj
+   fun:_ZN7Session16executeStatementEv
+}
+
+{
+   pthread thing
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:pthread_cancel_init
+   fun:_Unwind_ForcedUnwind
+   fun:__pthread_unwind
+   fun:pthread_exit
+   ...
+   fun:start_thread
+   fun:clone
+}
+
+
+{
    mem_comm_pool static initialization
    Memcheck:Leak
    fun:malloc
