@@ -58,6 +58,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
+
 
 #include "transaction_log.h"
 #include "background_worker.h"

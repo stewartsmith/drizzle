@@ -56,6 +56,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <drizzled/hash/crc32.h>
+#include <drizzled/errmsg_print.h>
 
 using namespace std;
 using namespace drizzled;

@@ -21,6 +21,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/listen_tcp.h>
+#include <drizzled/errmsg_print.h>
 
 #include <sys/socket.h>
 #include <fcntl.h>

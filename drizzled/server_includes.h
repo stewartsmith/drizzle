@@ -25,8 +25,5 @@
 /* Contains system-wide constants and #defines */
 #include <drizzled/definitions.h>
 
-/* Routines for printing error messages */
-#include <drizzled/errmsg_print.h>
-
 
 #endif /* DRIZZLED_SERVER_INCLUDES_H */
