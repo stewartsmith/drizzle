@@ -53,6 +53,7 @@ typedef void (*sys_set_default_func)(Session *, enum_var_type);
 typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
 static const std::vector<std::string> empty_aliases;
+extern struct system_variables max_system_variables;
 
 struct sys_var_chain
 {

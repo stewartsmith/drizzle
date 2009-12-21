@@ -89,8 +89,6 @@ extern pthread_cond_t COND_refresh;
 extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
-extern struct system_variables max_system_variables;
-extern struct system_status_var global_status_var;
 
 extern Table *unused_tables;
 

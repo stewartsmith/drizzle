@@ -54,7 +54,10 @@ typedef class Item COND;
 
 class NormalisedDatabaseName;
 
+
 typedef struct system_status_var STATUS_VAR;
+
+extern STATUS_VAR global_status_var;
 
 typedef struct st_lookup_field_values
 {
