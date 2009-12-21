@@ -36,7 +36,6 @@
 
 #include <string>
 #include <drizzled/function/str/strfunc.h>
-#include "config.h"
 #include <drizzled/item/func.h>
 
 /* implements memc_servers_set */

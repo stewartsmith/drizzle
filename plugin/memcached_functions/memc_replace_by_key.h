@@ -33,7 +33,6 @@
 #ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_REPLACE_BY_KEY_H
 #define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_REPLACE_BY_KEY_H
 
-#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
 #include <string>

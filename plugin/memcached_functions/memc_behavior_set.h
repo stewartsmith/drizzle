@@ -32,7 +32,6 @@
 #ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H
 #define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H
 
-#include "config.h"
 #include <drizzled/item/func.h>
 
 #include <libmemcached/memcached.h>

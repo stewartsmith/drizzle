@@ -33,7 +33,6 @@
 #ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DECREMENT_H
 #define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DECREMENT_H
 
-#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 
 /* implements memc_decrement */

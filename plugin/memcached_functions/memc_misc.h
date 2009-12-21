@@ -32,7 +32,6 @@
 #ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_MISC_H
 #define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_MISC_H
 
-#include "config.h"
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
