@@ -186,10 +186,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/function/units.h \
 		drizzled/function/user_var_as_out_param.h \
 		drizzled/function_hash.h \
+		drizzled/gettext.h \
+		drizzled/global_charset_info.h \
 		drizzled/ha_statistics.h \
 		drizzled/ha_trx_info.h \
 		drizzled/cursor.h \
 		drizzled/handler_structs.h \
+		drizzled/hash.h \
 		drizzled/hybrid_type.h \
 		drizzled/hybrid_type_traits.h \
 		drizzled/hybrid_type_traits_decimal.h \
@@ -293,6 +296,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_applier.h \
 		drizzled/plugin/transaction_reader.h \
 		drizzled/plugin/transaction_replicator.h \
+		drizzled/pthread_globals.h \
 		drizzled/probes.h \
 		drizzled/query_id.h \
 		drizzled/records.h \
@@ -313,6 +317,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/select_to_file.h \
 		drizzled/select_union.h \
 		drizzled/session.h \
+		drizzled/session_list.h \
 		drizzled/set_var.h \
 		drizzled/show.h \
 		drizzled/sql_alloc.h \
@@ -374,6 +379,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/statement/unlock_tables.h \
 		drizzled/statement/update.h \
 		drizzled/stored_key.h \
+		drizzled/strfunc.h \
 		drizzled/structs.h \
 		drizzled/symbol_hash.h \
 		drizzled/table.h \
@@ -397,6 +403,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/utf8/checked.h \
 		drizzled/utf8/core.h \
 		drizzled/utf8/unchecked.h \
+		drizzled/version.h \
+		drizzled/visibility.h \
 		drizzled/xid.h
 
 noinst_LTLIBRARIES += \
@@ -419,13 +427,6 @@ drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_drizzled_LDFLAGS = -export-dynamic
-
-
-noinst_HEADERS += \
-		drizzled/hash.h \
-		drizzled/gettext.h \
-		drizzled/global.h \
-		drizzled/server_includes.h
 
 drizzled_drizzled_SOURCES = \
 		drizzled/alter_info.cc \
@@ -461,7 +462,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/filesort.cc \
 		drizzled/foreign_key.cc \
 		drizzled/function/additive_op.cc \
-		drizzled/function/check_reserved_words.cc \
 		drizzled/function/coercibility.cc \
 		drizzled/function/field.cc \
 		drizzled/function/find_in_set.cc \
@@ -648,6 +648,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/records.cc \
 		drizzled/replication_services.cc \
 		drizzled/session.cc \
+		drizzled/session_list.cc \
 		drizzled/set_var.cc \
 		drizzled/show.cc \
 		drizzled/sql_alloc.cc \
@@ -721,6 +722,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \
 		drizzled/user_var_entry.cc \
+		drizzled/version.cc \
 		drizzled/xid.cc
 
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
@@ -763,6 +765,7 @@ CLEANFILES += \
 		drizzled/sql_yacc.output \
 		drizzled/symbol_hash.h \
 		drizzled/symbol_hash.stamp-h \
+		drizzled/plugin/config.h \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 

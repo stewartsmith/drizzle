@@ -24,6 +24,8 @@
 
 #include "drizzled/plugin/plugin.h"
 
+class Session;
+
 namespace drizzled
 {
 namespace plugin

@@ -37,6 +37,10 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 class AlterInfo;
 class Cursor;
 
+/* Flags for conversion functions. */
+static const uint32_t FN_FROM_IS_TMP(1 << 0);
+static const uint32_t FN_TO_IS_TMP(1 << 0);
+
 namespace drizzled { namespace message { class Table; } }
 namespace drizzled { class TableIdentifier; }
 
@@ -103,5 +107,11 @@ int mysql_prepare_create_table(Session *session,
                                KEY **key_info_buffer,
                                uint32_t *key_count,
                                int select_field_count);
+
+
+/* Conversion functions */
+size_t build_tmptable_filename(char *buff, size_t bufflen);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db,
+                            const char *table_name, bool is_tmp);
 
 #endif /* DRIZZLED_SQL_TABLE_H */

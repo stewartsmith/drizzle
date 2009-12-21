@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_USER_VAR_ENTRY_H
 #define DRIZZLED_USER_VAR_ENTRY_H
 
+#include "drizzled/query_id.h"
 
 // this is needed for user_vars hash
 class user_var_entry

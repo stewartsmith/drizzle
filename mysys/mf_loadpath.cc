@@ -33,7 +33,7 @@ char * my_load_path(char * to, const char *path,
       test_if_hard_path(path))
     strcpy(buff,path);
   else if ((is_cur=(path[0] == FN_CURLIB && path[1] == FN_LIBCHAR)) ||
-	   (is_prefix(path,FN_PARENTDIR)) ||
+	   (strncmp(path,FN_PARENTDIR, strlen(FN_PARENTDIR)) == 0) ||
 	   ! own_path_prefix)
   {
     if (is_cur)

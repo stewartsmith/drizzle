@@ -21,6 +21,10 @@
 #ifndef MYSYS_DYNAMIC_ARRAY_H
 #define MYSYS_DYNAMIC_ARRAY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
@@ -53,5 +57,8 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 #define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MYSYS_DYNAMIC_ARRAY_H */

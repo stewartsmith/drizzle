@@ -15,7 +15,7 @@
 
 /* drop and alter of tables */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <plugin/myisam/myisam.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -26,6 +26,7 @@
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include "drizzled/strfunc.h"
 #include <drizzled/db.h>
 #include <drizzled/lock.h>
 #include <drizzled/unireg.h>
@@ -35,14 +36,22 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
+#include "mystrings/m_string.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
 
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 using namespace drizzled;
+
+extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)

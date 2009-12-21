@@ -21,8 +21,9 @@
  * @file Implementation of the Session class and API
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/session.h>
+#include "drizzled/session_list.h"
 #include <sys/stat.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
@@ -42,8 +43,12 @@
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
+#include "drizzled/pthread_globals.h"
 
+
+#include <fcntl.h>
 #include <algorithm>
+#include <climits>
 
 using namespace std;
 using namespace drizzled;
@@ -112,7 +117,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  File fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -146,10 +151,15 @@ const char *get_session_proc_info(Session *session)
   return session->get_proc_info();
 }
 
-extern "C"
-void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
+void **Session::getEngineData(const plugin::StorageEngine *engine)
 {
-  return (void **) &session->ha_data[engine->slot].ha_ptr;
+  return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
+}
+
+Ha_trx_info *Session::getEngineInfo(const plugin::StorageEngine *engine,
+                                    size_t index)
+{
+  return &ha_data[engine->getSlot()].ha_info[index];
 }
 
 extern "C"
@@ -612,7 +622,7 @@ bool Session::schedule()
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.push_back(this);
+  getSessionList().push_back(this);
   pthread_mutex_unlock(&LOCK_thread_count);
 
   if (scheduler->addSession(this))
@@ -1098,9 +1108,9 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
+static int create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
 {
-  File file;
+  int file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
@@ -1726,15 +1736,6 @@ extern "C" unsigned long session_get_thread_id(const Session *session)
   return (unsigned long) session->getSessionId();
 }
 
-
-extern "C"
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                const char *str, unsigned int size,
-                                int allocate_lex_string)
-{
-  return session->make_lex_string(lex_str, str, size,
-                              (bool) allocate_lex_string);
-}
 
 const struct charset_info_st *session_charset(Session *session)
 {

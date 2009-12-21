@@ -13,7 +13,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <string>
 
@@ -24,6 +24,7 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/sql_lex.h"
 #include "drizzled/sql_select.h"
+#include "drizzled/strfunc.h"
 
 using namespace std;
 

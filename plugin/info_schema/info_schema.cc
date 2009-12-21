@@ -23,7 +23,7 @@
  *   I_S plugin implementation.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 
@@ -160,6 +160,7 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "info_schema",
   "1.1",
   "Padraig O'Sullivan",

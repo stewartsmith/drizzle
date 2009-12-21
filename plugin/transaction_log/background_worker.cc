@@ -56,8 +56,10 @@
  *    building the index as it reads the log file.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
+#include <drizzled/errmsg_print.h>
+
 
 #include "transaction_log.h"
 #include "background_worker.h"
@@ -75,7 +77,7 @@ bool initTransactionLogBackgroundWorker()
   return false;
 }
 
-pthread_handler_t collectTransactionLogStats(void *)
+void *collectTransactionLogStats(void *)
 {
   /* Check to see if there is an index file on disk */
 

@@ -21,7 +21,7 @@
   This file defines all compare functions
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"
@@ -31,11 +31,12 @@
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/time_functions.h"
-
+#include <math.h>
 #include <algorithm>
 
 using namespace std;
 
+extern const double log_10[309];
 
 static Eq_creator eq_creator;
 static Ne_creator ne_creator;

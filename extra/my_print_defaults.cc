@@ -20,7 +20,7 @@
 **  Written by Monty
 */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>

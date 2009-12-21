@@ -17,6 +17,7 @@
 #define CLIENT_LINEBUFFER_H
 
 #include <vector>
+#include <sstream>
 
 class LineBuffer
 {

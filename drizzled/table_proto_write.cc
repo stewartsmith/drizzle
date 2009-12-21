@@ -13,14 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 /* For proto */
 #include <string>
 #include <fstream>
+#include <fcntl.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>

@@ -34,6 +34,10 @@
 #ifndef DRIZZLED_HASH_CRC32_H
 #define DRIZZLED_HASH_CRC32_H
 
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
 namespace drizzled
 {
 namespace hash

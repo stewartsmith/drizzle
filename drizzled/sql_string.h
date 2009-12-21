@@ -29,10 +29,14 @@
 
 #include <drizzled/common.h>
 #include <mysys/iocache.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 class String;
+
+extern String my_empty_string;
+extern const String my_null_string;
 
 #if defined(__cplusplus)
 extern "C" {

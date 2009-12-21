@@ -17,7 +17,7 @@
   Derived tables
   These were introduced by Sinisa <sinisa@mysql.com>
 */
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 
 /*

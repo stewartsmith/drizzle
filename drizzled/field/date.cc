@@ -18,13 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/field/date.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
 #include "drizzled/time_functions.h"
+
+#include <math.h>
 
 #include <sstream>
 #include <string>

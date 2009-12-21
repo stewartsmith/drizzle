@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include <plugin/information_engine/information_engine.h>
 #include <drizzled/session.h>
 
@@ -253,6 +255,7 @@ static int finalize(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "INFORMATION_ENGINE",
   "1.0",
   "Padraig O'Sullivan, Brian Aker",

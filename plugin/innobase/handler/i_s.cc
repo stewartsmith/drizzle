@@ -23,7 +23,7 @@ InnoDB INFORMATION SCHEMA tables interface to MySQL.
 Created July 18, 2007 Vasil Dimov
 *******************************************************/
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
@@ -33,6 +33,8 @@ Created July 18, 2007 Vasil Dimov
 #include <drizzled/field.h>
 #include <drizzled/table.h>
 #include <drizzled/plugin/info_schema_table.h>
+#include "drizzled/global_charset_info.h"
+
 
 #include "i_s.h"
 

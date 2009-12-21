@@ -58,7 +58,7 @@
  * );
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 
@@ -66,6 +66,9 @@
 #include "transaction_log_entry.h"
 #include "transaction_log_index.h"
 #include "info_schema.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <string>
 #include <vector>

@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define DRIZZLE_LEX 1
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <mysys/hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -37,10 +37,14 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
+#include "drizzled/session_list.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/optimizer/explain_plan.h"
+#include "drizzled/pthread_globals.h"
 
 #include <bitset>
 #include <algorithm>
@@ -1492,7 +1496,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     if ((*it)->thread_id == id)
     {

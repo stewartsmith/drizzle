@@ -21,7 +21,13 @@
   Sorts a database
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <float.h>
+
+#include <queue>
+#include <algorithm>
+
 #include "drizzled/sql_sort.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -30,9 +36,6 @@
 #include "drizzled/table_list.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
-
-#include <queue>
-#include <algorithm>
 
 using namespace std;
 using namespace drizzled;

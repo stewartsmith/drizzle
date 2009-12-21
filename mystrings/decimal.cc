@@ -97,8 +97,9 @@
       implementation-defined.
 */
 
-#include <drizzled/global.h>
+#include "config.h"
 
+#include "drizzled/definitions.h"
 #include "m_string.h"
 #include "m_ctype.h"
 #include "decimal.h"

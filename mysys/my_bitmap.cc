@@ -18,6 +18,8 @@
 #include <mystrings/m_string.h>
 #include <mysys/my_bit.h>
 
+#include <memory>
+
 using namespace std;
 
 void MyBitmap::createLastWordMask()
@@ -69,7 +71,7 @@ bool MyBitmap::init(my_bitmap_map *buf, uint32_t num_bits)
   if (! buf)
   {
     uint32_t size_in_bytes= bitmap_buffer_size(num_bits);
-    if (! (buf= new(std::nothrow) my_bitmap_map[size_in_bytes]()))
+    if (! (buf= new(nothrow) my_bitmap_map[size_in_bytes]()))
     {
       return true;
     }

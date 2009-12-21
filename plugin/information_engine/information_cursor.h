@@ -21,7 +21,6 @@
 #ifndef PLUGIN_INFORMATION_ENGINE_INFORMATION_CURSOR_H
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_CURSOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 

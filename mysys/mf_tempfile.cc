@@ -52,12 +52,12 @@ using namespace std;
 
 */
 
-File create_temp_file(char *to, const char *dir, const char *prefix,
-                      myf MyFlags)
+int create_temp_file(char *to, const char *dir, const char *prefix,
+                     myf MyFlags)
 {
-  File file= -1;
+  int file= -1;
 
-  File org_file;
+  int org_file;
   string prefix_str;
 
   prefix_str= prefix ? prefix : "tmp.";

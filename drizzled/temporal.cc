@@ -34,7 +34,7 @@
  * their single parameter.
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "mystrings/m_ctype.h"
 #include "drizzled/my_decimal.h"

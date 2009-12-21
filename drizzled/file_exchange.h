@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_FILE_EXCHANGE_H
 #define DRIZZLED_FILE_EXCHANGE_H
 
+#include "drizzled/sql_string.h"
+#include "drizzled/sql_alloc.h"
 
 static String default_line_term("\n",default_charset_info);
 static String default_escaped("\\",default_charset_info);

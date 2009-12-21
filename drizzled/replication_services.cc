@@ -50,7 +50,7 @@
  * plugins can understand.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/replication_services.h"
 #include "drizzled/plugin/transaction_replicator.h"
 #include "drizzled/plugin/transaction_applier.h"

@@ -16,12 +16,12 @@
 #ifndef MYSYS_MY_DIR_H
 #define MYSYS_MY_DIR_H
 
+#include <drizzled/definitions.h>
+#include <sys/stat.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#include <drizzled/definitions.h>
-#include <sys/stat.h>
 
 #define MY_DONT_SORT	512	/* my_lib; Don't sort files */
 #define MY_WANT_STAT	1024	/* my_lib; stat files */
@@ -42,7 +42,7 @@ typedef struct st_my_dir	/* Struct returned from my_dir */
     we don't want to change code that uses my_dir.
   */
   struct fileinfo	*dir_entry;
-  uint			number_off_files;
+  unsigned int		number_off_files;
 } MY_DIR;
 
 extern MY_DIR *my_dir(const char *path, myf MyFlags);

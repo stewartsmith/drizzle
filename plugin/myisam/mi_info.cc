@@ -16,9 +16,7 @@
 /* Return useful base information for an open table */
 
 #include "myisam_priv.h"
-#ifdef	__WIN__
 #include <sys/stat.h>
-#endif
 
 	/* Get position to last record */
 

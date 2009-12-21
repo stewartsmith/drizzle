@@ -23,17 +23,21 @@
  *   Implementation of helper methods for I_S tables.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/join_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
+
 
 #include "helper_methods.h"
 
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace std;
 using namespace drizzled;
