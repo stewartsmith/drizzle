@@ -30,6 +30,8 @@
 #include <set>
 #include <algorithm>
 
+typedef struct drizzle_lex_string LEX_STRING;
+
 extern const std::string INFORMATION_SCHEMA_NAME;
 
 namespace drizzled

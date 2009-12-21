@@ -40,7 +40,6 @@
 
 #include "drizzled/global_charset_info.h"
 
-typedef struct drizzle_lex_string LEX_STRING;
 typedef struct st_typelib TYPELIB;
 
 
@@ -53,7 +52,6 @@ class Table;
 
 
 extern char *drizzle_tmpdir;
-extern const LEX_STRING command_name[];
 extern const char *first_keyword;
 extern const char *binary_keyword;
 extern const char *in_left_expr_name;
