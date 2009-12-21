@@ -56,6 +56,8 @@ using namespace std;
 using namespace drizzled;
 
 extern pid_t current_pid;
+extern plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
 

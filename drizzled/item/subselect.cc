@@ -35,6 +35,8 @@
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
 
+extern drizzled::plugin::StorageEngine *myisam_engine;
+
 inline Item * and_items(Item* cond, Item *item)
 {
   return (cond? (new Item_cond_and(cond, item)) : item);

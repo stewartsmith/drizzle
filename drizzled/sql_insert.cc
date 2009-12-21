@@ -31,6 +31,9 @@
 
 using namespace drizzled;
 
+extern plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *myisam_engine;
+
 /*
   Check if insert fields are correct.
 

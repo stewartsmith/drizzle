@@ -41,6 +41,7 @@
 using namespace std;
 
 extern my_decimal decimal_zero;
+extern drizzled::plugin::StorageEngine *heap_engine;
 
 /**
   Prepare an aggregate function item for checking context conditions.

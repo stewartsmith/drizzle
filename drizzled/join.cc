@@ -60,6 +60,7 @@
 using namespace std;
 using namespace drizzled;
 
+extern drizzled::plugin::StorageEngine *heap_engine;
 extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */

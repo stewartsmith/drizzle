@@ -17,12 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/**
- * @file
- *
- * Various server-wide declarations and variables.
- */
-
 #ifndef DRIZZLED_SERVER_INCLUDES_H
 #define DRIZZLED_SERVER_INCLUDES_H
 
@@ -35,10 +29,6 @@
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
-
-
-namespace drizzled { namespace plugin { class StorageEngine; } }
-
 
 extern char *drizzle_tmpdir;
 extern const char *first_keyword;
@@ -74,10 +64,5 @@ extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
-
-
-extern drizzled::plugin::StorageEngine *myisam_engine;
-extern drizzled::plugin::StorageEngine *heap_engine;
-
 
 #endif /* DRIZZLED_SERVER_INCLUDES_H */

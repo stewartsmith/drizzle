@@ -69,6 +69,7 @@
 using namespace std;
 using namespace drizzled;
 
+extern plugin::StorageEngine *myisam_engine;
 
 extern struct my_option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
