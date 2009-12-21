@@ -47,6 +47,9 @@ using namespace std;
   can't normally do this the client should have a bigger max_allowed_packet.
 */
 
+  /* Constants when using compression */
+#define NET_HEADER_SIZE 4		/* standard header size */
+#define COMP_HEADER_SIZE 3		/* compression header extra size */
 
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
 const char  *not_error_sqlstate= "00000";
