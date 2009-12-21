@@ -59,11 +59,15 @@ typedef struct drizzle_lex_string LEX_STRING;
 typedef struct st_typelib TYPELIB;
 
 
-/* information schema */
-extern const std::string INFORMATION_SCHEMA_NAME;
-
+namespace drizzled { namespace plugin { class StorageEngine; } }
+class TableList;
+class TableShare;
+class DRIZZLE_ERROR;
 class Session;
 class Table;
+
+/* information schema */
+extern const std::string INFORMATION_SCHEMA_NAME;
 
 extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];
@@ -124,10 +128,6 @@ extern Table *unused_tables;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 
-namespace drizzled { namespace plugin { class StorageEngine; } }
-class TableList;
-class TableShare;
-class DRIZZLE_ERROR;
 
 extern drizzled::plugin::StorageEngine *myisam_engine;
 extern drizzled::plugin::StorageEngine *heap_engine;
@@ -136,11 +136,6 @@ extern SHOW_COMP_OPTION have_symlink;
 
 extern pthread_t signal_thread;
 
-
-
-int rename_file_ext(const char * from,const char * to,const char * ext);
-bool check_column_name(const char *name);
-bool check_table_name(const char *name, uint32_t length);
 
 
 

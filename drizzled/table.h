@@ -550,4 +550,9 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
+
+int rename_file_ext(const char * from,const char * to,const char * ext);
+bool check_column_name(const char *name);
+bool check_table_name(const char *name, uint32_t length);
+
 #endif /* DRIZZLED_TABLE_H */
