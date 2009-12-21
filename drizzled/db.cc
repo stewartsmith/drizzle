@@ -34,6 +34,7 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 using namespace std;
 using namespace drizzled;

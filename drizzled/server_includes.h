@@ -50,7 +50,6 @@
 #include "drizzled/global_charset_info.h"
 
 #include <cstdlib>
-#include <string>
 
 typedef struct drizzle_lex_string LEX_STRING;
 typedef struct st_typelib TYPELIB;
@@ -63,8 +62,6 @@ class DRIZZLE_ERROR;
 class Session;
 class Table;
 
-/* information schema */
-extern const std::string INFORMATION_SCHEMA_NAME;
 
 extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];

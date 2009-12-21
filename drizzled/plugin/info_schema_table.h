@@ -30,6 +30,8 @@
 #include <set>
 #include <algorithm>
 
+extern const std::string INFORMATION_SCHEMA_NAME;
+
 namespace drizzled
 {
 namespace plugin

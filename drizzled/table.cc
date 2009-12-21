@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
+#include "drizzled/plugin/info_schema_table.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
