@@ -28,6 +28,9 @@ static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
 extern int cleanup_done;
 extern "C" pthread_handler_t signal_hand(void *);
+extern bool volatile abort_loop;
+extern bool volatile shutdown_in_progress;
+extern char pidfile_name[FN_REFLEN];
 
 extern std::bitset<12> test_flags;
 

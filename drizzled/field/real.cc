@@ -29,6 +29,8 @@
 
 using namespace std;
 
+extern const double log_10[309];
+
 /*
   Floating-point numbers
  */

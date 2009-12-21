@@ -27,6 +27,9 @@
 
 #include "drizzled/function/math/round.h"
 
+extern const double log_10[309];
+
+
 using namespace std;
 
 void Item_func_round::fix_length_and_dec()

@@ -18,9 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/str/set_collation.h>
 #include <drizzled/error.h>
+
+static const char *binary_keyword= "BINARY";
 
 String *Item_func_set_collation::val_str(String *str)
 {

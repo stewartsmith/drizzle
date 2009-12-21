@@ -55,6 +55,8 @@
 using namespace std;
 using namespace drizzled;
 
+extern bool volatile shutdown_in_progress;
+
 bool drizzle_rm_tmp_tables();
 
 /**

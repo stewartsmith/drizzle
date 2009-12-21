@@ -36,6 +36,7 @@
 
 using namespace std;
 
+extern const double log_10[309];
 
 static Eq_creator eq_creator;
 static Ne_creator ne_creator;

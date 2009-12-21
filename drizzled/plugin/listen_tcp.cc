@@ -28,6 +28,9 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
+extern uint32_t back_log;
+extern uint32_t drizzled_bind_timeout;
+
 using namespace std;
 
 namespace drizzled

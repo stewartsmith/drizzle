@@ -54,6 +54,36 @@ typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
 static const std::vector<std::string> empty_aliases;
 extern struct system_variables max_system_variables;
+extern size_t table_def_size;
+
+extern char *drizzle_tmpdir;
+extern const char *first_keyword;
+extern const char *in_left_expr_name;
+extern const char *in_additional_cond;
+extern const char *in_having_cond;
+extern char language[FN_REFLEN];
+extern char glob_hostname[FN_REFLEN];
+extern char drizzle_home[FN_REFLEN];
+extern char pidfile_name[FN_REFLEN];
+extern char system_time_zone[30];
+extern char *opt_tc_log_file;
+extern uint64_t session_startup_options;
+extern uint32_t global_thread_id;
+extern uint64_t aborted_threads;
+extern uint64_t aborted_connects;
+extern uint64_t table_cache_size;
+extern uint64_t max_connect_errors;
+extern uint32_t back_log;
+extern uint32_t ha_open_options;
+extern char *drizzled_bind_host;
+extern uint32_t dropping_tables;
+extern bool opt_endinfo;
+extern bool locked_in_memory;
+extern uint32_t volatile thread_running;
+extern uint32_t volatile global_read_lock;
+extern bool opt_readonly;
+extern char* opt_secure_file_priv;
+extern char *default_tz_name;
 
 struct sys_var_chain
 {

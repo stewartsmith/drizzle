@@ -188,7 +188,6 @@ static TYPELIB tc_heuristic_recover_typelib=
 };
 
 const char *first_keyword= "first";
-const char *binary_keyword= "BINARY";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
@@ -256,6 +255,8 @@ uint64_t aborted_connects;
 uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
+
+extern const double log_10[309];
 
 const double log_10[] = {
   1e000, 1e001, 1e002, 1e003, 1e004, 1e005, 1e006, 1e007, 1e008, 1e009,
