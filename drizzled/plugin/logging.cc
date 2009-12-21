@@ -24,6 +24,8 @@
 
 #include <vector>
 
+class Session;
+
 using namespace std;
 
 namespace drizzled

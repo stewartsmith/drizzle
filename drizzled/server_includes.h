@@ -40,14 +40,8 @@
 
 #include "drizzled/global_charset_info.h"
 
-typedef struct st_typelib TYPELIB;
-
 
 namespace drizzled { namespace plugin { class StorageEngine; } }
-class TableList;
-class TableShare;
-class DRIZZLE_ERROR;
-class Session;
 class Table;
 
 

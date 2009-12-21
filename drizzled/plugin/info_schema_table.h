@@ -30,6 +30,9 @@
 #include <set>
 #include <algorithm>
 
+class Session;
+class TableList;
+
 typedef struct drizzle_lex_string LEX_STRING;
 
 extern const std::string INFORMATION_SCHEMA_NAME;
