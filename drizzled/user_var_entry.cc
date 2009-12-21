@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
-#include CSTDINT_H
+#include "mystrings/m_string.h"
 
 /** Get the value of a variable as a double. */
 

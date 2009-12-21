@@ -18,10 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/error.h>
 #include <drizzled/current_session.h>
+#include "mystrings/m_string.h"
 
 
 String *Item_decimal_typecast::val_str(String *str)

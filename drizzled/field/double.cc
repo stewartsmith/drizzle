@@ -22,14 +22,15 @@
 #include <drizzled/server_includes.h>
 
 #include <float.h>
+#include <math.h>
+
+#include <algorithm>
+
 #include <drizzled/field/double.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-
-#include <math.h>
-
-#include <algorithm>
+#include "mystrings/m_string.h"
 
 using namespace std;
 

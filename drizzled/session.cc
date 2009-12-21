@@ -46,6 +46,7 @@
 
 #include <fcntl.h>
 #include <algorithm>
+#include <climits>
 
 using namespace std;
 using namespace drizzled;

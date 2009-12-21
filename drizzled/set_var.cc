@@ -60,6 +60,7 @@
 #include <drizzled/plugin.h>
 #include "drizzled/version.h"
 #include "drizzled/strfunc.h"
+#include "mystrings/m_string.h"
 
 #include <map>
 #include <algorithm>

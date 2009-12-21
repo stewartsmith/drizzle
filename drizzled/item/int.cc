@@ -18,8 +18,8 @@
  */
 
 #include <drizzled/server_includes.h>
-#include CSTDINT_H
 #include <drizzled/item/int.h>
+#include "mystrings/m_string.h"
 
 /**
   Create an item from a string we KNOW points to a valid int64_t

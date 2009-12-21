@@ -34,8 +34,6 @@
 /* Lots of system-wide struct definitions like IO_CACHE,
    prototypes for all my_* functions */
 #include <mysys/my_sys.h>
-/* Custom C string functions */
-#include <mystrings/m_string.h>
 
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>

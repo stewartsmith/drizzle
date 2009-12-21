@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/format.h>
 
-#include CSTDINT_H
 #include <limits>
 
 using namespace std;

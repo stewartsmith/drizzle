@@ -36,6 +36,7 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
+#include "mystrings/m_string.h"
 
 #include "drizzled/statement/alter_table.h"
 #include "drizzled/plugin/info_schema_table.h"

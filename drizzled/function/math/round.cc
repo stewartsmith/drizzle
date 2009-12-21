@@ -17,12 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "drizzled/server_includes.h"
+
 #include <math.h>
-#include <drizzled/function/math/round.h>
+#include <limits.h>
 
 #include <limits>
 #include <algorithm>
+
+#include "drizzled/function/math/round.h"
 
 using namespace std;
 

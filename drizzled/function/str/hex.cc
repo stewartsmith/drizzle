@@ -19,8 +19,8 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/util/convert.h>
-#include CSTDINT_H
 #include <drizzled/function/str/hex.h>
+#include "mystrings/m_string.h"
 
 /**
   convert a hex digit into number.

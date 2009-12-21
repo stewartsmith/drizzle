@@ -18,10 +18,10 @@
  */
 
 #include "drizzled/server_includes.h"
-#include CSTDINT_H
 #include "drizzled/function/time/date_format.h"
 #include "drizzled/session.h"
 #include "drizzled/time_functions.h"
+#include "mystrings/m_string.h"
 
 #include <algorithm>
 

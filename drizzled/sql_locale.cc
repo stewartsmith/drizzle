@@ -18,6 +18,7 @@
   Sponsored for subset of LC_TIME support,  WorkLog entry 2928, -- Josh Chamas
 */
 #include <drizzled/server_includes.h>
+#include <cassert>
 #include <drizzled/sql_locale.h>
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/

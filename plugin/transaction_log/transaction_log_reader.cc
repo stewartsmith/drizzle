@@ -45,6 +45,8 @@
 
 #include <fcntl.h>
 
+#include <climits>
+
 #include "transaction_log_reader.h"
 
 #include <drizzled/gettext.h>
