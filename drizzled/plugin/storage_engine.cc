@@ -33,7 +33,7 @@
 
 #include "mysys/my_dir.h"
 #include "mysys/hash.h"
-#include "mysys/cached_directory.h"
+#include "drizzled/cached_directory.h"
 
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>

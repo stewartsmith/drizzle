@@ -43,7 +43,7 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/listen.h>
-#include <mysys/cached_directory.h>
+#include "drizzled/cached_directory.h"
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
 #include "drizzled/memory/multi_malloc.h"

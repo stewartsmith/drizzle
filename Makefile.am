@@ -97,7 +97,6 @@ noinst_HEADERS+=	\
 		mystrings/t_ctype.h \
 		mystrings/utf8.h \
 		mysys/aio_result.h \
-		mysys/cached_directory.h \
 		mysys/drizzle_time.h \
 		mysys/hash.h \
 		mysys/iocache.h \
@@ -130,8 +129,9 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/longlong2str.cc \
 		mystrings/my_strtoll10.cc
 
+mysys_libmysys_la_LIBADD= drizzled/libcached_directory.la
+mysys_libmysys_la_DEPENDENCIES= drizzled/libcached_directory.la
 mysys_libmysys_la_SOURCES= \
-		mysys/cached_directory.cc \
 		mysys/charset-def.cc \
 		mysys/charset.cc \
 		mysys/checksum.cc \

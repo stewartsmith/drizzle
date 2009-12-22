@@ -145,7 +145,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
   int doDropTable(Session&, const string table_path);
   TinaShare *findOpenTable(const string table_name);

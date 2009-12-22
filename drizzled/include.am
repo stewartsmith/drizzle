@@ -30,6 +30,9 @@ DTRACEFILES = drizzled/.libs/cursor.o \
 	      drizzled/statement/insert.o \
 	      drizzled/statement/insert_select.o
 
+noinst_LTLIBRARIES+= drizzled/libcached_directory.la
+drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc
+
 drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/alter_column.h \
@@ -40,6 +43,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/atomic/sun_studio.h \
 		drizzled/atomics.h \
 		drizzled/base.h \
+		drizzled/cached_directory.h \
 		drizzled/cached_item.h \
 		drizzled/calendar.h \
 		drizzled/check_stack_overrun.h \
@@ -416,13 +420,14 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
-		 $(top_builddir)/drizzled/hash/libhash.la \
-		 $(top_builddir)/drizzled/util/libutil.la \
-		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(pandora_plugin_libs) \
-		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
+		drizzled/hash/libhash.la \
+		drizzled/util/libutil.la \
+		drizzled/message/libdrizzledmessage.la \
+		drizzled/libcached_directory.la \
+		$(pandora_plugin_libs) \
+		$(LDADD) $(LIBUUID) gnulib/libgnu.la \
+		$(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
+		$(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 

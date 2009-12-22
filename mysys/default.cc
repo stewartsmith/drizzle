@@ -39,7 +39,7 @@
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
 
-#include <mysys/cached_directory.h>
+#include "drizzled/cached_directory.h"
 
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
@@ -675,7 +675,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
                                 ptr, name, line)))
 	  goto err;
 
-        CachedDirectory dir_cache(ptr);
+        drizzled::CachedDirectory dir_cache(ptr);
 
         if (dir_cache.fail())
         {
@@ -690,12 +690,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
           goto err;
         }
 
-        CachedDirectory::Entries files= dir_cache.getEntries();
-        CachedDirectory::Entries::iterator file_iter= files.begin();
+        drizzled::CachedDirectory::Entries files= dir_cache.getEntries();
+        drizzled::CachedDirectory::Entries::iterator file_iter= files.begin();
 
         while (file_iter != files.end())
         {
-          CachedDirectory::Entry *entry= *file_iter;
+          drizzled::CachedDirectory::Entry *entry= *file_iter;
           ext= fn_ext(entry->filename.c_str());
 
           /* check extension */

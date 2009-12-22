@@ -163,7 +163,7 @@ public:
     return information_exts;
   }
 
-  void doGetTableNames(CachedDirectory&, 
+  void doGetTableNames(drizzled::CachedDirectory&, 
                        std::string &db, 
                        std::set<std::string> &set_of_names);
 

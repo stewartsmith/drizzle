@@ -166,7 +166,7 @@ int InformationEngine::doGetTableDefinition(Session &,
 }
 
 
-void InformationEngine::doGetTableNames(CachedDirectory&, 
+void InformationEngine::doGetTableNames(drizzled::CachedDirectory&, 
                                         string &db, 
                                         set<string> &set_of_names)
 {

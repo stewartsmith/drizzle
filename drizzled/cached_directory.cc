@@ -29,10 +29,13 @@
 
 #include <strings.h>
 #include <limits.h>
-#include "cached_directory.h"
+
+#include "drizzled/cached_directory.h"
 
 using namespace std;
 
+namespace drizzled
+{
 
 CachedDirectory::CachedDirectory() : 
   error(0)
@@ -131,3 +134,5 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
 
   return error == 0;
 }
+
+} /* namespace drizzled */

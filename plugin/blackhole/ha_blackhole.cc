@@ -87,14 +87,15 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       string&, set<string>& set_of_names)
   {
-    CachedDirectory::Entries entries= directory.getEntries();
+    drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
+    for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
-      CachedDirectory::Entry *entry= *entry_iter;
+      drizzled::CachedDirectory::Entry *entry= *entry_iter;
       string *filename= &entry->filename;
 
       assert(filename->size());

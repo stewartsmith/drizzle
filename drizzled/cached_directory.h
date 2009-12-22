@@ -25,17 +25,24 @@
  *   Defines the interface to the CachedDirectory class.
  */
 
-#ifndef MYSYS_CACHED_DIRECTORY_H
-#define MYSYS_CACHED_DIRECTORY_H
+#ifndef DRIZZLED_CACHED_DIRECTORY_H
+#define DRIZZLED_CACHED_DIRECTORY_H
+
+#include <dirent.h>
 
 #include <iostream>
 #include <vector>
 #include <set>
 #include <string>
-#include <dirent.h>
-#include <stdlib.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cerrno>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+namespace drizzled
+{
 
 /**
  * A utility class to handle processing the entries/files within a directory.
@@ -143,4 +150,10 @@ private:
   bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
 };
 
-#endif /* MYSYS_CACHED_DIRECTORY_H */
+} /* namespace drizzled */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* DRIZZLED_CACHED_DIRECTORY_H */

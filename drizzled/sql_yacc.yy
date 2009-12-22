@@ -86,7 +86,7 @@
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/statement.h>
