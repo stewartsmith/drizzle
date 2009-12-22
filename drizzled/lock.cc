@@ -76,7 +76,7 @@
 #include <fcntl.h>
 #include <drizzled/error.h>
 #include <mysys/hash.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>

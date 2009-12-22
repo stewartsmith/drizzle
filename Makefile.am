@@ -98,7 +98,6 @@ noinst_HEADERS+=	\
 		mystrings/utf8.h \
 		mysys/aio_result.h \
 		mysys/cached_directory.h \
-		mysys/definitions.h \
 		mysys/drizzle_time.h \
 		mysys/hash.h \
 		mysys/iocache.h \
@@ -114,7 +113,6 @@ noinst_HEADERS+=	\
 		mysys/my_tree.h \
 		mysys/mysys_err.h \
 		mysys/mysys_priv.h \
-		mysys/thr_lock.h \
 		mysys/typelib.h
 
 mystrings_libmystrings_la_SOURCES= \
@@ -182,7 +180,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_tree.cc \
 		mysys/my_write.cc \
 		mysys/ptr_cmp.cc \
-		mysys/thr_lock.cc \
 		mysys/typelib.cc
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc

@@ -391,6 +391,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/temporal.h \
 		drizzled/temporal_format.h \
 		drizzled/temporal_interval.h \
+		drizzled/thr_lock.h \
 		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
 		drizzled/tzfile.h \
@@ -717,6 +718,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/temporal.cc \
 		drizzled/temporal_format.cc \
 		drizzled/temporal_interval.cc \
+		drizzled/thr_lock.cc \
 		drizzled/time_functions.cc \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \

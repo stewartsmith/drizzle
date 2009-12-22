@@ -13,17 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* For use with thr_lock:s */
+/* For use with thr_locks */
 
-#ifndef MYSYS_THR_LOCK_H
-#define MYSYS_THR_LOCK_H
+#ifndef DRIZZLED_THR_LOCK_H
+#define DRIZZLED_THR_LOCK_H
+
+#include <pthread.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#include <mysys/my_pthread.h>
-#include <mysys/definitions.h>
 
 struct st_thr_lock;
 extern uint32_t locks_immediate,locks_waited ;
@@ -34,6 +33,44 @@ extern uint64_t max_write_lock_count;
 extern uint64_t table_lock_wait_timeout;
 extern bool thr_lock_inited;
 
+
+enum thr_lock_type { TL_IGNORE=-1,
+                     /* UNLOCK ANY LOCK */
+                     TL_UNLOCK,
+                     /* Read lock */
+                     TL_READ,
+                     TL_READ_WITH_SHARED_LOCKS,
+                     /* READ, Don't allow concurrent insert */
+                     TL_READ_NO_INSERT,
+                     /*
+                       Write lock, but allow other threads to read / write.
+                       Used by BDB tables in MySQL to mark that someone is
+                       reading/writing to the table.
+                     */
+                     TL_WRITE_ALLOW_WRITE,
+                     /*
+                       Write lock, but allow other threads to read.
+                       Used by ALTER TABLE in MySQL to allow readers
+                       to use the table until ALTER TABLE is finished.
+                     */
+                     TL_WRITE_ALLOW_READ,
+                     /*
+                       WRITE lock used by concurrent insert. Will allow
+                       READ, if one could use concurrent insert on table.
+                     */
+                     TL_WRITE_CONCURRENT_INSERT,
+                     /*
+                       parser only! Late bound low_priority flag.
+                       At open_tables() becomes thd->update_lock_default.
+                     */
+                     TL_WRITE_DEFAULT,
+                     /* Normal WRITE lock */
+                     TL_WRITE,
+                     /* Abort new lock request with an error */
+                     TL_WRITE_ONLY};
+
+enum enum_thr_lock_result { THR_LOCK_SUCCESS= 0, THR_LOCK_ABORTED= 1,
+                            THR_LOCK_WAIT_TIMEOUT= 2, THR_LOCK_DEADLOCK= 3 };
 /*
   A description of the thread which owns the lock. The address
   of an instance of this structure is used to uniquely identify the thread.
@@ -42,7 +79,7 @@ extern bool thr_lock_inited;
 typedef struct st_thr_lock_info
 {
   pthread_t thread;
-  my_thread_id thread_id;
+  uint64_t thread_id;
   uint32_t n_cursors;
 } THR_LOCK_INFO;
 
@@ -99,8 +136,8 @@ enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);
 void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);
 void thr_abort_locks(THR_LOCK *lock);
-bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread);
+bool thr_abort_locks_for_thread(THR_LOCK *lock, uint64_t thread);
 #ifdef	__cplusplus
 }
 #endif
-#endif /* MYSYS_THR_LOCK_H */
+#endif /* DRIZZLED_THR_LOCK_H */

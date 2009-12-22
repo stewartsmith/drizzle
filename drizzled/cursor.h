@@ -26,7 +26,7 @@
 
 /* Definitions for parameters to do with Cursor-routines */
 
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>

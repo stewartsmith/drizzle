@@ -26,7 +26,7 @@ extern "C" {
 #include <drizzled/base.h>
 #include <drizzled/common.h>
 #include <mysys/my_pthread.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
 #include <mysys/my_tree.h>
