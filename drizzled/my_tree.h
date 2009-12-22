@@ -13,27 +13,25 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef MYSYS_MY_TREE_H
-#define MYSYS_MY_TREE_H
+#ifndef DRIZZLED_MY_TREE_H
+#define DRIZZLED_MY_TREE_H
 
-#include <drizzled/base.h>		/* get 'enum ha_rkey_function' */
-#include <mysys/my_sys.h>
+#include <unistd.h>
+
+#include "drizzled/base.h"		/* get 'enum ha_rkey_function' */
 #include "drizzled/qsort_cmp.h"
+#include "drizzled/memory/root.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
+typedef struct st_mem_root MEM_ROOT;
+
 /* Worst case tree is half full. This gives use 2^(MAX_TREE_HEIGHT/2) leafs */
-#define MAX_TREE_HEIGHT	64
+static const int MAX_TREE_HEIGHT= 64;
 
-#define ELEMENT_KEY(tree,element)\
-(tree->offset_to_key ? (void*)((unsigned char*) element+tree->offset_to_key) :\
-			*((void**) (element+1)))
-
-#define tree_set_pointer(element,ptr) *((unsigned char **) (element+1))=((unsigned char*) (ptr))
-
-#define TREE_NO_DUPS 1
+static const int TREE_NO_DUPS= 1;
 
 typedef enum { left_root_right, right_root_left } TREE_WALK;
 typedef int (*tree_walk_action)(void *,uint32_t,void *);
@@ -47,7 +45,8 @@ typedef struct st_tree_element {
 	 colour:1;			/* black is marked as 1 */
 } TREE_ELEMENT;
 
-#define ELEMENT_CHILD(element, offs) (*(TREE_ELEMENT**)((char*)element + offs))
+static const int TREE_ELEMENT_EXTRA_SIZE= (sizeof(TREE_ELEMENT) + sizeof(void*));
+
 
 typedef struct st_tree {
   TREE_ELEMENT *root,null_element;
@@ -91,10 +90,9 @@ void *tree_search_next(TREE *tree, TREE_ELEMENT ***last_pos, int l_offs,
 ha_rows tree_record_pos(TREE *tree, const void *key,
                         enum ha_rkey_function search_flag, void *custom_arg);
 
-#define TREE_ELEMENT_EXTRA_SIZE (sizeof(TREE_ELEMENT) + sizeof(void*))
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif /* MYSYS_MY_TREE_H */
+#endif /* DRIZZLED_MY_TREE_H */

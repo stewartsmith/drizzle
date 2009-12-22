@@ -13,14 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/*
-   Data structures for mysys/my_alloc.c (root memory allocator)
-*/
 
-#ifndef MYSYS_MY_ALLOC_H
-#define MYSYS_MY_ALLOC_H
+#ifndef DRIZZLED_MEMORY_ROOT_H
+#define DRIZZLED_MEMORY_ROOT_H
 
 #include <stddef.h>
+
 #include <drizzled/definitions.h>
 
 #if defined(__cplusplus)
@@ -71,4 +69,4 @@ void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
 #if defined(__cplusplus)
 }
 #endif
-#endif /* MYSYS_MY_ALLOC_H */
+#endif /* DRIZZLED_MEMORY_ROOT_H */

@@ -55,13 +55,20 @@
 
 #include "config.h"
 
-#include <mystrings/m_string.h>
 #include "drizzled/my_tree.h"
+#include "mysys/my_sys.h"
+#include "mystrings/m_string.h"
+#include "drizzled/memory/root.h"
 
 #define BLACK		1
 #define RED		0
 #define DEFAULT_ALLOC_SIZE 8192
 #define DEFAULT_ALIGN_SIZE 8192
+
+#define ELEMENT_KEY(tree,element)\
+(tree->offset_to_key ? (void*)((unsigned char*) element+tree->offset_to_key) :\
+			*((void**) (element+1)))
+#define ELEMENT_CHILD(element, offs) (*(TREE_ELEMENT**)((char*)element + offs))
 
 static void delete_tree_element(TREE *,TREE_ELEMENT *);
 static int tree_walk_left_root_right(TREE *,TREE_ELEMENT *,

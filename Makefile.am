@@ -99,7 +99,6 @@ noinst_HEADERS+=	\
 		mysys/aio_result.h \
 		mysys/hash.h \
 		mysys/iocache.h \
-		mysys/my_alloc.h \
 		mysys/my_bit.h \
 		mysys/my_dir.h \
 		mysys/my_getopt.h \
@@ -125,8 +124,8 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/longlong2str.cc \
 		mystrings/my_strtoll10.cc
 
-mysys_libmysys_la_LIBADD= drizzled/libcached_directory.la
-mysys_libmysys_la_DEPENDENCIES= drizzled/libcached_directory.la
+mysys_libmysys_la_LIBADD= drizzled/libcached_directory.la drizzled/libmemory.la
+mysys_libmysys_la_DEPENDENCIES= drizzled/libcached_directory.la drizzled/libmemory.la
 mysys_libmysys_la_SOURCES= \
 		mysys/charset-def.cc \
 		mysys/charset.cc \
@@ -152,7 +151,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/mf_tempfile.cc \
 		mysys/mf_wcomp.cc \
 		mysys/my_access.cc \
-		mysys/my_alloc.cc \
 		mysys/my_bit.cc \
 		mysys/my_copy.cc \
 		mysys/my_create.cc \

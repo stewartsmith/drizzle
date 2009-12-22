@@ -17,7 +17,7 @@
 #ifndef MYSYS_TYPELIB_H
 #define MYSYS_TYPELIB_H
 
-#include "mysys/my_alloc.h"
+#include "drizzled/memory/root.h"
 
 typedef struct st_typelib {	/* Different types saved here */
   unsigned int count;		/* How many types */

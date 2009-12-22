@@ -37,7 +37,7 @@
 #include <mysys/typelib.h>
 #include <mysys/aio_result.h>
 
-#include <mysys/my_alloc.h>
+#include "drizzled/memory/root.h"
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -47,7 +47,6 @@ extern int errno;			/* declare errno */
 #endif
 #endif					/* #ifndef errno */
 
-#include <mysys/my_alloc.h>
 #include <mysys/dynamic_array.h>
 
 #include <sys/mman.h>
@@ -270,7 +269,6 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 int handle_default_option(void *in_ctx, const char *group_name,
                           const char *option);
 
-#include <mysys/my_alloc.h>
 
 
 	/* Prototypes for mysys and my_func functions */
