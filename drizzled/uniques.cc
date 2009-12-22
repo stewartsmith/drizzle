@@ -47,7 +47,7 @@ using namespace CMATH_NAMESPACE;
 using namespace std;
 
 
-int unique_write_to_file(unsigned char* key, element_count,
+int unique_write_to_file(unsigned char* key, uint32_t,
                          Unique *unique)
 {
   /*
@@ -60,7 +60,7 @@ int unique_write_to_file(unsigned char* key, element_count,
 }
 
 int unique_write_to_ptrs(unsigned char* key,
-                         element_count, Unique *unique)
+                         uint32_t, Unique *unique)
 {
   memcpy(unique->record_pointers, key, unique->size);
   unique->record_pointers+=unique->size;

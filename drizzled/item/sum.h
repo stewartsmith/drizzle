@@ -23,12 +23,13 @@
 /* classes for sum functions */
 
 
-#include <mysys/my_tree.h>
 #include <drizzled/hybrid_type.h>
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
 #include <mystrings/m_string.h>
+
+typedef struct st_tree TREE;
 
 extern "C"
 int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
@@ -970,7 +971,6 @@ class Item_func_group_concat : public Item_sum
   DRIZZLE_ERROR *warning;
   String result;
   String *separator;
-  TREE tree_base;
   TREE *tree;
 
   /**
@@ -1004,7 +1004,7 @@ class Item_func_group_concat : public Item_sum
                                                 const void* key2);
   friend int group_concat_key_cmp_with_order(void* arg, const void* key1,
 					     const void* key2);
-  friend int dump_leaf_key(unsigned char* key, element_count,
+  friend int dump_leaf_key(unsigned char* key, uint32_t,
                            Item_func_group_concat *group_concat_item);
 
 public:

@@ -36,8 +36,7 @@ extern "C" {
 #define TREE_NO_DUPS 1
 
 typedef enum { left_root_right, right_root_left } TREE_WALK;
-typedef uint32_t element_count;
-typedef int (*tree_walk_action)(void *,element_count,void *);
+typedef int (*tree_walk_action)(void *,uint32_t,void *);
 
 typedef enum { free_init, free_free, free_end } TREE_FREE;
 typedef void (*tree_element_free)(void*, TREE_FREE, void *);

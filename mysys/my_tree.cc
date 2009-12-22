@@ -511,7 +511,7 @@ static int tree_walk_left_root_right(TREE *tree, TREE_ELEMENT *element, tree_wal
     if ((error=tree_walk_left_root_right(tree,element->left,action,
 					  argument)) == 0 &&
 	(error=(*action)(ELEMENT_KEY(tree,element),
-			  (element_count) element->count,
+			  element->count,
 			  argument)) == 0)
       error=tree_walk_left_root_right(tree,element->right,action,argument);
     return error;
@@ -528,7 +528,7 @@ static int tree_walk_right_root_left(TREE *tree, TREE_ELEMENT *element, tree_wal
     if ((error=tree_walk_right_root_left(tree,element->right,action,
 					  argument)) == 0 &&
 	(error=(*action)(ELEMENT_KEY(tree,element),
-			  (element_count) element->count,
+			  element->count,
 			  argument)) == 0)
      error=tree_walk_right_root_left(tree,element->left,action,argument);
     return error;

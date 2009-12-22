@@ -67,8 +67,8 @@ public:
   void reset();
   bool walk(tree_walk_action action, void *walk_action_arg);
 
-  friend int unique_write_to_file(unsigned char* key, element_count count, Unique *unique);
-  friend int unique_write_to_ptrs(unsigned char* key, element_count count, Unique *unique);
+  friend int unique_write_to_file(unsigned char* key, uint32_t count, Unique *unique);
+  friend int unique_write_to_ptrs(unsigned char* key, uint32_t count, Unique *unique);
 };
 
 #endif /* DRIZZLED_UNIQUE_H */

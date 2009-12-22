@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_SQL_SORT_H
 #define DRIZZLED_SQL_SORT_H
 
+#include <unistd.h>
+
 #include "drizzled/base.h"
 #include "drizzled/qsort_cmp.h"
 
@@ -62,8 +64,8 @@ typedef struct st_buffpek {		/* Struktur om sorteringsbuffrarna */
   off_t file_pos;			/* Where we are in the sort file */
   unsigned char *base,*key;			/* key pointers */
   ha_rows count;			/* Number of rows in table */
-  ulong mem_count;			/* numbers of keys in memory */
-  ulong max_keys;			/* Max keys in buffert */
+  size_t mem_count;			/* numbers of keys in memory */
+  size_t max_keys;			/* Max keys in buffert */
 } BUFFPEK;
 
 struct BUFFPEK_COMPARE_CONTEXT

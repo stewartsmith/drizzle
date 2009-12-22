@@ -32,7 +32,7 @@ char *sql_strdup(const char *str);
 char *sql_strmake(const char *str, size_t len);
 void *sql_memdup(const void * ptr, size_t size);
 void sql_element_free(void *ptr);
-void sql_kill(Session *session, ulong id, bool only_kill_query);
+void sql_kill(Session *session, unsigned long id, bool only_kill_query);
 char* query_table_status(Session *session,const char *db,const char *table_name);
 
 /* mysql standard class memory allocator */
