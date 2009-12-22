@@ -256,6 +256,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/lookup_symbol.h \
 		drizzled/memory/multi_malloc.h \
 		drizzled/my_decimal.h\
+		drizzled/my_time.h \
 		drizzled/my_var.h \
 		drizzled/name_resolution_context.h \
 		drizzled/name_resolution_context_state.h \
@@ -621,6 +622,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/lookup_symbol.cc \
 		drizzled/memory/multi_malloc.cc \
 		drizzled/my_decimal.cc \
+		drizzled/my_time.cc \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
 		drizzled/optimizer/explain_plan.cc \

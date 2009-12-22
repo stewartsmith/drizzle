@@ -97,7 +97,6 @@ noinst_HEADERS+=	\
 		mystrings/t_ctype.h \
 		mystrings/utf8.h \
 		mysys/aio_result.h \
-		mysys/drizzle_time.h \
 		mysys/hash.h \
 		mysys/iocache.h \
 		mysys/my_alloc.h \
@@ -108,7 +107,6 @@ noinst_HEADERS+=	\
 		mysys/my_pthread.h \
 		mysys/my_static.h \
 		mysys/my_sys.h \
-		mysys/my_time.h \
 		mysys/my_tree.h \
 		mysys/mysys_err.h \
 		mysys/mysys_priv.h \
@@ -176,7 +174,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_symlink2.cc \
 		mysys/my_sync.cc \
 		mysys/my_thr_init.cc \
-		mysys/my_time.cc \
 		mysys/my_tree.cc \
 		mysys/my_write.cc \
 		mysys/ptr_cmp.cc \

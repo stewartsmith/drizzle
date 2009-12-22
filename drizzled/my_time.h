@@ -23,8 +23,8 @@
   declarations for my_time.c
 */
 
-#ifndef MYSYS_MY_TIME_H
-#define MYSYS_MY_TIME_H
+#ifndef DRIZZLED_MY_TIME_H
+#define DRIZZLED_MY_TIME_H
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -36,9 +36,6 @@
 #  include <time.h>
 # endif
 #endif
-
-
-#include "drizzle_time.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,6 +73,34 @@ extern unsigned char days_in_month[];
                         TIME_MAX_SECOND)
 #define TIME_MAX_VALUE_SECONDS (TIME_MAX_HOUR * 3600L + \
                                 TIME_MAX_MINUTE * 60L + TIME_MAX_SECOND)
+
+enum enum_drizzle_timestamp_type
+{
+  DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
+  DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
+};
+
+
+/*
+  Structure which is used to represent datetime values inside Drizzle.
+
+  We assume that values in this structure are normalized, i.e. year <= 9999,
+  month <= 12, day <= 31, hour <= 23, hour <= 59, hour <= 59. Many functions
+  in server such as my_system_gmt_sec() or make_time() family of functions
+  rely on this (actually now usage of make_*() family relies on a bit weaker
+  restriction). Also functions that produce DRIZZLE_TIME as result ensure this.
+  There is one exception to this rule though if this structure holds time
+  value (time_type == DRIZZLE_TIMESTAMP_TIME) days and hour member can hold
+  bigger values.
+*/
+typedef struct st_drizzle_time
+{
+  unsigned int  year, month, day, hour, minute, second;
+  unsigned long second_part;
+  bool       neg;
+  enum enum_drizzle_timestamp_type time_type;
+} DRIZZLE_TIME;
+
 
 bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
                    uint32_t flags, int *was_cut);
@@ -170,4 +195,4 @@ enum interval_type
 }
 #endif
 
-#endif /* MYSYS_MY_TIME_H */
+#endif /* DRIZZLED_MY_TIME_H */

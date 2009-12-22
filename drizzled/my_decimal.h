@@ -33,7 +33,7 @@
 #define DRIZZLED_MY_DECIMAL_H
 
 #include <mystrings/decimal.h>
-#include <mysys/my_time.h>
+#include <drizzled/my_time.h>
 #include <drizzled/definitions.h>
 #include <drizzled/sql_string.h>
 
