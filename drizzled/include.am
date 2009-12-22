@@ -661,6 +661,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/show.cc \
 		drizzled/sql_alloc.cc \
 		drizzled/sql_base.cc \
+		drizzled/sql_bitmap.cc \
 		drizzled/sql_delete.cc \
 		drizzled/sql_derived.cc \
 		drizzled/sql_error.cc \
