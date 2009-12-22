@@ -22,6 +22,7 @@
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <signal.h>
