@@ -28,8 +28,8 @@
 #endif
 
 #include <drizzled/common.h>
-#include <mysys/iocache.h>
 #include <assert.h>
+#include <mysys/iocache.h>
 #include <stdlib.h>
 #include <string.h>
 

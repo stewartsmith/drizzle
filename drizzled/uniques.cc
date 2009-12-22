@@ -56,7 +56,7 @@ int unique_write_to_file(unsigned char* key, uint32_t,
     when tree implementation chooses to store pointer to key in TREE_ELEMENT
     (instead of storing the element itself there)
   */
-  return my_b_write(&unique->file, key, unique->size) ? 1 : 0;
+  return my_b_write(unique->file, key, unique->size) ? 1 : 0;
 }
 
 int unique_write_to_ptrs(unsigned char* key,
@@ -69,9 +69,12 @@ int unique_write_to_ptrs(unsigned char* key,
 
 Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
 	       uint32_t size_arg, size_t max_in_memory_size_arg)
-  :max_in_memory_size(max_in_memory_size_arg), size(size_arg), elements(0)
+  : max_in_memory_size(max_in_memory_size_arg),
+    file(new IO_CACHE),
+    size(size_arg),
+    elements(0)
 {
-  my_b_clear(&file);
+  my_b_clear(file);
   init_tree(&tree, (ulong) (max_in_memory_size / 16), 0, size, comp_func, false,
             NULL, comp_func_fixed_arg);
   /* If the following fail's the next add will also fail */
@@ -81,7 +84,7 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
   */
   max_elements= (ulong) (max_in_memory_size /
                          ALIGN_SIZE(sizeof(TREE_ELEMENT)+size));
-  open_cached_file(&file, drizzle_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
+  open_cached_file(file, drizzle_tmpdir,TEMP_PREFIX, DISK_BUFFER_SIZE,
                    MYF(MY_WME));
 }
 
@@ -325,7 +328,7 @@ double Unique::get_use_cost(uint32_t *buffer, uint32_t nkeys, uint32_t key_size,
 
 Unique::~Unique()
 {
-  close_cached_file(&file);
+  close_cached_file(file);
   delete_tree(&tree);
   delete_dynamic(&file_ptrs);
 }
@@ -337,7 +340,7 @@ bool Unique::flush()
   BUFFPEK file_ptr;
   elements+= tree.elements_in_tree;
   file_ptr.count=tree.elements_in_tree;
-  file_ptr.file_pos=my_b_tell(&file);
+  file_ptr.file_pos=my_b_tell(file);
 
   if (tree_walk(&tree, (tree_walk_action) unique_write_to_file,
 		(void*) this, left_root_right) ||
@@ -366,7 +369,7 @@ Unique::reset()
   if (elements)
   {
     reset_dynamic(&file_ptrs);
-    reinit_io_cache(&file, WRITE_CACHE, 0L, 0, 1);
+    reinit_io_cache(file, WRITE_CACHE, 0L, 0, 1);
   }
   elements= 0;
 }
@@ -589,7 +592,7 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
   /* flush current tree to the file to have some memory for merge buffer */
   if (flush())
     return 1;
-  if (flush_io_cache(&file) || reinit_io_cache(&file, READ_CACHE, 0L, 0, 0))
+  if (flush_io_cache(file) || reinit_io_cache(file, READ_CACHE, 0L, 0, 0))
     return 1;
   if (!(merge_buffer= (unsigned char *) malloc(max_in_memory_size)))
     return 1;
@@ -597,7 +600,7 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
                   (BUFFPEK *) file_ptrs.buffer,
                   (BUFFPEK *) file_ptrs.buffer + file_ptrs.elements,
                   action, walk_action_arg,
-                  tree.compare, tree.custom_arg, &file);
+                  tree.compare, tree.custom_arg, file);
   free((char*) merge_buffer);
   return res;
 }
@@ -612,7 +615,7 @@ bool Unique::get(Table *table)
   SORTPARAM sort_param;
   table->sort.found_records=elements+tree.elements_in_tree;
 
-  if (my_b_tell(&file) == 0)
+  if (my_b_tell(file) == 0)
   {
     /* Whole tree is in memory;  Don't use disk if you don't need to */
     if ((record_pointers=table->sort.record_pointers= (unsigned char*)
@@ -661,12 +664,12 @@ bool Unique::get(Table *table)
   sort_param.cmp_context.key_compare_arg= tree.custom_arg;
 
   /* Merge the buffers to one file, removing duplicates */
-  if (merge_many_buff(&sort_param,sort_buffer,file_ptr,&maxbuffer,&file))
+  if (merge_many_buff(&sort_param,sort_buffer,file_ptr,&maxbuffer,file))
     goto err;
-  if (flush_io_cache(&file) ||
-      reinit_io_cache(&file,READ_CACHE,0L,0,0))
+  if (flush_io_cache(file) ||
+      reinit_io_cache(file,READ_CACHE,0L,0,0))
     goto err;
-  if (merge_buffers(&sort_param, &file, outfile, sort_buffer, file_ptr,
+  if (merge_buffers(&sort_param, file, outfile, sort_buffer, file_ptr,
 		    file_ptr, file_ptr+maxbuffer,0))
     goto err;
   error=0;

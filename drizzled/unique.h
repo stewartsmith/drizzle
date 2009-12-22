@@ -29,12 +29,14 @@
    memory simultaneously with iteration, so it should be ~2-3x faster.
  */
 
+typedef struct st_io_cache IO_CACHE;
+
 class Unique :public Sql_alloc
 {
   DYNAMIC_ARRAY file_ptrs;
   ulong max_elements;
   size_t max_in_memory_size;
-  IO_CACHE file;
+  IO_CACHE *file;
   TREE tree;
   unsigned char *record_pointers;
   bool flush();
