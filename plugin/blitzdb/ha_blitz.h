@@ -174,7 +174,6 @@ private:
   bool table_scan;                       /* Whether a table scan is occuring */
   bool thread_locked;                    /* Whether the thread is locked */
   uint32_t sql_command_type;             /* Type of SQL command to process */
-  uint32_t current_index;                /* Index Number to work with */
 
   /* KEY GENERATION SPECIFIC VARIABLES */
   char primary_key_buffer[BLITZ_MAX_KEY_LENGTH];
@@ -201,9 +200,9 @@ public:
   ha_blitz(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg);
   ~ha_blitz() {}
 
-  const char *index_type(uint32_t) { return "NONE"; };
+  /* TABLE CONTROL RELATED FUNCTIONS */
   const char **bas_ext() const;
-
+  const char *index_type(uint32_t key_num);
   int open(const char *name, int mode, uint32_t open_options);
   int close(void);
   int info(uint32_t flag);
@@ -219,6 +218,14 @@ public:
   /* INDEX RELATED FUNCTIONS */
   int index_init(uint32_t key_num, bool sorted);
   int index_first(unsigned char *buf);
+  //int index_last(unsigned char *buf);
+  //int index_next(unsigned char *buf);
+  //int index_prev(unsigned char *buf);
+  int index_read(unsigned char *buf, const unsigned char *key,
+                 uint32_t key_len, enum ha_rkey_function find_flag);
+  int index_read_idx(unsigned char *buf, uint32_t key_num,
+                     const unsigned char *key, uint32_t key_len,
+                     enum ha_rkey_function find_flag);
   int index_end(void);
 
   /* UPDATE RELATED FUNCTIONS */
@@ -274,7 +281,7 @@ public:
   uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LENGTH; }
 
   uint32_t index_flags(enum ha_key_alg) const {
-    return HA_ONLY_WHOLE_INDEX;
+    return (HA_ONLY_WHOLE_INDEX | HA_KEYREAD_ONLY);
   }
 };
 

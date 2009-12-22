@@ -335,13 +335,26 @@ void ha_blitz::position(const unsigned char *) {
          updateable_key_length);
 }
 
+const char *ha_blitz::index_type(uint32_t key_num) {
+  return (key_num == table->s->primary_key) ? "HASH" : "BTREE";
+}
+
 int ha_blitz::index_init(uint32_t key_num, bool) {
-  current_index = key_num;
+  active_index = key_num;
+
+  /* This is unlikely to happen but just for assurance, re-obtain
+     the lock if this thread already has a certain lock. This makes
+     sure that this thread will get the appropriate lock for the
+     current statement. */
+  if (thread_locked)
+    critical_section_exit();
+
+  critical_section_enter();
   return 0;
 }
 
 int ha_blitz::index_first(unsigned char *buf) {
-  if (current_index == table->s->primary_key) {
+  if (active_index == table->s->primary_key) {
     int length;
     char *first_row = share->dict.first_row(&length);
 
@@ -355,7 +368,58 @@ int ha_blitz::index_first(unsigned char *buf) {
   return HA_ERR_UNSUPPORTED;
 }
 
+int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
+                         uint32_t key_len, enum ha_rkey_function find_flag) {
+
+  /* In the future we will not need this condition because all access
+     to the index will be done through index_read_idx(). For now we need
+     it because we're only concerned with making PK work. */
+  if (active_index == table->s->primary_key)
+    return index_read_idx(buf, active_index, key, key_len, find_flag);
+
+  return HA_ERR_UNSUPPORTED;
+}
+
+/* This is where the read related index logic lives. It is used by both
+   BlitzDB and the Database Kernel (specifically, by the optimizer). */
+int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
+                             const unsigned char *key, uint32_t key_len,
+                             enum ha_rkey_function /*find_flag*/) {
+  char *fetched_row;
+  int fetched_len;
+
+  /* A PK in BlitzDB is the 'actual' key in the data dictionary.
+     Therefore we do a direct lookup on the data dictionary. All
+     other indexes are clustered btree. */
+  if (key_num == table->s->primary_key) {
+    fetched_row = share->dict.get_row((const char *)key, key_len, &fetched_len);
+
+    if (fetched_row == NULL)
+      return HA_ERR_KEY_NOT_FOUND;
+
+    /* Found the row. Copy it to drizzle's result buffer. TODO: Memory copy
+       operation SUCKS. Find a way to make TC use this buffer directly. */
+    memcpy(buf, fetched_row, fetched_len);
+    free(fetched_row);
+
+    /* Now we need to set the cursor to the current key. Yet another memcpy
+       that we really want to find a way to avoid. */
+    memcpy(key_buffer, key, key_len);
+    current_key = key_buffer;
+    current_key_length = key_len;
+    return 0;
+  }
+
+  return HA_ERR_UNSUPPORTED;
+}
+
 int ha_blitz::index_end(void) {
+  current_key = NULL;
+  current_key_length = 0;
+
+  if (thread_locked)
+    critical_section_exit();
+
   return 0;
 }
 
