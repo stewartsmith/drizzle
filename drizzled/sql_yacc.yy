@@ -1283,10 +1283,18 @@ create_table_options:
           create_table_option
         | create_table_option     create_table_options
         | create_table_option ',' create_table_options
+
+opt_engine_options:
+        '(' engine_options ')'
+
+engine_options:
+          /* empty */
+        | custom_engine_option
+        | custom_engine_option ',' engine_options;
         ;
 
 create_table_option:
-          ENGINE_SYM opt_equal ident_or_text
+          ENGINE_SYM opt_equal ident_or_text opt_engine_options
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             message::Table::StorageEngine *protoengine;
@@ -1341,6 +1349,36 @@ create_table_option:
             message::Table::TableOptions *tableopts;
             tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
             tableopts->set_key_block_size($3);
+          }
+        ;
+
+custom_engine_option:
+        ident_or_text
+          {
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            drizzled::message::Table::StorageEngine::EngineOption opt;
+            opt.set_option_name($1.str);
+            statement->parsed_engine_options.push_back(opt);
+          }
+        | ident_or_text equal ident_or_text
+          {
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            drizzled::message::Table::StorageEngine::EngineOption opt;
+            opt.set_option_name($1.str);
+            opt.set_option_value($3.str);
+            statement->parsed_engine_options.push_back(opt);
+          }
+        | ident_or_text equal ulonglong_num
+          {
+            char number_as_string[22];
+            snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            drizzled::message::Table::StorageEngine::EngineOption opt;
+            opt.set_option_name($1.str);
+            opt.set_option_value(number_as_string);
+
+            statement->parsed_engine_options.push_back(opt);
           }
         ;
 

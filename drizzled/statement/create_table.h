@@ -24,6 +24,8 @@
 #include "drizzled/statement.h"
 #include "drizzled/foreign_key.h"
 
+#include <list>
+
 class Session;
 
 namespace drizzled
@@ -71,6 +73,8 @@ public:
   bool is_create_table_like;
   bool is_if_not_exists;
   bool is_engine_set;
+
+  std::list<drizzled::message::Table::StorageEngine::EngineOption> parsed_engine_options;
 };
 
 } /* end namespace statement */
