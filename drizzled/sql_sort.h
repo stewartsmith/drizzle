@@ -20,13 +20,14 @@
 #ifndef DRIZZLED_SQL_SORT_H
 #define DRIZZLED_SQL_SORT_H
 
-#include "mysys/my_sys.h"
 #include "drizzled/base.h"
+#include "drizzled/qsort_cmp.h"
 
 typedef struct st_sort_field SORT_FIELD;
 typedef struct st_io_cache IO_CACHE;
 class Field;
 class Table;
+
 
 /* Defines used by filesort and uniques */
 
@@ -58,7 +59,7 @@ typedef struct st_sort_addon_field {  /* Sort addon packed field */
 } SORT_ADDON_FIELD;
 
 typedef struct st_buffpek {		/* Struktur om sorteringsbuffrarna */
-  my_off_t file_pos;			/* Where we are in the sort file */
+  off_t file_pos;			/* Where we are in the sort file */
   unsigned char *base,*key;			/* key pointers */
   ha_rows count;			/* Number of rows in table */
   ulong mem_count;			/* numbers of keys in memory */

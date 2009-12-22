@@ -310,7 +310,7 @@ struct st_myisam_info {
 };
 
 typedef struct st_buffpek {
-  my_off_t file_pos;                    /* Where we are in the sort file */
+  off_t file_pos;                    /* Where we are in the sort file */
   unsigned char *base,*key;                     /* Key pointers */
   ha_rows count;                        /* Number of rows in table */
   ulong mem_count;                      /* numbers of keys in memory */

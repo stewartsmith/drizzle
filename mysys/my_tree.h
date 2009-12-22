@@ -16,12 +16,13 @@
 #ifndef MYSYS_MY_TREE_H
 #define MYSYS_MY_TREE_H
 
+#include <drizzled/base.h>		/* get 'enum ha_rkey_function' */
+#include <mysys/my_sys.h>
+#include "drizzled/qsort_cmp.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#include <drizzled/base.h>		/* get 'enum ha_rkey_function' */
-#include <mysys/my_sys.h>
 
 /* Worst case tree is half full. This gives use 2^(MAX_TREE_HEIGHT/2) leafs */
 #define MAX_TREE_HEIGHT	64

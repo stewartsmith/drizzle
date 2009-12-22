@@ -302,6 +302,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_replicator.h \
 		drizzled/pthread_globals.h \
 		drizzled/probes.h \
+		drizzled/qsort_cmp.h \
 		drizzled/query_id.h \
 		drizzled/records.h \
 		drizzled/replication_services.h \

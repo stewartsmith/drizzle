@@ -52,6 +52,8 @@ extern int errno;			/* declare errno */
 
 #include <sys/mman.h>
 
+#include "drizzled/qsort_cmp.h"
+
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC      0
 #endif
@@ -143,9 +145,6 @@ extern int errno;			/* declare errno */
 extern "C" {
 #endif
 
-typedef int  (*qsort_cmp)(const void *,const void *);
-typedef int  (*qsort_cmp2)(void*, const void *,const void *);
-
 typedef uint64_t my_off_t;
 
 #define TRASH(A,B) /* nothing */
@@ -228,8 +227,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
   enum cache_type type;
 } RECORD_CACHE;
 
-
-typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 
 	/* defines for mf_iocache */
 
