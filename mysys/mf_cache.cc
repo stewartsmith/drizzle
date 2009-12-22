@@ -69,7 +69,7 @@ void close_cached_file(IO_CACHE *cache)
 {
   if (my_b_inited(cache))
   {
-    File file=cache->file;
+    int file=cache->file;
     cache->file= -1;				/* Don't flush data */
     (void) end_io_cache(cache);
     if (file >= 0)

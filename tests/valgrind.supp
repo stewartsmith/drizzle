@@ -697,6 +697,80 @@
 }
 
 {
+   InnoDB Garbage
+   Memcheck:Value8
+   ...
+   fun:ut_print_buf
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN6Cursor12ha_write_rowEPh
+   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
+   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZL21mysql_execute_commandP7Session
+}
+
+{
+   More InnoDB Garbage
+   Memcheck:Cond
+   ...
+   fun:ut_print_buf
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN6Cursor12ha_write_rowEPh
+   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
+   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZL21mysql_execute_commandP7Session
+   fun:_ZL11mysql_parseP7SessionPKcjPS2_
+}
+
+{
+   InnoDB Craptasticness
+   Memcheck:Value8
+   ...
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN6Cursor12ha_write_rowEPh
+   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
+   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZL21mysql_execute_commandP7Session
+   fun:_ZL11mysql_parseP7SessionPKcjPS2_
+   fun:_Z16dispatch_command19enum_server_commandP7SessionPcj
+   fun:_ZN7Session16executeStatementEv
+}
+
+{
+   pthread thing
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:pthread_cancel_init
+   fun:_Unwind_ForcedUnwind
+   fun:__pthread_unwind
+   fun:pthread_exit
+   ...
+   fun:start_thread
+   fun:clone
+}
+
+
+{
    mem_comm_pool static initialization
    Memcheck:Leak
    fun:malloc
@@ -881,6 +955,17 @@
 }
 
 {
+   Leak in dlopen()
+   Memcheck:Leak
+   fun:calloc
+   ...
+   fun:dlopen
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+}
+
+
+{
    Valgrind has issues tracking the deallocation of plugin objects.
    Memcheck:Leak
    fun:malloc
@@ -902,7 +987,40 @@
 }
 
 {
-   NSS database lookup in static space.
+   Leak in dlclose()
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlclose
+   fun:_ZN8drizzled6plugin7LibraryD1Ev
+   fun:_ZN8drizzled6plugin8RegistryD1Ev
+   fun:_ZN8drizzled6plugin8Registry8shutdownEv
+   fun:main
+}
+
+{
+   dlclose()
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+}
+
+{
+   dlopen()
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZL16plugin_load_listRN8drizzled6plugin8RegistryEP11st_mem_rootPiPPcSs
+}
+
+{
+   static var in getpwnam
    Memcheck:Leak
    fun:malloc
    fun:nss_parse_service_list
@@ -913,3 +1031,33 @@
    fun:getpwnam
    fun:main
 }
+
+{
+   pthread_cancel_init issue.
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:pthread_cancel_init
+   fun:_Unwind_ForcedUnwind
+   fun:__pthread_unwind
+   fun:pthread_exit
+   fun:os_thread_exit
+   fun:trx_rollback_or_clean_all_recovered
+   fun:start_thread
+   fun:clone
+}
+
+{
+   pwrite64 issue
+   Memcheck:Param
+   pwrite64(buf)
+   ...
+   fun:azclose
+   fun:_ZN12ArchiveShareD1Ev
+   fun:_ZN10ha_archive10free_shareEv
+   fun:_ZN10ha_archive5closeEv
+   ...
+   fun:session_thread
+   fun:start_thread
+}
+

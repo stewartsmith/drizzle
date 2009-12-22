@@ -36,7 +36,7 @@
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/foreign_key.h>
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function/locate.h>
@@ -131,6 +131,9 @@
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
 #include <drizzled/db.h>
+#include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
+
 
 using namespace drizzled;
 
@@ -170,6 +173,15 @@ int yylex(void *yylval, void *yysession);
 
 
 #define YYDEBUG 0
+
+static bool check_reserved_words(LEX_STRING *name)
+{
+  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
+    return true;
+  return false;
+}
 
 /**
   @brief Push an error message into MySQL error stack with line

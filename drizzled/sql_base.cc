@@ -15,7 +15,7 @@
 
 
 /* Basic functions needed by many modules */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <assert.h>
 
 #include <signal.h>
@@ -47,9 +47,15 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
+
 
 using namespace std;
 using namespace drizzled;
+
+extern bool volatile shutdown_in_progress;
 
 bool drizzle_rm_tmp_tables();
 

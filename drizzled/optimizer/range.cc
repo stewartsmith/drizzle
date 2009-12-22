@@ -107,7 +107,15 @@
            subject and may omit some details.
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <math.h>
+#include <float.h>
+
+#include <string>
+#include <vector>
+#include <algorithm>
+
 #include "drizzled/sql_base.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
@@ -119,16 +127,16 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
+#include "drizzled/optimizer/quick_group_min_max_select.h"
 #include "drizzled/optimizer/quick_index_merge_select.h"
+#include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include "drizzled/optimizer/quick_ror_union_select.h"
+#include "drizzled/optimizer/table_read_plan.h"
 #include "drizzled/optimizer/sel_arg.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/records.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
-
-#include <string>
-#include <vector>
-#include <algorithm>
 
 #include "drizzled/memory/multi_malloc.h"
 
@@ -274,13 +282,6 @@ public:
   /* Note that #records for each key scan is stored in table->quick_rows */
 };
 
-class TABLE_READ_PLAN;
-class TRP_RANGE;
-class TRP_ROR_INTERSECT;
-class TRP_ROR_UNION;
-class TRP_ROR_INDEX_MERGE;
-class TRP_GROUP_MIN_MAX;
-
 struct st_ror_scan_info;
 
 static SEL_TREE * get_mm_parts(optimizer::RangeParameter *param,
@@ -310,30 +311,30 @@ static ha_rows check_quick_select(optimizer::Parameter *param,
                                   uint32_t *bufsize,
                                   COST_VECT *cost);
 
-static TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
-                                       SEL_TREE *tree,
-                                       bool index_read_must_be_used,
-                                       bool update_tbl_stats,
-                                       double read_time);
+static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
+                                                  SEL_TREE *tree,
+                                                  bool index_read_must_be_used,
+                                                  bool update_tbl_stats,
+                                                  double read_time);
 
 static
-TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
-                                          SEL_TREE *tree,
-                                          double read_time,
-                                          bool *are_all_covering);
+optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
+                                                     SEL_TREE *tree,
+                                                     double read_time,
+                                                     bool *are_all_covering);
 
 static
-TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                   SEL_TREE *tree,
-                                                   double read_time);
+optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
+                                                              SEL_TREE *tree,
+                                                              double read_time);
 
 static
-TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
-                                         SEL_IMERGE *imerge,
-                                         double read_time);
+optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
+                                                    SEL_IMERGE *imerge,
+                                                    double read_time);
 
 static
-TRP_GROUP_MIN_MAX *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
+optimizer::TRP_GROUP_MIN_MAX *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
 
 static void print_sel_tree(optimizer::Parameter *param,
                            SEL_TREE *tree,
@@ -593,11 +594,11 @@ static int imerge_list_or_tree(optimizer::RangeParameter *param,
 	   */
 
 optimizer::SqlSelect *optimizer::make_select(Table *head,
-                                              table_map const_tables,
-                                              table_map read_tables,
-                                              COND *conds,
-                                              bool allow_null_cond,
-                                              int *error)
+                                             table_map const_tables,
+                                             table_map read_tables,
+                                             COND *conds,
+                                             bool allow_null_cond,
+                                             int *error)
 {
   optimizer::SqlSelect *select= NULL;
 
@@ -629,7 +630,11 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 }
 
 
-optimizer::SqlSelect::SqlSelect() :quick(0),cond(0),free_cond(0)
+optimizer::SqlSelect::SqlSelect() 
+  :
+    quick(NULL),
+    cond(NULL),
+    free_cond(false)
 {
   quick_keys.reset();
   needed_reg.reset();
@@ -643,7 +648,7 @@ void optimizer::SqlSelect::cleanup()
   quick= 0;
   if (free_cond)
   {
-    free_cond=0;
+    free_cond= 0;
     delete cond;
     cond= 0;
   }
@@ -657,19 +662,24 @@ optimizer::SqlSelect::~SqlSelect()
 }
 
 
-bool optimizer::SqlSelect::check_quick(Session *session, bool force_quick_range,
-                             ha_rows limit)
+bool optimizer::SqlSelect::check_quick(Session *session, 
+                                       bool force_quick_range,
+                                       ha_rows limit)
 {
   key_map tmp;
   tmp.set();
-  return test_quick_select(session, tmp, 0, limit,
-                           force_quick_range, false) < 0;
+  return (test_quick_select(session, 
+                           tmp, 
+                           0, 
+                           limit,
+                           force_quick_range, 
+                           false) < 0);
 }
 
 
 bool optimizer::SqlSelect::skip_record()
 {
-  return cond ? cond->val_int() == 0 : 0;
+  return (cond ? cond->val_int() == 0 : 0);
 }
 
 
@@ -678,301 +688,6 @@ optimizer::QuickSelectInterface::QuickSelectInterface()
     max_used_key_length(0),
     used_key_parts(0)
 {}
-
-
-
-optimizer::QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(Session *session_param,
-                                                                  Table *table,
-                                                                  bool retrieve_full_rows,
-                                                                  MEM_ROOT *parent_alloc)
-  :
-    cpk_quick(NULL),
-    session(session_param),
-    need_to_fetch_row(retrieve_full_rows),
-    scans_inited(false)
-{
-  index= MAX_KEY;
-  head= table;
-  record= head->record[0];
-  if (! parent_alloc)
-  {
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  }
-  else
-  {
-    memset(&alloc, 0, sizeof(MEM_ROOT));
-  }
-  last_rowid= (unsigned char*) alloc_root(parent_alloc? parent_alloc : &alloc,
-                                  head->cursor->ref_length);
-}
-
-
-/*
-  Do post-constructor initialization.
-  SYNOPSIS
-    QUICK_ROR_INTERSECT_SELECT::init()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_INTERSECT_SELECT::init()
-{
- /* Check if last_rowid was successfully allocated in ctor */
-  return (! last_rowid);
-}
-
-
-/*
-  Initialize this quick select to be a part of a ROR-merged scan.
-  SYNOPSIS
-    QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan()
-      reuse_handler If true, use head->cursor, otherwise create separate
-                    Cursor object.
-  RETURN
-    0     OK
-    other error code
-*/
-int optimizer::QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan(bool reuse_handler)
-{
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect *quick= NULL;
-
-  /* Initialize all merged "children" quick selects */
-  assert(!need_to_fetch_row || reuse_handler);
-  if (! need_to_fetch_row && reuse_handler)
-  {
-    quick= quick_it++;
-    /*
-      There is no use of this->cursor. Use it for the first of merged range
-      selects.
-    */
-    if (quick->init_ror_merged_scan(true))
-      return 0;
-    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
-  }
-  while ((quick= quick_it++))
-  {
-    if (quick->init_ror_merged_scan(false))
-    {
-      return 0;
-    }
-    quick->cursor->extra(HA_EXTRA_KEYREAD_PRESERVE_FIELDS);
-    /* All merged scans share the same record buffer in intersection. */
-    quick->record= head->record[0];
-  }
-
-  if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
-  {
-    return 0;
-  }
-  return 0;
-}
-
-
-/*
-  Initialize quick select for row retrieval.
-  SYNOPSIS
-    reset()
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_INTERSECT_SELECT::reset()
-{
-  if (! scans_inited && init_ror_merged_scan(true))
-  {
-    return 0;
-  }
-  scans_inited= true;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  optimizer::QuickRangeSelect *quick= NULL;
-  while ((quick= it++))
-  {
-    quick->reset();
-  }
-  return 0;
-}
-
-
-/*
-  Add a merged quick select to this ROR-intersection quick select.
-
-  SYNOPSIS
-    QUICK_ROR_INTERSECT_SELECT::push_quick_back()
-      quick Quick select to be added. The quick select must return
-            rows in rowid order.
-  NOTES
-    This call can only be made before init() is called.
-
-  RETURN
-    false OK
-    true  Out of memory.
-*/
-
-bool
-optimizer::QUICK_ROR_INTERSECT_SELECT::push_quick_back(optimizer::QuickRangeSelect *quick)
-{
-  return quick_selects.push_back(quick);
-}
-
-optimizer::QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
-{
-  quick_selects.delete_elements();
-  delete cpk_quick;
-  free_root(&alloc,MYF(0));
-  if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
-  {
-    head->cursor->ha_rnd_end();
-  }
-  return;
-}
-
-
-optimizer::QUICK_ROR_UNION_SELECT::QUICK_ROR_UNION_SELECT(Session *session_param,
-                                                          Table *table)
-  :
-    session(session_param),
-    scans_inited(false)
-{
-  index= MAX_KEY;
-  head= table;
-  rowid_length= table->cursor->ref_length;
-  record= head->record[0];
-  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-  session_param->mem_root= &alloc;
-}
-
-/*
- * Function object that is used as the comparison function
- * for the priority queue in the QUICK_ROR_UNION_SELECT
- * class.
- */
-class optimizer::compare_functor
-{
-  optimizer::QUICK_ROR_UNION_SELECT *self;
-  public:
-  compare_functor(optimizer::QUICK_ROR_UNION_SELECT *in_arg)
-    : self(in_arg) { }
-  inline bool operator()(const optimizer::QuickSelectInterface *i, const optimizer::QuickSelectInterface *j) const
-  {
-    int val= self->head->cursor->cmp_ref(i->last_rowid,
-                                         j->last_rowid);
-    return (val >= 0);
-  }
-};
-
-/*
-  Do post-constructor initialization.
-  SYNOPSIS
-    QUICK_ROR_UNION_SELECT::init()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_UNION_SELECT::init()
-{
-  queue=
-    new priority_queue<optimizer::QuickSelectInterface *,
-                       vector<optimizer::QuickSelectInterface *>,
-                       optimizer::compare_functor >(optimizer::compare_functor(this));
-  if (! (cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->cursor->ref_length)))
-  {
-    return 0;
-  }
-  prev_rowid= cur_rowid + head->cursor->ref_length;
-  return 0;
-}
-
-
-/*
-  Initialize quick select for row retrieval.
-  SYNOPSIS
-    reset()
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-
-int optimizer::QUICK_ROR_UNION_SELECT::reset()
-{
-  QuickSelectInterface *quick= NULL;
-  int error;
-  have_prev_rowid= false;
-  if (! scans_inited)
-  {
-    List_iterator_fast<QuickSelectInterface> it(quick_selects);
-    while ((quick= it++))
-    {
-      if (quick->init_ror_merged_scan(false))
-      {
-        return 0;
-      }
-    }
-    scans_inited= true;
-  }
-  while (! queue->empty())
-  {
-    queue->pop();
-  }
-  /*
-    Initialize scans for merged quick selects and put all merged quick
-    selects into the queue.
-  */
-  List_iterator_fast<QuickSelectInterface> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (quick->reset())
-    {
-      return 0;
-    }
-    if ((error= quick->get_next()))
-    {
-      if (error == HA_ERR_END_OF_FILE)
-      {
-        continue;
-      }
-      return(error);
-    }
-    quick->save_last_pos();
-    queue->push(quick);
-  }
-
-  if (head->cursor->ha_rnd_init(1))
-  {
-    return 0;
-  }
-
-  return 0;
-}
-
-
-bool
-optimizer::QUICK_ROR_UNION_SELECT::push_quick_back(QuickSelectInterface *quick_sel_range)
-{
-  return quick_selects.push_back(quick_sel_range);
-}
-
-optimizer::QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
-{
-  while (! queue->empty())
-  {
-    queue->pop();
-  }
-  delete queue;
-  quick_selects.delete_elements();
-  if (head->cursor->inited != Cursor::NONE)
-  {
-    head->cursor->ha_rnd_end();
-  }
-  free_root(&alloc,MYF(0));
-  return;
-}
 
 
 /*
@@ -1064,217 +779,6 @@ uint32_t optimizer::get_index_for_order(Table *table, order_st *order, ha_rows l
   return match_key;
 }
 
-
-/*
-  Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
-  objects from table read plans.
-*/
-class TABLE_READ_PLAN
-{
-public:
-  /*
-    Plan read cost, with or without cost of full row retrieval, depending
-    on plan creation parameters.
-  */
-  double read_cost;
-  ha_rows records; /* estimate of #rows to be examined */
-
-  /*
-    If true, the scan returns rows in rowid order. This is used only for
-    scans that can be both ROR and non-ROR.
-  */
-  bool is_ror;
-
-  /*
-    Create quick select for this plan.
-    SYNOPSIS
-     make_quick()
-       param               Parameter from test_quick_select
-       retrieve_full_rows  If true, created quick select will do full record
-                           retrieval.
-       parent_alloc        Memory pool to use, if any.
-
-    NOTES
-      retrieve_full_rows is ignored by some implementations.
-
-    RETURN
-      created quick select
-      NULL on any error.
-  */
-  virtual optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param,
-                                                      bool retrieve_full_rows,
-                                                      MEM_ROOT *parent_alloc=NULL) = 0;
-
-  /* Table read plans are allocated on MEM_ROOT and are never deleted */
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
-  static void operator delete(void *, size_t)
-    { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
-    { /* Never called */ }
-  virtual ~TABLE_READ_PLAN() {}               /* Remove gcc warning */
-
-};
-
-class TRP_ROR_INTERSECT;
-class TRP_ROR_UNION;
-class TRP_INDEX_MERGE;
-
-
-/*
-  Plan for a QuickRangeSelect scan.
-  TRP_RANGE::make_quick ignores retrieve_full_rows parameter because
-  QuickRangeSelect doesn't distinguish between 'index only' scans and full
-  record retrieval scans.
-*/
-
-class TRP_RANGE : public TABLE_READ_PLAN
-{
-public:
-  optimizer::SEL_ARG *key; /* set of intervals to be used in "range" method retrieval */
-  uint32_t     key_idx; /* key number in Parameter::key */
-  uint32_t     mrr_flags;
-  uint32_t     mrr_buf_size;
-
-  TRP_RANGE(optimizer::SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
-    :
-      key(key_arg),
-      key_idx(idx_arg),
-      mrr_flags(mrr_flags_arg)
-  {}
-  virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
-
-  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
-  {
-    optimizer::QuickRangeSelect *quick= NULL;
-    if ((quick= optimizer::get_quick_select(param,
-                                            key_idx,
-                                            key,
-                                            mrr_flags,
-                                            mrr_buf_size,
-                                            parent_alloc)))
-    {
-      quick->records= records;
-      quick->read_time= read_cost;
-    }
-    return quick;
-  }
-};
-
-
-/* Plan for QUICK_ROR_INTERSECT_SELECT scan. */
-
-class TRP_ROR_INTERSECT : public TABLE_READ_PLAN
-{
-public:
-  TRP_ROR_INTERSECT() {}                      /* Remove gcc warning */
-  virtual ~TRP_ROR_INTERSECT() {}             /* Remove gcc warning */
-  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param,
-                                              bool retrieve_full_rows,
-                                              MEM_ROOT *parent_alloc);
-
-  /* Array of pointers to ROR range scans used in this intersection */
-  struct st_ror_scan_info **first_scan;
-  struct st_ror_scan_info **last_scan; /* End of the above array */
-  struct st_ror_scan_info *cpk_scan;  /* Clustered PK scan, if there is one */
-  bool is_covering; /* true if no row retrieval phase is necessary */
-  double index_scan_costs; /* SUM(cost(index_scan)) */
-};
-
-
-/*
-  Plan for QUICK_ROR_UNION_SELECT scan.
-  QUICK_ROR_UNION_SELECT always retrieves full rows, so retrieve_full_rows
-  is ignored by make_quick.
-*/
-
-class TRP_ROR_UNION : public TABLE_READ_PLAN
-{
-public:
-  TRP_ROR_UNION() {}                          /* Remove gcc warning */
-  virtual ~TRP_ROR_UNION() {}                 /* Remove gcc warning */
-  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param,
-                                              bool retrieve_full_rows,
-                                              MEM_ROOT *parent_alloc);
-  TABLE_READ_PLAN **first_ror; /* array of ptrs to plans for merged scans */
-  TABLE_READ_PLAN **last_ror;  /* end of the above array */
-};
-
-
-/*
-  Plan for QuickIndexMergeSelect scan.
-  QUICK_ROR_INTERSECT_SELECT always retrieves full rows, so retrieve_full_rows
-  is ignored by make_quick.
-*/
-
-class TRP_INDEX_MERGE : public TABLE_READ_PLAN
-{
-public:
-  TRP_INDEX_MERGE() {}                        /* Remove gcc warning */
-  virtual ~TRP_INDEX_MERGE() {}               /* Remove gcc warning */
-  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param,
-                                              bool retrieve_full_rows,
-                                              MEM_ROOT *parent_alloc);
-  TRP_RANGE **range_scans; /* array of ptrs to plans of merged scans */
-  TRP_RANGE **range_scans_end; /* end of the array */
-};
-
-
-/*
-  Plan for a QUICK_GROUP_MIN_MAX_SELECT scan.
-*/
-
-class TRP_GROUP_MIN_MAX : public TABLE_READ_PLAN
-{
-private:
-  bool have_min, have_max;
-  KEY_PART_INFO *min_max_arg_part;
-  uint32_t group_prefix_len;
-  uint32_t used_key_parts;
-  uint32_t group_key_parts;
-  KEY *index_info;
-  uint32_t index;
-  uint32_t key_infix_len;
-  unsigned char key_infix[MAX_KEY_LENGTH];
-  SEL_TREE *range_tree; /* Represents all range predicates in the query. */
-  optimizer::SEL_ARG  *index_tree; /* The SEL_ARG sub-tree corresponding to index_info. */
-  uint32_t param_idx; /* Index of used key in param->key. */
-  /* Number of records selected by the ranges in index_tree. */
-public:
-  ha_rows quick_prefix_records;
-public:
-  TRP_GROUP_MIN_MAX(bool have_min_arg, bool have_max_arg,
-                    KEY_PART_INFO *min_max_arg_part_arg,
-                    uint32_t group_prefix_len_arg, uint32_t used_key_parts_arg,
-                    uint32_t group_key_parts_arg, KEY *index_info_arg,
-                    uint32_t index_arg, uint32_t key_infix_len_arg,
-                    unsigned char *key_infix_arg,
-                    SEL_TREE *tree_arg, optimizer::SEL_ARG *index_tree_arg,
-                    uint32_t param_idx_arg, ha_rows quick_prefix_records_arg)
-    :
-      have_min(have_min_arg),
-      have_max(have_max_arg),
-      min_max_arg_part(min_max_arg_part_arg),
-      group_prefix_len(group_prefix_len_arg),
-      used_key_parts(used_key_parts_arg),
-      group_key_parts(group_key_parts_arg),
-      index_info(index_info_arg),
-      index(index_arg),
-      key_infix_len(key_infix_len_arg),
-      range_tree(tree_arg),
-      index_tree(index_tree_arg),
-      param_idx(param_idx_arg),
-      quick_prefix_records(quick_prefix_records_arg)
-    {
-      if (key_infix_len)
-        memcpy(this->key_infix, key_infix_arg, key_infix_len);
-    }
-  virtual ~TRP_GROUP_MIN_MAX() {}             /* Remove gcc warning */
-
-  optimizer::QuickSelectInterface *make_quick(optimizer::Parameter *param,
-                                              bool retrieve_full_rows,
-                                              MEM_ROOT *parent_alloc);
-};
 
 
 /*
@@ -1387,11 +891,11 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
 */
 
 int optimizer::SqlSelect::test_quick_select(Session *session,
-                                             key_map keys_to_use,
-				                                     table_map prev_tables,
-				                                     ha_rows limit,
-                                             bool force_quick_range,
-                                             bool ordered_output)
+                                            key_map keys_to_use,
+				                                    table_map prev_tables,
+				                                    ha_rows limit,
+                                            bool force_quick_range,
+                                            bool ordered_output)
 {
   uint32_t idx;
   double scan_time;
@@ -1497,8 +1001,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         read_time= key_read_time;
     }
 
-    TABLE_READ_PLAN *best_trp= NULL;
-    TRP_GROUP_MIN_MAX *group_trp;
+    optimizer::TABLE_READ_PLAN *best_trp= NULL;
+    optimizer::TRP_GROUP_MIN_MAX *group_trp= NULL;
     double best_read_time= read_time;
 
     if (cond)
@@ -1521,7 +1025,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     }
 
     /*
-      Try to construct a QUICK_GROUP_MIN_MAX_SELECT.
+      Try to construct a QuickGroupMinMaxSelect.
       Notice that it can be constructed no matter if there is a range tree.
     */
     group_trp= get_best_group_min_max(&param, tree);
@@ -1544,8 +1048,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       */
       if (tree->merges.is_empty())
       {
-        TRP_RANGE         *range_trp;
-        TRP_ROR_INTERSECT *rori_trp;
+        optimizer::TRP_RANGE *range_trp= NULL;
+        optimizer::TRP_ROR_INTERSECT *rori_trp= NULL;
         bool can_build_covering= false;
 
         /* Get best 'range' plan and prepare data for making other plans */
@@ -1587,7 +1091,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       {
         /* Try creating index_merge/ROR-union scan. */
         SEL_IMERGE *imerge;
-        TABLE_READ_PLAN *best_conj_trp= NULL, *new_conj_trp;
+        optimizer::TABLE_READ_PLAN *best_conj_trp= NULL;
+        optimizer::TABLE_READ_PLAN *new_conj_trp= NULL;
         List_iterator_fast<SEL_IMERGE> it(tree->merges);
         while ((imerge= it++))
         {
@@ -1696,16 +1201,16 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 */
 
 static
-TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
-                                         SEL_IMERGE *imerge,
-                                         double read_time)
+optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
+                                                    SEL_IMERGE *imerge,
+                                                    double read_time)
 {
   SEL_TREE **ptree;
-  TRP_INDEX_MERGE *imerge_trp= NULL;
+  optimizer::TRP_INDEX_MERGE *imerge_trp= NULL;
   uint32_t n_child_scans= imerge->trees_next - imerge->trees;
-  TRP_RANGE **range_scans;
-  TRP_RANGE **cur_child;
-  TRP_RANGE **cpk_scan= NULL;
+  optimizer::TRP_RANGE **range_scans= NULL;
+  optimizer::TRP_RANGE **cur_child= NULL;
+  optimizer::TRP_RANGE **cpk_scan= NULL;
   bool imerge_too_expensive= false;
   double imerge_cost= 0.0;
   ha_rows cpk_scan_records= 0;
@@ -1714,15 +1219,15 @@ TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
   bool all_scans_ror_able= true;
   bool all_scans_rors= true;
   uint32_t unique_calc_buff_size;
-  TABLE_READ_PLAN **roru_read_plans;
-  TABLE_READ_PLAN **cur_roru_plan;
+  optimizer::TABLE_READ_PLAN **roru_read_plans= NULL;
+  optimizer::TABLE_READ_PLAN **cur_roru_plan= NULL;
   double roru_index_costs;
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  if (!(range_scans= (TRP_RANGE**)alloc_root(param->mem_root,
-                                             sizeof(TRP_RANGE*)*
-                                             n_child_scans)))
+  if (!(range_scans= (optimizer::TRP_RANGE**)alloc_root(param->mem_root,
+                                                        sizeof(optimizer::TRP_RANGE*)*
+                                                        n_child_scans)))
     return NULL;
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -1772,7 +1277,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
   }
   if (all_scans_rors)
   {
-    roru_read_plans= (TABLE_READ_PLAN**)range_scans;
+    roru_read_plans= (optimizer::TABLE_READ_PLAN**)range_scans;
     goto skip_to_ror_scan;
   }
   if (cpk_scan)
@@ -1815,7 +1320,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
                          param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
   {
-    if ((imerge_trp= new (param->mem_root)TRP_INDEX_MERGE))
+    if ((imerge_trp= new (param->mem_root) optimizer::TRP_INDEX_MERGE))
     {
       imerge_trp->read_cost= imerge_cost;
       imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
@@ -1834,9 +1339,9 @@ build_ror_index_merge:
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
   if (!(roru_read_plans=
-          (TABLE_READ_PLAN**)alloc_root(param->mem_root,
-                                        sizeof(TABLE_READ_PLAN*)*
-                                        n_child_scans)))
+          (optimizer::TABLE_READ_PLAN**)alloc_root(param->mem_root,
+                                                   sizeof(optimizer::TABLE_READ_PLAN*)*
+                                                   n_child_scans)))
     return(imerge_trp);
 skip_to_ror_scan:
   roru_index_costs= 0.0;
@@ -1866,7 +1371,7 @@ skip_to_ror_scan:
     else
       cost= read_time;
 
-    TABLE_READ_PLAN *prev_plan= *cur_child;
+    optimizer::TABLE_READ_PLAN *prev_plan= *cur_child;
     if (!(*cur_roru_plan= get_best_ror_intersect(param, *ptree, cost,
                                                  &dummy)))
     {
@@ -1878,7 +1383,7 @@ skip_to_ror_scan:
     }
     else
       roru_index_costs +=
-        ((TRP_ROR_INTERSECT*)(*cur_roru_plan))->index_scan_costs;
+        ((optimizer::TRP_ROR_INTERSECT*)(*cur_roru_plan))->index_scan_costs;
     roru_total_records += (*cur_roru_plan)->records;
     roru_intersect_part *= (*cur_roru_plan)->records /
                            param->table->cursor->stats.records;
@@ -1913,16 +1418,16 @@ skip_to_ror_scan:
                      sweep_cost.total_cost();
   }
 
-  TRP_ROR_UNION* roru;
+  optimizer::TRP_ROR_UNION *roru= NULL;
   if (roru_total_cost < read_time)
   {
-    if ((roru= new (param->mem_root) TRP_ROR_UNION))
+    if ((roru= new (param->mem_root) optimizer::TRP_ROR_UNION))
     {
       roru->first_ror= roru_read_plans;
       roru->last_ror= roru_read_plans + n_child_scans;
       roru->read_cost= roru_total_cost;
       roru->records= roru_total_records;
-      return(roru);
+      return roru;
     }
   }
   return(imerge_trp);
@@ -2446,10 +1951,10 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
 */
 
 static
-TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
-                                          SEL_TREE *tree,
-                                          double read_time,
-                                          bool *are_all_covering)
+optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
+                                                     SEL_TREE *tree,
+                                                     double read_time,
+                                                     bool *are_all_covering)
 {
   uint32_t idx;
   double min_cost= DBL_MAX;
@@ -2572,12 +2077,13 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
   }
 
   /* Ok, return ROR-intersect plan if we have found one */
-  TRP_ROR_INTERSECT *trp= NULL;
+  optimizer::TRP_ROR_INTERSECT *trp= NULL;
   if (min_cost < read_time && (cpk_scan_used || best_num > 1))
   {
-    if (!(trp= new (param->mem_root) TRP_ROR_INTERSECT))
-      return(trp);
-    if (!(trp->first_scan=
+    if (! (trp= new (param->mem_root) optimizer::TRP_ROR_INTERSECT))
+      return trp;
+
+    if (! (trp->first_scan=
            (ROR_SCAN_INFO**)alloc_root(param->mem_root,
                                        sizeof(ROR_SCAN_INFO*)*best_num)))
       return NULL;
@@ -2632,9 +2138,9 @@ TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
 */
 
 static
-TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                   SEL_TREE *tree,
-                                                   double read_time)
+optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
+                                                              SEL_TREE *tree,
+                                                              double read_time)
 {
   ROR_SCAN_INFO **ror_scan_mark;
   ROR_SCAN_INFO **ror_scans_end= tree->ror_scans_end;
@@ -2724,9 +2230,12 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
   if (total_cost > read_time)
     return NULL;
 
-  TRP_ROR_INTERSECT *trp;
-  if (!(trp= new (param->mem_root) TRP_ROR_INTERSECT))
-    return(trp);
+  optimizer::TRP_ROR_INTERSECT *trp= NULL;
+  if (! (trp= new (param->mem_root) optimizer::TRP_ROR_INTERSECT))
+  {
+    return trp;
+  }
+
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
   if (!(trp->first_scan= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
                                                      sizeof(ROR_SCAN_INFO*)*
@@ -2770,17 +2279,20 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
     NULL if no plan found or error occurred
 */
 
-static TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
-                                       SEL_TREE *tree,
-                                       bool index_read_must_be_used,
-                                       bool update_tbl_stats,
-                                       double read_time)
+static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
+                                                  SEL_TREE *tree,
+                                                  bool index_read_must_be_used,
+                                                  bool update_tbl_stats,
+                                                  double read_time)
 {
   uint32_t idx;
-  optimizer::SEL_ARG **key,**end, **key_to_read= NULL;
+  optimizer::SEL_ARG **key= NULL;
+  optimizer::SEL_ARG **end= NULL;
+  optimizer::SEL_ARG **key_to_read= NULL;
   ha_rows best_records= 0;
-  uint32_t    best_mrr_flags= 0, best_buf_size= 0;
-  TRP_RANGE* read_plan= NULL;
+  uint32_t best_mrr_flags= 0;
+  uint32_t best_buf_size= 0;
+  optimizer::TRP_RANGE *read_plan= NULL;
   /*
     Note that there may be trees that have type SEL_TREE::KEY but contain no
     key reads at all, e.g. tree for expression "key1 is not null" where key1
@@ -2829,8 +2341,8 @@ static TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
-    if ((read_plan= new (param->mem_root) TRP_RANGE(*key_to_read, idx,
-                                                    best_mrr_flags)))
+    if ((read_plan= new (param->mem_root) optimizer::TRP_RANGE(*key_to_read, idx,
+                                                               best_mrr_flags)))
     {
       read_plan->records= best_records;
       read_plan->is_ror= tree->ror_scans_map.test(idx);
@@ -2843,7 +2355,7 @@ static TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
 }
 
 
-optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
+optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
 {
   optimizer::QuickIndexMergeSelect *quick_imerge;
   optimizer::QuickRangeSelect *quick= NULL;
@@ -2855,11 +2367,12 @@ optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::Paramete
 
   quick_imerge->records= records;
   quick_imerge->read_time= read_cost;
-  for (TRP_RANGE **range_scan= range_scans; range_scan != range_scans_end;
+  for (optimizer::TRP_RANGE **range_scan= range_scans; 
+       range_scan != range_scans_end;
        range_scan++)
   {
-    if (!(quick= (optimizer::QuickRangeSelect*)
-          ((*range_scan)->make_quick(param, false, &quick_imerge->alloc)))||
+    if (! (quick= (optimizer::QuickRangeSelect*)
+          ((*range_scan)->make_quick(param, false, &quick_imerge->alloc))) ||
         quick_imerge->push_quick_back(quick))
     {
       delete quick;
@@ -2870,19 +2383,19 @@ optimizer::QuickSelectInterface *TRP_INDEX_MERGE::make_quick(optimizer::Paramete
   return quick_imerge;
 }
 
-optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::Parameter *param,
-                                                         bool retrieve_full_rows,
-                                                         MEM_ROOT *parent_alloc)
+optimizer::QuickSelectInterface *optimizer::TRP_ROR_INTERSECT::make_quick(optimizer::Parameter *param,
+                                                                          bool retrieve_full_rows,
+                                                                          MEM_ROOT *parent_alloc)
 {
-  optimizer::QUICK_ROR_INTERSECT_SELECT *quick_intersect= NULL;
+  optimizer::QuickRorIntersectSelect *quick_intersect= NULL;
   optimizer::QuickRangeSelect *quick= NULL;
   MEM_ROOT *alloc= NULL;
 
   if ((quick_intersect=
-         new optimizer::QUICK_ROR_INTERSECT_SELECT(param->session,
-                                                   param->table,
-                                                   (retrieve_full_rows? (! is_covering) : false),
-                                                   parent_alloc)))
+         new optimizer::QuickRorIntersectSelect(param->session,
+                                                param->table,
+                                                (retrieve_full_rows? (! is_covering) : false),
+                                                parent_alloc)))
   {
     print_ror_scans_arr(param->table,
                         "creating ROR-intersect",
@@ -2925,16 +2438,16 @@ optimizer::QuickSelectInterface *TRP_ROR_INTERSECT::make_quick(optimizer::Parame
 }
 
 
-optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
+optimizer::QuickSelectInterface *optimizer::TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
 {
-  optimizer::QUICK_ROR_UNION_SELECT *quick_roru;
-  TABLE_READ_PLAN **scan;
-  optimizer::QuickSelectInterface *quick;
+  optimizer::QuickRorUnionSelect *quick_roru= NULL;
+  optimizer::TABLE_READ_PLAN **scan= NULL;
+  optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
     rows, ignore retrieve_full_rows parameter.
   */
-  if ((quick_roru= new optimizer::QUICK_ROR_UNION_SELECT(param->session, param->table)))
+  if ((quick_roru= new optimizer::QuickRorUnionSelect(param->session, param->table)))
   {
     for (scan= first_ror; scan != last_ror; scan++)
     {
@@ -2947,7 +2460,7 @@ optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter 
     quick_roru->records= records;
     quick_roru->read_time= read_cost;
   }
-  return(quick_roru);
+  return quick_roru;
 }
 
 
@@ -2967,7 +2480,6 @@ optimizer::QuickSelectInterface *TRP_ROR_UNION::make_quick(optimizer::Parameter 
     #  Pointer to tree built tree
     0  on error
 */
-
 static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
                                 Item_func *cond_func,
                                 Field *field,
@@ -3006,15 +2518,17 @@ static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
   RETURN
     Pointer to the tree built tree
 */
-
 static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
                                   Item_func *cond_func,
-                                  Field *field, Item *value,
-                                  Item_result cmp_type, bool inv)
+                                  Field *field, 
+                                  Item *value,
+                                  Item_result cmp_type, 
+                                  bool inv)
 {
-  SEL_TREE *tree= 0;
+  SEL_TREE *tree= NULL;
 
-  switch (cond_func->functype()) {
+  switch (cond_func->functype()) 
+  {
 
   case Item_func::NE_FUNC:
     tree= get_ne_mm_tree(param, cond_func, field, value, value, cmp_type);
@@ -3022,46 +2536,59 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
 
   case Item_func::BETWEEN:
   {
-    if (!value)
+    if (! value)
     {
       if (inv)
       {
-        tree= get_ne_mm_tree(param, cond_func, field, cond_func->arguments()[1],
-                             cond_func->arguments()[2], cmp_type);
+        tree= get_ne_mm_tree(param, 
+                             cond_func, 
+                             field, 
+                             cond_func->arguments()[1],
+                             cond_func->arguments()[2], 
+                             cmp_type);
       }
       else
       {
-        tree= get_mm_parts(param, cond_func, field, Item_func::GE_FUNC,
-		           cond_func->arguments()[1],cmp_type);
+        tree= get_mm_parts(param, 
+                           cond_func, 
+                           field, 
+                           Item_func::GE_FUNC,
+		                       cond_func->arguments()[1],
+                           cmp_type);
         if (tree)
         {
-          tree= tree_and(param, tree, get_mm_parts(param, cond_func, field,
-					           Item_func::LE_FUNC,
-					           cond_func->arguments()[2],
-                                                   cmp_type));
+          tree= tree_and(param, 
+                         tree, 
+                         get_mm_parts(param, cond_func, field,
+					               Item_func::LE_FUNC,
+					               cond_func->arguments()[2],
+                         cmp_type));
         }
       }
     }
     else
-      tree= get_mm_parts(param, cond_func, field,
+      tree= get_mm_parts(param, 
+                         cond_func, 
+                         field,
                          (inv ?
                           (value == (Item*)1 ? Item_func::GT_FUNC :
                                                Item_func::LT_FUNC):
                           (value == (Item*)1 ? Item_func::LE_FUNC :
                                                Item_func::GE_FUNC)),
-                         cond_func->arguments()[0], cmp_type);
+                         cond_func->arguments()[0], 
+                         cmp_type);
     break;
   }
   case Item_func::IN_FUNC:
   {
-    Item_func_in *func=(Item_func_in*) cond_func;
+    Item_func_in *func= (Item_func_in*) cond_func;
 
     /*
       Array for IN() is constructed when all values have the same result
       type. Tree won't be built for values with different result types,
       so we check it here to avoid unnecessary work.
     */
-    if (!func->arg_types_compatible)
+    if (! func->arg_types_compatible)
       break;
 
     if (inv)
@@ -3109,7 +2636,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         Item *value_item= func->array->create_item();
         param->session->mem_root= tmp_root;
 
-        if (func->array->count > NOT_IN_IGNORE_THRESHOLD || !value_item)
+        if (func->array->count > NOT_IN_IGNORE_THRESHOLD || ! value_item)
           break;
 
         /* Get a SEL_TREE for "(-inf|NULL) < X < c_0" interval.  */
@@ -3117,9 +2644,12 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         do
         {
           func->array->value_to_item(i, value_item);
-          tree= get_mm_parts(param, cond_func, field, Item_func::LT_FUNC,
-                             value_item, cmp_type);
-          if (!tree)
+          tree= get_mm_parts(param, 
+                             cond_func, 
+                             field, Item_func::LT_FUNC,
+                             value_item, 
+                             cmp_type);
+          if (! tree)
             break;
           i++;
         } while (i < func->array->count && tree->type == SEL_TREE::IMPOSSIBLE);
@@ -5476,31 +5006,6 @@ bool optimizer::QuickSelectInterface::is_keys_used(const MyBitmap *fields)
 }
 
 
-bool optimizer::QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
-{
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (is_key_used(head, quick->index, fields))
-      return 1;
-  }
-  return 0;
-}
-
-bool optimizer::QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
-{
-  optimizer::QuickSelectInterface *quick;
-  List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (quick->is_keys_used(fields))
-      return 1;
-  }
-  return 0;
-}
-
-
 /*
   Create quick select from ref/ref_or_null scan.
 
@@ -5621,162 +5126,6 @@ err:
 
 
 /*
-  Retrieve next record.
-  SYNOPSIS
-     QUICK_ROR_INTERSECT_SELECT::get_next()
-
-  NOTES
-    Invariant on enter/exit: all intersected selects have retrieved all index
-    records with rowid <= some_rowid_val and no intersected select has
-    retrieved any index records with rowid > some_rowid_val.
-    We start fresh and loop until we have retrieved the same rowid in each of
-    the key scans or we got an error.
-
-    If a Clustered PK scan is present, it is used only to check if row
-    satisfies its condition (and never used for row retrieval).
-
-  RETURN
-   0     - Ok
-   other - Error code if any error occurred.
-*/
-
-int optimizer::QUICK_ROR_INTERSECT_SELECT::get_next()
-{
-  List_iterator_fast<optimizer::QuickRangeSelect> quick_it(quick_selects);
-  optimizer::QuickRangeSelect* quick;
-  int error, cmp;
-  uint32_t last_rowid_count=0;
-
-  do
-  {
-    /* Get a rowid for first quick and save it as a 'candidate' */
-    quick= quick_it++;
-    error= quick->get_next();
-    if (cpk_quick)
-    {
-      while (!error && !cpk_quick->row_in_ranges())
-        error= quick->get_next();
-    }
-    if (error)
-      return(error);
-
-    quick->cursor->position(quick->record);
-    memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
-    last_rowid_count= 1;
-
-    while (last_rowid_count < quick_selects.elements)
-    {
-      if (!(quick= quick_it++))
-      {
-        quick_it.rewind();
-        quick= quick_it++;
-      }
-
-      do
-      {
-        if ((error= quick->get_next()))
-          return(error);
-        quick->cursor->position(quick->record);
-        cmp= head->cursor->cmp_ref(quick->cursor->ref, last_rowid);
-      } while (cmp < 0);
-
-      /* Ok, current select 'caught up' and returned ref >= cur_ref */
-      if (cmp > 0)
-      {
-        /* Found a row with ref > cur_ref. Make it a new 'candidate' */
-        if (cpk_quick)
-        {
-          while (!cpk_quick->row_in_ranges())
-          {
-            if ((error= quick->get_next()))
-              return(error);
-          }
-        }
-        memcpy(last_rowid, quick->cursor->ref, head->cursor->ref_length);
-        last_rowid_count= 1;
-      }
-      else
-      {
-        /* current 'candidate' row confirmed by this select */
-        last_rowid_count++;
-      }
-    }
-
-    /* We get here if we got the same row ref in all scans. */
-    if (need_to_fetch_row)
-      error= head->cursor->rnd_pos(head->record[0], last_rowid);
-  } while (error == HA_ERR_RECORD_DELETED);
-  return(error);
-}
-
-
-/*
-  Retrieve next record.
-  SYNOPSIS
-    QUICK_ROR_UNION_SELECT::get_next()
-
-  NOTES
-    Enter/exit invariant:
-    For each quick select in the queue a {key,rowid} tuple has been
-    retrieved but the corresponding row hasn't been passed to output.
-
-  RETURN
-   0     - Ok
-   other - Error code if any error occurred.
-*/
-
-int optimizer::QUICK_ROR_UNION_SELECT::get_next()
-{
-  int error, dup_row;
-  optimizer::QuickSelectInterface *quick;
-  unsigned char *tmp;
-
-  do
-  {
-    do
-    {
-      if (queue->empty())
-        return(HA_ERR_END_OF_FILE);
-      /* Ok, we have a queue with >= 1 scans */
-
-      quick= queue->top();
-      memcpy(cur_rowid, quick->last_rowid, rowid_length);
-
-      /* put into queue rowid from the same stream as top element */
-      if ((error= quick->get_next()))
-      {
-        if (error != HA_ERR_END_OF_FILE)
-          return(error);
-        queue->pop();
-      }
-      else
-      {
-        quick->save_last_pos();
-        queue->pop();
-        queue->push(quick);
-      }
-
-      if (!have_prev_rowid)
-      {
-        /* No rows have been returned yet */
-        dup_row= false;
-        have_prev_rowid= true;
-      }
-      else
-        dup_row= !head->cursor->cmp_ref(cur_rowid, prev_rowid);
-    } while (dup_row);
-
-    tmp= cur_rowid;
-    cur_rowid= prev_rowid;
-    prev_rowid= tmp;
-
-    error= head->cursor->rnd_pos(quick->record, prev_rowid);
-  } while (error == HA_ERR_RECORD_DELETED);
-  return(error);
-}
-
-
-/*
   Range sequence interface implementation for array<QuickRange>: initialize
 
   SYNOPSIS
@@ -5844,108 +5193,6 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
 }
 
 
-void optimizer::QUICK_ROR_INTERSECT_SELECT::add_info_string(String *str)
-{
-  bool first= true;
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  str->append(STRING_WITH_LEN("intersect("));
-  while ((quick= it++))
-  {
-    KEY *key_info= head->key_info + quick->index;
-    if (! first)
-      str->append(',');
-    else
-      first= false;
-    str->append(key_info->name);
-  }
-  if (cpk_quick)
-  {
-    KEY *key_info= head->key_info + cpk_quick->index;
-    str->append(',');
-    str->append(key_info->name);
-  }
-  str->append(')');
-}
-
-
-void optimizer::QUICK_ROR_UNION_SELECT::add_info_string(String *str)
-{
-  bool first= true;
-  optimizer::QuickSelectInterface *quick;
-  List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
-  str->append(STRING_WITH_LEN("union("));
-  while ((quick= it++))
-  {
-    if (! first)
-      str->append(',');
-    else
-      first= false;
-    quick->add_info_string(str);
-  }
-  str->append(')');
-}
-
-
-void optimizer::QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
-                                                                 String *used_lengths)
-{
-  char buf[64];
-  uint32_t length;
-  bool first= true;
-  optimizer::QuickRangeSelect *quick;
-  List_iterator_fast<optimizer::QuickRangeSelect> it(quick_selects);
-  while ((quick= it++))
-  {
-    KEY *key_info= head->key_info + quick->index;
-    if (first)
-      first= false;
-    else
-    {
-      key_names->append(',');
-      used_lengths->append(',');
-    }
-    key_names->append(key_info->name);
-    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(buf, length);
-  }
-
-  if (cpk_quick)
-  {
-    KEY *key_info= head->key_info + cpk_quick->index;
-    key_names->append(',');
-    key_names->append(key_info->name);
-    length= int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
-    used_lengths->append(',');
-    used_lengths->append(buf, length);
-  }
-}
-
-
-void optimizer::QUICK_ROR_UNION_SELECT::add_keys_and_lengths(String *key_names,
-                                                             String *used_lengths)
-{
-  bool first= true;
-  optimizer::QuickSelectInterface *quick;
-  List_iterator_fast<optimizer::QuickSelectInterface> it(quick_selects);
-  while ((quick= it++))
-  {
-    if (first)
-      first= false;
-    else
-    {
-      used_lengths->append(',');
-      key_names->append(',');
-    }
-    quick->add_keys_and_lengths(key_names, used_lengths);
-  }
-}
-
-
-/*******************************************************************************
-* Implementation of QUICK_GROUP_MIN_MAX_SELECT
-*******************************************************************************/
-
 static inline uint32_t get_field_keypart(KEY *index, Field *field);
 
 static inline optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
@@ -5989,8 +5236,8 @@ cost_group_min_max(Table* table,
     sel_tree Range tree generated by get_mm_tree
 
   DESCRIPTION
-    Test whether a query can be computed via a QUICK_GROUP_MIN_MAX_SELECT.
-    Queries computable via a QUICK_GROUP_MIN_MAX_SELECT must satisfy the
+    Test whether a query can be computed via a QuickGroupMinMaxSelect.
+    Queries computable via a QuickGroupMinMaxSelect must satisfy the
     following conditions:
     A) Table T has at least one compound index I of the form:
        I = <A_1, ...,A_k, [B_1,..., B_m], C, [D_1,...,D_n]>
@@ -6074,7 +5321,7 @@ cost_group_min_max(Table* table,
   NOTES
     If the current query satisfies the conditions above, and if
     (mem_root! = NULL), then the function constructs and returns a new TRP
-    object, that is later used to construct a new QUICK_GROUP_MIN_MAX_SELECT.
+    object, that is later used to construct a new QuickGroupMinMaxSelect.
     If (mem_root == NULL), then the function only tests whether the current
     query satisfies the conditions above, and, if so, sets
     is_applicable = true.
@@ -6106,7 +5353,7 @@ cost_group_min_max(Table* table,
     If mem_root == NULL
     - NULL
 */
-static TRP_GROUP_MIN_MAX *
+static optimizer::TRP_GROUP_MIN_MAX *
 get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
 {
   Session *session= param->session;
@@ -6123,7 +5370,7 @@ get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
   uint32_t used_key_parts= 0;   /* Number of index key parts used for access. */
   unsigned char key_infix[MAX_KEY_LENGTH]; /* Constants from equality predicates.*/
   uint32_t key_infix_len= 0;          /* Length of key_infix. */
-  TRP_GROUP_MIN_MAX *read_plan= NULL; /* The eventually constructed TRP. */
+  optimizer::TRP_GROUP_MIN_MAX *read_plan= NULL; /* The eventually constructed TRP. */
   uint32_t key_part_nr;
   order_st *tmp_group= NULL;
   Item *item= NULL;
@@ -6522,20 +5769,20 @@ get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
 
   /* The query passes all tests, so construct a new TRP object. */
   read_plan=
-    new(param->mem_root) TRP_GROUP_MIN_MAX(have_min,
-                                           have_max,
-                                           min_max_arg_part,
-                                           group_prefix_len,
-                                           used_key_parts,
-                                           group_key_parts,
-                                           index_info,
-                                           index,
-                                           key_infix_len,
-                                           (key_infix_len > 0) ? key_infix : NULL,
-                                           tree,
-                                           best_index_tree,
-                                           best_param_idx,
-                                           best_quick_prefix_records);
+    new(param->mem_root) optimizer::TRP_GROUP_MIN_MAX(have_min,
+                                                      have_max,
+                                                      min_max_arg_part,
+                                                      group_prefix_len,
+                                                      used_key_parts,
+                                                      group_key_parts,
+                                                      index_info,
+                                                      index,
+                                                      key_infix_len,
+                                                      (key_infix_len > 0) ? key_infix : NULL,
+                                                      tree,
+                                                      best_index_tree,
+                                                      best_param_idx,
+                                                      best_quick_prefix_records);
   if (read_plan)
   {
     if (tree && read_plan->quick_prefix_records == 0)
@@ -6831,10 +6078,10 @@ get_field_keypart(KEY *index, Field *field)
   RETURN
     Pointer to the SEL_ARG subtree that corresponds to index.
 */
-optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
-                               SEL_TREE* range_tree,
-                               optimizer::Parameter *param,
-                               uint32_t *param_idx)
+optimizer::SEL_ARG *get_index_range_tree(uint32_t index,
+                                         SEL_TREE* range_tree,
+                                         optimizer::Parameter *param,
+                                         uint32_t *param_idx)
 {
   uint32_t idx= 0; /* Index nr in param->key_parts */
   while (idx < param->keys)
@@ -6998,35 +6245,35 @@ void cost_group_min_max(Table* table,
 
   NOTES
     Make_quick ignores the retrieve_full_rows parameter because
-    QUICK_GROUP_MIN_MAX_SELECT always performs 'index only' scans.
+    QuickGroupMinMaxSelect always performs 'index only' scans.
     The other parameter are ignored as well because all necessary
     data to create the QUICK object is computed at this TRP creation
     time.
 
   RETURN
-    New QUICK_GROUP_MIN_MAX_SELECT object if successfully created,
+    New QuickGroupMinMaxSelect object if successfully created,
     NULL otherwise.
 */
 optimizer::QuickSelectInterface *
-TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
+optimizer::TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
 {
-  optimizer::QUICK_GROUP_MIN_MAX_SELECT *quick= NULL;
+  optimizer::QuickGroupMinMaxSelect *quick= NULL;
 
-  quick= new optimizer::QUICK_GROUP_MIN_MAX_SELECT(param->table,
-                                                   param->session->lex->current_select->join,
-                                                   have_min,
-                                                   have_max,
-                                                   min_max_arg_part,
-                                                   group_prefix_len,
-                                                   group_key_parts,
-                                                   used_key_parts,
-                                                   index_info,
-                                                   index,
-                                                   read_cost,
-                                                   records,
-                                                   key_infix_len,
-                                                   key_infix,
-                                                   parent_alloc);
+  quick= new optimizer::QuickGroupMinMaxSelect(param->table,
+                                               param->session->lex->current_select->join,
+                                               have_min,
+                                               have_max,
+                                               min_max_arg_part,
+                                               group_prefix_len,
+                                               group_key_parts,
+                                               used_key_parts,
+                                               index_info,
+                                               index,
+                                               read_cost,
+                                               records,
+                                               key_infix_len,
+                                               key_infix,
+                                               parent_alloc);
   if (! quick)
   {
     return NULL;
@@ -7096,1006 +6343,22 @@ TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *paren
 }
 
 
-/*
-  Construct new quick select for group queries with min/max.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::QUICK_GROUP_MIN_MAX_SELECT()
-    table             The table being accessed
-    join              Descriptor of the current query
-    have_min          true if the query selects a MIN function
-    have_max          true if the query selects a MAX function
-    min_max_arg_part  The only argument field of all MIN/MAX functions
-    group_prefix_len  Length of all key parts in the group prefix
-    prefix_key_parts  All key parts in the group prefix
-    index_info        The index chosen for data access
-    use_index         The id of index_info
-    read_cost         Cost of this access method
-    records           Number of records returned
-    key_infix_len     Length of the key infix appended to the group prefix
-    key_infix         Infix of constants from equality predicates
-    parent_alloc      Memory pool for this and quick_prefix_select data
-
-  RETURN
-    None
-*/
-optimizer::QUICK_GROUP_MIN_MAX_SELECT::
-QUICK_GROUP_MIN_MAX_SELECT(Table *table,
-                           JOIN *join_arg,
-                           bool have_min_arg,
-                           bool have_max_arg,
-                           KEY_PART_INFO *min_max_arg_part_arg,
-                           uint32_t group_prefix_len_arg,
-                           uint32_t group_key_parts_arg,
-                           uint32_t used_key_parts_arg,
-                           KEY *index_info_arg,
-                           uint32_t use_index,
-                           double read_cost_arg,
-                           ha_rows records_arg,
-                           uint32_t key_infix_len_arg,
-                           unsigned char *key_infix_arg,
-                           MEM_ROOT *parent_alloc)
-  :
-    join(join_arg),
-    index_info(index_info_arg),
-    group_prefix_len(group_prefix_len_arg),
-    group_key_parts(group_key_parts_arg),
-    have_min(have_min_arg),
-    have_max(have_max_arg),
-    seen_first_key(false),
-    min_max_arg_part(min_max_arg_part_arg),
-    key_infix(key_infix_arg),
-    key_infix_len(key_infix_len_arg),
-    min_functions_it(NULL),
-    max_functions_it(NULL)
+optimizer::QuickSelectInterface *optimizer::TRP_RANGE::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
 {
-  head= table;
-  cursor= head->cursor;
-  index= use_index;
-  record= head->record[0];
-  tmp_record= head->record[1];
-  read_time= read_cost_arg;
-  records= records_arg;
-  used_key_parts= used_key_parts_arg;
-  real_key_parts= used_key_parts_arg;
-  real_prefix_len= group_prefix_len + key_infix_len;
-  group_prefix= NULL;
-  min_max_arg_len= min_max_arg_part ? min_max_arg_part->store_length : 0;
-
-  /*
-    We can't have parent_alloc set as the init function can't handle this case
-    yet.
-  */
-  assert(! parent_alloc);
-  if (! parent_alloc)
+  optimizer::QuickRangeSelect *quick= NULL;
+  if ((quick= optimizer::get_quick_select(param,
+                                          key_idx,
+                                          key,
+                                          mrr_flags,
+                                          mrr_buf_size,
+                                          parent_alloc)))
   {
-    init_sql_alloc(&alloc, join->session->variables.range_alloc_block_size, 0);
-    join->session->mem_root= &alloc;
+    quick->records= records;
+    quick->read_time= read_cost;
   }
-  else
-    memset(&alloc, 0, sizeof(MEM_ROOT));  // ensure that it's not used
+  return quick;
 }
 
-
-/*
-  Do post-constructor initialization.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::init()
-
-  DESCRIPTION
-    The method performs initialization that cannot be done in the constructor
-    such as memory allocations that may fail. It allocates memory for the
-    group prefix and inifix buffers, and for the lists of MIN/MAX item to be
-    updated during execution.
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::init()
-{
-  if (group_prefix) /* Already initialized. */
-    return 0;
-
-  if (! (last_prefix= (unsigned char*) alloc_root(&alloc, group_prefix_len)))
-      return 1;
-  /*
-    We may use group_prefix to store keys with all select fields, so allocate
-    enough space for it.
-  */
-  if (! (group_prefix= (unsigned char*) alloc_root(&alloc,
-                                                   real_prefix_len + min_max_arg_len)))
-    return 1;
-
-  if (key_infix_len > 0)
-  {
-    /*
-      The memory location pointed to by key_infix will be deleted soon, so
-      allocate a new buffer and copy the key_infix into it.
-    */
-    unsigned char *tmp_key_infix= (unsigned char*) alloc_root(&alloc, key_infix_len);
-    if (! tmp_key_infix)
-      return 1;
-    memcpy(tmp_key_infix, this->key_infix, key_infix_len);
-    this->key_infix= tmp_key_infix;
-  }
-
-  if (min_max_arg_part)
-  {
-    if (my_init_dynamic_array(&min_max_ranges, sizeof(optimizer::QuickRange*), 16, 16))
-      return 1;
-
-    if (have_min)
-    {
-      if (! (min_functions= new List<Item_sum>))
-        return 1;
-    }
-    else
-      min_functions= NULL;
-    if (have_max)
-    {
-      if (! (max_functions= new List<Item_sum>))
-        return 1;
-    }
-    else
-      max_functions= NULL;
-
-    Item_sum *min_max_item= NULL;
-    Item_sum **func_ptr= join->sum_funcs;
-    while ((min_max_item= *(func_ptr++)))
-    {
-      if (have_min && (min_max_item->sum_func() == Item_sum::MIN_FUNC))
-        min_functions->push_back(min_max_item);
-      else if (have_max && (min_max_item->sum_func() == Item_sum::MAX_FUNC))
-        max_functions->push_back(min_max_item);
-    }
-
-    if (have_min)
-    {
-      if (! (min_functions_it= new List_iterator<Item_sum>(*min_functions)))
-        return 1;
-    }
-
-    if (have_max)
-    {
-      if (! (max_functions_it= new List_iterator<Item_sum>(*max_functions)))
-        return 1;
-    }
-  }
-  else
-    min_max_ranges.elements= 0;
-
-  return 0;
-}
-
-
-optimizer::QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
-{
-  if (cursor->inited != Cursor::NONE)
-  {
-    cursor->ha_index_end();
-  }
-  if (min_max_arg_part)
-  {
-    delete_dynamic(&min_max_ranges);
-  }
-  free_root(&alloc,MYF(0));
-  delete min_functions_it;
-  delete max_functions_it;
-  delete quick_prefix_select;
-}
-
-
-/*
-  Eventually create and add a new quick range object.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::add_range()
-    sel_range  Range object from which a
-
-  NOTES
-    Construct a new QuickRange object from a SEL_ARG object, and
-    add it to the array min_max_ranges. If sel_arg is an infinite
-    range, e.g. (x < 5 or x > 4), then skip it and do not construct
-    a quick range.
-
-  RETURN
-    false on success
-    true  otherwise
-*/
-bool optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_range(SEL_ARG *sel_range)
-{
-  optimizer::QuickRange *range= NULL;
-  uint32_t range_flag= sel_range->min_flag | sel_range->max_flag;
-
-  /* Skip (-inf,+inf) ranges, e.g. (x < 5 or x > 4). */
-  if ((range_flag & NO_MIN_RANGE) && (range_flag & NO_MAX_RANGE))
-    return false;
-
-  if (! (sel_range->min_flag & NO_MIN_RANGE) &&
-      ! (sel_range->max_flag & NO_MAX_RANGE))
-  {
-    if (sel_range->maybe_null &&
-        sel_range->min_value[0] && sel_range->max_value[0])
-      range_flag|= NULL_RANGE; /* IS NULL condition */
-    else if (memcmp(sel_range->min_value, sel_range->max_value,
-                    min_max_arg_len) == 0)
-      range_flag|= EQ_RANGE;  /* equality condition */
-  }
-  range= new optimizer::QuickRange(sel_range->min_value,
-                                   min_max_arg_len,
-                                   make_keypart_map(sel_range->part),
-                                   sel_range->max_value,
-                                   min_max_arg_len,
-                                   make_keypart_map(sel_range->part),
-                                   range_flag);
-  if (! range)
-    return true;
-  if (insert_dynamic(&min_max_ranges, (unsigned char*)&range))
-    return true;
-  return false;
-}
-
-
-/*
-  Opens the ranges if there are more conditions in quick_prefix_select than
-  the ones used for jumping through the prefixes.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::adjust_prefix_ranges()
-
-  NOTES
-    quick_prefix_select is made over the conditions on the whole key.
-    It defines a number of ranges of length x.
-    However when jumping through the prefixes we use only the the first
-    few most significant keyparts in the range key. However if there
-    are more keyparts to follow the ones we are using we must make the
-    condition on the key inclusive (because x < "ab" means
-    x[0] < 'a' OR (x[0] == 'a' AND x[1] < 'b').
-    To achive the above we must turn off the NEAR_MIN/NEAR_MAX
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::adjust_prefix_ranges()
-{
-  if (quick_prefix_select &&
-      group_prefix_len < quick_prefix_select->max_used_key_length)
-  {
-    DYNAMIC_ARRAY *arr= NULL;
-    uint32_t inx;
-
-    for (inx= 0, arr= &quick_prefix_select->ranges; inx < arr->elements; inx++)
-    {
-      optimizer::QuickRange *range= NULL;
-
-      get_dynamic(arr, (unsigned char*)&range, inx);
-      range->flag &= ~(NEAR_MIN | NEAR_MAX);
-    }
-  }
-}
-
-
-/*
-  Determine the total number and length of the keys that will be used for
-  index lookup.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::update_key_stat()
-
-  DESCRIPTION
-    The total length of the keys used for index lookup depends on whether
-    there are any predicates referencing the min/max argument, and/or if
-    the min/max argument field can be NULL.
-    This function does an optimistic analysis whether the search key might
-    be extended by a constant for the min/max keypart. It is 'optimistic'
-    because during actual execution it may happen that a particular range
-    is skipped, and then a shorter key will be used. However this is data
-    dependent and can't be easily estimated here.
-
-  RETURN
-    None
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_key_stat()
-{
-  max_used_key_length= real_prefix_len;
-  if (min_max_ranges.elements > 0)
-  {
-    optimizer::QuickRange *cur_range= NULL;
-    if (have_min)
-    { /* Check if the right-most range has a lower boundary. */
-      get_dynamic(&min_max_ranges,
-                  (unsigned char*) &cur_range,
-                  min_max_ranges.elements - 1);
-      if (! (cur_range->flag & NO_MIN_RANGE))
-      {
-        max_used_key_length+= min_max_arg_len;
-        used_key_parts++;
-        return;
-      }
-    }
-    if (have_max)
-    { /* Check if the left-most range has an upper boundary. */
-      get_dynamic(&min_max_ranges, (unsigned char*)&cur_range, 0);
-      if (! (cur_range->flag & NO_MAX_RANGE))
-      {
-        max_used_key_length+= min_max_arg_len;
-        used_key_parts++;
-        return;
-      }
-    }
-  }
-  else if (have_min && min_max_arg_part &&
-           min_max_arg_part->field->real_maybe_null())
-  {
-    /*
-      If a MIN/MAX argument value is NULL, we can quickly determine
-      that we're in the beginning of the next group, because NULLs
-      are always < any other value. This allows us to quickly
-      determine the end of the current group and jump to the next
-      group (see next_min()) and thus effectively increases the
-      usable key length.
-    */
-    max_used_key_length+= min_max_arg_len;
-    used_key_parts++;
-  }
-}
-
-
-/*
-  Initialize a quick group min/max select for key retrieval.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::reset()
-
-  DESCRIPTION
-    Initialize the index chosen for access and find and store the prefix
-    of the last group. The method is expensive since it performs disk access.
-
-  RETURN
-    0      OK
-    other  Error code
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::reset(void)
-{
-  int result;
-
-  cursor->extra(HA_EXTRA_KEYREAD); /* We need only the key attributes */
-  if ((result= cursor->ha_index_init(index,1)))
-    return result;
-  if (quick_prefix_select && quick_prefix_select->reset())
-    return 0;
-  result= cursor->index_last(record);
-  if (result == HA_ERR_END_OF_FILE)
-    return 0;
-  /* Save the prefix of the last group. */
-  key_copy(last_prefix, record, index_info, group_prefix_len);
-
-  return 0;
-}
-
-
-
-/*
-  Get the next key containing the MIN and/or MAX key for the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::get_next()
-
-  DESCRIPTION
-    The method finds the next subsequent group of records that satisfies the
-    query conditions and finds the keys that contain the MIN/MAX values for
-    the key part referenced by the MIN/MAX function(s). Once a group and its
-    MIN/MAX values are found, store these values in the Item_sum objects for
-    the MIN/MAX functions. The rest of the values in the result row are stored
-    in the Item_field::result_field of each select field. If the query does
-    not contain MIN and/or MAX functions, then the function only finds the
-    group prefix, which is a query answer itself.
-
-  NOTES
-    If both MIN and MAX are computed, then we use the fact that if there is
-    no MIN key, there can't be a MAX key as well, so we can skip looking
-    for a MAX key in this case.
-
-  RETURN
-    0                  on success
-    HA_ERR_END_OF_FILE if returned all keys
-    other              if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::get_next()
-{
-  int min_res= 0;
-  int max_res= 0;
-  int result= 0;
-  int is_last_prefix= 0;
-
-  /*
-    Loop until a group is found that satisfies all query conditions or the last
-    group is reached.
-  */
-  do
-  {
-    result= next_prefix();
-    /*
-      Check if this is the last group prefix. Notice that at this point
-      this->record contains the current prefix in record format.
-    */
-    if (! result)
-    {
-      is_last_prefix= key_cmp(index_info->key_part, last_prefix,
-                              group_prefix_len);
-      assert(is_last_prefix <= 0);
-    }
-    else
-    {
-      if (result == HA_ERR_KEY_NOT_FOUND)
-        continue;
-      break;
-    }
-
-    if (have_min)
-    {
-      min_res= next_min();
-      if (min_res == 0)
-        update_min_result();
-    }
-    /* If there is no MIN in the group, there is no MAX either. */
-    if ((have_max && !have_min) ||
-        (have_max && have_min && (min_res == 0)))
-    {
-      max_res= next_max();
-      if (max_res == 0)
-        update_max_result();
-      /* If a MIN was found, a MAX must have been found as well. */
-      assert(((have_max && !have_min) ||
-                  (have_max && have_min && (max_res == 0))));
-    }
-    /*
-      If this is just a GROUP BY or DISTINCT without MIN or MAX and there
-      are equality predicates for the key parts after the group, find the
-      first sub-group with the extended prefix.
-    */
-    if (! have_min && ! have_max && key_infix_len > 0)
-      result= cursor->index_read_map(record,
-                                     group_prefix,
-                                     make_prev_keypart_map(real_key_parts),
-                                     HA_READ_KEY_EXACT);
-
-    result= have_min ? min_res : have_max ? max_res : result;
-  } while ((result == HA_ERR_KEY_NOT_FOUND || result == HA_ERR_END_OF_FILE) &&
-           is_last_prefix != 0);
-
-  if (result == 0)
-  {
-    /*
-      Partially mimic the behavior of end_select_send. Copy the
-      field data from Item_field::field into Item_field::result_field
-      of each non-aggregated field (the group fields, and optionally
-      other fields in non-ANSI SQL mode).
-    */
-    copy_fields(&join->tmp_table_param);
-  }
-  else if (result == HA_ERR_KEY_NOT_FOUND)
-    result= HA_ERR_END_OF_FILE;
-
-  return result;
-}
-
-
-/*
-  Retrieve the minimal key in the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_min()
-
-  DESCRIPTION
-    Find the minimal key within this group such that the key satisfies the query
-    conditions and NULL semantics. The found key is loaded into this->record.
-
-  IMPLEMENTATION
-    Depending on the values of min_max_ranges.elements, key_infix_len, and
-    whether there is a  NULL in the MIN field, this function may directly
-    return without any data access. In this case we use the key loaded into
-    this->record by the call to this->next_prefix() just before this call.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if no MIN key was found that fulfills all conditions.
-    HA_ERR_END_OF_FILE   - "" -
-    other                if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min()
-{
-  int result= 0;
-
-  /* Find the MIN key using the eventually extended group prefix. */
-  if (min_max_ranges.elements > 0)
-  {
-    if ((result= next_min_in_range()))
-      return result;
-  }
-  else
-  {
-    /* Apply the constant equality conditions to the non-group select fields */
-    if (key_infix_len > 0)
-    {
-      if ((result= cursor->index_read_map(record,
-                                          group_prefix,
-                                          make_prev_keypart_map(real_key_parts),
-                                          HA_READ_KEY_EXACT)))
-        return result;
-    }
-
-    /*
-      If the min/max argument field is NULL, skip subsequent rows in the same
-      group with NULL in it. Notice that:
-      - if the first row in a group doesn't have a NULL in the field, no row
-      in the same group has (because NULL < any other value),
-      - min_max_arg_part->field->ptr points to some place in 'record'.
-    */
-    if (min_max_arg_part && min_max_arg_part->field->is_null())
-    {
-      /* Find the first subsequent record without NULL in the MIN/MAX field. */
-      key_copy(tmp_record, record, index_info, 0);
-      result= cursor->index_read_map(record,
-                                     tmp_record,
-                                     make_keypart_map(real_key_parts),
-                                     HA_READ_AFTER_KEY);
-      /*
-        Check if the new record belongs to the current group by comparing its
-        prefix with the group's prefix. If it is from the next group, then the
-        whole group has NULLs in the MIN/MAX field, so use the first record in
-        the group as a result.
-        TODO:
-        It is possible to reuse this new record as the result candidate for the
-        next call to next_min(), and to save one lookup in the next call. For
-        this add a new member 'this->next_group_prefix'.
-      */
-      if (! result)
-      {
-        if (key_cmp(index_info->key_part, group_prefix, real_prefix_len))
-          key_restore(record, tmp_record, index_info, 0);
-      }
-      else if (result == HA_ERR_KEY_NOT_FOUND || result == HA_ERR_END_OF_FILE)
-        result= 0; /* There is a result in any case. */
-    }
-  }
-
-  /*
-    If the MIN attribute is non-nullable, this->record already contains the
-    MIN key in the group, so just return.
-  */
-  return result;
-}
-
-
-/*
-  Retrieve the maximal key in the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_max()
-
-  DESCRIPTION
-    Lookup the maximal key of the group, and store it into this->record.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if no MAX key was found that fulfills all conditions.
-    HA_ERR_END_OF_FILE	 - "" -
-    other                if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max()
-{
-  int result= 0;
-
-  /* Get the last key in the (possibly extended) group. */
-  if (min_max_ranges.elements > 0)
-    result= next_max_in_range();
-  else
-    result= cursor->index_read_map(record,
-                                   group_prefix,
-                                   make_prev_keypart_map(real_key_parts),
-                                   HA_READ_PREFIX_LAST);
-  return result;
-}
-
-
-/*
-  Determine the prefix of the next group.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
-
-  DESCRIPTION
-    Determine the prefix of the next group that satisfies the query conditions.
-    If there is a range condition referencing the group attributes, use a
-    QuickRangeSelect object to retrieve the *first* key that satisfies the
-    condition. If there is a key infix of constants, append this infix
-    immediately after the group attributes. The possibly extended prefix is
-    stored in this->group_prefix. The first key of the found group is stored in
-    this->record, on which relies this->next_min().
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if there is no key with the formed prefix
-    HA_ERR_END_OF_FILE   if there are no more keys
-    other                if some error occurred
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_prefix()
-{
-  int result= 0;
-
-  if (quick_prefix_select)
-  {
-    unsigned char *cur_prefix= seen_first_key ? group_prefix : NULL;
-    if ((result= quick_prefix_select->get_next_prefix(group_prefix_len,
-                                                      make_prev_keypart_map(group_key_parts),
-                                                      cur_prefix)))
-      return result;
-    seen_first_key= true;
-  }
-  else
-  {
-    if (! seen_first_key)
-    {
-      result= cursor->index_first(record);
-      if (result)
-        return result;
-      seen_first_key= true;
-    }
-    else
-    {
-      /* Load the first key in this group into record. */
-      result= cursor->index_read_map(record,
-                                     group_prefix,
-                                     make_prev_keypart_map(group_key_parts),
-                                     HA_READ_AFTER_KEY);
-      if (result)
-        return result;
-    }
-  }
-
-  /* Save the prefix of this group for subsequent calls. */
-  key_copy(group_prefix, record, index_info, group_prefix_len);
-  /* Append key_infix to group_prefix. */
-  if (key_infix_len > 0)
-    memcpy(group_prefix + group_prefix_len,
-           key_infix,
-           key_infix_len);
-
-  return 0;
-}
-
-
-/*
-  Find the minimal key in a group that satisfies some range conditions for the
-  min/max argument field.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
-
-  DESCRIPTION
-    Given the sequence of ranges min_max_ranges, find the minimal key that is
-    in the left-most possible range. If there is no such key, then the current
-    group does not have a MIN key that satisfies the WHERE clause. If a key is
-    found, its value is stored in this->record.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if there is no key with the given prefix in any of
-                         the ranges
-    HA_ERR_END_OF_FILE   - "" -
-    other                if some error
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
-{
-  ha_rkey_function find_flag;
-  key_part_map keypart_map;
-  optimizer::QuickRange *cur_range= NULL;
-  bool found_null= false;
-  int result= HA_ERR_KEY_NOT_FOUND;
-  basic_string<unsigned char> max_key;
-
-  max_key.reserve(real_prefix_len + min_max_arg_len);
-
-  assert(min_max_ranges.elements > 0);
-
-  for (uint32_t range_idx= 0; range_idx < min_max_ranges.elements; range_idx++)
-  { /* Search from the left-most range to the right. */
-    get_dynamic(&min_max_ranges, (unsigned char*)&cur_range, range_idx);
-
-    /*
-      If the current value for the min/max argument is bigger than the right
-      boundary of cur_range, there is no need to check this range.
-    */
-    if (range_idx != 0 && !(cur_range->flag & NO_MAX_RANGE) &&
-        (key_cmp(min_max_arg_part,
-                 (const unsigned char*) cur_range->max_key,
-                 min_max_arg_len) == 1))
-      continue;
-
-    if (cur_range->flag & NO_MIN_RANGE)
-    {
-      keypart_map= make_prev_keypart_map(real_key_parts);
-      find_flag= HA_READ_KEY_EXACT;
-    }
-    else
-    {
-      /* Extend the search key with the lower boundary for this range. */
-      memcpy(group_prefix + real_prefix_len,
-             cur_range->min_key,
-             cur_range->min_length);
-      keypart_map= make_keypart_map(real_key_parts);
-      find_flag= (cur_range->flag & (EQ_RANGE | NULL_RANGE)) ?
-                 HA_READ_KEY_EXACT : (cur_range->flag & NEAR_MIN) ?
-                 HA_READ_AFTER_KEY : HA_READ_KEY_OR_NEXT;
-    }
-
-    result= cursor->index_read_map(record, group_prefix, keypart_map, find_flag);
-    if (result)
-    {
-      if ((result == HA_ERR_KEY_NOT_FOUND || result == HA_ERR_END_OF_FILE) &&
-          (cur_range->flag & (EQ_RANGE | NULL_RANGE)))
-        continue; /* Check the next range. */
-
-      /*
-        In all other cases (HA_ERR_*, HA_READ_KEY_EXACT with NO_MIN_RANGE,
-        HA_READ_AFTER_KEY, HA_READ_KEY_OR_NEXT) if the lookup failed for this
-        range, it can't succeed for any other subsequent range.
-      */
-      break;
-    }
-
-    /* A key was found. */
-    if (cur_range->flag & EQ_RANGE)
-      break; /* No need to perform the checks below for equal keys. */
-
-    if (cur_range->flag & NULL_RANGE)
-    {
-      /*
-        Remember this key, and continue looking for a non-NULL key that
-        satisfies some other condition.
-      */
-      memcpy(tmp_record, record, head->s->rec_buff_length);
-      found_null= true;
-      continue;
-    }
-
-    /* Check if record belongs to the current group. */
-    if (key_cmp(index_info->key_part, group_prefix, real_prefix_len))
-    {
-      result= HA_ERR_KEY_NOT_FOUND;
-      continue;
-    }
-
-    /* If there is an upper limit, check if the found key is in the range. */
-    if (! (cur_range->flag & NO_MAX_RANGE) )
-    {
-      /* Compose the MAX key for the range. */
-      max_key.clear();
-      max_key.append(group_prefix, real_prefix_len);
-      max_key.append(cur_range->max_key, cur_range->max_length);
-      /* Compare the found key with max_key. */
-      int cmp_res= key_cmp(index_info->key_part,
-                           max_key.data(),
-                           real_prefix_len + min_max_arg_len);
-      if (! (((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) ||
-          (cmp_res <= 0)))
-      {
-        result= HA_ERR_KEY_NOT_FOUND;
-        continue;
-      }
-    }
-    /* If we got to this point, the current key qualifies as MIN. */
-    assert(result == 0);
-    break;
-  }
-  /*
-    If there was a key with NULL in the MIN/MAX field, and there was no other
-    key without NULL from the same group that satisfies some other condition,
-    then use the key with the NULL.
-  */
-  if (found_null && result)
-  {
-    memcpy(record, tmp_record, head->s->rec_buff_length);
-    result= 0;
-  }
-  return result;
-}
-
-
-/*
-  Find the maximal key in a group that satisfies some range conditions for the
-  min/max argument field.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
-
-  DESCRIPTION
-    Given the sequence of ranges min_max_ranges, find the maximal key that is
-    in the right-most possible range. If there is no such key, then the current
-    group does not have a MAX key that satisfies the WHERE clause. If a key is
-    found, its value is stored in this->record.
-
-  RETURN
-    0                    on success
-    HA_ERR_KEY_NOT_FOUND if there is no key with the given prefix in any of
-                         the ranges
-    HA_ERR_END_OF_FILE   - "" -
-    other                if some error
-*/
-int optimizer::QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
-{
-  ha_rkey_function find_flag;
-  key_part_map keypart_map;
-  optimizer::QuickRange *cur_range= NULL;
-  int result= 0;
-  basic_string<unsigned char> min_key;
-  min_key.reserve(real_prefix_len + min_max_arg_len);
-
-  assert(min_max_ranges.elements > 0);
-
-  for (uint32_t range_idx= min_max_ranges.elements; range_idx > 0; range_idx--)
-  { /* Search from the right-most range to the left. */
-    get_dynamic(&min_max_ranges, (unsigned char*)&cur_range, range_idx - 1);
-
-    /*
-      If the current value for the min/max argument is smaller than the left
-      boundary of cur_range, there is no need to check this range.
-    */
-    if (range_idx != min_max_ranges.elements &&
-        ! (cur_range->flag & NO_MIN_RANGE) &&
-        (key_cmp(min_max_arg_part,
-                 (const unsigned char*) cur_range->min_key,
-                 min_max_arg_len) == -1))
-      continue;
-
-    if (cur_range->flag & NO_MAX_RANGE)
-    {
-      keypart_map= make_prev_keypart_map(real_key_parts);
-      find_flag= HA_READ_PREFIX_LAST;
-    }
-    else
-    {
-      /* Extend the search key with the upper boundary for this range. */
-      memcpy(group_prefix + real_prefix_len,
-             cur_range->max_key,
-             cur_range->max_length);
-      keypart_map= make_keypart_map(real_key_parts);
-      find_flag= (cur_range->flag & EQ_RANGE) ?
-                 HA_READ_KEY_EXACT : (cur_range->flag & NEAR_MAX) ?
-                 HA_READ_BEFORE_KEY : HA_READ_PREFIX_LAST_OR_PREV;
-    }
-
-    result= cursor->index_read_map(record, group_prefix, keypart_map, find_flag);
-
-    if (result)
-    {
-      if ((result == HA_ERR_KEY_NOT_FOUND || result == HA_ERR_END_OF_FILE) &&
-          (cur_range->flag & EQ_RANGE))
-        continue; /* Check the next range. */
-
-      /*
-        In no key was found with this upper bound, there certainly are no keys
-        in the ranges to the left.
-      */
-      return result;
-    }
-    /* A key was found. */
-    if (cur_range->flag & EQ_RANGE)
-      return 0; /* No need to perform the checks below for equal keys. */
-
-    /* Check if record belongs to the current group. */
-    if (key_cmp(index_info->key_part, group_prefix, real_prefix_len))
-      continue;                                 // Row not found
-
-    /* If there is a lower limit, check if the found key is in the range. */
-    if (! (cur_range->flag & NO_MIN_RANGE) )
-    {
-      /* Compose the MIN key for the range. */
-      min_key.clear();
-      min_key.append(group_prefix, real_prefix_len);
-      min_key.append(cur_range->min_key, cur_range->min_length);
-
-      /* Compare the found key with min_key. */
-      int cmp_res= key_cmp(index_info->key_part,
-                           min_key.data(),
-                           real_prefix_len + min_max_arg_len);
-      if (! (((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
-          (cmp_res >= 0)))
-        continue;
-    }
-    /* If we got to this point, the current key qualifies as MAX. */
-    return result;
-  }
-  return HA_ERR_KEY_NOT_FOUND;
-}
-
-
-/*
-  Update all MIN function results with the newly found value.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::update_min_result()
-
-  DESCRIPTION
-    The method iterates through all MIN functions and updates the result value
-    of each function by calling Item_sum::reset(), which in turn picks the new
-    result value from this->head->record[0], previously updated by
-    next_min(). The updated value is stored in a member variable of each of the
-    Item_sum objects, depending on the value type.
-
-  IMPLEMENTATION
-    The update must be done separately for MIN and MAX, immediately after
-    next_min() was called and before next_max() is called, because both MIN and
-    MAX take their result value from the same buffer this->head->record[0]
-    (i.e.  this->record).
-
-  RETURN
-    None
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_min_result()
-{
-  Item_sum *min_func= NULL;
-
-  min_functions_it->rewind();
-  while ((min_func= (*min_functions_it)++))
-    min_func->reset();
-}
-
-
-/*
-  Update all MAX function results with the newly found value.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::update_max_result()
-
-  DESCRIPTION
-    The method iterates through all MAX functions and updates the result value
-    of each function by calling Item_sum::reset(), which in turn picks the new
-    result value from this->head->record[0], previously updated by
-    next_max(). The updated value is stored in a member variable of each of the
-    Item_sum objects, depending on the value type.
-
-  IMPLEMENTATION
-    The update must be done separately for MIN and MAX, immediately after
-    next_max() was called, because both MIN and MAX take their result value
-    from the same buffer this->head->record[0] (i.e.  this->record).
-
-  RETURN
-    None
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::update_max_result()
-{
-  Item_sum *max_func= NULL;
-
-  max_functions_it->rewind();
-  while ((max_func= (*max_functions_it)++))
-    max_func->reset();
-}
-
-
-/*
-  Append comma-separated list of keys this quick select uses to key_names;
-  append comma-separated list of corresponding used lengths to used_lengths.
-
-  SYNOPSIS
-    QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths()
-    key_names    [out] Names of used indexes
-    used_lengths [out] Corresponding lengths of the index names
-
-  DESCRIPTION
-    This method is used by select_describe to extract the names of the
-    indexes used by a quick select.
-
-*/
-void optimizer::QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_names,
-                                                                 String *used_lengths)
-{
-  char buf[64];
-  uint32_t length;
-  key_names->append(index_info->name);
-  length= int64_t2str(max_used_key_length, buf, 10) - buf;
-  used_lengths->append(buf, length);
-}
 
 static void print_sel_tree(optimizer::Parameter *param, SEL_TREE *tree, key_map *tree_map, const char *)
 {

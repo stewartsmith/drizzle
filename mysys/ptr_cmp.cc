@@ -20,6 +20,9 @@
   */
 
 #include "mysys/mysys_priv.h"
+
+#include <assert.h>
+
 #include "plugin/myisam/myisampack.h"
 
 static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b);

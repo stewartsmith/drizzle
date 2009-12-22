@@ -19,7 +19,7 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/null.h>
 
 unsigned char Field_null::null[1]={1};

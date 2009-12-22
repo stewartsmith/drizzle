@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
 #include "drizzled/lex_string.h"
 
+#include <cstring>
 #include <vector>
 
 using namespace std;
@@ -35,6 +36,29 @@ namespace drizzled
 
 vector<plugin::InfoSchemaTable *> all_schema_tables;
 
+
+plugin::InfoSchemaRecord::InfoSchemaRecord()
+  : record(NULL),
+    rec_len(0),
+    checksum(0)
+{}
+
+plugin::InfoSchemaRecord::InfoSchemaRecord(unsigned char *buf, size_t in_len)
+  : record(new unsigned char[in_len]),
+    rec_len(in_len),
+    checksum(0)
+{
+  memcpy(record, buf, rec_len);
+  checksum= drizzled::hash::crc32((const char *) record, rec_len);
+}
+
+plugin::InfoSchemaRecord::InfoSchemaRecord(const plugin::InfoSchemaRecord &rhs)
+  : record(new(std::nothrow) unsigned char[rhs.rec_len]),
+    rec_len(rhs.rec_len)
+{
+  memcpy(record, rhs.record, rec_len);
+  checksum= drizzled::hash::crc32((const char *) record, rec_len);
+}
 
 bool plugin::InfoSchemaTable::addPlugin(plugin::InfoSchemaTable *schema_table)
 {

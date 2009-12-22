@@ -21,7 +21,7 @@
  *   Errors a drizzled can give you
  *   */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <mysys/my_sys.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/definitions.h>

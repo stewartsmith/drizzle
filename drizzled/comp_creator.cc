@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/cmpfunc.h>
 

@@ -17,9 +17,11 @@
 #include "mysys/mysys_err.h"
 #include "my_dir.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#include <fcntl.h>
+
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 
 /*
   Open a file
@@ -31,15 +33,15 @@
       MyFlags	Special flags
 
   RETURN VALUE
-    File descriptor
+    int descriptor
 */
 
-File my_open(const char *FileName, int Flags, myf MyFlags)
+int my_open(const char *FileName, int Flags, myf MyFlags)
 				/* Path-name of file */
 				/* Read | write .. */
 				/* Special flags */
 {
-  File fd;
+  int fd;
 
 #if !defined(NO_OPEN_3)
   fd = open(FileName, Flags, my_umask);	/* Normal unix */
@@ -61,7 +63,7 @@ File my_open(const char *FileName, int Flags, myf MyFlags)
 
 */
 
-int my_close(File fd, myf MyFlags)
+int my_close(int fd, myf MyFlags)
 {
   int err;
 
@@ -99,7 +101,7 @@ int my_close(File fd, myf MyFlags)
 
 */
 
-File my_register_filename(File fd, const char *FileName, uint32_t error_message_number, myf MyFlags)
+int my_register_filename(int fd, const char *FileName, uint32_t error_message_number, myf MyFlags)
 {
   if ((int) fd >= 0)
   {

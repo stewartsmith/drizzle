@@ -60,6 +60,8 @@
 using namespace std;
 
 
+#define my_off_t2double(A)  ((double) (my_off_t) (A))
+
 /* Functions defined in this file */
 
 static int check_k_link(MI_CHECK *param, MI_INFO *info,uint32_t nr);
@@ -70,7 +72,7 @@ static uint32_t isam_key_length(MI_INFO *info,MI_KEYDEF *keyinfo);
 static ha_checksum calc_checksum(ha_rows count);
 static int writekeys(MI_SORT_PARAM *sort_param);
 static int sort_one_index(MI_CHECK *param, MI_INFO *info,MI_KEYDEF *keyinfo,
-			  my_off_t pagepos, File new_file);
+			  my_off_t pagepos, int new_file);
 extern "C"
 {
   int sort_key_read(MI_SORT_PARAM *sort_param,void *key);
@@ -1404,7 +1406,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   int error,got_error;
   ha_rows start_records,new_header_length;
   my_off_t del;
-  File new_file;
+  int new_file;
   MYISAM_SHARE *share=info->s;
   char llbuff[22],llbuff2[22];
   SORT_INFO sort_info;
@@ -1768,7 +1770,7 @@ void lock_memory(MI_CHECK *param)
 
 	/* Flush all changed blocks to disk */
 
-int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file)
+int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, int file)
 {
   if (flush_key_blocks(key_cache, file, FLUSH_RELEASE))
   {
@@ -1787,7 +1789,7 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
 {
   register uint32_t key;
   register MI_KEYDEF *keyinfo;
-  File new_file;
+  int new_file;
   my_off_t index_pos[HA_MAX_POSSIBLE_KEY];
   uint32_t r_locks,w_locks;
   int old_lock;
@@ -1881,7 +1883,7 @@ err2:
 	 /* Sort records recursive using one index */
 
 static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
-			  my_off_t pagepos, File new_file)
+			  my_off_t pagepos, int new_file)
 {
   uint32_t length,nod_flag,used_length, key_length;
   unsigned char *buff,*keypos,*endpos;
@@ -1970,7 +1972,7 @@ int change_to_newfile(const char * filename, const char * old_ext,
 
 	/* Copy a block between two files */
 
-int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
+int filecopy(MI_CHECK *param, int to,int from,my_off_t start,
 	     my_off_t length, const char *type)
 {
   char tmp_buff[IO_SIZE],*buff;
@@ -2028,7 +2030,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   ulong length;
   ha_rows start_records;
   my_off_t new_header_length,del;
-  File new_file;
+  int new_file;
   MI_SORT_PARAM sort_param;
   MYISAM_SHARE *share=info->s;
   HA_KEYSEG *keyseg;
@@ -2405,7 +2407,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
   ulong rec_length;
   ha_rows start_records;
   my_off_t new_header_length,del;
-  File new_file;
+  int new_file;
   MI_SORT_PARAM *sort_param=0;
   MYISAM_SHARE *share=info->s;
   ulong   *rec_per_key_part;

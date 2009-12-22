@@ -17,7 +17,7 @@
 #ifndef CLIENT_CLIENT_PRIV_H
 #define CLIENT_CLIENT_PRIV_H
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <libdrizzle/drizzle_client.h>
 #include <mysys/my_getopt.h>
 

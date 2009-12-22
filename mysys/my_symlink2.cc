@@ -24,10 +24,10 @@
 #include "mysys/mysys_err.h"
 #include <mystrings/m_string.h>
 
-File my_create_with_symlink(const char *linkname, const char *filename,
-			    int createflags, int access_flags, myf MyFlags)
+int my_create_with_symlink(const char *linkname, const char *filename,
+                           int createflags, int access_flags, myf MyFlags)
 {
-  File file;
+  int file;
   int tmp_errno;
   /* Test if we should create a link */
   int create_link;

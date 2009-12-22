@@ -22,7 +22,7 @@
 
 class Transparent_file
 {
-  File filedes;
+  int filedes;
   unsigned char *buff;  /* in-memory window to the file or mmaped area */
   /* current window sizes */
   off_t lower_bound;
@@ -34,7 +34,7 @@ public:
   Transparent_file();
   ~Transparent_file();
 
-  void init_buff(File filedes_arg);
+  void init_buff(int filedes_arg);
   unsigned char *ptr();
   off_t start();
   off_t end();

@@ -13,13 +13,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/definitions.h"
 
 namespace drizzled
 {
@@ -70,7 +71,7 @@ void* multi_malloc(bool zerofill, ...)
   while ((ptr=va_arg(args, void **)))
   {
     *ptr=res;
-    length=va_arg(args,uint);
+    length=va_arg(args,unsigned int);
     res+= ALIGN_SIZE(length);
   }
   va_end(args);

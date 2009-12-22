@@ -20,7 +20,8 @@
   @brief
   Sum functions (COUNT, MIN...)
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/hybrid_type_traits.h>
@@ -40,6 +41,7 @@
 using namespace std;
 
 extern my_decimal decimal_zero;
+extern drizzled::plugin::StorageEngine *heap_engine;
 
 /**
   Prepare an aggregate function item for checking context conditions.

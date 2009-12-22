@@ -14,6 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include "drizzled/sql_list.h"
 
 list_node end_of_list;

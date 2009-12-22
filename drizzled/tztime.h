@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_TZTIME_H
 #define DRIZZLED_TZTIME_H
 
+#include "drizzled/sql_alloc.h"
+
+class String;
 typedef struct st_drizzle_time DRIZZLE_TIME;
 
 /**

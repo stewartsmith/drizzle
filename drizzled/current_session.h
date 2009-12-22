@@ -22,6 +22,7 @@
 #define DRIZZLED_CURRENT_SESSION_H
 
 class Session;
+typedef struct st_mem_root MEM_ROOT;
 
 Session *_current_session(void);
 #define current_session _current_session()

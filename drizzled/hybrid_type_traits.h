@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_HYBRID_TYPE_TRAITS_H
 #define DRIZZLED_HYBRID_TYPE_TRAITS_H
 
-#include <stdint.h>
+#include "drizzled/common.h"
 
 class Item;
 class Field;

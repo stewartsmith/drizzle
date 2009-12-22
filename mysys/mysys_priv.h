@@ -16,7 +16,7 @@
 #ifndef MYSYS_MYSYS_PRIV_H
 #define MYSYS_MYSYS_PRIV_H
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <mysys/my_sys.h>
 
 #include <sys/resource.h>

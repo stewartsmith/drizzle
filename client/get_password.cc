@@ -22,7 +22,7 @@
 ** This is an own file to avoid conflicts with curses
 */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include "client/get_password.h"
 
 #include <string.h>

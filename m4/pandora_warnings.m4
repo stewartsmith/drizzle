@@ -223,8 +223,8 @@ template <> void C<int>::foo();
             AC_INCLUDES_DEFAULT])],
             [ac_cv_safe_to_use_Wredundant_decls_=yes],
             [ac_cv_safe_to_use_Wredundant_decls_=no])
-          CXXFLAGS="${save_CXXFLAGS}"
-          AC_LANG_POP()])
+         CXXFLAGS="${save_CXXFLAGS}"
+         AC_LANG_POP()])
       AS_IF([test "$ac_cv_safe_to_use_Wredundant_decls_" = "yes"],
             [CXX_WARNINGS="${CXX_WARNINGS} -Wredundant-decls"],
             [CXX_WARNINGS="${CXX_WARNINGS} -Wno-redundant-decls"])

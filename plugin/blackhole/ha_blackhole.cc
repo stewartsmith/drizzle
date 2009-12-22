@@ -13,19 +13,24 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/table.h>
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 
 #include "ha_blackhole.h"
 
+#include <fcntl.h>
+
 #include <string>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
+#include "mystrings/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include "drizzled/global_charset_info.h"
+
 
 using namespace std;
 using namespace google;
@@ -97,7 +102,7 @@ public:
       const char *ext= strchr(filename->c_str(), '.');
 
       if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
-          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
       {  }
       else
       {
@@ -421,6 +426,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

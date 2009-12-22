@@ -18,7 +18,7 @@
  */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/hybrid_type_traits_integer.h"
 #include "drizzled/hybrid_type.h"
 #include "drizzled/definitions.h"

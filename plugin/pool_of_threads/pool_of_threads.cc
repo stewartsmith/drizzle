@@ -18,8 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <fcntl.h>
 #include <plugin/pool_of_threads/pool_of_threads.h>
+#include "drizzled/pthread_globals.h"
 
 using namespace std;
 using namespace drizzled;
@@ -273,7 +275,7 @@ static void libevent_connection_close(Session *session)
   delete sched;
   session->scheduler_arg= NULL;
 
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  Session::unlink(session);   /* locks LOCK_thread_count and deletes session */
 
   return;
 }
@@ -673,6 +675,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pool_of_threads",
   "0.1",
   "Brian Aker",

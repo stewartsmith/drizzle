@@ -29,7 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/plugin/function.h>
 
@@ -349,6 +349,7 @@ static int memcachedDone(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "memcached_functions",
   "0.1",
   "Patrick Galbraith, Ronald Bradford, Padraig O'Sullivan",

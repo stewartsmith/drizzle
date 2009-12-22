@@ -18,6 +18,7 @@
 #include "heap_priv.h"
 
 #include <string.h>
+#include <cstdlib>
 
 using namespace std;
 

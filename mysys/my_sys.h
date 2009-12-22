@@ -21,6 +21,12 @@
 #ifndef MYSYS_MY_SYS_H
 #define MYSYS_MY_SYS_H
 
+#ifdef __cplusplus
+# include <cstdio>
+#else
+# include <stdio.h>
+#endif
+
 #include <errno.h>
 #define my_errno (errno)
 
@@ -32,6 +38,27 @@
 #include <mysys/aio_result.h>
 
 #include <mysys/my_alloc.h>
+
+#ifndef errno				/* did we already get it? */
+#ifdef HAVE_ERRNO_AS_DEFINE
+#include <errno.h>			/* errno is a define */
+#else
+extern int errno;			/* declare errno */
+#endif
+#endif					/* #ifndef errno */
+
+#include <mysys/my_alloc.h>
+#include <mysys/dynamic_array.h>
+
+#include <sys/mman.h>
+
+#ifndef MAP_NOSYNC
+#define MAP_NOSYNC      0
+#endif
+#ifndef MAP_NORESERVE
+#define MAP_NORESERVE 0         /* For irix and AIX */
+#endif
+
 
 /* Sun Studio does not inject this into main namespace yet */
 #if defined(__cplusplus)
@@ -119,15 +146,10 @@ extern "C" {
 typedef int  (*qsort_cmp)(const void *,const void *);
 typedef int  (*qsort_cmp2)(void*, const void *,const void *);
 
+typedef uint64_t my_off_t;
+
 #define TRASH(A,B) /* nothing */
 
-#ifndef errno				/* did we already get it? */
-#ifdef HAVE_ERRNO_AS_DEFINE
-#include <errno.h>			/* errno is a define */
-#else
-extern int errno;			/* declare errno */
-#endif
-#endif					/* #ifndef errno */
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
@@ -194,7 +216,7 @@ enum cache_type
 
 typedef struct st_record_cache	/* Used when cacheing records */
 {
-  File file;
+  int file;
   int	rc_seek,error,inited;
   uint	rc_length,read_length,reclength;
   my_off_t rc_record_pos,end_of_file;
@@ -258,22 +280,22 @@ int handle_default_option(void *in_ctx, const char *group_name,
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
-extern File my_open(const char *FileName,int Flags,myf MyFlags);
-extern File my_register_filename(File fd, const char *FileName,
+extern int my_open(const char *FileName,int Flags,myf MyFlags);
+extern int my_register_filename(int fd, const char *FileName,
 				 uint32_t error_message_number, myf MyFlags);
-extern File my_create(const char *FileName,int CreateFlags,
+extern int my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
-extern int my_close(File Filedes,myf MyFlags);
+extern int my_close(int Filedes,myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
-extern File my_create_with_symlink(const char *linkname, const char *filename,
+extern int my_create_with_symlink(const char *linkname, const char *filename,
 				   int createflags, int access_flags,
 				   myf MyFlags);
 extern int my_delete_with_symlink(const char *name, myf MyFlags);
 extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
-extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
+extern size_t my_read(int Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
-extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
+extern size_t my_write(int Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
 extern int _sanity(const char *sFile, uint32_t uLine);
 
@@ -283,7 +305,7 @@ extern int check_if_legal_tablename(const char *path);
 #define my_delete_allow_opened(fname,flags)  my_delete((fname),(flags))
 
 extern void init_glob_errs(void);
-extern int my_sync(File fd, myf my_flags);
+extern int my_sync(int fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
 extern void my_error(int nr,myf MyFlags, ...);
@@ -298,7 +320,7 @@ extern bool my_init(void);
 extern void my_end(void);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
-extern char * my_filename(File fd);
+extern char * my_filename(int fd);
 
 extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
@@ -326,7 +348,7 @@ extern void wf_end(struct wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
-extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,File file,
+extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,int file,
 			     size_t reclength,enum cache_type type,
 			     bool use_async_io);
 extern int read_cache_record(RECORD_CACHE *info,unsigned char *to);
@@ -348,7 +370,7 @@ extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
 extern qsort2_cmp get_ptr_compare(size_t);
 void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
-File create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
+int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 
 #include <mysys/dynamic_array.h>
 
@@ -372,15 +394,6 @@ extern void my_sleep(uint32_t m_seconds);
 extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
-
-#include <sys/mman.h>
-
-#ifndef MAP_NOSYNC
-#define MAP_NOSYNC      0
-#endif
-#ifndef MAP_NORESERVE
-#define MAP_NORESERVE 0         /* For irix and AIX */
-#endif
 
 
 /* character sets */

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/show.h"
@@ -50,6 +50,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include <float.h>
 
 using namespace std;
 using namespace drizzled;
@@ -315,6 +316,11 @@ Item::Item(Session *session, Item *item):
   /* Put this item in the session's free list */
   next= session->free_list;
   session->free_list= this;
+}
+
+uint32_t Item::float_length(uint32_t decimals_par) const
+{
+  return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
 }
 
 uint32_t Item::decimal_precision() const
@@ -1270,6 +1276,65 @@ int Item::save_in_field(Field *field, bool no_conversions)
     error=field->store(nr, unsigned_flag);
   }
   return error;
+}
+
+/**
+  Check if an item is a constant one and can be cached.
+
+  @param arg [out] TRUE <=> Cache this item.
+
+  @return TRUE  Go deeper in item tree.
+  @return FALSE Don't go deeper in item tree.
+*/
+
+bool Item::cache_const_expr_analyzer(unsigned char **arg)
+{
+  bool *cache_flag= (bool*)*arg;
+  if (!*cache_flag)
+  {
+    Item *item= real_item();
+    /*
+      Cache constant items unless it's a basic constant, constant field or
+      a subselect (they use their own cache).
+    */
+    if (const_item() &&
+        !(item->basic_const_item() || item->type() == Item::FIELD_ITEM ||
+          item->type() == SUBSELECT_ITEM ||
+           /*
+             Do not cache GET_USER_VAR() function as its const_item() may
+             return TRUE for the current thread but it still may change
+             during the execution.
+           */
+          (item->type() == Item::FUNC_ITEM &&
+           ((Item_func*)item)->functype() == Item_func::GUSERVAR_FUNC)))
+      *cache_flag= true;
+    return true;
+  }
+  return false;
+}
+
+/**
+  Cache item if needed.
+
+  @param arg   TRUE <=> Cache this item.
+
+  @return cache if cache needed.
+  @return this otherwise.
+*/
+
+Item* Item::cache_const_expr_transformer(unsigned char *arg)
+{
+  if (*(bool*)arg)
+  {
+    *((bool*)arg)= false;
+    Item_cache *cache= Item_cache::get_cache(this);
+    if (!cache)
+      return NULL;
+    cache->setup(this);
+    cache->store(this);
+    return cache;
+  }
+  return this;
 }
 
 bool Item::send(plugin::Client *client, String *buffer)

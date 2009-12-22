@@ -34,6 +34,7 @@ Created 5/11/1994 Heikki Tuuri
 # include "srv0srv.h"
 
 #include <stdlib.h>
+#include <errno.h>
 
 /** This struct is placed first in every allocated memory block */
 typedef struct ut_mem_block_struct ut_mem_block_t;

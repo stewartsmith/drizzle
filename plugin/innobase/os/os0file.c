@@ -55,6 +55,9 @@ Created 10/21/1995 Heikki Tuuri
 #include "srv0start.h"
 #include "fil0fil.h"
 #include "buf0buf.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #ifndef UNIV_HOTBACKUP
 # include "os0sync.h"
 # include "os0thread.h"
@@ -63,7 +66,6 @@ Created 10/21/1995 Heikki Tuuri
 /* Add includes for the _stat() call to compile on Windows */
 #  include <sys/types.h>
 #  include <sys/stat.h>
-#  include <errno.h>
 # endif /* __WIN__ */
 #endif /* !UNIV_HOTBACKUP */
 

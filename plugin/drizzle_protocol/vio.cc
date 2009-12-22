@@ -20,11 +20,19 @@
   the file descriptior.
 */
 
+#include "config.h"
+
 #define DONT_MAP_VIO
-#include <drizzled/global.h>
 #include "vio.h"
-#include <string.h>
-#include <stdint.h>
+
+#include <fcntl.h>
+
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <memory>
+
+using namespace std;
 
 /*
  * Helper to fill most of the Vio* with defaults.
