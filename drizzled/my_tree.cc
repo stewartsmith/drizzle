@@ -53,9 +53,10 @@
     (*tree->compare)(custom_arg, key, ELEMENT_KEY(tree,element))
 */
 
-#include "mysys/mysys_priv.h"
+#include "config.h"
+
 #include <mystrings/m_string.h>
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 
 #define BLACK		1
 #define RED		0

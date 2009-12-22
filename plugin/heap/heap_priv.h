@@ -24,7 +24,7 @@
 #include <mystrings/m_ctype.h>
 #include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 #include <list>
 
 /*

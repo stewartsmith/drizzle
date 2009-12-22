@@ -16,7 +16,6 @@
 /* Create a MyISAM table */
 
 #include "myisam_priv.h"
-#include <mysys/my_tree.h>
 #include <mysys/my_bit.h>
 
 #include <drizzled/util/test.h>

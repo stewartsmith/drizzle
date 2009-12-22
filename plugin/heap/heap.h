@@ -29,7 +29,7 @@ extern "C" {
 #include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 
 	/* defines used by heap-funktions */
 

@@ -21,7 +21,7 @@
 #include "config.h"
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 #include <mysys/my_pthread.h>
 #include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
