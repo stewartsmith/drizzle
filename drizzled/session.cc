@@ -1072,7 +1072,10 @@ void select_to_file::cleanup()
 }
 
 select_to_file::select_to_file(file_exchange *ex)
-  : exchange(ex), file(-1), cache(new IO_CACHE), row_count(0L)
+  : exchange(ex),
+    file(-1),
+    cache(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
+    row_count(0L)
 {
   path[0]=0;
 }

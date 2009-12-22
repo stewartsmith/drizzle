@@ -70,7 +70,7 @@ int unique_write_to_ptrs(unsigned char* key,
 Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
 	       uint32_t size_arg, size_t max_in_memory_size_arg)
   : max_in_memory_size(max_in_memory_size_arg),
-    file(new IO_CACHE),
+    file(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
     size(size_arg),
     elements(0)
 {

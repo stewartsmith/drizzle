@@ -634,12 +634,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    /*
-     * optimizer::SqlSelect is a SqlAlloc class, which seems to mean that
-     * this new below actually gets done on the mem_root. So we do not need
-     * to explicitly free it
-     */
-    file(new IO_CACHE),
+    file(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
     free_cond(false)
 {
   quick_keys.reset();
