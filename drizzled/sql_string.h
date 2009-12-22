@@ -28,15 +28,16 @@
 #endif
 
 #include <drizzled/common.h>
-#include <assert.h>
-#include <mysys/iocache.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 class String;
 
 extern String my_empty_string;
 extern const String my_null_string;
+typedef struct st_mem_root MEM_ROOT;
+typedef struct charset_info_st CHARSET_INFO;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -66,55 +67,16 @@ class String
   const CHARSET_INFO *str_charset;
 
 public:
-  String() :
-    Ptr(0),
-    str_length(0),
-    Alloced_length(0),
-    alloced(0),
-    str_charset(&my_charset_bin) { }
+  String();
+  String(uint32_t length_arg);
+  String(const char *str, const CHARSET_INFO * const cs);
+  String(const char *str, uint32_t len, const CHARSET_INFO * const cs);
+  String(char *str, uint32_t len, const CHARSET_INFO * const cs);
+  String(const String &str);
 
-  String(uint32_t length_arg) :
-    Ptr(0),
-    str_length(0),
-    Alloced_length(0),
-    alloced(0),
-    str_charset(&my_charset_bin)
-  {
-    (void) real_alloc(length_arg);
-  }
-
-  String(const char *str, const CHARSET_INFO * const cs) :
-    Ptr(const_cast<char*>(str)),
-    str_length(static_cast<uint32_t>(strlen(str))),
-    Alloced_length(0),
-    alloced(0),
-    str_charset(cs) { }
-
-  String(const char *str, uint32_t len, const CHARSET_INFO * const cs) :
-    Ptr(const_cast<char*>(str)),
-    str_length(len),
-    Alloced_length(0),
-    alloced(0),
-    str_charset(cs) { }
-
-  String(char *str,uint32_t len, const CHARSET_INFO * const cs) :
-    Ptr(str),
-    str_length(len),
-    Alloced_length(len),
-    alloced(0),
-    str_charset(cs) { }
-
-  String(const String &str) :
-    Ptr(str.Ptr),
-    str_length(str.str_length),
-    Alloced_length(str.Alloced_length),
-    alloced(0),
-    str_charset(str.str_charset) { }
-
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return alloc_root(mem_root, static_cast<uint32_t>(size)); }
+  static void *operator new(size_t size, MEM_ROOT *mem_root);
   static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
+  { }
   static void operator delete(void *, MEM_ROOT *)
   { /* never called */ }
   ~String();
@@ -390,11 +352,8 @@ public:
   }
 };
 
-static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
-                                           char *end)
-{
-  return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
-}
+bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+                             char *end);
 
 extern "C++" {
 bool operator==(const String &s1, const String &s2);

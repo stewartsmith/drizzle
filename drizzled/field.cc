@@ -367,6 +367,16 @@ bool test_if_important_data(const CHARSET_INFO * const cs,
   return (str < strend);
 }
 
+void *Field::operator new(size_t size)
+{
+  return sql_alloc(size);
+}
+
+void *Field::operator new(size_t size, MEM_ROOT *mem_root)
+{
+  return alloc_root(mem_root, static_cast<uint32_t>(size));
+}
+
 enum_field_types Field::field_type_merge(enum_field_types a,
                                          enum_field_types b)
 {

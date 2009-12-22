@@ -31,6 +31,7 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
+#include "mystrings/m_ctype.h"
 
 #include <string>
 #include <vector>
@@ -45,6 +46,8 @@
 #define ASSERT_COLUMN_MARKED_FOR_READ
 #define ASSERT_COLUMN_MARKED_FOR_WRITE
 #endif
+
+typedef struct st_typelib TYPELIB;
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
@@ -134,11 +137,10 @@ public:
    */
   bool is_created_from_null_item;
 
-  static void *operator new(size_t size) {return sql_alloc(size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return alloc_root(mem_root, static_cast<uint32_t>(size)); }
+  static void *operator new(size_t size);
+  static void *operator new(size_t size, MEM_ROOT *mem_root);
   static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
+  { }
 
   Field(unsigned char *ptr_arg,
         uint32_t length_arg,

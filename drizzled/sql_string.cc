@@ -38,6 +38,61 @@ extern void sql_element_free(void *ptr);
 ** String functions
 *****************************************************************************/
 
+String::String()
+  : Ptr(0),
+    str_length(0),
+    Alloced_length(0),
+    alloced(0),
+    str_charset(&my_charset_bin)
+{ }
+
+String::String(uint32_t length_arg)
+  : Ptr(0),
+    str_length(0),
+    Alloced_length(0),
+    alloced(0),
+    str_charset(&my_charset_bin)
+{
+  (void) real_alloc(length_arg);
+}
+
+String::String(const char *str, const CHARSET_INFO * const cs)
+  : Ptr(const_cast<char*>(str)),
+    str_length(static_cast<uint32_t>(strlen(str))),
+    Alloced_length(0),
+    alloced(0),
+    str_charset(cs)
+{ }
+
+String::String(const char *str, uint32_t len, const CHARSET_INFO * const cs)
+  : Ptr(const_cast<char*>(str)),
+    str_length(len),
+    Alloced_length(0),
+    alloced(0),
+    str_charset(cs)
+{ }
+
+String::String(char *str,uint32_t len, const CHARSET_INFO * const cs)
+  : Ptr(str),
+    str_length(len),
+    Alloced_length(len),
+    alloced(0),
+    str_charset(cs)
+{ }
+
+String::String(const String &str)
+  : Ptr(str.Ptr),
+    str_length(str.str_length),
+    Alloced_length(str.Alloced_length),
+    alloced(0),
+    str_charset(str.str_charset)
+{ }
+
+void *String::operator new(size_t size, MEM_ROOT *mem_root)
+{
+  return alloc_root(mem_root, static_cast<uint32_t>(size));
+}
+
 String::~String() { free(); }
 
 bool String::real_alloc(uint32_t arg_length)
@@ -725,3 +780,8 @@ bool operator!=(const String &s1, const String &s2)
   return !(s1 == s2);
 }
 
+bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+                             char *end)
+{
+  return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
+}

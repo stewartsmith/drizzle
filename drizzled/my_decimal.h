@@ -34,6 +34,7 @@
 
 #include <mystrings/decimal.h>
 #include <mysys/my_time.h>
+#include <drizzled/definitions.h>
 #include <drizzled/sql_string.h>
 
 #define DECIMAL_LONGLONG_DIGITS 22
