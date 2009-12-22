@@ -388,7 +388,8 @@ int mysql_update(Session *session, TableList *table_list,
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))
 	error=1;
-      select->file= tempfile;			// Read row ptrs from this cursor
+      // Read row ptrs from this cursor
+      memcpy(select->file, &tempfile, sizeof(tempfile));
       if (error >= 0)
 	goto err;
     }

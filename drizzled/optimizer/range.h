@@ -30,6 +30,7 @@
 class JOIN;
 class TRP_ROR_INTERSECT; 
 typedef class Item COND;
+typedef struct st_io_cache IO_CACHE;
 
 typedef struct st_handler_buffer HANDLER_BUFFER;
 
@@ -289,7 +290,7 @@ class SqlSelect : public Sql_alloc
   QuickSelectInterface *quick; /**< If quick-select used */
   COND *cond; /**< where condition */
   Table	*head;
-  IO_CACHE file; /**< Positions to used records */
+  IO_CACHE *file; /**< Positions to used records */
   ha_rows records; /**< Records in use if read from file */
   double read_time; /**< Time to read rows */
   key_map quick_keys; /**< Possible quick keys */
