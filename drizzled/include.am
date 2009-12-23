@@ -52,6 +52,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/current_session.h \
 		drizzled/data_home.h \
 		drizzled/db.h \
+		drizzled/decimal.h \
 		drizzled/definitions.h \
 		drizzled/diagnostics_area.h \
 		drizzled/discrete_interval.h \
@@ -446,6 +447,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/comp_creator.cc \
 		drizzled/create_field.cc \
 		drizzled/current_session.cc \
+		drizzled/decimal.cc \
 		drizzled/diagnostics_area.cc \
 		drizzled/drizzled.cc \
 		drizzled/dtcollation.cc \

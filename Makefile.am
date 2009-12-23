@@ -90,7 +90,6 @@ noinst_HEADERS+=	\
 		client/get_password.h \
 		client/linebuffer.h \
 		drizzled/configmake.h \
-		mystrings/decimal.h \
 		mystrings/m_ctype.h \
 		mystrings/m_string.h \
 		mystrings/my_uctype.h \
@@ -113,7 +112,6 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/ctype-uca.cc \
 		mystrings/ctype-utf8.cc \
 		mystrings/ctype.cc \
-		mystrings/decimal.cc \
 		mystrings/dtoa.cc \
 		mystrings/int2str.cc \
 		mystrings/llstr.cc \

@@ -100,9 +100,9 @@
 #include "config.h"
 
 #include "drizzled/definitions.h"
-#include "m_string.h"
-#include "m_ctype.h"
-#include "decimal.h"
+#include "mystrings/m_string.h"
+#include "mystrings/m_ctype.h"
+#include "drizzled/decimal.h"
 
 #include <plugin/myisam/myisampack.h>
 #include <drizzled/util/test.h>
