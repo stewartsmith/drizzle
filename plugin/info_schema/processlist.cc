@@ -29,6 +29,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/session_list.h"
 #include "drizzled/pthread_globals.h"
+#include "mysys/my_sys.h"
 
 #include "helper_methods.h"
 #include "processlist.h"

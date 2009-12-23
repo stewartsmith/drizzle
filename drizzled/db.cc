@@ -39,6 +39,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 
+#include "mysys/my_sys.h"
 
 using namespace std;
 using namespace drizzled;

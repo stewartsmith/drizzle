@@ -40,6 +40,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
+#include "mysys/my_sys.h"
 
 using namespace std;
 using namespace drizzled;

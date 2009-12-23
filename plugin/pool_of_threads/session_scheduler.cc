@@ -25,6 +25,7 @@
 #include <drizzled/plugin/client.h>
 #include <event.h>
 #include "session_scheduler.h"
+#include "mysys/my_sys.h"
 
 /* Prototype */
 extern "C"

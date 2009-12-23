@@ -81,6 +81,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include "drizzled/pthread_globals.h"
+#include "mysys/my_sys.h"
+
 
 /**
   @defgroup Locking Locking

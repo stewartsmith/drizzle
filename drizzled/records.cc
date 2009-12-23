@@ -25,6 +25,8 @@
 #include "drizzled/session.h"
 #include "drizzled/records.h"
 #include "drizzled/optimizer/range.h"
+#include "mysys/my_sys.h"
+#include "mysys/iocache.h"
 
 using namespace drizzled;
 

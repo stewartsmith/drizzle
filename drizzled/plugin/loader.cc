@@ -1085,7 +1085,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     if (global_lock)
       pthread_mutex_lock(&LOCK_global_system_variables);
 
-    safe_mutex_assert_owner(&LOCK_global_system_variables);
+    //safe_mutex_assert_owner(&LOCK_global_system_variables);
 
     memcpy(session->variables.dynamic_variables_ptr +
              session->variables.dynamic_variables_size,

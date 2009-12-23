@@ -28,6 +28,7 @@
 #include <signal.h>
 #include <limits.h>
 
+#include "mysys/my_sys.h"
 #include <mysys/my_bit.h>
 #include <drizzled/my_hash.h>
 #include <drizzled/stacktrace.h>
@@ -50,6 +51,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
+#include "plugin/myisam/myisam.h"
 
 #include <google/protobuf/stubs/common.h>
 

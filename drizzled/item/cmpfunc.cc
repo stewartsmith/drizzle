@@ -31,6 +31,7 @@
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/time_functions.h"
+#include "mysys/my_sys.h"
 #include <math.h>
 #include <algorithm>
 
@@ -3057,6 +3058,12 @@ static int cmp_decimal(void *, my_decimal *a, my_decimal *b)
   a->fix_buffer_pointer();
   b->fix_buffer_pointer();
   return my_decimal_cmp(a, b);
+}
+
+
+void in_vector::sort()
+{
+  my_qsort2(base,used_count,size,compare, (void *) collation);
 }
 
 

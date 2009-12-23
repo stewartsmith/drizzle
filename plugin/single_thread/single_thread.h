@@ -22,6 +22,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 #include <string>
+#include "mysys/my_sys.h"
 
 
 /**

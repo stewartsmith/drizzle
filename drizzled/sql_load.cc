@@ -23,6 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
+#include "mysys/my_sys.h"
+#include "mysys/iocache.h"
 #include <drizzled/db.h>
 
 #include <sys/stat.h>

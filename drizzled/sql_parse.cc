@@ -51,6 +51,8 @@
 #include <bitset>
 #include <algorithm>
 
+#include "mysys/my_sys.h"
+
 using namespace drizzled;
 using namespace std;
 

@@ -37,6 +37,9 @@
 #include "drizzled/table_list.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "mysys/iocache.h"
+#include "mysys/my_sys.h"
+#include "plugin/myisam/myisam.h"
 
 using namespace std;
 using namespace drizzled;

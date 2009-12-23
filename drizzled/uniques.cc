@@ -39,6 +39,7 @@
 #include "drizzled/sql_sort.h"
 #include "drizzled/session.h"
 #include "drizzled/sql_list.h"
+#include "mysys/iocache.h"
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

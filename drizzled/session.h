@@ -1473,7 +1473,6 @@ class JOIN;
 #include <drizzled/select_dump.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/select_create.h>
-#include <plugin/myisam/myisam.h>
 #include <drizzled/tmp_table_param.h>
 #include <drizzled/select_union.h>
 #include <drizzled/select_subselect.h>
