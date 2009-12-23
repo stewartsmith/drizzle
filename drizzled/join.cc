@@ -54,6 +54,8 @@
 #include "drizzled/records.h"
 #include "drizzled/probes.h"
 #include "mysys/my_bit.h"
+#include "mysys/my_sys.h"
+#include "mysys/iocache.h"
 
 #include <algorithm>
 

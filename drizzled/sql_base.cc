@@ -50,6 +50,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "mysys/iocache.h"
 
 
 using namespace std;

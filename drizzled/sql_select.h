@@ -43,8 +43,6 @@ class select_result;
 /* PREV_BITS only used in sql_select.cc */
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 
-#include <plugin/myisam/myisam.h>
-
 /* Values in optimize */
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2

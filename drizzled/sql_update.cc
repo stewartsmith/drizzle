@@ -27,6 +27,8 @@
 #include "drizzled/sql_parse.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "mysys/my_sys.h"
+#include "mysys/iocache.h"
 
 #include <list>
 

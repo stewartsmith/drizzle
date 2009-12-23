@@ -135,6 +135,8 @@
 #include "drizzled/optimizer/sel_arg.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/records.h"
+#include "mysys/my_sys.h"
+#include "mysys/iocache.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
