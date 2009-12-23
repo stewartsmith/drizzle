@@ -13,11 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-test_archive_LDADD = $(LIBINTL) $(LTLIBZ) \
+test_archive_LDADD = \
 		$(top_builddir)/plugin/archive/libazio.la \
 		$(top_builddir)/mysys/libmysys.la \
 		$(top_builddir)/mystrings/libmystrings.la \
-		$(LDADD)
+		$(LDADD) $(LIBINTL) $(LTLIBZ)
 
 noinst_LTLIBRARIES+=  plugin/archive/libazio.la
 noinst_HEADERS+= \
