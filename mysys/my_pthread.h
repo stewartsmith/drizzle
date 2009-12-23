@@ -156,8 +156,6 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #define ESRCH 1
 #endif
 
-typedef uint64_t my_thread_id;
-
 extern bool my_thread_global_init(void);
 extern void my_thread_global_end(void);
 extern bool my_thread_init(void);
@@ -179,7 +177,7 @@ struct st_my_thread_var
   pthread_mutex_t * volatile current_mutex;
   pthread_cond_t * volatile current_cond;
   pthread_t pthread_self;
-  my_thread_id id;
+  uint64_t id;
   int volatile abort;
   bool init;
   struct st_my_thread_var *next,**prev;

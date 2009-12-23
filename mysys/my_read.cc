@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include <errno.h>
 
 
@@ -43,7 +43,7 @@ size_t my_read(int Filedes, unsigned char *Buffer, size_t Count, myf MyFlags)
     errno= 0;					/* Linux doesn't reset this */
     if ((readbytes= read(Filedes, Buffer, Count)) != Count)
     {
-      my_errno= errno ? errno : -1;
+      errno= errno ? errno : -1;
       if ((readbytes == 0 || (int) readbytes == -1) && errno == EINTR)
       {
         continue;                              /* Interrupted */
@@ -52,10 +52,10 @@ size_t my_read(int Filedes, unsigned char *Buffer, size_t Count, myf MyFlags)
       {
         if (readbytes == (size_t) -1)
           my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG),
-                   "unknown", my_errno);
+                   "unknown", errno);
         else if (MyFlags & (MY_NABP | MY_FNABP))
           my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG),
-                   "unknown", my_errno);
+                   "unknown", errno);
       }
       if (readbytes == (size_t) -1 ||
           ((MyFlags & (MY_FNABP | MY_NABP)) && !(MyFlags & MY_FULL_IO)))

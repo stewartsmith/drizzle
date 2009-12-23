@@ -26,6 +26,7 @@
 #include <drizzled/error.h>
 #include <drizzled/function/str/conv_charset.h>
 #include <drizzled/session.h>
+#include "drizzled/charset.h"
 
 
 DTCollation::DTCollation()

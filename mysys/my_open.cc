@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include "my_dir.h"
 
 #include <fcntl.h>
@@ -74,7 +74,7 @@ int my_close(int fd, myf MyFlags)
 
   if (err)
   {
-    my_errno=errno;
+    errno=errno;
     if (MyFlags & (MY_FAE | MY_WME))
       my_error(EE_BADCLOSE, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
   }
@@ -111,14 +111,14 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
     return fd;
   }
   else
-    my_errno= errno;
+    errno= errno;
 
   if (MyFlags & (MY_FFNF | MY_FAE | MY_WME))
   {
-    if (my_errno == EMFILE)
+    if (errno == EMFILE)
       error_message_number= EE_OUT_OF_FILERESOURCES;
     my_error(error_message_number, MYF(ME_BELL+ME_WAITTANG),
-             FileName, my_errno);
+             FileName, errno);
   }
   return -1;
 }

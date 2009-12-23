@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 
 int my_delete(const char *name, myf MyFlags)
 {
@@ -22,7 +22,7 @@ int my_delete(const char *name, myf MyFlags)
 
   if ((err = unlink(name)) == -1)
   {
-    my_errno=errno;
+    errno=errno;
     if (MyFlags & (MY_FAE+MY_WME))
       my_error(EE_DELETE,MYF(ME_BELL+ME_WAITTANG+(MyFlags & ME_NOINPUT)),
 	       name,errno);

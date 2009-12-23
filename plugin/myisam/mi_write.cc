@@ -54,10 +54,10 @@ int mi_write(MI_INFO *info, unsigned char *record)
 
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    return(my_errno=EACCES);
+    return(errno=EACCES);
   }
   if (_mi_readinfo(info,F_WRLCK,1))
-    return(my_errno);
+    return(errno);
   filepos= ((share->state.dellink != HA_OFFSET_ERROR &&
              !info->append_insert_at_end) ?
 	    share->state.dellink :
@@ -67,12 +67,12 @@ int mi_write(MI_INFO *info, unsigned char *record)
       share->base.records == (ha_rows) 1 &&
       info->state->records == (ha_rows) 1)
   {						/* System file */
-    my_errno=HA_ERR_RECORD_FILE_FULL;
+    errno=HA_ERR_RECORD_FILE_FULL;
     goto err2;
   }
   if (info->state->key_file_length >= share->base.margin_key_file_length)
   {
-    my_errno=HA_ERR_INDEX_FILE_FULL;
+    errno=HA_ERR_INDEX_FILE_FULL;
     goto err2;
   }
   if (_mi_mark_file_changed(info))
@@ -150,9 +150,9 @@ int mi_write(MI_INFO *info, unsigned char *record)
   return(0);
 
 err:
-  save_errno=my_errno;
-  if (my_errno == HA_ERR_FOUND_DUPP_KEY || my_errno == HA_ERR_RECORD_FILE_FULL ||
-      my_errno == HA_ERR_NULL_IN_SPATIAL || my_errno == HA_ERR_OUT_OF_MEM)
+  save_errno=errno;
+  if (errno == HA_ERR_FOUND_DUPP_KEY || errno == HA_ERR_RECORD_FILE_FULL ||
+      errno == HA_ERR_NULL_IN_SPATIAL || errno == HA_ERR_OUT_OF_MEM)
   {
     if (info->bulk_insert)
     {
@@ -190,11 +190,11 @@ err:
     mi_mark_crashed(info);
   }
   info->update= (HA_STATE_CHANGED | HA_STATE_WRITTEN | HA_STATE_ROW_CHANGED);
-  my_errno=save_errno;
+  errno=save_errno;
 err2:
-  save_errno=my_errno;
+  save_errno=errno;
   _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
-  return(my_errno=save_errno);
+  return(errno=save_errno);
 } /* mi_write */
 
 
@@ -320,7 +320,7 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     {
       info->dupp_key_pos= dupp_key_pos;
       free(temp_buff);
-      my_errno=HA_ERR_FOUND_DUPP_KEY;
+      errno=HA_ERR_FOUND_DUPP_KEY;
       return(-1);
     }
   }
@@ -395,7 +395,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (t_length >= keyinfo->maxlength*2+MAX_POINTER_LENGTH)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(-1);
     }
     bmove_upp((unsigned char*) endpos+t_length,(unsigned char*) endpos,(uint) (endpos-key_pos));
@@ -405,7 +405,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (-t_length >= keyinfo->maxlength*2+MAX_POINTER_LENGTH)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(-1);
     }
     memmove(key_pos, key_pos - t_length, endpos - key_pos + t_length);
@@ -575,7 +575,7 @@ static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
     if (!(length=(*keyinfo->get_key)(keyinfo,0,&page,key_buff)))
     {
       mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(0);
     }
   }

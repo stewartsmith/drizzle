@@ -769,7 +769,7 @@ void thr_abort_locks(THR_LOCK *lock)
   This is used to abort all locks for a specific thread
 */
 
-bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
+bool thr_abort_locks_for_thread(THR_LOCK *lock, uint64_t thread_id)
 {
   THR_LOCK_DATA *data;
   bool found= false;

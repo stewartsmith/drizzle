@@ -19,14 +19,16 @@
 
 /* Dynamic hashing of record with different key-length */
 
-#ifndef MYSYS_HASH_H
-#define MYSYS_HASH_H
-
-#include <mysys/my_sys.h>
+#ifndef DRIZZLED_MY_HASH_H
+#define DRIZZLED_MY_HASH_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "drizzled/dynamic_array.h"
+
+typedef struct charset_info_st CHARSET_INFO;
 
 /*
   Overhead to store an element in hash
@@ -78,4 +80,4 @@ bool hash_delete(HASH *hash,unsigned char *record);
 #ifdef __cplusplus
 }
 #endif
-#endif /* MYSYS_HASH_H */
+#endif /* DRIZZLED_MY_HASH_H */

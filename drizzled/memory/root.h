@@ -25,6 +25,11 @@
 extern "C" {
 #endif
 
+#define MY_KEEP_PREALLOC	1
+#define MY_MARK_BLOCKS_FREE     2  /* move used to free list and reuse them */
+
+#define alloc_root_inited(A) ((A)->min_malloc != 0)
+#define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 #define ALLOC_MAX_BLOCK_TO_DROP			4096
 #define ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP	10
 

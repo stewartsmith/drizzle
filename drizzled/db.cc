@@ -20,11 +20,11 @@
 #include <fstream>
 #include <fcntl.h>
 #include <drizzled/message/schema.pb.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include "mystrings/m_string.h"
 #include <drizzled/session.h>
 #include <drizzled/db.h>
@@ -37,6 +37,7 @@
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
 
 
 using namespace std;
@@ -231,7 +232,7 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
       goto exit;
     }
 
-    my_error(ER_CANT_CREATE_DB, MYF(0), database_name.to_string().c_str(), my_errno);
+    my_error(ER_CANT_CREATE_DB, MYF(0), database_name.to_string().c_str(), errno);
     error= true;
     goto exit;
   }

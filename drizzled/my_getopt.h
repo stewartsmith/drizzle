@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef MYSYS_MY_GETOPT_H
-#define MYSYS_MY_GETOPT_H
+#ifndef DRIZZLED_MY_GETOPT_H
+#define DRIZZLED_MY_GETOPT_H
 
 #include "mysys/my_sys.h"
 
@@ -90,5 +90,5 @@ bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 }
 #endif
 
-#endif /* MYSYS_MY_GETOPT_H */
+#endif /* DRIZZLED_MY_GETOPT_H */
 

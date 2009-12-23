@@ -14,8 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef MYSYS_TYPELIB_H
-#define MYSYS_TYPELIB_H
+#ifndef DRIZZLED_TYPELIB_H
+#define DRIZZLED_TYPELIB_H
 
 #include "drizzled/memory/root.h"
 
@@ -42,4 +42,4 @@ extern TYPELIB *copy_typelib(MEM_ROOT *root, TYPELIB *from);
   }
 #endif
 
-#endif /* MYSYS_TYPELIB_H */
+#endif /* DRIZZLED_TYPELIB_H */

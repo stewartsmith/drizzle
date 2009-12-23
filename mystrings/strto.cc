@@ -185,7 +185,7 @@ function (const char *nptr,char **endptr,int base)
 
   if (overflow)
   {
-    my_errno=ERANGE;
+    errno=ERANGE;
 #ifdef USE_UNSIGNED
     return UINT64_MAX;
 #else
@@ -198,7 +198,7 @@ function (const char *nptr,char **endptr,int base)
 
 noconv:
   /* There was no number to convert.  */
-  my_errno=EDOM;
+  errno=EDOM;
   if (endptr != NULL)
     *endptr = (char *) nptr;
   return 0L;

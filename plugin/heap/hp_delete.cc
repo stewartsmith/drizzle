@@ -27,7 +27,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   test_active(info);
 
   if (info->opt_flag & READ_CHECK_USED)
-    return(my_errno);			/* Record changed */
+    return(errno);			/* Record changed */
   share->changed=1;
 
   rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
@@ -51,7 +51,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
 err:
   if (++(share->records) == share->blength)
     share->blength+= share->blength;
-  return(my_errno);
+  return(errno);
 }
 
 
@@ -125,7 +125,7 @@ int hp_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
     gpos=pos;
     if (!(pos=pos->next_key))
     {
-      return(my_errno=HA_ERR_CRASHED);	/* This shouldn't happend */
+      return(errno=HA_ERR_CRASHED);	/* This shouldn't happend */
     }
   }
 

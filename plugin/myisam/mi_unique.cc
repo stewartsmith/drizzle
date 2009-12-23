@@ -44,7 +44,7 @@ bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
     if (info->lastpos != disk_pos &&
 	!(*info->s->compare_unique)(info,def,record,info->lastpos))
     {
-      my_errno=HA_ERR_FOUND_DUPP_UNIQUE;
+      errno=HA_ERR_FOUND_DUPP_UNIQUE;
       info->errkey= (int) def->key;
       info->dupp_key_pos= info->lastpos;
       info->page_changed=1;			/* Can't optimize read next */

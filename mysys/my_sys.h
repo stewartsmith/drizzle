@@ -28,16 +28,16 @@
 #endif
 
 #include <errno.h>
-#define my_errno (errno)
 
 #include <mysys/my_pthread.h>
 
 #include <mystrings/m_ctype.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
-#include <mysys/typelib.h>
+#include "drizzled/typelib.h"
 #include <mysys/aio_result.h>
 
 #include "drizzled/memory/root.h"
+#include "drizzled/my_error.h"
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE
@@ -47,7 +47,7 @@ extern int errno;			/* declare errno */
 #endif
 #endif					/* #ifndef errno */
 
-#include <mysys/dynamic_array.h>
+#include <drizzled/dynamic_array.h>
 
 #include <sys/mman.h>
 
@@ -68,11 +68,6 @@ extern int errno;			/* declare errno */
 
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
-/* Max width of screen (for error messages) */
-#define SC_MAXWIDTH 256
-#define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
-#define NRERRBUFFS	(2)	/* Buffers for parameters */
-#define MY_FILE_ERROR	((size_t) -1)
 
 	/* General bitmaps for my_func's */
 #define MY_FFNF		1	/* Fatal if file not found */
@@ -106,7 +101,6 @@ extern int errno;			/* declare errno */
 #define ME_COLOUR1	((1 << ME_HIGHBYTE))	/* Possibly error-colours */
 #define ME_COLOUR2	((2 << ME_HIGHBYTE))
 #define ME_COLOUR3	((3 << ME_HIGHBYTE))
-#define ME_FATALERROR   1024    /* Fatal statement error */
 
 	/* Bits in last argument to fn_format */
 #define MY_REPLACE_DIR		1	/* replace dir in name with 'dir' */
@@ -124,10 +118,6 @@ extern int errno;			/* declare errno */
 #define MY_WAIT_FOR_USER_TO_FIX_PANIC	60	/* in seconds */
 #define MY_WAIT_GIVE_USER_A_MESSAGE	10	/* Every 10 times of prev */
 #define DFLT_INIT_HITS  3
-
-	/* root_alloc flags */
-#define MY_KEEP_PREALLOC	1
-#define MY_MARK_BLOCKS_FREE     2  /* move used to free list and reuse them */
 
 	/* Internal error numbers (for assembler functions) */
 #define MY_ERRNO_EDOM		33
@@ -150,14 +140,7 @@ typedef uint64_t my_off_t;
 
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
-typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
-extern error_handler_func error_handler_hook;
 extern uint32_t my_file_limit;
-
-/* charsets */
-extern const CHARSET_INFO *default_charset_info;
-extern CHARSET_INFO *all_charsets[256];
-extern CHARSET_INFO compiled_charsets[];
 
 /* statistics */
 extern uint32_t	my_file_opened,my_stream_opened, my_tmp_file_created;
@@ -165,13 +148,6 @@ extern uint32_t    my_file_total_opened;
 extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
-typedef void (*void_ptr_func)(void);
-typedef void (*void_ptr_int_func)(int);
-
-					/* Point to current my_message() */
-extern void_ptr_func my_sigtstp_cleanup,
-					/* Executed before jump to shell */
-	    my_sigtstp_restart;
 					/* Executed when comming from shell */
 extern int my_umask,		/* Default creation mask  */
 	   my_umask_dir,
@@ -299,18 +275,9 @@ extern int check_if_legal_tablename(const char *path);
 
 #define my_delete_allow_opened(fname,flags)  my_delete((fname),(flags))
 
-extern void init_glob_errs(void);
 extern int my_sync(int fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
-extern void my_error(int nr,myf MyFlags, ...);
-extern void my_printf_error(uint32_t my_err, const char *format,
-                            myf MyFlags, ...)
-  __attribute__((format(printf, 2, 4)));
-extern int my_error_register(const char **errmsgs, int first, int last);
-extern const char **my_error_unregister(int first, int last);
-extern void my_message(uint32_t my_err, const char *str,myf MyFlags);
-extern void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 extern bool my_init(void);
 extern void my_end(void);
 extern int my_redel(const char *from, const char *to, int MyFlags);
@@ -367,10 +334,6 @@ void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 int create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 
-#include <mysys/dynamic_array.h>
-
-#define alloc_root_inited(A) ((A)->min_malloc != 0)
-#define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 extern int get_defaults_options(int argc, char **argv,
                                 char **defaults, char **extra_defaults,
                                 char **group_suffix);
@@ -386,40 +349,7 @@ extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
 
-extern uint64_t my_getsystime(void);
-extern uint64_t my_micro_time(void);
-extern uint64_t my_micro_time_and_time(time_t *time_arg);
 
-
-/* character sets */
-void *cs_alloc(size_t size);
-
-extern uint32_t get_charset_number(const char *cs_name, uint32_t cs_flags);
-extern uint32_t get_collation_number(const char *name);
-extern const char *get_charset_name(uint32_t cs_number);
-
-extern const CHARSET_INFO *get_charset(uint32_t cs_number);
-extern const CHARSET_INFO *get_charset_by_name(const char *cs_name);
-extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint32_t cs_flags);
-
-extern bool resolve_charset(const char *cs_name,
-                            const CHARSET_INFO *default_cs,
-                            const CHARSET_INFO **cs);
-extern bool resolve_collation(const char *cl_name,
-                             const CHARSET_INFO *default_cl,
-                             const CHARSET_INFO **cl);
-
-extern void free_charsets(void);
-extern char *get_charsets_dir(char *buf);
-extern bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2);
-extern bool init_compiled_charsets(myf flags);
-extern void add_compiled_collation(CHARSET_INFO *cs);
-extern size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
-                                        char *to, size_t to_length,
-                                        const char *from, size_t length);
-extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
-                                        char *to, size_t to_length,
-                                        const char *from, size_t length);
 
 extern void thd_increment_bytes_sent(uint32_t length);
 extern void thd_increment_bytes_received(uint32_t length);

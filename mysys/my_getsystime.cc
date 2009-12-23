@@ -22,8 +22,8 @@
    exists some common code that should be merged into a function.
 */
 
-#include "mysys/mysys_priv.h"
-#include "my_static.h"
+#include "config.h"
+#include "drizzled/my_time.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

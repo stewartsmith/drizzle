@@ -32,7 +32,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include "mysys/my_dir.h"
-#include "mysys/hash.h"
+#include "drizzled/my_hash.h"
 #include "drizzled/cached_directory.h"
 
 #include <drizzled/definitions.h>
@@ -133,7 +133,7 @@ int plugin::StorageEngine::doRenameTable(Session *,
   {
     if (rename_file_ext(from, to, *ext))
     {
-      if ((error=my_errno) != ENOENT)
+      if ((error=errno) != ENOENT)
 	break;
       error= 0;
     }
@@ -170,7 +170,7 @@ int plugin::StorageEngine::doDropTable(Session&,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (my_delete_with_symlink(buff, MYF(0)))
     {
-      if ((error= my_errno) != ENOENT)
+      if ((error= errno) != ENOENT)
 	break;
     }
     else
@@ -927,11 +927,11 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
   {
     if (directory.fail())
     {
-      my_errno= directory.getError();
-      if (my_errno == ENOENT)
+      errno= directory.getError();
+      if (errno == ENOENT)
         my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
       else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;
     }
   }
@@ -982,8 +982,8 @@ void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const ch
 
   if (dir.fail())
   {
-    my_errno= dir.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), directory, my_errno);
+    errno= dir.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), directory, errno);
 
     return;
   }

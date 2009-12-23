@@ -139,8 +139,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
   if (directory.fail())
   {
-    my_errno= directory.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
+    errno= directory.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), path, errno);
 
     return true;
   }
@@ -163,8 +163,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
     if (stat(entry->filename.c_str(), &entry_stat))
     {
-      my_errno= errno;
-      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), my_errno);
+      errno= errno;
+      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), errno);
       return(true);
     }
 
@@ -706,9 +706,9 @@ public:
     return (void*) sql_alloc((uint32_t) size);
   }
   static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
+  { }
 
-  my_thread_id thread_id;
+  uint64_t thread_id;
   time_t start_time;
   uint32_t   command;
   const char *user,*host,*db,*proc_info,*state_info;

@@ -50,7 +50,7 @@ TODO:
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #ifdef HAVE_AIOWAIT
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include <mysys/aio_result.h>
 static void my_aiowait(my_aio_result *result);
 #endif
@@ -178,7 +178,7 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
   if (file >= 0)
   {
     pos= lseek(file, 0, SEEK_CUR);
-    if ((pos == MY_FILEPOS_ERROR) && (my_errno == ESPIPE))
+    if ((pos == MY_FILEPOS_ERROR) && (errno == ESPIPE))
     {
       /*
          This kind of object doesn't support seek() or tell(). Don't set a
@@ -470,7 +470,7 @@ static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Cou
         info->file is a pipe or socket or FIFO.  We never should have tried
         to seek on that.  See Bugs#25807 and #22828 for more info.
       */
-      assert(my_errno != ESPIPE);
+      assert(errno != ESPIPE);
       info->error= -1;
       return(1);
     }
@@ -1219,7 +1219,7 @@ read_append_buffer:
       Count                     Number of bytes to read into Buffer
 
   RETURN VALUE
-    -1          An error has occurred; my_errno is set.
+    -1          An error has occurred; errno is set.
      0          Success
      1          An error has occurred; IO_CACHE to error state.
 */
@@ -1247,14 +1247,14 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
 	my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG),
 		 my_filename(info->file),
 		 info->aio_result.result.aio_errno);
-      my_errno=info->aio_result.result.aio_errno;
+      errno=info->aio_result.result.aio_errno;
       info->error= -1;
       return(1);
     }
     if (! (read_length= (size_t) info->aio_result.result.aio_return) ||
 	read_length == (size_t) -1)
     {
-      my_errno=0;				/* For testing */
+      errno=0;				/* For testing */
       info->error= (read_length == (size_t) -1 ? -1 :
 		    (int) (read_length+left_length));
       return(1);
@@ -1331,7 +1331,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
       {					/* Didn't find hole block */
 	if (info->myflags & (MY_WME | MY_FAE | MY_FNABP) && Count != org_Count)
 	  my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG),
-		   my_filename(info->file),my_errno);
+		   my_filename(info->file),errno);
 	info->error=(int) (read_length+left_length);
 	return 1;
       }
@@ -1367,7 +1367,7 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
 		(my_off_t) next_pos_in_file,SEEK_SET,
 		&info->aio_result.result))
     {						/* Skip async io */
-      my_errno=errno;
+      errno=errno;
       if (info->request_pos != info->buffer)
       {
         memmove(info->buffer, info->request_pos,
@@ -1409,7 +1409,7 @@ int _my_b_get(IO_CACHE *info)
    RETURN VALUE
     1 On error on write
     0 On success
-   -1 On error; my_errno contains error code.
+   -1 On error; errno contains error code.
 */
 
 extern "C" int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
@@ -1418,7 +1418,7 @@ extern "C" int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer,
 
   if (info->pos_in_file+info->buffer_length > info->end_of_file)
   {
-    my_errno=errno=EFBIG;
+    errno=errno=EFBIG;
     return info->error = -1;
   }
 

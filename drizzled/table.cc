@@ -42,6 +42,7 @@
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/charset.h"
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -1211,7 +1212,7 @@ err:
     free(field_pack_length);
 
   share->error= error;
-  share->open_errno= my_errno;
+  share->open_errno= errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
   share->open_table_error(error, share->open_errno, 0);
@@ -1263,7 +1264,7 @@ int open_table_def(Session& session, TableShare *share)
   {
     if (error>0)
     {
-      my_errno= error;
+      errno= error;
       error= 1;
     }
     else
@@ -1287,7 +1288,7 @@ err_not_open:
   if (error && !error_given)
   {
     share->error= error;
-    share->open_table_error(error, (share->open_errno= my_errno), 0);
+    share->open_table_error(error, (share->open_errno= errno), 0);
   }
 
   return(error);
@@ -1494,7 +1495,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             as if the .frm cursor didn't exist
           */
 	  error= 1;
-	  my_errno= ENOENT;
+	  errno= ENOENT;
           break;
         case EMFILE:
 	  /*
@@ -1502,7 +1503,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             cursor can't open
            */
 	  error= 1;
-	  my_errno= EMFILE;
+	  errno= EMFILE;
           break;
         default:
           outparam->print_error(ha_err, MYF(0));
@@ -1525,7 +1526,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
-    share->open_table_error(error, my_errno, 0);
+    share->open_table_error(error, errno, 0);
   delete outparam->cursor;
   outparam->cursor= 0;				// For easier error checking
   outparam->db_stat= 0;

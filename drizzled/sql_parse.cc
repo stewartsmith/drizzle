@@ -15,7 +15,7 @@
 
 #define DRIZZLE_LEX 1
 #include "config.h"
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>

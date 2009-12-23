@@ -16,7 +16,7 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include "my_static.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string>
@@ -67,7 +67,7 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
     dir= P_tmpdir;
   if (strlen(dir)+prefix_str.length() > FN_REFLEN-2)
   {
-    errno=my_errno= ENAMETOOLONG;
+    errno=errno= ENAMETOOLONG;
     return(file);
   }
   strcpy(convert_dirname(to,dir,NULL),prefix_str.c_str());
@@ -82,10 +82,10 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
   /* If we didn't manage to register the name, remove the temp file */
   if (org_file >= 0 && file < 0)
   {
-    int tmp=my_errno;
+    int tmp=errno;
     close(org_file);
     (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
-    my_errno=tmp;
+    errno=tmp;
   }
   if (file >= 0)
     my_tmp_file_created++;

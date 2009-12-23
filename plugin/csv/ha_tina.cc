@@ -172,7 +172,7 @@ int Tina::doDropTable(Session&,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (my_delete_with_symlink(buff, MYF(0)))
     {
-      if ((error= my_errno) != ENOENT)
+      if ((error= errno) != ENOENT)
 	break;
     }
     else
@@ -1359,7 +1359,7 @@ int ha_tina::delete_all_rows()
   int rc;
 
   if (!records_is_known)
-    return(my_errno=HA_ERR_WRONG_COMMAND);
+    return(errno=HA_ERR_WRONG_COMMAND);
 
   if (!share->tina_write_opened)
     if (init_tina_writer())

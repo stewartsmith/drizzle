@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include <mystrings/m_string.h>
 #undef my_rename
 
@@ -28,24 +28,24 @@ int my_rename(const char *from, const char *to, myf MyFlags)
   {				/* Check that there isn't a old file */
     int save_errno;
     MY_STAT my_stat_result;
-    save_errno=my_errno;
+    save_errno=errno;
     if (my_stat(to,&my_stat_result,MYF(0)))
     {
-      my_errno=EEXIST;
+      errno=EEXIST;
       error= -1;
       if (MyFlags & MY_FAE+MY_WME)
-	my_error(EE_LINK, MYF(ME_BELL+ME_WAITTANG),from,to,my_errno);
+	my_error(EE_LINK, MYF(ME_BELL+ME_WAITTANG),from,to,errno);
       return(error);
     }
-    my_errno=save_errno;
+    errno=save_errno;
   }
 #endif
   if (rename(from,to))
   {
-    my_errno=errno;
+    errno=errno;
     error = -1;
     if (MyFlags & (MY_FAE+MY_WME))
-      my_error(EE_LINK, MYF(ME_BELL+ME_WAITTANG),from,to,my_errno);
+      my_error(EE_LINK, MYF(ME_BELL+ME_WAITTANG),from,to,errno);
   }
   else if (MyFlags & MY_SYNC_DIR)
   {

@@ -73,7 +73,7 @@ int my_copy(const char *from, const char *to, myf MyFlags)
   {
     if (stat(from, &stat_buff))
     {
-      my_errno=errno;
+      errno=errno;
       goto err;
     }
     if (MyFlags & MY_HOLD_ORIGINAL_MODES && new_file_stat)

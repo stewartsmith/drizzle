@@ -179,7 +179,6 @@ struct system_variables
   uint32_t trans_alloc_block_size;
   uint32_t trans_prealloc_size;
   uint64_t group_concat_max_len;
-  /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
   drizzled::plugin::StorageEngine *storage_engine;
@@ -677,7 +676,7 @@ public:
   */
   uint32_t row_count;
   pthread_t real_id; /**< For debugging */
-  my_thread_id thread_id;
+  uint64_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
   uint32_t server_status;

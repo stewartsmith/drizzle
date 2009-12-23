@@ -133,6 +133,7 @@
 #include <drizzled/db.h>
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
 
 
 using namespace drizzled;

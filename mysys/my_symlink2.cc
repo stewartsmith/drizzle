@@ -21,7 +21,7 @@
 */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include <mystrings/m_string.h>
 
 int my_create_with_symlink(const char *linkname, const char *filename,
@@ -57,13 +57,13 @@ int my_create_with_symlink(const char *linkname, const char *filename,
   {
     if (!access(filename,F_OK))
     {
-      my_errno= errno= EEXIST;
+      errno= errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), filename, EEXIST);
       return(-1);
     }
     if (create_link && !access(linkname,F_OK))
     {
-      my_errno= errno= EEXIST;
+      errno= errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), linkname, EEXIST);
       return(-1);
     }
@@ -80,11 +80,11 @@ int my_create_with_symlink(const char *linkname, const char *filename,
       if (symlink(filename,linkname))
       {
 	/* Fail, remove everything we have done */
-	tmp_errno=my_errno;
+	tmp_errno=errno;
 	my_close(file,MYF(0));
 	my_delete(filename, MYF(0));
 	file= -1;
-	my_errno=tmp_errno;
+	errno=tmp_errno;
       }
       else if (MyFlags & MY_SYNC_DIR)
         my_sync_dir_by_file(linkname, MyFlags);
@@ -147,7 +147,7 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   name_is_different= strcmp(link_name, tmp_name);
   if (name_is_different && !access(tmp_name, F_OK))
   {
-    my_errno= EEXIST;
+    errno= EEXIST;
     if (MyFlags & MY_WME)
       my_error(EE_CANTCREATEFILE, MYF(0), tmp_name, EEXIST);
     return(1);
@@ -167,22 +167,22 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
 
   if (name_is_different && my_rename(link_name, tmp_name, MyFlags))
   {
-    int save_errno=my_errno;
+    int save_errno=errno;
     my_delete(to, MyFlags);			/* Remove created symlink */
-    my_errno=save_errno;
+    errno=save_errno;
     return(1);
   }
 
   /* Remove original symlink */
   if (my_delete(from, MyFlags))
   {
-    int save_errno=my_errno;
+    int save_errno=errno;
     /* Remove created link */
     my_delete(to, MyFlags);
     /* Rename file back */
     if (strcmp(link_name, tmp_name))
       (void) my_rename(tmp_name, link_name, MyFlags);
-    my_errno=save_errno;
+    errno=save_errno;
     result= 1;
   }
   return(result);

@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include "drizzled/function/time/from_days.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"

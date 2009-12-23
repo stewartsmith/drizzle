@@ -32,7 +32,7 @@ int _mi_check_index(MI_INFO *info, int inx)
     inx=info->lastinx;
   if (inx < 0 || ! mi_is_key_active(info->s->state.key_map, inx))
   {
-    my_errno=HA_ERR_WRONG_INDEX;
+    errno=HA_ERR_WRONG_INDEX;
     return -1;
   }
   if (info->lastinx != inx)             /* Index changed */
@@ -66,7 +66,7 @@ int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
   if (pos == HA_OFFSET_ERROR)
   {
-    my_errno=HA_ERR_KEY_NOT_FOUND;                      /* Didn't find key */
+    errno=HA_ERR_KEY_NOT_FOUND;                      /* Didn't find key */
     info->lastpos= HA_OFFSET_ERROR;
     if (!(nextflag & (SEARCH_SMALLER | SEARCH_BIGGER | SEARCH_LAST)))
       return(-1);                          /* Not found ; return error */
@@ -107,7 +107,7 @@ int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     {
       if ((error=_mi_search(info,keyinfo,key,key_len,SEARCH_FIND,
                             _mi_kpos(nod_flag,keypos))) >= 0 ||
-          my_errno != HA_ERR_KEY_NOT_FOUND)
+          errno != HA_ERR_KEY_NOT_FOUND)
         return(error);
       info->last_keypage= HA_OFFSET_ERROR;              /* Buffer not in mem */
     }
@@ -132,7 +132,7 @@ int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
         ha_key_cmp(keyinfo->seg, info->lastkey, key, key_len, SEARCH_FIND,
                    not_used))
     {
-      my_errno=HA_ERR_KEY_NOT_FOUND;                    /* Didn't find key */
+      errno=HA_ERR_KEY_NOT_FOUND;                    /* Didn't find key */
       goto err;
     }
   }
@@ -247,7 +247,7 @@ int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *pa
     if (length == 0 || page > end)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(MI_FOUND_WRONG_KEY);
     }
     if ((flag=ha_key_cmp(keyinfo->seg,t_buff,key,key_len,comp_flag,
@@ -387,7 +387,7 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char 
     if (page > end)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(MI_FOUND_WRONG_KEY);
     }
 
@@ -769,7 +769,7 @@ uint32_t _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
 	if (length > (uint) keyseg->length)
 	{
           mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-	  my_errno=HA_ERR_CRASHED;
+	  errno=HA_ERR_CRASHED;
 	  return 0;				/* Error */
 	}
 	if (length == 0)			/* Same key */
@@ -781,7 +781,7 @@ uint32_t _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
 	  if (length > keyseg->length)
 	  {
             mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-	    my_errno=HA_ERR_CRASHED;
+	    errno=HA_ERR_CRASHED;
 	    return 0;
 	  }
 	  continue;
@@ -835,7 +835,7 @@ uint32_t _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
       if (length > (uint) keyseg->length)
       {
         mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-        my_errno=HA_ERR_CRASHED;
+        errno=HA_ERR_CRASHED;
         return 0;                               /* Error */
       }
       store_key_length_inc(key,length);
@@ -902,7 +902,7 @@ uint32_t _mi_get_binary_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
     if (length > keyinfo->maxlength)
     {
       mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(0);                                 /* Wrong key */
     }
     /* Key is packed against prev key, take prefix from prev key. */
@@ -983,7 +983,7 @@ uint32_t _mi_get_binary_pack_key(register MI_KEYDEF *keyinfo, uint32_t nod_flag,
     if (from_end != page_end)
     {
       mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(0);                                 /* Error */
     }
     /* Copy data pointer and, if appropriate, key block pointer. */
@@ -1018,7 +1018,7 @@ unsigned char *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *pag
       if (*return_key_length == 0)
       {
         mi_print_error(info->s, HA_ERR_CRASHED);
-        my_errno=HA_ERR_CRASHED;
+        errno=HA_ERR_CRASHED;
         return(0);
       }
     }
@@ -1053,7 +1053,7 @@ static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *p
       if (*return_key_length == 0)
       {
         mi_print_error(info->s, HA_ERR_CRASHED);
-        my_errno=HA_ERR_CRASHED;
+        errno=HA_ERR_CRASHED;
         return(1);
       }
     }
@@ -1091,7 +1091,7 @@ unsigned char *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char
       if (*return_key_length == 0)
       {
         mi_print_error(info->s, HA_ERR_CRASHED);
-        my_errno=HA_ERR_CRASHED;
+        errno=HA_ERR_CRASHED;
         return(0);
       }
     }
@@ -1257,7 +1257,7 @@ int _mi_search_first(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
   if (pos == HA_OFFSET_ERROR)
   {
-    my_errno=HA_ERR_KEY_NOT_FOUND;
+    errno=HA_ERR_KEY_NOT_FOUND;
     info->lastpos= HA_OFFSET_ERROR;
     return(-1);
   }
@@ -1299,7 +1299,7 @@ int _mi_search_last(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
   if (pos == HA_OFFSET_ERROR)
   {
-    my_errno=HA_ERR_KEY_NOT_FOUND;                      /* Didn't find key */
+    errno=HA_ERR_KEY_NOT_FOUND;                      /* Didn't find key */
     info->lastpos= HA_OFFSET_ERROR;
     return(-1);
   }

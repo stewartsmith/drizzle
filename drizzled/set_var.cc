@@ -44,7 +44,7 @@
 */
 
 #include "config.h"
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #include <plugin/myisam/myisam.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -62,6 +62,7 @@
 #include "drizzled/strfunc.h"
 #include "mystrings/m_string.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
 
 #include <map>
 #include <algorithm>
@@ -80,6 +81,8 @@ static DYNAMIC_ARRAY fixed_show_vars;
 typedef map<string, sys_var *> SystemVariableMap;
 static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
+
+extern TYPELIB tx_isolation_typelib;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=

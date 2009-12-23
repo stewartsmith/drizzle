@@ -15,11 +15,12 @@
 
 #include "mysys/mysys_priv.h"
 #include "my_static.h"
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "drizzled/charset.h"
+#include <cstdio>
+#include <cstdlib>
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */

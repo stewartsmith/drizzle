@@ -15,7 +15,7 @@
 
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #if defined(HAVE_UTIME_H)
 #include <utime.h>
 #elif defined(HAVE_SYS_UTIME_H)
@@ -78,7 +78,7 @@ int my_copystat(const char *from, const char *to, int MyFlags)
 
   if (stat((char*) from, &statbuf))
   {
-    my_errno=errno;
+    errno=errno;
     if (MyFlags & (MY_FAE+MY_WME))
       my_error(EE_STAT, MYF(ME_BELL+ME_WAITTANG),from,errno);
     return -1;				/* Can't get stat on input file */

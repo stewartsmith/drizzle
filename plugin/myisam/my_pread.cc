@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "myisam_priv.h"
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <errno.h>
 #include <unistd.h>
 
@@ -48,7 +48,7 @@ size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, my_off_t offse
   {
     errno=0;					/* Linux doesn't reset this */
     if ((error= ((readbytes= pread(Filedes, Buffer, Count, offset)) != Count)))
-      my_errno= errno ? errno : -1;
+      errno= errno ? errno : -1;
     if (error || readbytes != Count)
     {
       if ((readbytes == 0 || readbytes == (size_t) -1) && errno == EINTR)
@@ -58,9 +58,9 @@ size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, my_off_t offse
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
       {
 	if (readbytes == (size_t) -1)
-	  my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG), "unknown", my_errno);
+	  my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
 	else if (MyFlags & (MY_NABP | MY_FNABP))
-	  my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG), "unknown", my_errno);
+	  my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
       }
       if (readbytes == (size_t) -1 || (MyFlags & (MY_FNABP | MY_NABP)))
 	return(MY_FILE_ERROR);		/* Return with error */
@@ -105,7 +105,7 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
   {
     if ((writenbytes= pwrite(Filedes, Buffer, Count,offset)) == Count)
       break;
-    my_errno= errno;
+    errno= errno;
     if (writenbytes != (size_t) -1)
     {					/* Safegueard */
       written+=writenbytes;
@@ -116,23 +116,23 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
 #ifndef NO_BACKGROUND
     if (my_thread_var->abort)
       MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
-    if ((my_errno == ENOSPC || my_errno == EDQUOT) &&
+    if ((errno == ENOSPC || errno == EDQUOT) &&
         (MyFlags & MY_WAIT_IF_FULL))
     {
       if (!(errors++ % MY_WAIT_GIVE_USER_A_MESSAGE))
 	my_error(EE_DISK_FULL,MYF(ME_BELL | ME_NOREFRESH),
-		 "unknown", my_errno, MY_WAIT_FOR_USER_TO_FIX_PANIC);
+		 "unknown", errno, MY_WAIT_FOR_USER_TO_FIX_PANIC);
       sleep(MY_WAIT_FOR_USER_TO_FIX_PANIC);
       continue;
     }
-    if ((writenbytes && writenbytes != (size_t) -1) || my_errno == EINTR)
+    if ((writenbytes && writenbytes != (size_t) -1) || errno == EINTR)
       continue;					/* Retry */
 #endif
     if (MyFlags & (MY_NABP | MY_FNABP))
     {
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
       {
-	my_error(EE_WRITE, MYF(ME_BELL | ME_WAITTANG), "unknown", my_errno);
+	my_error(EE_WRITE, MYF(ME_BELL | ME_WAITTANG), "unknown", errno);
       }
       return(MY_FILE_ERROR);		/* Error on read */
     }

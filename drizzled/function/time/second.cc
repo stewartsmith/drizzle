@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/second.h"

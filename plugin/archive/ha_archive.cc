@@ -254,7 +254,7 @@ int ArchiveEngine::doDropTable(Session&,
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;
@@ -694,7 +694,7 @@ int ArchiveEngine::doCreateTable(Session *,
   fn_format(name_buff, table_name, "", ARZ,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  my_errno= 0;
+  errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {

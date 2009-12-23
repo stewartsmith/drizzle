@@ -19,7 +19,7 @@
 #include <errno.h>
 
 #include "mysys/my_dir.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 
 	/*
 	** Create a new file
@@ -59,9 +59,9 @@ int my_create(const char *FileName, int CreateFlags, int access_flags,
   */
   if (unlikely(fd >= 0 && rc < 0))
   {
-    int tmp= my_errno;
+    int tmp= errno;
     my_delete(FileName, MyFlags);
-    my_errno= tmp;
+    errno= tmp;
   }
 
   return(rc);

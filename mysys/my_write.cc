@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 #include <errno.h>
 
 
@@ -40,23 +40,23 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
       Buffer+=writenbytes;
       Count-=writenbytes;
     }
-    my_errno=errno;
+    errno=errno;
 #ifndef NO_BACKGROUND
     if (my_thread_var->abort)
       MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
-    if ((my_errno == ENOSPC || my_errno == EDQUOT) &&
+    if ((errno == ENOSPC || errno == EDQUOT) &&
         (MyFlags & MY_WAIT_IF_FULL))
     {
       if (!(errors++ % MY_WAIT_GIVE_USER_A_MESSAGE))
 	my_error(EE_DISK_FULL,MYF(ME_BELL | ME_NOREFRESH),
-		 "unknown", my_errno,MY_WAIT_FOR_USER_TO_FIX_PANIC);
+		 "unknown", errno,MY_WAIT_FOR_USER_TO_FIX_PANIC);
       sleep(MY_WAIT_FOR_USER_TO_FIX_PANIC);
       continue;
     }
 
     if ((writenbytes == 0 || writenbytes == (size_t) -1))
     {
-      if (my_errno == EINTR)
+      if (errno == EINTR)
       {
         continue;                               /* Interrupted */
       }
@@ -76,7 +76,7 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
       {
 	my_error(EE_WRITE, MYF(ME_BELL+ME_WAITTANG),
-		 "unknown", my_errno);
+		 "unknown", errno);
       }
       return(MY_FILE_ERROR);		/* Error on read */
     }

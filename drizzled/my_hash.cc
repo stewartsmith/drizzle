@@ -22,8 +22,9 @@
 /* Key length of 0 isn't allowed */
 
 #include "config.h"
-#include CSTDINT_H
-#include <mysys/hash.h>
+#include "drizzled/my_hash.h"
+#include "drizzled/charset.h"
+#include "mystrings/m_ctype.h"
 
 const uint32_t NO_RECORD= UINT32_MAX;
 

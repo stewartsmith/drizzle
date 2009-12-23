@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "mysys/mysys_err.h"
+#include "drizzled/my_error.h"
 
 /*
   Sync data in file to disk
@@ -68,15 +68,15 @@ int my_sync(int fd, myf my_flags)
   if (res)
   {
     int er= errno;
-    if (!(my_errno= er))
-      my_errno= -1;                             /* Unknown error */
+    if (!(errno= er))
+      errno= -1;                             /* Unknown error */
     if ((my_flags & MY_IGNORE_BADFD) &&
         (er == EBADF || er == EINVAL || er == EROFS))
     {
       res= 0;
     }
     else if (my_flags & MY_WME)
-      my_error(EE_SYNC, MYF(ME_BELL+ME_WAITTANG), "unknown", my_errno);
+      my_error(EE_SYNC, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
   }
   return(res);
 } /* my_sync */

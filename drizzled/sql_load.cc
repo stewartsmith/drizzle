@@ -293,7 +293,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     }
     if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
     {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), name, my_errno);
+      my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
       return(true);
     }
   }
@@ -361,7 +361,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 			    *enclosed, skip_lines, ignore);
     if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->print_error(my_errno, MYF(0));
+      table->print_error(errno, MYF(0));
       error= 1;
     }
     table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);

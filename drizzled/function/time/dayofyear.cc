@@ -18,11 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/calendar.h"
 #include "drizzled/function/time/dayofyear.h"
+#include "mysys/my_sys.h"
 
 int64_t Item_func_dayofyear::val_int()
 {

@@ -18,7 +18,7 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <mysys/my_static.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <mysys/iocache.h>
 
 

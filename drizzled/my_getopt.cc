@@ -18,8 +18,8 @@
 
 #include <mystrings/m_string.h>
 #include <mysys/my_sys.h>
-#include <mysys/mysys_err.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_error.h"
+#include "drizzled/my_getopt.h"
 
 #include <stdio.h>
 #include <stdlib.h>

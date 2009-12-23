@@ -54,10 +54,11 @@ DISTCLEANFILES=		ac_available_languages_fragment \
 
 MAINTAINERCLEANFILES=	autom4te.cache
 
-CLIENT_LDADD=		mysys/libmysys.la \
-			mystrings/libmystrings.la \
-			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
-			client/libgetpassword.la
+CLIENT_LDADD=\
+		mysys/libmysys.la \
+		mystrings/libmystrings.la \
+		$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
+		client/libgetpassword.la
 
 noinst_LTLIBRARIES+= \
 		client/libgetpassword.la \
@@ -90,24 +91,19 @@ noinst_HEADERS+=	\
 		client/linebuffer.h \
 		drizzled/configmake.h \
 		mystrings/decimal.h \
-		mysys/dynamic_array.h \
 		mystrings/m_ctype.h \
 		mystrings/m_string.h \
 		mystrings/my_uctype.h \
 		mystrings/t_ctype.h \
 		mystrings/utf8.h \
 		mysys/aio_result.h \
-		mysys/hash.h \
 		mysys/iocache.h \
 		mysys/my_bit.h \
 		mysys/my_dir.h \
-		mysys/my_getopt.h \
 		mysys/my_pthread.h \
 		mysys/my_static.h \
 		mysys/my_sys.h \
-		mysys/mysys_err.h \
-		mysys/mysys_priv.h \
-		mysys/typelib.h
+		mysys/mysys_priv.h
 
 mystrings_libmystrings_la_SOURCES= \
 		mystrings/bmove_upp.cc \
@@ -124,16 +120,17 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/longlong2str.cc \
 		mystrings/my_strtoll10.cc
 
-mysys_libmysys_la_LIBADD= drizzled/libcached_directory.la drizzled/libmemory.la
-mysys_libmysys_la_DEPENDENCIES= drizzled/libcached_directory.la drizzled/libmemory.la
+mysys_libmysys_la_LIBADD= \
+		drizzled/libcharset.la \
+		drizzled/libcached_directory.la \
+		drizzled/libdynamic_array.la \
+		drizzled/liberror.la \
+		drizzled/libgetopt.la \
+		drizzled/libmemory.la \
+		drizzled/libtypelib.la
 mysys_libmysys_la_SOURCES= \
-		mysys/charset-def.cc \
-		mysys/charset.cc \
 		mysys/checksum.cc \
 		mysys/default.cc \
-		mysys/dynamic_array.cc \
-		mysys/errors.cc \
-		mysys/hash.cc \
 		mysys/mf_arr_appstr.cc \
 		mysys/mf_cache.cc \
 		mysys/mf_dirname.cc \
@@ -155,8 +152,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_copy.cc \
 		mysys/my_create.cc \
 		mysys/my_delete.cc \
-		mysys/my_error.cc \
-		mysys/my_getopt.cc \
 		mysys/my_getsystime.cc \
 		mysys/my_init.cc \
 		mysys/my_lib.cc \
@@ -170,8 +165,7 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_sync.cc \
 		mysys/my_thr_init.cc \
 		mysys/my_write.cc \
-		mysys/ptr_cmp.cc \
-		mysys/typelib.cc
+		mysys/ptr_cmp.cc
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}

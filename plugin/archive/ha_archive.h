@@ -20,7 +20,7 @@
 #include <zlib.h>
 #include "azio.h"
 #include <drizzled/thr_lock.h>
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/cursor.h>
 #include <string>
 

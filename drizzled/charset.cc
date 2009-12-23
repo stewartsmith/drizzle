@@ -13,8 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+#include "config.h"
+
+#include "drizzled/charset.h"
+#include "drizzled/my_error.h"
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
 #include <drizzled/configmake.h>

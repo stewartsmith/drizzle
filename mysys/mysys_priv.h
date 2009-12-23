@@ -33,6 +33,4 @@ extern pthread_mutex_t THR_LOCK_net;
 #define EDQUOT (-1)
 #endif
 
-void my_error_unregister_all(void);
-
 #endif /* MYSYS_MYSYS_PRIV_H */

@@ -17,6 +17,7 @@
 #include <drizzled/table.h>
 #include <mysys/my_dir.h>
 #include <drizzled/error.h>
+#include "mysys/my_pthread.h"
 
 #include "ha_blackhole.h"
 
@@ -222,7 +223,7 @@ int BlackholeEngine::doDropTable(Session&, const string path)
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;

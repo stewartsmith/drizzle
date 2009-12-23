@@ -26,10 +26,10 @@ int mi_delete_all_rows(MI_INFO *info)
 
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    return(my_errno=EACCES);
+    return(errno=EACCES);
   }
   if (_mi_readinfo(info,F_WRLCK,1))
-    return(my_errno);
+    return(errno);
   if (_mi_mark_file_changed(info))
     goto err;
 
@@ -58,9 +58,9 @@ int mi_delete_all_rows(MI_INFO *info)
 
 err:
   {
-    int save_errno=my_errno;
+    int save_errno=errno;
     _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
     info->update|=HA_STATE_WRITTEN;	/* Buffer changed */
-    return(my_errno=save_errno);
+    return(errno=save_errno);
   }
 } /* mi_delete */

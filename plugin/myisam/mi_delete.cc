@@ -45,14 +45,14 @@ int mi_delete(MI_INFO *info,const unsigned char *record)
 	/* Test if record is in datafile */
   if (!(info->update & HA_STATE_AKTIV))
   {
-    return(my_errno=HA_ERR_KEY_NOT_FOUND);	/* No database read */
+    return(errno=HA_ERR_KEY_NOT_FOUND);	/* No database read */
   }
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    return(my_errno=EACCES);
+    return(errno=EACCES);
   }
   if (_mi_readinfo(info,F_WRLCK,1))
-    return(my_errno);
+    return(errno);
   if (info->s->calc_checksum)
     info->checksum=(*info->s->calc_checksum)(info,record);
   if ((*share->compare_record)(info,record))
@@ -91,7 +91,7 @@ int mi_delete(MI_INFO *info,const unsigned char *record)
   return(0);
 
 err:
-  save_errno=my_errno;
+  save_errno=errno;
   mi_sizestore(lastpos,info->lastpos);
   if (save_errno != HA_ERR_RECORD_CHANGED)
   {
@@ -100,14 +100,14 @@ err:
   }
   _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
   info->update|=HA_STATE_WRITTEN;	/* Buffer changed */
-  my_errno=save_errno;
+  errno=save_errno;
   if (save_errno == HA_ERR_KEY_NOT_FOUND)
   {
     mi_print_error(info->s, HA_ERR_CRASHED);
-    my_errno=HA_ERR_CRASHED;
+    errno=HA_ERR_CRASHED;
   }
 
-  return(my_errno);
+  return(errno);
 } /* mi_delete */
 
 
@@ -132,12 +132,12 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
   if ((old_root=*root) == HA_OFFSET_ERROR)
   {
     mi_print_error(info->s, HA_ERR_CRASHED);
-    return(my_errno=HA_ERR_CRASHED);
+    return(errno=HA_ERR_CRASHED);
   }
   if (!(root_buff= (unsigned char*) malloc(keyinfo->block_length+
 				      MI_MAX_KEY_BUFF*2)))
   {
-    return(my_errno=ENOMEM);
+    return(errno=ENOMEM);
   }
   if (!_mi_fetch_keypage(info,keyinfo,old_root,DFLT_INIT_HITS,root_buff,0))
   {
@@ -208,7 +208,7 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (!(leaf_buff= (unsigned char*) malloc(keyinfo->block_length+
 					MI_MAX_KEY_BUFF*2)))
     {
-      my_errno=ENOMEM;
+      errno=ENOMEM;
       return(-1);
     }
     if (!_mi_fetch_keypage(info,keyinfo,leaf_page,DFLT_INIT_HITS,leaf_buff,0))
@@ -220,7 +220,7 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (!nod_flag)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;		/* This should newer happend */
+      errno=HA_ERR_CRASHED;		/* This should newer happend */
       goto err;
     }
     save_flag=0;

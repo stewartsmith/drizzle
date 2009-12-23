@@ -22,7 +22,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
@@ -38,6 +38,7 @@
 #include <drizzled/table_identifier.h>
 #include "mystrings/m_string.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 
 
 #include "drizzled/statement/alter_table.h"
@@ -1872,7 +1873,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
     if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
        && rename_table_proto_file(from_base, to_base))
     {
-      error= my_errno;
+      error= errno;
       base->renameTable(session, to_base, from_base);
     }
   }
@@ -2349,10 +2350,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr)
     {
-      if (my_errno == ENOENT)
+      if (errno == ENOENT)
         my_error(ER_BAD_DB_ERROR,MYF(0),db);
       else
-        my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), my_errno);
+        my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), errno);
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }

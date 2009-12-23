@@ -25,7 +25,7 @@
 #include <drizzled/session.h>
 #include "drizzled/session_list.h"
 #include <sys/stat.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/query_id.h>
@@ -1051,6 +1051,11 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list));
 }
 
+void select_result::send_error(uint32_t errcode, const char *err)
+{
+  my_message(errcode, err, MYF(0));
+}
+
 /************************************************************************
   Handling writing to file
 ************************************************************************/
@@ -1481,7 +1486,7 @@ bool select_dump::send_data(List<Item> &items)
     }
     else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
     {
-      my_error(ER_ERROR_ON_WRITE, MYF(0), path, my_errno);
+      my_error(ER_ERROR_ON_WRITE, MYF(0), path, errno);
       goto err;
     }
   }
@@ -2167,7 +2172,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getPath(), my_errno);
+                  identifier.getPath(), errno);
   }
   return error;
 }
@@ -2185,7 +2190,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, my_errno);
+                  path, errno);
   }
   return error;
 }

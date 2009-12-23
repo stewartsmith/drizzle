@@ -18,8 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef MYSYS_DYNAMIC_ARRAY_H
-#define MYSYS_DYNAMIC_ARRAY_H
+#ifndef DRIZZLED_DYNAMIC_ARRAY_H
+#define DRIZZLED_DYNAMIC_ARRAY_H
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,4 +63,4 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
 }
 #endif
 
-#endif /* MYSYS_DYNAMIC_ARRAY_H */
+#endif /* DRIZZLED_DYNAMIC_ARRAY_H */

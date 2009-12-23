@@ -139,7 +139,7 @@ void my_thread_global_end(void)
   }
 }
 
-static my_thread_id thread_id= 0;
+static uint64_t thread_id= 0;
 
 /*
   Allocate thread specific memory for the thread, used by mysys

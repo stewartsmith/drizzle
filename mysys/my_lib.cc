@@ -17,7 +17,7 @@
 
 #include	"mysys/mysys_priv.h"
 #include	<mystrings/m_string.h>
-#include	"mysys/mysys_err.h"
+#include	"drizzled/my_error.h"
 #include	"my_dir.h"	/* Structs used by my_dir,includes sys/types */
 #include <dirent.h>
 
@@ -138,12 +138,12 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
 
  error:
 
-  my_errno=errno;
+  errno=errno;
   if (dirp)
     (void) closedir(dirp);
   my_dirend(result);
   if (MyFlags & (MY_FAE | MY_WME))
-    my_error(EE_DIR,MYF(ME_BELL+ME_WAITTANG),path,my_errno);
+    my_error(EE_DIR,MYF(ME_BELL+ME_WAITTANG),path,errno);
 
   return((MY_DIR *) NULL);
 } /* my_dir */

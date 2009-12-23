@@ -20,7 +20,7 @@
 #include "config.h"
 #include <cassert>
 #include "drizzled/sql_locale.h"
-#include "mysys/typelib.h"
+#include "drizzled/typelib.h"
 #include "mystrings/m_ctype.h"
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/

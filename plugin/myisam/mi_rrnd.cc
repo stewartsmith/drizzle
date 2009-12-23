@@ -52,7 +52,7 @@ int mi_rrnd(MI_INFO *info, unsigned char *buf, register my_off_t filepos)
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
 
   if (info->opt_flag & WRITE_CACHE_USED && flush_io_cache(&info->rec_cache))
-    return(my_errno);
+    return(errno);
 
   return ((*info->s->read_rnd)(info,buf,filepos,skip_deleted_blocks));
 }

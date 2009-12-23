@@ -19,20 +19,13 @@
 
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
+#include "drizzled/charset.h"
 
 #include <algorithm>
 
+#include "drizzled/sql_string.h"
+
 using namespace std;
-
-/*
-  The following extern declarations are ok as these are interface functions
-  required by the string function
-*/
-
-extern unsigned char* sql_alloc(unsigned size);
-extern void sql_element_free(void *ptr);
-
-#include "sql_string.h"
 
 /*****************************************************************************
 ** String functions

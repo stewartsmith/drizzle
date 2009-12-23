@@ -28,7 +28,7 @@
 #include <fcntl.h>
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 
 #define SHOW_VERSION "0.1"
 

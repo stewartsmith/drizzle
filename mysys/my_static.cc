@@ -19,7 +19,7 @@
 */
 
 #include "mysys/mysys_priv.h"
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include "my_static.h"
 #include <stdlib.h>
 
@@ -65,10 +65,6 @@ struct st_irem *sf_malloc_root = NULL;
 	/* from my_alarm */
 int volatile my_have_got_alarm=0;	/* declare variable to reset */
 uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
-
-	/* from errors.c */
-void_ptr_int_func my_abort_hook= (void_ptr_int_func)exit;
-error_handler_func error_handler_hook= NULL;
 
 	/* How to disable options */
 bool my_disable_async_io= true;
