@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-12-20 07:43+0000\n"
-"Last-Translator: zeugma <Unknown>\n"
+"PO-Revision-Date: 2009-12-22 12:55+0000\n"
+"Last-Translator: Serdar KAHYA <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-12-21 04:42+0000\n"
+"X-Launchpad-Export-Date: 2009-12-23 04:34+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -163,7 +163,7 @@ msgstr "Bu yardımı göster ve çık"
 
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
-msgstr ""
+msgstr "- için takma ad?"
 
 #: client/drizzle.cc:1428
 msgid ""
@@ -368,6 +368,8 @@ msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
+"Sonucu kaydetme, tek tek yazdır. Eğer çıkış yarıda kesilirse bu sunucuyu "
+"yavaşlatabilir. Geçmiş dosyasını kullanmaz."
 
 #: client/drizzle.cc:1524
 msgid "Write fields without conversion. Used with --batch."
@@ -383,7 +385,7 @@ msgstr ""
 
 #: client/drizzle.cc:1529
 msgid "Shutdown the server."
-msgstr ""
+msgstr "Sunucuyu kapat."
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -443,7 +445,7 @@ msgstr "Bağlantının zaman aşımna uğraması için gereken saniye sayısı."
 
 #: client/drizzle.cc:1563
 msgid "Max length of input line"
-msgstr ""
+msgstr "Komut için maksimum uzunluk"
 
 #: client/drizzle.cc:1568
 msgid "Automatic limit for SELECT when using --safe-updates"
