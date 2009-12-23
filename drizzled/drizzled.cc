@@ -26,6 +26,7 @@
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <limits.h>
 
 #include <mysys/my_bit.h>
 #include <drizzled/my_hash.h>

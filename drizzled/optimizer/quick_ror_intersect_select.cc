@@ -23,6 +23,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include "mystrings/m_string.h"
 
 #include <vector>
 

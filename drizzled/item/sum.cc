@@ -36,6 +36,8 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
+#include "mystrings/m_string.h"
+
 #include <algorithm>
 
 using namespace std;
@@ -3316,6 +3318,22 @@ void Item_func_group_concat::make_unique()
   tree= 0;
 }
 
+double Item_func_group_concat::val_real()
+{
+  String *res;  res=val_str(&str_value);
+  return res ? my_atof(res->c_ptr()) : 0.0;
+}
+
+int64_t Item_func_group_concat::val_int()
+{
+  String *res;
+  char *end_ptr;
+  int error;
+  if (!(res= val_str(&str_value)))
+    return (int64_t) 0;
+  end_ptr= (char*) res->ptr()+ res->length();
+  return my_strtoll10(res->ptr(), &end_ptr, &error);
+}
 
 String* Item_func_group_concat::val_str(String* )
 {

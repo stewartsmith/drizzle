@@ -24,6 +24,7 @@
 #include "config.h"
 
 #include <float.h>
+#include <limits.h>
 
 #include <queue>
 #include <algorithm>

@@ -46,6 +46,8 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
+#include <limits.h>
+
 #include <bitset>
 #include <algorithm>
 
