@@ -23,7 +23,7 @@
     - add function from mysql_select that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cache.h>
@@ -34,6 +34,8 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
+
+extern drizzled::plugin::StorageEngine *myisam_engine;
 
 inline Item * and_items(Item* cond, Item *item)
 {

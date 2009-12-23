@@ -17,13 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/plugin/query_cache.h"
 #include "drizzled/plugin/registry.h"
 
 #include "drizzled/gettext.h"
 
 #include <vector>
+
+class Session;
 
 using namespace std;
 

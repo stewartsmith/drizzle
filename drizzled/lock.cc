@@ -72,13 +72,15 @@
   Change to use malloc() ONLY when using LOCK TABLES command or when
   we are forced to use mysql_lock_merge.
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <fcntl.h>
 #include <drizzled/error.h>
 #include <mysys/hash.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include "drizzled/pthread_globals.h"
 
 /**
   @defgroup Locking Locking

@@ -17,15 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/listen_tcp.h>
+#include <drizzled/errmsg_print.h>
 
+#include <unistd.h>
+#include <sys/socket.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <cerrno>
+
+extern uint32_t back_log;
+extern uint32_t drizzled_bind_timeout;
 
 using namespace std;
+
+#define MAX_ACCEPT_RETRY	10	// Test accept this many times
 
 namespace drizzled
 {

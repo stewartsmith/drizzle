@@ -21,18 +21,24 @@
 */
 
 #define DONT_MAP_VIO
-#include <drizzled/global.h>
+#include "config.h"
 #include "vio.h"
 #include <drizzled/util/test.h>
 
 #include <sys/socket.h>
-#include <string.h>
+#include <fcntl.h>
 
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <sys/poll.h>
+#include <unistd.h>
 
 #include <netdb.h>
+
+#include <cstdio>
+#include <cstring>
+#include <cassert>
 
 #include <algorithm>
 

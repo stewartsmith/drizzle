@@ -28,12 +28,14 @@
  * Implements the HEXDUMP_TRANSACTION_MESSAGE(filename, offset) UDF.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/hash/crc32.h>
+
+#include <fcntl.h>
 
 #include "transaction_log.h"
 #include "hexdump_transaction_message.h"

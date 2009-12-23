@@ -19,7 +19,7 @@
 
 
 /* Function with list databases, tables or fields */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/gettext.h>
@@ -40,10 +40,15 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin/registry.h"
+#include "drizzled/session_list.h"
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
+
 #include <sys/stat.h>
 
 #include <string>
@@ -739,7 +744,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   if (!session->killed)
   {
     Session *tmp;
-    for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+    for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
@@ -995,7 +1000,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   *to= global_status_var;
 
   /* Add to this status from existing threads */
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     add_to_status(to, &((*it)->status_var));
   }

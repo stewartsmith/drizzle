@@ -41,8 +41,13 @@
 
 #include <mysys/cached_directory.h>
 
-#include <stdio.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#include <cstdio>
 #include <algorithm>
+
 
 using namespace std;
 
@@ -318,19 +323,19 @@ int get_defaults_options(int argc, char **argv,
     /* Skip program name or previously handled argument */
     argv++;
     prev_argc= argc;                            /* To check if we found */
-    if (!*defaults && is_prefix(*argv,"--defaults-file="))
+    if (!*defaults && (strncmp(*argv,"--defaults-file=", sizeof("--defaults-file=")) == 0))
     {
       *defaults= *argv + sizeof("--defaults-file=")-1;
        argc--;
        continue;
     }
-    if (!*extra_defaults && is_prefix(*argv,"--defaults-extra-file="))
+    if (!*extra_defaults && (strncmp(*argv, "--defaults-extra-file=", sizeof("--defaults-extra-file=")) == 0))
     {
       *extra_defaults= *argv + sizeof("--defaults-extra-file=")-1;
       argc--;
       continue;
     }
-    if (!*group_suffix && is_prefix(*argv, "--defaults-group-suffix="))
+    if (!*group_suffix && (strncmp(*argv, "--defaults-group-suffix=", sizeof("--defaults-group-suffix=")) == 0))
     {
       *group_suffix= *argv + sizeof("--defaults-group-suffix=")-1;
       argc--;

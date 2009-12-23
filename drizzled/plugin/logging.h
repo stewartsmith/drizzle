@@ -26,6 +26,8 @@
 
 #include <string>
 
+class Session;
+
 namespace drizzled
 {
 namespace plugin

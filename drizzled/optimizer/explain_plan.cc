@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/item/uint.h"
 #include "drizzled/item/float.h"
@@ -29,6 +29,7 @@
 #include "drizzled/join.h"
 
 #include <string>
+#include <sstream>
 
 using namespace std;
 using namespace drizzled;

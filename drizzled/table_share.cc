@@ -24,7 +24,7 @@
 */
 
 /* Basic functions needed by many modules */
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <assert.h>
 
@@ -35,6 +35,7 @@
 
 using namespace std;
 
+extern size_t table_def_size;
 typedef drizzled::hash_map<string, TableShare *> TableDefCache;
 TableDefCache table_def_cache;
 static pthread_mutex_t LOCK_table_share;

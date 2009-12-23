@@ -17,9 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/plugin/function.h>
+#include "drizzled/version.h"
 
 using namespace std;
 using namespace drizzled;
@@ -45,7 +46,7 @@ public:
 
 String *VersionFunction::val_str(String *str)
 {
-  str->set(drizzled_version().c_str(), drizzled_version().size(),
+  str->set(version().c_str(), version().size(),
            system_charset_info);
   return str;
 }
@@ -66,17 +67,4 @@ static int finalize(plugin::Registry &registry)
    return 0;
 }
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  "version",
-  "1.0",
-  "Devananda van der Veen",
-  "Return the server version",
-  PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL);

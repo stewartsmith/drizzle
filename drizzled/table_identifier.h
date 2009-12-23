@@ -32,8 +32,8 @@
 #ifndef DRIZZLED_TABLE_IDENTIFIER_H
 #define DRIZZLED_TABLE_IDENTIFIER_H
 
-#include <drizzled/global.h>
 #include <drizzled/enum.h>
+#include "drizzled/definitions.h"
 #include <string.h>
 
 #include <ostream>

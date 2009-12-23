@@ -17,10 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include <dlfcn.h>
 
+#include <cerrno>
 #include <string>
 
 #include "drizzled/plugin.h"
@@ -33,8 +34,6 @@ using namespace std;
 
 namespace drizzled
 {
-
-static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
 
 plugin::Library::Library(const std::string &name_arg,
                          void *handle_arg,
@@ -94,20 +93,35 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name)
   }
 
 
+  string plugin_decl_sym("_drizzled_");
+  plugin_decl_sym.append(plugin_name);
+  plugin_decl_sym.append("_plugin_");
+
   /* Find plugin declarations */
-  void *sym= dlsym(handle, plugin_declarations_sym);
+  void *sym= dlsym(handle, plugin_decl_sym.c_str());
   if (sym == NULL)
   {
     const char* errmsg= dlerror();
     errmsg_printf(ERRMSG_LVL_ERROR, errmsg);
     errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
-                  plugin_declarations_sym, dlpath.c_str());
+                  plugin_decl_sym.c_str(), dlpath.c_str());
     (void)dlerror();
     dlclose(handle);
     return NULL;
   }
 
-  const Manifest *manifest= reinterpret_cast<plugin::Manifest *>(sym); 
+  const Manifest *manifest= static_cast<plugin::Manifest *>(sym); 
+  if (manifest->drizzle_version != DRIZZLE_VERSION_ID)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Plugin module %s was compiled for version %" PRIu64 ", "
+                    "which does not match the current running version of "
+                    "Drizzle: %" PRIu64"."),
+                 dlpath.c_str(), manifest->drizzle_version,
+                 DRIZZLE_VERSION_ID);
+    return NULL;
+  }
+
   return new (nothrow) plugin::Library(plugin_name, handle, manifest);
 }
 

@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_OPTIMIZER_QUICK_RANGE_H
 #define DRIZZLED_OPTIMIZER_QUICK_RANGE_H
 
+#include "drizzled/sql_alloc.h"
+#include "drizzled/base.h"
+
 namespace drizzled
 {
 

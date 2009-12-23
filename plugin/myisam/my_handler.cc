@@ -17,29 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 
 #include <mystrings/m_ctype.h>
 #include <drizzled/base.h>
 #include <plugin/myisam/my_handler.h>
 #include <mysys/my_sys.h>
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
 
-/**
-  Swap the contents of two variables.
- */
-#define swap_variables(TYPE, a, b) \
-  do {                             \
-    TYPE dummy;                    \
-    dummy= a;                      \
-    a= b;                          \
-    b= dummy;                      \
-  } while (0)
-
-#define CMP_NUM(a,b) (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
+template<class T>
+int CMP_NUM(const T& a, const T&b)
+{
+  return (a < b) ? -1 : (a == b) ? 0 : 1;
+}
 
 
 int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, uint32_t a_length,

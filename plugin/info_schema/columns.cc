@@ -23,9 +23,11 @@
  *   Character Set I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 #include "columns.h"

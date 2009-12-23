@@ -37,11 +37,14 @@
 	itoa assumes that 10 -base numbers are allways signed and other arn't.
 */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "m_string.h"
 
 #if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)
+
+char _dig_vec_upper[] =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /*
   This assumes that int64_t multiplication is faster than int64_t division.

@@ -23,6 +23,8 @@
 
 #include <drizzled/field/str.h>
 
+#include "drizzled/global_charset_info.h"
+
 #include <string>
 
 /**

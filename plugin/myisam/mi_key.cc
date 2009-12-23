@@ -20,6 +20,8 @@
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
+#include <math.h>
+#include <cassert>
 
 #define CHECK_KEYS                              /* Enable safety checks */
 

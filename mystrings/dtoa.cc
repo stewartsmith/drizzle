@@ -35,11 +35,14 @@
 
  ***************************************************************/
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include <mystrings/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
-#include <stdlib.h>
 
+#include <float.h>
+
+#include <cstdlib>
+#include <cerrno>
 #include <algorithm>
 
 using namespace std;

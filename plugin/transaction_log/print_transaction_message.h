@@ -38,7 +38,6 @@
 #ifndef PLUGIN_TRANSACTION_LOG_PRINT_TRANSACTION_MESSAGE_H
 #define PLUGIN_TRANSACTION_LOG_PRINT_TRANSACTION_MESSAGE_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 

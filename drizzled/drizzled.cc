@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
 
@@ -46,6 +46,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
+#include "drizzled/session_list.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -63,6 +64,7 @@
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
 #endif
+#include <sys/socket.h>
 
 #include <locale.h>
 
@@ -76,7 +78,6 @@
 
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
-extern "C" {					// Because of SCO 3.2V4.2
 #include <errno.h>
 #include <sys/stat.h>
 #include <mysys/my_getopt.h>
@@ -144,8 +145,6 @@ inline void setup_fpu()
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
 
-} /* cplusplus */
-
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 
 #include <drizzled/gettext.h>
@@ -158,12 +157,6 @@ using namespace std;
 using namespace drizzled;
 
 /* Constants */
-
-const string& drizzled_version()
-{
-  static const string DRIZZLED_VERSION(STRING_WITH_LEN(PANDORA_RELEASE_VERSION));
-  return DRIZZLED_VERSION;
-}
 
 
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
@@ -195,7 +188,6 @@ static TYPELIB tc_heuristic_recover_typelib=
 };
 
 const char *first_keyword= "first";
-const char *binary_keyword= "BINARY";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
@@ -264,6 +256,8 @@ uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
 
+extern const double log_10[309];
+
 const double log_10[] = {
   1e000, 1e001, 1e002, 1e003, 1e004, 1e005, 1e006, 1e007, 1e008, 1e009,
   1e010, 1e011, 1e012, 1e013, 1e014, 1e015, 1e016, 1e017, 1e018, 1e019,
@@ -326,8 +320,6 @@ my_decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
-
-vector<Session*> session_list;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
@@ -438,7 +430,7 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
@@ -470,12 +462,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (session_list.empty())
+    if (getSessionList().empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    tmp= session_list.front();
+    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -729,14 +721,14 @@ extern "C" void end_thread_signal(int )
   Unlink session from global list of available connections and free session
 
   SYNOPSIS
-    unlink_session()
+    Session::unlink()
     session		 Thread handler
 
   NOTES
     LOCK_thread_count is locked and left locked
 */
 
-void unlink_session(Session *session)
+void Session::unlink(Session *session)
 {
   connection_count--;
 
@@ -745,9 +737,9 @@ void unlink_session(Session *session)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
 
-  session_list.erase(remove(session_list.begin(),
-                     session_list.end(),
-                     session));
+  getSessionList().erase(remove(getSessionList().begin(),
+                         getSessionList().end(),
+                         session));
 
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -758,7 +750,6 @@ void unlink_session(Session *session)
 
 #ifdef THREAD_SPECIFIC_SIGPIPE
 /**
-  Aborts a thread nicely. Comes here on SIGPIPE.
 
   @todo
     One should have to fix that thr_alarm know about this thread too.
@@ -1270,8 +1261,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /*
     Add server status variables to the dynamic list of
     status variables that is shown by SHOW STATUS.
-    Later, in plugin_init, and mysql_install_plugin
-    new entries could be added to that list.
+    Later, in plugin_init, new entries could be added to that list.
   */
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
@@ -1392,7 +1382,7 @@ static int init_server_components(plugin::Registry &plugins)
     return(1);
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+                  ((opt_help) ? true : false)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -1630,7 +1620,7 @@ int main(int argc, char **argv)
 
     /* If we error on creation we drop the connection and delete the session. */
     if (session->schedule())
-      unlink_session(session);
+      Session::unlink(session);
   }
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
@@ -2189,7 +2179,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  session_list.clear();
+  getSessionList().clear();
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
@@ -2403,7 +2393,7 @@ static void get_options(int *argc,char **argv)
 static const char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,PREFIX) &&
+      (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
       strcmp(PREFIX,FN_ROOTDIR))
   {
     if (strlen(PREFIX) < strlen(path))

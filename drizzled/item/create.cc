@@ -20,7 +20,7 @@
   Functions to create an item. Used by sql_yac.yy
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/item/create.h>
 #include <drizzled/item/func.h>
 #include <drizzled/error.h>

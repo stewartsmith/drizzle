@@ -27,7 +27,11 @@
  * @{
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <float.h>
+#include <math.h>
+
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -55,6 +59,9 @@
 
 using namespace std;
 using namespace drizzled;
+
+extern drizzled::plugin::StorageEngine *heap_engine;
+extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);

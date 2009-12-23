@@ -21,16 +21,15 @@
 #define DRIZZLED_PLUGIN_FUNCTION_H
 
 
-#include <drizzled/item.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/item/bin_string.h>
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/function/func.h"
+#include "drizzled/item/func.h"
 
 #include <string>
 #include <vector>
 #include <functional>
 
+typedef struct st_mem_root MEM_ROOT;
+class Item_func;
 
 namespace drizzled
 {

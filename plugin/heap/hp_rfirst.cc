@@ -16,6 +16,7 @@
 #include "heap_priv.h"
 
 #include <string.h>
+#include <cassert>
 
 /* Read first record with the current key */
 

@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/show.h"
@@ -50,6 +50,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include <float.h>
 
 using namespace std;
 using namespace drizzled;
@@ -315,6 +316,11 @@ Item::Item(Session *session, Item *item):
   /* Put this item in the session's free list */
   next= session->free_list;
   session->free_list= this;
+}
+
+uint32_t Item::float_length(uint32_t decimals_par) const
+{
+  return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
 }
 
 uint32_t Item::decimal_precision() const

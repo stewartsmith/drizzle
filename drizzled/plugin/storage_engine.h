@@ -26,6 +26,8 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/sql_string.h"
+#include "drizzled/table_identifier.h"
 
 #include "mysys/cached_directory.h"
 
@@ -249,6 +251,7 @@ public:
   uint32_t slot;
 
   inline uint32_t getSlot (void) { return slot; }
+  inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
   bool has_2pc()

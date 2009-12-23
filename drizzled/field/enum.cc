@@ -19,11 +19,12 @@
  */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
+#include "drizzled/strfunc.h"
 
 #include <sstream>
 #include <string>

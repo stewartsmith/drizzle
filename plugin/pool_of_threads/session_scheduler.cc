@@ -18,7 +18,7 @@
   It's embedded in the Session class.
 */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/session.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>

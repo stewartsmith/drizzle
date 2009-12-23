@@ -16,7 +16,7 @@
 
 /* Insert of records */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -26,8 +26,13 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
 
 using namespace drizzled;
+
+extern plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *myisam_engine;
 
 /*
   Check if insert fields are correct.

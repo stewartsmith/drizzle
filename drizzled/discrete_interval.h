@@ -21,6 +21,10 @@
 #ifndef DRIZZLED_DISCRETE_INTERVAL_H
 #define DRIZZLED_DISCRETE_INTERVAL_H
 
+#include <cstdlib>
+
+#include "drizzled/definitions.h"
+
 /*
   Such interval is "discrete": it is the set of
   { auto_inc_interval_min + k * increment,

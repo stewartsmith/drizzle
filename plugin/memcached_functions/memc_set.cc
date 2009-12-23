@@ -31,7 +31,7 @@
  *
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 
 #include "memcached_functions.h"
