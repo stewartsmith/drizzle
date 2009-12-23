@@ -16,7 +16,7 @@
 /* Functions to check if a row is unique */
 
 #include "myisam_priv.h"
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 
 bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, unsigned char *record,
 			ha_checksum unique_hash, my_off_t disk_pos)

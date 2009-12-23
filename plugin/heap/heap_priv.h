@@ -21,7 +21,7 @@
 #include <drizzled/base.h>
 
 #include <mysys/my_sys.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
 #include "drizzled/my_tree.h"

@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <drizzled/base.h>
 #include <plugin/myisam/my_handler.h>
 #include <mysys/my_sys.h>

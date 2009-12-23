@@ -90,7 +90,6 @@ noinst_HEADERS+=	\
 		client/get_password.h \
 		client/linebuffer.h \
 		drizzled/configmake.h \
-		mystrings/m_ctype.h \
 		mystrings/m_string.h \
 		mystrings/my_uctype.h \
 		mystrings/t_ctype.h \

@@ -44,6 +44,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/cached_item.h \
 		drizzled/calendar.h \
 		drizzled/charset.h \
+		drizzled/charset_info.h \
 		drizzled/check_stack_overrun.h \
 		drizzled/common.h \
 		drizzled/comp_creator.h \

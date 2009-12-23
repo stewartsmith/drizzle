@@ -15,7 +15,7 @@
 
 #include "config.h"
 #include "drizzled/charset.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 
 
 /*

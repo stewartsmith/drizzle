@@ -33,8 +33,8 @@
 
 
 #include "config.h"
-#include "m_ctype.h"
-#include "m_string.h"
+#include "drizzled/charset_info.h"
+#include "mystrings/m_string.h"
 #include <stdio.h>
 
 #include <algorithm>

@@ -16,7 +16,7 @@
 /* Functions to handle keys */
 
 #include "myisam_priv.h"
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif

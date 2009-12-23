@@ -26,7 +26,7 @@ extern "C" {
 
 #include <drizzled/base.h>
 #ifndef _m_ctype_h
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #endif
 #ifndef _keycache_h
 #include "keycache.h"

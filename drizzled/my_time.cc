@@ -18,7 +18,7 @@
 #include "my_time.h"
 
 #include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
 
 #include <stdio.h>

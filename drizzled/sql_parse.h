@@ -26,7 +26,6 @@
 #include "drizzled/comp_creator.h"
 #include <drizzled/table_identifier.h>
 
-#include "mystrings/m_ctype.h"
 
 class Session;
 class TableList;
@@ -35,6 +34,8 @@ class Item;
 class LEX;
 class Table_ident;
 class Select_Lex;
+
+typedef struct charset_info_st CHARSET_INFO;
 
 extern const LEX_STRING command_name[];
 

@@ -25,7 +25,7 @@
 #include "mysys/my_pthread.h"
 #include "drizzled/charset.h"
 #include "drizzled/global_charset_info.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 
 XID::XID()
 {}

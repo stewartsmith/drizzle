@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <fcntl.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <mystrings/m_string.h>
 #include "drizzled/my_getopt.h"
 

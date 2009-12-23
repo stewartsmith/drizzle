@@ -17,7 +17,7 @@
 #include "my_static.h"
 #include "drizzled/my_error.h"
 #include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include "drizzled/charset.h"
 #include <cstdio>
 #include <cstdlib>

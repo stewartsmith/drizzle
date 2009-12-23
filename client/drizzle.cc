@@ -41,7 +41,7 @@
 #include <algorithm>
 #include <limits.h>
 #include <cassert>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <stdarg.h>
 #include <math.h>
 #include "client/linebuffer.h"

@@ -31,7 +31,7 @@
 
 #include <mysys/my_pthread.h>
 
-#include <mystrings/m_ctype.h>                    /* for CHARSET_INFO */
+#include "drizzled/charset_info.h"                    /* for CHARSET_INFO */
 #include <stdarg.h>
 #include "drizzled/typelib.h"
 #include <mysys/aio_result.h>

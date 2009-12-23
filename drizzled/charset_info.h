@@ -17,10 +17,9 @@
   A better inplementation of the UNIX ctype(3) library.
 */
 
-#ifndef MYSTRINGS_M_CTYPE_H
-#define MYSTRINGS_M_CTYPE_H
+#ifndef DRIZZLED_CHARSET_INFO_H
+#define DRIZZLED_CHARSET_INFO_H
 
-#include <stdint.h>
 #include <sys/types.h>
 
 #ifdef	__cplusplus
@@ -709,4 +708,4 @@ int make_escape_code(const CHARSET_INFO * const cs, const char *escape);
 }
 #endif
 
-#endif /* MYSTRINGS_M_CTYPE_H */
+#endif /* DRIZZLED_CHARSET_INFO_H */

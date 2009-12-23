@@ -24,7 +24,7 @@
 #include "config.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/charset.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 
 const uint32_t NO_RECORD= UINT32_MAX;
 

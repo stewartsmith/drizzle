@@ -20,7 +20,7 @@
 #include <string.h>
 #include <algorithm>
 
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 #include "mystrings/m_string.h"
 #include "drizzled/util/test.h"
 #include "drizzled/global_charset_info.h"

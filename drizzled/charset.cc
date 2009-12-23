@@ -17,7 +17,7 @@
 
 #include "drizzled/charset.h"
 #include "drizzled/my_error.h"
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <mystrings/m_string.h>
 #include <drizzled/configmake.h>
 #include <vector>

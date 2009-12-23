@@ -18,7 +18,7 @@
 
 #include "drizzled/strfunc.h"
 #include "drizzled/typelib.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 #include "drizzled/global_charset_info.h"
 
 /*

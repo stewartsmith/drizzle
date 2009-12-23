@@ -31,7 +31,7 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 
 #include <string>
 #include <vector>

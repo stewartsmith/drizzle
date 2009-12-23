@@ -64,7 +64,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 #include "mystrings/m_string.h"
 #include "mysys/my_sys.h"
 #include "drizzled/my_hash.h"

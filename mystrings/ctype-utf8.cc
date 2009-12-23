@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <errno.h>
 
 #include <algorithm>

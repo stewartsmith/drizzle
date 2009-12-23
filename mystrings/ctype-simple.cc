@@ -15,13 +15,13 @@
 
 #include "config.h"
 
-#include "m_string.h"
-#include "m_ctype.h"
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "mystrings/m_string.h"
+#include "drizzled/charset_info.h"
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
-#include "stdarg.h"
+#include <stdarg.h>
 
 #include <algorithm>
 

@@ -15,8 +15,8 @@
 
 #include "config.h"
 
-#include "m_string.h"
-#include "m_ctype.h"
+#include "mystrings/m_string.h"
+#include "drizzled/charset_info.h"
 
 #include <algorithm>
 

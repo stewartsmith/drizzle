@@ -21,7 +21,7 @@
 #include <cassert>
 #include "drizzled/sql_locale.h"
 #include "drizzled/typelib.h"
-#include "mystrings/m_ctype.h"
+#include "drizzled/charset_info.h"
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/
 static const char *my_locale_month_names_ar_AE[13] =
