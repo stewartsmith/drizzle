@@ -16,7 +16,7 @@
 #ifndef DRIZZLED_MY_GETOPT_H
 #define DRIZZLED_MY_GETOPT_H
 
-#include "mysys/my_sys.h"
+#include "drizzled/typelib.h"
 
 #define GET_NO_ARG     1
 #define GET_BOOL       2
@@ -43,6 +43,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum loglevel {
+   ERROR_LEVEL,
+   WARNING_LEVEL,
+   INFORMATION_LEVEL
+};
 
 enum get_opt_arg_type { NO_ARG, OPT_ARG, REQUIRED_ARG };
 

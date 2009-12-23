@@ -176,12 +176,6 @@ typedef struct wild_file_pack	/* Struct to hold info when selecting files */
   char *	*wild;		/* Pointer to wildcards */
 } WF_PACK;
 
-enum loglevel {
-   ERROR_LEVEL,
-   WARNING_LEVEL,
-   INFORMATION_LEVEL
-};
-
 enum cache_type
 {
   TYPE_NOT_SET= 0, READ_CACHE, WRITE_CACHE,
