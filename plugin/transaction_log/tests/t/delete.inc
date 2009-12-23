@@ -53,3 +53,30 @@ INSERT INTO t1 VALUES (8, 8);
 DELETE FROM t1;
 
 DROP TABLE t1;
+
+# Test for LP Bug #496101:
+#
+# Delete within a transaction does not generate the correct 
+# statements in the transaction log.  We start a transaction
+# and issue both inserts and deletes in the same transaction.
+
+--echo Start Test of LP Bug #496101
+
+CREATE TABLE t1 (
+  id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+
+START TRANSACTION;
+
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+
+DELETE FROM t1 where id = 1;
+
+COMMIT;
+
+DROP TABLE t1;
+
+--echo End Test of LP Bug #496101
