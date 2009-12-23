@@ -420,11 +420,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/visibility.h \
 		drizzled/xid.h
 
-LDADD = $(top_builddir)/mysys/libmysys.la \
-	$(top_builddir)/mystrings/libmystrings.la \
-	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
+DRIZZLED_LDADD= \
+		 drizzled/internal/libinternal.la \
+		$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
-drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
+drizzled_drizzled_LDADD= \
+		${DRIZZLED_LDADD} \
+		${noinst_LTLIBRARIES} \
 		drizzled/hash/libhash.la \
 		drizzled/util/libutil.la \
 		drizzled/message/libdrizzledmessage.la \

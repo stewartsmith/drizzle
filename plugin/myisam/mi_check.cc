@@ -41,7 +41,7 @@
 */
 
 #include "myisam_priv.h"
-#include <mystrings/m_string.h>
+#include "drizzled/internal/m_string.h"
 #include <stdarg.h>
 #include "drizzled/my_getopt.h"
 #ifdef HAVE_SYS_VADVISE_H

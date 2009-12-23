@@ -26,7 +26,7 @@
 #include "drizzled/error.h"
 #include "drizzled/definitions.h"
 
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 extern "C" void sql_alloc_error_handler(void);
 

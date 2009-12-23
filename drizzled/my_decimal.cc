@@ -18,7 +18,7 @@
 #include "drizzled/current_session.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 /**
   report result of decimal operation.

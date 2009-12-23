@@ -30,7 +30,7 @@
 #  include <time.h>
 # endif
 #endif
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_pthread.h"
 
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
@@ -50,7 +50,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
-#include "mysys/iocache.h"
+#include "drizzled/internal/iocache.h"
 
 
 using namespace std;

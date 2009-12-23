@@ -85,7 +85,7 @@
 #include <vector>
 #include <string>
 
-#include <mysys/my_sys.h> /* for my_sync */
+#include "drizzled/internal/my_sys.h" /* for my_sync */
 
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>

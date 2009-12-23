@@ -21,7 +21,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
-#include <mysys/my_dir.h>
+#include "drizzled/internal/my_dir.h"
 
 #include "ha_archive.h"
 

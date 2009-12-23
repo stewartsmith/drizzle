@@ -55,15 +55,12 @@ DISTCLEANFILES=		ac_available_languages_fragment \
 MAINTAINERCLEANFILES=	autom4te.cache
 
 CLIENT_LDADD=\
-		mysys/libmysys.la \
-		mystrings/libmystrings.la \
+		drizzled/internal/libinternal.la \
 		$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
 		client/libgetpassword.la
 
 noinst_LTLIBRARIES+= \
-		client/libgetpassword.la \
-		mysys/libmysys.la \
-		mystrings/libmystrings.la
+		client/libgetpassword.la
 
 noinst_PROGRAMS+=\
 		client/drizzletest \
@@ -84,85 +81,13 @@ man_MANS=\
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
-noinst_HEADERS+=	\
+noinst_HEADERS+=\
 		client/client_priv.h \
 		client/errname.h \
 		client/get_password.h \
 		client/linebuffer.h \
-		drizzled/configmake.h \
-		mystrings/m_string.h \
-		mystrings/my_uctype.h \
-		mystrings/t_ctype.h \
-		mystrings/utf8.h \
-		mysys/aio_result.h \
-		mysys/iocache.h \
-		mysys/my_bit.h \
-		mysys/my_dir.h \
-		mysys/my_pthread.h \
-		mysys/my_static.h \
-		mysys/my_sys.h \
-		mysys/mysys_priv.h
+		drizzled/configmake.h
 
-mystrings_libmystrings_la_SOURCES= \
-		mystrings/bmove_upp.cc \
-		mystrings/ctype-bin.cc \
-		mystrings/ctype-mb.cc \
-		mystrings/ctype-simple.cc \
-		mystrings/ctype-uca.cc \
-		mystrings/ctype-utf8.cc \
-		mystrings/ctype.cc \
-		mystrings/dtoa.cc \
-		mystrings/int2str.cc \
-		mystrings/llstr.cc \
-		mystrings/longlong2str.cc \
-		mystrings/my_strtoll10.cc
-
-mysys_libmysys_la_LIBADD= \
-		drizzled/libcharset.la \
-		drizzled/libcached_directory.la \
-		drizzled/libdynamic_array.la \
-		drizzled/liberror.la \
-		drizzled/libgetopt.la \
-		drizzled/libmemory.la \
-		drizzled/libtypelib.la
-mysys_libmysys_la_SOURCES= \
-		mysys/checksum.cc \
-		mysys/default.cc \
-		mysys/mf_arr_appstr.cc \
-		mysys/mf_cache.cc \
-		mysys/mf_dirname.cc \
-		mysys/mf_fn_ext.cc \
-		mysys/mf_format.cc \
-		mysys/mf_getdate.cc \
-		mysys/mf_iocache.cc \
-		mysys/mf_loadpath.cc \
-		mysys/mf_pack.cc \
-		mysys/mf_qsort.cc \
-		mysys/mf_qsort2.cc \
-		mysys/mf_radix.cc \
-		mysys/mf_same.cc \
-		mysys/mf_sort.cc \
-		mysys/mf_tempfile.cc \
-		mysys/mf_wcomp.cc \
-		mysys/my_access.cc \
-		mysys/my_bit.cc \
-		mysys/my_copy.cc \
-		mysys/my_create.cc \
-		mysys/my_delete.cc \
-		mysys/my_getsystime.cc \
-		mysys/my_init.cc \
-		mysys/my_lib.cc \
-		mysys/my_open.cc \
-		mysys/my_read.cc \
-		mysys/my_redel.cc \
-		mysys/my_rename.cc \
-		mysys/my_static.cc \
-		mysys/my_symlink.cc \
-		mysys/my_symlink2.cc \
-		mysys/my_sync.cc \
-		mysys/my_thr_init.cc \
-		mysys/my_write.cc \
-		mysys/ptr_cmp.cc
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
@@ -185,8 +110,7 @@ include config/pandora-plugin.am
 
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= \
-		$(top_builddir)/mysys/libmysys.la \
-		$(top_builddir)/mystrings/libmystrings.la \
+		drizzled/internal/libinternal.la
 		$(LIBINTL)
 
 EXTRA_DIST+=	${man_MANS}
@@ -265,6 +189,7 @@ clean-local:
 include config/lint-source.am
 
 include drizzled/include.am
+include drizzled/internal/include.am
 include drizzled/hash/include.am
 include drizzled/util/include.am
 include drizzled/message/include.am

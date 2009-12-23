@@ -31,7 +31,7 @@
 #include "drizzled/join_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include "plugin/myisam/myisam.h" // needed for dflt_key_cache
 #include "helper_methods.h"
 

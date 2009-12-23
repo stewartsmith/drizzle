@@ -21,7 +21,7 @@
 #include <drizzled/dtcollation.h>
 
 #include <drizzled/definitions.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/charset_info.h"
 #include <drizzled/error.h>
 #include <drizzled/function/str/conv_charset.h>

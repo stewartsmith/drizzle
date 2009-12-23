@@ -35,7 +35,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/hash.h"
 #include "drizzled/pthread_globals.h"
-#include "mysys/my_pthread.h"
+#include "drizzled/internal/my_pthread.h"
 
 using namespace std;
 

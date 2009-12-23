@@ -15,9 +15,9 @@
 
 #include "config.h"
 #include <drizzled/table.h>
-#include <mysys/my_dir.h>
+#include "drizzled/internal/my_dir.h"
 #include <drizzled/error.h>
-#include "mysys/my_pthread.h"
+#include "drizzled/internal/my_pthread.h"
 
 #include "ha_blackhole.h"
 
@@ -27,7 +27,7 @@
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "drizzled/global_charset_info.h"

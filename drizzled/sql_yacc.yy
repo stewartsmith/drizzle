@@ -134,7 +134,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 
 
 using namespace drizzled;

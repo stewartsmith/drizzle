@@ -56,8 +56,8 @@
 #include "config.h"
 
 #include "drizzled/my_tree.h"
-#include "mysys/my_sys.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/memory/root.h"
 
 #define BLACK		1

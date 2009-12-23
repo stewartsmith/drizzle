@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include "drizzled/charset_info.h"
-#include <mystrings/m_string.h>
+#include "drizzled/internal/m_string.h"
 #include "drizzled/my_getopt.h"
 
 #define SHOW_VERSION "0.1"

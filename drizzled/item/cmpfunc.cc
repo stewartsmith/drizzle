@@ -31,7 +31,7 @@
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/time_functions.h"
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 #include <math.h>
 #include <algorithm>
 

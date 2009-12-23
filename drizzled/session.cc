@@ -46,7 +46,7 @@
 #include "drizzled/pthread_globals.h"
 
 #include "plugin/myisam/myisam.h"
-#include "mysys/iocache.h"
+#include "drizzled/internal/iocache.h"
 
 #include <fcntl.h>
 #include <algorithm>

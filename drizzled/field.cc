@@ -43,7 +43,7 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/time_functions.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 
 /*****************************************************************************
   Instansiate templates and static variables

@@ -24,7 +24,7 @@
 #include "drizzled/foreign_key.h"
 #include "drizzled/error.h"
 #include "drizzled/create_field.h"
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 extern const CHARSET_INFO *system_charset_info;
 

@@ -22,7 +22,7 @@
 
 #include <drizzled/my_hash.h>
 #include <drizzled/xid.h>
-#include "mysys/my_pthread.h"
+#include "drizzled/internal/my_pthread.h"
 #include "drizzled/charset.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset_info.h"

@@ -26,7 +26,7 @@ Created July 18, 2007 Vasil Dimov
 #include "config.h"
 #include <drizzled/error.h>
 #include "drizzled/charset_info.h"
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 #include <drizzled/my_hash.h>
 #include "drizzled/my_error.h"
 #include <drizzled/plugin.h>

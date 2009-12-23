@@ -21,8 +21,8 @@
 */
 
 #include "config.h"
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/my_getopt.h"
 
 #include <stdio.h>

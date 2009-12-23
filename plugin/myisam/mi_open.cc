@@ -21,7 +21,7 @@
 #include <algorithm>
 
 #include "drizzled/charset_info.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/util/test.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"

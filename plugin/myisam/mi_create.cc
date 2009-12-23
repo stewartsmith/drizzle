@@ -16,7 +16,7 @@
 /* Create a MyISAM table */
 
 #include "myisam_priv.h"
-#include <mysys/my_bit.h>
+#include "drizzled/internal/my_bit.h"
 
 #include "drizzled/util/test.h"
 #include "drizzled/global_charset_info.h"

@@ -100,7 +100,7 @@
 #include "config.h"
 
 #include "drizzled/definitions.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/decimal.h"
 

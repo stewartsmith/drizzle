@@ -32,8 +32,8 @@
 #include "client_priv.h"
 #include <string>
 
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include "drizzled/hash.h"
 #include <stdarg.h>

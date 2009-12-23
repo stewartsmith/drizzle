@@ -65,10 +65,10 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 */
 
-#include "mysys/mysys_priv.h"
+#include "drizzled/internal/mysys_priv.h"
 
 #include "thr_lock.h"
-#include <mystrings/m_string.h>
+#include "drizzled/internal/m_string.h"
 #include <errno.h>
 #include <list>
 

@@ -28,8 +28,8 @@
 #include <signal.h>
 #include <limits.h>
 
-#include "mysys/my_sys.h"
-#include <mysys/my_bit.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/stacktrace.h>
 #include "drizzled/my_error.h"
@@ -150,7 +150,7 @@ inline void setup_fpu()
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
 
-#include <mysys/my_pthread.h>			// For thr_setconcurency()
+#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
 
 #include <drizzled/gettext.h>
 

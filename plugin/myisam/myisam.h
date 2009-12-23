@@ -32,7 +32,7 @@ extern "C" {
 #include "keycache.h"
 #endif
 #include <plugin/myisam/my_handler.h>
-#include <mysys/iocache.h>
+#include "drizzled/internal/iocache.h"
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY

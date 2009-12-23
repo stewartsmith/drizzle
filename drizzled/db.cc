@@ -21,11 +21,11 @@
 #include <fcntl.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/my_error.h"
-#include <mysys/my_dir.h>
+#include "drizzled/internal/my_dir.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/my_hash.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/sql_base.h>
@@ -39,7 +39,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 using namespace std;
 using namespace drizzled;

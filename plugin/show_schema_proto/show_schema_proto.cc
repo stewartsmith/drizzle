@@ -22,7 +22,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/db.h>
 #include "drizzled/charset.h"
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <stdio.h>
 #include <iostream>

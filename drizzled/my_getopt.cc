@@ -13,11 +13,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys/mysys_priv.h"
+#include "drizzled/internal/mysys_priv.h"
 #include <drizzled/gettext.h>
 
-#include <mystrings/m_string.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/my_error.h"
 #include "drizzled/my_getopt.h"
 

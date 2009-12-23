@@ -20,7 +20,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 #include <string>

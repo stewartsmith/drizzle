@@ -34,7 +34,7 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/hash/crc32.h>
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/charset.h"
 
 #include <fcntl.h>

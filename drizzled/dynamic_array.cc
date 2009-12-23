@@ -15,8 +15,8 @@
 
 /* Handling of arrays that can grow dynamicly. */
 
-#include "mysys/mysys_priv.h"
-#include <mystrings/m_string.h>
+#include "drizzled/internal/mysys_priv.h"
+#include "drizzled/internal/m_string.h"
 
 #include <algorithm>
 

@@ -23,7 +23,7 @@
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>

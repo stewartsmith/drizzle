@@ -43,7 +43,7 @@
 #include <drizzled/message/table.pb.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/charset.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include "plugin/myisam/myisam.h"
 
 #include <drizzled/item/string.h>

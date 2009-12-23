@@ -20,7 +20,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 
 /* For proto */

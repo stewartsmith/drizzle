@@ -47,7 +47,7 @@ TODO:
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 #include "ha_tina.h"
 

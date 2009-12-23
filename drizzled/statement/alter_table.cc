@@ -40,8 +40,8 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/records.h"
 #include "drizzled/pthread_globals.h"
-#include "mysys/my_sys.h"
-#include "mysys/iocache.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 
 extern pid_t current_pid;
 

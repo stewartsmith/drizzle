@@ -103,10 +103,10 @@
 
 #include "config.h"
 #include "drizzled/my_error.h"
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 #include "keycache.h"
-#include <mystrings/m_string.h>
-#include <mysys/my_bit.h>
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_bit.h"
 #include <errno.h>
 #include <stdarg.h>
 

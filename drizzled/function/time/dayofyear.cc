@@ -22,7 +22,7 @@
 #include "drizzled/error.h"
 #include "drizzled/calendar.h"
 #include "drizzled/function/time/dayofyear.h"
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 
 int64_t Item_func_dayofyear::val_int()
 {

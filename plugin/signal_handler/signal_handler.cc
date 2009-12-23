@@ -20,8 +20,8 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/cursor.h> /* for refresh_version */
 #include "drizzled/pthread_globals.h"
-#include "mysys/my_pthread.h"
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_pthread.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>
