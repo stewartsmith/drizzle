@@ -18,11 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <fcntl.h>
+
+#include <sstream>
+
 #include "drizzled/show.h"
 #include "drizzled/lock.h"
 #include "drizzled/session.h"
 #include "drizzled/statement/alter_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/gettext.h"
 #include "drizzled/data_home.h"
@@ -32,6 +39,9 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/records.h"
+#include "drizzled/pthread_globals.h"
+
+extern pid_t current_pid;
 
 using namespace std;
 

@@ -17,7 +17,7 @@
 #ifndef PLUGIN_HEAP_HEAP_PRIV_H
 #define PLUGIN_HEAP_HEAP_PRIV_H
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/base.h>
 
 #include <mysys/my_sys.h>

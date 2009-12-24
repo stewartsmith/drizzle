@@ -15,7 +15,8 @@
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
-#include "global.h"
+#include "config.h"
+
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 

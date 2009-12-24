@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
-#include "drizzled/lex_string.h"
 
-bool check_reserved_words(LEX_STRING *name)
-{
-  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
-      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
-      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
-    return true;
-  return false;
-}
+#ifndef DRIZZLED_GLOBAL_CHARSET_INFO_H
+#define DRIZZLED_GLOBAL_CHARSET_INFO_H
 
+typedef struct charset_info_st CHARSET_INFO;
 
+/*
+  External variables
+*/
+extern const CHARSET_INFO *system_charset_info;
+extern const CHARSET_INFO *files_charset_info;
+extern const CHARSET_INFO *table_alias_charset;
+
+#endif /* DRIZZLED_GLOBAL_CHARSET_INFO_H */

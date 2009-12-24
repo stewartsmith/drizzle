@@ -18,6 +18,7 @@
 */
 
 #include "myisam_priv.h"
+#include <stdlib.h>
 #include <drizzled/util/test.h>
 
 

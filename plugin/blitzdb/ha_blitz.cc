@@ -738,8 +738,9 @@ static int blitz_deinit(drizzled::plugin::Registry &registry) {
 }
 
 DRIZZLE_DECLARE_PLUGIN {
+  DRIZZLE_VERSION_ID,
   "BLITZDB",
-  "0.2",
+  "0.3",
   "Toru Maesaka",
   "BlitzDB Storage Engine",
   PLUGIN_LICENSE_GPL,

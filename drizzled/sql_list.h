@@ -21,9 +21,10 @@
 #define DRIZZLED_SQL_LIST_H
 
 
+#include <cstdlib>
+#include <cassert>
 #include <utility>
 #include <algorithm>
-#include <stdlib.h>
 #include <drizzled/sql_alloc.h>
 
 /** Struct to handle simple linked lists. */

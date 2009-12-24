@@ -28,7 +28,7 @@
  * Statement messages to other formats, including SQL strings.
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "drizzled/message/statement_transform.h"
 #include "drizzled/message/transaction.pb.h"

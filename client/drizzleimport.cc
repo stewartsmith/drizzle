@@ -29,6 +29,7 @@
 
 #include "client_priv.h"
 #include <string>
+#include <sstream>
 
 #include <pthread.h>
 

@@ -17,14 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_CONFIG_H
-#define DRIZZLED_PLUGIN_CONFIG_H
+#ifndef DRIZZLED_PTHREAD_GLOBALS_H
+#define DRIZZLED_PTHREAD_GLOBALS_H
 
-/* The list of builtin plugins */
-#define  PANDORA_BUILTIN_LIST @PANDORA_BUILTIN_LIST@
-/* List of plugins that should be loaded on startup if no
- * value is given for --plugin-load */
-#define PANDORA_PLUGIN_LIST "@PANDORA_PLUGIN_LIST@"
+#include <pthread.h>
 
-#endif /* DRIZZLED_PLUGIN_CONFIG_H */
+extern pthread_mutex_t LOCK_create_db;
+extern pthread_mutex_t LOCK_open;
+extern pthread_mutex_t LOCK_thread_count;
+extern pthread_mutex_t LOCK_status;
+extern pthread_mutex_t LOCK_global_read_lock;
+extern pthread_mutex_t LOCK_global_system_variables;
 
+extern pthread_rwlock_t LOCK_system_variables_hash;
+extern pthread_cond_t COND_refresh;
+extern pthread_cond_t COND_thread_count;
+extern pthread_cond_t COND_global_read_lock;
+extern pthread_attr_t connection_attrib;
+extern pthread_t signal_thread;
+
+#endif /* DRIZZLED_PTHREAD_GLOBALS_H */

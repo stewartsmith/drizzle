@@ -23,9 +23,11 @@
  *   key column usage I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 #include "key_column_usage.h"

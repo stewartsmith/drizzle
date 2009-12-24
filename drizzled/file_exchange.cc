@@ -18,7 +18,7 @@
  */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/file_exchange.h"
 
 file_exchange::file_exchange(char *name, bool flag, enum_filetype filetype_arg)

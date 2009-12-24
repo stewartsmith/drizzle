@@ -23,7 +23,10 @@
   Handler-calling-functions
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <fcntl.h>
+
 #include "mysys/hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
@@ -147,7 +150,7 @@ void Cursor::ha_statistic_increment(ulong SSV::*offset) const
 
 void **Cursor::ha_data(Session *session) const
 {
-  return session_ha_data(session, engine);
+  return session->getEngineData(engine);
 }
 
 Session *Cursor::ha_session(void) const
@@ -680,7 +683,7 @@ inline
 void
 Cursor::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->getSlot()].ha_info[0];
+  Ha_trx_info *ha_info= ha_session()->getEngineInfo(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the

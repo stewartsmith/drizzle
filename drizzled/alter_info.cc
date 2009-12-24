@@ -22,7 +22,7 @@
  * @file Implementation of the AlterInfo class
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/alter_info.h"
 #include "drizzled/alter_drop.h"
 #include "drizzled/alter_column.h"

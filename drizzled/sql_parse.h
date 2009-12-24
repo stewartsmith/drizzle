@@ -36,6 +36,8 @@ class LEX;
 class Table_ident;
 class Select_Lex;
 
+extern const LEX_STRING command_name[];
+
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);

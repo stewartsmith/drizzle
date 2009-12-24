@@ -27,7 +27,7 @@
  * @{
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
 

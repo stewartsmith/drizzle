@@ -33,6 +33,7 @@
 #endif
 #include <drizzled/util/test.h>
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
@@ -48,7 +49,7 @@ static int update_dynamic_record(MI_INFO *info,my_off_t filepos,unsigned char *r
 				 ulong reclength);
 static int delete_dynamic_record(MI_INFO *info,my_off_t filepos,
 				 uint32_t second_read);
-static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
+static int _mi_cmp_buffer(int file, const unsigned char *buff, my_off_t filepos,
 			  uint32_t length);
 
 	/* Interface function from MI_INFO */
@@ -1401,7 +1402,7 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
   uint32_t b_type, left_length= 0;
   unsigned char *to= NULL;
   MI_BLOCK_INFO block_info;
-  File file;
+  int file;
 
   if (filepos != HA_OFFSET_ERROR)
   {
@@ -1603,7 +1604,7 @@ err:
 
 	/* Compare file to buffert */
 
-static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
+static int _mi_cmp_buffer(int file, const unsigned char *buff, my_off_t filepos,
 			  uint32_t length)
 {
   uint32_t next_length;
@@ -1833,7 +1834,7 @@ err:
 
 	/* Read and process header from a dynamic-record-file */
 
-uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
+uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, int file, my_off_t filepos)
 {
   uint32_t return_val=0;
   unsigned char *header=info->header;

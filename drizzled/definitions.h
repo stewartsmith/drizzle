@@ -45,6 +45,7 @@
 #define MAX_ALIAS_NAME 256
 #define MAX_FIELD_NAME 34			/* Max colum name length +2 */
 #define MAX_SYS_VAR_LENGTH 32
+#define MAX_INDEXES 64
 #define MAX_KEY MAX_INDEXES                     /* Max used keys */
 #define MAX_REF_PARTS 16			/* Max parts used as ref */
 #define MAX_KEY_LENGTH 4096			/* max possible key */
@@ -147,7 +148,6 @@
 /***************************************************************************
   Configuration parameters
 ****************************************************************************/
-#define MAX_ACCEPT_RETRY	10	// Test accept this many times
 #define MAX_FIELDS_BEFORE_HASH	32
 #define USER_VARS_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    64
@@ -316,7 +316,6 @@ enum test_flag_bit
 #define IS_EQUAL_PACK_LENGTH 2
 
 
-typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
@@ -493,5 +492,218 @@ typedef int myf;
 
 #define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
+
+
+#ifdef __cplusplus
+template <class T> void set_if_bigger(T &a, const T &b)
+{
+  if (a < b)
+    a=b;
+}
+
+template <class T> void set_if_smaller(T &a, const T &b)
+{
+  if (a > b)
+    a=b;
+}
+#else
+#ifdef __GNUC__
+#define set_if_bigger(a,b) do {                 \
+  const typeof(a) _a = (a);                     \
+  const typeof(b) _b = (b);                     \
+  (void) (&_a == &_b);                          \
+  if ((a) < (b)) (a)=(b);                       \
+  } while(0)
+#define set_if_smaller(a,b) do {                \
+  const typeof(a) _a = (a);                     \
+  const typeof(b) _b = (b);                     \
+  (void) (&_a == &_b);                          \
+  if ((a) > (b)) (a)=(b);                       \
+  } while(0)
+
+#else
+#define set_if_bigger(a,b)  do { if ((a) < (b)) (a)=(b); } while(0)
+#define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
+#endif
+#endif
+
+
+#define array_elements(a) \
+  ((sizeof(a) / sizeof(*(a))) / \
+   static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+
+
+/* Some types that is different between systems */
+
+#ifndef FN_LIBCHAR
+#define FN_LIBCHAR  '/'
+#define FN_ROOTDIR  "/"
+#endif
+#define MY_NFILE  64  /* This is only used to save filenames */
+#ifndef OS_FILE_LIMIT
+#define OS_FILE_LIMIT  65535
+#endif
+
+/*
+  How much overhead does malloc have. The code often allocates
+  something like 1024-MALLOC_OVERHEAD bytes
+*/
+#define MALLOC_OVERHEAD 8
+
+/* get memory in huncs */
+static const uint32_t ONCE_ALLOC_INIT= 4096;
+/* Typical record cash */
+static const uint32_t RECORD_CACHE_SIZE= 64*1024;
+/* Typical key cash */
+static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
+
+/* Default size of a key cache block  */
+static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
+
+
+/* Some things that this system doesn't have */
+
+/* Some defines of functions for portability */
+
+#undef remove    /* Crashes MySQL on SCO 5.0.0 */
+#ifndef uint64_t2double
+#define uint64_t2double(A) ((double) (uint64_t) (A))
+#endif
+
+#ifndef offsetof
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
+#define ulong_to_double(X) ((double) (ulong) (X))
+
+#ifndef STACK_DIRECTION
+#error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"
+#endif
+
+/* From limits.h instead */
+#ifndef DBL_MIN
+#define DBL_MIN    4.94065645841246544e-324
+#endif
+#ifndef DBL_MAX
+#define DBL_MAX    1.79769313486231470e+308
+#endif
+
+
+/* Define missing math constants. */
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#ifndef M_E
+#define M_E 2.7182818284590452354
+#endif
+#ifndef M_LN2
+#define M_LN2 0.69314718055994530942
+#endif
+
+/*
+  Max size that must be added to a so that we know Size to make
+  adressable obj.
+*/
+#define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
+#define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
+/* Size to make adressable obj. */
+#define ALIGN_PTR(A, t) ((t*) MY_ALIGN((A),sizeof(t)))
+/* Offset of field f in structure t */
+#define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
+#ifdef __cplusplus
+#define ADD_TO_PTR(ptr,size,type) (type) (reinterpret_cast<const unsigned char*>(ptr)+size)
+#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) (reinterpret_cast<const unsigned char*>(A) - reinterpret_cast<const unsigned char*>(B))
+#else
+ #define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
+ #define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
+#endif
+
+#define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
+#define MY_ALIGNED_BYTE_ARRAY(N, S, T) T N[MY_DIV_UP(S, sizeof(T))]
+
+/* Typdefs for easyier portability */
+
+
+#if defined(SIZEOF_OFF_T)
+# if (SIZEOF_OFF_T == 8)
+#  define OFF_T_MAX (INT64_MAX)
+# else
+#  define OFF_T_MAX (INT32_MAX)
+# endif
+#endif
+
+#define MY_FILEPOS_ERROR  -1
+
+/* Defines for time function */
+#define SCALE_SEC  100
+#define SCALE_USEC  10000
+
+#define DRIZZLE_SERVER
+
+/* Length of decimal number represented by INT32. */
+#define MY_INT32_NUM_DECIMAL_DIGITS 11
+
+/* Length of decimal number represented by INT64. */
+#define MY_INT64_NUM_DECIMAL_DIGITS 21
+
+/*
+  Io buffer size; Must be a power of 2 and
+  a multiple of 512. May be
+  smaller what the disk page size. This influences the speed of the
+  isam btree library. eg to big to slow.
+*/
+#define IO_SIZE 4096
+/* Max file name len */
+#define FN_LEN 256
+/* Max length of extension (part of FN_LEN) */
+#define FN_EXTLEN 20
+/* Max length of full path-name */
+#define FN_REFLEN 512
+/* File extension character */
+#define FN_EXTCHAR '.'
+/* ~ is used as abbrev for home dir */
+#define FN_HOMELIB '~'
+/* ./ is used as abbrev for current dir */
+#define FN_CURLIB '.'
+/* Parent directory; Must be a string */
+#define FN_PARENTDIR ".."
+
+/* Quote argument (before cpp) */
+#ifndef QUOTE_ARG
+# define QUOTE_ARG(x) #x
+#endif
+/* Quote argument, (after cpp) */
+#ifndef STRINGIFY_ARG
+# define STRINGIFY_ARG(x) QUOTE_ARG(x)
+#endif
+
+/*
+ * The macros below are borrowed from include/linux/compiler.h in the
+ * Linux kernel. Use them to indicate the likelyhood of the truthfulness
+ * of a condition. This serves two purposes - newer versions of gcc will be
+ * able to optimize for branch predication, which could yield siginficant
+ * performance gains in frequently executed sections of the code, and the
+ * other reason to use them is for documentation
+ */
+#if !defined(__GNUC__)
+#define __builtin_expect(x, expected_value) (x)
+#endif
+
+#define likely(x)  __builtin_expect((x),1)
+#define unlikely(x)  __builtin_expect((x),0)
+
+
+/*
+  Only Linux is known to need an explicit sync of the directory to make sure a
+  file creation/deletion/renaming in(from,to) this directory durable.
+*/
+#ifdef TARGET_OS_LINUX
+#define NEED_EXPLICIT_SYNC_DIR 1
+#endif
+
+/* We need to turn off _DTRACE_VERSION if we're not going to use dtrace */
+#if !defined(HAVE_DTRACE)
+# undef _DTRACE_VERSION
+# define _DTRACE_VERSION 0
+#endif
 
 #endif /* DRIZZLED_DEFINITIONS_H */

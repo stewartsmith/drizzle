@@ -21,6 +21,7 @@
 
 #include <drizzled/util/test.h>
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
@@ -35,7 +36,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 	      MI_CREATE_INFO *ci,uint32_t flags)
 {
   register uint32_t i, j;
-  File dfile= 0, file= 0;
+  int dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
   uint32_t fields,length,max_key_length,packed,pointer,real_length_diff,

@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/error.h>
 #include <drizzled/current_session.h>
+#include "mystrings/m_string.h"
 
 
 String *Item_decimal_typecast::val_str(String *str)

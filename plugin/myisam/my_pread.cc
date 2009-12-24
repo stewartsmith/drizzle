@@ -39,7 +39,7 @@
     #             Number of bytes read
 */
 
-size_t my_pread(File Filedes, unsigned char *Buffer, size_t Count, my_off_t offset,
+size_t my_pread(int Filedes, unsigned char *Buffer, size_t Count, my_off_t offset,
                 myf MyFlags)
 {
   size_t readbytes;

@@ -32,7 +32,7 @@
  * event to the supplier.  This is meant as a skeleton replicator only.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/registry.h>
 #include <drizzled/plugin.h>
 #include <drizzled/gettext.h>
@@ -107,6 +107,7 @@ static drizzle_sys_var* default_replicator_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "default_replicator",
   "0.1",
   "Jay Pipes",

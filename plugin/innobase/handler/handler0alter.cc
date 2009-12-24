@@ -21,7 +21,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 Smart ALTER TABLE
 *******************************************************/
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <mystrings/m_ctype.h>
 #include <drizzled/field.h>

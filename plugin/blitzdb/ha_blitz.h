@@ -20,15 +20,15 @@
 #ifndef STORAGE_BLITZ_HA_BLITZ_H
 #define STORAGE_BLITZ_HA_BLITZ_H
 
-#include <drizzled/server_includes.h>
-#include <drizzled/session.h>
-#include <drizzled/cursor.h>
-#include <drizzled/table.h>
-#include <drizzled/field.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/atomics.h>
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
+#include "config.h"
+#include "drizzled/session.h"
+#include "drizzled/cursor.h"
+#include "drizzled/table.h"
+#include "drizzled/field.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/atomics.h"
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
 #include <mysys/thr_lock.h>
 #include <tchdb.h>
 #include <tcbdb.h>

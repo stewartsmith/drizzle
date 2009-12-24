@@ -390,9 +390,7 @@ enum ha_base_keytype {
 
 	/* Other constants */
 
-#define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
-
-typedef ulong key_part_map;
+typedef unsigned long key_part_map;
 #define HA_WHOLE_KEY  (~(key_part_map)0)
 
 	/* Intern constants in databases */

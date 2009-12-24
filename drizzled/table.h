@@ -25,7 +25,6 @@
 
 #include <string>
 
-#include "plugin/myisam/myisam.h"
 #include "mysys/hash.h"
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
@@ -36,6 +35,7 @@
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
 #include "drizzled/atomics.h"
+#include "drizzled/query_id.h"
 
 class Item;
 class Item_subselect;
@@ -50,6 +50,7 @@ class Field_blob;
 extern uint64_t refresh_version;
 
 typedef enum enum_table_category TABLE_CATEGORY;
+typedef struct st_columndef MI_COLUMNDEF;
 
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
@@ -237,73 +238,7 @@ public:
   MEM_ROOT mem_root;
   filesort_info_st sort;
 
-  Table() : 
-    s(NULL), 
-    field(NULL),
-    cursor(NULL),
-    next(NULL),
-    prev(NULL),
-    read_set(NULL),
-    write_set(NULL),
-    tablenr(0),
-    db_stat(0),
-    in_use(NULL),
-    insert_values(NULL),
-    key_info(NULL),
-    next_number_field(NULL),
-    found_next_number_field(NULL),
-    timestamp_field(NULL),
-    pos_in_table_list(NULL),
-    group(NULL),
-    alias(NULL),
-    null_flags(NULL),
-    lock_position(0),
-    lock_data_start(0),
-    lock_count(0),
-    used_fields(0),
-    status(0),
-    derived_select_number(0),
-    current_lock(F_UNLCK),
-    copy_blobs(false),
-    maybe_null(false),
-    null_row(false),
-    force_index(false),
-    distinct(false),
-    const_table(false),
-    no_rows(false),
-    key_read(false),
-    no_keyread(false),
-    open_placeholder(false),
-    locked_by_name(false),
-    no_cache(false),
-    auto_increment_field_not_null(false),
-    alias_name_used(false),
-    query_id(0), 
-    quick_condition_rows(0),
-    timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-    map(0)
-  {
-    record[0]= (unsigned char *) 0;
-    record[1]= (unsigned char *) 0;
-
-    covering_keys.reset();
-
-    quick_keys.reset();
-    merge_keys.reset();
-
-    keys_in_use_for_query.reset();
-    keys_in_use_for_group_by.reset();
-    keys_in_use_for_order_by.reset();
-
-    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
-    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
-
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-    memset(&sort, 0, sizeof(filesort_info_st));
-  }
+  Table();
 
   int report_error(int error);
   /**
@@ -313,89 +248,7 @@ public:
    */
   int closefrm(bool free_share);
 
-  void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg)
-  {
-    s= share;
-    field= NULL;
-
-    cursor= NULL;
-    next= NULL;
-    prev= NULL;
-
-    read_set= NULL;
-    write_set= NULL;
-
-    tablenr= 0;
-    db_stat= db_stat_arg;
-
-    in_use= session;
-    record[0]= (unsigned char *) 0;
-    record[1]= (unsigned char *) 0;
-
-    insert_values= NULL;
-    key_info= NULL;
-    next_number_field= NULL;
-    found_next_number_field= NULL;
-    timestamp_field= NULL;
-
-    pos_in_table_list= NULL;
-    group= NULL;
-    alias= NULL;
-    null_flags= NULL;
-     
-    lock_position= 0;
-    lock_data_start= 0;
-    lock_count= 0;
-    used_fields= 0;
-    status= 0;
-    derived_select_number= 0;
-    current_lock= F_UNLCK;
-    copy_blobs= false;
-
-    maybe_null= false;
-
-    null_row= false;
-
-    force_index= false;
-    distinct= false;
-    const_table= false;
-    no_rows= false;
-    key_read= false;
-    no_keyread= false;
-
-    open_placeholder= false;
-    locked_by_name= false;
-    no_cache= false;
-
-    auto_increment_field_not_null= false;
-    alias_name_used= false;
-    
-    query_id= 0;
-    quick_condition_rows= 0;
-     
-    timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
-    map= 0;
-
-    reginfo.reset();
-
-    covering_keys.reset();
-
-    quick_keys.reset();
-    merge_keys.reset();
-
-    keys_in_use_for_query.reset();
-    keys_in_use_for_group_by.reset();
-    keys_in_use_for_order_by.reset();
-
-    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
-    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
-
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-    memset(&sort, 0, sizeof(filesort_info_st));
-  }
+  void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
   inline TableShare *getShare() { return s; } /* Get rid of this long term */
@@ -658,5 +511,48 @@ struct open_table_list_st
   { }
 
 };
+
+TableShare *alloc_table_share(TableList *table_list, char *key,
+                               uint32_t key_length);
+int open_table_def(Session& session, TableShare *share);
+void open_table_error(TableShare *share, int error, int db_errno, int errarg);
+int open_table_from_share(Session *session, TableShare *share, const char *alias,
+                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          Table *outparam);
+void free_blobs(Table *table);
+int set_zone(int nr,int min_zone,int max_zone);
+uint32_t convert_period_to_month(uint32_t period);
+uint32_t convert_month_to_period(uint32_t month);
+
+int test_if_number(char *str,int *res,bool allow_wildcards);
+void change_byte(unsigned char *,uint,char,char);
+
+namespace drizzled { namespace optimizer { class SqlSelect; } }
+
+ha_rows filesort(Session *session,
+                 Table *form,
+                 struct st_sort_field *sortorder,
+		             uint32_t s_length,
+                 drizzled::optimizer::SqlSelect *select,
+		             ha_rows max_rows,
+                 bool sort_positions,
+                 ha_rows *examined_rows);
+
+void filesort_free_buffers(Table *table, bool full);
+void change_double_for_sort(double nr,unsigned char *to);
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
+                       bool truncate);
+int get_quick_record(drizzled::optimizer::SqlSelect *select);
+
+void find_date(char *pos,uint32_t *vek,uint32_t flag);
+TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
+TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
+ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
+ulong next_io_size(ulong pos);
+void append_unescaped(String *res, const char *pos, uint32_t length);
+
+int rename_file_ext(const char * from,const char * to,const char * ext);
+bool check_column_name(const char *name);
+bool check_table_name(const char *name, uint32_t length);
 
 #endif /* DRIZZLED_TABLE_H */

@@ -13,18 +13,26 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/cursor.h> /* for refresh_version */
+#include "drizzled/pthread_globals.h"
+
+#include <sys/stat.h>
+#include <fcntl.h>
 
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
 extern int cleanup_done;
 extern "C" pthread_handler_t signal_hand(void *);
+extern bool volatile abort_loop;
+extern bool volatile shutdown_in_progress;
+extern char pidfile_name[FN_REFLEN];
 
+extern std::bitset<12> test_flags;
 
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
@@ -252,6 +260,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "signal_handler",
   "0.1",
   "Brian Aker",

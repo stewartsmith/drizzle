@@ -21,13 +21,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/hash/crc32.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <cerrno>
 #include <iostream>
 #include <string>
 #include <algorithm>

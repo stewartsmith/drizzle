@@ -31,7 +31,7 @@
  * src/usr.bin/cksum/crc32.c.
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 #include "drizzled/hash/crc32.h"
 
 namespace drizzled
