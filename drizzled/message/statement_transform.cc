@@ -43,7 +43,8 @@ using namespace drizzled;
 enum message::TransformSqlError
 message::transformStatementToSql(const message::Statement &source,
                                  vector<string> &sql_strings,
-                                 enum message::TransformSqlVariant sql_variant)
+                                 enum message::TransformSqlVariant sql_variant,
+                                 bool already_in_transaction)
 {
   message::TransformSqlError error= NONE;
 
@@ -67,7 +68,7 @@ message::transformStatementToSql(const message::Statement &source,
       size_t num_keys= insert_data.record_size();
       size_t x;
 
-      if (num_keys > 1)
+      if (num_keys > 1 && ! already_in_transaction)
         sql_strings.push_back("START TRANSACTION");
 
       for (x= 0; x < num_keys; ++x)
@@ -84,7 +85,7 @@ message::transformStatementToSql(const message::Statement &source,
         sql_strings.push_back(destination);
       }
 
-      if (num_keys > 1)
+      if (num_keys > 1 && ! already_in_transaction)
       {
         if (error == NONE)
           sql_strings.push_back("COMMIT");
@@ -111,7 +112,7 @@ message::transformStatementToSql(const message::Statement &source,
       size_t num_keys= update_data.record_size();
       size_t x;
 
-      if (num_keys > 1)
+      if (num_keys > 1 && ! already_in_transaction)
         sql_strings.push_back("START TRANSACTION");
 
       for (x= 0; x < num_keys; ++x)
@@ -128,7 +129,7 @@ message::transformStatementToSql(const message::Statement &source,
         sql_strings.push_back(destination);
       }
 
-      if (num_keys > 1)
+      if (num_keys > 1 && ! already_in_transaction)
       {
         if (error == NONE)
           sql_strings.push_back("COMMIT");
@@ -155,7 +156,7 @@ message::transformStatementToSql(const message::Statement &source,
       size_t num_keys= delete_data.record_size();
       size_t x;
 
-      if (num_keys > 1)
+      if (num_keys > 1 && ! already_in_transaction)
         sql_strings.push_back("START TRANSACTION");
 
       for (x= 0; x < num_keys; ++x)
@@ -172,7 +173,7 @@ message::transformStatementToSql(const message::Statement &source,
         sql_strings.push_back(destination);
       }
 
-      if (num_keys > 1)
+      if (num_keys > 1 && ! already_in_transaction)
       {
         if (error == NONE)
           sql_strings.push_back("COMMIT");

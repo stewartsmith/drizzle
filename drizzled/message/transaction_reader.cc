@@ -52,7 +52,10 @@ static void printStatement(const message::Statement &statement)
 {
   vector<string> sql_strings;
 
-  message::transformStatementToSql(statement, sql_strings, message::DRIZZLE);
+  message::transformStatementToSql(statement,
+                                   sql_strings,
+                                   message::DRIZZLE,
+                                   true /* already in transaction */);
 
   for (vector<string>::iterator sql_string_iter= sql_strings.begin();
        sql_string_iter != sql_strings.end();
@@ -97,11 +100,13 @@ static void printTransaction(const message::Transaction &transaction)
   size_t num_statements= transaction.statement_size();
   size_t x;
 
+  cout << "START TRANSACTION;" << endl;
   for (x= 0; x < num_statements; ++x)
   {
     const message::Statement &statement= transaction.statement(x);
     printStatement(statement);
   }
+  cout << "COMMIT;" << endl;
 }
 
 int main(int argc, char* argv[])
