@@ -3284,7 +3284,7 @@ bool Item_func_group_concat::setup(Session *session)
 
   if (arg_count_order)
   {
-    tree= new TREE;
+    tree= &tree_base;
     /*
       Create a tree for sorting. The tree is used to sort (according to the
       syntax of this function). If there is no order_st BY clause, we don't
@@ -3394,6 +3394,4 @@ Item_func_group_concat::~Item_func_group_concat()
 {
   if (!original && unique_filter)
     delete unique_filter;
-  if (tree)
-    delete tree;
 }
