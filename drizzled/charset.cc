@@ -145,6 +145,7 @@ void *cs_alloc(size_t size)
 }
 
 
+
 static bool init_available_charsets(myf myflags)
 {
   bool error= false;

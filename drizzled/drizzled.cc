@@ -1008,13 +1008,13 @@ static void init_signals(void)
   return;;
 }
 
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
+void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
   All global error messages are sent here where the first one is stored
   for the client.
 */
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
