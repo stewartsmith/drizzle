@@ -20,7 +20,7 @@
 #include "config.h"
 #include <drizzled/definitions.h>
 #include <drizzled/query_id.h>
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_pthread.h"
 
 Query_id::Query_id()
 {

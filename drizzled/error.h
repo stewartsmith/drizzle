@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ERROR_H
 #define DRIZZLED_ERROR_H
 
+#include "drizzled/my_error.h"
+
 #ifdef  __cplusplus
 extern "C" {
 #endif

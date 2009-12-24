@@ -18,11 +18,11 @@
  */
 
 #include "config.h"
-#include <mystrings/m_ctype.h>
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
 #include <errno.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #include <stdio.h>
 
 #define INIT_SYM_TABLE  4096

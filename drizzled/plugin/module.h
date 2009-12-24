@@ -20,8 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_MODULE_H
 #define DRIZZLED_PLUGIN_MODULE_H
 
-#include <drizzled/lex_string.h>
-#include <mysys/my_alloc.h>
+#include "drizzled/lex_string.h"
 #include "drizzled/plugin/manifest.h"
 
 class sys_var;

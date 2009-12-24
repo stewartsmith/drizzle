@@ -24,6 +24,7 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
 
 #include <math.h>
 

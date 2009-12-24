@@ -17,6 +17,7 @@
 
 #include "myisam_priv.h"
 #include <sys/stat.h>
+#include "drizzled/my_error.h"
 
 	/* Get position to last record */
 

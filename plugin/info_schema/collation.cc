@@ -27,6 +27,7 @@
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 
 
 #include "helper_methods.h"

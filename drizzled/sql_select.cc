@@ -52,6 +52,7 @@
 #include "drizzled/index_hint.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/iocache.h"
 
 #include "drizzled/sql_union.h"
 #include "drizzled/optimizer/key_field.h"

@@ -22,8 +22,8 @@
  *   */
 
 #include "config.h"
-#include <mysys/my_sys.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/my_error.h"
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>

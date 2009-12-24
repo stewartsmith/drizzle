@@ -15,8 +15,6 @@
 
 test_archive_LDADD = $(LIBINTL) $(LTLIBZ) \
 		$(top_builddir)/plugin/archive/libazio.la \
-		$(top_builddir)/mysys/libmysys.la \
-		$(top_builddir)/mystrings/libmystrings.la \
 		$(LDADD)
 
 noinst_LTLIBRARIES+=  plugin/archive/libazio.la
@@ -24,6 +22,7 @@ noinst_HEADERS+= \
       plugin/archive/azio.h
 plugin_archive_libazio_la_SOURCES= \
       plugin/archive/azio.cc
+plugin_archive_libazio_la_LIBADD= drizzled/internal/libinternal.la
 
 
 if BUILD_ARCHIVE_PLUGIN

@@ -21,6 +21,8 @@
 #include <drizzled/error.h>
 #include <drizzled/current_session.h>
 #include <drizzled/db.h>
+#include "drizzled/charset.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <stdio.h>
 #include <iostream>

@@ -79,9 +79,7 @@ public:
   }
 
   static void operator delete(void *, size_t)
-  { 
-    TRASH(ptr, size); 
-  }
+  { }
 
   static void operator delete(void *, MEM_ROOT *)
     { /* Never called */ }

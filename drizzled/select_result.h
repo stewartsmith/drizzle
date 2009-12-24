@@ -59,10 +59,7 @@ public:
    ** Functions to provide a interface to select results
    *****************************************************************************/
 
-  virtual void send_error(uint32_t errcode, const char *err)
-  {
-    my_message(errcode, err, MYF(0));
-  }
+  virtual void send_error(uint32_t errcode, const char *err);
 
   /*
     Cleanup instance of this class for next execution of a prepared

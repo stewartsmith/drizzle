@@ -25,7 +25,6 @@
 
 #include <string>
 
-#include "mysys/hash.h"
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"

@@ -27,7 +27,7 @@
 
 #include <fcntl.h>
 
-#include "mysys/hash.h"
+#include "drizzled/my_hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/probes.h"
@@ -43,6 +43,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/internal/my_sys.h"
 
 using namespace std;
 using namespace drizzled;
@@ -50,6 +51,18 @@ using namespace drizzled;
 /****************************************************************************
 ** General Cursor functions
 ****************************************************************************/
+Cursor::Cursor(drizzled::plugin::StorageEngine &engine_arg,
+               TableShare &share_arg)
+  : table_share(&share_arg), table(0),
+    estimation_rows_to_insert(0), engine(&engine_arg),
+    ref(0), in_range_check_pushed_down(false),
+    key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
+    ref_length(sizeof(my_off_t)),
+    inited(NONE),
+    locked(false), implicit_emptied(0),
+    next_insert_id(0), insert_id_for_cur_row(0)
+{ }
+
 Cursor::~Cursor(void)
 {
   assert(locked == false);
@@ -199,7 +212,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   }
   if (error)
   {
-    my_errno= error;                            /* Safeguard */
+    errno= error;                            /* Safeguard */
   }
   else
   {

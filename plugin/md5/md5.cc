@@ -15,9 +15,10 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "config.h"
-#include <drizzled/plugin/function.h>
-#include <drizzled/item/func.h>
-#include <drizzled/function/str/strfunc.h>
+
+/* Include these before the openssl headers, because they are BROKEN AS CRAP */
+#include <cstdio>
+#include <cstddef>
 
 #if defined(HAVE_LIBGNUTLS_OPENSSL)
 # include <gnutls/openssl.h>
@@ -25,7 +26,10 @@
 # include <openssl/md5.h>
 #endif /* HAVE_GNUTLS_OPENSSL */
 
-#include <stdio.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/item/func.h>
+#include "drizzled/charset.h"
+#include <drizzled/function/str/strfunc.h>
 
 using namespace std;
 using namespace drizzled;

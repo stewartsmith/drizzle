@@ -24,6 +24,9 @@
     methods (sql_select.h/sql_select.cc)
 */
 #include "config.h"
+
+#include <limits.h>
+
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cache.h>

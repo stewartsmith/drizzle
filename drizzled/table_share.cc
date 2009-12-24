@@ -26,12 +26,16 @@
 /* Basic functions needed by many modules */
 #include "config.h"
 
-#include <assert.h>
+#include <pthread.h>
+
+#include <cassert>
 
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/hash.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_pthread.h"
 
 using namespace std;
 

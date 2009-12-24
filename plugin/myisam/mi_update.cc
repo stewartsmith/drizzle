@@ -31,25 +31,25 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
 
   if (!(info->update & HA_STATE_AKTIV))
   {
-    return(my_errno=HA_ERR_KEY_NOT_FOUND);
+    return(errno=HA_ERR_KEY_NOT_FOUND);
   }
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    return(my_errno=EACCES);
+    return(errno=EACCES);
   }
   if (info->state->key_file_length >= share->base.margin_key_file_length)
   {
-    return(my_errno=HA_ERR_INDEX_FILE_FULL);
+    return(errno=HA_ERR_INDEX_FILE_FULL);
   }
   pos=info->lastpos;
   if (_mi_readinfo(info,F_WRLCK,1))
-    return(my_errno);
+    return(errno);
 
   if (share->calc_checksum)
     old_checksum=info->checksum=(*share->calc_checksum)(info,oldrec);
   if ((*share->compare_record)(info,oldrec))
   {
-    save_errno=my_errno;
+    save_errno=errno;
     goto err_end;			/* Record has changed */
   }
 
@@ -63,13 +63,13 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
 	mi_check_unique(info, def, newrec, mi_unique_hash(def, newrec),
 			info->lastpos))
     {
-      save_errno=my_errno;
+      save_errno=errno;
       goto err_end;
     }
   }
   if (_mi_mark_file_changed(info))
   {
-    save_errno=my_errno;
+    save_errno=errno;
     goto err_end;
   }
 
@@ -158,11 +158,11 @@ int mi_update(register MI_INFO *info, const unsigned char *oldrec, unsigned char
   return(0);
 
 err:
-  save_errno=my_errno;
+  save_errno=errno;
   if (changed)
     key_changed|= HA_STATE_CHANGED;
-  if (my_errno == HA_ERR_FOUND_DUPP_KEY || my_errno == HA_ERR_OUT_OF_MEM ||
-      my_errno == HA_ERR_RECORD_FILE_FULL)
+  if (errno == HA_ERR_FOUND_DUPP_KEY || errno == HA_ERR_OUT_OF_MEM ||
+      errno == HA_ERR_RECORD_FILE_FULL)
   {
     info->errkey= (int) i;
     flag=0;
@@ -195,5 +195,5 @@ err:
     mi_print_error(info->s, HA_ERR_CRASHED);
     save_errno=HA_ERR_CRASHED;
   }
-  return(my_errno=save_errno);
+  return(errno=save_errno);
 } /* mi_update */

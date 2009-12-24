@@ -64,16 +64,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
-#include "mystrings/m_ctype.h"
-#include "mystrings/m_string.h"
-#include "mysys/my_sys.h"
-#include "mysys/hash.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/my_error.h"
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/data_home.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"
+#include "drizzled/charset.h"
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
 #include "drizzled/table.h"
@@ -1183,10 +1184,10 @@ innobase_mysql_tmpfile(void)
 		my_close(). */
 		fd2 = dup(fd);
 		if (fd2 < 0) {
-			my_errno=errno;
+			errno=errno;
 			my_error(EE_OUT_OF_FILERESOURCES,
 				 MYF(ME_BELL+ME_WAITTANG),
-				 "ib*", my_errno);
+				 "ib*", errno);
 		}
 		my_close(fd, MYF(MY_WME));
 	}
@@ -2773,7 +2774,7 @@ retry:
 				norm_name);
 		free_share(share);
 		free(upd_buff);
-		my_errno = ENOENT;
+		errno = ENOENT;
 
 		return(HA_ERR_NO_SUCH_TABLE);
 	}
@@ -2789,7 +2790,7 @@ retry:
 				norm_name);
 		free_share(share);
 		free(upd_buff);
-		my_errno = ENOENT;
+		errno = ENOENT;
 
 		dict_table_decrement_handle_count(ib_table, FALSE);
 		return(HA_ERR_NO_SUCH_TABLE);
@@ -5922,7 +5923,7 @@ ha_innobase::delete_all_rows(void)
 		/* We only handle TRUNCATE TABLE t as a special case.
 		DELETE FROM t will have to use ha_innobase::delete_row(),
 		because DELETE is transactional while TRUNCATE is not. */
-		return(my_errno=HA_ERR_WRONG_COMMAND);
+		return(errno=HA_ERR_WRONG_COMMAND);
 	}
 
 	/* Truncate the table in InnoDB */

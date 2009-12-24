@@ -21,11 +21,12 @@
 #include <drizzled/dtcollation.h>
 
 #include <drizzled/definitions.h>
-#include <mysys/my_sys.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/charset_info.h"
 #include <drizzled/error.h>
 #include <drizzled/function/str/conv_charset.h>
 #include <drizzled/session.h>
+#include "drizzled/charset.h"
 
 
 DTCollation::DTCollation()

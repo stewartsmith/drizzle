@@ -14,10 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "config.h"
+#include <time.h>
 #include "drizzled/current_session.h"
-#include "time.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"
+#include "drizzled/internal/my_sys.h"
 
 /**
   report result of decimal operation.

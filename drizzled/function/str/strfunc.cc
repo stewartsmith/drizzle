@@ -33,7 +33,7 @@
 #include <drizzled/function/str/strfunc.h>
 
 // For soundex_map
-#include <mysys/my_static.h>
+#include "drizzled/internal/my_static.h"
 
 using namespace std;
 

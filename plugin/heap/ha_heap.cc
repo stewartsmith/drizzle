@@ -90,7 +90,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
@@ -198,7 +198,7 @@ ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
 
 int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
 {
-  if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(name, mode)) && my_errno == ENOENT))
+  if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(name, mode)) && errno == ENOENT))
   {
     HA_CREATE_INFO create_info;
     internal_table= test(test_if_locked & HA_OPEN_INTERNAL_TABLE);
@@ -742,7 +742,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     return -1;
 
   if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))
-    return my_errno;
+    return errno;
 
   for (column_idx= 0; column_idx < column_count; column_idx++)
   {
@@ -780,7 +780,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 				    parts * sizeof(HA_KEYSEG))))
   {
     free((void *) columndef);
-    return my_errno;
+    return errno;
   }
 
   seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
