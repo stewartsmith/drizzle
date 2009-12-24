@@ -57,6 +57,7 @@ MAINTAINERCLEANFILES=	autom4te.cache
 CLIENT_LDADD=\
 		drizzled/internal/libinternal.la \
 		$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
+		gnulib/libgnu.la \
 		client/libgetpassword.la
 
 noinst_LTLIBRARIES+= \
@@ -110,7 +111,8 @@ include config/pandora-plugin.am
 
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= \
-		drizzled/internal/libinternal.la
+		drizzled/internal/libinternal.la \
+		gnulib/libgnu.la \
 		$(LIBINTL)
 
 EXTRA_DIST+=	${man_MANS}
