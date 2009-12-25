@@ -22,10 +22,10 @@
 #define DRIZZLED_CURRENT_SESSION_H
 
 class Session;
-typedef struct st_mem_root MEM_ROOT;
 
-Session *_current_session(void);
-#define current_session _current_session()
-MEM_ROOT *current_mem_root(void);
+namespace drizzled { namespace memory { class Root; } }
+
+Session *current_session(void);
+drizzled::memory::Root *current_mem_root(void);
 
 #endif /* DRIZZLED_CURRENT_SESSION_H */

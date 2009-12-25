@@ -27,6 +27,7 @@
 
 #include <string>
 
+using namespace drizzled;
 using namespace std;
 
 /****************************************************************************
@@ -453,7 +454,7 @@ int Field_varstring::cmp_binary(const unsigned char *a_ptr,
 }
 
 
-Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
+Field *Field_varstring::new_field(memory::Root *root, Table *new_table, bool keep_type)
 {
   Field_varstring *res= (Field_varstring*) Field::new_field(root, new_table,
                                                             keep_type);
@@ -463,7 +464,7 @@ Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_ty
 }
 
 
-Field *Field_varstring::new_key_field(MEM_ROOT *root,
+Field *Field_varstring::new_key_field(memory::Root *root,
                                       Table *new_table,
                                       unsigned char *new_ptr, unsigned char *new_null_ptr,
                                       uint32_t new_null_bit)

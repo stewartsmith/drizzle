@@ -67,7 +67,7 @@ typedef struct st_time_zone_info
   uint32_t typecnt;  // Number of local time types
   uint32_t charcnt;  // Number of characters used for abbreviations
   uint32_t revcnt;   // Number of transition descr. for TIME->time_t conversion
-  /* The following are dynamical arrays are allocated in MEM_ROOT */
+  /* The following are dynamical arrays are allocated in memory::Root */
   time_t *ats;       // Times of transitions between time types
   unsigned char	*types; // Local time types for transitions
   TRAN_TYPE_INFO *ttis; // Local time types descriptions

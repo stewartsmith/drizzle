@@ -110,7 +110,7 @@ static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length)
 {
-  MEM_ROOT mem_root;
+  memory::Root mem_root;
   TableShare *share;
   char *key_buff, *path_buff;
   char path[FN_REFLEN];
@@ -1754,7 +1754,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
@@ -2351,7 +2351,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  MEM_ROOT *mem_root_save, own_root;
+  memory::Root *mem_root_save, own_root;
   Table *table;
   TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
@@ -3290,7 +3290,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
 void Table::free_tmp_table(Session *session)
 {
-  MEM_ROOT own_root= mem_root;
+  memory::Root own_root= mem_root;
   const char *save_proc_info;
 
   save_proc_info=session->get_proc_info();

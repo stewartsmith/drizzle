@@ -855,7 +855,7 @@ err:
   return(error != 0);
 }
 
-Cursor *plugin::StorageEngine::getCursor(TableShare &share, MEM_ROOT *alloc)
+Cursor *plugin::StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
 {
   assert(enabled);
   return create(share, alloc);

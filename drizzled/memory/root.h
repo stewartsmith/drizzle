@@ -49,21 +49,19 @@ public:
 
 static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::UsedMemory) + 8);
 
-}
-}
 
 
-
-typedef struct st_mem_root
+class Root
 {
+public:
   /* blocks with free memory in it */
-  drizzled::memory::internal::UsedMemory *free;
+  internal::UsedMemory *free;
 
   /* blocks almost without free memory */
-  drizzled::memory::internal::UsedMemory *used;
+  internal::UsedMemory *used;
 
   /* preallocated block */
-  drizzled::memory::internal::UsedMemory *pre_alloc;
+  internal::UsedMemory *pre_alloc;
 
   /* if block have less memory it will be put in 'used' list */
   size_t min_malloc;
@@ -76,24 +74,27 @@ typedef struct st_mem_root
   unsigned int first_block_usage;
 
   void (*error_handler)(void);
-} MEM_ROOT;
+};
 
-inline static bool alloc_root_inited(MEM_ROOT *root)
+inline static bool alloc_root_inited(Root *root)
 {
   return root->min_malloc != 0;
 }
 
-void init_alloc_root(MEM_ROOT *mem_root,
-                     size_t block_size= drizzled::memory::ROOT_MIN_BLOCK_SIZE);
-void *alloc_root(MEM_ROOT *mem_root, size_t Size);
-void *multi_alloc_root(MEM_ROOT *mem_root, ...);
-void free_root(MEM_ROOT *root, myf MyFLAGS);
-void set_prealloc_root(MEM_ROOT *root, char *ptr);
-void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
+void init_alloc_root(Root *mem_root,
+                     size_t block_size= ROOT_MIN_BLOCK_SIZE);
+void *alloc_root(Root *mem_root, size_t Size);
+void *multi_alloc_root(Root *mem_root, ...);
+void free_root(Root *root, myf MyFLAGS);
+void set_prealloc_root(Root *root, char *ptr);
+void reset_root_defaults(Root *mem_root, size_t block_size,
                          size_t prealloc_size);
-char *strdup_root(MEM_ROOT *root,const char *str);
-char *strmake_root(MEM_ROOT *root,const char *str,size_t len);
-void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
+char *strdup_root(Root *root,const char *str);
+char *strmake_root(Root *root,const char *str,size_t len);
+void *memdup_root(Root *root,const void *str, size_t len);
+
+}
+}
 
 #if defined(__cplusplus)
 }

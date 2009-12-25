@@ -26,8 +26,6 @@
 extern "C" {
 #endif
 
-typedef struct st_mem_root MEM_ROOT;
-
 /* Worst case tree is half full. This gives use 2^(MAX_TREE_HEIGHT/2) leafs */
 static const int MAX_TREE_HEIGHT= 64;
 
@@ -56,7 +54,7 @@ typedef struct st_tree {
   size_t allocated;
   qsort_cmp2 compare;
   void *custom_arg;
-  MEM_ROOT mem_root;
+  drizzled::memory::Root mem_root;
   bool with_delete;
   tree_element_free free;
   uint32_t flag;

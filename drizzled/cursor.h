@@ -238,7 +238,7 @@ public:
 
   Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg);
   virtual ~Cursor(void);
-  virtual Cursor *clone(MEM_ROOT *mem_root);
+  virtual Cursor *clone(drizzled::memory::Root *mem_root);
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 

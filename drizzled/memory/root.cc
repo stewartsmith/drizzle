@@ -21,7 +21,9 @@
 #include <algorithm>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 static const unsigned int MAX_BLOCK_TO_DROP= 4096;
 static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
@@ -30,7 +32,7 @@ static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
   Initialize memory root
 
   SYNOPSIS
-    init_alloc_root()
+    memory::init_alloc_root()
       mem_root       - memory root to initialize
       block_size     - size of chunks (blocks) used for memory allocation
                        (It is external size of chunk i.e. it should include
@@ -45,7 +47,7 @@ static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
     reported as error in first alloc_root() on this memory root.
 */
 
-void init_alloc_root(MEM_ROOT *mem_root, size_t block_size)
+void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
 {
   mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
   mem_root->min_malloc= 32;
@@ -75,8 +77,8 @@ void init_alloc_root(MEM_ROOT *mem_root, size_t block_size)
     before allocation.
 */
 
-void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
-                         size_t pre_alloc_size)
+void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
+                                 size_t pre_alloc_size)
 {
   assert(alloc_root_inited(mem_root));
 
@@ -130,7 +132,7 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
 }
 
 
-void *alloc_root(MEM_ROOT *mem_root, size_t length)
+void *memory::alloc_root(memory::Root *mem_root, size_t length)
 {
   size_t get_size, block_size;
   unsigned char* point;
@@ -205,7 +207,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     in case of success or NULL if out of memory.
 */
 
-void *multi_alloc_root(MEM_ROOT *root, ...)
+void *memory::multi_alloc_root(memory::Root *root, ...)
 {
   va_list args;
   char **ptr, *start, *res;
@@ -220,7 +222,7 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
   }
   va_end(args);
 
-  if (!(start= (char*) alloc_root(root, tot_length)))
+  if (!(start= (char*) memory::alloc_root(root, tot_length)))
     return(0);
 
   va_start(args, root);
@@ -239,7 +241,7 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
 
 /* Mark all data in blocks free for reusage */
 
-static inline void mark_blocks_free(MEM_ROOT* root)
+static inline void mark_blocks_free(memory::Root* root)
 {
   memory::internal::UsedMemory *next;
   memory::internal::UsedMemory **last;
@@ -269,7 +271,7 @@ static inline void mark_blocks_free(MEM_ROOT* root)
 
 
 /*
-  Deallocate everything used by alloc_root or just move
+  Deallocate everything used by memory::alloc_root or just move
   used blocks to free list if called with MY_USED_TO_FREE
 
   SYNOPSIS
@@ -287,7 +289,7 @@ static inline void mark_blocks_free(MEM_ROOT* root)
     It's also safe to call this multiple times with the same mem_root.
 */
 
-void free_root(MEM_ROOT *root, myf MyFlags)
+void memory::free_root(memory::Root *root, myf MyFlags)
 {
   memory::internal::UsedMemory *next,*old;
 
@@ -328,7 +330,7 @@ void free_root(MEM_ROOT *root, myf MyFlags)
   Find block that contains an object and set the pre_alloc to it
 */
 
-void set_prealloc_root(MEM_ROOT *root, char *ptr)
+void memory::set_prealloc_root(memory::Root *root, char *ptr)
 {
   memory::internal::UsedMemory *next;
   for (next=root->used; next ; next=next->next)
@@ -350,16 +352,16 @@ void set_prealloc_root(MEM_ROOT *root, char *ptr)
 }
 
 
-char *strdup_root(MEM_ROOT *root, const char *str)
+char *memory::strdup_root(memory::Root *root, const char *str)
 {
   return strmake_root(root, str, strlen(str));
 }
 
 
-char *strmake_root(MEM_ROOT *root, const char *str, size_t len)
+char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
 {
   char *pos;
-  if ((pos=(char *)alloc_root(root,len+1)))
+  if ((pos=(char *)memory::alloc_root(root,len+1)))
   {
     memcpy(pos,str,len);
     pos[len]=0;
@@ -368,10 +370,12 @@ char *strmake_root(MEM_ROOT *root, const char *str, size_t len)
 }
 
 
-void *memdup_root(MEM_ROOT *root, const void *str, size_t len)
+void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
 {
   void *pos;
-  if ((pos=alloc_root(root,len)))
+  if ((pos=memory::alloc_root(root,len)))
     memcpy(pos,str,len);
   return pos;
 }
+
+} /* namespace drizzled */

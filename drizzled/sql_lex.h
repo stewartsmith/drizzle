@@ -248,11 +248,11 @@ public:
   {
     return sql_alloc(size);
   }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
   {  }
-  static void operator delete(void *, MEM_ROOT *)
+  static void operator delete(void *, drizzled::memory::Root *)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}

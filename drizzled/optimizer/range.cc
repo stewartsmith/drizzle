@@ -923,7 +923,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
   keys_to_use&= head->keys_in_use_for_query;
   if (keys_to_use.any())
   {
-    MEM_ROOT alloc;
+    memory::Root alloc;
     SEL_TREE *tree= NULL;
     KEY_PART *key_parts;
     KEY *key_info;
@@ -2358,7 +2358,7 @@ static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
+optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickIndexMergeSelect *quick_imerge;
   optimizer::QuickRangeSelect *quick= NULL;
@@ -2388,11 +2388,11 @@ optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimize
 
 optimizer::QuickSelectInterface *optimizer::TRP_ROR_INTERSECT::make_quick(optimizer::Parameter *param,
                                                                           bool retrieve_full_rows,
-                                                                          MEM_ROOT *parent_alloc)
+                                                                          memory::Root *parent_alloc)
 {
   optimizer::QuickRorIntersectSelect *quick_intersect= NULL;
   optimizer::QuickRangeSelect *quick= NULL;
-  MEM_ROOT *alloc= NULL;
+  memory::Root *alloc= NULL;
 
   if ((quick_intersect=
          new optimizer::QuickRorIntersectSelect(param->session,
@@ -2441,7 +2441,7 @@ optimizer::QuickSelectInterface *optimizer::TRP_ROR_INTERSECT::make_quick(optimi
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *)
+optimizer::QuickSelectInterface *optimizer::TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickRorUnionSelect *quick_roru= NULL;
   optimizer::TABLE_READ_PLAN **scan= NULL;
@@ -2626,7 +2626,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
           * Otherwise, don't produce a SEL_TREE.
         */
 #define NOT_IN_IGNORE_THRESHOLD 1000
-        MEM_ROOT *tmp_root= param->mem_root;
+        memory::Root *tmp_root= param->mem_root;
         param->session->mem_root= param->old_root;
         /*
           Create one Item_type constant object. We'll need it as
@@ -2937,7 +2937,7 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
       all the memory allocated has the same life span as the subselect
       item itself. So we have to restore the thread's mem_root here.
     */
-    MEM_ROOT *tmp_root= param->mem_root;
+    memory::Root *tmp_root= param->mem_root;
     param->session->mem_root= param->old_root;
     tree= cond->val_int() ? new(tmp_root) SEL_TREE(SEL_TREE::ALWAYS) :
                             new(tmp_root) SEL_TREE(SEL_TREE::IMPOSSIBLE);
@@ -3115,7 +3115,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
   uint32_t maybe_null=(uint32_t) field->real_maybe_null();
   bool optimize_range;
   optimizer::SEL_ARG *tree= NULL;
-  MEM_ROOT *alloc= param->mem_root;
+  memory::Root *alloc= param->mem_root;
   unsigned char *str;
   int err= 0;
 
@@ -4772,7 +4772,7 @@ optimizer::get_quick_select(Parameter *param,
                             optimizer::SEL_ARG *key_tree,
                             uint32_t mrr_flags,
                             uint32_t mrr_buf_size,
-                            MEM_ROOT *parent_alloc)
+                            memory::Root *parent_alloc)
 {
   optimizer::QuickRangeSelect *quick= NULL;
   bool create_err= false;
@@ -5033,7 +5033,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
                                                                  table_reference_st *ref,
                                                                  ha_rows records)
 {
-  MEM_ROOT *old_root, *alloc;
+  memory::Root *old_root, *alloc;
   optimizer::QuickRangeSelect *quick= NULL;
   KEY *key_info = &table->key_info[ref->key];
   KEY_PART *key_part;
@@ -6258,7 +6258,7 @@ void cost_group_min_max(Table* table,
     NULL otherwise.
 */
 optimizer::QuickSelectInterface *
-optimizer::TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
+optimizer::TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
   optimizer::QuickGroupMinMaxSelect *quick= NULL;
 
@@ -6346,7 +6346,7 @@ optimizer::TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, MEM_
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_RANGE::make_quick(optimizer::Parameter *param, bool, MEM_ROOT *parent_alloc)
+optimizer::QuickSelectInterface *optimizer::TRP_RANGE::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
   optimizer::QuickRangeSelect *quick= NULL;
   if ((quick= optimizer::get_quick_select(param,

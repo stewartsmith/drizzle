@@ -28,6 +28,8 @@
 
 #include "drizzled/internal/my_sys.h"
 
+using namespace drizzled;
+
 extern "C" void sql_alloc_error_handler(void);
 
 extern "C" void sql_alloc_error_handler(void)
@@ -35,7 +37,7 @@ extern "C" void sql_alloc_error_handler(void)
   errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
 }
 
-void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t)
+void init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 {
   init_alloc_root(mem_root, block_size);
   mem_root->error_handler= sql_alloc_error_handler;
@@ -44,7 +46,7 @@ void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t)
 
 void *sql_alloc(size_t Size)
 {
-  MEM_ROOT *root= current_mem_root();
+  memory::Root *root= current_mem_root();
   return alloc_root(root,Size);
 }
 
@@ -98,12 +100,12 @@ void *Sql_alloc::operator new[](size_t size)
   return sql_alloc(size);
 }
 
-void *Sql_alloc::operator new[](size_t size, MEM_ROOT *mem_root)
+void *Sql_alloc::operator new[](size_t size, memory::Root *mem_root)
 {
   return alloc_root(mem_root, size);
 }
 
-void *Sql_alloc::operator new(size_t size, MEM_ROOT *mem_root)
+void *Sql_alloc::operator new(size_t size, memory::Root *mem_root)
 {
   return alloc_root(mem_root, size);
 }

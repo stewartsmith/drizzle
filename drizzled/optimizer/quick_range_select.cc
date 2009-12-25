@@ -34,7 +34,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               Table *table,
                                               uint32_t key_nr,
                                               bool no_alloc,
-                                              MEM_ROOT *parent_alloc,
+                                              memory::Root *parent_alloc,
                                               bool *create_error)
   :
     cursor(NULL),

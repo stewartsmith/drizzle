@@ -25,6 +25,7 @@
 
 #include "drizzled/sql_string.h"
 
+using namespace drizzled;
 using namespace std;
 
 /*****************************************************************************
@@ -81,7 +82,7 @@ String::String(const String &str)
     str_charset(str.str_charset)
 { }
 
-void *String::operator new(size_t size, MEM_ROOT *mem_root)
+void *String::operator new(size_t size, memory::Root *mem_root)
 {
   return alloc_root(mem_root, static_cast<uint32_t>(size));
 }

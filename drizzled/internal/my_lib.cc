@@ -22,6 +22,8 @@
 #include "drizzled/my_error.h"
 #include "drizzled/internal/my_dir.h"	/* Structs used by my_dir,includes sys/types */
 
+using namespace drizzled;
+
 #if defined(HAVE_READDIR_R)
 #define READDIR(A,B,C) ((errno=readdir_r(A,B,&C)) != 0 || !C)
 #else 
@@ -49,7 +51,7 @@ void my_dirend(MY_DIR *buffer)
   {
     delete_dynamic((DYNAMIC_ARRAY*)((char*)buffer +
                                     ALIGN_SIZE(sizeof(MY_DIR))));
-    free_root((MEM_ROOT*)((char*)buffer + ALIGN_SIZE(sizeof(MY_DIR)) +
+    free_root((memory::Root*)((char*)buffer + ALIGN_SIZE(sizeof(MY_DIR)) +
                           ALIGN_SIZE(sizeof(DYNAMIC_ARRAY))), MYF(0));
     free((unsigned char*) buffer);
   }
@@ -71,7 +73,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   MY_DIR        *result= 0;
   FILEINFO      finfo;
   DYNAMIC_ARRAY *dir_entries_storage;
-  MEM_ROOT      *names_storage;
+  memory::Root      *names_storage;
   DIR		*dirp;
   struct dirent *dp;
   char		tmp_path[FN_REFLEN+1],*tmp_file;
@@ -81,11 +83,11 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   if (dirp == NULL ||
       ! (buffer= (char *) malloc(ALIGN_SIZE(sizeof(MY_DIR)) + 
                                  ALIGN_SIZE(sizeof(DYNAMIC_ARRAY)) +
-                                 sizeof(MEM_ROOT))))
+                                 sizeof(memory::Root))))
     goto error;
 
   dir_entries_storage= (DYNAMIC_ARRAY*)(buffer + ALIGN_SIZE(sizeof(MY_DIR)));
-  names_storage= (MEM_ROOT*)(buffer + ALIGN_SIZE(sizeof(MY_DIR)) +
+  names_storage= (memory::Root*)(buffer + ALIGN_SIZE(sizeof(MY_DIR)) +
                              ALIGN_SIZE(sizeof(DYNAMIC_ARRAY)));
 
   if (my_init_dynamic_array(dir_entries_storage, sizeof(FILEINFO),

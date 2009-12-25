@@ -25,7 +25,7 @@
 
 class Session;
 
-void init_sql_alloc(MEM_ROOT *root, size_t block_size, size_t pre_alloc_size);
+void init_sql_alloc(drizzled::memory::Root *root, size_t block_size, size_t pre_alloc_size);
 void *sql_alloc(size_t);
 void *sql_calloc(size_t);
 char *sql_strdup(const char *str);
@@ -41,13 +41,13 @@ class Sql_alloc
 public:
   static void *operator new(size_t size);
   static void *operator new[](size_t size);
-  static void *operator new[](size_t size, MEM_ROOT *mem_root);
-  static void *operator new(size_t size, MEM_ROOT *mem_root);
+  static void *operator new[](size_t size, drizzled::memory::Root *mem_root);
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
   static void operator delete(void *, size_t)
   {  }
-  static void operator delete(void *, MEM_ROOT *)
+  static void operator delete(void *, drizzled::memory::Root *)
   {  }
-  static void operator delete[](void *, MEM_ROOT *)
+  static void operator delete[](void *, drizzled::memory::Root *)
   {  }
   static void operator delete[](void *, size_t)
   {  }

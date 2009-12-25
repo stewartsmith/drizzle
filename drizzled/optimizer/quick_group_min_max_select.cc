@@ -47,7 +47,7 @@ QuickGroupMinMaxSelect(Table *table,
                        ha_rows records_arg,
                        uint32_t key_infix_len_arg,
                        unsigned char *key_infix_arg,
-                       MEM_ROOT *parent_alloc)
+                       memory::Root *parent_alloc)
   :
     join(join_arg),
     index_info(index_info_arg),
@@ -86,7 +86,7 @@ QuickGroupMinMaxSelect(Table *table,
     join->session->mem_root= &alloc;
   }
   else
-    memset(&alloc, 0, sizeof(MEM_ROOT));  // ensure that it's not used
+    memset(&alloc, 0, sizeof(memory::Root));  // ensure that it's not used
 }
 
 

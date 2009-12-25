@@ -32,7 +32,7 @@
 
 class Item;
 class MyBitmap;
-typedef struct st_mem_root MEM_ROOT;
+namespace drizzled { namespace memory { class Root; } }
 
 class Key :public Sql_alloc {
 public:

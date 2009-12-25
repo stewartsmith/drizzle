@@ -69,7 +69,7 @@ public:
 
   /**
     We need this only for surpressing warnings, objects of this type are
-    allocated on MEM_ROOT and should not require destruction.
+    allocated on drizzled::memory::Root and should not require destruction.
   */
   virtual ~Time_zone() {};
 };

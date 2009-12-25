@@ -70,7 +70,7 @@ Cursor::~Cursor(void)
 }
 
 
-Cursor *Cursor::clone(MEM_ROOT *mem_root)
+Cursor *Cursor::clone(memory::Root *mem_root)
 {
   Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
 

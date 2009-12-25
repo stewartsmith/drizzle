@@ -124,7 +124,7 @@ public:
     tina_open_tables()
   {}
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_tina(*this, table);
   }

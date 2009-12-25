@@ -169,7 +169,7 @@ public:
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
-  MEM_ROOT mem_root;
+  drizzled::memory::Root mem_root;
   TYPELIB keynames;			/* Pointers to keynames */
   TYPELIB fieldnames;			/* Pointer to fieldnames */
   TYPELIB *intervals;			/* pointer to interval info */
@@ -434,7 +434,7 @@ public:
 
   void free_table_share()
   {
-    MEM_ROOT new_mem_root;
+    drizzled::memory::Root new_mem_root;
     assert(ref_count == 0);
 
     /*

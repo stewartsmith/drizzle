@@ -95,7 +95,7 @@ public:
     The following two members are public to allow easy access from
     TRP_GROUP_MIN_MAX::make_quick()
   */
-  MEM_ROOT alloc; /**< Memory pool for this and quick_prefix_select data. */
+  drizzled::memory::Root alloc; /**< Memory pool for this and quick_prefix_select data. */
   QuickRangeSelect *quick_prefix_select; /**< For retrieval of group prefixes. */
 
 private:
@@ -292,7 +292,7 @@ public:
                          ha_rows records,
                          uint key_infix_len, 
                          unsigned char *key_infix,
-                         MEM_ROOT *parent_alloc);
+                         drizzled::memory::Root *parent_alloc);
 
   ~QuickGroupMinMaxSelect();
 

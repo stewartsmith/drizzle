@@ -138,7 +138,7 @@ public:
   bool is_created_from_null_item;
 
   static void *operator new(size_t size);
-  static void *operator new(size_t size, MEM_ROOT *mem_root);
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
   static void operator delete(void *, size_t)
   { }
 
@@ -365,15 +365,15 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root,
+  virtual Field *new_field(drizzled::memory::Root *root,
                            Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
+  virtual Field *new_key_field(drizzled::memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(MEM_ROOT *mem_root, Table *new_table);
+  Field *clone(drizzled::memory::Root *mem_root, Table *new_table);
   inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
@@ -798,7 +798,7 @@ public:
 };
 
 Field *make_field(TableShare *share,
-                  MEM_ROOT *root,
+                  drizzled::memory::Root *root,
                   unsigned char *ptr,
                   uint32_t field_length,
                   bool is_nullable,

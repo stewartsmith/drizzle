@@ -25,7 +25,7 @@
 #include "drizzled/lex_string.h"
 
 class Item;
-typedef struct st_mem_root MEM_ROOT;
+namespace drizzled { namespace memory { class Root; } }
 
 class Key_part_spec :public Sql_alloc {
 public:
@@ -47,7 +47,7 @@ public:
     @return If out of memory, 0 is returned and an error is set in
     Session.
   */
-  Key_part_spec *clone(MEM_ROOT *mem_root) const
+  Key_part_spec *clone(drizzled::memory::Root *mem_root) const
   { return new (mem_root) Key_part_spec(*this); }
 };
 
