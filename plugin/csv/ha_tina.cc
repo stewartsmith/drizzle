@@ -1118,7 +1118,7 @@ int ha_tina::rnd_init(bool)
   records_is_known= 0;
   chain_ptr= chain;
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE, 0);
+  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }

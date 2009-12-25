@@ -396,8 +396,8 @@ bool plugin_init(plugin::Registry &registry,
   if (initialized)
     return false;
 
-  init_alloc_root(&plugin_mem_root, 4096, 4096);
-  init_alloc_root(&tmp_root, 4096, 4096);
+  init_alloc_root(&plugin_mem_root, 4096);
+  init_alloc_root(&tmp_root, 4096);
 
   if (hash_init(&bookmark_hash, &my_charset_bin, 16, 0, 0,
                   get_bookmark_hash_key, NULL, HASH_UNIQUE))
@@ -2014,7 +2014,7 @@ void my_print_help_inc_plugins(my_option *main_options)
   MEM_ROOT mem_root;
   my_option *opt= NULL;
 
-  init_alloc_root(&mem_root, 4096, 4096);
+  init_alloc_root(&mem_root, 4096);
 
   if (initialized)
   {

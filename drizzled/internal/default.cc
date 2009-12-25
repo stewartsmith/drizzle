@@ -390,7 +390,7 @@ int load_defaults(const char *conf_file, const char **groups,
   struct handle_option_ctx ctx;
 
   init_default_directories();
-  init_alloc_root(&alloc,512,0);
+  init_alloc_root(&alloc,512);
   /*
     Check if the user doesn't want any default option processing
     --no-defaults is always the first option

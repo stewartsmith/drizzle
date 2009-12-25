@@ -21,8 +21,8 @@
 #define DRIZZLED_SQL_ALLOC_H
 
 #include <unistd.h>
+#include "drizzled/memory/root.h"
 
-typedef struct st_mem_root MEM_ROOT;
 class Session;
 
 void init_sql_alloc(MEM_ROOT *root, size_t block_size, size_t pre_alloc_size);

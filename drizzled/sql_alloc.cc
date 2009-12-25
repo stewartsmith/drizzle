@@ -35,9 +35,9 @@ extern "C" void sql_alloc_error_handler(void)
   errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
 }
 
-void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t pre_alloc)
+void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t)
 {
-  init_alloc_root(mem_root, block_size, pre_alloc);
+  init_alloc_root(mem_root, block_size);
   mem_root->error_handler= sql_alloc_error_handler;
 }
 

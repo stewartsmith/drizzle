@@ -94,7 +94,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
     free((unsigned char*) buffer);
     goto error;
   }
-  init_alloc_root(names_storage, NAMES_START_SIZE, NAMES_START_SIZE);
+  init_alloc_root(names_storage, NAMES_START_SIZE);
 
   /* MY_DIR structure is allocated and completly initialized at this point */
   result= (MY_DIR*)buffer;

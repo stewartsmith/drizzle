@@ -34,26 +34,37 @@ static const int KEEP_PREALLOC= 1;
 /* move used to free list and reuse them */
 static const int MARK_BLOCKS_FREE= 2;
 
+namespace internal
+{
+
+class UsedMemory
+{			   /* struct for once_alloc (block) */
+public:
+  UsedMemory *next;	   /* Next block in use */
+  size_t left;		   /* memory left in block  */            
+  size_t size;		   /* size of block */
+};
+
+}
+
+static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::UsedMemory) + 8);
+
 }
 }
 
-#define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
-#define ALLOC_MAX_BLOCK_TO_DROP			4096
-#define ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP	10
-
-typedef struct st_used_mem
-{				   /* struct for once_alloc (block) */
-  struct st_used_mem *next;	   /* Next block in use */
-  size_t left;			   /* memory left in block  */            
-  size_t size;			   /* size of block */
-} USED_MEM;
 
 
 typedef struct st_mem_root
 {
-  USED_MEM *free;                  /* blocks with free memory in it */
-  USED_MEM *used;                  /* blocks almost without free memory */
-  USED_MEM *pre_alloc;             /* preallocated block */
+  /* blocks with free memory in it */
+  drizzled::memory::internal::UsedMemory *free;
+
+  /* blocks almost without free memory */
+  drizzled::memory::internal::UsedMemory *used;
+
+  /* preallocated block */
+  drizzled::memory::internal::UsedMemory *pre_alloc;
+
   /* if block have less memory it will be put in 'used' list */
   size_t min_malloc;
   size_t block_size;               /* initial block size */
@@ -72,8 +83,8 @@ inline static bool alloc_root_inited(MEM_ROOT *root)
   return root->min_malloc != 0;
 }
 
-void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
-                     size_t pre_alloc_size);
+void init_alloc_root(MEM_ROOT *mem_root,
+                     size_t block_size= drizzled::memory::ROOT_MIN_BLOCK_SIZE);
 void *alloc_root(MEM_ROOT *mem_root, size_t Size);
 void *multi_alloc_root(MEM_ROOT *mem_root, ...);
 void free_root(MEM_ROOT *root, myf MyFLAGS);
