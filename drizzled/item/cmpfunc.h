@@ -32,6 +32,7 @@
 #include "drizzled/function/numhybrid.h"
 #include "drizzled/session.h"
 #include "drizzled/common.h"
+#include "drizzled/qsort_cmp.h"
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;
@@ -779,10 +780,7 @@ public:
   virtual ~in_vector() {}
   virtual void set(uint32_t pos,Item *item)=0;
   virtual unsigned char *get_value(Item *item)=0;
-  void sort()
-  {
-    my_qsort2(base,used_count,size,compare, (void *) collation);
-  }
+  void sort();
   int find(Item *item);
 
   /*

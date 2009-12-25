@@ -17,7 +17,7 @@
 #define PLUGIN_CSV_HA_TINA_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

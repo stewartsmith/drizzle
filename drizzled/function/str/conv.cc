@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <drizzled/function/str/conv.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 
 String *Item_func_conv::val_str(String *str)
 {

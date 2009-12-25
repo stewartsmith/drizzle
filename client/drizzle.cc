@@ -41,13 +41,14 @@
 #include <algorithm>
 #include <limits.h>
 #include <cassert>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <stdarg.h>
 #include <math.h>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
+#include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>

@@ -25,6 +25,7 @@
 #include <drizzled/plugin/client.h>
 #include <event.h>
 #include "session_scheduler.h"
+#include "drizzled/internal/my_sys.h"
 
 /* Prototype */
 extern "C"
@@ -55,7 +56,7 @@ bool session_scheduler::thread_attach()
   {
     return true;
   }
-  my_errno= 0;
+  errno= 0;
   session->mysys_var->abort= 0;
   thread_attached= true;
 

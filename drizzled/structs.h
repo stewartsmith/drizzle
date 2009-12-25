@@ -24,8 +24,9 @@
 #define DRIZZLED_STRUCTS_H
 
 #include "drizzled/base.h"
-#include "mysys/definitions.h"
+#include "drizzled/definitions.h"
 #include "drizzled/lex_string.h"
+#include "drizzled/thr_lock.h"
 
 class Table;
 class Field;

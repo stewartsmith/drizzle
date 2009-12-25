@@ -18,7 +18,7 @@
 #define PLUGIN_MYISAM_HA_MYISAM_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 /* class for the the myisam Cursor */
 

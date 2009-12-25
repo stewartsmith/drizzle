@@ -26,8 +26,8 @@ int mi_rename(const char *old_name, const char *new_name)
   fn_format(from,old_name,"",MI_NAME_IEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
   fn_format(to,new_name,"",MI_NAME_IEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
   if (my_rename_with_symlink(from, to, MYF(MY_WME)))
-    return(my_errno);
+    return(errno);
   fn_format(from,old_name,"",MI_NAME_DEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
   fn_format(to,new_name,"",MI_NAME_DEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
-  return(my_rename_with_symlink(from, to,MYF(MY_WME)) ? my_errno : 0);
+  return(my_rename_with_symlink(from, to,MYF(MY_WME)) ? errno : 0);
 }

@@ -34,7 +34,7 @@ int heap_rsame(register HP_INFO *info, unsigned char *record, int inx)
   {
     if (inx < -1 || inx >= (int) share->keys)
     {
-      return(my_errno=HA_ERR_WRONG_INDEX);
+      return(errno=HA_ERR_WRONG_INDEX);
     }
     else if (inx != -1)
     {
@@ -43,7 +43,7 @@ int heap_rsame(register HP_INFO *info, unsigned char *record, int inx)
       if (!hp_search(info, share->keydef + inx, info->lastkey, 3))
       {
 	info->update=0;
-	return(my_errno);
+	return(errno);
       }
     }
     hp_extract_record(share, record, info->current_ptr);
@@ -51,5 +51,5 @@ int heap_rsame(register HP_INFO *info, unsigned char *record, int inx)
   }
   info->update=0;
 
-  return(my_errno=HA_ERR_RECORD_DELETED);
+  return(errno=HA_ERR_RECORD_DELETED);
 }

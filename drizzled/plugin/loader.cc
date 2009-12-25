@@ -22,9 +22,9 @@
 #include <map>
 #include <algorithm>
 
-#include "mysys/my_getopt.h"
-#include "mysys/hash.h"
-#include "mystrings/m_string.h"
+#include "drizzled/my_getopt.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/internal/m_string.h"
 
 #include "drizzled/plugin/load_list.h"
 #include "drizzled/sql_parse.h"
@@ -1085,7 +1085,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     if (global_lock)
       pthread_mutex_lock(&LOCK_global_system_variables);
 
-    safe_mutex_assert_owner(&LOCK_global_system_variables);
+    //safe_mutex_assert_owner(&LOCK_global_system_variables);
 
     memcpy(session->variables.dynamic_variables_ptr +
              session->variables.dynamic_variables_size,

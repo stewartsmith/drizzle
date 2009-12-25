@@ -40,7 +40,7 @@
 #define AZIO_AIO
 
 #include <drizzled/common.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 
 #include <zlib.h>
 

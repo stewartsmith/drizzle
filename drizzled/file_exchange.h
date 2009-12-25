@@ -23,6 +23,9 @@
 
 #include "drizzled/sql_string.h"
 #include "drizzled/sql_alloc.h"
+#include "drizzled/enum.h"
+
+extern const CHARSET_INFO *default_charset_info;
 
 static String default_line_term("\n",default_charset_info);
 static String default_escaped("\\",default_charset_info);

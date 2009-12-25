@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_LOCK_H
 #define DRIZZLED_LOCK_H
 
-#include <mysys/definitions.h>
+#include "drizzled/thr_lock.h"
 
 class Session;
 class Table;

@@ -87,7 +87,8 @@ enum TransformSqlError
 enum TransformSqlError
 transformStatementToSql(const Statement &source,
                         std::vector<std::string> &sql_strings,
-                        enum TransformSqlVariant sql_variant= DRIZZLE);
+                        enum TransformSqlVariant sql_variant= DRIZZLE,
+                        bool already_in_transaction= false);
 
 /**
  * This function looks at a supplied InsertHeader

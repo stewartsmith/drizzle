@@ -28,6 +28,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/iocache.h"
 
 using namespace drizzled;
 

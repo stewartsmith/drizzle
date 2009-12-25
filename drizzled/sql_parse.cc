@@ -15,7 +15,7 @@
 
 #define DRIZZLE_LEX 1
 #include "config.h"
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
@@ -46,8 +46,12 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
+#include <limits.h>
+
 #include <bitset>
 #include <algorithm>
+
+#include "drizzled/internal/my_sys.h"
 
 using namespace drizzled;
 using namespace std;

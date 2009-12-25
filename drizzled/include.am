@@ -40,8 +40,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/atomic/sun_studio.h \
 		drizzled/atomics.h \
 		drizzled/base.h \
+		drizzled/cached_directory.h \
 		drizzled/cached_item.h \
 		drizzled/calendar.h \
+		drizzled/charset.h \
+		drizzled/charset_info.h \
 		drizzled/check_stack_overrun.h \
 		drizzled/common.h \
 		drizzled/comp_creator.h \
@@ -50,10 +53,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/current_session.h \
 		drizzled/data_home.h \
 		drizzled/db.h \
+		drizzled/decimal.h \
 		drizzled/definitions.h \
 		drizzled/diagnostics_area.h \
 		drizzled/discrete_interval.h \
 		drizzled/dtcollation.h \
+		drizzled/dynamic_array.h \
 		drizzled/enum.h \
 		drizzled/enum_nested_loop_state.h \
 		drizzled/errmsg_print.h \
@@ -183,6 +188,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/function/time/unix_timestamp.h \
 		drizzled/function/time/weekday.h \
 		drizzled/function/time/year.h  \
+		drizzled/typelib.h \
 		drizzled/function/units.h \
 		drizzled/function/user_var_as_out_param.h \
 		drizzled/function_hash.h \
@@ -251,7 +257,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/lock.h \
 		drizzled/lookup_symbol.h \
 		drizzled/memory/multi_malloc.h \
-		drizzled/my_decimal.h\
+		drizzled/memory/root.h \
+		drizzled/my_decimal.h \
+		drizzled/my_error.h \
+		drizzled/my_getopt.h \
+		drizzled/my_hash.h \
+		drizzled/my_time.h \
+		drizzled/my_tree.h \
 		drizzled/my_var.h \
 		drizzled/name_resolution_context.h \
 		drizzled/name_resolution_context_state.h \
@@ -298,6 +310,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_replicator.h \
 		drizzled/pthread_globals.h \
 		drizzled/probes.h \
+		drizzled/qsort_cmp.h \
 		drizzled/query_id.h \
 		drizzled/records.h \
 		drizzled/replication_services.h \
@@ -321,7 +334,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/set_var.h \
 		drizzled/show.h \
 		drizzled/sql_alloc.h \
-		drizzled/sql_array.h \
 		drizzled/sql_base.h \
 		drizzled/sql_bitmap.h \
 		drizzled/sql_error.h \
@@ -392,6 +404,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/temporal.h \
 		drizzled/temporal_format.h \
 		drizzled/temporal_interval.h \
+		drizzled/thr_lock.h \
 		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
 		drizzled/tzfile.h \
@@ -407,22 +420,23 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/visibility.h \
 		drizzled/xid.h
 
-noinst_LTLIBRARIES += \
-		drizzled/libhandler.la \
-		drizzled/libserialutil.la
+DRIZZLED_LDADD= \
+		 drizzled/internal/libinternal.la \
+		$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
-LDADD = $(top_builddir)/mysys/libmysys.la \
-	$(top_builddir)/mystrings/libmystrings.la \
-	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
-
-drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
-		 $(top_builddir)/drizzled/hash/libhash.la \
-		 $(top_builddir)/drizzled/util/libutil.la \
-		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(pandora_plugin_libs) \
-		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
+drizzled_drizzled_LDADD= \
+		${DRIZZLED_LDADD} \
+		${noinst_LTLIBRARIES} \
+		drizzled/hash/libhash.la \
+		drizzled/util/libutil.la \
+		drizzled/message/libdrizzledmessage.la \
+		drizzled/libcached_directory.la \
+		drizzled/liberror.la \
+		drizzled/libmemory.la \
+		$(pandora_plugin_libs) \
+		$(LDADD) $(LIBUUID) gnulib/libgnu.la \
+		$(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
+		$(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
@@ -436,6 +450,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/comp_creator.cc \
 		drizzled/create_field.cc \
 		drizzled/current_session.cc \
+		drizzled/decimal.cc \
 		drizzled/diagnostics_area.cc \
 		drizzled/drizzled.cc \
 		drizzled/dtcollation.cc \
@@ -613,8 +628,10 @@ drizzled_drizzled_SOURCES = \
 		drizzled/key_map.cc \
 		drizzled/lock.cc \
 		drizzled/lookup_symbol.cc \
-		drizzled/memory/multi_malloc.cc \
 		drizzled/my_decimal.cc \
+		drizzled/my_hash.cc \
+		drizzled/my_time.cc \
+		drizzled/my_tree.cc \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
 		drizzled/optimizer/explain_plan.cc \
@@ -653,6 +670,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/show.cc \
 		drizzled/sql_alloc.cc \
 		drizzled/sql_base.cc \
+		drizzled/sql_bitmap.cc \
 		drizzled/sql_delete.cc \
 		drizzled/sql_derived.cc \
 		drizzled/sql_error.cc \
@@ -718,6 +736,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/temporal.cc \
 		drizzled/temporal_format.cc \
 		drizzled/temporal_interval.cc \
+		drizzled/thr_lock.cc \
 		drizzled/time_functions.cc \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \
@@ -725,10 +744,31 @@ drizzled_drizzled_SOURCES = \
 		drizzled/version.cc \
 		drizzled/xid.cc
 
+noinst_LTLIBRARIES += \
+		drizzled/libcached_directory.la \
+		drizzled/libcharset.la \
+		drizzled/libdynamic_array.la \
+		drizzled/liberror.la \
+		drizzled/libgetopt.la \
+		drizzled/libhandler.la \
+		drizzled/libmemory.la \
+		drizzled/libserialutil.la \
+		drizzled/libtypelib.la
+
+drizzled_libcharset_la_SOURCES = drizzled/charset.cc drizzled/charset-def.cc
+drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
+drizzled_liberror_la_SOURCES = drizzled/my_error.cc
+drizzled_libgetopt_la_SOURCES = drizzled/my_getopt.cc
+drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
 drizzled_libhandler_la_SOURCES = drizzled/cursor.cc drizzled/plugin/storage_engine.cc
+
+drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc
+drizzled_libmemory_la_SOURCES= \
+		drizzled/memory/multi_malloc.cc \
+		drizzled/memory/root.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 

@@ -20,7 +20,7 @@
 #include "config.h"
 #include <drizzled/util/convert.h>
 #include <drizzled/function/str/hex.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 
 /**
   convert a hex digit into number.

@@ -43,8 +43,8 @@ int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
     }
     else
     {
-      my_errno = HA_ERR_END_OF_FILE;
-      return(my_errno);
+      errno = HA_ERR_END_OF_FILE;
+      return(errno);
     }
     return(0);
   }

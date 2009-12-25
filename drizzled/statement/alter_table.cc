@@ -40,6 +40,8 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/records.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 
 extern pid_t current_pid;
 
@@ -1407,7 +1409,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   if (to->cursor->ha_end_bulk_insert() && error <= 0)
   {
-    to->print_error(my_errno, MYF(0));
+    to->print_error(errno, MYF(0));
     error=1;
   }
   to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);

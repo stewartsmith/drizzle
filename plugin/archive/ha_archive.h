@@ -19,8 +19,8 @@
 #include <inttypes.h>
 #include <zlib.h>
 #include "azio.h"
-#include <mysys/thr_lock.h>
-#include <mysys/hash.h>
+#include <drizzled/thr_lock.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/cursor.h>
 #include <string>
 

@@ -29,13 +29,13 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
   int res= 0;
 
   if ((inx = _mi_check_index(info,inx)) < 0)
-    return(my_errno);
+    return(errno);
   flag=SEARCH_BIGGER;				/* Read next */
   if (info->lastpos == HA_OFFSET_ERROR && info->update & HA_STATE_PREV_FOUND)
     flag=0;					/* Read first */
 
   if (fast_mi_readinfo(info))
-    return(my_errno);
+    return(errno);
   if (info->s->concurrent_insert)
     pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
   changed=_mi_test_if_changed(info);
@@ -84,7 +84,7 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
       if (info->s->concurrent_insert)
         pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
       info->lastpos= HA_OFFSET_ERROR;
-      return(my_errno= HA_ERR_END_OF_FILE);
+      return(errno= HA_ERR_END_OF_FILE);
     }
   }
 
@@ -97,17 +97,17 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
 
   if (error)
   {
-    if (my_errno == HA_ERR_KEY_NOT_FOUND)
-      my_errno=HA_ERR_END_OF_FILE;
+    if (errno == HA_ERR_KEY_NOT_FOUND)
+      errno=HA_ERR_END_OF_FILE;
   }
   else if (!buf)
   {
-    return(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos==HA_OFFSET_ERROR ? errno : 0);
   }
   else if (!(*info->read_record)(info,info->lastpos,buf))
   {
     info->update|= HA_STATE_AKTIV;		/* Record is read */
     return(0);
   }
-  return(my_errno);
+  return(errno);
 } /* mi_rnext */

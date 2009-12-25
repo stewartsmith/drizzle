@@ -91,6 +91,8 @@
 #include <cstdlib>
 #include <string>
 
+#include <pthread.h>
+
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 

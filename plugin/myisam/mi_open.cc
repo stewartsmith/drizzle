@@ -20,9 +20,11 @@
 #include <string.h>
 #include <algorithm>
 
-#include "mystrings/m_ctype.h"
-#include "mystrings/m_string.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/util/test.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 #include "drizzled/memory/multi_malloc.h"
 
 
@@ -40,7 +42,7 @@ static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
 {                              \
-  my_errno=HA_ERR_CRASHED;     \
+  errno=HA_ERR_CRASHED;     \
   goto err;                    \
 }
 
@@ -121,12 +123,12 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     if (my_read(kfile, share->state.header.file_version, head_length,
 		MYF(MY_NABP)))
     {
-      my_errno= HA_ERR_NOT_A_TABLE;
+      errno= HA_ERR_NOT_A_TABLE;
       goto err;
     }
     if (memcmp(share->state.header.file_version, myisam_file_magic, 4))
     {
-      my_errno=HA_ERR_NOT_A_TABLE;
+      errno=HA_ERR_NOT_A_TABLE;
       goto err;
     }
     share->options= mi_uint2korr(share->state.header.options);
@@ -137,7 +139,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
           HA_OPTION_TMP_TABLE
           ))
     {
-      my_errno=HA_ERR_OLD_FILE;
+      errno=HA_ERR_OLD_FILE;
       goto err;
     }
 
@@ -155,7 +157,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     base_pos=mi_uint2korr(share->state.header.base_pos);
     if (!(disk_cache= (unsigned char*) malloc(info_length+128)))
     {
-      my_errno=ENOMEM;
+      errno=ENOMEM;
       goto err;
     }
     end_pos=disk_cache+info_length;
@@ -165,7 +167,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     errpos=3;
     if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       goto err;
     }
     len=mi_uint2korr(share->state.header.state_info_length);
@@ -183,7 +185,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
     if (share->state.changed & STATE_CRASHED)
     {
-      my_errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
+      errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
 		HA_ERR_CRASHED_ON_REPAIR : HA_ERR_CRASHED_ON_USAGE);
       goto err;
     }
@@ -191,14 +193,14 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* sanity check */
     if (share->base.keystart > 65535 || share->base.rec_reflength > 8)
     {
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       goto err;
     }
 
     if (share->base.max_key_length > MI_MAX_KEY_BUFF || keys > MI_MAX_KEY ||
 	key_parts > MI_MAX_KEY * MI_MAX_KEY_SEG)
     {
-      my_errno=HA_ERR_UNSUPPORTED;
+      errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
 
@@ -217,7 +219,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 #endif
     if (share->base.raid_type)
     {
-      my_errno=HA_ERR_UNSUPPORTED;
+      errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
     share->base.max_data_file_length=(my_off_t) max_data_file_length;
@@ -279,7 +281,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
               ! (share->options & (HA_OPTION_COMPRESS_RECORD |
                                    HA_OPTION_PACK_RECORD)))
           {
-            my_errno= HA_ERR_CRASHED;
+            errno= HA_ERR_CRASHED;
             goto err;
           }
 	  if (pos->type == HA_KEYTYPE_TEXT ||
@@ -290,7 +292,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	      pos->charset=default_charset_info;
 	    else if (!(pos->charset= get_charset(pos->language)))
 	    {
-	      my_errno=HA_ERR_UNKNOWN_CHARSET;
+	      errno=HA_ERR_UNKNOWN_CHARSET;
 	      goto err;
 	    }
 	  }
@@ -322,7 +324,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	      pos->charset=default_charset_info;
 	    else if (!(pos->charset= get_charset(pos->language)))
 	    {
-	      my_errno=HA_ERR_UNKNOWN_CHARSET;
+	      errno=HA_ERR_UNKNOWN_CHARSET;
 	      goto err;
 	    }
 	  }
@@ -354,7 +356,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share->rec[i].type=(int) FIELD_LAST;	/* End marker */
     if (offset > share->base.reclength)
     {
-      my_errno= HA_ERR_CRASHED;
+      errno= HA_ERR_CRASHED;
       goto err;
     }
 
@@ -418,7 +420,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share= old_info->s;
     if (mode == O_RDWR && share->mode == O_RDONLY)
     {
-      my_errno=EACCES;				/* Can't open in write mode */
+      errno=EACCES;				/* Can't open in write mode */
       goto err;
     }
     if (mi_open_datafile(&info, share, old_info->dfile))
@@ -514,7 +516,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 err:
   if (disk_cache != NULL)
     free(disk_cache);
-  save_errno=my_errno ? my_errno : HA_ERR_END_OF_FILE;
+  save_errno=errno ? errno : HA_ERR_END_OF_FILE;
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||
       (save_errno == HA_ERR_CRASHED_ON_REPAIR))
@@ -541,7 +543,7 @@ err:
     break;
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  my_errno=save_errno;
+  errno=save_errno;
   return (NULL);
 } /* mi_open */
 

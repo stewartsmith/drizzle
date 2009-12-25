@@ -21,9 +21,9 @@
 #include "config.h"
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
-#include <mysys/my_tree.h>
-#include <mysys/my_pthread.h>
-#include <mysys/thr_lock.h>
+#include "drizzled/my_tree.h"
+#include "drizzled/internal/my_pthread.h"
+#include <drizzled/thr_lock.h>
 #include <drizzled/common.h>
 
 #include <assert.h>
@@ -310,7 +310,7 @@ struct st_myisam_info {
 };
 
 typedef struct st_buffpek {
-  my_off_t file_pos;                    /* Where we are in the sort file */
+  off_t file_pos;                    /* Where we are in the sort file */
   unsigned char *base,*key;                     /* Key pointers */
   ha_rows count;                        /* Number of rows in table */
   ulong mem_count;                      /* numbers of keys in memory */
