@@ -421,7 +421,7 @@ bool plugin_init(plugin::Registry &registry,
       if (module == NULL)
         return true;
 
-      free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
+      free_root(&tmp_root, MYF(memory::MARK_BLOCKS_FREE));
       if (test_plugin_options(&tmp_root, module, argc, argv))
         continue;
 
@@ -523,7 +523,7 @@ static bool plugin_load_list(plugin::Registry &registry,
       return true;
     }
 
-    free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
+    free_root(tmp_root, MYF(memory::MARK_BLOCKS_FREE));
     if (plugin_add(registry, tmp_root, library, argc, argv))
     {
       registry.removeLibrary(plugin_name);

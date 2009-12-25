@@ -550,7 +550,7 @@ public:
     {
       changed_tables= 0;
       savepoints= 0;
-      free_root(&mem_root,MYF(MY_KEEP_PREALLOC));
+      free_root(&mem_root,MYF(drizzled::memory::KEEP_PREALLOC));
     }
     st_transactions()
     {

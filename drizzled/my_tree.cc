@@ -60,6 +60,8 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/memory/root.h"
 
+using namespace drizzled;
+
 #define BLACK		1
 #define RED		0
 #define DEFAULT_ALLOC_SIZE 8192
@@ -160,7 +162,7 @@ void delete_tree(TREE* tree)
 void reset_tree(TREE* tree)
 {
   /* do not free mem_root, just mark blocks as free */
-  free_tree(tree, MYF(MY_MARK_BLOCKS_FREE));
+  free_tree(tree, MYF(memory::MARK_BLOCKS_FREE));
 }
 
 

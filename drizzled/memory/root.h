@@ -17,7 +17,7 @@
 #ifndef DRIZZLED_MEMORY_ROOT_H
 #define DRIZZLED_MEMORY_ROOT_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <drizzled/definitions.h>
 
@@ -25,10 +25,18 @@
 extern "C" {
 #endif
 
-#define MY_KEEP_PREALLOC	1
-#define MY_MARK_BLOCKS_FREE     2  /* move used to free list and reuse them */
+namespace drizzled
+{
+namespace memory
+{
 
-#define alloc_root_inited(A) ((A)->min_malloc != 0)
+static const int KEEP_PREALLOC= 1;
+/* move used to free list and reuse them */
+static const int MARK_BLOCKS_FREE= 2;
+
+}
+}
+
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 #define ALLOC_MAX_BLOCK_TO_DROP			4096
 #define ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP	10
@@ -58,6 +66,11 @@ typedef struct st_mem_root
 
   void (*error_handler)(void);
 } MEM_ROOT;
+
+inline static bool alloc_root_inited(MEM_ROOT *root)
+{
+  return root->min_malloc != 0;
+}
 
 void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
                      size_t pre_alloc_size);

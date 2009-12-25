@@ -21,6 +21,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /*
   Initialize memory root
@@ -276,8 +277,8 @@ static inline void mark_blocks_free(MEM_ROOT* root)
       root		Memory root
       MyFlags		Flags for what should be freed:
 
-        MY_MARK_BLOCKS_FREED	Don't free blocks, just mark them free
-        MY_KEEP_PREALLOC	If this is not set, then free also the
+        MARK_BLOCKS_FREED	Don't free blocks, just mark them free
+        KEEP_PREALLOC		If this is not set, then free also the
         		        preallocated block
 
   NOTES
@@ -290,12 +291,12 @@ void free_root(MEM_ROOT *root, myf MyFlags)
 {
   register USED_MEM *next,*old;
 
-  if (MyFlags & MY_MARK_BLOCKS_FREE)
+  if (MyFlags & memory::MARK_BLOCKS_FREE)
   {
     mark_blocks_free(root);
     return;
   }
-  if (!(MyFlags & MY_KEEP_PREALLOC))
+  if (!(MyFlags & memory::KEEP_PREALLOC))
     root->pre_alloc=0;
 
   for (next=root->used; next ;)
