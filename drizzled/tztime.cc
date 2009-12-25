@@ -1010,7 +1010,7 @@ static Time_zone_offset tz_OFFSET0(0);
 
 Time_zone *my_tz_SYSTEM= &tz_SYSTEM;
 
-class Tz_names_entry: public Sql_alloc
+class Tz_names_entry: public drizzled::memory::SqlAlloc
 {
 public:
   String name;

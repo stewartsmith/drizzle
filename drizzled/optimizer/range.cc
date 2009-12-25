@@ -237,7 +237,7 @@ static void get_sweep_read_cost(Table *table,
 class SEL_IMERGE;
 
 
-class SEL_TREE :public Sql_alloc
+class SEL_TREE :public drizzled::memory::SqlAlloc
 {
 public:
   /*
@@ -387,7 +387,7 @@ bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2, optimizer::RangePar
   This class relies on memory manager to do the cleanup.
 */
 
-class SEL_IMERGE : public Sql_alloc
+class SEL_IMERGE : public drizzled::memory::SqlAlloc
 {
   enum { PREALLOCED_TREES= 10};
 public:

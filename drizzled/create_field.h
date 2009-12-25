@@ -31,7 +31,7 @@ typedef struct st_typelib TYPELIB;
  * Basically, all information for a new or altered field
  * definition is contained in the Create_field class.
  */
-class CreateField :public Sql_alloc
+class CreateField :public drizzled::memory::SqlAlloc
 {
 public:
   const char *field_name; /**< Name of the field to be created */

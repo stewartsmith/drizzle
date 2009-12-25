@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "drizzled/errmsg_print.h"
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/current_session.h"
 #include "drizzled/error.h"
 #include "drizzled/definitions.h"
@@ -90,22 +90,22 @@ void* sql_memdup(const void *ptr, size_t len)
   return pos;
 }
 
-void *Sql_alloc::operator new(size_t size)
+void *memory::SqlAlloc::operator new(size_t size)
 {
   return sql_alloc(size);
 }
 
-void *Sql_alloc::operator new[](size_t size)
+void *memory::SqlAlloc::operator new[](size_t size)
 {
   return sql_alloc(size);
 }
 
-void *Sql_alloc::operator new[](size_t size, memory::Root *mem_root)
+void *memory::SqlAlloc::operator new[](size_t size, memory::Root *mem_root)
 {
   return alloc_root(mem_root, size);
 }
 
-void *Sql_alloc::operator new(size_t size, memory::Root *mem_root)
+void *memory::SqlAlloc::operator new(size_t size, memory::Root *mem_root)
 {
   return alloc_root(mem_root, size);
 }

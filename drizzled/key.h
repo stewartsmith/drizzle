@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/key_part_spec.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/lex_string.h"
@@ -34,7 +34,7 @@ class Item;
 class MyBitmap;
 namespace drizzled { namespace memory { class Root; } }
 
-class Key :public Sql_alloc {
+class Key :public drizzled::memory::SqlAlloc {
 public:
   enum Keytype { PRIMARY, UNIQUE, MULTIPLE, FOREIGN_KEY};
   enum Keytype type;

@@ -25,7 +25,8 @@ class Session;
 
 namespace drizzled { namespace memory { class Root; } }
 
-Session *current_session(void);
+Session *_current_session(void);
+#define current_session _current_session()
 drizzled::memory::Root *current_mem_root(void);
 
 #endif /* DRIZZLED_CURRENT_SESSION_H */

@@ -161,7 +161,7 @@ inline key_part_map make_prev_keypart_map(T a)
   must be set to 0.
 */
 
-class Cursor :public Sql_alloc
+class Cursor :public drizzled::memory::SqlAlloc
 {
 protected:
   TableShare *table_share;   /* The table definition */

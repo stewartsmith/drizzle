@@ -50,7 +50,7 @@ uint64_t get_datetime_value(Session *session,
                             Item *warn_item, 
                             bool *is_null);
 
-class Arg_comparator: public Sql_alloc
+class Arg_comparator: public drizzled::memory::SqlAlloc
 {
   Item **a, **b;
   arg_cmp_func func;
@@ -762,7 +762,7 @@ public:
 
 /* A vector of values of some type  */
 
-class in_vector :public Sql_alloc
+class in_vector :public drizzled::memory::SqlAlloc
 {
 public:
   char *base;
@@ -940,7 +940,7 @@ public:
 ** Classes for easy comparing of non const items
 */
 
-class cmp_item :public Sql_alloc
+class cmp_item :public drizzled::memory::SqlAlloc
 {
 public:
   const CHARSET_INFO *cmp_charset;
@@ -1577,7 +1577,7 @@ public:
   { return fields.head()->collation.collation; }
 };
 
-class COND_EQUAL: public Sql_alloc
+class COND_EQUAL: public drizzled::memory::SqlAlloc
 {
 public:
   uint32_t max_members;               /* max number of members the current level

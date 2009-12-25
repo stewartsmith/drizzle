@@ -767,7 +767,7 @@ public:
 /**
  * A class for quick copying data to fields
  */
-class CopyField :public Sql_alloc
+class CopyField :public drizzled::memory::SqlAlloc
 {
   /**
     Convenience definition of a copy function returned by

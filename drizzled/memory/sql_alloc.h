@@ -35,25 +35,32 @@ void sql_element_free(void *ptr);
 void sql_kill(Session *session, unsigned long id, bool only_kill_query);
 char* query_table_status(Session *session,const char *db,const char *table_name);
 
-/* mysql standard class memory allocator */
-class Sql_alloc
+namespace drizzled
+{
+namespace memory
+{
+
+class SqlAlloc
 {
 public:
   static void *operator new(size_t size);
   static void *operator new[](size_t size);
-  static void *operator new[](size_t size, drizzled::memory::Root *mem_root);
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
+  static void *operator new[](size_t size, Root *mem_root);
+  static void *operator new(size_t size, Root *mem_root);
   static void operator delete(void *, size_t)
   {  }
-  static void operator delete(void *, drizzled::memory::Root *)
+  static void operator delete(void *, Root *)
   {  }
-  static void operator delete[](void *, drizzled::memory::Root *)
+  static void operator delete[](void *, Root *)
   {  }
   static void operator delete[](void *, size_t)
   {  }
-  Sql_alloc() {}
-  ~Sql_alloc() {}
+  SqlAlloc() {}
+  ~SqlAlloc() {}
 
 };
+
+}
+}
 
 #endif /* DRIZZLED_SQL_ALLOC_H */

@@ -25,7 +25,7 @@
 #include <cassert>
 #include <utility>
 #include <algorithm>
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
@@ -85,7 +85,7 @@ typedef struct st_sql_list {
   @note We never call a destructor for instances of this class.
 */
 
-struct list_node :public Sql_alloc
+struct list_node :public drizzled::memory::SqlAlloc
 {
   list_node *next;
   void *info;
@@ -102,7 +102,7 @@ struct list_node :public Sql_alloc
 
 extern list_node end_of_list;
 
-class base_list :public Sql_alloc
+class base_list :public drizzled::memory::SqlAlloc
 {
 protected:
   list_node *first,**last;
@@ -121,7 +121,7 @@ public:
     relies on this behaviour. This logic is quite tricky: please do not use
     it in any new code.
   */
-  inline base_list(const base_list &tmp) :Sql_alloc()
+  inline base_list(const base_list &tmp) :drizzled::memory::SqlAlloc()
   {
     elements= tmp.elements;
     first= tmp.first;

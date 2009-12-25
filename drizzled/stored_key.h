@@ -21,7 +21,7 @@
 #define DRIZZLED_STORED_KEY_H
 
 /** class to store an field/item as a key struct */
-class StoredKey :public Sql_alloc
+class StoredKey :public drizzled::memory::SqlAlloc
 {
 public:
   bool null_key; /**< If true, the value of the key has a null part */

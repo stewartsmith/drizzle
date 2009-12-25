@@ -284,7 +284,7 @@ uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
  * The QuickSelectInterface member variable is the implementor
  * of the SELECT execution.
  */
-class SqlSelect : public Sql_alloc 
+class SqlSelect : public drizzled::memory::SqlAlloc 
 {
  public:
   QuickSelectInterface *quick; /**< If quick-select used */

@@ -21,13 +21,13 @@
 #ifndef DRIZZLED_KEY_PART_SPEC_H
 #define DRIZZLED_KEY_PART_SPEC_H
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/lex_string.h"
 
 class Item;
 namespace drizzled { namespace memory { class Root; } }
 
-class Key_part_spec :public Sql_alloc {
+class Key_part_spec :public drizzled::memory::SqlAlloc {
 public:
   LEX_STRING field_name;
   uint32_t length;

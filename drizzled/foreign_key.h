@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FOREIGN_KEY_H
 #define DRIZZLED_FOREIGN_KEY_H
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/key.h"
 #include "drizzled/key_part_spec.h"
 #include "drizzled/sql_list.h"

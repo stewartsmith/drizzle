@@ -25,7 +25,7 @@
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
 
 class TableList;
@@ -76,7 +76,7 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class Item: public Sql_alloc
+class Item: public drizzled::memory::SqlAlloc
 {
   /* Prevent use of these */
   Item(const Item &);

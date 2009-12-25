@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_OPTIMIZER_QUICK_RANGE_H
 #define DRIZZLED_OPTIMIZER_QUICK_RANGE_H
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/base.h"
 
 namespace drizzled
@@ -29,7 +29,7 @@ namespace drizzled
 namespace optimizer
 {
 
-class QuickRange : public Sql_alloc
+class QuickRange : public drizzled::memory::SqlAlloc
 {
 public:
   unsigned char *min_key;

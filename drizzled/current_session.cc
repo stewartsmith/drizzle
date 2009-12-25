@@ -27,7 +27,7 @@ using namespace drizzled;
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
 
-Session *current_session(void)
+Session *_current_session(void)
 {
   return static_cast<Session *>(pthread_getspecific(THR_Session));
 }

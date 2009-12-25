@@ -20,12 +20,12 @@
 #ifndef DRIZZLED_ALTER_DROP_H
 #define DRIZZLED_ALTER_DROP_H
 
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 
 class Item;
 namespace drizzled { namespace memory { class Root; } }
 
-class AlterDrop :public Sql_alloc {
+class AlterDrop :public drizzled::memory::SqlAlloc {
 public:
   enum drop_type
   {
