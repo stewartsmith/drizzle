@@ -29,7 +29,6 @@
 #include "drizzled/atomics.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
-#include <mysys/thr_lock.h>
 #include <tchdb.h>
 #include <tcbdb.h>
 
@@ -100,6 +99,7 @@ public:
 
   /* DATA DICTIONARY METADATA RELATED */
   uint64_t nrecords(void);
+  uint64_t table_size(void);
 
   /* DATA DICTIONARY READ RELATED*/
   char *get_row(const char *key, const size_t klen, int *value_len);
@@ -154,7 +154,6 @@ public:
   BlitzShare() : blitz_lock(), use_count(0), nkeys(0) {}
   ~BlitzShare() {}
 
-  THR_LOCK lock;           /* Shared Drizzle Lock */
   BlitzLock blitz_lock;    /* Handler level lock for BlitzDB */
   BlitzData dict;          /* Utility class of BlitzDB */
   BlitzTree **btrees;      /* Array of BTREE indexes */

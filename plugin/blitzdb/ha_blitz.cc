@@ -196,7 +196,6 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
     ref_length = BLITZ_MAX_KEY_LENGTH;
   }
 
-  thr_lock_data_init(&share->lock, &lock, NULL);
   pthread_mutex_unlock(&blitz_utility_mutex);
   return 0;
 }
@@ -207,8 +206,10 @@ int ha_blitz::close(void) {
 }
 
 int ha_blitz::info(uint32_t flag) {
-  if (flag & HA_STATUS_VARIABLE)
+  if (flag & HA_STATUS_VARIABLE) {
     stats.records = share->dict.nrecords(); 
+    stats.data_file_length = share->dict.table_size();
+  }
 
   if (flag & HA_STATUS_ERRKEY)
     errkey = errkey_id;
@@ -341,6 +342,7 @@ const char *ha_blitz::index_type(uint32_t key_num) {
 
 int ha_blitz::index_init(uint32_t key_num, bool) {
   active_index = key_num;
+  sql_command_type = session_sql_command(current_session);
 
   /* This is unlikely to happen but just for assurance, re-obtain
      the lock if this thread already has a certain lock. This makes
@@ -402,11 +404,12 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
     memcpy(buf, fetched_row, fetched_len);
     free(fetched_row);
 
-    /* Now we need to set the cursor to the current key. Yet another memcpy
-       that we really want to find a way to avoid. */
+    /* Now keep track of the key. This is because another function that
+       needs this information such as delete_row() might be called before
+       BlitzDB reaches index_end() */
     memcpy(key_buffer, key, key_len);
-    current_key = key_buffer;
-    current_key_length = key_len;
+    updateable_key = key_buffer;
+    updateable_key_length = key_len;
     return 0;
   }
 
@@ -414,8 +417,8 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 }
 
 int ha_blitz::index_end(void) {
-  current_key = NULL;
-  current_key_length = 0;
+  updateable_key = NULL;
+  updateable_key_length = 0;
 
   if (thread_locked)
     critical_section_exit();
@@ -695,7 +698,6 @@ static BlitzShare *get_share(const char *table_name) {
 
   /* Cache the memory address of the object */
   tcmapput(blitz_table_cache, table_name, length, &share, sizeof(share));
-  thr_lock_init(&share->lock);
   pthread_mutex_unlock(&blitz_utility_mutex);
   return share;
 }

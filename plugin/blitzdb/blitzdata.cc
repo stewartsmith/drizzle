@@ -159,8 +159,12 @@ bool BlitzData::write_table_definition(TCHDB *table,
   return true;
 }
 
-uint64_t BlitzData::nrecords() {
+uint64_t BlitzData::nrecords(void) {
   return tchdbrnum(data_table);
+}
+
+uint64_t BlitzData::table_size(void) {
+  return tchdbfsiz(data_table);
 }
 
 char *BlitzData::get_row(const char *key, const size_t klen, int *vlen) {

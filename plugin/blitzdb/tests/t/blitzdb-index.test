@@ -23,4 +23,12 @@ select * from t1 where id = 2;
 select * from t1 where id = 4;
 select * from t1 where id = 6;
 
+# Test Primary Key based Deletion
+delete from t1 where id = 5;
+delete from t1 where id = 6;
+delete from t1 where id = 7;
+delete from t1 where id = 8;
+
+select * from t1;
+
 drop table t1;
