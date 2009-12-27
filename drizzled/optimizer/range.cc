@@ -135,6 +135,8 @@
 #include "drizzled/optimizer/sel_arg.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
@@ -620,8 +622,8 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 
   if (head->sort.io_cache)
   {
-    select->file= *head->sort.io_cache;
-    select->records=(ha_rows) (select->file.end_of_file/
+    memcpy(select->file, head->sort.io_cache, sizeof(IO_CACHE));
+    select->records=(ha_rows) (select->file->end_of_file/
 			       head->cursor->ref_length);
     delete head->sort.io_cache;
     head->sort.io_cache=0;
@@ -634,11 +636,12 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
+    file(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
     free_cond(false)
 {
   quick_keys.reset();
   needed_reg.reset();
-  my_b_clear(&file);
+  my_b_clear(file);
 }
 
 
@@ -652,7 +655,7 @@ void optimizer::SqlSelect::cleanup()
     delete cond;
     cond= 0;
   }
-  close_cached_file(&file);
+  close_cached_file(file);
 }
 
 

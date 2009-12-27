@@ -23,10 +23,12 @@ Smart ALTER TABLE
 
 #include "config.h"
 #include <drizzled/error.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <drizzled/field.h>
 #include <drizzled/table.h>
 #include <drizzled/field/varstring.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/my_error.h"
 
 extern "C" {
 #include "log0log.h"

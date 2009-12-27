@@ -26,6 +26,7 @@
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/sel_arg.h"
+#include "drizzled/internal/m_string.h"
 
 using namespace std;
 using namespace drizzled;

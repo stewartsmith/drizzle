@@ -21,7 +21,7 @@
 #define PLUGIN_HEAP_HA_HEAP_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 typedef struct st_heap_info HP_INFO;
 typedef unsigned char *HEAP_PTR;

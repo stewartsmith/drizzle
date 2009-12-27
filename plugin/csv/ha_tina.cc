@@ -47,6 +47,7 @@ TODO:
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
 
 #include "ha_tina.h"
 
@@ -145,7 +146,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
   int doDropTable(Session&, const string table_path);
   TinaShare *findOpenTable(const string table_name);
@@ -172,7 +173,7 @@ int Tina::doDropTable(Session&,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (my_delete_with_symlink(buff, MYF(0)))
     {
-      if ((error= my_errno) != ENOENT)
+      if ((error= errno) != ENOENT)
 	break;
     }
     else
@@ -1359,7 +1360,7 @@ int ha_tina::delete_all_rows()
   int rc;
 
   if (!records_is_known)
-    return(my_errno=HA_ERR_WRONG_COMMAND);
+    return(errno=HA_ERR_WRONG_COMMAND);
 
   if (!share->tina_write_opened)
     if (init_tina_writer())

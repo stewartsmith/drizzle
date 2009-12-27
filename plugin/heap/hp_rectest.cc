@@ -22,7 +22,7 @@ int hp_rectest(register HP_INFO *info, register const unsigned char *old_record)
 
   if (hp_process_record_data_to_chunkset(info->s, old_record, info->current_ptr, 1))
   {
-    return((my_errno=HA_ERR_RECORD_CHANGED)); /* Record have changed */
+    return((errno=HA_ERR_RECORD_CHANGED)); /* Record have changed */
   }
 
   return(0);

@@ -28,6 +28,9 @@
 
 #include <string>
 
+#include "drizzled/typelib.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/memory/root.h"
 #include "drizzled/message/table.pb.h"
 
 class TableShare

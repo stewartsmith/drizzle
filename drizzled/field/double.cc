@@ -30,7 +30,7 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 
 using namespace std;
 

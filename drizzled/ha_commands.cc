@@ -24,7 +24,7 @@
 */
 
 #include "config.h"
-#include "mysys/hash.h"
+#include "drizzled/my_hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/probes.h"
@@ -40,6 +40,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/internal/my_sys.h"
 
 using namespace std;
 using namespace drizzled;
@@ -57,12 +58,6 @@ const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
 
-const char *tx_isolation_names[] =
-{ "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
-  NULL};
-
-TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
-                               tx_isolation_names, NULL};
 
 
 /**

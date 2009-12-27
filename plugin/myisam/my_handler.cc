@@ -19,10 +19,10 @@
 
 #include "config.h"
 
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <drizzled/base.h>
 #include <plugin/myisam/my_handler.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 
 #include <cassert>
 #include <algorithm>

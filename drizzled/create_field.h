@@ -23,6 +23,7 @@
 #include "drizzled/field.h"
 
 class Item;
+typedef struct st_typelib TYPELIB;
 
 /**
  * Class representing a field in a CREATE TABLE statement.

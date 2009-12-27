@@ -27,6 +27,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/join.h"
+#include "drizzled/internal/m_string.h"
 
 #include <string>
 #include <sstream>

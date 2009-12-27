@@ -759,7 +759,7 @@ row_search_index_entry(
 }
 
 #if defined(BUILD_DRIZZLE)
-# include "mysys/my_sys.h"
+# include "drizzled/internal/my_sys.h"
 #else
 # include "my_sys.h"
 #endif

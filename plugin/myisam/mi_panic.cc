@@ -39,7 +39,7 @@ int mi_panic(enum ha_panic_function flag)
     case HA_PANIC_CLOSE:
       pthread_mutex_unlock(&THR_LOCK_myisam);	/* Not exactly right... */
       if (mi_close(info))
-	error=my_errno;
+	error=errno;
       pthread_mutex_lock(&THR_LOCK_myisam);
       break;
     case HA_PANIC_WRITE:		/* Do this to free databases */
@@ -48,14 +48,14 @@ int mi_panic(enum ha_panic_function flag)
 	break;
 #endif
       if (flush_key_blocks(info->s->key_cache, info->s->kfile, FLUSH_RELEASE))
-	error=my_errno;
+	error=errno;
       if (info->opt_flag & WRITE_CACHE_USED)
 	if (flush_io_cache(&info->rec_cache))
-	  error=my_errno;
+	  error=errno;
       if (info->opt_flag & READ_CACHE_USED)
       {
 	if (flush_io_cache(&info->rec_cache))
-	  error=my_errno;
+	  error=errno;
 	reinit_io_cache(&info->rec_cache,READ_CACHE,0,
 		       (bool) (info->lock_type != F_UNLCK),1);
       }
@@ -63,13 +63,13 @@ int mi_panic(enum ha_panic_function flag)
       {
 	info->was_locked=info->lock_type;
 	if (mi_lock_database(info,F_UNLCK))
-	  error=my_errno;
+	  error=errno;
       }
 #ifdef CANT_OPEN_FILES_TWICE
       if (info->s->kfile >= 0 && my_close(info->s->kfile,MYF(0)))
-	error = my_errno;
+	error = errno;
       if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
-	error = my_errno;
+	error = errno;
       info->s->kfile=info->dfile= -1;	/* Files aren't open anymore */
       break;
 #endif
@@ -81,13 +81,13 @@ int mi_panic(enum ha_panic_function flag)
 	  if ((info->s->kfile= my_open(fn_format(name_buff,info->filename,"",
 					      N_NAME_IEXT,4),info->mode,
 				    MYF(MY_WME))) < 0)
-	    error = my_errno;
+	    error = errno;
 	if (info->dfile < 0)
 	{
 	  if ((info->dfile= my_open(fn_format(name_buff,info->filename,"",
 					      N_NAME_DEXT,4),info->mode,
 				    MYF(MY_WME))) < 0)
-	    error = my_errno;
+	    error = errno;
 	  info->rec_cache.file=info->dfile;
 	}
       }
@@ -95,7 +95,7 @@ int mi_panic(enum ha_panic_function flag)
       if (info->was_locked)
       {
 	if (mi_lock_database(info, info->was_locked))
-	  error=my_errno;
+	  error=errno;
 	info->was_locked=0;
       }
       break;
@@ -105,5 +105,5 @@ int mi_panic(enum ha_panic_function flag)
   pthread_mutex_unlock(&THR_LOCK_myisam);
   if (!error)
     return(0);
-  return(my_errno=error);
+  return(errno=error);
 } /* mi_panic */

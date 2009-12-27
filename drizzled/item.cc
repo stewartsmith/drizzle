@@ -47,6 +47,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/internal/m_string.h"
 
 #include <math.h>
 #include <algorithm>

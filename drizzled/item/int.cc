@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <drizzled/item/int.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 
 /**
   Create an item from a string we KNOW points to a valid int64_t

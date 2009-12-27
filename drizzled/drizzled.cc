@@ -22,14 +22,17 @@
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <limits.h>
 
-#include <mysys/my_bit.h>
-#include <mysys/hash.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/my_bit.h"
+#include <drizzled/my_hash.h>
 #include <drizzled/stacktrace.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/tztime.h>
@@ -47,6 +50,8 @@
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
+#include "drizzled/charset.h"
+#include "plugin/myisam/myisam.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -80,7 +85,7 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
@@ -145,7 +150,7 @@ inline void setup_fpu()
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
 
-#include <mysys/my_pthread.h>			// For thr_setconcurency()
+#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
 
 #include <drizzled/gettext.h>
 
@@ -190,6 +195,13 @@ static TYPELIB tc_heuristic_recover_typelib=
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
+
+const char *tx_isolation_names[] =
+{ "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
+  NULL};
+
+TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
+                               tx_isolation_names, NULL};
 
 /*
   Used with --help for detailed option
@@ -479,7 +491,8 @@ extern "C" void print_signal_warning(int sig);
 extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
+    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64),
+                  sig, global_thread_id);
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -995,13 +1008,13 @@ static void init_signals(void)
   return;;
 }
 
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
+void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
   All global error messages are sent here where the first one is stored
   for the client.
 */
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -2340,7 +2353,7 @@ extern "C" void option_error_reporter(enum loglevel level, const char *format, .
 
 /**
   @todo
-  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "mysys/mysys_err.h" and return that code?
+  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "drizzled/my_error.h" and return that code?
 */
 static void get_options(int *argc,char **argv)
 {

@@ -21,7 +21,8 @@
 #include "drizzled/session.h"
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
-#include "mysys/my_bitmap.h"
+#include "drizzled/sql_bitmap.h"
+#include "drizzled/internal/m_string.h"
 #include <fcntl.h>
 #include "drizzled/memory/multi_malloc.h"
 

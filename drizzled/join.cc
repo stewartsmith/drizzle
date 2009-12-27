@@ -53,7 +53,9 @@
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/records.h"
 #include "drizzled/probes.h"
-#include "mysys/my_bit.h"
+#include "drizzled/internal/my_bit.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 
 #include <algorithm>
 

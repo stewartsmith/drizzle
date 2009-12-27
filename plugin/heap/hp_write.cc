@@ -38,13 +38,13 @@ int heap_write(HP_INFO *info, const unsigned char *record)
   if ((share->records >= share->max_records && share->max_records) ||
     (share->recordspace.total_data_length + share->index_length >= share->max_table_size))
   {
-    return(my_errno=HA_ERR_RECORD_FILE_FULL);
+    return(errno=HA_ERR_RECORD_FILE_FULL);
   }
 
   rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
 
   if (!(pos=hp_allocate_chunkset(&share->recordspace, chunk_count)))
-    return(my_errno);
+    return(errno);
   share->changed=1;
 
   for (keydef = share->keydef, end = keydef + share->keys; keydef < end;
@@ -74,7 +74,7 @@ err:
     either.  Otherwise for HASH index on HA_ERR_FOUND_DUPP_KEY the key
     was inserted and we have to delete it.
   */
-  if (keydef->algorithm == HA_KEY_ALG_BTREE || my_errno == ENOMEM)
+  if (keydef->algorithm == HA_KEY_ALG_BTREE || errno == ENOMEM)
   {
     keydef--;
   }
@@ -87,7 +87,7 @@ err:
 
   hp_free_chunks(&share->recordspace, pos);
 
-  return(my_errno);
+  return(errno);
 } /* heap_write */
 
 /*
@@ -116,7 +116,7 @@ int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *reco
   if (!tree_insert(&keyinfo->rb_tree, (void*)info->recbuf,
 		   custom_arg.key_length, &custom_arg))
   {
-    my_errno= HA_ERR_FOUND_DUPP_KEY;
+    errno= HA_ERR_FOUND_DUPP_KEY;
     return 1;
   }
   info->s->index_length+= (keyinfo->rb_tree.allocated-old_allocated);
@@ -330,7 +330,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
       {
 	if (! hp_rec_key_cmp(keyinfo, record, pos->ptr_to_rec, 1))
 	{
-	  return(my_errno=HA_ERR_FOUND_DUPP_KEY);
+	  return(errno=HA_ERR_FOUND_DUPP_KEY);
 	}
       } while ((pos=pos->next_key));
     }

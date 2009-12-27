@@ -23,6 +23,7 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "plugin/myisam/myisam.h"
 
 #include <string>
 

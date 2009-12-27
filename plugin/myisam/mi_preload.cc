@@ -63,7 +63,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     for (i= 1 ; i < keys ; i++)
     {
       if (keyinfo[i].block_length != block_length)
-        return(my_errno= HA_ERR_NON_UNIQUE_BLOCK_SIZE);
+        return(errno= HA_ERR_NON_UNIQUE_BLOCK_SIZE);
     }
   }
   else
@@ -73,7 +73,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   set_if_bigger(length, block_length);
 
   if (!(buff= (unsigned char *) malloc(length)))
-    return(my_errno= HA_ERR_OUT_OF_MEM);
+    return(errno= HA_ERR_OUT_OF_MEM);
 
   if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))
     goto err;
@@ -119,6 +119,6 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
 
 err:
   free((char*) buff);
-  return(my_errno= errno);
+  return(errno= errno);
 }
 

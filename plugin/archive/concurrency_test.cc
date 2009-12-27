@@ -24,7 +24,7 @@
 #include "config.h"
 
 #include "azio.h"
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>

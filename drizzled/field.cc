@@ -43,11 +43,11 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/time_functions.h"
+#include "drizzled/internal/m_string.h"
 
 /*****************************************************************************
   Instansiate templates and static variables
 *****************************************************************************/
-
 
 static enum_field_types
 field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
@@ -361,6 +361,16 @@ bool test_if_important_data(const CHARSET_INFO * const cs,
   if (cs != &my_charset_bin)
     str+= cs->cset->scan(cs, str, strend, MY_SEQ_SPACES);
   return (str < strend);
+}
+
+void *Field::operator new(size_t size)
+{
+  return sql_alloc(size);
+}
+
+void *Field::operator new(size_t size, MEM_ROOT *mem_root)
+{
+  return alloc_root(mem_root, static_cast<uint32_t>(size));
 }
 
 enum_field_types Field::field_type_merge(enum_field_types a,

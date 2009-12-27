@@ -17,7 +17,7 @@
 
 #include "heap_priv.h"
 
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
 
 #include <math.h>
@@ -132,7 +132,7 @@ unsigned char *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char 
 	case 2:					/* Search previous */
 	  if (pos->ptr_to_rec == info->current_ptr)
 	  {
-	    my_errno=HA_ERR_KEY_NOT_FOUND;	/* If gpos == 0 */
+	    errno=HA_ERR_KEY_NOT_FOUND;	/* If gpos == 0 */
 	    info->current_hash_ptr=prev_ptr;
 	    return(info->current_ptr=prev_ptr ? prev_ptr->ptr_to_rec : 0);
 	  }
@@ -157,7 +157,7 @@ unsigned char *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char 
     }
     while ((pos=pos->next_key));
   }
-  my_errno=HA_ERR_KEY_NOT_FOUND;
+  errno=HA_ERR_KEY_NOT_FOUND;
   if (nextflag == 2 && ! info->current_ptr)
   {
     /* Do a previous from end */
@@ -166,7 +166,7 @@ unsigned char *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char 
   }
 
   if (old_nextflag && nextflag)
-    my_errno=HA_ERR_RECORD_CHANGED;		/* Didn't find old record */
+    errno=HA_ERR_RECORD_CHANGED;		/* Didn't find old record */
   info->current_hash_ptr=0;
   return((info->current_ptr= 0));
 }
@@ -188,7 +188,7 @@ unsigned char *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned 
       return (info->current_ptr= pos->ptr_to_rec);
     }
   }
-  my_errno=HA_ERR_KEY_NOT_FOUND;
+  errno=HA_ERR_KEY_NOT_FOUND;
   info->current_hash_ptr=0;
   return ((info->current_ptr= 0));
 }

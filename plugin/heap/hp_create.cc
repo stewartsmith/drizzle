@@ -17,6 +17,7 @@
 
 #include <drizzled/common.h>
 #include <drizzled/error.h>
+#include "drizzled/my_error.h"
 
 #include <string.h>
 #include <algorithm>
@@ -441,7 +442,7 @@ int heap_delete_table(const char *name)
   }
   else
   {
-    result= my_errno=ENOENT;
+    result= errno=ENOENT;
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
   return(result);

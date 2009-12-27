@@ -28,12 +28,12 @@
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
 #include "drizzled/table_identifier.h"
-
-#include "mysys/cached_directory.h"
+#include "drizzled/cached_directory.h"
 
 #include <bitset>
 #include <string>
 #include <vector>
+#include <set>
 
 class TableList;
 class Session;
@@ -385,7 +385,9 @@ public:
   }
 
   // TODO: move these to protected
-  virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
+  virtual void doGetTableNames(drizzled::CachedDirectory &directory,
+                               std::string& db_name,
+                               std::set<std::string>& set_of_names);
   virtual int doDropTable(Session& session,
                           const std::string table_path)= 0;
 

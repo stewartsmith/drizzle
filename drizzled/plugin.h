@@ -25,6 +25,7 @@
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/module.h>
 #include "drizzled/configmake.h"
+#include "drizzled/definitions.h"
 
 
 class Session;

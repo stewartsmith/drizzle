@@ -25,7 +25,7 @@
 #include <drizzled/session.h>
 #include "drizzled/session_list.h"
 #include <sys/stat.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/query_id.h>
@@ -45,6 +45,8 @@
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 
+#include "plugin/myisam/myisam.h"
+#include "drizzled/internal/iocache.h"
 
 #include <fcntl.h>
 #include <algorithm>
@@ -634,6 +636,35 @@ bool Session::schedule()
   return false;
 }
 
+
+const char* Session::enter_cond(pthread_cond_t *cond,
+                                pthread_mutex_t* mutex,
+                                const char* msg)
+{
+  const char* old_msg = get_proc_info();
+  safe_mutex_assert_owner(mutex);
+  mysys_var->current_mutex = mutex;
+  mysys_var->current_cond = cond;
+  this->set_proc_info(msg);
+  return old_msg;
+}
+
+void Session::exit_cond(const char* old_msg)
+{
+  /*
+    Putting the mutex unlock in exit_cond() ensures that
+    mysys_var->current_mutex is always unlocked _before_ mysys_var->mutex is
+    locked (if that would not be the case, you'll get a deadlock if someone
+    does a Session::awake() on you).
+  */
+  pthread_mutex_unlock(mysys_var->current_mutex);
+  pthread_mutex_lock(&mysys_var->mutex);
+  mysys_var->current_mutex = 0;
+  mysys_var->current_cond = 0;
+  this->set_proc_info(old_msg);
+  pthread_mutex_unlock(&mysys_var->mutex);
+}
+
 bool Session::authenticate()
 {
   lex_start(this);
@@ -1011,6 +1042,11 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list));
 }
 
+void select_result::send_error(uint32_t errcode, const char *err)
+{
+  my_message(errcode, err, MYF(0));
+}
+
 /************************************************************************
   Handling writing to file
 ************************************************************************/
@@ -1020,7 +1056,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   my_message(errcode, err, MYF(0));
   if (file > 0)
   {
-    (void) end_io_cache(&cache);
+    (void) end_io_cache(cache);
     (void) my_close(file, MYF(0));
     (void) my_delete(path, MYF(0));		// Delete file on error
     file= -1;
@@ -1030,7 +1066,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 
 bool select_to_file::send_eof()
 {
-  int error= test(end_io_cache(&cache));
+  int error= test(end_io_cache(cache));
   if (my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
@@ -1052,7 +1088,7 @@ void select_to_file::cleanup()
   /* In case of error send_eof() may be not called: close the file here. */
   if (file >= 0)
   {
-    (void) end_io_cache(&cache);
+    (void) end_io_cache(cache);
     (void) my_close(file, MYF(0));
     file= -1;
   }
@@ -1060,15 +1096,18 @@ void select_to_file::cleanup()
   row_count= 0;
 }
 
+select_to_file::select_to_file(file_exchange *ex)
+  : exchange(ex),
+    file(-1),
+    cache(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
+    row_count(0L)
+{
+  path[0]=0;
+}
 
 select_to_file::~select_to_file()
 {
-  if (file >= 0)
-  {					// This only happens in case of error
-    (void) end_io_cache(&cache);
-    (void) my_close(file, MYF(0));
-    file= -1;
-  }
+  cleanup();
 }
 
 /***************************************************************************
@@ -1197,7 +1236,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
     return 1;
   }
 
-  if ((file= create_file(session, path, exchange, &cache)) < 0)
+  if ((file= create_file(session, path, exchange, cache)) < 0)
     return 1;
 
   return 0;
@@ -1227,7 +1266,7 @@ bool select_export::send_data(List<Item> &items)
   uint32_t used_length=0,items_left=items.elements;
   List_iterator_fast<Item> li(items);
 
-  if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
+  if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
                  exchange->line_start->length()))
     goto err;
   while ((item=li++))
@@ -1238,7 +1277,7 @@ bool select_export::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (res && enclosed)
     {
-      if (my_b_write(&cache,(unsigned char*) exchange->enclosed->ptr(),
+      if (my_b_write(cache,(unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
         goto err;
     }
@@ -1250,10 +1289,10 @@ bool select_export::send_data(List<Item> &items)
         {
           null_buff[0]=escape_char;
           null_buff[1]='N';
-          if (my_b_write(&cache,(unsigned char*) null_buff,2))
+          if (my_b_write(cache,(unsigned char*) null_buff,2))
             goto err;
         }
-        else if (my_b_write(&cache,(unsigned char*) "NULL",4))
+        else if (my_b_write(cache,(unsigned char*) "NULL",4))
           goto err;
       }
       else
@@ -1343,16 +1382,16 @@ bool select_export::send_data(List<Item> &items)
                           is_ambiguous_field_sep) ?
               field_sep_char : escape_char;
             tmp_buff[1]= *pos ? *pos : '0';
-            if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
-                my_b_write(&cache,(unsigned char*) tmp_buff,2))
+            if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
+                my_b_write(cache,(unsigned char*) tmp_buff,2))
               goto err;
             start=pos+1;
           }
         }
-        if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
+        if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)))
           goto err;
       }
-      else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))
+      else if (my_b_write(cache,(unsigned char*) res->ptr(),used_length))
         goto err;
     }
     if (fixed_row_size)
@@ -1368,27 +1407,27 @@ bool select_export::send_data(List<Item> &items)
         uint32_t length=item->max_length-used_length;
         for (; length > sizeof(space) ; length-=sizeof(space))
         {
-          if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
+          if (my_b_write(cache,(unsigned char*) space,sizeof(space)))
             goto err;
         }
-        if (my_b_write(&cache,(unsigned char*) space,length))
+        if (my_b_write(cache,(unsigned char*) space,length))
           goto err;
       }
     }
     if (res && enclosed)
     {
-      if (my_b_write(&cache, (unsigned char*) exchange->enclosed->ptr(),
+      if (my_b_write(cache, (unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
         goto err;
     }
     if (--items_left)
     {
-      if (my_b_write(&cache, (unsigned char*) exchange->field_term->ptr(),
+      if (my_b_write(cache, (unsigned char*) exchange->field_term->ptr(),
                      field_term_length))
         goto err;
     }
   }
-  if (my_b_write(&cache,(unsigned char*) exchange->line_term->ptr(),
+  if (my_b_write(cache,(unsigned char*) exchange->line_term->ptr(),
                  exchange->line_term->length()))
     goto err;
   return(0);
@@ -1406,7 +1445,7 @@ int
 select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 {
   unit= u;
-  return (int) ((file= create_file(session, path, exchange, &cache)) < 0);
+  return (int) ((file= create_file(session, path, exchange, cache)) < 0);
 }
 
 
@@ -1433,12 +1472,12 @@ bool select_dump::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (!res)					// If NULL
     {
-      if (my_b_write(&cache,(unsigned char*) "",1))
+      if (my_b_write(cache,(unsigned char*) "",1))
 	goto err;
     }
-    else if (my_b_write(&cache,(unsigned char*) res->ptr(),res->length()))
+    else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
     {
-      my_error(ER_ERROR_ON_WRITE, MYF(0), path, my_errno);
+      my_error(ER_ERROR_ON_WRITE, MYF(0), path, errno);
       goto err;
     }
   }
@@ -2124,7 +2163,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getPath(), my_errno);
+                  identifier.getPath(), errno);
   }
   return error;
 }
@@ -2142,7 +2181,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, my_errno);
+                  path, errno);
   }
   return error;
 }

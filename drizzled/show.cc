@@ -44,10 +44,12 @@
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
-#include <mysys/cached_directory.h>
+#include <drizzled/cached_directory.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <sys/stat.h>
 
@@ -139,8 +141,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
   if (directory.fail())
   {
-    my_errno= directory.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
+    errno= directory.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), path, errno);
 
     return true;
   }
@@ -163,8 +165,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
     if (stat(entry->filename.c_str(), &entry_stat))
     {
-      my_errno= errno;
-      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), my_errno);
+      errno= errno;
+      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), errno);
       return(true);
     }
 
@@ -703,7 +705,7 @@ class thread_info
 {
   thread_info();
 public:
-  my_thread_id thread_id;
+  uint64_t thread_id;
   time_t start_time;
   uint32_t   command;
   string user, host, db, proc_info, state_info, query;

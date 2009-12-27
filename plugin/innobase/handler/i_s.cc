@@ -25,10 +25,10 @@ Created July 18, 2007 Vasil Dimov
 
 #include "config.h"
 #include <drizzled/error.h>
-#include <mystrings/m_ctype.h>
-#include <mysys/my_sys.h>
-#include <mysys/hash.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/my_sys.h"
+#include <drizzled/my_hash.h>
+#include "drizzled/my_error.h"
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>

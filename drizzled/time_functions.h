@@ -21,7 +21,7 @@
 #define DRIZZLED_TIME_FUNCTIONS_H
 
 #include "drizzled/sql_error.h"
-#include "mysys/drizzle_time.h"
+#include "drizzled/my_time.h"
 
 typedef struct st_drizzle_time DRIZZLE_TIME;
 
