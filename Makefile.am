@@ -52,7 +52,8 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
 			.plugin.scan \
-			config/bzr_revinfo
+			config/bzr_revinfo \
+			config/top.h
 
 MAINTAINERCLEANFILES=	autom4te.cache
 
