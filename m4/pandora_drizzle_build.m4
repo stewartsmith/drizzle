@@ -77,7 +77,9 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 
 #include "config/top.h"
 ])
+  mkdir -p config
   cat > config/top.h.stamp <<EOF_CONFIG_TOP
+
 #if defined(i386) && !defined(__i386__)
 #define __i386__
 #endif
@@ -86,9 +88,9 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 # undef _FILE_OFFSET_BITS
 #endif
 EOF_CONFIG_TOP
-
   diff config/top.h.stamp config/top.h >/dev/null 2>&1 || mv config/top.h.stamp config/top.h
   rm -f config/top.h.stamp
+
 
   AH_BOTTOM([
 #if defined(__cplusplus)
