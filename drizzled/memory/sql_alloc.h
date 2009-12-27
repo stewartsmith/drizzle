@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_ALLOC_H
-#define DRIZZLED_SQL_ALLOC_H
+#ifndef DRIZZLED_MEMORY_SQL_ALLOC_H
+#define DRIZZLED_MEMORY_SQL_ALLOC_H
 
 #include <unistd.h>
 #include "drizzled/memory/root.h"
@@ -63,4 +63,4 @@ public:
 }
 }
 
-#endif /* DRIZZLED_SQL_ALLOC_H */
+#endif /* DRIZZLED_MEMORY_SQL_ALLOC_H */
