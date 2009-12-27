@@ -1143,8 +1143,8 @@ int mysql_prepare_create_table(Session *session,
     return(true);
   }
 
-  (*key_info_buffer)= key_info= (KEY*) sql_calloc(sizeof(KEY) * (*key_count));
-  key_part_info=(KEY_PART_INFO*) sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
+  (*key_info_buffer)= key_info= (KEY*) memory::sql_calloc(sizeof(KEY) * (*key_count));
+  key_part_info=(KEY_PART_INFO*) memory::sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
@@ -1822,7 +1822,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
     *buff_end= '_';
     int10_to_str(i, buff_end+1, 10);
     if (!check_if_keyname_exists(buff,start,end))
-      return sql_strdup(buff);
+      return memory::sql_strdup(buff);
   }
   return (char*) "not_specified";		// Should never happen
 }

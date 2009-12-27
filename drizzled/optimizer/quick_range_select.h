@@ -99,13 +99,13 @@ public:
 
   uint32_t mrr_flags; /**< Flags to be used with MRR interface */
 
-  MEM_ROOT alloc;
+  drizzled::memory::Root alloc;
 
   QuickRangeSelect(Session *session,
                      Table *table,
                      uint32_t index_arg,
                      bool no_alloc,
-                     MEM_ROOT *parent_alloc,
+                     drizzled::memory::Root *parent_alloc,
                      bool *create_err);
 
   ~QuickRangeSelect();
@@ -247,7 +247,7 @@ private:
                                             SEL_ARG *key_tree,
                                             uint32_t mrr_flags,
                                             uint32_t mrr_buf_size,
-                                            MEM_ROOT *alloc);
+                                            drizzled::memory::Root *alloc);
   friend class QuickSelectDescending;
 
   friend class QuickIndexMergeSelect;

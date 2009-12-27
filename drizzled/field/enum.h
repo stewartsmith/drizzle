@@ -55,7 +55,7 @@ public:
   {
     flags|= ENUM_FLAG;
   }
-  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
+  Field *new_field(drizzled::memory::Root *root, Table *new_table, bool keep_type);
   enum ha_base_keytype key_type() const;
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
   int  store(double nr);

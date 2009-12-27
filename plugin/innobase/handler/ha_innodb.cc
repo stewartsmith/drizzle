@@ -322,7 +322,7 @@ public:
   	XID	*xid);	/* in: X/Open XA transaction identification */
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_innobase(*this, table);
   }

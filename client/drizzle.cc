@@ -135,10 +135,6 @@ typedef Function drizzle_compentry_func_t;
 
 
 
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
-
-
 #if !defined(HAVE_VIDATTR)
 #undef vidattr
 #define vidattr(A) {}      // Can't get this to work

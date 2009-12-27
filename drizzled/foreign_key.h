@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FOREIGN_KEY_H
 #define DRIZZLED_FOREIGN_KEY_H
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/key.h"
 #include "drizzled/key_part_spec.h"
 #include "drizzled/sql_list.h"
@@ -30,7 +30,7 @@
 class Item;
 class Table_ident;
 
-typedef struct st_mem_root MEM_ROOT;
+namespace drizzled { namespace memory { class Root; } }
 
 class Foreign_key: public Key 
 {
@@ -76,7 +76,7 @@ public:
    * If out of memory, a partial copy is returned and an error is set
    * in Session.
    */
-  Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root);
+  Foreign_key(const Foreign_key &rhs, drizzled::memory::Root *mem_root);
 
 
   /**
@@ -84,7 +84,7 @@ public:
    * 
    * @see comment for Key_part_spec::clone
    */
-  virtual Key *clone(MEM_ROOT *mem_root) const
+  virtual Key *clone(drizzled::memory::Root *mem_root) const
   {
     return new (mem_root) Foreign_key(*this, mem_root);
   }

@@ -124,7 +124,7 @@ public:
     tina_open_tables()
   {}
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_tina(*this, table);
   }
@@ -695,7 +695,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   int eoln_len;
   int error;
 
-  free_root(&blobroot, MYF(MY_MARK_BLOCKS_FREE));
+  free_root(&blobroot, MYF(drizzled::memory::MARK_BLOCKS_FREE));
 
   /*
     We do not read further then local_saved_data_file_length in order
@@ -1118,7 +1118,7 @@ int ha_tina::rnd_init(bool)
   records_is_known= 0;
   chain_ptr= chain;
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE, 0);
+  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }

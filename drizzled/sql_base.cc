@@ -136,7 +136,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 {
   TableShare *share, *old_share= table->s;
   char *key_buff;
-  MEM_ROOT *mem_root= &table->mem_root;
+  memory::Root *mem_root= &table->mem_root;
 
   assert(table->db_stat);
 

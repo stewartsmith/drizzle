@@ -38,7 +38,7 @@ class ha_heap: public Cursor
 public:
   ha_heap(drizzled::plugin::StorageEngine &engine, TableShare &table);
   ~ha_heap() {}
-  Cursor *clone(MEM_ROOT *mem_root);
+  Cursor *clone(drizzled::memory::Root *mem_root);
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;

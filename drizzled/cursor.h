@@ -161,7 +161,7 @@ inline key_part_map make_prev_keypart_map(T a)
   must be set to 0.
 */
 
-class Cursor :public Sql_alloc
+class Cursor :public drizzled::memory::SqlAlloc
 {
 protected:
   TableShare *table_share;   /* The table definition */
@@ -238,7 +238,7 @@ public:
 
   Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg);
   virtual ~Cursor(void);
-  virtual Cursor *clone(MEM_ROOT *mem_root);
+  virtual Cursor *clone(drizzled::memory::Root *mem_root);
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 

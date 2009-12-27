@@ -110,7 +110,7 @@ static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length)
 {
-  MEM_ROOT mem_root;
+  memory::Root mem_root;
   TableShare *share;
   char *key_buff, *path_buff;
   char path[FN_REFLEN];
@@ -119,7 +119,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
                                     table_list->table_name, false);
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
@@ -1663,7 +1663,7 @@ void Table::resetTable(Session *session,
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 
@@ -1754,7 +1754,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
@@ -2351,7 +2351,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  MEM_ROOT *mem_root_save, own_root;
+  memory::Root *mem_root_save, own_root;
   Table *table;
   TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
@@ -2425,7 +2425,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
 
-  init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
                         &table, sizeof(*table),
@@ -3290,7 +3290,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
 void Table::free_tmp_table(Session *session)
 {
-  MEM_ROOT own_root= mem_root;
+  memory::Root own_root= mem_root;
   const char *save_proc_info;
 
   save_proc_info=session->get_proc_info();
@@ -3615,7 +3615,7 @@ Table::Table()
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 

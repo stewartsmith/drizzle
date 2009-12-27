@@ -20,6 +20,7 @@
 #include "drizzled/charset_info.h"
 #include <stdio.h>
 
+using namespace drizzled;
 
 static const char field_separator=',';
 
@@ -188,7 +189,7 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
 
   SYNOPSIS
     copy_typelib()
-    root	pointer to a MEM_ROOT object for allocations
+    root	pointer to a memory::Root object for allocations
     from	pointer to a source TYPELIB structure
 
   RETURN
@@ -196,7 +197,7 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
     NULL otherwise
 */
 
-TYPELIB *copy_typelib(MEM_ROOT *root, TYPELIB *from)
+TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
 {
   TYPELIB *to;
   uint32_t i;

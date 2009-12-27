@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_FIELD_ITERATOR_H
 #define DRIZZLED_FIELD_ITERATOR_H
 
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 #include <drizzled/sql_list.h>
 #include <drizzled/natural_join_column.h>
 
@@ -32,7 +32,7 @@ class TableList;
   Iterator over the fields of a generic table reference.
 */
 
-class Field_iterator: public Sql_alloc
+class Field_iterator: public drizzled::memory::SqlAlloc
 {
 public:
   Field_iterator() {}                         /* Remove gcc warning */

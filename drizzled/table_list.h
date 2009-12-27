@@ -262,7 +262,7 @@ public:
    * @retval
    *  true - out of memory
    */
-  bool set_insert_values(MEM_ROOT *mem_root);
+  bool set_insert_values(drizzled::memory::Root *mem_root);
   /**
    * Find underlying base tables (TableList) which represent given
    * table_to_find (Table)

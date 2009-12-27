@@ -38,7 +38,9 @@
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
 
-extern drizzled::plugin::StorageEngine *myisam_engine;
+using namespace drizzled;
+
+extern plugin::StorageEngine *myisam_engine;
 
 inline Item * and_items(Item* cond, Item *item)
 {
@@ -564,7 +566,7 @@ void Item_singlerow_subselect::fix_length_and_dec()
   }
   else
   {
-    if (!(row= (Item_cache**) sql_alloc(sizeof(Item_cache*)*max_columns)))
+    if (!(row= (Item_cache**) memory::sql_alloc(sizeof(Item_cache*)*max_columns)))
       return;
     engine->fix_length_and_dec(row);
     value= *row;

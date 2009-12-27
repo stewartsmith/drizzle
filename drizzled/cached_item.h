@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_CACHED_ITEM_H
 #define DRIZZLED_CACHED_ITEM_H
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/sql_string.h"
 #include "drizzled/my_decimal.h"
 
@@ -28,7 +28,7 @@ class Item;
 class Session;
 class Field;
 
-class Cached_item :public Sql_alloc
+class Cached_item :public drizzled::memory::SqlAlloc
 {
 public:
   bool null_value;

@@ -49,6 +49,7 @@
 #include <algorithm>
 
 
+using namespace drizzled;
 using namespace std;
 
 const char *my_defaults_file=0;
@@ -74,7 +75,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
 
 struct handle_option_ctx
 {
-   MEM_ROOT *alloc;
+   memory::Root *alloc;
    DYNAMIC_ARRAY *args;
    TYPELIB *group;
 };
@@ -385,12 +386,12 @@ int load_defaults(const char *conf_file, const char **groups,
   bool found_print_defaults= 0;
   uint32_t args_used= 0;
   int error= 0;
-  MEM_ROOT alloc;
+  memory::Root alloc;
   char *ptr,**res;
   struct handle_option_ctx ctx;
 
   init_default_directories();
-  init_alloc_root(&alloc,512,0);
+  init_alloc_root(&alloc,512);
   /*
     Check if the user doesn't want any default option processing
     --no-defaults is always the first option
@@ -410,7 +411,7 @@ int load_defaults(const char *conf_file, const char **groups,
     res[i-1]=0;					/* End pointer */
     (*argc)--;
     *argv=res;
-    *(MEM_ROOT*) ptr= alloc;			/* Save alloc root for free */
+    *(memory::Root*) ptr= alloc;			/* Save alloc root for free */
     return(0);
   }
 
@@ -462,7 +463,7 @@ int load_defaults(const char *conf_file, const char **groups,
 
   (*argc)+=int(args.elements);
   *argv= static_cast<char**>(res);
-  *(MEM_ROOT*) ptr= alloc;			/* Save alloc root for free */
+  *(memory::Root*) ptr= alloc;			/* Save alloc root for free */
   delete_dynamic(&args);
   if (found_print_defaults)
   {
@@ -484,7 +485,7 @@ int load_defaults(const char *conf_file, const char **groups,
 
 void free_defaults(char **argv)
 {
-  MEM_ROOT ptr;
+  memory::Root ptr;
   memcpy(&ptr, (char*) argv - sizeof(ptr), sizeof(ptr));
   free_root(&ptr,MYF(0));
 }

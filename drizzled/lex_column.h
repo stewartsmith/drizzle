@@ -23,7 +23,7 @@
 
 
 
-class Lex_Column : public Sql_alloc
+class Lex_Column : public drizzled::memory::SqlAlloc
 {
 public:
   String column;

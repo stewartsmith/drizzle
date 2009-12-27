@@ -284,7 +284,7 @@ uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
  * The QuickSelectInterface member variable is the implementor
  * of the SELECT execution.
  */
-class SqlSelect : public Sql_alloc 
+class SqlSelect : public drizzled::memory::SqlAlloc 
 {
  public:
   QuickSelectInterface *quick; /**< If quick-select used */
@@ -329,7 +329,7 @@ QuickRangeSelect *get_quick_select_for_ref(Session *session,
   NOTES
     The caller must call QUICK_SELECT::init for returned quick select.
 
-    CAUTION! This function may change session->mem_root to a MEM_ROOT which will be
+    CAUTION! This function may change session->mem_root to a drizzled::memory::Root which will be
     deallocated when the returned quick select is deleted.
 
   RETURN
@@ -341,7 +341,7 @@ QuickRangeSelect *get_quick_select(Parameter *param,
                                    SEL_ARG *key_tree, 
                                    uint32_t mrr_flags,
                                    uint32_t mrr_buf_size, 
-                                   MEM_ROOT *alloc);
+                                   drizzled::memory::Root *alloc);
 
 uint32_t get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
