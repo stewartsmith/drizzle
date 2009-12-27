@@ -25,17 +25,17 @@
 
 class Session;
 
-void init_sql_alloc(drizzled::memory::Root *root, size_t block_size, size_t pre_alloc_size);
+namespace drizzled
+{
+namespace memory
+{
+
+void init_sql_alloc(Root *root, size_t block_size, size_t pre_alloc_size);
 void *sql_alloc(size_t);
 void *sql_calloc(size_t);
 char *sql_strdup(const char *str);
 char *sql_strmake(const char *str, size_t len);
 void *sql_memdup(const void * ptr, size_t size);
-
-namespace drizzled
-{
-namespace memory
-{
 
 class SqlAlloc
 {
@@ -53,6 +53,9 @@ public:
   static void operator delete[](void *, size_t)
   {  }
   SqlAlloc() {}
+  /**
+   * @TODO: Make this virtual... but List<> must be fixed first
+   */
   ~SqlAlloc() {}
 
 };

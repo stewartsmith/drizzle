@@ -119,7 +119,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
                                     table_list->table_name, false);
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
@@ -1663,7 +1663,7 @@ void Table::resetTable(Session *session,
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 
@@ -2425,7 +2425,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
 
-  init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
                         &table, sizeof(*table),
@@ -3615,7 +3615,7 @@ Table::Table()
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 

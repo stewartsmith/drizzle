@@ -636,7 +636,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    file(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
+    file(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
     free_cond(false)
 {
   quick_keys.reset();
@@ -948,7 +948,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     param.force_default_mrr= ordered_output;
 
     session->no_errors=1;				// Don't warn about NULL
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
     if (!(param.key_parts= (KEY_PART*) alloc_root(&alloc,
                                                   sizeof(KEY_PART)*
                                                   head->s->key_parts)) ||

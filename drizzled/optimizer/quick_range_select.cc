@@ -69,7 +69,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   if (! no_alloc && ! parent_alloc)
   {
     // Allocates everything through the internal memroot
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
     session->mem_root= &alloc;
   }
   else
@@ -82,12 +82,12 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   save_read_set= head->read_set;
   save_write_set= head->write_set;
 
-  /* Allocate a bitmap for used columns. Using sql_alloc instead of malloc
+  /* Allocate a bitmap for used columns. Using memory::sql_alloc instead of malloc
      simply as a "fix" to the MySQL 6.0 code that also free()s it at the
      same time we destroy the mem_root.
    */
 
-  bitmap= reinterpret_cast<my_bitmap_map*>(sql_alloc(head->s->column_bitmap_size));
+  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->s->column_bitmap_size));
   if (! bitmap)
   {
     column_bitmap.setBitmap(NULL);

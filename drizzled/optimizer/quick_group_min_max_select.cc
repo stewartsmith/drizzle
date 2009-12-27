@@ -82,7 +82,7 @@ QuickGroupMinMaxSelect(Table *table,
   assert(! parent_alloc);
   if (! parent_alloc)
   {
-    init_sql_alloc(&alloc, join->session->variables.range_alloc_block_size, 0);
+    memory::init_sql_alloc(&alloc, join->session->variables.range_alloc_block_size, 0);
     join->session->mem_root= &alloc;
   }
   else

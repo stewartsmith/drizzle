@@ -556,7 +556,7 @@ public:
     {
       memset(this, 0, sizeof(*this));
       xid_state.xid.null();
-      init_sql_alloc(&mem_root, drizzled::memory::ROOT_MIN_BLOCK_SIZE, 0);
+      drizzled::memory::init_sql_alloc(&mem_root, drizzled::memory::ROOT_MIN_BLOCK_SIZE, 0);
     }
   } transaction;
   Field *dup_field;

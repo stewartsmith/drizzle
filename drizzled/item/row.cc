@@ -19,6 +19,8 @@
 
 #include <drizzled/item/row.h>
 
+using namespace drizzled;
+
 /**
   Row items used for comparing rows and IN operations on rows:
 
@@ -39,7 +41,7 @@ Item_row::Item_row(List<Item> &arg):
 
   //TODO: think placing 2-3 component items in item (as it done for function)
   if ((arg_count= arg.elements))
-    items= (Item**) sql_alloc(sizeof(Item*)*arg_count);
+    items= (Item**) memory::sql_alloc(sizeof(Item*)*arg_count);
   else
     items= 0;
   List_iterator<Item> li(arg);

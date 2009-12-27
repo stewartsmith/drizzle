@@ -5516,7 +5516,7 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD 
   for (order_st *tmp = order; tmp; tmp=tmp->next)
     count++;
   if (!sortorder)
-    sortorder= (SORT_FIELD*) sql_alloc(sizeof(SORT_FIELD) *
+    sortorder= (SORT_FIELD*) memory::sql_alloc(sizeof(SORT_FIELD) *
                                        (max(count, *length) + 1));
   pos= sort= sortorder;
 
@@ -6151,7 +6151,7 @@ bool setup_copy_fields(Session *session,
                 another extra byte to not get warnings from purify in
                 Field_varstring::val_int
               */
-        if (!(tmp= (unsigned char*) sql_alloc(field->pack_length()+2)))
+        if (!(tmp= (unsigned char*) memory::sql_alloc(field->pack_length()+2)))
           goto err;
         if (copy)
         {

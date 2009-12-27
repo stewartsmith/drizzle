@@ -405,7 +405,7 @@ public:
             const char *new_path)
   {
     memset(this, 0, sizeof(TableShare));
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    drizzled::memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              INTERNAL_TMP_TABLE;
     db.str=                 (char*) key;

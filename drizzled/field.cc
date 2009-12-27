@@ -367,7 +367,7 @@ bool test_if_important_data(const CHARSET_INFO * const cs,
 
 void *Field::operator new(size_t size)
 {
-  return sql_alloc(size);
+  return memory::sql_alloc(size);
 }
 
 void *Field::operator new(size_t size, memory::Root *mem_root)

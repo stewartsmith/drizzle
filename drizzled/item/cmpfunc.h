@@ -774,7 +774,7 @@ public:
   in_vector() {}
   in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func,
   	    const CHARSET_INFO * const cmp_coll)
-    :base((char*) sql_calloc(elements*element_length)),
+    :base((char*) drizzled::memory::sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
      count(elements), used_count(elements) {}
   virtual ~in_vector() {}

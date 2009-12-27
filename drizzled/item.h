@@ -162,7 +162,7 @@ public:
    *
    * @note
    *
-   * Alloc & destruct is done as start of select using sql_alloc
+   * Alloc & destruct is done as start of select using memory::sql_alloc
    */
   Item();
   /**

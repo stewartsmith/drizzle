@@ -246,7 +246,7 @@ public:
 
   static void *operator new(size_t size)
   {
-    return sql_alloc(size);
+    return drizzled::memory::sql_alloc(size);
   }
   static void *operator new(size_t size, drizzled::memory::Root *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
