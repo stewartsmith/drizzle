@@ -254,7 +254,7 @@ int optimizer::SEL_ARG::store_max_key(KEY_PART *key, unsigned char **range_key, 
 
 optimizer::SEL_ARG::SEL_ARG(optimizer::SEL_ARG &arg)
   :
-    Sql_alloc()
+    drizzled::memory::SqlAlloc()
 {
   type= arg.type;
   min_flag= arg.min_flag;

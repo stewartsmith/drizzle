@@ -27,7 +27,7 @@
     This structure is copied using memcpy as a part of JOIN.
 */
 
-class Tmp_Table_Param :public Sql_alloc
+class Tmp_Table_Param :public drizzled::memory::SqlAlloc
 {
 private:
   /* Prevent use of these (not safe because of lists and copy_field) */

@@ -18,13 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/hex_string.h>
 
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 static char _dig_vec_lower[] =
@@ -40,7 +40,7 @@ inline uint32_t char_val(char X)
 Item_hex_string::Item_hex_string(const char *str, uint32_t str_length)
 {
   max_length=(str_length+1)/2;
-  char *ptr=(char*) sql_alloc(max_length+1);
+  char *ptr=(char*) memory::sql_alloc(max_length+1);
   if (!ptr)
     return;
   str_value.set(ptr,max_length,&my_charset_bin);

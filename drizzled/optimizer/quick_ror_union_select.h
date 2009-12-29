@@ -113,7 +113,7 @@ public:
 
   /** Priority queue for merge operation */
   std::priority_queue<QuickSelectInterface *, std::vector<QuickSelectInterface *>, compare_functor > *queue;
-  MEM_ROOT alloc; /**< Memory pool for this and merged quick selects data. */
+  drizzled::memory::Root alloc; /**< Memory pool for this and merged quick selects data. */
 
   Session *session; /**< current thread */
   unsigned char *cur_rowid; /**< buffer used in get_next() */

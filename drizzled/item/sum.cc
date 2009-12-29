@@ -40,10 +40,11 @@
 
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 extern my_decimal decimal_zero;
-extern drizzled::plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *heap_engine;
 
 /**
   Prepare an aggregate function item for checking context conditions.
@@ -377,7 +378,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
 Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   forced_const(false)
 {
-  if ((args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
+  if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
     List_iterator_fast<Item> li(list);
@@ -2985,7 +2986,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
            (for possible order items in temporare tables)
     order - arg_count_order
   */
-  if (!(args= (Item**) sql_alloc(sizeof(Item*) * arg_count +
+  if (!(args= (Item**) memory::sql_alloc(sizeof(Item*) * arg_count +
                                  sizeof(order_st*)*arg_count_order)))
     return;
 

@@ -25,6 +25,7 @@
 
 #include "drizzled/sql_string.h"
 
+using namespace drizzled;
 using namespace std;
 
 /*****************************************************************************
@@ -50,7 +51,6 @@ String::String(uint32_t length_arg)
   (void) real_alloc(length_arg);
 }
 
-
 String::String(const char *str, const CHARSET_INFO * const cs)
   : Ptr(const_cast<char *>(str)),
     str_length(static_cast<uint32_t>(strlen(str))),
@@ -58,6 +58,7 @@ String::String(const char *str, const CHARSET_INFO * const cs)
     alloced(false),
     str_charset(cs)
 { }
+
 
 String::String(const char *str, uint32_t len, const CHARSET_INFO * const cs)
   : Ptr(const_cast<char *>(str)),
@@ -86,7 +87,7 @@ String::String(const String &str)
 { }
 
 
-void *String::operator new(size_t size, MEM_ROOT *mem_root)
+void *String::operator new(size_t size, memory::Root *mem_root)
 {
   return alloc_root(mem_root, static_cast<uint32_t>(size));
 }

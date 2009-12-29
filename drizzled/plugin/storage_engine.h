@@ -340,7 +340,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual Cursor *create(TableShare &, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare &, drizzled::memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -435,7 +435,7 @@ public:
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
-  Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
+  Cursor *getCursor(TableShare &share, drizzled::memory::Root *alloc);
 
   uint32_t max_record_length() const
   { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }

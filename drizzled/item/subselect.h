@@ -402,7 +402,7 @@ public:
 };
 
 
-class subselect_engine: public Sql_alloc
+class subselect_engine: public drizzled::memory::SqlAlloc
 {
 protected:
   select_result_interceptor *result; /* results storage class */

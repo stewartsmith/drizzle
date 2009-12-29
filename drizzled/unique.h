@@ -32,7 +32,7 @@
 
 typedef struct st_io_cache IO_CACHE;
 
-class Unique :public Sql_alloc
+class Unique :public drizzled::memory::SqlAlloc
 {
   DYNAMIC_ARRAY file_ptrs;
   ulong max_elements;

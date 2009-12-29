@@ -61,7 +61,7 @@ public:
   }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_blackhole(*this, table);
   }

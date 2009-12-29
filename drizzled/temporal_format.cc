@@ -41,8 +41,7 @@
 namespace drizzled
 {
 
-  TemporalFormat::TemporalFormat(const char *pattern)
-  :
+TemporalFormat::TemporalFormat(const char *pattern) :
   _pattern(pattern)
 , _error_offset(0)
 , _error(NULL)
@@ -55,9 +54,6 @@ namespace drizzled
 , _usecond_part_index(0)
 , _nsecond_part_index(0)
 {
-  /* Make sure we've got no junk in the match_vector. */
-  memset(_match_vector, 0, sizeof(_match_vector));
-
   /* Compile our regular expression */
   _re= pcre_compile(pattern
                     , 0 /* Default options */
@@ -71,7 +67,12 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
 {
   if (! is_valid()) 
     return false;
+
+  int32_t match_vector[OUT_VECTOR_SIZE]; /**< Stores match substring indexes */
   
+  /* Make sure we've got no junk in the match_vector. */
+  memset(match_vector, 0, sizeof(match_vector));
+
   /* Simply check the subject against the compiled regular expression */
   int32_t result= pcre_exec(_re
                             , NULL /* No extra data */
@@ -79,7 +80,7 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
                             , data_len
                             , 0 /* Start at offset 0 of subject...*/
                             , 0 /* Default options */
-                            , _match_vector
+                            , match_vector
                             , OUT_VECTOR_SIZE
                             );
   if (result < 0)
@@ -119,46 +120,46 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
    */
   if (_year_part_index > 1)
   {
-    size_t year_start= _match_vector[_year_part_index];
-    size_t year_len= _match_vector[_year_part_index + 1] - _match_vector[_year_part_index];
+    size_t year_start= match_vector[_year_part_index];
+    size_t year_len= match_vector[_year_part_index + 1] - match_vector[_year_part_index];
     to->_years= atoi(copy_data.substr(year_start, year_len).c_str());
     if (year_len == 2)
       to->_years+= (to->_years >= DRIZZLE_YY_PART_YEAR ? 1900 : 2000);
   }
   if (_month_part_index > 1)
   {
-    size_t month_start= _match_vector[_month_part_index];
-    size_t month_len= _match_vector[_month_part_index + 1] - _match_vector[_month_part_index];
+    size_t month_start= match_vector[_month_part_index];
+    size_t month_len= match_vector[_month_part_index + 1] - match_vector[_month_part_index];
     to->_months= atoi(copy_data.substr(month_start, month_len).c_str());
   }
   if (_day_part_index > 1)
   {
-    size_t day_start= _match_vector[_day_part_index];
-    size_t day_len= _match_vector[_day_part_index + 1] - _match_vector[_day_part_index];
+    size_t day_start= match_vector[_day_part_index];
+    size_t day_len= match_vector[_day_part_index + 1] - match_vector[_day_part_index];
     to->_days= atoi(copy_data.substr(day_start, day_len).c_str());
   }
   if (_hour_part_index > 1)
   {
-    size_t hour_start= _match_vector[_hour_part_index];
-    size_t hour_len= _match_vector[_hour_part_index + 1] - _match_vector[_hour_part_index];
+    size_t hour_start= match_vector[_hour_part_index];
+    size_t hour_len= match_vector[_hour_part_index + 1] - match_vector[_hour_part_index];
     to->_hours= atoi(copy_data.substr(hour_start, hour_len).c_str());
   }
   if (_minute_part_index > 1)
   {
-    size_t minute_start= _match_vector[_minute_part_index];
-    size_t minute_len= _match_vector[_minute_part_index + 1] - _match_vector[_minute_part_index];
+    size_t minute_start= match_vector[_minute_part_index];
+    size_t minute_len= match_vector[_minute_part_index + 1] - match_vector[_minute_part_index];
     to->_minutes= atoi(copy_data.substr(minute_start, minute_len).c_str());
   }
   if (_second_part_index > 1)
   {
-    size_t second_start= _match_vector[_second_part_index];
-    size_t second_len= _match_vector[_second_part_index + 1] - _match_vector[_second_part_index];
+    size_t second_start= match_vector[_second_part_index];
+    size_t second_len= match_vector[_second_part_index + 1] - match_vector[_second_part_index];
     to->_seconds= atoi(copy_data.substr(second_start, second_len).c_str());
   }
   if (_usecond_part_index > 1)
   {
-    size_t usecond_start= _match_vector[_usecond_part_index];
-    size_t usecond_len= _match_vector[_usecond_part_index + 1] - _match_vector[_usecond_part_index];
+    size_t usecond_start= match_vector[_usecond_part_index];
+    size_t usecond_len= match_vector[_usecond_part_index + 1] - match_vector[_usecond_part_index];
     /* 
      * For microseconds, which are millionth of 1 second, 
      * we must ensure that we produce a correct result, 
@@ -176,8 +177,8 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
   }
   if (_nsecond_part_index > 1)
   {
-    size_t nsecond_start= _match_vector[_nsecond_part_index];
-    size_t nsecond_len= _match_vector[_nsecond_part_index + 1] - _match_vector[_nsecond_part_index];
+    size_t nsecond_start= match_vector[_nsecond_part_index];
+    size_t nsecond_len= match_vector[_nsecond_part_index + 1] - match_vector[_nsecond_part_index];
     /* 
      * For nanoseconds, which are 1 billionth of a second, 
      * we must ensure that we produce a correct result, 

@@ -49,7 +49,6 @@ protected:
   pcre *_re; /**< The compiled regular expression struct */
   int32_t _error_offset; /**< Any error encountered during compilation or matching */
   const char *_error;
-  int32_t _match_vector[OUT_VECTOR_SIZE]; /**< Stores match substring indexes */
   /* Index of the pattern which is a specific temporal part */
   uint32_t _year_part_index;
   uint32_t _month_part_index;

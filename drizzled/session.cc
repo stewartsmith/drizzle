@@ -218,7 +218,7 @@ Session::Session(plugin::Client *client_arg)
     the destructor works OK in case of an error. The main_mem_root
     will be re-initialized in init_for_queries().
   */
-  init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
@@ -278,7 +278,7 @@ Session::Session(plugin::Client *client_arg)
   memset(&status_var, 0, sizeof(status_var));
 
   /* Initialize sub structures */
-  init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
+  memory::init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
   hash_init(&user_vars, system_charset_info, USER_VARS_HASH_SIZE, 0, 0,
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
@@ -293,7 +293,7 @@ Session::Session(plugin::Client *client_arg)
 void Session::free_items()
 {
   Item *next;
-  /* This works because items are allocated with sql_alloc() */
+  /* This works because items are allocated with memory::sql_alloc() */
   for (; free_list; free_list= next)
   {
     next= free_list->next;
@@ -524,7 +524,7 @@ void Session::awake(Session::killed_state state_to_set)
 
 /*
   Remember the location of thread info, the structure needed for
-  sql_alloc() and the structure for the net buffer
+  memory::sql_alloc() and the structure for the net buffer
 */
 bool Session::storeGlobals()
 {
@@ -1110,7 +1110,7 @@ void select_to_file::cleanup()
 select_to_file::select_to_file(file_exchange *ex)
   : exchange(ex),
     file(-1),
-    cache(static_cast<IO_CACHE *>(sql_calloc(sizeof(IO_CACHE)))),
+    cache(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
     row_count(0L)
 {
   path[0]=0;

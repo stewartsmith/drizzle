@@ -32,7 +32,7 @@
 # endif
 #endif
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 
 class String;
 typedef struct st_drizzle_time DRIZZLE_TIME;
@@ -43,7 +43,7 @@ typedef struct st_drizzle_time DRIZZLE_TIME;
   Actual time zones which are specified by DB, or via offset
   or use system functions are its descendants.
 */
-class Time_zone: public Sql_alloc
+class Time_zone: public drizzled::memory::SqlAlloc
 {
 public:
   Time_zone() {}                              /* Remove gcc warning */
@@ -69,7 +69,7 @@ public:
 
   /**
     We need this only for surpressing warnings, objects of this type are
-    allocated on MEM_ROOT and should not require destruction.
+    allocated on drizzled::memory::Root and should not require destruction.
   */
   virtual ~Time_zone() {};
 };

@@ -18,7 +18,6 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
@@ -28,6 +27,7 @@
 #include <drizzled/item/default_value.h>
 #include <drizzled/field/null.h>
 
+using namespace drizzled;
 
 bool Item_insert_value::eq(const Item *item, bool binary_cmp) const
 {
@@ -70,7 +70,7 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
 
   if (field_arg->field->table->insert_values)
   {
-    Field *def_field= (Field*) sql_alloc(field_arg->field->size_of());
+    Field *def_field= (Field*) memory::sql_alloc(field_arg->field->size_of());
     if (!def_field)
       return true;
     memcpy(def_field, field_arg->field, field_arg->field->size_of());

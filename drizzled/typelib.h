@@ -36,7 +36,7 @@ extern int find_type_or_exit(char *x, TYPELIB *typelib,
 extern int find_type(char *x, const TYPELIB *typelib, unsigned int full_name);
 extern void make_type(char *to,unsigned int nr,TYPELIB *typelib);
 extern const char *get_type(TYPELIB *typelib,unsigned int nr);
-extern TYPELIB *copy_typelib(MEM_ROOT *root, TYPELIB *from);
+extern TYPELIB *copy_typelib(drizzled::memory::Root *root, TYPELIB *from);
 
 #ifdef __cplusplus
   }

@@ -705,7 +705,7 @@ class thread_info :public ilink {
 public:
   static void *operator new(size_t size)
   {
-    return (void*) sql_alloc((uint32_t) size);
+    return (void*) memory::sql_alloc((uint32_t) size);
   }
   static void operator delete(void *, size_t)
   { }

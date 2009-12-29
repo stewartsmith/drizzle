@@ -23,7 +23,7 @@
 
 class JOIN;
 
-class select_result :public Sql_alloc {
+class select_result :public drizzled::memory::SqlAlloc {
 protected:
   Session *session;
   Select_Lex_Unit *unit;

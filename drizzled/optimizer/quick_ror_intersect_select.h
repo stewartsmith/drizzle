@@ -54,7 +54,7 @@ public:
   QuickRorIntersectSelect(Session *session, 
                              Table *table,
                              bool retrieve_full_rows,
-                             MEM_ROOT *parent_alloc);
+                             drizzled::memory::Root *parent_alloc);
 
   ~QuickRorIntersectSelect();
 
@@ -159,7 +159,7 @@ public:
    */
   QuickRangeSelect *cpk_quick;
 
-  MEM_ROOT alloc; /**< Memory pool for this and merged quick selects data. */
+  drizzled::memory::Root alloc; /**< Memory pool for this and merged quick selects data. */
   Session *session; /**< Pointer to the current session */
   bool need_to_fetch_row; /**< if true, do retrieve full table records. */
   /** in top-level quick select, true if merged scans where initialized */
