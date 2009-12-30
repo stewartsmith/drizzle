@@ -391,7 +391,7 @@ public:
    * itself to the list on creation (see Item::Item() for details))
    */
   Item *free_list;
-  MEM_ROOT *mem_root; /**< Pointer to current memroot */
+  drizzled::memory::Root *mem_root; /**< Pointer to current memroot */
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -447,7 +447,7 @@ public:
   */
   static const char * const DEFAULT_WHERE;
 
-  MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
+  drizzled::memory::Root warn_root; /**< Allocation area for warnings and errors */
   drizzled::plugin::Client *client; /**< Pointer to client object */
   drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
@@ -545,18 +545,18 @@ public:
        cache (instead of full list of changed in transaction tables).
     */
     CHANGED_TableList* changed_tables;
-    MEM_ROOT mem_root; // Transaction-life memory allocation pool
+    drizzled::memory::Root mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
       changed_tables= 0;
       savepoints= 0;
-      free_root(&mem_root,MYF(MY_KEEP_PREALLOC));
+      free_root(&mem_root,MYF(drizzled::memory::KEEP_PREALLOC));
     }
     st_transactions()
     {
       memset(this, 0, sizeof(*this));
       xid_state.xid.null();
-      init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
+      drizzled::memory::init_sql_alloc(&mem_root, drizzled::memory::ROOT_MIN_BLOCK_SIZE, 0);
     }
   } transaction;
   Field *dup_field;
@@ -1270,7 +1270,7 @@ private:
     - for prepared queries, only to allocate runtime data. The parsed
     tree itself is reused between executions and thus is stored elsewhere.
   */
-  MEM_ROOT main_mem_root;
+  drizzled::memory::Root main_mem_root;
 
   /**
    * Marks all tables in the list which were used by current substatement

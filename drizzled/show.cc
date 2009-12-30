@@ -709,7 +709,9 @@ public:
   time_t start_time;
   uint32_t   command;
   string user, host, db, proc_info, state_info, query;
-  thread_info(my_thread_id thread_id_arg, time_t start_time_arg, uint32_t command_arg,
+  thread_info(uint64_t thread_id_arg,
+              time_t start_time_arg,
+              uint32_t command_arg,
               const string &user_arg,
               const string &host_arg,
               const string &db_arg,

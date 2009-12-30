@@ -30,7 +30,7 @@
 #include <drizzled/optimizer/position.h>
 #include <bitset>
 
-class JOIN :public Sql_alloc
+class JOIN :public drizzled::memory::SqlAlloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
   JOIN& operator=(const JOIN &rhs);             /**< not implemented */

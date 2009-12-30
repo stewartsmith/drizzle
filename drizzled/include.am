@@ -30,8 +30,7 @@ DTRACEFILES = drizzled/.libs/cursor.o \
 	      drizzled/statement/insert.o \
 	      drizzled/statement/insert_select.o
 
-drizzledincludedir = ${includedir}/drizzled
-nobase_dist_drizzledinclude_HEADERS = \
+nobase_dist_include_HEADERS+= \
 		drizzled/alter_column.h \
 		drizzled/alter_drop.h \
 		drizzled/alter_info.h \
@@ -256,6 +255,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/lex_symbol.h \
 		drizzled/lock.h \
 		drizzled/lookup_symbol.h \
+		drizzled/memory/sql_alloc.h \
 		drizzled/memory/multi_malloc.h \
 		drizzled/memory/root.h \
 		drizzled/my_decimal.h \
@@ -308,6 +308,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_applier.h \
 		drizzled/plugin/transaction_reader.h \
 		drizzled/plugin/transaction_replicator.h \
+		drizzled/plugin/version.h \
 		drizzled/pthread_globals.h \
 		drizzled/probes.h \
 		drizzled/qsort_cmp.h \
@@ -333,7 +334,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/session_list.h \
 		drizzled/set_var.h \
 		drizzled/show.h \
-		drizzled/sql_alloc.h \
 		drizzled/sql_base.h \
 		drizzled/sql_bitmap.h \
 		drizzled/sql_error.h \
@@ -668,7 +668,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/session_list.cc \
 		drizzled/set_var.cc \
 		drizzled/show.cc \
-		drizzled/sql_alloc.cc \
 		drizzled/sql_base.cc \
 		drizzled/sql_bitmap.cc \
 		drizzled/sql_delete.cc \
@@ -768,7 +767,8 @@ drizzled_libhandler_la_SOURCES = drizzled/cursor.cc drizzled/plugin/storage_engi
 drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc
 drizzled_libmemory_la_SOURCES= \
 		drizzled/memory/multi_malloc.cc \
-		drizzled/memory/root.cc
+		drizzled/memory/root.cc \
+		drizzled/memory/sql_alloc.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 

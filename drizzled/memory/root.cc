@@ -22,18 +22,22 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
+static const unsigned int MAX_BLOCK_TO_DROP= 4096;
+static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
+
 /*
   Initialize memory root
 
   SYNOPSIS
-    init_alloc_root()
+    memory::init_alloc_root()
       mem_root       - memory root to initialize
       block_size     - size of chunks (blocks) used for memory allocation
                        (It is external size of chunk i.e. it should include
                         memory required for internal structures, thus it
-                        should be no less than ALLOC_ROOT_MIN_BLOCK_SIZE)
-      pre_alloc_size - if non-0, then size of block that should be
-                       pre-allocated during memory root initialization.
+                        should be no less than memory::ROOT_MIN_BLOCK_SIZE)
 
   DESCRIPTION
     This function prepares memory root for further use, sets initial size of
@@ -43,12 +47,11 @@ using namespace std;
     reported as error in first alloc_root() on this memory root.
 */
 
-void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
-		     size_t )
+void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
 {
   mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
   mem_root->min_malloc= 32;
-  mem_root->block_size= block_size - ALLOC_ROOT_MIN_BLOCK_SIZE;
+  mem_root->block_size= block_size - memory::ROOT_MIN_BLOCK_SIZE;
   mem_root->error_handler= 0;
   mem_root->block_num= 4;			/* We shift this with >>2 */
   mem_root->first_block_usage= 0;
@@ -74,18 +77,18 @@ void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
     before allocation.
 */
 
-void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
-                         size_t pre_alloc_size)
+void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
+                                 size_t pre_alloc_size)
 {
   assert(alloc_root_inited(mem_root));
 
-  mem_root->block_size= block_size - ALLOC_ROOT_MIN_BLOCK_SIZE;
+  mem_root->block_size= block_size - memory::ROOT_MIN_BLOCK_SIZE;
   if (pre_alloc_size)
   {
-    size_t size= pre_alloc_size + ALIGN_SIZE(sizeof(USED_MEM));
+    size_t size= pre_alloc_size + ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     if (!mem_root->pre_alloc || mem_root->pre_alloc->size != size)
     {
-      USED_MEM *mem, **prev= &mem_root->free;
+      memory::internal::UsedMemory *mem, **prev= &mem_root->free;
       /*
         Free unused blocks, so that consequent calls
         to reset_root_defaults won't eat away memory.
@@ -99,7 +102,7 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
           mem_root->pre_alloc= mem;
           return;
         }
-        if (mem->left + ALIGN_SIZE(sizeof(USED_MEM)) == mem->size)
+        if (mem->left + ALIGN_SIZE(sizeof(memory::internal::UsedMemory)) == mem->size)
         {
           /* remove block from the list and free it */
           *prev= mem->next;
@@ -109,7 +112,7 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
           prev= &mem->next;
       }
       /* Allocate new prealloc block and add it to the end of free list */
-      if ((mem= (USED_MEM *) malloc(size)))
+      if ((mem= static_cast<memory::internal::UsedMemory *>(malloc(size))))
       {
         mem->size= size;
         mem->left= pre_alloc_size;
@@ -129,20 +132,20 @@ void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
 }
 
 
-void *alloc_root(MEM_ROOT *mem_root, size_t length)
+void *memory::alloc_root(memory::Root *mem_root, size_t length)
 {
   size_t get_size, block_size;
   unsigned char* point;
-  register USED_MEM *next= 0;
-  register USED_MEM **prev;
+  memory::internal::UsedMemory *next= NULL;
+  memory::internal::UsedMemory **prev;
   assert(alloc_root_inited(mem_root));
 
   length= ALIGN_SIZE(length);
   if ((*(prev= &mem_root->free)) != NULL)
   {
     if ((*prev)->left < length &&
-	mem_root->first_block_usage++ >= ALLOC_MAX_BLOCK_USAGE_BEFORE_DROP &&
-	(*prev)->left < ALLOC_MAX_BLOCK_TO_DROP)
+	mem_root->first_block_usage++ >= MAX_BLOCK_USAGE_BEFORE_DROP &&
+	(*prev)->left < MAX_BLOCK_TO_DROP)
     {
       next= *prev;
       *prev= next->next;			/* Remove block from list */
@@ -156,19 +159,19 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
   if (! next)
   {						/* Time to alloc new block */
     block_size= mem_root->block_size * (mem_root->block_num >> 2);
-    get_size= length+ALIGN_SIZE(sizeof(USED_MEM));
+    get_size= length+ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     get_size= max(get_size, block_size);
 
-    if (!(next = (USED_MEM*) malloc(get_size)))
+    if (!(next = static_cast<memory::internal::UsedMemory *>(malloc(get_size))))
     {
       if (mem_root->error_handler)
 	(*mem_root->error_handler)();
-      return((void*) 0);
+      return NULL;
     }
     mem_root->block_num++;
     next->next= *prev;
     next->size= get_size;
-    next->left= get_size-ALIGN_SIZE(sizeof(USED_MEM));
+    next->left= get_size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     *prev=next;
   }
 
@@ -204,7 +207,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     in case of success or NULL if out of memory.
 */
 
-void *multi_alloc_root(MEM_ROOT *root, ...)
+void *memory::multi_alloc_root(memory::Root *root, ...)
 {
   va_list args;
   char **ptr, *start, *res;
@@ -219,7 +222,7 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
   }
   va_end(args);
 
-  if (!(start= (char*) alloc_root(root, tot_length)))
+  if (!(start= (char*) memory::alloc_root(root, tot_length)))
     return(0);
 
   va_start(args, root);
@@ -238,16 +241,16 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
 
 /* Mark all data in blocks free for reusage */
 
-static inline void mark_blocks_free(MEM_ROOT* root)
+static inline void mark_blocks_free(memory::Root* root)
 {
-  register USED_MEM *next;
-  register USED_MEM **last;
+  memory::internal::UsedMemory *next;
+  memory::internal::UsedMemory **last;
 
   /* iterate through (partially) free blocks, mark them free */
   last= &root->free;
   for (next= root->free; next; next= *(last= &next->next))
   {
-    next->left= next->size - ALIGN_SIZE(sizeof(USED_MEM));
+    next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     TRASH_MEM(next);
   }
 
@@ -257,7 +260,7 @@ static inline void mark_blocks_free(MEM_ROOT* root)
   /* now go through the used blocks and mark them free */
   for (; next; next= next->next)
   {
-    next->left= next->size - ALIGN_SIZE(sizeof(USED_MEM));
+    next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     TRASH_MEM(next);
   }
 
@@ -268,7 +271,7 @@ static inline void mark_blocks_free(MEM_ROOT* root)
 
 
 /*
-  Deallocate everything used by alloc_root or just move
+  Deallocate everything used by memory::alloc_root or just move
   used blocks to free list if called with MY_USED_TO_FREE
 
   SYNOPSIS
@@ -276,8 +279,8 @@ static inline void mark_blocks_free(MEM_ROOT* root)
       root		Memory root
       MyFlags		Flags for what should be freed:
 
-        MY_MARK_BLOCKS_FREED	Don't free blocks, just mark them free
-        MY_KEEP_PREALLOC	If this is not set, then free also the
+        MARK_BLOCKS_FREED	Don't free blocks, just mark them free
+        KEEP_PREALLOC		If this is not set, then free also the
         		        preallocated block
 
   NOTES
@@ -286,16 +289,16 @@ static inline void mark_blocks_free(MEM_ROOT* root)
     It's also safe to call this multiple times with the same mem_root.
 */
 
-void free_root(MEM_ROOT *root, myf MyFlags)
+void memory::free_root(memory::Root *root, myf MyFlags)
 {
-  register USED_MEM *next,*old;
+  memory::internal::UsedMemory *next,*old;
 
-  if (MyFlags & MY_MARK_BLOCKS_FREE)
+  if (MyFlags & memory::MARK_BLOCKS_FREE)
   {
     mark_blocks_free(root);
     return;
   }
-  if (!(MyFlags & MY_KEEP_PREALLOC))
+  if (!(MyFlags & memory::KEEP_PREALLOC))
     root->pre_alloc=0;
 
   for (next=root->used; next ;)
@@ -314,7 +317,7 @@ void free_root(MEM_ROOT *root, myf MyFlags)
   if (root->pre_alloc)
   {
     root->free=root->pre_alloc;
-    root->free->left=root->pre_alloc->size-ALIGN_SIZE(sizeof(USED_MEM));
+    root->free->left=root->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     TRASH_MEM(root->pre_alloc);
     root->free->next=0;
   }
@@ -327,9 +330,9 @@ void free_root(MEM_ROOT *root, myf MyFlags)
   Find block that contains an object and set the pre_alloc to it
 */
 
-void set_prealloc_root(MEM_ROOT *root, char *ptr)
+void memory::set_prealloc_root(memory::Root *root, char *ptr)
 {
-  USED_MEM *next;
+  memory::internal::UsedMemory *next;
   for (next=root->used; next ; next=next->next)
   {
     if ((char*) next <= ptr && (char*) next + next->size > ptr)
@@ -349,16 +352,16 @@ void set_prealloc_root(MEM_ROOT *root, char *ptr)
 }
 
 
-char *strdup_root(MEM_ROOT *root, const char *str)
+char *memory::strdup_root(memory::Root *root, const char *str)
 {
   return strmake_root(root, str, strlen(str));
 }
 
 
-char *strmake_root(MEM_ROOT *root, const char *str, size_t len)
+char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
 {
   char *pos;
-  if ((pos=(char *)alloc_root(root,len+1)))
+  if ((pos=(char *)memory::alloc_root(root,len+1)))
   {
     memcpy(pos,str,len);
     pos[len]=0;
@@ -367,10 +370,12 @@ char *strmake_root(MEM_ROOT *root, const char *str, size_t len)
 }
 
 
-void *memdup_root(MEM_ROOT *root, const void *str, size_t len)
+void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
 {
   void *pos;
-  if ((pos=alloc_root(root,len)))
+  if ((pos=memory::alloc_root(root,len)))
     memcpy(pos,str,len);
   return pos;
 }
+
+} /* namespace drizzled */

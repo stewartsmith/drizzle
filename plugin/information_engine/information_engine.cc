@@ -33,7 +33,7 @@ using namespace drizzled;
 static const string engine_name("INFORMATION_ENGINE");
 
 
-Cursor *InformationEngine::create(TableShare &table, MEM_ROOT *mem_root)
+Cursor *InformationEngine::create(TableShare &table, memory::Root *mem_root)
 {
   return new (mem_root) InformationCursor(*this, table);
 }

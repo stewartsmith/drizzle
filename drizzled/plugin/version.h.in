@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,20 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_PLUGIN_VERSION_H
+#define DRIZZLED_PLUGIN_VERSION_H
 
-#ifndef DRIZZLED_MY_VAR_H
-#define DRIZZLED_MY_VAR_H
+/* Machine comsumable version of the server which was built against. */
+#define DRIZZLE_VERSION_ID @PANDORA_RELEASE_ID@
 
-class my_var : public drizzled::memory::SqlAlloc  {
-public:
-  LEX_STRING s;
-  bool local;
-  uint32_t offset;
-  enum_field_types type;
-  my_var (LEX_STRING& j, bool i, uint32_t o, enum_field_types t)
-    :s(j), local(i), offset(o), type(t)
-  {}
-  ~my_var() {}
-};
+/* A release comment about the branch that was built */
+#define DRIZZLE_RELEASE_COMMENT "@PANDORA_RELEASE_COMMENT@"
 
-#endif /* DRIZZLED_MY_VAR_H */
+#endif /* DRIZZLED_PLUGIN_VERSION_H */
+

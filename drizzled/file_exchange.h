@@ -22,7 +22,7 @@
 #define DRIZZLED_FILE_EXCHANGE_H
 
 #include "drizzled/sql_string.h"
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/enum.h"
 
 extern const CHARSET_INFO *default_charset_info;
@@ -37,7 +37,7 @@ static String default_field_term("\t",default_charset_info);
   XXX: We never call destructor for objects of this class.
 */
 
-class file_exchange :public Sql_alloc
+class file_exchange :public drizzled::memory::SqlAlloc
 {
 public:
   enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */

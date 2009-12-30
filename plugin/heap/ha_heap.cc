@@ -27,7 +27,7 @@
 #include <string>
 
 
-
+using namespace drizzled;
 using namespace std;
 
 static const string engine_name("MEMORY");
@@ -53,7 +53,7 @@ public:
   { }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                          memory::Root *mem_root)
   {
     return new (mem_root) ha_heap(*this, table);
   }
@@ -259,7 +259,7 @@ int ha_heap::close(void)
     with '\'-delimited path.
 */
 
-Cursor *ha_heap::clone(MEM_ROOT *mem_root)
+Cursor *ha_heap::clone(memory::Root *mem_root)
 {
   Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
 

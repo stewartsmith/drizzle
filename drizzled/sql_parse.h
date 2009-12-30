@@ -84,4 +84,7 @@ Item * all_any_subquery_creator(Item *left_expr,
                                 bool all,
                                 Select_Lex *select_lex);
 
+void sql_kill(Session *session, unsigned long id, bool only_kill_query);
+char* query_table_status(Session *session,const char *db,const char *table_name);
+
 #endif /* DRIZZLED_SQL_PARSE_H */

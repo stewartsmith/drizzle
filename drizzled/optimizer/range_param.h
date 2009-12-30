@@ -44,8 +44,8 @@ public:
   /* Array of parts of all keys for which range analysis is performed */
   KEY_PART *key_parts;
   KEY_PART *key_parts_end;
-  MEM_ROOT *mem_root; /* Memory that will be freed when range analysis completes */
-  MEM_ROOT *old_root; /* Memory that will last until the query end */
+  drizzled::memory::Root *mem_root; /* Memory that will be freed when range analysis completes */
+  drizzled::memory::Root *old_root; /* Memory that will last until the query end */
   /*
     Number of indexes used in range analysis (In SEL_TREE::keys only first
     #keys elements are not empty)

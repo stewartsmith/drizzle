@@ -20,6 +20,8 @@ SUFFIXES =
 TESTS = 
 check_PROGRAMS =
 noinst_HEADERS =
+nobase_nodist_include_HEADERS =
+nobase_dist_include_HEADERS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
@@ -50,7 +52,8 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
 			.plugin.scan \
-			config/bzr_revinfo
+			config/bzr_revinfo \
+			config/top.h
 
 MAINTAINERCLEANFILES=	autom4te.cache
 
@@ -176,8 +179,6 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  echo '#define PKGPLUGINDIR "$(pkgplugindir)"'; \
           echo '#undef VERSION'; \
           echo '#define VERSION "${PANDORA_RELEASE_VERSION}"'; \
-          echo '#define DRIZZLE_VERSION_ID $(PANDORA_RELEASE_ID)'; \
-          echo '#define DRIZZLE_RELEASE_COMMENT "${PANDORA_RELEASE_COMMENT}"'; \
 	} | sed '/""/d' > $@-t
 	@if diff $@-t $@ >/dev/null 2>&1 ; then \
 	  rm @-t ; \

@@ -36,7 +36,7 @@ class String;
 
 extern String my_empty_string;
 extern const String my_null_string;
-typedef struct st_mem_root MEM_ROOT;
+namespace drizzled { namespace memory { class Root; } }
 typedef struct charset_info_st CHARSET_INFO;
 
 #if defined(__cplusplus)
@@ -74,11 +74,11 @@ public:
   String(char *str, uint32_t len, const CHARSET_INFO * const cs);
   String(const String &str);
 
-  static void *operator new(size_t size, MEM_ROOT *mem_root);
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
   static void operator delete(void *, size_t)
   { }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* never called */ }
+  static void operator delete(void *, drizzled::memory::Root *)
+  { }
   ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)

@@ -53,7 +53,7 @@ enum index_hint_type
                              INDEX_HINT_MASK_ORDER)
 
 /* Single element of an USE/FORCE/IGNORE INDEX list specified as a SQL hint  */
-class Index_hint : public Sql_alloc
+class Index_hint : public drizzled::memory::SqlAlloc
 {
 public:
   /* The type of the hint : USE/FORCE/IGNORE */

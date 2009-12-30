@@ -80,7 +80,7 @@ public:
   { }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_myisam(*this, table);
   }
@@ -528,7 +528,7 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
   is_ordered(true)
 { }
 
-Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
+Cursor *ha_myisam::clone(drizzled::memory::Root *mem_root)
 {
   ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)

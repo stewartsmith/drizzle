@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <climits>
 
+using namespace drizzled;
 using namespace std;
 
 class READ_INFO {
@@ -775,7 +776,7 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   /* Set of a stack for unget if long terminators */
   uint32_t length= max(field_term_length,line_term_length)+1;
   set_if_bigger(length,line_start.length());
-  stack= stack_pos= (int*) sql_alloc(sizeof(int)*length);
+  stack= stack_pos= (int*) memory::sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
     error=1;

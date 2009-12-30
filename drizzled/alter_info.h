@@ -92,7 +92,7 @@ public:
   bool error_if_not_empty;
 
   AlterInfo();
-  AlterInfo(const AlterInfo &rhs, MEM_ROOT *mem_root);
+  AlterInfo(const AlterInfo &rhs, drizzled::memory::Root *mem_root);
 private:
   AlterInfo &operator=(const AlterInfo &rhs); // not implemented
   AlterInfo(const AlterInfo &rhs);            // not implemented
