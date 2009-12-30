@@ -78,7 +78,7 @@ public:
   static void operator delete(void *, size_t)
   { }
   static void operator delete(void *, drizzled::memory::Root *)
-  { /* never called */ }
+  { }
   ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)

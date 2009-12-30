@@ -15,16 +15,16 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 test_archive_LDADD = \
-                     $(top_builddir)/plugin/archive/libazio.la \
-                     $(LDADD) \
-                     $(LIBINTL) \
-                     $(LTLIBZ)
+			$(top_builddir)/plugin/archive/libazio.la \
+			$(LDADD) \
+			$(LIBINTL) \
+			$(LTLIBZ)
 
 noinst_LTLIBRARIES+=  plugin/archive/libazio.la
 noinst_HEADERS+= \
                  plugin/archive/azio.h
 plugin_archive_libazio_la_SOURCES= \
-                                   plugin/archive/azio.cc
+			plugin/archive/azio.cc
 plugin_archive_libazio_la_LIBADD= drizzled/internal/libinternal.la
 
 

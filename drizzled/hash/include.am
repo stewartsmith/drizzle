@@ -13,8 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-hashincludedir = ${includedir}/drizzled/hash
-dist_hashinclude_HEADERS= drizzled/hash/crc32.h
+nobase_dist_include_HEADERS+= drizzled/hash/crc32.h
 
 noinst_LTLIBRARIES+= drizzled/hash/libhash.la
 drizzled_hash_libhash_la_SOURCES= drizzled/hash/crc32.cc
