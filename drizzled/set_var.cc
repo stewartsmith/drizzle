@@ -2211,12 +2211,3 @@ void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_ty
 }
 
 
-/****************************************************************************
-  Used templates
-****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<set_var_base>;
-template class List_iterator_fast<set_var_base>;
-template class I_List_iterator<NAMED_LIST>;
-#endif

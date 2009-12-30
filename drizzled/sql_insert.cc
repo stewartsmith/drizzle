@@ -1789,11 +1789,3 @@ void select_create::abort()
   }
 }
 
-
-/*****************************************************************************
-  Instansiate templates
-*****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List_iterator_fast<List_item>;
-#endif /* HAVE_EXPLICIT_TEMPLATE_INSTANTIATION */
