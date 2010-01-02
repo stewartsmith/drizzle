@@ -16,9 +16,15 @@
 
 /* create and drop of databases */
 #include "config.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <set>
 #include <string>
 #include <fstream>
-#include <fcntl.h>
+
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/my_error.h"
 #include <drizzled/error.h>
