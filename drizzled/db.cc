@@ -46,9 +46,9 @@ using namespace drizzled;
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
-const char *del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD",".opt", NULL};
-static TYPELIB deletable_extentions=
-{array_elements(del_exts)-1,"del_exts", del_exts, NULL};
+const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD", ".opt"};
+static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
+
 
 static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
                                  const string &db, const char *path,
@@ -618,6 +618,8 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
 				 const char *org_path,
                                  TableList **dropped_tables)
 {
+
+
   long deleted= 0;
   char filePath[FN_REFLEN];
   TableList *tot_list= NULL, **tot_list_next;
@@ -628,17 +630,20 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
        iter != dirp.getEntries().end() && !session->killed;
        ++iter)
   {
-    const CachedDirectory::Entry *file= *iter;
-    char *extension;
+    string filename((*iter)->filename);
 
     /* skiping . and .. */
-    if (file->filename[0] == '.' && (!file->filename[1] ||
-       (file->filename[1] == '.' &&  !file->filename[2])))
+    if (filename[0] == '.' && (!filename[1] ||
+       (filename[1] == '.' &&  !filename[2])))
       continue;
 
-    if (!(extension= strrchr(file->filename.c_str(), '.')))
-      extension= strchr(file->filename.c_str(), '\0');
-    if (find_type(extension, &deletable_extentions,1+2) <= 0)
+    string extension("");
+    size_t ext_pos= filename.rfind('.');
+    if (ext_pos != string::npos)
+    {
+      extension= filename.substr(ext_pos);
+    }
+    if (deletable_extentions.find(extension) == deletable_extentions.end())
     {
       /*
         ass ass ass.
@@ -655,25 +660,25 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
       continue;
     }
     /* just for safety we use files_charset_info */
-    if (!my_strcasecmp(files_charset_info, extension, ".dfe"))
+    if (!my_strcasecmp(files_charset_info, extension.c_str(), ".dfe"))
     {
       size_t db_len= db.size();
 
       /* Drop the table nicely */
-      *extension= 0;			// Remove extension
+      filename.erase(ext_pos);
       TableList *table_list=(TableList*)
-                              session->calloc(sizeof(*table_list) +
-                                          db_len + 1 +
-                                          file->filename.size() + 1);
+                             session->calloc(sizeof(*table_list) +
+                                             db_len + 1 +
+                                             filename.size() + 1);
 
       if (!table_list)
         return -1;
       table_list->db= (char*) (table_list+1);
       table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
-      filename_to_tablename(file->filename.c_str(), table_list->table_name,
-                            file->filename.size() + 1);
+      filename_to_tablename(filename.c_str(), table_list->table_name,
+                            filename.size() + 1);
       table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-      table_list->internal_tmp_table= (strncmp(file->filename.c_str(),
+      table_list->internal_tmp_table= (strncmp(filename.c_str(),
                                                TMP_FILE_PREFIX,
                                                strlen(TMP_FILE_PREFIX)) == 0);
       /* Link into list */
@@ -683,7 +688,7 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     }
     else
     {
-      sprintf(filePath, "%s/%s", org_path, file->filename.c_str());
+      sprintf(filePath, "%s/%s", org_path, filename.c_str());
       if (my_delete_with_symlink(filePath,MYF(MY_WME)))
       {
 	return -1;
