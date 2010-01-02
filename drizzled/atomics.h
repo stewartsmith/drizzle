@@ -113,21 +113,14 @@ public:
     return operator+=(D(0)-addend);
   }
 
-  value_type operator++() {
+  value_type increment() {
     return fetch_and_add(1)+1;
   }
 
-  value_type operator--() {
+  value_type decrement() {
     return fetch_and_add(D(-1))-1;
   }
 
-  value_type operator++(int) {
-    return fetch_and_add(1)+1;
-  }
-
-  value_type operator--(int) {
-    return fetch_and_add(D(-1))-1;
-  }
 
 };
 
