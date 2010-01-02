@@ -135,14 +135,14 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
   return EEXIST;
 }
 
-void BlitzEngine::doGetTableNames(CachedDirectory &directory, string&,
+void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
                                   set<string> &set_of_names) {
-  CachedDirectory::Entries entries = directory.getEntries();
+  drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
-  for (CachedDirectory::Entries::iterator entry_iter = entries.begin(); 
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
        entry_iter != entries.end(); ++entry_iter) {
 
-    CachedDirectory::Entry *entry = *entry_iter;
+    drizzled::CachedDirectory::Entry *entry = *entry_iter;
     string *filename = &entry->filename;
 
     assert(filename->size());
@@ -726,7 +726,12 @@ static int blitz_init(drizzled::plugin::Registry &registry) {
     delete blitz_engine;
     return HA_ERR_OUT_OF_MEM;
   }
-  pthread_mutex_init(&blitz_utility_mutex, MY_MUTEX_INIT_FAST);
+  /**
+   * If MY_MUTEX_INIT_FAST becomes exposed in the API, then turn this
+   * back on.
+   */
+  //pthread_mutex_init(&blitz_utility_mutex, MY_MUTEX_INIT_FAST);
+  pthread_mutex_init(&blitz_utility_mutex, NULL);
   registry.add(blitz_engine);
   return 0;
 }

@@ -29,6 +29,7 @@
 #include "drizzled/atomics.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
+#include "drizzled/cached_directory.h"
 #include <tchdb.h>
 #include <tcbdb.h>
 
@@ -253,7 +254,7 @@ public:
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 
-  virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root) {
+  virtual Cursor *create(TableShare &table, drizzled::memory::Root *mem_root) {
     return new (mem_root) ha_blitz(*this, table);
   }
 
@@ -272,7 +273,7 @@ public:
                            const char *table_name, const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string&,
+  void doGetTableNames(drizzled::CachedDirectory &directory, string&,
                        set<string>& set_of_names);
 
   uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
