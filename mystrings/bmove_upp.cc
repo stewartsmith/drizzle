@@ -22,7 +22,7 @@
     "src-len" to the destination "dst-len" counting downwards.
 */
 
-#include "drizzled/global.h"
+#include "config.h"
 #include "m_string.h"
 
 void bmove_upp(register unsigned char *dst, register const unsigned char *src,

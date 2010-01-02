@@ -20,13 +20,23 @@
 #ifndef DRIZZLED_HANDLER_STRUCTS_H
 #define DRIZZLED_HANDLER_STRUCTS_H
 
-#include <stdint.h>
-#include <time.h>
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
 
 #include <drizzled/base.h>
 #include <drizzled/structs.h>
 #include <drizzled/definitions.h>
 #include <drizzled/lex_string.h>
+#include "drizzled/global_charset_info.h"
+
 
 class Ha_trx_info;
 struct st_key;

@@ -34,6 +34,7 @@
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/xid.h>
+#include "drizzled/query_id.h"
 
 #include <netdb.h>
 #include <map>
@@ -520,8 +521,14 @@ public:
     Both of the following container points in session will be converted to an API.
   */
 
+private:
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
+public:
+  void **getEngineData(const drizzled::plugin::StorageEngine *engine);
+  Ha_trx_info *getEngineInfo(const drizzled::plugin::StorageEngine *engine,
+                             size_t index= 0);
+
 
   /* container for replication data */
   void *replication_data;
@@ -1474,6 +1481,9 @@ public:
       return variables.storage_engine;
     return global_system_variables.storage_engine;
   };
+
+  static void unlink(Session *session);
+
 };
 
 class JOIN;

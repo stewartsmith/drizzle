@@ -36,7 +36,7 @@
  * the event will not be passed along to the applier.
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>
 #include <drizzled/message/transaction.pb.h>
@@ -645,6 +645,7 @@ static drizzle_sys_var* filtered_replicator_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "filtered_replicator",
   "0.2",
   "Padraig O'Sullivan",

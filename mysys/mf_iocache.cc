@@ -158,7 +158,7 @@ init_functions(IO_CACHE* info)
     #  error
 */
 
-int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
+int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
 		  enum cache_type type, my_off_t seek_offset,
 		  bool use_async_io, myf cache_myflags)
 {

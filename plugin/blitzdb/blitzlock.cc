@@ -100,7 +100,8 @@ void BlitzLock::scan_update_end() {
 }
 
 int ha_blitz::critical_section_enter() {
-  if (sql_command_type == SQLCOM_UPDATE ||
+  if (sql_command_type == SQLCOM_ALTER_TABLE ||
+      sql_command_type == SQLCOM_UPDATE ||
       sql_command_type == SQLCOM_DELETE ||
       sql_command_type == SQLCOM_REPLACE ||
       sql_command_type == SQLCOM_REPLACE_SELECT) {
@@ -113,9 +114,11 @@ int ha_blitz::critical_section_enter() {
 }
 
 int ha_blitz::critical_section_exit() {
-  if (sql_command_type == SQLCOM_UPDATE ||
+  if (sql_command_type == SQLCOM_ALTER_TABLE ||
+      sql_command_type == SQLCOM_UPDATE ||
       sql_command_type == SQLCOM_DELETE ||
-      sql_command_type == SQLCOM_REPLACE) {
+      sql_command_type == SQLCOM_REPLACE ||
+      sql_command_type == SQLCOM_REPLACE_SELECT) {
     share->blitz_lock.scan_update_end();
   } else {
     share->blitz_lock.scan_end();

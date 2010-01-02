@@ -16,7 +16,7 @@
 
 /* Functions to handle keys and fields in forms */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/table.h"
 #include "drizzled/key.h"
 #include "drizzled/field/blob.h"

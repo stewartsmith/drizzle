@@ -32,7 +32,7 @@
 */
 
 
-#include <drizzled/global.h>
+#include "config.h"
 #include "m_ctype.h"
 #include "m_string.h"
 #include <stdio.h>

@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define DRIZZLE_LEX 1
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <mysys/hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -37,9 +37,14 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
+#include "drizzled/session_list.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/optimizer/explain_plan.h"
+#include "drizzled/pthread_globals.h"
 
 #include <bitset>
 #include <algorithm>
@@ -211,7 +216,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       break;					// fatal error is set
     DRIZZLE_QUERY_START(session->query,
                         session->thread_id,
-                        const_cast<const char *>(session->db ? session->db : ""));
+                        const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -538,7 +543,8 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       if (!(result= new select_send()))
         return true;
       session->send_explain_fields(result);
-      res= mysql_explain_union(session, &session->lex->unit, result);
+      optimizer::ExplainPlan planner;
+      res= planner.explainUnion(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];
@@ -781,7 +787,7 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
             session->query_length--;
           DRIZZLE_QUERY_EXEC_START(session->query,
                                    session->thread_id,
-                                   const_cast<const char *>(session->db ? session->db : ""));
+                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
           /* Actually execute the query */
           mysql_execute_command(session);
           DRIZZLE_QUERY_EXEC_DONE(0);
@@ -1490,7 +1496,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     if ((*it)->thread_id == id)
     {

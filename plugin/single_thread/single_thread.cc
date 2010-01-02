@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <plugin/single_thread/single_thread.h>
 
 using namespace std;
@@ -45,6 +45,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "single_thread",
   "0.1",
   "Brian Aker",

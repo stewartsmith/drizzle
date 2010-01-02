@@ -21,6 +21,7 @@
 */
 
 #include "myisam_priv.h"
+#include <cstdlib>
 
 int mi_close(MI_INFO *info)
 {

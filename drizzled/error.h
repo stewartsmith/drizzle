@@ -721,7 +721,8 @@ enum drizzled_error_code {
   ER_ARGUMENT_OUT_OF_RANGE,
   ER_INVALID_TIME_VALUE,
   ER_INVALID_ENUM_VALUE,
-  ER_ERROR_LAST= ER_INVALID_ENUM_VALUE
+  ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE,
+  ER_ERROR_LAST= ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE
 };
 
 #ifdef  __cplusplus
@@ -729,4 +730,3 @@ enum drizzled_error_code {
 #endif
 
 #endif /* DRIZZLED_ERROR_H */
-

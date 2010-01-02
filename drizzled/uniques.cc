@@ -30,10 +30,15 @@
   deletes in disk order.
 */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_sort.h>
-#include <drizzled/session.h>
+#include "config.h"
+
+#include <math.h>
+
 #include <queue>
+
+#include "drizzled/sql_sort.h"
+#include "drizzled/session.h"
+#include "drizzled/sql_list.h"
 
 #if defined(CMATH_NAMESPACE)
 using namespace CMATH_NAMESPACE;

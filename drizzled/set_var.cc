@@ -43,7 +43,7 @@
     example).
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <mysys/my_getopt.h>
 #include <plugin/myisam/myisam.h>
 #include <drizzled/error.h>
@@ -58,6 +58,10 @@
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 #include <drizzled/plugin.h>
+#include "drizzled/version.h"
+#include "drizzled/strfunc.h"
+#include "mystrings/m_string.h"
+#include "drizzled/pthread_globals.h"
 
 #include <map>
 #include <algorithm>
@@ -65,6 +69,9 @@
 using namespace std;
 using namespace drizzled;
 
+extern plugin::StorageEngine *myisam_engine;
+
+extern struct my_option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
@@ -225,7 +232,7 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str  sys_version(&vars, "version", drizzled_version().c_str());
+static sys_var_const_str  sys_version(&vars, "version", drizzled::version().c_str());
 
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);
@@ -306,6 +313,7 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
 /* Read only variables */
 
+extern SHOW_COMP_OPTION have_symlink;
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
@@ -1242,7 +1250,11 @@ static int resize_key_cache_with_lock(KEY_CACHE *key_cache)
                            division_limit, age_threshold));
 }
 
-
+sys_var_key_buffer_size::sys_var_key_buffer_size(sys_var_chain *chain,
+                                                 const char *name_arg)
+  : sys_var_key_cache_param(chain, name_arg,
+                            offsetof(KEY_CACHE, param_buff_size))
+{}
 
 bool sys_var_key_buffer_size::update(Session *session, set_var *var)
 {

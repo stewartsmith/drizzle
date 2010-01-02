@@ -501,10 +501,7 @@ public:
   {
     return COND_OK;
   }
-  inline uint32_t float_length(uint32_t decimals_par) const
-  {
-    return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
-  }
+  uint32_t float_length(uint32_t decimals_par) const;
   virtual uint32_t decimal_precision() const;
   int decimal_int_part() const;
 
@@ -683,6 +680,9 @@ public:
   virtual bool reset_query_id_processor(unsigned char *query_id_arg);
   virtual bool register_field_in_read_map(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
+
+  virtual bool cache_const_expr_analyzer(unsigned char **arg);
+  virtual Item* cache_const_expr_transformer(unsigned char *arg);
 
   virtual Item *equal_fields_propagator(unsigned char * arg);
   virtual bool set_no_const_sub(unsigned char *arg);

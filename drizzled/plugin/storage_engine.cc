@@ -17,9 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
-#include CSTDINT_H
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <string>
 #include <vector>
 #include <set>
@@ -44,6 +46,9 @@
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
 #include "drizzled/xid.h"
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include <drizzled/table_proto.h>
 
@@ -98,7 +103,8 @@ plugin::StorageEngine::~StorageEngine()
 
 void plugin::StorageEngine::setTransactionReadWrite(Session& session)
 {
-  Ha_trx_info *ha_info= &session.ha_data[getSlot()].ha_info[0];
+  Ha_trx_info *ha_info= session.getEngineInfo(this);
+
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -297,9 +303,8 @@ public:
   */
   inline result_type operator() (argument_type engine)
   {
-    if (engine->is_enabled() && 
-        session_get_ha_data(session, engine))
-    engine->close_connection(session);
+    if (engine->is_enabled() && (*session->getEngineData(engine)))
+      engine->close_connection(session);
   }
 };
 
@@ -873,7 +878,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
     const char *ext= strchr(filename->c_str(), '.');
 
     if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_DEFINITION_FILE_EXT.c_str()) ||
-        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     { }
     else
     {

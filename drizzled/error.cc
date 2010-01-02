@@ -21,7 +21,7 @@
  *   Errors a drizzled can give you
  *   */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <mysys/my_sys.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/definitions.h>
@@ -1413,7 +1413,9 @@ N_("Received an out-of-range argument '%s' for function '%s'."),
 /* ER_INVALID_TIME_VALUE */
 N_("Received an invalid time value '%s'."),
 /* ER_INVALID_ENUM_VALUE */
-N_("Received an invalid enum value '%s'.")
+N_("Received an invalid enum value '%s'."),
+/* ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE */
+N_("Tables which are replicated require a primary key.")
 };
 
 const char * error_message(unsigned int code)

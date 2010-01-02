@@ -18,7 +18,7 @@
  */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/tzfile.h"
 #include "drizzled/tztime.h"
 #include "drizzled/gettext.h"

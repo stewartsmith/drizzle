@@ -23,7 +23,7 @@
 #define BLITZ_TC_BUCKET_NUM 1000000
 
 bool BlitzData::startup(const char *table_name) {
-  data_table = open_table(table_name, BLITZ_DATAFILE_EXT, HDBOWRITER);
+  data_table = open_table(table_name, BLITZ_DATA_EXT, HDBOWRITER);
 
   if (data_table == NULL)
     return false;
@@ -82,7 +82,7 @@ TCHDB *BlitzData::open_table(const char *path, const char *ext, int mode) {
   }
 
   /* Allow the data table to use more resource than default. */
-  if (strcmp(ext, BLITZ_DATAFILE_EXT) == 0) {
+  if (strcmp(ext, BLITZ_DATA_EXT) == 0) {
     if (!tchdbtune(table, BLITZ_TC_BUCKET_NUM, -1, -1, 0)) {
       tchdbdel(table);
       return NULL;
@@ -108,8 +108,8 @@ bool BlitzData::rename_table(const char *from, const char *to) {
   char from_buf[FN_REFLEN];
   char to_buf[FN_REFLEN];
 
-  snprintf(from_buf, FN_REFLEN, "%s%s", from, BLITZ_DATAFILE_EXT);
-  snprintf(to_buf, FN_REFLEN, "%s%s", to, BLITZ_DATAFILE_EXT);
+  snprintf(from_buf, FN_REFLEN, "%s%s", from, BLITZ_DATA_EXT);
+  snprintf(to_buf, FN_REFLEN, "%s%s", to, BLITZ_DATA_EXT);
 
   if (rename(from_buf, to_buf) != 0)
     return false;
@@ -159,8 +159,12 @@ bool BlitzData::write_table_definition(TCHDB *table,
   return true;
 }
 
-uint64_t BlitzData::nrecords() {
+uint64_t BlitzData::nrecords(void) {
   return tchdbrnum(data_table);
+}
+
+uint64_t BlitzData::table_size(void) {
+  return tchdbfsiz(data_table);
 }
 
 char *BlitzData::get_row(const char *key, const size_t klen, int *vlen) {
@@ -174,28 +178,38 @@ char *BlitzData::get_row(const char *key, const size_t klen, int *vlen) {
    holds both key and value. */
 char *BlitzData::next_key_and_row(const char *key, const size_t klen,
                                   int *next_key_len, const char **value,
-                                  int *value_length) {
+                                  int *value_len) {
   return tchdbgetnext3(data_table, key, klen, next_key_len,
-                       value, value_length);
+                       value, value_len);
+}
+
+char *BlitzData::first_row(int *row_len) {
+  return (char *)tchdbgetnext(data_table, NULL, 0, row_len);
 }
 
 uint64_t BlitzData::next_hidden_row_id(void) {
   /* current_hidden_row_id is an atomic type */
-  uint64_t rv = ++current_hidden_row_id;
+  uint64_t rv = current_hidden_row_id++;
   return rv;
 }
 
-/* For now only worry about auto generated keys here. This function
-   will be worked on when I start hacking on index support. */
-size_t BlitzData::generate_table_key(char *key_buffer) {
-  uint64_t next_id = next_hidden_row_id();
-  int8store(key_buffer, next_id);
-  return sizeof(next_id);
+int BlitzData::write_row(const char *key, const size_t klen,
+                         const unsigned char *row, const size_t rlen) {
+  bool success = tchdbput(data_table, key, klen, row, rlen);
+  return (success) ? 0 : 1; 
 }
 
-bool BlitzData::overwrite_row(const char *key, const size_t klen,
-                              const unsigned char *row, const size_t rlen) {
-  return tchdbput(data_table, key, klen, row, rlen);
+int BlitzData::write_unique_row(const char *key, const size_t klen,
+                                const unsigned char *row, const size_t rlen) {
+  int rv = 0;
+
+  if (!tchdbputkeep(data_table, key, klen, row, rlen)) {
+    if (tchdbecode(data_table) == TCEKEEP) {
+      my_errno = HA_ERR_FOUND_DUPP_KEY;
+      rv = HA_ERR_FOUND_DUPP_KEY;
+    }
+  }
+  return rv;
 }
 
 bool BlitzData::delete_row(const char *key, const size_t klen) {

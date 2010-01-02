@@ -14,7 +14,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/field.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/field/timestamp.h"
@@ -25,7 +25,10 @@
 
 #include "ha_archive.h"
 
-#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <cstdio>
 #include <string>
 #include <map>
 
@@ -224,7 +227,7 @@ void ArchiveEngine::doGetTableNames(CachedDirectory &directory,
     const char *ext= strchr(filename->c_str(), '.');
 
     if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
-        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     {  }
     else
     {
@@ -1461,6 +1464,7 @@ static drizzle_sys_var* archive_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",

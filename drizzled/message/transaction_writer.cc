@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 #include "drizzled/hash/crc32.h"
 #include "drizzled/gettext.h"
 #include "drizzled/replication_services.h"
@@ -32,6 +32,18 @@
 #include <string>
 #include <fstream>
 #include <unistd.h>
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 #include <drizzled/message/transaction.pb.h>
 
 #include <google/protobuf/io/coded_stream.h>

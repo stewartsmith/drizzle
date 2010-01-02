@@ -19,7 +19,7 @@
   @brief
   Functions for easy reading of records, possible through a cache
 */
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"

@@ -22,7 +22,7 @@
   @TODO: License?
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/session.h>
 #include <drizzled/plugin/authentication.h>
 #include <security/pam_appl.h>
@@ -150,6 +150,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pam",
   "0.1",
   "Brian Aker",

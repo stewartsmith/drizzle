@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <dlfcn.h>
 
@@ -24,8 +24,9 @@
 
 #include "mysys/my_getopt.h"
 #include "mysys/hash.h"
+#include "mystrings/m_string.h"
 
-#include "drizzled/plugin/config.h"
+#include "drizzled/plugin/load_list.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
@@ -37,6 +38,8 @@
 #include "drizzled/gettext.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/library.h"
+#include "drizzled/strfunc.h"
+#include "drizzled/pthread_globals.h"
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
@@ -264,7 +267,6 @@ static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
   if (!test_plugin_options(tmp_root, tmp, argc, argv))
   {
     registry.add(tmp);
-    init_alloc_root(&tmp->mem_root, 4096, 4096);
     return false;
   }
   errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_FIND_DL_ENTRY),
@@ -382,7 +384,9 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
+bool plugin_init(plugin::Registry &registry,
+                 int *argc, char **argv,
+                 bool skip_init)
 {
   plugin::Manifest **builtins;
   plugin::Manifest *manifest;
@@ -390,7 +394,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
   MEM_ROOT tmp_root;
 
   if (initialized)
-    return(0);
+    return false;
 
   init_alloc_root(&plugin_mem_root, 4096, 4096);
   init_alloc_root(&tmp_root, 4096, 4096);
@@ -399,7 +403,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
                   get_bookmark_hash_key, NULL, HASH_UNIQUE))
   {
     free_root(&tmp_root, MYF(0));
-    return(1);
+    return true;
   }
 
 
@@ -410,7 +414,8 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
   */
   for (builtins= drizzled_builtins; *builtins; builtins++)
   {
-    for (manifest= *builtins; manifest->name; manifest++)
+    manifest= *builtins;
+    if (manifest->name != NULL)
     {
       module= new (std::nothrow) plugin::Module(manifest);
       if (module == NULL)
@@ -424,41 +429,46 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
       plugin_initialize_vars(module);
 
-      if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
+      if (! skip_init)
       {
         if (plugin_initialize(registry, module))
         {
           free_root(&tmp_root, MYF(0));
-          return(1);
+          return true;
         }
       }
     }
   }
 
 
+  bool load_failed= false;
   /* Register all dynamic plugins */
-  if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
+  if (opt_plugin_load)
   {
-    if (opt_plugin_load)
-    {
-      plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
-    }
-    else
-    {
-      string tmp_plugin_list(opt_plugin_load_default);
-      if (opt_plugin_add)
-      {
-        tmp_plugin_list.push_back(',');
-        tmp_plugin_list.append(opt_plugin_add);
-      }
-      plugin_load_list(registry, &tmp_root, argc, argv, tmp_plugin_list);
-    }
+    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                  opt_plugin_load);
   }
-
-  if (flags & PLUGIN_INIT_SKIP_INITIALIZATION)
+  else
+  {
+    string tmp_plugin_list(opt_plugin_load_default);
+    if (opt_plugin_add)
+    {
+      tmp_plugin_list.push_back(',');
+      tmp_plugin_list.append(opt_plugin_add);
+    }
+    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                  tmp_plugin_list);
+  }
+  if (load_failed)
   {
     free_root(&tmp_root, MYF(0));
-    return(0);
+    return true;
+  }
+
+  if (skip_init)
+  {
+    free_root(&tmp_root, MYF(0));
+    return false;
   }
 
   /*
@@ -483,7 +493,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
   free_root(&tmp_root, MYF(0));
 
-  return(0);
+  return false;
 }
 
 
@@ -1609,11 +1619,11 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 
 
 static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
-                             my_option *options, bool can_disable)
+                             my_option *options)
 {
   const char *plugin_name= tmp->getManifest().name;
   uint32_t namelen= strlen(plugin_name), optnamelen;
-  uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
+  uint32_t buffer_length= namelen * 4 +  75;
   char *name= (char*) alloc_root(mem_root, buffer_length);
   bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
   char *optname, *p;
@@ -1631,18 +1641,15 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
     if (*p == '_')
       *p= '-';
 
-  if (can_disable)
-  {
-    sprintf(name+namelen*2+10,
-            "Enable %s plugin. Disable with --skip-%s (will save memory).",
-            plugin_name, name);
-    /*
-      Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
-      20 + namelen + 20 + 1 == namelen * 4 + 67.
-    */
+  sprintf(name+namelen*2+10,
+          "Enable %s plugin. Disable with --skip-%s (will save memory).",
+          plugin_name, name);
+  /*
+    Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
+    20 + namelen + 20 + 1 == namelen * 4 + 67.
+  */
 
-    options[0].comment= name + namelen*2 + 10;
-  }
+  options[0].comment= name + namelen*2 + 10;
 
   /*
     This whole code around variables and command line parameters is turd
@@ -1840,7 +1847,6 @@ static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
 {
   drizzle_sys_var **opt;
   my_option *opts;
-  bool can_disable;
   uint32_t count= EXTRA_OPTIONS;
 
   for (opt= p->getManifest().system_vars; opt && *opt; opt++, count+= 2) {};
@@ -1851,15 +1857,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
 
   memset(opts, 0, sizeof(my_option) * count);
 
-  if ((my_strcasecmp(&my_charset_utf8_general_ci, p->getName().c_str(), "MyISAM") == 0))
-    can_disable= false;
-  else if ((my_strcasecmp(&my_charset_utf8_general_ci, p->getName().c_str(), "MEMORY") == 0))
-    can_disable= false;
-  else
-    can_disable= true;
-
-
-  if (construct_options(mem_root, p, opts, can_disable))
+  if (construct_options(mem_root, p, opts))
     return NULL;
 
   return(opts);
@@ -1898,7 +1896,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  bool can_disable;
   drizzle_sys_var **opt;
   my_option *opts= NULL;
   int error;
@@ -1909,12 +1906,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
   for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->getName().c_str(), "MyISAM") == 0))
-    can_disable= false;
-  else if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->getName().c_str(), "MEMORY") == 0))
-    can_disable= false;
-  else
-    can_disable= true;
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
@@ -1925,7 +1916,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
     }
     memset(opts, 0, sizeof(my_option) * count);
 
-    if (construct_options(tmp_root, tmp, opts, can_disable))
+    if (construct_options(tmp_root, tmp, opts))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Bad options for plugin '%s'."), tmp->getName().c_str());
       return(-1);

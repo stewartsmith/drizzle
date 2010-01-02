@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "drizzled/replication_services.h"
 #include "drizzled/plugin/transaction_applier.h"

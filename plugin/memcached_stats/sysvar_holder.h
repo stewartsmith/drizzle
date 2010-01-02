@@ -30,6 +30,8 @@
 #ifndef PLUGIN_MEMCACHED_STATS_SYSVAR_HOLDER_H
 #define PLUGIN_MEMCACHED_STATS_SYSVAR_HOLDER_H
 
+#include <pthread.h>
+
 #include <string>
 
 class SysvarHolder

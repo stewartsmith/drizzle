@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/error.h>
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/float.h>
+
+extern const CHARSET_INFO *system_charset_info;
 
 static uint32_t nr_of_decimals(const char *str, const char *end)
 {

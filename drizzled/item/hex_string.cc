@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include CSTDINT_H
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
@@ -26,6 +26,9 @@
 #include <algorithm>
 
 using namespace std;
+
+static char _dig_vec_lower[] =
+  "0123456789abcdefghijklmnopqrstuvwxyz";
 
 inline uint32_t char_val(char X)
 {

@@ -18,13 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <fcntl.h>
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
@@ -232,7 +233,7 @@ int main(int argc, char *argv[])
 
   if (opt_extract_frm)
   {
-    File frm_file;
+    int frm_file;
     char *ptr;
     frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);

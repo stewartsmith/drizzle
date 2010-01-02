@@ -36,7 +36,7 @@ Created November 07, 2007 Vasil Dimov
 #define MYSQL_SERVER
 #endif /* MYSQL_SERVER */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include "mysql_addons.h"
 #include "univ.i"

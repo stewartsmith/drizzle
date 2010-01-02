@@ -41,17 +41,16 @@ class Module
 public:
   Library *plugin_dl;
   bool isInited;
-  MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
   Module(const Manifest *manifest_arg, Library *library_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
       isInited(false),
-      mem_root(), system_vars(NULL) {}
+      system_vars(NULL) {}
       
   Module(const Manifest *manifest_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
       isInited(false),
-      mem_root(), system_vars(NULL) {}
+      system_vars(NULL) {}
       
   const std::string& getName() const
   {

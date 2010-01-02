@@ -38,6 +38,7 @@
 #include "drizzled/statement.h"
 
 #include <bitset>
+#include <string>
 
 class select_result_interceptor;
 
@@ -423,7 +424,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  const char *type;               /* type of select for EXPLAIN          */
+  std::string type; /* type of select for EXPLAIN          */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -673,7 +674,7 @@ public:
     of Query_tables_list instances which are used as backup storage.
   */
   Query_tables_list() {}
-  ~Query_tables_list() {}
+  virtual ~Query_tables_list() {}
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);

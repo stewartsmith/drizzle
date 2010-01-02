@@ -24,7 +24,7 @@
 class select_to_file :public select_result_interceptor {
 protected:
   file_exchange *exchange;
-  File file;
+  int file;
   IO_CACHE cache;
   ha_rows row_count;
   char path[FN_REFLEN];

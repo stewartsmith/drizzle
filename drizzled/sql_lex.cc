@@ -17,7 +17,7 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #define DRIZZLE_LEX 1
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
@@ -1352,7 +1352,7 @@ void Select_Lex::init_select()
 {
   sj_nests.empty();
   group_list.empty();
-  type= db= 0;
+  db= 0;
   having= 0;
   table_join_options= 0;
   in_sum_expr= with_wild= 0;

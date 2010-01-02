@@ -19,7 +19,7 @@
  */
 
 /* This implements 'user defined functions' */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include "drizzled/hash.h"
 #include "drizzled/plugin/function.h"

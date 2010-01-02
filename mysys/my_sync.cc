@@ -14,8 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys/mysys_priv.h"
-#include "mysys/mysys_err.h"
+
 #include <errno.h>
+#include <fcntl.h>
+
+#include "mysys/mysys_err.h"
 
 /*
   Sync data in file to disk
@@ -40,7 +43,7 @@
     -1 error
 */
 
-int my_sync(File fd, myf my_flags)
+int my_sync(int fd, myf my_flags)
 {
   int res;
 
@@ -94,7 +97,7 @@ static const char cur_dir_name[]= {FN_CURLIB, 0};
 #ifdef NEED_EXPLICIT_SYNC_DIR
 int my_sync_dir(const char *dir_name, myf my_flags)
 {
-  File dir_fd;
+  int dir_fd;
   int res= 0;
   const char *correct_dir_name;
   /* Sometimes the path does not contain an explicit directory */
