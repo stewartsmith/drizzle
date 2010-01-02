@@ -15,20 +15,13 @@
 
 /* TODO: check for overun of memory for names. */
 
-#include <dirent.h>
-
 #include "drizzled/internal/mysys_priv.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/my_error.h"
 #include "drizzled/internal/my_dir.h"	/* Structs used by my_dir,includes sys/types */
+#include <dirent.h>
 
 using namespace drizzled;
-
-#if defined(HAVE_READDIR_R)
-#define READDIR(A,B,C) ((errno=readdir_r(A,B,&C)) != 0 || !C)
-#else 
-#error You must have a thread safe readdir() 
-#endif
 
 /*
   We are assuming that directory we are reading is either has less than
@@ -105,7 +98,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
 
   dp= (struct dirent*) dirent_tmp;
 
-  while (!(READDIR(dirp,(struct dirent*) dirent_tmp,dp)))
+  while (!(errno= readdir_r(dirp, (dirent*) dirent_tmp, &dp)) != 0 || !dp)
   {
     if (!(finfo.name= strdup_root(names_storage, dp->d_name)))
       goto error;
