@@ -97,7 +97,7 @@ public:
          entry_iter != entries.end(); ++entry_iter)
     {
       drizzled::CachedDirectory::Entry *entry= *entry_iter;
-      string *filename= &entry->filename;
+      const string *filename= &entry->filename;
 
       assert(filename->size());
 

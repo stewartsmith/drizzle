@@ -872,7 +872,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
        entry_iter != entries.end(); ++entry_iter)
   {
     CachedDirectory::Entry *entry= *entry_iter;
-    string *filename= &entry->filename;
+    const string *filename= &entry->filename;
 
     assert(filename->size());
 
