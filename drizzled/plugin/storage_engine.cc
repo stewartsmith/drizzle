@@ -31,7 +31,6 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "drizzled/internal/my_dir.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/cached_directory.h"
 

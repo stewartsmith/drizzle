@@ -15,7 +15,6 @@
 
 #include "config.h"
 #include <drizzled/table.h>
-#include "drizzled/internal/my_dir.h"
 #include <drizzled/error.h>
 #include "drizzled/internal/my_pthread.h"
 
