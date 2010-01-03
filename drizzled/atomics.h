@@ -113,25 +113,14 @@ public:
     return operator+=(D(0)-addend);
   }
 
-  atomic_impl<I,D,T>& operator++() {
-    fetch_and_add(1);
-    return *this;
+  value_type increment() {
+    return fetch_and_add(1)+1;
   }
 
-  atomic_impl<I,D,T>& operator--() {
-    fetch_and_add(D(-1));
-    return *this;
+  value_type decrement() {
+    return fetch_and_add(D(-1))-1;
   }
 
-  atomic_impl<I,D,T> operator++(int) {
-    fetch_and_add(1);
-    return *this;
-  }
-
-  atomic_impl<I,D,T> operator--(int) {
-    fetch_and_add(D(-1));
-    return *this;
-  }
 
 };
 

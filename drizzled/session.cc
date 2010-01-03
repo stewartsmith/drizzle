@@ -605,7 +605,7 @@ bool Session::schedule()
   scheduler= plugin::Scheduler::getScheduler();
   assert(scheduler);
 
-  ++connection_count;
+  connection_count.increment();
 
   if (connection_count > max_used_connections)
     max_used_connections= connection_count;
