@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-12-23 15:05+0000\n"
+"PO-Revision-Date: 2010-01-02 23:07+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-12-24 04:38+0000\n"
+"X-Launchpad-Export-Date: 2010-01-03 04:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -264,6 +264,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
+"Activar comandos \"nomeados\". Os comandos nomeados são os comandos internos "
+"do programa; ver drizzle > ajuda. Se estiverem activados, os comandos "
+"nomeados podem ser usados em qualquer linha da consulta, em vez de apenas "
+"serem permitidos apenas antes da primeira quebra de linha. Desactivar com --"
+"disable-named-commands. Esta opção está inactiva por omissão."
 
 #: client/drizzle.cc:1473
 msgid ""
@@ -273,6 +278,12 @@ msgid ""
 "G'. Long format commands still work from the first line. WARNING: option "
 "deprecated; use --disable-named-commands instead."
 msgstr ""
+"Os comandos \"nomeados\" estão desactivados. Utilizar apenas a forma \\*, ou "
+"então utilizar apenas no início da linha terminada com ponto e vírgula (;). "
+"Desde a versão 10.9 que o cliente arranca com esta opção ACTIVA por omissão! "
+"Desactivar com '-G'. No entanto, os comandos longos funcionam desde a "
+"primeira linha. AVISO: esta opção está obsoleta; usar antes --disable-named-"
+"commands."
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
@@ -925,7 +936,7 @@ msgstr ""
 #: drizzled/drizzled.cc:841
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
-msgstr ""
+msgstr "Sinal fatal %d ao retroceder\n"
 
 #: drizzled/drizzled.cc:864
 #, c-format
@@ -1100,7 +1111,7 @@ msgstr "Tipo de tabela desconhecido ou não suportado: %s"
 #: drizzled/drizzled.cc:1434
 #, c-format
 msgid "Default storage engine (%s) is not available"
-msgstr ""
+msgstr "O motor de armazenamento usado por omissão (%s) não está disponível"
 
 #: drizzled/drizzled.cc:1465
 #, c-format
@@ -1158,6 +1169,8 @@ msgstr "Caminho para a raíz da base de dados."
 #: drizzled/drizzled.cc:1725
 msgid "Set the default storage engine (table type) for tables."
 msgstr ""
+"Definir o motor de armazenamento por omissão (tipo de tabela) a ser usado "
+"para as tabelas."
 
 #: drizzled/drizzled.cc:1729
 msgid "Set the default time zone."
@@ -1694,12 +1707,12 @@ msgstr "A vista '%-.192s' não existe para '%-.192s'"
 #: drizzled/error.cc:94
 #, c-format
 msgid "Got error %d from storage engine"
-msgstr ""
+msgstr "Foi recebido o erro %d do motor de armazenamento"
 
 #: drizzled/error.cc:96
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr ""
+msgstr "O motor de armazenamento da tabela '%-.192s' não tem esta opção"
 
 #: drizzled/error.cc:98
 #, c-format
@@ -2432,7 +2445,7 @@ msgstr "Nome de coluna incorrecto: '%-.100s'"
 #: drizzled/error.cc:368
 #, c-format
 msgid "The used storage engine can't index column '%-.192s'"
-msgstr ""
+msgstr "O motor de armazenamento não pode indexar a coluna '%-.192s'"
 
 #: drizzled/error.cc:370
 msgid ""
@@ -2493,7 +2506,7 @@ msgstr "Impossível abrir tabela"
 #: drizzled/error.cc:390
 #, c-format
 msgid "The storage engine for the table doesn't support %s"
-msgstr ""
+msgstr "O motor de armazenamento da tabela não suporta %s"
 
 #: drizzled/error.cc:392
 msgid "You are not allowed to execute this command in a transaction"
@@ -2528,7 +2541,7 @@ msgstr ""
 
 #: drizzled/error.cc:404
 msgid "The storage engine for the table does not support binary table dump"
-msgstr ""
+msgstr "O motor de armazenamento não suporta o dump binário da tabela"
 
 #: drizzled/error.cc:406
 msgid "Binlog closed, cannot RESET MASTER"
@@ -2711,7 +2724,7 @@ msgstr "Utilização incorrecta de %s e %s"
 
 #: drizzled/error.cc:478
 msgid "The used SELECT statements have a different number of columns"
-msgstr ""
+msgstr "Os comandos SELECT usados não têm o mesmo número de colunas"
 
 #: drizzled/error.cc:480
 msgid "Can't execute the query because you have a conflicting read lock"
@@ -2726,7 +2739,7 @@ msgstr ""
 #: drizzled/error.cc:484
 #, c-format
 msgid "Option '%s' used twice in statement"
-msgstr ""
+msgstr "A opção '%s' foi usada duas vezes no comando"
 
 #: drizzled/error.cc:486
 #, c-format
@@ -2934,7 +2947,7 @@ msgstr "Dados truncados para a coluna '%s' na fila %ld"
 #: drizzled/error.cc:566
 #, c-format
 msgid "Using storage engine %s for table '%s'"
-msgstr ""
+msgstr "Usando o motor de armazenamento %s para a tabela '%s'"
 
 #: drizzled/error.cc:568
 #, c-format
@@ -3072,6 +3085,8 @@ msgid ""
 "The Drizzle server is running with the %s option so it cannot execute this "
 "statement"
 msgstr ""
+"O servidor Drizzle está a ser executado com a opção %s por isso não pode "
+"executar este comando"
 
 #: drizzled/error.cc:616
 #, c-format
@@ -3099,6 +3114,7 @@ msgstr "Cláusula ON UPDATE inválida para a coluna '%-.192s'"
 #: drizzled/error.cc:624
 msgid "This command is not supported in the prepared statement protocol yet"
 msgstr ""
+"Este comando ainda não é suportado no protocolo de declarações preparadas"
 
 #: drizzled/error.cc:626
 #, c-format
@@ -3235,7 +3251,7 @@ msgstr "FUNCTION %s terminou sem RETURN"
 
 #: drizzled/error.cc:678
 msgid "Cursor statement must be a SELECT"
-msgstr "Instrução de cursor tem que um SELECT"
+msgstr "Instrução de cursor tem que ser um SELECT"
 
 #: drizzled/error.cc:680
 msgid "Cursor SELECT must not have INTO"
@@ -3554,7 +3570,7 @@ msgstr ""
 
 #: drizzled/error.cc:814
 msgid "Prepared statement contains too many placeholders"
-msgstr ""
+msgstr "A declaração preparada contém demasiados marcadores de posição"
 
 #: drizzled/error.cc:816
 #, c-format
@@ -3982,6 +3998,7 @@ msgstr "Os espaços antes do nome '%s' são removidos"
 #: drizzled/error.cc:968
 msgid "Failed to read auto-increment value from storage engine"
 msgstr ""
+"Não foi possível ler do motor de armazenamento o valor de auto-incremento"
 
 #: drizzled/error.cc:970
 msgid "user name"
@@ -4043,6 +4060,7 @@ msgstr ""
 msgid ""
 "Table storage engine '%-.64s' does not support the create option '%.64s'"
 msgstr ""
+"O motor de armazenamento '%-.64s' não suporta a opção de criação '%.64s'"
 
 #: drizzled/error.cc:992
 #, c-format
@@ -4351,6 +4369,8 @@ msgstr "O evento '%-.192s' já existe"
 #, c-format
 msgid "Failed to store event %s. Error code %d from storage engine."
 msgstr ""
+"Não foi possível guardar o evento %s. Foi recebido o código de erro %d do "
+"motor de armazenamento."
 
 #: drizzled/error.cc:1112
 #, c-format
@@ -4545,7 +4565,7 @@ msgstr ""
 
 #: drizzled/error.cc:1192
 msgid "This storage engine cannot be used for log tables"
-msgstr ""
+msgstr "Este motor de armazenamento não pode ser usado para tabelas de log"
 
 #: drizzled/error.cc:1194
 #, c-format
@@ -4723,7 +4743,7 @@ msgstr ""
 #: drizzled/error.cc:1266
 #, c-format
 msgid "Can't access storage engine of table %-.64s"
-msgstr ""
+msgstr "Não foi possível aceder ao motor de armazenamento da tabela %-.64s"
 
 #: drizzled/error.cc:1268
 msgid "Starting backup process"
@@ -4813,6 +4833,7 @@ msgstr ""
 #, c-format
 msgid "Skipping table %-.64s since it has no valid storage engine"
 msgstr ""
+"Ignorando a tabela %-.64s porque não tem um motor de armazenamento válido"
 
 #: drizzled/error.cc:1306
 #, c-format
@@ -6145,11 +6166,11 @@ msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:107
 msgid "The table already existed in storage engine"
-msgstr ""
+msgstr "Esta tabela já existiu no motor de armazenamento"
 
 #: plugin/myisam/my_handler_errors.cc:109
 msgid "Could not connect to storage engine"
-msgstr ""
+msgstr "Não foi possível ligar ao motor de armazenamento"
 
 #: plugin/myisam/my_handler_errors.cc:111
 msgid "Unexpected null pointer found when using spatial index"
@@ -6157,7 +6178,7 @@ msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:113
 msgid "The table changed in storage engine"
-msgstr ""
+msgstr "A tabela foi modificada no motor de armazenamento"
 
 #: plugin/myisam/my_handler_errors.cc:115
 msgid "There's no partition in table for the given value"
@@ -6389,11 +6410,12 @@ msgstr "Utilização inválida de ponteiro nulo"
 
 #: plugin/oldlibdrizzle/errmsg.cc:58
 msgid "Statement not prepared"
-msgstr ""
+msgstr "Declaração não preparada"
 
 #: plugin/oldlibdrizzle/errmsg.cc:59
 msgid "No data supplied for parameters in prepared statement"
 msgstr ""
+"Não foram fornecidos valores para os parâmetros da declaração preparada"
 
 #: plugin/oldlibdrizzle/errmsg.cc:60
 msgid "Data truncated"
@@ -6450,7 +6472,7 @@ msgstr "Tentativa de ler uma coluna sem obtenção prévia da linha"
 
 #: plugin/oldlibdrizzle/errmsg.cc:82
 msgid "Prepared statement contains no metadata"
-msgstr ""
+msgstr "A declaração preparada não contém meta-informação"
 
 #: plugin/oldlibdrizzle/errmsg.cc:83
 msgid ""
