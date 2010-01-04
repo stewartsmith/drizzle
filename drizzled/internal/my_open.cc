@@ -15,7 +15,6 @@
 
 #include "drizzled/internal/mysys_priv.h"
 #include "drizzled/my_error.h"
-#include "my_dir.h"
 
 #include <fcntl.h>
 

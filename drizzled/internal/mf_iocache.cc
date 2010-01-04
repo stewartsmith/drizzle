@@ -1675,8 +1675,6 @@ int end_io_cache(IO_CACHE *info)
 
 #ifdef MAIN
 
-#include <my_dir.h>
-
 void die(const char* fmt, ...)
 {
   va_list va_args;

@@ -21,7 +21,6 @@ noinst_HEADERS+= \
 		drizzled/internal/iocache.h \
 		drizzled/internal/m_string.h \
 		drizzled/internal/my_bit.h \
-		drizzled/internal/my_dir.h \
 		drizzled/internal/my_pthread.h \
 		drizzled/internal/my_static.h \
 		drizzled/internal/my_sys.h \
@@ -76,7 +75,6 @@ drizzled_internal_libinternal_la_SOURCES= \
 		drizzled/internal/my_delete.cc \
 		drizzled/internal/my_getsystime.cc \
 		drizzled/internal/my_init.cc \
-		drizzled/internal/my_lib.cc \
 		drizzled/internal/my_open.cc \
 		drizzled/internal/my_read.cc \
 		drizzled/internal/my_redel.cc \

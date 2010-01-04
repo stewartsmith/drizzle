@@ -31,7 +31,6 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "drizzled/internal/my_dir.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/cached_directory.h"
 
@@ -872,7 +871,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
        entry_iter != entries.end(); ++entry_iter)
   {
     CachedDirectory::Entry *entry= *entry_iter;
-    string *filename= &entry->filename;
+    const string *filename= &entry->filename;
 
     assert(filename->size());
 
