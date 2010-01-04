@@ -27,7 +27,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #define INNODB_HANDLER_HA_INNODB_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 /** InnoDB table share */
 typedef struct st_innobase_share {

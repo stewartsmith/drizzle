@@ -22,7 +22,7 @@
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_CURSOR_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #include <drizzled/plugin/info_schema_table.h>
 #include <plugin/information_engine/information_engine.h>

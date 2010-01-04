@@ -21,18 +21,20 @@
 #ifndef DRIZZLED_SELECT_TO_FILE_H
 #define DRIZZLED_SELECT_TO_FILE_H
 
-class select_to_file :public select_result_interceptor {
+typedef struct st_io_cache IO_CACHE;
+
+class select_to_file : public select_result_interceptor
+{
 protected:
   file_exchange *exchange;
   int file;
-  IO_CACHE cache;
+  IO_CACHE *cache;
   ha_rows row_count;
   char path[FN_REFLEN];
 
 public:
-  select_to_file(file_exchange *ex) :exchange(ex), file(-1),row_count(0L)
-  { path[0]=0; }
-  ~select_to_file();
+  select_to_file(file_exchange *ex);
+  virtual ~select_to_file();
   void send_error(uint32_t errcode,const char *err);
   bool send_eof();
   void cleanup();

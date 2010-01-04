@@ -25,7 +25,7 @@ int mi_delete_table(const char *name)
 
   fn_format(from,name,"",MI_NAME_IEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
   if (my_delete_with_symlink(from, 0))
-    return(my_errno);
+    return(errno);
   fn_format(from,name,"",MI_NAME_DEXT,MY_UNPACK_FILENAME|MY_APPEND_EXT);
-  return(my_delete_with_symlink(from, MYF(MY_WME)) ? my_errno : 0);
+  return(my_delete_with_symlink(from, MYF(MY_WME)) ? errno : 0);
 }

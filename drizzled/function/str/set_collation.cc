@@ -20,6 +20,7 @@
 #include "config.h"
 #include <drizzled/function/str/set_collation.h>
 #include <drizzled/error.h>
+#include "drizzled/charset.h"
 
 static const char *binary_keyword= "BINARY";
 

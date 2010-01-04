@@ -22,7 +22,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/sql_lex.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
@@ -36,8 +36,9 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 
 
 #include "drizzled/statement/alter_table.h"
@@ -1142,8 +1143,8 @@ int mysql_prepare_create_table(Session *session,
     return(true);
   }
 
-  (*key_info_buffer)= key_info= (KEY*) sql_calloc(sizeof(KEY) * (*key_count));
-  key_part_info=(KEY_PART_INFO*) sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
+  (*key_info_buffer)= key_info= (KEY*) memory::sql_calloc(sizeof(KEY) * (*key_count));
+  key_part_info=(KEY_PART_INFO*) memory::sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
@@ -1821,7 +1822,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
     *buff_end= '_';
     int10_to_str(i, buff_end+1, 10);
     if (!check_if_keyname_exists(buff,start,end))
-      return sql_strdup(buff);
+      return memory::sql_strdup(buff);
   }
   return (char*) "not_specified";		// Should never happen
 }
@@ -1872,7 +1873,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
     if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
        && rename_table_proto_file(from_base, to_base))
     {
-      error= my_errno;
+      error= errno;
       base->renameTable(session, to_base, from_base);
     }
   }
@@ -2349,10 +2350,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr)
     {
-      if (my_errno == ENOENT)
+      if (errno == ENOENT)
         my_error(ER_BAD_DB_ERROR,MYF(0),db);
       else
-        my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), my_errno);
+        my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), errno);
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }

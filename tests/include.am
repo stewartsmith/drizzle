@@ -28,8 +28,7 @@ noinst_PROGRAMS += 	tests/resolve_stack_dump
 tests_resolve_stack_dump_SOURCES = tests/resolve_stack_dump.cc
 tests_resolve_stack_dump_LDADD = ${TEST_LDADD}
 
-TEST_LDADD=			$(top_builddir)/mysys/libmysys.la \
-                        $(top_builddir)/mystrings/libmystrings.la \
+TEST_LDADD=		drizzled/internal/libinternal.la \
 			$(LIBINTL)
 
 TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \

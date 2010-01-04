@@ -26,8 +26,6 @@
 #include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
-#include <mysys/my_alloc.h>
-#include <mysys/my_tree.h>
 #include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
@@ -61,6 +59,8 @@ class Lex_input_stream;
 class user_var_entry;
 class CopyField;
 class Table_ident;
+
+struct st_my_thread_var;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -179,7 +179,6 @@ struct system_variables
   uint32_t trans_alloc_block_size;
   uint32_t trans_prealloc_size;
   uint64_t group_concat_max_len;
-  /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
   drizzled::plugin::StorageEngine *storage_engine;
@@ -392,7 +391,7 @@ public:
    * itself to the list on creation (see Item::Item() for details))
    */
   Item *free_list;
-  MEM_ROOT *mem_root; /**< Pointer to current memroot */
+  drizzled::memory::Root *mem_root; /**< Pointer to current memroot */
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -448,7 +447,7 @@ public:
   */
   static const char * const DEFAULT_WHERE;
 
-  MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
+  drizzled::memory::Root warn_root; /**< Allocation area for warnings and errors */
   drizzled::plugin::Client *client; /**< Pointer to client object */
   drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
@@ -546,18 +545,18 @@ public:
        cache (instead of full list of changed in transaction tables).
     */
     CHANGED_TableList* changed_tables;
-    MEM_ROOT mem_root; // Transaction-life memory allocation pool
+    drizzled::memory::Root mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
       changed_tables= 0;
       savepoints= 0;
-      free_root(&mem_root,MYF(MY_KEEP_PREALLOC));
+      free_root(&mem_root,MYF(drizzled::memory::KEEP_PREALLOC));
     }
     st_transactions()
     {
       memset(this, 0, sizeof(*this));
       xid_state.xid.null();
-      init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
+      drizzled::memory::init_sql_alloc(&mem_root, drizzled::memory::ROOT_MIN_BLOCK_SIZE, 0);
     }
   } transaction;
   Field *dup_field;
@@ -677,7 +676,7 @@ public:
   */
   uint32_t row_count;
   pthread_t real_id; /**< For debugging */
-  my_thread_id thread_id;
+  uint64_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
   uint32_t server_status;
@@ -981,30 +980,9 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  inline const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg)
-  {
-    const char* old_msg = get_proc_info();
-    safe_mutex_assert_owner(mutex);
-    mysys_var->current_mutex = mutex;
-    mysys_var->current_cond = cond;
-    this->set_proc_info(msg);
-    return old_msg;
-  }
-  inline void exit_cond(const char* old_msg)
-  {
-    /*
-      Putting the mutex unlock in exit_cond() ensures that
-      mysys_var->current_mutex is always unlocked _before_ mysys_var->mutex is
-      locked (if that would not be the case, you'll get a deadlock if someone
-      does a Session::awake() on you).
-    */
-    pthread_mutex_unlock(mysys_var->current_mutex);
-    pthread_mutex_lock(&mysys_var->mutex);
-    mysys_var->current_mutex = 0;
-    mysys_var->current_cond = 0;
-    this->set_proc_info(old_msg);
-    pthread_mutex_unlock(&mysys_var->mutex);
-  }
+  const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg);
+  void exit_cond(const char* old_msg);
+
   inline time_t query_start() { return start_time; }
   inline void set_time()
   {
@@ -1292,7 +1270,7 @@ private:
     - for prepared queries, only to allocate runtime data. The parsed
     tree itself is reused between executions and thus is stored elsewhere.
   */
-  MEM_ROOT main_mem_root;
+  drizzled::memory::Root main_mem_root;
 
   /**
    * Marks all tables in the list which were used by current substatement
@@ -1495,7 +1473,6 @@ class JOIN;
 #include <drizzled/select_dump.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/select_create.h>
-#include <plugin/myisam/myisam.h>
 #include <drizzled/tmp_table_param.h>
 #include <drizzled/select_union.h>
 #include <drizzled/select_subselect.h>

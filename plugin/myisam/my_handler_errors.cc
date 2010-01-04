@@ -19,8 +19,9 @@
 
 #include "config.h"
 #include <drizzled/base.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 #include <plugin/myisam/my_handler.h>
+#include "drizzled/my_error.h"
 
 #include <drizzled/gettext.h>
 

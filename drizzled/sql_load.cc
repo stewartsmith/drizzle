@@ -23,6 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 #include <drizzled/db.h>
 
 #include <sys/stat.h>
@@ -30,6 +32,7 @@
 #include <algorithm>
 #include <climits>
 
+using namespace drizzled;
 using namespace std;
 
 class READ_INFO {
@@ -293,7 +296,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     }
     if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
     {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), name, my_errno);
+      my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
       return(true);
     }
   }
@@ -361,7 +364,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 			    *enclosed, skip_lines, ignore);
     if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->print_error(my_errno, MYF(0));
+      table->print_error(errno, MYF(0));
       error= 1;
     }
     table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
@@ -773,7 +776,7 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   /* Set of a stack for unget if long terminators */
   uint32_t length= max(field_term_length,line_term_length)+1;
   set_if_bigger(length,line_start.length());
-  stack= stack_pos= (int*) sql_alloc(sizeof(int)*length);
+  stack= stack_pos= (int*) memory::sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
     error=1;

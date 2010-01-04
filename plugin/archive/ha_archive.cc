@@ -21,7 +21,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
-#include <mysys/my_dir.h>
+#include "drizzled/internal/my_dir.h"
 
 #include "ha_archive.h"
 
@@ -151,7 +151,7 @@ public:
   }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_archive(*this, table);
   }
@@ -171,7 +171,7 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, string& , set<string>& set_of_names);
 
   int doDropTable(Session&, const string table_path);
   ArchiveShare *findOpenTable(const string table_name);
@@ -210,16 +210,16 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 }
 
 
-void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
+void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
                                     string&, 
                                     set<string>& set_of_names)
 {
-  CachedDirectory::Entries entries= directory.getEntries();
+  drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
-  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
        entry_iter != entries.end(); ++entry_iter)
   {
-    CachedDirectory::Entry *entry= *entry_iter;
+    drizzled::CachedDirectory::Entry *entry= *entry_iter;
     string *filename= &entry->filename;
 
     assert(filename->size());
@@ -254,7 +254,7 @@ int ArchiveEngine::doDropTable(Session&,
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;
@@ -694,7 +694,7 @@ int ArchiveEngine::doCreateTable(Session *,
   fn_format(name_buff, table_name, "", ARZ,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  my_errno= 0;
+  errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {

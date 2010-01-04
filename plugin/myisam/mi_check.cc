@@ -41,9 +41,9 @@
 */
 
 #include "myisam_priv.h"
-#include <mystrings/m_string.h>
+#include "drizzled/internal/m_string.h"
 #include <stdarg.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #ifdef HAVE_SYS_VADVISE_H
 #include <sys/vadvise.h>
 #endif
@@ -54,6 +54,7 @@
 #include <sys/mman.h>
 #endif
 #include <drizzled/util/test.h>
+#include "drizzled/my_error.h"
 
 #include <algorithm>
 
@@ -1265,7 +1266,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   free(mi_get_rec_buff_ptr(info, record));
   return (error);
  err:
-  mi_check_print_error(param,"got error: %d when reading datafile at record: %s",my_errno, llstr(records,llbuff));
+  mi_check_print_error(param,"got error: %d when reading datafile at record: %s",errno, llstr(records,llbuff));
  err2:
   free(mi_get_rec_buff_ptr(info, record));
   param->testflag|=T_RETRY_WITHOUT_QUICK;
@@ -1514,7 +1515,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   {
     if (writekeys(&sort_param))
     {
-      if (my_errno != HA_ERR_FOUND_DUPP_KEY)
+      if (errno != HA_ERR_FOUND_DUPP_KEY)
 	goto err;
       mi_check_print_info(param,"Duplicate key %2d for record at %10s against new record at %10s",
 			  info->errkey+1,
@@ -1549,7 +1550,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   {
     mi_check_print_warning(param,
 			   "Can't change size of indexfile, error: %d",
-			   my_errno);
+			   errno);
     goto err;
   }
 
@@ -1621,7 +1622,7 @@ err:
   if (got_error)
   {
     if (! param->error_printed)
-      mi_check_print_error(param,"%d for record at pos %s",my_errno,
+      mi_check_print_error(param,"%d for record at pos %s",errno,
 		  llstr(sort_param.start_recpos,llbuff));
     if (new_file >= 0)
     {
@@ -1683,7 +1684,7 @@ static int writekeys(MI_SORT_PARAM *sort_param)
   return(0);
 
  err:
-  if (my_errno == HA_ERR_FOUND_DUPP_KEY)
+  if (errno == HA_ERR_FOUND_DUPP_KEY)
   {
     info->errkey=(int) i;			/* This key was found */
     while ( i-- > 0 )
@@ -1760,7 +1761,7 @@ void lock_memory(MI_CHECK *param)
     int success = mlockall(MCL_CURRENT);	/* or plock(DATLOCK); */
     if (geteuid() == 0 && success != 0)
       mi_check_print_warning(param,
-			     "Failed to lock memory. errno %d",my_errno);
+			     "Failed to lock memory. errno %d",errno);
   }
 #else
   (void)param;
@@ -1774,7 +1775,7 @@ int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, int file)
 {
   if (flush_key_blocks(key_cache, file, FLUSH_RELEASE))
   {
-    mi_check_print_error(param,"%d when trying to write bufferts",my_errno);
+    mi_check_print_error(param,"%d when trying to write bufferts",errno);
     return(1);
   }
   if (!param->using_global_keycache)
@@ -1934,7 +1935,7 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
   if (my_pwrite(new_file,(unsigned char*) buff,(uint) keyinfo->block_length,
 		new_page_pos,MYF(MY_NABP | MY_WAIT_IF_FULL)))
   {
-    mi_check_print_error(param,"Can't write indexblock, error: %d",my_errno);
+    mi_check_print_error(param,"Can't write indexblock, error: %d",errno);
     goto err;
   }
   free(buff);
@@ -2002,7 +2003,7 @@ err:
   if (buff != tmp_buff)
     free(buff);
   mi_check_print_error(param,"Can't copy %s to tempfile, error %d",
-		       type,my_errno);
+		       type,errno);
   return(1);
 }
 
@@ -2277,7 +2278,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
       if (ftruncate(info->dfile, skr))
 	mi_check_print_warning(param,
 			       "Can't change size of datafile,  error: %d",
-			       my_errno);
+			       errno);
   }
   if (param->testflag & T_CALC_CHECKSUM)
     info->state->checksum=param->glob_crc;
@@ -2285,7 +2286,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   if (ftruncate(share->kfile, info->state->key_file_length))
     mi_check_print_warning(param,
 			   "Can't change size of indexfile, error: %d",
-			   my_errno);
+			   errno);
 
   if (!(param->testflag & T_SILENT))
   {
@@ -2322,7 +2323,7 @@ err:
   if (got_error)
   {
     if (! param->error_printed)
-      mi_check_print_error(param,"%d when fixing table",my_errno);
+      mi_check_print_error(param,"%d when fixing table",errno);
     if (new_file >= 0)
     {
       my_close(new_file,MYF(0));
@@ -2775,14 +2776,14 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
       if (ftruncate(info->dfile, skr))
 	mi_check_print_warning(param,
 			       "Can't change size of datafile,  error: %d",
-			       my_errno);
+			       errno);
   }
   if (param->testflag & T_CALC_CHECKSUM)
     info->state->checksum=param->glob_crc;
 
   if (ftruncate(share->kfile, info->state->key_file_length))
     mi_check_print_warning(param,
-			   "Can't change size of indexfile, error: %d", my_errno);
+			   "Can't change size of indexfile, error: %d", errno);
 
   if (!(param->testflag & T_SILENT))
   {
@@ -2832,7 +2833,7 @@ err:
   if (got_error)
   {
     if (! param->error_printed)
-      mi_check_print_error(param,"%d when fixing table",my_errno);
+      mi_check_print_error(param,"%d when fixing table",errno);
     if (new_file >= 0)
     {
       my_close(new_file,MYF(0));
@@ -3212,7 +3213,7 @@ int sort_get_next_record(MI_SORT_PARAM *sort_param)
 	{
 	  mi_check_print_info(param,
 			      "Read error for block at: %s (error: %d); Skipped",
-			      llstr(block_info.filepos,llbuff),my_errno);
+			      llstr(block_info.filepos,llbuff),errno);
 	  goto try_next;
 	}
 	left_length-=block_info.data_len;
@@ -3305,7 +3306,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
       if (my_b_write(&info->rec_cache,sort_param->record,
 		     share->base.pack_reclength))
       {
-	mi_check_print_error(param,"%d when writing to datafile",my_errno);
+	mi_check_print_error(param,"%d when writing to datafile",errno);
 	return(1);
       }
       sort_param->filepos+=share->base.pack_reclength;
@@ -3359,7 +3360,7 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
 				  sort_param->filepos+block_length,
 				  &from,&reclength,&flag))
 	{
-	  mi_check_print_error(param,"%d when writing to datafile",my_errno);
+	  mi_check_print_error(param,"%d when writing to datafile",errno);
 	  return(1);
 	}
 	sort_param->filepos+=block_length;
@@ -3805,7 +3806,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
 		&create_info,
 		HA_DONT_TOUCH_DATA))
   {
-    mi_check_print_error(param,"Got error %d when trying to recreate indexfile",my_errno);
+    mi_check_print_error(param,"Got error %d when trying to recreate indexfile",errno);
     goto end;
   }
   *org_info=mi_open(filename,O_RDWR,
@@ -3815,7 +3816,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   if (!*org_info)
   {
     mi_check_print_error(param,"Got error %d when trying to open re-created indexfile",
-		my_errno);
+		errno);
     goto end;
   }
   /* We are modifing */
@@ -3857,7 +3858,7 @@ int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile)
     if (my_b_write(&info->rec_cache,buff,sizeof(buff)))
     {
       mi_check_print_error(sort_info->param,
-			   "%d when writing to datafile",my_errno);
+			   "%d when writing to datafile",errno);
       return 1;
     }
     sort_info->param->read_cache.end_of_file+=sizeof(buff);
@@ -3922,7 +3923,7 @@ int update_state_info(MI_CHECK *param, MI_INFO *info,uint32_t update)
       return 0;
   }
 err:
-  mi_check_print_error(param,"%d when updating keyfile",my_errno);
+  mi_check_print_error(param,"%d when updating keyfile",errno);
   return 1;
 }
 
@@ -3969,11 +3970,11 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
   mi_extra(info,HA_EXTRA_KEYREAD,0);
   if (mi_rlast(info, record, info->s->base.auto_key-1))
   {
-    if (my_errno != HA_ERR_END_OF_FILE)
+    if (errno != HA_ERR_END_OF_FILE)
     {
       mi_extra(info,HA_EXTRA_NO_KEYREAD,0);
       free(mi_get_rec_buff_ptr(info, record));
-      mi_check_print_error(param,"%d when reading last record",my_errno);
+      mi_check_print_error(param,"%d when reading last record",errno);
       return;
     }
     if (!repair_only)

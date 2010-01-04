@@ -54,8 +54,8 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
     }
     else
     {
-      my_errno = HA_ERR_END_OF_FILE;
-      return(my_errno);
+      errno = HA_ERR_END_OF_FILE;
+      return(errno);
     }
     return(0);
   }
@@ -63,8 +63,8 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
   {
     if (!(info->s->records))
     {
-      my_errno=HA_ERR_END_OF_FILE;
-      return(my_errno);
+      errno=HA_ERR_END_OF_FILE;
+      return(errno);
     }
     assert(0); /* TODO fix it */
     info->current_record=0;

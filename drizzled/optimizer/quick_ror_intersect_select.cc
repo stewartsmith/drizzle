@@ -23,6 +23,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
+#include "drizzled/internal/m_string.h"
 
 #include <vector>
 
@@ -33,7 +34,7 @@ using namespace drizzled;
 optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_param,
                                                             Table *table,
                                                             bool retrieve_full_rows,
-                                                            MEM_ROOT *parent_alloc)
+                                                            memory::Root *parent_alloc)
   :
     cpk_quick(NULL),
     session(session_param),
@@ -45,11 +46,11 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
   record= head->record[0];
   if (! parent_alloc)
   {
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
   }
   else
   {
-    memset(&alloc, 0, sizeof(MEM_ROOT));
+    memset(&alloc, 0, sizeof(memory::Root));
   }
   last_rowid= (unsigned char*) alloc_root(parent_alloc ? parent_alloc : &alloc,
                                           head->cursor->ref_length);

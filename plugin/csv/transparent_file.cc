@@ -16,7 +16,7 @@
 
 #include "config.h"
 #include <cstdlib>
-#include "mysys/my_sys.h"
+#include "drizzled/internal/my_sys.h"
 #include "transparent_file.h"
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)

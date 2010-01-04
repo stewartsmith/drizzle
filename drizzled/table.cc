@@ -42,6 +42,9 @@
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/charset.h"
+#include "drizzled/internal/m_string.h"
+#include "plugin/myisam/myisam.h"
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -107,7 +110,7 @@ static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length)
 {
-  MEM_ROOT mem_root;
+  memory::Root mem_root;
   TableShare *share;
   char *key_buff, *path_buff;
   char path[FN_REFLEN];
@@ -116,7 +119,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
                                     table_list->table_name, false);
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
@@ -1211,7 +1214,7 @@ err:
     free(field_pack_length);
 
   share->error= error;
-  share->open_errno= my_errno;
+  share->open_errno= errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
   share->open_table_error(error, share->open_errno, 0);
@@ -1263,7 +1266,7 @@ int open_table_def(Session& session, TableShare *share)
   {
     if (error>0)
     {
-      my_errno= error;
+      errno= error;
       error= 1;
     }
     else
@@ -1287,7 +1290,7 @@ err_not_open:
   if (error && !error_given)
   {
     share->error= error;
-    share->open_table_error(error, (share->open_errno= my_errno), 0);
+    share->open_table_error(error, (share->open_errno= errno), 0);
   }
 
   return(error);
@@ -1494,7 +1497,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             as if the .frm cursor didn't exist
           */
 	  error= 1;
-	  my_errno= ENOENT;
+	  errno= ENOENT;
           break;
         case EMFILE:
 	  /*
@@ -1502,7 +1505,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             cursor can't open
            */
 	  error= 1;
-	  my_errno= EMFILE;
+	  errno= EMFILE;
           break;
         default:
           outparam->print_error(ha_err, MYF(0));
@@ -1525,7 +1528,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
-    share->open_table_error(error, my_errno, 0);
+    share->open_table_error(error, errno, 0);
   delete outparam->cursor;
   outparam->cursor= 0;				// For easier error checking
   outparam->db_stat= 0;
@@ -1660,7 +1663,7 @@ void Table::resetTable(Session *session,
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 
@@ -1751,7 +1754,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
@@ -2348,7 +2351,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  MEM_ROOT *mem_root_save, own_root;
+  memory::Root *mem_root_save, own_root;
   Table *table;
   TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
@@ -2422,7 +2425,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
 
-  init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
                         &table, sizeof(*table),
@@ -3287,7 +3290,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
 void Table::free_tmp_table(Session *session)
 {
-  MEM_ROOT own_root= mem_root;
+  memory::Root own_root= mem_root;
   const char *save_proc_info;
 
   save_proc_info=session->get_proc_info();
@@ -3612,7 +3615,7 @@ Table::Table()
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 
@@ -3717,7 +3720,3 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   return false;
 }
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<String>;
-template class List_iterator<String>;
-#endif

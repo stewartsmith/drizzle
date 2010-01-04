@@ -139,7 +139,7 @@ public:
   /* true if this select is currently doing a clustered PK scan */
   bool  doing_pk_scan;
 
-  MEM_ROOT alloc;
+  drizzled::memory::Root alloc;
   Session *session;
 
   /**

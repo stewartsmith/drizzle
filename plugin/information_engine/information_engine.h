@@ -21,7 +21,7 @@
 #ifndef PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_ENGINE_H
 
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/plugin/storage_engine.h>
 
@@ -156,14 +156,14 @@ public:
     return EPERM; 
   }
 
-  virtual Cursor *create(TableShare &table, MEM_ROOT *mem_root);
+  virtual Cursor *create(TableShare &table, drizzled::memory::Root *mem_root);
 
   const char **bas_ext() const 
   {
     return information_exts;
   }
 
-  void doGetTableNames(CachedDirectory&, 
+  void doGetTableNames(drizzled::CachedDirectory&, 
                        std::string &db, 
                        std::set<std::string> &set_of_names);
 

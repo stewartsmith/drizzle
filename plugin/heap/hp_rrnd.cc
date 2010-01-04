@@ -32,13 +32,13 @@ int heap_rrnd(register HP_INFO *info, unsigned char *record, unsigned char *pos)
   if (!(info->current_ptr= pos))
   {
     info->update= 0;
-    return(my_errno= HA_ERR_END_OF_FILE);
+    return(errno= HA_ERR_END_OF_FILE);
   }
   if (get_chunk_status(&share->recordspace, info->current_ptr) != CHUNK_STATUS_ACTIVE)
   {
     /* treat deleted and linked chunks as deleted */
     info->update= HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND;
-    return(my_errno=HA_ERR_RECORD_DELETED);
+    return(errno=HA_ERR_RECORD_DELETED);
   }
   info->update=HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND | HA_STATE_AKTIV;
   hp_extract_record(share, record, info->current_ptr);
@@ -79,7 +79,7 @@ asdfasdf;
   if (pos >= share->used_chunk_count+share->deleted_chunk_count)
   {
     info->update= 0;
-    return(my_errno= HA_ERR_END_OF_FILE);
+    return(errno= HA_ERR_END_OF_FILE);
   }
 
 	/* Find record number pos */
@@ -89,7 +89,7 @@ end:
   if (!info->current_ptr[share->reclength])
   {
     info->update= HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND;
-    return(my_errno=HA_ERR_RECORD_DELETED);
+    return(errno=HA_ERR_RECORD_DELETED);
   }
   info->update=HA_STATE_PREV_FOUND | HA_STATE_NEXT_FOUND | HA_STATE_AKTIV;
   memcpy(record,info->current_ptr,(size_t) share->reclength);

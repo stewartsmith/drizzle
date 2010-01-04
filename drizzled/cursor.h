@@ -26,8 +26,7 @@
 
 /* Definitions for parameters to do with Cursor-routines */
 
-#include <mysys/thr_lock.h>
-#include <mysys/hash.h>
+#include <drizzled/thr_lock.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/plugin/storage_engine.h>
@@ -162,7 +161,7 @@ inline key_part_map make_prev_keypart_map(T a)
   must be set to 0.
 */
 
-class Cursor :public Sql_alloc
+class Cursor :public drizzled::memory::SqlAlloc
 {
 protected:
   TableShare *table_share;   /* The table definition */
@@ -237,18 +236,9 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg)
-    :table_share(&share_arg), table(0),
-    estimation_rows_to_insert(0), engine(&engine_arg),
-    ref(0), in_range_check_pushed_down(false),
-    key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
-    ref_length(sizeof(my_off_t)),
-    inited(NONE),
-    locked(false), implicit_emptied(0),
-    next_insert_id(0), insert_id_for_cur_row(0)
-    {}
+  Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg);
   virtual ~Cursor(void);
-  virtual Cursor *clone(MEM_ROOT *mem_root);
+  virtual Cursor *clone(drizzled::memory::Root *mem_root);
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
@@ -645,7 +635,7 @@ private:
                          uint32_t, enum ha_rkey_function)
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_read_last(unsigned char *, const unsigned char *, uint32_t)
-   { return (my_errno= HA_ERR_WRONG_COMMAND); }
+   { return (errno= HA_ERR_WRONG_COMMAND); }
   /**
     This is called to delete all rows in a table
     If the Cursor don't support this, then this function will
@@ -653,7 +643,7 @@ private:
     by one.
   */
   virtual int delete_all_rows(void)
-  { return (my_errno=HA_ERR_WRONG_COMMAND); }
+  { return (errno=HA_ERR_WRONG_COMMAND); }
   /**
     Reset the auto-increment counter to the given value, i.e. the next row
     inserted will get the given value. This is called e.g. after TRUNCATE
@@ -673,7 +663,7 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
 
   virtual int discard_or_import_tablespace(bool)
-  { return (my_errno=HA_ERR_WRONG_COMMAND); }
+  { return (errno=HA_ERR_WRONG_COMMAND); }
 
   /* 
     @todo this is just for the HEAP engine, it should
@@ -685,9 +675,7 @@ private:
 };
 
 extern const char *ha_row_type[];
-extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
-extern TYPELIB tx_isolation_typelib;
 extern uint32_t total_ha, total_ha_2pc;
 
        /* Wrapper functions */

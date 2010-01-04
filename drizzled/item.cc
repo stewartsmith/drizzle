@@ -47,6 +47,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/internal/m_string.h"
 
 #include <math.h>
 #include <algorithm>
@@ -426,7 +427,7 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
                             str + length - orig_len);
     }
   }
-  name= sql_strmake(str, length);
+  name= memory::sql_strmake(str, length);
 }
 
 bool Item::eq(const Item *item, bool) const
@@ -1420,7 +1421,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     return; /* Can't be better */
   Item_result res_type=item_cmp_type(comp_item->result_type(),
 				     item->result_type());
-  char *name=item->name; /* Alloced by sql_alloc */
+  char *name=item->name; /* Alloced by memory::sql_alloc */
 
   switch (res_type) {
   case STRING_RESULT:
@@ -1433,7 +1434,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     else
     {
       uint32_t length= result->length();
-      char *tmp_str= sql_strmake(result->ptr(), length);
+      char *tmp_str= memory::sql_strmake(result->ptr(), length);
       new_item= new Item_string(name, tmp_str, length, result->charset());
     }
     break;
@@ -1778,10 +1779,3 @@ Field *create_tmp_field(Session *session,
   }
 }
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<Item>;
-template class List_iterator<Item>;
-template class List_iterator_fast<Item>;
-template class List_iterator_fast<Item_field>;
-template class List<List_item>;
-#endif

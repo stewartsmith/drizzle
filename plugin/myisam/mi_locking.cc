@@ -21,8 +21,7 @@
 */
 
 #include "myisam_priv.h"
-#include <mystrings/m_ctype.h>
-#include <mysys/my_tree.h>
+#include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
 
 using namespace std;
@@ -64,7 +63,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  !share->delay_key_write && flush_key_blocks(share->key_cache,
 						      share->kfile,FLUSH_KEEP))
       {
-	error=my_errno;
+	error=errno;
         mi_print_error(info->s, HA_ERR_CRASHED);
 	mi_mark_crashed(info);		/* Mark that table must be checked */
       }
@@ -72,7 +71,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       {
 	if (end_io_cache(&info->rec_cache))
 	{
-	  error=my_errno;
+	  error=errno;
           mi_print_error(info->s, HA_ERR_CRASHED);
 	  mi_mark_crashed(info);
 	}
@@ -95,7 +94,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  share->state.unique=   info->last_unique=  info->this_unique;
 	  share->state.update_count= info->last_loop= ++info->this_loop;
           if (mi_state_info_write(share->kfile, &share->state, 1))
-	    error=my_errno;
+	    error=errno;
 	  share->changed=0;
           share->not_flushed=1;
 	  if (error)
@@ -143,13 +142,13 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	flag=1;
 	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
-	  error=my_errno;
+	  error=errno;
 	  break;
 	}
 	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
-	  error=my_errno;
-	  my_errno=error;
+	  error=errno;
+	  errno=error;
 	  break;
 	}
       }
@@ -180,8 +179,8 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  {
 	    if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	    {
-	      error=my_errno;
-	      my_errno=error;
+	      error=errno;
+	      errno=error;
 	      break;
 	    }
 	  }
@@ -342,8 +341,8 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
     {
       if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
       {
-	int error=my_errno ? my_errno : -1;
-	my_errno=error;
+	int error=errno ? errno : -1;
+	errno=error;
 	return(1);
       }
     }
@@ -352,7 +351,7 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
   }
   else if (lock_type == F_WRLCK && info->lock_type == F_RDLCK)
   {
-    my_errno=EACCES;				/* Not allowed to change */
+    errno=EACCES;				/* Not allowed to change */
     return(-1);				/* when have read_lock() */
   }
   return(0);
@@ -372,16 +371,16 @@ int _mi_writeinfo(register MI_INFO *info, uint32_t operation)
   error=0;
   if (share->tot_locks == 0)
   {
-    olderror=my_errno;			/* Remember last error */
+    olderror=errno;			/* Remember last error */
     if (operation)
     {					/* Two threads can't be here */
       share->state.process= share->last_process=   share->this_process;
       share->state.unique=  info->last_unique=	   info->this_unique;
       share->state.update_count= info->last_loop= ++info->this_loop;
       if ((error=mi_state_info_write(share->kfile, &share->state, 1)))
-	olderror=my_errno;
+	olderror=errno;
     }
-    my_errno=olderror;
+    errno=olderror;
   }
   else if (operation)
     share->changed= 1;			/* Mark keyfile changed */

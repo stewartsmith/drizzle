@@ -42,7 +42,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
     if (info->state->data_file_length > info->s->base.max_data_file_length-
 	info->s->base.pack_reclength)
     {
-      my_errno=HA_ERR_RECORD_FILE_FULL;
+      errno=HA_ERR_RECORD_FILE_FULL;
       return(2);
     }
     if (info->opt_flag & WRITE_CACHE_USED)
@@ -130,7 +130,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *
     if (memcmp(info->rec_buff, old,
 	       (uint) info->s->base.reclength))
     {
-      my_errno=HA_ERR_RECORD_CHANGED;		/* Record have changed */
+      errno=HA_ERR_RECORD_CHANGED;		/* Record have changed */
       return(1);
     }
   }
@@ -175,7 +175,7 @@ int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
     {
       if (!*record)
       {
-	my_errno=HA_ERR_RECORD_DELETED;
+	errno=HA_ERR_RECORD_DELETED;
 	return(1);				/* Record is deleted */
       }
       info->update|= HA_STATE_AKTIV;		/* Record is read */
@@ -202,7 +202,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   if (info->opt_flag & WRITE_CACHE_USED &&
       (info->rec_cache.pos_in_file <= filepos || skip_deleted_blocks) &&
       flush_io_cache(&info->rec_cache))
-    return(my_errno);
+    return(errno);
   if (info->opt_flag & READ_CACHE_USED)
   {						/* Cache in use */
     if (filepos == my_b_tell(&info->rec_cache) &&
@@ -220,7 +220,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
     if (filepos >= info->state->data_file_length)
     {						/* Test if new records */
       if (_mi_readinfo(info,F_RDLCK,0))
-	return(my_errno);
+	return(errno);
       locked=1;
     }
     else
@@ -235,7 +235,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   if (filepos >= info->state->data_file_length)
   {
     fast_mi_writeinfo(info);
-    return(my_errno=HA_ERR_END_OF_FILE);
+    return(errno=HA_ERR_END_OF_FILE);
   }
   info->lastpos= filepos;
   info->nextpos= filepos+share->base.pack_reclength;
@@ -245,9 +245,9 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
     if ((error=_mi_read_static_record(info,filepos,buf)))
     {
       if (error > 0)
-	error=my_errno=HA_ERR_RECORD_DELETED;
+	error=errno=HA_ERR_RECORD_DELETED;
       else
-	error=my_errno;
+	error=errno;
     }
     return(error);
   }
@@ -266,14 +266,14 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   {
     if (!buf[0])
     {						/* Record is removed */
-      return(my_errno=HA_ERR_RECORD_DELETED);
+      return(errno=HA_ERR_RECORD_DELETED);
     }
 						/* Found and may be updated */
     info->update|= HA_STATE_AKTIV | HA_STATE_KEY_CHANGED;
     return(0);
   }
-  /* my_errno should be set if rec_cache.error == -1 */
-  if (info->rec_cache.error != -1 || my_errno == 0)
-    my_errno=HA_ERR_WRONG_IN_RECORD;
-  return(my_errno);			/* Something wrong (EOF?) */
+  /* errno should be set if rec_cache.error == -1 */
+  if (info->rec_cache.error != -1 || errno == 0)
+    errno=HA_ERR_WRONG_IN_RECORD;
+  return(errno);			/* Something wrong (EOF?) */
 }

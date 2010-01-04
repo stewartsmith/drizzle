@@ -464,9 +464,9 @@ info
 SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID()
 show processlist;
 Id	User	Host	db	Command	Time	State	Info
-#	#	#	mysqltest	Sleep	#	#	NULL
-#	#	#	test	Sleep	#	#	NULL
 #	#	#	test	Query	#	#	show processlist
+#	#	#	test	Sleep	#	#	
+#	#	#	mysqltest	Sleep	#	#	
 SELECT info, command, db
 FROM information_schema.processlist
 WHERE id = CONNECTION_ID();

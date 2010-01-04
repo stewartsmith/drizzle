@@ -41,7 +41,7 @@ optimizer::QuickRorUnionSelect::QuickRorUnionSelect(Session *session_param,
   head= table;
   rowid_length= table->cursor->ref_length;
   record= head->record[0];
-  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+  memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
   session_param->mem_root= &alloc;
 }
 

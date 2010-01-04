@@ -22,7 +22,7 @@
 #define DRIZZLED_TABLE_IDENT_H
 
 /* Structure for db & table in sql_yacc */
-class Table_ident :public Sql_alloc
+class Table_ident :public drizzled::memory::SqlAlloc
 {
 public:
   LEX_STRING db;

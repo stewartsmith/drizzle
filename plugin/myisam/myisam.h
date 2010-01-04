@@ -26,13 +26,13 @@ extern "C" {
 
 #include <drizzled/base.h>
 #ifndef _m_ctype_h
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #endif
 #ifndef _keycache_h
 #include "keycache.h"
 #endif
 #include <plugin/myisam/my_handler.h>
-#include <mysys/iocache.h>
+#include "drizzled/internal/iocache.h"
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY
