@@ -31,7 +31,7 @@
 #  define ATOMIC_TRAITS internal::pthread_traits
 # endif
 
-# if (SIZEOF_SIZE_T >= SIZEOF_LONG_LONG) || (!defined(HAVE_GCC_ATOMIC_BUILTINS) || !defined(__SUNPRO_CC))
+# if (SIZEOF_SIZE_T >= SIZEOF_LONG_LONG) || (!defined(HAVE_GCC_ATOMIC_BUILTINS) || !defined(__SUNPRO_CC)) || defined(__ppc__)
 #  include <pthread.h>
 #  include <drizzled/atomic/pthread_traits.h>
 # endif
@@ -158,7 +158,7 @@ __DRIZZLE_DECL_ATOMIC(bool)
  * so we'll use pthread locks to handler 64-bit types on that platforms
  */
 /* *INDENT-OFF* */
-#  if SIZEOF_SIZE_T >= SIZEOF_LONG_LONG
+# if !defined(__ppc__) && (defined(_INT64_TYPE) || defined(_LP64))
 __DRIZZLE_DECL_ATOMIC(long long)
 __DRIZZLE_DECL_ATOMIC(unsigned long long)
 #  else
