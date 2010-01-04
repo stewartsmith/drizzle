@@ -205,7 +205,7 @@ int BlitzData::write_unique_row(const char *key, const size_t klen,
 
   if (!tchdbputkeep(data_table, key, klen, row, rlen)) {
     if (tchdbecode(data_table) == TCEKEEP) {
-      my_errno = HA_ERR_FOUND_DUPP_KEY;
+      errno = HA_ERR_FOUND_DUPP_KEY;
       rv = HA_ERR_FOUND_DUPP_KEY;
     }
   }
