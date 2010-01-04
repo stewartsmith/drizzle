@@ -32,11 +32,11 @@
  */
 
 #include "config.h"
-#include "drizzled/hash/crc32.h"
+#include "drizzled/hash_algorithm/crc32.h"
 
 namespace drizzled
 {
-namespace hash
+namespace hash_algorithm
 {
 
 static const uint32_t crc32tab[256] = {
@@ -117,5 +117,5 @@ uint32_t crc32(const char *key, size_t key_length)
   return ~crc;
 }
 
-} /* namespace hash */
+} /* namespace hash_algorithm */
 } /* namespace drizzled */

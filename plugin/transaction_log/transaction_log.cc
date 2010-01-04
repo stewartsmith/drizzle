@@ -90,7 +90,7 @@
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
-#include <drizzled/hash/crc32.h>
+#include <drizzled/hash_algorithm/crc32.h>
 #include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/io/coded_stream.h>
 
@@ -250,7 +250,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
   uint32_t checksum= 0;
   if (do_checksum)
   {
-    checksum= drizzled::hash::crc32(reinterpret_cast<char *>(buffer) - message_byte_length, message_byte_length);
+    checksum= drizzled::hash_algorithm::crc32(reinterpret_cast<char *>(buffer) - message_byte_length, message_byte_length);
   }
 
   /* We always write in network byte order */

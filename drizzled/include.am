@@ -427,7 +427,7 @@ DRIZZLED_LDADD= \
 drizzled_drizzled_LDADD= \
 		${DRIZZLED_LDADD} \
 		${noinst_LTLIBRARIES} \
-		drizzled/hash/libhash.la \
+		drizzled/hash_algorithm/libhash.la \
 		drizzled/util/libutil.la \
 		drizzled/message/libdrizzledmessage.la \
 		drizzled/libcached_directory.la \

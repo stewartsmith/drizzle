@@ -31,8 +31,8 @@
  * src/usr.bin/cksum/crc32.c.
  */
 
-#ifndef DRIZZLED_HASH_CRC32_H
-#define DRIZZLED_HASH_CRC32_H
+#ifndef DRIZZLED_HASH_ALGORITHM_CRC32_H
+#define DRIZZLED_HASH_ALGORITHM_CRC32_H
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -40,12 +40,12 @@
 
 namespace drizzled
 {
-namespace hash
+namespace hash_algorithm
 {
 
 uint32_t crc32(const char *key, size_t key_length);
 
-} /* namespace hash */
+} /* namespace hash_algorithm */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_HASH_CRC32_H */
+#endif /* DRIZZLED_HASH_ALGORITHM_CRC32_H */

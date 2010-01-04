@@ -55,7 +55,7 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
-#include <drizzled/hash/crc32.h>
+#include <drizzled/hash_algorithm/crc32.h>
 #include <drizzled/errmsg_print.h>
 #include "drizzled/definitions.h"
 
@@ -163,9 +163,9 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
 
       if (do_checksum)
       {
-        if (checksum != drizzled::hash::crc32(buffer, static_cast<size_t>(length)))
+        if (checksum != drizzled::hash_algorithm::crc32(buffer, static_cast<size_t>(length)))
         {
-          fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::hash::crc32(buffer, static_cast<size_t>(length)));
+          fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::hash_algorithm::crc32(buffer, static_cast<size_t>(length)));
         }
       }
 
