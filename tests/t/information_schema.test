@@ -127,7 +127,7 @@ drop table t1;
 SELECT table_schema, count(*) FROM information_schema.TABLES
 WHERE table_name NOT LIKE 'ndb_%' AND 
 table_name NOT LIKE 'falcon%' AND
-table_name NOT LIKE 'MEMCACHED%'
+plugin_name IS NULL
 GROUP BY TABLE_SCHEMA;
 
 #
@@ -259,7 +259,7 @@ SELECT t.table_name, c1.column_name
                   c2.column_name LIKE '%SCHEMA%'
         )
   AND t.table_name NOT LIKE 'falcon%'
-  AND t.table_name NOT LIKE 'MEMCACHED%';
+  AND t.plugin_name IS NULL;
 SELECT t.table_name, c1.column_name
   FROM information_schema.tables t
        INNER JOIN
@@ -275,7 +275,7 @@ SELECT t.table_name, c1.column_name
                   c2.column_name LIKE '%SCHEMA%'
         )
   AND t.table_name NOT LIKE 'falcon%'
-  AND t.table_name NOT LIKE 'MEMCACHED%';
+  AND t.plugin_name IS NULL;
 
 #
 # Bug#21231: query with a simple non-correlated subquery over
@@ -313,7 +313,7 @@ inner join information_schema.columns c1
 on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
 where t.table_schema = 'information_schema' AND
       t.table_name not like 'falcon%' AND
-      t.table_name not like 'MEMCACHED%' AND
+      t.plugin_name IS NULL AND
         c1.ordinal_position =
         (select isnull(c2.column_type) -
          isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
@@ -437,7 +437,9 @@ ORDER BY collation_name;
 #
 SELECT table_name, column_name
 FROM information_schema.columns
-WHERE table_name NOT LIKE 'MEMCACHED%'
+WHERE table_name IN
+(SELECT table_name FROM information_schema.tables 
+ WHERE plugin_name IS NULL)
 ORDER BY table_name;
 
 #
@@ -500,7 +502,7 @@ FROM information_schema.table_constraints;
 #
 SELECT table_schema, table_name
 FROM information_schema.tables
-WHERE table_name NOT LIKE 'MEMCACHED%'
+WHERE plugin_name IS NULL
 ORDER BY table_name;
 
 # 

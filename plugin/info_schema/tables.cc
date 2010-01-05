@@ -379,9 +379,9 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
 
     if (tmp_table != NULL)
     {
-      const std::string plugin_name= tmp_table->getPluginName();
+      const std::string &plugin_name= tmp_table->getPluginName();
 
-      if (plugin_name != "")
+      if (! plugin_name.empty())
       {
         table->field[21]->set_notnull();
         table->field[21]->store(plugin_name.c_str(), plugin_name.size(), cs);
