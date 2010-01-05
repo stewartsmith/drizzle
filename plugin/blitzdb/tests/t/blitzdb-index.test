@@ -4,7 +4,7 @@
 drop table if exists t1, t2;
 --enable_warnings
 
-create table t1(id int primary key, a int, b int) engine = blitzdb;
+create table t1 (id int primary key, a int, b int) engine = blitzdb;
 insert into t1 values (1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4);
 insert into t1 values (5, 5, 5), (6, 6, 6), (7, 7, 7), (8, 8, 8);
 
@@ -28,7 +28,19 @@ delete from t1 where id = 5;
 delete from t1 where id = 6;
 delete from t1 where id = 7;
 delete from t1 where id = 8;
-
 select * from t1;
+drop table t1;
 
+# Test Auto Increment on PK
+create table t1 (id int primary key auto_increment, num int) engine = blitzdb;
+insert into t1 (num) values (1);
+insert into t1 (num) values (1);
+insert into t1 (num) values (1);
+insert into t1 (num) values (1);
+flush table t1;
+insert into t1 (num) values (1);
+insert into t1 (num) values (1);
+insert into t1 (num) values (1);
+insert into t1 (num) values (1);
+select * from t1;
 drop table t1;

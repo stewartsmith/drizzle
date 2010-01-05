@@ -46,6 +46,7 @@ using namespace std;
 
 const string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
+const string BLITZ_AUTOINC_KEY = "autoinc_value";
 
 static const char *ha_blitz_exts[] = {
   BLITZ_DATA_EXT,
@@ -117,6 +118,11 @@ public:
                        const unsigned char *row, const size_t rlen);
   bool delete_row(const char *key, const size_t klen);
   bool delete_all_rows(void);
+
+  /* SYSTEM TABLE RELATED */
+  uint64_t autoinc_in_system_table(void);
+  bool flush_autoinc(uint64_t autoinc_val);
+  bool flush_autoinc(TCHDB *prebuilt, uint64_t autoinc_val);
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O
@@ -154,6 +160,8 @@ class BlitzShare {
 public:
   BlitzShare() : blitz_lock(), use_count(0), nkeys(0) {}
   ~BlitzShare() {}
+
+  drizzled::atomic<uint64_t> auto_increment_value;
 
   BlitzLock blitz_lock;    /* Handler level lock for BlitzDB */
   BlitzData dict;          /* Utility class of BlitzDB */
@@ -233,6 +241,11 @@ public:
   int update_row(const unsigned char *old_data, unsigned char *new_data);
   int delete_row(const unsigned char *buf);
   int delete_all_rows(void);
+  virtual void get_auto_increment(uint64_t offset, uint64_t increment,
+                                  uint64_t nb_desired_values,
+                                  uint64_t *first_value,
+                                  uint64_t *nb_reserved_values);
+  int reset_auto_increment(uint64_t value);
 
   /* BLITZDB THREAD SPECIFIC FUNCTIONS */
   int critical_section_enter();

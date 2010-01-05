@@ -26,10 +26,11 @@ static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;
 
 /* Create relevant files for a new table and close them immediately.
-   All we want to do here is somewhat like UNIX touch(1) */
+   All we want to do here is somewhat like UNIX touch(1). */
 int BlitzEngine::doCreateTable(Session *, const char *table_path,
                                Table &, drizzled::message::Table &proto) {
   BlitzData dict;
+  uint64_t auto_increment;
   int ecode;
 
   if ((ecode = dict.create_table(table_path, BLITZ_DATA_EXT)) != 0) {
@@ -40,15 +41,23 @@ int BlitzEngine::doCreateTable(Session *, const char *table_path,
     return ecode;
   }
 
-  /* Write the table definition to system table */
+  /* Write the table definition to system table. */
   TCHDB *system_table;
   system_table = dict.open_table(table_path, BLITZ_SYSTEM_EXT, HDBOWRITER);
 
-  if (system_table == NULL) {
+  if (system_table == NULL)
+    return HA_ERR_CRASHED_ON_USAGE;
+
+  if (!dict.write_table_definition(system_table, proto)) {
+    dict.close_table(system_table);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
-  if (!dict.write_table_definition(system_table, proto)) {
+  auto_increment = (proto.options().has_auto_increment_value())
+                   ? proto.options().auto_increment_value() - 1 : 0;
+
+  /* Write the auto increment value to the system table */
+  if (!dict.flush_autoinc(system_table, auto_increment)) {
     dict.close_table(system_table);
     return HA_ERR_CRASHED_ON_USAGE;
   }
@@ -139,7 +148,7 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
                                   set<string> &set_of_names) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
-  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();
        entry_iter != entries.end(); ++entry_iter) {
 
     drizzled::CachedDirectory::Entry *entry = *entry_iter;
@@ -210,6 +219,10 @@ int ha_blitz::info(uint32_t flag) {
     stats.records = share->dict.nrecords(); 
     stats.data_file_length = share->dict.table_size();
   }
+
+  /* TODO: Check if it's worthwhile to add 1 to this assignment */
+  if (flag & HA_STATUS_AUTO)
+    stats.auto_increment_value = share->auto_increment_value;
 
   if (flag & HA_STATUS_ERRKEY)
     errkey = errkey_id;
@@ -433,6 +446,24 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   
   ha_statistic_increment(&SSV::ha_write_count);
 
+  /* Prepare Auto Increment field if one exists. This logic is borrowed
+     from Archive until we hack on multiple index support. */
+  if (table->next_number_field && drizzle_row == table->record[0]) {
+    if ((rv = update_auto_increment()) != 0)
+      return rv;
+
+    KEY *key = &table->s->key_info[0];
+    uint64_t next_val = table->next_number_field->val_int();
+    
+    if (next_val <= share->auto_increment_value && key->flags & HA_NOSAME)
+      return HA_ERR_FOUND_DUPP_KEY;
+
+    if (next_val > share->auto_increment_value) {
+      share->auto_increment_value = next_val;
+      stats.auto_increment_value = share->auto_increment_value + 1;
+    }
+  }
+
   /* Serialize a primary key for this row. If a PK doesn't exist,
      an internal hidden ID will be packed into primary_key_buffer. */
   generate_table_key();
@@ -537,6 +568,18 @@ int ha_blitz::delete_row(const unsigned char *) {
     rv = share->dict.delete_row(updateable_key, updateable_key_length);
 
   return (rv) ? 0 : -1;
+}
+
+void ha_blitz::get_auto_increment(uint64_t, uint64_t,
+                                  uint64_t, uint64_t *first_value,
+                                  uint64_t *nb_reserved_values) {
+  *first_value = share->auto_increment_value + 1;
+  *nb_reserved_values = UINT64_MAX;
+}
+
+int ha_blitz::reset_auto_increment(uint64_t value) {
+  share->auto_increment_value = (value == 0) ? 1 : value;
+  return 0;
 }
 
 int ha_blitz::delete_all_rows(void) {
@@ -693,6 +736,7 @@ static BlitzShare *get_share(const char *table_name) {
     return NULL;
   }
 
+  share->auto_increment_value = share->dict.autoinc_in_system_table();
   share->table_name.append(table_name);
   share->use_count = 1;
 
@@ -708,6 +752,11 @@ static int free_share(BlitzShare *share) {
   /* BlitzShare could still be used by another thread. Check the
      reference counter to see if it's safe to free it */
   if (--share->use_count == 0) {
+    if (!share->dict.flush_autoinc(share->auto_increment_value)) {
+      pthread_mutex_unlock(&blitz_utility_mutex);
+      return HA_ERR_CRASHED_ON_USAGE;
+    }
+
     if (!share->dict.shutdown()) {
       pthread_mutex_unlock(&blitz_utility_mutex);
       return HA_ERR_CRASHED_ON_USAGE;

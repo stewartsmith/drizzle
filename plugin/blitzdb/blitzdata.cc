@@ -219,3 +219,32 @@ bool BlitzData::delete_row(const char *key, const size_t klen) {
 bool BlitzData::delete_all_rows() {
   return tchdbvanish(data_table);
 }
+
+uint64_t BlitzData::autoinc_in_system_table(void) {
+  char *val;
+  int length;
+  uint64_t rv = 0;
+
+  val = (char *)tchdbget(system_table, BLITZ_AUTOINC_KEY.c_str(),
+                         BLITZ_AUTOINC_KEY.length(), &length);
+  if (val == NULL)
+    return 0;
+
+  rv = uint8korr(val);
+  free(val);
+  return rv;
+}
+
+/* The following functions are for writing the latest auto increment
+   value to the system table, which is also used for metadata storage.
+   It is only used in two scenes: When a table is created or closed. */
+bool BlitzData::flush_autoinc(uint64_t autoinc_val) {
+  return flush_autoinc(system_table, autoinc_val);
+}
+
+bool BlitzData::flush_autoinc(TCHDB *prebuilt, uint64_t autoinc_val) {
+  char buf[sizeof(autoinc_val)];
+  int8store(buf, autoinc_val);
+  return tchdbput(prebuilt, BLITZ_AUTOINC_KEY.c_str(),
+                  BLITZ_AUTOINC_KEY.length(), buf, sizeof(autoinc_val));
+}
