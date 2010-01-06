@@ -71,6 +71,8 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
+  processBuiltinOptions();
+
   if (is_engine_set)
   {
     create_info.db_type= 

@@ -433,7 +433,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 88
+%expect 90
 
 /*
    Comments for TOKENS.
@@ -939,8 +939,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <interval_time_st> interval_time_stamp
 
-%type <row_type> row_types
-
 %type <column_format_type> column_format_types
 
 %type <tx_isolation> isolation_types
@@ -1284,83 +1282,27 @@ create_table_options:
         | create_table_option     create_table_options
         | create_table_option ',' create_table_options
 
-opt_engine_options:
-        '(' engine_options ')'
-
-engine_options:
-          /* empty */
-        | custom_engine_option
-        | custom_engine_option ',' engine_options;
-        ;
-
 create_table_option:
-          ENGINE_SYM opt_equal ident_or_text opt_engine_options
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
-
-            statement->is_engine_set= true;
-
-            protoengine->set_name($3.str);
-          }
-        | BLOCK_SIZE_SYM opt_equal ulong_num
-          {
-	    message::Table::TableOptions *tableopts;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
-
-            tableopts->set_block_size($3);
-            statement->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
-          }
-        | COMMENT_SYM opt_equal TEXT_STRING_sys
-          {
-	    message::Table::TableOptions *tableopts;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
-
-	    tableopts->set_comment($3.str);
-          }
-        | AUTO_INC opt_equal ulonglong_num
-          {
-	    message::Table::TableOptions *tableopts;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
-
-            statement->create_info.auto_increment_value=$3;
-            statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
-	    tableopts->set_auto_increment_value($3);
-          }
-        | ROW_FORMAT_SYM opt_equal row_types
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->create_info.row_type= $3;
-            statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
-            statement->alter_info.flags.set(ALTER_ROW_FORMAT);
-          }
-        | default_collation
-        | KEY_BLOCK_SIZE opt_equal ulong_num
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
-
-            message::Table::TableOptions *tableopts;
-            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
-            tableopts->set_key_block_size($3);
-          }
-        ;
+		custom_engine_option;
 
 custom_engine_option:
-        ident_or_text
-          {
+        ENGINE_SYM opt_equal ident_or_text
+                    {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             drizzled::message::Table::StorageEngine::EngineOption opt;
-            opt.set_option_name($1.str);
+            opt.set_option_name("ENGINE");
+            opt.set_option_value($3.str);
             statement->parsed_engine_options.push_back(opt);
-          }
-        | ident_or_text equal ident_or_text
+                    }
+        |  opt_default COLLATE_SYM opt_equal ident_or_text
+                    {
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            drizzled::message::Table::StorageEngine::EngineOption opt;
+            opt.set_option_name("COLLATE");
+            opt.set_option_value($4.str);
+            statement->parsed_engine_options.push_back(opt);
+		    }
+        |  ident_or_text equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             drizzled::message::Table::StorageEngine::EngineOption opt;
@@ -1382,25 +1324,6 @@ custom_engine_option:
           }
         ;
 
-default_collation:
-          opt_default COLLATE_SYM opt_equal collation_name_or_default
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            HA_CREATE_INFO *cinfo= &statement->create_info;
-            if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
-                 cinfo->default_table_charset && $4 &&
-                 !my_charset_same(cinfo->default_table_charset,$4))
-              {
-                my_error(ER_COLLATION_CHARSET_MISMATCH, MYF(0),
-                         $4->name, cinfo->default_table_charset->csname);
-                DRIZZLE_YYABORT;
-              }
-              statement->create_info.default_table_charset= $4;
-              statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
-          }
-        ;
-
 default_collation_schema:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
@@ -1416,15 +1339,6 @@ column_format_types:
         | FIXED_SYM   { $$= COLUMN_FORMAT_TYPE_FIXED; }
         | DYNAMIC_SYM { $$= COLUMN_FORMAT_TYPE_DYNAMIC; };
 
-row_types:
-          DEFAULT        { $$= ROW_TYPE_DEFAULT; }
-        | FIXED_SYM      { $$= ROW_TYPE_FIXED; }
-        | DYNAMIC_SYM    { $$= ROW_TYPE_DYNAMIC; }
-        | COMPRESSED_SYM { $$= ROW_TYPE_COMPRESSED; }
-        | REDUNDANT_SYM  { $$= ROW_TYPE_REDUNDANT; }
-        | COMPACT_SYM    { $$= ROW_TYPE_COMPACT; }
-        | PAGE_SYM       { $$= ROW_TYPE_PAGE; }
-        ;
 
 opt_select_from:
           opt_limit_clause {}

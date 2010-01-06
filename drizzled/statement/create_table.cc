@@ -24,9 +24,108 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
 #include <drizzled/table_identifier.h>
+#include <list>
+
+using namespace std;
 
 namespace drizzled
 {
+
+void statement::CreateTable::processBuiltinOptions()
+{
+  list<drizzled::message::Table::StorageEngine::EngineOption>::iterator it= parsed_engine_options.begin();
+
+  while (it != parsed_engine_options.end())
+  {
+    if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                      "ENGINE") == 0)
+    {
+      message::Table::StorageEngine *engine_message;
+      engine_message= create_table_proto.mutable_engine();
+      is_engine_set= true;
+      engine_message->set_name((*it).option_value());
+    }
+    else if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                           "BLOCK_SIZE") == 0)
+    {
+      message::Table::TableOptions *tableopts;
+      tableopts= create_table_proto.mutable_options();
+
+      tableopts->set_block_size(strtoull((*it).option_value().c_str(), NULL, 10)); // FIXME
+      create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
+    }
+    else if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                           "COMMENT") == 0)
+    {
+      message::Table::TableOptions *tableopts;
+      tableopts= create_table_proto.mutable_options();
+      tableopts->set_comment((*it).option_value());
+    }
+    else if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                           "AUTO_INCREMENT") == 0)
+    {
+      message::Table::TableOptions *tableopts;
+      tableopts= create_table_proto.mutable_options();
+
+      create_info.auto_increment_value=strtoull((*it).option_value().c_str(), NULL, 10); // FIXME
+      create_info.used_fields|= HA_CREATE_USED_AUTO;
+      tableopts->set_auto_increment_value(strtoull((*it).option_value().c_str(), NULL, 10)); // FIXME
+    }
+    else if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                           "ROW_FORMAT") == 0)
+    {
+      enum row_type row_type;
+      const char* option_value= (*it).option_value().c_str();
+
+      if (my_strcasecmp(system_charset_info, option_value, "DEFAULT") == 0)
+        row_type= ROW_TYPE_DEFAULT;
+      else if (my_strcasecmp(system_charset_info, option_value, "FIXED") == 0)
+        row_type= ROW_TYPE_FIXED;
+      else if (my_strcasecmp(system_charset_info, option_value, "DYNAMIC") == 0)
+        row_type= ROW_TYPE_DYNAMIC;
+      else if (my_strcasecmp(system_charset_info, option_value, "COMPRESSED") == 0)
+        row_type= ROW_TYPE_COMPRESSED;
+      else if (my_strcasecmp(system_charset_info, option_value, "REDUNDANT") == 0)
+        row_type= ROW_TYPE_REDUNDANT;
+      else if (my_strcasecmp(system_charset_info, option_value, "COMPACT") == 0)
+        row_type= ROW_TYPE_COMPACT;
+      else if (my_strcasecmp(system_charset_info, option_value, "PAGE") == 0)
+        row_type= ROW_TYPE_PAGE;
+      else
+        abort(); // FIXME
+
+
+      create_info.row_type= row_type;
+      create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
+      alter_info.flags.set(ALTER_ROW_FORMAT);
+    }
+    else if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                           "KEY_BLOCK_SIZE") == 0)
+    {
+      message::Table::TableOptions *tableopts;
+      tableopts= create_table_proto.mutable_options();
+
+      tableopts->set_key_block_size(strtoull((*it).option_value().c_str(), NULL, 10)); // FIXME
+      create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
+    }
+    else if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                           "COLLATE") == 0)
+    {
+      const CHARSET_INFO *cs= get_charset_by_name((*it).option_value().c_str());
+      if (! cs)
+      {
+        my_error(ER_UNKNOWN_COLLATION, MYF(0), (*it).option_value().c_str());
+        return ;
+      }
+      create_info.default_table_charset= cs;
+      create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+    }
+
+//    parsed_engine_options.erase(it);
+
+    it++;
+  }
+}
 
 bool statement::CreateTable::execute()
 {
@@ -40,6 +139,8 @@ bool statement::CreateTable::execute()
   bool link_to_local= false;
   bool lex_identified_temp_table= 
     create_table_proto.type() == drizzled::message::Table::TEMPORARY;
+
+  processBuiltinOptions();
 
   if (is_engine_set)
   {

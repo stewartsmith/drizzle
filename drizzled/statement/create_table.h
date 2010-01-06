@@ -35,6 +35,9 @@ namespace statement
 
 class CreateTable : public Statement
 {
+protected:
+  void processBuiltinOptions();
+
 public:
   CreateTable(Session *in_session)
     :
