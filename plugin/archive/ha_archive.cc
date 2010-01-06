@@ -21,12 +21,12 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
-#include "drizzled/internal/my_dir.h"
 
 #include "ha_archive.h"
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <cstdio>
 #include <string>
@@ -220,7 +220,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
        entry_iter != entries.end(); ++entry_iter)
   {
     drizzled::CachedDirectory::Entry *entry= *entry_iter;
-    string *filename= &entry->filename;
+    const string *filename= &entry->filename;
 
     assert(filename->size());
 

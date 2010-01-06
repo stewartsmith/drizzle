@@ -15,7 +15,6 @@
 
 #include "config.h"
 #include <drizzled/table.h>
-#include "drizzled/internal/my_dir.h"
 #include <drizzled/error.h>
 #include "drizzled/internal/my_pthread.h"
 
@@ -97,7 +96,7 @@ public:
          entry_iter != entries.end(); ++entry_iter)
     {
       drizzled::CachedDirectory::Entry *entry= *entry_iter;
-      string *filename= &entry->filename;
+      const string *filename= &entry->filename;
 
       assert(filename->size());
 
