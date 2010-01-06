@@ -253,6 +253,8 @@ public:
   uint32_t max_row_length(void);
   size_t generate_table_key(void);
   size_t pack_index_key(char *pack_to, int key_num);
+  char *native_to_blitz_key(const unsigned char *native_key,
+                            const int key_num, int *return_key_length);
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
   bool unpack_row(unsigned char *to, const char *from, const size_t from_len);
   unsigned char *get_pack_buffer(const size_t size);

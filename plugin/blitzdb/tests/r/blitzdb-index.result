@@ -51,3 +51,53 @@ id	num
 7	1
 8	1
 drop table t1;
+create table t1 (id varchar(64) primary key, country varchar(64)) engine = blitzdb;
+insert into t1 values ('amsterdam', 'netherlands');
+insert into t1 values ('budapest', 'hungary');
+insert into t1 values ('copenhagen', 'denmark');
+insert into t1 values ('dublin', 'ireland');
+insert into t1 values ('edinburgh', 'scotland');
+insert into t1 values ('fukuoka', 'japan');
+insert into t1 values ('geneva', 'switzerland');
+select * from t1;
+id	country
+amsterdam	netherlands
+budapest	hungary
+copenhagen	denmark
+dublin	ireland
+edinburgh	scotland
+fukuoka	japan
+geneva	switzerland
+select country from t1 where id = 'dublin';
+country
+ireland
+select country from t1 where id = 'geneva';
+country
+switzerland
+select country from t1 where id = 'amsterdam';
+country
+netherlands
+select country from t1 where id = 'non existent key';
+country
+select country from t1 where id = 'edinburgh';
+country
+scotland
+select country from t1 where id = 'copenhagen';
+country
+denmark
+select country from t1 where id = 'fukuoka';
+country
+japan
+select country from t1 where id = 'budapest';
+country
+hungary
+delete from t1 where id = 'geneva';
+delete from t1 where id = 'fukuoka';
+select * from t1;
+id	country
+amsterdam	netherlands
+budapest	hungary
+copenhagen	denmark
+dublin	ireland
+edinburgh	scotland
+drop table t1;

@@ -44,3 +44,27 @@ insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 select * from t1;
 drop table t1;
+
+# Test VARCHAR field as a Primary Key
+create table t1 (id varchar(64) primary key, country varchar(64)) engine = blitzdb;
+insert into t1 values ('amsterdam', 'netherlands');
+insert into t1 values ('budapest', 'hungary');
+insert into t1 values ('copenhagen', 'denmark');
+insert into t1 values ('dublin', 'ireland');
+insert into t1 values ('edinburgh', 'scotland');
+insert into t1 values ('fukuoka', 'japan');
+insert into t1 values ('geneva', 'switzerland');
+
+select * from t1;
+select country from t1 where id = 'dublin';
+select country from t1 where id = 'geneva';
+select country from t1 where id = 'amsterdam';
+select country from t1 where id = 'non existent key';
+select country from t1 where id = 'edinburgh';
+select country from t1 where id = 'copenhagen';
+select country from t1 where id = 'fukuoka';
+select country from t1 where id = 'budapest';
+delete from t1 where id = 'geneva';
+delete from t1 where id = 'fukuoka';
+select * from t1;
+drop table t1;

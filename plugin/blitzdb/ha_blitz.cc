@@ -263,10 +263,10 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
 
-  /* Unpack and copy the current row to Drizzle's result buffer */
+  /* Unpack and copy the current row to Drizzle's result buffer. */
   unpack_row(drizzle_buf, current_row, current_row_length);
 
-  /* Retrieve both key and row of the next record with one allocation */
+  /* Retrieve both key and row of the next record with one allocation. */
   next_key = share->dict.next_key_and_row(current_key, current_key_length,
                                           &next_key_length, &next_row,
                                           &next_row_length);
@@ -400,26 +400,30 @@ int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
 int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
                              const unsigned char *key, uint32_t key_len,
                              enum ha_rkey_function /*find_flag*/) {
-  char *fetched_row;
-  int fetched_len;
-
   /* A PK in BlitzDB is the 'actual' key in the data dictionary.
      Therefore we do a direct lookup on the data dictionary. All
      other indexes are clustered btree. */
   if (key_num == table->s->primary_key) {
-    fetched_row = share->dict.get_row((const char *)key, key_len, &fetched_len);
+    char *pk, *fetched_row;
+    int fetched_len, blitz_key_len;
+
+    pk = native_to_blitz_key(key, key_num, &blitz_key_len);
+
+    fprintf(stderr, "blitz_key_len in index_read_idx: %d\n", blitz_key_len);
+
+    fetched_row = share->dict.get_row((const char *)pk, blitz_key_len,
+                                      &fetched_len);
 
     if (fetched_row == NULL)
       return HA_ERR_KEY_NOT_FOUND;
 
-    /* Found the row. Copy it to drizzle's result buffer. TODO: Memory copy
-       operation SUCKS. Find a way to make TC use this buffer directly. */
-    memcpy(buf, fetched_row, fetched_len);
+    /* Found the row. Unpack it into Drizzle's buffer */
+    unpack_row(buf, fetched_row, fetched_len);
     free(fetched_row);
 
     /* Now keep track of the key. This is because another function that
        needs this information such as delete_row() might be called before
-       BlitzDB reaches index_end() */
+       BlitzDB reaches index_end(). */
     memcpy(key_buffer, key, key_len);
     updateable_key = key_buffer;
     updateable_key_length = key_len;
@@ -624,6 +628,8 @@ size_t ha_blitz::pack_index_key(char *pack_to, int key_num) {
 
   unsigned char *pos = (unsigned char *)pack_to;
 
+  memset(pack_to, 0, BLITZ_MAX_KEY_LENGTH);
+
   /* Loop through key part(s) and pack them. Don't worry about NULL key
      values since this functionality is currently disabled in BlitzDB.*/
   for (; key_part != key_part_end; key_part++) {
@@ -633,6 +639,31 @@ size_t ha_blitz::pack_index_key(char *pack_to, int key_num) {
   }
 
   return packed_length;
+}
+
+/* Converts a native Drizzle index key to BlitzDB's format. */
+char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
+                                    const int key_num, int *return_key_len) {
+  KEY *key = &table->key_info[key_num];
+  KEY_PART_INFO *key_part = key->key_part;
+  KEY_PART_INFO *key_part_end = key_part + key->key_parts;
+  int total_key_len = 0;
+
+  unsigned char *key_pos = (unsigned char *)native_key;
+  unsigned char *keybuf_pos = (unsigned char *)this->key_buffer;
+
+  memset(key_buffer, 0, BLITZ_MAX_KEY_LENGTH);
+
+  for (; key_part != key_part_end; key_part++) {
+    key_part->field->pack(keybuf_pos, key_pos);
+
+    key_pos += key_part->field->key_length();
+    keybuf_pos += key_part->field->pack_length();
+    total_key_len += key_part->field->pack_length();
+  }
+
+  *return_key_len = total_key_len;
+  return this->key_buffer;
 }
 
 size_t ha_blitz::pack_row(unsigned char *row_buffer,
@@ -674,7 +705,7 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from,
   memcpy(to, pos, table->s->null_bytes);
   pos += table->s->null_bytes;
 
-  /* Unpack all fields in the provided row */
+  /* Unpack all fields in the provided row. */
   for (Field **field = table->field; *field; field++) {
     if (!((*field)->is_null())) {
       pos = (*field)->unpack(to + (*field)->offset(table->record[0]), pos);
