@@ -22,7 +22,7 @@
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/hash_algorithm/crc32.h"
+#include "drizzled/algorithm/crc32.h"
 #include "drizzled/common.h"
 
 #include <cstring>
@@ -523,7 +523,7 @@ public:
    */
   void addRow(unsigned char *buf, size_t len)
   {
-    uint32_t cs= drizzled::hash_algorithm::crc32((const char *) buf, len);
+    uint32_t cs= drizzled::algorithm::crc32((const char *) buf, len);
     Rows::iterator it= std::find_if(rows.begin(),
                                     rows.end(),
                                     FindRowByChecksum(cs));
