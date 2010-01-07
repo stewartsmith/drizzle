@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include CSTDINT_H
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/field/num.h>
@@ -309,17 +309,6 @@ my_decimal *Item_func_set_user_var::val_decimal_result(my_decimal *val)
 void Item_func_set_user_var::print(String *str, enum_query_type query_type)
 {
   str->append(STRING_WITH_LEN("(@"));
-  str->append(name.str, name.length);
-  str->append(STRING_WITH_LEN(":="));
-  args[0]->print(str, query_type);
-  str->append(')');
-}
-
-
-void Item_func_set_user_var::print_as_stmt(String *str,
-                                           enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("set @"));
   str->append(name.str, name.length);
   str->append(STRING_WITH_LEN(":="));
   args[0]->print(str, query_type);

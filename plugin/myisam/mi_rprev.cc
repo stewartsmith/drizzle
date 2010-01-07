@@ -29,13 +29,13 @@ int mi_rprev(MI_INFO *info, unsigned char *buf, int inx)
   MYISAM_SHARE *share=info->s;
 
   if ((inx = _mi_check_index(info,inx)) < 0)
-    return(my_errno);
+    return(errno);
   flag=SEARCH_SMALLER;				/* Read previous */
   if (info->lastpos == HA_OFFSET_ERROR && info->update & HA_STATE_NEXT_FOUND)
     flag=0;					/* Read last */
 
   if (fast_mi_readinfo(info))
-    return(my_errno);
+    return(errno);
   changed=_mi_test_if_changed(info);
   if (share->concurrent_insert)
     pthread_rwlock_rdlock(&share->key_root_lock[inx]);
@@ -70,17 +70,17 @@ int mi_rprev(MI_INFO *info, unsigned char *buf, int inx)
   info->update|= HA_STATE_PREV_FOUND;
   if (error)
   {
-    if (my_errno == HA_ERR_KEY_NOT_FOUND)
-      my_errno=HA_ERR_END_OF_FILE;
+    if (errno == HA_ERR_KEY_NOT_FOUND)
+      errno=HA_ERR_END_OF_FILE;
   }
   else if (!buf)
   {
-    return(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos==HA_OFFSET_ERROR ? errno : 0);
   }
   else if (!(*info->read_record)(info,info->lastpos,buf))
   {
     info->update|= HA_STATE_AKTIV;		/* Record is read */
     return(0);
   }
-  return(my_errno);
+  return(errno);
 } /* mi_rprev */

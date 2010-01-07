@@ -16,20 +16,27 @@
 
 /* Copy data from a textfile to table */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_load.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
+#include <drizzled/db.h>
 
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <algorithm>
+#include <climits>
 
+using namespace drizzled;
 using namespace std;
 
 class READ_INFO {
-  File	cursor;
+  int	cursor;
   unsigned char	*buffer;                /* Buffer for read text */
   unsigned char *end_of_buff;           /* Data in bufferts ends here */
   size_t buff_length;                   /* Length of buffert */
@@ -48,7 +55,7 @@ public:
 	*row_end;			/* Found row ends here */
   const CHARSET_INFO *read_charset;
 
-  READ_INFO(File cursor, size_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(int cursor, size_t tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -115,7 +122,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
                 enum enum_duplicates handle_duplicates, bool ignore)
 {
   char name[FN_REFLEN];
-  File file;
+  int file;
   Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
@@ -289,7 +296,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     }
     if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
     {
-      my_error(ER_CANT_OPEN_FILE, MYF(0), name, my_errno);
+      my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
       return(true);
     }
   }
@@ -357,7 +364,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 			    *enclosed, skip_lines, ignore);
     if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->print_error(my_errno, MYF(0));
+      table->print_error(errno, MYF(0));
       error= 1;
     }
     table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
@@ -729,7 +736,7 @@ READ_INFO::unescape(char chr)
 */
 
 
-READ_INFO::READ_INFO(File file_par, size_t tot_length,
+READ_INFO::READ_INFO(int file_par, size_t tot_length,
                      const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
@@ -769,7 +776,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
   /* Set of a stack for unget if long terminators */
   uint32_t length= max(field_term_length,line_term_length)+1;
   set_if_bigger(length,line_start.length());
-  stack= stack_pos= (int*) sql_alloc(sizeof(int)*length);
+  stack= stack_pos= (int*) memory::sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
     error=1;

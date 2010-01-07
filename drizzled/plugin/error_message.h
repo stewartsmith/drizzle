@@ -25,7 +25,10 @@
 #include "drizzled/plugin/plugin.h"
 
 #include <stdarg.h>
+
 #include <string>
+
+class Session;
 
 namespace drizzled
 {

@@ -50,6 +50,10 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#include <cassert>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #include PCRE_HEADER
 
@@ -60,6 +64,8 @@
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
 #include "drizzled/hash.h"
+#include "drizzled/my_time.h"
+#include "drizzled/charset.h"
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
 #define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
@@ -1335,10 +1341,10 @@ enum compare_files_result_enum {
 
 */
 
-static int compare_files2(File fd, const char* filename2)
+static int compare_files2(int fd, const char* filename2)
 {
   int error= RESULT_OK;
-  File fd2;
+  int fd2;
   uint32_t len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
@@ -1413,7 +1419,7 @@ static int compare_files2(File fd, const char* filename2)
 
 static int compare_files(const char* filename1, const char* filename2)
 {
-  File fd;
+  int fd;
   int error;
 
   if ((fd= my_open(filename1, O_RDONLY, MYF(0))) < 0)
@@ -1442,7 +1448,7 @@ static int compare_files(const char* filename1, const char* filename2)
 static int string_cmp(string* ds, const char *fname)
 {
   int error;
-  File fd;
+  int fd;
   char temp_file_path[FN_REFLEN];
 
   if ((fd= create_temp_file(temp_file_path, NULL,
@@ -2961,7 +2967,7 @@ static void do_change_user(struct st_command *)
 static void do_perl(struct st_command *command)
 {
   int error;
-  File fd;
+  int fd;
   FILE *res_file;
   char buf[FN_REFLEN];
   char temp_file_path[FN_REFLEN];

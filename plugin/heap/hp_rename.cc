@@ -19,6 +19,7 @@
 
 #include "heap_priv.h"
 #include <string.h>
+#include <cstdlib>
 
 int heap_rename(const char *old_name, const char *new_name)
 {
@@ -31,7 +32,7 @@ int heap_rename(const char *old_name, const char *new_name)
     if (!(name_buff=(char*) strdup(new_name)))
     {
       pthread_mutex_unlock(&THR_LOCK_heap);
-      return(my_errno);
+      return(errno);
     }
     free(info->name);
     info->name=name_buff;

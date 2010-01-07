@@ -40,7 +40,7 @@
 #define AZIO_AIO
 
 #include <drizzled/common.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 
 #include <zlib.h>
 
@@ -242,7 +242,7 @@ typedef struct azio_stream {
   z_stream stream;
   int      z_err;   /* error code for last stream operation */
   int      z_eof;   /* set if end of input file */
-  File     file;   /* .gz file */
+  int     file;   /* .gz file */
   Byte     *inbuf;  /* input buffer */
   Byte     buffer1[AZ_BUFSIZE_READ];  /* input buffer */
   Byte     buffer2[AZ_BUFSIZE_READ];  /* input buffer */
@@ -297,7 +297,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method);
    can be checked to distinguish the two cases (if errno is zero, the
    zlib error is Z_MEM_ERROR).  */
 
-int azdopen(azio_stream *s,File fd, int Flags);
+int azdopen(azio_stream *s,int fd, int Flags);
 /*
      azdopen() associates a azio_stream with the file descriptor fd.  File
    descriptors are obtained from calls like open, dup, creat, pipe or

@@ -81,8 +81,17 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#include <fcntl.h>
+#include <math.h>
 #include <ctype.h>
+#include <cassert>
+#include <cstdlib>
 #include <string>
+
+#include <pthread.h>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
@@ -174,7 +183,7 @@ uint32_t *concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 const char *opt_csv_str;
-File csv_file;
+int csv_file;
 
 static int get_options(int *argc,char ***argv);
 static uint32_t opt_drizzle_port= 0;
@@ -1527,7 +1536,7 @@ get_options(int *argc,char ***argv)
   {
     if (create_string && !stat(create_string, &sbuf))
     {
-      File data_file;
+      int data_file;
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
@@ -1584,7 +1593,7 @@ get_options(int *argc,char ***argv)
 
     if (user_supplied_query && !stat(user_supplied_query, &sbuf))
     {
-      File data_file;
+      int data_file;
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -1631,7 +1640,7 @@ get_options(int *argc,char ***argv)
   if (user_supplied_pre_statements
       && !stat(user_supplied_pre_statements, &sbuf))
   {
-    File data_file;
+    int data_file;
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -1678,7 +1687,7 @@ get_options(int *argc,char ***argv)
   if (user_supplied_post_statements
       && !stat(user_supplied_post_statements, &sbuf))
   {
-    File data_file;
+    int data_file;
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",

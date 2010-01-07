@@ -18,22 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create_schema.h>
+#include <drizzled/db.h>
+
+#include <string>
+
+using namespace std;
 
 namespace drizzled
 {
 
 bool statement::ShowCreateSchema::execute()
 {
-  if (check_db_name(&session->lex->name))
+  string database_name(session->lex->name.str);
+  NonNormalisedDatabaseName non_normalised_database_name(database_name);
+  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+
+  if (! normalised_database_name.isValid())
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
+    my_error(ER_WRONG_DB_NAME, MYF(0),
+             normalised_database_name.to_string().c_str());
     return false;
   }
-  bool res= mysqld_show_create_db(session, session->lex->name.str,
+  bool res= mysqld_show_create_db(session, normalised_database_name,
                                   is_if_not_exists);
   return res;
 }

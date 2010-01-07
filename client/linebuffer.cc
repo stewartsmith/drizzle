@@ -15,8 +15,8 @@
 
 /* readline for batch mode */
 
-#include <drizzled/global.h>
-#include <mysys/my_sys.h>
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 #include "client/linebuffer.h"
 
 #include <vector>

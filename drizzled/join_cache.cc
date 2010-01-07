@@ -27,12 +27,13 @@
  * @{
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
 
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 static uint32_t used_blob_length(CACHE_FIELD **ptr);
@@ -83,7 +84,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     }
   }
   if (!(cache->field=(CACHE_FIELD*)
-	sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
+	memory::sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
 
 		  sizeof(CACHE_FIELD*))))
   {

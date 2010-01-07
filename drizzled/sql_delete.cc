@@ -18,7 +18,7 @@
 
   Multi-table deletes were introduced by Monty and Sinisa
 */
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -28,6 +28,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/iocache.h"
 
 using namespace drizzled;
 
@@ -45,7 +46,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 {
   int		error;
   Table		*table;
-  optimizer::SQL_SELECT *select= NULL;
+  optimizer::SqlSelect *select= NULL;
   READ_RECORD	info;
   bool          using_limit=limit != HA_POS_ERROR;
   bool		transactional_table, const_cond;

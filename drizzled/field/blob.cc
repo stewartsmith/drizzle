@@ -19,10 +19,11 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/blob.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "plugin/myisam/myisam.h"
 
 #include <string>
 #include <algorithm>

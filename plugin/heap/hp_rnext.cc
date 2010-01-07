@@ -26,7 +26,7 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
   HP_KEYDEF *keyinfo;
 
   if (info->lastinx < 0)
-    return(my_errno=HA_ERR_WRONG_INDEX);
+    return(errno=HA_ERR_WRONG_INDEX);
 
   keyinfo = share->keydef + info->lastinx;
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
@@ -87,7 +87,7 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
     }
     else
     {
-      my_errno = HA_ERR_KEY_NOT_FOUND;
+      errno = HA_ERR_KEY_NOT_FOUND;
     }
   }
   else
@@ -100,7 +100,7 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
       if (!info->current_ptr && (info->update & HA_STATE_NEXT_FOUND))
       {
 	pos=0;					/* Read next after last */
-	my_errno=HA_ERR_KEY_NOT_FOUND;
+	errno=HA_ERR_KEY_NOT_FOUND;
       }
       else if (!info->current_ptr)		/* Deleted or first call */
 	pos= hp_search(info, keyinfo, info->lastkey, 0);
@@ -111,9 +111,9 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
   if (!pos)
   {
     info->update=HA_STATE_NEXT_FOUND;		/* For heap_rprev */
-    if (my_errno == HA_ERR_KEY_NOT_FOUND)
-      my_errno=HA_ERR_END_OF_FILE;
-    return(my_errno);
+    if (errno == HA_ERR_KEY_NOT_FOUND)
+      errno=HA_ERR_END_OF_FILE;
+    return(errno);
   }
   hp_extract_record(share, record, pos);
   info->update=HA_STATE_AKTIV | HA_STATE_NEXT_FOUND;

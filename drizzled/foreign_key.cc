@@ -17,13 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
-#include "drizzled/server_includes.h" /* @TODO remove this when header include is refactored more... */
+#include "config.h"
+
+#include <string>
+
 #include "drizzled/foreign_key.h"
 #include "drizzled/error.h"
 #include "drizzled/create_field.h"
+#include "drizzled/internal/my_sys.h"
 
-Foreign_key::Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root)
+using namespace drizzled;
+
+extern const CHARSET_INFO *system_charset_info;
+
+Foreign_key::Foreign_key(const Foreign_key &rhs, memory::Root *mem_root)
   :Key(rhs),
   ref_table(rhs.ref_table),
   ref_columns(rhs.ref_columns),

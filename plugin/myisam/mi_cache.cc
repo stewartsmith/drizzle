@@ -98,8 +98,8 @@ int _mi_read_cache(IO_CACHE *info, unsigned char *buff, my_off_t pos, uint32_t l
   if (!(flag & READING_HEADER) || (int) read_length == -1 ||
       read_length+in_buff_length < 3)
   {
-    if (!my_errno || my_errno == -1)
-      my_errno=HA_ERR_WRONG_IN_RECORD;
+    if (!errno || errno == -1)
+      errno=HA_ERR_WRONG_IN_RECORD;
     return(1);
   }
   memset(buff+read_length, 0,

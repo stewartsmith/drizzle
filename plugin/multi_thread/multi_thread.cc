@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <plugin/multi_thread/multi_thread.h>
+#include "drizzled/pthread_globals.h"
 
 using namespace std;
 using namespace drizzled;
@@ -50,12 +51,12 @@ bool MultiThreadScheduler::addSession(Session *session)
   if (thread_count >= max_threads)
     return true;
 
-  thread_count++;
+  thread_count.increment();
 
   if (pthread_create(&session->real_id, &attr, session_thread,
                      static_cast<void*>(session)))
   {
-    thread_count--;
+    thread_count.decrement();
     return true;
   }
 
@@ -66,8 +67,8 @@ bool MultiThreadScheduler::addSession(Session *session)
 void MultiThreadScheduler::killSessionNow(Session *session)
 {
   /* Locks LOCK_thread_count and deletes session */
-  unlink_session(session);
-  thread_count--;
+  Session::unlink(session);
+  thread_count.decrement();
   my_thread_end();
   pthread_exit(0);
   /* We should never reach this point. */
@@ -114,6 +115,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "multi_thread",
   "0.1",
   "Brian Aker",

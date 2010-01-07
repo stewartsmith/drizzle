@@ -21,10 +21,14 @@
 */
 
 #define DONT_MAP_VIO
-#include <drizzled/global.h>
+#include "config.h"
 #include "vio.h"
 #include <string.h>
-#include <stdint.h>
+
+#include <cstdlib>
+#include <cassert>
+#include <cstdio>
+#include <fcntl.h>
 
 /*
  * Helper to fill most of the Vio* with defaults.

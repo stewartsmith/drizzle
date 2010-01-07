@@ -33,7 +33,6 @@
 #ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
 #define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
 

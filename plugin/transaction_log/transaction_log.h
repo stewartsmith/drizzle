@@ -71,6 +71,9 @@ public:
     ONLINE,
     WRITING
   };
+  static const uint32_t SYNC_METHOD_OS= 0; ///< Rely on operating system to sync log file
+  static const uint32_t SYNC_METHOD_EVERY_WRITE= 1; //< Sync on every write to the log file
+  static const uint32_t SYNC_METHOD_EVERY_SECOND= 2; ///< Sync no more than once a second
 public:
   TransactionLog(std::string name_arg,
                  const std::string &in_log_file_path,
@@ -169,6 +172,16 @@ private:
    * Clears the current error message
    */
   void clearError();
+  /**
+   * Helper method which synchronizes/flushes the transaction log file
+   * according to the transaction_log_sync_method system variable
+   *
+   * @retval
+   *   0 == Success
+   * @retval
+   *   >0 == Failure. Error code.
+   */
+  int syncLogFile();
 
   int log_file; ///< Handle for our log file
   Status state; ///< The state the log is in
@@ -178,6 +191,7 @@ private:
   drizzled::atomic<off_t> log_offset; ///< Offset in log file where log will write next command
   bool has_error; ///< Is the log in error?
   std::string error_message; ///< Current error message
+  time_t last_sync_time; ///< Last time the log file was synced (only set in SYNC_METHOD_EVERY_SECOND)
 };
 
 #endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H */

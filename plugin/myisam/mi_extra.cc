@@ -69,7 +69,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	(share->options & HA_OPTION_PACK_RECORD))
     {
       error=1;			/* Not possibly if not locked */
-      my_errno=EACCES;
+      errno=EACCES;
       break;
     }
     if (info->s->file_map) /* Don't use cache if mmap */
@@ -143,7 +143,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       error=end_io_cache(&info->rec_cache);
       /* Sergei will insert full text index caching here */
     }
-#if defined(HAVE_MMAP) && defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
+#if !defined(TARGET_OS_SOLARIS)
     if (info->opt_flag & MEMMAP_USED)
       madvise((char*) share->file_map, share->state.state.data_file_length,
               MADV_RANDOM);
@@ -253,7 +253,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 			 (function == HA_EXTRA_FORCE_REOPEN ?
 			  FLUSH_RELEASE : FLUSH_IGNORE_CHANGED)))
     {
-      error=my_errno;
+      error=errno;
       share->changed=1;
       mi_print_error(info->s, HA_ERR_CRASHED);
       mi_mark_crashed(info);			/* Fatal error found */
@@ -267,13 +267,13 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     {
       info->was_locked=info->lock_type;
       if (mi_lock_database(info,F_UNLCK))
-	error=my_errno;
+	error=errno;
       info->lock_type = F_UNLCK;
     }
     if (share->kfile >= 0)
       _mi_decrement_open_count(info);
     if (share->kfile >= 0 && my_close(share->kfile,MYF(0)))
-      error=my_errno;
+      error=errno;
     {
       list<MI_INFO *>::iterator it= myisam_open_list.begin();
       while (it != myisam_open_list.end())
@@ -282,7 +282,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	if (tmpinfo->s == info->s)
 	{
 	  if (tmpinfo->dfile >= 0 && my_close(tmpinfo->dfile,MYF(0)))
-	    error = my_errno;
+	    error = errno;
 	  tmpinfo->dfile= -1;
 	}
         ++it;
@@ -303,9 +303,9 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     {
       share->not_flushed=0;
       if (my_sync(share->kfile, MYF(0)))
-	error= my_errno;
+	error= errno;
       if (my_sync(info->dfile, MYF(0)))
-	error= my_errno;
+	error= errno;
       if (error)
       {
 	share->changed=1;
@@ -384,7 +384,7 @@ int mi_reset(MI_INFO *info)
   }
   if (share->base.blobs)
     mi_alloc_rec_buff(info, -1, &info->rec_buff);
-#if defined(HAVE_MMAP) && defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
+#if !defined(TARGET_OS_SOLARIS)
   if (info->opt_flag & MEMMAP_USED)
     madvise((char*) share->file_map, share->state.state.data_file_length,
             MADV_RANDOM);

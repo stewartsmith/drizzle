@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 
 #include <client/errname.h>
 
@@ -715,6 +715,7 @@ ErrorCodes::ErrorCodes()
     { "ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN",1679 },
     { "ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN",1680 },
     { "ER_CONST_EXPR_IN_VCOL",1681 },
+    { "ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE", 1692},
     { 0, 0 }
   };
 

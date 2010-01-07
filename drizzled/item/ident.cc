@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/table.h>
 #include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
+using namespace drizzled;
 using namespace std;
 
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
@@ -84,7 +84,7 @@ const char *Item_ident::full_name() const
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp=(char*) sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
+    tmp=(char*) memory::sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
                           (uint32_t) strlen(field_name)+3);
     sprintf(tmp,"%s.%s.%s",db_name,table_name,field_name);
   }
@@ -92,7 +92,7 @@ const char *Item_ident::full_name() const
   {
     if (table_name[0])
     {
-      tmp= (char*) sql_alloc((uint32_t) strlen(table_name) +
+      tmp= (char*) memory::sql_alloc((uint32_t) strlen(table_name) +
                              (uint32_t) strlen(field_name) + 2);
       sprintf(tmp, "%s.%s", table_name, field_name);
     }

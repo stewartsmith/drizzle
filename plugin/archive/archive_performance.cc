@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "azio.h"
 #include <string.h>
@@ -21,7 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mysys/my_getopt.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include "drizzled/my_getopt.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
     azio_stream reader_handle;
 
     if (method)
-      printf("Performing aio_read() test\n");
+      printf("Performing azio_read() test\n");
     else
       printf("Performing read() test\n");
 

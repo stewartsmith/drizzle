@@ -17,7 +17,7 @@
 #define PLUGIN_CSV_HA_TINA_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,10 +31,18 @@
 
 #define TINA_VERSION 1
 
-typedef struct st_tina_share {
-  char *table_name;
+class TinaShare
+{
+  TinaShare();
+  TinaShare(const TinaShare &);
+  TinaShare& operator=(const TinaShare &);
+public:
+  explicit TinaShare(const char *name);
+  ~TinaShare();
+
+  std::string table_name;
   char data_file_name[FN_REFLEN];
-  uint32_t table_name_length, use_count;
+  uint32_t use_count;
   /*
     Here we save the length of the file for readers. This is updated by
     inserts, updates and deletes. The var is initialized along with the
@@ -45,12 +53,12 @@ typedef struct st_tina_share {
   THR_LOCK lock;
   bool update_file_opened;
   bool tina_write_opened;
-  File meta_file;           /* Meta file we use */
-  File tina_write_filedes;  /* File Cursor for readers */
+  int meta_file;           /* Meta file we use */
+  int tina_write_filedes;  /* File Cursor for readers */
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
   uint32_t data_file_version;   /* Version of the data file used */
-} TINA_SHARE;
+};
 
 struct tina_set {
   off_t begin;
@@ -60,15 +68,15 @@ struct tina_set {
 class ha_tina: public Cursor
 {
   THR_LOCK_DATA lock;      /* MySQL lock */
-  TINA_SHARE *share;       /* Shared lock info */
+  TinaShare *share;       /* Shared lock info */
   off_t current_position;  /* Current position in the file during a file scan */
   off_t next_position;     /* Next position in the file scan */
   off_t local_saved_data_file_length; /* save position for reads */
   off_t temp_file_length;
   unsigned char byte_buffer[IO_SIZE];
   Transparent_file *file_buff;
-  File data_file;                   /* File Cursor for readers */
-  File update_temp_file;
+  int data_file;                   /* File Cursor for readers */
+  int update_temp_file;
   String buffer;
   /*
     The chain contains "holes" in the file, occured because of
@@ -82,7 +90,7 @@ class ha_tina: public Cursor
   uint32_t chain_size;
   uint32_t local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
-  MEM_ROOT blobroot;
+  drizzled::memory::Root blobroot;
 
   bool get_write_pos(off_t *end_pos, tina_set *closest_hole);
   int open_update_temp_file_if_needed();
@@ -125,6 +133,8 @@ public:
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   int rnd_end();
+  TinaShare *get_share(const char *table_name);
+  int free_share();
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   void position(const unsigned char *record);

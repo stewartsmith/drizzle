@@ -11,15 +11,17 @@
 
 /* @(#) $Id$ */
 
-#include <drizzled/global.h>
+#include "config.h"
 
 #include "azio.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
+#include <fcntl.h>
 #include <unistd.h>
+
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cassert>
 
 static int const az_magic[3] = {0xfe, 0x03, 0x01}; /* az magic header */
 
@@ -159,7 +161,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   int err;
   int level = Z_DEFAULT_COMPRESSION ; /* compression level */
   int strategy = Z_DEFAULT_STRATEGY; /* compression strategy */
-  File fd= -1;
+  int fd= -1;
 
   memset(s, 0, sizeof(azio_stream));
 
@@ -1072,7 +1074,7 @@ static void get_block(azio_stream *s)
     }
     s->pos+= s->stream.avail_in;
     s->inbuf= (Byte *)s->container.buffer;
-    /* We only aio_read when we know there is more data to be read */
+    /* We only azio_read when we know there is more data to be read */
     if (s->pos >= s->check_point)
     {
       s->aio_inited= 0;

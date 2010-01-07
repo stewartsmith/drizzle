@@ -13,18 +13,24 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/table.h>
-#include <mysys/my_dir.h>
 #include <drizzled/error.h>
+#include "drizzled/internal/my_pthread.h"
 
 #include "ha_blackhole.h"
 
+#include <fcntl.h>
+
 #include <string>
+#include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
+#include "drizzled/internal/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include "drizzled/global_charset_info.h"
+
 
 using namespace std;
 using namespace google;
@@ -37,6 +43,9 @@ static const char *ha_blackhole_exts[] = {
 
 class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
+  typedef map<string, BlackholeShare*> BlackholeMap;
+  BlackholeMap blackhole_open_tables;
+
 public:
   BlackholeEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
@@ -44,13 +53,14 @@ public:
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
                                      HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_HAS_DATA_DICTIONARY),
+    blackhole_open_tables()
   {
     table_definition_ext= BLACKHOLE_EXT;
   }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_blackhole(*this, table);
   }
@@ -66,6 +76,10 @@ public:
 
   int doDropTable(Session&, const string table_name);
 
+  BlackholeShare *findOpenTable(const string table_name);
+  void addOpenTable(const string &table_name, BlackholeShare *);
+  void deleteOpenTable(const string &table_name);
+
   int doGetTableDefinition(Session& session,
                            const char* path,
                            const char *db,
@@ -73,22 +87,23 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       string&, set<string>& set_of_names)
   {
-    CachedDirectory::Entries entries= directory.getEntries();
+    drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
+    for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
-      CachedDirectory::Entry *entry= *entry_iter;
-      string *filename= &entry->filename;
+      drizzled::CachedDirectory::Entry *entry= *entry_iter;
+      const string *filename= &entry->filename;
 
       assert(filename->size());
 
       const char *ext= strchr(filename->c_str(), '.');
 
       if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
-          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
       {  }
       else
       {
@@ -119,13 +134,33 @@ public:
 
 };
 
+
+BlackholeShare *BlackholeEngine::findOpenTable(const string table_name)
+{
+  BlackholeMap::iterator find_iter=
+    blackhole_open_tables.find(table_name);
+
+  if (find_iter != blackhole_open_tables.end())
+    return (*find_iter).second;
+  else
+    return NULL;
+}
+
+void BlackholeEngine::addOpenTable(const string &table_name, BlackholeShare *share)
+{
+  blackhole_open_tables[table_name]= share;
+}
+
+void BlackholeEngine::deleteOpenTable(const string &table_name)
+{
+  blackhole_open_tables.erase(table_name);
+}
+
+
 /* Static declarations for shared structures */
 
 static pthread_mutex_t blackhole_mutex;
-static HASH blackhole_open_tables;
 
-static st_blackhole_share *get_share(const char *table_name);
-static void free_share(st_blackhole_share *share);
 
 /*****************************************************************************
 ** BLACKHOLE tables
@@ -133,7 +168,7 @@ static void free_share(st_blackhole_share *share);
 
 ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+  :Cursor(engine_arg, table_arg), share(NULL)
 { }
 
 int ha_blackhole::open(const char *name, int, uint32_t)
@@ -147,7 +182,7 @@ int ha_blackhole::open(const char *name, int, uint32_t)
 
 int ha_blackhole::close(void)
 {
-  free_share(share);
+  free_share();
   return 0;
 }
 
@@ -187,7 +222,7 @@ int BlackholeEngine::doDropTable(Session&, const string path)
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;
@@ -319,60 +354,53 @@ int ha_blackhole::index_last(unsigned char *)
 }
 
 
-static st_blackhole_share *get_share(const char *table_name)
+BlackholeShare *ha_blackhole::get_share(const char *table_name)
 {
-  st_blackhole_share *share;
-  uint32_t length;
-
-  length= (uint) strlen(table_name);
   pthread_mutex_lock(&blackhole_mutex);
 
-  if (!(share= (st_blackhole_share*) hash_search(&blackhole_open_tables,
-                                                 (unsigned char*) table_name, length)))
+  BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+  share= a_engine->findOpenTable(table_name);
+
+  if (share == NULL)
   {
-    if (!(share= (st_blackhole_share*) malloc(sizeof(st_blackhole_share) +
-                                              length)))
-      goto error;
-    memset(share, 0, sizeof(st_blackhole_share) + length);
-
-    share->table_name_length= length;
-    strcpy(share->table_name, table_name);
-
-    if (my_hash_insert(&blackhole_open_tables, (unsigned char*) share))
+    share= new (nothrow) BlackholeShare(table_name);
+    if (share == NULL)
     {
-      free((unsigned char*) share);
-      share= NULL;
-      goto error;
+      pthread_mutex_unlock(&blackhole_mutex);      
+      return NULL;
     }
 
-    thr_lock_init(&share->lock);
+    a_engine->addOpenTable(share->table_name, share);
   }
   share->use_count++;
-
-error:
   pthread_mutex_unlock(&blackhole_mutex);
   return share;
+
 }
 
-static void free_share(st_blackhole_share *share)
+void ha_blackhole::free_share()
 {
   pthread_mutex_lock(&blackhole_mutex);
   if (!--share->use_count)
-    hash_delete(&blackhole_open_tables, (unsigned char*) share);
+  {
+    BlackholeEngine *a_engine= static_cast<BlackholeEngine *>(engine);
+    a_engine->deleteOpenTable(share->table_name);
+    delete share;
+  }
   pthread_mutex_unlock(&blackhole_mutex);
 }
 
-static void blackhole_free_key(st_blackhole_share *share)
+BlackholeShare::BlackholeShare(const string table_name_arg)
+  : use_count(0), table_name(table_name_arg)
 {
-  thr_lock_delete(&share->lock);
-  free((unsigned char*) share);
+  thr_lock_init(&lock);
 }
 
-static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *length, bool)
+BlackholeShare::~BlackholeShare()
 {
-  *length= share->table_name_length;
-  return (unsigned char*) share->table_name;
+  thr_lock_delete(&lock);
 }
+
 
 static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
@@ -383,9 +411,6 @@ static int blackhole_init(drizzled::plugin::Registry &registry)
   registry.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
-  (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
-                   (hash_get_key) blackhole_get_key,
-                   (hash_free_key) blackhole_free_key, 0);
 
   return 0;
 }
@@ -395,7 +420,6 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
   registry.remove(blackhole_engine);
   delete blackhole_engine;
 
-  hash_free(&blackhole_open_tables);
   pthread_mutex_destroy(&blackhole_mutex);
 
   return 0;
@@ -403,6 +427,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

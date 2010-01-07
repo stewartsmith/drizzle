@@ -28,11 +28,16 @@
 #endif
 
 #include <drizzled/common.h>
-#include <mysys/iocache.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 class String;
+
+extern String my_empty_string;
+extern const String my_null_string;
+namespace drizzled { namespace memory { class Root; } }
+typedef struct charset_info_st CHARSET_INFO;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -62,43 +67,18 @@ class String
   const CHARSET_INFO *str_charset;
 
 public:
-  String()
-  {
-    Ptr=0; str_length=Alloced_length=0; alloced=0;
-    str_charset= &my_charset_bin;
-  }
-  String(uint32_t length_arg)
-  {
-    alloced=0; Alloced_length=0; (void) real_alloc(length_arg);
-    str_charset= &my_charset_bin;
-  }
-  String(const char *str, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; str_length=(uint32_t) strlen(str); Alloced_length=0; alloced=0;
-    str_charset=cs;
-  }
-  String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
-    str_charset=cs;
-  }
-  String(char *str,uint32_t len, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
-    str_charset=cs;
-  }
-  String(const String &str)
-  {
-    Ptr=str.Ptr ; str_length=str.str_length ;
-    Alloced_length=str.Alloced_length; alloced=0;
-    str_charset=str.str_charset;
-  }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); } 
+  String();
+  String(uint32_t length_arg);
+  String(const char *str, const CHARSET_INFO * const cs);
+  String(const char *str, uint32_t len, const CHARSET_INFO * const cs);
+  String(char *str, uint32_t len, const CHARSET_INFO * const cs);
+  String(const String &str);
+
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
   static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* never called */ }
+  { }
+  static void operator delete(void *, drizzled::memory::Root *)
+  { }
   ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)
@@ -118,7 +98,7 @@ public:
       (void) realloc(str_length);
     else
       Ptr[str_length]= 0;
-    
+
     return Ptr;
   }
   inline char *c_ptr_quick()
@@ -141,7 +121,7 @@ public:
   {
     assert(&str != this);
     free();
-    Ptr=(char*) str.ptr()+offset; str_length=arg_length; alloced=0;
+    Ptr= str.ptr()+offset; str_length=arg_length; alloced=0;
     if (str.Alloced_length)
       Alloced_length=str.Alloced_length-offset;
     else
@@ -151,13 +131,14 @@ public:
   inline void set(char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     free();
-    Ptr=(char*) str; str_length=Alloced_length=arg_length ; alloced=0;
+    Ptr= str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
   inline void set(const char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     free();
-    Ptr=(char*) str; str_length=arg_length; Alloced_length=0 ; alloced=0;
+    Ptr= const_cast<char*>(str);
+    str_length=arg_length; Alloced_length=0 ; alloced=0;
     str_charset=cs;
   }
   bool set_ascii(const char *str, uint32_t arg_length);
@@ -165,15 +146,15 @@ public:
   {
     if (!alloced)
     {
-      Ptr=(char*) str; str_length=Alloced_length=arg_length;
+      Ptr= str; str_length= Alloced_length= arg_length;
     }
-    str_charset=cs;
+    str_charset= cs;
   }
   bool set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs);
   bool set(int64_t num, const CHARSET_INFO * const cs)
   { return set_int(num, false, cs); }
   bool set(uint64_t num, const CHARSET_INFO * const cs)
-  { return set_int((int64_t)num, true, cs); }
+  { return set_int(static_cast<int64_t>(num), true, cs); }
   bool set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs);
 
   /*
@@ -227,7 +208,7 @@ public:
     if (arg_length < Alloced_length)
     {
       char *new_ptr;
-      if (!(new_ptr=(char*) ::realloc(Ptr,arg_length)))
+      if (!(new_ptr= reinterpret_cast<char*>(::realloc(Ptr,arg_length))))
       {
 	Alloced_length = 0;
 	real_alloc(arg_length);
@@ -371,11 +352,8 @@ public:
   }
 };
 
-static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
-                                           char *end)
-{
-  return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
-}
+bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+                             char *end);
 
 extern "C++" {
 bool operator==(const String &s1, const String &s2);

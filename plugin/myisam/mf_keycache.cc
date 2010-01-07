@@ -101,12 +101,12 @@
   I/O finished.
 */
 
-#include <drizzled/global.h>
-#include <mysys/mysys_err.h>
-#include <mysys/my_sys.h>
+#include "config.h"
+#include "drizzled/my_error.h"
+#include "drizzled/internal/my_sys.h"
 #include "keycache.h"
-#include <mystrings/m_string.h>
-#include <mysys/my_bit.h>
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_bit.h"
 #include <errno.h>
 #include <stdarg.h>
 
@@ -161,7 +161,7 @@ struct st_hash_link
 {
   struct st_hash_link *next, **prev; /* to connect links in the same bucket  */
   struct st_block_link *block;       /* reference to the block for the page: */
-  File file;                         /* from such a file                     */
+  int file;                         /* from such a file                     */
   my_off_t diskpos;                  /* with such an offset                  */
   uint32_t requests;                     /* number of requests for the page      */
 };
@@ -336,7 +336,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
       }
       if (blocks < 8)
       {
-        my_errno= ENOMEM;
+        errno= ENOMEM;
         my_error(EE_OUTOFMEMORY, MYF(0), blocks * keycache->key_cache_block_size);
         goto err;
       }
@@ -395,7 +395,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
   return((int) keycache->disk_blocks);
 
 err:
-  error= my_errno;
+  error= errno;
   keycache->disk_blocks= 0;
   keycache->blocks=  0;
   if (keycache->block_mem)
@@ -408,7 +408,7 @@ err:
     free((unsigned char*) keycache->block_root);
     keycache->block_root= NULL;
   }
-  my_errno= error;
+  errno= error;
   keycache->can_be_used= 0;
   return(0);
 }
@@ -1394,7 +1394,7 @@ restart:
 */
 
 static BLOCK_LINK *find_key_block(KEY_CACHE *keycache,
-                                  File file, my_off_t filepos,
+                                  int file, my_off_t filepos,
                                   int init_hits_left,
                                   int wrmode, int *page_st)
 {
@@ -2193,7 +2193,7 @@ static void read_block(KEY_CACHE *keycache,
 */
 
 unsigned char *key_cache_read(KEY_CACHE *keycache,
-                      File file, my_off_t filepos, int level,
+                      int file, my_off_t filepos, int level,
                       unsigned char *buff, uint32_t length,
                       uint32_t block_length,
                       int return_buffer)
@@ -2296,7 +2296,7 @@ unsigned char *key_cache_read(KEY_CACHE *keycache,
             this could only happen if we are using a file with
             small key blocks and are trying to read outside the file
           */
-          my_errno= -1;
+          errno= -1;
           block->status|= BLOCK_ERROR;
         }
       }
@@ -2387,7 +2387,7 @@ end:
 */
 
 int key_cache_insert(KEY_CACHE *keycache,
-                     File file, my_off_t filepos, int level,
+                     int file, my_off_t filepos, int level,
                      unsigned char *buff, uint32_t length)
 {
   int error= 0;
@@ -2621,7 +2621,7 @@ int key_cache_insert(KEY_CACHE *keycache,
 */
 
 int key_cache_write(KEY_CACHE *keycache,
-                    File file, my_off_t filepos, int level,
+                    int file, my_off_t filepos, int level,
                     unsigned char *buff, uint32_t length,
                     uint32_t block_length,
                     int dont_write)
@@ -3042,7 +3042,7 @@ static int cmp_sec_link(BLOCK_LINK **a, BLOCK_LINK **b)
 */
 
 static int flush_cached_blocks(KEY_CACHE *keycache,
-                               File file, BLOCK_LINK **cache,
+                               int file, BLOCK_LINK **cache,
                                BLOCK_LINK **end,
                                enum flush_type type)
 {
@@ -3168,7 +3168,7 @@ static int flush_cached_blocks(KEY_CACHE *keycache,
 */
 
 static int flush_key_blocks_int(KEY_CACHE *keycache,
-				File file, enum flush_type type)
+				int file, enum flush_type type)
 {
   BLOCK_LINK *cache_buff[FLUSH_CACHE],**cache;
   int last_errno= 0;
@@ -3467,7 +3467,7 @@ restart:
             {
               struct st_hash_link *next_hash_link= NULL;
               my_off_t            next_diskpos= 0;
-              File                next_file= 0;
+              int                next_file= 0;
               uint32_t                next_status= 0;
               uint32_t                hash_requests= 0;
 
@@ -3592,7 +3592,7 @@ err:
 */
 
 int flush_key_blocks(KEY_CACHE *keycache,
-                     File file, enum flush_type type)
+                     int file, enum flush_type type)
 {
   int res= 0;
 

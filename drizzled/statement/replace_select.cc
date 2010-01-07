@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
@@ -36,7 +36,6 @@ bool statement::ReplaceSelect::execute()
   Select_Lex_Unit *unit= &session->lex->unit;
   select_result *sel_result= NULL;
   bool res;
-  bool need_start_waiting;
 
   if (insert_precheck(session, all_tables))
   {
@@ -48,7 +47,7 @@ bool statement::ReplaceSelect::execute()
 
   unit->set_limit(select_lex);
 
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+  if (wait_if_global_read_lock(session, false, true))
   {
     return true;
   }
@@ -69,9 +68,9 @@ bool statement::ReplaceSelect::execute()
                                                 session->lex->duplicates,
                                                 session->lex->ignore)))
     {
-      res= handle_select(session, 
-                         session->lex, 
-                         sel_result, 
+      res= handle_select(session,
+                         session->lex,
+                         sel_result,
                          OPTION_SETUP_TABLES_DONE);
       /*
          Invalidate the table in the query cache if something changed

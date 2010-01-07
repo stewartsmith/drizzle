@@ -18,6 +18,7 @@
 #include "heap_priv.h"
 
 #include <string.h>
+#include <cstdlib>
 
 using namespace std;
 
@@ -83,7 +84,7 @@ HP_INFO *heap_open(const char *name, int mode)
   pthread_mutex_lock(&THR_LOCK_heap);
   if (!(share= hp_find_named_heap(name)))
   {
-    my_errno= ENOENT;
+    errno= ENOENT;
     pthread_mutex_unlock(&THR_LOCK_heap);
     return(0);
   }

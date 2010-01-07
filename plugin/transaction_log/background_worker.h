@@ -45,7 +45,7 @@ bool initTransactionLogBackgroundWorker();
  * The routine which the background worker executes
  */
 extern "C" {
-  pthread_handler_t collectTransactionLogStats(void *arg);
+  void *collectTransactionLogStats(void *arg);
 }
 
 #endif /* PLUGIN_TRANSACTION_LOG_BACKGROUND_WORKER_H */

@@ -30,7 +30,7 @@
 #include <drizzled/optimizer/position.h>
 #include <bitset>
 
-class JOIN :public Sql_alloc
+class JOIN :public drizzled::memory::SqlAlloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
   JOIN& operator=(const JOIN &rhs);             /**< not implemented */
@@ -143,8 +143,7 @@ public:
   Select_Lex_Unit *unit;
   /** select that processed */
   Select_Lex *select_lex;
-  drizzled::optimizer::SQL_SELECT *select; /**< created in optimisation phase */
-  Array<Item_in_subselect> sj_subselects;
+  drizzled::optimizer::SqlSelect *select; /**< created in optimization phase */
 
   /**
     Bitmap of nested joins embedding the position at the end of the current
@@ -271,7 +270,6 @@ public:
       unit(NULL),
       select_lex(NULL),
       select(NULL),
-      sj_subselects(session_arg->mem_root, 4),
       exec_tmp_table1(NULL),
       exec_tmp_table2(NULL),
       sum_funcs(NULL),
@@ -471,6 +469,8 @@ public:
     memcpy(best_positions, positions, 
            sizeof(drizzled::optimizer::Position) * size);
   }
+
+  void cache_const_exprs();
 
   /**
    * @param[in] index the index of the position to retrieve

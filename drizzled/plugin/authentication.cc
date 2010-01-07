@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/registry.h"

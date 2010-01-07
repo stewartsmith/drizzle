@@ -35,13 +35,20 @@
 
 #include "client_priv.h"
 #include <string>
+#include <drizzled/gettext.h>
+#include <iostream>
+#include <map>
 #include <algorithm>
-#include <mystrings/m_ctype.h>
+#include <limits.h>
+#include <cassert>
+#include "drizzled/charset_info.h"
 #include <stdarg.h>
+#include <math.h>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
+#include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -126,11 +133,6 @@ typedef Function drizzle_compentry_func_t;
 #include <locale.h>
 #endif
 
-#include <drizzled/gettext.h>
-
-
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
 
 
 #if !defined(HAVE_VIDATTR)
@@ -138,8 +140,6 @@ void sql_element_free(void *ptr);
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-#include <iostream>
-#include <map>
 
 using namespace std;
 
@@ -1024,13 +1024,6 @@ extern "C" void handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
 static void window_resize(int sig);
 #endif
-
-static inline int is_prefix(const char *s, const char *t)
-{
-  while (*t)
-    if (*s++ != *t++) return 0;
-  return 1;                                     /* WRONG */
-}
 
 /**
   Shutdown the server that we are currently connected to.
@@ -2546,30 +2539,6 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
 }
 
 /* for gnu readline */
-
-#ifndef HAVE_INDEX
-extern "C" {
-  extern char *index(const char *,int c),*rindex(const char *,int);
-
-  char *index(const char *s,int c)
-  {
-    for (;;)
-    {
-      if (*s == (char) c) return (char*) s;
-      if (!*s++) return NULL;
-    }
-  }
-
-  char *rindex(const char *s,int c)
-  {
-    register char *t;
-
-    t = NULL;
-    do if (*s == (char) c) t = (char*) s; while (*s++);
-    return (char*) t;
-  }
-}
-#endif
 
 
 static int reconnect(void)

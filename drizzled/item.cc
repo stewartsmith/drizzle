@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/show.h"
@@ -47,9 +47,11 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/internal/m_string.h"
 
 #include <math.h>
 #include <algorithm>
+#include <float.h>
 
 using namespace std;
 using namespace drizzled;
@@ -317,6 +319,11 @@ Item::Item(Session *session, Item *item):
   session->free_list= this;
 }
 
+uint32_t Item::float_length(uint32_t decimals_par) const
+{
+  return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
+}
+
 uint32_t Item::decimal_precision() const
 {
   Item_result restype= result_type();
@@ -420,7 +427,7 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
                             str + length - orig_len);
     }
   }
-  name= sql_strmake(str, length);
+  name= memory::sql_strmake(str, length);
 }
 
 bool Item::eq(const Item *item, bool) const
@@ -1272,6 +1279,65 @@ int Item::save_in_field(Field *field, bool no_conversions)
   return error;
 }
 
+/**
+  Check if an item is a constant one and can be cached.
+
+  @param arg [out] TRUE <=> Cache this item.
+
+  @return TRUE  Go deeper in item tree.
+  @return FALSE Don't go deeper in item tree.
+*/
+
+bool Item::cache_const_expr_analyzer(unsigned char **arg)
+{
+  bool *cache_flag= (bool*)*arg;
+  if (!*cache_flag)
+  {
+    Item *item= real_item();
+    /*
+      Cache constant items unless it's a basic constant, constant field or
+      a subselect (they use their own cache).
+    */
+    if (const_item() &&
+        !(item->basic_const_item() || item->type() == Item::FIELD_ITEM ||
+          item->type() == SUBSELECT_ITEM ||
+           /*
+             Do not cache GET_USER_VAR() function as its const_item() may
+             return TRUE for the current thread but it still may change
+             during the execution.
+           */
+          (item->type() == Item::FUNC_ITEM &&
+           ((Item_func*)item)->functype() == Item_func::GUSERVAR_FUNC)))
+      *cache_flag= true;
+    return true;
+  }
+  return false;
+}
+
+/**
+  Cache item if needed.
+
+  @param arg   TRUE <=> Cache this item.
+
+  @return cache if cache needed.
+  @return this otherwise.
+*/
+
+Item* Item::cache_const_expr_transformer(unsigned char *arg)
+{
+  if (*(bool*)arg)
+  {
+    *((bool*)arg)= false;
+    Item_cache *cache= Item_cache::get_cache(this);
+    if (!cache)
+      return NULL;
+    cache->setup(this);
+    cache->store(this);
+    return cache;
+  }
+  return this;
+}
+
 bool Item::send(plugin::Client *client, String *buffer)
 {
   bool result= false;
@@ -1355,7 +1421,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     return; /* Can't be better */
   Item_result res_type=item_cmp_type(comp_item->result_type(),
 				     item->result_type());
-  char *name=item->name; /* Alloced by sql_alloc */
+  char *name=item->name; /* Alloced by memory::sql_alloc */
 
   switch (res_type) {
   case STRING_RESULT:
@@ -1368,7 +1434,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     else
     {
       uint32_t length= result->length();
-      char *tmp_str= sql_strmake(result->ptr(), length);
+      char *tmp_str= memory::sql_strmake(result->ptr(), length);
       new_item= new Item_string(name, tmp_str, length, result->charset());
     }
     break;
@@ -1713,10 +1779,3 @@ Field *create_tmp_field(Session *session,
   }
 }
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<Item>;
-template class List_iterator<Item>;
-template class List_iterator_fast<Item>;
-template class List_iterator_fast<Item_field>;
-template class List<List_item>;
-#endif

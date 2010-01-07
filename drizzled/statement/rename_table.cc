@@ -18,11 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/rename_table.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
 
 namespace drizzled
 {

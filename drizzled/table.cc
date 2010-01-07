@@ -16,10 +16,19 @@
 
 /* Some general useful functions */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include <float.h>
+#include <fcntl.h>
+
+#include <string>
+#include <vector>
+#include <algorithm>
+
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
+#include "drizzled/plugin/info_schema_table.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -32,6 +41,10 @@
 #include <drizzled/field/double.h>
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/charset.h"
+#include "drizzled/internal/m_string.h"
+#include "plugin/myisam/myisam.h"
 
 #include <drizzled/item/string.h>
 #include <drizzled/item/int.h>
@@ -42,13 +55,12 @@
 
 #include "drizzled/table_proto.h"
 
-#include <string>
-#include <vector>
-#include <algorithm>
-
-using namespace drizzled;
 using namespace std;
 using namespace drizzled;
+
+extern pid_t current_pid;
+extern plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *myisam_engine;
 
 /* Functions defined in this cursor */
 
@@ -98,7 +110,7 @@ static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length)
 {
-  MEM_ROOT mem_root;
+  memory::Root mem_root;
   TableShare *share;
   char *key_buff, *path_buff;
   char path[FN_REFLEN];
@@ -107,7 +119,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
                                     table_list->table_name, false);
-  init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
@@ -1202,7 +1214,7 @@ err:
     free(field_pack_length);
 
   share->error= error;
-  share->open_errno= my_errno;
+  share->open_errno= errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
   share->open_table_error(error, share->open_errno, 0);
@@ -1254,7 +1266,7 @@ int open_table_def(Session& session, TableShare *share)
   {
     if (error>0)
     {
-      my_errno= error;
+      errno= error;
       error= 1;
     }
     else
@@ -1278,7 +1290,7 @@ err_not_open:
   if (error && !error_given)
   {
     share->error= error;
-    share->open_table_error(error, (share->open_errno= my_errno), 0);
+    share->open_table_error(error, (share->open_errno= errno), 0);
   }
 
   return(error);
@@ -1485,7 +1497,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             as if the .frm cursor didn't exist
           */
 	  error= 1;
-	  my_errno= ENOENT;
+	  errno= ENOENT;
           break;
         case EMFILE:
 	  /*
@@ -1493,7 +1505,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             cursor can't open
            */
 	  error= 1;
-	  my_errno= EMFILE;
+	  errno= EMFILE;
           break;
         default:
           outparam->print_error(ha_err, MYF(0));
@@ -1516,7 +1528,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
-    share->open_table_error(error, my_errno, 0);
+    share->open_table_error(error, errno, 0);
   delete outparam->cursor;
   outparam->cursor= 0;				// For easier error checking
   outparam->db_stat= 0;
@@ -1567,6 +1579,94 @@ int Table::closefrm(bool free_share)
 
   return error;
 }
+
+
+void Table::resetTable(Session *session,
+                       TableShare *share,
+                       uint32_t db_stat_arg)
+{
+  s= share;
+  field= NULL;
+
+  cursor= NULL;
+  next= NULL;
+  prev= NULL;
+
+  read_set= NULL;
+  write_set= NULL;
+
+  tablenr= 0;
+  db_stat= db_stat_arg;
+
+  in_use= session;
+  record[0]= (unsigned char *) NULL;
+  record[1]= (unsigned char *) NULL;
+
+  insert_values= NULL;
+  key_info= NULL;
+  next_number_field= NULL;
+  found_next_number_field= NULL;
+  timestamp_field= NULL;
+
+  pos_in_table_list= NULL;
+  group= NULL;
+  alias= NULL;
+  null_flags= NULL;
+
+  lock_position= 0;
+  lock_data_start= 0;
+  lock_count= 0;
+  used_fields= 0;
+  status= 0;
+  derived_select_number= 0;
+  current_lock= F_UNLCK;
+  copy_blobs= false;
+
+  maybe_null= false;
+
+  null_row= false;
+
+  force_index= false;
+  distinct= false;
+  const_table= false;
+  no_rows= false;
+  key_read= false;
+  no_keyread= false;
+
+  open_placeholder= false;
+  locked_by_name= false;
+  no_cache= false;
+
+  auto_increment_field_not_null= false;
+  alias_name_used= false;
+
+  query_id= 0;
+  quick_condition_rows= 0;
+
+  timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+  map= 0;
+
+  reginfo.reset();
+
+  covering_keys.reset();
+
+  quick_keys.reset();
+  merge_keys.reset();
+
+  keys_in_use_for_query.reset();
+  keys_in_use_for_group_by.reset();
+  keys_in_use_for_order_by.reset();
+
+  memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
+
+  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
+  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
+
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memset(&sort, 0, sizeof(filesort_info_st));
+}
+
 
 
 /* Deallocate temporary blob storage */
@@ -1654,7 +1754,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
@@ -1833,32 +1933,6 @@ uint32_t calculate_key_len(Table *table, uint32_t key,
   }
   return length;
 }
-
-/*
-  Check if database name is valid
-
-  SYNPOSIS
-    check_db_name()
-    org_name		Name of database and length
-
-  RETURN
-    0	ok
-    1   error
-*/
-
-bool check_db_name(LEX_STRING *org_name)
-{
-  char *name= org_name->str;
-  uint32_t name_length= org_name->length;
-
-  if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
-    return 1;
-
-  my_casedn_str(files_charset_info, name);
-
-  return check_identifier_name(org_name);
-}
-
 
 /*
   Allow anything as a table name, as long as it doesn't contain an
@@ -2277,7 +2351,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  MEM_ROOT *mem_root_save, own_root;
+  memory::Root *mem_root_save, own_root;
   Table *table;
   TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
@@ -2351,7 +2425,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
 
-  init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
                         &table, sizeof(*table),
@@ -3216,7 +3290,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
 void Table::free_tmp_table(Session *session)
 {
-  MEM_ROOT own_root= mem_root;
+  memory::Root own_root= mem_root;
   const char *save_proc_info;
 
   save_proc_info=session->get_proc_info();
@@ -3477,6 +3551,74 @@ void Table::emptyRecord()
   memset(null_flags, 255, s->null_bytes);
 }
 
+Table::Table()
+  : s(NULL),
+    field(NULL),
+    cursor(NULL),
+    next(NULL),
+    prev(NULL),
+    read_set(NULL),
+    write_set(NULL),
+    tablenr(0),
+    db_stat(0),
+    in_use(NULL),
+    insert_values(NULL),
+    key_info(NULL),
+    next_number_field(NULL),
+    found_next_number_field(NULL),
+    timestamp_field(NULL),
+    pos_in_table_list(NULL),
+    group(NULL),
+    alias(NULL),
+    null_flags(NULL),
+    lock_position(0),
+    lock_data_start(0),
+    lock_count(0),
+    used_fields(0),
+    status(0),
+    derived_select_number(0),
+    current_lock(F_UNLCK),
+    copy_blobs(false),
+    maybe_null(false),
+    null_row(false),
+    force_index(false),
+    distinct(false),
+    const_table(false),
+    no_rows(false),
+    key_read(false),
+    no_keyread(false),
+    open_placeholder(false),
+    locked_by_name(false),
+    no_cache(false),
+    auto_increment_field_not_null(false),
+    alias_name_used(false),
+    query_id(0),
+    quick_condition_rows(0),
+    timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
+    map(0)
+{
+  record[0]= (unsigned char *) 0;
+  record[1]= (unsigned char *) 0;
+
+  covering_keys.reset();
+
+  quick_keys.reset();
+  merge_keys.reset();
+
+  keys_in_use_for_query.reset();
+  keys_in_use_for_group_by.reset();
+  keys_in_use_for_order_by.reset();
+
+  memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+  memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
+
+  memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
+  memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
+
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memset(&sort, 0, sizeof(filesort_info_st));
+}
+
 /*****************************************************************************
   The different ways to read a record
   Returns -1 if row was not found, 0 if row was found and 1 on errors
@@ -3578,7 +3720,3 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   return false;
 }
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<String>;
-template class List_iterator<String>;
-#endif

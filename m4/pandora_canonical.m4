@@ -4,12 +4,22 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.73])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.92])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
+  AC_ARG_ENABLE([fat-binaries],
+    [AS_HELP_STRING([--enable-fat-binaries],
+      [Enable fat binary support on OSX @<:@default=off@:>@])],
+    [ac_enable_fat_binaries="$enableval"],
+    [ac_enable_fat_binaries="no"])
+
   dnl Force dependency tracking on for Sun Studio builds
   AS_IF([test "x${enable_dependency_tracking}" = "x"],[
     enable_dependency_tracking=yes
+  ])
+  dnl If we're building OSX Fat Binaries, we have to turn off -M options
+  AS_IF([test "x${ac_enable_fat_binaries}" = "xyes"],[
+    enable_dependency_tracking=no
   ])
 ])
 
@@ -24,6 +34,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   m4_define([PCT_IGNORE_SHARED_PTR],[no])
   m4_define([PCT_FORCE_GCC42],[no])
   m4_define([PCT_SRC_IN_SRC],[no])
+  m4_define([PCT_VERSION_FROM_VC],[no])
+  m4_define([PCT_USE_VISIBILITY],[yes])
   m4_foreach([pct_arg],[$*],[
     m4_case(pct_arg,
       [use-gnulib], [
@@ -42,9 +54,17 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
         m4_undefine([PCT_FORCE_GCC42])
         m4_define([PCT_FORCE_GCC42],[yes])
       ],
+      [skip-visibility], [
+        m4_undefine([PCT_USE_VISIBILITY])
+        m4_define([PCT_USE_VISIBILITY],[no])
+      ],
       [src-in-src], [
         m4_undefine([PCT_SRC_IN_SRC])
         m4_define([PCT_SRC_IN_SRC],[yes])
+      ],
+      [version-from-vc], [
+        m4_undefine([PCT_VERSION_FROM_VC])
+        m4_define([PCT_VERSION_FROM_VC],[yes])
     ])
   ])
 
@@ -66,6 +86,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_REQUIRE([AC_PROG_CC])
   AC_REQUIRE([PANDORA_MAC_GCC42])
   AC_REQUIRE([PANDORA_64BIT])
+
+  m4_if(PCT_VERSION_FROM_VC,yes,[
+    PANDORA_VC_VERSION
+  ])
+  PANDORA_VERSION
 
   dnl Once we can use a modern autoconf, we can use this
   dnl AC_PROG_CC_C99
@@ -154,6 +179,13 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   dnl alloca - but we need to know it anyway for check_stack_overrun.
   PANDORA_STACK_DIRECTION
 
+  AC_CHECK_LIBM
+  
+  AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
+  AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
+
+
+
   PANDORA_OPTIMIZE
 
   AC_LANG_PUSH(C++)
@@ -169,11 +201,13 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_HAVE_GCC_ATOMICS
 
-  dnl We need to inject error into the cflags to test if visibility works or not
-  dnl save_CFLAGS="${CFLAGS}"
-  dnl CFLAGS="${CFLAGS} -Werror"
-  dnl gl_VISIBILITY
-  dnl CFLAGS="${save_CFLAGS}"
+  m4_if(PCT_USE_VISIBILITY,[yes],[
+    dnl We need to inject error into the cflags to test if visibility works or not
+    save_CFLAGS="${CFLAGS}"
+    CFLAGS="${CFLAGS} -Werror"
+    PANDORA_VISIBILITY
+    CFLAGS="${save_CFLAGS}"
+  ])
 
   PANDORA_HEADER_ASSERT
 
@@ -208,5 +242,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_SUBST([AM_CFLAGS])
   AC_SUBST([AM_CXXFLAGS])
   AC_SUBST([AM_CPPFLAGS])
+  AC_SUBST([AM_LDFLAGS])
 
 ])

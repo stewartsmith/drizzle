@@ -43,9 +43,6 @@ class select_result;
 /* PREV_BITS only used in sql_select.cc */
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 
-#include <plugin/myisam/myisam.h>
-#include <drizzled/sql_array.h>
-
 /* Values in optimize */
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
@@ -138,7 +135,6 @@ bool change_refs_to_tmp_fields(Session *session,
                                List<Item> &res_all_fields,
                                uint32_t elements,
 			                         List<Item> &all_fields);
-void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool distinct, const char *message= NULL);
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
@@ -201,10 +197,16 @@ bool update_ref_and_keys(Session *session,
                          table_map normal_tables,
                          Select_Lex *select_lex,
                          std::vector<drizzled::optimizer::SargableParam> &sargables);
-ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
+ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SqlSelect *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
+bool mysql_select(Session *session, Item ***rref_pointer_array,
+                  TableList *tables, uint32_t wild_num,  List<Item> &list,
+                  COND *conds, uint32_t og_num, order_st *order, order_st *group,
+                  Item *having, uint64_t select_type,
+                  select_result *result, Select_Lex_Unit *unit,
+                  Select_Lex *select_lex);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
@@ -212,9 +214,6 @@ bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
 bool create_ref_for_key(JOIN *join, JoinTable *j, 
                         drizzled::optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
-
-/* from sql_delete.cc, used by optimizer/range.cc */
-extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 
 #include "drizzled/stored_key.h"
 

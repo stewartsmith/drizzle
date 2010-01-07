@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_NATURAL_JOIN_COLUMN_H
 #define DRIZZLED_NATURAL_JOIN_COLUMN_H
 
-#include "drizzled/sql_alloc.h"
+#include "drizzled/memory/sql_alloc.h"
 
 class Field;
 class TableList;
@@ -32,7 +32,7 @@ class Item;
   Field (for tables).
 */
 
-class Natural_join_column: public Sql_alloc
+class Natural_join_column: public drizzled::memory::SqlAlloc
 {
 public:
   Field            *table_field; /* Column reference of table or temp view. */

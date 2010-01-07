@@ -21,10 +21,11 @@
  * @file Implementation of the Session class and API
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/session.h>
+#include "drizzled/session_list.h"
 #include <sys/stat.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/query_id.h>
@@ -41,8 +42,15 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
+#include "drizzled/db.h"
+#include "drizzled/pthread_globals.h"
 
+#include "plugin/myisam/myisam.h"
+#include "drizzled/internal/iocache.h"
+
+#include <fcntl.h>
 #include <algorithm>
+#include <climits>
 
 using namespace std;
 using namespace drizzled;
@@ -66,17 +74,6 @@ extern pthread_key_t THR_Mem_root;
 extern uint32_t max_used_connections;
 extern drizzled::atomic<uint32_t> connection_count;
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-/* Used templates */
-template class List<Key>;
-template class List_iterator<Key>;
-template class List<Key_part_spec>;
-template class List_iterator<Key_part_spec>;
-template class List<AlterDrop>;
-template class List_iterator<AlterDrop>;
-template class List<AlterColumn>;
-template class List_iterator<AlterColumn>;
-#endif
 
 /****************************************************************************
 ** User variables
@@ -111,7 +108,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  File fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -145,10 +142,15 @@ const char *get_session_proc_info(Session *session)
   return session->get_proc_info();
 }
 
-extern "C"
-void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
+void **Session::getEngineData(const plugin::StorageEngine *engine)
 {
-  return (void **) &session->ha_data[engine->slot].ha_ptr;
+  return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
+}
+
+Ha_trx_info *Session::getEngineInfo(const plugin::StorageEngine *engine,
+                                    size_t index)
+{
+  return &ha_data[engine->getSlot()].ha_info[index];
 }
 
 extern "C"
@@ -205,7 +207,7 @@ Session::Session(plugin::Client *client_arg)
     the destructor works OK in case of an error. The main_mem_root
     will be re-initialized in init_for_queries().
   */
-  init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
+  memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
@@ -265,7 +267,7 @@ Session::Session(plugin::Client *client_arg)
   memset(&status_var, 0, sizeof(status_var));
 
   /* Initialize sub structures */
-  init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
+  memory::init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
   hash_init(&user_vars, system_charset_info, USER_VARS_HASH_SIZE, 0, 0,
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
@@ -280,7 +282,7 @@ Session::Session(plugin::Client *client_arg)
 void Session::free_items()
 {
   Item *next;
-  /* This works because items are allocated with sql_alloc() */
+  /* This works because items are allocated with memory::sql_alloc() */
   for (; free_list; free_list= next)
   {
     next= free_list->next;
@@ -511,7 +513,7 @@ void Session::awake(Session::killed_state state_to_set)
 
 /*
   Remember the location of thread info, the structure needed for
-  sql_alloc() and the structure for the net buffer
+  memory::sql_alloc() and the structure for the net buffer
 */
 bool Session::storeGlobals()
 {
@@ -603,7 +605,7 @@ bool Session::schedule()
   scheduler= plugin::Scheduler::getScheduler();
   assert(scheduler);
 
-  ++connection_count;
+  connection_count.increment();
 
   if (connection_count > max_used_connections)
     max_used_connections= connection_count;
@@ -611,7 +613,7 @@ bool Session::schedule()
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.push_back(this);
+  getSessionList().push_back(this);
   pthread_mutex_unlock(&LOCK_thread_count);
 
   if (scheduler->addSession(this))
@@ -634,6 +636,35 @@ bool Session::schedule()
   return false;
 }
 
+
+const char* Session::enter_cond(pthread_cond_t *cond,
+                                pthread_mutex_t* mutex,
+                                const char* msg)
+{
+  const char* old_msg = get_proc_info();
+  safe_mutex_assert_owner(mutex);
+  mysys_var->current_mutex = mutex;
+  mysys_var->current_cond = cond;
+  this->set_proc_info(msg);
+  return old_msg;
+}
+
+void Session::exit_cond(const char* old_msg)
+{
+  /*
+    Putting the mutex unlock in exit_cond() ensures that
+    mysys_var->current_mutex is always unlocked _before_ mysys_var->mutex is
+    locked (if that would not be the case, you'll get a deadlock if someone
+    does a Session::awake() on you).
+  */
+  pthread_mutex_unlock(mysys_var->current_mutex);
+  pthread_mutex_lock(&mysys_var->mutex);
+  mysys_var->current_mutex = 0;
+  mysys_var->current_cond = 0;
+  this->set_proc_info(old_msg);
+  pthread_mutex_unlock(&mysys_var->mutex);
+}
+
 bool Session::authenticate()
 {
   lex_start(this);
@@ -646,7 +677,6 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
@@ -672,7 +702,11 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
-    if (mysql_change_db(this, &db_str, false))
+    const string database_name_string(in_db);
+    NonNormalisedDatabaseName database_name(database_name_string);
+    NormalisedDatabaseName normalised_database_name(database_name);
+
+    if (mysql_change_db(this, normalised_database_name, false))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;
@@ -1008,6 +1042,11 @@ int Session::send_explain_fields(select_result *result)
   return (result->send_fields(field_list));
 }
 
+void select_result::send_error(uint32_t errcode, const char *err)
+{
+  my_message(errcode, err, MYF(0));
+}
+
 /************************************************************************
   Handling writing to file
 ************************************************************************/
@@ -1017,7 +1056,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   my_message(errcode, err, MYF(0));
   if (file > 0)
   {
-    (void) end_io_cache(&cache);
+    (void) end_io_cache(cache);
     (void) my_close(file, MYF(0));
     (void) my_delete(path, MYF(0));		// Delete file on error
     file= -1;
@@ -1027,7 +1066,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 
 bool select_to_file::send_eof()
 {
-  int error= test(end_io_cache(&cache));
+  int error= test(end_io_cache(cache));
   if (my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
@@ -1049,7 +1088,7 @@ void select_to_file::cleanup()
   /* In case of error send_eof() may be not called: close the file here. */
   if (file >= 0)
   {
-    (void) end_io_cache(&cache);
+    (void) end_io_cache(cache);
     (void) my_close(file, MYF(0));
     file= -1;
   }
@@ -1057,15 +1096,18 @@ void select_to_file::cleanup()
   row_count= 0;
 }
 
+select_to_file::select_to_file(file_exchange *ex)
+  : exchange(ex),
+    file(-1),
+    cache(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
+    row_count(0L)
+{
+  path[0]=0;
+}
 
 select_to_file::~select_to_file()
 {
-  if (file >= 0)
-  {					// This only happens in case of error
-    (void) end_io_cache(&cache);
-    (void) my_close(file, MYF(0));
-    file= -1;
-  }
+  cleanup();
 }
 
 /***************************************************************************
@@ -1094,9 +1136,9 @@ select_export::~select_export()
 */
 
 
-static File create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
+static int create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
 {
-  File file;
+  int file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
 
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
@@ -1129,11 +1171,7 @@ static File create_file(Session *session, char *path, file_exchange *exchange, I
   /* Create the file world readable */
   if ((file= my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
-#ifdef HAVE_FCHMOD
   (void) fchmod(file, 0666);			// Because of umask()
-#else
-  (void) chmod(path, 0666);
-#endif
   if (init_io_cache(cache, file, 0L, WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
     my_close(file, MYF(0));
@@ -1198,7 +1236,7 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
     return 1;
   }
 
-  if ((file= create_file(session, path, exchange, &cache)) < 0)
+  if ((file= create_file(session, path, exchange, cache)) < 0)
     return 1;
 
   return 0;
@@ -1228,7 +1266,7 @@ bool select_export::send_data(List<Item> &items)
   uint32_t used_length=0,items_left=items.elements;
   List_iterator_fast<Item> li(items);
 
-  if (my_b_write(&cache,(unsigned char*) exchange->line_start->ptr(),
+  if (my_b_write(cache,(unsigned char*) exchange->line_start->ptr(),
                  exchange->line_start->length()))
     goto err;
   while ((item=li++))
@@ -1239,7 +1277,7 @@ bool select_export::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (res && enclosed)
     {
-      if (my_b_write(&cache,(unsigned char*) exchange->enclosed->ptr(),
+      if (my_b_write(cache,(unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
         goto err;
     }
@@ -1251,10 +1289,10 @@ bool select_export::send_data(List<Item> &items)
         {
           null_buff[0]=escape_char;
           null_buff[1]='N';
-          if (my_b_write(&cache,(unsigned char*) null_buff,2))
+          if (my_b_write(cache,(unsigned char*) null_buff,2))
             goto err;
         }
-        else if (my_b_write(&cache,(unsigned char*) "NULL",4))
+        else if (my_b_write(cache,(unsigned char*) "NULL",4))
           goto err;
       }
       else
@@ -1344,16 +1382,16 @@ bool select_export::send_data(List<Item> &items)
                           is_ambiguous_field_sep) ?
               field_sep_char : escape_char;
             tmp_buff[1]= *pos ? *pos : '0';
-            if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
-                my_b_write(&cache,(unsigned char*) tmp_buff,2))
+            if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)) ||
+                my_b_write(cache,(unsigned char*) tmp_buff,2))
               goto err;
             start=pos+1;
           }
         }
-        if (my_b_write(&cache,(unsigned char*) start,(uint32_t) (pos-start)))
+        if (my_b_write(cache,(unsigned char*) start,(uint32_t) (pos-start)))
           goto err;
       }
-      else if (my_b_write(&cache,(unsigned char*) res->ptr(),used_length))
+      else if (my_b_write(cache,(unsigned char*) res->ptr(),used_length))
         goto err;
     }
     if (fixed_row_size)
@@ -1369,27 +1407,27 @@ bool select_export::send_data(List<Item> &items)
         uint32_t length=item->max_length-used_length;
         for (; length > sizeof(space) ; length-=sizeof(space))
         {
-          if (my_b_write(&cache,(unsigned char*) space,sizeof(space)))
+          if (my_b_write(cache,(unsigned char*) space,sizeof(space)))
             goto err;
         }
-        if (my_b_write(&cache,(unsigned char*) space,length))
+        if (my_b_write(cache,(unsigned char*) space,length))
           goto err;
       }
     }
     if (res && enclosed)
     {
-      if (my_b_write(&cache, (unsigned char*) exchange->enclosed->ptr(),
+      if (my_b_write(cache, (unsigned char*) exchange->enclosed->ptr(),
                      exchange->enclosed->length()))
         goto err;
     }
     if (--items_left)
     {
-      if (my_b_write(&cache, (unsigned char*) exchange->field_term->ptr(),
+      if (my_b_write(cache, (unsigned char*) exchange->field_term->ptr(),
                      field_term_length))
         goto err;
     }
   }
-  if (my_b_write(&cache,(unsigned char*) exchange->line_term->ptr(),
+  if (my_b_write(cache,(unsigned char*) exchange->line_term->ptr(),
                  exchange->line_term->length()))
     goto err;
   return(0);
@@ -1407,7 +1445,7 @@ int
 select_dump::prepare(List<Item> &, Select_Lex_Unit *u)
 {
   unit= u;
-  return (int) ((file= create_file(session, path, exchange, &cache)) < 0);
+  return (int) ((file= create_file(session, path, exchange, cache)) < 0);
 }
 
 
@@ -1434,12 +1472,12 @@ bool select_dump::send_data(List<Item> &items)
     res=item->str_result(&tmp);
     if (!res)					// If NULL
     {
-      if (my_b_write(&cache,(unsigned char*) "",1))
+      if (my_b_write(cache,(unsigned char*) "",1))
 	goto err;
     }
-    else if (my_b_write(&cache,(unsigned char*) res->ptr(),res->length()))
+    else if (my_b_write(cache,(unsigned char*) res->ptr(),res->length()))
     {
-      my_error(ER_ERROR_ON_WRITE, MYF(0), path, my_errno);
+      my_error(ER_ERROR_ON_WRITE, MYF(0), path, errno);
       goto err;
     }
   }
@@ -1692,15 +1730,16 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
 }
 
 
-bool Session::set_db(const char *new_db, size_t length)
+bool Session::set_db(const NormalisedDatabaseName &new_db)
 {
-  /* Do not reallocate memory if current chunk is big enough. */
-  if (length)
-    db= new_db;
-  else
-    db.clear();
+  db= new_db.to_string();
 
   return false;
+}
+
+void Session::clear_db()
+{
+  db.clear();
 }
 
 
@@ -1725,15 +1764,6 @@ extern "C" unsigned long session_get_thread_id(const Session *session)
   return (unsigned long) session->getSessionId();
 }
 
-
-extern "C"
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                const char *str, unsigned int size,
-                                int allocate_lex_string)
-{
-  return session->make_lex_string(lex_str, str, size,
-                              (bool) allocate_lex_string);
-}
 
 const struct charset_info_st *session_charset(Session *session)
 {
@@ -2133,7 +2163,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getPath(), my_errno);
+                  identifier.getPath(), errno);
   }
   return error;
 }
@@ -2151,7 +2181,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, my_errno);
+                  path, errno);
   }
   return error;
 }

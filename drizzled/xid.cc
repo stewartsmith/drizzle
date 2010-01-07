@@ -17,11 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <string.h>
 
-#include <mysys/hash.h>
+#include <drizzled/my_hash.h>
 #include <drizzled/xid.h>
+#include "drizzled/internal/my_pthread.h"
+#include "drizzled/charset.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/charset_info.h"
 
 XID::XID()
 {}

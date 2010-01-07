@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/plugin/function.h"
 
 #include "gman_servers_set.h"
@@ -72,6 +72,7 @@ static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "gearman_udf",
   "0.1",
   "Eric Day",

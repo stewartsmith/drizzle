@@ -36,7 +36,7 @@
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/foreign_key.h>
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function/locate.h>
@@ -86,8 +86,9 @@
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 #include <drizzled/message/table.pb.h>
+#include <drizzled/message/schema.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/alter_table.h>
@@ -129,6 +130,12 @@
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
+#include <drizzled/db.h>
+#include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
+#include "drizzled/internal/m_string.h"
+
 
 using namespace drizzled;
 
@@ -168,6 +175,15 @@ int yylex(void *yylval, void *yysession);
 
 
 #define YYDEBUG 0
+
+static bool check_reserved_words(LEX_STRING *name)
+{
+  if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
+      !my_strcasecmp(system_charset_info, name->str, "SESSION"))
+    return true;
+  return false;
+}
 
 /**
   @brief Push an error message into MySQL error stack with line
@@ -1366,8 +1382,8 @@ default_collation_schema:
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
 
-            statement->create_info.default_table_charset= $4;
-            statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+            message::Schema &schema_message= statement->schema_message;
+            schema_message.set_collation($4->name);
           }
         ;
 
@@ -1405,7 +1421,7 @@ column_def:
           field_spec opt_check_constraint
         | field_spec references
           {
-            Lex->col_list.empty(); /* Alloced by sql_alloc */
+            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -1417,7 +1433,7 @@ key_def:
             Key *key= new Key($1, $2, &statement->key_create_info, 0,
                               lex->col_list);
             statement->alter_info.key_list.push_back(key);
-            lex->col_list.empty(); /* Alloced by sql_alloc */
+            lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint constraint_key_type opt_ident key_alg
           '(' key_list ')' key_options
@@ -1427,7 +1443,7 @@ key_def:
             Key *key= new Key($2, $3.str ? $3 : $1, &statement->key_create_info, 0,
                               lex->col_list);
             statement->alter_info.key_list.push_back(key);
-            lex->col_list.empty(); /* Alloced by sql_alloc */
+            lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {
@@ -1444,17 +1460,17 @@ key_def:
                          &default_key_create_info, 1,
                          lex->col_list);
             statement->alter_info.key_list.push_back(key);
-            lex->col_list.empty(); /* Alloced by sql_alloc */
+            lex->col_list.empty(); /* Alloced by memory::sql_alloc */
             /* Only used for ALTER TABLE. Ignored otherwise. */
             statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }
         | constraint opt_check_constraint
           {
-            Lex->col_list.empty(); /* Alloced by sql_alloc */
+            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint check_constraint
           {
-            Lex->col_list.empty(); /* Alloced by sql_alloc */
+            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -2416,10 +2432,23 @@ alter_list_item:
             {
               DRIZZLE_YYABORT;
             }
-            if (check_table_name($3->table.str,$3->table.length) || ($3->db.str && check_db_name(&$3->db)))
+
+            if (check_table_name($3->table.str,$3->table.length))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
               DRIZZLE_YYABORT;
+            }
+
+            if ($3->db.str)
+            {
+              std::string database_name($3->db.str);
+              NonNormalisedDatabaseName non_normalised_database_name(database_name);
+              NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+              if (! normalised_database_name.isValid())
+              {
+                my_error(ER_WRONG_TABLE_NAME, MYF(0), $3->table.str);
+                DRIZZLE_YYABORT;
+              }
             }
             lex->name= $3->table;
             statement->alter_info.flags.set(ALTER_RENAME);
@@ -3490,7 +3519,7 @@ opt_gorder_clause:
           {
             Select_Lex *select= Lex->current_select;
             select->gorder_list=
-              (SQL_LIST*) sql_memdup((char*) &select->order_list,
+              (SQL_LIST*) memory::sql_memdup((char*) &select->order_list,
                                      sizeof(st_sql_list));
             select->order_list.empty();
           }
@@ -4114,7 +4143,7 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (LEX_STRING*) sql_memdup(&$2,sizeof(LEX_STRING)); }
+          { $$= (LEX_STRING*) memory::sql_memdup(&$2,sizeof(LEX_STRING)); }
         ;
 
 opt_all:

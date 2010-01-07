@@ -20,7 +20,7 @@
 
 /* Functions to handle date and time */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/error.h"
 #include "drizzled/util/test.h"
 #include "drizzled/tztime.h"

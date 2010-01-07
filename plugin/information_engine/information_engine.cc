@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include <plugin/information_engine/information_engine.h>
 #include <drizzled/session.h>
 
@@ -31,7 +33,7 @@ using namespace drizzled;
 static const string engine_name("INFORMATION_ENGINE");
 
 
-Cursor *InformationEngine::create(TableShare &table, MEM_ROOT *mem_root)
+Cursor *InformationEngine::create(TableShare &table, memory::Root *mem_root)
 {
   return new (mem_root) InformationCursor(*this, table);
 }
@@ -164,7 +166,7 @@ int InformationEngine::doGetTableDefinition(Session &,
 }
 
 
-void InformationEngine::doGetTableNames(CachedDirectory&, 
+void InformationEngine::doGetTableNames(drizzled::CachedDirectory&, 
                                         string &db, 
                                         set<string> &set_of_names)
 {
@@ -253,6 +255,7 @@ static int finalize(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "INFORMATION_ENGINE",
   "1.0",
   "Padraig O'Sullivan, Brian Aker",

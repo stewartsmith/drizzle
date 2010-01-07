@@ -28,6 +28,7 @@ Created 5/30/1994 Heikki Tuuri
 
 #include "univ.i"
 #include <string.h>
+#include <sys/types.h>
 #ifndef UNIV_HOTBACKUP
 # include "os0sync.h"
 

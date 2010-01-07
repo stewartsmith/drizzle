@@ -127,7 +127,8 @@ def should_lint(path):
         'sql_yacc', 'gperf', 'drizzled/probes.h',
         'drizzled/function_hash.h', 'drizzled/symbol_hash.h',
         'util/dummy.cc', 'drizzled/sql_yacc.h', 'drizzled/configmake.h',
-        'drizzled/plugin/config.h']:
+	'drizzled/plugin/version.h',
+        'drizzled/plugin/load_list.h']:
         if exclude in path:
             return False
     return True
@@ -142,6 +143,7 @@ def accumulate_sources(arg, dirname, fnames):
 
 sources_list = []
 os.path.walk(srcdir,accumulate_sources,sources_list)
+sources_list.sort()
 for path in sources_list:
     lint_path(path)
 clean_lints(sources_list)

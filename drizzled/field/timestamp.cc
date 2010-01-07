@@ -19,12 +19,16 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/timestamp.h>
 #include <drizzled/error.h>
 #include <drizzled/tztime.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+
+#include <math.h>
+
+#include <sstream>
 
 #include "drizzled/temporal.h"
 

@@ -22,6 +22,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 #include <string>
+#include "drizzled/internal/my_sys.h"
 
 
 /**
@@ -57,7 +58,7 @@ public:
 
   virtual void killSessionNow(Session *session)
   {
-    unlink_session(session);
+    Session::unlink(session);
     my_thread_end();
   }
 };

@@ -18,10 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/change_schema.h>
+#include <drizzled/db.h>
+
+#include <string>
+
+using namespace std;
 
 namespace drizzled
 {
@@ -29,9 +34,11 @@ namespace drizzled
 bool statement::ChangeSchema::execute()
 {
   Select_Lex *select_lex= &session->lex->select_lex;
-  LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
+  string database_name(select_lex->db);
+  NonNormalisedDatabaseName non_normalised_database_name(database_name);
+  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
 
-  if (! mysql_change_db(session, &db_str, false))
+  if (! mysql_change_db(session, normalised_database_name, false))
   {
     session->my_ok();
   }

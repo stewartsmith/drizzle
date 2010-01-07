@@ -18,11 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <fcntl.h>
+
+#include <sstream>
+
 #include "drizzled/show.h"
 #include "drizzled/lock.h"
 #include "drizzled/session.h"
 #include "drizzled/statement/alter_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/gettext.h"
 #include "drizzled/data_home.h"
@@ -32,6 +39,11 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/time_functions.h"
 #include "drizzled/records.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
+
+extern pid_t current_pid;
 
 using namespace std;
 
@@ -1333,7 +1345,7 @@ copy_data_between_tables(Table *from, Table *to,
                       &tables, fields, all_fields, order) ||
           !(sortorder= make_unireg_sortorder(order, &length, NULL)) ||
           (from->sort.found_records= filesort(session, from, sortorder, length,
-                                              (optimizer::SQL_SELECT *) 0, HA_POS_ERROR,
+                                              (optimizer::SqlSelect *) 0, HA_POS_ERROR,
                                               1, &examined_rows)) ==
           HA_POS_ERROR)
         goto err;
@@ -1342,7 +1354,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
-  init_read_record(&info, session, from, (optimizer::SQL_SELECT *) 0, 1,1);
+  init_read_record(&info, session, from, (optimizer::SqlSelect *) 0, 1,1);
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   session->row_count= 0;
@@ -1397,7 +1409,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   if (to->cursor->ha_end_bulk_insert() && error <= 0)
   {
-    to->print_error(my_errno, MYF(0));
+    to->print_error(errno, MYF(0));
     error=1;
   }
   to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);

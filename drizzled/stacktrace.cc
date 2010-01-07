@@ -17,12 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
-#include "stacktrace.h"
+#include "config.h"
+#include "drizzled/stacktrace.h"
+#include <cstddef>
 
 #include <signal.h>
-#include <mysys/my_pthread.h>
-#include <mystrings/m_string.h>
+#include "drizzled/internal/my_pthread.h"
+#include "drizzled/internal/m_string.h"
 #ifdef HAVE_STACKTRACE
 #include <unistd.h>
 #include <strings.h>
@@ -31,7 +32,11 @@
 #include <execinfo.h>
 #endif
 
+#include <cstring>
+#include <cstdio>
 #include <algorithm>
+
+#include "drizzled/definitions.h"
 
 using namespace std;
 

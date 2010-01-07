@@ -17,12 +17,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
+#include "drizzled/my_error.h"
 #include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
 #include <algorithm>
 
 #include "pack.h"
@@ -35,6 +38,9 @@ using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
+extern uint32_t global_thread_id;
+
+static const uint32_t DRIZZLE_TCP_PORT= 4427;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static uint32_t port;
 static uint32_t connect_timeout;
@@ -51,18 +57,11 @@ const char* ListenDrizzleProtocol::getHost(void) const
 
 in_port_t ListenDrizzleProtocol::getPort(void) const
 {
-  struct servent *serv_ptr;
   char *env;
 
   if (port == 0)
   {
     port= DRIZZLE_TCP_PORT;
-
-    if (DRIZZLE_TCP_PORT_DEFAULT == 0)
-    {
-      if ((serv_ptr= getservbyname("drizzle", "tcp")))
-        port= ntohs((u_short) serv_ptr->s_port);
-    }
 
     if ((env = getenv("DRIZZLE_TCP_PORT")))
       port= (uint32_t) atoi(env);
@@ -824,9 +823,10 @@ static int deinit(drizzled::plugin::Registry &registry)
 }
 
 static DRIZZLE_SYSVAR_UINT(port, port, PLUGIN_VAR_RQCMDARG,
-                           N_("Port number to use for connection or 0 for default to, in order of "
-                              "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
-                              STRINGIFY_ARG(DRIZZLE_TCP_PORT) ")."),
+                           N_("Port number to use for connection or 0 for "
+                              "default to, in order of "
+                              "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+                              "built-in default (4427)."),
                            NULL, NULL, 0, 0, 65535, 0);
 static DRIZZLE_SYSVAR_UINT(connect_timeout, connect_timeout,
                            PLUGIN_VAR_RQCMDARG, N_("Connect Timeout."),
@@ -856,6 +856,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "drizzle_protocol",
   "0.1",
   "Eric Day",

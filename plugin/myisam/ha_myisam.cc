@@ -15,12 +15,13 @@
 
 
 
-#include <drizzled/server_includes.h>
-#include <mysys/my_bit.h>
+#include "config.h"
+#include "drizzled/internal/my_bit.h"
 #include "myisampack.h"
 #include "ha_myisam.h"
 #include "myisam_priv.h"
-#include "mysys/my_bit.h"
+#include "drizzled/internal/my_bit.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/util/test.h"
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
@@ -32,6 +33,7 @@
 #include "drizzled/memory/multi_malloc.h"
 
 #include <string>
+#include <sstream>
 #include <map>
 #include <algorithm>
 
@@ -78,7 +80,7 @@ public:
   { }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_myisam(*this, table);
   }
@@ -103,7 +105,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
@@ -526,7 +528,7 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
   is_ordered(true)
 { }
 
-Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
+Cursor *ha_myisam::clone(drizzled::memory::Root *mem_root)
 {
   ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)
@@ -563,11 +565,11 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     MyISAM share exists already).
   */
   if (!(file=mi_open(name, mode, test_if_locked)))
-    return (my_errno ? my_errno : -1);
+    return (errno ? errno : -1);
 
   if (!table->s->tmp_table) /* No need to perform a check for tmp table */
   {
-    if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
+    if ((errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
       goto err;
     }
@@ -575,7 +577,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
                          file->s->keyinfo, file->s->rec,
                          file->s->base.keys, file->s->base.fields, true))
     {
-      my_errno= HA_ERR_CRASHED;
+      errno= HA_ERR_CRASHED;
       goto err;
     }
   }
@@ -606,7 +608,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
       }
     }
   }
-  my_errno= 0;
+  errno= 0;
   goto end;
  err:
   this->close();
@@ -617,7 +619,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   */
   if (recinfo)
     free((unsigned char*) recinfo);
-  return my_errno;
+  return errno;
 }
 
 int ha_myisam::close(void)
@@ -683,7 +685,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   // Don't lock tables if we have used LOCK Table
   if (mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
-    mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
+    mi_check_print_error(&param,ER(ER_CANT_LOCK),errno);
     return(HA_ADMIN_FAILED);
   }
 
@@ -904,7 +906,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
       errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
-                        my_errno, param.db_name, param.table_name);
+                        errno, param.db_name, param.table_name);
       /* Repairing by sort failed. Now try standard repair method. */
       param.testflag&= ~(T_REP_BY_SORT | T_QUICK);
       error= (repair(session,param,0) != HA_ADMIN_OK);
@@ -1566,6 +1568,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "MyISAM",
   "1.0",
   "MySQL AB",

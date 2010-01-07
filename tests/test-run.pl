@@ -244,6 +244,7 @@ my @default_valgrind_args= ("--show-reachable=yes");
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
+my $opt_massif;
 
 our $opt_stress=               "";
 our $opt_stress_suite=     "main";
@@ -538,6 +539,7 @@ sub command_line_setup () {
              'valgrind-option=s'        => \@valgrind_args,
              'valgrind-path=s'          => \$opt_valgrind_path,
 	     'callgrind'                => \$opt_callgrind,
+	     'massif'                   => \$opt_massif,
 
              # Stress testing 
              'stress'                   => \$opt_stress,
@@ -864,6 +866,13 @@ sub command_line_setup () {
     # Set special valgrind options unless options passed on command line
     push(@valgrind_args, "--trace-children=yes")
       unless @valgrind_args;
+  }
+
+  if ( $opt_massif )
+  {
+    mtr_report("Valgrind with Massif tool for drizzled(s)");
+    $opt_valgrind= 1;
+    $opt_valgrind_mysqld= 1;
   }
 
   if ( $opt_valgrind )
@@ -3424,6 +3433,10 @@ sub valgrind_arguments {
     mtr_add_arg($args, "--tool=callgrind");
     mtr_add_arg($args, "--base=$opt_vardir/log");
   }
+  elsif ($opt_massif)
+  {
+    mtr_add_arg($args, "--tool=massif");
+  }
   else
   {
     mtr_add_arg($args, "--tool=memcheck"); # From >= 2.1.2 needs this option
@@ -3613,6 +3626,7 @@ Options for coverage, profiling etc
                         can be specified more then once
   valgrind-path=[EXE]   Path to the valgrind executable
   callgrind             Instruct valgrind to use callgrind
+  massif                Instruct valgrind to use massif
 
 Misc options
 

@@ -24,12 +24,13 @@
   Buffers to save and compare item values
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/session.h>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 /**
@@ -137,7 +138,7 @@ Cached_item_field::Cached_item_field(Field *arg_field)
     field(arg_field)
 {
   /* TODO: take the memory allocation below out of the constructor. */
-  buff= (unsigned char*) sql_calloc(length= field->pack_length());
+  buff= (unsigned char*) memory::sql_calloc(length= field->pack_length());
 }
 
 bool Cached_item_field::cmp(void)

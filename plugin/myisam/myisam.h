@@ -26,13 +26,13 @@ extern "C" {
 
 #include <drizzled/base.h>
 #ifndef _m_ctype_h
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #endif
 #ifndef _keycache_h
 #include "keycache.h"
 #endif
 #include <plugin/myisam/my_handler.h>
-#include <mysys/iocache.h>
+#include "drizzled/internal/iocache.h"
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY
@@ -145,7 +145,7 @@ typedef struct st_mi_isaminfo		/* Struct from h_info */
   uint	options;			/* HA_OPTION_... used */
   int	errkey,				/* With key was dupplicated on err */
 	sortkey;			/* clustered by this key */
-  File	filenr;				/* (uniq) filenr for datafile */
+  int	filenr;				/* (uniq) filenr for datafile */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
@@ -459,7 +459,7 @@ int update_state_info(MI_CHECK *param, MI_INFO *info,uint32_t update);
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
                       uint64_t *unique, uint64_t *notnull,
                       uint64_t records);
-int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
+int filecopy(MI_CHECK *param, int to,int from,my_off_t start,
 	     my_off_t length, const char *type);
 int movepoint(MI_INFO *info,unsigned char *record,my_off_t oldpos,
 	      my_off_t newpos, uint32_t prot_key);

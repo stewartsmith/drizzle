@@ -14,18 +14,21 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/field.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/field/timestamp.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
-#include <mysys/my_dir.h>
 
 #include "ha_archive.h"
 
-#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#include <cstdio>
 #include <string>
 #include <map>
 
@@ -148,7 +151,7 @@ public:
   }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_archive(*this, table);
   }
@@ -168,7 +171,7 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, string& , set<string>& set_of_names);
 
   int doDropTable(Session&, const string table_path);
   ArchiveShare *findOpenTable(const string table_name);
@@ -207,24 +210,24 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 }
 
 
-void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
+void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
                                     string&, 
                                     set<string>& set_of_names)
 {
-  CachedDirectory::Entries entries= directory.getEntries();
+  drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
-  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
        entry_iter != entries.end(); ++entry_iter)
   {
-    CachedDirectory::Entry *entry= *entry_iter;
-    string *filename= &entry->filename;
+    drizzled::CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
 
     assert(filename->size());
 
     const char *ext= strchr(filename->c_str(), '.');
 
     if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
-        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     {  }
     else
     {
@@ -251,7 +254,7 @@ int ArchiveEngine::doDropTable(Session&,
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;
@@ -691,7 +694,7 @@ int ArchiveEngine::doCreateTable(Session *,
   fn_format(name_buff, table_name, "", ARZ,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  my_errno= 0;
+  errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {
@@ -1461,6 +1464,7 @@ static drizzle_sys_var* archive_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",
