@@ -41,7 +41,7 @@ drop table t1;
 # contains stopwords only. The first execution of analyze table should
 # mark index statistics as up to date so that next execution of this
 # statement will end up with Table is up to date status.
-create TEMPORARY table t1 (a varchar(10), key key1(a)) collate utf8_general_ci engine myisam;
+create TEMPORARY table t1 (a varchar(10), key key1(a)) collate=utf8_general_ci engine=myisam;
 insert into t1 values ('hello');
 
 analyze table t1;

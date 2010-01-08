@@ -65,7 +65,7 @@ create table t1 (
   PRIMARY KEY  (pk1),
   KEY key1 (key1),
   KEY key2 (key2)
-) collate utf8_general_ci;
+) collate=utf8_general_ci;
 insert into t1 values ('a1', 1, 1),
   ('b2', 1, 1),
   ('A3', 1, 1),

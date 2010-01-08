@@ -1286,7 +1286,7 @@ create_table_option:
 		custom_engine_option;
 
 custom_engine_option:
-        ENGINE_SYM opt_equal ident_or_text
+        ENGINE_SYM equal ident_or_text
                     {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             drizzled::message::Table::StorageEngine::EngineOption opt;
@@ -1294,7 +1294,7 @@ custom_engine_option:
             opt.set_option_value($3.str);
             statement->parsed_engine_options.push_back(opt);
                     }
-        |  opt_default COLLATE_SYM opt_equal ident_or_text
+        |  opt_default COLLATE_SYM equal ident_or_text
                     {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             drizzled::message::Table::StorageEngine::EngineOption opt;

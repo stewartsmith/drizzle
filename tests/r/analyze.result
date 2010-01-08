@@ -26,7 +26,7 @@ check table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 drop table t1;
-create TEMPORARY table t1 (a varchar(10), key key1(a)) collate utf8_general_ci engine myisam;
+create TEMPORARY table t1 (a varchar(10), key key1(a)) collate=utf8_general_ci engine=myisam;
 insert into t1 values ('hello');
 analyze table t1;
 Table	Op	Msg_type	Msg_text

@@ -416,7 +416,7 @@ show create table t2;
 drop table t2,t1;
 
 create table t1 (i int)
-comment '123456789*123456789*123456789*123456789*123456789*123456789*';
+comment='123456789*123456789*123456789*123456789*123456789*123456789*';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;

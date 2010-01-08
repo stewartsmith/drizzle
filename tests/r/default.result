@@ -28,7 +28,7 @@ y varbinary(5) NOT NULL DEFAULT ' ',
 z varbinary(20) NOT NULL DEFAULT ' ',
 a1 varbinary(30) NOT NULL DEFAULT ' ',
 b1 blob NULL)
-ENGINE=InnoDB DEFAULT COLLATE utf8_bin;
+ENGINE=InnoDB DEFAULT COLLATE=utf8_bin;
 INSERT into t1 (b) values ('1');
 SHOW WARNINGS;
 Level	Code	Message
@@ -63,7 +63,7 @@ y varbinary(5) NOT NULL DEFAULT ' ',
 z varbinary(20) NOT NULL DEFAULT ' ',
 a1 varbinary(30) NOT NULL DEFAULT ' ',
 b1 blob NULL)
-ENGINE=MyISAM DEFAULT COLLATE utf8_bin;
+ENGINE=MyISAM DEFAULT COLLATE=utf8_bin;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (

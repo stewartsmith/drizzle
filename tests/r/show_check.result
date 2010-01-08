@@ -207,7 +207,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
 ) ENGINE=MyISAM ROW_FORMAT=DYNAMIC COMMENT='test'
-ALTER TABLE t1 COMMENT="" ROW_FORMAT=default;
+ALTER TABLE t1 COMMENT="", ROW_FORMAT='default';
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
