@@ -265,6 +265,7 @@ public:
   BlitzEngine(const string &name_arg)
     : drizzled::plugin::StorageEngine(name_arg,
                                       HTON_FILE_BASED |
+                                      HTON_STATS_RECORDS_IS_EXACT |
                                       HTON_SKIP_STORE_LOCK) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }

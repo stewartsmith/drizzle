@@ -19,27 +19,67 @@ id	a	b
 select * from t1 where id = 6;
 id	a	b
 6	6	6
+select count (*) from t1;
+count (*)
+8
 delete from t1 where id = 5;
+select count (*) from t1;
+count (*)
+7
 delete from t1 where id = 6;
+select count (*) from t1;
+count (*)
+6
 delete from t1 where id = 7;
+select count (*) from t1;
+count (*)
+5
 delete from t1 where id = 8;
+select count (*) from t1;
+count (*)
+4
+select count (id) from t1;
+count (id)
+4
+select count (a) from t1;
+count (a)
+4
+select count (b) from t1;
+count (b)
+4
 select * from t1;
 id	a	b
 1	1	1
 2	2	2
 3	3	3
 4	4	4
+delete from t1;
+select count (*) from t1;
+count (*)
+0
 drop table t1;
 create table t1 (id int primary key auto_increment, num int) engine = blitzdb;
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
+select count(*) from t1;
+count(*)
+4
 flush table t1;
+select count(*) from t1;
+count(*)
+4
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
+select count(*) from t1;
+count(*)
+8
+select count(num) from t1;
+count(num)
+8
 select * from t1;
 id	num
 1	1
@@ -50,6 +90,25 @@ id	num
 6	1
 7	1
 8	1
+drop table t1;
+create table t1 (id int primary key auto_increment) engine = blitzdb;
+insert into t1 values ();
+insert into t1 values ();
+insert into t1 values ();
+insert into t1 values ();
+select count(*) from t1;
+count(*)
+4
+delete from t1 where id = 1;
+delete from t1 where id = 2;
+select count(*) from t1;
+count(*)
+2
+insert into t1 values ();
+insert into t1 values ();
+select count(*) from t1;
+count(*)
+4
 drop table t1;
 create table t1 (id varchar(64) primary key, country varchar(64)) engine = blitzdb;
 insert into t1 values ('amsterdam', 'netherlands');
@@ -91,8 +150,17 @@ japan
 select country from t1 where id = 'budapest';
 country
 hungary
+select count (id) from t1;
+count (id)
+7
 delete from t1 where id = 'geneva';
 delete from t1 where id = 'fukuoka';
+select count (id) from t1;
+count (id)
+5
+select count (*) from t1;
+count (*)
+5
 select * from t1;
 id	country
 amsterdam	netherlands

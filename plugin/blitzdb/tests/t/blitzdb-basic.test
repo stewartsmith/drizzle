@@ -30,9 +30,9 @@ insert into t1 values (5, 4, "five");
 insert into t1 values (6, 3, "six");
 insert into t1 values (7, 2, "seven");
 insert into t1 values (8, 1, "eight");
+select count(*) from t1;
 
 # Test(3): Simple table scan based row reading
-select count(*) from t1;
 select c from t1 where a = 4;
 select c from t1 where a > 5;
 select * from t1;

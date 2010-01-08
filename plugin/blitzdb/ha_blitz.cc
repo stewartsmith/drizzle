@@ -408,9 +408,6 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
     int fetched_len, blitz_key_len;
 
     pk = native_to_blitz_key(key, key_num, &blitz_key_len);
-
-    fprintf(stderr, "blitz_key_len in index_read_idx: %d\n", blitz_key_len);
-
     fetched_row = share->dict.get_row((const char *)pk, blitz_key_len,
                                       &fetched_len);
 

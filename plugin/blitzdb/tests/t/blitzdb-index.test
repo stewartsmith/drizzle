@@ -23,12 +23,22 @@ select * from t1 where id = 2;
 select * from t1 where id = 4;
 select * from t1 where id = 6;
 
-# Test Primary Key based Deletion
+# Test Primary Key based Deletion and check that COUNT is working
+select count (*) from t1;
 delete from t1 where id = 5;
+select count (*) from t1;
 delete from t1 where id = 6;
+select count (*) from t1;
 delete from t1 where id = 7;
+select count (*) from t1;
 delete from t1 where id = 8;
+select count (*) from t1;
+select count (id) from t1;
+select count (a) from t1;
+select count (b) from t1;
 select * from t1;
+delete from t1;
+select count (*) from t1;
 drop table t1;
 
 # Test Auto Increment on PK
@@ -37,12 +47,31 @@ insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
+select count(*) from t1;
 flush table t1;
+select count(*) from t1;
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
+select count(*) from t1;
+select count(num) from t1;
 select * from t1;
+drop table t1;
+
+# Test COUNT on a single auto column table
+create table t1 (id int primary key auto_increment) engine = blitzdb;
+insert into t1 values ();
+insert into t1 values ();
+insert into t1 values ();
+insert into t1 values ();
+select count(*) from t1;
+delete from t1 where id = 1;
+delete from t1 where id = 2;
+select count(*) from t1;
+insert into t1 values ();
+insert into t1 values ();
+select count(*) from t1;
 drop table t1;
 
 # Test VARCHAR field as a Primary Key
@@ -64,7 +93,11 @@ select country from t1 where id = 'edinburgh';
 select country from t1 where id = 'copenhagen';
 select country from t1 where id = 'fukuoka';
 select country from t1 where id = 'budapest';
+select count (id) from t1;
+
 delete from t1 where id = 'geneva';
 delete from t1 where id = 'fukuoka';
+select count (id) from t1;
+select count (*) from t1;
 select * from t1;
 drop table t1;
