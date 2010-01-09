@@ -1350,8 +1350,8 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   records= 0;
   if ((db_stat & HA_OPEN_KEYFILE))
     records=1;
-  if (prgflag & (READ_ALL+EXTRA_RECORD))
-    records++;
+  assert (prgflag & (READ_ALL+EXTRA_RECORD));
+  records++;
 
   if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
                                    share->rec_buff_length * records)))
