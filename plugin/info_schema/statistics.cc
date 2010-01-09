@@ -203,7 +203,7 @@ plugin::InfoSchemaTable *StatisticsIS::getTable()
     stats_table= new plugin::InfoSchemaTable("STATISTICS",
                                              *columns,
                                              1, 2, false, true,
-                                             OPEN_TABLE_ONLY,
+                                             0,
                                              methods);
   }
 

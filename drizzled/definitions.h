@@ -107,14 +107,6 @@
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
 #define DELAYED_OPEN		4096	/* Open table later */
 
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine
-  The flag means that we need to process tables only to get necessary data.
-  Views are not processed.
-*/
-#define OPEN_TABLE_ONLY        32768*2
-
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
   for SELECT "text" LIKE "%pattern%", excluding the two
