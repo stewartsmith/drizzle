@@ -1343,15 +1343,8 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     goto err;
 
   /* Allocate Cursor */
-  if (!(prgflag & OPEN_FRM_FILE_ONLY))
-  {
-    if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
-      goto err;
-  }
-  else
-  {
-    assert(!db_stat);
-  }
+  if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
+    goto err;
 
   error= 4;
   records= 0;
