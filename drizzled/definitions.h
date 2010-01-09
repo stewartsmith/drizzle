@@ -114,12 +114,6 @@
   Views are not processed.
 */
 #define OPEN_TABLE_ONLY        32768*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that I_S table uses optimization algorithm.
-*/
-#define OPTIMIZE_I_S_TABLE     OPEN_TABLE_ONLY*2
 
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
