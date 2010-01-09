@@ -100,11 +100,6 @@
 #define ME_ERROR (ME_BELL+ME_OLDWIN+ME_NOREFRESH)
 #define MYF_RW MYF(MY_WME+MY_NABP)		/* Vid my_read & my_write */
 
-	/* Defines for use with openfrm, openprt and openfrd */
-
-#define READ_ALL		1	/* openfrm: Read all parameters */
-#define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
   for SELECT "text" LIKE "%pattern%", excluding the two

@@ -796,7 +796,7 @@ int plugin::StorageEngine::createTable(Session& session,
       goto err;
   }
 
-  if (open_table_from_share(&session, &share, "", 0, (uint32_t) READ_ALL, 0,
+  if (open_table_from_share(&session, &share, "", 0, 0,
                             &table))
     goto err;
 

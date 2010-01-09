@@ -1308,7 +1308,6 @@ err_not_open:
     db_stat		open flags (for example HA_OPEN_KEYFILE|
     			HA_OPEN_RNDFILE..) can be 0 (example in
                         ha_example_table)
-    prgflag   		READ_ALL etc..
     ha_open_flags	HA_OPEN_ABORT_IF_LOCKED etc..
     outparam       	result table
 
@@ -1323,7 +1322,7 @@ err_not_open:
 */
 
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          uint32_t db_stat, uint32_t ha_open_flags,
                           Table *outparam)
 {
   int error;
@@ -1350,7 +1349,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   records= 0;
   if ((db_stat & HA_OPEN_KEYFILE))
     records=1;
-  assert (prgflag & (READ_ALL+EXTRA_RECORD));
+
   records++;
 
   if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
