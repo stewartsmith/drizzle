@@ -28,6 +28,18 @@ AC_DEFUN([_PANDORA_SEARCH_LIBMEMCACHED],[
     ac_cv_libmemcached="no"
   ])
   
+  AC_CACHE_CHECK([if libmemcached has memcached_server_fn],
+    [pandora_cv_libmemcached_server_fn],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <libmemcached/memcached.h>
+memcached_server_fn callbacks[1];
+    ]])],
+    [pandora_cv_libmemcached_server_fn =yes],
+    [pandora_cv_libmemcached_server_fn =no])])
+  AS_IF([test "$pandora_cv_libmemcached_server_fn" = "yes"],[
+    AC_DEFINE([HAVE_MEMCACHED_SERVER_FN],[1],[If we have the new memcached_server_fn typedef])
+  ])
+
   AM_CONDITIONAL(HAVE_LIBMEMCACHED, [test "x${ac_cv_libmemcached}" = "xyes"])
   
 ])
@@ -41,3 +53,4 @@ AC_DEFUN([PANDORA_REQUIRE_LIBMEMCACHED],[
   AS_IF([test x$ac_cv_libmemcached = xno],
       AC_MSG_ERROR([libmemcached is required for ${PACKAGE}]))
 ])
+
