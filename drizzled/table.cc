@@ -1520,7 +1520,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   return (0);
 
  err:
-  if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
+  if (!error_reported)
     share->open_table_error(error, errno, 0);
   delete outparam->cursor;
   outparam->cursor= 0;				// For easier error checking
