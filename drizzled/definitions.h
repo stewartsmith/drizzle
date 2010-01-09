@@ -73,7 +73,7 @@
 #define RAND_TABLE_BIT	(((table_map) 1) << (sizeof(table_map)*8-1))
 #define PSEUDO_TABLE_BITS (PARAM_TABLE_BIT | OUTER_REF_TABLE_BIT | \
                            RAND_TABLE_BIT)
-#define MAX_FIELDS	4096			/* Limit in the .frm file */
+#define MAX_FIELDS	4096      /* Historical limit from MySQL FRM. */
 
 #define MAX_SELECT_NESTING (sizeof(nesting_map)*8-1)
 
