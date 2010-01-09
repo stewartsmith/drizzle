@@ -1603,25 +1603,7 @@ static int fill_schema_table_names(Session *session, Table *table,
   return 0;
 }
 
-
-/**
-  @brief          Fill I_S tables whose data are retrieved
-                  from frm files and storage engine
-
-  @details        The information schema tables are internally represented as
-                  temporary tables that are filled at query execution time.
-                  Those I_S tables whose data are retrieved
-                  from frm files and storage engine are filled by the function
-                  plugin::InfoSchemaMethods::fillTable().
-
-  @param[in]      session                      thread Cursor
-  @param[in]      tables                   I_S table
-
-  @return         Operation status
-    @retval       0                        success
-    @retval       1                        error
-*/
-int plugin::InfoSchemaMethods::fillTable(Session *session, 
+int plugin::InfoSchemaMethods::fillTable(Session *session,
                                          Table *table,
                                          plugin::InfoSchemaTable *schema_table)
 {
