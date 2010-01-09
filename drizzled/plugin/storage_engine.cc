@@ -696,8 +696,7 @@ handle_error(uint32_t ,
 
 
 /**
-  This should return ENOENT if the file doesn't exists.
-  The .frm file will be deleted only if we return 0 or ENOENT
+   returns ENOENT if the file doesn't exists.
 */
 int plugin::StorageEngine::dropTable(Session& session,
                                      TableIdentifier &identifier,
