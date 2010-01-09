@@ -1348,7 +1348,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   error= 4;
   records= 0;
-  if ((db_stat & HA_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
+  if ((db_stat & HA_OPEN_KEYFILE))
     records=1;
   if (prgflag & (READ_ALL+EXTRA_RECORD))
     records++;

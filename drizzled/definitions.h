@@ -104,7 +104,6 @@
 
 #define READ_ALL		1	/* openfrm: Read all parameters */
 #define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-#define DELAYED_OPEN		4096	/* Open table later */
 
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
