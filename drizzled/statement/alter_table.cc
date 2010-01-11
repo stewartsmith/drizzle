@@ -73,6 +73,10 @@ bool statement::AlterTable::execute()
 
   processBuiltinOptions();
 
+  if (errorOnUnknownOptions())
+    return true;
+
+
   if (is_engine_set)
   {
     create_info.db_type= 
