@@ -31,6 +31,31 @@ using namespace std;
 namespace drizzled
 {
 
+bool statement::CreateTable::errorOnUnknownOptions()
+{
+  if (parsed_engine_options.size() > 0)
+  {
+    list<drizzled::message::Table::StorageEngine::EngineOption>::iterator it;
+    it= parsed_engine_options.begin();
+
+    my_error(ER_UNKNOWN_OPTION, MYF(0), (*it).option_name().c_str());
+
+    it++;
+
+    while (it != parsed_engine_options.end())
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_UNKNOWN_OPTION, ER(ER_UNKNOWN_OPTION),
+                          (*it).option_name().c_str());
+      it++;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
 void statement::CreateTable::processBuiltinOptions()
 {
   list<drizzled::message::Table::StorageEngine::EngineOption>::iterator it= parsed_engine_options.begin();
@@ -144,6 +169,9 @@ bool statement::CreateTable::execute()
     create_table_proto.type() == drizzled::message::Table::TEMPORARY;
 
   processBuiltinOptions();
+
+  if (errorOnUnknownOptions())
+    return true;
 
   if (is_engine_set)
   {

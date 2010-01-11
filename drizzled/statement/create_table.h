@@ -37,6 +37,7 @@ class CreateTable : public Statement
 {
 protected:
   void processBuiltinOptions();
+  bool errorOnUnknownOptions();
 
 public:
   CreateTable(Session *in_session)
