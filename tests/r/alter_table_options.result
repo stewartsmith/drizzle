@@ -1,0 +1,8 @@
+CREATE TABLE t1 (a int);
+ALTER TABLE t1 FOO=BAR, INVALIDFOOBAR=0;
+ERROR HY000: Unknown option 'FOO'.
+SHOW WARNINGS;
+Level	Code	Message
+Error	1693	Unknown option 'FOO'.
+Error	1693	Unknown option 'INVALIDFOOBAR'.
+DROP TABLE t1;
