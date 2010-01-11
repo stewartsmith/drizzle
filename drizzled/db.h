@@ -21,11 +21,12 @@
 #ifndef DRIZZLED_DB_H
 #define DRIZZLED_DB_H
 
-namespace drizzled { namespace message { class Schema; } }
+#include <list>
+#include <drizzled/message/schema.pb.h>
 
 class NormalisedDatabaseName;
 
-bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, drizzled::message::Schema *schema_message, bool is_if_not_exists);
+bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, drizzled::message::Schema *schema_message, std::list<drizzled::message::Schema::SchemaOption> *parsed_schema_options, bool is_if_not_exists);
 bool mysql_alter_db(Session *session, const NormalisedDatabaseName &database_name, drizzled::message::Schema *schema_message);
 bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, bool if_exists);
 bool mysql_change_db(Session *session, const NormalisedDatabaseName &new_db_name, bool force_switch);

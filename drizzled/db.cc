@@ -171,7 +171,7 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 */
 
-bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_name, message::Schema *schema_message, std::list<drizzled::message::Schema::SchemaOption> *parsed_schema_options, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   long result= 1;
@@ -184,6 +184,39 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
   {
     my_error(ER_DB_CREATE_EXISTS, MYF(0), database_name.to_string().c_str());
     return(-1);
+  }
+
+  list<drizzled::message::Schema::SchemaOption>::iterator it= parsed_schema_options->begin();
+
+  while (it != parsed_schema_options->end())
+  {
+    if (my_strcasecmp(system_charset_info, (*it).option_name().c_str(),
+                      "super_secret_extra_database_option") == 0)
+    {
+      message::Schema::SchemaOption *opt= schema_message->add_options();
+      *opt= *it;
+      it= parsed_schema_options->erase(it);
+    }
+    it++;
+  }
+
+  if (parsed_schema_options->size() > 0)
+  {
+    list<drizzled::message::Schema::SchemaOption>::iterator it;
+    it= parsed_schema_options->begin();
+
+    my_error(ER_UNKNOWN_OPTION, MYF(0), (*it).option_name().c_str());
+
+    it++;
+
+    while (it != parsed_schema_options->end())
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_UNKNOWN_OPTION, ER(ER_UNKNOWN_OPTION),
+                          (*it).option_name().c_str());
+      it++;
+    }
+    return false;
   }
 
   assert(database_name.isValid());

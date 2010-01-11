@@ -1,0 +1,23 @@
+--error 1693
+CREATE DATABASE foo unknown_key=value;
+--error 1693
+CREATE DATABASE foo unknown_key=value, anotheR_unknown_key;
+SHOW WARNINGS;
+--error 1693
+CREATE DATABASE foo unknown_key=42;
+
+CREATE DATABASE foo super_secret_extra_database_option;
+--echo schema_reader:
+--exec ../drizzled/message/schema_reader var/master-data/foo/db.opt
+DROP DATABASE foo;
+
+CREATE DATABASE foo super_secret_extra_database_option=42;
+--echo schema_reader:
+--exec ../drizzled/message/schema_reader var/master-data/foo/db.opt
+DROP DATABASE foo;
+
+CREATE DATABASE foo super_secret_extra_database_option='Hello World!';
+--echo schema_reader:
+--exec ../drizzled/message/schema_reader var/master-data/foo/db.opt
+DROP DATABASE foo;
+ 

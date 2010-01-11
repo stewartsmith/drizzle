@@ -32,6 +32,13 @@ static void printSchema(const drizzled::message::Schema *schema)
   cout << "CREATE SCHEMA `" << schema->name() << "` ";
   if (schema->has_collation())
     cout << "COLLATE `" << schema->collation() << "` ";
+
+  for (int option_nr=0; option_nr < schema->options_size(); option_nr++)
+  {
+    cout << " " << schema->options(option_nr).option_name() << " = "
+         << "'" << schema->options(option_nr).option_value() << "'";
+  }
+
   cout << ";" << endl;
 }
 

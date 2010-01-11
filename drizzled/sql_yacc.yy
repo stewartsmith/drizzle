@@ -1255,6 +1255,42 @@ opt_as:
 opt_create_database_options:
           /* empty */ {}
         | default_collation_schema {}
+        | opt_database_custom_options {}
+        ;
+
+opt_database_custom_options:
+        custom_database_option
+        | custom_database_option ',' opt_database_custom_options
+        ;
+
+custom_database_option:
+          ident_or_text
+        {
+          drizzled::message::Schema::SchemaOption opt;
+          opt.set_option_name($1.str);
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          statement->parsed_schema_options.push_back(opt);
+        }
+        | ident_or_text equal ident_or_text
+        {
+          drizzled::message::Schema::SchemaOption opt;
+          opt.set_option_name($1.str);
+          opt.set_option_value($3.str);
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          statement->parsed_schema_options.push_back(opt);
+        }
+        | ident_or_text equal ulonglong_num
+        {
+          char number_as_string[22];
+
+          snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+          drizzled::message::Schema::SchemaOption opt;
+          opt.set_option_name($1.str);
+          opt.set_option_value(number_as_string);
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          statement->parsed_schema_options.push_back(opt);
+        }
         ;
 
 opt_table_options:
