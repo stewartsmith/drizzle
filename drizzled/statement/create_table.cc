@@ -120,10 +120,13 @@ void statement::CreateTable::processBuiltinOptions()
       create_info.default_table_charset= cs;
       create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
     }
+    else
+    {
+      it++;
+      continue;
+    }
 
-//    parsed_engine_options.erase(it);
-
-    it++;
+    it= parsed_engine_options.erase(it);
   }
 }
 
