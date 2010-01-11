@@ -198,3 +198,9 @@ include drizzled/util/include.am
 include drizzled/message/include.am
 include support-files/include.am
 include tests/include.am
+
+merge-clean:
+	find ./ | $(GREP) \.orig | xargs rm -f
+	find ./ | $(GREP) \.rej | xargs rm -f
+	find ./ | $(GREP) \~$$ | xargs rm -f
+	bzr unknowns
