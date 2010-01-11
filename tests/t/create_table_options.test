@@ -1,0 +1,2 @@
+--error 1693
+CREATE TABLE t1 (a int) FOO=BAR, INVALIDFOOBAR=0;
