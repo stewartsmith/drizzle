@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-31 15:24+0000\n"
-"Last-Translator: Ebaut <Unknown>\n"
+"PO-Revision-Date: 2010-01-11 07:30+0000\n"
+"Last-Translator: d.s.div <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2009-11-01 08:22+0000\n"
+"X-Launchpad-Export-Date: 2010-01-12 04:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -441,7 +441,7 @@ msgstr ""
 #: client/drizzle.cc:1543
 msgid "User for login if not current user."
 msgstr ""
-"Имя пользование для подключения (если не совпадает с именем текущего "
+"Имя пользователя для подключения (если не совпадает с именем текущего "
 "пользователя)."
 
 #: client/drizzle.cc:1545
@@ -502,7 +502,7 @@ msgstr "Запрос на сервер для определения его жи
 #: client/drizzle.cc:1595
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
+msgstr "%s Версия %s Дистрибутив %s, для %s-%s (%s) с использованием %s %s\n"
 
 #: client/drizzle.cc:1602
 #, c-format
@@ -511,6 +511,11 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Copyright (C) 2008 Sun Microsystems \n"
+"Это программное обеспечение поставляется АБСОЛЮТНО БЕЗ ГАРАНТИЙ. Это "
+"бесплатное программное обеспечение, \n"
+"и Вы можете модифицировать и распространять его в соответствии с лицензией "
+"GPL\n"
 
 #: client/drizzle.cc:1607
 #, c-format
@@ -537,16 +542,19 @@ msgstr ""
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
+"ПРЕДУПРЕЖДЕНИЕ: опция --server-arg не поддерживается в этой конфигурации.\n"
 
 #: client/drizzle.cc:1714
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead."
 msgstr ""
+"В качестве номера порта задано нецелое число. Если вы пытаетесь ввести "
+"пароль, пожалуйста используйте --password."
 
 #: client/drizzle.cc:1722
 msgid "Value supplied for port is not valid."
-msgstr ""
+msgstr "Номер порта задан неверно."
 
 #: client/drizzle.cc:1861
 #, c-format
@@ -743,7 +751,7 @@ msgstr ""
 
 #: client/drizzledump.cc:988
 msgid "Couldn't allocate memory"
-msgstr ""
+msgstr "Не могу выделить память"
 
 #: client/drizzledump.cc:1332
 #, c-format
@@ -844,7 +852,7 @@ msgstr ""
 #: client/drizzledump.cc:2512
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "Не найдена таблица: \"%s\""
 
 #: client/drizzledump.cc:2790 client/drizzledump.cc:2797
 #: client/drizzledump.cc:2807
@@ -992,11 +1000,11 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1335
 msgid "Out of memory"
-msgstr ""
+msgstr "Недостаточно памяти"
 
 #: drizzled/drizzled.cc:1346
 msgid "Failed to initialize plugins."
-msgstr ""
+msgstr "Не удалось проинициализировать плагины."
 
 #: drizzled/drizzled.cc:1377
 #, c-format
@@ -1016,7 +1024,7 @@ msgstr ""
 #: drizzled/drizzled.cc:1428
 #, c-format
 msgid "Unknown/unsupported table type: %s"
-msgstr ""
+msgstr "Неизвестный или неподдерживаемый тип таблицы: %s"
 
 #: drizzled/drizzled.cc:1434
 #, c-format
@@ -1098,7 +1106,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1753
 msgid "Set the language used for the month names and the days of the week."
-msgstr ""
+msgstr "Установить язык для вывода названий месяцев и дней недели."
 
 #: drizzled/drizzled.cc:1758
 msgid "Log some not critical warnings to the log file."
@@ -1142,7 +1150,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1796
 msgid "Enable symbolic link support."
-msgstr ""
+msgstr "Включить поддержку символьных ссылок."
 
 #: drizzled/drizzled.cc:1805
 msgid ""
@@ -1155,7 +1163,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1814
 msgid "Default transaction isolation level."
-msgstr ""
+msgstr "Уровень изоляции транзакций, используемый по умолчанию."
 
 #: drizzled/drizzled.cc:1818
 msgid "Run drizzled daemon as user."

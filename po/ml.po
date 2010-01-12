@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-11-30 09:55+0000\n"
-"Last-Translator: Jobin Augustine <Unknown>\n"
+"PO-Revision-Date: 2010-01-11 21:37+0000\n"
+"Last-Translator: sajinsj <saji89@gmail.com>\n"
 "Language-Team: Malayalam <ml@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-12-01 04:40+0000\n"
+"X-Launchpad-Export-Date: 2010-01-12 04:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -34,8 +34,8 @@ msgstr "സെര്‍വറിലേക്കു വീണ്ടും കണ�
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
-"സ്റ്റേറ്റ്മെന്റ് ശരിയായി അവസ്സാനിപ്പിക്കുക. ശ്രദ്ധിക്കുക: ബാക്കിയുള്ള "
-"ലൈനിന്റെ ഭാഗം delimiter ആയി എടുക്കുന്നു"
+"റ്റേറ്റ്മെന്റ് ശരിയായി അവസ്സാനിപ്പിക്കുക. ശ്രദ്ധിക്കുക: വരിയുടെ ബാക്കിയുള്ള "
+"ഭാഗം delimiter ആയി എടുക്കുന്നു."
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
@@ -44,11 +44,11 @@ msgstr ""
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
-msgstr "Drizzle അവസാനിപ്പിക്കുക. പുറത്തുകടക്കുന്നതിനു തുല്ല്യം"
+msgstr "ട്രിസ്സില്‍ അവസാനിപ്പിക്കുക. പുറത്തുകടക്കുന്നതിനു തുല്ല്യം"
 
 #: client/drizzle.cc:282
 msgid "Send command to drizzle server."
-msgstr "കമാന്റ് സെര്‍വറിലേക്കു അയക്കുക"
+msgstr "കമാന്റ് ട്രിസ്സില്‍ സെര്‍വറിലേക്കു അയക്കുക"
 
 #: client/drizzle.cc:283
 msgid "Display this help."
