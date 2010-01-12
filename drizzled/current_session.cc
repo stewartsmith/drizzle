@@ -22,6 +22,8 @@
 
 #include <pthread.h>
 
+using namespace drizzled;
+
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
 
@@ -31,7 +33,7 @@ Session *_current_session(void)
 }
 
 
-MEM_ROOT *current_mem_root(void)
+memory::Root *current_mem_root(void)
 {
-  return *(static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root)));
+  return *(static_cast<memory::Root **>(pthread_getspecific(THR_Mem_root)));
 }

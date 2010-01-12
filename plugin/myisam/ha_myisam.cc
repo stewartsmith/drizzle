@@ -16,13 +16,13 @@
 
 
 #include "config.h"
-#include <mysys/my_bit.h>
+#include "drizzled/internal/my_bit.h"
 #include "myisampack.h"
 #include "ha_myisam.h"
 #include "myisam_priv.h"
-#include "mysys/my_bit.h"
-#include <mysys/my_getopt.h>
-#include "mystrings/m_string.h"
+#include "drizzled/my_getopt.h"
+#include "drizzled/internal/my_bit.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/util/test.h"
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
@@ -87,7 +87,7 @@ public:
   { }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_myisam(*this, table);
   }
@@ -112,7 +112,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
@@ -535,7 +535,7 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
   is_ordered(true)
 { }
 
-Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
+Cursor *ha_myisam::clone(drizzled::memory::Root *mem_root)
 {
   ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)
@@ -572,11 +572,11 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     MyISAM share exists already).
   */
   if (!(file=mi_open(name, mode, test_if_locked)))
-    return (my_errno ? my_errno : -1);
+    return (errno ? errno : -1);
 
   if (!table->s->tmp_table) /* No need to perform a check for tmp table */
   {
-    if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
+    if ((errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
       goto err;
     }
@@ -584,7 +584,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
                          file->s->keyinfo, file->s->rec,
                          file->s->base.keys, file->s->base.fields, true))
     {
-      my_errno= HA_ERR_CRASHED;
+      errno= HA_ERR_CRASHED;
       goto err;
     }
   }
@@ -615,7 +615,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
       }
     }
   }
-  my_errno= 0;
+  errno= 0;
   goto end;
  err:
   this->close();
@@ -626,7 +626,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   */
   if (recinfo)
     free((unsigned char*) recinfo);
-  return my_errno;
+  return errno;
 }
 
 int ha_myisam::close(void)
@@ -692,7 +692,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   // Don't lock tables if we have used LOCK Table
   if (mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
-    mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
+    mi_check_print_error(&param,ER(ER_CANT_LOCK),errno);
     return(HA_ADMIN_FAILED);
   }
 
@@ -913,7 +913,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
       errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
-                        my_errno, param.db_name, param.table_name);
+                        errno, param.db_name, param.table_name);
       /* Repairing by sort failed. Now try standard repair method. */
       param.testflag&= ~(T_REP_BY_SORT | T_QUICK);
       error= (repair(session,param,0) != HA_ADMIN_OK);
@@ -1586,49 +1586,49 @@ static void sys_var_key_cache_block_size_update(Session *session, drizzle_sys_va
 }
 
 static DRIZZLE_SYSVAR_UINT(key_cache_block_size,
-														myisam_key_cache_block_size,
-														PLUGIN_VAR_RQCMDARG,
-														N_("Block size to be used for MyISAM index pages."),
-														NULL,
-														sys_var_key_cache_block_size_update,
-														MI_KEY_BLOCK_LENGTH,
-														MI_MIN_KEY_BLOCK_LENGTH, 
-														MI_MAX_KEY_BLOCK_LENGTH,
-														0);
+                            myisam_key_cache_block_size,
+                            PLUGIN_VAR_RQCMDARG,
+                            N_("Block size to be used for MyISAM index pages."),
+                            NULL,
+                            sys_var_key_cache_block_size_update,
+                            MI_KEY_BLOCK_LENGTH,
+                            MI_MIN_KEY_BLOCK_LENGTH, 
+                            MI_MAX_KEY_BLOCK_LENGTH,
+                            0);
 
 static DRIZZLE_SYSVAR_UINT(key_cache_age_threshold, myisam_key_cache_age_threshold,
-														PLUGIN_VAR_RQCMDARG,
-														N_("This characterizes the number of hits a hot block has to be untouched "
-														"until it is considered aged enough to be downgraded to a warm block. "
-														"This specifies the percentage ratio of that number of hits to the "
-														"total number of blocks in key cache"),
-														NULL, NULL, 300, 100, 
-														UINT32_MAX, 0);
+                            PLUGIN_VAR_RQCMDARG,
+                            N_("This characterizes the number of hits a hot block has to be untouched "
+                            "until it is considered aged enough to be downgraded to a warm block. "
+                            "This specifies the percentage ratio of that number of hits to the "
+                            "total number of blocks in key cache"),
+                            NULL, NULL, 300, 100, 
+                            UINT32_MAX, 0);
 
 static DRIZZLE_SYSVAR_UINT(key_cache_division_limit, myisam_key_cache_division_limit,
-														PLUGIN_VAR_RQCMDARG,
-														N_("The minimum percentage of warm blocks in key cache"),
-														NULL, NULL, 100, 1, 
-														100, 0);
+                            PLUGIN_VAR_RQCMDARG,
+                            N_("The minimum percentage of warm blocks in key cache"),
+                            NULL, NULL, 100, 1, 
+                            100, 0);
 
 static DRIZZLE_SYSVAR_ULONGLONG(key_cache_size,
-																myisam_key_cache_size,
-																PLUGIN_VAR_RQCMDARG,
-																N_("The size of the buffer used for index blocks for MyISAM tables. "
-																"Increase this to get better index handling (for all reads and multiple "
-																"writes) to as much as you can afford;"),
-																NULL,
-																sys_var_key_cache_size_update,
-																KEY_CACHE_SIZE,
-																1 * 1024 * 1024, 
-																SIZE_MAX,
-																IO_SIZE);
+                                myisam_key_cache_size,
+                                PLUGIN_VAR_RQCMDARG,
+                                N_("The size of the buffer used for index blocks for MyISAM tables. "
+                                "Increase this to get better index handling (for all reads and multiple "
+                                "writes) to as much as you can afford;"),
+                                NULL,
+                                sys_var_key_cache_size_update,
+                                KEY_CACHE_SIZE,
+                                1 * 1024 * 1024, 
+                                SIZE_MAX,
+                                IO_SIZE);
 
 static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Number of threads to use when repairing MyISAM tables. The value of "
-                              "1 disables parallel repair."),
-                           NULL, NULL, 1, 1, UINT32_MAX, 0);
+                            PLUGIN_VAR_RQCMDARG,
+                            N_("Number of threads to use when repairing MyISAM tables. The value of "
+                            "1 disables parallel repair."),
+                            NULL, NULL, 1, 1, UINT32_MAX, 0);
 
 static DRIZZLE_SYSVAR_ULONGLONG(max_sort_file_size, max_sort_file_size,
                                 PLUGIN_VAR_RQCMDARG,
@@ -1642,9 +1642,9 @@ static DRIZZLE_SYSVAR_ULONGLONG(sort_buffer_size, sort_buffer_size,
 
 extern uint32_t data_pointer_size;
 static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
-                           PLUGIN_VAR_RQCMDARG,
-                           N_("Default pointer size to be used for MyISAM tables."),
-                           NULL, NULL, 6, 2, 7, 0);
+                            PLUGIN_VAR_RQCMDARG,
+                            N_("Default pointer size to be used for MyISAM tables."),
+                            NULL, NULL, 6, 2, 7, 0);
 
 static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(key_cache_block_size),

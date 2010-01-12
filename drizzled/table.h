@@ -25,7 +25,6 @@
 
 #include <string>
 
-#include "mysys/hash.h"
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
@@ -235,7 +234,7 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
-  MEM_ROOT mem_root;
+  drizzled::memory::Root mem_root;
   filesort_info_st sort;
 
   Table();
@@ -546,7 +545,7 @@ int get_quick_record(drizzled::optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
+TYPELIB *typelib(drizzled::memory::Root *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);

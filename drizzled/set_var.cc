@@ -44,7 +44,7 @@
 */
 
 #include "config.h"
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/tztime.h>
@@ -59,8 +59,9 @@
 #include <drizzled/plugin.h>
 #include "drizzled/version.h"
 #include "drizzled/strfunc.h"
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
 
 #include <map>
 #include <algorithm>
@@ -69,6 +70,7 @@ using namespace std;
 using namespace drizzled;
 
 extern plugin::StorageEngine *myisam_engine;
+extern bool timed_mutexes;
 
 extern struct my_option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
@@ -79,6 +81,8 @@ static DYNAMIC_ARRAY fixed_show_vars;
 typedef map<string, sys_var *> SystemVariableMap;
 static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
+
+extern TYPELIB tx_isolation_typelib;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
@@ -2076,14 +2080,3 @@ void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_ty
   else
     session->variables.*offset= global_system_variables.*offset;
 }
-
-
-/****************************************************************************
-  Used templates
-****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<set_var_base>;
-template class List_iterator_fast<set_var_base>;
-template class I_List_iterator<NAMED_LIST>;
-#endif

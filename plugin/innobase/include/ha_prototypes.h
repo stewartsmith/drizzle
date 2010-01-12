@@ -29,7 +29,7 @@ Created 5/11/2006 Osku Salerma
 
 #include "trx0types.h"
 #if defined(BUILD_DRIZZLE)
-# include "mystrings/m_ctype.h"
+# include "drizzled/charset_info.h"
 #else
 # include "m_ctype.h" /* CHARSET_INFO */
 

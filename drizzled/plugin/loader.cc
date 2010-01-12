@@ -22,9 +22,9 @@
 #include <map>
 #include <algorithm>
 
-#include "mysys/my_getopt.h"
-#include "mysys/hash.h"
-#include "mystrings/m_string.h"
+#include "drizzled/my_getopt.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/internal/m_string.h"
 
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/load_list.h"
@@ -79,7 +79,7 @@ static bool reap_needed= false;
   write-lock on LOCK_system_variables_hash is required before modifying
   the following variables/structures
 */
-static MEM_ROOT plugin_mem_root;
+static memory::Root plugin_mem_root;
 static uint32_t global_variables_dynamic_size= 0;
 static HASH bookmark_hash;
 
@@ -146,9 +146,9 @@ public:
 
 /* prototypes */
 static bool plugin_load_list(plugin::Registry &registry,
-                             MEM_ROOT *tmp_root, int *argc, char **argv,
+                             memory::Root *tmp_root, int *argc, char **argv,
                              string plugin_list);
-static int test_plugin_options(MEM_ROOT *, plugin::Module *,
+static int test_plugin_options(memory::Root *, plugin::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
@@ -231,7 +231,7 @@ static int item_val_real(drizzle_value *value, double *buf)
   NOTE
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
+static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
                        plugin::Library *library,
                        int *argc, char **argv)
 {
@@ -380,13 +380,13 @@ bool plugin_init(plugin::Registry &registry,
   plugin::Manifest **builtins;
   plugin::Manifest *manifest;
   plugin::Module *module;
-  MEM_ROOT tmp_root;
+  memory::Root tmp_root;
 
   if (initialized)
     return false;
 
-  init_alloc_root(&plugin_mem_root, 4096, 4096);
-  init_alloc_root(&tmp_root, 4096, 4096);
+  init_alloc_root(&plugin_mem_root, 4096);
+  init_alloc_root(&tmp_root, 4096);
 
   if (hash_init(&bookmark_hash, &my_charset_bin, 16, 0, 0,
                   get_bookmark_hash_key, NULL, HASH_UNIQUE))
@@ -410,7 +410,7 @@ bool plugin_init(plugin::Registry &registry,
       if (module == NULL)
         return true;
 
-      free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
+      free_root(&tmp_root, MYF(memory::MARK_BLOCKS_FREE));
       if (test_plugin_options(&tmp_root, module, argc, argv))
         continue;
 
@@ -491,7 +491,7 @@ bool plugin_init(plugin::Registry &registry,
   called only by plugin_init()
 */
 static bool plugin_load_list(plugin::Registry &registry,
-                             MEM_ROOT *tmp_root, int *argc, char **argv,
+                             memory::Root *tmp_root, int *argc, char **argv,
                              string plugin_list)
 {
   plugin::Library *library= NULL;
@@ -512,7 +512,7 @@ static bool plugin_load_list(plugin::Registry &registry,
       return true;
     }
 
-    free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
+    free_root(tmp_root, MYF(memory::MARK_BLOCKS_FREE));
     if (plugin_add(registry, tmp_root, library, argc, argv))
     {
       registry.removeLibrary(plugin_name);
@@ -1074,7 +1074,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     if (global_lock)
       pthread_mutex_lock(&LOCK_global_system_variables);
 
-    safe_mutex_assert_owner(&LOCK_global_system_variables);
+    //safe_mutex_assert_owner(&LOCK_global_system_variables);
 
     memcpy(session->variables.dynamic_variables_ptr +
              session->variables.dynamic_variables_size,
@@ -1607,7 +1607,7 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 }
 
 
-static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
+static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
                              my_option *options)
 {
   const char *plugin_name= tmp->getManifest().name;
@@ -1832,7 +1832,7 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Module *tmp,
 }
 
 
-static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Module *p)
+static my_option *construct_help_options(memory::Root *mem_root, plugin::Module *p)
 {
   drizzle_sys_var **opt;
   my_option *opts;
@@ -1881,7 +1881,7 @@ void drizzle_del_plugin_sysvar()
   NOTE:
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Module *tmp,
+static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
@@ -2000,10 +2000,10 @@ void my_print_help_inc_plugins(my_option *main_options)
   plugin::Registry &registry= plugin::Registry::singleton();
   vector<my_option> all_options;
   plugin::Module *p;
-  MEM_ROOT mem_root;
+  memory::Root mem_root;
   my_option *opt= NULL;
 
-  init_alloc_root(&mem_root, 4096, 4096);
+  init_alloc_root(&mem_root, 4096);
 
   if (initialized)
   {

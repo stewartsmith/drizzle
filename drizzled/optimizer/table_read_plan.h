@@ -70,20 +70,18 @@ public:
   */
   virtual QuickSelectInterface *make_quick(Parameter *param,
                                            bool retrieve_full_rows,
-                                           MEM_ROOT *parent_alloc= NULL) = 0;
+                                           drizzled::memory::Root *parent_alloc= NULL) = 0;
 
-  /* Table read plans are allocated on MEM_ROOT and are never deleted */
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
+  /* Table read plans are allocated on drizzled::memory::Root and are never deleted */
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
   { 
     return (void*) alloc_root(mem_root, (uint32_t) size); 
   }
 
   static void operator delete(void *, size_t)
-  { 
-    TRASH(ptr, size); 
-  }
+  { }
 
-  static void operator delete(void *, MEM_ROOT *)
+  static void operator delete(void *, drizzled::memory::Root *)
     { /* Never called */ }
 
   virtual ~TABLE_READ_PLAN() {} /* Remove gcc warning */
@@ -115,7 +113,7 @@ public:
   {}
   virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
 
-  QuickSelectInterface *make_quick(Parameter *param, bool, MEM_ROOT *parent_alloc);
+  QuickSelectInterface *make_quick(Parameter *param, bool, drizzled::memory::Root *parent_alloc);
 
 };
 
@@ -129,7 +127,7 @@ public:
   virtual ~TRP_ROR_INTERSECT() {}             /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   MEM_ROOT *parent_alloc);
+                                   drizzled::memory::Root *parent_alloc);
 
   /* Array of pointers to ROR range scans used in this intersection */
   struct st_ror_scan_info **first_scan;
@@ -153,7 +151,7 @@ public:
   virtual ~TRP_ROR_UNION() {}                 /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   MEM_ROOT *parent_alloc);
+                                   drizzled::memory::Root *parent_alloc);
   TABLE_READ_PLAN **first_ror; /* array of ptrs to plans for merged scans */
   TABLE_READ_PLAN **last_ror;  /* end of the above array */
 };
@@ -172,7 +170,7 @@ public:
   virtual ~TRP_INDEX_MERGE() {}               /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   MEM_ROOT *parent_alloc);
+                                   drizzled::memory::Root *parent_alloc);
   TRP_RANGE **range_scans; /* array of ptrs to plans of merged scans */
   TRP_RANGE **range_scans_end; /* end of the array */
 };
@@ -239,7 +237,7 @@ public:
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   MEM_ROOT *parent_alloc);
+                                   drizzled::memory::Root *parent_alloc);
 };
 
 

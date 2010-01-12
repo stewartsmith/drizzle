@@ -22,7 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

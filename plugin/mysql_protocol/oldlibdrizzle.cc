@@ -23,7 +23,7 @@
 #include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include <algorithm>
 
 #include "pack.h"

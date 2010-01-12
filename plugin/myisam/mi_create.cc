@@ -16,10 +16,11 @@
 /* Create a MyISAM table */
 
 #include "myisam_priv.h"
-#include <mysys/my_tree.h>
-#include <mysys/my_bit.h>
+#include "drizzled/internal/my_bit.h"
 
-#include <drizzled/util/test.h>
+#include "drizzled/util/test.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/my_error.h"
 
 #include <cassert>
 #include <algorithm>
@@ -66,7 +67,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   if (keys + uniques > MI_MAX_KEY || columns == 0)
   {
-    return(my_errno=HA_WRONG_CREATE_OPTION);
+    return(errno=HA_WRONG_CREATE_OPTION);
   }
   errpos= 0;
   options= 0;
@@ -89,7 +90,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   if (!(rec_per_key_part=
 	(ulong*) malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long))))
-    return(my_errno);
+    return(errno);
   memset(rec_per_key_part, 0, (keys + uniques)*MI_MAX_KEY_SEG*sizeof(long));
 
 	/* Start by checking fields and field-types used */
@@ -322,7 +323,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     key_segs+=keydef->keysegs;
     if (keydef->keysegs > MI_MAX_KEY_SEG)
     {
-      my_errno=HA_WRONG_CREATE_OPTION;
+      errno=HA_WRONG_CREATE_OPTION;
       goto err;
     }
     /*
@@ -347,7 +348,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     if (keydef->block_length > MI_MAX_KEY_BLOCK_LENGTH ||
         length >= MI_MAX_KEY_BUFF)
     {
-      my_errno=HA_WRONG_CREATE_OPTION;
+      errno=HA_WRONG_CREATE_OPTION;
       goto err;
     }
     set_if_bigger(max_key_block_length,(uint32_t)keydef->block_length);
@@ -393,7 +394,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     my_printf_error(0, "MyISAM table '%s' has too many columns and/or "
                     "indexes and/or unique constraints.",
                     MYF(0), name + dirname_length(name));
-    my_errno= HA_WRONG_CREATE_OPTION;
+    errno= HA_WRONG_CREATE_OPTION;
     goto err;
   }
 
@@ -527,7 +528,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     my_printf_error(0, "MyISAM table '%s' is in use "
                     "(most likely by a MERGE table). Try FLUSH TABLES.",
                     MYF(0), name + dirname_length(name));
-    my_errno= HA_ERR_TABLE_EXIST;
+    errno= HA_ERR_TABLE_EXIST;
     goto err;
   }
 
@@ -673,7 +674,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
 err:
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  save_errno=my_errno;
+  save_errno=errno;
   switch (errpos) {
   case 3:
     my_close(dfile,MYF(0));
@@ -692,7 +693,7 @@ err:
 			     MYF(0));
   }
   free((char*) rec_per_key_part);
-  return(my_errno=save_errno);		/* return the fatal errno */
+  return(errno=save_errno);		/* return the fatal errno */
 }
 
 

@@ -19,10 +19,10 @@
 
 #include "config.h"
 #include "drizzled/current_session.h"
-#include CSTDINT_H
 #include "drizzled/error.h"
 #include "drizzled/function/time/typecast.h"
 #include "drizzled/time_functions.h"
+#include "drizzled/charset.h"
 
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
 {

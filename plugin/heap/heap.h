@@ -25,11 +25,11 @@ extern "C" {
 
 #include <drizzled/base.h>
 #include <drizzled/common.h>
-#include <mysys/my_pthread.h>
-#include <mysys/thr_lock.h>
+#include "drizzled/internal/my_pthread.h"
+#include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 
 	/* defines used by heap-funktions */
 

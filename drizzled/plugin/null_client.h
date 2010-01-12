@@ -55,6 +55,7 @@ public:
   virtual bool store(const DRIZZLE_TIME*) { return false; }
   virtual bool store(const char*) { return false; }
   virtual bool store(const char*, size_t) { return false; }
+  virtual bool store(const std::string &) { return false; }
   virtual bool haveMoreData(void) { return false; }
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }

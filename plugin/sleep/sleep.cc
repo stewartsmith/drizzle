@@ -29,7 +29,7 @@
 
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_pthread.h"
 #include <drizzled/function/str/strfunc.h>
 
 #include <string>

@@ -26,6 +26,7 @@
 #include "drizzled/sql_select.h"
 #include "drizzled/strfunc.h"
 
+using namespace drizzled;
 using namespace std;
 
 class Item;
@@ -36,7 +37,7 @@ uint32_t TableList::create_table_def_key(char *key)
   return TableShare::createKey(key, db, table_name);
 }
 
-bool TableList::set_insert_values(MEM_ROOT *mem_root)
+bool TableList::set_insert_values(memory::Root *mem_root)
 {
   if (table)
   {

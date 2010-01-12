@@ -29,6 +29,8 @@
 #include <sstream>
 #include <string>
 
+using namespace drizzled;
+
 /****************************************************************************
 ** enum type.
 ** This is a string which only can have a selection of different values.
@@ -265,7 +267,7 @@ void Field_enum::sql_type(String &res) const
   res.append(')');
 }
 
-Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
+Field *Field_enum::new_field(memory::Root *root, Table *new_table,
                              bool keep_type)
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);

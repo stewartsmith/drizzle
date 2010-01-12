@@ -41,13 +41,14 @@
 #include <algorithm>
 #include <limits.h>
 #include <cassert>
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #include <stdarg.h>
 #include <math.h>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
+#include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -132,10 +133,6 @@ typedef Function drizzle_compentry_func_t;
 #include <locale.h>
 #endif
 
-
-
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
 
 
 #if !defined(HAVE_VIDATTR)

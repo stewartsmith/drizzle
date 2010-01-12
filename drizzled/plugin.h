@@ -24,7 +24,8 @@
 #include <drizzled/xid.h>
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/module.h>
-#include "drizzled/configmake.h"
+#include "drizzled/plugin/version.h"
+#include "drizzled/definitions.h"
 
 
 class Session;

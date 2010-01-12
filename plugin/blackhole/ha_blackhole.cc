@@ -15,8 +15,8 @@
 
 #include "config.h"
 #include <drizzled/table.h>
-#include <mysys/my_dir.h>
 #include <drizzled/error.h>
+#include "drizzled/internal/my_pthread.h"
 
 #include "ha_blackhole.h"
 
@@ -26,7 +26,7 @@
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
-#include "mystrings/m_string.h"
+#include "drizzled/internal/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "drizzled/global_charset_info.h"
@@ -60,7 +60,7 @@ public:
   }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_blackhole(*this, table);
   }
@@ -87,15 +87,16 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       string&, set<string>& set_of_names)
   {
-    CachedDirectory::Entries entries= directory.getEntries();
+    drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
+    for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
-      CachedDirectory::Entry *entry= *entry_iter;
-      string *filename= &entry->filename;
+      drizzled::CachedDirectory::Entry *entry= *entry_iter;
+      const string *filename= &entry->filename;
 
       assert(filename->size());
 
@@ -221,7 +222,7 @@ int BlackholeEngine::doDropTable(Session&, const string path)
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;

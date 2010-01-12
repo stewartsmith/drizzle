@@ -758,9 +758,7 @@ row_search_index_entry(
 	return(!page_rec_is_infimum(rec) && low_match == n_fields);
 }
 
-#if defined(BUILD_DRIZZLE)
-# include "mysys/my_sys.h"
-#else
+#if !defined(BUILD_DRIZZLE)
 # include "my_sys.h"
 #endif
 

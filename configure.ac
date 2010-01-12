@@ -117,6 +117,7 @@ AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
  po/Makefile.in dnl
  tests/Makefile dnl
+ drizzled/plugin/version.h dnl
  support-files/drizzle.server support-files/drizzle-log-rotate
  support-files/smf/install.sh dnl
  support-files/smf/drizzle.xml dnl

@@ -24,6 +24,7 @@
 #include "config.h"
 
 #include <float.h>
+#include <limits.h>
 
 #include <queue>
 #include <algorithm>
@@ -36,6 +37,9 @@
 #include "drizzled/table_list.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/iocache.h"
+#include "drizzled/internal/my_sys.h"
+#include "plugin/myisam/myisam.h"
 
 using namespace std;
 using namespace drizzled;
@@ -530,7 +534,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
       {
 	if (my_b_read(indexfile,(unsigned char*) ref_pos,ref_length))
 	{
-	  error= my_errno ? my_errno : -1;		/* Abort */
+	  error= errno ? errno : -1;		/* Abort */
 	  break;
 	}
 	error=file->rnd_pos(sort_form->record[0],next_pos);

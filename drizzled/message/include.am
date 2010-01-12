@@ -43,8 +43,7 @@ drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WE
 
 drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_transform.cc
 
-messageincludedir= ${includedir}/drizzled/message
-messageinclude_HEADERS= drizzled/message/statement_transform.h
+nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h
 
 nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
 		drizzled/message/binary_log.pb.cc \
@@ -53,7 +52,7 @@ nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
 		drizzled/message/schema.pb.cc \
 		drizzled/message/table.pb.cc
 
-nodist_noinst_HEADERS= \
+nobase_nodist_include_HEADERS+= \
 		drizzled/message/binary_log.pb.h \
 		drizzled/message/master_list.pb.h \
 		drizzled/message/transaction.pb.h \

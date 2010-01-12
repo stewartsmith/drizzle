@@ -21,11 +21,11 @@
 #define DRIZZLED_ITEM_H
 
 #include <drizzled/dtcollation.h>
-#include <mysys/drizzle_time.h>
+#include <drizzled/my_time.h>
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
 
 class TableList;
@@ -76,7 +76,7 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class Item: public Sql_alloc
+class Item: public drizzled::memory::SqlAlloc
 {
   /* Prevent use of these */
   Item(const Item &);
@@ -162,7 +162,7 @@ public:
    *
    * @note
    *
-   * Alloc & destruct is done as start of select using sql_alloc
+   * Alloc & destruct is done as start of select using memory::sql_alloc
    */
   Item();
   /**

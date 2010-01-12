@@ -17,26 +17,80 @@
 
 #include "config.h"
 
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/charset.h"
 
 #include <algorithm>
 
+#include "drizzled/sql_string.h"
+
+using namespace drizzled;
 using namespace std;
-
-/*
-  The following extern declarations are ok as these are interface functions
-  required by the string function
-*/
-
-extern unsigned char* sql_alloc(unsigned size);
-extern void sql_element_free(void *ptr);
-
-#include "sql_string.h"
 
 /*****************************************************************************
 ** String functions
 *****************************************************************************/
+
+String::String()
+  : Ptr(NULL),
+    str_length(0),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(&my_charset_bin)
+{ }
+
+
+String::String(uint32_t length_arg)
+  : Ptr(NULL),
+    str_length(0),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(&my_charset_bin)
+{
+  (void) real_alloc(length_arg);
+}
+
+String::String(const char *str, const CHARSET_INFO * const cs)
+  : Ptr(const_cast<char *>(str)),
+    str_length(static_cast<uint32_t>(strlen(str))),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(cs)
+{ }
+
+
+String::String(const char *str, uint32_t len, const CHARSET_INFO * const cs)
+  : Ptr(const_cast<char *>(str)),
+    str_length(len),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(cs)
+{ }
+
+
+String::String(char *str, uint32_t len, const CHARSET_INFO * const cs)
+  : Ptr(str),
+    str_length(len),
+    Alloced_length(len),
+    alloced(false),
+    str_charset(cs)
+{ }
+
+
+String::String(const String &str)
+  : Ptr(str.Ptr),
+    str_length(str.str_length),
+    Alloced_length(str.Alloced_length),
+    alloced(false),
+    str_charset(str.str_charset)
+{ }
+
+
+void *String::operator new(size_t size, memory::Root *mem_root)
+{
+  return alloc_root(mem_root, static_cast<uint32_t>(size));
+}
 
 String::~String() { free(); }
 
@@ -725,3 +779,8 @@ bool operator!=(const String &s1, const String &s2)
   return !(s1 == s2);
 }
 
+bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+                             char *end)
+{
+  return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
+}

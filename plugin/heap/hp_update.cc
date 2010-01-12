@@ -30,7 +30,7 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   pos=info->current_ptr;
 
   if (info->opt_flag & READ_CHECK_USED && hp_rectest(info,old_record))
-    return(my_errno);				/* Record changed */
+    return(errno);				/* Record changed */
 
   old_length = hp_get_encoded_data_length(share, old_record, &old_chunk_count);
   new_length = hp_get_encoded_data_length(share, new_record, &new_chunk_count);
@@ -38,7 +38,7 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   if (new_chunk_count > old_chunk_count) {
     /* extend the old chunkset size as necessary, but do not shrink yet */
     if (hp_reallocate_chunkset(&share->recordspace, new_chunk_count, pos)) {
-      return(my_errno);                          /* Out of memory or table space */
+      return(errno);                          /* Out of memory or table space */
     }
   }
 
@@ -70,7 +70,7 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   return(0);
 
  err:
-  if (my_errno == HA_ERR_FOUND_DUPP_KEY)
+  if (errno == HA_ERR_FOUND_DUPP_KEY)
   {
     info->errkey = (int) (keydef - share->keydef);
     if (keydef->algorithm == HA_KEY_ALG_BTREE)
@@ -80,7 +80,7 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
       {
         if (++(share->records) == share->blength)
 	  share->blength+= share->blength;
-        return(my_errno);
+        return(errno);
       }
       keydef--;
     }
@@ -104,5 +104,5 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
     hp_reallocate_chunkset(&share->recordspace, old_chunk_count, pos);
   }
 
-  return(my_errno);
+  return(errno);
 } /* heap_update */

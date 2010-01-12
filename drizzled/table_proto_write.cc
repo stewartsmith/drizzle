@@ -20,6 +20,8 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 
+#include "drizzled/internal/my_sys.h"
+
 
 /* For proto */
 #include <string>

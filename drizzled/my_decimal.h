@@ -24,7 +24,7 @@
 
   Most functions use 'uint32_t mask' as parameter, if during operation error
   which fit in this mask is detected then it will be processed automatically
-  here. (errors are E_DEC_* constants, see include/decimal.h)
+  here. (errors are E_DEC_* constants, see drizzled/decimal.h)
 
   Most function are just inline wrappers around library calls
 */
@@ -32,8 +32,9 @@
 #ifndef DRIZZLED_MY_DECIMAL_H
 #define DRIZZLED_MY_DECIMAL_H
 
-#include <mystrings/decimal.h>
-#include <mysys/my_time.h>
+#include <drizzled/decimal.h>
+#include <drizzled/my_time.h>
+#include <drizzled/definitions.h>
 #include <drizzled/sql_string.h>
 
 #define DECIMAL_LONGLONG_DIGITS 22

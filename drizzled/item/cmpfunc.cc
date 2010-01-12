@@ -31,9 +31,11 @@
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
 #include "drizzled/time_functions.h"
+#include "drizzled/internal/my_sys.h"
 #include <math.h>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 extern const double log_10[309];
@@ -1798,7 +1800,7 @@ void Item_func_interval::fix_length_and_dec()
 
     if (not_null_consts &&
         (intervals=
-          (interval_range*) sql_alloc(sizeof(interval_range) * (rows - 1))))
+          (interval_range*) memory::sql_alloc(sizeof(interval_range) * (rows - 1))))
     {
       if (use_decimal_comparison)
       {
@@ -2717,7 +2719,7 @@ void Item_func_case::fix_length_and_dec()
   Item **agg;
   uint32_t nagg;
   uint32_t found_types= 0;
-  if (!(agg= (Item**) sql_alloc(sizeof(Item*)*(ncases+1))))
+  if (!(agg= (Item**) memory::sql_alloc(sizeof(Item*)*(ncases+1))))
     return;
 
   /*
@@ -3060,6 +3062,12 @@ static int cmp_decimal(void *, my_decimal *a, my_decimal *b)
 }
 
 
+void in_vector::sort()
+{
+  my_qsort2(base,used_count,size,compare, (void *) collation);
+}
+
+
 int in_vector::find(Item *item)
 {
   unsigned char *result=get_value(item);
@@ -3091,7 +3099,7 @@ in_string::~in_string()
 {
   if (base)
   {
-    // base was allocated with help of sql_alloc => following is OK
+    // base was allocated with help of memory::sql_alloc => following is OK
     for (uint32_t i=0 ; i < count ; i++)
       ((String*) base)[i].free();
   }
@@ -3341,7 +3349,7 @@ void cmp_item_row::store_value_by_template(cmp_item *t, Item *item)
     return;
   }
   n= tmpl->n;
-  if ((comparators= (cmp_item **) sql_alloc(sizeof(cmp_item *)*n)))
+  if ((comparators= (cmp_item **) memory::sql_alloc(sizeof(cmp_item *)*n)))
   {
     item->bring_value();
     item->null_value= 0;
@@ -4394,12 +4402,12 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      escape= (char *)sql_alloc(escape_str->length());
+      escape= (char *)memory::sql_alloc(escape_str->length());
       strcpy(escape, escape_str->ptr()); 
     }
     else
     {
-      escape= (char *)sql_alloc(1);
+      escape= (char *)memory::sql_alloc(1);
       strcpy(escape, "\\");
     } 
    

@@ -102,11 +102,11 @@
 */
 
 #include "config.h"
-#include <mysys/mysys_err.h>
-#include <mysys/my_sys.h>
+#include "drizzled/my_error.h"
+#include "drizzled/internal/my_sys.h"
 #include "keycache.h"
-#include <mystrings/m_string.h>
-#include <mysys/my_bit.h>
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_bit.h"
 #include <errno.h>
 #include <stdarg.h>
 
@@ -336,7 +336,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
       }
       if (blocks < 8)
       {
-        my_errno= ENOMEM;
+        errno= ENOMEM;
         my_error(EE_OUTOFMEMORY, MYF(0), blocks * keycache->key_cache_block_size);
         goto err;
       }
@@ -395,7 +395,7 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
   return((int) keycache->disk_blocks);
 
 err:
-  error= my_errno;
+  error= errno;
   keycache->disk_blocks= 0;
   keycache->blocks=  0;
   if (keycache->block_mem)
@@ -408,7 +408,7 @@ err:
     free((unsigned char*) keycache->block_root);
     keycache->block_root= NULL;
   }
-  my_errno= error;
+  errno= error;
   keycache->can_be_used= 0;
   return(0);
 }
@@ -2296,7 +2296,7 @@ unsigned char *key_cache_read(KEY_CACHE *keycache,
             this could only happen if we are using a file with
             small key blocks and are trying to read outside the file
           */
-          my_errno= -1;
+          errno= -1;
           block->status|= BLOCK_ERROR;
         }
       }

@@ -24,10 +24,13 @@
 #include "drizzled/foreign_key.h"
 #include "drizzled/error.h"
 #include "drizzled/create_field.h"
+#include "drizzled/internal/my_sys.h"
+
+using namespace drizzled;
 
 extern const CHARSET_INFO *system_charset_info;
 
-Foreign_key::Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root)
+Foreign_key::Foreign_key(const Foreign_key &rhs, memory::Root *mem_root)
   :Key(rhs),
   ref_table(rhs.ref_table),
   ref_columns(rhs.ref_columns),

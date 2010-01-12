@@ -47,6 +47,7 @@ TODO:
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
 
 #include "ha_tina.h"
 
@@ -123,7 +124,7 @@ public:
     tina_open_tables()
   {}
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_tina(*this, table);
   }
@@ -145,7 +146,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
   int doDropTable(Session&, const string table_path);
   TinaShare *findOpenTable(const string table_name);
@@ -172,7 +173,7 @@ int Tina::doDropTable(Session&,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (my_delete_with_symlink(buff, MYF(0)))
     {
-      if ((error= my_errno) != ENOENT)
+      if ((error= errno) != ENOENT)
 	break;
     }
     else
@@ -694,7 +695,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   int eoln_len;
   int error;
 
-  free_root(&blobroot, MYF(MY_MARK_BLOCKS_FREE));
+  free_root(&blobroot, MYF(drizzled::memory::MARK_BLOCKS_FREE));
 
   /*
     We do not read further then local_saved_data_file_length in order
@@ -1117,7 +1118,7 @@ int ha_tina::rnd_init(bool)
   records_is_known= 0;
   chain_ptr= chain;
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE, 0);
+  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }
@@ -1359,7 +1360,7 @@ int ha_tina::delete_all_rows()
   int rc;
 
   if (!records_is_known)
-    return(my_errno=HA_ERR_WRONG_COMMAND);
+    return(errno=HA_ERR_WRONG_COMMAND);
 
   if (!share->tina_write_opened)
     if (init_tina_writer())

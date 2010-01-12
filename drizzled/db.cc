@@ -16,16 +16,21 @@
 
 /* create and drop of databases */
 #include "config.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <set>
 #include <string>
 #include <fstream>
-#include <fcntl.h>
+
 #include <drizzled/message/schema.pb.h>
-#include <mysys/mysys_err.h>
-#include <mysys/my_dir.h>
+#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <mysys/hash.h>
-#include "mystrings/m_string.h"
+#include <drizzled/my_hash.h>
+#include "drizzled/internal/m_string.h"
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/sql_base.h>
@@ -37,7 +42,9 @@
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
 
+#include "drizzled/internal/my_sys.h"
 
 using namespace std;
 using namespace drizzled;
@@ -45,12 +52,12 @@ using namespace drizzled;
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
-const char *del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD",".opt", NULL};
-static TYPELIB deletable_extentions=
-{array_elements(del_exts)-1,"del_exts", del_exts, NULL};
+const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD", ".opt"};
+static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
 
-static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
-                                 const char *db, const char *path,
+
+static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
+                                 const string &db, const char *path,
                                  TableList **dropped_tables);
 
 /**
@@ -231,7 +238,7 @@ bool mysql_create_db(Session *session, const NormalisedDatabaseName &database_na
       goto exit;
     }
 
-    my_error(ER_CANT_CREATE_DB, MYF(0), database_name.to_string().c_str(), my_errno);
+    my_error(ER_CANT_CREATE_DB, MYF(0), database_name.to_string().c_str(), errno);
     error= true;
     goto exit;
   }
@@ -330,7 +337,6 @@ bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, 
   long deleted=0;
   int error= false;
   char	path[FN_REFLEN+16];
-  MY_DIR *dirp;
   uint32_t length;
   TableList *dropped_tables= NULL;
 
@@ -354,8 +360,7 @@ bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, 
   */
   if (wait_if_global_read_lock(session, 0, 1))
   {
-    error= -1;
-    goto exit2;
+    return -1;
   }
 
   pthread_mutex_lock(&LOCK_create_db);
@@ -367,7 +372,8 @@ bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, 
   path[length]= '\0';				// Remove file name
 
   /* See if the directory exists */
-  if (!(dirp= my_dir(path,MYF(MY_DONT_SORT))))
+  CachedDirectory dirp(path);
+  if (dirp.fail())
   {
     if (!if_exists)
     {
@@ -388,7 +394,10 @@ bool mysql_rm_db(Session *session, const NormalisedDatabaseName &database_name, 
 
 
     error= -1;
-    if ((deleted= mysql_rm_known_files(session, dirp, database_name.to_string().c_str(), path, &dropped_tables)) >= 0)
+    deleted= mysql_rm_known_files(session, dirp,
+                                  database_name.to_string(),
+                                  path, &dropped_tables);
+    if (deleted >= 0)
     {
       plugin::StorageEngine::dropDatabase(path);
       error = 0;
@@ -461,8 +470,7 @@ exit:
     session->clear_db();
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit2:
-  return(error);
+  return error;
 }
 
 
@@ -611,31 +619,37 @@ err_with_placeholders:
   session MUST be set when calling this function!
 */
 
-static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
+static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
+                                 const string &db,
 				 const char *org_path,
                                  TableList **dropped_tables)
 {
+
+
   long deleted= 0;
   char filePath[FN_REFLEN];
   TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
 
-  for (uint32_t idx= 0;
-       idx < (uint32_t) dirp->number_off_files && !session->killed ;
-       idx++)
+  for (CachedDirectory::Entries::const_iterator iter= dirp.getEntries().begin();
+       iter != dirp.getEntries().end() && !session->killed;
+       ++iter)
   {
-    FILEINFO *file=dirp->dir_entry+idx;
-    char *extension;
+    string filename((*iter)->filename);
 
     /* skiping . and .. */
-    if (file->name[0] == '.' && (!file->name[1] ||
-       (file->name[1] == '.' &&  !file->name[2])))
+    if (filename[0] == '.' && (!filename[1] ||
+       (filename[1] == '.' &&  !filename[2])))
       continue;
 
-    if (!(extension= strrchr(file->name, '.')))
-      extension= strchr(file->name, '\0');
-    if (find_type(extension, &deletable_extentions,1+2) <= 0)
+    string extension("");
+    size_t ext_pos= filename.rfind('.');
+    if (ext_pos != string::npos)
+    {
+      extension= filename.substr(ext_pos);
+    }
+    if (deletable_extentions.find(extension) == deletable_extentions.end())
     {
       /*
         ass ass ass.
@@ -652,26 +666,25 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       continue;
     }
     /* just for safety we use files_charset_info */
-    if (db && !my_strcasecmp(files_charset_info,
-                             extension, ".dfe"))
+    if (!my_strcasecmp(files_charset_info, extension.c_str(), ".dfe"))
     {
-      uint32_t db_len= strlen(db);
+      size_t db_len= db.size();
 
       /* Drop the table nicely */
-      *extension= 0;			// Remove extension
+      filename.erase(ext_pos);
       TableList *table_list=(TableList*)
-                              session->calloc(sizeof(*table_list) +
-                                          db_len + 1 +
-                                          strlen(file->name) + 1);
+                             session->calloc(sizeof(*table_list) +
+                                             db_len + 1 +
+                                             filename.size() + 1);
 
       if (!table_list)
-        goto err;
+        return -1;
       table_list->db= (char*) (table_list+1);
-      table_list->table_name= strcpy(table_list->db, db) + db_len + 1;
-      filename_to_tablename(file->name, table_list->table_name,
-                            strlen(file->name) + 1);
+      table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
+      filename_to_tablename(filename.c_str(), table_list->table_name,
+                            filename.size() + 1);
       table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-      table_list->internal_tmp_table= (strncmp(file->name,
+      table_list->internal_tmp_table= (strncmp(filename.c_str(),
                                                TMP_FILE_PREFIX,
                                                strlen(TMP_FILE_PREFIX)) == 0);
       /* Link into list */
@@ -681,23 +694,21 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
     }
     else
     {
-      sprintf(filePath, "%s/%s", org_path, file->name);
+      sprintf(filePath, "%s/%s", org_path, filename.c_str());
       if (my_delete_with_symlink(filePath,MYF(MY_WME)))
       {
-	goto err;
+	return -1;
       }
     }
   }
   if (session->killed)
-    goto err;
+    return -1;
 
   if (tot_list)
   {
     if (rm_table_part2(session, tot_list))
-      goto err;
+      return -1;
   }
-
-  my_dirend(dirp);
 
   if (dropped_tables)
     *dropped_tables= tot_list;
@@ -709,10 +720,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
   }
 
   return deleted;
-
-err:
-  my_dirend(dirp);
-  return -1;
 }
 
 /**

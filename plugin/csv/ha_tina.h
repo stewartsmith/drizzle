@@ -17,7 +17,7 @@
 #define PLUGIN_CSV_HA_TINA_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -90,7 +90,7 @@ class ha_tina: public Cursor
   uint32_t chain_size;
   uint32_t local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
-  MEM_ROOT blobroot;
+  drizzled::memory::Root blobroot;
 
   bool get_write_pos(off_t *end_pos, tina_set *closest_hole);
   int open_update_temp_file_if_needed();

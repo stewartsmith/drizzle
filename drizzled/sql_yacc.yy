@@ -86,7 +86,7 @@
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/statement.h>
@@ -133,6 +133,8 @@
 #include <drizzled/db.h>
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
+#include "drizzled/internal/m_string.h"
 
 
 using namespace drizzled;
@@ -1419,7 +1421,7 @@ column_def:
           field_spec opt_check_constraint
         | field_spec references
           {
-            Lex->col_list.empty(); /* Alloced by sql_alloc */
+            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -1431,7 +1433,7 @@ key_def:
             Key *key= new Key($1, $2, &statement->key_create_info, 0,
                               lex->col_list);
             statement->alter_info.key_list.push_back(key);
-            lex->col_list.empty(); /* Alloced by sql_alloc */
+            lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint constraint_key_type opt_ident key_alg
           '(' key_list ')' key_options
@@ -1441,7 +1443,7 @@ key_def:
             Key *key= new Key($2, $3.str ? $3 : $1, &statement->key_create_info, 0,
                               lex->col_list);
             statement->alter_info.key_list.push_back(key);
-            lex->col_list.empty(); /* Alloced by sql_alloc */
+            lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint FOREIGN KEY_SYM opt_ident '(' key_list ')' references
           {
@@ -1458,17 +1460,17 @@ key_def:
                          &default_key_create_info, 1,
                          lex->col_list);
             statement->alter_info.key_list.push_back(key);
-            lex->col_list.empty(); /* Alloced by sql_alloc */
+            lex->col_list.empty(); /* Alloced by memory::sql_alloc */
             /* Only used for ALTER TABLE. Ignored otherwise. */
             statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }
         | constraint opt_check_constraint
           {
-            Lex->col_list.empty(); /* Alloced by sql_alloc */
+            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         | opt_constraint check_constraint
           {
-            Lex->col_list.empty(); /* Alloced by sql_alloc */
+            Lex->col_list.empty(); /* Alloced by memory::sql_alloc */
           }
         ;
 
@@ -3517,7 +3519,7 @@ opt_gorder_clause:
           {
             Select_Lex *select= Lex->current_select;
             select->gorder_list=
-              (SQL_LIST*) sql_memdup((char*) &select->order_list,
+              (SQL_LIST*) memory::sql_memdup((char*) &select->order_list,
                                      sizeof(st_sql_list));
             select->order_list.empty();
           }
@@ -4141,7 +4143,7 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (LEX_STRING*) sql_memdup(&$2,sizeof(LEX_STRING)); }
+          { $$= (LEX_STRING*) memory::sql_memdup(&$2,sizeof(LEX_STRING)); }
         ;
 
 opt_all:

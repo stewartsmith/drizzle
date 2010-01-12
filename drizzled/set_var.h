@@ -955,7 +955,7 @@ public:
   Classes for parsing of the SET command
 ****************************************************************************/
 
-class set_var_base :public Sql_alloc
+class set_var_base :public drizzled::memory::SqlAlloc
 {
 public:
   set_var_base() {}

@@ -402,7 +402,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     table->cursor->ha_release_auto_increment();
     if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->print_error(my_errno,MYF(0));
+      table->print_error(errno,MYF(0));
       error=1;
     }
     if (duplic != DUP_ERROR || ignore)
@@ -773,7 +773,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
       {
 	if (table->cursor->extra(HA_EXTRA_FLUSH_CACHE)) /* Not needed with NISAM */
 	{
-	  error=my_errno;
+	  error=errno;
 	  goto err;
 	}
 
@@ -1789,11 +1789,3 @@ void select_create::abort()
   }
 }
 
-
-/*****************************************************************************
-  Instansiate templates
-*****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List_iterator_fast<List_item>;
-#endif /* HAVE_EXPLICIT_TEMPLATE_INSTANTIATION */

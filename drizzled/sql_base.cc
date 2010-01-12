@@ -30,7 +30,7 @@
 #  include <time.h>
 # endif
 #endif
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_pthread.h"
 
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
@@ -43,13 +43,14 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/plugin/listen.h>
-#include <mysys/cached_directory.h>
+#include "drizzled/cached_directory.h"
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/internal/iocache.h"
 
 
 using namespace std;
@@ -135,7 +136,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 {
   TableShare *share, *old_share= table->s;
   char *key_buff;
-  MEM_ROOT *mem_root= &table->mem_root;
+  memory::Root *mem_root= &table->mem_root;
 
   assert(table->db_stat);
 

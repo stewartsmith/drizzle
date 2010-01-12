@@ -31,6 +31,7 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
+#include "drizzled/charset_info.h"
 
 #include <string>
 #include <vector>
@@ -45,6 +46,8 @@
 #define ASSERT_COLUMN_MARKED_FOR_READ
 #define ASSERT_COLUMN_MARKED_FOR_WRITE
 #endif
+
+typedef struct st_typelib TYPELIB;
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
@@ -134,11 +137,10 @@ public:
    */
   bool is_created_from_null_item;
 
-  static void *operator new(size_t size) {return sql_alloc(size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return alloc_root(mem_root, static_cast<uint32_t>(size)); }
+  static void *operator new(size_t size);
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
   static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
+  { }
 
   Field(unsigned char *ptr_arg,
         uint32_t length_arg,
@@ -363,15 +365,15 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root,
+  virtual Field *new_field(drizzled::memory::Root *root,
                            Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
+  virtual Field *new_key_field(drizzled::memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(MEM_ROOT *mem_root, Table *new_table);
+  Field *clone(drizzled::memory::Root *mem_root, Table *new_table);
   inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
@@ -765,7 +767,7 @@ public:
 /**
  * A class for quick copying data to fields
  */
-class CopyField :public Sql_alloc
+class CopyField :public drizzled::memory::SqlAlloc
 {
   /**
     Convenience definition of a copy function returned by
@@ -796,7 +798,7 @@ public:
 };
 
 Field *make_field(TableShare *share,
-                  MEM_ROOT *root,
+                  drizzled::memory::Root *root,
                   unsigned char *ptr,
                   uint32_t field_length,
                   bool is_nullable,

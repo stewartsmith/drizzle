@@ -22,8 +22,8 @@
 #include <cstddef>
 
 #include <signal.h>
-#include <mysys/my_pthread.h>
-#include <mystrings/m_string.h>
+#include "drizzled/internal/my_pthread.h"
+#include "drizzled/internal/m_string.h"
 #ifdef HAVE_STACKTRACE
 #include <unistd.h>
 #include <strings.h>

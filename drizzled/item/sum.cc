@@ -36,12 +36,15 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
+#include "drizzled/internal/m_string.h"
+
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 extern my_decimal decimal_zero;
-extern drizzled::plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *heap_engine;
 
 /**
   Prepare an aggregate function item for checking context conditions.
@@ -375,7 +378,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
 Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   forced_const(false)
 {
-  if ((args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
+  if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
     List_iterator_fast<Item> li(list);
@@ -884,7 +887,7 @@ static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 
 
 static int item_sum_distinct_walk(void *element,
-                                  element_count ,
+                                  uint32_t ,
                                   void *item)
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
@@ -2516,7 +2519,7 @@ extern "C" {
 #endif
 
 static int count_distinct_walk(void *,
-                               element_count ,
+                               uint32_t ,
                                void *arg)
 {
   (*((uint64_t*)arg))++;
@@ -2880,7 +2883,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
   Append data from current leaf to item->result.
 */
 
-int dump_leaf_key(unsigned char* key, element_count ,
+int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
@@ -2962,7 +2965,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
                        bool distinct_arg, List<Item> *select_list,
                        SQL_LIST *order_list, String *separator_arg)
   :tmp_table_param(0), warning(0),
-   separator(separator_arg), tree(0), unique_filter(NULL), table(0),
+   separator(separator_arg), tree(NULL), unique_filter(NULL), table(0),
    order(0), context(context_arg),
    arg_count_order(order_list ? order_list->elements : 0),
    arg_count_field(select_list->elements),
@@ -2983,7 +2986,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
            (for possible order items in temporare tables)
     order - arg_count_order
   */
-  if (!(args= (Item**) sql_alloc(sizeof(Item*) * arg_count +
+  if (!(args= (Item**) memory::sql_alloc(sizeof(Item*) * arg_count +
                                  sizeof(order_st*)*arg_count_order)))
     return;
 
@@ -3316,6 +3319,22 @@ void Item_func_group_concat::make_unique()
   tree= 0;
 }
 
+double Item_func_group_concat::val_real()
+{
+  String *res;  res=val_str(&str_value);
+  return res ? my_atof(res->c_ptr()) : 0.0;
+}
+
+int64_t Item_func_group_concat::val_int()
+{
+  String *res;
+  char *end_ptr;
+  int error;
+  if (!(res= val_str(&str_value)))
+    return (int64_t) 0;
+  end_ptr= (char*) res->ptr()+ res->length();
+  return my_strtoll10(res->ptr(), &end_ptr, &error);
+}
 
 String* Item_func_group_concat::val_str(String* )
 {
