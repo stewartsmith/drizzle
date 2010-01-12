@@ -1591,9 +1591,9 @@ static DRIZZLE_SYSVAR_UINT(key_cache_block_size,
                             N_("Block size to be used for MyISAM index pages."),
                             NULL,
                             sys_var_key_cache_block_size_update,
-                            MI_KEY_BLOCK_LENGTH,
-                            MI_MIN_KEY_BLOCK_LENGTH, 
-                            MI_MAX_KEY_BLOCK_LENGTH,
+                            KEY_CACHE_BLOCK_SIZE,
+                            512, 
+                            16 * 1024,
                             0);
 
 static DRIZZLE_SYSVAR_UINT(key_cache_age_threshold, myisam_key_cache_age_threshold,
