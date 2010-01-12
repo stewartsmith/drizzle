@@ -130,13 +130,13 @@ static char *host= NULL, *opt_password= NULL, *user= NULL,
   *user_supplied_post_statements= NULL,
   *default_engine= NULL,
   *pre_system= NULL,
-  *post_system= NULL,
-  *opt_drizzle_unix_port= NULL;
+  *post_system= NULL;
 
 const char *delimiter= "\n";
 
 const char *create_schema_string= "drizzleslap";
 
+static bool opt_mysql= false;
 static bool opt_preserve= true;
 static bool opt_only_print= false;
 static bool opt_burnin= false;
@@ -630,6 +630,9 @@ static struct my_option my_long_options[] =
   {"label", OPT_SLAP_LABEL, "Label to use for print and csv output.",
    (char**) &opt_label, (char**) &opt_label, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"number-blob-cols", OPT_SLAP_BLOB_COL,
    "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ",
    (char**) &num_blob_cols_opt, (char**) &num_blob_cols_opt, 0, GET_STR, REQUIRED_ARG,
@@ -690,9 +693,6 @@ static struct my_option my_long_options[] =
   {"silent", 's', "Run program in silent mode - no output.",
    (char**) &opt_silent, (char**) &opt_silent, 0, GET_BOOL,  NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"timer-length", OPT_SLAP_TIMER_LENGTH,
    "Require drizzleslap to run each specific test a certain amount of time in seconds.",
    (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT,
@@ -2698,7 +2698,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
       drizzle_con_add_tcp(drizzle, con, host, opt_drizzle_port, user,
                           opt_password,
                           connect_to_schema ? create_schema_string : NULL,
-                          DRIZZLE_CON_NONE) == NULL)
+                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     fprintf(stderr,"%s: Error creating drizzle object\n", my_progname);
     exit(1);

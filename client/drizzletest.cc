@@ -115,6 +115,7 @@ static bool disable_info= true;
 static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
+static bool opt_mysql= false;
 static char **default_argv;
 static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
@@ -3930,6 +3931,8 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzle_create()");
   if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
     die("Failed on drizzle_con_create()");
+  if (opt_mysql)
+    drizzle_con_add_options(&con_slot->con, DRIZZLE_CON_MYSQL);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4603,6 +4606,9 @@ static struct my_option my_long_options[] =
    "Max number of connection attempts when connecting to server",
    (char**) &opt_max_connect_retries, (char**) &opt_max_connect_retries, 0,
    GET_INT, REQUIRED_ARG, 500, 1, 10000, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"password", 'P', "Password to use when connecting to server.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'p', "Port number to use for connection or 0 for default to, in "
@@ -5612,6 +5618,8 @@ int main(int argc, char **argv)
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
     die("Failed in drizzle_con_create()");
+  if (opt_mysql)
+    drizzle_con_add_options(&cur_con->con, DRIZZLE_CON_MYSQL);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");

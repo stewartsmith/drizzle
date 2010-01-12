@@ -60,7 +60,7 @@ static char *add_load_option(char *ptr,const char *object,
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
             ignore_unique= false, opt_low_priority= false,
-            tty_password= false;
+            tty_password= false, opt_mysql= false;
 
 static uint32_t opt_use_threads= 0, opt_local_file= 0;
 static char  *opt_password= NULL, *current_user= NULL,
@@ -68,7 +68,6 @@ static char  *opt_password= NULL, *current_user= NULL,
     *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
     *escaped= NULL, *opt_columns= NULL;
 static uint32_t opt_drizzle_port= 0;
-static char * opt_drizzle_unix_port= 0;
 static int64_t opt_ignore_lines= -1;
 
 static struct my_option my_long_options[] =
@@ -116,6 +115,9 @@ static struct my_option my_long_options[] =
   {"low-priority", OPT_LOW_PRIORITY,
    "Use LOW_PRIORITY when updating the table.", (char**) &opt_low_priority,
    (char**) &opt_low_priority, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"password", 'P',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
@@ -129,9 +131,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_replace, (char**) &opt_replace, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Be more silent.", (char**) &silent, (char**) &silent, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"use-threads", OPT_USE_THREADS,
    "Load files in parallel. The argument is the number "
    "of threads to use for loading data.",
@@ -406,7 +405,7 @@ static drizzle_con_st *db_connect(char *host, char *database,
   if (!(drizzle= drizzle_create(NULL)))
     return 0;
   if (!(con= drizzle_con_add_tcp(drizzle,NULL,host,opt_drizzle_port,user,passwd,
-                                 database, DRIZZLE_CON_NONE)))
+                                 database, opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE)))
   {
     return 0;
   }
