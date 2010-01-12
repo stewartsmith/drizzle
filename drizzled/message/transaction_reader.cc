@@ -24,7 +24,7 @@
 #include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/replication_services.h>
-#include <drizzled/hash/crc32.h>
+#include <drizzled/algorithm/crc32.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -226,9 +226,9 @@ int main(int argc, char* argv[])
 
     if (do_checksum)
     {
-      if (checksum != drizzled::hash::crc32(buffer, static_cast<size_t>(length)))
+      if (checksum != drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)))
       {
-        fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::hash::crc32(buffer, static_cast<size_t>(length)));
+        fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)));
       }
     }
 

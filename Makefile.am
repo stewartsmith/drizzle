@@ -136,7 +136,7 @@ include config/lint-source.am
 
 include drizzled/include.am
 include drizzled/internal/include.am
-include drizzled/hash/include.am
+include drizzled/algorithm/include.am
 include drizzled/util/include.am
 include drizzled/message/include.am
 include client/include.am
