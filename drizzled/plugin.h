@@ -371,6 +371,16 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 #define DRIZZLE_VALUE_TYPE_REAL   1
 #define DRIZZLE_VALUE_TYPE_INT    2
 
+/*
+  skeleton of a plugin variable - portion of structure common to all.
+*/
+struct drizzle_sys_var
+{
+  DRIZZLE_PLUGIN_VAR_HEADER;
+};
+
+void plugin_opt_set_limits(my_option *options, const drizzle_sys_var *opt);
+
 struct drizzle_value
 {
   int (*value_type)(drizzle_value *);

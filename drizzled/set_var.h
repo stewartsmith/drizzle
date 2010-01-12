@@ -27,6 +27,7 @@
 #include "drizzled/item/string.h"
 #include "drizzled/item/field.h"
 
+uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
 
 /* Classes to support the SET command */
 
@@ -796,42 +797,6 @@ public:
   void set_default(Session *session, enum_var_type type);
   unsigned char *value_ptr(Session *session, enum_var_type type,
                            const LEX_STRING *base);
-};
-
-
-class sys_var_key_cache_param :public sys_var
-{
-protected:
-  size_t offset;
-public:
-  sys_var_key_cache_param(sys_var_chain *chain, const char *name_arg,
-                          size_t offset_arg)
-    :sys_var(name_arg), offset(offset_arg)
-  { chain_sys_var(chain); }
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
-  bool check_default(enum_var_type)
-  { return 1; }
-};
-
-
-class sys_var_key_buffer_size :public sys_var_key_cache_param
-{
-public:
-  sys_var_key_buffer_size(sys_var_chain *chain, const char *name_arg);
-  bool update(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-};
-
-
-class sys_var_key_cache_uint32_t :public sys_var_key_cache_param
-{
-public:
-  sys_var_key_cache_uint32_t(sys_var_chain *chain, const char *name_arg, size_t offset_arg)
-    :sys_var_key_cache_param(chain, name_arg, offset_arg)
-  {}
-  bool update(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_INT; }
 };
 
 /* Variable that you can only read from */

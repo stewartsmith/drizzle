@@ -8,7 +8,7 @@ drop table if exists t1,t2;
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
 #
-set @my_key_buffer_size           =@@global.key_buffer_size;
+set @my_myisam_key_cache_size           =@@global.myisam_key_cache_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
@@ -207,8 +207,8 @@ create temporary table t1 (a int not null auto_increment, primary key(a));
 create temporary table t2 (a int not null auto_increment, primary key(a));
 insert into t1 values(null),(null),(null);
 insert into t2 values(null),(null),(null);
-set global key_buffer_size=100000;
-select @@key_buffer_size;
+set global myisam_key_cache_size=100000;
+select @@myisam_key_cache_size;
 select * from t1 where a=2;
 select * from t2 where a=3;
 check table t1,t2;
@@ -224,7 +224,7 @@ select @@xxxxxxxxxx;
 select 1;
 
 --error 1238
-select @@session.key_buffer_size;
+select @@session.myisam_key_cache_size;
 
 # init_connect was removed
 #--error 1229
@@ -262,15 +262,15 @@ set global myisam_max_sort_file_size=default;
 # Bug#2586:Disallow global/session/local as structured var. instance names
 #
 --error 1193
-set @@global.global.key_buffer_size= 1;
+set @@global.global.myisam_key_cache_size= 1;
 --error 1193
-set GLOBAL global.key_buffer_size= 1;
+set GLOBAL global.myisam_key_cache_size= 1;
 --error 1064
-SELECT @@global.global.key_buffer_size;
+SELECT @@global.global.myisam_key_cache_size;
 --error 1064
-SELECT @@global.session.key_buffer_size;
+SELECT @@global.session.myisam_key_cache_size;
 --error 1064
-SELECT @@global.local.key_buffer_size;
+SELECT @@global.local.myisam_key_cache_size;
 
 #
 # BUG#4788 show create table provides incorrect statement
@@ -541,7 +541,7 @@ show variables like 'hostname';
 #
 --error 1193
 set global flush_time                =@my_flush_time;
-set global key_buffer_size           =@my_key_buffer_size;
+set global myisam_key_cache_size           =@my_myisam_key_cache_size;
 set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;

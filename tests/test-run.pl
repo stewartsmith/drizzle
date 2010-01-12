@@ -2525,7 +2525,7 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--key_buffer_size=1M", $prefix);
+  mtr_add_arg($args, "%s--myisam_key_cache_size=1M", $prefix);
   mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
   mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
 
