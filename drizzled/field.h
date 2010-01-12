@@ -105,12 +105,11 @@ public:
   key_map part_of_sortkey;
 
   /*
-    We use three additional unireg types for TIMESTAMP to overcome limitation
-    of current binary format of .frm file. We'd like to be able to support
-    NOW() as default and on update value for such fields but unable to hold
-    this info anywhere except unireg_check field. This issue will be resolved
-    in more clean way with transition to new text based .frm format.
-    See also comment for Field_timestamp::Field_timestamp().
+    We use three additional unireg types for TIMESTAMP for hysterical
+    raisins and limitations in the MySQL FRM file format.
+
+    A good TODO is to clean this up as we can support just about
+    anything in the table proto message now.
   */
   enum utype
   {

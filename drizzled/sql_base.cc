@@ -1960,7 +1960,6 @@ retry:
                                                    HA_OPEN_RNDFILE |
                                                    HA_GET_INDEX |
                                                    HA_TRY_READ_ONLY),
-                                       (EXTRA_RECORD),
                                        session->open_options, entry)))
   {
     if (error == 7)                             // Table def changed
@@ -2302,7 +2301,6 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
       open_table_from_share(this, share, identifier.getTableName(),
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
-                            (EXTRA_RECORD),
                             ha_open_options,
                             new_tmp_table))
   {

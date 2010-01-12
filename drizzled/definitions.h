@@ -73,7 +73,7 @@
 #define RAND_TABLE_BIT	(((table_map) 1) << (sizeof(table_map)*8-1))
 #define PSEUDO_TABLE_BITS (PARAM_TABLE_BIT | OUTER_REF_TABLE_BIT | \
                            RAND_TABLE_BIT)
-#define MAX_FIELDS	4096			/* Limit in the .frm file */
+#define MAX_FIELDS	4096      /* Historical limit from MySQL FRM. */
 
 #define MAX_SELECT_NESTING (sizeof(nesting_map)*8-1)
 
@@ -99,32 +99,6 @@
 #define ME_INFO (ME_HOLDTANG+ME_OLDWIN+ME_NOREFRESH)
 #define ME_ERROR (ME_BELL+ME_OLDWIN+ME_NOREFRESH)
 #define MYF_RW MYF(MY_WME+MY_NABP)		/* Vid my_read & my_write */
-
-	/* Defines for use with openfrm, openprt and openfrd */
-
-#define READ_ALL		1	/* openfrm: Read all parameters */
-#define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-#define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
-#define DELAYED_OPEN		4096	/* Open table later */
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine
-  The flag means that we need to open FRM file only to get necessary data.
-*/
-#define OPEN_FRM_FILE_ONLY     32768
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine
-  The flag means that we need to process tables only to get necessary data.
-  Views are not processed.
-*/
-#define OPEN_TABLE_ONLY        OPEN_FRM_FILE_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that I_S table uses optimization algorithm.
-*/
-#define OPTIMIZE_I_S_TABLE     OPEN_TABLE_ONLY*2
 
 /*
   Minimum length pattern before Turbo Boyer-Moore is used

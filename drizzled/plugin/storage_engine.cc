@@ -31,7 +31,6 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "drizzled/internal/my_dir.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/cached_directory.h"
 
@@ -696,8 +695,7 @@ handle_error(uint32_t ,
 
 
 /**
-  This should return ENOENT if the file doesn't exists.
-  The .frm file will be deleted only if we return 0 or ENOENT
+   returns ENOENT if the file doesn't exists.
 */
 int plugin::StorageEngine::dropTable(Session& session,
                                      TableIdentifier &identifier,
@@ -796,7 +794,7 @@ int plugin::StorageEngine::createTable(Session& session,
       goto err;
   }
 
-  if (open_table_from_share(&session, &share, "", 0, (uint32_t) READ_ALL, 0,
+  if (open_table_from_share(&session, &share, "", 0, 0,
                             &table))
     goto err;
 
@@ -872,7 +870,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
        entry_iter != entries.end(); ++entry_iter)
   {
     CachedDirectory::Entry *entry= *entry_iter;
-    string *filename= &entry->filename;
+    const string *filename= &entry->filename;
 
     assert(filename->size());
 

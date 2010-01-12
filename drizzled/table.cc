@@ -1308,7 +1308,6 @@ err_not_open:
     db_stat		open flags (for example HA_OPEN_KEYFILE|
     			HA_OPEN_RNDFILE..) can be 0 (example in
                         ha_example_table)
-    prgflag   		READ_ALL etc..
     ha_open_flags	HA_OPEN_ABORT_IF_LOCKED etc..
     outparam       	result table
 
@@ -1323,7 +1322,7 @@ err_not_open:
 */
 
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          uint32_t db_stat, uint32_t ha_open_flags,
                           Table *outparam)
 {
   int error;
@@ -1343,22 +1342,15 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     goto err;
 
   /* Allocate Cursor */
-  if (!(prgflag & OPEN_FRM_FILE_ONLY))
-  {
-    if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
-      goto err;
-  }
-  else
-  {
-    assert(!db_stat);
-  }
+  if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
+    goto err;
 
   error= 4;
   records= 0;
-  if ((db_stat & HA_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
+  if ((db_stat & HA_OPEN_KEYFILE))
     records=1;
-  if (prgflag & (READ_ALL+EXTRA_RECORD))
-    records++;
+
+  records++;
 
   if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
                                    share->rec_buff_length * records)))
@@ -1527,7 +1519,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   return (0);
 
  err:
-  if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
+  if (!error_reported)
     share->open_table_error(error, errno, 0);
   delete outparam->cursor;
   outparam->cursor= 0;				// For easier error checking
