@@ -237,7 +237,7 @@ plugin::InfoSchemaTable *TablesIS::getTable()
     tbls_table= new plugin::InfoSchemaTable("TABLES",
                                             *columns,
                                             1, 2, false, true,
-                                            OPTIMIZE_I_S_TABLE,
+                                            0,
                                             methods);
   }
 

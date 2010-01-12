@@ -516,7 +516,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 int open_table_def(Session& session, TableShare *share);
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
+                          uint32_t db_stat, uint32_t ha_open_flags,
                           Table *outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);

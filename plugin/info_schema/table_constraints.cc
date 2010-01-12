@@ -132,7 +132,7 @@ plugin::InfoSchemaTable *TableConstraintsIS::getTable()
     tc_table= new plugin::InfoSchemaTable("TABLE_CONSTRAINTS",
                                           *columns,
                                           3, 4, false, true,
-                                          OPEN_TABLE_ONLY,
+                                          0,
                                           methods);
   }
 
