@@ -173,10 +173,11 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                    TableShare &table_arg) : Cursor(engine_arg, table_arg),
                                             table_scan(false),
+                                            key_buffer(NULL),
                                             current_key(NULL),
-                                            current_key_length(0),
+                                            current_key_len(0),
                                             updateable_key(NULL),
-                                            updateable_key_length(0),
+                                            updateable_key_len(0),
                                             errkey_id(0) {}
 
 int ha_blitz::open(const char *table_name, int, uint32_t) {
@@ -184,6 +185,16 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
     return HA_ERR_CRASHED_ON_USAGE;
 
   pthread_mutex_lock(&blitz_utility_mutex);
+
+  /* TODO: Investigate whether this is enough. This _might_ not
+           be enough for long multi byte character keys. */
+  if ((key_buffer = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
+    free_share(share);
+    pthread_mutex_unlock(&blitz_utility_mutex);
+    return HA_ERR_OUT_OF_MEM;
+  }
+
+  key_buffer_len = BLITZ_MAX_KEY_LEN;
 
   secondary_row_buffer = NULL;
   secondary_row_buffer_size = 0;
@@ -194,7 +205,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
 
   if (table->s->primary_key >= MAX_KEY) {
     share->primary_key_exists = false;
-    ref_length = sizeof(updateable_key_length) + sizeof(uint64_t);
+    ref_length = sizeof(updateable_key_len) + sizeof(uint64_t);
   } else {
     share->primary_key_exists = true;
 
@@ -202,7 +213,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
              than it should need in general. Investigate how to
              optimize it. One idea is to find the largest possible
              key size within the array. */
-    ref_length = BLITZ_MAX_KEY_LENGTH;
+    ref_length = BLITZ_MAX_KEY_LEN;
   }
 
   pthread_mutex_unlock(&blitz_utility_mutex);
@@ -210,7 +221,10 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
 }
 
 int ha_blitz::close(void) {
+  free(key_buffer);
   free(secondary_row_buffer);
+  key_buffer = NULL;
+  secondary_row_buffer = NULL;
   return free_share(share);
 }
 
@@ -242,9 +256,9 @@ int ha_blitz::rnd_init(bool scan) {
      care of checking return value errors. */
   if (table_scan) {
     current_key = share->dict.next_key_and_row(NULL, 0,
-                                               &current_key_length,
+                                               &current_key_len,
                                                &current_row,
-                                               &current_row_length);
+                                               &current_row_len);
   }
   return 0;
 }
@@ -264,10 +278,10 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
 
   /* Unpack and copy the current row to Drizzle's result buffer. */
-  unpack_row(drizzle_buf, current_row, current_row_length);
+  unpack_row(drizzle_buf, current_row, current_row_len);
 
   /* Retrieve both key and row of the next record with one allocation. */
-  next_key = share->dict.next_key_and_row(current_key, current_key_length,
+  next_key = share->dict.next_key_and_row(current_key, current_key_len,
                                           &next_key_length, &next_row,
                                           &next_row_length);
 
@@ -277,18 +291,18 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
      "updateable_key" points to it. If there isn't another iteration
      then it is freed in rnd_end(). */
   current_row = next_row;
-  current_row_length = next_row_length;
+  current_row_len = next_row_length;
 
   /* Remember the current row because delete, update or replace
      function could be called after this function. This pointer is
      also used to free the previous key and row, which resides on
      the same buffer. */
   updateable_key = current_key;
-  updateable_key_length = current_key_length;
+  updateable_key_len = current_key_len;
 
   /* It is now memory-leak-safe to point current_key to next_key. */
   current_key = next_key;
-  current_key_length = next_key_length;
+  current_key_len = next_key_length;
   return 0;
 }
 
@@ -300,8 +314,8 @@ int ha_blitz::rnd_end() {
 
   current_key = NULL;
   updateable_key = NULL;
-  current_key_length = 0;
-  updateable_key_length = 0;
+  current_key_len = 0;
+  updateable_key_len = 0;
   table_scan = false;
   
   if (thread_locked)
@@ -335,7 +349,7 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
      after this function. */
   if (!table_scan) {
     current_key = key;
-    current_key_length = key_length;
+    current_key_len = key_length;
   }
 
   free(row);
@@ -343,10 +357,10 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
 }
 
 void ha_blitz::position(const unsigned char *) {
-  int length = sizeof(updateable_key_length);
-  memcpy(ref, &updateable_key_length, length);
+  int length = sizeof(updateable_key_len);
+  memcpy(ref, &updateable_key_len, length);
   memcpy(ref + length, reinterpret_cast<unsigned char *>(updateable_key),
-         updateable_key_length);
+         updateable_key_len);
 }
 
 const char *ha_blitz::index_type(uint32_t key_num) {
@@ -423,7 +437,7 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
        BlitzDB reaches index_end(). */
     memcpy(key_buffer, key, key_len);
     updateable_key = key_buffer;
-    updateable_key_length = key_len;
+    updateable_key_len = key_len;
     return 0;
   }
 
@@ -432,7 +446,7 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 
 int ha_blitz::index_end(void) {
   updateable_key = NULL;
-  updateable_key_length = 0;
+  updateable_key_len = 0;
 
   if (thread_locked)
     critical_section_exit();
@@ -441,8 +455,8 @@ int ha_blitz::index_end(void) {
 }
 
 int ha_blitz::write_row(unsigned char *drizzle_row) {
-  size_t row_length = max_row_length();
-  unsigned char *row_buf = get_pack_buffer(row_length);
+  size_t row_len = max_row_length();
+  unsigned char *row_buf = get_pack_buffer(row_len);
   int rv;
   
   ha_statistic_increment(&SSV::ha_write_count);
@@ -466,10 +480,15 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   }
 
   /* Serialize a primary key for this row. If a PK doesn't exist,
-     an internal hidden ID will be packed into primary_key_buffer. */
-  generate_table_key();
+     an internal hidden ID will be generated. We obtain the PK here
+     and pack it to this function's local buffer instead of the
+     thread's own 'key_buffer' because the PK value needs to be
+     remembered when writing non-PK keys AND because the 'key_buffer'
+     will be used to generate these non-PK keys. */
+  char temp_pkbuf[BLITZ_MAX_KEY_LEN];
+  size_t pk_len = pack_primary_key(temp_pkbuf);
 
-  row_length = pack_row(row_buf, drizzle_row);
+  row_len = pack_row(row_buf, drizzle_row);
 
   /* Write index key(s) to the appropriate BlitzTree object
      EXCEPT for the PRIMARY KEY. This is because PK is treated
@@ -495,14 +514,11 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
      it will be used as the key _and_ checked for key duplication. Otherwise
      a hidden 8 byte key (incremental uint64_t) will be used as the key. */
   if (share->primary_key_exists) {
-    rv = share->dict.write_unique_row(primary_key_buffer, primary_key_length,
-                                      row_buf, row_length);
+    rv = share->dict.write_unique_row(temp_pkbuf, pk_len, row_buf, row_len);
     if (rv == HA_ERR_FOUND_DUPP_KEY)
       this->errkey_id = table->s->primary_key;
-
   } else {
-    rv = share->dict.write_row(primary_key_buffer, primary_key_length,
-                               row_buf, row_length);
+    rv = share->dict.write_row(temp_pkbuf, pk_len, row_buf, row_len);
   }
 
   return rv;
@@ -510,8 +526,8 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
 int ha_blitz::update_row(const unsigned char *,
                          unsigned char *new_row) {
-  size_t row_length = max_row_length();
-  unsigned char *row_buf = get_pack_buffer(row_length);
+  size_t row_len = max_row_length();
+  unsigned char *row_buf = get_pack_buffer(row_len);
   int rv = -1;
 
   ha_statistic_increment(&SSV::ha_update_count);
@@ -520,16 +536,16 @@ int ha_blitz::update_row(const unsigned char *,
     /* This is a really simple case where an UPDATE statement is
        requested to be processed in middle of a table scan. */
     if (table_scan) {
-      row_length = pack_row(row_buf, new_row);
-      rv = share->dict.write_row(updateable_key, updateable_key_length,
-                                 row_buf, row_length); 
+      row_len = pack_row(row_buf, new_row);
+      rv = share->dict.write_row(updateable_key, updateable_key_len,
+                                 row_buf, row_len); 
       return rv;
     }
 
     /* When updating cached rows, Drizzle and MySQL calls rnd_pos()
        prior to calling update_row(). If this is a keyless table,
        BlitzDB has kept a pointer to the key on memory and the length
-       of it in 'current_key' and 'current_key_length'.
+       of it in 'current_key' and 'current_key_len'.
 
        Furthermore, it is impossible for the key value to have updated 
        if a primary key isn't defined. This is because Drizzle knows
@@ -547,14 +563,13 @@ int ha_blitz::update_row(const unsigned char *,
          BlitzDB hasn't been worked on yet. */
     }
 
-    row_length = pack_row(row_buf, new_row);
-    rv = share->dict.write_row(current_key, current_key_length,
-                               row_buf, row_length); 
+    row_len = pack_row(row_buf, new_row);
+    rv = share->dict.write_row(current_key, current_key_len, row_buf, row_len);
 
     /* Don't free this pointer because drizzled will */
     if (current_key) {
       current_key = NULL;
-      current_key_length = 0;
+      current_key_len = 0;
     }
   }
   return rv;
@@ -566,7 +581,7 @@ int ha_blitz::delete_row(const unsigned char *) {
   ha_statistic_increment(&SSV::ha_delete_count);
 
   if (thread_locked)
-    rv = share->dict.delete_row(updateable_key, updateable_key_length);
+    rv = share->dict.delete_row(updateable_key, updateable_key_len);
 
   return (rv) ? 0 : -1;
 }
@@ -600,21 +615,17 @@ uint32_t ha_blitz::max_row_length(void) {
   return length;
 }
 
-/* Note that primary_key_buffer is a thread local buffer */
-size_t ha_blitz::generate_table_key(void) {
+size_t ha_blitz::pack_primary_key(char *pack_to) {
   if (!share->primary_key_exists) {
     uint64_t next_id = share->dict.next_hidden_row_id();
-    int8store(primary_key_buffer, next_id);
-    primary_key_length = sizeof(next_id);
-    return primary_key_length; 
+    int8store(pack_to, next_id);
+    return sizeof(next_id);
   }
 
   /* Getting here means that there is a PK in this table. Get the
      binary representation of the PK, pack it to BlitzDB's key buffer
      and return the size of it. */
-  primary_key_length = pack_index_key(primary_key_buffer,
-                                      table->s->primary_key);
-  return primary_key_length;
+  return pack_index_key(pack_to, table->s->primary_key);
 }
 
 size_t ha_blitz::pack_index_key(char *pack_to, int key_num) {
@@ -625,7 +636,7 @@ size_t ha_blitz::pack_index_key(char *pack_to, int key_num) {
 
   unsigned char *pos = (unsigned char *)pack_to;
 
-  memset(pack_to, 0, BLITZ_MAX_KEY_LENGTH);
+  memset(pack_to, 0, BLITZ_MAX_KEY_LEN);
 
   /* Loop through key part(s) and pack them. Don't worry about NULL key
      values since this functionality is currently disabled in BlitzDB.*/
@@ -649,7 +660,7 @@ char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
   unsigned char *key_pos = (unsigned char *)native_key;
   unsigned char *keybuf_pos = (unsigned char *)this->key_buffer;
 
-  memset(key_buffer, 0, BLITZ_MAX_KEY_LENGTH);
+  memset(key_buffer, 0, BLITZ_MAX_KEY_LEN);
 
   for (; key_part != key_part_end; key_part++) {
     key_part->field->pack(keybuf_pos, key_pos);

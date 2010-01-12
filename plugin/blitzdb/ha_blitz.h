@@ -40,7 +40,7 @@
 #define BLITZ_SYSTEM_EXT      ".bzs"
 #define BLITZ_MAX_ROW_STACK   2048
 #define BLITZ_MAX_INDEX       1
-#define BLITZ_MAX_KEY_LENGTH  512
+#define BLITZ_MAX_KEY_LEN     1024 
 
 using namespace std;
 
@@ -175,28 +175,26 @@ public:
 
 class ha_blitz: public Cursor {
 private:
-  BlitzShare *share;                     /* Shared object among all threads */
-  THR_LOCK_DATA lock;                    /* Drizzle Lock */
+  BlitzShare *share;         /* Shared object among all threads */
+  THR_LOCK_DATA lock;        /* Drizzle Lock */
 
   /* THREAD STATE */
-  bool table_scan;                       /* Whether a table scan is occuring */
-  bool thread_locked;                    /* Whether the thread is locked */
-  uint32_t sql_command_type;             /* Type of SQL command to process */
+  bool table_scan;           /* Whether a table scan is occuring */
+  bool thread_locked;        /* Whether the thread is locked */
+  uint32_t sql_command_type; /* Type of SQL command to process */
 
   /* KEY GENERATION SPECIFIC VARIABLES */
-  char primary_key_buffer[BLITZ_MAX_KEY_LENGTH];
-  size_t primary_key_length;
-
-  char key_buffer[BLITZ_MAX_KEY_LENGTH]; /* Buffer for key generation */
-  size_t generated_key_length;           /* Length of the generated key */
+  char *key_buffer;          /* Buffer for key generation */
+  size_t key_buffer_len;     /* Key Buffer size */
+  size_t generated_key_len;  /* Length of the generated key */
 
   /* TABLE SCANNER SPECIFIC VARIABLES */
-  char *current_key;                     /* Current key in table scan */
-  const char *current_row;               /* Current row in table scan */
-  int current_key_length;                /* Length of the current key */
-  int current_row_length;                /* Length of the current row */
-  char *updateable_key;                  /* Used in table scan */
-  int updateable_key_length;             /* Length of updateable key */
+  char *current_key;         /* Current key in table scan */
+  const char *current_row;   /* Current row in table scan */
+  int current_key_len;       /* Length of the current key */
+  int current_row_len;       /* Length of the current row */
+  char *updateable_key;      /* Used in table scan */
+  int updateable_key_len;    /* Length of updateable key */
 
   /* ROW PROCESSING SPECIFIC VARIABLES */
   unsigned char pack_buffer[BLITZ_MAX_ROW_STACK]; /* Pack Buffer */
@@ -251,7 +249,7 @@ public:
   int critical_section_enter();
   int critical_section_exit();
   uint32_t max_row_length(void);
-  size_t generate_table_key(void);
+  size_t pack_primary_key(char *pack_to);
   size_t pack_index_key(char *pack_to, int key_num);
   char *native_to_blitz_key(const unsigned char *native_key,
                             const int key_num, int *return_key_length);
@@ -293,8 +291,8 @@ public:
                        set<string>& set_of_names);
 
   uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
-  uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LENGTH; }
-  uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LENGTH; }
+  uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }
+  uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LEN; }
 
   uint32_t index_flags(enum ha_key_alg) const {
     return (HA_ONLY_WHOLE_INDEX | HA_KEYREAD_ONLY);
