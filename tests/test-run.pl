@@ -271,6 +271,7 @@ my $source_dist= 0;
 
 our $opt_max_save_core= 5;
 my $num_saved_cores= 0;  # Number of core files saved in vardir/log/ so far.
+our $mysql_port_offset= 50;
 
 ######################################################################
 #
@@ -930,6 +931,7 @@ sub command_line_setup () {
    path_pid      => "$opt_vardir/run/master.pid",
    path_sock     => "$sockdir/master.sock",
    port          =>  $opt_master_myport,
+   mysql_port    =>  $opt_master_myport + $mysql_port_offset,
    start_timeout =>  400, # enough time create innodb tables
    cluster       =>  0, # index in clusters list
    start_opts    => [],
@@ -945,6 +947,7 @@ sub command_line_setup () {
    path_pid      => "$opt_vardir/run/master1.pid",
    path_sock     => "$sockdir/master1.sock",
    port          => $opt_master_myport + 1,
+   mysql_port    => $opt_master_myport + 1 + $mysql_port_offset,
    start_timeout => 400, # enough time create innodb tables
    cluster       =>  0, # index in clusters list
    start_opts    => [],
@@ -957,9 +960,10 @@ sub command_line_setup () {
    idx           => 0,
    path_myddir   => "$opt_vardir/slave-data",
    path_myerr    => "$opt_vardir/log/slave.err",
-   path_pid    => "$opt_vardir/run/slave.pid",
-   path_sock   => "$sockdir/slave.sock",
-   port   => $opt_slave_myport,
+   path_pid      => "$opt_vardir/run/slave.pid",
+   path_sock     => "$sockdir/slave.sock",
+   port          => $opt_slave_myport,
+   mysql_port    => $opt_slave_myport + $mysql_port_offset,
    start_timeout => 400,
 
    cluster       =>  1, # index in clusters list
@@ -973,9 +977,10 @@ sub command_line_setup () {
    idx           => 1,
    path_myddir   => "$opt_vardir/slave1-data",
    path_myerr    => "$opt_vardir/log/slave1.err",
-   path_pid    => "$opt_vardir/run/slave1.pid",
-   path_sock   => "$sockdir/slave1.sock",
-   port   => $opt_slave_myport + 1,
+   path_pid      => "$opt_vardir/run/slave1.pid",
+   path_sock     => "$sockdir/slave1.sock",
+   port          => $opt_slave_myport + 1,
+   mysql_port    => $opt_slave_myport + 1 + $mysql_port_offset,
    start_timeout => 300,
    cluster       =>  -1, # index in clusters list
    start_opts    => [],
@@ -988,9 +993,10 @@ sub command_line_setup () {
    idx           => 2,
    path_myddir   => "$opt_vardir/slave2-data",
    path_myerr    => "$opt_vardir/log/slave2.err",
-   path_pid    => "$opt_vardir/run/slave2.pid",
-   path_sock   => "$sockdir/slave2.sock",
-   port   => $opt_slave_myport + 2,
+   path_pid      => "$opt_vardir/run/slave2.pid",
+   path_sock     => "$sockdir/slave2.sock",
+   port          => $opt_slave_myport + 2,
+   mysql_port    => $opt_slave_myport + 2 + $mysql_port_offset,
    start_timeout => 300,
    cluster       =>  -1, # index in clusters list
    start_opts    => [],
@@ -1434,6 +1440,9 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysqldump= generate_cmdline_mysqldump($master->[0]);
   my $cmdline_mysqldumpslave= generate_cmdline_mysqldump($slave->[0]);
+  my $cmdline_mysqldumpmysql= mtr_native_path($exe_drizzledump) .
+       " --no-defaults -uroot " .
+       "--mysql --port=$master->[0]->{'mysql_port'} ";
 
   if ( $opt_debug )
   {
@@ -1441,9 +1450,12 @@ sub environment_setup () {
       " --debug=d:t:A,$path_vardir_trace/log/mysqldump-master.trace";
     $cmdline_mysqldumpslave .=
       " --debug=d:t:A,$path_vardir_trace/log/mysqldump-slave.trace";
+    $cmdline_mysqldumpmysql .=
+      " --debug=d:t:A,$path_vardir_trace/log/mysqldump-mysql.trace";
   }
   $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
+  $ENV{'DRIZZLE_DUMP_MYSQL'}= $cmdline_mysqldumpmysql;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlslap
@@ -1454,13 +1466,20 @@ sub environment_setup () {
       mtr_native_path($exe_drizzleslap) .
       " -uroot " .
       "--port=$master->[0]->{'port'} ";
+    my $cmdline_drizzleslapmysql=
+      mtr_native_path($exe_drizzleslap) .
+      " -uroot " .
+      "--mysql --port=$master->[0]->{'mysql_port'} ";
 
     if ( $opt_debug )
    {
       $cmdline_drizzleslap .=
         " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
+      $cmdline_drizzleslapmysql .=
+        " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
     }
     $ENV{'DRIZZLE_SLAP'}= $cmdline_drizzleslap;
+    $ENV{'DRIZZLE_SLAP_MYSQL'}= $cmdline_drizzleslapmysql;
   }
 
 
@@ -1488,8 +1507,13 @@ sub environment_setup () {
     mtr_native_path($exe_drizzle) .
     " --no-defaults --host=localhost  --user=root --password= " .
     "--port=$master->[0]->{'port'} ";
+  my $cmdline_drizzlemysql=
+    mtr_native_path($exe_drizzle) .
+    " --no-defaults --host=localhost  --user=root --password= " .
+    "--mysql --port=$master->[0]->{'mysql_port'} ";
 
   $ENV{'MYSQL'}= $cmdline_mysql;
+  $ENV{'DRIZZLE_MYSQL'}= $cmdline_drizzlemysql;
 
   # ----------------------------------------------------
   # Setup env so childs can execute bug25714
@@ -2470,10 +2494,10 @@ sub mysqld_arguments ($$$$) {
 	      $mysqld->{'path_pid'});
 
   mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
-                $mysqld->{'port'});
+              $mysqld->{'port'});
 
   mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
-                $mysqld->{'port'} + 50);
+              $mysqld->{'mysql_port'});
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});
