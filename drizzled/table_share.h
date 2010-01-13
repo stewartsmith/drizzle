@@ -193,7 +193,7 @@ public:
   LEX_STRING table_cache_key;
   LEX_STRING db;                        /* Pointer to db */
   LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;	/* Path to .frm file (from datadir) */
+  LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 
   uint32_t   block_size;                   /* create information */
@@ -377,7 +377,7 @@ public:
     must start with db name.
     key_length	Length of key
     table_name	Table name
-    path	Path to file (possible in lower case) without .frm
+    path	Path to table (possible in lower case)
 
     NOTES
     This is different from alloc_table_share() because temporary tables

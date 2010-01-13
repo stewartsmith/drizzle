@@ -917,9 +917,6 @@ bool Field_enum::eq_def(Field *field)
   return 1;
 }
 
-/*
-  Make a field from the .frm file info
-*/
 uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {

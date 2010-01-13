@@ -722,8 +722,8 @@ N_("Error while parsing parameter '%-.192s' (line: '%-.192s')"),
 N_("Unexpected end of file while skipping unknown parameter '%-.192s'"),
 /* ER_VIEW_NO_EXPLAIN   */
 N_("EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"),
-/* ER_FRM_UNKNOWN_TYPE   */
-N_("File '%-.192s' has unknown type '%-.64s' in its header"),
+/* ER_UNUSED1346   */
+N_("UNUSED"),
 /* ER_WRONG_OBJECT   */
 N_("'%-.192s.%-.192s' is not %s"),
 /* ER_NONUPDATEABLE_COLUMN   */

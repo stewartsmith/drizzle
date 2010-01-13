@@ -41,6 +41,7 @@ config.h.in
 config.log
 config.status
 config.sub
+config/bzr_revinfo
 config/pandora-plugin.list
 config/plugin-list.ac
 config/plugin-list.am
@@ -48,6 +49,7 @@ config/plugin.ac
 config/plugin.am
 config/plugin.list
 config/plugin.stamp
+config/top.h
 configure
 configvar.gcno
 current_session.gcno
@@ -91,6 +93,8 @@ drizzled/message/transaction.pb.cc
 drizzled/message/transaction.pb.h
 drizzled/message/transaction_reader
 drizzled/message/transaction_writer
+drizzled/plugin/load_list.h
+drizzled/plugin/version.h
 drizzled/schema.pb.cc
 drizzled/schema.pb.h
 drizzled/sql_builtin.cc
@@ -171,6 +175,7 @@ plugin/blackhole/Makefile.in
 plugin/csv/Makefile.in
 plugin/heap/Makefile.in
 plugin/innobase/Makefile.in
+plugin/memcached_functions/start_mc.sh
 plugin/memcached_functions/tests/start_mc.sh
 plugin/myisam/Makefile.in
 plugin/myisam/myisamchk
