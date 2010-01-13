@@ -192,17 +192,43 @@ dnl Config for %(title)s
 """ % plugin)
   for m4_file in plugin_m4_files:
     plugin_ac.write('m4_sinclude([%s])\n' % m4_file)
+  plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
 
-  plugin_ac.write("""
+  if plugin['static']:
+    plugin_ac.write("""
+dnl This plugin is staticly built, which means we cannot live without and it is not
+dnl possible to disable it. Once it is disableable, we will make it non-static.
+with_%(name)s_plugin=yes
+pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
+pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
+PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
+
+""" % plugin)
+    if plugin['testsuite']:
+      plugin_ac.write("""
+pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
+""" % plugin)
+  else:
+    plugin_ac.write("""
 AC_ARG_WITH([%(name_with_dashes)s-plugin],[
-dnl indented werid to make the help output correct
-AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s and enable it. @<:@default=%(default_yesno)s@:>@])
+dnl indented wierd to make the help output correct
+AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=yes@:>@])
 AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
+  ],[
+    with_%(name)s_plugin="$withval"
+    requested_%(name)s_plugin="yes"
+  ],[
+    with_%(name)s_plugin="yes"
+    requested_%(name)s_plugin="no"
+  ])
+AC_ARG_ENABLE([%(name_with_dashes)s-plugin],[
+dnl indented wierd to make the help output correct
+AS_HELP_STRING([--enable-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=%(default_yesno)s@:>@])
+AS_HELP_STRING([--disable-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],
-  [with_%(name)s_plugin="$withval"],
-  [AS_IF([test "x$ac_with_all_plugins" = "xyes"],
-         [with_%(name)s_plugin=yes],
-         [with_%(name)s_plugin=%(default_yesno)s])])
+  [enable_%(name)s_plugin="$withval"],
+  [enable_%(name)s_plugin=%(default_yesno)s])
+
 """ % plugin)
   if os.path.exists(plugin_ac_file):
     plugin_ac.write('m4_sinclude([%s])\n' % plugin_ac_file) 
@@ -215,36 +241,34 @@ AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title
     plugin_ac.write("""
 AS_IF([test %(build_conditional)s],
       [], dnl build_conditional can only negate
-      [with_%(name)s_plugin=no])
+      [
+        AS_IF([test "x${requested_%(name)s_plugin}" = "xyes"],
+              [AC_MSG_ERROR([Plugin %(name)s was explicitly requested, yet failed build dependency checks. Aborting!])])
+        with_%(name)s_plugin=no
+      ])
 
 """ % plugin)
-  plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
   if not plugin['unconditional']:
     plugin_ac.write("""
 AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
     """ % plugin)
-  plugin_ac.write("""
+  if not plugin['static']:
+    plugin_ac.write("""
 AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
 """ % plugin)
-  if plugin['testsuite']:
-    plugin_ac.write("""
+    if plugin['testsuite']:
+      plugin_ac.write("""
         pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
-    """ % plugin)
+      """ % plugin)
 
-  if plugin['static']:
-    #pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
     plugin_ac.write("""
-        pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
-        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
-	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
-""" % plugin)
-  else:
-    plugin_ac.write("""
-        pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
+        AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
+          pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
+        ])
     """ % plugin)
-  plugin_ac.write("      ])\n")
+    plugin_ac.write("      ])\n")
 
 
 def expand_plugin_ini(plugin, plugin_dir):
