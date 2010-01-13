@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-12-22 22:47+0000\n"
+"PO-Revision-Date: 2010-01-12 10:10+0000\n"
 "Last-Translator: Björn Sundberg <sundberg.bjorn@gmail.com>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-12-24 04:38+0000\n"
+"X-Launchpad-Export-Date: 2010-01-13 04:50+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -57,7 +57,7 @@ msgstr "Inaktivera pager, skriv till stdout"
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
-msgstr "Skriv inte till outfile."
+msgstr "Skriv inte till utfil"
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -243,6 +243,12 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
+"Aktivera namngivna kommandon. Programmets interna kommndon är namngivna "
+"kommandon; se dirzzle > hjälp. När namngivna kommandon är aktiverade, kan de "
+"användas från vilken rad som helst i en fråga. Är inte namngivna kommandon "
+"aktiverat kan det endast användas från första raden i en fråga, före enter. "
+"Avaktivera namngivna kommandon med --disable-named-commands. Detta val är "
+"avaktiverat i grundinställningarna."
 
 #: client/drizzle.cc:1473
 msgid ""
@@ -6180,16 +6186,16 @@ msgstr ""
 
 #: plugin/pool_of_threads/pool_of_threads.cc:527
 msgid "libevent_thread_proc: my_thread_init() failed\n"
-msgstr ""
+msgstr "libevent_thread_proc: my_thread_init() misslyckades\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:725
 msgid "Size of Pool."
-msgstr ""
+msgstr "Storlek på poolen"
 
 #: plugin/signal_handler/signal_handler.cc:214
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
-msgstr ""
+msgstr "Kan inte skapa  trådavbrott (error %d, errno: %d)"
 
 #, c-format
 #~ msgid "Unknown command '\\%c'."
