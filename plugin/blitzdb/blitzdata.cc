@@ -179,8 +179,7 @@ char *BlitzData::get_row(const char *key, const size_t klen, int *vlen) {
 char *BlitzData::next_key_and_row(const char *key, const size_t klen,
                                   int *next_key_len, const char **value,
                                   int *value_len) {
-  return tchdbgetnext3(data_table, key, klen, next_key_len,
-                       value, value_len);
+  return tchdbgetnext3(data_table, key, klen, next_key_len, value, value_len);
 }
 
 char *BlitzData::first_row(int *row_len) {

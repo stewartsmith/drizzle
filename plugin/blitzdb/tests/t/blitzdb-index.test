@@ -44,6 +44,7 @@ drop table t1;
 # Test Auto Increment on PK
 create table t1 (id int primary key auto_increment, num int) engine = blitzdb;
 insert into t1 (num) values (1);
+select * from t1;
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);
 insert into t1 (num) values (1);

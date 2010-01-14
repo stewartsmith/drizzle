@@ -111,7 +111,7 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
     BlitzData blitz;
     TCHDB *system_table;
     char *proto_string;
-    int proto_string_length;
+    int proto_string_len;
 
     system_table = blitz.open_table(file_path, BLITZ_SYSTEM_EXT, HDBOREADER);
 
@@ -123,7 +123,7 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
     proto_string = (char *)tchdbget(system_table,
                                     BLITZ_TABLE_PROTO_KEY.c_str(),
                                     BLITZ_TABLE_PROTO_KEY.length(),
-                                    &proto_string_length);
+                                    &proto_string_len);
 
     blitz.close_table(system_table);
 
@@ -132,7 +132,7 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
       return ENOMEM;
     }
 
-    if (!proto->ParseFromArray(proto_string, proto_string_length)) {
+    if (!proto->ParseFromArray(proto_string, proto_string_len)) {
       free(proto_string);
       pthread_mutex_unlock(&proto_cache_mutex);
       return HA_ERR_CRASHED_ON_USAGE;      
@@ -266,14 +266,16 @@ int ha_blitz::rnd_init(bool scan) {
 int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   char *next_key;
   const char *next_row;
-  int next_row_length;
-  int next_key_length;
+  int next_row_len;
+  int next_key_len;
 
   free(updateable_key);
   updateable_key = NULL;
 
-  if (current_key == NULL)
+  if (current_key == NULL) {
+    table->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
+  }
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
 
@@ -282,8 +284,8 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
 
   /* Retrieve both key and row of the next record with one allocation. */
   next_key = share->dict.next_key_and_row(current_key, current_key_len,
-                                          &next_key_length, &next_row,
-                                          &next_row_length);
+                                          &next_key_len, &next_row,
+                                          &next_row_len);
 
   /* Memory region for "current_row" will be freed as "updateable
      key" on the next iteration. This is because "current_key"
@@ -291,7 +293,7 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
      "updateable_key" points to it. If there isn't another iteration
      then it is freed in rnd_end(). */
   current_row = next_row;
-  current_row_len = next_row_length;
+  current_row_len = next_row_len;
 
   /* Remember the current row because delete, update or replace
      function could be called after this function. This pointer is
@@ -302,7 +304,8 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
 
   /* It is now memory-leak-safe to point current_key to next_key. */
   current_key = next_key;
-  current_key_len = next_key_length;
+  current_key_len = next_key_len;
+  table->status = 0;
   return 0;
 }
 
@@ -327,21 +330,21 @@ int ha_blitz::rnd_end() {
 int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
   char *row;
   char *key = NULL;
-  int key_length, row_length;
+  int key_len, row_len;
 
-  memcpy(&key_length, pos, sizeof(key_length));
-  key = reinterpret_cast<char *>(pos + sizeof(key_length));
+  memcpy(&key_len, pos, sizeof(key_len));
+  key = reinterpret_cast<char *>(pos + sizeof(key_len));
 
   /* TODO: Find a better error type. */
   if (key == NULL)
     return HA_ERR_KEY_NOT_FOUND;
 
-  row = share->dict.get_row(key, key_length, &row_length);
+  row = share->dict.get_row(key, key_len, &row_len);
 
   if (row == NULL)
     return HA_ERR_KEY_NOT_FOUND;
 
-  unpack_row(copy_to, row, row_length);
+  unpack_row(copy_to, row, row_len);
 
   /* Let the thread remember the key location on memory if
      the thread is not doing a table scan. This is because
@@ -349,7 +352,7 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
      after this function. */
   if (!table_scan) {
     current_key = key;
-    current_key_len = key_length;
+    current_key_len = key_len;
   }
 
   free(row);
