@@ -1562,7 +1562,7 @@ static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var
 
 static void sys_var_key_cache_block_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
 {
-  uint64_t tmp= *static_cast<const uint64_t *>(save);
+  uint32_t tmp= *static_cast<const uint32_t *>(save);
   bool error= 0;
 
 	struct my_option option_limits;
@@ -1572,7 +1572,7 @@ static void sys_var_key_cache_block_size_update(Session *session, drizzle_sys_va
   if (dflt_key_cache->in_init)
     return;
 
-  myisam_key_cache_block_size= static_cast<uint32_t>(fix_unsigned(session, tmp, &option_limits));
+  myisam_key_cache_block_size= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
 
   dflt_key_cache->in_init= 1;
 
