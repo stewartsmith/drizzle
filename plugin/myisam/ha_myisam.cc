@@ -49,7 +49,7 @@ pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t repair_threads;
 static uint32_t myisam_key_cache_block_size;
-static uint64_t myisam_key_cache_size;
+static uint32_t myisam_key_cache_size;
 static uint32_t myisam_key_cache_division_limit;
 static uint32_t myisam_key_cache_age_threshold;
 static uint64_t max_sort_file_size;
@@ -1537,7 +1537,7 @@ static int myisam_deinit(drizzled::plugin::Registry &registry)
 
 static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
 {
-  uint64_t tmp= *static_cast<const uint64_t *>(save);
+  uint32_t tmp= *static_cast<const uint32_t *>(save);
   bool error= 0;
 
 	struct my_option option_limits;
@@ -1547,7 +1547,7 @@ static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var
   if (dflt_key_cache->in_init)
     return;
 
-  myisam_key_cache_size= fix_unsigned(session, tmp, &option_limits);
+  myisam_key_cache_size= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
 
   /* If key cache didn't existed initialize it, else resize it */
   dflt_key_cache->in_init= 1;
@@ -1669,18 +1669,18 @@ static DRIZZLE_SYSVAR_UINT(key_cache_division_limit, myisam_key_cache_division_l
                             100,
                             0);
 
-static DRIZZLE_SYSVAR_ULONGLONG(key_cache_size,
-                                myisam_key_cache_size,
-                                PLUGIN_VAR_RQCMDARG,
-                                N_("The size of the buffer used for index blocks for MyISAM tables. "
-                                "Increase this to get better index handling (for all reads and multiple "
-                                "writes) to as much as you can afford;"),
-                                NULL,
-                                sys_var_key_cache_size_update,
-                                KEY_CACHE_SIZE,
-                                1 * 1024 * 1024, 
-                                SIZE_MAX,
-                                IO_SIZE);
+static DRIZZLE_SYSVAR_UINT(key_cache_size,
+                            myisam_key_cache_size,
+                            PLUGIN_VAR_RQCMDARG,
+                            N_("The size of the buffer used for index blocks for MyISAM tables. "
+                            "Increase this to get better index handling (for all reads and multiple "
+                            "writes) to as much as you can afford;"),
+                            NULL,
+                            sys_var_key_cache_size_update,
+                            KEY_CACHE_SIZE,
+                            1 * 1024 * 1024, 
+                            UINT32_MAX,
+                            IO_SIZE);
 
 static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
                             PLUGIN_VAR_RQCMDARG,
