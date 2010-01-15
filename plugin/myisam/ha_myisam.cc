@@ -1585,6 +1585,56 @@ static void sys_var_key_cache_block_size_update(Session *session, drizzle_sys_va
   dflt_key_cache->in_init= 0;
 }
 
+static void sys_var_key_cache_division_limit_update(Session *session, drizzle_sys_var *var, void *, const void *save)
+{
+  uint32_t tmp= *static_cast<const uint32_t *>(save);
+  bool error= 0;
+
+	struct my_option option_limits;
+  plugin_opt_set_limits(&option_limits, var);
+	option_limits.name= "myisam_key_cache_division_limit";
+
+  if (dflt_key_cache->in_init)
+    return;
+
+  myisam_key_cache_division_limit= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
+
+  dflt_key_cache->in_init= 1;
+
+  error= ! resize_key_cache(dflt_key_cache,
+														myisam_key_cache_block_size,
+                            myisam_key_cache_size,
+                            myisam_key_cache_division_limit,
+													  myisam_key_cache_age_threshold);
+
+  dflt_key_cache->in_init= 0;
+}
+
+static void sys_var_key_cache_age_threshold_update(Session *session, drizzle_sys_var *var, void *, const void *save)
+{
+  uint32_t tmp= *static_cast<const uint32_t *>(save);
+  bool error= 0;
+
+	struct my_option option_limits;
+  plugin_opt_set_limits(&option_limits, var);
+	option_limits.name= "myisam_key_cache_age_threshold";
+
+  if (dflt_key_cache->in_init)
+    return;
+
+  myisam_key_cache_age_threshold= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
+
+  dflt_key_cache->in_init= 1;
+
+  error= ! resize_key_cache(dflt_key_cache,
+														myisam_key_cache_block_size,
+                            myisam_key_cache_size,
+                            myisam_key_cache_division_limit,
+													  myisam_key_cache_age_threshold);
+
+  dflt_key_cache->in_init= 0;
+}
+
 static DRIZZLE_SYSVAR_UINT(key_cache_block_size,
                             myisam_key_cache_block_size,
                             PLUGIN_VAR_RQCMDARG,
@@ -1602,14 +1652,22 @@ static DRIZZLE_SYSVAR_UINT(key_cache_age_threshold, myisam_key_cache_age_thresho
                             "until it is considered aged enough to be downgraded to a warm block. "
                             "This specifies the percentage ratio of that number of hits to the "
                             "total number of blocks in key cache"),
-                            NULL, NULL, 300, 100, 
-                            UINT32_MAX, 0);
+                            NULL,
+                            sys_var_key_cache_age_threshold_update,
+                            300,
+                            100, 
+                            UINT32_MAX,
+                            0);
 
 static DRIZZLE_SYSVAR_UINT(key_cache_division_limit, myisam_key_cache_division_limit,
                             PLUGIN_VAR_RQCMDARG,
                             N_("The minimum percentage of warm blocks in key cache"),
-                            NULL, NULL, 100, 1, 
-                            100, 0);
+                            NULL,
+                            sys_var_key_cache_division_limit_update,
+                            100,
+                            1, 
+                            100,
+                            0);
 
 static DRIZZLE_SYSVAR_ULONGLONG(key_cache_size,
                                 myisam_key_cache_size,
