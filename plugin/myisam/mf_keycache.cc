@@ -266,7 +266,7 @@ static inline uint32_t next_power(uint32_t value)
 */
 
 int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-		   size_t use_mem, uint32_t division_limit,
+		   uint32_t use_mem, uint32_t division_limit,
 		   uint32_t age_threshold)
 {
   uint32_t blocks, hash_links;
@@ -444,7 +444,7 @@ err:
 */
 
 int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-		     size_t use_mem, uint32_t division_limit,
+		     uint32_t use_mem, uint32_t division_limit,
 		     uint32_t age_threshold)
 {
   int blocks;
