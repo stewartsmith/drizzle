@@ -124,7 +124,7 @@ typedef struct st_key_cache
 extern KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
 
 extern int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-			  size_t use_mem, uint32_t division_limit,
+			  uint32_t use_mem, uint32_t division_limit,
 			  uint32_t age_threshold);
 extern int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 			    uint32_t use_mem, uint32_t division_limit,
