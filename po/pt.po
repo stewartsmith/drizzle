@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-01-02 23:07+0000\n"
+"PO-Revision-Date: 2010-01-16 01:08+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-01-04 04:37+0000\n"
+"X-Launchpad-Export-Date: 2010-01-16 04:35+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1063,6 +1063,9 @@ msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 msgstr ""
+"setrlimit não conseguiu alterar o tamanho dos ficheiros de core para "
+"'infinito'; poderá não ser possível gerar ficheiros de core após recepção de "
+"sinais"
 
 #: drizzled/drizzled.cc:1210
 #, c-format
@@ -1461,6 +1464,9 @@ msgid ""
 "each table it scans. If you do many sequential scans, you may want to "
 "increase this value."
 msgstr ""
+"Cada thread que faz uma pesquisa sequencial aloca um buffer deste tamanho "
+"para cada tabela que pesquisa. Se fizer muitas pesquisas sequenciais pode "
+"querer aumentar este valor."
 
 #: drizzled/drizzled.cc:2003
 msgid ""
@@ -1468,6 +1474,9 @@ msgid ""
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
 "record_buffer."
 msgstr ""
+"Ao fazer a leitura de linhas após uma ordenação elas são lidas através deste "
+"buffer para evitar acesso a disco. Se o buffer não estiver especificado "
+"assume o valor de record_buffer."
 
 #: drizzled/drizzled.cc:2011
 msgid "Select scheduler to be used (by default multi-thread)."
@@ -2046,6 +2055,7 @@ msgstr ""
 #, c-format
 msgid "Can't DROP '%-.192s'; check that column/key exists"
 msgstr ""
+"Não é possível fazer DROP a '%-.192s'; verificar se a coluna/chave existe"
 
 #: drizzled/error.cc:218
 #, c-format
@@ -2075,7 +2085,7 @@ msgstr "Nenhuma tabela utilizada"
 #: drizzled/error.cc:228
 #, c-format
 msgid "Too many strings for column %-.192s and SET"
-msgstr ""
+msgstr "Demasiadas strings para a coluna %-.192s e SET"
 
 #: drizzled/error.cc:230
 #, c-format
