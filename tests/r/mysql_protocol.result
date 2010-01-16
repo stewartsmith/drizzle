@@ -16,16 +16,3 @@ SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 DROP TABLE t1;
 drizzled is alive
-Benchmark
-	Load: mixed
-	Average Time took to generate schema and initial data: 0.000 seconds
-	Average number of seconds to run all queries: 0.000 seconds
-	Minimum number of seconds to run all queries: 0.000 seconds
-	Maximum number of seconds to run all queries: 0.000 seconds
-	Total time for tests: 0.000 seconds
-	Standard Deviation: 0.000
-	Number of queries in create queries: 0
-	Number of clients running queries: 1/0
-	Number of times test was run: 1
-	Average number of queries per client: 0
-

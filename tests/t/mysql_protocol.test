@@ -10,4 +10,4 @@ DROP TABLE t1;
 
 --exec $DRIZZLE_MYSQL --ping
 
---exec $DRIZZLE_SLAP_MYSQL
+--exec $DRIZZLE_SLAP_MYSQL --silent
