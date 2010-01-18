@@ -51,12 +51,12 @@ bool MultiThreadScheduler::addSession(Session *session)
   if (thread_count >= max_threads)
     return true;
 
-  thread_count++;
+  thread_count.increment();
 
   if (pthread_create(&session->real_id, &attr, session_thread,
                      static_cast<void*>(session)))
   {
-    thread_count--;
+    thread_count.decrement();
     return true;
   }
 
@@ -68,7 +68,7 @@ void MultiThreadScheduler::killSessionNow(Session *session)
 {
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
-  thread_count--;
+  thread_count.decrement();
   my_thread_end();
   pthread_exit(0);
   /* We should never reach this point. */

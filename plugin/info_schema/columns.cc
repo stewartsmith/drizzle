@@ -239,7 +239,7 @@ plugin::InfoSchemaTable *ColumnsIS::getTable()
     cols_table= new plugin::InfoSchemaTable("COLUMNS",
                                             *columns,
                                             1, 2, false, true,
-                                            OPTIMIZE_I_S_TABLE,
+                                            0,
                                             methods);
   }
 

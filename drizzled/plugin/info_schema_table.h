@@ -22,7 +22,7 @@
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/hash/crc32.h"
+#include "drizzled/algorithm/crc32.h"
 #include "drizzled/common.h"
 
 #include <cstring>
@@ -323,7 +323,30 @@ public:
       requested_object(req_object),
       column_info(in_column_info),
       rows(),
-      i_s_methods(in_methods)
+      i_s_methods(in_methods),
+      plugin_name("")
+  {}
+
+  InfoSchemaTable(const std::string& tab_name,
+                  Columns& in_column_info,
+                  int idx_col1,
+                  int idx_col2,
+                  bool in_hidden,
+                  bool in_opt_possible,
+                  uint32_t req_object,
+                  InfoSchemaMethods *in_methods,
+                  const std::string in_plugin_name)
+    :
+      Plugin(tab_name, "InfoSchemaTable"),
+      hidden(in_hidden),
+      is_opt_possible(in_opt_possible),
+      first_column_index(idx_col1),
+      second_column_index(idx_col2),
+      requested_object(req_object),
+      column_info(in_column_info),
+      rows(),
+      i_s_methods(in_methods),
+      plugin_name(in_plugin_name)
   {}
 
   explicit InfoSchemaTable(const std::string& tab_name)
@@ -336,7 +359,8 @@ public:
       requested_object(0),
       column_info(),
       rows(),
-      i_s_methods(NULL)
+      i_s_methods(NULL),
+      plugin_name("")
   {}
 
   virtual ~InfoSchemaTable()
@@ -486,6 +510,14 @@ public:
   }
 
   /**
+   * @return the plugin name.
+   */
+  const std::string &getPluginName() const
+  {
+    return plugin_name;
+  }
+
+  /**
    * @return the columns for this I_S table
    */
   const Columns &getColumns() const
@@ -523,7 +555,7 @@ public:
    */
   void addRow(unsigned char *buf, size_t len)
   {
-    uint32_t cs= drizzled::hash::crc32((const char *) buf, len);
+    uint32_t cs= drizzled::algorithm::crc32((const char *) buf, len);
     Rows::iterator it= std::find_if(rows.begin(),
                                     rows.end(),
                                     FindRowByChecksum(cs));
@@ -588,6 +620,12 @@ private:
    * Contains the methods available on this I_S table.
    */
   InfoSchemaMethods *i_s_methods;
+
+  /**
+   * The name of the plugin associated with this I_S table
+   * NULL for non I_S tables. 
+   */ 
+  const std::string plugin_name; 
 
 public:
   static bool addPlugin(plugin::InfoSchemaTable *schema_table);

@@ -18,7 +18,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "drizzled/internal/my_dir.h"
 #include "drizzled/my_error.h"
 
 	/*

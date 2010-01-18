@@ -188,7 +188,7 @@ char *BlitzData::first_row(int *row_len) {
 
 uint64_t BlitzData::next_hidden_row_id(void) {
   /* current_hidden_row_id is an atomic type */
-  uint64_t rv = current_hidden_row_id++;
+  uint64_t rv = current_hidden_row_id.increment();
   return rv;
 }
 

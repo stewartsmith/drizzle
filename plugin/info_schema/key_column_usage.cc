@@ -174,7 +174,7 @@ plugin::InfoSchemaTable *KeyColumnUsageIS::getTable()
     key_col_table= new plugin::InfoSchemaTable("KEY_COLUMN_USAGE",
                                                *columns,
                                                4, 5, false, true,
-                                               OPEN_TABLE_ONLY,
+                                               0,
                                                methods);
   }
 

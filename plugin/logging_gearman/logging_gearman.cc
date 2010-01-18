@@ -23,6 +23,14 @@
 #include <drizzled/session.h>
 
 #include <libgearman/gearman.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+using namespace drizzled;
 
 
 /* TODO make this dynamic as needed */
@@ -37,7 +45,6 @@ static char* sysvar_logging_gearman_function= NULL;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)

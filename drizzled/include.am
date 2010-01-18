@@ -1,3 +1,7 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
 #  Copyright (C) 2008 Sun Microsystems
 # 
 #  This program is free software; you can redistribute it and/or modify
@@ -16,7 +20,7 @@
 
 sbin_PROGRAMS= drizzled/drizzled
 
-DTRACEFILES = drizzled/.libs/cursor.o \
+DTRACEFILES = drizzled/cursor.o \
 	      drizzled/sql_select.o \
 	      drizzled/filesort.o \
 	      drizzled/drizzled.o \
@@ -422,12 +426,14 @@ nobase_dist_include_HEADERS+= \
 
 DRIZZLED_LDADD= \
 		 drizzled/internal/libinternal.la \
-		$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
+                 $(LIBZ) \
+                 $(LIBINTL) \
+                 ${LIBC_P}
 
 drizzled_drizzled_LDADD= \
 		${DRIZZLED_LDADD} \
 		${noinst_LTLIBRARIES} \
-		drizzled/hash/libhash.la \
+		drizzled/algorithm/libhash.la \
 		drizzled/util/libutil.la \
 		drizzled/message/libdrizzledmessage.la \
 		drizzled/libcached_directory.la \
@@ -450,6 +456,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/comp_creator.cc \
 		drizzled/create_field.cc \
 		drizzled/current_session.cc \
+		drizzled/cursor.cc \
 		drizzled/decimal.cc \
 		drizzled/diagnostics_area.cc \
 		drizzled/drizzled.cc \
@@ -659,6 +666,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/plugin/query_cache.cc \
 		drizzled/plugin/registry.cc \
 		drizzled/plugin/scheduler.cc \
+		drizzled/plugin/storage_engine.cc \
 		drizzled/plugin/transaction_applier.cc \
 		drizzled/plugin/transaction_replicator.cc \
 		drizzled/query_id.cc \
@@ -749,7 +757,6 @@ noinst_LTLIBRARIES += \
 		drizzled/libdynamic_array.la \
 		drizzled/liberror.la \
 		drizzled/libgetopt.la \
-		drizzled/libhandler.la \
 		drizzled/libmemory.la \
 		drizzled/libserialutil.la \
 		drizzled/libtypelib.la
@@ -761,8 +768,6 @@ drizzled_libgetopt_la_SOURCES = drizzled/my_getopt.cc
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
-
-drizzled_libhandler_la_SOURCES = drizzled/cursor.cc drizzled/plugin/storage_engine.cc
 
 drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc
 drizzled_libmemory_la_SOURCES= \
@@ -841,9 +846,10 @@ if BUILD_GCC_PCH
 	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
 
-.d.o : $(DTRACEFILES)
-	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
-	mv probes.o drizzled/probes.o
+drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
+
+.d.o:
+	$(DTRACE) $(DTRACEFLAGS) -o $@ -G -s $< $(DTRACEFILES)
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h

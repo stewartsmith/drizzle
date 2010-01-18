@@ -743,7 +743,7 @@ extern "C" void end_thread_signal(int )
 
 void Session::unlink(Session *session)
 {
-  connection_count--;
+  connection_count.decrement();
 
   session->cleanup();
 

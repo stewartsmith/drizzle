@@ -1,0 +1,10 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+
+extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
+extra_my_print_defaults_LDADD= \
+		drizzled/internal/libinternal.la \
+		gnulib/libgnu.la \
+		$(LIBINTL)

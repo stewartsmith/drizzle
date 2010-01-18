@@ -55,9 +55,10 @@ class CachedDirectory
 public:
   class Entry
   {
+    Entry();
   public:
     std::string filename;
-    Entry(std::string in_name)
+    explicit Entry(std::string in_name)
       : filename(in_name)
     {}
   };

@@ -57,66 +57,9 @@ DISTCLEANFILES=		ac_available_languages_fragment \
 
 MAINTAINERCLEANFILES=	autom4te.cache
 
-CLIENT_LDADD=\
-		drizzled/internal/libinternal.la \
-		$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
-		gnulib/libgnu.la \
-		client/libgetpassword.la
-
-noinst_LTLIBRARIES+= \
-		client/libgetpassword.la
-
-noinst_PROGRAMS+=\
-		client/drizzletest \
-		extra/my_print_defaults
-
-bin_PROGRAMS= \
-		client/drizzle \
-		client/drizzledump \
-		client/drizzleimport \
-		client/drizzleslap
-
-man_MANS=\
-		client/drizzle.1 \
-		client/drizzled.8 \
-		client/drizzledump.1 \
-		client/drizzleimport.1 \
-		client/drizzleslap.1
-
-client_libgetpassword_la_SOURCES= client/get_password.cc
-
-noinst_HEADERS+=\
-		client/client_priv.h \
-		client/errname.h \
-		client/get_password.h \
-		client/linebuffer.h \
-		drizzled/configmake.h
-
-
-client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
-client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
-
-client_drizzledump_SOURCES=	client/drizzledump.cc
-client_drizzledump_LDADD=	${CLIENT_LDADD}
-
-client_drizzleimport_SOURCES=	client/drizzleimport.cc
-client_drizzleimport_LDADD=	${CLIENT_LDADD}
-
-client_drizzleslap_SOURCES=	client/drizzleslap.cc
-client_drizzleslap_LDADD=	${CLIENT_LDADD}
-
-client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
-client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
-
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
 include config/pandora-plugin.am
-
-extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
-extra_my_print_defaults_LDADD= \
-		drizzled/internal/libinternal.la \
-		gnulib/libgnu.la \
-		$(LIBINTL)
 
 EXTRA_DIST+=	${man_MANS}
 
@@ -193,8 +136,16 @@ include config/lint-source.am
 
 include drizzled/include.am
 include drizzled/internal/include.am
-include drizzled/hash/include.am
+include drizzled/algorithm/include.am
 include drizzled/util/include.am
 include drizzled/message/include.am
+include client/include.am
+include extra/include.am
 include support-files/include.am
 include tests/include.am
+
+merge-clean:
+	find ./ | $(GREP) \.orig | xargs rm -f
+	find ./ | $(GREP) \.rej | xargs rm -f
+	find ./ | $(GREP) \~$$ | xargs rm -f
+	bzr unknowns
