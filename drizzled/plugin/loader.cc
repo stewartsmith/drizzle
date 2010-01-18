@@ -26,6 +26,7 @@
 #include "drizzled/my_hash.h"
 #include "drizzled/internal/m_string.h"
 
+#include "drizzled/plugin.h"
 #include "drizzled/plugin/load_list.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/show.h"
@@ -114,15 +115,6 @@ struct st_bookmark
 
 
 /*
-  skeleton of a plugin variable - portion of structure common to all.
-*/
-struct drizzle_sys_var
-{
-  DRIZZLE_PLUGIN_VAR_HEADER;
-};
-
-
-/*
   sys_var class for access to all plugin variables visible to the user
 */
 class sys_var_pluginvar: public sys_var
@@ -161,9 +153,6 @@ static int test_plugin_options(memory::Root *, plugin::Module *,
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
-static void plugin_opt_set_limits(struct my_option *options,
-                                  const drizzle_sys_var *opt);
-
 
 /* declared in set_var.cc */
 extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
@@ -1508,8 +1497,8 @@ bool sys_var_pluginvar::update(Session *session, set_var *var)
   options->block_size= (long) (opt)->blk_sz
 
 
-static void plugin_opt_set_limits(struct my_option *options,
-                                  const drizzle_sys_var *opt)
+void plugin_opt_set_limits(struct my_option *options,
+													 const drizzle_sys_var *opt)
 {
   options->sub_size= 0;
 
