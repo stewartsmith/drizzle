@@ -102,3 +102,31 @@ select count (id) from t1;
 select count (*) from t1;
 select * from t1;
 drop table t1;
+
+# Test UPDATE on a VARCHAR key
+create table t1 (id varchar(255) primary key, num int) engine = blitzdb;
+insert into t1 values ('a', 1);
+insert into t1 values ('b', 2);
+insert into t1 values ('c', 3);
+insert into t1 values ('d', 4);
+insert into t1 values ('e', 5);
+select * from t1;
+
+--error 1062
+update t1 set id = 'b' where id = 'a';
+--error 1062
+update t1 set id = 'c' where id = 'b';
+--error 1062
+update t1 set id = 'd' where id = 'c';
+--error 1062
+update t1 set id = 'e' where id = 'd';
+
+update t1 set id = 'f' where id = 'a';
+update t1 set id = 'g' where id = 'b';
+update t1 set id = 'h' where id = 'c';
+update t1 set id = 'i' where id = 'd';
+update t1 set id = 'j' where id = 'e';
+
+select * from t1;
+
+drop table t1;

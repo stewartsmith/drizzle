@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Toru Maesaka
+ *  Copyright (C) 2009 - 2010 Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -245,17 +245,27 @@ public:
                                   uint64_t *nb_reserved_values);
   int reset_auto_increment(uint64_t value);
 
-  /* BLITZDB THREAD SPECIFIC FUNCTIONS */
+  /* LOCK RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   int critical_section_enter();
   int critical_section_exit();
   uint32_t max_row_length(void);
+
+  /* INDEX KEY RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   size_t pack_primary_key(char *pack_to);
   size_t pack_index_key(char *pack_to, int key_num);
+  size_t pack_index_key_from_row(char *pack_to, int key_num,
+                                 const unsigned char *row);
   char *native_to_blitz_key(const unsigned char *native_key,
                             const int key_num, int *return_key_length);
+
+  /* ROW RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
   bool unpack_row(unsigned char *to, const char *from, const size_t from_len);
   unsigned char *get_pack_buffer(const size_t size);
+
+  /* COMAPARISON LOGIC (BLITZDB SPECIFIC) */
+  int compare_rows_for_unique_violation(const unsigned char *old_row,
+                                        const unsigned char *new_row);
 };
 
 class BlitzEngine : public drizzled::plugin::StorageEngine {

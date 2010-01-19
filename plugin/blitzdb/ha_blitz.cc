@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Toru Maesaka
+ *  Copyright (C) 2009 - 2010 Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -527,11 +527,11 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   return rv;
 }
 
-int ha_blitz::update_row(const unsigned char *,
+int ha_blitz::update_row(const unsigned char *old_row,
                          unsigned char *new_row) {
   size_t row_len = max_row_length();
   unsigned char *row_buf = get_pack_buffer(row_len);
-  int rv = -1;
+  int rv = 0;
 
   ha_statistic_increment(&SSV::ha_update_count);
 
@@ -545,36 +545,41 @@ int ha_blitz::update_row(const unsigned char *,
       return rv;
     }
 
-    /* When updating cached rows, Drizzle and MySQL calls rnd_pos()
-       prior to calling update_row(). If this is a keyless table,
-       BlitzDB has kept a pointer to the key on memory and the length
-       of it in 'current_key' and 'current_key_len'.
-
-       Furthermore, it is impossible for the key value to have updated 
-       if a primary key isn't defined. This is because Drizzle knows
-       nothing about BlitzDB's internal row-id for keyless tables. */
-    if (share->primary_key_exists) {
-      /* Take a diff beween primary keys of the old row and the new row.
-         If it has changed then do the appropriate thing:
-
-         (1) If updated, then see if the new primary key doesn't clash
-             with an existing row. If it doesn't then write a new row
-             with it then delete a row from BlitzDB based on the old
-             primary key.
-
-         This is unimplemented at the moment because index support for
-         BlitzDB hasn't been worked on yet. */
-    }
-
-    row_len = pack_row(row_buf, new_row);
-    rv = share->dict.write_row(current_key, current_key_len, row_buf, row_len);
-
-    /* Don't free this pointer because drizzled will */
+    /* This is for: 'UPDATE t1 SET id = id+1 ORDER BY id LIMIT 2' */
     if (current_key) {
+      row_len = pack_row(row_buf, new_row);
+      rv = share->dict.write_row(current_key, current_key_len, row_buf, row_len);
+
+      /* Don't free this pointer because drizzled will free the original */
       current_key = NULL;
       current_key_len = 0;
+      return rv;
     }
+
+    /* Check for Unique Constraint Violations. For now it only checks PK. */
+    if ((rv = compare_rows_for_unique_violation(old_row, new_row)) != 0)
+      return rv;
+
+    /* Check if the old key is in the database. If it is then delete
+       it before writing the row with a new key. TODO: delete_keys(); */
+    char *key, *fetched;
+    int klen, fetched_len;
+
+    key = key_buffer;
+    klen = pack_index_key_from_row(key, table->s->primary_key, old_row);
+    fetched = share->dict.get_row(key, klen, &fetched_len);
+
+    if (fetched != NULL) {
+      share->dict.delete_row(key, klen);
+      free(fetched);
+    }
+
+    /* It is now safe to write the new row. */
+    row_len = pack_row(row_buf, new_row);
+    klen = pack_index_key_from_row(key, table->s->primary_key, new_row);
+    rv = share->dict.write_row(key, klen, row_buf, row_len);
   }
+
   return rv;
 }
 
@@ -646,6 +651,30 @@ size_t ha_blitz::pack_index_key(char *pack_to, int key_num) {
   for (; key_part != key_part_end; key_part++) {
     key_part->field->pack(pos, key_part->field->ptr);
     pos += key_part->field->pack_length();
+    packed_length += key_part->field->pack_length();
+  }
+
+  return packed_length;
+}
+
+/* This function is different to other key pack functions in a way that
+   it will generate a key from a Drizzle row. */
+size_t ha_blitz::pack_index_key_from_row(char *pack_to, int key_num,
+                                         const unsigned char *row) {
+  KEY *key = &table->key_info[key_num];
+  KEY_PART_INFO *key_part = key->key_part;
+  KEY_PART_INFO *key_part_end = key_part + key->key_parts;
+  unsigned char *pack_pos = (unsigned char *)pack_to;
+  unsigned char *row_pos;
+  size_t packed_length = 0;
+
+  memset(pack_to, 0, BLITZ_MAX_KEY_LEN);
+
+  for (; key_part != key_part_end; key_part++) {
+    row_pos = (unsigned char *)row;
+    row_pos += key_part->offset;
+    key_part->field->pack(pack_pos, row_pos);
+    pack_pos += key_part->field->pack_length();
     packed_length += key_part->field->pack_length();
   }
 
