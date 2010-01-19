@@ -81,6 +81,7 @@ static void field_escape(string &in, const char *from);
 static bool  verbose= false;
 static bool opt_no_create_info= false;
 static bool opt_no_data= false;
+static bool opt_mysql= false;
 static bool quick= true;
 static bool extended_insert= true;
 static bool ignore_errors= false;
@@ -257,6 +258,9 @@ static struct my_option my_long_options[] =
    "dump. Automatically turns --single-transaction and --lock-tables off.",
    (char**) &opt_lock_all_tables, (char**) &opt_lock_all_tables, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"no-autocommit", OPT_AUTOCOMMIT,
    "Wrap tables with autocommit/commit statements.",
    (char**) &opt_autocommit, (char**) &opt_autocommit, 0, GET_BOOL, NO_ARG,
@@ -913,6 +917,8 @@ static int connect_to_db(char *host, char *user,char *passwd)
   drizzle_con_create(&drizzle, &dcon);
   drizzle_con_set_tcp(&dcon, host, opt_drizzle_port);
   drizzle_con_set_auth(&dcon, user, passwd);
+  if (opt_mysql)
+    drizzle_con_add_options(&dcon, DRIZZLE_CON_MYSQL);
   ret= drizzle_con_connect(&dcon);
   if (ret != DRIZZLE_RETURN_OK)
   {
