@@ -28,17 +28,17 @@ using namespace std;
 using namespace drizzled;
 
 namespace {
-  char const* func_name = "rot13";
+  char const* rot13 = "rot13";
 }
 
 class Item_func_rot13 : public Item_str_func
 {
 public:
   Item_func_rot13() : Item_str_func() {}
-  const char *func_name() const { return func_name; }
+  const char *func_name() const { return rot13; }
 
   String *val_str(String* s) {
-    return args[0]->val_str(&s);
+    return args[0]->val_str(s);
   };
 
   void fix_length_and_dec() {
@@ -56,7 +56,7 @@ plugin::Create_function<Item_func_rot13> *rot13_func = NULL;
 static int rot13_plugin_init(drizzled::plugin::Registry &registry)
 {
   rot13_func =
-    new plugin::Create_function<Item_func_rot13>(func_name);
+    new plugin::Create_function<Item_func_rot13>(rot13);
   registry.add(rot13_func);
   return 0;
 }
@@ -68,4 +68,4 @@ static int rot13_plugin_deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL);
+DRIZZLE_PLUGIN(rot13_plugin_init, rot13_plugin_deinit, NULL, NULL);
