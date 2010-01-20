@@ -24,6 +24,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 using namespace drizzled;
@@ -34,17 +35,18 @@ namespace
 
   std::string rot13(std::string const& s)
   {
-    std::ostringstring sout;
+    std::ostringstream sout;
     for (std::size_t i = 0, max = s.length(); i < max; ++i)
     {
       const char& c = s[i];
       if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
-        sout << c + 13;
+        sout << char(c + 13);
       else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
-        sout << c - 13;
+        sout << char(c - 13);
       else
         sout << c;
     }
+
     return sout.str();
   }
 
@@ -58,7 +60,9 @@ public:
   const char *func_name() const { return rot13_name; }
 
   String *val_str(String* s) {
-    std::string to_rot = String_to_std_string(*s);
+    String val;
+    String* other = args[0]->val_str(&val);
+    std::string to_rot = String_to_std_string(*other);
     return set_String_from_std_string(s, rot13(to_rot));
   };
 
