@@ -46,7 +46,7 @@ class Error_message_notify : public plugin::ErrorMessage
 public:
   Error_message_notify()
    : plugin::ErrorMessage("Error_message_notify"),
-     errmsg_tags(5)
+     errmsg_tags()
   {
     errmsg_tags.push_back("Unknown");
     errmsg_tags.push_back("Debug");
@@ -63,12 +63,12 @@ public:
     prv= vsnprintf(msgbuf, MAX_MSG_LEN, format, ap);
     if (prv < 0) return true;
 
-    Notify::Notification n(errmsg_tags[priority], msgbuf);
+    Notify::Notification n(errmsg_tags[priority].c_str(), msgbuf);
     /**
      * @TODO: Make this timeout a system variable
      */
     n.set_timeout(3000);
-    
+
 #ifdef GLIBMM_EXCEPTIONS_ENABLED
     try
     {
@@ -78,7 +78,7 @@ public:
       if (!n.show(error))
 #endif
       {
-        fprintf(stderr, "Failed to send error message to libnotify\n");
+        fprintf(stderr, _("Failed to send error message to libnotify\n"));
         return true;
       }
 #ifdef GLIBMM_EXCEPTIONS_ENABLED
@@ -89,7 +89,8 @@ public:
      }
 #endif
 
-    return false;
+  return false;
+  
   }
 };
 
