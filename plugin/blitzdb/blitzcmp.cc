@@ -37,7 +37,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
     KEY_PART_INFO *key_part_end = key_part + pk->key_parts;
     int key_changed = 0;
 
-    for (; key_part != key_part_end; key_part++) {
+    while (key_part != key_part_end) {  
       old_pos = old_row + key_part->offset;
       new_pos = new_row + key_part->offset;
 
@@ -52,13 +52,16 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
         /* Compare the actual data by repecting it's collation. */
         key_changed = my_strnncoll(&my_charset_utf8_general_ci, old_pos,
                                    old_key_len, new_pos, new_key_len);
-      } else {
+      } else if (key_part->type == HA_KEYTYPE_BINARY) {
         return HA_ERR_UNSUPPORTED;
+      } else {
+        key_changed = memcmp(old_pos, new_pos, key_part->length);
       }
+      key_part++;
     }
 
     /* Key has changed. Look up the database to see if the new value
-       would break the unique contraint violation. */
+       would violate the unique contraint. */
     if (key_changed) {
       key = key_buffer;
       key_len = pack_index_key_from_row(key, table->s->primary_key, new_row);

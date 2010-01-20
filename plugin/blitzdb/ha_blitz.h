@@ -245,6 +245,9 @@ public:
                                   uint64_t *nb_reserved_values);
   int reset_auto_increment(uint64_t value);
 
+  /* UTILITY FUNCTIONS (BLITZDB SPECIFIC) */
+  BlitzShare *get_share(const char *table_name);
+
   /* LOCK RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   int critical_section_enter();
   int critical_section_exit();

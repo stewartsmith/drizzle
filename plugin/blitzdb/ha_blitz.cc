@@ -20,7 +20,6 @@
 #include "ha_blitz.h"
 #include <sys/stat.h>
 
-static BlitzShare *get_share(const char *table_name);
 static int free_share(BlitzShare *share);
 static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;
@@ -199,21 +198,13 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
   secondary_row_buffer = NULL;
   secondary_row_buffer_size = 0;
 
-  share->nkeys = table->s->keys;
-  share->fixed_length_table = !(table->s->db_create_options
-                                & HA_OPTION_PACK_RECORD);
-
-  if (table->s->primary_key >= MAX_KEY) {
-    share->primary_key_exists = false;
-    ref_length = sizeof(updateable_key_len) + sizeof(uint64_t);
+  /* 'ref_length' determines the size of the buffer that the kernel
+     will use to uniquely identify a row. The actual allocation is
+     done by the kernel so all we do here is specify the size of it.*/
+  if (share->primary_key_exists) {
+    ref_length = table->key_info[table->s->primary_key].key_length;
   } else {
-    share->primary_key_exists = true;
-
-    /* TODO: This makes sense but it is asking for more memory
-             than it should need in general. Investigate how to
-             optimize it. One idea is to find the largest possible
-             key size within the array. */
-    ref_length = BLITZ_MAX_KEY_LEN;
+    ref_length = sizeof(updateable_key_len) + sizeof(uint64_t);
   }
 
   pthread_mutex_unlock(&blitz_utility_mutex);
@@ -778,43 +769,52 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
 
 static BlitzEngine *blitz_engine = NULL;
 
-static BlitzShare *get_share(const char *table_name) {
-  int length, vlen;
-  BlitzShare *share;
+BlitzShare *ha_blitz::get_share(const char *table_name) {
+  int len, vlen;
+  BlitzShare *share_ptr;
 
   pthread_mutex_lock(&blitz_utility_mutex);
-  length = (int)strlen(table_name);
+  len = (int)strlen(table_name);
 
   /* Look up the table cache to see if the table resource is available */
-  const void *cached = tcmapget(blitz_table_cache, table_name, length, &vlen);
+  const void *cached = tcmapget(blitz_table_cache, table_name, len, &vlen);
   
   /* Check before dereferencing */
   if (cached) {
-    share = *(BlitzShare **)cached;
-    share->use_count++;
+    share_ptr = *(BlitzShare **)cached;
+    share_ptr->use_count++;
     pthread_mutex_unlock(&blitz_utility_mutex);
-    return share;
+    return share_ptr;
   }
 
   /* Table wasn't cached so create a new table handler */
-  share = new BlitzShare();
+  share_ptr = new BlitzShare();
 
   /* Allocate and open all necessary resources for this table */
-  if (!share->dict.startup(table_name)) {
-    share->dict.shutdown();
-    delete share;
+  if (!share_ptr->dict.startup(table_name)) {
+    share_ptr->dict.shutdown();
+    delete share_ptr;
     pthread_mutex_unlock(&blitz_utility_mutex);
     return NULL;
   }
 
-  share->auto_increment_value = share->dict.autoinc_in_system_table();
-  share->table_name.append(table_name);
-  share->use_count = 1;
+  share_ptr->auto_increment_value = share_ptr->dict.autoinc_in_system_table();
+  share_ptr->table_name.append(table_name);
+  share_ptr->nkeys = table->s->keys;
+  share_ptr->use_count = 1;
+
+  share_ptr->fixed_length_table = !(table->s->db_create_options
+                                    & HA_OPTION_PACK_RECORD);
+
+  if (table->s->primary_key >= MAX_KEY)
+    share_ptr->primary_key_exists = false;
+  else
+    share_ptr->primary_key_exists = true;
 
   /* Cache the memory address of the object */
-  tcmapput(blitz_table_cache, table_name, length, &share, sizeof(share));
+  tcmapput(blitz_table_cache, table_name, len, &share_ptr, sizeof(share_ptr));
   pthread_mutex_unlock(&blitz_utility_mutex);
-  return share;
+  return share_ptr;
 }
 
 static int free_share(BlitzShare *share) {
