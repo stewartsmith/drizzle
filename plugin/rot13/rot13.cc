@@ -23,22 +23,43 @@
 #include <drizzled/function/str/strfunc.h>
 
 #include <string>
+#include <sstream>
 
 using namespace std;
 using namespace drizzled;
 
-namespace {
-  char const* rot13 = "rot13";
+namespace
+{
+  char const* rot13_name = "rot13";
+
+  std::string rot13(std::string const& s)
+  {
+    std::ostringstring sout;
+    for (std::size_t i = 0, max = s.length(); i < max; ++i)
+    {
+      const char& c = s[i];
+      if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
+        sout << c + 13;
+      else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
+        sout << c - 13;
+      else
+        sout << c;
+    }
+    return sout.str();
+  }
+
 }
+
 
 class Item_func_rot13 : public Item_str_func
 {
 public:
   Item_func_rot13() : Item_str_func() {}
-  const char *func_name() const { return rot13; }
+  const char *func_name() const { return rot13_name; }
 
   String *val_str(String* s) {
-    return args[0]->val_str(s);
+    std::string to_rot = String_to_std_string(*s);
+    return set_String_from_std_string(s, rot13(to_rot));
   };
 
   void fix_length_and_dec() {
@@ -56,7 +77,7 @@ plugin::Create_function<Item_func_rot13> *rot13_func = NULL;
 static int rot13_plugin_init(drizzled::plugin::Registry &registry)
 {
   rot13_func =
-    new plugin::Create_function<Item_func_rot13>(rot13);
+    new plugin::Create_function<Item_func_rot13>(rot13_name);
   registry.add(rot13_func);
   return 0;
 }

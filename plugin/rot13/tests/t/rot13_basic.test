@@ -1,1 +1,8 @@
-select rot13("hello world");
+SELECT ROT13("hello world");
+
+# Check for error if no parameter provided
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
+SELECT ROT13();
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
+SELECT ROT13('foo','bar','zoo');
+SELECT ROT13('');
