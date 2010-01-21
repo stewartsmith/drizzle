@@ -32,11 +32,6 @@ using namespace std;
 
 // Converstion functions to and from std::string.
 
-String std_string_to_String(std::string const& s)
-{
-   return String(s.c_str(), s.length(), system_charset_info);
-}
-
 std::string String_to_std_string(String const& s)
 {
    return std::string(s.ptr(), s.length());
@@ -45,6 +40,7 @@ std::string String_to_std_string(String const& s)
 String* set_String_from_std_string(String* s, std::string const& cs)
 {
    s->set_ascii(cs.c_str(), cs.length());
+   s->copy();
    return s;
 }
 
