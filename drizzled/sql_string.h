@@ -44,7 +44,6 @@ typedef struct charset_info_st CHARSET_INFO;
 extern "C" {
 #endif
 
-  String std_string_to_String(std::string const& s);
   std::string String_to_std_string(String const& s);
   String* set_String_from_std_string(String* s, std::string const& cs);
 
