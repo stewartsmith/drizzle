@@ -52,11 +52,12 @@ namespace plugin
         return sout.str();
       }
     }
+
     class Function : public Item_str_func
     {
     public:
       Function() : Item_str_func() {}
-      const char *func_name() const { return name; }
+      const char *func_name() const { return rot13::name; }
 
       String *val_str(String *s)
       {
@@ -84,7 +85,7 @@ namespace plugin
 
     static int init(Registry &registry)
     {
-      rot13_func= new PluginFunction(name);
+      rot13_func= new PluginFunction(rot13::name);
       registry.add(rot13_func);
       return 0;
     }
