@@ -28,73 +28,77 @@
 
 namespace plugin
 {
-  namespace rot13
+namespace rot13
+{
+
+char const* name= "rot13";
+
+namespace
+{
+
+std::string rot13(std::string const& s)
+{
+  std::ostringstream sout;
+  for (std::size_t i= 0, max= s.length(); i < max; ++i)
   {
-    char const* name= "rot13";
-
-    namespace
-    {
-      std::string rot13(std::string const& s)
-      {
-        std::ostringstream sout;
-        for (std::size_t i= 0, max= s.length(); i < max; ++i)
-        {
-          const char& c= s[i];
-          if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
-            sout << char(c + 13);
-          else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
-            sout << char(c - 13);
-          else
-            sout << c;
-        }
-        return sout.str();
-      }
-    }
-
-    class Function : public Item_str_func
-    {
-    public:
-      Function() : Item_str_func() {}
-      const char *func_name() const { return rot13::name; }
-
-      String *val_str(String *s)
-      {
-        String val;
-        String *other= args[0]->val_str(&val);
-        std::string to_rot= String_to_std_string(*other);
-        return set_String_from_std_string(s, rot13(to_rot));
-      };
-
-      void fix_length_and_dec()
-      {
-        max_length= args[0]->max_length;
-      }
-
-      bool check_argument_count(int n)
-      {
-        return (n == 1);
-      }
-    };
-
-    using drizzled::plugin::Create_function;
-    using drizzled::plugin::Registry;
-    typedef Create_function<Function> PluginFunction;
-    PluginFunction *rot13_func= NULL;
-
-    static int init(Registry &registry)
-    {
-      rot13_func= new PluginFunction(rot13::name);
-      registry.add(rot13_func);
-      return 0;
-    }
-
-    static int deinit(Registry &registry)
-    {
-      registry.remove(rot13_func);
-      delete rot13_func;
-      return 0;
-    }
+    const char& c= s[i];
+    if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
+      sout << char(c + 13);
+    else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
+      sout << char(c - 13);
+    else
+      sout << c;
   }
+  return sout.str();
 }
+
+} // anon namespace
+
+class Function : public Item_str_func
+{
+public:
+  Function() : Item_str_func() {}
+  const char *func_name() const { return rot13::name; }
+
+  String *val_str(String *s)
+  {
+    String val;
+    String *other= args[0]->val_str(&val);
+    std::string to_rot= String_to_std_string(*other);
+    return set_String_from_std_string(s, rot13(to_rot));
+  };
+
+  void fix_length_and_dec()
+  {
+    max_length= args[0]->max_length;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 1);
+  }
+};
+
+using drizzled::plugin::Create_function;
+using drizzled::plugin::Registry;
+typedef Create_function<Function> PluginFunction;
+PluginFunction *rot13_func= NULL;
+
+static int init(Registry &registry)
+{
+  rot13_func= new PluginFunction(rot13::name);
+  registry.add(rot13_func);
+  return 0;
+}
+
+static int deinit(Registry &registry)
+{
+  registry.remove(rot13_func);
+  delete rot13_func;
+  return 0;
+}
+
+} // rot13 namespace
+} // plugin namespace
 
 DRIZZLE_PLUGIN(plugin::rot13::init, plugin::rot13::deinit, NULL, NULL);
