@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-31 23:23+0000\n"
-"Last-Translator: exxxo45 <exxxo45@gmail.com>\n"
+"PO-Revision-Date: 2010-01-20 14:23+0000\n"
+"Last-Translator: Kuvaly [LCT] <kuvaly@seznam.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2009-11-01 08:21+0000\n"
+"X-Launchpad-Export-Date: 2010-01-21 04:33+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -6040,11 +6040,11 @@ msgstr ""
 #: plugin/oldlibdrizzle/errmsg.cc:66
 #, c-format
 msgid "Shared memory: %-.100s"
-msgstr ""
+msgstr "Sdílená paměť: %-.100s"
 
 #: plugin/oldlibdrizzle/errmsg.cc:76
 msgid "Wrong or unknown protocol"
-msgstr ""
+msgstr "Chybný či neznámý protokol"
 
 #: plugin/oldlibdrizzle/errmsg.cc:77
 msgid "Invalid connection handle"
@@ -6136,7 +6136,7 @@ msgstr ""
 
 #: plugin/pool_of_threads/pool_of_threads.cc:237
 msgid "event_add error in libevent_add_session_callback\n"
-msgstr ""
+msgstr "chyba event_add v libevent_add_session_callback\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:403
 msgid "init_pipe(session_add_pipe) error in libevent_init\n"
