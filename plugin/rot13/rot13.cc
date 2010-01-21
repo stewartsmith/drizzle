@@ -26,8 +26,6 @@
 #include <sstream>
 #include <iostream>
 
-using namespace std;
-
 namespace plugin
 {
   namespace rot13
