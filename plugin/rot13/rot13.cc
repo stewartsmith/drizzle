@@ -33,28 +33,25 @@ namespace plugin
   namespace rot13
   {
     char const* name= "rot13";
-    // It seems that -Wmissing-declarations craps itself if we don't have this.
-    // Perhaps this is a bug in the compiler as I'm guessing that it should
-    // only complain if used outside the translation unit.
-    std::string rot13(std::string const& s);
 
-    std::string rot13(std::string const& s)
+    namespace
     {
-      std::ostringstream sout;
-      for (std::size_t i= 0, max= s.length(); i < max; ++i)
+      std::string rot13(std::string const& s)
       {
-        const char& c= s[i];
-        if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
-          sout << char(c + 13);
-        else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
-          sout << char(c - 13);
-        else
-          sout << c;
+        std::ostringstream sout;
+        for (std::size_t i= 0, max= s.length(); i < max; ++i)
+        {
+          const char& c= s[i];
+          if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
+            sout << char(c + 13);
+          else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
+            sout << char(c - 13);
+          else
+            sout << c;
+        }
+        return sout.str();
       }
-
-      return sout.str();
     }
-
     class Function : public Item_str_func
     {
     public:
