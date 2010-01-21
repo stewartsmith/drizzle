@@ -102,6 +102,8 @@ public:
   /* DATA DICTIONARY METADATA RELATED */
   uint64_t nrecords(void);
   uint64_t table_size(void);
+  uint64_t read_meta_row_id(void);
+  void write_meta_row_id(uint64_t row_id);
 
   /* DATA DICTIONARY READ RELATED*/
   char *get_row(const char *key, const size_t klen, int *value_len);
