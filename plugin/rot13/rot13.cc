@@ -27,70 +27,78 @@
 #include <iostream>
 
 using namespace std;
-using namespace drizzled;
 
-namespace
+namespace plugin
 {
-  char const* rot13_name = "rot13";
-
-  std::string rot13(std::string const& s)
+  namespace rot13
   {
-    std::ostringstream sout;
-    for (std::size_t i = 0, max = s.length(); i < max; ++i)
+    char const* name= "rot13";
+    // It seems that -Wmissing-declarations craps itself if we don't have this.
+    // Perhaps this is a bug in the compiler as I'm guessing that it should
+    // only complain if used outside the translation unit.
+    std::string rot13(std::string const& s);
+
+    std::string rot13(std::string const& s)
     {
-      const char& c = s[i];
-      if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
-        sout << char(c + 13);
-      else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
-        sout << char(c - 13);
-      else
-        sout << c;
+      std::ostringstream sout;
+      for (std::size_t i= 0, max= s.length(); i < max; ++i)
+      {
+        const char& c = s[i];
+        if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
+          sout << char(c + 13);
+        else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
+          sout << char(c - 13);
+        else
+          sout << c;
+      }
+
+      return sout.str();
     }
 
-    return sout.str();
-  }
+    class Function : public Item_str_func
+    {
+    public:
+      Function() : Item_str_func() {}
+      const char *func_name() const { return name; }
 
+      String *val_str(String* s)
+      {
+        String val;
+        String* other = args[0]->val_str(&val);
+        std::string to_rot = String_to_std_string(*other);
+        return set_String_from_std_string(s, rot13(to_rot));
+      };
+
+      void fix_length_and_dec()
+      {
+        max_length = args[0]->max_length;
+      }
+
+      bool check_argument_count(int n)
+      {
+        return (n == 1);
+      }
+    };
+
+    using drizzled::plugin::Create_function;
+    using drizzled::plugin::Registry;
+    typedef Create_function<Function> PluginFunction;
+    PluginFunction *rot13_func = NULL;
+
+    static int init(Registry &registry)
+    {
+      rot13_func= new PluginFunction(name);
+      registry.add(rot13_func);
+      return 0;
+    }
+
+    static int deinit(Registry &registry)
+    {
+      registry.remove(rot13_func);
+      delete rot13_func;
+      return 0;
+    }
+  }
 }
 
-
-class Item_func_rot13 : public Item_str_func
-{
-public:
-  Item_func_rot13() : Item_str_func() {}
-  const char *func_name() const { return rot13_name; }
-
-  String *val_str(String* s) {
-    String val;
-    String* other = args[0]->val_str(&val);
-    std::string to_rot = String_to_std_string(*other);
-    return set_String_from_std_string(s, rot13(to_rot));
-  };
-
-  void fix_length_and_dec() {
-    max_length = args[0]->max_length;
-  }
-
-  bool check_argument_count(int n)
-  {
-    return (n == 1);
-  }
-};
-
-plugin::Create_function<Item_func_rot13> *rot13_func = NULL;
-
-static int rot13_plugin_init(drizzled::plugin::Registry &registry)
-{
-  rot13_func =
-    new plugin::Create_function<Item_func_rot13>(rot13_name);
-  registry.add(rot13_func);
-  return 0;
-}
-
-static int rot13_plugin_deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(rot13_func);
-  delete rot13_func;
-  return 0;
-}
-
-DRIZZLE_PLUGIN(rot13_plugin_init, rot13_plugin_deinit, NULL, NULL);
+DRIZZLE_PLUGIN(plugin::rot13::init, plugin::rot13::deinit, NULL, NULL);
