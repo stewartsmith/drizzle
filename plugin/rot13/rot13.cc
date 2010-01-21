@@ -43,7 +43,7 @@ namespace plugin
       std::ostringstream sout;
       for (std::size_t i= 0, max= s.length(); i < max; ++i)
       {
-        const char& c = s[i];
+        const char& c= s[i];
         if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
           sout << char(c + 13);
         else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
@@ -61,17 +61,17 @@ namespace plugin
       Function() : Item_str_func() {}
       const char *func_name() const { return name; }
 
-      String *val_str(String* s)
+      String *val_str(String *s)
       {
         String val;
-        String* other = args[0]->val_str(&val);
-        std::string to_rot = String_to_std_string(*other);
+        String *other= args[0]->val_str(&val);
+        std::string to_rot= String_to_std_string(*other);
         return set_String_from_std_string(s, rot13(to_rot));
       };
 
       void fix_length_and_dec()
       {
-        max_length = args[0]->max_length;
+        max_length= args[0]->max_length;
       }
 
       bool check_argument_count(int n)
@@ -83,7 +83,7 @@ namespace plugin
     using drizzled::plugin::Create_function;
     using drizzled::plugin::Registry;
     typedef Create_function<Function> PluginFunction;
-    PluginFunction *rot13_func = NULL;
+    PluginFunction *rot13_func= NULL;
 
     static int init(Registry &registry)
     {
