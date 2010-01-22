@@ -92,7 +92,7 @@ public:
 
   /* DATA DICTIONARY CREATION RELATED */
   TCHDB *open_table(const char *path, const char *ext, int mode);
-  int create_table(drizzled::message::Table &proto,
+  int create_table(drizzled::message::Table &proto, Table &table,
                    const char *table_path, const char *ext);
   bool close_table(TCHDB *table);
   bool rename_table(const char *from, const char *to);
@@ -104,8 +104,10 @@ public:
   uint64_t table_size(void);
   uint64_t read_meta_row_id(void);
   uint64_t read_meta_autoinc(void);
+  uint32_t read_meta_keycount(void);
   void write_meta_row_id(uint64_t row_id);
   void write_meta_autoinc(uint64_t num);
+  void write_meta_keycount(uint32_t nkeys);
 
   /* DATA DICTIONARY READ RELATED*/
   char *get_row(const char *key, const size_t klen, int *value_len);
@@ -130,15 +132,15 @@ class BlitzTree {
 private:
   TCBDB *btree;
   std::string filename;
-  int idx_number;
+  int type;
 
 public:
-  BlitzTree() : idx_number(0) {}
+  BlitzTree() : type(0) {}
   ~BlitzTree() {}
 
   /* BTREE INDEX CREATION RELATED */
-  int open(const char *path, int mode);
-  int create(const char *path);
+  int open(const char *path, const int key_num, int mode);
+  int create(const char *path, const int key_num);
   int rename(const char *from, const char *to);
   int close(void);
 

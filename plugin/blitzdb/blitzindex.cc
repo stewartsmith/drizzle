@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Toru Maesaka
+ *  Copyright (C) 2009 - 2010 Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
    since the default configuration satisfies BlitzDB's default
    performance requirements. Tuning parameters will be made dynamic
    in the upcoming releases. */
-int BlitzTree::open(const char *path, int mode) {
+int BlitzTree::open(const char *path, const int key_num, int mode) {
   char name_buffer[FN_REFLEN];
 
   if ((btree = tcbdbnew()) == NULL)
@@ -34,7 +34,7 @@ int BlitzTree::open(const char *path, int mode) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
-  snprintf(name_buffer, FN_REFLEN, "%s%s", path, BLITZ_INDEX_EXT);
+  snprintf(name_buffer, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
 
   if (!tcbdbopen(btree, name_buffer, mode)) {
     tcbdbdel(btree);
@@ -45,10 +45,10 @@ int BlitzTree::open(const char *path, int mode) {
 }
 
 /* Similar to UNIX touch(1) but generates a TCBDB file. */
-int BlitzTree::create(const char *path) {
+int BlitzTree::create(const char *path, const int key_num) {
   int rv;
 
-  if ((rv = this->open(path, (BDBOWRITER | BDBOCREAT))) != 0)
+  if ((rv = this->open(path, key_num, (BDBOWRITER | BDBOCREAT))) != 0)
     return rv;
 
   if ((rv = this->close()) != 0)

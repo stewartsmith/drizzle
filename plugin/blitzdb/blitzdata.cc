@@ -54,7 +54,7 @@ bool BlitzData::shutdown() {
 }
 
 /* Similar to UNIX touch(1) but generates a TCHDB file. */
-int BlitzData::create_table(drizzled::message::Table &proto,
+int BlitzData::create_table(drizzled::message::Table &proto, Table &table_info,
                             const char *table_path, const char *ext) {
   TCHDB *table;
   int mode = (HDBOWRITER | HDBOCREAT);
@@ -66,6 +66,7 @@ int BlitzData::create_table(drizzled::message::Table &proto,
     uint64_t autoinc = (proto.options().has_auto_increment_value())
                        ? proto.options().auto_increment_value() - 1 : 0;
     write_meta_autoinc(autoinc); 
+    write_meta_keycount(table_info.s->keys);
   }
 
   if (!close_table(table))
@@ -188,6 +189,13 @@ uint64_t BlitzData::read_meta_autoinc(void) {
   return (uint64_t)uint8korr(pos);
 }
 
+uint32_t BlitzData::read_meta_keycount(void) {
+  assert(tc_meta_buffer);
+  char *pos = tc_meta_buffer;
+  pos += sizeof(current_hidden_row_id) + sizeof(uint64_t);
+  return (uint32_t)uint4korr(pos);
+}
+
 void BlitzData::write_meta_row_id(uint64_t row_id) {
   assert(tc_meta_buffer);
   int8store(tc_meta_buffer, row_id);
@@ -197,6 +205,13 @@ void BlitzData::write_meta_autoinc(uint64_t num) {
   assert(tc_meta_buffer);
   char *pos = tc_meta_buffer + sizeof(current_hidden_row_id);
   int8store(pos, num);
+}
+
+void BlitzData::write_meta_keycount(uint32_t nkeys) {
+  assert(tc_meta_buffer);
+  char *pos = tc_meta_buffer;
+  pos += sizeof(current_hidden_row_id) + sizeof(uint64_t);
+  int4store(pos, nkeys);
 }
 
 char *BlitzData::get_row(const char *key, const size_t klen, int *vlen) {

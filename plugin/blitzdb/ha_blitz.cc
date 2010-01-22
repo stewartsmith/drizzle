@@ -26,22 +26,22 @@ static TCMAP *blitz_table_cache;
 
 /* Create relevant files for a new table and close them immediately.
    All we want to do here is somewhat like UNIX touch(1). */
-int BlitzEngine::doCreateTable(Session *, const char *table_path,
-                               Table &, drizzled::message::Table &proto) {
+int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
+                               drizzled::message::Table &proto) {
   BlitzData dict;
   int ecode;
 
-  if ((ecode = dict.create_table(proto, table_path, BLITZ_DATA_EXT)) != 0) {
+  if ((ecode = dict.create_table(proto, table, path, BLITZ_DATA_EXT)) != 0)
     return ecode; 
-  }
 
-  if ((ecode = dict.create_table(proto, table_path, BLITZ_SYSTEM_EXT)) != 0) {
+  if ((ecode = dict.create_table(proto, table, path, BLITZ_SYSTEM_EXT)) != 0)
     return ecode;
-  }
 
-  /* Write the table definition to system table. */
+  /* Write the table definition to system table. TODO: Consider writing the
+     table proto to a flatfile instead of using TC. Beginning to question
+     whether a system table is necessary. */
   TCHDB *system_table;
-  system_table = dict.open_table(table_path, BLITZ_SYSTEM_EXT, HDBOWRITER);
+  system_table = dict.open_table(path, BLITZ_SYSTEM_EXT, HDBOWRITER);
 
   if (system_table == NULL)
     return HA_ERR_CRASHED_ON_USAGE;
