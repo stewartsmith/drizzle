@@ -50,7 +50,7 @@ TODO:
 #include "drizzled/internal/mysys_priv.h"
 #include "drizzled/internal/m_string.h"
 #ifdef HAVE_AIOWAIT
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include "drizzled/internal/aio_result.h"
 static void my_aiowait(my_aio_result *result);
 #endif

@@ -18,7 +18,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 	/*
 	** Create a new file

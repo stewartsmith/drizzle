@@ -1601,7 +1601,7 @@ void my_error(int nr, myf MyFlags, ...)
 /*
   Error as printf
 
-  SYNOPSIS
+         SYNOPSIS
     my_printf_error()
       error	Errno
       format	Format string

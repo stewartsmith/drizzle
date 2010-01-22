@@ -22,7 +22,7 @@
 #define DRIZZLED_SELECT_DUMPVAR_H
 
 #include "drizzled/error.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 #include <vector>
 

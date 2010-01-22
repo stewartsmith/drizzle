@@ -28,7 +28,6 @@ Created July 18, 2007 Vasil Dimov
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/my_sys.h"
 #include <drizzled/my_hash.h>
-#include "drizzled/my_error.h"
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>

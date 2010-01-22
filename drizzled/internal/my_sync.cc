@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 /*
   Sync data in file to disk

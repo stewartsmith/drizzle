@@ -21,7 +21,7 @@
 */
 
 #include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include "drizzled/internal/m_string.h"
 
 int my_create_with_symlink(const char *linkname, const char *filename,

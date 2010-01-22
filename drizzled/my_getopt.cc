@@ -18,7 +18,7 @@
 
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include "drizzled/my_getopt.h"
 
 #include <stdio.h>
