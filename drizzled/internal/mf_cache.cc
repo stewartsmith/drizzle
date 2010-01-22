@@ -15,11 +15,11 @@
 
 /* Open a temporary file and cache it with io_cache. Delete it on close */
 
-#include "drizzled/error.h"
 #include "drizzled/internal/mysys_priv.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_static.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/error.h"
 
 
 	/*
