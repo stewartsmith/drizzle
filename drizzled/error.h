@@ -32,10 +32,6 @@
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
 extern error_handler_func error_handler_hook;
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
 
@@ -804,8 +800,5 @@ const char **my_error_unregister(int first, int last);
 void my_message(uint32_t my_err, const char *str,myf MyFlags);
 void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 
-#ifdef  __cplusplus
-}
-#endif
 
 #endif /* DRIZZLED_ERROR_H */
