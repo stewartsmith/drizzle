@@ -46,7 +46,6 @@ using namespace std;
 
 const string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
-const string BLITZ_AUTOINC_KEY = "autoinc_value";
 
 static const char *ha_blitz_exts[] = {
   BLITZ_DATA_EXT,
@@ -93,7 +92,8 @@ public:
 
   /* DATA DICTIONARY CREATION RELATED */
   TCHDB *open_table(const char *path, const char *ext, int mode);
-  int create_table(const char *table_path, const char *ext);
+  int create_table(drizzled::message::Table &proto,
+                   const char *table_path, const char *ext);
   bool close_table(TCHDB *table);
   bool rename_table(const char *from, const char *to);
   bool write_table_definition(TCHDB *system_table,
@@ -103,7 +103,9 @@ public:
   uint64_t nrecords(void);
   uint64_t table_size(void);
   uint64_t read_meta_row_id(void);
+  uint64_t read_meta_autoinc(void);
   void write_meta_row_id(uint64_t row_id);
+  void write_meta_autoinc(uint64_t num);
 
   /* DATA DICTIONARY READ RELATED*/
   char *get_row(const char *key, const size_t klen, int *value_len);
@@ -120,11 +122,6 @@ public:
                        const unsigned char *row, const size_t rlen);
   bool delete_row(const char *key, const size_t klen);
   bool delete_all_rows(void);
-
-  /* SYSTEM TABLE RELATED */
-  uint64_t autoinc_in_system_table(void);
-  bool flush_autoinc(uint64_t autoinc_val);
-  bool flush_autoinc(TCHDB *prebuilt, uint64_t autoinc_val);
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O

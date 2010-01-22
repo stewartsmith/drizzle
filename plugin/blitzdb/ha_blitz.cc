@@ -29,14 +29,13 @@ static TCMAP *blitz_table_cache;
 int BlitzEngine::doCreateTable(Session *, const char *table_path,
                                Table &, drizzled::message::Table &proto) {
   BlitzData dict;
-  uint64_t auto_increment;
   int ecode;
 
-  if ((ecode = dict.create_table(table_path, BLITZ_DATA_EXT)) != 0) {
+  if ((ecode = dict.create_table(proto, table_path, BLITZ_DATA_EXT)) != 0) {
     return ecode; 
   }
 
-  if ((ecode = dict.create_table(table_path, BLITZ_SYSTEM_EXT)) != 0) {
+  if ((ecode = dict.create_table(proto, table_path, BLITZ_SYSTEM_EXT)) != 0) {
     return ecode;
   }
 
@@ -48,15 +47,6 @@ int BlitzEngine::doCreateTable(Session *, const char *table_path,
     return HA_ERR_CRASHED_ON_USAGE;
 
   if (!dict.write_table_definition(system_table, proto)) {
-    dict.close_table(system_table);
-    return HA_ERR_CRASHED_ON_USAGE;
-  }
-
-  auto_increment = (proto.options().has_auto_increment_value())
-                   ? proto.options().auto_increment_value() - 1 : 0;
-
-  /* Write the auto increment value to the system table */
-  if (!dict.flush_autoinc(system_table, auto_increment)) {
     dict.close_table(system_table);
     return HA_ERR_CRASHED_ON_USAGE;
   }
@@ -172,6 +162,7 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                    TableShare &table_arg) : Cursor(engine_arg, table_arg),
                                             table_scan(false),
+                                            thread_locked(false),
                                             key_buffer(NULL),
                                             current_key(NULL),
                                             current_key_len(0),
@@ -798,7 +789,7 @@ BlitzShare *ha_blitz::get_share(const char *table_name) {
     return NULL;
   }
 
-  share_ptr->auto_increment_value = share_ptr->dict.autoinc_in_system_table();
+  share_ptr->auto_increment_value = share_ptr->dict.read_meta_autoinc();
   share_ptr->table_name.append(table_name);
   share_ptr->nkeys = table->s->keys;
   share_ptr->use_count = 1;
@@ -823,15 +814,13 @@ static int free_share(BlitzShare *share) {
   /* BlitzShare could still be used by another thread. Check the
      reference counter to see if it's safe to free it */
   if (--share->use_count == 0) {
-    if (!share->dict.flush_autoinc(share->auto_increment_value)) {
-      pthread_mutex_unlock(&blitz_utility_mutex);
-      return HA_ERR_CRASHED_ON_USAGE;
-    }
+    share->dict.write_meta_autoinc(share->auto_increment_value);
 
     if (!share->dict.shutdown()) {
       pthread_mutex_unlock(&blitz_utility_mutex);
       return HA_ERR_CRASHED_ON_USAGE;
     }
+
     tcmapout2(blitz_table_cache, share->table_name.c_str());
     delete share;
   }

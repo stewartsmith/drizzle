@@ -54,12 +54,19 @@ bool BlitzData::shutdown() {
 }
 
 /* Similar to UNIX touch(1) but generates a TCHDB file. */
-int BlitzData::create_table(const char *table_path, const char *ext) {
+int BlitzData::create_table(drizzled::message::Table &proto,
+                            const char *table_path, const char *ext) {
   TCHDB *table;
   int mode = (HDBOWRITER | HDBOCREAT);
 
   if ((table = open_table(table_path, ext, mode)) == NULL)
     return HA_ERR_CRASHED_ON_USAGE;
+
+  if (strcmp(ext, BLITZ_DATA_EXT) == 0) {
+    uint64_t autoinc = (proto.options().has_auto_increment_value())
+                       ? proto.options().auto_increment_value() - 1 : 0;
+    write_meta_autoinc(autoinc); 
+  }
 
   if (!close_table(table))
     return HA_ERR_CRASHED_ON_USAGE;
@@ -175,9 +182,21 @@ uint64_t BlitzData::read_meta_row_id(void) {
   return (uint64_t)uint8korr(tc_meta_buffer);
 }
 
+uint64_t BlitzData::read_meta_autoinc(void) {
+  assert(tc_meta_buffer);
+  char *pos = tc_meta_buffer + sizeof (current_hidden_row_id);
+  return (uint64_t)uint8korr(pos);
+}
+
 void BlitzData::write_meta_row_id(uint64_t row_id) {
   assert(tc_meta_buffer);
   int8store(tc_meta_buffer, row_id);
+}
+
+void BlitzData::write_meta_autoinc(uint64_t num) {
+  assert(tc_meta_buffer);
+  char *pos = tc_meta_buffer + sizeof(current_hidden_row_id);
+  int8store(pos, num);
 }
 
 char *BlitzData::get_row(const char *key, const size_t klen, int *vlen) {
@@ -230,33 +249,4 @@ bool BlitzData::delete_row(const char *key, const size_t klen) {
 
 bool BlitzData::delete_all_rows() {
   return tchdbvanish(data_table);
-}
-
-uint64_t BlitzData::autoinc_in_system_table(void) {
-  char *val;
-  int length;
-  uint64_t rv = 0;
-
-  val = (char *)tchdbget(system_table, BLITZ_AUTOINC_KEY.c_str(),
-                         BLITZ_AUTOINC_KEY.length(), &length);
-  if (val == NULL)
-    return 0;
-
-  rv = uint8korr(val);
-  free(val);
-  return rv;
-}
-
-/* The following functions are for writing the latest auto increment
-   value to the system table, which is also used for metadata storage.
-   It is only used in two scenes: When a table is created or closed. */
-bool BlitzData::flush_autoinc(uint64_t autoinc_val) {
-  return flush_autoinc(system_table, autoinc_val);
-}
-
-bool BlitzData::flush_autoinc(TCHDB *prebuilt, uint64_t autoinc_val) {
-  char buf[sizeof(autoinc_val)];
-  int8store(buf, autoinc_val);
-  return tchdbput(prebuilt, BLITZ_AUTOINC_KEY.c_str(),
-                  BLITZ_AUTOINC_KEY.length(), buf, sizeof(autoinc_val));
 }
