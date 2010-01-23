@@ -28,6 +28,37 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 
+namespace {
+
+// Use unsigned long rather than the drizzled_error_code as we plan
+// on having other plugins add to the error codes.
+typedef drizzled::hash_map<unsigned long, std::string> ErrorCodeMap;
+ErrorCodeMap errorCodes;
+
+/**
+ * DESIGN NOTES:
+ *
+ * 1) Have a central error store.
+ * 2) Have a single function that can take an error number, and return the
+ *    translated error string, or something that can output a translated string.
+ * 2a) ideally we'd want to be able to have a function that inserts directly
+ *    into the the translated error.
+ * 3) Plugins should be able to register/unregister their own errors
+ * 3a) error ids should not overlap, which does bring with it the idea of
+ *    why do we care if the errors are not unregistered?  If plugins are not
+ *    changed during execution, and are loaded at startup, the only time they
+ *    are being unregistered is when the application is shutting down.  In which
+ *    case we can leave it up to the standard library implementation to free up
+ *    the memory which has been allocated.
+ * 4) Instead of translating the strings on the way into the error store,
+ *    they should be translated on the way out based on the language
+ *    of the connection.  If there is no connection, then we should fall
+ *    back to the language that the server is running under.
+ */
+
+
+}
+
 static const char *drizzled_error_messages[]=
 {
 /* Unused: was ER_HASHCHK which hasn't been used since before MySQL 3.20.32a  */
