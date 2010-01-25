@@ -30,6 +30,7 @@
 #include <plugin/data_engine/processlist.h>
 #include <plugin/data_engine/modules.h>
 #include <plugin/data_engine/plugins.h>
+#include <plugin/data_engine/character_sets.h>
 
 extern const CHARSET_INFO *default_charset_info;
 
@@ -44,6 +45,7 @@ class Dictionary : public drizzled::plugin::StorageEngine
   ProcesslistTool processlist;
   ModulesTool modules;
   PluginsTool plugins;
+  CharacterSetsTool character_sets;
 
 public:
   Dictionary(const std::string &name_arg);

@@ -17,6 +17,9 @@ count(*)
 SELECT count(*) FROM data_dictionary.modules;
 count(*)
 #
+SELECT count(*) FROM data_dictionary.character_sets ORDER BY CHARACTER_SET_NAME;
+count(*)
+2
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;

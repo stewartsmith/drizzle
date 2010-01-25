@@ -20,11 +20,11 @@ SELECT count(*) FROM data_dictionary.plugins;
 --replace_column 1 #
 SELECT count(*) FROM data_dictionary.modules;
 
-#SELECT count(*) FROM data_dictionary.character_sets ORDER BY CHARACTER_SET_NAME;
+SELECT count(*) FROM data_dictionary.character_sets ORDER BY CHARACTER_SET_NAME;
 
 
 CREATE SCHEMA drizzleslap;
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionararacter_sets" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.character_sets" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.modules" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.plugins" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.processlist" --delimiter=";"

@@ -47,7 +47,9 @@ Tool *Dictionary::getTool(const char *path)
 {
   string tab_name(path);
 
-  if (strcmp(path, "./data_dictionary/processlist") == 0)
+  if (strcmp(path, "./data_dictionary/character_sets") == 0)
+    return &character_sets;
+  else if (strcmp(path, "./data_dictionary/processlist") == 0)
     return &processlist;
   else if (strcmp(path, "./data_dictionary/modules") == 0)
     return &modules;
@@ -75,7 +77,14 @@ int Dictionary::doGetTableDefinition(Session &,
     return ENOENT;
   }
 
-  if (strcmp(path, "./data_dictionary/processlist") == 0)
+  else if (strcmp(path, "./data_dictionary/character_sets") == 0)
+  {
+    if (table_proto)
+    {
+      character_sets.define(*table_proto);
+    }
+  }
+  else if (strcmp(path, "./data_dictionary/processlist") == 0)
   {
     if (table_proto)
     {
@@ -110,9 +119,10 @@ void Dictionary::doGetTableNames(drizzled::CachedDirectory&,
   if (db.compare("data_dictionary"))
     return;
 
-  set_of_names.insert("PROCESSLIST");
-  set_of_names.insert("PLUGINS");
+  set_of_names.insert("CHARACTER_SETS");
   set_of_names.insert("MODULES");
+  set_of_names.insert("PLUGINS");
+  set_of_names.insert("PROCESSLIST");
 
   (void)set_of_names;
 }
