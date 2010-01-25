@@ -27,10 +27,13 @@
 #define PLUGIN_DATA_ENGINE_DICTIONARY_H
 
 #include <plugin/data_engine/tool.h>
-#include <plugin/data_engine/processlist.h>
+
+#include <plugin/data_engine/character_sets.h>
+#include <plugin/data_engine/collation_character_set_applicability.h>
+#include <plugin/data_engine/collations.h>
 #include <plugin/data_engine/modules.h>
 #include <plugin/data_engine/plugins.h>
-#include <plugin/data_engine/character_sets.h>
+#include <plugin/data_engine/processlist.h>
 
 extern const CHARSET_INFO *default_charset_info;
 
@@ -46,6 +49,8 @@ class Dictionary : public drizzled::plugin::StorageEngine
   ModulesTool modules;
   PluginsTool plugins;
   CharacterSetsTool character_sets;
+  CollationsTool collations;
+  CollationCharacterSetApplicabilityTool collation_character_set_applicability;
 
 public:
   Dictionary(const std::string &name_arg);

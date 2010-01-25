@@ -49,6 +49,10 @@ Tool *Dictionary::getTool(const char *path)
 
   if (strcmp(path, "./data_dictionary/character_sets") == 0)
     return &character_sets;
+  else if (strcmp(path, "./data_dictionary/collations") == 0)
+    return &collations;
+  else if (strcmp(path, "./data_dictionary/collation_character_set_applicability") == 0)
+    return &collation_character_set_applicability;
   else if (strcmp(path, "./data_dictionary/processlist") == 0)
     return &processlist;
   else if (strcmp(path, "./data_dictionary/modules") == 0)
@@ -76,7 +80,20 @@ int Dictionary::doGetTableDefinition(Session &,
   {
     return ENOENT;
   }
-
+  else if (strcmp(path, "./data_dictionary/collations") == 0)
+  {
+    if (table_proto)
+    {
+      collations.define(*table_proto);
+    }
+  }
+  else if (strcmp(path, "./data_dictionary/collation_character_set_applicability") == 0)
+  {
+    if (table_proto)
+    {
+      collation_character_set_applicability.define(*table_proto);
+    }
+  }
   else if (strcmp(path, "./data_dictionary/character_sets") == 0)
   {
     if (table_proto)
@@ -120,6 +137,8 @@ void Dictionary::doGetTableNames(drizzled::CachedDirectory&,
     return;
 
   set_of_names.insert("CHARACTER_SETS");
+  set_of_names.insert("COLLATIONS");
+  set_of_names.insert("COLLATION_CHARACTER_SET_APPLICABILITY");
   set_of_names.insert("MODULES");
   set_of_names.insert("PLUGINS");
   set_of_names.insert("PROCESSLIST");

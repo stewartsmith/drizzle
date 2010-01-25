@@ -17,9 +17,39 @@ count(*)
 SELECT count(*) FROM data_dictionary.modules;
 count(*)
 #
-SELECT count(*) FROM data_dictionary.character_sets ORDER BY CHARACTER_SET_NAME;
-count(*)
-2
+SELECT * FROM data_dictionary.character_sets ORDER BY CHARACTER_SET_NAME;
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+binary	binary		1
+utf8	utf8_general_ci	UTF-8 Unicode	4
+SELECT * FROM data_dictionary.collations ORDER BY COLLATION_NAME;
+COLLATION_NAME	CHARACTER_SET_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+binary	binary	63	0	0	1	0
+utf8_general_ci	utf8	45	0	0	1	0
+SELECT * FROM data_dictionary.collation_character_set_applicability ORDER BY CHARACTER_SET_NAME;
+COLLATION_NAME	CHARACTER_SET_NAME
+binary	binary
+utf8_hungarian_ci	utf8
+utf8_sinhala_ci	utf8
+utf8_swedish_ci	utf8
+utf8_persian_ci	utf8
+utf8_roman_ci	utf8
+utf8_spanish2_ci	utf8
+utf8_slovak_ci	utf8
+utf8_lithuanian_ci	utf8
+utf8_danish_ci	utf8
+utf8_czech_ci	utf8
+utf8_turkish_ci	utf8
+utf8_esperanto_ci	utf8
+utf8_general_ci	utf8
+utf8_estonian_ci	utf8
+utf8_polish_ci	utf8
+utf8_slovenian_ci	utf8
+utf8_romanian_ci	utf8
+utf8_latvian_ci	utf8
+utf8_icelandic_ci	utf8
+utf8_unicode_ci	utf8
+utf8_bin	utf8
+utf8_spanish_ci	utf8
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
