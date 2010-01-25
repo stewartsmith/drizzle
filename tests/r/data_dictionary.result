@@ -1,0 +1,22 @@
+CREATE SCHEMA data_dictionary;
+SELECT ID FROM data_dictionary.processlist;
+ID
+#
+SELECT ID FROM data_dictionary.processlist ORDER BY ID;
+ID
+#
+SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b ORDER BY ID;
+ID
+1
+SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b;
+ID
+#
+SELECT count(*) FROM data_dictionary.plugins;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.modules;
+count(*)
+#
+CREATE SCHEMA drizzleslap;
+DROP SCHEMA drizzleslap;
+DROP SCHEMA data_dictionary;

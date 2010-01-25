@@ -1,0 +1,33 @@
+# Drizzle's data dictionary.
+
+CREATE SCHEMA data_dictionary;
+
+--replace_column 1 #
+SELECT ID FROM data_dictionary.processlist;
+
+--replace_column 1 #
+SELECT ID FROM data_dictionary.processlist ORDER BY ID;
+
+#--replace_column 1 #
+SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b ORDER BY ID;
+
+--replace_column 1 #
+SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b;
+
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.plugins;
+
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.modules;
+
+#SELECT count(*) FROM data_dictionary.character_sets ORDER BY CHARACTER_SET_NAME;
+
+
+CREATE SCHEMA drizzleslap;
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionararacter_sets" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.modules" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.plugins" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.processlist" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b ORDER BY ID" --delimiter=";"
+DROP SCHEMA drizzleslap;
+DROP SCHEMA data_dictionary;

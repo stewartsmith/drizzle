@@ -29,7 +29,7 @@ ModulesTool::ModulesTool()
   message::Table::StorageEngine *engine;
   message::Table::TableOptions *table_options;
 
-  schema.set_name("schema");
+  schema.set_name("modules");
   schema.set_type(message::Table::STANDARD);
 
   table_options= schema.mutable_options();
