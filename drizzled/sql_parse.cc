@@ -202,13 +202,11 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    string database_name(packet);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
+    LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-
-    if (! mysql_change_db(session, normalised_database_name, false))
+    tmp.str= packet;
+    tmp.length= packet_length;
+    if (!mysql_change_db(session, &tmp, false))
     {
       session->my_ok();
     }
@@ -367,6 +365,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   if (schema_table_name.compare("TABLES") == 0 ||
       schema_table_name.compare("TABLE_NAMES") == 0)
   {
+    LEX_STRING db;
     size_t dummy;
     if (lex->select_lex.db == NULL &&
         lex->copy_db_to(&lex->select_lex.db, &dummy))
@@ -374,18 +373,13 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       return (1);
     }
     schema_select_lex= new Select_Lex();
-    schema_select_lex->db= lex->select_lex.db;
-
-    string database_name(schema_select_lex->db);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
+    db.str= schema_select_lex->db= lex->select_lex.db;
     schema_select_lex->table_list.first= NULL;
+    db.length= strlen(db.str);
 
-    if (! normalised_database_name.isValid())
+    if (check_db_name(&db))
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0),
-               normalised_database_name.to_string().c_str());
+      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
       return (1);
     }
   }
@@ -958,20 +952,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (table->is_derived_table() == false && table->db.str &&
+      check_db_name(&table->db))
   {
-    string database_name(table->db.str);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
-    if (! normalised_database_name.isValid())
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
-      return NULL;
-    }
-
-    strncpy(table->db.str, normalised_database_name.to_string().c_str(),
-            table->db.length);
+    my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+    return NULL;
   }
 
   if (!alias)					/* Alias is case sensitive */

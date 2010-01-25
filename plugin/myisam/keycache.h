@@ -65,7 +65,7 @@ typedef struct st_key_cache
   bool resize_in_flush;       /* true during flush of resize operation    */
   bool can_be_used;           /* usage of cache for read/write is allowed */
   uint32_t hash_entries;             /* max number of entries in the hash table  */
-  size_t key_cache_mem_size;      /* specified size of the cache memory       */
+  uint32_t key_cache_mem_size;      /* specified size of the cache memory       */
   uint32_t key_cache_block_size;     /* size of the page buffer of a cache block */
   int disk_blocks;               /* max number of blocks in the cache        */
   ulong min_warm_blocks;         /* min number of warm blocks;               */
@@ -104,7 +104,7 @@ typedef struct st_key_cache
     initializing the key cache.
   */
 
-  uint64_t param_buff_size;    /* size the memory allocated for the cache  */
+  uint32_t param_buff_size;    /* size the memory allocated for the cache  */
   uint32_t param_block_size;   /* size of the blocks in the key cache      */
   uint32_t param_division_limit; /* min. percentage of warm blocks           */
   uint32_t param_age_threshold;    /* determines when hot block is downgraded  */
@@ -124,10 +124,10 @@ typedef struct st_key_cache
 extern KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
 
 extern int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-			  size_t use_mem, uint32_t division_limit,
+			  uint32_t use_mem, uint32_t division_limit,
 			  uint32_t age_threshold);
 extern int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-			    size_t use_mem, uint32_t division_limit,
+			    uint32_t use_mem, uint32_t division_limit,
 			    uint32_t age_threshold);
 extern unsigned char *key_cache_read(KEY_CACHE *keycache,
                             int file, my_off_t filepos, int level,

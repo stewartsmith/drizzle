@@ -222,7 +222,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
       break;
 
     case 14: /* PING */
-      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      (*l_packet)[0]= (unsigned char) COM_PING;
       break;
 
 
