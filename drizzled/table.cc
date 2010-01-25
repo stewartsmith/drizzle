@@ -1649,7 +1649,7 @@ void Table::resetTable(Session *session,
   keys_in_use_for_group_by.reset();
   keys_in_use_for_order_by.reset();
 
-  memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
   memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
 
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
@@ -3626,7 +3626,7 @@ Table::Table()
   keys_in_use_for_group_by.reset();
   keys_in_use_for_order_by.reset();
 
-  memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
   memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
 
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);

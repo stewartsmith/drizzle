@@ -506,7 +506,7 @@ void trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine
 
   trans->no_2pc|= not engine->has_2pc();
   if (session->transaction.xid_state.xid.is_null())
-    session->transaction.xid_state.xid.set(session->query_id);
+    session->transaction.xid_state.xid.set(session->getQueryId());
 }
 
 /**

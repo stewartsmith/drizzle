@@ -677,7 +677,6 @@ public:
   virtual bool collect_item_field_processor(unsigned char * arg);
   virtual bool find_item_in_field_list_processor(unsigned char *arg);
   virtual bool change_context_processor(unsigned char *context);
-  virtual bool reset_query_id_processor(unsigned char *query_id_arg);
   virtual bool register_field_in_read_map(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
 
