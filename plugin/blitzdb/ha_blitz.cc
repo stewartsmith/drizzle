@@ -27,15 +27,22 @@ static TCMAP *blitz_table_cache;
 int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
                                drizzled::message::Table &proto) {
   BlitzData dict;
+  BlitzTree btree;
   int ecode;
 
   /* Create relevant files for a new table and close them immediately.
      All we want to do here is somewhat like UNIX touch(1). */
   if ((ecode = dict.create_data_table(proto, table, path)) != 0)
-    return ecode; 
+    return ecode;
 
   if ((ecode = dict.create_system_table(path)) != 0)
-    return ecode; 
+    return ecode;
+
+  /* Create b+tree index(es) for this table. */
+  for (uint32_t i = 0; i < table.s->keys; i++) {
+    if ((ecode = btree.create(path, i)) != 0)
+      return ecode;
+  }
 
   /* Write the table definition to system table. */
   if ((ecode = dict.open_system_table(path, HDBOWRITER)) != 0)
@@ -52,26 +59,58 @@ int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
 
 int BlitzEngine::doRenameTable(Session *, const char *from, const char *to) {
   BlitzData dict;
+  BlitzTree btree;
+  int err;
+
+  if ((err = dict.open_data_table(from, HDBOREADER)) != 0)
+    return err;
+
+  uint32_t nkeys = dict.read_meta_keycount();
+  dict.close_data_table();
+
+  for (uint32_t i = 0; i < nkeys; i++) {
+    if ((err = btree.rename(from, to, i)) != 0)
+      return err;
+  }
+
   return (dict.rename_table(from, to)) ? 0 : -1;
 }
 
-int BlitzEngine::doDropTable(Session &, const string table_path) {
+int BlitzEngine::doDropTable(Session &, const string path) {
+  BlitzData dict;
+  BlitzTree btree;
+  char buf[FN_REFLEN];
+  uint32_t nkeys;
   int err;
-  char name_buffer[FN_REFLEN];
 
-  snprintf(name_buffer, FN_REFLEN, "%s%s", table_path.c_str(),
-           BLITZ_DATA_EXT);
+  /* We open the dictionary to extract meta data from it */
+  if ((err = dict.open_data_table(path.c_str(), HDBOREADER)) != 0)
+    return err;
 
-  if ((err = unlink(name_buffer)) == -1) {
+  nkeys = dict.read_meta_keycount();
+
+  /* We no longer need the dictionary to be open */
+  dict.close_data_table();
+
+  /* Drop the Data Dictionary */
+  snprintf(buf, FN_REFLEN, "%s%s", path.c_str(), BLITZ_DATA_EXT);
+  if ((err = unlink(buf)) == -1) {
     return err;
   }
 
-  snprintf(name_buffer, FN_REFLEN, "%s%s", table_path.c_str(),
-           BLITZ_SYSTEM_EXT);
-
-  if ((err = unlink(name_buffer)) == -1) {
+  /* Drop the System Table */
+  snprintf(buf, FN_REFLEN, "%s%s", path.c_str(), BLITZ_SYSTEM_EXT);
+  if ((err = unlink(buf)) == -1) {
     return err;
   }
+
+  /* Drop Index file(s) */
+  for (uint32_t i = 0; i < nkeys; i++) {
+    if ((err = btree.drop(path.c_str(), i)) != 0) {
+      return err;
+    }
+  }
+
   return 0;
 }
 

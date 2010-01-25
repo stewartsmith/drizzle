@@ -24,7 +24,7 @@
    performance requirements. Tuning parameters will be made dynamic
    in the upcoming releases. */
 int BlitzTree::open(const char *path, const int key_num, int mode) {
-  char name_buffer[FN_REFLEN];
+  char buf[FN_REFLEN];
 
   if ((btree = tcbdbnew()) == NULL)
     return HA_ERR_OUT_OF_MEM;
@@ -34,9 +34,9 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
-  snprintf(name_buffer, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
+  snprintf(buf, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
 
-  if (!tcbdbopen(btree, name_buffer, mode)) {
+  if (!tcbdbopen(btree, buf, mode)) {
     tcbdbdel(btree);
     return HA_ERR_CRASHED_ON_USAGE;
   }
@@ -55,6 +55,22 @@ int BlitzTree::create(const char *path, const int key_num) {
     return rv;
 
   return rv;
+}
+
+int BlitzTree::drop(const char *path, const int key_num) {
+  char buf[FN_REFLEN];
+  snprintf(buf, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
+  return unlink(buf);
+}
+
+int BlitzTree::rename(const char *from, const char *to, const int key_num) {
+  char from_buf[FN_REFLEN];
+  char to_buf[FN_REFLEN];
+
+  snprintf(from_buf, FN_REFLEN, "%s_%02d%s", from, key_num, BLITZ_INDEX_EXT);
+  snprintf(to_buf, FN_REFLEN, "%s_%02d%s", to, key_num, BLITZ_INDEX_EXT);
+
+  return std::rename(from_buf, to_buf);
 }
 
 int BlitzTree::close(void) {

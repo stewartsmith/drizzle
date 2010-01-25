@@ -233,7 +233,7 @@ bool BlitzData::delete_all_rows() {
   return tchdbvanish(data_table);
 }
 
-/* Code here on are for BlitzDB's internal system information management.
+/* Code from here on is for BlitzDB's internal system information management.
    It is deliberately separated from the data dictionary code because we
    might move to a simple flat file structure in the future. For now we
    use a micro Tokyo Cabinet database for this. */
