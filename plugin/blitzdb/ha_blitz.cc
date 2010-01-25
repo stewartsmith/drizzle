@@ -24,34 +24,29 @@ static int free_share(BlitzShare *share);
 static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;
 
-/* Create relevant files for a new table and close them immediately.
-   All we want to do here is somewhat like UNIX touch(1). */
 int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
                                drizzled::message::Table &proto) {
   BlitzData dict;
   int ecode;
 
-  if ((ecode = dict.create_table(proto, table, path, BLITZ_DATA_EXT)) != 0)
+  /* Create relevant files for a new table and close them immediately.
+     All we want to do here is somewhat like UNIX touch(1). */
+  if ((ecode = dict.create_data_table(proto, table, path)) != 0)
     return ecode; 
 
-  if ((ecode = dict.create_table(proto, table, path, BLITZ_SYSTEM_EXT)) != 0)
-    return ecode;
+  if ((ecode = dict.create_system_table(path)) != 0)
+    return ecode; 
 
-  /* Write the table definition to system table. TODO: Consider writing the
-     table proto to a flatfile instead of using TC. Beginning to question
-     whether a system table is necessary. */
-  TCHDB *system_table;
-  system_table = dict.open_table(path, BLITZ_SYSTEM_EXT, HDBOWRITER);
+  /* Write the table definition to system table. */
+  if ((ecode = dict.open_system_table(path, HDBOWRITER)) != 0)
+    return ecode; 
 
-  if (system_table == NULL)
-    return HA_ERR_CRASHED_ON_USAGE;
-
-  if (!dict.write_table_definition(system_table, proto)) {
-    dict.close_table(system_table);
+  if (!dict.write_table_definition(proto)) {
+    dict.close_system_table();
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
-  dict.close_table(system_table);
+  dict.close_system_table();
   return 0;
 }
 
@@ -97,24 +92,23 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
   }
 
   if (proto) {
-    BlitzData blitz;
-    TCHDB *system_table;
+    BlitzData db;
     char *proto_string;
     int proto_string_len;
 
-    system_table = blitz.open_table(file_path, BLITZ_SYSTEM_EXT, HDBOREADER);
-
-    if (system_table == NULL) {
+    if (db.open_system_table(file_path, HDBOREADER) != 0) {
       pthread_mutex_unlock(&proto_cache_mutex);
       return HA_ERR_CRASHED_ON_USAGE;
     }
 
-    proto_string = (char *)tchdbget(system_table,
-                                    BLITZ_TABLE_PROTO_KEY.c_str(),
-                                    BLITZ_TABLE_PROTO_KEY.length(),
-                                    &proto_string_len);
-
-    blitz.close_table(system_table);
+    proto_string = db.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
+                                       BLITZ_TABLE_PROTO_KEY.length(),
+                                       &proto_string_len);
+            
+    if (db.close_system_table() != 0) {
+      pthread_mutex_unlock(&proto_cache_mutex);
+      return HA_ERR_CRASHED_ON_USAGE;
+    }
 
     if (proto_string == NULL) {
       pthread_mutex_unlock(&proto_cache_mutex);
@@ -129,6 +123,7 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
 
     free(proto_string);
   }
+
   pthread_mutex_unlock(&proto_cache_mutex);
   return EEXIST;
 }
@@ -782,7 +777,7 @@ BlitzShare *ha_blitz::get_share(const char *table_name) {
   share_ptr = new BlitzShare();
 
   /* Allocate and open all necessary resources for this table */
-  if (!share_ptr->dict.startup(table_name)) {
+  if (share_ptr->dict.startup(table_name) != 0) {
     share_ptr->dict.shutdown();
     delete share_ptr;
     pthread_mutex_unlock(&blitz_utility_mutex);
@@ -816,7 +811,7 @@ static int free_share(BlitzShare *share) {
   if (--share->use_count == 0) {
     share->dict.write_meta_autoinc(share->auto_increment_value);
 
-    if (!share->dict.shutdown()) {
+    if (share->dict.shutdown() != 0) {
       pthread_mutex_unlock(&blitz_utility_mutex);
       return HA_ERR_CRASHED_ON_USAGE;
     }

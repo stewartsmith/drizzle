@@ -87,17 +87,15 @@ private:
 public:
   BlitzData() { current_hidden_row_id = 0; }
   ~BlitzData() {}
-  bool startup(const char *table_path);
-  bool shutdown(void);
+  int startup(const char *table_path);
+  int shutdown(void);
 
   /* DATA DICTIONARY CREATION RELATED */
-  TCHDB *open_table(const char *path, const char *ext, int mode);
-  int create_table(drizzled::message::Table &proto, Table &table,
-                   const char *table_path, const char *ext);
-  bool close_table(TCHDB *table);
+  int create_data_table(drizzled::message::Table &proto, Table &table,
+                        const char *path);
+  int open_data_table(const char *path, const int mode);
+  int close_data_table(void);
   bool rename_table(const char *from, const char *to);
-  bool write_table_definition(TCHDB *system_table,
-                              drizzled::message::Table &proto);
 
   /* DATA DICTIONARY METADATA RELATED */
   uint64_t nrecords(void);
@@ -124,6 +122,13 @@ public:
                        const unsigned char *row, const size_t rlen);
   bool delete_row(const char *key, const size_t klen);
   bool delete_all_rows(void);
+
+  /* SYSTEM TABLE RELATED */
+  int create_system_table(const char *path);
+  int open_system_table(const char *path, const int mode);
+  int close_system_table(void);
+  bool write_table_definition(drizzled::message::Table &proto);
+  char *get_system_entry(const char *key, const size_t klen, int *vlen);
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O
