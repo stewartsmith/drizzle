@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_DB_H
 #define DRIZZLED_DB_H
 
+#define DATA_DICTIONARY "data_dictionary"
+
 namespace drizzled { namespace message { class Schema; } }
 
 bool mysql_create_db(Session *session, const char *db, drizzled::message::Schema *schema_message, bool is_if_not_exists);

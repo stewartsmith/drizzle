@@ -1347,10 +1347,16 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 static int init_thread_environment()
 {
+   pthread_mutexattr_t attr; 
+   pthread_mutexattr_init(&attr);
+
   (void) pthread_mutex_init(&LOCK_create_db, NULL);
   (void) pthread_mutex_init(&LOCK_open, NULL);
-  (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
+
+  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
+  (void) pthread_mutex_init(&LOCK_thread_count, &attr);
+
+  (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
@@ -1358,6 +1364,8 @@ static int init_thread_environment()
   (void) pthread_cond_init(&COND_server_end,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
+
+  pthread_mutexattr_destroy(&attr);
 
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))

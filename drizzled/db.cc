@@ -355,7 +355,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
     return true;
   }
 
-
   /*
     Do not drop database if another thread is holding read lock.
     Wait for global read lock before acquiring LOCK_create_db.
@@ -812,7 +811,6 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
     return false;
   }
-
   /*
     Now we need to make a copy because check_db_name requires a
     non-constant argument. Actually, it takes database file name.

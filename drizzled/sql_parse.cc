@@ -1672,6 +1672,11 @@ bool create_table_precheck(TableIdentifier &identifier)
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
     return true;
   }
+  if (strcmp(identifier.getDBName(), DATA_DICTIONARY) == 0)
+  {
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DATA_DICTIONARY);
+    return true;
+  }
 
   return false;
 }

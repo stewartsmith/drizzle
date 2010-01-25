@@ -276,6 +276,11 @@ static bool store_db_create_info(const char *dbname, String *buffer, bool if_not
   {
     dbname= INFORMATION_SCHEMA_NAME.c_str();
   }
+  else if (!my_strcasecmp(system_charset_info, dbname,
+                     "data_dictionary"))
+  {
+    dbname= "data_dictionary";
+  }
   else
   {
     int r= get_database_metadata(dbname, &schema);
