@@ -93,7 +93,7 @@ public:
 
   /*
     The following two members are public to allow easy access from
-    TRP_GROUP_MIN_MAX::make_quick()
+    GroupMinMaxReadPlan::make_quick()
   */
   drizzled::memory::Root alloc; /**< Memory pool for this and quick_prefix_select data. */
   QuickRangeSelect *quick_prefix_select; /**< For retrieval of group prefixes. */

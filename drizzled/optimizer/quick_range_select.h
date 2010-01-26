@@ -228,7 +228,7 @@ private:
     mrr_buf_size= 0;
   }
 
-  friend class ::TRP_ROR_INTERSECT; 
+  friend class ::RorIntersectReadPlan; 
 
   friend
   QuickRangeSelect *get_quick_select_for_ref(Session *session, Table *table,

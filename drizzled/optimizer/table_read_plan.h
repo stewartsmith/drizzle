@@ -119,12 +119,11 @@ public:
 
 
 /* Plan for QuickRorIntersectSelect scan. */
-
-class TRP_ROR_INTERSECT : public TableReadPlan
+class RorIntersectReadPlan : public TableReadPlan
 {
 public:
-  TRP_ROR_INTERSECT() {}                      /* Remove gcc warning */
-  virtual ~TRP_ROR_INTERSECT() {}             /* Remove gcc warning */
+  RorIntersectReadPlan() {}                      /* Remove gcc warning */
+  virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    drizzled::memory::Root *parent_alloc);
@@ -163,11 +162,11 @@ public:
   is ignored by make_quick.
 */
 
-class TRP_INDEX_MERGE : public TableReadPlan
+class IndexMergeReadPlan : public TableReadPlan
 {
 public:
-  TRP_INDEX_MERGE() {}                        /* Remove gcc warning */
-  virtual ~TRP_INDEX_MERGE() {}               /* Remove gcc warning */
+  IndexMergeReadPlan() {}                        /* Remove gcc warning */
+  virtual ~IndexMergeReadPlan() {}               /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    drizzled::memory::Root *parent_alloc);
@@ -180,7 +179,7 @@ public:
   Plan for a QuickGroupMinMaxSelect scan.
 */
 
-class TRP_GROUP_MIN_MAX : public TableReadPlan
+class GroupMinMaxReadPlan : public TableReadPlan
 {
 private:
   bool have_min;
@@ -201,20 +200,20 @@ public:
   ha_rows quick_prefix_records;
 
 public:
-  TRP_GROUP_MIN_MAX(bool have_min_arg, 
-                    bool have_max_arg,
-                    KEY_PART_INFO *min_max_arg_part_arg,
-                    uint32_t group_prefix_len_arg, 
-                    uint32_t used_key_parts_arg,
-                    uint32_t group_key_parts_arg, 
-                    KEY *index_info_arg,
-                    uint32_t index_arg, 
-                    uint32_t key_infix_len_arg,
-                    unsigned char *key_infix_arg,
-                    SEL_TREE *tree_arg, 
-                    SEL_ARG *index_tree_arg,
-                    uint32_t param_idx_arg, 
-                    ha_rows quick_prefix_records_arg)
+  GroupMinMaxReadPlan(bool have_min_arg, 
+                      bool have_max_arg,
+                      KEY_PART_INFO *min_max_arg_part_arg,
+                      uint32_t group_prefix_len_arg, 
+                      uint32_t used_key_parts_arg,
+                      uint32_t group_key_parts_arg, 
+                      KEY *index_info_arg,
+                      uint32_t index_arg, 
+                      uint32_t key_infix_len_arg,
+                      unsigned char *key_infix_arg,
+                      SEL_TREE *tree_arg, 
+                      SEL_ARG *index_tree_arg,
+                      uint32_t param_idx_arg, 
+                      ha_rows quick_prefix_records_arg)
     :
       have_min(have_min_arg),
       have_max(have_max_arg),
@@ -233,7 +232,7 @@ public:
       if (key_infix_len)
         memcpy(this->key_infix, key_infix_arg, key_infix_len);
     }
-  virtual ~TRP_GROUP_MIN_MAX() {}             /* Remove gcc warning */
+  virtual ~GroupMinMaxReadPlan() {}             /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
