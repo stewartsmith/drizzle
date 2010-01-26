@@ -24,8 +24,6 @@
 
 class PluginsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
   PluginsTool();
 

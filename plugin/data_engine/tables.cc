@@ -27,26 +27,26 @@ using namespace drizzled;
 TablesTool::TablesTool() :
   Tool("TABLES")
 {
-  add_field(schema, "TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "ENGINE", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "VERSION", message::Table::Field::BIGINT);
-  add_field(schema, "ROW_FORMAT", message::Table::Field::VARCHAR, 10);
-  add_field(schema, "TABLE_ROWS", message::Table::Field::BIGINT);
-  add_field(schema, "AVG_ROW_LENGTH", message::Table::Field::BIGINT);
-  add_field(schema, "DATA_LENGTH", message::Table::Field::BIGINT);
-  add_field(schema, "MAX_DATA_LENGTH", message::Table::Field::BIGINT);
-  add_field(schema, "INDEX_LENGTH", message::Table::Field::BIGINT);
-  add_field(schema, "DATA_FREE", message::Table::Field::BIGINT);
-  add_field(schema, "AUTO_INCREMENT", message::Table::Field::BIGINT);
-  add_field(schema, "CREATE_TIME", message::Table::Field::BIGINT);
-  add_field(schema, "UPDATE_TIME", message::Table::Field::BIGINT);
-  add_field(schema, "CHECK_TIME", message::Table::Field::BIGINT);
-  add_field(schema, "TABLE_COLLATION", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CHECKSUM", message::Table::Field::BIGINT);
-  add_field(schema, "CREATE_OPTIONS", message::Table::Field::VARCHAR, 255);
-  add_field(schema, "TABLE_COMMENT", message::Table::Field::VARCHAR, 2048);
-  add_field(schema, "PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("ENGINE", message::Table::Field::VARCHAR, 64);
+  add_field("VERSION", message::Table::Field::BIGINT);
+  add_field("ROW_FORMAT", message::Table::Field::VARCHAR, 10);
+  add_field("TABLE_ROWS", message::Table::Field::BIGINT);
+  add_field("AVG_ROW_LENGTH", message::Table::Field::BIGINT);
+  add_field("DATA_LENGTH", message::Table::Field::BIGINT);
+  add_field("MAX_DATA_LENGTH", message::Table::Field::BIGINT);
+  add_field("INDEX_LENGTH", message::Table::Field::BIGINT);
+  add_field("DATA_FREE", message::Table::Field::BIGINT);
+  add_field("AUTO_INCREMENT", message::Table::Field::BIGINT);
+  add_field("CREATE_TIME", message::Table::Field::BIGINT);
+  add_field("UPDATE_TIME", message::Table::Field::BIGINT);
+  add_field("CHECK_TIME", message::Table::Field::BIGINT);
+  add_field("TABLE_COLLATION", message::Table::Field::VARCHAR, 64);
+  add_field("CHECKSUM", message::Table::Field::BIGINT);
+  add_field("CREATE_OPTIONS", message::Table::Field::VARCHAR, 255);
+  add_field("TABLE_COMMENT", message::Table::Field::VARCHAR, 2048);
+  add_field("PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
 }

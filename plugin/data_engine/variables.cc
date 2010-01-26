@@ -27,6 +27,6 @@ using namespace drizzled;
 VariablesTool::VariablesTool() :
   Tool("GLOBAL_VARIABLES")
 {
-  add_field(schema, "VARIABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "VARIABLE_VALUE", message::Table::Field::VARCHAR, 16300);
+  add_field("VARIABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("VARIABLE_VALUE", message::Table::Field::VARCHAR, 16300);
 }

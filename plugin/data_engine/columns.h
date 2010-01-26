@@ -24,8 +24,6 @@
 
 class ColumnsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   ColumnsTool();

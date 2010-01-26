@@ -24,8 +24,6 @@
 
 class StatusTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   StatusTool();

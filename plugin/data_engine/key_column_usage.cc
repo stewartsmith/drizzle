@@ -27,19 +27,19 @@ using namespace drizzled;
 KeyColumnUsageTool::KeyColumnUsageTool() :
   Tool("KEY_COLUMN_USAGE")
 {
-  add_field(schema, "CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
 
-  add_field(schema, "TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
 
-  add_field(schema, "COLUMN_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "ORDINAL_POSITION", message::Table::Field::BIGINT);
-  add_field(schema, "POSITION_IN_UNIQUE_CONSTRAINT", message::Table::Field::BIGINT);
+  add_field("COLUMN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("ORDINAL_POSITION", message::Table::Field::BIGINT);
+  add_field("POSITION_IN_UNIQUE_CONSTRAINT", message::Table::Field::BIGINT);
 
-  add_field(schema, "REFERENCED_TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "REFERENCED_TABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "REFERENCED_COLUMN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("REFERENCED_TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("REFERENCED_TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("REFERENCED_COLUMN_NAME", message::Table::Field::VARCHAR, 64);
 }

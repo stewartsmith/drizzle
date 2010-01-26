@@ -27,10 +27,10 @@ using namespace drizzled;
 CharacterSetsTool::CharacterSetsTool() :
   Tool("CHARACTER_SETS")
 {
-  add_field(schema, "CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DEFAULT_COLLATE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DESCRIPTION", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "MAXLEN", message::Table::Field::BIGINT);
+  add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("DEFAULT_COLLATE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("DESCRIPTION", message::Table::Field::VARCHAR, 64);
+  add_field("MAXLEN", message::Table::Field::BIGINT);
 }
 
 CharacterSetsTool::Generator::Generator()

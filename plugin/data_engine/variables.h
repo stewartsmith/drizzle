@@ -24,8 +24,6 @@
 
 class VariablesTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   VariablesTool();

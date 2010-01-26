@@ -26,10 +26,10 @@ using namespace drizzled;
 PluginsTool::PluginsTool() :
   Tool("PLUGINS")
 {
-  add_field(schema, "PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "PLUGIN_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "IS_ACTIVE", message::Table::Field::VARCHAR, 3);
-  add_field(schema, "MODULE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("PLUGIN_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("IS_ACTIVE", message::Table::Field::VARCHAR, 3);
+  add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
 }
 
 PluginsTool::Generator::Generator()

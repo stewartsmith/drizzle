@@ -27,8 +27,8 @@ using namespace drizzled;
 CollationCharacterSetApplicabilityTool::CollationCharacterSetApplicabilityTool() :
   Tool("COLLATION_CHARACTER_SET_APPLICABILITY")
 {
-  add_field(schema, "COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
 }
 
 CollationCharacterSetApplicabilityTool::Generator::Generator()

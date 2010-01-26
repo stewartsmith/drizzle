@@ -27,19 +27,19 @@ using namespace drizzled;
 ReferentialConstraintsTool::ReferentialConstraintsTool() :
   Tool("REFERENTIAL_CONSTRAINTS")
 {
-  add_field(schema, "CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
 
-  add_field(schema, "UNIQUE_CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "UNIQUE_CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "UNIQUE_CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("UNIQUE_CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("UNIQUE_CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("UNIQUE_CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
 
 
-  add_field(schema, "MATCH_OPTION", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "UPDATE_RULE", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DELETE_RULE", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("MATCH_OPTION", message::Table::Field::VARCHAR, 64);
+  add_field("UPDATE_RULE", message::Table::Field::VARCHAR, 64);
+  add_field("DELETE_RULE", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
 
-  add_field(schema, "REFERENCED_TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("REFERENCED_TABLE_NAME", message::Table::Field::VARCHAR, 64);
 }

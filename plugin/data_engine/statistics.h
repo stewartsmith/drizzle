@@ -24,8 +24,6 @@
 
 class StatisticsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   StatisticsTool();

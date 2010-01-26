@@ -24,8 +24,6 @@
 
 class SchemataTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   SchemataTool();

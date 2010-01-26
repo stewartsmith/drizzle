@@ -27,13 +27,13 @@ using namespace drizzled;
 CollationsTool::CollationsTool() :
   Tool("COLLATIONS")
 {
-  add_field(schema, "COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DESCRIPTION", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "ID", message::Table::Field::BIGINT);
-  add_field(schema, "IS_DEFAULT", message::Table::Field::BIGINT);
-  add_field(schema, "IS_COMPILED", message::Table::Field::BIGINT);
-  add_field(schema, "SORTLEN", message::Table::Field::BIGINT);
+  add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("DESCRIPTION", message::Table::Field::VARCHAR, 64);
+  add_field("ID", message::Table::Field::BIGINT);
+  add_field("IS_DEFAULT", message::Table::Field::BIGINT);
+  add_field("IS_COMPILED", message::Table::Field::BIGINT);
+  add_field("SORTLEN", message::Table::Field::BIGINT);
 }
 
 CollationsTool::Generator::Generator()

@@ -24,8 +24,6 @@
 
 class ModulesTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   ModulesTool();

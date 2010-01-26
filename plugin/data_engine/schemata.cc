@@ -27,9 +27,9 @@ using namespace drizzled;
 SchemataTool::SchemataTool() :
   Tool("SCHEMATA")
 {
-  add_field(schema, "CATALOG_NAME", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "SCHEMA_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DEFAULT_CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DEFAULT_COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "SQL_PATH", message::Table::Field::VARCHAR, 512);
+  add_field("CATALOG_NAME", message::Table::Field::VARCHAR, 512);
+  add_field("SCHEMA_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("DEFAULT_CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("DEFAULT_COLLATION_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("SQL_PATH", message::Table::Field::VARCHAR, 512);
 }

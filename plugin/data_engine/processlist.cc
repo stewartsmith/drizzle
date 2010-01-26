@@ -30,14 +30,14 @@ using namespace drizzled;
 ProcesslistTool::ProcesslistTool() :
   Tool("PROCESSLIST")
 {
-  add_field(schema, "ID", message::Table::Field::BIGINT);
-  add_field(schema, "USER", message::Table::Field::VARCHAR, 16);
-  add_field(schema, "HOST", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "DB", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "COMMAND", message::Table::Field::VARCHAR, 16);
-  add_field(schema, "TIME", message::Table::Field::BIGINT);
-  add_field(schema, "STATE", message::Table::Field::VARCHAR, 16);
-  add_field(schema, "INFO", message::Table::Field::VARCHAR, PROCESS_LIST_WIDTH);
+  add_field("ID", message::Table::Field::BIGINT);
+  add_field("USER", message::Table::Field::VARCHAR, 16);
+  add_field("HOST", message::Table::Field::VARCHAR, 64);
+  add_field("DB", message::Table::Field::VARCHAR, 64);
+  add_field("COMMAND", message::Table::Field::VARCHAR, 16);
+  add_field("TIME", message::Table::Field::BIGINT);
+  add_field("STATE", message::Table::Field::VARCHAR, 16);
+  add_field("INFO", message::Table::Field::VARCHAR, PROCESS_LIST_WIDTH);
 }
 
 ProcesslistTool::Generator::Generator()

@@ -27,28 +27,28 @@ using namespace drizzled;
 ColumnsTool::ColumnsTool() :
   Tool("COLUMNS")
 {
-  add_field(schema, "TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
 
-  add_field(schema, "COLUMN_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "ORDINAL_POSITION", message::Table::Field::BIGINT);
-  add_field(schema, "COLUMN_DEFAULT", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "IS_NULLABLE", message::Table::Field::VARCHAR, 3);
-  add_field(schema, "DATATYPE", message::Table::Field::VARCHAR, 64);
+  add_field("COLUMN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("ORDINAL_POSITION", message::Table::Field::BIGINT);
+  add_field("COLUMN_DEFAULT", message::Table::Field::VARCHAR, 64);
+  add_field("IS_NULLABLE", message::Table::Field::VARCHAR, 3);
+  add_field("DATATYPE", message::Table::Field::VARCHAR, 64);
 
-  add_field(schema, "CHARACTER_MAXIMUM_LENGTH", message::Table::Field::BIGINT);
-  add_field(schema, "CHARACTER_OCTET_LENGTH", message::Table::Field::BIGINT);
-  add_field(schema, "NUMERIC_PRECISION", message::Table::Field::BIGINT);
-  add_field(schema, "NUMERIC_SCALE", message::Table::Field::BIGINT);
+  add_field("CHARACTER_MAXIMUM_LENGTH", message::Table::Field::BIGINT);
+  add_field("CHARACTER_OCTET_LENGTH", message::Table::Field::BIGINT);
+  add_field("NUMERIC_PRECISION", message::Table::Field::BIGINT);
+  add_field("NUMERIC_SCALE", message::Table::Field::BIGINT);
 
-  add_field(schema, "CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "COLUMN_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "COLUMN_KEY", message::Table::Field::VARCHAR, 3);
-  add_field(schema, "EXTRA", message::Table::Field::VARCHAR, 27);
-  add_field(schema, "PRIVILEGES", message::Table::Field::VARCHAR, 80);
-  add_field(schema, "COLUMN_COMMENT", message::Table::Field::VARCHAR, 1024);
-  add_field(schema, "STORAGE", message::Table::Field::VARCHAR, 8);
-  add_field(schema, "FORMAT", message::Table::Field::VARCHAR, 8);
+  add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("COLUMN_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("COLUMN_KEY", message::Table::Field::VARCHAR, 3);
+  add_field("EXTRA", message::Table::Field::VARCHAR, 27);
+  add_field("PRIVILEGES", message::Table::Field::VARCHAR, 80);
+  add_field("COLUMN_COMMENT", message::Table::Field::VARCHAR, 1024);
+  add_field("STORAGE", message::Table::Field::VARCHAR, 8);
+  add_field("FORMAT", message::Table::Field::VARCHAR, 8);
 }

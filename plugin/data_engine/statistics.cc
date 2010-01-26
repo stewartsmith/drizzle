@@ -27,20 +27,20 @@ using namespace drizzled;
 StatisticsTool::StatisticsTool() :
   Tool("STATISTICS")
 {
-  add_field(schema, "TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "NON_UNIQUE", message::Table::Field::BIGINT);
-  add_field(schema, "INDEX_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "INDEX_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "SEQ_IN_INDEX", message::Table::Field::BIGINT);
-  add_field(schema, "COLUMN_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "COLLATION", message::Table::Field::VARCHAR, 1);
-  add_field(schema, "CARDINALITY", message::Table::Field::BIGINT);
-  add_field(schema, "SUB_PART", message::Table::Field::BIGINT);
-  add_field(schema, "PACKED", message::Table::Field::VARCHAR, 10);
-  add_field(schema, "NULLABLE", message::Table::Field::VARCHAR, 3);
-  add_field(schema, "INDEX_TYPE", message::Table::Field::VARCHAR, 16);
-  add_field(schema, "COMMENT", message::Table::Field::VARCHAR, 16);
-  add_field(schema, "INDEX_COMMENT", message::Table::Field::VARCHAR, 1024);
+  add_field("TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("NON_UNIQUE", message::Table::Field::BIGINT);
+  add_field("INDEX_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("INDEX_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("SEQ_IN_INDEX", message::Table::Field::BIGINT);
+  add_field("COLUMN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("COLLATION", message::Table::Field::VARCHAR, 1);
+  add_field("CARDINALITY", message::Table::Field::BIGINT);
+  add_field("SUB_PART", message::Table::Field::BIGINT);
+  add_field("PACKED", message::Table::Field::VARCHAR, 10);
+  add_field("NULLABLE", message::Table::Field::VARCHAR, 3);
+  add_field("INDEX_TYPE", message::Table::Field::VARCHAR, 16);
+  add_field("COMMENT", message::Table::Field::VARCHAR, 16);
+  add_field("INDEX_COMMENT", message::Table::Field::VARCHAR, 1024);
 }

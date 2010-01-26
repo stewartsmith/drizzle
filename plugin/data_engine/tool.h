@@ -96,8 +96,7 @@ public:
     return new Generator;
   }
 
-  void add_field(drizzled::message::Table&,
-                 const char *label,
+  void add_field(const char *label,
                  drizzled::message::Table::Field::FieldType type,
                  uint32_t length= 0)
   {

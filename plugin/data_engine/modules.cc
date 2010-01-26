@@ -27,13 +27,13 @@ using namespace drizzled;
 ModulesTool::ModulesTool() :
   Tool("MODULES")
 {
-  add_field(schema, "MODULE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "MODULE_VERSION", message::Table::Field::VARCHAR, 20);
-  add_field(schema, "MODULE_AUTHOR", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "IS_BUILTIN", message::Table::Field::VARCHAR, 3);
-  add_field(schema, "MODULE_LIBRARY", message::Table::Field::VARCHAR, 254);
-  add_field(schema, "MODULE_DESCRIPTION", message::Table::Field::VARCHAR, 254);
-  add_field(schema, "MODULE_LICENSE", message::Table::Field::VARCHAR, 80);
+  add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("MODULE_VERSION", message::Table::Field::VARCHAR, 20);
+  add_field("MODULE_AUTHOR", message::Table::Field::VARCHAR, 64);
+  add_field("IS_BUILTIN", message::Table::Field::VARCHAR, 3);
+  add_field("MODULE_LIBRARY", message::Table::Field::VARCHAR, 254);
+  add_field("MODULE_DESCRIPTION", message::Table::Field::VARCHAR, 254);
+  add_field("MODULE_LICENSE", message::Table::Field::VARCHAR, 80);
 }
 
 ModulesTool::Generator::Generator()

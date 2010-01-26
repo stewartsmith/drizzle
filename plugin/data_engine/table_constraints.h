@@ -24,8 +24,6 @@
 
 class TableConstraintsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   TableConstraintsTool();

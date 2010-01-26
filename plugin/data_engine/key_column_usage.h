@@ -24,8 +24,6 @@
 
 class KeyColumnUsageTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   KeyColumnUsageTool();

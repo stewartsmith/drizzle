@@ -27,10 +27,10 @@ using namespace drizzled;
 TableConstraintsTool::TableConstraintsTool() :
   Tool("TABLE_CONSTRAINTS")
 {
-  add_field(schema, "CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field(schema, "CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field(schema, "CONSTRAINT_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
+  add_field("CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_TYPE", message::Table::Field::VARCHAR, 64);
 }

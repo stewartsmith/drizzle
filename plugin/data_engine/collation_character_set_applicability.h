@@ -23,18 +23,11 @@
 
 class CollationCharacterSetApplicabilityTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   CollationCharacterSetApplicabilityTool();
 
   bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
 
   class Generator : public Tool::Generator 
   {

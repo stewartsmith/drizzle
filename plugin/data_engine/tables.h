@@ -24,9 +24,8 @@
 
 class TablesTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
+
   TablesTool();
 };
 

@@ -24,9 +24,8 @@
 
 class ReferentialConstraintsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
+
   ReferentialConstraintsTool();
 };
 

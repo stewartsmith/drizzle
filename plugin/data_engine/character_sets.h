@@ -24,19 +24,12 @@
 
 class CharacterSetsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   CharacterSetsTool();
   ~CharacterSetsTool() {}
 
   bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
 
   class Generator : public Tool::Generator 
   {

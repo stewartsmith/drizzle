@@ -24,19 +24,11 @@
 
 class CollationsTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   CollationsTool();
-  ~CollationsTool() {}
 
   bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
 
   class Generator : public Tool::Generator 
   {

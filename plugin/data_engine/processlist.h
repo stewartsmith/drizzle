@@ -24,8 +24,6 @@
 
 class ProcesslistTool : public Tool
 {
-  drizzled::message::Table schema;
-
 public:
 
   ProcesslistTool();
