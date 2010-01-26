@@ -457,16 +457,15 @@ int optimizer::QuickRangeSelect::cmp_next(optimizer::QuickRange *range_arg)
 
 int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 {
-  int cmp;
   if (range_arg->flag & NO_MIN_RANGE)
-    return 0;					/* key can't be to small */
+    return 0; /* key can't be to small */
 
-  cmp= key_cmp(key_part_info,
-               range_arg->min_key,
-               range_arg->min_length);
+  int cmp= key_cmp(key_part_info,
+                   range_arg->min_key,
+                   range_arg->min_length);
   if (cmp > 0 || (cmp == 0 && (range_arg->flag & NEAR_MIN) == false))
     return 0;
-  return 1;                                     // outside of range
+  return 1; // outside of range
 }
 
 
@@ -500,25 +499,29 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
  */
 optimizer::QuickSelectDescending::QuickSelectDescending(optimizer::QuickRangeSelect *q, uint32_t, bool *)
   :
-    optimizer::QuickRangeSelect(*q),
-    rev_it(rev_ranges)
+    optimizer::QuickRangeSelect(*q)
 {
-  optimizer::QuickRange *r= NULL;
-
   optimizer::QuickRange **pr= (optimizer::QuickRange**) ranges.buffer;
   optimizer::QuickRange **end_range= pr + ranges.elements;
   for (; pr != end_range; pr++)
-    rev_ranges.push_front(*pr);
+  {
+    rev_ranges.push_back(*pr);
+  }
+  rev_it= rev_ranges.begin();
 
   /* Remove EQ_RANGE flag for keys that are not using the full key */
-  for (r = rev_it++; r; r= rev_it++)
+  for (vector<optimizer::QuickRange *>::iterator it= rev_ranges.begin();
+       it != rev_ranges.end();
+       ++it)
   {
+    optimizer::QuickRange *r= *it;
     if ((r->flag & EQ_RANGE) &&
         head->key_info[index].key_length != r->max_length)
+    {
       r->flag&= ~EQ_RANGE;
+    }
   }
-  rev_it.rewind();
-  q->dont_free= 1;				// Don't free shared mem
+  q->dont_free= 1; // Don't free shared mem
   delete q;
 }
 
@@ -546,15 +549,19 @@ int optimizer::QuickSelectDescending::get_next()
 		           cursor->index_prev(record));
       if (! result)
       {
-        if (cmp_prev(*rev_it.ref()) == 0)
-          return 0;
+          if (cmp_prev(*(rev_it - 1)) == 0)
+            return 0;
       }
       else if (result != HA_ERR_END_OF_FILE)
         return result;
     }
 
-    if (! (last_range= rev_it++))
-      return HA_ERR_END_OF_FILE;		// All ranges used
+    if (rev_it == rev_ranges.end())
+    {
+      return HA_ERR_END_OF_FILE; // All ranges used
+    }
+    last_range= *rev_it;
+    ++rev_it;
 
     if (last_range->flag & NO_MAX_RANGE)        // Read last record
     {
