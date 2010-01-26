@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
+#include "drizzled/hash.h"
 
 #ifndef PLUGIN_DATA_ENGINE_DICTIONARY_H
 #define PLUGIN_DATA_ENGINE_DICTIONARY_H
@@ -54,6 +55,11 @@ static const char *dictionary_exts[] = {
 
 class Dictionary : public drizzled::plugin::StorageEngine
 {
+  typedef drizzled::hash_map<std::string, Tool *> ToolMap;
+  typedef std::pair<std::string, Tool&> ToolMapPair;
+
+  ToolMap table_map;
+
   CharacterSetsTool character_sets;
   CollationCharacterSetApplicabilityTool collation_character_set_applicability;
   CollationsTool collations;
@@ -71,6 +77,7 @@ class Dictionary : public drizzled::plugin::StorageEngine
   TableConstraintsTool table_constraints;
   VariablesTool global_variables;
   VariablesTool session_variables;
+
 
 public:
   Dictionary(const std::string &name_arg);

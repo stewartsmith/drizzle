@@ -23,6 +23,9 @@
 
 class Tool
 {
+  std::string name;
+  std::string path;
+
 public:
   virtual ~Tool() {}
 
@@ -34,14 +37,47 @@ public:
     Generator()
     { }
 
-    virtual ~Generator() {}
+    virtual ~Generator()
+    { }
 
-    virtual bool populate(Field **fields)= 0;
+    /*
+      Return type is "are there more rows".
+    */
+    virtual bool populate(Field **)
+    {
+      return false;
+    }
   };
 
-  virtual void define(drizzled::message::Table &proto)= 0;
+  virtual void define(drizzled::message::Table &)
+  { 
+  }
 
-  virtual Generator *generator()= 0;
+  virtual std::string &getName()
+  { 
+    return name;
+  }
+
+  virtual std::string &getPath()
+  { 
+    return path;
+  }
+
+  virtual void setName(const char *arg)
+  { 
+    path.clear();
+    name= arg;
+
+    path.append("./data_dictionary/");
+    path.append(name);
+    transform(path.begin(), path.end(),
+              path.begin(), ::tolower);
+  }
+
+  virtual Generator *generator()
+  {
+    return new Generator;
+  }
 
   virtual void add_field(drizzled::message::Table &schema,
                          const char *label,

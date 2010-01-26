@@ -29,7 +29,8 @@ KeyColumnUsageTool::KeyColumnUsageTool()
   message::Table::StorageEngine *engine;
   message::Table::TableOptions *table_options;
 
-  schema.set_name("key_column_usage");
+  setName("KEY_COLUMN_USAGE");
+  schema.set_name(getName().c_str());
   schema.set_type(message::Table::STANDARD);
 
   table_options= schema.mutable_options();

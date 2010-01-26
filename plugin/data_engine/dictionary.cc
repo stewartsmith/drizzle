@@ -35,6 +35,79 @@ Dictionary::Dictionary(const std::string &name_arg) :
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {
+
+  pair<ToolMap::iterator, bool> ret;
+
+  ret= table_map.insert(make_pair(character_sets.getPath(), &character_sets));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(collation_character_set_applicability.getPath(),
+                                  &collation_character_set_applicability));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(collations.getPath(),
+                                  &collations));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(columns.getPath(),
+                                  &columns));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(key_column_usage.getPath(),
+                                  &key_column_usage));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(modules.getPath(),
+                                  &modules));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(plugins.getPath(),
+                                  &plugins));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(processlist.getPath(),
+                                  &processlist));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(referential_constraints.getPath(),
+                                  &referential_constraints));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(schemata.getPath(),
+                                  &schemata));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(statistics.getPath(),
+                                  &statistics));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(global_status.getPath(),
+                                  &global_status));
+  assert(ret.second == true);
+
+#if 0
+  ret= table_map.insert(make_pair(session_status.getPath(),
+                                  &session_status));
+  assert(ret.second == true);
+#endif
+
+  ret= table_map.insert(make_pair(tables.getPath(),
+                                  &tables));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(table_constraints.getPath(),
+                                  &table_constraints));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(global_variables.getPath(),
+                                  &global_variables));
+  assert(ret.second == true);
+
+#if 0
+  ret= table_map.insert(make_pair(session_variables.getPath(),
+                                  &session_variables));
+  assert(ret.second == true);
+#endif
 }
 
 
@@ -45,35 +118,15 @@ Cursor *Dictionary::create(TableShare &table, memory::Root *mem_root)
 
 Tool *Dictionary::getTool(const char *path)
 {
-  string tab_name(path);
+  ToolMap::iterator iter= table_map.find(path);
 
-  if (strcmp(path, "./data_dictionary/character_sets") == 0)
-    return &character_sets;
-  else if (strcmp(path, "./data_dictionary/collation_character_set_applicability") == 0)
-    return &collation_character_set_applicability;
-  else if (strcmp(path, "./data_dictionary/collations") == 0)
-    return &collations;
-  else if (strcmp(path, "./data_dictionary/columns") == 0)
-    return &columns;
-  else if (strcmp(path, "./data_dictionary/global_status") == 0)
-    return &global_status;
-  else if (strcmp(path, "./data_dictionary/global_variables") == 0)
-    return &global_variables;
-  else if (strcmp(path, "./data_dictionary/key_column_usage") == 0)
-    return &key_column_usage;
-  else if (strcmp(path, "./data_dictionary/modules") == 0)
-    return &modules;
-  else if (strcmp(path, "./data_dictionary/plugins") == 0)
-    return &plugins;
-  else if (strcmp(path, "./data_dictionary/processlist") == 0)
-    return &processlist;
-  else if (strcmp(path, "./data_dictionary/statistics") == 0)
-    return &statistics;
+  if (iter == table_map.end())
+  {
+    fprintf(stderr, "\n %s\n", path);
+    assert(path == NULL);
+  }
+  return (*iter).second;
 
-  fprintf(stderr, "\n %s\n", path);
-  assert(path == NULL);
-
-  return NULL;
 }
 
 
@@ -90,84 +143,20 @@ int Dictionary::doGetTableDefinition(Session &,
   {
     return ENOENT;
   }
-  else if (strcmp(path, "./data_dictionary/character_sets") == 0)
+
+  ToolMap::iterator iter= table_map.find(path);
+
+  if (iter == table_map.end())
   {
-    if (table_proto)
-    {
-      character_sets.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/collations") == 0)
-  {
-    if (table_proto)
-    {
-      collations.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/collation_character_set_applicability") == 0)
-  {
-    if (table_proto)
-    {
-      collation_character_set_applicability.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/columns") == 0)
-  {
-    if (table_proto)
-    {
-      columns.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/global_status") == 0)
-  {
-    if (table_proto)
-    {
-      global_status.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/global_variables") == 0)
-  {
-    if (table_proto)
-    {
-      global_variables.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/key_column_usage") == 0)
-  {
-    if (table_proto)
-    {
-      key_column_usage.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/modules") == 0)
-  {
-    if (table_proto)
-    {
-      modules.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/processlist") == 0)
-  {
-    if (table_proto)
-    {
-      processlist.define(*table_proto);
-    }
-  }
-  else if (strcmp(path, "./data_dictionary/plugins") == 0)
-  {
-    if (table_proto)
-      plugins.define(*table_proto);
-  }
-  else if (strcmp(path, "./data_dictionary/statistics") == 0)
-  {
-    if (table_proto)
-    {
-      statistics.define(*table_proto);
-    }
-  }
-  else
-  {
+    fprintf(stderr, "\n doGetTableDefinition() %s\n", path);
     return ENOENT;
+  }
+
+  if (table_proto)
+  {
+    Tool *tool= (*iter).second;
+
+    tool->define(*table_proto);
   }
 
   return EEXIST;
@@ -181,25 +170,13 @@ void Dictionary::doGetTableNames(drizzled::CachedDirectory&,
   if (db.compare("data_dictionary"))
     return;
 
-  set_of_names.insert("CHARACTER_SETS");
-  set_of_names.insert("COLLATIONS");
-  set_of_names.insert("COLLATION_CHARACTER_SET_APPLICABILITY");
-  set_of_names.insert("COLUMNS");
-  set_of_names.insert("GLOBAL_STATUS");
-  set_of_names.insert("GLOBAL_STATUS");
-  set_of_names.insert("GLOBAL_VARIABLES");
-  set_of_names.insert("GLOBAL_VARIABLES");
-  set_of_names.insert("KEY_COLUMN_USAGE");
-  set_of_names.insert("MODULES");
-  set_of_names.insert("PLUGINS");
-  set_of_names.insert("PROCESSLIST");
-  set_of_names.insert("REFERENTIAL_CONSTRAINTS");
-  set_of_names.insert("SCHEMATA");
-  set_of_names.insert("SESSION_STATUS");
-  set_of_names.insert("SESSION_VARIABLES");
-  set_of_names.insert("STATISTICS");
-  set_of_names.insert("TABLES");
-  set_of_names.insert("TABLE_CONSTRAINTS");
+  for (ToolMap::iterator it= table_map.begin();
+       it != table_map.end();
+       it++)
+  {
+    Tool *tool= (*it).second;
+    set_of_names.insert(tool->getName());
+  }
 }
 
 

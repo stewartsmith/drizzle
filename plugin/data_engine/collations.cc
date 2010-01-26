@@ -29,7 +29,8 @@ CollationsTool::CollationsTool()
   message::Table::StorageEngine *engine;
   message::Table::TableOptions *table_options;
 
-  schema.set_name("character_sets");
+  setName("COLLATIONS");
+  schema.set_name(getName().c_str());
   schema.set_type(message::Table::STANDARD);
 
   table_options= schema.mutable_options();

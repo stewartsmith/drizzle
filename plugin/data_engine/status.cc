@@ -29,7 +29,8 @@ StatusTool::StatusTool()
   message::Table::StorageEngine *engine;
   message::Table::TableOptions *table_options;
 
-  schema.set_name("global_status");
+  setName("GLOBAL_STATUS");
+  schema.set_name(getName().c_str());
   schema.set_type(message::Table::STANDARD);
 
   table_options= schema.mutable_options();

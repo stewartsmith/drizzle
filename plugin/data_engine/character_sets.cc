@@ -29,7 +29,8 @@ CharacterSetsTool::CharacterSetsTool()
   message::Table::StorageEngine *engine;
   message::Table::TableOptions *table_options;
 
-  schema.set_name("character_sets");
+  setName("CHARACTER_SETS");
+  schema.set_name(getName().c_str());
   schema.set_type(message::Table::STANDARD);
 
   table_options= schema.mutable_options();
