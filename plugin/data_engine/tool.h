@@ -23,25 +23,41 @@
 
 class Tool
 {
+  Tool() {};
+
+  drizzled::message::Table schema;
   std::string name;
   std::string path;
 
 public:
+  Tool(const char *arg)
+  {
+    drizzled::message::Table::StorageEngine *engine;
+    drizzled::message::Table::TableOptions *table_options;
+
+    setName(arg);
+    schema.set_name(name.c_str());
+    schema.set_type(drizzled::message::Table::STANDARD);
+
+    table_options= schema.mutable_options();
+    table_options->set_collation_id(default_charset_info->number);
+    table_options->set_collation(default_charset_info->name);
+
+    engine= schema.mutable_engine();
+    engine->set_name(engine_name);
+  }
+
   virtual ~Tool() {}
 
   class Generator 
   {
 
   public:
-
-    Generator()
-    { }
-
     virtual ~Generator()
     { }
 
     /*
-      Return type is "are there more rows".
+      Return type is bool meaning "are there more rows".
     */
     virtual bool populate(Field **)
     {
@@ -49,21 +65,22 @@ public:
     }
   };
 
-  virtual void define(drizzled::message::Table &)
+  void define(drizzled::message::Table &proto)
   { 
+    proto.CopyFrom(schema);
   }
 
-  virtual std::string &getName()
+  std::string &getName()
   { 
     return name;
   }
 
-  virtual std::string &getPath()
+  std::string &getPath()
   { 
     return path;
   }
 
-  virtual void setName(const char *arg)
+  void setName(const char *arg)
   { 
     path.clear();
     name= arg;
@@ -79,10 +96,10 @@ public:
     return new Generator;
   }
 
-  virtual void add_field(drizzled::message::Table &schema,
-                         const char *label,
-                         drizzled::message::Table::Field::FieldType type,
-                         uint32_t length= 0)
+  void add_field(drizzled::message::Table&,
+                 const char *label,
+                 drizzled::message::Table::Field::FieldType type,
+                 uint32_t length= 0)
   {
     drizzled::message::Table::Field *field;
     drizzled::message::Table::Field::FieldOptions *field_options;

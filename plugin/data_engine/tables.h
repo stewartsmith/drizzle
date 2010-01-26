@@ -27,30 +27,7 @@ class TablesTool : public Tool
   drizzled::message::Table schema;
 
 public:
-
   TablesTool();
-
-  bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
-  class Generator : public Tool::Generator 
-  {
-
-  public:
-    Generator();
-
-    bool populate(Field ** fields);
-
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_TABLES_H

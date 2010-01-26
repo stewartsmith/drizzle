@@ -27,22 +27,9 @@
 using namespace std;
 using namespace drizzled;
 
-ProcesslistTool::ProcesslistTool()
+ProcesslistTool::ProcesslistTool() :
+  Tool("PROCESSLIST")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("PROCESSLIST");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "ID", message::Table::Field::BIGINT);
   add_field(schema, "USER", message::Table::Field::VARCHAR, 16);
   add_field(schema, "HOST", message::Table::Field::VARCHAR, 64);

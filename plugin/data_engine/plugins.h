@@ -27,6 +27,7 @@ class PluginsTool : public Tool
   drizzled::message::Table schema;
 
 public:
+  PluginsTool();
 
   class Generator : public Tool::Generator 
   {
@@ -39,19 +40,10 @@ public:
     bool populate(Field ** fields);
   };
 
-  PluginsTool();
-  ~PluginsTool() {}
-
   Generator *generator()
   {
     return new Generator;
   }
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
 };
 
 #endif // PLUGIN_DATA_ENGINE_PLUGINS_H

@@ -29,28 +29,6 @@ class StatusTool : public Tool
 public:
 
   StatusTool();
-
-  bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
-  class Generator : public Tool::Generator 
-  {
-
-  public:
-    Generator();
-
-    bool populate(Field ** fields);
-
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_STATUS_H

@@ -23,22 +23,9 @@
 using namespace std;
 using namespace drizzled;
 
-PluginsTool::PluginsTool()
+PluginsTool::PluginsTool() :
+  Tool("PLUGINS")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("PLUGINS");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "PLUGIN_TYPE", message::Table::Field::VARCHAR, 64);
   add_field(schema, "IS_ACTIVE", message::Table::Field::VARCHAR, 3);

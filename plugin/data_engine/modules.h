@@ -29,7 +29,6 @@ class ModulesTool : public Tool
 public:
 
   ModulesTool();
-  ~ModulesTool() {}
 
   class Generator : public Tool::Generator 
   {
@@ -38,7 +37,6 @@ public:
 
   public:
     Generator();
-    ~Generator() {};
 
     bool populate(Field ** fields);
   };
@@ -47,12 +45,6 @@ public:
   {
     return new Generator;
   }
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
 };
 
 #endif // PLUGIN_DATA_ENGINE_MODULES_H

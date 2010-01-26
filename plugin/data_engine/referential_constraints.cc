@@ -24,22 +24,9 @@
 using namespace std;
 using namespace drizzled;
 
-ReferentialConstraintsTool::ReferentialConstraintsTool()
+ReferentialConstraintsTool::ReferentialConstraintsTool() :
+  Tool("REFERENTIAL_CONSTRAINTS")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("REFERENTIAL_CONSTRAINTS");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
   add_field(schema, "CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
   add_field(schema, "CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
@@ -55,15 +42,4 @@ ReferentialConstraintsTool::ReferentialConstraintsTool()
   add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
 
   add_field(schema, "REFERENCED_TABLE_NAME", message::Table::Field::VARCHAR, 64);
-}
-
-ReferentialConstraintsTool::Generator::Generator()
-{
-}
-
-bool ReferentialConstraintsTool::Generator::populate(Field ** fields)
-{
-  (void)fields;
-
-  return false;
 }

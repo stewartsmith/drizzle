@@ -24,33 +24,9 @@
 using namespace std;
 using namespace drizzled;
 
-StatusTool::StatusTool()
+StatusTool::StatusTool() :
+  Tool("GLOBAL_STATUS")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("GLOBAL_STATUS");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "VARIABLE_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "VARIABLE_VALUE", message::Table::Field::VARCHAR, 16300);
-}
-
-StatusTool::Generator::Generator()
-{
-}
-
-bool StatusTool::Generator::populate(Field ** fields)
-{
-  (void)fields;
-
-  return false;
 }

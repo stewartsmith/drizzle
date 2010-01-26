@@ -24,22 +24,9 @@
 using namespace std;
 using namespace drizzled;
 
-ModulesTool::ModulesTool()
+ModulesTool::ModulesTool() :
+  Tool("MODULES")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("MODULES");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "MODULE_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "MODULE_VERSION", message::Table::Field::VARCHAR, 20);
   add_field(schema, "MODULE_AUTHOR", message::Table::Field::VARCHAR, 64);

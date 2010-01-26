@@ -27,30 +27,7 @@ class ReferentialConstraintsTool : public Tool
   drizzled::message::Table schema;
 
 public:
-
   ReferentialConstraintsTool();
-
-  bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
-  class Generator : public Tool::Generator 
-  {
-
-  public:
-    Generator();
-
-    bool populate(Field ** fields);
-
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H

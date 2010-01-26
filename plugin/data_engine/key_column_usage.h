@@ -29,29 +29,6 @@ class KeyColumnUsageTool : public Tool
 public:
 
   KeyColumnUsageTool();
-  ~KeyColumnUsageTool() {}
-
-  bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
-  class Generator : public Tool::Generator 
-  {
-
-  public:
-    Generator();
-
-    bool populate(Field ** fields);
-
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_KEY_COLUMN_USAGE_H

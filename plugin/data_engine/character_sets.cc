@@ -24,22 +24,9 @@
 using namespace std;
 using namespace drizzled;
 
-CharacterSetsTool::CharacterSetsTool()
+CharacterSetsTool::CharacterSetsTool() :
+  Tool("CHARACTER_SETS")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("CHARACTER_SETS");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "DEFAULT_COLLATE_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "DESCRIPTION", message::Table::Field::VARCHAR, 64);

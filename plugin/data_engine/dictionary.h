@@ -27,6 +27,8 @@
 #ifndef PLUGIN_DATA_ENGINE_DICTIONARY_H
 #define PLUGIN_DATA_ENGINE_DICTIONARY_H
 
+static const std::string engine_name("DICTIONARY");
+
 #include <plugin/data_engine/tool.h>
 
 #include <plugin/data_engine/character_sets.h>
@@ -46,8 +48,6 @@
 #include <plugin/data_engine/variables.h>
 
 extern const CHARSET_INFO *default_charset_info;
-
-static const std::string engine_name("DICTIONARY");
 
 static const char *dictionary_exts[] = {
   NULL

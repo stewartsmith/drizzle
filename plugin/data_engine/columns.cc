@@ -24,22 +24,9 @@
 using namespace std;
 using namespace drizzled;
 
-ColumnsTool::ColumnsTool()
+ColumnsTool::ColumnsTool() :
+  Tool("COLUMNS")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("COLUMNS");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
   add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
   add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
@@ -64,15 +51,4 @@ ColumnsTool::ColumnsTool()
   add_field(schema, "COLUMN_COMMENT", message::Table::Field::VARCHAR, 1024);
   add_field(schema, "STORAGE", message::Table::Field::VARCHAR, 8);
   add_field(schema, "FORMAT", message::Table::Field::VARCHAR, 8);
-}
-
-ColumnsTool::Generator::Generator()
-{
-}
-
-bool ColumnsTool::Generator::populate(Field ** fields)
-{
-  (void)fields;
-
-  return false;
 }

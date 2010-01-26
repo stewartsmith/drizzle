@@ -29,29 +29,6 @@ class SchemataTool : public Tool
 public:
 
   SchemataTool();
-  ~SchemataTool() {}
-
-  bool populate(Field ** fields);
-
-  void define(drizzled::message::Table &proto)
-  {
-    proto.CopyFrom(schema);
-  }
-
-  class Generator : public Tool::Generator 
-  {
-
-  public:
-    Generator();
-
-    bool populate(Field ** fields);
-
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_SCHEMATA_H

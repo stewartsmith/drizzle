@@ -24,37 +24,13 @@
 using namespace std;
 using namespace drizzled;
 
-TableConstraintsTool::TableConstraintsTool()
+TableConstraintsTool::TableConstraintsTool() :
+  Tool("TABLE_CONSTRAINTS")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("TABLE_CONSTRAINTS");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
   add_field(schema, "CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
   add_field(schema, "CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
   add_field(schema, "TABLE_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "CONSTRAINT_TYPE", message::Table::Field::VARCHAR, 64);
-}
-
-TableConstraintsTool::Generator::Generator()
-{
-}
-
-bool TableConstraintsTool::Generator::populate(Field ** fields)
-{
-  (void)fields;
-
-  return false;
 }

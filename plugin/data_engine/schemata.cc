@@ -24,37 +24,12 @@
 using namespace std;
 using namespace drizzled;
 
-SchemataTool::SchemataTool()
+SchemataTool::SchemataTool() :
+  Tool("SCHEMATA")
 {
-  message::Table::StorageEngine *engine;
-  message::Table::TableOptions *table_options;
-
-  setName("SCHEMATA");
-  schema.set_name(getName().c_str());
-  schema.set_type(message::Table::STANDARD);
-
-  table_options= schema.mutable_options();
-  table_options->set_collation_id(default_charset_info->number);
-  table_options->set_collation(default_charset_info->name);
-
-  engine= schema.mutable_engine();
-  engine->set_name(engine_name);
-
   add_field(schema, "CATALOG_NAME", message::Table::Field::VARCHAR, 512);
   add_field(schema, "SCHEMA_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "DEFAULT_CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "DEFAULT_COLLATION_NAME", message::Table::Field::VARCHAR, 64);
   add_field(schema, "SQL_PATH", message::Table::Field::VARCHAR, 512);
 }
-
-SchemataTool::Generator::Generator()
-{
-}
-
-bool SchemataTool::Generator::populate(Field ** fields)
-{
-  (void)fields;
-
-  return false;
-}
-
