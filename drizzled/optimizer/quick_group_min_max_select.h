@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 namespace drizzled
 {
 
@@ -81,7 +83,7 @@ private:
   uint32_t min_max_arg_len; /**< The length of the MIN/MAX argument field */
   unsigned char *key_infix; /**< Infix of constants from equality predicates. */
   uint32_t key_infix_len;
-  DYNAMIC_ARRAY min_max_ranges; /**< Array of range ptrs for the MIN/MAX field. */
+  std::vector<QuickRange *> min_max_ranges; /**< Array of range ptrs for the MIN/MAX field. */
   uint32_t real_prefix_len; /**< Length of key prefix extended with key_infix. */
   uint32_t real_key_parts;  /**< A number of keyparts in the above value.      */
   List<Item_sum> *min_functions;
