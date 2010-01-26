@@ -313,11 +313,11 @@ static ha_rows check_quick_select(optimizer::Parameter *param,
                                   uint32_t *bufsize,
                                   COST_VECT *cost);
 
-static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
-                                                  SEL_TREE *tree,
-                                                  bool index_read_must_be_used,
-                                                  bool update_tbl_stats,
-                                                  double read_time);
+static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
+                                                      SEL_TREE *tree,
+                                                      bool index_read_must_be_used,
+                                                      bool update_tbl_stats,
+                                                      double read_time);
 
 static
 optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Parameter *param,
@@ -1051,7 +1051,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       */
       if (tree->merges.is_empty())
       {
-        optimizer::TRP_RANGE *range_trp= NULL;
+        optimizer::RangeReadPlan *range_trp= NULL;
         optimizer::RorIntersectReadPlan *rori_trp= NULL;
         bool can_build_covering= false;
 
@@ -1211,9 +1211,9 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
   SEL_TREE **ptree;
   optimizer::IndexMergeReadPlan *imerge_trp= NULL;
   uint32_t n_child_scans= imerge->trees_next - imerge->trees;
-  optimizer::TRP_RANGE **range_scans= NULL;
-  optimizer::TRP_RANGE **cur_child= NULL;
-  optimizer::TRP_RANGE **cpk_scan= NULL;
+  optimizer::RangeReadPlan **range_scans= NULL;
+  optimizer::RangeReadPlan **cur_child= NULL;
+  optimizer::RangeReadPlan **cpk_scan= NULL;
   bool imerge_too_expensive= false;
   double imerge_cost= 0.0;
   ha_rows cpk_scan_records= 0;
@@ -1228,9 +1228,9 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  if (! (range_scans= (optimizer::TRP_RANGE**)alloc_root(param->mem_root,
-                                                         sizeof(optimizer::TRP_RANGE*)*
-                                                         n_child_scans)))
+  if (! (range_scans= (optimizer::RangeReadPlan**)alloc_root(param->mem_root,
+                                                             sizeof(optimizer::RangeReadPlan*)*
+                                                             n_child_scans)))
     return NULL;
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -1421,10 +1421,10 @@ skip_to_ror_scan:
                      sweep_cost.total_cost();
   }
 
-  optimizer::TRP_ROR_UNION *roru= NULL;
+  optimizer::RorUnionReadPlan *roru= NULL;
   if (roru_total_cost < read_time)
   {
-    if ((roru= new (param->mem_root) optimizer::TRP_ROR_UNION))
+    if ((roru= new (param->mem_root) optimizer::RorUnionReadPlan))
     {
       roru->first_ror= roru_read_plans;
       roru->last_ror= roru_read_plans + n_child_scans;
@@ -2282,11 +2282,11 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     NULL if no plan found or error occurred
 */
 
-static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
-                                                  SEL_TREE *tree,
-                                                  bool index_read_must_be_used,
-                                                  bool update_tbl_stats,
-                                                  double read_time)
+static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
+                                                      SEL_TREE *tree,
+                                                      bool index_read_must_be_used,
+                                                      bool update_tbl_stats,
+                                                      double read_time)
 {
   uint32_t idx;
   optimizer::SEL_ARG **key= NULL;
@@ -2295,7 +2295,7 @@ static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
   ha_rows best_records= 0;
   uint32_t best_mrr_flags= 0;
   uint32_t best_buf_size= 0;
-  optimizer::TRP_RANGE *read_plan= NULL;
+  optimizer::RangeReadPlan *read_plan= NULL;
   /*
     Note that there may be trees that have type SEL_TREE::KEY but contain no
     key reads at all, e.g. tree for expression "key1 is not null" where key1
@@ -2344,8 +2344,8 @@ static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
-    if ((read_plan= new (param->mem_root) optimizer::TRP_RANGE(*key_to_read, idx,
-                                                               best_mrr_flags)))
+    if ((read_plan= new (param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx,
+                                                                   best_mrr_flags)))
     {
       read_plan->records= best_records;
       read_plan->is_ror= tree->ror_scans_map.test(idx);
@@ -2370,7 +2370,7 @@ optimizer::QuickSelectInterface *optimizer::IndexMergeReadPlan::make_quick(optim
 
   quick_imerge->records= records;
   quick_imerge->read_time= read_cost;
-  for (optimizer::TRP_RANGE **range_scan= range_scans; 
+  for (optimizer::RangeReadPlan **range_scan= range_scans; 
        range_scan != range_scans_end;
        range_scan++)
   {
@@ -2441,7 +2441,7 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, memory::Root *)
+optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickRorUnionSelect *quick_roru= NULL;
   optimizer::TableReadPlan **scan= NULL;
@@ -6346,7 +6346,7 @@ optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, me
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_RANGE::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
+optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
   optimizer::QuickRangeSelect *quick= NULL;
   if ((quick= optimizer::get_quick_select(param,

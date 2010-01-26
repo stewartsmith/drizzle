@@ -91,11 +91,11 @@ public:
 
 /*
   Plan for a QuickRangeSelect scan.
-  TRP_RANGE::make_quick ignores retrieve_full_rows parameter because
+  RangeReadPlan::make_quick ignores retrieve_full_rows parameter because
   QuickRangeSelect doesn't distinguish between 'index only' scans and full
   record retrieval scans.
 */
-class TRP_RANGE : public TableReadPlan
+class RangeReadPlan : public TableReadPlan
 {
 
 public:
@@ -105,13 +105,13 @@ public:
   uint32_t     mrr_flags;
   uint32_t     mrr_buf_size;
 
-  TRP_RANGE(SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
+  RangeReadPlan(SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
     :
       key(key_arg),
       key_idx(idx_arg),
       mrr_flags(mrr_flags_arg)
   {}
-  virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
+  virtual ~RangeReadPlan() {}                     /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param, bool, drizzled::memory::Root *parent_alloc);
 
@@ -143,11 +143,11 @@ public:
   is ignored by make_quick.
 */
 
-class TRP_ROR_UNION : public TableReadPlan
+class RorUnionReadPlan : public TableReadPlan
 {
 public:
-  TRP_ROR_UNION() {}                          /* Remove gcc warning */
-  virtual ~TRP_ROR_UNION() {}                 /* Remove gcc warning */
+  RorUnionReadPlan() {}                          /* Remove gcc warning */
+  virtual ~RorUnionReadPlan() {}                 /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    drizzled::memory::Root *parent_alloc);
@@ -170,8 +170,8 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    drizzled::memory::Root *parent_alloc);
-  TRP_RANGE **range_scans; /* array of ptrs to plans of merged scans */
-  TRP_RANGE **range_scans_end; /* end of the array */
+  RangeReadPlan **range_scans; /* array of ptrs to plans of merged scans */
+  RangeReadPlan **range_scans_end; /* end of the array */
 };
 
 
