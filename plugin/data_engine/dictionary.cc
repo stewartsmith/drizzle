@@ -49,16 +49,26 @@ Tool *Dictionary::getTool(const char *path)
 
   if (strcmp(path, "./data_dictionary/character_sets") == 0)
     return &character_sets;
-  else if (strcmp(path, "./data_dictionary/collations") == 0)
-    return &collations;
   else if (strcmp(path, "./data_dictionary/collation_character_set_applicability") == 0)
     return &collation_character_set_applicability;
-  else if (strcmp(path, "./data_dictionary/processlist") == 0)
-    return &processlist;
+  else if (strcmp(path, "./data_dictionary/collations") == 0)
+    return &collations;
+  else if (strcmp(path, "./data_dictionary/columns") == 0)
+    return &columns;
+  else if (strcmp(path, "./data_dictionary/global_status") == 0)
+    return &global_status;
+  else if (strcmp(path, "./data_dictionary/global_variables") == 0)
+    return &global_variables;
+  else if (strcmp(path, "./data_dictionary/key_column_usage") == 0)
+    return &key_column_usage;
   else if (strcmp(path, "./data_dictionary/modules") == 0)
     return &modules;
   else if (strcmp(path, "./data_dictionary/plugins") == 0)
     return &plugins;
+  else if (strcmp(path, "./data_dictionary/processlist") == 0)
+    return &processlist;
+  else if (strcmp(path, "./data_dictionary/statistics") == 0)
+    return &statistics;
 
   fprintf(stderr, "\n %s\n", path);
   assert(path == NULL);
@@ -80,6 +90,13 @@ int Dictionary::doGetTableDefinition(Session &,
   {
     return ENOENT;
   }
+  else if (strcmp(path, "./data_dictionary/character_sets") == 0)
+  {
+    if (table_proto)
+    {
+      character_sets.define(*table_proto);
+    }
+  }
   else if (strcmp(path, "./data_dictionary/collations") == 0)
   {
     if (table_proto)
@@ -94,18 +111,32 @@ int Dictionary::doGetTableDefinition(Session &,
       collation_character_set_applicability.define(*table_proto);
     }
   }
-  else if (strcmp(path, "./data_dictionary/character_sets") == 0)
+  else if (strcmp(path, "./data_dictionary/columns") == 0)
   {
     if (table_proto)
     {
-      character_sets.define(*table_proto);
+      columns.define(*table_proto);
     }
   }
-  else if (strcmp(path, "./data_dictionary/processlist") == 0)
+  else if (strcmp(path, "./data_dictionary/global_status") == 0)
   {
     if (table_proto)
     {
-      processlist.define(*table_proto);
+      global_status.define(*table_proto);
+    }
+  }
+  else if (strcmp(path, "./data_dictionary/global_variables") == 0)
+  {
+    if (table_proto)
+    {
+      global_variables.define(*table_proto);
+    }
+  }
+  else if (strcmp(path, "./data_dictionary/key_column_usage") == 0)
+  {
+    if (table_proto)
+    {
+      key_column_usage.define(*table_proto);
     }
   }
   else if (strcmp(path, "./data_dictionary/modules") == 0)
@@ -115,10 +146,24 @@ int Dictionary::doGetTableDefinition(Session &,
       modules.define(*table_proto);
     }
   }
+  else if (strcmp(path, "./data_dictionary/processlist") == 0)
+  {
+    if (table_proto)
+    {
+      processlist.define(*table_proto);
+    }
+  }
   else if (strcmp(path, "./data_dictionary/plugins") == 0)
   {
     if (table_proto)
       plugins.define(*table_proto);
+  }
+  else if (strcmp(path, "./data_dictionary/statistics") == 0)
+  {
+    if (table_proto)
+    {
+      statistics.define(*table_proto);
+    }
   }
   else
   {
@@ -139,11 +184,22 @@ void Dictionary::doGetTableNames(drizzled::CachedDirectory&,
   set_of_names.insert("CHARACTER_SETS");
   set_of_names.insert("COLLATIONS");
   set_of_names.insert("COLLATION_CHARACTER_SET_APPLICABILITY");
+  set_of_names.insert("COLUMNS");
+  set_of_names.insert("GLOBAL_STATUS");
+  set_of_names.insert("GLOBAL_STATUS");
+  set_of_names.insert("GLOBAL_VARIABLES");
+  set_of_names.insert("GLOBAL_VARIABLES");
+  set_of_names.insert("KEY_COLUMN_USAGE");
   set_of_names.insert("MODULES");
   set_of_names.insert("PLUGINS");
   set_of_names.insert("PROCESSLIST");
-
-  (void)set_of_names;
+  set_of_names.insert("REFERENTIAL_CONSTRAINTS");
+  set_of_names.insert("SCHEMATA");
+  set_of_names.insert("SESSION_STATUS");
+  set_of_names.insert("SESSION_VARIABLES");
+  set_of_names.insert("STATISTICS");
+  set_of_names.insert("TABLES");
+  set_of_names.insert("TABLE_CONSTRAINTS");
 }
 
 

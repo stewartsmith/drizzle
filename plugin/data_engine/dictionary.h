@@ -31,9 +31,18 @@
 #include <plugin/data_engine/character_sets.h>
 #include <plugin/data_engine/collation_character_set_applicability.h>
 #include <plugin/data_engine/collations.h>
+#include <plugin/data_engine/columns.h>
+#include <plugin/data_engine/key_column_usage.h>
 #include <plugin/data_engine/modules.h>
 #include <plugin/data_engine/plugins.h>
 #include <plugin/data_engine/processlist.h>
+#include <plugin/data_engine/referential_constraints.h>
+#include <plugin/data_engine/schemata.h>
+#include <plugin/data_engine/statistics.h>
+#include <plugin/data_engine/status.h>
+#include <plugin/data_engine/table_constraints.h>
+#include <plugin/data_engine/tables.h>
+#include <plugin/data_engine/variables.h>
 
 extern const CHARSET_INFO *default_charset_info;
 
@@ -45,12 +54,23 @@ static const char *dictionary_exts[] = {
 
 class Dictionary : public drizzled::plugin::StorageEngine
 {
-  ProcesslistTool processlist;
+  CharacterSetsTool character_sets;
+  CollationCharacterSetApplicabilityTool collation_character_set_applicability;
+  CollationsTool collations;
+  ColumnsTool columns;
+  KeyColumnUsageTool key_column_usage;
   ModulesTool modules;
   PluginsTool plugins;
-  CharacterSetsTool character_sets;
-  CollationsTool collations;
-  CollationCharacterSetApplicabilityTool collation_character_set_applicability;
+  ProcesslistTool processlist;
+  ReferentialConstraintsTool referential_constraints;
+  SchemataTool schemata;
+  StatisticsTool statistics;
+  StatusTool global_status;
+  StatusTool session_status;
+  TablesTool tables;
+  TableConstraintsTool table_constraints;
+  VariablesTool global_variables;
+  VariablesTool session_variables;
 
 public:
   Dictionary(const std::string &name_arg);

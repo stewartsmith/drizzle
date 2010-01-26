@@ -161,9 +161,11 @@ name_resolution_context_state.gcno
 natural_join_column.gcno
 opt_range.gcno
 opt_sum.gcno
+out
 pandora-plugin.ac
 pandora-plugin.am
 parser.gcno
+patch
 plugin/Makefile.in
 plugin/Makefile.in
 plugin/archive/Makefile.in
