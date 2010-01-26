@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
-#define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
+#ifndef DRIZZLED_OPTIMIZER_TableReadPlan_H
+#define DRIZZLED_OPTIMIZER_TableReadPlan_H
 
 class SEL_TREE;
 struct st_ror_scan_info;
@@ -36,7 +36,7 @@ class SEL_ARG;
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
   objects from table read plans.
 */
-class TABLE_READ_PLAN
+class TableReadPlan
 {
 public:
   /*
@@ -84,7 +84,7 @@ public:
   static void operator delete(void *, drizzled::memory::Root *)
     { /* Never called */ }
 
-  virtual ~TABLE_READ_PLAN() {} /* Remove gcc warning */
+  virtual ~TableReadPlan() {} /* Remove gcc warning */
 
 };
 
@@ -95,7 +95,7 @@ public:
   QuickRangeSelect doesn't distinguish between 'index only' scans and full
   record retrieval scans.
 */
-class TRP_RANGE : public TABLE_READ_PLAN
+class TRP_RANGE : public TableReadPlan
 {
 
 public:
@@ -120,7 +120,7 @@ public:
 
 /* Plan for QuickRorIntersectSelect scan. */
 
-class TRP_ROR_INTERSECT : public TABLE_READ_PLAN
+class TRP_ROR_INTERSECT : public TableReadPlan
 {
 public:
   TRP_ROR_INTERSECT() {}                      /* Remove gcc warning */
@@ -144,7 +144,7 @@ public:
   is ignored by make_quick.
 */
 
-class TRP_ROR_UNION : public TABLE_READ_PLAN
+class TRP_ROR_UNION : public TableReadPlan
 {
 public:
   TRP_ROR_UNION() {}                          /* Remove gcc warning */
@@ -152,8 +152,8 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    drizzled::memory::Root *parent_alloc);
-  TABLE_READ_PLAN **first_ror; /* array of ptrs to plans for merged scans */
-  TABLE_READ_PLAN **last_ror;  /* end of the above array */
+  TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
+  TableReadPlan **last_ror;  /* end of the above array */
 };
 
 
@@ -163,7 +163,7 @@ public:
   is ignored by make_quick.
 */
 
-class TRP_INDEX_MERGE : public TABLE_READ_PLAN
+class TRP_INDEX_MERGE : public TableReadPlan
 {
 public:
   TRP_INDEX_MERGE() {}                        /* Remove gcc warning */
@@ -180,7 +180,7 @@ public:
   Plan for a QuickGroupMinMaxSelect scan.
 */
 
-class TRP_GROUP_MIN_MAX : public TABLE_READ_PLAN
+class TRP_GROUP_MIN_MAX : public TableReadPlan
 {
 private:
   bool have_min;

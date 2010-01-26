@@ -331,9 +331,9 @@ optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Paramet
                                                               double read_time);
 
 static
-optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
-                                                    SEL_IMERGE *imerge,
-                                                    double read_time);
+optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
+                                                  SEL_IMERGE *imerge,
+                                                  double read_time);
 
 static
 optimizer::TRP_GROUP_MIN_MAX *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
@@ -1004,7 +1004,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         read_time= key_read_time;
     }
 
-    optimizer::TABLE_READ_PLAN *best_trp= NULL;
+    optimizer::TableReadPlan *best_trp= NULL;
     optimizer::TRP_GROUP_MIN_MAX *group_trp= NULL;
     double best_read_time= read_time;
 
@@ -1093,9 +1093,9 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       else
       {
         /* Try creating index_merge/ROR-union scan. */
-        SEL_IMERGE *imerge;
-        optimizer::TABLE_READ_PLAN *best_conj_trp= NULL;
-        optimizer::TABLE_READ_PLAN *new_conj_trp= NULL;
+        SEL_IMERGE *imerge= NULL;
+        optimizer::TableReadPlan *best_conj_trp= NULL;
+        optimizer::TableReadPlan *new_conj_trp= NULL;
         List_iterator_fast<SEL_IMERGE> it(tree->merges);
         while ((imerge= it++))
         {
@@ -1204,9 +1204,9 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 */
 
 static
-optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
-                                                    SEL_IMERGE *imerge,
-                                                    double read_time)
+optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
+                                                  SEL_IMERGE *imerge,
+                                                  double read_time)
 {
   SEL_TREE **ptree;
   optimizer::TRP_INDEX_MERGE *imerge_trp= NULL;
@@ -1222,15 +1222,15 @@ optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
   bool all_scans_ror_able= true;
   bool all_scans_rors= true;
   uint32_t unique_calc_buff_size;
-  optimizer::TABLE_READ_PLAN **roru_read_plans= NULL;
-  optimizer::TABLE_READ_PLAN **cur_roru_plan= NULL;
+  optimizer::TableReadPlan **roru_read_plans= NULL;
+  optimizer::TableReadPlan **cur_roru_plan= NULL;
   double roru_index_costs;
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  if (!(range_scans= (optimizer::TRP_RANGE**)alloc_root(param->mem_root,
-                                                        sizeof(optimizer::TRP_RANGE*)*
-                                                        n_child_scans)))
+  if (! (range_scans= (optimizer::TRP_RANGE**)alloc_root(param->mem_root,
+                                                         sizeof(optimizer::TRP_RANGE*)*
+                                                         n_child_scans)))
     return NULL;
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -1280,7 +1280,7 @@ optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
   }
   if (all_scans_rors)
   {
-    roru_read_plans= (optimizer::TABLE_READ_PLAN**)range_scans;
+    roru_read_plans= (optimizer::TableReadPlan **) range_scans;
     goto skip_to_ror_scan;
   }
   if (cpk_scan)
@@ -1341,11 +1341,11 @@ build_ror_index_merge:
 
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
-  if (!(roru_read_plans=
-          (optimizer::TABLE_READ_PLAN**)alloc_root(param->mem_root,
-                                                   sizeof(optimizer::TABLE_READ_PLAN*)*
+  if (! (roru_read_plans=
+          (optimizer::TableReadPlan **) alloc_root(param->mem_root,
+                                                   sizeof(optimizer::TableReadPlan*)*
                                                    n_child_scans)))
-    return(imerge_trp);
+    return imerge_trp;
 skip_to_ror_scan:
   roru_index_costs= 0.0;
   roru_total_records= 0;
@@ -1374,7 +1374,7 @@ skip_to_ror_scan:
     else
       cost= read_time;
 
-    optimizer::TABLE_READ_PLAN *prev_plan= *cur_child;
+    optimizer::TableReadPlan *prev_plan= *cur_child;
     if (!(*cur_roru_plan= get_best_ror_intersect(param, *ptree, cost,
                                                  &dummy)))
     {
@@ -2444,7 +2444,7 @@ optimizer::QuickSelectInterface *optimizer::TRP_ROR_INTERSECT::make_quick(optimi
 optimizer::QuickSelectInterface *optimizer::TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickRorUnionSelect *quick_roru= NULL;
-  optimizer::TABLE_READ_PLAN **scan= NULL;
+  optimizer::TableReadPlan **scan= NULL;
   optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
