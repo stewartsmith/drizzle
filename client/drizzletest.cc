@@ -50,6 +50,10 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#include <cassert>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #include PCRE_HEADER
 
@@ -60,6 +64,8 @@
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
 #include "drizzled/hash.h"
+#include "drizzled/my_time.h"
+#include "drizzled/charset.h"
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
 #define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
@@ -109,6 +115,7 @@ static bool disable_info= true;
 static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
+static bool opt_mysql= false;
 static char **default_argv;
 static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
@@ -1335,10 +1342,10 @@ enum compare_files_result_enum {
 
 */
 
-static int compare_files2(File fd, const char* filename2)
+static int compare_files2(int fd, const char* filename2)
 {
   int error= RESULT_OK;
-  File fd2;
+  int fd2;
   uint32_t len, len2;
   char buff[512], buff2[512];
   const char *fname= filename2;
@@ -1413,7 +1420,7 @@ static int compare_files2(File fd, const char* filename2)
 
 static int compare_files(const char* filename1, const char* filename2)
 {
-  File fd;
+  int fd;
   int error;
 
   if ((fd= my_open(filename1, O_RDONLY, MYF(0))) < 0)
@@ -1442,7 +1449,7 @@ static int compare_files(const char* filename1, const char* filename2)
 static int string_cmp(string* ds, const char *fname)
 {
   int error;
-  File fd;
+  int fd;
   char temp_file_path[FN_REFLEN];
 
   if ((fd= create_temp_file(temp_file_path, NULL,
@@ -2961,7 +2968,7 @@ static void do_change_user(struct st_command *)
 static void do_perl(struct st_command *command)
 {
   int error;
-  File fd;
+  int fd;
   FILE *res_file;
   char buf[FN_REFLEN];
   char temp_file_path[FN_REFLEN];
@@ -3924,6 +3931,8 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzle_create()");
   if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
     die("Failed on drizzle_con_create()");
+  if (opt_mysql)
+    drizzle_con_add_options(&con_slot->con, DRIZZLE_CON_MYSQL);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -4597,6 +4606,9 @@ static struct my_option my_long_options[] =
    "Max number of connection attempts when connecting to server",
    (char**) &opt_max_connect_retries, (char**) &opt_max_connect_retries, 0,
    GET_INT, REQUIRED_ARG, 500, 1, 10000, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"password", 'P', "Password to use when connecting to server.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'p', "Port number to use for connection or 0 for default to, in "
@@ -5606,6 +5618,8 @@ int main(int argc, char **argv)
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
     die("Failed in drizzle_con_create()");
+  if (opt_mysql)
+    drizzle_con_add_options(&cur_con->con, DRIZZLE_CON_MYSQL);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");

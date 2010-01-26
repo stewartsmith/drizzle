@@ -2448,9 +2448,9 @@ create table t1 (f1 int not null auto_increment primary key, f2 varchar(10));
 create table t11 like t1;
 insert into t1 values(1,""),(2,"");
 show table status like 't1%';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	InnoDB	X	Compact	2	8192	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
-t11	InnoDB	X	Compact	0	0	X	X	X	X	X	X	X	X	utf8_general_ci	NULL		
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+t1	InnoDB	X	Compact	2	8192	X	X	X	X	X	X	X	X	utf8_general_ci	NULL			NULL
+t11	InnoDB	X	Compact	0	0	X	X	X	X	X	X	X	X	utf8_general_ci	NULL			NULL
 select 123 as a from t1 where f1 is null;
 a
 drop table t1,t11;
@@ -3661,3 +3661,46 @@ a
 4
 5
 DROP TABLE t1;
+CREATE TABLE t1 (a INT);
+INSERT INTO t1 VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
+CREATE TABLE t2 (b INT);
+INSERT INTO t2 VALUES (2);
+SELECT * FROM t1 WHERE a = 1 + 1;
+a
+2
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a = 1 + 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where (`test`.`t1`.`a` = <cache>((1 + 1)))
+SELECT * FROM t1 HAVING a = 1 + 1;
+a
+2
+EXPLAIN EXTENDED SELECT * FROM t1 HAVING a = 1 + 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` having (`test`.`t1`.`a` = <cache>((1 + 1)))
+SELECT * FROM t1, t2 WHERE a = b + (1 + 1);
+a	b
+4	2
+EXPLAIN EXTENDED SELECT * FROM t1, t2 WHERE a = b + (1 + 1);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where; Using join buffer
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a`,`test`.`t2`.`b` AS `b` from `test`.`t1` join `test`.`t2` where (`test`.`t1`.`a` = (`test`.`t2`.`b` + <cache>((1 + 1))))
+SELECT * FROM t2 LEFT JOIN t1 ON a = b + 1;
+b	a
+2	3
+EXPLAIN EXTENDED SELECT * FROM t2 LEFT JOIN t1 ON a = b + 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	
+Warnings:
+Note	1003	select `test`.`t2`.`b` AS `b`,`test`.`t1`.`a` AS `a` from `test`.`t2` left join `test`.`t1` on((`test`.`t1`.`a` = (`test`.`t2`.`b` + 1))) where 1
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a > UNIX_TIMESTAMP('2009-03-10 00:00:00');
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where (`test`.`t1`.`a` > <cache>(unix_timestamp('2009-03-10 00:00:00')))

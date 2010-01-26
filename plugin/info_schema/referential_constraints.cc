@@ -23,7 +23,7 @@
  *   referential constraints I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 
@@ -165,7 +165,7 @@ plugin::InfoSchemaTable *ReferentialConstraintsIS::getTable()
     rc_table= new plugin::InfoSchemaTable("REFERENTIAL_CONSTRAINTS",
                                           *columns,
                                           1, 9, false, true,
-                                          OPEN_TABLE_ONLY,
+                                          0,
                                           methods);
   }
 

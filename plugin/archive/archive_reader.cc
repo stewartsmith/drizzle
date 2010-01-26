@@ -18,16 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <mystrings/m_ctype.h>
-#include <mystrings/m_string.h>
-#include <mysys/my_getopt.h>
+#include <fcntl.h>
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/my_getopt.h"
 
 #define SHOW_VERSION "0.1"
 
@@ -42,7 +43,7 @@ static const char *new_auto_increment;
 uint64_t new_auto_increment_value;
 static const char *load_default_groups[]= { "archive_reader", 0 };
 static char **default_argv;
-int opt_check, opt_force, opt_quiet, opt_backup= 0, opt_extract_frm;
+int opt_check, opt_force, opt_quiet, opt_backup= 0, opt_extract_table_message;
 int opt_autoincrement;
 
 int main(int argc, char *argv[])
@@ -109,11 +110,12 @@ int main(int argc, char *argv[])
     printf("\tLongest Row %u\n", reader_handle.longest_row);
     printf("\tShortest Row %u\n", reader_handle.shortest_row);
     printf("\tState %s\n", ( reader_handle.dirty ? "dirty" : "clean"));
-    printf("\tFRM stored at %u\n", reader_handle.frm_start_pos);
+    printf("\tTable protobuf message stored at %u\n",
+           reader_handle.frm_start_pos);
     printf("\tComment stored at %u\n", reader_handle.comment_start_pos);
     printf("\tData starts at %u\n", (unsigned int)reader_handle.start);
     if (reader_handle.frm_start_pos)
-      printf("\tFRM length %u\n", reader_handle.frm_length);
+      printf("\tTable proto message length %u\n", reader_handle.frm_length);
     if (reader_handle.comment_start_pos)
     {
       char *comment =
@@ -230,9 +232,9 @@ int main(int argc, char *argv[])
     azclose(&writer_handle);
   }
 
-  if (opt_extract_frm)
+  if (opt_extract_table_message)
   {
-    File frm_file;
+    int frm_file;
     char *ptr;
     frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
@@ -266,7 +268,7 @@ bool get_one_option(int optid, const struct my_option *opt, char *argument)
     opt_check= 1;
     break;
   case 'e':
-    opt_extract_frm= 1;
+    opt_extract_table_message= 1;
     break;
   case 'f':
     opt_force= 1;
@@ -303,8 +305,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c', "Check table for errors.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"extract-frm", 'e',
-   "Extract the frm file.",
+  {"extract-table-message", 'e',
+   "Extract the table protobuf message.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"force", 'f',
    "Restart with -r if there are any errors in the table.",

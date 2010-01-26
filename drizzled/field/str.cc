@@ -19,12 +19,14 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/str.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/m_string.h"
 
+extern char _dig_vec_upper[];
 
 Field_str::Field_str(unsigned char *ptr_arg,
                      uint32_t len_arg,

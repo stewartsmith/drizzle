@@ -23,8 +23,8 @@
   Handler-calling-functions
 */
 
-#include "drizzled/server_includes.h"
-#include "mysys/hash.h"
+#include "config.h"
+#include "drizzled/my_hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/probes.h"
@@ -40,6 +40,7 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/internal/my_sys.h"
 
 using namespace std;
 using namespace drizzled;
@@ -57,12 +58,6 @@ const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
 
-const char *tx_isolation_names[] =
-{ "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
-  NULL};
-
-TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
-                               tx_isolation_names, NULL};
 
 
 /**
@@ -502,7 +497,7 @@ void trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[engine->getSlot()].ha_info + static_cast<unsigned>(all);
+  ha_info= session->getEngineInfo(engine, all ? 1 : 0);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -544,7 +539,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->getSlot()].ha_info[1];
+      Ha_trx_info *ha_info_all= session->getEngineInfo(ha_info->engine(), 1);
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement

@@ -28,6 +28,9 @@
 
 #include <string>
 
+#include "drizzled/typelib.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/memory/root.h"
 #include "drizzled/message/table.pb.h"
 
 class TableShare
@@ -166,7 +169,7 @@ public:
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
-  MEM_ROOT mem_root;
+  drizzled::memory::Root mem_root;
   TYPELIB keynames;			/* Pointers to keynames */
   TYPELIB fieldnames;			/* Pointer to fieldnames */
   TYPELIB *intervals;			/* pointer to interval info */
@@ -190,7 +193,7 @@ public:
   LEX_STRING table_cache_key;
   LEX_STRING db;                        /* Pointer to db */
   LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;	/* Path to .frm file (from datadir) */
+  LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 
   uint32_t   block_size;                   /* create information */
@@ -374,7 +377,7 @@ public:
     must start with db name.
     key_length	Length of key
     table_name	Table name
-    path	Path to file (possible in lower case) without .frm
+    path	Path to table (possible in lower case)
 
     NOTES
     This is different from alloc_table_share() because temporary tables
@@ -402,7 +405,7 @@ public:
             const char *new_path)
   {
     memset(this, 0, sizeof(TableShare));
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    drizzled::memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              INTERNAL_TMP_TABLE;
     db.str=                 (char*) key;
@@ -431,7 +434,7 @@ public:
 
   void free_table_share()
   {
-    MEM_ROOT new_mem_root;
+    drizzled::memory::Root new_mem_root;
     assert(ref_count == 0);
 
     /*

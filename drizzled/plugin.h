@@ -24,6 +24,9 @@
 #include <drizzled/xid.h>
 #include <drizzled/plugin/manifest.h>
 #include <drizzled/plugin/module.h>
+#include "drizzled/plugin/version.h"
+#include "drizzled/definitions.h"
+
 
 class Session;
 class Item;
@@ -52,29 +55,25 @@ namespace drizzled { namespace plugin { class StorageEngine; } }
 */
 
 
-#if defined(PANDORA_DYNAMIC_PLUGIN)
-# define DRIZZLE_DECLARE_PLUGIN \
-    drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
-#else
-# define PANDORA_BUILTIN_NAME(x) builtin_ ## x ## _plugin
-# define PANDORA_NAME(x) PANDORA_BUILTIN_NAME(x)
-# define DRIZZLE_DECLARE_PLUGIN \
-           drizzled::plugin::Manifest PANDORA_NAME(PANDORA_MODULE_NAME)[]= {
-#endif
+#define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
+#define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
+#define DRIZZLE_DECLARE_PLUGIN \
+           drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
-#define DRIZZLE_DECLARE_PLUGIN_END ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
+#define DRIZZLE_DECLARE_PLUGIN_END
+#define DRIZZLE_PLUGIN(init,deinit,status,system) \
+  DRIZZLE_DECLARE_PLUGIN \
+  { \
+    DRIZZLE_VERSION_ID, \
+    STRINGIFY_ARG(PANDORA_MODULE_NAME), \
+    STRINGIFY_ARG(PANDORA_MODULE_VERSION), \
+    STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
+    STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
+    PANDORA_MODULE_LICENSE, \
+    init, deinit, status, system, NULL \
+  } 
 
-
-
-/*
-  the following flags are valid for plugin_init()
-*/
-#define PLUGIN_INIT_SKIP_DYNAMIC_LOADING 1
-#define PLUGIN_INIT_SKIP_PLUGIN_TABLE    2
-#define PLUGIN_INIT_SKIP_INITIALIZATION  4
-
-#define INITIAL_LEX_PLUGIN_LIST_SIZE    16
 
 /*
   declarations for SHOW STATUS support in plugins
@@ -373,6 +372,16 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 #define DRIZZLE_VALUE_TYPE_REAL   1
 #define DRIZZLE_VALUE_TYPE_INT    2
 
+/*
+  skeleton of a plugin variable - portion of structure common to all.
+*/
+struct drizzle_sys_var
+{
+  DRIZZLE_PLUGIN_VAR_HEADER;
+};
+
+void plugin_opt_set_limits(my_option *options, const drizzle_sys_var *opt);
+
 struct drizzle_value
 {
   int (*value_type)(drizzle_value *);
@@ -390,14 +399,12 @@ struct drizzle_value
 extern "C" {
 #endif
 
-extern int plugin_init(drizzled::plugin::Registry &plugins,
-                       int *argc, char **argv, int init_flags);
+extern bool plugin_init(drizzled::plugin::Registry &registry,
+                        int *argc, char **argv,
+                        bool skip_init);
 extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
-extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
-                                 const LEX_STRING *dl);
-extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
@@ -408,12 +415,7 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine);
 int session_tx_isolation(const Session *session);
-
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                    const char *str, unsigned int size,
-                                    int allocate_lex_string);
 
 
 
@@ -513,29 +515,6 @@ void mysql_query_cache_invalidate4(Session *session,
                                    int using_trx);
 
 #ifdef __cplusplus
-}
-#endif
-
-#ifdef __cplusplus
-/**
-  Provide a handler data getter to simplify coding
-*/
-inline
-void *
-session_get_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine)
-{
-  return *session_ha_data(session, engine);
-}
-
-/**
-  Provide a handler data setter to simplify coding
-*/
-inline
-void
-session_set_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine,
-                const void *ha_data)
-{
-  *session_ha_data(session, engine)= (void*) ha_data;
 }
 #endif
 

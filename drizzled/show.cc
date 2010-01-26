@@ -19,7 +19,7 @@
 
 
 /* Function with list databases, tables or fields */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/gettext.h>
@@ -40,10 +40,17 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin/registry.h"
+#include "drizzled/session_list.h"
 #include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
-#include <mysys/cached_directory.h>
+#include <drizzled/cached_directory.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_sys.h"
+
 #include <sys/stat.h>
 
 #include <string>
@@ -134,8 +141,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
   if (directory.fail())
   {
-    my_errno= directory.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
+    errno= directory.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), path, errno);
 
     return true;
   }
@@ -158,8 +165,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
     if (stat(entry->filename.c_str(), &entry_stat))
     {
-      my_errno= errno;
-      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), my_errno);
+      errno= errno;
+      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), errno);
       return(true);
     }
 
@@ -296,18 +303,18 @@ static bool store_db_create_info(const char *dbname, String *buffer, bool if_not
   return false;
 }
 
-bool mysqld_show_create_db(Session *session, const NormalisedDatabaseName &database_name, bool if_not_exists)
+bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
 
-  if (store_db_create_info(database_name.to_string().c_str(), &buffer, if_not_exists))
+  if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
       can fail is incorrect database name (which is the case now).
     */
-    my_error(ER_BAD_DB_ERROR, MYF(0), database_name.to_string().c_str());
+    my_error(ER_BAD_DB_ERROR, MYF(0), dbname);
     return true;
   }
 
@@ -318,7 +325,7 @@ bool mysqld_show_create_db(Session *session, const NormalisedDatabaseName &datab
   if (session->client->sendFields(&field_list))
     return true;
 
-  session->client->store(database_name.to_string().c_str(), database_name.to_string().length());
+  session->client->store(dbname, strlen(dbname));
   session->client->store(buffer.ptr(), buffer.length());
 
   if (session->client->flush())
@@ -694,31 +701,34 @@ static void store_key_options(String *packet, Table *table, KEY *key_info)
   returns for each thread: thread id, user, host, db, command, info
 ****************************************************************************/
 
-class thread_info :public ilink {
+class thread_info
+{
+  thread_info();
 public:
-  static void *operator new(size_t size)
-  {
-    return (void*) sql_alloc((uint32_t) size);
-  }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-
-  my_thread_id thread_id;
+  uint64_t thread_id;
   time_t start_time;
   uint32_t   command;
-  const char *user,*host,*db,*proc_info,*state_info;
-  char *query;
+  string user, host, db, proc_info, state_info, query;
+  thread_info(uint64_t thread_id_arg,
+              time_t start_time_arg,
+              uint32_t command_arg,
+              const string &user_arg,
+              const string &host_arg,
+              const string &db_arg,
+              const string &proc_info_arg,
+              const string &state_info_arg,
+              const string &query_arg)
+    : thread_id(thread_id_arg), start_time(start_time_arg), command(command_arg),
+      user(user_arg), host(host_arg), db(db_arg), proc_info(proc_info_arg),
+      state_info(state_info_arg), query(query_arg)
+  {}
 };
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class I_List<thread_info>;
-#endif
 
 void mysqld_list_processes(Session *session,const char *user, bool)
 {
   Item *field;
   List<Item> field_list;
-  I_List<thread_info> thread_infos;
+  vector<thread_info> thread_infos;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));
@@ -738,73 +748,73 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   if (!session->killed)
   {
     Session *tmp;
-    for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+    for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
       if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
-        thread_info *session_info= new thread_info;
 
-        session_info->thread_id=tmp->thread_id;
-        session_info->user= session->strdup(tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user");
-        session_info->host= session->strdup(tmp_sctx->ip.c_str());
-        if ((session_info->db= tmp->db.c_str()))             // Safe test
-          session_info->db=session->strdup(session_info->db);
-        session_info->command=(int) tmp->command;
         if ((mysys_var= tmp->mysys_var))
           pthread_mutex_lock(&mysys_var->mutex);
 
-        if (tmp->killed == Session::KILL_CONNECTION)
-          session_info->proc_info= (char*) "Killed";
-        else
-          session_info->proc_info= command_name[session_info->command].str;
+        const string tmp_proc_info((tmp->killed == Session::KILL_CONNECTION) ? "Killed" : command_name[tmp->command].str);
 
-        session_info->state_info= (char*) (tmp->client->isWriting() ?
-                                           "Writing to net" :
-                                           tmp->client->isReading() ?
-                                           (session_info->command == COM_SLEEP ?
-                                            NULL : "Reading from net") :
-                                       tmp->get_proc_info() ? tmp->get_proc_info() :
-                                       tmp->mysys_var &&
-                                       tmp->mysys_var->current_cond ?
-                                       "Waiting on cond" : NULL);
+        const string tmp_state_info(tmp->client->isWriting()
+                                     ? "Writing to net"
+                                     : tmp->client->isReading()
+                                       ? (tmp->command == COM_SLEEP
+                                            ? ""
+                                            : "Reading from net")
+                                       : tmp->get_proc_info()
+                                         ? tmp->get_proc_info()
+                                         : (tmp->mysys_var && tmp->mysys_var->current_cond)
+                                           ? "Waiting on cond"
+                                           : "");
         if (mysys_var)
           pthread_mutex_unlock(&mysys_var->mutex);
 
-        session_info->start_time= tmp->start_time;
-        session_info->query= NULL;
-        if (tmp->process_list_info[0])
-          session_info->query= session->strdup(tmp->process_list_info);
-        thread_infos.append(session_info);
+        const string tmp_query((tmp->process_list_info[0]) ? tmp->process_list_info : "");
+        thread_infos.push_back(thread_info(tmp->thread_id,
+                                           tmp->start_time,
+                                           tmp->command,
+                                           tmp_sctx->user.empty()
+                                             ? string("unauthenticated user")
+                                             : tmp_sctx->user,
+                                           tmp_sctx->ip,
+                                           tmp->db,
+                                           tmp_proc_info,
+                                           tmp_state_info,
+                                           tmp_query));
       }
     }
   }
   pthread_mutex_unlock(&LOCK_thread_count);
-
-  thread_info *session_info;
   time_t now= time(NULL);
-  while ((session_info=thread_infos.get()))
+  for(vector<thread_info>::iterator iter= thread_infos.begin();
+      iter != thread_infos.end();
+      ++iter)
   {
-    session->client->store((uint64_t) session_info->thread_id);
-    session->client->store(session_info->user);
-    session->client->store(session_info->host);
-    session->client->store(session_info->db);
-    session->client->store(session_info->proc_info);
+    session->client->store((uint64_t) (*iter).thread_id);
+    session->client->store((*iter).user);
+    session->client->store((*iter).host);
+    session->client->store((*iter).db);
+    session->client->store((*iter).proc_info);
 
-    if (session_info->start_time)
-      session->client->store((uint32_t) (now - session_info->start_time));
+    if ((*iter).start_time)
+      session->client->store((uint32_t) (now - (*iter).start_time));
     else
       session->client->store();
 
-    session->client->store(session_info->state_info);
-    session->client->store(session_info->query);
+    session->client->store((*iter).state_info);
+    session->client->store((*iter).query);
 
     if (session->client->flush())
       break;
   }
   session->my_eof();
+
   return;
 }
 
@@ -994,7 +1004,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   *to= global_status_var;
 
   /* Add to this status from existing threads */
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     add_to_status(to, &((*it)->status_var));
   }
@@ -1593,25 +1603,7 @@ static int fill_schema_table_names(Session *session, Table *table,
   return 0;
 }
 
-
-/**
-  @brief          Fill I_S tables whose data are retrieved
-                  from frm files and storage engine
-
-  @details        The information schema tables are internally represented as
-                  temporary tables that are filled at query execution time.
-                  Those I_S tables whose data are retrieved
-                  from frm files and storage engine are filled by the function
-                  plugin::InfoSchemaMethods::fillTable().
-
-  @param[in]      session                      thread Cursor
-  @param[in]      tables                   I_S table
-
-  @return         Operation status
-    @retval       0                        success
-    @retval       1                        error
-*/
-int plugin::InfoSchemaMethods::fillTable(Session *session, 
+int plugin::InfoSchemaMethods::fillTable(Session *session,
                                          Table *table,
                                          plugin::InfoSchemaTable *schema_table)
 {

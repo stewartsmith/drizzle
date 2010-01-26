@@ -18,7 +18,7 @@
   Single table and multi table updates of tables.
   Multi-table updates were introduced by Sinisa & Monty
 */
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -27,6 +27,8 @@
 #include "drizzled/sql_parse.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 
 #include <list>
 
@@ -388,7 +390,8 @@ int mysql_update(Session *session, TableList *table_list,
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))
 	error=1;
-      select->file= tempfile;			// Read row ptrs from this cursor
+      // Read row ptrs from this cursor
+      memcpy(select->file, &tempfile, sizeof(tempfile));
       if (error >= 0)
 	goto err;
     }

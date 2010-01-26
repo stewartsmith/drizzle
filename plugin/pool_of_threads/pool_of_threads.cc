@@ -18,12 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <fcntl.h>
 #include <plugin/pool_of_threads/pool_of_threads.h>
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_pthread.h"
 
 using namespace std;
 using namespace drizzled;
-
 
 /* Global's (TBR) */
 static PoolOfThreadsScheduler *scheduler= NULL;
@@ -49,7 +51,7 @@ static void libevent_connection_close(Session *session);
 void libevent_session_add(Session* session);
 bool libevent_should_close_connection(Session* session);
 extern "C" {
-  pthread_handler_t libevent_thread_proc(void *arg);
+  void *libevent_thread_proc(void *arg);
   void libevent_io_callback(int Fd, short Operation, void *ctx);
   void libevent_add_session_callback(int Fd, short Operation, void *ctx);
   void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
@@ -273,7 +275,7 @@ static void libevent_connection_close(Session *session)
   delete sched;
   session->scheduler_arg= NULL;
 
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  Session::unlink(session);   /* locks LOCK_thread_count and deletes session */
 
   return;
 }
@@ -299,7 +301,7 @@ bool libevent_should_close_connection(Session* session)
  *  These procs only return/terminate on shutdown (kill_pool_threads ==
  *  true).
  */
-pthread_handler_t libevent_thread_proc(void *ctx)
+void *libevent_thread_proc(void *ctx)
 {
   if (my_thread_init())
   {
@@ -313,7 +315,7 @@ pthread_handler_t libevent_thread_proc(void *ctx)
   return pot_scheduler->mainLoop();
 }
 
-pthread_handler_t PoolOfThreadsScheduler::mainLoop()
+void *PoolOfThreadsScheduler::mainLoop()
 {
   /*
    Signal libevent_init() when all threads has been created and are ready
@@ -673,6 +675,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pool_of_threads",
   "0.1",
   "Brian Aker",

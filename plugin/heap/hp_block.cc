@@ -17,6 +17,8 @@
 
 #include "heap_priv.h"
 
+#include <cstdlib>
+
 /*
   Find record according to record-position.
 

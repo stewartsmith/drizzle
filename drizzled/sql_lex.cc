@@ -17,7 +17,7 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #define DRIZZLE_LEX 1
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
@@ -409,7 +409,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       assert(end >= str);
 
       if (!(start= (char*) lip->m_session->alloc((uint32_t) (end-str)+1)))
-        return (char*) "";		// Sql_alloc has set error flag
+        return (char*) "";		// memory::SqlAlloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
       lip->m_cpp_text_end= lip->get_cpp_ptr() - post_skip;
@@ -1352,7 +1352,7 @@ void Select_Lex::init_select()
 {
   sj_nests.empty();
   group_list.empty();
-  type= db= 0;
+  db= 0;
   having= 0;
   table_join_options= 0;
   in_sum_expr= with_wild= 0;

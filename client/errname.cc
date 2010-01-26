@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 
 #include <client/errname.h>
 
@@ -379,7 +379,7 @@ ErrorCodes::ErrorCodes()
     { "ER_FPARSER_ERROR_IN_PARAMETER",1343 },
     { "ER_FPARSER_EOF_IN_UNKNOWN_PARAMETER",1344 },
     { "ER_VIEW_NO_EXPLAIN",1345 },
-    { "ER_FRM_UNKNOWN_TYPE",1346 },
+    { "ER_UNUSED1346",1346 },
     { "ER_WRONG_OBJECT",1347 },
     { "ER_NONUPDATEABLE_COLUMN",1348 },
     { "ER_VIEW_SELECT_DERIVED",1349 },
@@ -715,6 +715,7 @@ ErrorCodes::ErrorCodes()
     { "ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN",1679 },
     { "ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN",1680 },
     { "ER_CONST_EXPR_IN_VCOL",1681 },
+    { "ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE", 1692},
     { 0, 0 }
   };
 

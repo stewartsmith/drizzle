@@ -21,9 +21,9 @@
  *   Errors a drizzled can give you
  *   */
 
-#include <drizzled/global.h>
-#include <mysys/my_sys.h>
-#include <mysys/mysys_err.h>
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/my_error.h"
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -722,8 +722,8 @@ N_("Error while parsing parameter '%-.192s' (line: '%-.192s')"),
 N_("Unexpected end of file while skipping unknown parameter '%-.192s'"),
 /* ER_VIEW_NO_EXPLAIN   */
 N_("EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"),
-/* ER_FRM_UNKNOWN_TYPE   */
-N_("File '%-.192s' has unknown type '%-.64s' in its header"),
+/* ER_UNUSED1346   */
+N_("UNUSED"),
 /* ER_WRONG_OBJECT   */
 N_("'%-.192s.%-.192s' is not %s"),
 /* ER_NONUPDATEABLE_COLUMN   */
@@ -1413,7 +1413,9 @@ N_("Received an out-of-range argument '%s' for function '%s'."),
 /* ER_INVALID_TIME_VALUE */
 N_("Received an invalid time value '%s'."),
 /* ER_INVALID_ENUM_VALUE */
-N_("Received an invalid enum value '%s'.")
+N_("Received an invalid enum value '%s'."),
+/* ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE */
+N_("Tables which are replicated require a primary key.")
 };
 
 const char * error_message(unsigned int code)

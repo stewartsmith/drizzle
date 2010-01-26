@@ -25,7 +25,7 @@
     (This shouldn't be needed)
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <zlib.h>
 #include <drizzled/query_id.h>
 #include <uuid/uuid.h>
@@ -33,7 +33,7 @@
 #include <drizzled/function/str/strfunc.h>
 
 // For soundex_map
-#include <mysys/my_static.h>
+#include "drizzled/internal/my_static.h"
 
 using namespace std;
 

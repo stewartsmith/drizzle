@@ -26,7 +26,6 @@
 #include "drizzled/comp_creator.h"
 #include <drizzled/table_identifier.h>
 
-#include "mystrings/m_ctype.h"
 
 class Session;
 class TableList;
@@ -35,6 +34,10 @@ class Item;
 class LEX;
 class Table_ident;
 class Select_Lex;
+
+typedef struct charset_info_st CHARSET_INFO;
+
+extern const LEX_STRING command_name[];
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool mysql_insert_select_prepare(Session *session);
@@ -80,5 +83,8 @@ Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,
                                 bool all,
                                 Select_Lex *select_lex);
+
+void sql_kill(Session *session, unsigned long id, bool only_kill_query);
+char* query_table_status(Session *session,const char *db,const char *table_name);
 
 #endif /* DRIZZLED_SQL_PARSE_H */

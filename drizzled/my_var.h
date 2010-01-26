@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_MY_VAR_H
 #define DRIZZLED_MY_VAR_H
 
-class my_var : public Sql_alloc  {
+class my_var : public drizzled::memory::SqlAlloc  {
 public:
   LEX_STRING s;
   bool local;

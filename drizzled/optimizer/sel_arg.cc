@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/optimizer/sel_arg.h"
@@ -254,7 +254,7 @@ int optimizer::SEL_ARG::store_max_key(KEY_PART *key, unsigned char **range_key, 
 
 optimizer::SEL_ARG::SEL_ARG(optimizer::SEL_ARG &arg)
   :
-    Sql_alloc()
+    drizzled::memory::SqlAlloc()
 {
   type= arg.type;
   min_flag= arg.min_flag;

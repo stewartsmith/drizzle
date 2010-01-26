@@ -27,9 +27,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/my_error.h"
 
 #include "stats_table.h"
 #include "sysvar_holder.h"
@@ -42,56 +43,114 @@
 using namespace std;
 using namespace drizzled;
 
+#if !defined(HAVE_MEMCACHED_SERVER_FN)
+typedef memcached_server_function memcached_server_fn;
+#endif
+
+extern "C"
+memcached_return  server_function(memcached_st *ptr,
+                                  memcached_server_st *server,
+                                  void *context);
+
+struct server_function_context
+{
+  Table* table;
+  plugin::InfoSchemaTable *schema_table;
+  server_function_context(Table *table_arg,
+                          plugin::InfoSchemaTable *schema_table_arg)
+    : table(table_arg), schema_table(schema_table_arg)
+  {}
+};
+
+extern "C"
+memcached_return  server_function(memcached_st *memc,
+                                  memcached_server_st *server,
+                                  void *context)
+{
+  server_function_context *ctx= static_cast<server_function_context *>(context);
+  const CHARSET_INFO * const scs= system_charset_info;
+    
+  char *server_name= memcached_server_name(memc, *server);
+  in_port_t server_port= memcached_server_port(memc, *server);
+
+  memcached_stat_st stats;
+  memcached_return ret= memcached_stat_servername(&stats, NULL,
+                                                  server_name, server_port);
+  if (ret != MEMCACHED_SUCCESS)
+  {
+    my_printf_error(ER_UNKNOWN_ERROR, _("Unable get stats from memcached server %s.  Got error from memcached_stat_servername()."), MYF(0), server_name);
+    return ret;
+  }
+
+  char **list= memcached_stat_get_keys(memc, &stats, &ret);
+  char **ptr= NULL;
+
+  ctx->table->setWriteSet(0);
+  ctx->table->setWriteSet(1);
+
+  ctx->table->field[0]->store(server_name, strlen(server_name), scs);
+  ctx->table->field[1]->store(server_port);
+
+  uint32_t col= 2;
+  for (ptr= list; *ptr; ptr++)
+  {
+    char *value= memcached_stat_get_value(memc, &stats, *ptr, &ret);
+
+    ctx->table->setWriteSet(col);
+    ctx->table->field[col]->store(value,
+                                  strlen(value),
+                                  scs);
+    col++;
+    free(value);
+  }
+  free(list);
+  /* store the actual record now */
+  ctx->schema_table->addRow(ctx->table->record[0], ctx->table->s->reclength);
+  return MEMCACHED_SUCCESS;
+}
+
 int MemcachedStatsISMethods::fillTable(Session *,
                                        Table *table,
                                        plugin::InfoSchemaTable *schema_table)
 {
-  const CHARSET_INFO * const scs= system_charset_info;
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   const string servers_string= sysvar_holder.getServersString();
 
   table->restoreRecordAsDefault();
-
-  memcached_return rc;
-  memcached_st *serv= memcached_create(NULL);
-  memcached_server_st *tmp_serv=
-    memcached_servers_parse(servers_string.c_str());
-  memcached_server_push(serv, tmp_serv);
-  memcached_server_list_free(tmp_serv);
-  memcached_stat_st *stats= memcached_stat(serv, NULL, &rc);
-  memcached_server_st *servers= memcached_server_list(serv);
-
-  for (uint32_t i= 0; i < memcached_server_count(serv); i++)
+  if (servers_string.empty())
   {
-    char **list= memcached_stat_get_keys(serv, &stats[i], &rc);
-    char **ptr= NULL;
+    my_printf_error(ER_UNKNOWN_ERROR, _("No value in MEMCACHED_STATS_SERVERS variable."), MYF(0));
+    return 1;
+  } 
+ 
 
-    table->setWriteSet(0);
-    table->setWriteSet(1);
-
-    table->field[0]->store(memcached_server_name(serv, servers[i]),
-                           64,
-                           scs);
-    table->field[1]->store(memcached_server_port(serv, servers[i]));
-    uint32_t col= 2;
-    for (ptr= list; *ptr; ptr++)
-    {
-      char *value= memcached_stat_get_value(serv, &stats[i], *ptr, &rc);
-
-      table->setWriteSet(col);
-      table->field[col]->store(value,
-                               64,
-                               scs);
-      col++;
-      free(value);
-    }
-    free(list);
-    /* store the actual record now */
-    schema_table->addRow(table->record[0], table->s->reclength);
+  memcached_st *memc= memcached_create(NULL);
+  if (memc == NULL)
+  {
+    my_printf_error(ER_UNKNOWN_ERROR, _("Unable to create memcached struct.  Got error from memcached_create()."), MYF(0));
+    return 1;
   }
 
-  memcached_stat_free(serv, stats);
-  memcached_free(serv);
+  memcached_server_st *tmp_serv=
+    memcached_servers_parse(servers_string.c_str());
+  if (tmp_serv == NULL)
+  {
+    my_printf_error(ER_UNKNOWN_ERROR, _("Unable to create memcached server list.  Got error from memcached_servers_parse(%s)."), MYF(0), servers_string.c_str());
+    memcached_free(memc);
+    return 1; 
+  }
+
+  memcached_server_push(memc, tmp_serv);
+  memcached_server_list_free(tmp_serv);
+
+  memcached_server_fn callbacks[1];
+
+  callbacks[0]= server_function;
+  server_function_context context(table, schema_table);
+
+  memcached_server_cursor(memc, callbacks, &context, 1);
+
+  memcached_free(memc);
 
   return 0;
 }

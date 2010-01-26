@@ -17,9 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
-#include CSTDINT_H
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <string>
 #include <vector>
 #include <set>
@@ -29,9 +31,8 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "mysys/my_dir.h"
-#include "mysys/hash.h"
-#include "mysys/cached_directory.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/cached_directory.h"
 
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
@@ -44,6 +45,10 @@
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
 #include "drizzled/xid.h"
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/internal/my_sys.h"
+
 
 #include <drizzled/table_proto.h>
 
@@ -98,7 +103,8 @@ plugin::StorageEngine::~StorageEngine()
 
 void plugin::StorageEngine::setTransactionReadWrite(Session& session)
 {
-  Ha_trx_info *ha_info= &session.ha_data[getSlot()].ha_info[0];
+  Ha_trx_info *ha_info= session.getEngineInfo(this);
+
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -127,7 +133,7 @@ int plugin::StorageEngine::doRenameTable(Session *,
   {
     if (rename_file_ext(from, to, *ext))
     {
-      if ((error=my_errno) != ENOENT)
+      if ((error=errno) != ENOENT)
 	break;
       error= 0;
     }
@@ -164,7 +170,7 @@ int plugin::StorageEngine::doDropTable(Session&,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (my_delete_with_symlink(buff, MYF(0)))
     {
-      if ((error= my_errno) != ENOENT)
+      if ((error= errno) != ENOENT)
 	break;
     }
     else
@@ -297,9 +303,8 @@ public:
   */
   inline result_type operator() (argument_type engine)
   {
-    if (engine->is_enabled() && 
-        session_get_ha_data(session, engine))
-    engine->close_connection(session);
+    if (engine->is_enabled() && (*session->getEngineData(engine)))
+      engine->close_connection(session);
   }
 };
 
@@ -690,8 +695,7 @@ handle_error(uint32_t ,
 
 
 /**
-  This should return ENOENT if the file doesn't exists.
-  The .frm file will be deleted only if we return 0 or ENOENT
+   returns ENOENT if the file doesn't exists.
 */
 int plugin::StorageEngine::dropTable(Session& session,
                                      TableIdentifier &identifier,
@@ -790,7 +794,7 @@ int plugin::StorageEngine::createTable(Session& session,
       goto err;
   }
 
-  if (open_table_from_share(&session, &share, "", 0, (uint32_t) READ_ALL, 0,
+  if (open_table_from_share(&session, &share, "", 0, 0,
                             &table))
     goto err;
 
@@ -849,7 +853,7 @@ err:
   return(error != 0);
 }
 
-Cursor *plugin::StorageEngine::getCursor(TableShare &share, MEM_ROOT *alloc)
+Cursor *plugin::StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
 {
   assert(enabled);
   return create(share, alloc);
@@ -866,14 +870,14 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
        entry_iter != entries.end(); ++entry_iter)
   {
     CachedDirectory::Entry *entry= *entry_iter;
-    string *filename= &entry->filename;
+    const string *filename= &entry->filename;
 
     assert(filename->size());
 
     const char *ext= strchr(filename->c_str(), '.');
 
     if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_DEFINITION_FILE_EXT.c_str()) ||
-        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     { }
     else
     {
@@ -922,11 +926,11 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
   {
     if (directory.fail())
     {
-      my_errno= directory.getError();
-      if (my_errno == ENOENT)
+      errno= directory.getError();
+      if (errno == ENOENT)
         my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
       else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;
     }
   }
@@ -977,8 +981,8 @@ void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const ch
 
   if (dir.fail())
   {
-    my_errno= dir.getError();
-    my_error(ER_CANT_READ_DIR, MYF(0), directory, my_errno);
+    errno= dir.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), directory, errno);
 
     return;
   }

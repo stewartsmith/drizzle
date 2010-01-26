@@ -18,14 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 
+#include <math.h>
+
 #include <limits>
 
 using namespace std;
+
+extern const double log_10[309];
 
 /*
   Floating-point numbers

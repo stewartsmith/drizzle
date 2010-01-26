@@ -43,9 +43,8 @@
     example).
 */
 
-#include <drizzled/server_includes.h>
-#include <mysys/my_getopt.h>
-#include <plugin/myisam/myisam.h>
+#include "config.h"
+#include "drizzled/my_getopt.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/tztime.h>
@@ -58,6 +57,11 @@
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 #include <drizzled/plugin.h>
+#include "drizzled/version.h"
+#include "drizzled/strfunc.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/charset.h"
 
 #include <map>
 #include <algorithm>
@@ -65,6 +69,10 @@
 using namespace std;
 using namespace drizzled;
 
+extern plugin::StorageEngine *myisam_engine;
+extern bool timed_mutexes;
+
+extern struct my_option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
@@ -73,6 +81,8 @@ static DYNAMIC_ARRAY fixed_show_vars;
 typedef map<string, sys_var *> SystemVariableMap;
 static SystemVariableMap system_variable_map;
 extern char *opt_drizzle_tmpdir;
+
+extern TYPELIB tx_isolation_typelib;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
 TYPELIB bool_typelib=
@@ -91,7 +101,6 @@ static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
 static void fix_server_id(Session *session, enum_var_type type);
-static uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
@@ -131,16 +140,6 @@ static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_h
 
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
-static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
-static sys_var_key_cache_uint32_t  sys_key_cache_block_size(&vars, "key_cache_block_size",
-                                                        offsetof(KEY_CACHE,
-                                                                 param_block_size));
-static sys_var_key_cache_uint32_t	sys_key_cache_division_limit(&vars, "key_cache_division_limit",
-                                                           offsetof(KEY_CACHE,
-                                                                    param_division_limit));
-static sys_var_key_cache_uint32_t  sys_key_cache_age_threshold(&vars, "key_cache_age_threshold",
-                                                           offsetof(KEY_CACHE,
-                                                                    param_age_threshold));
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
                                                        &SV::max_allowed_packet);
 static sys_var_uint64_t_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
@@ -225,7 +224,7 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str  sys_version(&vars, "version", drizzled_version().c_str());
+static sys_var_const_str  sys_version(&vars, "version", drizzled::version().c_str());
 
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);
@@ -306,6 +305,7 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
 /* Read only variables */
 
+extern SHOW_COMP_OPTION have_symlink;
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
@@ -444,7 +444,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
   return false;
 }
 
-static uint64_t fix_unsigned(Session *session, uint64_t num,
+uint64_t fix_unsigned(Session *session, uint64_t num,
                               const struct my_option *option_limits)
 {
   bool fixed= false;
@@ -1215,120 +1215,6 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
                            session->variables.*offset);
   return cs ? (unsigned char*) cs->name : (unsigned char*) "NULL";
 }
-
-
-unsigned char *sys_var_key_cache_param::value_ptr(Session *, enum_var_type,
-                                                  const LEX_STRING *)
-{
-  return (unsigned char*) dflt_key_cache + offset ;
-}
-
-/**
-  Resize key cache.
-*/
-static int resize_key_cache_with_lock(KEY_CACHE *key_cache)
-{
-  assert(key_cache->key_cache_inited);
-
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  long tmp_buff_size= (long) key_cache->param_buff_size;
-  long tmp_block_size= (long) key_cache->param_block_size;
-  uint32_t division_limit= key_cache->param_division_limit;
-  uint32_t age_threshold=  key_cache->param_age_threshold;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-
-  return(!resize_key_cache(key_cache, tmp_block_size,
-                           tmp_buff_size,
-                           division_limit, age_threshold));
-}
-
-
-
-bool sys_var_key_buffer_size::update(Session *session, set_var *var)
-{
-  uint64_t tmp= var->save_result.uint64_t_value;
-  KEY_CACHE *key_cache;
-  bool error= 0;
-
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  key_cache= dflt_key_cache;
-
-  /*
-    Abort if some other thread is changing the key cache
-    TODO: This should be changed so that we wait until the previous
-    assignment is done and then do the new assign
-  */
-  if (key_cache->in_init)
-    goto end;
-
-  if (tmp == 0)					// Zero size means delete
-  {
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                        ER_WARN_CANT_DROP_DEFAULT_KEYCACHE,
-                        ER(ER_WARN_CANT_DROP_DEFAULT_KEYCACHE));
-    goto end;					// Ignore default key cache
-  }
-
-  key_cache->param_buff_size=
-    (uint64_t) fix_unsigned(session, tmp, option_limits);
-
-  /* If key cache didn't existed initialize it, else resize it */
-  key_cache->in_init= 1;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-
-  error= (bool)(resize_key_cache_with_lock(key_cache));
-
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  key_cache->in_init= 0;
-
-end:
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return error;
-}
-
-
-/**
-  @todo
-  Abort if some other thread is changing the key cache.
-  This should be changed so that we wait until the previous
-  assignment is done and then do the new assign
-*/
-bool sys_var_key_cache_uint32_t::update(Session *session, set_var *var)
-{
-  uint64_t tmp= (uint64_t) var->value->val_int();
-  bool error= 0;
-
-  pthread_mutex_lock(&LOCK_global_system_variables);
-
-  /*
-    Abort if some other thread is changing the key cache
-    TODO: This should be changed so that we wait until the previous
-    assignment is done and then do the new assign
-  */
-  if (dflt_key_cache->in_init)
-    goto end;
-
-  *((uint32_t*) (((char*) dflt_key_cache) + offset))=
-    (uint32_t) fix_unsigned(session, tmp, option_limits);
-
-  /*
-    Don't create a new key cache if it didn't exist
-    (key_caches are created only when the user sets block_size)
-  */
-  dflt_key_cache->in_init= 1;
-
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-
-  error= (bool) (resize_key_cache_with_lock(dflt_key_cache));
-
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  dflt_key_cache->in_init= 0;
-
-end:
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return error;
-}
-
 
 /****************************************************************************/
 
@@ -2194,14 +2080,3 @@ void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_ty
   else
     session->variables.*offset= global_system_variables.*offset;
 }
-
-
-/****************************************************************************
-  Used templates
-****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<set_var_base>;
-template class List_iterator_fast<set_var_base>;
-template class I_List_iterator<NAMED_LIST>;
-#endif

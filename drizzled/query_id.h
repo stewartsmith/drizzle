@@ -23,6 +23,8 @@
 #include <pthread.h>
 #include <drizzled/atomics.h>
 
+typedef uint64_t query_id_t;
+
 class Query_id
 {
 public:

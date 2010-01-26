@@ -52,6 +52,7 @@ typedef int (*initialize_func_t)(Registry &);
  */
 struct Manifest
 {
+  uint64_t drizzle_version;  /* Drizzle version the plugin was compiled for  */
   const char *name;          /* plugin name (for SHOW PLUGINS)               */
   const char *version;       /* plugin version (for SHOW PLUGINS)            */
   const char *author;        /* plugin author (for SHOW PLUGINS)             */

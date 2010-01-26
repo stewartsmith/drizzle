@@ -18,6 +18,8 @@
 
 #include "heap_priv.h"
 
+#include <cassert>
+
 
 /*
   MySQL Heap tables keep data in arrays of fixed-size chunks.
@@ -329,13 +331,13 @@ int hp_reallocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count, unsigned ch
   if (!info->is_variable_size)
   {
     /* Update should never change chunk_count in fixed-size mode */
-    my_errno=HA_ERR_WRONG_COMMAND;
-    return my_errno;
+    errno=HA_ERR_WRONG_COMMAND;
+    return errno;
   }
 
   /* Reallocate never moves the first chunk */
   if (!hp_allocate_variable_chunkset(info, chunk_count, pos))
-    return(my_errno);
+    return(errno);
 
   return(0);
 }

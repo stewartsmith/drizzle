@@ -104,6 +104,8 @@ Created 2/16/1996 Heikki Tuuri
 # include "row0mysql.h"
 # include "btr0pcur.h"
 
+#include <errno.h>
+
 /** Log sequence number immediately after startup */
 UNIV_INTERN ib_uint64_t	srv_start_lsn;
 /** Log sequence number at shutdown */

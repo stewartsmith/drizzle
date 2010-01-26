@@ -19,12 +19,14 @@
   @brief
   Functions for easy reading of records, possible through a cache
 */
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
 #include "drizzled/records.h"
 #include "drizzled/optimizer/range.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/iocache.h"
 
 using namespace drizzled;
 
@@ -92,8 +94,8 @@ void init_read_record(READ_RECORD *info,
   info->ignore_not_found_rows= 0;
   table->status=0;			/* And it's always found */
 
-  if (select && my_b_inited(&select->file))
-    tempfile= &select->file;
+  if (select && my_b_inited(select->file))
+    tempfile= select->file;
   else
     tempfile= table->sort.io_cache;
   if (tempfile && my_b_inited(tempfile)) // Test if ref-records was used

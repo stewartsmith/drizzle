@@ -23,10 +23,11 @@
  *   tables I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/tztime.h"
+#include "drizzled/internal/m_string.h"
 
 #include "helper_methods.h"
 #include "tables.h"
@@ -214,6 +215,13 @@ vector<const plugin::ColumnInfo *> *TablesIS::createColumns()
                                             0,
                                             "Comment"));
 
+  columns->push_back(new plugin::ColumnInfo("PLUGIN_NAME",
+                                            64,
+                                            DRIZZLE_TYPE_VARCHAR,
+                                            0,
+                                            MY_I_S_MAYBE_NULL,
+                                            "Plugin_name"));
+
   return columns;
 }
 
@@ -236,7 +244,7 @@ plugin::InfoSchemaTable *TablesIS::getTable()
     tbls_table= new plugin::InfoSchemaTable("TABLES",
                                             *columns,
                                             1, 2, false, true,
-                                            OPTIMIZE_I_S_TABLE,
+                                            0,
                                             methods);
   }
 
@@ -286,8 +294,10 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
   table->setWriteSet(18);
   table->setWriteSet(19);
   table->setWriteSet(20);
+  table->setWriteSet(21);
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(table_name->str, table_name->length, cs);
+
   if (res)
   {
     /*
@@ -364,6 +374,20 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
       table->field[20]->store(share->getComment(),
                               share->getCommentLength(), cs);
 
+    drizzled::plugin::InfoSchemaTable *tmp_table= 
+      drizzled::plugin::InfoSchemaTable::getTable(table_name->str);
+
+    if (tmp_table != NULL)
+    {
+      const std::string &plugin_name= tmp_table->getPluginName();
+
+      if (! plugin_name.empty())
+      {
+        table->field[21]->set_notnull();
+        table->field[21]->store(plugin_name.c_str(), plugin_name.size(), cs);
+      }
+    }
+ 
     if (cursor)
     {
       cursor->info(HA_STATUS_VARIABLE | 

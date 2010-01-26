@@ -105,7 +105,7 @@ public:
   void doIO(session_scheduler *sched);
   void killSession(int Fd);
   void addSession(int Fd);
-  pthread_handler_t mainLoop();
+  void *mainLoop();
   void sessionAddToQueue(session_scheduler *sched);
 
 

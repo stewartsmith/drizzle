@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_ERROR_H
 #define DRIZZLED_ERROR_H
 
+#include "drizzled/my_error.h"
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -375,7 +377,7 @@ enum drizzled_error_code {
   ER_FPARSER_ERROR_IN_PARAMETER,
   ER_FPARSER_EOF_IN_UNKNOWN_PARAMETER,
   ER_VIEW_NO_EXPLAIN,
-  ER_FRM_UNKNOWN_TYPE,
+  ER_UNUSED1346,
   ER_WRONG_OBJECT,
   ER_NONUPDATEABLE_COLUMN,
   ER_VIEW_SELECT_DERIVED,
@@ -721,7 +723,8 @@ enum drizzled_error_code {
   ER_ARGUMENT_OUT_OF_RANGE,
   ER_INVALID_TIME_VALUE,
   ER_INVALID_ENUM_VALUE,
-  ER_ERROR_LAST= ER_INVALID_ENUM_VALUE
+  ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE,
+  ER_ERROR_LAST= ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE
 };
 
 #ifdef  __cplusplus
@@ -729,4 +732,3 @@ enum drizzled_error_code {
 #endif
 
 #endif /* DRIZZLED_ERROR_H */
-

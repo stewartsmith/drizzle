@@ -21,8 +21,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
-#include "drizzled/hash/crc32.h"
+#include "config.h"
+#include "drizzled/algorithm/crc32.h"
 #include "drizzled/gettext.h"
 #include "drizzled/replication_services.h"
 
@@ -32,6 +32,18 @@
 #include <string>
 #include <fstream>
 #include <unistd.h>
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 #include <drizzled/message/transaction.pb.h>
 
 #include <google/protobuf/io/coded_stream.h>
@@ -340,7 +352,7 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
   output->WriteLittleEndian32(static_cast<uint32_t>(ReplicationServices::TRANSACTION));
   output->WriteLittleEndian32(static_cast<uint32_t>(length));
   output->WriteString(buffer);
-  output->WriteLittleEndian32(drizzled::hash::crc32(buffer.c_str(), length)); /* checksum */
+  output->WriteLittleEndian32(drizzled::algorithm::crc32(buffer.c_str(), length)); /* checksum */
 }
 
 int main(int argc, char* argv[])

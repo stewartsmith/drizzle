@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
@@ -31,6 +31,14 @@
 #endif
 
 #include <stdarg.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+using namespace drizzled;
 
 static bool sysvar_logging_syslog_enable= false;
 static char* sysvar_logging_syslog_ident= NULL;
@@ -44,7 +52,6 @@ static ulong sysvar_logging_syslog_threshold_big_examined= 0;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)
@@ -272,6 +279,7 @@ static drizzle_sys_var* logging_syslog_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "logging_syslog",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",

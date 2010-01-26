@@ -40,6 +40,8 @@ Created 1/20/1994 Heikki Tuuri
 #ifndef univ_i
 #define univ_i
 
+#include "config.h"
+
 #ifndef __cplusplus
 # include <stdbool.h>
 #endif
@@ -105,8 +107,7 @@ in compiling more Posix-compatible. These headers also define __WIN__
 if we are compiling on Windows. */
 
 # if defined(BUILD_DRIZZLE)
-#  include <drizzled/global.h>
-#  include <mysys/my_pthread.h>
+#  include "drizzled/internal/my_pthread.h"
 # else
 #  ifndef UNIV_HOTBACKUP
 #   include <my_global.h>

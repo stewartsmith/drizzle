@@ -18,7 +18,7 @@
 #define PLUGIN_BLACKHOLE_HA_BLACKHOLE_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #define BLACKHOLE_MAX_KEY	64		/* Max allowed keys */
 #define BLACKHOLE_MAX_KEY_LENGTH 1000

@@ -17,19 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <limits.h>
 
-#include <mysys/my_bit.h>
-#include <mysys/hash.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/my_bit.h"
+#include <drizzled/my_hash.h>
 #include <drizzled/stacktrace.h>
-#include <mysys/mysys_err.h>
+#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/tztime.h>
@@ -46,6 +49,9 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
+#include "drizzled/session_list.h"
+#include "drizzled/charset.h"
+#include "plugin/myisam/myisam.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -63,6 +69,7 @@
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
 #endif
+#include <sys/socket.h>
 
 #include <locale.h>
 
@@ -76,10 +83,9 @@
 
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
-extern "C" {					// Because of SCO 3.2V4.2
 #include <errno.h>
 #include <sys/stat.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
@@ -144,9 +150,7 @@ inline void setup_fpu()
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
 
-} /* cplusplus */
-
-#include <mysys/my_pthread.h>			// For thr_setconcurency()
+#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
 
 #include <drizzled/gettext.h>
 
@@ -158,12 +162,6 @@ using namespace std;
 using namespace drizzled;
 
 /* Constants */
-
-const string& drizzled_version()
-{
-  static const string DRIZZLED_VERSION(STRING_WITH_LEN(PANDORA_RELEASE_VERSION));
-  return DRIZZLED_VERSION;
-}
 
 
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
@@ -195,9 +193,15 @@ static TYPELIB tc_heuristic_recover_typelib=
 };
 
 const char *first_keyword= "first";
-const char *binary_keyword= "BINARY";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
+
+const char *tx_isolation_names[] =
+{ "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ", "SERIALIZABLE",
+  NULL};
+
+TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
+                               tx_isolation_names, NULL};
 
 /*
   Used with --help for detailed option
@@ -264,6 +268,8 @@ uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
 
+extern const double log_10[309];
+
 const double log_10[] = {
   1e000, 1e001, 1e002, 1e003, 1e004, 1e005, 1e006, 1e007, 1e008, 1e009,
   1e010, 1e011, 1e012, 1e013, 1e014, 1e015, 1e016, 1e017, 1e018, 1e019,
@@ -326,8 +332,6 @@ my_decimal decimal_zero;
 /* classes for comparation parsing/processing */
 
 FILE *stderror_file=0;
-
-vector<Session*> session_list;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
@@ -438,7 +442,7 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
@@ -470,12 +474,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (session_list.empty())
+    if (getSessionList().empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    tmp= session_list.front();
+    tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -487,7 +491,8 @@ extern "C" void print_signal_warning(int sig);
 extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
+    errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64),
+                  sig, global_thread_id);
 #ifndef HAVE_BSD_SIGNALS
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -729,25 +734,25 @@ extern "C" void end_thread_signal(int )
   Unlink session from global list of available connections and free session
 
   SYNOPSIS
-    unlink_session()
+    Session::unlink()
     session		 Thread handler
 
   NOTES
     LOCK_thread_count is locked and left locked
 */
 
-void unlink_session(Session *session)
+void Session::unlink(Session *session)
 {
-  connection_count--;
+  connection_count.decrement();
 
   session->cleanup();
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
 
-  session_list.erase(remove(session_list.begin(),
-                     session_list.end(),
-                     session));
+  getSessionList().erase(remove(getSessionList().begin(),
+                         getSessionList().end(),
+                         session));
 
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -758,7 +763,6 @@ void unlink_session(Session *session)
 
 #ifdef THREAD_SPECIFIC_SIGPIPE
 /**
-  Aborts a thread nicely. Comes here on SIGPIPE.
 
   @todo
     One should have to fix that thr_alarm know about this thread too.
@@ -1004,13 +1008,13 @@ static void init_signals(void)
   return;;
 }
 
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
+void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
   All global error messages are sent here where the first one is stored
   for the client.
 */
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -1270,8 +1274,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /*
     Add server status variables to the dynamic list of
     status variables that is shown by SHOW STATUS.
-    Later, in plugin_init, and mysql_install_plugin
-    new entries could be added to that list.
+    Later, in plugin_init, new entries could be added to that list.
   */
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
@@ -1392,7 +1395,7 @@ static int init_server_components(plugin::Registry &plugins)
     return(1);
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+                  ((opt_help) ? true : false)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -1630,7 +1633,7 @@ int main(int argc, char **argv)
 
     /* If we error on creation we drop the connection and delete the session. */
     if (session->schedule())
-      unlink_session(session);
+      Session::unlink(session);
   }
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
@@ -1895,36 +1898,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
-  {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
-   N_("The size of the buffer used for index blocks for MyISAM tables. "
-      "Increase this to get better index handling (for all reads and multiple "
-      "writes) to as much as you can afford;"),
-   (char**) &dflt_key_cache_var.param_buff_size,
-   (char**) 0,
-   0, (GET_ULL),
-   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_MAX, MALLOC_OVERHEAD,
-   IO_SIZE, 0},
-  {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
-   N_("This characterizes the number of hits a hot block has to be untouched "
-      "until it is considered aged enough to be downgraded to a warm block. "
-      "This specifies the percentage ratio of that number of hits to the "
-      "total number of blocks in key cache"),
-   (char**) &dflt_key_cache_var.param_age_threshold,
-   (char**) 0,
-   0, (GET_UINT32), REQUIRED_ARG,
-   300, 100, ULONG_MAX, 0, 100, 0},
-  {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
-   N_("The default size of key cache blocks"),
-   (char**) &dflt_key_cache_var.param_block_size,
-   (char**) 0,
-   0, (GET_UINT32), REQUIRED_ARG,
-   KEY_CACHE_BLOCK_SIZE, 512, 1024 * 16, 0, 512, 0},
-  {"key_cache_division_limit", OPT_KEY_CACHE_DIVISION_LIMIT,
-   N_("The minimum percentage of warm blocks in key cache"),
-   (char**) &dflt_key_cache_var.param_division_limit,
-   (char**) 0,
-   0, (GET_UINT32) , REQUIRED_ARG, 100,
-   1, 100, 0, 1, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
@@ -2189,7 +2162,7 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  session_list.clear();
+  getSessionList().clear();
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
@@ -2350,7 +2323,7 @@ extern "C" void option_error_reporter(enum loglevel level, const char *format, .
 
 /**
   @todo
-  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "mysys/mysys_err.h" and return that code?
+  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "drizzled/my_error.h" and return that code?
 */
 static void get_options(int *argc,char **argv)
 {
@@ -2403,7 +2376,7 @@ static void get_options(int *argc,char **argv)
 static const char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,PREFIX) &&
+      (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
       strcmp(PREFIX,FN_ROOTDIR))
   {
     if (strlen(PREFIX) < strlen(path))
@@ -2541,14 +2514,3 @@ static void fix_paths(string &progname)
   }
 }
 
-/*****************************************************************************
-  Instantiate templates
-*****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-/* Used templates */
-template class I_List<i_string>;
-template class I_List<i_string_pair>;
-template class I_List<Statement>;
-template class I_List_iterator<Statement>;
-#endif

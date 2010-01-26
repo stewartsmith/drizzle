@@ -1,9 +1,5 @@
 # 
-# Simple test of the serial event log for testing ALTER command 
-# 
-# We create a table then alter it by adding a column into it. 
-# 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# Simple test of the transaction log for testing ALTER command 
 #
 
 --disable_warnings
@@ -24,3 +20,5 @@ ALTER TABLE t1 ADD dummy INT;
 
 # Add an index via ALTER TABLE
 ALTER TABLE t1 ADD INDEX ix_padding (padding(20));
+
+DROP TABLE t1;

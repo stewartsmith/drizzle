@@ -13,7 +13,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 
 #include <string>
 
@@ -24,7 +24,9 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/sql_lex.h"
 #include "drizzled/sql_select.h"
+#include "drizzled/strfunc.h"
 
+using namespace drizzled;
 using namespace std;
 
 class Item;
@@ -35,7 +37,7 @@ uint32_t TableList::create_table_def_key(char *key)
   return TableShare::createKey(key, db, table_name);
 }
 
-bool TableList::set_insert_values(MEM_ROOT *mem_root)
+bool TableList::set_insert_values(memory::Root *mem_root)
 {
   if (table)
   {

@@ -35,13 +35,20 @@
 
 #include "client_priv.h"
 #include <string>
+#include <drizzled/gettext.h>
+#include <iostream>
+#include <map>
 #include <algorithm>
-#include <mystrings/m_ctype.h>
+#include <limits.h>
+#include <cassert>
+#include "drizzled/charset_info.h"
 #include <stdarg.h>
+#include <math.h>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
+#include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -126,11 +133,6 @@ typedef Function drizzle_compentry_func_t;
 #include <locale.h>
 #endif
 
-#include <drizzled/gettext.h>
-
-
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
 
 
 #if !defined(HAVE_VIDATTR)
@@ -138,8 +140,6 @@ void sql_element_free(void *ptr);
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-#include <iostream>
-#include <map>
 
 using namespace std;
 
@@ -186,13 +186,13 @@ static bool ignore_errors= false, quick= false,
   default_charset_used= false, opt_secure_auth= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
-  show_warnings= false, executing_query= false, interrupted_query= false;
+  show_warnings= false, executing_query= false, interrupted_query= false,
+  opt_mysql= false;
 static uint32_t  show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line, opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
-static char * opt_drizzle_unix_port= NULL;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *current_host, *current_db, *current_user= NULL,
   *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
@@ -1025,13 +1025,6 @@ extern "C" void handle_sigint(int sig);
 static void window_resize(int sig);
 #endif
 
-static inline int is_prefix(const char *s, const char *t)
-{
-  while (*t)
-    if (*s++ != *t++) return 0;
-  return 1;                                     /* WRONG */
-}
-
 /**
   Shutdown the server that we are currently connected to.
 
@@ -1356,7 +1349,6 @@ void drizzle_end(int sig)
   if (processed_prompt)
     delete processed_prompt;
   free(opt_password);
-  free(opt_drizzle_unix_port);
   free(histfile);
   free(histfile_tmp);
   free(current_db);
@@ -1392,7 +1384,7 @@ void handle_sigint(int sig)
 
   if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host,
                           opt_drizzle_port, current_user, opt_password, NULL,
-                          DRIZZLE_CON_NONE) == NULL)
+                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     goto err;
   }
@@ -1533,9 +1525,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_shutdown, (char**) &opt_shutdown, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Be more silent. Print results with a tab as separator, each row on new line."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"socket", 'S', N_("Socket file to use for connection."),
-   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"table", 't', N_("Output in table format."), (char**) &output_tables,
    (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"tee", OPT_TEE,
@@ -1587,6 +1576,9 @@ static struct my_option my_long_options[] =
    0, 0, 0, 0, 0, 0},
   {"ping", OPT_PING, N_("Ping the server to check if it's alive."),
    (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -3888,7 +3880,7 @@ sql_connect(char *host,char *database,char *user,char *password,
   }
   drizzle_create(&drizzle);
   if (drizzle_con_add_tcp(&drizzle, &con, host, opt_drizzle_port, user,
-                          password, database, DRIZZLE_CON_NONE) == NULL)
+                          password, database, opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);

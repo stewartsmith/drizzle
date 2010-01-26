@@ -27,7 +27,7 @@
  *
  * Implementation of SQL index hints
  */
-#include "drizzled/global.h"
+#include "config.h"
 #include "drizzled/sql_string.h"
 #include "drizzled/session.h"
 #include "drizzled/index_hint.h"

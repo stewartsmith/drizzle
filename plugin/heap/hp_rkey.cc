@@ -26,7 +26,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
 
   if ((uint) inx >= share->keys)
   {
-    return(my_errno= HA_ERR_WRONG_INDEX);
+    return(errno= HA_ERR_WRONG_INDEX);
   }
   info->lastinx= inx;
   info->current_record= UINT32_MAX;		/* For heap_rrnd() */
@@ -53,7 +53,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
                                                 find_flag, &custom_arg)))
     {
       info->update= 0;
-      return(my_errno= HA_ERR_KEY_NOT_FOUND);
+      return(errno= HA_ERR_KEY_NOT_FOUND);
     }
     memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), sizeof(unsigned char*));
     info->current_ptr= pos;
@@ -63,7 +63,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
     if (!(pos= hp_search(info, share->keydef + inx, key, 0)))
     {
       info->update= 0;
-      return(my_errno);
+      return(errno);
     }
     if (!(keyinfo->flag & HA_NOSAME))
       memcpy(info->lastkey, key, (size_t) keyinfo->length);

@@ -17,9 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/function/str/conv.h>
+#include "drizzled/internal/m_string.h"
 
 String *Item_func_conv::val_str(String *str)
 {

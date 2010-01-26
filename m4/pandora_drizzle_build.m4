@@ -10,10 +10,7 @@ dnl are set.
 AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 
   dnl We need to turn on our CXXFLAGS to make sure it shows up correctly
-  save_CXXFLAGS="${CXXFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${AM_CXXFLAGS}"
   PANDORA_CXX_STL_HASH
-  CXXFLAGS="${save_CXXFLAGS}"
 
   PANDORA_CXX_CSTDINT
   PANDORA_CXX_CINTTYPES
@@ -74,4 +71,40 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 
   PANDORA_CXX_DEMANGLE
 
+  AH_TOP([
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#include "config/top.h"
+])
+  mkdir -p config
+  cat > config/top.h.stamp <<EOF_CONFIG_TOP
+
+#if defined(i386) && !defined(__i386__)
+#define __i386__
+#endif
+
+#if defined(_FILE_OFFSET_BITS)
+# undef _FILE_OFFSET_BITS
+#endif
+EOF_CONFIG_TOP
+  diff config/top.h.stamp config/top.h >/dev/null 2>&1 || mv config/top.h.stamp config/top.h
+  rm -f config/top.h.stamp
+
+
+  AH_BOTTOM([
+#if defined(__cplusplus)
+# include CSTDINT_H
+# include CINTTYPES_H
+#else
+# include <stdint.h>
+# include <inttypes.h>
+#endif
+
+#if !defined(HAVE_ULONG) && !defined(__USE_MISC)
+typedef unsigned long int ulong;
+#endif
+
+#endif /* __CONFIG_H__ */
+  ])
 ])

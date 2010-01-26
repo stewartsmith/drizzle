@@ -17,14 +17,14 @@
 #ifndef PLUGIN_HEAP_HEAP_PRIV_H
 #define PLUGIN_HEAP_HEAP_PRIV_H
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/base.h>
 
-#include <mysys/my_sys.h>
-#include <mystrings/m_ctype.h>
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/my_pthread.h"
 #include "heap.h"			/* Structs & some defines */
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 #include <list>
 
 /*
@@ -50,7 +50,7 @@ extern std::list<HP_INFO *> heap_open_list;
 
 #define test_active(info) \
 if (!(info->update & HA_STATE_AKTIV))\
-{ my_errno=HA_ERR_NO_ACTIVE_RECORD; return(-1); }
+{ errno=HA_ERR_NO_ACTIVE_RECORD; return(-1); }
 #define hp_find_hash(A,B) ((HASH_INFO*) hp_find_block((A),(B)))
 
 	/* Find pos for record and update it in info->current_ptr */

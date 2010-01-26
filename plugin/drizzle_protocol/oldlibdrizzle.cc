@@ -17,12 +17,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
+#include "drizzled/my_error.h"
 #include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
 #include <algorithm>
 
 #include "pack.h"
@@ -34,6 +37,8 @@ using namespace std;
 using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
+
+extern uint32_t global_thread_id;
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
@@ -851,6 +856,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "drizzle_protocol",
   "0.1",
   "Eric Day",

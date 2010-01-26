@@ -32,9 +32,9 @@
 #include "client_priv.h"
 #include <string>
 
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/charset_info.h"
 #include "drizzled/hash.h"
 #include <stdarg.h>
 #include <algorithm>
@@ -81,6 +81,7 @@ static void field_escape(string &in, const char *from);
 static bool  verbose= false;
 static bool opt_no_create_info= false;
 static bool opt_no_data= false;
+static bool opt_mysql= false;
 static bool quick= true;
 static bool extended_insert= true;
 static bool ignore_errors= false;
@@ -257,6 +258,9 @@ static struct my_option my_long_options[] =
    "dump. Automatically turns --single-transaction and --lock-tables off.",
    (char**) &opt_lock_all_tables, (char**) &opt_lock_all_tables, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"no-autocommit", OPT_AUTOCOMMIT,
    "Wrap tables with autocommit/commit statements.",
    (char**) &opt_autocommit, (char**) &opt_autocommit, 0, GET_BOOL, NO_ARG,
@@ -913,6 +917,8 @@ static int connect_to_db(char *host, char *user,char *passwd)
   drizzle_con_create(&drizzle, &dcon);
   drizzle_con_set_tcp(&dcon, host, opt_drizzle_port);
   drizzle_con_set_auth(&dcon, user, passwd);
+  if (opt_mysql)
+    drizzle_con_add_options(&dcon, DRIZZLE_CON_MYSQL);
   ret= drizzle_con_connect(&dcon);
   if (ret != DRIZZLE_RETURN_OK)
   {
@@ -2403,7 +2409,8 @@ static int dump_all_tables_in_db(char *database)
     0 if error
 */
 
-static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
+static char *get_actual_table_name(const char *old_table_name,
+                                   drizzled::memory::Root *root)
 {
   char *name= 0;
   drizzle_result_st result;
@@ -2441,7 +2448,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 
 static int dump_selected_tables(char *db, char **table_names, int tables)
 {
-  MEM_ROOT root;
+  drizzled::memory::Root root;
   char **dump_tables, **pos, **end;
   drizzle_result_st result;
   drizzle_return_t ret;
@@ -2450,7 +2457,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   if (init_dumping(db, init_dumping_tables))
     return(1);
 
-  init_alloc_root(&root, 8192, 0);
+  init_alloc_root(&root, 8192);
   if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
      die(EX_EOM, _("alloc_root failure."));
 

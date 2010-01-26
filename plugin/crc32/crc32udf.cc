@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
-#include <drizzled/hash/crc32.h>
+#include <drizzled/algorithm/crc32.h>
 
 #include <string>
 
@@ -66,7 +66,7 @@ int64_t Crc32Function::val_int()
   }
 
   null_value= false;
-  return static_cast<int64_t>(drizzled::hash::crc32(res->ptr(), res->length()));
+  return static_cast<int64_t>(drizzled::algorithm::crc32(res->ptr(), res->length()));
 }
 
 plugin::Create_function<Crc32Function> *crc32udf= NULL;
@@ -85,17 +85,4 @@ static int finalize(plugin::Registry &registry)
   return 0;
 }
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  "crc32",
-  "1.0",
-  "Stewart Smith",
-  "UDF for computing CRC32",
-  PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(initialize, finalize, NULL, NULL);

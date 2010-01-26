@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/math/int.h>
 #include <drizzled/plugin/function.h>
 
@@ -86,6 +86,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "charlength",
   "1.0",
   "Devananda van der Veen",

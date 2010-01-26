@@ -1,3 +1,7 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
 #  Copyright (C) 2008 Sun Microsystems
 # 
 #  This program is free software; you can redistribute it and/or modify
@@ -17,20 +21,20 @@
 sbin_PROGRAMS= drizzled/drizzled
 
 DTRACEFILES = drizzled/cursor.o \
+	      drizzled/sql_select.o \
 	      drizzled/filesort.o \
 	      drizzled/drizzled.o \
+	      drizzled/join.o \
 	      drizzled/session.o \
 	      drizzled/sql_delete.o \
 	      drizzled/sql_insert.o \
-	      drizzled/sql_select.o \
 	      drizzled/sql_update.o \
 	      drizzled/sql_parse.o \
 	      drizzled/statement/delete.o \
 	      drizzled/statement/insert.o \
 	      drizzled/statement/insert_select.o
 
-drizzledincludedir = ${includedir}/drizzled
-nobase_dist_drizzledinclude_HEADERS = \
+nobase_dist_include_HEADERS+= \
 		drizzled/alter_column.h \
 		drizzled/alter_drop.h \
 		drizzled/alter_info.h \
@@ -39,8 +43,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/atomic/sun_studio.h \
 		drizzled/atomics.h \
 		drizzled/base.h \
+		drizzled/cached_directory.h \
 		drizzled/cached_item.h \
 		drizzled/calendar.h \
+		drizzled/charset.h \
+		drizzled/charset_info.h \
 		drizzled/check_stack_overrun.h \
 		drizzled/common.h \
 		drizzled/comp_creator.h \
@@ -49,10 +56,12 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/current_session.h \
 		drizzled/data_home.h \
 		drizzled/db.h \
+		drizzled/decimal.h \
 		drizzled/definitions.h \
 		drizzled/diagnostics_area.h \
 		drizzled/discrete_interval.h \
 		drizzled/dtcollation.h \
+		drizzled/dynamic_array.h \
 		drizzled/enum.h \
 		drizzled/enum_nested_loop_state.h \
 		drizzled/errmsg_print.h \
@@ -182,13 +191,17 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/function/time/unix_timestamp.h \
 		drizzled/function/time/weekday.h \
 		drizzled/function/time/year.h  \
+		drizzled/typelib.h \
 		drizzled/function/units.h \
 		drizzled/function/user_var_as_out_param.h \
 		drizzled/function_hash.h \
+		drizzled/gettext.h \
+		drizzled/global_charset_info.h \
 		drizzled/ha_statistics.h \
 		drizzled/ha_trx_info.h \
 		drizzled/cursor.h \
 		drizzled/handler_structs.h \
+		drizzled/hash.h \
 		drizzled/hybrid_type.h \
 		drizzled/hybrid_type_traits.h \
 		drizzled/hybrid_type_traits_decimal.h \
@@ -246,8 +259,15 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/lex_symbol.h \
 		drizzled/lock.h \
 		drizzled/lookup_symbol.h \
+		drizzled/memory/sql_alloc.h \
 		drizzled/memory/multi_malloc.h \
-		drizzled/my_decimal.h\
+		drizzled/memory/root.h \
+		drizzled/my_decimal.h \
+		drizzled/my_error.h \
+		drizzled/my_getopt.h \
+		drizzled/my_hash.h \
+		drizzled/my_time.h \
+		drizzled/my_tree.h \
 		drizzled/my_var.h \
 		drizzled/name_resolution_context.h \
 		drizzled/name_resolution_context_state.h \
@@ -256,6 +276,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/open_tables_state.h \
 		drizzled/optimizer/key_field.h \
 		drizzled/optimizer/key_use.h \
+		drizzled/optimizer/explain_plan.h \
 		drizzled/optimizer/position.h \
 		drizzled/optimizer/quick_group_min_max_select.h \
 		drizzled/optimizer/quick_index_merge_select.h \
@@ -291,7 +312,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/plugin/transaction_applier.h \
 		drizzled/plugin/transaction_reader.h \
 		drizzled/plugin/transaction_replicator.h \
+		drizzled/plugin/version.h \
+		drizzled/pthread_globals.h \
 		drizzled/probes.h \
+		drizzled/qsort_cmp.h \
 		drizzled/query_id.h \
 		drizzled/records.h \
 		drizzled/replication_services.h \
@@ -311,10 +335,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/select_to_file.h \
 		drizzled/select_union.h \
 		drizzled/session.h \
+		drizzled/session_list.h \
 		drizzled/set_var.h \
 		drizzled/show.h \
-		drizzled/sql_alloc.h \
-		drizzled/sql_array.h \
 		drizzled/sql_base.h \
 		drizzled/sql_bitmap.h \
 		drizzled/sql_error.h \
@@ -372,6 +395,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/statement/unlock_tables.h \
 		drizzled/statement/update.h \
 		drizzled/stored_key.h \
+		drizzled/strfunc.h \
 		drizzled/structs.h \
 		drizzled/symbol_hash.h \
 		drizzled/table.h \
@@ -384,6 +408,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/temporal.h \
 		drizzled/temporal_format.h \
 		drizzled/temporal_interval.h \
+		drizzled/thr_lock.h \
 		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
 		drizzled/tzfile.h \
@@ -395,35 +420,33 @@ nobase_dist_drizzledinclude_HEADERS = \
 		drizzled/utf8/checked.h \
 		drizzled/utf8/core.h \
 		drizzled/utf8/unchecked.h \
+		drizzled/version.h \
+		drizzled/visibility.h \
 		drizzled/xid.h
 
-noinst_LTLIBRARIES += \
-		drizzled/libhandler.la \
-		drizzled/libserialutil.la
+DRIZZLED_LDADD= \
+		 drizzled/internal/libinternal.la \
+                 $(LIBZ) \
+                 $(LIBINTL) \
+                 ${LIBC_P}
 
-LDADD = $(top_builddir)/mysys/libmysys.la \
-	$(top_builddir)/mystrings/libmystrings.la \
-	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
-
-drizzled_drizzled_LDADD = ${noinst_LTLIBRARIES} \
-		 $(top_builddir)/drizzled/hash/libhash.la \
-		 $(top_builddir)/drizzled/util/libutil.la \
-		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(pandora_plugin_libs) \
-		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
-		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS)
+drizzled_drizzled_LDADD= \
+		${DRIZZLED_LDADD} \
+		${noinst_LTLIBRARIES} \
+		drizzled/algorithm/libhash.la \
+		drizzled/util/libutil.la \
+		drizzled/message/libdrizzledmessage.la \
+		drizzled/libcached_directory.la \
+		drizzled/liberror.la \
+		drizzled/libmemory.la \
+		$(pandora_plugin_libs) \
+		$(LDADD) $(LIBUUID) gnulib/libgnu.la \
+		$(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
+		$(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_drizzled_LDFLAGS = -export-dynamic
-
-
-noinst_HEADERS += \
-		drizzled/hash.h \
-		drizzled/gettext.h \
-		drizzled/global.h \
-		drizzled/server_includes.h
 
 drizzled_drizzled_SOURCES = \
 		drizzled/alter_info.cc \
@@ -433,6 +456,8 @@ drizzled_drizzled_SOURCES = \
 		drizzled/comp_creator.cc \
 		drizzled/create_field.cc \
 		drizzled/current_session.cc \
+		drizzled/cursor.cc \
+		drizzled/decimal.cc \
 		drizzled/diagnostics_area.cc \
 		drizzled/drizzled.cc \
 		drizzled/dtcollation.cc \
@@ -459,7 +484,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/filesort.cc \
 		drizzled/foreign_key.cc \
 		drizzled/function/additive_op.cc \
-		drizzled/function/check_reserved_words.cc \
 		drizzled/function/coercibility.cc \
 		drizzled/function/field.cc \
 		drizzled/function/find_in_set.cc \
@@ -611,10 +635,13 @@ drizzled_drizzled_SOURCES = \
 		drizzled/key_map.cc \
 		drizzled/lock.cc \
 		drizzled/lookup_symbol.cc \
-		drizzled/memory/multi_malloc.cc \
 		drizzled/my_decimal.cc \
+		drizzled/my_hash.cc \
+		drizzled/my_time.cc \
+		drizzled/my_tree.cc \
 		drizzled/name_resolution_context_state.cc \
 		drizzled/natural_join_column.cc \
+		drizzled/optimizer/explain_plan.cc \
 		drizzled/optimizer/key_field.cc \
 		drizzled/optimizer/quick_group_min_max_select.cc \
 		drizzled/optimizer/quick_index_merge_select.cc \
@@ -639,16 +666,18 @@ drizzled_drizzled_SOURCES = \
 		drizzled/plugin/query_cache.cc \
 		drizzled/plugin/registry.cc \
 		drizzled/plugin/scheduler.cc \
+		drizzled/plugin/storage_engine.cc \
 		drizzled/plugin/transaction_applier.cc \
 		drizzled/plugin/transaction_replicator.cc \
 		drizzled/query_id.cc \
 		drizzled/records.cc \
 		drizzled/replication_services.cc \
 		drizzled/session.cc \
+		drizzled/session_list.cc \
 		drizzled/set_var.cc \
 		drizzled/show.cc \
-		drizzled/sql_alloc.cc \
 		drizzled/sql_base.cc \
+		drizzled/sql_bitmap.cc \
 		drizzled/sql_delete.cc \
 		drizzled/sql_derived.cc \
 		drizzled/sql_error.cc \
@@ -714,16 +743,37 @@ drizzled_drizzled_SOURCES = \
 		drizzled/temporal.cc \
 		drizzled/temporal_format.cc \
 		drizzled/temporal_interval.cc \
+		drizzled/thr_lock.cc \
 		drizzled/time_functions.cc \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \
 		drizzled/user_var_entry.cc \
+		drizzled/version.cc \
 		drizzled/xid.cc
 
+noinst_LTLIBRARIES += \
+		drizzled/libcached_directory.la \
+		drizzled/libcharset.la \
+		drizzled/libdynamic_array.la \
+		drizzled/liberror.la \
+		drizzled/libgetopt.la \
+		drizzled/libmemory.la \
+		drizzled/libserialutil.la \
+		drizzled/libtypelib.la
+
+drizzled_libcharset_la_SOURCES = drizzled/charset.cc drizzled/charset-def.cc
+drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
+drizzled_liberror_la_SOURCES = drizzled/my_error.cc
+drizzled_libgetopt_la_SOURCES = drizzled/my_getopt.cc
+drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
-drizzled_libhandler_la_SOURCES = drizzled/cursor.cc drizzled/plugin/storage_engine.cc
+drizzled_libcached_directory_la_SOURCES=drizzled/cached_directory.cc
+drizzled_libmemory_la_SOURCES= \
+		drizzled/memory/multi_malloc.cc \
+		drizzled/memory/root.cc \
+		drizzled/memory/sql_alloc.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
@@ -760,6 +810,7 @@ CLEANFILES += \
 		drizzled/sql_yacc.output \
 		drizzled/symbol_hash.h \
 		drizzled/symbol_hash.stamp-h \
+		drizzled/plugin/config.h \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
@@ -778,10 +829,10 @@ DISTCLEANFILES += $(EXTRA_PROGRAMS) \
 
 MAINTAINERCLEANFILES += $(BUILT_MAINT_SRC)
 
-generated_probes.h : probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o generated_probes.h
+drizzled/generated_probes.h : drizzled/probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s drizzled/probes.d -o drizzled/generated_probes.h
 	mv drizzled/generated_probes.h drizzled/generated_probes.h.bak
-	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drzzled/generated_probes.h
+	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drizzled/generated_probes.h
 	rm drizzled/generated_probes.h.bak
 	sed -e 's,void \*,const void \*,g' drizzled/generated_probes.h | \
 		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
@@ -795,8 +846,10 @@ if BUILD_GCC_PCH
 	$(CXXCOMPILE) -include config.h ${NO_UNUSED_MACROS} -c $<
 endif
 
-.d.o : $(DTRACEFILES)
-	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
+drizzled/probes.o :  drizzled/probes.d $(DTRACEFILES) config.h
+
+.d.o:
+	$(DTRACE) $(DTRACEFLAGS) -o $@ -G -s $< $(DTRACEFILES)
 
 drizzled/function_hash.h: drizzled/function_hash.stamp-h
 drizzled/symbol_hash.h: drizzled/symbol_hash.stamp-h

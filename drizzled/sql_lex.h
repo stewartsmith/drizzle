@@ -38,6 +38,7 @@
 #include "drizzled/statement.h"
 
 #include <bitset>
+#include <string>
 
 class select_result_interceptor;
 
@@ -245,13 +246,13 @@ public:
 
   static void *operator new(size_t size)
   {
-    return sql_alloc(size);
+    return drizzled::memory::sql_alloc(size);
   }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
+  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
+  {  }
+  static void operator delete(void *, drizzled::memory::Root *)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}
@@ -423,7 +424,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  const char *type;               /* type of select for EXPLAIN          */
+  std::string type; /* type of select for EXPLAIN          */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -673,7 +674,7 @@ public:
     of Query_tables_list instances which are used as backup storage.
   */
   Query_tables_list() {}
-  ~Query_tables_list() {}
+  virtual ~Query_tables_list() {}
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);

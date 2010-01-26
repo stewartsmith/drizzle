@@ -16,10 +16,12 @@
 /* Functions to handle keys */
 
 #include "myisam_priv.h"
-#include <mystrings/m_ctype.h>
+#include "drizzled/charset_info.h"
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
+#include <math.h>
+#include <cassert>
 
 #define CHECK_KEYS                              /* Enable safety checks */
 
@@ -380,13 +382,13 @@ int _mi_read_key_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
       if (_mi_put_key_in_record(info,(uint) info->lastinx,buf))
       {
         mi_print_error(info->s, HA_ERR_CRASHED);
-	my_errno=HA_ERR_CRASHED;
+	errno=HA_ERR_CRASHED;
 	return -1;
       }
       info->update|= HA_STATE_AKTIV; /* We should find a record */
       return 0;
     }
-    my_errno=HA_ERR_WRONG_INDEX;
+    errno=HA_ERR_WRONG_INDEX;
   }
   return(-1);				/* Wrong data to read */
 }
@@ -414,7 +416,7 @@ int mi_check_index_cond(register MI_INFO *info, uint32_t keynr, unsigned char *r
   if (_mi_put_key_in_record(info, keynr, record))
   {
     mi_print_error(info->s, HA_ERR_CRASHED);
-    my_errno=HA_ERR_CRASHED;
+    errno=HA_ERR_CRASHED;
     return -1;
   }
   return info->index_cond_func(info->index_cond_func_arg);

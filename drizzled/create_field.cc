@@ -21,8 +21,9 @@
  * @file Implementation of CreateField class
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include <errno.h>
+#include <float.h>
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"
@@ -46,6 +47,7 @@
 
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 
@@ -107,7 +109,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       char buff[MAX_FIELD_WIDTH], *pos;
       String tmp(buff, sizeof(buff), charset), *res;
       res= orig_field->val_str(&tmp);
-      pos= (char*) sql_strmake(res->ptr(), res->length());
+      pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
     orig_field->move_field_offset(-diff);	// Back to record[0]

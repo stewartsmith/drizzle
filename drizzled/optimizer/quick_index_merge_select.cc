@@ -17,12 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/records.h"
 #include "drizzled/util/functors.h"
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/quick_index_merge_select.h"
+#include "drizzled/internal/m_string.h"
 
 #include <vector>
 
@@ -48,7 +49,7 @@ optimizer::QuickIndexMergeSelect::QuickIndexMergeSelect(Session *session_param,
   index= MAX_KEY;
   head= table;
   memset(&read_record, 0, sizeof(read_record));
-  init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+  memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
   return;
 }
 

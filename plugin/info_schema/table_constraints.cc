@@ -23,9 +23,12 @@
  *   table constraints I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 #include "table_constraints.h"
@@ -129,7 +132,7 @@ plugin::InfoSchemaTable *TableConstraintsIS::getTable()
     tc_table= new plugin::InfoSchemaTable("TABLE_CONSTRAINTS",
                                           *columns,
                                           3, 4, false, true,
-                                          OPEN_TABLE_ONLY,
+                                          0,
                                           methods);
   }
 

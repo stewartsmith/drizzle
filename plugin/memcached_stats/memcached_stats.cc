@@ -27,7 +27,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/show.h"
 #include "drizzled/gettext.h"
 #include "drizzled/plugin/info_schema_table.h"
@@ -137,7 +137,8 @@ static bool initMemcachedTables()
   memcached_stats_table= new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_STATS",
                                                            memcached_stats_columns,
                                                            -1, -1, false, false, 0,
-                                                           memcached_stats_methods);
+                                                           memcached_stats_methods,
+                                                           "MEMCACHED_STATS");
   if (! memcached_stats_table)
   {
     return true;
@@ -147,7 +148,8 @@ static bool initMemcachedTables()
     new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_ANALYSIS",
                                       memcached_analysis_columns,
                                       -1, -1, false, false, 0,
-                                      memcached_analysis_methods);
+                                      memcached_analysis_methods,
+                                      "MEMCACHED_STATS");
   if (! memcached_analysis_table)
   {
     return true;
@@ -265,6 +267,7 @@ static drizzle_sys_var *system_variables[]=
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "memcached_stats",
   "1.0",
   "Padraig O'Sullivan",

@@ -32,7 +32,9 @@
 #include <sys/mman.h>
 #endif
 #include <drizzled/util/test.h>
+#include "drizzled/my_error.h"
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
@@ -48,7 +50,7 @@ static int update_dynamic_record(MI_INFO *info,my_off_t filepos,unsigned char *r
 				 ulong reclength);
 static int delete_dynamic_record(MI_INFO *info,my_off_t filepos,
 				 uint32_t second_read);
-static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
+static int _mi_cmp_buffer(int file, const unsigned char *buff, my_off_t filepos,
 			  uint32_t length);
 
 	/* Interface function from MI_INFO */
@@ -255,13 +257,13 @@ int _mi_write_blob_record(MI_INFO *info, const unsigned char *record)
 #ifdef NOT_USED					/* We now support big rows */
   if (reclength > MI_DYN_MAX_ROW_LENGTH)
   {
-    my_errno=HA_ERR_TO_BIG_ROW;
+    errno=HA_ERR_TO_BIG_ROW;
     return -1;
   }
 #endif
   if (!(rec_buff=(unsigned char*) malloc(reclength)))
   {
-    my_errno= HA_ERR_OUT_OF_MEM;
+    errno= HA_ERR_OUT_OF_MEM;
     return(-1);
   }
   reclength2= _mi_rec_pack(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
@@ -287,13 +289,13 @@ int _mi_update_blob_record(MI_INFO *info, my_off_t pos, const unsigned char *rec
 #ifdef NOT_USED					/* We now support big rows */
   if (reclength > MI_DYN_MAX_ROW_LENGTH)
   {
-    my_errno=HA_ERR_TO_BIG_ROW;
+    errno=HA_ERR_TO_BIG_ROW;
     return -1;
   }
 #endif
   if (!(rec_buff=(unsigned char*) malloc(reclength)))
   {
-    my_errno= HA_ERR_OUT_OF_MEM;
+    errno= HA_ERR_OUT_OF_MEM;
     return(-1);
   }
   reclength=_mi_rec_pack(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
@@ -340,7 +342,7 @@ static int write_dynamic_record(MI_INFO *info, const unsigned char *record,
         info->state->empty - info->state->del * MI_MAX_DYN_BLOCK_HEADER <
         reclength + MI_MAX_DYN_BLOCK_HEADER)
     {
-      my_errno=HA_ERR_RECORD_FILE_FULL;
+      errno=HA_ERR_RECORD_FILE_FULL;
       return(1);
     }
   }
@@ -382,7 +384,7 @@ static int _mi_find_writepos(MI_INFO *info,
     if (!(_mi_get_block_info(&block_info,info->dfile,info->s->state.dellink) &
 	   BLOCK_DELETED))
     {
-      my_errno=HA_ERR_WRONG_IN_RECORD;
+      errno=HA_ERR_WRONG_IN_RECORD;
       return(-1);
     }
     info->s->state.dellink=block_info.next_filepos;
@@ -403,7 +405,7 @@ static int _mi_find_writepos(MI_INFO *info,
     if (info->state->data_file_length >
 	(info->s->base.max_data_file_length - tmp))
     {
-      my_errno=HA_ERR_RECORD_FILE_FULL;
+      errno=HA_ERR_RECORD_FILE_FULL;
       return(-1);
     }
     if (tmp > MI_MAX_BLOCK_LENGTH)
@@ -505,7 +507,7 @@ static int update_backward_delete_link(MI_INFO *info, my_off_t delete_block,
     }
     else
     {
-      my_errno=HA_ERR_WRONG_IN_RECORD;
+      errno=HA_ERR_WRONG_IN_RECORD;
       return(1);				/* Wrong delete link */
     }
   }
@@ -536,7 +538,7 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
 	(length=(uint) (block_info.filepos-filepos) +block_info.block_len) <
 	MI_MIN_BLOCK_LENGTH)
     {
-      my_errno=HA_ERR_WRONG_IN_RECORD;
+      errno=HA_ERR_WRONG_IN_RECORD;
       return(1);
     }
     /* Check if next block is a delete block */
@@ -796,7 +798,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
         & (BLOCK_DELETED | BLOCK_ERROR | BLOCK_SYNC_ERROR | BLOCK_FATAL_ERROR))
     {
       if (!(error & BLOCK_FATAL_ERROR))
-        my_errno=HA_ERR_WRONG_IN_RECORD;
+        errno=HA_ERR_WRONG_IN_RECORD;
       goto err;
     }
 
@@ -809,7 +811,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
           info->state->empty - info->state->del * MI_MAX_DYN_BLOCK_HEADER <
           reclength - block_info.rec_len + MI_MAX_DYN_BLOCK_HEADER)
       {
-        my_errno=HA_ERR_RECORD_FILE_FULL;
+        errno=HA_ERR_RECORD_FILE_FULL;
         goto err;
       }
     }
@@ -826,7 +828,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
 	     BLOCK_FATAL_ERROR))
       {
 	if (!(error & BLOCK_FATAL_ERROR))
-	  my_errno=HA_ERR_WRONG_IN_RECORD;
+	  errno=HA_ERR_WRONG_IN_RECORD;
 	goto err;
       }
       length=(ulong) (block_info.filepos-filepos) + block_info.block_len;
@@ -1172,7 +1174,7 @@ err:
 
 
 	/* Unpacks a record */
-	/* Returns -1 and my_errno =HA_ERR_RECORD_DELETED if reclength isn't */
+	/* Returns -1 and errno =HA_ERR_RECORD_DELETED if reclength isn't */
 	/* right. Returns reclength (>0) if ok */
 
 ulong _mi_rec_unpack(register MI_INFO *info, register unsigned char *to, unsigned char *from,
@@ -1301,7 +1303,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register unsigned char *to, unsigne
     return(found_length);
 
 err:
-  my_errno= HA_ERR_WRONG_IN_RECORD;
+  errno= HA_ERR_WRONG_IN_RECORD;
   return(MY_FILE_ERROR);
 } /* _mi_rec_unpack */
 
@@ -1401,7 +1403,7 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
   uint32_t b_type, left_length= 0;
   unsigned char *to= NULL;
   MI_BLOCK_INFO block_info;
-  File file;
+  int file;
 
   if (filepos != HA_OFFSET_ERROR)
   {
@@ -1423,7 +1425,7 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
 	     BLOCK_FATAL_ERROR))
       {
 	if (b_type & (BLOCK_SYNC_ERROR | BLOCK_DELETED))
-	  my_errno=HA_ERR_RECORD_DELETED;
+	  errno=HA_ERR_RECORD_DELETED;
 	goto err;
       }
       if (block_of_record++ == 0)			/* First block */
@@ -1488,7 +1490,7 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char *buf)
   return(-1);			/* Wrong data to read */
 
 panic:
-  my_errno=HA_ERR_WRONG_IN_RECORD;
+  errno=HA_ERR_WRONG_IN_RECORD;
 err:
   _mi_writeinfo(info,0);
   return(-1);
@@ -1566,7 +1568,7 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char 
 	     BLOCK_FATAL_ERROR))
       {
 	if (b_type & (BLOCK_SYNC_ERROR | BLOCK_DELETED))
-	  my_errno=HA_ERR_RECORD_CHANGED;
+	  errno=HA_ERR_RECORD_CHANGED;
 	goto err;
       }
       if (flag == 0)				/* First block */
@@ -1574,36 +1576,36 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const unsigned char 
 	flag=1;
 	if (reclength != block_info.rec_len)
 	{
-	  my_errno=HA_ERR_RECORD_CHANGED;
+	  errno=HA_ERR_RECORD_CHANGED;
 	  goto err;
 	}
       } else if (reclength < block_info.data_len)
       {
-	my_errno=HA_ERR_WRONG_IN_RECORD;
+	errno=HA_ERR_WRONG_IN_RECORD;
 	goto err;
       }
       reclength-=block_info.data_len;
       if (_mi_cmp_buffer(info->dfile,record,block_info.filepos,
 			 block_info.data_len))
       {
-	my_errno=HA_ERR_RECORD_CHANGED;
+	errno=HA_ERR_RECORD_CHANGED;
 	goto err;
       }
       flag=1;
       record+=block_info.data_len;
     }
   }
-  my_errno=0;
+  errno=0;
 err:
   if (buffer != info->rec_buff)
     free((unsigned char*) buffer);
-  return(my_errno);
+  return(errno);
 }
 
 
 	/* Compare file to buffert */
 
-static int _mi_cmp_buffer(File file, const unsigned char *buff, my_off_t filepos,
+static int _mi_cmp_buffer(int file, const unsigned char *buff, my_off_t filepos,
 			  uint32_t length)
 {
   uint32_t next_length;
@@ -1698,7 +1700,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
       }
       if (filepos >= info->state->data_file_length)
       {
-	my_errno= HA_ERR_END_OF_FILE;
+	errno= HA_ERR_END_OF_FILE;
 	goto err;
       }
     }
@@ -1716,7 +1718,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
       if (info->opt_flag & WRITE_CACHE_USED &&
 	  info->rec_cache.pos_in_file < filepos + MI_BLOCK_INFO_HEADER_LENGTH &&
 	  flush_io_cache(&info->rec_cache))
-	return(my_errno);
+	return(errno);
       info->rec_cache.seek_not_done=1;
       b_type=_mi_get_block_info(&block_info,info->dfile,filepos);
     }
@@ -1733,7 +1735,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
       }
       if (b_type & (BLOCK_DELETED | BLOCK_SYNC_ERROR))
       {
-	my_errno=HA_ERR_RECORD_DELETED;
+	errno=HA_ERR_RECORD_DELETED;
 	info->lastpos=block_info.filepos;
 	info->nextpos=block_info.filepos+block_info.block_len;
       }
@@ -1795,8 +1797,8 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
 	/* lseek(info->dfile,filepos,SEEK_SET); */
 	if (my_read(info->dfile,(unsigned char*) to,block_info.data_len,MYF(MY_NABP)))
 	{
-	  if (my_errno == -1)
-	    my_errno= HA_ERR_WRONG_IN_RECORD;	/* Unexpected end of file */
+	  if (errno == -1)
+	    errno= HA_ERR_WRONG_IN_RECORD;	/* Unexpected end of file */
 	  goto err;
 	}
       }
@@ -1820,20 +1822,20 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, unsigned char *buf,
   if (_mi_rec_unpack(info,buf,info->rec_buff,block_info.rec_len) !=
       MY_FILE_ERROR)
     return(0);
-  return(my_errno);			/* Wrong record */
+  return(errno);			/* Wrong record */
 
 panic:
-  my_errno=HA_ERR_WRONG_IN_RECORD;		/* Something is fatal wrong */
+  errno=HA_ERR_WRONG_IN_RECORD;		/* Something is fatal wrong */
 err:
-  save_errno=my_errno;
+  save_errno=errno;
   _mi_writeinfo(info,0);
-  return(my_errno=save_errno);
+  return(errno=save_errno);
 }
 
 
 	/* Read and process header from a dynamic-record-file */
 
-uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
+uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, int file, my_off_t filepos)
 {
   uint32_t return_val=0;
   unsigned char *header=info->header;
@@ -1961,6 +1963,6 @@ uint32_t _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
   }
 
 err:
-  my_errno=HA_ERR_WRONG_IN_RECORD;	 /* Garbage */
+  errno=HA_ERR_WRONG_IN_RECORD;	 /* Garbage */
   return BLOCK_ERROR;
 }

@@ -28,7 +28,7 @@
  * Defines the implementation of a transaction log entry POD class
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include "transaction_log_entry.h"
 

@@ -23,7 +23,10 @@
     - add function from mysql_select that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include <limits.h>
+
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/cache.h>
@@ -34,6 +37,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
+
+using namespace drizzled;
+
+extern plugin::StorageEngine *myisam_engine;
 
 inline Item * and_items(Item* cond, Item *item)
 {
@@ -559,7 +566,7 @@ void Item_singlerow_subselect::fix_length_and_dec()
   }
   else
   {
-    if (!(row= (Item_cache**) sql_alloc(sizeof(Item_cache*)*max_columns)))
+    if (!(row= (Item_cache**) memory::sql_alloc(sizeof(Item_cache*)*max_columns)))
       return;
     engine->fix_length_and_dec(row);
     value= *row;

@@ -17,7 +17,7 @@
 #define PLUGIN_CSV_HA_TINA_H
 
 #include <drizzled/cursor.h>
-#include <mysys/thr_lock.h>
+#include <drizzled/thr_lock.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,8 +53,8 @@ public:
   THR_LOCK lock;
   bool update_file_opened;
   bool tina_write_opened;
-  File meta_file;           /* Meta file we use */
-  File tina_write_filedes;  /* File Cursor for readers */
+  int meta_file;           /* Meta file we use */
+  int tina_write_filedes;  /* File Cursor for readers */
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
   uint32_t data_file_version;   /* Version of the data file used */
@@ -75,8 +75,8 @@ class ha_tina: public Cursor
   off_t temp_file_length;
   unsigned char byte_buffer[IO_SIZE];
   Transparent_file *file_buff;
-  File data_file;                   /* File Cursor for readers */
-  File update_temp_file;
+  int data_file;                   /* File Cursor for readers */
+  int update_temp_file;
   String buffer;
   /*
     The chain contains "holes" in the file, occured because of
@@ -90,7 +90,7 @@ class ha_tina: public Cursor
   uint32_t chain_size;
   uint32_t local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
-  MEM_ROOT blobroot;
+  drizzled::memory::Root blobroot;
 
   bool get_write_pos(off_t *end_pos, tina_set *closest_hole);
   int open_update_temp_file_if_needed();

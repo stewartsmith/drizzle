@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
@@ -33,6 +33,7 @@
 #include <limits>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 void Item_func::set_arguments(List<Item> &list)
@@ -40,7 +41,7 @@ void Item_func::set_arguments(List<Item> &list)
   allowed_arg_cols= 1;
   arg_count=list.elements;
   args= tmp_arg;                                // If 2 arguments
-  if (arg_count <= 2 || (args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
+  if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     List_iterator_fast<Item> li(list);
     Item *item;

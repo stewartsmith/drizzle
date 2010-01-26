@@ -23,10 +23,12 @@
  *   statistics I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
 #include "drizzled/tztime.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 #include "statistics.h"
@@ -201,7 +203,7 @@ plugin::InfoSchemaTable *StatisticsIS::getTable()
     stats_table= new plugin::InfoSchemaTable("STATISTICS",
                                              *columns,
                                              1, 2, false, true,
-                                             OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
+                                             0,
                                              methods);
   }
 

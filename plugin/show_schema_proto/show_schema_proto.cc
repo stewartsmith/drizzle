@@ -14,13 +14,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/error.h>
 #include <drizzled/current_session.h>
 #include <drizzled/db.h>
+#include "drizzled/charset.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <stdio.h>
 #include <iostream>
@@ -120,6 +122,7 @@ static int finalize(plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "show_schema_proto",
   "1.0",
   "Stewart Smith",

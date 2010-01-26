@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include <plugin/information_engine/information_cursor.h>
 #include <drizzled/session.h>
 
@@ -107,7 +109,7 @@ public:
 void InformationCursor::position(const unsigned char *record)
 {
   /* compute a hash of the row */
-  uint32_t cs= drizzled::hash::crc32((const char *) record, table->s->reclength);
+  uint32_t cs= drizzled::algorithm::crc32((const char *) record, table->s->reclength);
   /* copy the hash into ref */
   memcpy(ref, &cs, sizeof(uint32_t));
 }

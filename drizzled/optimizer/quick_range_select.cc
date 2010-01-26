@@ -17,11 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/optimizer/quick_range.h"
 #include "drizzled/optimizer/quick_range_select.h"
-#include "mysys/my_bitmap.h"
+#include "drizzled/sql_bitmap.h"
+#include "drizzled/internal/m_string.h"
+#include <fcntl.h>
 #include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
@@ -32,7 +34,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               Table *table,
                                               uint32_t key_nr,
                                               bool no_alloc,
-                                              MEM_ROOT *parent_alloc,
+                                              memory::Root *parent_alloc,
                                               bool *create_error)
   :
     cursor(NULL),
@@ -67,7 +69,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   if (! no_alloc && ! parent_alloc)
   {
     // Allocates everything through the internal memroot
-    init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
+    memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
     session->mem_root= &alloc;
   }
   else
@@ -80,12 +82,12 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   save_read_set= head->read_set;
   save_write_set= head->write_set;
 
-  /* Allocate a bitmap for used columns. Using sql_alloc instead of malloc
+  /* Allocate a bitmap for used columns. Using memory::sql_alloc instead of malloc
      simply as a "fix" to the MySQL 6.0 code that also free()s it at the
      same time we destroy the mem_root.
    */
 
-  bitmap= reinterpret_cast<my_bitmap_map*>(sql_alloc(head->s->column_bitmap_size));
+  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->s->column_bitmap_size));
   if (! bitmap)
   {
     column_bitmap.setBitmap(NULL);

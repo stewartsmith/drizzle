@@ -223,8 +223,8 @@ template <> void C<int>::foo();
             AC_INCLUDES_DEFAULT])],
             [ac_cv_safe_to_use_Wredundant_decls_=yes],
             [ac_cv_safe_to_use_Wredundant_decls_=no])
-          CXXFLAGS="${save_CXXFLAGS}"
-          AC_LANG_POP()])
+         CXXFLAGS="${save_CXXFLAGS}"
+         AC_LANG_POP()])
       AS_IF([test "$ac_cv_safe_to_use_Wredundant_decls_" = "yes"],
             [CXX_WARNINGS="${CXX_WARNINGS} -Wredundant-decls"],
             [CXX_WARNINGS="${CXX_WARNINGS} -Wno-redundant-decls"])
@@ -329,8 +329,8 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
       CXX_WARNINGS_FULL="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint"
     ])
 
-    CC_WARNINGS="-v -errtags=yes ${W_FAIL} ${CC_WARNINGS_FULL}"
-    CXX_WARNINGS="+w +w2 -xwe -xport64 -errtags=yes ${CXX_WARNINGS_FULL} ${W_FAIL}"
+    CC_WARNINGS="-v -errtags=yes ${W_FAIL} ${CC_WARNINGS_FULL} ${CFLAG_VISIBILITY}"
+    CXX_WARNINGS="+w +w2 -xwe -xport64 -errtags=yes ${CXX_WARNINGS_FULL} ${W_FAIL} ${CFLAG_VISIBILITY}"
     PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1,signextwarn,partinit,notused,badargtype2w,wbadinit"
     NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
     NO_WERROR="-errwarn=%none"

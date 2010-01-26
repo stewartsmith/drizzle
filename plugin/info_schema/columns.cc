@@ -23,9 +23,11 @@
  *   Character Set I_S table methods.
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "helper_methods.h"
 #include "columns.h"
@@ -237,7 +239,7 @@ plugin::InfoSchemaTable *ColumnsIS::getTable()
     cols_table= new plugin::InfoSchemaTable("COLUMNS",
                                             *columns,
                                             1, 2, false, true,
-                                            OPTIMIZE_I_S_TABLE,
+                                            0,
                                             methods);
   }
 

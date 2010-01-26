@@ -2104,7 +2104,7 @@ def _ClassifyInclude(fileinfo, include, is_system):
 def CheckGlobalInclude(filename, clean_lines, linenum, include_state, error):
   """Check rules that are applicable to #include lines.
 
-  global.h, config.h and server_includes.h should NEVER be included in headers
+  config.h should NEVER be included in headers
   unless those headers end in _priv and therefore are private headers.
 
   Args:
@@ -2114,7 +2114,7 @@ def CheckGlobalInclude(filename, clean_lines, linenum, include_state, error):
     include_state: An _IncludeState instance in which the headers are inserted.
     error: The function to call with any errors found.
   """
-  if filename.endswith("config.h") or filename.endswith("global.h") or filename.endswith("server_includes.h") or filename.endswith("_priv.h") or not filename.endswith(".h"):
+  if filename.endswith("config.h") or filename.endswith("_priv.h") or not filename.endswith(".h"):
     return
 
   fileinfo = FileInfo(filename)

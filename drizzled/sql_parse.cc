@@ -14,8 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define DRIZZLE_LEX 1
-#include <drizzled/server_includes.h>
-#include <mysys/hash.h>
+#include "config.h"
+#include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
@@ -37,12 +37,21 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
+#include "drizzled/session_list.h"
+#include "drizzled/global_charset_info.h"
+
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/optimizer/explain_plan.h"
+#include "drizzled/pthread_globals.h"
+
+#include <limits.h>
 
 #include <bitset>
 #include <algorithm>
+
+#include "drizzled/internal/my_sys.h"
 
 using namespace drizzled;
 using namespace std;
@@ -193,13 +202,11 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    string database_name(packet);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
+    LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-
-    if (! mysql_change_db(session, normalised_database_name, false))
+    tmp.str= packet;
+    tmp.length= packet_length;
+    if (!mysql_change_db(session, &tmp, false))
     {
       session->my_ok();
     }
@@ -211,7 +218,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       break;					// fatal error is set
     DRIZZLE_QUERY_START(session->query,
                         session->thread_id,
-                        const_cast<const char *>(session->db ? session->db : ""));
+                        const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -308,7 +315,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->query_length= 0;
 
   session->set_proc_info(NULL);
-  free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
+  free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
@@ -358,6 +365,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   if (schema_table_name.compare("TABLES") == 0 ||
       schema_table_name.compare("TABLE_NAMES") == 0)
   {
+    LEX_STRING db;
     size_t dummy;
     if (lex->select_lex.db == NULL &&
         lex->copy_db_to(&lex->select_lex.db, &dummy))
@@ -365,18 +373,13 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       return (1);
     }
     schema_select_lex= new Select_Lex();
-    schema_select_lex->db= lex->select_lex.db;
-
-    string database_name(schema_select_lex->db);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
+    db.str= schema_select_lex->db= lex->select_lex.db;
     schema_select_lex->table_list.first= NULL;
+    db.length= strlen(db.str);
 
-    if (! normalised_database_name.isValid())
+    if (check_db_name(&db))
     {
-      my_error(ER_WRONG_DB_NAME, MYF(0),
-               normalised_database_name.to_string().c_str());
+      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
       return (1);
     }
   }
@@ -538,7 +541,8 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       if (!(result= new select_send()))
         return true;
       session->send_explain_fields(result);
-      res= mysql_explain_union(session, &session->lex->unit, result);
+      optimizer::ExplainPlan planner;
+      res= planner.explainUnion(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];
@@ -781,7 +785,7 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
             session->query_length--;
           DRIZZLE_QUERY_EXEC_START(session->query,
                                    session->thread_id,
-                                   const_cast<const char *>(session->db ? session->db : ""));
+                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
           /* Actually execute the query */
           mysql_execute_command(session);
           DRIZZLE_QUERY_EXEC_DONE(0);
@@ -948,20 +952,11 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str)
+  if (table->is_derived_table() == false && table->db.str &&
+      check_db_name(&table->db))
   {
-    string database_name(table->db.str);
-    NonNormalisedDatabaseName non_normalised_database_name(database_name);
-    NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
-    if (! normalised_database_name.isValid())
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
-      return NULL;
-    }
-
-    strncpy(table->db.str, normalised_database_name.to_string().c_str(),
-            table->db.length);
+    my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+    return NULL;
   }
 
   if (!alias)					/* Alias is case sensitive */
@@ -1490,7 +1485,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   
-  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     if ((*it)->thread_id == id)
     {

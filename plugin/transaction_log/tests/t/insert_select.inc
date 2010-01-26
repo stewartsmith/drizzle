@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS t2;
 --enable_warnings
 
 CREATE TABLE t1 (
-  id INT NOT NULL
+  id INT NOT NULL PRIMARY KEY
 , padding VARCHAR(200) NOT NULL
 );
 
@@ -23,7 +23,7 @@ INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
 
 CREATE TABLE t2 (
-  id INT NOT NULL
+  id INT NOT NULL PRIMARY KEY
 , padding VARCHAR(200) NOT NULL
 );
 

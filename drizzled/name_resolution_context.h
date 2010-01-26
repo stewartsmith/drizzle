@@ -44,7 +44,7 @@ class Select_Lex;
  * structure before and after INSERT/CREATE and its SELECT to make correct
  * field name resolution.
  */
-class Name_resolution_context: public Sql_alloc
+class Name_resolution_context: public drizzled::memory::SqlAlloc
 {
 public:
   /**

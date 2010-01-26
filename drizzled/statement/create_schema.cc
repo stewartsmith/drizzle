@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
@@ -33,22 +33,20 @@ namespace drizzled
 
 bool statement::CreateSchema::execute()
 {
-  string database_name(session->lex->name.str);
-  NonNormalisedDatabaseName non_normalised_database_name(database_name);
-  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
-
   if (! session->endActiveTransaction())
   {
     return true;
   }
-  if (! session->lex->name.str ||
-      ! normalised_database_name.isValid())
+  char *alias= session->strmake(session->lex->name.str,
+                                session->lex->name.length);
+  if (! alias ||
+      check_db_name(&session->lex->name))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;
   }
-  bool res= mysql_create_db(session, normalised_database_name, &schema_message, is_if_not_exists);
+
+  bool res= mysql_create_db(session, session->lex->name.str, &schema_message, is_if_not_exists);
   return res;
 }
 

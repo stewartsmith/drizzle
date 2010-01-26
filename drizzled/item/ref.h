@@ -59,7 +59,7 @@ public:
   enum Type type() const		{ return REF_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const
   {
-    Item *it= static_cast<Item *>(((Item *) item)->real_item());
+    const Item *it= item->real_item();
     return ref && (*ref)->eq(it, binary_cmp);
   }
   double val_real();
@@ -146,7 +146,10 @@ public:
     if (ref && result_type() == ROW_RESULT)
       (*ref)->bring_value();
   }
-
+  bool basic_const_item() const
+  {
+    return (*ref)->basic_const_item();
+  }
 };
 
 #endif /* DRIZZLED_ITEM_REF_H */

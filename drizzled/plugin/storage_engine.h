@@ -26,12 +26,14 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
-
-#include "mysys/cached_directory.h"
+#include "drizzled/sql_string.h"
+#include "drizzled/table_identifier.h"
+#include "drizzled/cached_directory.h"
 
 #include <bitset>
 #include <string>
 #include <vector>
+#include <set>
 
 class TableList;
 class Session;
@@ -249,6 +251,7 @@ public:
   uint32_t slot;
 
   inline uint32_t getSlot (void) { return slot; }
+  inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
   bool has_2pc()
@@ -337,7 +340,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual Cursor *create(TableShare &, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare &, drizzled::memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -347,9 +350,6 @@ public:
     return false;
   }
 
-  /* args: current_session, tables, cond */
-  virtual int fill_files_table(Session *, TableList *,
-                               Item *) { return 0; }
   virtual int release_temporary_latches(Session *) { return false; }
 
   /**
@@ -385,7 +385,9 @@ public:
   }
 
   // TODO: move these to protected
-  virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
+  virtual void doGetTableNames(drizzled::CachedDirectory &directory,
+                               std::string& db_name,
+                               std::set<std::string>& set_of_names);
   virtual int doDropTable(Session& session,
                           const std::string table_path)= 0;
 
@@ -433,7 +435,7 @@ public:
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
-  Cursor *getCursor(TableShare &share, MEM_ROOT *alloc);
+  Cursor *getCursor(TableShare &share, drizzled::memory::Root *alloc);
 
   uint32_t max_record_length() const
   { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }

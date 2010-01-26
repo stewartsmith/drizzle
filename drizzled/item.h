@@ -21,11 +21,11 @@
 #define DRIZZLED_ITEM_H
 
 #include <drizzled/dtcollation.h>
-#include <mysys/drizzle_time.h>
+#include <drizzled/my_time.h>
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
 
 class TableList;
@@ -76,7 +76,7 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class Item: public Sql_alloc
+class Item: public drizzled::memory::SqlAlloc
 {
   /* Prevent use of these */
   Item(const Item &);
@@ -162,7 +162,7 @@ public:
    *
    * @note
    *
-   * Alloc & destruct is done as start of select using sql_alloc
+   * Alloc & destruct is done as start of select using memory::sql_alloc
    */
   Item();
   /**
@@ -501,10 +501,7 @@ public:
   {
     return COND_OK;
   }
-  inline uint32_t float_length(uint32_t decimals_par) const
-  {
-    return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
-  }
+  uint32_t float_length(uint32_t decimals_par) const;
   virtual uint32_t decimal_precision() const;
   int decimal_int_part() const;
 
@@ -683,6 +680,9 @@ public:
   virtual bool reset_query_id_processor(unsigned char *query_id_arg);
   virtual bool register_field_in_read_map(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
+
+  virtual bool cache_const_expr_analyzer(unsigned char **arg);
+  virtual Item* cache_const_expr_transformer(unsigned char *arg);
 
   virtual Item *equal_fields_propagator(unsigned char * arg);
   virtual bool set_no_const_sub(unsigned char *arg);

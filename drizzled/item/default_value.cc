@@ -17,13 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 #include <drizzled/current_session.h>
 #include <drizzled/item/default_value.h>
+
+using namespace drizzled;
 
 bool Item_default_value::eq(const Item *item, bool binary_cmp) const
 {
@@ -61,7 +63,7 @@ bool Item_default_value::fix_fields(Session *session, Item **)
     my_error(ER_NO_DEFAULT_FOR_FIELD, MYF(0), field_arg->field->field_name);
     goto error;
   }
-  if (!(def_field= (Field*) sql_alloc(field_arg->field->size_of())))
+  if (!(def_field= (Field*) memory::sql_alloc(field_arg->field->size_of())))
     goto error;
   memcpy(def_field, field_arg->field, field_arg->field->size_of());
   def_field->move_field_offset((ptrdiff_t)

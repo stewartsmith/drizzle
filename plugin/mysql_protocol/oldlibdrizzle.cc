@@ -17,12 +17,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/m_string.h"
 #include <algorithm>
 
 #include "pack.h"
@@ -34,6 +35,8 @@ using namespace std;
 using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
+
+extern uint32_t global_thread_id;
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static uint32_t port;
@@ -219,7 +222,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
       break;
 
     case 14: /* PING */
-      (*l_packet)[0]= (unsigned char) COM_SHUTDOWN;
+      (*l_packet)[0]= (unsigned char) COM_PING;
       break;
 
 
@@ -836,6 +839,7 @@ static drizzle_sys_var* system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "mysql_protocol",
   "0.1",
   "Eric Day",

@@ -22,8 +22,9 @@
  * @file This file implements the Field class and API
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include <errno.h>
+#include <float.h>
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/field/str.h"
@@ -42,15 +43,13 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/time_functions.h"
+#include "drizzled/internal/m_string.h"
+
+using namespace drizzled;
 
 /*****************************************************************************
   Instansiate templates and static variables
 *****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<CreateField>;
-template class List_iterator<CreateField>;
-#endif
 
 static enum_field_types
 field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
@@ -364,6 +363,16 @@ bool test_if_important_data(const CHARSET_INFO * const cs,
   if (cs != &my_charset_bin)
     str+= cs->cset->scan(cs, str, strend, MY_SEQ_SPACES);
   return (str < strend);
+}
+
+void *Field::operator new(size_t size)
+{
+  return memory::sql_alloc(size);
+}
+
+void *Field::operator new(size_t size, memory::Root *mem_root)
+{
+  return alloc_root(mem_root, static_cast<uint32_t>(size));
 }
 
 enum_field_types Field::field_type_merge(enum_field_types a,
@@ -831,7 +840,7 @@ bool Field::optimize_range(uint32_t idx, uint32_t)
   return test(table->index_flags(idx) & HA_READ_RANGE);
 }
 
-Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)
+Field *Field::new_field(memory::Root *root, Table *new_table, bool)
 {
   Field *tmp;
   if (!(tmp= (Field*) memdup_root(root,(char*) this,size_of())))
@@ -849,7 +858,7 @@ Field *Field::new_field(MEM_ROOT *root, Table *new_table, bool)
   return tmp;
 }
 
-Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
+Field *Field::new_key_field(memory::Root *root, Table *new_table,
                             unsigned char *new_ptr,
                             unsigned char *new_null_ptr,
                             uint32_t new_null_bit)
@@ -864,7 +873,7 @@ Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
   return tmp;
 }
 
-Field *Field::clone(MEM_ROOT *root, Table *new_table)
+Field *Field::clone(memory::Root *root, Table *new_table)
 {
   Field *tmp;
   if ((tmp= (Field*) memdup_root(root,(char*) this,size_of())))
@@ -908,9 +917,6 @@ bool Field_enum::eq_def(Field *field)
   return 1;
 }
 
-/*
-  Make a field from the .frm file info
-*/
 uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
@@ -944,7 +950,7 @@ uint32_t pack_length_to_packflag(uint32_t type)
 }
 
 Field *make_field(TableShare *share,
-                  MEM_ROOT *root,
+                  memory::Root *root,
                   unsigned char *ptr,
                   uint32_t field_length,
                   bool is_nullable,

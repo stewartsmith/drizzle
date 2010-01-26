@@ -41,7 +41,13 @@
  * the log file(s)
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include <fcntl.h>
+
+#include <climits>
+#include <cerrno>
+
 #include "transaction_log_reader.h"
 
 #include <drizzled/gettext.h>
@@ -49,7 +55,9 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
-#include <drizzled/hash/crc32.h>
+#include <drizzled/algorithm/crc32.h>
+#include <drizzled/errmsg_print.h>
+#include "drizzled/definitions.h"
 
 using namespace std;
 using namespace drizzled;
@@ -155,9 +163,9 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
 
       if (do_checksum)
       {
-        if (checksum != drizzled::hash::crc32(buffer, static_cast<size_t>(length)))
+        if (checksum != drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)))
         {
-          fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::hash::crc32(buffer, static_cast<size_t>(length)));
+          fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)));
         }
       }
 

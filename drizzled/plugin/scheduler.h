@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+class Session;
+
 namespace drizzled
 {
 namespace plugin

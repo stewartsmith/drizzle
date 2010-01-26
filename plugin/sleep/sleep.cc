@@ -21,14 +21,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+ 
+#include "config.h"
 
 #include <unistd.h>
 #include <time.h>
 
-#include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_pthread.h"
 #include <drizzled/function/str/strfunc.h>
 
 #include <string>
@@ -144,17 +145,4 @@ static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 }
 
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  "sleep",
-  "1.0",
-  "Patrick Galbraith",
-  "sleep()",
-  PLUGIN_LICENSE_GPL,
-  sleep_plugin_init, /* Plugin Init */
-  sleep_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(sleep_plugin_init, sleep_plugin_deinit, NULL, NULL);

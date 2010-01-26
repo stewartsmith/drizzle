@@ -13,19 +13,24 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/table.h>
-#include <mysys/my_dir.h>
 #include <drizzled/error.h>
+#include "drizzled/internal/my_pthread.h"
 
 #include "ha_blackhole.h"
+
+#include <fcntl.h>
 
 #include <string>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
+#include "drizzled/internal/m_string.h"
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include "drizzled/global_charset_info.h"
+
 
 using namespace std;
 using namespace google;
@@ -55,7 +60,7 @@ public:
   }
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_blackhole(*this, table);
   }
@@ -82,22 +87,23 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       string&, set<string>& set_of_names)
   {
-    CachedDirectory::Entries entries= directory.getEntries();
+    drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin();
+    for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
          entry_iter != entries.end(); ++entry_iter)
     {
-      CachedDirectory::Entry *entry= *entry_iter;
-      string *filename= &entry->filename;
+      drizzled::CachedDirectory::Entry *entry= *entry_iter;
+      const string *filename= &entry->filename;
 
       assert(filename->size());
 
       const char *ext= strchr(filename->c_str(), '.');
 
       if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
-          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
       {  }
       else
       {
@@ -216,7 +222,7 @@ int BlackholeEngine::doDropTable(Session&, const string path)
 
   if (error != 0)
   {
-    error= my_errno= errno;
+    error= errno= errno;
   }
 
   return error;
@@ -421,6 +427,7 @@ static int blackhole_fini(drizzled::plugin::Registry &registry)
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

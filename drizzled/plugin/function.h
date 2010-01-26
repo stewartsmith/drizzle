@@ -21,19 +21,23 @@
 #define DRIZZLED_PLUGIN_FUNCTION_H
 
 
-#include <drizzled/item.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/item/bin_string.h>
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/function/func.h"
+#include "drizzled/item/func.h"
 
 #include <string>
 #include <vector>
 #include <functional>
 
+class Item_func;
 
 namespace drizzled
 {
+
+namespace memory
+{
+  class Root;
+}
+
 namespace plugin
 {
 
@@ -42,7 +46,7 @@ namespace plugin
  */
 class Function
   : public Plugin,
-    public std::unary_function<MEM_ROOT*, Item_func *>
+    public std::unary_function<drizzled::memory::Root*, Item_func *>
 {
   Function();
   Function(const Function &);
@@ -50,7 +54,7 @@ class Function
 public:
   Function(std::string in_name)
    : Plugin(in_name, "Function"),
-     std::unary_function<MEM_ROOT*, Item_func *>()
+     std::unary_function<drizzled::memory::Root*, Item_func *>()
   { }
   virtual result_type operator()(argument_type root) const= 0;
   virtual ~Function() {}

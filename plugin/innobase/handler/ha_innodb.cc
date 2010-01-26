@@ -57,18 +57,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
     in Windows?
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
+
+#include <limits.h>
+#include <fcntl.h>
+
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
-#include "mystrings/m_ctype.h"
-#include "mysys/my_sys.h"
-#include "mysys/hash.h"
-#include "mysys/mysys_err.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/my_hash.h"
+#include "drizzled/my_error.h"
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/data_home.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"
+#include "drizzled/charset.h"
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
 #include "drizzled/table.h"
@@ -78,6 +84,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/pthread_globals.h"
 
 /** @file ha_innodb.cc */
 
@@ -315,7 +322,7 @@ public:
   	XID	*xid);	/* in: X/Open XA transaction identification */
 
   virtual Cursor *create(TableShare &table,
-                          MEM_ROOT *mem_root)
+                         drizzled::memory::Root *mem_root)
   {
     return new (mem_root) ha_innobase(*this, table);
   }
@@ -748,7 +755,7 @@ session_to_trx(
 /*=======*/
 	Session*	session)	/*!< in: Drizzle Session */
 {
-	return(*(trx_t**) session_ha_data(session, innodb_engine_ptr));
+	return *(trx_t**) session->getEngineData(innodb_engine_ptr);
 }
 
 /********************************************************************//**
@@ -1165,7 +1172,7 @@ innobase_mysql_tmpfile(void)
 /*========================*/
 {
 	int	fd2 = -1;
-	File	fd = mysql_tmpfile("ib");
+	int	fd = mysql_tmpfile("ib");
 	if (fd >= 0) {
 		/* Copy the file descriptor, so that the additional resources
 		allocated by create_temp_file() can be freed by invoking
@@ -1177,10 +1184,10 @@ innobase_mysql_tmpfile(void)
 		my_close(). */
 		fd2 = dup(fd);
 		if (fd2 < 0) {
-			my_errno=errno;
+			errno=errno;
 			my_error(EE_OUT_OF_FILERESOURCES,
 				 MYF(ME_BELL+ME_WAITTANG),
-				 "ib*", my_errno);
+				 "ib*", errno);
 		}
 		my_close(fd, MYF(MY_WME));
 	}
@@ -2767,7 +2774,7 @@ retry:
 				norm_name);
 		free_share(share);
 		free(upd_buff);
-		my_errno = ENOENT;
+		errno = ENOENT;
 
 		return(HA_ERR_NO_SUCH_TABLE);
 	}
@@ -2783,7 +2790,7 @@ retry:
 				norm_name);
 		free_share(share);
 		free(upd_buff);
-		my_errno = ENOENT;
+		errno = ENOENT;
 
 		dict_table_decrement_handle_count(ib_table, FALSE);
 		return(HA_ERR_NO_SUCH_TABLE);
@@ -5916,7 +5923,7 @@ ha_innobase::delete_all_rows(void)
 		/* We only handle TRUNCATE TABLE t as a special case.
 		DELETE FROM t will have to use ha_innobase::delete_row(),
 		because DELETE is transactional while TRUNCATE is not. */
-		return(my_errno=HA_ERR_WRONG_COMMAND);
+		return(errno=HA_ERR_WRONG_COMMAND);
 	}
 
 	/* Truncate the table in InnoDB */
@@ -6862,8 +6869,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_ke
 	  while (tmp_buff[i] != '/')
 		  i++;
 	  tmp_buff+= i + 1;
-	  f_key_info.forein_id = session_make_lex_string(session, 0,
-		  tmp_buff, (uint) strlen(tmp_buff), 1);
+	  f_key_info.forein_id = session->make_lex_string(NULL, tmp_buff, strlen(tmp_buff), true);
 	  tmp_buff= foreign->referenced_table_name;
 
           /* Database name */
@@ -6875,23 +6881,19 @@ ha_innobase::get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_ke
           }
           db_name[i]= 0;
           ulen= filename_to_tablename(db_name, uname, sizeof(uname));
-	  f_key_info.referenced_db = session_make_lex_string(session, 0,
-		  uname, ulen, 1);
+	  f_key_info.referenced_db = session->make_lex_string(NULL, uname, ulen, true);
 
           /* Table name */
 	  tmp_buff+= i + 1;
           ulen= filename_to_tablename(tmp_buff, uname, sizeof(uname));
-	  f_key_info.referenced_table = session_make_lex_string(session, 0,
-		  uname, ulen, 1);
+	  f_key_info.referenced_table = session->make_lex_string(NULL, uname, ulen, true);
 
 	  for (i= 0;;) {
 		  tmp_buff= foreign->foreign_col_names[i];
-		  name = session_make_lex_string(session, name,
-			  tmp_buff, (uint) strlen(tmp_buff), 1);
+		  name = session->make_lex_string(name, tmp_buff, strlen(tmp_buff), true);
 		  f_key_info.foreign_fields.push_back(name);
 		  tmp_buff= foreign->referenced_col_names[i];
-		  name = session_make_lex_string(session, name,
-			tmp_buff, (uint) strlen(tmp_buff), 1);
+		  name = session->make_lex_string(name, tmp_buff, strlen(tmp_buff), true);
 		  f_key_info.referenced_fields.push_back(name);
 		  if (++i >= foreign->n_fields)
 			  break;
@@ -6918,8 +6920,8 @@ ha_innobase::get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_ke
             length=8;
             tmp_buff= "RESTRICT";
           }
-	  f_key_info.delete_method = session_make_lex_string(
-		  session, f_key_info.delete_method, tmp_buff, length, 1);
+	  f_key_info.delete_method = session->make_lex_string(
+		  f_key_info.delete_method, tmp_buff, length, true);
  
  
           if (foreign->type & DICT_FOREIGN_ON_UPDATE_CASCADE)
@@ -6942,15 +6944,15 @@ ha_innobase::get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_ke
             length=8;
             tmp_buff= "RESTRICT";
           }
-	  f_key_info.update_method = session_make_lex_string(
-		  session, f_key_info.update_method, tmp_buff, length, 1);
+	  f_key_info.update_method = session->make_lex_string(
+		  f_key_info.update_method, tmp_buff, length, true);
           if (foreign->referenced_index &&
               foreign->referenced_index->name)
           {
-	    f_key_info.referenced_key_name = session_make_lex_string(
-		    session, f_key_info.referenced_key_name,
+	    f_key_info.referenced_key_name = session->make_lex_string(
+		    f_key_info.referenced_key_name,
 		    foreign->referenced_index->name,
-		    (uint) strlen(foreign->referenced_index->name), 1);
+		    strlen(foreign->referenced_index->name), true);
           }
           else
             f_key_info.referenced_key_name= 0;
@@ -9047,6 +9049,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
 
 DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   innobase_engine_name,
   INNODB_VERSION_STR,
   "Innobase Oy",

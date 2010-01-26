@@ -18,7 +18,7 @@
 
   Multi-table deletes were introduced by Monty and Sinisa
 */
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/probes.h"
@@ -28,6 +28,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
+#include "drizzled/internal/iocache.h"
 
 using namespace drizzled;
 

@@ -4,12 +4,22 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.83])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.95])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
+  AC_ARG_ENABLE([fat-binaries],
+    [AS_HELP_STRING([--enable-fat-binaries],
+      [Enable fat binary support on OSX @<:@default=off@:>@])],
+    [ac_enable_fat_binaries="$enableval"],
+    [ac_enable_fat_binaries="no"])
+
   dnl Force dependency tracking on for Sun Studio builds
   AS_IF([test "x${enable_dependency_tracking}" = "x"],[
     enable_dependency_tracking=yes
+  ])
+  dnl If we're building OSX Fat Binaries, we have to turn off -M options
+  AS_IF([test "x${ac_enable_fat_binaries}" = "xyes"],[
+    enable_dependency_tracking=no
   ])
 ])
 
@@ -169,12 +179,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   dnl alloca - but we need to know it anyway for check_stack_overrun.
   PANDORA_STACK_DIRECTION
 
-  save_LIBS="${LIBS}"
-  LIBS=""
-  AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
-  LIBM="${LIBS}"
-  LIBS="${save_LIBS}"
-  AC_SUBST([LIBM])
+  AC_CHECK_LIBM
   
   AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
   AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
@@ -200,7 +205,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     dnl We need to inject error into the cflags to test if visibility works or not
     save_CFLAGS="${CFLAGS}"
     CFLAGS="${CFLAGS} -Werror"
-    gl_VISIBILITY
+    PANDORA_VISIBILITY
     CFLAGS="${save_CFLAGS}"
   ])
 
@@ -237,5 +242,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_SUBST([AM_CFLAGS])
   AC_SUBST([AM_CXXFLAGS])
   AC_SUBST([AM_CPPFLAGS])
+  AC_SUBST([AM_LDFLAGS])
 
 ])
