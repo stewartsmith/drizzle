@@ -171,7 +171,7 @@ public:
 
   BlitzLock blitz_lock;    /* Handler level lock for BlitzDB */
   BlitzData dict;          /* Utility class of BlitzDB */
-  BlitzTree **btrees;      /* Array of BTREE indexes */
+  BlitzTree *btrees;       /* Array of BTREE indexes */
   std::string table_name;  /* Name and Length of the table */
   uint32_t use_count;      /* Reference counter of this object */
   uint32_t nkeys;          /* Number of indexes in this table */

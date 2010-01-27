@@ -794,15 +794,15 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
 
 static BlitzEngine *blitz_engine = NULL;
 
-BlitzShare *ha_blitz::get_share(const char *table_name) {
+BlitzShare *ha_blitz::get_share(const char *path) {
   int len, vlen;
   BlitzShare *share_ptr;
 
   pthread_mutex_lock(&blitz_utility_mutex);
-  len = (int)strlen(table_name);
+  len = (int)strlen(path);
 
   /* Look up the table cache to see if the table resource is available */
-  const void *cached = tcmapget(blitz_table_cache, table_name, len, &vlen);
+  const void *cached = tcmapget(blitz_table_cache, path, len, &vlen);
   
   /* Check before dereferencing */
   if (cached) {
@@ -815,16 +815,22 @@ BlitzShare *ha_blitz::get_share(const char *table_name) {
   /* Table wasn't cached so create a new table handler */
   share_ptr = new BlitzShare();
 
-  /* Allocate and open all necessary resources for this table */
-  if (share_ptr->dict.startup(table_name) != 0) {
-    share_ptr->dict.shutdown();
+  /* Prepare the Data Dictionary */
+  if (share_ptr->dict.startup(path) != 0) {
     delete share_ptr;
     pthread_mutex_unlock(&blitz_utility_mutex);
     return NULL;
   }
 
+  /* Prepare Index Structure(s) */
+  share_ptr->btrees = new BlitzTree[table->s->keys];
+
+  for (uint32_t i = 0; i < table->s->keys; i++)
+    share_ptr->btrees[i].open(path, i, BDBOWRITER);
+
+  /* Set Meta Data */
   share_ptr->auto_increment_value = share_ptr->dict.read_meta_autoinc();
-  share_ptr->table_name.append(table_name);
+  share_ptr->table_name.append(path);
   share_ptr->nkeys = table->s->keys;
   share_ptr->use_count = 1;
 
@@ -837,7 +843,7 @@ BlitzShare *ha_blitz::get_share(const char *table_name) {
     share_ptr->primary_key_exists = true;
 
   /* Cache the memory address of the object */
-  tcmapput(blitz_table_cache, table_name, len, &share_ptr, sizeof(share_ptr));
+  tcmapput(blitz_table_cache, path, len, &share_ptr, sizeof(share_ptr));
   pthread_mutex_unlock(&blitz_utility_mutex);
   return share_ptr;
 }
@@ -855,7 +861,11 @@ static int free_share(BlitzShare *share) {
       return HA_ERR_CRASHED_ON_USAGE;
     }
 
+    for (uint32_t i = 0; i < share->nkeys; i++)
+      share->btrees[i].close();
+
     tcmapout2(blitz_table_cache, share->table_name.c_str());
+    delete[] share->btrees;
     delete share;
   }
 
