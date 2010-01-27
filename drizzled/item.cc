@@ -696,21 +696,6 @@ bool Item::is_expensive()
   return test(is_expensive_cache);
 }
 
-int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
-{
-  int res;
-  Table *table= field->table;
-  Session *session= table->in_use;
-  enum_check_fields tmp= session->count_cuted_fields;
-  ulong sql_mode= session->variables.sql_mode;
-  session->variables.sql_mode&= ~(MODE_NO_ZERO_DATE);
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  res= save_in_field(field, no_conversions);
-  session->count_cuted_fields= tmp;
-  session->variables.sql_mode= sql_mode;
-  return res;
-}
-
 /*
  need a special class to adjust printing : references to aggregate functions
  must not be printed as refs because the aggregate functions that are added to

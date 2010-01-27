@@ -219,17 +219,6 @@ public:
     fixed= true;
   }
 
-  /**
-   * Save value in field, but don't give any warnings.
-   *
-   * @note
-   *
-   * This is used to temporary store and retrieve a value in a column,
-   * for example in optimizer/range to adjust the key value to fit the column.
-   * Return: Function returns 1 on overflow and -1 on fatal errors
-   */
-  int save_in_field_no_warnings(Field *field, bool no_conversions);
-
   virtual int save_in_field(Field *field, bool no_conversions);
   virtual void save_org_in_field(Field *field)
   {
