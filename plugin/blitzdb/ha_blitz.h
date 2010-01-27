@@ -38,8 +38,9 @@
 #define BLITZ_DATA_EXT        ".bzd"
 #define BLITZ_INDEX_EXT       ".bzx"
 #define BLITZ_SYSTEM_EXT      ".bzs"
-#define BLITZ_MAX_ROW_STACK   2048
+#define BLITZ_LOCK_SLOTS      16
 #define BLITZ_MAX_INDEX       1
+#define BLITZ_MAX_ROW_STACK   2048
 #define BLITZ_MAX_KEY_LEN     1024 
 
 using namespace std;
@@ -60,13 +61,21 @@ class BlitzLock {
 private:
   int scanner_count;
   int updater_count;
-  pthread_mutex_t mutex;
   pthread_cond_t condition;
+  pthread_mutex_t mutex;
+  pthread_mutex_t slots[BLITZ_LOCK_SLOTS];
 
 public:
   BlitzLock();
   ~BlitzLock();
 
+  /* Slotted Lock Mechanism for Concurrently and Atomically
+     updating the index and data dictionary at the same time. */
+  uint32_t slot_id(const void *data, size_t len);
+  int slotted_lock(const uint32_t slot_id);
+  int slotted_unlock(const uint32_t slot_id);
+
+  /* Multi Reader-Writer Lock Mechanism. */
   void update_begin();
   void update_end();
   void scan_begin();

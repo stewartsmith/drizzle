@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Toru Maesaka
+ *  Copyright (C) 2009 - 2010 Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,36 @@
 BlitzLock::BlitzLock() : scanner_count(0), updater_count(0) {
   pthread_cond_init(&condition, NULL);
   pthread_mutex_init(&mutex, NULL);
+
+  for (int i = 0; i < BLITZ_LOCK_SLOTS; i++)
+    pthread_mutex_init(&slots[i], NULL);
 }
 
 BlitzLock::~BlitzLock() {
   pthread_cond_destroy(&condition);
   pthread_mutex_destroy(&mutex);
+
+  for (int i = 0; i < BLITZ_LOCK_SLOTS; i++)
+    pthread_mutex_destroy(&slots[i]);
+}
+
+uint32_t BlitzLock::slot_id(const void *data, size_t len) {
+  uint64_t hash = 14695981039346656037ULL;
+  const unsigned char *rp = (unsigned char *)data;
+  const unsigned char *ep = rp + len;
+
+  while (rp < ep)
+    hash = (hash ^ *(rp++)) * 109951162811ULL;
+
+  return (uint32_t)(hash % BLITZ_LOCK_SLOTS);
+}
+
+int BlitzLock::slotted_lock(const uint32_t id) {
+  return pthread_mutex_lock(&slots[id]);
+}
+
+int BlitzLock::slotted_unlock(const uint32_t id) {
+  return pthread_mutex_unlock(&slots[id]);
 }
 
 void BlitzLock::update_begin() {
