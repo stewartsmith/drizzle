@@ -110,7 +110,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     fields		fields for update
     values		values of fields for update
     conds		WHERE clause expression
-    order_num		number of elemen in order_st BY clause
+    order_num		number of elemen in ORDER BY clause
     order		order_st BY clause list
     limit		limit clause
     handle_duplicates	how to handle duplicates
@@ -578,8 +578,8 @@ abort:
     session			- thread handler
     table_list		- global/local table list
     conds		- conditions
-    order_num		- number of order_st BY list entries
-    order		- order_st BY clause list
+    order_num		- number of ORDER BY list entries
+    order		- ORDER BY clause list
 
   RETURN VALUE
     false OK
