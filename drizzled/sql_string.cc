@@ -20,6 +20,7 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset.h"
+#include "drizzled/global_charset_info.h"
 
 #include <algorithm>
 
@@ -27,6 +28,21 @@
 
 using namespace drizzled;
 using namespace std;
+
+
+// Converstion functions to and from std::string.
+
+std::string String_to_std_string(String const& s)
+{
+   return std::string(s.ptr(), s.length());
+}
+
+String* set_String_from_std_string(String* s, std::string const& cs)
+{
+   s->set_ascii(cs.c_str(), cs.length());
+   s->copy();
+   return s;
+}
 
 /*****************************************************************************
 ** String functions
