@@ -1645,7 +1645,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *fu
   {
     /*
       IN/SOME/ALL/ANY subqueries aren't support LIMIT clause. Without it
-      order_st BY clause becomes meaningless thus we drop it here.
+      ORDER BY clause becomes meaningless thus we drop it here.
     */
     Select_Lex *sl= current->master_unit()->first_select();
     for (; sl; sl= sl->next_select())
