@@ -33,6 +33,7 @@
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/replication_services.h>
+#include "drizzled/transaction_services.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
@@ -1975,6 +1976,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Item *item;
   LEX *lex= session->lex;
   int result_code= 0;
+  TransactionServices &transaction_services= TransactionServices::singleton();
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
@@ -2052,7 +2054,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
       session->client->store(buff, length);
-      ha_autocommit_or_rollback(session, 0);
+      transaction_services.ha_autocommit_or_rollback(session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
@@ -2175,7 +2177,7 @@ send_result:
         }
       }
     }
-    ha_autocommit_or_rollback(session, 0);
+    transaction_services.ha_autocommit_or_rollback(session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -2187,7 +2189,7 @@ send_result:
   return(false);
 
 err:
-  ha_autocommit_or_rollback(session, 1);
+  transaction_services.ha_autocommit_or_rollback(session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)

@@ -39,11 +39,11 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
-#include "drizzled/unireg.h" // for mysql_frm_type
 #include "drizzled/field/timestamp.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/transaction_services.h"
 
 using namespace std;
 using namespace drizzled;
@@ -831,34 +831,6 @@ Cursor::closeMarkForDelete(const char *name)
   mark_trx_read_write();
 
   return drop_table(name);
-}
-
-/**
-  Tell the storage engine that it is allowed to "disable transaction" in the
-  Cursor. It is a hint that ACID is not required - it is used in NDB for
-  ALTER Table, for example, when data are copied to temporary table.
-  A storage engine may treat this hint any way it likes. NDB for example
-  starts to commit every now and then automatically.
-  This hint can be safely ignored.
-*/
-int ha_enable_transaction(Session *session, bool on)
-{
-  int error= 0;
-
-  if ((session->transaction.on= on))
-  {
-    /*
-      Now all storage engines should have transaction handling enabled.
-      But some may have it enabled all the time - "disabling" transactions
-      is an optimization hint that storage engine is free to ignore.
-      So, let's commit an open transaction (if any) now.
-    */
-    if (!(error= ha_commit_trans(session, 0)))
-      if (! session->endTransaction(COMMIT))
-        error= 1;
-
-  }
-  return error;
 }
 
 int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)

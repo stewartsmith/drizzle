@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/savepoint.h>
+#include "drizzled/transaction_services.h"
 
 namespace drizzled
 {
@@ -44,10 +45,11 @@ bool statement::Savepoint::execute()
                        (*sv)->length) == 0)
         return false;
     }
+    TransactionServices &transaction_services= TransactionServices::singleton();
     if (*sv) /* old savepoint of the same name exists */
     {
       newsv= *sv;
-      ha_release_savepoint(session, *sv); // it cannot fail
+      transaction_services.ha_release_savepoint(session, *sv); // it cannot fail
       *sv= (*sv)->prev;
     }
     else if ((newsv= (SAVEPOINT *) alloc_root(&session->transaction.mem_root,
@@ -65,7 +67,7 @@ bool statement::Savepoint::execute()
        we'll lose a little bit of memory in transaction mem_root, but it'll
        be free'd when transaction ends anyway
      */
-    if (ha_savepoint(session, newsv))
+    if (transaction_services.ha_savepoint(session, newsv))
     {
       return true;
     }
@@ -80,4 +82,3 @@ bool statement::Savepoint::execute()
 }
 
 } /* namespace drizzled */
-

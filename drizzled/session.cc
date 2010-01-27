@@ -44,6 +44,7 @@
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/transaction_services.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -369,7 +370,8 @@ void Session::cleanup(void)
   }
 #endif
   {
-    ha_rollback(this);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.ha_rollback_trans(this, true);
     xid_cache_delete(&transaction.xid_state);
   }
   hash_free(&user_vars);
@@ -559,7 +561,8 @@ void Session::prepareForQueries()
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
-  ha_enable_transaction(this,true);
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.ha_enable_transaction(this, true);
 
   reset_root_defaults(mem_root, variables.query_alloc_block_size,
                       variables.query_prealloc_size);
@@ -778,6 +781,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   bool result= true;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -793,7 +797,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (ha_commit(this))
+      if (transaction_services.ha_commit_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
@@ -811,7 +815,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (ha_rollback(this))
+      if (transaction_services.ha_rollback_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
@@ -835,6 +839,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
 bool Session::endActiveTransaction()
 {
   bool result= true;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -844,7 +849,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (ha_commit(this))
+    if (transaction_services.ha_commit_trans(this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -2067,8 +2072,9 @@ void Session::close_thread_tables()
    */
   if (backups_available == false)
   {
+    TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
-    ha_autocommit_or_rollback(this, is_error());
+    transaction_services.ha_autocommit_or_rollback(this, is_error());
     main_da.can_overwrite_status= false;
     transaction.stmt.reset();
   }

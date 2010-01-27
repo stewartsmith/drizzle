@@ -678,31 +678,10 @@ extern const char *ha_row_type[];
 extern const char *binlog_format_names[];
 extern uint32_t total_ha, total_ha_2pc;
 
-       /* Wrapper functions */
-#define ha_commit(session) (ha_commit_trans((session), true))
-#define ha_rollback(session) (ha_rollback_trans((session), true))
-
 /* basic stuff */
 int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
-
-/* transactions: interface to plugin::StorageEngine functions */
-int ha_commit_one_phase(Session *session, bool all);
-int ha_rollback_trans(Session *session, bool all);
-
-/* transactions: these functions never call plugin::StorageEngine functions directly */
-int ha_commit_trans(Session *session, bool all);
-int ha_autocommit_or_rollback(Session *session, int error);
-int ha_enable_transaction(Session *session, bool on);
-
-/* savepoints */
-int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv);
-int ha_savepoint(Session *session, SAVEPOINT *sv);
-int ha_release_savepoint(Session *session, SAVEPOINT *sv);
-
-/* these are called by storage engines */
-void trans_register_ha(Session *session, bool all, drizzled::plugin::StorageEngine *engine);
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 bool tablename_to_filename(const char *from, char *to, size_t to_length);
@@ -716,8 +695,6 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length);
 #define trans_need_2pc(session, all)                   ((total_ha_2pc > 1) && \
         !((all ? &session->transaction.all : &session->transaction.stmt)->no_2pc))
 
-
-bool mysql_xa_recover(Session *session);
 
 SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                    SORT_FIELD *sortorder);

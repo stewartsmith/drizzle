@@ -411,6 +411,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/thr_lock.h \
 		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
+		drizzled/transaction_services.h \
 		drizzled/tzfile.h \
 		drizzled/tztime.h \
 		drizzled/unique.h \
@@ -745,6 +746,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/temporal_interval.cc \
 		drizzled/thr_lock.cc \
 		drizzled/time_functions.cc \
+		drizzled/transaction_services.cc \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \
 		drizzled/user_var_entry.cc \

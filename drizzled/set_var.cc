@@ -62,6 +62,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
+#include "drizzled/transaction_services.h"
 
 #include <map>
 #include <algorithm>
@@ -1481,8 +1482,9 @@ static bool set_option_autocommit(Session *session, set_var *var)
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
-      if (ha_commit(session))
-	return 1;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      if (transaction_services.ha_commit_trans(session, true))
+        return 1;
     }
     else
     {

@@ -86,6 +86,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
 
+#include <drizzled/transaction_services.h>
+
 /** @file ha_innodb.cc */
 
 /* Include necessary InnoDB headers */
@@ -128,7 +130,7 @@ extern "C" {
 #include <string>
 
 using namespace std;
-
+using namespace drizzled;
 
 #ifndef DRIZZLE_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t
@@ -1446,7 +1448,8 @@ innobase_register_stmt(
 {
 	assert(engine == innodb_engine_ptr);
 	/* Register the statement */
-	trans_register_ha(session, FALSE, engine);
+  TransactionServices &transaction_services= TransactionServices::singleton();
+	transaction_services.trans_register_ha(session, FALSE, engine);
 }
 
 /*********************************************************************//**
@@ -1471,7 +1474,8 @@ innobase_register_trx_and_stmt(
 	if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 
 		/* No autocommit mode, register for a transaction */
-		trans_register_ha(session, TRUE, engine);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.trans_register_ha(session, TRUE, engine);
 	}
 }
 

@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/release_savepoint.h>
+#include "drizzled/transaction_services.h"
 
 namespace drizzled
 {
@@ -29,6 +30,7 @@ namespace drizzled
 bool statement::ReleaseSavepoint::execute()
 {
   SAVEPOINT *sv;
+  TransactionServices &transaction_services= TransactionServices::singleton();
   for (sv= session->transaction.savepoints; sv; sv= sv->prev)
   {
     if (my_strnncoll(system_charset_info,
@@ -42,7 +44,7 @@ bool statement::ReleaseSavepoint::execute()
   }
   if (sv)
   {
-    if (ha_release_savepoint(session, sv))
+    if (transaction_services.ha_release_savepoint(session, sv))
     {
       return true;
     }
@@ -63,4 +65,3 @@ bool statement::ReleaseSavepoint::execute()
 }
 
 } /* namespace drizzled */
-

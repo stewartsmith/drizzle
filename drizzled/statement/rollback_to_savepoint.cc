@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/rollback_to_savepoint.h>
+#include "drizzled/transaction_services.h"
 
 namespace drizzled
 {
@@ -42,7 +43,8 @@ bool statement::RollbackToSavepoint::execute()
   }
   if (sv)
   {
-    if (ha_rollback_to_savepoint(session, sv))
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    if (transaction_services.ha_rollback_to_savepoint(session, sv))
     {
       return true; /* cannot happen */
     }
