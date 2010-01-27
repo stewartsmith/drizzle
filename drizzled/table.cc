@@ -2609,7 +2609,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                            for distinct, as we want the distinct index to be
                            usable in this case too.
                          */
-                         item->marker == 4 || param->bit_fields_as_long,
+                         item->marker == 4,
                          force_copy_fields,
                          param->convert_blob_length);
 

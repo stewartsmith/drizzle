@@ -101,7 +101,6 @@ bool select_union::flush()
                          duplicates on insert
       options            create options
       table_alias        name of the temporary table
-      bit_fields_as_long convert bit fields to uint64_t
 
   DESCRIPTION
     Create a temporary table that is used to store the result of a UNION,
@@ -115,13 +114,11 @@ bool select_union::flush()
 bool
 select_union::create_result_table(Session *session_arg, List<Item> *column_types,
                                   bool is_union_distinct, uint64_t options,
-                                  const char *table_alias,
-                                  bool bit_fields_as_long)
+                                  const char *table_alias)
 {
   assert(table == NULL);
   tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
-  tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
                                  (order_st*) NULL, is_union_distinct, 1,
@@ -353,7 +350,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                      TMP_TABLE_ALL_COLUMNS);
 
     if (union_result->create_result_table(session, &types, test(union_distinct),
-                                          create_options, "", false))
+                                          create_options, ""))
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
     result_table_list.db= (char*) "";

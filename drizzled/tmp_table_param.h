@@ -67,12 +67,6 @@ public:
   uint32_t  convert_blob_length;
 
   const CHARSET_INFO *table_charset;
-  /*
-    If true, create_tmp_field called from create_tmp_table will convert
-    all BIT fields to 64-bit longs. This is a workaround the limitation
-    that MEMORY tables cannot index BIT columns.
-  */
-  bool bit_fields_as_long;
 
   Tmp_Table_Param()
     :copy_field(0),
@@ -82,8 +76,7 @@ public:
     schema_table(false),
     precomputed_group_by(false),
     force_copy_fields(false),
-    convert_blob_length(0),
-    bit_fields_as_long(false)
+    convert_blob_length(0)
   {}
   ~Tmp_Table_Param()
   {

@@ -120,8 +120,7 @@ bool mysql_derived_prepare(Session *session, LEX *, TableList *orig_table_list)
     */
     if ((res= derived_result->create_result_table(session, &unit->types, false,
                                                   create_options,
-                                                  orig_table_list->alias,
-                                                  false)))
+                                                  orig_table_list->alias)))
       goto exit;
 
     table= derived_result->table;
