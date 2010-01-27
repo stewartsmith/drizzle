@@ -2836,7 +2836,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
 
 
 /**
-  function of sort for syntax: GROUP_CONCAT(expr,... order_st BY col,... )
+  function of sort for syntax: GROUP_CONCAT(expr,... ORDER BY col,... )
 */
 
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
@@ -3253,7 +3253,7 @@ bool Item_func_group_concat::setup(Session *session)
   {
     /*
       Currently we have to force conversion of BLOB values to VARCHAR's
-      if we are to store them in TREE objects used for order_st BY and
+      if we are to store them in TREE objects used for ORDER BY and
       DISTINCT. This leads to truncation if the BLOB's size exceeds
       Field_varstring::MAX_SIZE.
     */
@@ -3265,7 +3265,7 @@ bool Item_func_group_concat::setup(Session *session)
     We have to create a temporary table to get descriptions of fields
     (types, sizes and so on).
 
-    Note that in the table, we first have the order_st BY fields, then the
+    Note that in the table, we first have the ORDER BY fields, then the
     field list.
   */
   if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
@@ -3288,7 +3288,7 @@ bool Item_func_group_concat::setup(Session *session)
     tree= &tree_base;
     /*
       Create a tree for sorting. The tree is used to sort (according to the
-      syntax of this function). If there is no order_st BY clause, we don't
+      syntax of this function). If there is no ORDER BY clause, we don't
       create this tree.
     */
     init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
