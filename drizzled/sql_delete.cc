@@ -388,17 +388,14 @@ bool mysql_truncate(Session& session, TableList *table_list)
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  transaction_services.ha_enable_transaction(&session, false);
   mysql_init_select(session.lex);
   error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
-  transaction_services.ha_enable_transaction(&session, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
   error= transaction_services.ha_autocommit_or_rollback(&session, error);
-  transaction_services.ha_commit_trans(&session, true);
   session.options= save_options;
 
   return error;

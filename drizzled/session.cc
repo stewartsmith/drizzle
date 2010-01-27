@@ -235,7 +235,6 @@ Session::Session(plugin::Client *client_arg)
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
-  transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
@@ -561,8 +560,6 @@ void Session::prepareForQueries()
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.ha_enable_transaction(this, true);
 
   reset_root_defaults(mem_root, variables.query_alloc_block_size,
                       variables.query_prealloc_size);

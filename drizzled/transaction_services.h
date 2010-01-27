@@ -63,7 +63,6 @@ public:
   /* transactions: these functions never call plugin::StorageEngine functions directly */
   int ha_commit_trans(Session *session, bool all);
   int ha_autocommit_or_rollback(Session *session, int error);
-  int ha_enable_transaction(Session *session, bool on);
 
   /* savepoints */
   int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv);

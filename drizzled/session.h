@@ -546,7 +546,6 @@ public:
     SAVEPOINT *savepoints;
     Session_TRANS all;			// Trans since BEGIN WORK
     Session_TRANS stmt;			// Trans for current statement
-    bool on;                            // see ha_enable_transaction()
     XID_STATE xid_state;
 
     /*

@@ -1263,7 +1263,7 @@ copy_data_between_tables(Table *from, Table *to,
                          enum enum_enable_or_disable keys_onoff,
                          bool error_if_not_empty)
 {
-  int error;
+  int error= 0;
   CopyField *copy,*copy_end;
   ulong found_count,delete_count;
   Session *session= current_session;
@@ -1284,9 +1284,6 @@ copy_data_between_tables(Table *from, Table *to,
     This needs to be done before external_lock
   */
   TransactionServices &transaction_services= TransactionServices::singleton();
-  error= transaction_services.ha_enable_transaction(session, false);
-  if (error)
-    return -1;
 
   if (!(copy= new CopyField[to->s->fields]))
     return -1;
@@ -1417,12 +1414,6 @@ copy_data_between_tables(Table *from, Table *to,
     error=1;
   }
   to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
-
-  if (transaction_services.ha_enable_transaction(session, true))
-  {
-    error= 1;
-    goto err;
-  }
 
   /*
     Ensure that the new table is saved properly to disk so that we
