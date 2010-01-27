@@ -428,7 +428,7 @@ bool Select_Lex_Unit::exec()
 	{
 	  offset_limit_cnt= 0;
 	  /*
-	    We can't use LIMIT at this stage if we are using order_st BY for the
+	    We can't use LIMIT at this stage if we are using ORDER BY for the
 	    whole query
 	  */
 	  if (sl->order_list.first || describe)
