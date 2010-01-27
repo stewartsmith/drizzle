@@ -177,6 +177,7 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
              min_max_ranges.end(),
              DeletePtr());
   }
+  min_max_ranges.clear();
   free_root(&alloc,MYF(0));
   delete min_functions_it;
   delete max_functions_it;
@@ -244,7 +245,7 @@ void optimizer::QuickGroupMinMaxSelect::update_key_stat()
     optimizer::QuickRange *cur_range= NULL;
     if (have_min)
     { /* Check if the right-most range has a lower boundary. */
-      cur_range= min_max_ranges.at(min_max_ranges.size() - 1);
+      cur_range= min_max_ranges.back();
       if (! (cur_range->flag & NO_MIN_RANGE))
       {
         max_used_key_length+= min_max_arg_len;
@@ -254,7 +255,7 @@ void optimizer::QuickGroupMinMaxSelect::update_key_stat()
     }
     if (have_max)
     { /* Check if the left-most range has an upper boundary. */
-      cur_range= min_max_ranges.at(0);
+      cur_range= min_max_ranges.front();
       if (! (cur_range->flag & NO_MAX_RANGE))
       {
         max_used_key_length+= min_max_arg_len;
