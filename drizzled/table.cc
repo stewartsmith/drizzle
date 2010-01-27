@@ -3675,36 +3675,6 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   merge_keys.reset();
 }
 
-Field *Table::find_field_in_table_sef(const char *name)
-{
-  Field **field_ptr;
-  if (s->name_hash.records)
-  {
-    field_ptr= (Field**)hash_search(&s->name_hash,(unsigned char*) name,
-                                    strlen(name));
-    if (field_ptr)
-    {
-      /*
-        field_ptr points to field in TableShare. Convert it to the matching
-        field in table
-      */
-      field_ptr= (field + (field_ptr - s->field));
-    }
-  }
-  else
-  {
-    if (!(field_ptr= field))
-      return (Field *)0;
-    for (; *field_ptr; ++field_ptr)
-      if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
-        break;
-  }
-  if (field_ptr)
-    return *field_ptr;
-  else
-    return (Field *)0;
-}
-
 
 /*
   Used by ALTER Table when the table is a temporary one. It changes something

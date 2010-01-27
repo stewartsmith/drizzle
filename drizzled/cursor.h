@@ -828,8 +828,5 @@ find_field_in_table_ref(Session *session, TableList *table_list,
 Field *
 find_field_in_table(Session *session, Table *table, const char *name, uint32_t length,
                     bool allow_rowid, uint32_t *cached_field_index_ptr);
-Field *
-find_field_in_table_sef(Table *table, const char *name);
-
 
 #endif /* DRIZZLED_CURSOR_H */
