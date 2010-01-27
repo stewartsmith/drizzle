@@ -118,13 +118,13 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
                                   const char *table_alias,
                                   bool bit_fields_as_long)
 {
-  assert(table == 0);
+  assert(table == NULL);
   tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
   tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
-                                 (order_st*) 0, is_union_distinct, 1,
+                                 (order_st*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
     return true;
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
@@ -273,7 +273,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                 sl->order_list.elements) +
                                sl->group_list.elements,
                                can_skip_order_by ?
-                               (order_st*) 0 : (order_st *)sl->order_list.first,
+                               (order_st*) NULL : (order_st *)sl->order_list.first,
                                (order_st*) sl->group_list.first,
                                sl->having,
                                sl, this);
