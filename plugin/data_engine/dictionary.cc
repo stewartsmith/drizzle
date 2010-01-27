@@ -73,6 +73,14 @@ Dictionary::Dictionary(const std::string &name_arg) :
                                   &referential_constraints));
   assert(ret.second == true);
 
+  ret= table_map.insert(make_pair(schemas.getPath(),
+                                  &schemas));
+  assert(ret.second == true);
+
+  ret= table_map.insert(make_pair(schemas_full.getPath(),
+                                  &schemas_full));
+  assert(ret.second == true);
+
   ret= table_map.insert(make_pair(schemata.getPath(),
                                   &schemata));
   assert(ret.second == true);

@@ -40,6 +40,7 @@ static const std::string engine_name("DICTIONARY");
 #include <plugin/data_engine/plugins.h>
 #include <plugin/data_engine/processlist.h>
 #include <plugin/data_engine/referential_constraints.h>
+#include <plugin/data_engine/schemas.h>
 #include <plugin/data_engine/schemata.h>
 #include <plugin/data_engine/statistics.h>
 #include <plugin/data_engine/status.h>
@@ -69,6 +70,8 @@ class Dictionary : public drizzled::plugin::StorageEngine
   PluginsTool plugins;
   ProcesslistTool processlist;
   ReferentialConstraintsTool referential_constraints;
+  SchemaTool schemas;
+  SchemaFullTool schemas_full;
   SchemataTool schemata;
   StatisticsTool statistics;
   StatusTool global_status;

@@ -18,33 +18,54 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_COLLATIONS_H
-#define PLUGIN_DATA_ENGINE_COLLATIONS_H
+#ifndef PLUGIN_DATA_ENGINE_SCHEMAS_H
+#define PLUGIN_DATA_ENGINE_SCHEMAS_H
 
 
-class CollationsTool : public Tool
+class SchemaTool : public Tool
 {
 public:
 
-  CollationsTool();
+  SchemaTool();
 
   class Generator : public Tool::Generator 
   {
-    CHARSET_INFO **cs;
-    CHARSET_INFO **cl;
+    std::set<std::string> set_of_names;
+    std::set<std::string>::iterator it;
 
   public:
     Generator();
 
     bool populate(Field ** fields);
-
   };
 
   Generator *generator()
   {
     return new Generator;
   }
-
 };
 
-#endif // PLUGIN_DATA_ENGINE_COLLATIONS_H
+class SchemaFullTool : public Tool
+{
+public:
+
+  SchemaFullTool();
+
+  class Generator : public Tool::Generator 
+  {
+    std::set<std::string> set_of_names;
+    std::set<std::string>::iterator it;
+
+  public:
+    Generator();
+
+    bool populate(Field ** fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
+};
+
+#endif // PLUGIN_DATA_ENGINE_SCHEMAS_H

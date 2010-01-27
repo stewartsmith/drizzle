@@ -53,6 +53,13 @@ namespace drizzled
 class CachedDirectory
 {
 public:
+  enum FILTER {
+    NONE,
+    DIRECTORY,
+    FILE,
+    MAX
+  };
+
   class Entry
   {
     Entry();
@@ -83,6 +90,7 @@ public:
    * @param[in] File extensions to allow
    */
   CachedDirectory(const std::string& in_path, std::set<std::string>& allowed_exts);
+  CachedDirectory(const std::string& in_path, enum CachedDirectory::FILTER filter);
 
   /**
    * Destructor.  Cleans up any resources we've taken 
@@ -149,6 +157,8 @@ private:
    * @retval false Failure
    */
   bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
+  bool open(const std::string &in_path, std::set<std::string> &allowed_exts, enum CachedDirectory::FILTER filter);
+
 };
 
 } /* namespace drizzled */

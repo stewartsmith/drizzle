@@ -48,6 +48,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/db.h"
 
 
 #include <drizzled/table_proto.h>
@@ -913,6 +914,49 @@ public:
     engine->doGetTableNames(directory, db, set_of_names);
   }
 };
+
+void plugin::StorageEngine::getSchemaNames(set<string>& set_of_names)
+{
+  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+
+  CachedDirectory::Entries files= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator fileIter= files.begin();
+       fileIter != files.end(); fileIter++)
+  {
+    CachedDirectory::Entry *entry= *fileIter;
+    set_of_names.insert(entry->filename);
+  }
+
+  set_of_names.insert("information_schema"); // special cases suck
+
+  // Add hook here for engines to register schema.
+#if 0
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           AddTableName(directory, db, set_of_names));
+#endif
+}
+
+/*
+  Return value is "if parsed"
+*/
+bool plugin::StorageEngine::getSchemaDefinition(std::string &schema_name, message::Schema &proto)
+{
+  int ret;
+
+  if (schema_name.compare("information_schema") == 0)
+  {
+    proto.set_name("information_schema");
+    proto.set_collation("utf8_general_ci");
+    ret= 0;
+  }
+  else
+  {
+    ret= get_database_metadata(schema_name.c_str(), &proto);
+  }
+
+  return ret == 0 ? false : true;
+}
 
 void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
 {

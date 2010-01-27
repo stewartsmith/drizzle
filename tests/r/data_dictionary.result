@@ -50,6 +50,18 @@ utf8_icelandic_ci	utf8
 utf8_unicode_ci	utf8
 utf8_bin	utf8
 utf8_spanish_ci	utf8
+SELECT SCHEMA_NAME  FROM data_dictionary.schema_info;
+SCHEMA_NAME
+#
+#
+#
+#
+SELECT SCHEMA_NAME  FROM data_dictionary.schema_names;
+SCHEMA_NAME
+#
+#
+#
+#
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
