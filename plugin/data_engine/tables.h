@@ -21,12 +21,37 @@
 #ifndef PLUGIN_DATA_ENGINE_TABLES_H
 #define PLUGIN_DATA_ENGINE_TABLES_H
 
-
 class TablesTool : public Tool
 {
 public:
 
   TablesTool();
+};
+
+class TablesNameTool : public Tool
+{
+public:
+
+  TablesNameTool();
+
+  class Generator : public Tool::Generator 
+  {
+    std::set<std::string> schema_names;
+    std::set<std::string> table_names;
+    std::set<std::string>::iterator schema_iterator;
+    std::set<std::string>::iterator table_iterator;
+    std::string db_name;
+
+  public:
+    Generator();
+
+    bool populate(Field ** fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_TABLES_H

@@ -50,3 +50,48 @@ TablesTool::TablesTool() :
   add_field("TABLE_COMMENT", message::Table::Field::VARCHAR, 2048);
   add_field("PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
 }
+
+TablesNameTool::TablesNameTool() :
+  Tool("TABLE_NAMES")
+{
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+}
+
+TablesNameTool::Generator::Generator()
+{
+  plugin::StorageEngine::getSchemaNames(schema_names);
+
+  schema_iterator= schema_names.begin();
+  table_iterator= table_names.begin(); // Prime it to end()
+}
+
+bool TablesNameTool::Generator::populate(Field ** fields)
+{
+  const CHARSET_INFO * const scs= system_charset_info;
+  Field **field= fields;
+
+  if (table_iterator == table_names.end())
+  {
+    do {
+      /* If we are done with schema we have nothing else to return. */
+      if (schema_iterator == schema_names.end())
+        return false;
+
+      db_name= *schema_iterator;
+      plugin::StorageEngine::getTableNames(db_name, table_names);
+      schema_iterator++;
+      table_iterator= table_names.begin();
+    } while (table_iterator == table_names.end());
+
+  }
+
+  (*field)->store(db_name.c_str(), db_name.length(), scs);
+  field++;
+
+  (*field)->store((*table_iterator).c_str(), (*table_iterator).length(), scs);
+
+  table_iterator++;
+
+  return true;
+}

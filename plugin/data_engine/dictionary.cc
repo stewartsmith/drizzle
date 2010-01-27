@@ -103,6 +103,10 @@ Dictionary::Dictionary(const std::string &name_arg) :
                                   &tables));
   assert(ret.second == true);
 
+  ret= table_map.insert(make_pair(table_names.getPath(),
+                                  &table_names));
+  assert(ret.second == true);
+
   ret= table_map.insert(make_pair(table_constraints.getPath(),
                                   &table_constraints));
   assert(ret.second == true);

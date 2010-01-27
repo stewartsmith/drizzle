@@ -77,6 +77,7 @@ class Dictionary : public drizzled::plugin::StorageEngine
   StatusTool global_status;
   StatusTool session_status;
   TablesTool tables;
+  TablesNameTool table_names;
   TableConstraintsTool table_constraints;
   VariablesTool global_variables;
   VariablesTool session_variables;
