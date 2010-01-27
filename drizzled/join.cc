@@ -248,7 +248,7 @@ int JOIN::prepare(Item ***rref_pointer_array,
              (Subquery is non-correlated ||
               Subquery is correlated to any query outer to IN predicate ||
               (Subquery is correlated to the immediate outer query &&
-               Subquery !contains {GROUP BY, order_st BY [LIMIT],
+               Subquery !contains {GROUP BY, ORDER BY [LIMIT],
                aggregate functions) && subquery predicate is not under "NOT IN"))
           6. No execution method was already chosen (by a prepared statement).
 
@@ -653,7 +653,7 @@ int JOIN::optimize()
     }
 
     /*
-      If we are using order_st BY NULL or order_st BY const_expression,
+      If we are using ORDER BY NULL or ORDER BY const_expression,
       return result in any order (even if we are using a GROUP BY)
     */
     if (!order && org_order)
@@ -684,14 +684,14 @@ int JOIN::optimize()
         We have found that grouping can be removed since groups correspond to
         only one row anyway, but we still have to guarantee correct result
         order. The line below effectively rewrites the query from GROUP BY
-        <fields> to order_st BY <fields>. There are two exceptions:
+        <fields> to ORDER BY <fields>. There are two exceptions:
         - if skip_sort_order is set (see above), then we can simply skip
           GROUP BY;
-        - we can only rewrite order_st BY if the order_st BY fields are 'compatible'
+        - we can only rewrite ORDER BY if the ORDER BY fields are 'compatible'
           with the GROUP BY ones, i.e. either one is a prefix of another.
-          We only check if the order_st BY is a prefix of GROUP BY. In this case
+          We only check if the ORDER BY is a prefix of GROUP BY. In this case
           test_if_subpart() copies the ASC/DESC attributes from the original
-          order_st BY fields.
+          ORDER BY fields.
           If GROUP BY is a prefix of order_st BY, then it is safe to leave
           'order' as is.
        */
@@ -730,7 +730,7 @@ int JOIN::optimize()
       - We are scanning the whole table without LIMIT
         This can happen if:
         - We are using CALC_FOUND_ROWS
-        - We are using an order_st BY that can't be optimized away.
+        - We are using an ORDER BY that can't be optimized away.
 
       We don't want to use this optimization when we are using LIMIT
       because in this case we can just create a temporary table that
@@ -762,7 +762,7 @@ int JOIN::optimize()
           {
             /*
               Force MySQL to read the table in sorted order to get result in
-              order_st BY order.
+              ORDER BY order.
             */
             tmp_table_param.quick_group=0;
           }
@@ -819,8 +819,8 @@ int JOIN::optimize()
     This has to be done if all tables are not already read (const tables)
     and one of the following conditions holds:
     - We are using DISTINCT (simple distinct's are already optimized away)
-    - We are using an order_st BY or GROUP BY on fields not in the first table
-    - We are using different order_st BY and GROUP BY orders
+    - We are using an ORDER BY or GROUP BY on fields not in the first table
+    - We are using different ORDER BY and GROUP BY orders
     - The user wants us to buffer the result.
   */
   need_tmp= (const_tables != tables &&
@@ -999,7 +999,7 @@ int JOIN::optimize()
                                                                      (order_st*) 0);
     /*
       Pushing LIMIT to the temporary table creation is not applicable
-      when there is order_st BY or GROUP BY or there is no GROUP BY, but
+      when there is ORDER BY or GROUP BY or there is no GROUP BY, but
       there are aggregate functions, because in all these cases we need
       all result rows.
     */
@@ -1272,7 +1272,7 @@ void JOIN::exec()
   if (select_options & SELECT_DESCRIBE)
   {
     /*
-      Check if we managed to optimize order_st BY away and don't use temporary
+      Check if we managed to optimize ORDER BY away and don't use temporary
       table to resolve order_st BY: in that case, we only may need to do
       filesort for GROUP BY.
     */
