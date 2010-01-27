@@ -897,7 +897,6 @@ Field *create_tmp_field(Session *session,
                         Field **def_field,
                         bool group,
                         bool modify_item,
-                        bool table_cant_handle_bit_fields,
                         bool make_copy_field,
                         uint32_t convert_blob_length);
 

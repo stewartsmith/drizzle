@@ -1688,7 +1688,6 @@ Field *create_tmp_field(Session *session,
                         Field **default_field,
                         bool group,
                         bool modify_item,
-                        bool,
                         bool make_copy_field,
                         uint32_t convert_blob_length)
 {

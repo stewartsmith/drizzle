@@ -2551,7 +2551,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             create_tmp_field(session, table, arg, arg->type(), &copy_func,
                              tmp_from_field, &default_field[fieldnr],
                              group != 0,not_all_columns,
-                             distinct, 0,
+                             false,
                              param->convert_blob_length);
 	  if (!new_field)
 	    goto err;					// Should be OOM
@@ -2596,20 +2596,12 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	We here distinguish between UNION and multi-table-updates by the fact
 	that in the later case group is set to the row pointer.
       */
-      Field *new_field= 
+      Field *new_field=
         create_tmp_field(session, table, item, type, &copy_func,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,
                          !force_copy_fields &&
                            (not_all_columns || group != 0),
-                         /*
-                           If item->marker == 4 then we force create_tmp_field
-                           to create a 64-bit longs for BIT fields because HEAP
-                           tables can't index BIT fields directly. We do the same
-                           for distinct, as we want the distinct index to be
-                           usable in this case too.
-                         */
-                         item->marker == 4,
                          force_copy_fields,
                          param->convert_blob_length);
 
