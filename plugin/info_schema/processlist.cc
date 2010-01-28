@@ -190,7 +190,7 @@ int ProcessListISMethods::fillTable(Session* session,
     for (vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
-      SecurityContext *tmp_sctx= &tmp->security_ctx;
+      SecurityContext *tmp_sctx= &tmp->getSecurityContext();
       struct st_my_thread_var *mysys_var;
       const char *val;
 

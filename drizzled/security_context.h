@@ -30,18 +30,12 @@
 class SecurityContext {
 public:
   SecurityContext() {}
-  /*
-    host - host of the client
-    user - user of the client, set to NULL until the user has been read from
-    the connection
-    priv_user - The user privilege we are using. May be "" for anonymous user.
-    ip - client IP
-  */
 
   std::string& getIp()
   {
     return ip;
   }
+
   void setIp(char * newip)
   {
     ip.assign(newip);
@@ -51,6 +45,7 @@ public:
   {
     return user;
   }
+
   void setUser(char * newuser)
   {
     user.assign(newuser);

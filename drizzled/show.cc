@@ -751,7 +751,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
-      SecurityContext *tmp_sctx= &tmp->security_ctx;
+      SecurityContext *tmp_sctx= &tmp->getSecurityContext();
       struct st_my_thread_var *mysys_var;
       if (tmp->client->isConnected() && (!user || (tmp_sctx->getUser().c_str() && !strcmp(tmp_sctx->getUser().c_str(), user))))
       {
