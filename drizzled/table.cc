@@ -2362,6 +2362,19 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
 
+static void make_internal_temporary_table_path(Session *session, char* path)
+{
+  /* if we run out of slots or we are not using tempool */
+  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+           session->thread_id, session->tmp_table++);
+
+  /*
+    No need to change table name to lower case as we are only creating
+    MyISAM or HEAP tables here
+  */
+  fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+}
+
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
@@ -2396,16 +2409,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   status_var_increment(session->status_var.created_tmp_tables);
 
-  /* if we run out of slots or we are not using tempool */
-  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-           session->thread_id, session->tmp_table++);
-
-  /*
-    No need to change table name to lower case as we are only creating
-    MyISAM or HEAP tables here
-  */
-  fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
-
+  make_internal_temporary_table_path(session, path);
 
   if (group)
   {
