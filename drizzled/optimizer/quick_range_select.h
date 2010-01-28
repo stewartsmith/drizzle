@@ -22,6 +22,8 @@
 
 #include "drizzled/optimizer/range.h"
 
+#include <vector>
+
 class Cursor;
 
 namespace drizzled
@@ -226,7 +228,7 @@ private:
     mrr_buf_size= 0;
   }
 
-  friend class ::TRP_ROR_INTERSECT; 
+  friend class ::RorIntersectReadPlan; 
 
   friend
   QuickRangeSelect *get_quick_select_for_ref(Session *session, Table *table,
@@ -295,13 +297,13 @@ private:
 
   int reset(void) 
   { 
-    rev_it.rewind(); 
+    rev_it= rev_ranges.begin();
     return QuickRangeSelect::reset();
   }
 
-  List<QuickRange> rev_ranges;
+  std::vector<QuickRange *> rev_ranges;
 
-  List_iterator<QuickRange> rev_it;
+  std::vector<QuickRange *>::iterator rev_it;
 
 };
 
