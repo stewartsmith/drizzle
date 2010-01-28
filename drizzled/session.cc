@@ -698,8 +698,6 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     return false;
   }
 
-  security_ctx.skip_grants();
-
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
@@ -1690,11 +1688,6 @@ void Session::send_kill_message() const
 void Session::set_status_var_init()
 {
   memset(&status_var, 0, sizeof(status_var));
-}
-
-void SecurityContext::skip_grants()
-{
-  /* privileges for the user are unknown everything is allowed */
 }
 
 

@@ -38,8 +38,6 @@ public:
     ip - client IP
   */
 
-  void skip_grants();
-
   std::string& getIp()
   {
     return ip;
