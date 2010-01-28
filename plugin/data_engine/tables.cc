@@ -52,8 +52,7 @@ TablesTool::TablesTool() :
 }
 
 TablesTool::Generator::Generator() :
-  schema_counter(0),
-  table_counter(0)
+  schema_counter(0)
 {
   plugin::StorageEngine::getSchemaNames(schema_names);
 
@@ -74,15 +73,13 @@ bool TablesTool::Generator::populate(Field ** fields)
       if (schema_iterator == schema_names.end())
         return false;
 
-      db_name= *schema_iterator;
       table_names.clear();
-      plugin::StorageEngine::getTableNames(db_name, table_names);
+      plugin::StorageEngine::getTableNames(schema_name(), table_names);
       table_iterator= table_names.begin();
       schema_counter++;
     } while (table_iterator == table_names.end());
   }
 
-  tb_name= *table_iterator;
   bool rc= fill(fields);
   table_iterator++;
 

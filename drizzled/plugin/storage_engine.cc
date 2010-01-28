@@ -902,7 +902,7 @@ class AddTableName :
 
 public:
 
-  AddTableName(CachedDirectory& directory_arg, string& database_name, set<string>& of_names) :
+  AddTableName(CachedDirectory& directory_arg, const string& database_name, set<string>& of_names) :
     directory(directory_arg),
     set_of_names(of_names)
   {
@@ -958,7 +958,7 @@ bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, 
   return ret == 0 ? true : false;
 }
 
-void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
+void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 {
   char tmp_path[FN_REFLEN];
 

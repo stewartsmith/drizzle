@@ -36,22 +36,19 @@ public:
     std::set<std::string> table_names;
     std::set<std::string>::iterator schema_iterator;
     std::set<std::string>::iterator table_iterator;
-    std::string db_name;
-    std::string tb_name;
     uint32_t schema_counter;
-    uint32_t table_counter;
 
   public:
     Generator();
 
-    std::string &schema_name()
+    const std::string &schema_name()
     {
-      return db_name;
+      return (*schema_iterator);
     }
 
-    std::string &table_name()
+    const std::string &table_name()
     {
-      return tb_name;
+      return (*table_iterator);
     }
 
     bool populate(Field ** fields);

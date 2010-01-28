@@ -50,13 +50,13 @@ utf8_icelandic_ci	utf8
 utf8_unicode_ci	utf8
 utf8_bin	utf8
 utf8_spanish_ci	utf8
-SELECT SCHEMA_NAME  FROM data_dictionary.schema_info;
+SELECT SCHEMA_NAME  FROM data_dictionary.schemata_info;
 SCHEMA_NAME
 #
 #
 #
 #
-SELECT SCHEMA_NAME  FROM data_dictionary.schema_names;
+SELECT SCHEMA_NAME  FROM data_dictionary.schemata_names;
 SCHEMA_NAME
 #
 #
@@ -76,8 +76,8 @@ data_dictionary	PLUGINS
 data_dictionary	PROCESSLIST
 data_dictionary	REFERENTIAL_CONSTRAINTS
 data_dictionary	SCHEMATA
-data_dictionary	SCHEMA_INFO
-data_dictionary	SCHEMA_NAMES
+data_dictionary	SCHEMATA_INFO
+data_dictionary	SCHEMATA_NAMES
 data_dictionary	STATISTICS
 data_dictionary	TABLES
 data_dictionary	TABLE_CONSTRAINTS
@@ -123,8 +123,8 @@ data_dictionary	PLUGINS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci
 data_dictionary	PROCESSLIST	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
 data_dictionary	REFERENTIAL_CONSTRAINTS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
 data_dictionary	SCHEMATA	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
-data_dictionary	SCHEMA_INFO	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
-data_dictionary	SCHEMA_NAMES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	SCHEMATA_INFO	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	SCHEMATA_NAMES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
 data_dictionary	STATISTICS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
 data_dictionary	TABLES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
 data_dictionary	TABLE_CONSTRAINTS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	

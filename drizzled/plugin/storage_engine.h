@@ -421,7 +421,7 @@ public:
   static int dropTable(Session& session,
                        drizzled::TableIdentifier &identifier,
                        bool generate_warning);
-  static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
+  static void getTableNames(const std::string& db_name, std::set<std::string> &set_of_names);
 
   static void getSchemaNames(std::set<std::string>& set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
