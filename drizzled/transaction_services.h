@@ -21,8 +21,8 @@
  * @file Transaction processing code
  */
 
-#ifndef DRIZZLE_TRANSACTION_SERVICES_H
-#define DRIZZLE_TRANSACTION_SERVICES_H
+#ifndef DRIZZLED_TRANSACTION_SERVICES_H
+#define DRIZZLED_TRANSACTION_SERVICES_H
 
 /* some forward declarations needed */
 class Session;
@@ -77,4 +77,4 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLE_TRANSACTION_SERVICES_H */
+#endif /* DRIZZLED_TRANSACTION_SERVICES_H */
