@@ -21,8 +21,8 @@
  * @file Simple named savepoint class.
  */
 
-#ifndef DRIZZLE_NAMED_SAVEPOINT_H
-#define DRIZZLE_NAMED_SAVEPOINT_H
+#ifndef DRIZZLED_NAMED_SAVEPOINT_H
+#define DRIZZLED_NAMED_SAVEPOINT_H
 
 class Ha_trx_info;
 
@@ -66,4 +66,4 @@ private:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLE_NAMED_SAVEPOINT_H */
+#endif /* DRIZZLED_NAMED_SAVEPOINT_H */
