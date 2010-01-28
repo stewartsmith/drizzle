@@ -51,65 +51,7 @@ TablesTool::TablesTool() :
   add_field("PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
 }
 
-TablesNameTool::TablesNameTool() :
-  Tool("TABLE_NAMES")
-{
-  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
-}
-
-TablesNameTool::Generator::Generator()
-{
-  plugin::StorageEngine::getSchemaNames(schema_names);
-
-  schema_iterator= schema_names.begin();
-  table_iterator= table_names.begin(); // Prime it to end()
-}
-
-bool TablesNameTool::Generator::populate(Field ** fields)
-{
-  const CHARSET_INFO * const scs= system_charset_info;
-  Field **field= fields;
-
-  if (table_iterator == table_names.end())
-  {
-    do {
-      /* If we are done with schema we have nothing else to return. */
-      if (schema_iterator == schema_names.end())
-        return false;
-
-      db_name= *schema_iterator;
-      table_names.clear();
-      plugin::StorageEngine::getTableNames(db_name, table_names);
-      schema_iterator++;
-      table_iterator= table_names.begin();
-    } while (table_iterator == table_names.end());
-
-  }
-
-  (*field)->store(db_name.c_str(), db_name.length(), scs);
-  field++;
-
-  (*field)->store((*table_iterator).c_str(), (*table_iterator).length(), scs);
-
-  table_iterator++;
-
-  return true;
-}
-
-TablesInfoTool::TablesInfoTool() :
-  Tool("TABLE_INFO")
-{
-  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field("ENGINE", message::Table::Field::VARCHAR, 64);
-  add_field("ROW_FORMAT", message::Table::Field::VARCHAR, 10);
-  add_field("TABLE_COLLATION", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_COMMENT", message::Table::Field::VARCHAR, 2048);
-}
-
-TablesInfoTool::Generator::Generator() :
+TablesTool::Generator::Generator() :
   schema_counter(0),
   table_counter(0)
 {
@@ -119,13 +61,8 @@ TablesInfoTool::Generator::Generator() :
   table_iterator= table_names.begin(); // Prime it to null
 }
 
-extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
-
-bool TablesInfoTool::Generator::populate(Field ** fields)
+bool TablesTool::Generator::populate(Field ** fields)
 {
-  const CHARSET_INFO * const scs= system_charset_info;
-  Field **field= fields;
-
   if (table_iterator == table_names.end())
   {
     // If no tables exist in the schema we just loop over it
@@ -145,22 +82,92 @@ bool TablesInfoTool::Generator::populate(Field ** fields)
     } while (table_iterator == table_names.end());
   }
 
+  tb_name= *table_iterator;
+  bool rc= fill(fields);
+  table_iterator++;
+
+  return rc;
+}
+
+bool TablesTool::Generator::fill(Field ** fields)
+{
+  const CHARSET_INFO * const scs= system_charset_info;
+  Field **field= fields;
+
+  /* TABLE_CATALOG */
+  (*field)->store("default", sizeof("default"), scs);
+  field++;
+
+  /* TABLE_SCHEMA */
+  (*field)->store(schema_name().c_str(), schema_name().length(), scs);
+  field++;
+
+  /* TABLE_NAME */
+  (*field)->store(table_name().c_str(), table_name().length(), scs);
+  field++;
+
+  for (; *field ; field++)
+  {
+    (*field)->store("<not implemented>", sizeof("<not implemented>"), scs);
+  }
+
+  return true;
+}
+
+TablesNameTool::TablesNameTool() :
+  TablesTool("TABLE_NAMES")
+{
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+}
+
+bool TablesNameTool::Generator::fill(Field **fields) 
+{
+  const CHARSET_INFO * const scs= system_charset_info;
+  Field **field= fields;
+
+  (*field)->store(schema_name().c_str(), schema_name().length(), scs);
+  field++;
+
+  (*field)->store(table_name().c_str(), table_name().length(), scs);
+
+  return true;
+}
+
+TablesInfoTool::TablesInfoTool() :
+  TablesTool("TABLE_INFO")
+{
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("ENGINE", message::Table::Field::VARCHAR, 64);
+  add_field("ROW_FORMAT", message::Table::Field::VARCHAR, 10);
+  add_field("TABLE_COLLATION", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_COMMENT", message::Table::Field::VARCHAR, 2048);
+}
+
+extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+
+bool TablesInfoTool::Generator::fill(Field **fields) 
+{
+  const CHARSET_INFO * const scs= system_charset_info;
+  Field **field= fields;
   message::Table table_proto;
   Session *session= current_session;
   char path[FN_REFLEN];
-  build_table_filename(path, sizeof(path), db_name.c_str(), (*table_iterator).c_str(), false);
+  build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
   plugin::StorageEngine::getTableDefinition(*session,
                                             path,
-                                            db_name.c_str(), (*table_iterator).c_str(),
+                                            schema_name().c_str(), table_name().c_str(),
                                             false,
                                             &table_proto);
 
   /* TABLE_SCHEMA */
-  (*field)->store(db_name.c_str(), db_name.length(), scs);
+  (*field)->store(schema_name().c_str(), schema_name().length(), scs);
   field++;
 
   /* TABLE_NAME */
-  (*field)->store((*table_iterator).c_str(), (*table_iterator).length(), scs);
+  (*field)->store(table_name().c_str(), table_name().length(), scs);
   field++;
 
   /* TABLE_TYPE */
@@ -235,8 +242,6 @@ bool TablesInfoTool::Generator::populate(Field ** fields)
   /* TABLE_COMMENT */
   (*field)->store(table_proto.options().comment().c_str(),
                   table_proto.options().comment().length(), scs);
-
-  table_iterator++;
 
   return true;
 }

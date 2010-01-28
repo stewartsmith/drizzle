@@ -26,13 +26,9 @@ class TablesTool : public Tool
 public:
 
   TablesTool();
-};
-
-class TablesNameTool : public Tool
-{
-public:
-
-  TablesNameTool();
+  TablesTool(const char *arg) :
+    Tool(arg)
+  { }
 
   class Generator : public Tool::Generator 
   {
@@ -41,11 +37,49 @@ public:
     std::set<std::string>::iterator schema_iterator;
     std::set<std::string>::iterator table_iterator;
     std::string db_name;
+    std::string tb_name;
+    uint32_t schema_counter;
+    uint32_t table_counter;
 
   public:
     Generator();
 
+    std::string &schema_name()
+    {
+      return db_name;
+    }
+
+    std::string &table_name()
+    {
+      return tb_name;
+    }
+
     bool populate(Field ** fields);
+    virtual bool fill(Field ** fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
+
+};
+
+class TablesNameTool : public TablesTool
+{
+public:
+
+  TablesNameTool();
+
+  class Generator : public TablesTool::Generator 
+  {
+
+  public:
+    Generator() :
+      TablesTool::Generator()
+    { }
+
+    bool fill(Field ** fields);
   };
 
   Generator *generator()
@@ -54,26 +88,20 @@ public:
   }
 };
 
-class TablesInfoTool : public Tool
+class TablesInfoTool : public TablesTool
 {
 public:
 
   TablesInfoTool();
 
-  class Generator : public Tool::Generator 
+  class Generator : public TablesTool::Generator 
   {
-    std::set<std::string> schema_names;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator schema_iterator;
-    std::set<std::string>::iterator table_iterator;
-    std::string db_name;
-    uint32_t schema_counter;
-    uint32_t table_counter;
-
   public:
-    Generator();
+    Generator() :
+      TablesTool::Generator()
+    { }
 
-    bool populate(Field ** fields);
+    bool fill(Field ** fields);
   };
 
   Generator *generator()
