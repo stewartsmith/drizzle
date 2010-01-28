@@ -23,13 +23,13 @@
 
 
 /**
-  @class Security_context
+  @class SecurityContext
   @brief A set of Session members describing the current authenticated user.
 */
 
-class Security_context {
+class SecurityContext {
 public:
-  Security_context() {}
+  SecurityContext() {}
   /*
     host - host of the client
     user - user of the client, set to NULL until the user has been read from

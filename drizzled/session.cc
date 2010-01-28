@@ -1692,7 +1692,7 @@ void Session::set_status_var_init()
   memset(&status_var, 0, sizeof(status_var));
 }
 
-void Security_context::skip_grants()
+void SecurityContext::skip_grants()
 {
   /* privileges for the user are unknown everything is allowed */
 }
@@ -1810,7 +1810,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   {
     if (! killed && variables.log_warnings > 1)
     {
-      Security_context *sctx= &security_ctx;
+      SecurityContext *sctx= &security_ctx;
 
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id

@@ -484,7 +484,7 @@ public:
 
     @see handle_slave_sql
   */
-  Security_context security_ctx;
+  SecurityContext security_ctx;
 
   /**
     Used in error messages to tell user in what part of MySQL we found an

@@ -41,7 +41,7 @@ class Item_subselect;
 class Select_Lex_Unit;
 class Select_Lex;
 class COND_EQUAL;
-class Security_context;
+class SecurityContext;
 class TableList;
 class Field_timestamp;
 class Field_blob;

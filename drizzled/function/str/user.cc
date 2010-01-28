@@ -64,7 +64,7 @@ bool Item_func_current_user::fix_fields(Session *session, Item **ref)
   if (Item_str_func::fix_fields(session, ref))
     return true;
 
-  Security_context *ctx= &session->security_ctx;
+  SecurityContext *ctx= &session->security_ctx;
   return init(ctx->user.c_str(), ctx->ip.c_str());
 }
 

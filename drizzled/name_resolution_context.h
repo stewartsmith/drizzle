@@ -23,7 +23,7 @@
 #include "drizzled/item.h"
 
 class TableList;
-class Security_context;
+class SecurityContext;
 class Session;
 class Select_Lex;
 
@@ -102,7 +102,7 @@ public:
    * Security context of this name resolution context. It's used for views
    * and is non-zero only if the view is defined with SQL SECURITY DEFINER.
    */
-  Security_context *security_ctx;
+  SecurityContext *security_ctx;
 
   Name_resolution_context()
     :
