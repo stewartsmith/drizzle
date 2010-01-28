@@ -2062,16 +2062,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
-  {"transaction_alloc_block_size", OPT_TRANS_ALLOC_BLOCK_SIZE,
-   N_("Allocation block size for transactions to be stored in binary log"),
-   (char**) &global_system_variables.trans_alloc_block_size,
-   (char**) &max_system_variables.trans_alloc_block_size, 0, GET_UINT,
-   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"transaction_prealloc_size", OPT_TRANS_PREALLOC_SIZE,
-   N_("Persistent buffer for transactions to be stored in binary log"),
-   (char**) &global_system_variables.trans_prealloc_size,
-   (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
-   REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 

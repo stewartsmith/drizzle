@@ -710,7 +710,7 @@ bool TransactionServices::mysql_xa_recover(Session *session)
 }
 
 
-int TransactionServices::ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
+int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
   Session_TRANS *trans= &session->transaction.all;
@@ -721,13 +721,12 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, SAVEPOINT *s
     rolling back to savepoint in all storage engines that were part of the
     transaction when the savepoint was set
   */
-  for (ha_info= sv->ha_list; ha_info; ha_info= ha_info->next())
+  for (ha_info= sv.ha_list; ha_info; ha_info= ha_info->next())
   {
     int err;
     plugin::StorageEngine *engine= ha_info->engine();
     assert(engine);
-    if ((err= engine->savepoint_rollback(session,
-                                         (void *)(sv+1))))
+    if ((err= engine->savepoint_rollback(session, sv)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error= 1;
@@ -739,7 +738,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, SAVEPOINT *s
     rolling back the transaction in all storage engines that were not part of
     the transaction when the savepoint was set
   */
-  for (ha_info= trans->ha_list; ha_info != sv->ha_list;
+  for (ha_info= trans->ha_list; ha_info != sv.ha_list;
        ha_info= ha_info_next)
   {
     int err;
@@ -753,7 +752,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, SAVEPOINT *s
     ha_info_next= ha_info->next();
     ha_info->reset(); /* keep it conveniently zero-filled */
   }
-  trans->ha_list= sv->ha_list;
+  trans->ha_list= sv.ha_list;
   return error;
 }
 
@@ -761,9 +760,9 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, SAVEPOINT *s
   @note
   according to the sql standard (ISO/IEC 9075-2:2003)
   section "4.33.4 SQL-statements and transaction states",
-  SAVEPOINT is *not* transaction-initiating SQL-statement
+  NamedSavepoint is *not* transaction-initiating SQL-statement
 */
-int TransactionServices::ha_savepoint(Session *session, SAVEPOINT *sv)
+int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
   Session_TRANS *trans= &session->transaction.all;
@@ -776,12 +775,12 @@ int TransactionServices::ha_savepoint(Session *session, SAVEPOINT *sv)
 #ifdef NOT_IMPLEMENTED /*- TODO (examine this againt the original code base) */
     if (! engine->savepoint_set)
     {
-      my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "SAVEPOINT");
+      my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "NamedSavepoint");
       error= 1;
       break;
     } 
 #endif
-    if ((err= engine->savepoint_set(session, (void *)(sv+1))))
+    if ((err= engine->savepoint_set(session, sv)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error= 1;
@@ -792,14 +791,14 @@ int TransactionServices::ha_savepoint(Session *session, SAVEPOINT *sv)
     Remember the list of registered storage engines. All new
     engines are prepended to the beginning of the list.
   */
-  sv->ha_list= trans->ha_list;
+  sv.ha_list= trans->ha_list;
   return error;
 }
 
-int TransactionServices::ha_release_savepoint(Session *session, SAVEPOINT *sv)
+int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
-  Ha_trx_info *ha_info= sv->ha_list;
+  Ha_trx_info *ha_info= sv.ha_list;
 
   for (; ha_info; ha_info= ha_info->next())
   {
@@ -807,8 +806,7 @@ int TransactionServices::ha_release_savepoint(Session *session, SAVEPOINT *sv)
     plugin::StorageEngine *engine= ha_info->engine();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
-    if ((err= engine->savepoint_release(session,
-                                        (void *)(sv+1))))
+    if ((err= engine->savepoint_release(session, sv)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error= 1;

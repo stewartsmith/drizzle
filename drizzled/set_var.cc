@@ -100,7 +100,6 @@ static int check_completion_type(Session *session, set_var *var);
 static void fix_completion_type(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
-static void fix_trans_mem_root(Session *session, enum_var_type type);
 static void fix_server_id(Session *session, enum_var_type type);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
@@ -190,12 +189,6 @@ static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_s
                                                         &SV::query_prealloc_size,
                                                         false, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
-static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
-                                                           &SV::trans_alloc_block_size,
-                                                           false, fix_trans_mem_root);
-static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
-                                                        &SV::trans_prealloc_size,
-                                                        false, fix_session_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -410,16 +403,6 @@ static void fix_session_mem_root(Session *session, enum_var_type type)
                         session->variables.query_alloc_block_size,
                         session->variables.query_prealloc_size);
 }
-
-
-static void fix_trans_mem_root(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    reset_root_defaults(&session->transaction.mem_root,
-                        session->variables.trans_alloc_block_size,
-                        session->variables.trans_prealloc_size);
-}
-
 
 static void fix_server_id(Session *, enum_var_type)
 {

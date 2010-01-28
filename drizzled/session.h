@@ -33,11 +33,13 @@
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
+#include "drizzled/named_savepoint.h"
 
 #include <netdb.h>
 #include <map>
 #include <string>
 #include <bitset>
+#include <deque>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -176,8 +178,6 @@ struct system_variables
   size_t range_alloc_block_size;
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
-  uint32_t trans_alloc_block_size;
-  uint32_t trans_prealloc_size;
   uint64_t group_concat_max_len;
   uint64_t pseudo_thread_id;
 
@@ -277,14 +277,6 @@ typedef struct system_status_var
 #define last_system_status_var questions
 
 void mark_transaction_to_rollback(Session *session, bool all);
-
-struct st_savepoint
-{
-  struct st_savepoint *prev;
-  char *name;
-  size_t length;
-  Ha_trx_info *ha_list;
-};
 
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
@@ -538,12 +530,8 @@ public:
   Ha_trx_info *getEngineInfo(const drizzled::plugin::StorageEngine *engine,
                              size_t index= 0);
 
-
-  /* container for replication data */
-  void *replication_data;
-
   struct st_transactions {
-    SAVEPOINT *savepoints;
+    std::deque<drizzled::NamedSavepoint> savepoints;
     Session_TRANS all;			// Trans since BEGIN WORK
     Session_TRANS stmt;			// Trans for current statement
     XID_STATE xid_state;
@@ -553,19 +541,16 @@ public:
        List contain only transactional tables, that not invalidated in query
        cache (instead of full list of changed in transaction tables).
     */
-    CHANGED_TableList* changed_tables;
-    drizzled::memory::Root mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
-      changed_tables= 0;
-      savepoints= 0;
-      free_root(&mem_root,MYF(drizzled::memory::KEEP_PREALLOC));
+      savepoints.clear();
     }
-    st_transactions()
+    st_transactions() :
+      savepoints(),
+      all(),
+      stmt(),
+      xid_state()
     {
-      memset(this, 0, sizeof(*this));
-      xid_state.xid.null();
-      drizzled::memory::init_sql_alloc(&mem_root, drizzled::memory::ROOT_MIN_BLOCK_SIZE, 0);
     }
   } transaction;
   Field *dup_field;
@@ -1039,18 +1024,11 @@ public:
   {
     return !lex->only_view_structure();
   }
-  inline void* trans_alloc(unsigned int size)
-  {
-    return alloc_root(&transaction.mem_root,size);
-  }
 
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
 
-  void add_changed_table(Table *table);
-  void add_changed_table(const char *key, long key_length);
-  CHANGED_TableList * changed_table_dup(const char *key, long key_length);
   int send_explain_fields(select_result *result);
   /**
     Clear the current error, if any.

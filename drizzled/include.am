@@ -271,6 +271,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/my_var.h \
 		drizzled/name_resolution_context.h \
 		drizzled/name_resolution_context_state.h \
+		drizzled/named_savepoint.h \
 		drizzled/natural_join_column.h \
 		drizzled/nested_join.h \
 		drizzled/open_tables_state.h \

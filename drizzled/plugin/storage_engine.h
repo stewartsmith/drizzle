@@ -117,6 +117,7 @@ class Table;
 
 namespace drizzled
 {
+class NamedSavepoint;
 namespace plugin
 {
 
@@ -199,11 +200,11 @@ protected:
    * Implementing classes should override these to provide savepoint
    * functionality.
    */
-  virtual int savepoint_set_hook(Session *, void *) { return 0; }
+  virtual int savepoint_set_hook(Session *, NamedSavepoint &) { return 0; }
 
-  virtual int savepoint_rollback_hook(Session *, void *) { return 0; }
+  virtual int savepoint_rollback_hook(Session *, NamedSavepoint &) { return 0; }
 
-  virtual int savepoint_release_hook(Session *, void *) { return 0; }
+  virtual int savepoint_release_hook(Session *, NamedSavepoint &) { return 0; }
 
 public:
 
@@ -315,25 +316,23 @@ public:
     The void * points to an uninitialized storage area of requested size
     (see savepoint_offset description)
   */
-  int savepoint_set(Session *session, void *sp)
+  int savepoint_set(Session *session, NamedSavepoint &sp)
   {
-    return savepoint_set_hook(session, (unsigned char *)sp+savepoint_offset);
+    return savepoint_set_hook(session, sp);
   }
 
   /*
     The void * points to a storage area, that was earlier passed
     to the savepoint_set call
   */
-  int savepoint_rollback(Session *session, void *sp)
+  int savepoint_rollback(Session *session, NamedSavepoint &sp)
   {
-     return savepoint_rollback_hook(session,
-                                    (unsigned char *)sp+savepoint_offset);
+     return savepoint_rollback_hook(session, sp);
   }
 
-  int savepoint_release(Session *session, void *sp)
+  int savepoint_release(Session *session, NamedSavepoint &sp)
   {
-    return savepoint_release_hook(session,
-                                  (unsigned char *)sp+savepoint_offset);
+    return savepoint_release_hook(session, sp);
   }
 
   virtual int  prepare(Session *, bool) { return 0; }

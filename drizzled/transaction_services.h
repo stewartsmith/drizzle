@@ -26,7 +26,6 @@
 
 /* some forward declarations needed */
 class Session;
-typedef struct st_savepoint SAVEPOINT;
 
 namespace drizzled
 {
@@ -34,6 +33,8 @@ namespace drizzled
   {
     class StorageEngine;
   }
+
+class NamedSavepoint;
 
 /**
  * This is a class which manages the XA transaction processing
@@ -65,9 +66,9 @@ public:
   int ha_autocommit_or_rollback(Session *session, int error);
 
   /* savepoints */
-  int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv);
-  int ha_savepoint(Session *session, SAVEPOINT *sv);
-  int ha_release_savepoint(Session *session, SAVEPOINT *sv);
+  int ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv);
+  int ha_savepoint(Session *session, NamedSavepoint &sv);
+  int ha_release_savepoint(Session *session, NamedSavepoint &sv);
   bool mysql_xa_recover(Session *session);
 
   /* these are called by storage engines */

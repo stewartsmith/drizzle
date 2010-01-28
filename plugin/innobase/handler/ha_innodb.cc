@@ -85,6 +85,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/named_savepoint.h"
 
 #include <drizzled/transaction_services.h>
 
@@ -275,11 +276,11 @@ public:
 			whose resources should be free'd */
 
   virtual int savepoint_set_hook(Session* session,
-                                 void *savepoint);
+                                 drizzled::NamedSavepoint &savepoint);
   virtual int savepoint_rollback_hook(Session* session,
-                                      void *savepoint);
+                                     drizzled::NamedSavepoint &savepoint);
   virtual int savepoint_release_hook(Session* session,
-                                     void *savepoint);
+                                     drizzled::NamedSavepoint &savepoint);
   virtual int commit(Session* session, bool all);
   virtual int rollback(Session* session, bool all);
 
@@ -2342,12 +2343,11 @@ InnobaseEngine::savepoint_rollback_hook(
 /*===========================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
-	void*	savepoint)	/*!< in: savepoint data */
+	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
 {
 	ib_int64_t	mysql_binlog_cache_pos;
 	int		error = 0;
 	trx_t*		trx;
-	char		sp_name[64];
 
 	assert(this == innodb_engine_ptr);
 
@@ -2360,10 +2360,7 @@ InnobaseEngine::savepoint_rollback_hook(
 	innobase_release_stat_resources(trx);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-
-	int64_t2str((ulint)savepoint, sp_name, 36);
-
-	error = (int) trx_rollback_to_savepoint_for_mysql(trx, sp_name,
+	error = (int) trx_rollback_to_savepoint_for_mysql(trx, named_savepoint.getName().c_str(),
 						&mysql_binlog_cache_pos);
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
@@ -2377,21 +2374,17 @@ InnobaseEngine::savepoint_release_hook(
 /*=======================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
-	void*	savepoint)	/*!< in: savepoint data */
+	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
 {
 	int		error = 0;
 	trx_t*		trx;
-	char		sp_name[64];
 
 	assert(this == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-
-	int64_t2str((ulint)savepoint, sp_name, 36);
-
-	error = (int) trx_release_savepoint_for_mysql(trx, sp_name);
+	error = (int) trx_release_savepoint_for_mysql(trx, named_savepoint.getName().c_str());
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
@@ -2403,7 +2396,7 @@ int
 InnobaseEngine::savepoint_set_hook(
 /*===============*/
 	Session*	session,/*!< in: handle to the MySQL thread */
-	void*	savepoint)	/*!< in: savepoint data */
+	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
 {
 	int	error = 0;
 	trx_t*	trx;
@@ -2428,10 +2421,7 @@ InnobaseEngine::savepoint_set_hook(
 	assert(trx->active_trans);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-	char sp_name[64];
-	int64_t2str((ulint)savepoint,sp_name,36);
-
-	error = (int) trx_savepoint_for_mysql(trx, sp_name, (ib_int64_t)0);
+	error = (int) trx_savepoint_for_mysql(trx, named_savepoint.getName().c_str(), (ib_int64_t)0);
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }

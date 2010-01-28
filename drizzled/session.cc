@@ -231,7 +231,6 @@ Session::Session(plugin::Client *client_arg)
   query_length= 0;
   warn_query_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
-  replication_data= 0;
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
@@ -408,7 +407,6 @@ Session::~Session()
   plugin_sessionvar_cleanup(this);
 
   free_root(&warn_root,MYF(0));
-  free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
   dbug_sentry= Session_SENTRY_GONE;
 
@@ -563,9 +561,6 @@ void Session::prepareForQueries()
 
   reset_root_defaults(mem_root, variables.query_alloc_block_size,
                       variables.query_prealloc_size);
-  reset_root_defaults(&transaction.mem_root,
-                      variables.trans_alloc_block_size,
-                      variables.trans_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
 }
@@ -927,81 +922,6 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
   lex_str->length= length;
   return lex_str;
 }
-
-/* routings to adding tables to list of changed in transaction tables */
-inline static void list_include(CHANGED_TableList** prev,
-				CHANGED_TableList* curr,
-				CHANGED_TableList* new_table)
-{
-  if (new_table)
-  {
-    *prev = new_table;
-    (*prev)->next = curr;
-  }
-}
-
-/* add table to list of changed in transaction tables */
-
-void Session::add_changed_table(Table *table)
-{
-  assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
-	      table->cursor->has_transactions());
-  add_changed_table(table->s->table_cache_key.str,
-                    (long) table->s->table_cache_key.length);
-}
-
-
-void Session::add_changed_table(const char *key, long key_length)
-{
-  CHANGED_TableList **prev_changed = &transaction.changed_tables;
-  CHANGED_TableList *curr = transaction.changed_tables;
-
-  for (; curr; prev_changed = &(curr->next), curr = curr->next)
-  {
-    int cmp =  (long)curr->key_length - (long)key_length;
-    if (cmp < 0)
-    {
-      list_include(prev_changed, curr, changed_table_dup(key, key_length));
-      return;
-    }
-    else if (cmp == 0)
-    {
-      cmp = memcmp(curr->key, key, curr->key_length);
-      if (cmp < 0)
-      {
-        list_include(prev_changed, curr, changed_table_dup(key, key_length));
-        return;
-      }
-      else if (cmp == 0)
-      {
-        return;
-      }
-    }
-  }
-  *prev_changed = changed_table_dup(key, key_length);
-}
-
-
-CHANGED_TableList* Session::changed_table_dup(const char *key, long key_length)
-{
-  CHANGED_TableList* new_table =
-    (CHANGED_TableList*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TableList))+
-				      key_length + 1);
-  if (!new_table)
-  {
-    my_error(EE_OUTOFMEMORY, MYF(ME_BELL),
-             ALIGN_SIZE(sizeof(TableList)) + key_length + 1);
-    killed= KILL_CONNECTION;
-    return 0;
-  }
-
-  new_table->key= ((char*)new_table)+ ALIGN_SIZE(sizeof(CHANGED_TableList));
-  new_table->next = 0;
-  new_table->key_length = key_length;
-  ::memcpy(new_table->key, key, key_length);
-  return new_table;
-}
-
 
 int Session::send_explain_fields(select_result *result)
 {
