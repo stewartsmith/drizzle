@@ -39,10 +39,6 @@ public:
   */
 
   void skip_grants();
-  inline const char *priv_host_name()
-  {
-    return (ip.c_str() ? ip.c_str() : (char *)"%");
-  }
 
   std::string& getIp()
   {
