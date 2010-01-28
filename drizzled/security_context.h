@@ -37,14 +37,34 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  std::string user;
-  std::string ip;
 
   void skip_grants();
   inline const char *priv_host_name()
   {
     return (ip.c_str() ? ip.c_str() : (char *)"%");
   }
+
+  std::string& getIp()
+  {
+    return ip;
+  }
+  void setIp(char * newip)
+  {
+    ip.assign(newip);
+  }
+
+  std::string& getUser()
+  {
+    return user;
+  }
+  void setUser(char * newuser)
+  {
+    user.assign(newuser);
+  }
+
+private:
+  std::string user;
+  std::string ip;
 };
 
 #endif /* DRIZZLED_SECURITY_CONTEXT_H */

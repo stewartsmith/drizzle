@@ -391,8 +391,8 @@ Session::~Session()
     if (global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
                       thread_id,
-                      (security_ctx.user.c_str() ?
-                       security_ctx.user.c_str() : ""));
+                      (security_ctx.getUser().c_str() ?
+                       security_ctx.getUser().c_str() : ""));
     disconnect(0, false);
   }
 
@@ -682,7 +682,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
 
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.getIp().c_str());
     return false;
   }
 
@@ -691,8 +691,8 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   if (is_authenticated != true)
   {
     my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             security_ctx.user.c_str(),
-             security_ctx.ip.c_str(),
+             security_ctx.getUser().c_str(),
+             security_ctx.getIp().c_str(),
              passwd_len ? ER(ER_YES) : ER(ER_NO));
 
     return false;
@@ -1815,8 +1815,8 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (db.empty() ? "unconnected" : db.c_str())
-                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
-                  , sctx->ip.c_str()
+                  , sctx->getUser().empty() == false ? sctx->getUser().c_str() : "unauthenticated"
+                  , sctx->getIp().c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
     }
   }

@@ -976,8 +976,8 @@ innobase_mysql_print_thd(
           static_cast<uint64_t>(session_get_thread_id( session)),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
-          session->security_ctx.ip.c_str(),
-          session->security_ctx.user.c_str()
+          session->security_ctx.getIp().c_str(),
+          session->security_ctx.getUser().c_str()
   );
   fprintf(f,
           "\n%s", session->getQueryString()

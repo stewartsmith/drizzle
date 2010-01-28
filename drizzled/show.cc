@@ -753,7 +753,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
       tmp= *it;
       SecurityContext *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->client->isConnected() && (!user || (tmp_sctx->getUser().c_str() && !strcmp(tmp_sctx->getUser().c_str(), user))))
       {
 
         if ((mysys_var= tmp->mysys_var))
@@ -779,10 +779,10 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         thread_infos.push_back(thread_info(tmp->thread_id,
                                            tmp->start_time,
                                            tmp->command,
-                                           tmp_sctx->user.empty()
+                                           tmp_sctx->getUser().empty()
                                              ? string("unauthenticated user")
-                                             : tmp_sctx->user,
-                                           tmp_sctx->ip,
+                                             : tmp_sctx->getUser(),
+                                           tmp_sctx->getIp(),
                                            tmp->db,
                                            tmp_proc_info,
                                            tmp_state_info,
