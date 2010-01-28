@@ -32,6 +32,9 @@ SELECT SCHEMA_NAME  FROM data_dictionary.schemata_info;
 --replace_column 1 #
 SELECT SCHEMA_NAME  FROM data_dictionary.schemata_names;
 
+--replace_column 1 #
+SELECT COLUMN_NAME  FROM data_dictionary.columns;
+
 SELECT *  FROM data_dictionary.table_names;
 SELECT *  FROM data_dictionary.table_info;
 

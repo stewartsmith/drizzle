@@ -52,3 +52,102 @@ ColumnsTool::ColumnsTool() :
   add_field("STORAGE", message::Table::Field::VARCHAR, 8);
   add_field("FORMAT", message::Table::Field::VARCHAR, 8);
 }
+
+ColumnsTool::Generator::Generator() :
+  schema_counter(0),
+  column_iterator(0)
+{
+  plugin::StorageEngine::getSchemaNames(schema_names);
+
+  schema_iterator= schema_names.begin(); // Prime the schema list.
+
+  fetch_tables();
+  fetch_proto();
+}
+
+bool ColumnsTool::Generator::populate(Field ** fields)
+{
+  while (schema_iterator != schema_names.end())
+  {
+    while (table_iterator != table_names.end())
+    {
+      for (; column_iterator < table_proto.field_size(); column_iterator++)
+      {
+        const message::Table::Field column= table_proto.field(column_iterator);
+        fill(fields, column);
+
+        column_iterator++;
+
+        return true;
+      }
+
+      column_iterator= 0;
+      table_iterator++;
+
+      fetch_proto();
+    }
+
+    schema_iterator++;
+
+    fetch_tables();
+  }
+
+  return false;
+}
+
+void ColumnsTool::Generator::fetch_tables()
+{
+  if (schema_iterator != schema_names.end())
+  {
+    table_names.clear();
+    plugin::StorageEngine::getTableNames(schema_name(), table_names); // Prime up the table names
+    table_iterator= table_names.begin(); // Prime the table iterator
+  }
+}
+
+extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+
+void ColumnsTool::Generator::fetch_proto()
+{
+  Session *session= current_session;
+  char path[FN_REFLEN];
+
+  if (table_iterator != table_names.end())
+  {
+    build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
+
+    plugin::StorageEngine::getTableDefinition(*session,
+                                              path,
+                                              schema_name().c_str(),
+                                              table_name().c_str(),
+                                              false,
+                                              &table_proto);
+  }
+}
+
+void ColumnsTool::Generator::fill(Field ** fields, const message::Table::Field &column)
+{
+  const CHARSET_INFO * const scs= system_charset_info;
+  Field **field= fields;
+
+  /* TABLE_CATALOG */
+  (*field)->store("default", sizeof("default"), scs);
+  field++;
+
+  /* TABLE_SCHEMA */
+  (*field)->store(schema_name().c_str(), schema_name().length(), scs);
+  field++;
+
+  /* TABLE_NAME */
+  (*field)->store(table_name().c_str(), table_name().length(), scs);
+  field++;
+
+  /* COLUMN_NAME */
+  (*field)->store(column.name().c_str(), column.name().length(), scs);
+  field++;
+
+  for (; *field ; field++)
+  {
+    (*field)->store("<not implemented>", sizeof("<not implemented>"), scs);
+  }
+}
