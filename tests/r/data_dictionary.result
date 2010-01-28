@@ -2703,12 +2703,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
 SELECT *  FROM data_dictionary.table_names;
 TABLE_SCHEMA	TABLE_NAME
 data_dictionary	CHARACTER_SETS

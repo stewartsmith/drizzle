@@ -44,13 +44,8 @@ ColumnsTool::ColumnsTool() :
 
   add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
   add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("COLUMN_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field("COLUMN_KEY", message::Table::Field::VARCHAR, 3);
-  add_field("EXTRA", message::Table::Field::VARCHAR, 27);
-  add_field("PRIVILEGES", message::Table::Field::VARCHAR, 80);
+
   add_field("COLUMN_COMMENT", message::Table::Field::VARCHAR, 1024);
-  add_field("STORAGE", message::Table::Field::VARCHAR, 8);
-  add_field("FORMAT", message::Table::Field::VARCHAR, 8);
 }
 
 ColumnsTool::Generator::Generator() :
@@ -146,8 +141,108 @@ void ColumnsTool::Generator::fill(Field ** fields, const message::Table::Field &
   (*field)->store(column.name().c_str(), column.name().length(), scs);
   field++;
 
-  for (; *field ; field++)
+  /* ORDINAL_POSITION */
+  (*field)->store(column_iterator);
+  field++;
+
+  /* COLUMN_DEFAULT */
+  (*field)->store(column.options().default_value().c_str(),
+                  column.options().default_value().length(), scs);
+  field++;
+
+  /* IS_NULLABLE */
   {
-    (*field)->store("<not implemented>", sizeof("<not implemented>"), scs);
+    const char *yes= "YES";
+    const char *no= "NO";
+
+    uint32_t yes_length= sizeof("YES");
+    uint32_t no_length= sizeof("YES");
+
+    (*field)->store(column.constraints().is_nullable() ? yes : no,
+                    column.constraints().is_nullable() ? yes_length : no_length,
+                    scs);
+    field++;
   }
+
+  /* DATATYPE */
+  {
+    const char *str;
+    uint32_t length;
+
+    switch (column.type())
+    {
+    case message::Table::Field::DOUBLE:
+      str= "DOUBLE";
+      length= sizeof("DOUBLE");
+      break;
+    default:
+    case message::Table::Field::VARCHAR:
+      str= "VARCHAR";
+      length= sizeof("VARCHAR");
+      break;
+    case message::Table::Field::BLOB:
+      str= "BLOB";
+      length= sizeof("BLOB");
+      break;
+    case message::Table::Field::ENUM:
+      str= "ENUM";
+      length= sizeof("ENUM");
+      break;
+    case message::Table::Field::INTEGER:
+      str= "INT";
+      length= sizeof("INT");
+      break;
+    case message::Table::Field::BIGINT:
+      str= "BIGINT";
+      length= sizeof("BIGINT");
+      break;
+    case message::Table::Field::DECIMAL:
+      str= "DECIMAL";
+      length= sizeof("DECIMAL");
+      break;
+    case message::Table::Field::DATE:
+      str= "DATE";
+      length= sizeof("DATE");
+      break;
+    case message::Table::Field::TIME:
+      str= "TIME";
+      length= sizeof("TIME");
+      break;
+    case message::Table::Field::TIMESTAMP:
+      str= "TIMESTAMP";
+      length= sizeof("TIMESTAMP");
+      break;
+    case message::Table::Field::DATETIME:
+      str= "DATETIME";
+      length= sizeof("DATETIME");
+      break;
+    }
+    (*field)->store(str, length, scs);
+    field++;
+  }
+
+ /* "CHARACTER_MAXIMUM_LENGTH" */
+  (*field)->store(column.string_options().length());
+
+ /* "CHARACTER_OCTET_LENGTH" */
+  (*field)->store(column.string_options().length() * 4);
+
+ /* "NUMERIC_PRECISION" */
+  (*field)->store(column.numeric_options().precision());
+
+ /* "NUMERIC_SCALE" */
+  (*field)->store(column.numeric_options().scale());
+
+ /* "CHARACTER_SET_NAME" */
+  (*field)->store("UTF-8", sizeof("UTF-8"), scs);
+
+ /* "COLLATION_NAME" */
+  (*field)->store(column.string_options().collation().c_str(),
+                  column.string_options().collation().length(),
+                  scs);
+
+ /* "COLUMN_COMMENT" */
+  (*field)->store(column.comment().c_str(),
+                  column.comment().length(),
+                  scs);
 }
