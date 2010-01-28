@@ -27,10 +27,10 @@ SELECT * FROM data_dictionary.collations ORDER BY COLLATION_NAME;
 SELECT * FROM data_dictionary.collation_character_set_applicability ORDER BY CHARACTER_SET_NAME;
 
 --replace_column 1 #
-SELECT SCHEMA_NAME  FROM data_dictionary.schema_info;
+SELECT SCHEMA_NAME  FROM data_dictionary.schemata_info;
 
 --replace_column 1 #
-SELECT SCHEMA_NAME  FROM data_dictionary.schema_names;
+SELECT SCHEMA_NAME  FROM data_dictionary.schemata_names;
 
 SELECT *  FROM data_dictionary.table_names;
 SELECT *  FROM data_dictionary.table_info;

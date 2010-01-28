@@ -424,7 +424,7 @@ public:
   static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
 
   static void getSchemaNames(std::set<std::string>& set_of_names);
-  static bool getSchemaDefinition(std::string &schema_name, message::Schema &proto);
+  static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

@@ -940,7 +940,7 @@ void plugin::StorageEngine::getSchemaNames(set<string>& set_of_names)
 /*
   Return value is "if parsed"
 */
-bool plugin::StorageEngine::getSchemaDefinition(std::string &schema_name, message::Schema &proto)
+bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
   int ret;
 
@@ -955,7 +955,7 @@ bool plugin::StorageEngine::getSchemaDefinition(std::string &schema_name, messag
     ret= get_database_metadata(schema_name.c_str(), &proto);
   }
 
-  return ret == 0 ? false : true;
+  return ret == 0 ? true : false;
 }
 
 void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)

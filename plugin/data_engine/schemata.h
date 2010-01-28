@@ -27,6 +27,73 @@ class SchemataTool : public Tool
 public:
 
   SchemataTool();
+  SchemataTool(const char *arg) :
+    Tool(arg)
+  { }
+
+  class Generator : public Tool::Generator 
+  {
+    std::set<std::string> set_of_names;
+    std::set<std::string>::const_iterator it;
+
+  public:
+    Generator();
+
+    const std::string& schema_name()
+    {
+      return (*it);
+    }
+
+    bool populate(Field **fields);
+    virtual bool fill(Field **fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
+};
+
+class SchemataNamesTool : public SchemataTool
+{
+public:
+  SchemataNamesTool();
+
+  class Generator : public SchemataTool::Generator 
+  {
+  public:
+    Generator() :
+      SchemataTool::Generator()
+    { }
+
+    bool fill(Field ** fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
+};
+
+class SchemataInfoTool : public SchemataTool
+{
+public:
+  SchemataInfoTool();
+
+  class Generator : public SchemataTool::Generator 
+  {
+  public:
+    Generator() :
+      SchemataTool::Generator()
+    { }
+
+    bool fill(Field ** fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_SCHEMATA_H

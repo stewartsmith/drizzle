@@ -25,7 +25,7 @@ class Tool
 {
   Tool() {};
 
-  drizzled::message::Table schema;
+  drizzled::message::Table proto;
   std::string name;
   std::string path;
 
@@ -36,14 +36,14 @@ public:
     drizzled::message::Table::TableOptions *table_options;
 
     setName(arg);
-    schema.set_name(name.c_str());
-    schema.set_type(drizzled::message::Table::FUNCTION);
+    proto.set_name(name.c_str());
+    proto.set_type(drizzled::message::Table::FUNCTION);
 
-    table_options= schema.mutable_options();
+    table_options= proto.mutable_options();
     table_options->set_collation_id(default_charset_info->number);
     table_options->set_collation(default_charset_info->name);
 
-    engine= schema.mutable_engine();
+    engine= proto.mutable_engine();
     engine->set_name(engine_name);
   }
 
@@ -65,9 +65,9 @@ public:
     }
   };
 
-  void define(drizzled::message::Table &proto)
+  void define(drizzled::message::Table &arg)
   { 
-    proto.CopyFrom(schema);
+    arg.CopyFrom(proto);
   }
 
   std::string &getName()
@@ -104,7 +104,7 @@ public:
     drizzled::message::Table::Field::FieldOptions *field_options;
     drizzled::message::Table::Field::FieldConstraints *field_constraints;
 
-    field= schema.add_field();
+    field= proto.add_field();
     field->set_name(label);
     field->set_type(type);
 

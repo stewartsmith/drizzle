@@ -94,10 +94,6 @@ bool TablesTool::Generator::fill(Field ** fields)
   const CHARSET_INFO * const scs= system_charset_info;
   Field **field= fields;
 
-  /* TABLE_CATALOG */
-  (*field)->store("default", sizeof("default"), scs);
-  field++;
-
   /* TABLE_SCHEMA */
   (*field)->store(schema_name().c_str(), schema_name().length(), scs);
   field++;

@@ -47,8 +47,8 @@ Dictionary::Dictionary(const std::string &name_arg) :
   addTool(plugins);
   addTool(processlist);
   addTool(referential_constraints);
-  addTool(schemas);
-  addTool(schemas_full);
+  addTool(schemata_names);
+  addTool(schemata_info);
   addTool(schemata);
   addTool(statistics);
   addTool(table_constraints);
