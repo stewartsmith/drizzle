@@ -48,8 +48,6 @@ KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 uint32_t total_ha= 0;
 /* number of storage engines (from storage_engines[]) that support 2pc */
 uint32_t total_ha_2pc= 0;
-/* size of savepoint storage area (see ha_init) */
-uint32_t savepoint_alloc_size= 0;
 
 const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
@@ -149,12 +147,6 @@ int ha_init()
   int error= 0;
 
   assert(total_ha < MAX_HA);
-  /*
-    Check if there is a transaction-capable storage engine besides the
-    binary log (which is considered a transaction-capable storage engine in
-    counting total_ha)
-  */
-  savepoint_alloc_size+= sizeof(SAVEPOINT);
   return error;
 }
 

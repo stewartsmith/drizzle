@@ -80,9 +80,6 @@ class Item_ident;
 typedef struct st_sort_field SORT_FIELD;
 
 typedef List<Item> List_item;
-
-typedef struct st_savepoint SAVEPOINT;
-extern uint32_t savepoint_alloc_size;
 extern KEY_CREATE_INFO default_key_create_info;
 
 /* Forward declaration for condition pushdown to storage engine */

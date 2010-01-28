@@ -149,17 +149,6 @@ private:
   bool enabled;
 
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
-  /*
-    to store per-savepoint data storage engine is provided with an area
-    of a requested size (0 is ok here).
-    savepoint_offset must be initialized statically to the size of
-    the needed memory to store per-savepoint information.
-    After xxx_init it is changed to be an offset to savepoint storage
-    area and need not be used by storage engine.
-    see binlog_engine and binlog_savepoint_set/rollback for an example.
-  */
-  size_t savepoint_offset;
-  size_t orig_savepoint_offset;
 
   void setTransactionReadWrite(Session& session);
 
@@ -210,7 +199,6 @@ public:
 
   StorageEngine(const std::string name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                size_t savepoint_offset_arg= 0,
                 bool support_2pc= false);
 
   virtual ~StorageEngine();
