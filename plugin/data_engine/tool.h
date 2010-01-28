@@ -37,7 +37,7 @@ public:
 
     setName(arg);
     schema.set_name(name.c_str());
-    schema.set_type(drizzled::message::Table::STANDARD);
+    schema.set_type(drizzled::message::Table::FUNCTION);
 
     table_options= schema.mutable_options();
     table_options->set_collation_id(default_charset_info->number);

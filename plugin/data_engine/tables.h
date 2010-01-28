@@ -54,4 +54,32 @@ public:
   }
 };
 
+class TablesInfoTool : public Tool
+{
+public:
+
+  TablesInfoTool();
+
+  class Generator : public Tool::Generator 
+  {
+    std::set<std::string> schema_names;
+    std::set<std::string> table_names;
+    std::set<std::string>::iterator schema_iterator;
+    std::set<std::string>::iterator table_iterator;
+    std::string db_name;
+    uint32_t schema_counter;
+    uint32_t table_counter;
+
+  public:
+    Generator();
+
+    bool populate(Field ** fields);
+  };
+
+  Generator *generator()
+  {
+    return new Generator;
+  }
+};
+
 #endif // PLUGIN_DATA_ENGINE_TABLES_H

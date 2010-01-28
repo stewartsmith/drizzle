@@ -79,6 +79,7 @@ bool TablesNameTool::Generator::populate(Field ** fields)
         return false;
 
       db_name= *schema_iterator;
+      table_names.clear();
       plugin::StorageEngine::getTableNames(db_name, table_names);
       schema_iterator++;
       table_iterator= table_names.begin();
@@ -90,6 +91,150 @@ bool TablesNameTool::Generator::populate(Field ** fields)
   field++;
 
   (*field)->store((*table_iterator).c_str(), (*table_iterator).length(), scs);
+
+  table_iterator++;
+
+  return true;
+}
+
+TablesInfoTool::TablesInfoTool() :
+  Tool("TABLE_INFO")
+{
+  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("ENGINE", message::Table::Field::VARCHAR, 64);
+  add_field("ROW_FORMAT", message::Table::Field::VARCHAR, 10);
+  add_field("TABLE_COLLATION", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_COMMENT", message::Table::Field::VARCHAR, 2048);
+}
+
+TablesInfoTool::Generator::Generator() :
+  schema_counter(0),
+  table_counter(0)
+{
+  plugin::StorageEngine::getSchemaNames(schema_names);
+
+  schema_iterator= schema_names.begin(); // Prime it to begin()
+  table_iterator= table_names.begin(); // Prime it to null
+}
+
+extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+
+bool TablesInfoTool::Generator::populate(Field ** fields)
+{
+  const CHARSET_INFO * const scs= system_charset_info;
+  Field **field= fields;
+
+  if (table_iterator == table_names.end())
+  {
+    // If no tables exist in the schema we just loop over it
+    do {
+      /* If we are done with schema we have nothing else to return. */
+      if (schema_counter)
+        schema_iterator++;
+
+      if (schema_iterator == schema_names.end())
+        return false;
+
+      db_name= *schema_iterator;
+      table_names.clear();
+      plugin::StorageEngine::getTableNames(db_name, table_names);
+      table_iterator= table_names.begin();
+      schema_counter++;
+    } while (table_iterator == table_names.end());
+  }
+
+  message::Table table_proto;
+  Session *session= current_session;
+  char path[FN_REFLEN];
+  build_table_filename(path, sizeof(path), db_name.c_str(), (*table_iterator).c_str(), false);
+  plugin::StorageEngine::getTableDefinition(*session,
+                                            path,
+                                            db_name.c_str(), (*table_iterator).c_str(),
+                                            false,
+                                            &table_proto);
+
+  /* TABLE_SCHEMA */
+  (*field)->store(db_name.c_str(), db_name.length(), scs);
+  field++;
+
+  /* TABLE_NAME */
+  (*field)->store((*table_iterator).c_str(), (*table_iterator).length(), scs);
+  field++;
+
+  /* TABLE_TYPE */
+  {
+    const char *str;
+
+    switch (table_proto.type())
+    {
+    default:
+    case message::Table::STANDARD:
+      str= "STANDARD";
+      break;
+    case message::Table::TEMPORARY:
+      str= "TEMPORARY";
+      break;
+    case message::Table::INTERNAL:
+      str= "INTERNAL";
+      break;
+    case message::Table::FUNCTION:
+      str= "FUNCTION";
+      break;
+    }
+    (*field)->store(str, strlen(str), scs);
+    field++;
+  }
+
+  /* ENGINE */
+  (*field)->store(table_proto.engine().name().c_str(),
+                  table_proto.engine().name().length(), scs);
+  field++;
+
+  /* ROW_FORMAT */
+  {
+    const char *str;
+
+    switch (table_proto.options().row_type())
+    {
+    default:
+    case message::Table::TableOptions::ROW_TYPE_DEFAULT:
+      str= "DEFAULT";
+      break;
+    case message::Table::TableOptions::ROW_TYPE_FIXED:
+      str= "FIXED";
+      break;
+    case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
+      str= "DYNAMIC";
+      break;
+    case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
+      str= "COMPRESSED";
+      break;
+    case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
+      str= "REDUNDANT";
+      break;
+    case message::Table::TableOptions::ROW_TYPE_COMPACT:
+      str= "COMPACT";
+      break;
+    case message::Table::TableOptions::ROW_TYPE_PAGE:
+      str= "PAGE";
+      break;
+    }
+    message::Table::TableOptions options= table_proto.options();
+
+    (*field)->store(str, strlen(str), scs);
+  }
+  field++;
+
+  /* TABLE_COLLATION */
+  (*field)->store(table_proto.options().collation().c_str(),
+                  table_proto.options().collation().length(), scs);
+  field++;
+
+  /* TABLE_COMMENT */
+  (*field)->store(table_proto.options().comment().c_str(),
+                  table_proto.options().comment().length(), scs);
 
   table_iterator++;
 

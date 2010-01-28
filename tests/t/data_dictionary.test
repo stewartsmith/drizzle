@@ -32,6 +32,9 @@ SELECT SCHEMA_NAME  FROM data_dictionary.schema_info;
 --replace_column 1 #
 SELECT SCHEMA_NAME  FROM data_dictionary.schema_names;
 
+SELECT *  FROM data_dictionary.table_names;
+SELECT *  FROM data_dictionary.table_info;
+
 # Slap tests for concurrency
 CREATE SCHEMA drizzleslap;
 
@@ -51,6 +54,8 @@ CREATE SCHEMA drizzleslap;
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.schemata" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.statistics" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.tables" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_info" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_names" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
 
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b ORDER BY ID" --delimiter=";"

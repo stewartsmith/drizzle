@@ -78,9 +78,19 @@ class Dictionary : public drizzled::plugin::StorageEngine
   StatusTool session_status;
   TablesTool tables;
   TablesNameTool table_names;
+  TablesInfoTool table_info;
   TableConstraintsTool table_constraints;
   VariablesTool global_variables;
   VariablesTool session_variables;
+
+  void addTool(Tool& tool)
+  {
+    std::pair<ToolMap::iterator, bool> ret;
+
+    ret= table_map.insert(make_pair(tool.getPath(),
+                                    &tool));
+    assert(ret.second == true);
+  }
 
 
 public:

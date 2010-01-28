@@ -62,6 +62,100 @@ SCHEMA_NAME
 #
 #
 #
+SELECT *  FROM data_dictionary.table_names;
+TABLE_SCHEMA	TABLE_NAME
+data_dictionary	CHARACTER_SETS
+data_dictionary	COLLATIONS
+data_dictionary	COLLATION_CHARACTER_SET_APPLICABILITY
+data_dictionary	COLUMNS
+data_dictionary	GLOBAL_STATUS
+data_dictionary	GLOBAL_VARIABLES
+data_dictionary	KEY_COLUMN_USAGE
+data_dictionary	MODULES
+data_dictionary	PLUGINS
+data_dictionary	PROCESSLIST
+data_dictionary	REFERENTIAL_CONSTRAINTS
+data_dictionary	SCHEMATA
+data_dictionary	SCHEMA_INFO
+data_dictionary	SCHEMA_NAMES
+data_dictionary	STATISTICS
+data_dictionary	TABLES
+data_dictionary	TABLE_CONSTRAINTS
+data_dictionary	TABLE_INFO
+data_dictionary	TABLE_NAMES
+information_schema	CHARACTER_SETS
+information_schema	COLLATIONS
+information_schema	COLLATION_CHARACTER_SET_APPLICABILITY
+information_schema	COLUMNS
+information_schema	GLOBAL_STATUS
+information_schema	GLOBAL_VARIABLES
+information_schema	INNODB_CMP
+information_schema	INNODB_CMPMEM
+information_schema	INNODB_CMPMEM_RESET
+information_schema	INNODB_CMP_RESET
+information_schema	INNODB_LOCKS
+information_schema	INNODB_LOCK_WAITS
+information_schema	INNODB_TRX
+information_schema	KEY_COLUMN_USAGE
+information_schema	MEMCACHED_ANALYSIS
+information_schema	MEMCACHED_STATS
+information_schema	MODULES
+information_schema	PLUGINS
+information_schema	PROCESSLIST
+information_schema	REFERENTIAL_CONSTRAINTS
+information_schema	SCHEMATA
+information_schema	SESSION_STATUS
+information_schema	SESSION_VARIABLES
+information_schema	STATISTICS
+information_schema	TABLES
+information_schema	TABLE_CONSTRAINTS
+SELECT *  FROM data_dictionary.table_info;
+TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_COMMENT
+data_dictionary	CHARACTER_SETS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	COLLATIONS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	COLLATION_CHARACTER_SET_APPLICABILITY	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	COLUMNS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	GLOBAL_STATUS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	GLOBAL_VARIABLES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	KEY_COLUMN_USAGE	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	MODULES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	PLUGINS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	PROCESSLIST	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	REFERENTIAL_CONSTRAINTS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	SCHEMATA	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	SCHEMA_INFO	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	SCHEMA_NAMES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	STATISTICS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	TABLES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	TABLE_CONSTRAINTS	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	TABLE_INFO	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+data_dictionary	TABLE_NAMES	FUNCTION	DICTIONARY	DEFAULT	utf8_general_ci	
+information_schema	CHARACTER_SETS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	COLLATIONS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	COLLATION_CHARACTER_SET_APPLICABILITY	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	COLUMNS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	GLOBAL_STATUS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	GLOBAL_VARIABLES	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_CMP	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_CMPMEM	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_CMPMEM_RESET	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_CMP_RESET	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_LOCKS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_LOCK_WAITS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	INNODB_TRX	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	KEY_COLUMN_USAGE	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	MEMCACHED_ANALYSIS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	MEMCACHED_STATS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	MODULES	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	PLUGINS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	PROCESSLIST	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	REFERENTIAL_CONSTRAINTS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	SCHEMATA	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	SESSION_STATUS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	SESSION_VARIABLES	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	STATISTICS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	TABLES	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
+information_schema	TABLE_CONSTRAINTS	STANDARD	INFORMATION_ENGINE	DEFAULT	utf8_general_ci	
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;

@@ -36,84 +36,25 @@ Dictionary::Dictionary(const std::string &name_arg) :
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {
 
-  pair<ToolMap::iterator, bool> ret;
-
-  ret= table_map.insert(make_pair(character_sets.getPath(), &character_sets));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(collation_character_set_applicability.getPath(),
-                                  &collation_character_set_applicability));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(collations.getPath(),
-                                  &collations));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(columns.getPath(),
-                                  &columns));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(key_column_usage.getPath(),
-                                  &key_column_usage));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(modules.getPath(),
-                                  &modules));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(plugins.getPath(),
-                                  &plugins));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(processlist.getPath(),
-                                  &processlist));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(referential_constraints.getPath(),
-                                  &referential_constraints));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(schemas.getPath(),
-                                  &schemas));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(schemas_full.getPath(),
-                                  &schemas_full));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(schemata.getPath(),
-                                  &schemata));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(statistics.getPath(),
-                                  &statistics));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(global_status.getPath(),
-                                  &global_status));
-  assert(ret.second == true);
-
-#if 0
-  ret= table_map.insert(make_pair(session_status.getPath(),
-                                  &session_status));
-  assert(ret.second == true);
-#endif
-
-  ret= table_map.insert(make_pair(tables.getPath(),
-                                  &tables));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(table_names.getPath(),
-                                  &table_names));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(table_constraints.getPath(),
-                                  &table_constraints));
-  assert(ret.second == true);
-
-  ret= table_map.insert(make_pair(global_variables.getPath(),
-                                  &global_variables));
-  assert(ret.second == true);
+  addTool(character_sets);
+  addTool(collation_character_set_applicability);
+  addTool(collations);
+  addTool(columns);
+  addTool(global_status);
+  addTool(global_variables);
+  addTool(key_column_usage);
+  addTool(modules);
+  addTool(plugins);
+  addTool(processlist);
+  addTool(referential_constraints);
+  addTool(schemas);
+  addTool(schemas_full);
+  addTool(schemata);
+  addTool(statistics);
+  addTool(table_constraints);
+  addTool(table_info);
+  addTool(table_names);
+  addTool(tables);
 
 #if 0
   ret= table_map.insert(make_pair(session_variables.getPath(),
@@ -150,17 +91,19 @@ int Dictionary::doGetTableDefinition(Session &,
                                      message::Table *table_proto)
 {
   string tab_name(path);
+  transform(tab_name.begin(), tab_name.end(),
+            tab_name.begin(), ::tolower);
 
   if (tab_name.compare(0, schema_name_prefix.length(), schema_name_prefix) != 0)
   {
     return ENOENT;
   }
 
-  ToolMap::iterator iter= table_map.find(path);
+  ToolMap::iterator iter= table_map.find(tab_name);
 
   if (iter == table_map.end())
   {
-    fprintf(stderr, "\n doGetTableDefinition() %s\n", path);
+    fprintf(stderr, "\n Error from doGetTableDefinition() %s\n", tab_name.c_str());
     return ENOENT;
   }
 
