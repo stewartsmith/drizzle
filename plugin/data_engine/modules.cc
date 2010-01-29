@@ -30,7 +30,7 @@ ModulesTool::ModulesTool() :
   add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
   add_field("MODULE_VERSION", message::Table::Field::VARCHAR, 20);
   add_field("MODULE_AUTHOR", message::Table::Field::VARCHAR, 64);
-  add_field("IS_BUILTIN", message::Table::Field::VARCHAR, 3);
+  add_field("IS_BUILTIN", message::Table::Field::VARCHAR, 5);
   add_field("MODULE_LIBRARY", message::Table::Field::VARCHAR, 254);
   add_field("MODULE_DESCRIPTION", message::Table::Field::VARCHAR, 254);
   add_field("MODULE_LICENSE", message::Table::Field::VARCHAR, 80);
@@ -79,16 +79,14 @@ bool ModulesTool::Generator::populate(Field ** fields)
     }
     field++;
 
+    populateBoolean(field, (module->plugin_dl == NULL));
+    field++;
     if (module->plugin_dl == NULL)
     {
-      (*field)->store("YES", sizeof("YES"), cs);
-      field++;
       (*field)->store("<builtin>", sizeof("<builtin>"), cs);
     }
     else
     {
-      (*field)->store("NO", sizeof("NO"), cs);
-      field++;
       (*field)->store(module->plugin_dl->getName().c_str(),
                              module->plugin_dl->getName().size(), cs);
     }

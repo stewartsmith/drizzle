@@ -28,7 +28,7 @@ PluginsTool::PluginsTool() :
 {
   add_field("PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
   add_field("PLUGIN_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field("IS_ACTIVE", message::Table::Field::VARCHAR, 3);
+  add_field("IS_ACTIVE", message::Table::Field::VARCHAR, 5);
   add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
 }
 
@@ -59,14 +59,7 @@ bool PluginsTool::Generator::populate(Field ** fields)
                   plugin->getTypeName().size(), cs);
   field++;
 
-  if (plugin->isActive())
-  {
-    (*field)->store("YES", sizeof("YES"), cs);
-  }
-  else
-  {
-    (*field)->store("NO", sizeof("NO"), cs);
-  }
+  populateBoolean(field, plugin->isActive());
   field++;
 
   (*field)->store(plugin->getModuleName().c_str(),

@@ -20,9 +20,13 @@
 
 #include <plugin/data_engine/dictionary.h>
 #include <drizzled/charset.h>
+#include <assert.h>
 
 using namespace std;
 using namespace drizzled;
+
+extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+
 
 ColumnsTool::ColumnsTool() :
   Tool("COLUMNS")
@@ -34,7 +38,7 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_NAME", message::Table::Field::VARCHAR, 64);
   add_field("ORDINAL_POSITION", message::Table::Field::BIGINT);
   add_field("COLUMN_DEFAULT", message::Table::Field::VARCHAR, 64);
-  add_field("IS_NULLABLE", message::Table::Field::VARCHAR, 3);
+  add_field("IS_NULLABLE", message::Table::Field::VARCHAR, 5);
   add_field("DATATYPE", message::Table::Field::VARCHAR, 64);
 
   add_field("CHARACTER_MAXIMUM_LENGTH", message::Table::Field::BIGINT);
@@ -42,7 +46,6 @@ ColumnsTool::ColumnsTool() :
   add_field("NUMERIC_PRECISION", message::Table::Field::BIGINT);
   add_field("NUMERIC_SCALE", message::Table::Field::BIGINT);
 
-  add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
   add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
 
   add_field("COLUMN_COMMENT", message::Table::Field::VARCHAR, 1024);
@@ -50,14 +53,13 @@ ColumnsTool::ColumnsTool() :
 
 ColumnsTool::Generator::Generator() :
   schema_counter(0),
-  column_iterator(0)
+  column_iterator(0),
+  primed(false)
 {
   plugin::StorageEngine::getSchemaNames(schema_names);
-
-  schema_iterator= schema_names.begin(); // Prime the schema list.
+  schema_iterator= schema_names.begin();
 
   fetch_tables();
-  fetch_proto();
 }
 
 bool ColumnsTool::Generator::populate(Field ** fields)
@@ -66,25 +68,28 @@ bool ColumnsTool::Generator::populate(Field ** fields)
   {
     while (table_iterator != table_names.end())
     {
-      for (; column_iterator < table_proto.field_size(); column_iterator++)
+      while (column_iterator < table_proto.field_size())
       {
         const message::Table::Field column= table_proto.field(column_iterator);
-        fill(fields, column);
 
+        fill(fields, column);
         column_iterator++;
 
         return true;
       }
 
-      column_iterator= 0;
       table_iterator++;
 
-      fetch_proto();
+      if (table_iterator != table_names.end())
+        fetch_proto();
     }
 
-    schema_iterator++;
-
     fetch_tables();
+
+    if (schema_iterator == schema_names.end())
+      break;
+
+    fetch_proto();
   }
 
   return false;
@@ -92,32 +97,46 @@ bool ColumnsTool::Generator::populate(Field ** fields)
 
 void ColumnsTool::Generator::fetch_tables()
 {
-  if (schema_iterator != schema_names.end())
+  do
   {
+    if (primed)
+    {
+      schema_iterator++;
+      if (schema_iterator == schema_names.end())
+        throw true;
+    }
+    else
+    {
+      schema_iterator= schema_names.begin();
+      primed= true;
+    }
+
+
     table_names.clear();
     plugin::StorageEngine::getTableNames(schema_name(), table_names); // Prime up the table names
     table_iterator= table_names.begin(); // Prime the table iterator
-  }
-}
 
-extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+  } while (table_iterator == table_names.end());
+
+  fetch_proto();
+}
 
 void ColumnsTool::Generator::fetch_proto()
 {
   Session *session= current_session;
   char path[FN_REFLEN];
 
-  if (table_iterator != table_names.end())
-  {
-    build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
+  assert(schema_name().c_str());
+  assert(table_name().c_str());
+  build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
 
-    plugin::StorageEngine::getTableDefinition(*session,
-                                              path,
-                                              schema_name().c_str(),
-                                              table_name().c_str(),
-                                              false,
-                                              &table_proto);
-  }
+  plugin::StorageEngine::getTableDefinition(*session,
+                                            path,
+                                            schema_name().c_str(),
+                                            table_name().c_str(),
+                                            false,
+                                            &table_proto);
+  column_iterator= 0;
 }
 
 void ColumnsTool::Generator::fill(Field ** fields, const message::Table::Field &column)
@@ -151,98 +170,38 @@ void ColumnsTool::Generator::fill(Field ** fields, const message::Table::Field &
   field++;
 
   /* IS_NULLABLE */
-  {
-    const char *yes= "YES";
-    const char *no= "NO";
-
-    uint32_t yes_length= sizeof("YES");
-    uint32_t no_length= sizeof("YES");
-
-    (*field)->store(column.constraints().is_nullable() ? yes : no,
-                    column.constraints().is_nullable() ? yes_length : no_length,
-                    scs);
-    field++;
-  }
+  populateBoolean(field, column.constraints().is_nullable());
+  field++;
 
   /* DATATYPE */
-  {
-    const char *str;
-    uint32_t length;
-
-    switch (column.type())
-    {
-    case message::Table::Field::DOUBLE:
-      str= "DOUBLE";
-      length= sizeof("DOUBLE");
-      break;
-    default:
-    case message::Table::Field::VARCHAR:
-      str= "VARCHAR";
-      length= sizeof("VARCHAR");
-      break;
-    case message::Table::Field::BLOB:
-      str= "BLOB";
-      length= sizeof("BLOB");
-      break;
-    case message::Table::Field::ENUM:
-      str= "ENUM";
-      length= sizeof("ENUM");
-      break;
-    case message::Table::Field::INTEGER:
-      str= "INT";
-      length= sizeof("INT");
-      break;
-    case message::Table::Field::BIGINT:
-      str= "BIGINT";
-      length= sizeof("BIGINT");
-      break;
-    case message::Table::Field::DECIMAL:
-      str= "DECIMAL";
-      length= sizeof("DECIMAL");
-      break;
-    case message::Table::Field::DATE:
-      str= "DATE";
-      length= sizeof("DATE");
-      break;
-    case message::Table::Field::TIME:
-      str= "TIME";
-      length= sizeof("TIME");
-      break;
-    case message::Table::Field::TIMESTAMP:
-      str= "TIMESTAMP";
-      length= sizeof("TIMESTAMP");
-      break;
-    case message::Table::Field::DATETIME:
-      str= "DATETIME";
-      length= sizeof("DATETIME");
-      break;
-    }
-    (*field)->store(str, length, scs);
-    field++;
-  }
+  populateFieldType(field, column.type());
+  field++;
 
  /* "CHARACTER_MAXIMUM_LENGTH" */
   (*field)->store(column.string_options().length());
+  field++;
 
  /* "CHARACTER_OCTET_LENGTH" */
   (*field)->store(column.string_options().length() * 4);
+  field++;
 
  /* "NUMERIC_PRECISION" */
   (*field)->store(column.numeric_options().precision());
+  field++;
 
  /* "NUMERIC_SCALE" */
   (*field)->store(column.numeric_options().scale());
-
- /* "CHARACTER_SET_NAME" */
-  (*field)->store("UTF-8", sizeof("UTF-8"), scs);
+  field++;
 
  /* "COLLATION_NAME" */
   (*field)->store(column.string_options().collation().c_str(),
                   column.string_options().collation().length(),
                   scs);
+  field++;
 
  /* "COLUMN_COMMENT" */
   (*field)->store(column.comment().c_str(),
                   column.comment().length(),
                   scs);
+  field++;
 }

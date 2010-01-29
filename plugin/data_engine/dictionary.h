@@ -35,13 +35,13 @@ static const std::string engine_name("DICTIONARY");
 #include <plugin/data_engine/collation_character_set_applicability.h>
 #include <plugin/data_engine/collations.h>
 #include <plugin/data_engine/columns.h>
+#include <plugin/data_engine/indexes.h>
 #include <plugin/data_engine/key_column_usage.h>
 #include <plugin/data_engine/modules.h>
 #include <plugin/data_engine/plugins.h>
 #include <plugin/data_engine/processlist.h>
 #include <plugin/data_engine/referential_constraints.h>
 #include <plugin/data_engine/schemata.h>
-#include <plugin/data_engine/statistics.h>
 #include <plugin/data_engine/status.h>
 #include <plugin/data_engine/table_constraints.h>
 #include <plugin/data_engine/tables.h>
@@ -64,15 +64,16 @@ class Dictionary : public drizzled::plugin::StorageEngine
   CollationCharacterSetApplicabilityTool collation_character_set_applicability;
   CollationsTool collations;
   ColumnsTool columns;
+  IndexesTool indexes;
+  IndexDefinitionTool index_definitions;
   KeyColumnUsageTool key_column_usage;
   ModulesTool modules;
   PluginsTool plugins;
   ProcesslistTool processlist;
   ReferentialConstraintsTool referential_constraints;
-  SchemataTool schemata;
-  SchemataNamesTool schemata_names;
   SchemataInfoTool schemata_info;
-  StatisticsTool statistics;
+  SchemataNamesTool schemata_names;
+  SchemataTool schemata;
   StatusTool global_status;
   StatusTool session_status;
   TablesTool tables;
