@@ -85,6 +85,28 @@ int BlitzTree::close(void) {
   return 0;
 }
 
+int BlitzTree::write(const char *key, const size_t klen,
+                     const char *val, const size_t vlen) {
+  return (tcbdbput(btree, key, klen, val, vlen)) ? 0 : 1;
+}
+
+int BlitzTree::write_unique(const char *key, const size_t klen,
+                            const char *val, const size_t vlen) {
+  int rv = 0;
+
+  if (!tcbdbputkeep(btree, key, klen, val, vlen)) {
+    if (tcbdbecode(btree) == TCEKEEP) {
+      errno = HA_ERR_FOUND_DUPP_KEY;
+      rv = HA_ERR_FOUND_DUPP_KEY;
+    }
+  }
+  return rv;
+}
+
+int BlitzTree::delete_all(void) {
+  return (tcbdbvanish(btree)) ? 0 : 1;
+}
+
 uint64_t BlitzTree::records(void) {
   return tcbdbrnum(btree);
 }

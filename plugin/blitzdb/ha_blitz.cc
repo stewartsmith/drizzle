@@ -509,37 +509,35 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
   row_len = pack_row(row_buf, drizzle_row);
 
-  /* Write index key(s) to the appropriate BlitzTree object
-     EXCEPT for the PRIMARY KEY. This is because PK is treated
-     as a data-dictionary-key in BlitzDB. The internal key ID
-     for a PK (if it exists) seems guaranteed to be 0. Therefore
-     if a PK exists in this table, we skip the first element of
-     the KEY array. */
-  uint32_t i = (share->primary_key_exists) ? 1 : 0;
+  /* Loop over the keys and write them to it's exclusive tree.
+     If writing to a certain index fails, we delete the entries in
+     the reverse order that we wrote to the tree. */
+  uint32_t curr_key = 0;
 
-  /* NOTE: This means that the key is UNIQUE. Remeber it for future
-     usage. if (key->flags & HA_NOSAME) { no duplicates } */
-  while (i < share->nkeys) {
-    /* This is where we iterate over the keys and write them
-       to the appropriate BTREE file(s). Don't implement this
-       body yet since we're only interested in supporting one
-       index to begin with, which is PK.
-
-       KEY *current_index = &table->key_info[i]; */
-    i++;
-  }
-
-  /* Write the 'real' row to the Data Dictionary. If a primary key exists,
-     it will be used as the key _and_ checked for key duplication. Otherwise
-     a hidden 8 byte key (incremental uint64_t) will be used as the key. */
+  /* We isolate this condition outside the key loop to avoid the CPU
+     from going through unnecessary conditional branching on heavy
+     insertion load. */
   if (share->primary_key_exists) {
-    rv = share->dict.write_unique_row(temp_pkbuf, pk_len, row_buf, row_len);
-    if (rv == HA_ERR_FOUND_DUPP_KEY)
-      this->errkey_id = table->s->primary_key;
-  } else {
-    rv = share->dict.write_row(temp_pkbuf, pk_len, row_buf, row_len);
+    rv = share->btrees[curr_key].write_unique(temp_pkbuf, pk_len, "", 0);
+
+    if (rv == HA_ERR_FOUND_DUPP_KEY) {
+      this->errkey_id = curr_key;
+      return rv;
+    }
+    curr_key = 1;
   }
 
+  while (curr_key < share->nkeys) {
+    /* TODO: write to tree(s) and check for error. */
+    curr_key++;
+  }
+
+  /* Write the 'real' row to the Data Dictionary. */
+  rv = share->dict.write_row(temp_pkbuf, pk_len, row_buf, row_len);
+
+  /* TODO: Check rv for error. If writing to the dictionary had failed,
+           we must delete all index entries for this row. What we need
+           to do is: rewind_index(const int key_num_to_rewind_from). */
   return rv;
 }
 
@@ -623,6 +621,12 @@ int ha_blitz::reset_auto_increment(uint64_t value) {
 }
 
 int ha_blitz::delete_all_rows(void) {
+  for (uint32_t i = 0; i < share->nkeys; i++) {
+    if (share->btrees[i].delete_all() != 0) {
+      errkey = i;
+      return HA_ERR_CRASHED_ON_USAGE;
+    }
+  }
   return (share->dict.delete_all_rows()) ? 0 : -1;
 }
 
@@ -825,8 +829,12 @@ BlitzShare *ha_blitz::get_share(const char *path) {
   /* Prepare Index Structure(s) */
   share_ptr->btrees = new BlitzTree[table->s->keys];
 
-  for (uint32_t i = 0; i < table->s->keys; i++)
+  for (uint32_t i = 0; i < table->s->keys; i++) {
     share_ptr->btrees[i].open(path, i, BDBOWRITER);
+
+    if (table->key_info[i].flags & HA_NOSAME)
+      share_ptr->btrees[i].unique = true;
+  }
 
   /* Set Meta Data */
   share_ptr->auto_increment_value = share_ptr->dict.read_meta_autoinc();

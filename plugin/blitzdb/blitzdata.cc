@@ -208,8 +208,7 @@ uint64_t BlitzData::next_hidden_row_id(void) {
 
 int BlitzData::write_row(const char *key, const size_t klen,
                          const unsigned char *row, const size_t rlen) {
-  bool success = tchdbput(data_table, key, klen, row, rlen);
-  return (success) ? 0 : 1; 
+  return (tchdbput(data_table, key, klen, row, rlen)) ? 0 : 1;
 }
 
 int BlitzData::write_unique_row(const char *key, const size_t klen,

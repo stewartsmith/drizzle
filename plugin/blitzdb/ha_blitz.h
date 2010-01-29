@@ -145,11 +145,14 @@ public:
 class BlitzTree {
 private:
   TCBDB *btree;
-  int type;
 
 public:
-  BlitzTree() : type(0) {}
+  BlitzTree() : type(0), unique(false) {}
   ~BlitzTree() {}
+
+  /* METADATA */
+  int type;
+  bool unique;
 
   /* BTREE INDEX CREATION RELATED */
   int open(const char *path, const int key_num, int mode);
@@ -163,6 +166,7 @@ public:
             const size_t vlen);
   int write_unique(const char *key, const size_t klen, const char *val,
                    const size_t vlen);
+  int delete_all(void);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
