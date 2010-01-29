@@ -36,7 +36,7 @@ public:
     return ip;
   }
 
-  void setIp(const char *newip) const
+  void setIp(const char *newip)
   {
     ip.assign(newip);
   }
@@ -46,14 +46,14 @@ public:
     return user;
   }
 
-  void setUser(const char *newuser) const
+  void setUser(const char *newuser)
   {
     user.assign(newuser);
   }
 
 private:
-  mutable std::string user;
-  mutable std::string ip;
+  std::string user;
+  std::string ip;
 };
 
 #endif /* DRIZZLED_SECURITY_CONTEXT_H */

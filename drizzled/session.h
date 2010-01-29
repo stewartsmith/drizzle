@@ -480,6 +480,11 @@ public:
     return security_ctx;
   }
 
+  SecurityContext& getSecurityContext()
+  {
+    return security_ctx;
+  }
+
   /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
