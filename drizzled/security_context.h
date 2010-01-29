@@ -31,29 +31,29 @@ class SecurityContext {
 public:
   SecurityContext() {}
 
-  std::string& getIp()
+  const std::string& getIp() const
   {
     return ip;
   }
 
-  void setIp(char * newip)
+  void setIp(const char *newip) const
   {
     ip.assign(newip);
   }
 
-  std::string& getUser()
+  const std::string& getUser() const
   {
     return user;
   }
 
-  void setUser(char * newuser)
+  void setUser(const char *newuser) const
   {
     user.assign(newuser);
   }
 
 private:
-  std::string user;
-  std::string ip;
+  mutable std::string user;
+  mutable std::string ip;
 };
 
 #endif /* DRIZZLED_SECURITY_CONTEXT_H */

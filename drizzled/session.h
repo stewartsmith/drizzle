@@ -475,11 +475,10 @@ public:
 private:
   SecurityContext security_ctx;
 public:
-  SecurityContext& getSecurityContext()
+  const SecurityContext& getSecurityContext() const
   {
     return security_ctx;
   }
-  
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
