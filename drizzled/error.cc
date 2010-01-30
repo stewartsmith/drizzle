@@ -96,11 +96,6 @@ const char * error_message(unsigned int code)
 }
 
 
-// -- From here has just been moved from my_error.cc
-
-/* Error message numbers in global map */
-const char * globerrs[GLOBERRS];
-
 error_handler_func error_handler_hook= NULL;
 
 
@@ -112,31 +107,6 @@ error_handler_func error_handler_hook= NULL;
   - With some special text of errror message use:
   my_printf_error(ER_CODE, format, MYF(N), ...)
 */
-
-/*
-  Message texts are registered into a linked list of 'my_err_head' structs.
-  Each struct contains (1.) an array of pointers to C character strings with
-  '\0' termination, (2.) the error number for the first message in the array
-  (array index 0) and (3.) the error number for the last message in the array
-  (array index (last - first)).
-  The array may contain gaps with NULL pointers and pointers to empty strings.
-  Both kinds of gaps will be translated to "Unknown error %d.", if my_error()
-  is called with a respective error number.
-  The list of header structs is sorted in increasing order of error numbers.
-  Negative error numbers are allowed. Overlap of error numbers is not allowed.
-  Not registered error numbers will be translated to "Unknown error %d.".
-*/
-static struct my_err_head
-{
-  struct my_err_head    *meh_next;      /* chain link */
-  const char            **meh_errmsgs;  /* error messages array */
-  int                   meh_first;      /* error number matching array slot 0 */
-  int                   meh_last;       /* error number matching last slot */
-  bool			is_globerrs;
-} my_errmsgs_globerrs = {NULL, globerrs, EE_ERROR_FIRST, EE_ERROR_LAST, true};
-
-static struct my_err_head *my_errmsgs_list= &my_errmsgs_globerrs;
-
 
 /*
    Error message to user
