@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-01-28 12:42+0000\n"
-"Last-Translator: Rino Tom Thomas <Unknown>\n"
+"PO-Revision-Date: 2010-01-29 10:55+0000\n"
+"Last-Translator: Jobin Augustine <Unknown>\n"
 "Language-Team: Malayalam <ml@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-01-29 04:52+0000\n"
+"X-Launchpad-Export-Date: 2010-01-30 04:39+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -209,10 +209,12 @@ msgstr ""
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"ഹിസ്റ്ററി ഫയല്‍ ഉപയോഗിക്കരുത്. ഒരുമിച്ചു (interact) ചെയ്യുന്നത് "
+"അവസാനിപ്പിക്കുക. ( --silent  ഇനേബിള്‍ ചെയ്യും)"
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
-msgstr ""
+msgstr "കോളത്തിന്റെ ടൈപ്പ് വിവരം കാണിക്കുക"
 
 #: client/drizzle.cc:1442
 msgid ""
