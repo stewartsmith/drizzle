@@ -33,15 +33,14 @@ namespace drizzled
 
 bool statement::AlterSchema::execute()
 {
-  string database_name(session->lex->name.str);
-  NonNormalisedDatabaseName non_normalised_database_name(database_name);
-  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
+  LEX_STRING *db= &session->lex->name;
 
-  if (! normalised_database_name.isValid())
+  if (check_db_name(db))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), normalised_database_name.to_string().c_str());
+    my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
     return false;
   }
+
   if (session->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
@@ -49,7 +48,9 @@ bool statement::AlterSchema::execute()
                MYF(0));
     return true;
   }
-  bool res= mysql_alter_db(session, normalised_database_name, &schema_message);
+
+  bool res= mysql_alter_db(session, db->str, &schema_message);
+
   return res;
 }
 

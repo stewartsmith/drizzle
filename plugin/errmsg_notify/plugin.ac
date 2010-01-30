@@ -1,0 +1,11 @@
+PKG_CHECK_MODULES([gtkmm], [gtkmm-2.4], [
+  ac_cv_have_gtkmm=yes
+],[
+  ac_cv_have_gtkmm=no
+])
+PKG_CHECK_MODULES([libnotifymm], [libnotifymm-1.0], [
+  ac_cv_have_libnotifymm=yes
+],[
+  ac_cv_have_libnotifymm=no
+])
+
