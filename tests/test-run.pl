@@ -98,7 +98,7 @@ $Devel::Trace::TRACE= 1;
 ##############################################################################
 
 # Misc global variables
-our $mysql_version_id;
+our $drizzle_version_id;
 our $glob_suite_path=             undef;
 our $glob_mysql_test_dir=         undef;
 our $glob_mysql_bench_dir=        undef;
@@ -129,7 +129,7 @@ our $default_vardir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main"; # Default suites to run
+our $opt_suites_default= "main,jp"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
@@ -1125,7 +1125,7 @@ sub collect_mysqld_features () {
   foreach my $line (split('\n', $list))
   {
     # First look for version
-    if ( !$mysql_version_id )
+    if ( !$drizzle_version_id )
     {
       # Look for version
       my $exe_name= basename($exe_drizzled);
@@ -1133,9 +1133,9 @@ sub collect_mysqld_features () {
       if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
       {
 	#print "Major: $1 Minor: $2 Build: $3\n";
-	$mysql_version_id= $1*10000 + $2*100 + $3;
-	#print "mysql_version_id: $mysql_version_id\n";
-	mtr_report("MySQL Version $1.$2.$3");
+	$drizzle_version_id= $1*10000 + $2*100 + $3;
+	#print "drizzle_version_id: $drizzle_version_id\n";
+	mtr_report("Drizzle Version $1.$2.$3");
       }
     }
     else
@@ -1176,7 +1176,7 @@ sub collect_mysqld_features () {
     }
   }
   rmtree($tmpdir);
-  mtr_error("Could not find version of MySQL") unless $mysql_version_id;
+  mtr_error("Could not find version of Drizzle") unless $drizzle_version_id;
   mtr_error("Could not find variabes list") unless $found_variable_list_start;
 
 }
@@ -1251,7 +1251,7 @@ sub executable_setup () {
   if (!$opt_extern)
   {
 # Look for SQL scripts directory
-     if ( $mysql_version_id >= 50100 )
+     if ( $drizzle_version_id >= 50100 )
      {
          $exe_drizzleslap= mtr_exe_exists("$path_client_bindir/drizzleslap");
      }
@@ -1312,7 +1312,7 @@ sub drizzle_client_test_arguments()
   mtr_add_arg($args, "--user=root");
   mtr_add_arg($args, "--port=$master->[0]->{'port'}");
 
-  if ( $opt_extern || $mysql_version_id >= 50000 )
+  if ( $opt_extern || $drizzle_version_id >= 50000 )
   {
     mtr_add_arg($args, "--vardir=$opt_vardir")
   }
@@ -2469,7 +2469,7 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
   }
 
-  if ( $mysql_version_id >= 50036)
+  if ( $drizzle_version_id >= 50036)
   {
     # By default, prevent the started mysqld to access files outside of vardir
     mtr_add_arg($args, "%s--secure-file-priv=%s", $prefix, $opt_vardir);
