@@ -683,7 +683,7 @@ extern uint32_t total_ha, total_ha_2pc;
 #define ha_rollback(session) (ha_rollback_trans((session), true))
 
 /* basic stuff */
-int ha_init_errors(void);
+void ha_init_errors(void);
 int ha_init(void);
 
 /* transactions: interface to plugin::StorageEngine functions */

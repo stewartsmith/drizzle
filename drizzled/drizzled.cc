@@ -1381,8 +1381,7 @@ static int init_server_components(plugin::Registry &plugins)
   }
 
   /* Allow storage engine to give real error messages */
-  if (ha_init_errors())
-    return(1);
+  ha_init_errors();
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
                   ((opt_help) ? true : false)))

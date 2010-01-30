@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_ERROR_H
 #define DRIZZLED_ERROR_H
 
+#include <string>
 #include "drizzled/definitions.h"
 
 /* Max width of screen (for error messages) */
@@ -32,18 +33,17 @@
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
 extern error_handler_func error_handler_hook;
 
+// TODO: kill this method. Too much to do with this branch.
+// This is called through the ER(x) macro.
 const char * error_message(unsigned int err_index);
 
+// Adds the message to the global error dictionary.
+void add_error_message(uint32_t error_code, std::string const& message);
 
-void my_error(int nr,myf MyFlags, ...);
+void my_error(int nr, myf MyFlags, ...);
+void my_message(uint32_t my_err, const char *str, myf MyFlags);
 void my_printf_error(uint32_t my_err, const char *format,
                      myf MyFlags, ...)
                      __attribute__((format(printf, 2, 4)));
-
-int my_error_register(const char **errmsgs, int first, int last);
-
-void my_message(uint32_t my_err, const char *str, myf MyFlags);
-void my_message_no_curses(uint32_t my_err, const char *str, myf MyFlags);
-
 
 #endif /* DRIZZLED_ERROR_H */

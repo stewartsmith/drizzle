@@ -27,25 +27,25 @@
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
+#include "drizzled/hash.h"
+
+#include <exception>
 
 namespace {
 
-/**
- * DESIGN NOTES:
- *
- * 1) Have a central error store.
- * 2) Have a single function that can take an error number, and return the
- *    translated error string, or something that can output a translated string.
- * 2a) ideally we'd want to be able to have a function that inserts directly
- *    into the the translated error.
- * 3) Plugins should be able to register/unregister their own errors
- * 3a) error ids should not overlap, which does bring with it the idea of
- *    why do we care if the errors are not unregistered?  If plugins are not
- *    changed during execution, and are loaded at startup, the only time they
- *    are being unregistered is when the application is shutting down.  In which
- *    case we can leave it up to the standard library implementation to free up
- *    the memory which has been allocated.
- */
+class ErrorStringNotFound: public std::exception
+{
+public:
+  ErrorStringNotFound(uint32_t code)
+    : error_num_(code)
+  {}
+  uint32_t error_num() const
+  {
+    return error_num_;
+  }
+private:
+  uint32_t error_num_;
+};
 
 /*
  * Provides a mapping from the error enum values to std::strings.
@@ -57,10 +57,10 @@ public:
 
   // Insert the message for the error.  If the error already has an existing
   // mapping, an error is logged, but the function continues.
-  void add(uint32_t errno, std::string const& message);
-  // If there is no error mapping for the errno, then "Unknown error %d" is returned,
-  // with the %d replaced with the error_num value.
-  std::string find(uint32_t error_num) const;
+  void add(uint32_t error_num, std::string const& message);
+
+  // If there is no error mapping for the error_num, ErrorStringNotFound is raised.
+  std::string const& find(uint32_t error_num) const;
 
 private:
   // Disable copy and assignment.
@@ -68,7 +68,6 @@ private:
   ErrorMap& operator=(ErrorMap const& e);
 
   typedef drizzled::hash_map<uint32_t, std::string> ErrorMessageMap;
-  typedef ErrorMessageMap::value_type value_type;
   ErrorMessageMap mapping_;
 };
 
@@ -80,24 +79,25 @@ ErrorMap& get_error_map()
 
 } // anonymous namespace
 
-
-const char * error_message(unsigned int code)
+void add_error_message(uint32_t error_code, std::string const& message)
 {
-  /**
-   if the connection is killed, code is 2
-   See lp bug# 435619
-   */
-  if ((code > ER_ERROR_FIRST) )
-   {
-     return drizzled_error_messages[code-ER_ERROR_FIRST];
-   }
-  else
-    return drizzled_error_messages[ER_UNKNOWN_ERROR - ER_ERROR_FIRST];
+  get_error_map().add(error_code, message);
 }
 
 
-error_handler_func error_handler_hook= NULL;
+const char * error_message(unsigned int code)
+{
+  try
+  {
+    return get_error_map().find(code).c_str();
+  }
+  catch (ErrorStringNotFound const& e)
+  {
+    return get_error_map().find(ER_UNKNOWN_ERROR).c_str();
+  }
+}
 
+error_handler_func error_handler_hook= NULL;
 
 /*
   WARNING!
@@ -120,28 +120,22 @@ error_handler_func error_handler_hook= NULL;
 
 void my_error(int nr, myf MyFlags, ...)
 {
-  const char *format;
-  struct my_err_head *meh_p;
+  std::string format;
   va_list args;
   char ebuff[ERRMSGSIZE + 20];
 
-  /* Search for the error messages array, which could contain the message. */
-  for (meh_p= my_errmsgs_list; meh_p; meh_p= meh_p->meh_next)
-    if (nr <= meh_p->meh_last)
-      break;
-
-  /* get the error message string. Default, if NULL or empty string (""). */
-  if (! (format= (meh_p && (nr >= meh_p->meh_first)) ?
-         _(meh_p->meh_errmsgs[nr - meh_p->meh_first]) : NULL) || ! *format)
-    (void) snprintf (ebuff, sizeof(ebuff), _("Unknown error %d"), nr);
-  else
+  try
   {
+    format= get_error_map().find(nr);
     va_start(args,MyFlags);
-    (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
+    (void) vsnprintf (ebuff, sizeof(ebuff), format.c_str(), args);
     va_end(args);
   }
+  catch (ErrorStringNotFound const& e)
+  {
+    (void) snprintf (ebuff, sizeof(ebuff), _("Unknown error %d"), nr);
+  }
   (*error_handler_hook)(nr, ebuff, MyFlags);
-  return;
 }
 
 /*
@@ -193,7 +187,7 @@ void ErrorMap::add(uint32_t error_num, std::string const& message)
   if (mapping_.find(error_num) == mapping_.end())
   {
     // Log the error.
-    errorMessages[error_num]= message;
+    mapping_[error_num]= message;
   }
   else
   {
@@ -201,15 +195,12 @@ void ErrorMap::add(uint32_t error_num, std::string const& message)
   }
 }
 
-// If there is no error mapping for the errno, then ... is returned.
-std::string ErrorMap::find(uint32_t error_num) const
+std::string const& ErrorMap::find(uint32_t error_num) const
 {
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
   {
-    std::ostringstream sout;
-    sout << "Unknown error " << error_num;
-    return sout.str();
+    throw ErrorStringNotFound(error_num);
   }
   return pos->second;
 }
@@ -341,7 +332,7 @@ ErrorMap::ErrorMap()
   add(ER_CANT_FIND_UDF, N_("Can't load function '%-.192s'"));
   add(ER_CANT_INITIALIZE_UDF, N_("Can't initialize function '%-.192s'; %-.80s"));
   add(ER_PLUGIN_NO_PATHS, N_("No paths allowed for plugin library"));
-  add(ER_UDF_EXISTS, N_("Plugin '%-.192s' already exists"));
+  add(ER_PLUGIN_EXISTS, N_("Plugin '%-.192s' already exists"));
   add(ER_CANT_OPEN_LIBRARY, N_("Can't open shared library '%-.192s' (errno: %d %-.128s)"));
   add(ER_CANT_FIND_DL_ENTRY, N_("Can't find symbol '%-.128s' in library '%-.128s'"));
   add(ER_FUNCTION_NOT_DEFINED, N_("Function '%-.192s' is not defined"));
@@ -485,7 +476,7 @@ ErrorMap::ErrorMap()
   add(ER_WARN_TOO_MANY_RECORDS, N_("Row %ld was truncated; it contained more data than there were input columns"));
   add(ER_WARN_NULL_TO_NOTNULL, N_("Column set to default value; NULL supplied to NOT NULL column '%s' at row %ld"));
   add(ER_WARN_DATA_OUT_OF_RANGE, N_("Out of range value for column '%s' at row %ld"));
-  add(WARN_DATA_TRUNCATED, N_("Data truncated for column '%s' at row %ld"));
+  add(ER_WARN_DATA_TRUNCATED, N_("Data truncated for column '%s' at row %ld"));
   add(ER_WARN_USING_OTHER_HANDLER, N_("Using storage engine %s for table '%s'"));
   add(ER_CANT_AGGREGATE_2COLLATIONS, N_("Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"));
   add(ER_DROP_USER, N_("Cannot drop one or more of the requested users"));
