@@ -36,6 +36,7 @@
 #include "drizzled/key_part_spec.h"
 #include "drizzled/index_hint.h"
 #include "drizzled/statement.h"
+#include "drizzled/optimizer/explain_plan.h"
 
 #include <bitset>
 #include <string>
@@ -424,7 +425,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  std::string type; /* type of select for EXPLAIN          */
+  enum drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;

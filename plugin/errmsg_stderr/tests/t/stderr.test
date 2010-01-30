@@ -1,0 +1,5 @@
+# 
+# Verify that the errmsg_stderr plugin doesn't cause server crashes
+#
+
+SELECT "I love testing";

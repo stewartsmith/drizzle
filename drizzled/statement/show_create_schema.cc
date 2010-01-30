@@ -33,17 +33,12 @@ namespace drizzled
 
 bool statement::ShowCreateSchema::execute()
 {
-  string database_name(session->lex->name.str);
-  NonNormalisedDatabaseName non_normalised_database_name(database_name);
-  NormalisedDatabaseName normalised_database_name(non_normalised_database_name);
-
-  if (! normalised_database_name.isValid())
+  if (check_db_name(&session->lex->name))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0),
-             normalised_database_name.to_string().c_str());
+    my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;
   }
-  bool res= mysqld_show_create_db(session, normalised_database_name,
+  bool res= mysqld_show_create_db(session, session->lex->name.str,
                                   is_if_not_exists);
   return res;
 }

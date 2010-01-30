@@ -75,11 +75,9 @@ public:
                                      HTON_STATS_RECORDS_IS_EXACT |
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NULL_IN_KEY |
-                                     HTON_MRR_CANT_SORT |
                                      HTON_HAS_RECORDS |
                                      HTON_DUPLICATE_POS |
                                      HTON_AUTO_PART_KEY |
-                                     HTON_NEED_READ_RANGE_BUFFER |
                                      HTON_SKIP_STORE_LOCK |
                                      HTON_FILE_BASED ) {}
 

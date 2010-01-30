@@ -303,18 +303,18 @@ static bool store_db_create_info(const char *dbname, String *buffer, bool if_not
   return false;
 }
 
-bool mysqld_show_create_db(Session *session, const NormalisedDatabaseName &database_name, bool if_not_exists)
+bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
 
-  if (store_db_create_info(database_name.to_string().c_str(), &buffer, if_not_exists))
+  if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
       can fail is incorrect database name (which is the case now).
     */
-    my_error(ER_BAD_DB_ERROR, MYF(0), database_name.to_string().c_str());
+    my_error(ER_BAD_DB_ERROR, MYF(0), dbname);
     return true;
   }
 
@@ -325,7 +325,7 @@ bool mysqld_show_create_db(Session *session, const NormalisedDatabaseName &datab
   if (session->client->sendFields(&field_list))
     return true;
 
-  session->client->store(database_name.to_string().c_str(), database_name.to_string().length());
+  session->client->store(dbname, strlen(dbname));
   session->client->store(buffer.ptr(), buffer.length());
 
   if (session->client->flush())

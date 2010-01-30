@@ -676,6 +676,7 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
+  LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
@@ -701,11 +702,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
-    const string database_name_string(in_db);
-    NonNormalisedDatabaseName database_name(database_name_string);
-    NormalisedDatabaseName normalised_database_name(database_name);
-
-    if (mysql_change_db(this, normalised_database_name, false))
+    if (mysql_change_db(this, &db_str, false))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;
@@ -1728,18 +1725,18 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   set_open_tables_state(backup);
 }
 
-
-bool Session::set_db(const NormalisedDatabaseName &new_db)
+bool Session::set_db(const char *new_db, size_t length)
 {
-  db= new_db.to_string();
+  /* Do not reallocate memory if current chunk is big enough. */
+  if (length)
+    db= new_db;
+  else
+    db.clear();
 
   return false;
 }
 
-void Session::clear_db()
-{
-  db.clear();
-}
+
 
 
 /**
