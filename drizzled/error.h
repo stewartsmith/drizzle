@@ -42,8 +42,8 @@ void my_printf_error(uint32_t my_err, const char *format,
 
 int my_error_register(const char **errmsgs, int first, int last);
 
-void my_message(uint32_t my_err, const char *str,myf MyFlags);
-void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
+void my_message(uint32_t my_err, const char *str, myf MyFlags);
+void my_message_no_curses(uint32_t my_err, const char *str, myf MyFlags);
 
 
 #endif /* DRIZZLED_ERROR_H */
