@@ -783,13 +783,7 @@ enum drizzle_exit_codes {
 };
 
 
-#define GLOBERRS (EE_ERROR_LAST - EE_ERROR_FIRST + 1) /* Nr of global errors */
-#define EE(X)    (globerrs[(X) - EE_ERROR_FIRST])
-
-/* Error message numbers in global map */
-extern const char * globerrs[GLOBERRS];
-
-void init_glob_errs(void);
+void init_glob_errors(void);
 void my_error(int nr,myf MyFlags, ...);
 void my_printf_error(uint32_t my_err, const char *format,
                      myf MyFlags, ...)

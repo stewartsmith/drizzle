@@ -55,7 +55,7 @@ bool my_init(void)
   mysys_usage_id++;
   my_umask= 0660;                       /* Default umask for new files */
   my_umask_dir= 0700;                   /* Default umask for new directories */
-  init_glob_errs();
+  init_glob_errors();
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();
 #endif
