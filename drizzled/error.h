@@ -32,7 +32,6 @@
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
 extern error_handler_func error_handler_hook;
 
-// bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
 
 enum drizzled_error_code {
@@ -783,16 +782,12 @@ enum drizzle_exit_codes {
 };
 
 
-// void init_glob_errors(void);
-
 void my_error(int nr,myf MyFlags, ...);
 void my_printf_error(uint32_t my_err, const char *format,
                      myf MyFlags, ...)
                      __attribute__((format(printf, 2, 4)));
 
 int my_error_register(const char **errmsgs, int first, int last);
-//void my_error_unregister_all(void);
-//const char **my_error_unregister(int first, int last);
 
 void my_message(uint32_t my_err, const char *str,myf MyFlags);
 void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);

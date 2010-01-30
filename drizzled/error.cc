@@ -96,29 +96,6 @@ const char * error_message(unsigned int code)
 }
 
 
-static void init_myfunc_errs()
-{
-  init_glob_errors();                     /* Initiate english errors */
-  init_drizzle_errors();
-
-  {
-  }
-}
-
-bool init_errmessage(void)
-{
-
-  /* Register messages for use with my_error(). */
-  if (my_error_register(drizzled_error_messages,
-                        ER_ERROR_FIRST, ER_ERROR_LAST))
-  {
-    return(true);
-  }
-
-  init_myfunc_errs();                   /* Init myfunc messages */
-  return(false);
-}
-
 // -- From here has just been moved from my_error.cc
 
 /* Error message numbers in global map */
@@ -126,10 +103,6 @@ const char * globerrs[GLOBERRS];
 
 error_handler_func error_handler_hook= NULL;
 
-
-void init_glob_errors()
-{
-}
 
 /*
   WARNING!

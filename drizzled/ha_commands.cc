@@ -127,26 +127,6 @@ int ha_init_errors(void)
   return my_error_register(errmsgs, HA_ERR_FIRST, HA_ERR_LAST);
 }
 
-
-/**
-  Unregister Cursor error messages.
-
-  @retval
-    0           OK
-  @retval
-    !=0         Error
-*/
-static int ha_finish_errors(void)
-{
-  const char    **errmsgs;
-
-  /* Allocate a pointer array for the error message strings. */
-  if (! (errmsgs= my_error_unregister(HA_ERR_FIRST, HA_ERR_LAST)))
-    return 1;
-  free((unsigned char*) errmsgs);
-  return 0;
-}
-
 int ha_init()
 {
   int error= 0;
@@ -160,22 +140,6 @@ int ha_init()
   savepoint_alloc_size+= sizeof(SAVEPOINT);
   return error;
 }
-
-int ha_end()
-{
-  int error= 0;
-
-  /*
-    This should be eventualy based  on the graceful shutdown flag.
-    So if flag is equal to HA_PANIC_CLOSE, the deallocate
-    the errors.
-  */
-  if (ha_finish_errors())
-    error= 1;
-
-  return error;
-}
-
 
 
 /* ========================================================================

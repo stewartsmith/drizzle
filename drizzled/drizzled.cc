@@ -544,7 +544,6 @@ static void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  ha_end();
   plugin::Registry &plugins= plugin::Registry::singleton();
   plugin_shutdown(plugins);
   xid_cache_free();
@@ -565,12 +564,6 @@ static void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
-  /* Returns NULL on globerrs, we don't want to try to free that */
-  //void *freeme=
-  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
-  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
-/*  if (freeme != NULL)
-    free(freeme);  */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
@@ -1286,8 +1279,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
-  if (init_errmessage())	/* Read error messages from file */
-    return 1;
   if (item_create_init())
     return 1;
   if (set_var_init())

@@ -685,7 +685,6 @@ extern uint32_t total_ha, total_ha_2pc;
 /* basic stuff */
 int ha_init_errors(void);
 int ha_init(void);
-int ha_end(void);
 
 /* transactions: interface to plugin::StorageEngine functions */
 int ha_commit_one_phase(Session *session, bool all);

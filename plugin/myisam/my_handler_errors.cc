@@ -186,10 +186,3 @@ void my_handler_error_register(void)
   my_error_register(handler_error_messages, HA_ERR_FIRST,
                     HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
 }
-
-
-void my_handler_error_unregister(void)
-{
-  my_error_unregister(HA_ERR_FIRST,
-                      HA_ERR_FIRST+ array_elements(handler_error_messages)-1);
-}
