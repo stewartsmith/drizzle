@@ -128,7 +128,7 @@ void my_error(int nr, myf MyFlags, ...)
   {
     format= get_error_map().find(nr);
     va_start(args,MyFlags);
-    (void) vsnprintf (ebuff, sizeof(ebuff), format.c_str(), args);
+    (void) vsnprintf (ebuff, sizeof(ebuff), _(format.c_str()), args);
     va_end(args);
   }
   catch (ErrorStringNotFound const& e)
