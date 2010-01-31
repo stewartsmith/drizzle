@@ -4860,26 +4860,6 @@ show_param:
              if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
                DRIZZLE_YYABORT;
            }
-        | OPEN_SYM TABLES opt_db show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->select_lex.db= $3;
-            if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
-              DRIZZLE_YYABORT;
-          }
-        | ENGINE_SYM ident_or_text STATUS_SYM /* This should either go... well it should go */
-          {
-            Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
-            Lex->statement=
-              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2.str);
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
           {
             LEX *lex= Lex;
@@ -4948,7 +4928,7 @@ show_param:
             if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
               DRIZZLE_YYABORT;
           }
-        | opt_full PROCESSLIST_SYM
+        | PROCESSLIST_SYM
           {
             Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
             Lex->statement=
