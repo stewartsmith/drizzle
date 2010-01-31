@@ -181,7 +181,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  session->query_id= query_id.value();
+  session->setQueryId(query_id.value());
 
   switch( command ) {
   /* Ignore these statements. */

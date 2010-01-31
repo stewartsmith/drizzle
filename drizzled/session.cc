@@ -228,7 +228,7 @@ Session::Session(plugin::Client *client_arg)
   query_id= 0;
   query= NULL;
   query_length= 0;
-  warn_id= 0;
+  warn_query_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
   mysys_var= 0;

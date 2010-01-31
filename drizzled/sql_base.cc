@@ -1153,7 +1153,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
         return NULL;
       }
-      table->query_id= query_id;
+      table->query_id= getQueryId();
       goto reset;
     }
   }

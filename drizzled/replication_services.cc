@@ -187,7 +187,7 @@ void ReplicationServices::initTransaction(message::Transaction &in_transaction,
 {
   message::TransactionContext *trx= in_transaction.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
-  trx->set_transaction_id(in_session->getTransactionId());
+  trx->set_transaction_id(in_session->getQueryId());
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
 
