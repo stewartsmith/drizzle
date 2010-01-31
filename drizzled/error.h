@@ -30,6 +30,11 @@
 #define MY_FILE_ERROR	((size_t) -1)
 #define ME_FATALERROR   1024    /* Fatal statement error */
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
 extern error_handler_func error_handler_hook;
 
@@ -45,5 +50,8 @@ void my_message(uint32_t my_err, const char *str, myf MyFlags);
 void my_printf_error(uint32_t my_err, const char *format,
                      myf MyFlags, ...)
                      __attribute__((format(printf, 2, 4)));
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DRIZZLED_ERROR_H */
