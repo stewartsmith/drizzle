@@ -27,7 +27,7 @@
 /****************************************************************************
 	Check stack size; Send error if there isn't enough stack to continue
 ****************************************************************************/
-#if STACK_DIRECTION < 0
+#if defined(STACK_DIRECTION) && (STACK_DIRECTION < 0)
 #define used_stack(A,B) (long) (A - B)
 #else
 #define used_stack(A,B) (long) (B - A)

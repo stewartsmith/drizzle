@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.100])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.103])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -162,10 +162,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AS_IF([test "$ac_cv_time_t_unsigned" = "yes"],[
     AC_DEFINE([TIME_T_UNSIGNED], 1, [Define to 1 if time_t is unsigned])
   ])
-
-  dnl AC_FUNC_ALLOCA would test for stack direction if we didn't have a working
-  dnl alloca - but we need to know it anyway for check_stack_overrun.
-  PANDORA_STACK_DIRECTION
 
   AC_CHECK_LIBM
   

@@ -549,10 +549,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 #endif
 #define ulong_to_double(X) ((double) (ulong) (X))
 
-#ifndef STACK_DIRECTION
-#error "please add -DSTACK_DIRECTION=1 or -1 to your CPPFLAGS"
-#endif
-
 /* From limits.h instead */
 #ifndef DBL_MIN
 #define DBL_MIN    4.94065645841246544e-324
