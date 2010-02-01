@@ -30,14 +30,14 @@ using namespace drizzled;
 ProcesslistTool::ProcesslistTool() :
   Tool("PROCESSLIST")
 {
-  add_field("ID", message::Table::Field::BIGINT);
-  add_field("USER", message::Table::Field::VARCHAR, 16);
-  add_field("HOST", message::Table::Field::VARCHAR, 64);
-  add_field("DB", message::Table::Field::VARCHAR, 64);
-  add_field("COMMAND", message::Table::Field::VARCHAR, 16);
-  add_field("TIME", message::Table::Field::BIGINT);
-  add_field("STATE", message::Table::Field::VARCHAR, 16);
-  add_field("INFO", message::Table::Field::VARCHAR, PROCESS_LIST_WIDTH);
+  add_field("ID", Tool::NUMBER);
+  add_field("USER", 16);
+  add_field("HOST", NI_MAXHOST);
+  add_field("DB");
+  add_field("COMMAND", 16);
+  add_field("TIME", Tool::NUMBER);
+  add_field("STATE", 16);
+  add_field("INFO", PROCESS_LIST_WIDTH);
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
@@ -60,7 +60,6 @@ bool ProcesslistTool::Generator::populate(Field ** fields)
   const char *val;
   Session* tmp;
   Security_context *tmp_sctx;
-  size_t length;
 
   if (it == getSessionList().end())
     return false;
@@ -75,36 +74,33 @@ bool ProcesslistTool::Generator::populate(Field ** fields)
 
   /* USER */
   val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user";
-  (*field)->store(val, strlen(val), default_charset_info);
-  field++;
+  push(val);
 
   /* HOST */
-  (*field)->store(tmp_sctx->ip.c_str(), strlen(tmp_sctx->ip.c_str()), default_charset_info);
-  field++;
+  push(tmp_sctx->ip.c_str());
 
   /* DB */
   if (! tmp->db.empty())
   {
-    (*field)->store(tmp->db.c_str(), tmp->db.length(), default_charset_info);
+    push(tmp->db.c_str());
   }
   else
   {
-    (*field)->store("<none selected>", sizeof("<none selected>"), default_charset_info);
+    push("<none selected>");
   }
-  field++;
 
   /* COMMAND */
-  if ((val= (char *) (tmp->killed == Session::KILL_CONNECTION ? "Killed" : 0)))
-    (*field)->store(val, strlen(val), default_charset_info);
+  if ((val= const_cast<char *>(tmp->killed == Session::KILL_CONNECTION ? "Killed" : 0)))
+  {
+    push(val);
+  }
   else
-    (*field)->store(command_name[tmp->command].str,
-                    command_name[tmp->command].length, default_charset_info);
-  field++;
+  {
+    push(command_name[tmp->command].str, command_name[tmp->command].length);
+  }
 
   /* DRIZZLE_TIME */
-  (*field)->store((uint32_t)(tmp->start_time ?
-                             now - tmp->start_time : 0), true);
-  field++;
+  push((uint32_t)(tmp->start_time ?  now - tmp->start_time : 0));
 
   /* STATE */
   val= (char*) (tmp->client->isWriting() ?
@@ -116,25 +112,17 @@ bool ProcesslistTool::Generator::populate(Field ** fields)
                 tmp->mysys_var &&
                 tmp->mysys_var->current_cond ?
                 "Waiting on cond" : NULL);
-  if (val)
-  {
-    (*field)->store(val, strlen(val), default_charset_info);
-  }
-  else
-  {
-    (*field)->store("unknown", sizeof("unknown"), default_charset_info);
-  }
-  field++;
+  push(val ? val : "unknown");
 
   /* INFO */
-  length= strlen(tmp->process_list_info);
+  size_t length= strlen(tmp->process_list_info);
   if (length)
   {
-    (*field)->store(tmp->process_list_info, length, default_charset_info);
+    push(tmp->process_list_info, length);
   }
   else
   {
-    (*field)->store(" ", sizeof(" "), default_charset_info);
+    push("");
   }
 
   it++;
