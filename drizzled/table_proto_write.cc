@@ -38,7 +38,7 @@ using namespace std;
 
 namespace drizzled {
 
-static drizzled::message::Table::Field::FieldType enum_field_types_to_field_message_type(const enum_field_types type)
+drizzled::message::Table::Field::FieldType enum_field_types_to_field_message_type(const enum_field_types type)
 {
   switch (type) {
   case DRIZZLE_TYPE_LONG:
