@@ -38,6 +38,37 @@ using namespace std;
 
 namespace drizzled {
 
+static drizzled::message::Table::Field::FieldType enum_field_types_to_field_message_type(const enum_field_types type)
+{
+  switch (type) {
+  case DRIZZLE_TYPE_LONG:
+    return message::Table::Field::INTEGER;
+  case DRIZZLE_TYPE_DOUBLE:
+    return message::Table::Field::DOUBLE;
+  case DRIZZLE_TYPE_NULL:
+    assert(1); /* Not a user definable type */
+    return message::Table::Field::INTEGER; /* unreachable */
+  case DRIZZLE_TYPE_TIMESTAMP:
+    return message::Table::Field::TIMESTAMP;
+  case DRIZZLE_TYPE_LONGLONG:
+    return message::Table::Field::BIGINT;
+  case DRIZZLE_TYPE_DATETIME:
+    return message::Table::Field::DATETIME;
+  case DRIZZLE_TYPE_DATE:
+    return message::Table::Field::DATE;
+  case DRIZZLE_TYPE_VARCHAR:
+    return message::Table::Field::VARCHAR;
+  case DRIZZLE_TYPE_DECIMAL:
+    return message::Table::Field::DECIMAL;
+  case DRIZZLE_TYPE_ENUM:
+    return message::Table::Field::ENUM;
+  case DRIZZLE_TYPE_BLOB:
+    return message::Table::Field::BLOB;
+  }
+
+  return message::Table::Field::INTEGER; /* unreachable */
+}
+
 int fill_table_proto(message::Table *table_proto,
                      const char *table_name,
                      List<CreateField> &create_fields,
@@ -94,15 +125,14 @@ int fill_table_proto(message::Table *table_proto,
 
     message::Table::Field::FieldType parser_type= attribute->type();
 
-    switch (field_arg->sql_type) {
-    case DRIZZLE_TYPE_LONG:
-      attribute->set_type(message::Table::Field::INTEGER);
-      break;
-    case DRIZZLE_TYPE_DOUBLE:
-      {
-        attribute->set_type(drizzled::message::Table::Field::DOUBLE);
+    attribute->set_type(enum_field_types_to_field_message_type(field_arg->sql_type));
 
-        /* 
+    switch (attribute->type()) {
+    default: /* Only deal with types that need extra information */
+      break;
+    case message::Table::Field::DOUBLE:
+      {
+        /*
          * For DOUBLE, we only add a specific scale and precision iff
          * the fixed decimal point has been specified...
          */
@@ -117,26 +147,12 @@ int fill_table_proto(message::Table *table_proto,
         }
       }
       break;
-    case DRIZZLE_TYPE_NULL  :
-      assert(1); /* Not a user definable type */
-    case DRIZZLE_TYPE_TIMESTAMP:
-      attribute->set_type(message::Table::Field::TIMESTAMP);
-      break;
-    case DRIZZLE_TYPE_LONGLONG:
-      attribute->set_type(message::Table::Field::BIGINT);
-      break;
-    case DRIZZLE_TYPE_DATETIME:
-      attribute->set_type(message::Table::Field::DATETIME);
-      break;
-    case DRIZZLE_TYPE_DATE:
-      attribute->set_type(message::Table::Field::DATE);
-      break;
-    case DRIZZLE_TYPE_VARCHAR:
+    case message::Table::Field::VARCHAR:
       {
         message::Table::Field::StringFieldOptions *string_field_options;
 
         string_field_options= attribute->mutable_string_options();
-        attribute->set_type(message::Table::Field::VARCHAR);
+
         if (! use_existing_fields || string_field_options->length()==0)
           string_field_options->set_length(field_arg->length
                                            / field_arg->charset->mbmaxlen);
@@ -150,24 +166,22 @@ int fill_table_proto(message::Table *table_proto,
         }
         break;
       }
-    case DRIZZLE_TYPE_DECIMAL:
+    case message::Table::Field::DECIMAL:
       {
         message::Table::Field::NumericFieldOptions *numeric_field_options;
 
-        attribute->set_type(message::Table::Field::DECIMAL);
         numeric_field_options= attribute->mutable_numeric_options();
         /* This is magic, I hate magic numbers -Brian */
         numeric_field_options->set_precision(field_arg->length + ( field_arg->decimals ? -2 : -1));
         numeric_field_options->set_scale(field_arg->decimals);
         break;
       }
-    case DRIZZLE_TYPE_ENUM:
+    case message::Table::Field::ENUM:
       {
         message::Table::Field::SetFieldOptions *set_field_options;
 
         assert(field_arg->interval);
 
-        attribute->set_type(message::Table::Field::ENUM);
         set_field_options= attribute->mutable_set_options();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
@@ -181,10 +195,8 @@ int fill_table_proto(message::Table *table_proto,
         set_field_options->set_collation(field_arg->charset->name);
         break;
       }
-    case DRIZZLE_TYPE_BLOB:
+    case message::Table::Field::BLOB:
       {
-	attribute->set_type(message::Table::Field::BLOB);
-
         message::Table::Field::StringFieldOptions *string_field_options;
 
         string_field_options= attribute->mutable_string_options();
@@ -193,8 +205,6 @@ int fill_table_proto(message::Table *table_proto,
       }
 
       break;
-    default:
-      assert(0); /* Tell us, since this shouldn't happend */
     }
 
     assert (!use_existing_fields || parser_type == attribute->type());
