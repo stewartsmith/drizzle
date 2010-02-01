@@ -274,11 +274,11 @@ public:
 	Session*	session);	/* in: handle to the MySQL thread of the user
 			whose resources should be free'd */
 
-  virtual int savepoint_set_hook(Session* session,
+  virtual int doSetSavepoint(Session* session,
                                  drizzled::NamedSavepoint &savepoint);
-  virtual int savepoint_rollback_hook(Session* session,
+  virtual int doRollbackToSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
-  virtual int savepoint_release_hook(Session* session,
+  virtual int doReleaseSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
   virtual int commit(Session* session, bool all);
   virtual int rollback(Session* session, bool all);
@@ -309,7 +309,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  commit_by_xid(
+  commitByXid(
   /*===================*/
   			/* out: 0 or error number */
   	XID*	xid);	/* in: X/Open XA transaction identification */
@@ -318,7 +318,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  rollback_by_xid(
+  rollbackByXid(
   /*=====================*/
   			/* out: 0 or error number */
   	XID	*xid);	/* in: X/Open XA transaction identification */
@@ -2162,7 +2162,7 @@ InnobaseEngine::commit(
 	1. ::external_lock(),
 	2. ::start_stmt(),
 	3. innobase_query_caching_of_table_permitted(),
-	4. InnobaseEngine::savepoint_set(),
+	4. InnobaseEngine::setSavepoint(),
 	5. ::init_table_handle_for_HANDLER(),
 	6. InnobaseEngine::start_consistent_snapshot(),
 
@@ -2338,7 +2338,7 @@ Rolls back a transaction to a savepoint.
 @return 0 if success, HA_ERR_NO_SAVEPOINT if no savepoint with the
 given name */
 int
-InnobaseEngine::savepoint_rollback_hook(
+InnobaseEngine::doRollbackToSavepoint(
 /*===========================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
@@ -2369,7 +2369,7 @@ Release transaction savepoint name.
 @return 0 if success, HA_ERR_NO_SAVEPOINT if no savepoint with the
 given name */
 int
-InnobaseEngine::savepoint_release_hook(
+InnobaseEngine::doReleaseSavepoint(
 /*=======================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
@@ -2392,7 +2392,7 @@ InnobaseEngine::savepoint_release_hook(
 Sets a transaction savepoint.
 @return	always 0, that is, always succeeds */
 int
-InnobaseEngine::savepoint_set_hook(
+InnobaseEngine::doSetSavepoint(
 /*===============*/
 	Session*	session,/*!< in: handle to the MySQL thread */
 	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
@@ -8303,7 +8303,7 @@ This function is used to commit one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::commit_by_xid(
+InnobaseEngine::commitByXid(
 /*===================*/
 	XID*	xid)	/*!< in: X/Open XA transaction identification */
 {
@@ -8327,7 +8327,7 @@ This function is used to rollback one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::rollback_by_xid(
+InnobaseEngine::rollbackByXid(
 /*=====================*/
 	XID*		xid)	/*!< in: X/Open XA transaction
 				identification */

@@ -185,11 +185,11 @@ protected:
    * Implementing classes should override these to provide savepoint
    * functionality.
    */
-  virtual int savepoint_set_hook(Session *, NamedSavepoint &) { return 0; }
+  virtual int doSetSavepoint(Session *, NamedSavepoint &) { return 0; }
 
-  virtual int savepoint_rollback_hook(Session *, NamedSavepoint &) { return 0; }
+  virtual int doRollbackToSavepoint(Session *, NamedSavepoint &) { return 0; }
 
-  virtual int savepoint_release_hook(Session *, NamedSavepoint &) { return 0; }
+  virtual int doReleaseSavepoint(Session *, NamedSavepoint &) { return 0; }
 
 public:
 
@@ -286,43 +286,35 @@ public:
     NOTE 'all' is also false in auto-commit mode where 'end of statement'
     and 'real commit' mean the same event.
   */
-  virtual int  commit(Session *, bool)
+  virtual int commit(Session *, bool)
   {
     return 0;
   }
 
-  virtual int  rollback(Session *, bool)
+  virtual int rollback(Session *, bool)
   {
     return 0;
   }
 
-  /*
-    The void * points to an uninitialized storage area of requested size
-    (see savepoint_offset description)
-  */
-  int savepoint_set(Session *session, NamedSavepoint &sp)
+  int setSavepoint(Session *session, NamedSavepoint &sp)
   {
-    return savepoint_set_hook(session, sp);
+    return doSetSavepoint(session, sp);
   }
 
-  /*
-    The void * points to a storage area, that was earlier passed
-    to the savepoint_set call
-  */
-  int savepoint_rollback(Session *session, NamedSavepoint &sp)
+  int rollbackToSavepoint(Session *session, NamedSavepoint &sp)
   {
-     return savepoint_rollback_hook(session, sp);
+     return doRollbackToSavepoint(session, sp);
   }
 
-  int savepoint_release(Session *session, NamedSavepoint &sp)
+  int releaseSavepoint(Session *session, NamedSavepoint &sp)
   {
-    return savepoint_release_hook(session, sp);
+    return doReleaseSavepoint(session, sp);
   }
 
   virtual int  prepare(Session *, bool) { return 0; }
   virtual int  recover(XID *, uint32_t) { return 0; }
-  virtual int  commit_by_xid(XID *) { return 0; }
-  virtual int  rollback_by_xid(XID *) { return 0; }
+  virtual int  commitByXid(XID *) { return 0; }
+  virtual int  rollbackByXid(XID *) { return 0; }
   virtual Cursor *create(TableShare &, drizzled::memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }

@@ -726,7 +726,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
     int err;
     plugin::StorageEngine *engine= ha_info->engine();
     assert(engine);
-    if ((err= engine->savepoint_rollback(session, sv)))
+    if ((err= engine->rollbackToSavepoint(session, sv)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
       error= 1;
@@ -780,7 +780,7 @@ int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
       break;
     } 
 #endif
-    if ((err= engine->savepoint_set(session, sv)))
+    if ((err= engine->setSavepoint(session, sv)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error= 1;
@@ -806,7 +806,7 @@ int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &
     plugin::StorageEngine *engine= ha_info->engine();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
-    if ((err= engine->savepoint_release(session, sv)))
+    if ((err= engine->releaseSavepoint(session, sv)))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
       error= 1;

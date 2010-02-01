@@ -325,10 +325,10 @@ int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
   
   if (commit)
     transform(vector_of_engines.begin(), vector_of_engines.end(), results.begin(),
-              bind2nd(mem_fun(&plugin::StorageEngine::commit_by_xid),xid));
+              bind2nd(mem_fun(&plugin::StorageEngine::commitByXid),xid));
   else
     transform(vector_of_engines.begin(), vector_of_engines.end(), results.begin(),
-              bind2nd(mem_fun(&plugin::StorageEngine::rollback_by_xid),xid));
+              bind2nd(mem_fun(&plugin::StorageEngine::rollbackByXid),xid));
 
   if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
          == results.end())
@@ -452,11 +452,11 @@ public:
               hash_search(commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
               tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
           {
-            engine->commit_by_xid(trans_list+i);
+            engine->commitByXid(trans_list+i);
           }
           else
           {
-            engine->rollback_by_xid(trans_list+i);
+            engine->rollbackByXid(trans_list+i);
           }
         }
         if (got < trans_len)
