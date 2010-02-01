@@ -92,7 +92,7 @@ bool ColumnsTool::Generator::nextColumn()
   return true;
 }
 
-bool ColumnsTool::Generator::populate(Field **)
+bool ColumnsTool::Generator::populate()
 {
   if (not nextColumn())
     return false;

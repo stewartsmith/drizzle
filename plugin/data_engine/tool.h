@@ -73,13 +73,13 @@ public:
     /*
       Return type is bool meaning "are there more rows".
     */
-    bool sub_populate(Field **arg)
+    bool sub_populate()
     {
       columns_iterator= columns;
-      return populate(arg);
+      return populate();
     }
 
-    virtual bool populate(Field **)
+    virtual bool populate()
     {
       return false;
     }

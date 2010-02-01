@@ -40,7 +40,7 @@ public:
   public:
     Generator(Field **arg);
 
-    bool populate(Field **fields);
+    bool populate();
     void fill();
 
     const drizzled::message::Table::Field& getColumn()

@@ -29,8 +29,6 @@ public:
   CharacterSetsTool();
   ~CharacterSetsTool() {}
 
-  bool populate(Field ** fields);
-
   class Generator : public Tool::Generator 
   {
     CHARSET_INFO **cs;
@@ -38,7 +36,7 @@ public:
   public:
     Generator(Field **arg);
 
-    bool populate(Field ** fields);
+    bool populate();
 
   };
 

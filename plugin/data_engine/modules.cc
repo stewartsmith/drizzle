@@ -44,7 +44,7 @@ ModulesTool::Generator::Generator(Field **arg) :
   it= modules.begin();
 }
 
-bool ModulesTool::Generator::populate(Field **)
+bool ModulesTool::Generator::populate()
 {
   if (it == modules.end())
     return false;

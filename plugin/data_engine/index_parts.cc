@@ -78,7 +78,7 @@ bool IndexPartsTool::Generator::nextIndexParts()
   return true;
 }
 
-bool IndexPartsTool::Generator::populate(Field **)
+bool IndexPartsTool::Generator::populate()
 {
   if (not nextIndexParts())
     return false;

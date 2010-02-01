@@ -80,7 +80,7 @@ bool IndexesTool::Generator::nextIndex()
   return true;
 }
 
-bool IndexesTool::Generator::populate(Field **)
+bool IndexesTool::Generator::populate()
 {
   if (not nextIndex())
     return false;

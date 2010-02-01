@@ -62,7 +62,7 @@ bool SchemasTool::Generator::nextSchema()
   
 
 
-bool SchemasTool::Generator::populate(Field **)
+bool SchemasTool::Generator::populate()
 {
   if (nextSchema())
   {

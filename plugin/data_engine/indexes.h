@@ -55,7 +55,7 @@ public:
 
     bool nextIndex();
 
-    bool populate(Field **fields);
+    bool populate();
   };
 
   Generator *generator(Field **arg)

@@ -54,9 +54,8 @@ ProcesslistTool::Generator::~Generator()
   pthread_mutex_unlock(&LOCK_thread_count);
 }
 
-bool ProcesslistTool::Generator::populate(Field ** fields)
+bool ProcesslistTool::Generator::populate()
 {
-  Field **field= fields;
   const char *val;
   Session* tmp;
   Security_context *tmp_sctx;
@@ -68,8 +67,7 @@ bool ProcesslistTool::Generator::populate(Field ** fields)
   tmp_sctx= &tmp->security_ctx;
 
   /* ID */
-  (*field)->store((int64_t) tmp->thread_id, true);
-  field++;
+  push((int64_t) tmp->thread_id);
 
 
   /* USER */

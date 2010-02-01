@@ -43,7 +43,7 @@ CollationsTool::Generator::Generator(Field **arg) :
   cl= all_charsets;
 }
 
-bool CollationsTool::Generator::populate(Field **)
+bool CollationsTool::Generator::populate()
 {
   for (; cs < all_charsets+255 ; cs++)
   {

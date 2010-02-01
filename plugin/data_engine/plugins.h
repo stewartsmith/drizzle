@@ -35,7 +35,7 @@ public:
   public:
     Generator(Field **arg);
 
-    bool populate(Field ** fields);
+    bool populate();
   };
 
   Generator *generator(Field **arg)

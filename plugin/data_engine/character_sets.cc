@@ -39,7 +39,7 @@ CharacterSetsTool::Generator::Generator(Field **arg) :
   cs= all_charsets;
 }
 
-bool CharacterSetsTool::Generator::populate(Field **)
+bool CharacterSetsTool::Generator::populate()
 {
   for (; cs < all_charsets+255 ; cs++)
   {

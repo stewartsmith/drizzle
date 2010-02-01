@@ -92,7 +92,7 @@ bool TablesTool::Generator::nextTable()
   return true;
 }
 
-bool TablesTool::Generator::populate(Field **)
+bool TablesTool::Generator::populate()
 {
   if (not nextTable())
     return false;

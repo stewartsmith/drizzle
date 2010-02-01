@@ -43,7 +43,7 @@ PluginsTool::Generator::Generator(Field **arg) :
   end= plugin_map.end();
 }
 
-bool PluginsTool::Generator::populate(Field **)
+bool PluginsTool::Generator::populate()
 {
   const drizzled::plugin::Plugin *plugin= (*it).second;
 

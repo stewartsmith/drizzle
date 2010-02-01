@@ -59,7 +59,7 @@ public:
       return is_tables_primed;
     }
 
-    bool populate(Field ** fields);
+    bool populate();
     bool nextTable();
   };
 

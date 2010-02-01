@@ -49,7 +49,7 @@ public:
       return is_schema_parsed ? schema.name() : (*schema_iterator);
     }
 
-    bool populate(Field **fields);
+    bool populate();
     bool nextSchema();
     bool isSchemaPrimed()
     {
