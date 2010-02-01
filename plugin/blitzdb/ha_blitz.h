@@ -273,10 +273,8 @@ public:
   uint32_t max_row_length(void);
 
   /* INDEX KEY RELATED FUNCTIONS (BLITZDB SPECIFIC) */
-  size_t pack_primary_key(char *pack_to);
-  size_t pack_index_key(char *pack_to, int key_num);
-  size_t pack_index_key_from_row(char *pack_to, int key_num,
-                                 const unsigned char *row);
+  size_t make_primary_key(char *pack_to, const unsigned char *row);
+  size_t make_index_key(char *pack_to, int key_num, const unsigned char *row);
   char *native_to_blitz_key(const unsigned char *native_key,
                             const int key_num, int *return_key_length);
 

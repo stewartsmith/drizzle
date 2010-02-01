@@ -64,7 +64,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
        would violate the unique contraint. */
     if (key_changed) {
       key = key_buffer;
-      key_len = pack_index_key_from_row(key, table->s->primary_key, new_row);
+      key_len = make_index_key(key, table->s->primary_key, new_row);
       fetched = share->dict.get_row(key, key_len, &fetched_len);
 
       /* Key Exists. It's a violation. */

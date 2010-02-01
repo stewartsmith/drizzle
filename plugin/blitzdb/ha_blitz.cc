@@ -505,7 +505,7 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
      remembered when writing non-PK keys AND because the 'key_buffer'
      will be used to generate these non-PK keys. */
   char temp_pkbuf[BLITZ_MAX_KEY_LEN];
-  size_t pk_len = pack_primary_key(temp_pkbuf);
+  size_t pk_len = make_primary_key(temp_pkbuf, drizzle_row);
 
   row_len = pack_row(row_buf, drizzle_row);
 
@@ -580,7 +580,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
     int klen, fetched_len;
 
     key = key_buffer;
-    klen = pack_index_key_from_row(key, table->s->primary_key, old_row);
+    klen = make_index_key(key, table->s->primary_key, old_row);
     fetched = share->dict.get_row(key, klen, &fetched_len);
 
     if (fetched != NULL) {
@@ -590,7 +590,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
 
     /* It is now safe to write the new row. */
     row_len = pack_row(row_buf, new_row);
-    klen = pack_index_key_from_row(key, table->s->primary_key, new_row);
+    klen = make_index_key(key, table->s->primary_key, new_row);
     rv = share->dict.write_row(key, klen, row_buf, row_len);
   }
 
@@ -643,7 +643,7 @@ uint32_t ha_blitz::max_row_length(void) {
   return length;
 }
 
-size_t ha_blitz::pack_primary_key(char *pack_to) {
+size_t ha_blitz::make_primary_key(char *pack_to, const unsigned char *row) {
   if (!share->primary_key_exists) {
     uint64_t next_id = share->dict.next_hidden_row_id();
     int8store(pack_to, next_id);
@@ -653,52 +653,36 @@ size_t ha_blitz::pack_primary_key(char *pack_to) {
   /* Getting here means that there is a PK in this table. Get the
      binary representation of the PK, pack it to BlitzDB's key buffer
      and return the size of it. */
-  return pack_index_key(pack_to, table->s->primary_key);
+  return make_index_key(pack_to, table->s->primary_key, row);
 }
 
-size_t ha_blitz::pack_index_key(char *pack_to, int key_num) {
+size_t ha_blitz::make_index_key(char *pack_to, int key_num,
+                                const unsigned char *row) {
   KEY *key = &table->key_info[key_num];
   KEY_PART_INFO *key_part = key->key_part;
   KEY_PART_INFO *key_part_end = key_part + key->key_parts;
-  size_t packed_length = 0;
 
   unsigned char *pos = (unsigned char *)pack_to;
 
   memset(pack_to, 0, BLITZ_MAX_KEY_LEN);
 
-  /* Loop through key part(s) and pack them. Don't worry about NULL key
-     values since this functionality is currently disabled in BlitzDB.*/
+  /* Loop through key part(s) and pack them as we go. */
   for (; key_part != key_part_end; key_part++) {
-    key_part->field->pack(pos, key_part->field->ptr);
+    if (key_part->null_bit) {
+      /* This means that the current key part is NULL. We therefore
+         pack 0 to it and move on to the next key part. */
+      if (row[key_part->null_offset] & key_part->null_bit) {
+        *pos++ = 0;
+        continue;
+      }
+      *pos++ = 1;
+    }
+
+    key_part->field->pack(pos, row + key_part->offset);
     pos += key_part->field->pack_length();
-    packed_length += key_part->field->pack_length();
   }
 
-  return packed_length;
-}
-
-/* This function is different to other key pack functions in a way that
-   it will generate a key from a Drizzle row. */
-size_t ha_blitz::pack_index_key_from_row(char *pack_to, int key_num,
-                                         const unsigned char *row) {
-  KEY *key = &table->key_info[key_num];
-  KEY_PART_INFO *key_part = key->key_part;
-  KEY_PART_INFO *key_part_end = key_part + key->key_parts;
-  unsigned char *pack_pos = (unsigned char *)pack_to;
-  unsigned char *row_pos;
-  size_t packed_length = 0;
-
-  memset(pack_to, 0, BLITZ_MAX_KEY_LEN);
-
-  for (; key_part != key_part_end; key_part++) {
-    row_pos = (unsigned char *)row;
-    row_pos += key_part->offset;
-    key_part->field->pack(pack_pos, row_pos);
-    pack_pos += key_part->field->pack_length();
-    packed_length += key_part->field->pack_length();
-  }
-
-  return packed_length;
+  return ((char *)pos - pack_to);
 }
 
 /* Converts a native Drizzle index key to BlitzDB's format. */
