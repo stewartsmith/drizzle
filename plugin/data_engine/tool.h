@@ -137,63 +137,6 @@ public:
       columns_iterator++;
     }
 
-    void populateBoolean(Field **field, bool arg)
-    {
-      if (arg)
-      {
-        (*field)->store("TRUE", sizeof("TRUE"), scs);
-      }
-      else
-      {
-        (*field)->store("FALSE", sizeof("FALSE"), scs);
-      }
-    }
-
-    drizzled::message::Table::Field::FieldType 
-      populateFieldType(Field **field,
-                        drizzled::message::Table::Field::FieldType arg)
-    {
-      switch (arg)
-      {
-      default:
-      case drizzled::message::Table::Field::VARCHAR:
-        (*field)->store("VARCHAR", sizeof("VARCHAR"), scs);
-        break;
-      case drizzled::message::Table::Field::DOUBLE:
-        (*field)->store("DOUBLE", sizeof("DOUBLE"), scs);
-        break;
-      case drizzled::message::Table::Field::BLOB:
-        (*field)->store("BLOB", sizeof("BLOB"), scs);
-        break;
-      case drizzled::message::Table::Field::ENUM:
-        (*field)->store("ENUM", sizeof("ENUM"), scs);
-        break;
-      case drizzled::message::Table::Field::INTEGER:
-        (*field)->store("INT", sizeof("INT"), scs);
-        break;
-      case drizzled::message::Table::Field::BIGINT:
-        (*field)->store("BIGINT", sizeof("BIGINT"), scs);
-        break;
-      case drizzled::message::Table::Field::DECIMAL:
-        (*field)->store("DECIMAL", sizeof("DECIMAL"), scs);
-        break;
-      case drizzled::message::Table::Field::DATE:
-        (*field)->store("DATE", sizeof("DATE"), scs);
-        break;
-      case drizzled::message::Table::Field::TIME:
-        (*field)->store("TIME", sizeof("TIME"), scs);
-        break;
-      case drizzled::message::Table::Field::TIMESTAMP:
-        (*field)->store("TIMESTAMP", sizeof("TIMESTAMP"), scs);
-        break;
-      case drizzled::message::Table::Field::DATETIME:
-        (*field)->store("DATETIME", sizeof("DATETIME"), scs);
-        break;
-      }
-
-      return arg;
-    }
-
   };
 
   void define(drizzled::message::Table &arg)

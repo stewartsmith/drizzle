@@ -27,13 +27,13 @@ using namespace drizzled;
 ModulesTool::ModulesTool() :
   Tool("MODULES")
 {
-  add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("MODULE_VERSION", message::Table::Field::VARCHAR, 20);
-  add_field("MODULE_AUTHOR", message::Table::Field::VARCHAR, 64);
-  add_field("IS_BUILTIN", message::Table::Field::VARCHAR, 5);
-  add_field("MODULE_LIBRARY", message::Table::Field::VARCHAR, 254);
-  add_field("MODULE_DESCRIPTION", message::Table::Field::VARCHAR, 254);
-  add_field("MODULE_LICENSE", message::Table::Field::VARCHAR, 80);
+  add_field("MODULE_NAME");
+  add_field("MODULE_VERSION", 20);
+  add_field("MODULE_AUTHOR");
+  add_field("IS_BUILTIN", Tool::BOOLEAN);
+  add_field("MODULE_LIBRARY", 254);
+  add_field("MODULE_DESCRIPTION", 254);
+  add_field("MODULE_LICENSE", 80);
 }
 
 ModulesTool::Generator::Generator(Field **arg) :
@@ -44,77 +44,39 @@ ModulesTool::Generator::Generator(Field **arg) :
   it= modules.begin();
 }
 
-bool ModulesTool::Generator::populate(Field ** fields)
+bool ModulesTool::Generator::populate(Field **)
 {
-  Field **field= fields;
-
   if (it == modules.end())
     return false;
 
   {
     drizzled::plugin::Module *module= *it;
     const drizzled::plugin::Manifest &manifest= module->getManifest();
-    const CHARSET_INFO * const cs= system_charset_info;
 
-    (*field)->store(module->getName().c_str(),
-                    module->getName().size(), cs);
-    field++;
+    push(module->getName());
 
-    if (manifest.version)
-    {
-      (*field)->store(manifest.version, strlen(manifest.version), cs);
-    }
-    else
-    {
-      (*field)->store(0.0);
-    }
-    field++;
+    push(manifest.version ? manifest.version : 0);
 
-    if (manifest.author)
-    {
-      (*field)->store(manifest.author, strlen(manifest.author), cs);
-    }
-    else
-    {
-      (*field)->store("<unknown>", sizeof("<unknown>"), cs);
-    }
-    field++;
+    push(manifest.author ? manifest.author : "<unknown>");
 
-    populateBoolean(field, (module->plugin_dl == NULL));
-    field++;
-    if (module->plugin_dl == NULL)
-    {
-      (*field)->store("<builtin>", sizeof("<builtin>"), cs);
-    }
-    else
-    {
-      (*field)->store(module->plugin_dl->getName().c_str(),
-                             module->plugin_dl->getName().size(), cs);
-    }
-    field++;
+    push((module->plugin_dl == NULL));
 
-    if (manifest.descr)
-    {
-      (*field)->store(manifest.descr, strlen(manifest.descr), cs);
-    }
-    else
-    {
-      (*field)->store("<none>", sizeof("<none>"), cs);
-    }
-    field++;
+    push ((module->plugin_dl == NULL) ? "builtin" : module->plugin_dl->getName());
+
+    push(manifest.descr ? manifest.descr : "none");
 
     switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      (*field)->store("GPL", sizeof("GPL"), cs);
+      push("GPL");
       break;
     case PLUGIN_LICENSE_BSD:
-      (*field)->store("BSD", sizeof("BSD"), cs);
+      push("BSD");
       break;
     case PLUGIN_LICENSE_LGPL:
-      (*field)->store("LGPL", sizeof("LGPL"), cs);
+      push("LGPL");
       break;
     default:
-      (*field)->store("LGPL", sizeof("PROPRIETARY"), cs);
+      push("PROPRIETARY");
       break;
     }
   }

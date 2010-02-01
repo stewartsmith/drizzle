@@ -26,10 +26,10 @@ using namespace drizzled;
 PluginsTool::PluginsTool() :
   Tool("PLUGINS")
 {
-  add_field("PLUGIN_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("PLUGIN_TYPE", message::Table::Field::VARCHAR, 64);
-  add_field("IS_ACTIVE", message::Table::Field::VARCHAR, 5);
-  add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("PLUGIN_NAME");
+  add_field("PLUGIN_TYPE");
+  add_field("IS_ACTIVE", Tool::BOOLEAN);
+  add_field("MODULE_NAME");
 }
 
 PluginsTool::Generator::Generator(Field **arg) :
@@ -43,28 +43,17 @@ PluginsTool::Generator::Generator(Field **arg) :
   end= plugin_map.end();
 }
 
-bool PluginsTool::Generator::populate(Field ** fields)
+bool PluginsTool::Generator::populate(Field **)
 {
   const drizzled::plugin::Plugin *plugin= (*it).second;
-  const CHARSET_INFO * const cs= system_charset_info;
-  Field **field= fields;
 
   if (it == end)
     return false;
 
-  (*field)->store(plugin->getName().c_str(),
-                  plugin->getName().size(), cs);
-  field++;
-
-  (*field)->store(plugin->getTypeName().c_str(),
-                  plugin->getTypeName().size(), cs);
-  field++;
-
-  populateBoolean(field, plugin->isActive());
-  field++;
-
-  (*field)->store(plugin->getModuleName().c_str(),
-                  plugin->getModuleName().size(), cs);
+  push(plugin->getName());
+  push(plugin->getTypeName());
+  push(plugin->isActive());
+  push(plugin->isActive());
 
   it++;
 
