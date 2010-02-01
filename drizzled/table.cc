@@ -2377,8 +2377,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t  blob_count,group_null_items, string_count;
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
-  bool  using_unique_constraint= 0;
-  bool  use_packed_rows= 0;
+  bool  using_unique_constraint= false;
+  bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
   char  *tmpname,path[FN_REFLEN];
   unsigned char	*pos, *group_buff, *bitmaps;
@@ -2409,7 +2409,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   if (group)
   {
-    if (!param->quick_group)
+    if (! param->quick_group)
       group= 0;					// Can't use group key
     else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
     {
@@ -2421,10 +2421,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       */
       (*tmp->item)->marker= 4;
       if ((*tmp->item)->max_length >= CONVERT_IF_BIGGER_TO_BLOB)
-	using_unique_constraint=1;
+	using_unique_constraint= true;
     }
     if (param->group_length >= MAX_BLOB_WIDTH)
-      using_unique_constraint=1;
+      using_unique_constraint= true;
     if (group)
       distinct= 0;				// Can't use distinct
   }
@@ -2663,26 +2663,25 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
   if (blob_count || using_unique_constraint ||
-      (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
-      OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
+      (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     share->storage_engine= myisam_engine;
     table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
-      using_unique_constraint=1;
+      using_unique_constraint= true;
   }
   else
   {
     share->storage_engine= heap_engine;
     table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
   }
-  if (!table->cursor)
+  if (! table->cursor)
     goto err;
 
 
-  if (!using_unique_constraint)
+  if (! using_unique_constraint)
     reclength+= group_null_items;	// null flag is stored separately
 
   share->blob_fields= blob_count;
@@ -3210,7 +3209,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
   if (share->keys)
   {						// Get keys for ni_create
-    bool using_unique_constraint= 0;
+    bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) alloc_root(&this->mem_root,
                                             sizeof(*seg) * keyinfo->key_parts);
     if (!seg)
@@ -3224,7 +3223,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       /* Can't create a key; Make a unique constraint instead of a key */
       share->keys=    0;
       share->uniques= 1;
-      using_unique_constraint=1;
+      using_unique_constraint= true;
       memset(&uniquedef, 0, sizeof(uniquedef));
       uniquedef.keysegs=keyinfo->key_parts;
       uniquedef.seg=seg;
@@ -3274,7 +3273,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 	  In this case we have to tell MyISAM that two NULL should
 	  on INSERT be regarded at the same value
 	*/
-	if (!using_unique_constraint)
+	if (! using_unique_constraint)
 	  keydef.flag|= HA_NULL_ARE_EQUAL;
       }
     }

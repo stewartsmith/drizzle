@@ -79,11 +79,6 @@
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
-/**
-  Force the used temporary table to be a MyISAM table (because we will use
-  fulltext functions when reading from it.
-*/
-#define TMP_TABLE_FORCE_MYISAM          (UINT64_C(1) << 32)
 #define OPTION_PROFILING                (UINT64_C(1) << 33)
 
 /*
