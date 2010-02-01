@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <drizzled/charset.h>
 
 using namespace std;

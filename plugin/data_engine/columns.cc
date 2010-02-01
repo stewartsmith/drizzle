@@ -18,190 +18,128 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <drizzled/charset.h>
 #include <assert.h>
 
 using namespace std;
 using namespace drizzled;
 
-extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
-
 
 ColumnsTool::ColumnsTool() :
-  Tool("COLUMNS")
+  TablesTool("COLUMNS")
 {
-  add_field("TABLE_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("TABLE_SCHEMA");
+  add_field("TABLE_NAME");
 
-  add_field("COLUMN_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("COLUMN_NAME");
   add_field("ORDINAL_POSITION", message::Table::Field::BIGINT);
-  add_field("COLUMN_DEFAULT", message::Table::Field::VARCHAR, 64);
-  add_field("IS_NULLABLE", message::Table::Field::VARCHAR, 5);
-  add_field("DATATYPE", message::Table::Field::VARCHAR, 64);
+  add_field("COLUMN_DEFAULT");
+  add_field("IS_NULLABLE", Tool::BOOLEAN);
+  add_field("DATATYPE");
 
-  add_field("CHARACTER_MAXIMUM_LENGTH", message::Table::Field::BIGINT);
-  add_field("CHARACTER_OCTET_LENGTH", message::Table::Field::BIGINT);
-  add_field("NUMERIC_PRECISION", message::Table::Field::BIGINT);
-  add_field("NUMERIC_SCALE", message::Table::Field::BIGINT);
+  add_field("CHARACTER_MAXIMUM_LENGTH", Tool::NUMBER);
+  add_field("CHARACTER_OCTET_LENGTH", Tool::NUMBER);
+  add_field("NUMERIC_PRECISION", Tool::NUMBER);
+  add_field("NUMERIC_SCALE", Tool::NUMBER);
 
-  add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-
-  add_field("COLUMN_COMMENT", message::Table::Field::VARCHAR, 1024);
+  add_field("COLLATION_NAME");
+  add_field("COLUMN_COMMENT", 1024);
 }
 
-ColumnsTool::Generator::Generator() :
-  schema_counter(0),
+
+ColumnsTool::Generator::Generator(Field **arg) :
+  TablesTool::Generator(arg),
   column_iterator(0),
-  primed(false)
+  is_columns_primed(false)
 {
-  plugin::StorageEngine::getSchemaNames(schema_names);
-  schema_iterator= schema_names.begin();
-
-  fetch_tables();
 }
 
-bool ColumnsTool::Generator::populate(Field ** fields)
+
+bool ColumnsTool::Generator::nextColumnCore()
 {
-  while (schema_iterator != schema_names.end())
+  if (is_columns_primed)
   {
-    while (table_iterator != table_names.end())
-    {
-      while (column_iterator < table_proto.field_size())
-      {
-        const message::Table::Field column= table_proto.field(column_iterator);
+    column_iterator++;
+  }
+  else
+  {
+    if (not isTablesPrimed())
+      return false;
 
-        fill(fields, column);
-        column_iterator++;
-
-        return true;
-      }
-
-      table_iterator++;
-
-      if (table_iterator != table_names.end())
-        fetch_proto();
-    }
-
-    fetch_tables();
-
-    if (schema_iterator == schema_names.end())
-      break;
-
-    fetch_proto();
+    column_iterator= 0;
+    is_columns_primed= true;
   }
 
-  return false;
+  if (column_iterator >= getTableProto().field_size())
+    return false;
+
+  column= getTableProto().field(column_iterator);
+
+  return true;
 }
 
-void ColumnsTool::Generator::fetch_tables()
+
+bool ColumnsTool::Generator::nextColumn()
 {
-  do
+  while (not nextColumnCore())
   {
-    if (primed)
-    {
-      schema_iterator++;
-      if (schema_iterator == schema_names.end())
-        throw true;
-    }
-    else
-    {
-      schema_iterator= schema_names.begin();
-      primed= true;
-    }
+    if (not nextTable())
+      return false;
+    is_columns_primed= false;
+  }
 
-
-    table_names.clear();
-    plugin::StorageEngine::getTableNames(schema_name(), table_names); // Prime up the table names
-    table_iterator= table_names.begin(); // Prime the table iterator
-
-  } while (table_iterator == table_names.end());
-
-  fetch_proto();
+  return true;
 }
 
-void ColumnsTool::Generator::fetch_proto()
+bool ColumnsTool::Generator::populate(Field **)
 {
-  Session *session= current_session;
-  char path[FN_REFLEN];
+  if (not nextColumn())
+    return false;
 
-  assert(schema_name().c_str());
-  assert(table_name().c_str());
-  build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
+  fill();
 
-  plugin::StorageEngine::getTableDefinition(*session,
-                                            path,
-                                            schema_name().c_str(),
-                                            table_name().c_str(),
-                                            false,
-                                            &table_proto);
-  column_iterator= 0;
+  return true;
 }
 
-void ColumnsTool::Generator::fill(Field ** fields, const message::Table::Field &column)
+void ColumnsTool::Generator::fill()
 {
-  const CHARSET_INFO * const scs= system_charset_info;
-  Field **field= fields;
-
-  /* TABLE_CATALOG */
-  (*field)->store("default", sizeof("default"), scs);
-  field++;
-
   /* TABLE_SCHEMA */
-  (*field)->store(schema_name().c_str(), schema_name().length(), scs);
-  field++;
+  push(schema_name());
 
   /* TABLE_NAME */
-  (*field)->store(table_name().c_str(), table_name().length(), scs);
-  field++;
+  push(table_name());
 
   /* COLUMN_NAME */
-  (*field)->store(column.name().c_str(), column.name().length(), scs);
-  field++;
+  push(column.name());
 
   /* ORDINAL_POSITION */
-  (*field)->store(column_iterator);
-  field++;
+  push(column_iterator);
 
   /* COLUMN_DEFAULT */
-  (*field)->store(column.options().default_value().c_str(),
-                  column.options().default_value().length(), scs);
-  field++;
+  push(column.options().default_value());
 
   /* IS_NULLABLE */
-  populateBoolean(field, column.constraints().is_nullable());
-  field++;
+  push(column.constraints().is_nullable());
 
   /* DATATYPE */
-  populateFieldType(field, column.type());
-  field++;
+  push(column.type());
 
  /* "CHARACTER_MAXIMUM_LENGTH" */
-  (*field)->store(column.string_options().length());
-  field++;
+  push(static_cast<int64_t>(column.string_options().length()));
 
  /* "CHARACTER_OCTET_LENGTH" */
-  (*field)->store(column.string_options().length() * 4);
-  field++;
+  push(static_cast<int64_t>(column.string_options().length()) * 4);
 
  /* "NUMERIC_PRECISION" */
-  (*field)->store(column.numeric_options().precision());
-  field++;
+  push(static_cast<int64_t>(column.numeric_options().precision()));
 
  /* "NUMERIC_SCALE" */
-  (*field)->store(column.numeric_options().scale());
-  field++;
+  push(static_cast<int64_t>(column.numeric_options().scale()));
 
  /* "COLLATION_NAME" */
-  (*field)->store(column.string_options().collation().c_str(),
-                  column.string_options().collation().length(),
-                  scs);
-  field++;
+  push(column.string_options().collation());
 
  /* "COLUMN_COMMENT" */
-  (*field)->store(column.comment().c_str(),
-                  column.comment().length(),
-                  scs);
-  field++;
+  push(column.comment());
 }

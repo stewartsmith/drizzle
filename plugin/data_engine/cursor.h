@@ -23,9 +23,9 @@
 
 #include <drizzled/cursor.h>
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 
-class DictionaryCursor: public Cursor
+class FunctionCursor: public Cursor
 {
   Tool *tool;
   Tool::Generator *generator;
@@ -33,8 +33,8 @@ class DictionaryCursor: public Cursor
   std::vector<unsigned char *> row_cache;
 
 public:
-  DictionaryCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
-  ~DictionaryCursor() {}
+  FunctionCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  ~FunctionCursor() {}
 
   int open(const char *name, int mode, uint32_t test_if_locked);
 

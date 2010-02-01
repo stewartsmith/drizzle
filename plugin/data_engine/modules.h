@@ -34,14 +34,15 @@ public:
     std::vector<drizzled::plugin::Module *>::iterator it;
 
   public:
-    Generator();
+    Generator(Field **arg);
 
     bool populate(Field ** fields);
   };
 
-  Generator *generator()
+  
+  Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
 };
 

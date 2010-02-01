@@ -24,36 +24,37 @@
 #include <drizzled/plugin/storage_engine.h>
 #include "drizzled/hash.h"
 
-#ifndef PLUGIN_DATA_ENGINE_DICTIONARY_H
-#define PLUGIN_DATA_ENGINE_DICTIONARY_H
+#ifndef PLUGIN_DATA_ENGINE_FUNCTION_H
+#define PLUGIN_DATA_ENGINE_FUNCTION_H
 
-static const std::string engine_name("DICTIONARY");
+static const std::string engine_name("FUNCTION");
 
 #include <plugin/data_engine/tool.h>
 
-#include <plugin/data_engine/character_sets.h>
-#include <plugin/data_engine/collation_character_set_applicability.h>
-#include <plugin/data_engine/collations.h>
+#include <plugin/data_engine/schemas.h>
+#include <plugin/data_engine/tables.h>
 #include <plugin/data_engine/columns.h>
 #include <plugin/data_engine/indexes.h>
-#include <plugin/data_engine/key_column_usage.h>
+#include <plugin/data_engine/index_parts.h>
+#include <plugin/data_engine/referential_constraints.h>
+#include <plugin/data_engine/table_constraints.h>
+
+#include <plugin/data_engine/character_sets.h>
+#include <plugin/data_engine/collations.h>
+
 #include <plugin/data_engine/modules.h>
 #include <plugin/data_engine/plugins.h>
 #include <plugin/data_engine/processlist.h>
-#include <plugin/data_engine/referential_constraints.h>
-#include <plugin/data_engine/schemata.h>
 #include <plugin/data_engine/status.h>
-#include <plugin/data_engine/table_constraints.h>
-#include <plugin/data_engine/tables.h>
 #include <plugin/data_engine/variables.h>
 
 extern const CHARSET_INFO *default_charset_info;
 
-static const char *dictionary_exts[] = {
+static const char *function_exts[] = {
   NULL
 };
 
-class Dictionary : public drizzled::plugin::StorageEngine
+class Function : public drizzled::plugin::StorageEngine
 {
   typedef drizzled::hash_map<std::string, Tool *> ToolMap;
   typedef std::pair<std::string, Tool&> ToolMapPair;
@@ -61,24 +62,18 @@ class Dictionary : public drizzled::plugin::StorageEngine
   ToolMap table_map;
 
   CharacterSetsTool character_sets;
-  CollationCharacterSetApplicabilityTool collation_character_set_applicability;
   CollationsTool collations;
   ColumnsTool columns;
   IndexesTool indexes;
-  IndexDefinitionTool index_definitions;
-  KeyColumnUsageTool key_column_usage;
+  IndexPartsTool index_parts;
   ModulesTool modules;
   PluginsTool plugins;
   ProcesslistTool processlist;
   ReferentialConstraintsTool referential_constraints;
-  SchemataInfoTool schemata_info;
-  SchemataNamesTool schemata_names;
-  SchemataTool schemata;
+  SchemasTool schemas;
   StatusTool global_status;
   StatusTool session_status;
   TablesTool tables;
-  TablesNameTool table_names;
-  TablesInfoTool table_info;
   TableConstraintsTool table_constraints;
   VariablesTool global_variables;
   VariablesTool session_variables;
@@ -94,9 +89,9 @@ class Dictionary : public drizzled::plugin::StorageEngine
 
 
 public:
-  Dictionary(const std::string &name_arg);
+  Function(const std::string &name_arg);
 
-  ~Dictionary()
+  ~Function()
   {
   }
 
@@ -119,7 +114,7 @@ public:
 
   const char **bas_ext() const 
   {
-    return dictionary_exts;
+    return function_exts;
   }
 
   void doGetTableNames(drizzled::CachedDirectory&, 
@@ -134,4 +129,4 @@ public:
                            drizzled::message::Table *table_proto);
 };
 
-#endif /* PLUGIN_DATA_ENGINE_DICTIONARY_H */
+#endif /* PLUGIN_DATA_ENGINE_FUNCTION_H */

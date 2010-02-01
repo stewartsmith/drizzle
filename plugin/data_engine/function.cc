@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <plugin/data_engine/cursor.h>
 
 #include <string>
@@ -29,7 +29,7 @@ using namespace drizzled;
 static const string schema_name("data_dictionary");
 static const string schema_name_prefix("./data_dictionary/");
 
-Dictionary::Dictionary(const std::string &name_arg) :
+Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_SKIP_STORE_LOCK |
@@ -37,40 +37,28 @@ Dictionary::Dictionary(const std::string &name_arg) :
 {
 
   addTool(character_sets);
-  addTool(collation_character_set_applicability);
   addTool(collations);
   addTool(columns);
   addTool(global_status);
   addTool(global_variables);
   addTool(indexes);
-  addTool(index_definitions);
-  addTool(key_column_usage);
+  addTool(index_parts);
   addTool(modules);
   addTool(plugins);
   addTool(processlist);
   addTool(referential_constraints);
-  addTool(schemata);
-  addTool(schemata_info);
-  addTool(schemata_names);
+  addTool(schemas);
   addTool(table_constraints);
-  addTool(table_info);
-  addTool(table_names);
   addTool(tables);
-
-#if 0
-  ret= table_map.insert(make_pair(session_variables.getPath(),
-                                  &session_variables));
-  assert(ret.second == true);
-#endif
 }
 
 
-Cursor *Dictionary::create(TableShare &table, memory::Root *mem_root)
+Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 {
-  return new (mem_root) DictionaryCursor(*this, table);
+  return new (mem_root) FunctionCursor(*this, table);
 }
 
-Tool *Dictionary::getTool(const char *path)
+Tool *Function::getTool(const char *path)
 {
   ToolMap::iterator iter= table_map.find(path);
 
@@ -84,7 +72,7 @@ Tool *Dictionary::getTool(const char *path)
 }
 
 
-int Dictionary::doGetTableDefinition(Session &,
+int Function::doGetTableDefinition(Session &,
                                      const char *path,
                                      const char *,
                                      const char *,
@@ -119,11 +107,11 @@ int Dictionary::doGetTableDefinition(Session &,
 }
 
 
-void Dictionary::doGetTableNames(drizzled::CachedDirectory&, 
+void Function::doGetTableNames(drizzled::CachedDirectory&, 
                                         string &db, 
                                         set<string> &set_of_names)
 {
-  if (db.compare("data_dictionary"))
+  if (db.compare(schema_name))
     return;
 
   for (ToolMap::iterator it= table_map.begin();
@@ -136,25 +124,25 @@ void Dictionary::doGetTableNames(drizzled::CachedDirectory&,
 }
 
 
-static plugin::StorageEngine *dictionary_plugin= NULL;
+static plugin::StorageEngine *function_plugin= NULL;
 
 static int init(plugin::Registry &registry)
 {
-  dictionary_plugin= new(std::nothrow) Dictionary(engine_name);
-  if (! dictionary_plugin)
+  function_plugin= new(std::nothrow) Function(engine_name);
+  if (! function_plugin)
   {
     return 1;
   }
 
-  registry.add(dictionary_plugin);
+  registry.add(function_plugin);
   
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-  registry.remove(dictionary_plugin);
-  delete dictionary_plugin;
+  registry.remove(function_plugin);
+  delete function_plugin;
 
   return 0;
 }
@@ -165,7 +153,7 @@ DRIZZLE_DECLARE_PLUGIN
   "DICTIONARY",
   "1.0",
   "Brian Aker",
-  "Dictionary provides the information for data_dictionary.",
+  "Function provides the information for data_dictionary,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
   finalize,     /* Plugin Deinit */

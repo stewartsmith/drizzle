@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <drizzled/charset.h>
 
 using namespace std;
@@ -27,26 +27,24 @@ using namespace drizzled;
 CollationsTool::CollationsTool() :
   Tool("COLLATIONS")
 {
-  add_field("COLLATION_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("CHARACTER_SET_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("DESCRIPTION", message::Table::Field::VARCHAR, 64);
-  add_field("ID", message::Table::Field::BIGINT);
-  add_field("IS_DEFAULT", message::Table::Field::BIGINT);
-  add_field("IS_COMPILED", message::Table::Field::BIGINT);
-  add_field("SORTLEN", message::Table::Field::BIGINT);
+  add_field("CHARACTER_SET_NAME");
+  add_field("COLLATION_NAME");
+  add_field("DESCRIPTION");
+  add_field("ID", Tool::NUMBER);
+  add_field("IS_DEFAULT", Tool::BOOLEAN);
+  add_field("IS_COMPILED", Tool::BOOLEAN);
+  add_field("SORTLEN", Tool::NUMBER);
 }
 
-CollationsTool::Generator::Generator()
+CollationsTool::Generator::Generator(Field **arg) :
+  Tool::Generator(arg)
 {
   cs= all_charsets;
   cl= all_charsets;
 }
 
-bool CollationsTool::Generator::populate(Field ** fields)
+bool CollationsTool::Generator::populate(Field **)
 {
-  const CHARSET_INFO * const scs= system_charset_info;
-  Field **field= fields;
-
   for (; cs < all_charsets+255 ; cs++)
   {
     const CHARSET_INFO *tmp_cs= cs[0];
@@ -65,31 +63,32 @@ bool CollationsTool::Generator::populate(Field ** fields)
         continue;
 
       {
-        const char *tmp_buff;
+        /* CHARACTER_SET_NAME */
+        push(tmp_cs->name);
 
-        (*field)->store(tmp_cl->name, strlen(tmp_cl->name), scs);
-        field++;
+        /* "COLLATION_NAME" */
+        push(tmp_cl->name);
 
-        (*field)->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-        field++;
+        /* "DESCRIPTION" */
+        push(tmp_cl->csname);
 
-        (*field)->store((int64_t) tmp_cl->number, true);
-        field++;
+        /* COLLATION_ID */
+        push((int64_t) tmp_cl->number);
+         
+        /* IS_DEFAULT */
+        push((bool)(tmp_cl->state & MY_CS_PRIMARY));
 
-        tmp_buff= (tmp_cl->state & MY_CS_PRIMARY) ? "Yes" : "";
-        (*field)->store(tmp_buff, strlen(tmp_buff), scs);
-        field++;
+        /* IS_COMPILED */
+        push((bool)(tmp_cl->state & MY_CS_COMPILED));
 
-        tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
-        (*field)->store(tmp_buff, strlen(tmp_buff), scs);
-        field++;
+        /* SORTLEN */
+        push((int64_t) tmp_cl->strxfrm_multiply);
 
-        (*field)->store((int64_t) tmp_cl->strxfrm_multiply, true);
-
-        cs++;
+        cl++;
 
         return true;
       }
+      cs++;
     }
 
     cl= all_charsets;

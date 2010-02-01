@@ -23,8 +23,6 @@
 
 class Tool
 {
-  Tool() {};
-
   drizzled::message::Table proto;
   std::string name;
   std::string path;
@@ -47,27 +45,100 @@ public:
     engine->set_name(engine_name);
   }
 
+  enum ColumnType {
+    BOOLEAN,
+    NUMBER,
+    STRING
+  };
+
   virtual ~Tool() {}
 
   class Generator 
   {
+    Field **columns;
+    Field **columns_iterator;
 
   public:
+    const CHARSET_INFO *scs;
+
+    Generator(Field **arg) :
+      columns(arg)
+    {
+      scs= system_charset_info;
+    }
+
     virtual ~Generator()
     { }
 
     /*
       Return type is bool meaning "are there more rows".
     */
+    bool sub_populate(Field **arg)
+    {
+      columns_iterator= columns;
+      return populate(arg);
+    }
+
     virtual bool populate(Field **)
     {
       return false;
     }
-    
-    bool populateBoolean(Field **field, bool arg)
-    {
-      const CHARSET_INFO * const scs= system_charset_info;
 
+    void push(uint64_t arg)
+    {
+      (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+      columns_iterator++;
+    }
+
+    void push(uint32_t arg)
+    {
+      (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+      columns_iterator++;
+    }
+
+    void push(int64_t arg)
+    {
+      (*columns_iterator)->store(arg, false);
+      columns_iterator++;
+    }
+
+    void push(int32_t arg)
+    {
+      (*columns_iterator)->store(arg, false);
+      columns_iterator++;
+    }
+
+    void push(const char *arg, uint32_t length= 0)
+    {
+      assert(columns_iterator);
+      assert(*columns_iterator);
+      assert(arg);
+      (*columns_iterator)->store(arg, length ? length : strlen(arg), scs);
+      columns_iterator++;
+    }
+    
+    void push(const std::string& arg)
+    {
+      (*columns_iterator)->store(arg.c_str(), arg.length(), scs);
+      columns_iterator++;
+    }
+
+    void push(bool arg)
+    {
+      if (arg)
+      {
+        (*columns_iterator)->store("TRUE", 4, scs);
+      }
+      else
+      {
+        (*columns_iterator)->store("FALSE", 5, scs);
+      }
+
+      columns_iterator++;
+    }
+
+    void populateBoolean(Field **field, bool arg)
+    {
       if (arg)
       {
         (*field)->store("TRUE", sizeof("TRUE"), scs);
@@ -76,16 +147,12 @@ public:
       {
         (*field)->store("FALSE", sizeof("FALSE"), scs);
       }
-
-      return arg;
     }
 
     drizzled::message::Table::Field::FieldType 
       populateFieldType(Field **field,
                         drizzled::message::Table::Field::FieldType arg)
     {
-      const CHARSET_INFO * const scs= system_charset_info;
-
       switch (arg)
       {
       default:
@@ -155,43 +222,30 @@ public:
               path.begin(), ::tolower);
   }
 
-  virtual Generator *generator()
+  virtual Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
 
   void add_field(const char *label,
                  drizzled::message::Table::Field::FieldType type,
-                 uint32_t length= 0)
-  {
-    drizzled::message::Table::Field *field;
-    drizzled::message::Table::Field::FieldOptions *field_options;
-    drizzled::message::Table::Field::FieldConstraints *field_constraints;
+                 uint32_t length= 0);
 
-    field= proto.add_field();
-    field->set_name(label);
-    field->set_type(type);
+  void add_field(const char *label,
+                 uint32_t field_length= 64);
 
-    field_options= field->mutable_options();
-    field_constraints= field->mutable_constraints();
-    field_options->set_default_null(false);
-    field_constraints->set_is_nullable(false);
+  void add_field(const char *label,
+                 Tool::ColumnType type,
+                 bool is_default_null= false);
 
-    switch (type) 
-    {
-    case drizzled::message::Table::Field::VARCHAR:
-      {
-        drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+  void add_field(const char *label,
+                 Tool::ColumnType type,
+                 uint32_t field_length,
+                 bool is_default_null= false);
 
-        string_field_options= field->mutable_string_options();
-        string_field_options->set_length(length);
+private:
 
-        break;
-      }
-    default:
-      break;
-    }
-  }
+  Tool() {};
 };
 
 #endif // PLUGIN_DATA_ENGINE_TOOL_H

@@ -33,14 +33,14 @@ public:
     std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator end;
 
   public:
-    Generator();
+    Generator(Field **arg);
 
     bool populate(Field ** fields);
   };
 
-  Generator *generator()
+  Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
 };
 

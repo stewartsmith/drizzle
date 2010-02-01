@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <drizzled/plugin/library.h>
 
 using namespace std;
@@ -36,7 +36,8 @@ ModulesTool::ModulesTool() :
   add_field("MODULE_LICENSE", message::Table::Field::VARCHAR, 80);
 }
 
-ModulesTool::Generator::Generator()
+ModulesTool::Generator::Generator(Field **arg) :
+  Tool::Generator(arg)
 {
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   modules= registry.getList(true);

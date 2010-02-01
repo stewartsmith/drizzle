@@ -34,15 +34,15 @@ public:
     CHARSET_INFO **cl;
 
   public:
-    Generator();
+    Generator(Field **arg);
 
     bool populate(Field ** fields);
 
   };
 
-  Generator *generator()
+  Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
 
 };

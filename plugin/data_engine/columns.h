@@ -22,46 +22,36 @@
 #define PLUGIN_DATA_ENGINE_COLUMNS_H
 
 
-class ColumnsTool : public Tool
+class ColumnsTool : public TablesTool
 {
 public:
 
   ColumnsTool();
 
-  class Generator : public Tool::Generator 
+  class Generator : public TablesTool::Generator 
   {
-    std::set<std::string> schema_names;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator schema_iterator;
-    std::set<std::string>::iterator table_iterator;
-    uint32_t schema_counter;
     int32_t column_iterator;
-    drizzled::message::Table table_proto;
-    bool primed;
+    bool is_columns_primed;
+    drizzled::message::Table::Field column;
 
-    void fetch_proto(void);
-    void fetch_tables();
+    bool nextColumnCore();
+    bool nextColumn();
 
   public:
-    Generator();
-
-    const std::string &schema_name()
-    {
-      return (*schema_iterator);
-    }
-
-    const std::string &table_name()
-    {
-      return (*table_iterator);
-    }
+    Generator(Field **arg);
 
     bool populate(Field **fields);
-    virtual void fill(Field **fields, const drizzled::message::Table::Field &column);
+    void fill();
+
+    const drizzled::message::Table::Field& getColumn()
+    {
+      return column;
+    }
   };
 
-  Generator *generator()
+  Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
 };
 

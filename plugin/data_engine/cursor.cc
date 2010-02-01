@@ -30,43 +30,43 @@ using namespace std;
 using namespace drizzled;
 
 /*****************************************************************************
-** Data Dictionary tables
+** Data Function tables
 *****************************************************************************/
 
-DictionaryCursor::DictionaryCursor(plugin::StorageEngine &engine_arg,
+FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
                                      TableShare &table_arg) :
   Cursor(engine_arg, table_arg)
 {}
 
-int DictionaryCursor::open(const char *name, int, uint32_t)
+int FunctionCursor::open(const char *name, int, uint32_t)
 {
   (void)name;
-  tool= static_cast<Dictionary *>(engine)->getTool(name); 
+  tool= static_cast<Function *>(engine)->getTool(name); 
 
   return 0;
 }
 
-int DictionaryCursor::close(void)
+int FunctionCursor::close(void)
 {
   tool= NULL;
   return 0;
 }
 
-int DictionaryCursor::rnd_init(bool)
+int FunctionCursor::rnd_init(bool)
 {
   record_id= 0;
-  generator= tool->generator();
+  generator= tool->generator(table->field);
 
   return 0;
 }
 
 
-int DictionaryCursor::rnd_next(unsigned char *)
+int FunctionCursor::rnd_next(unsigned char *)
 {
   bool more_rows;
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
 
-  more_rows= generator->populate(table->field);
+  more_rows= generator->sub_populate(table->field);
 
   if (more_rows)
   {
@@ -81,7 +81,7 @@ int DictionaryCursor::rnd_next(unsigned char *)
   return more_rows ? 0 : HA_ERR_END_OF_FILE;
 }
 
-void DictionaryCursor::position(const unsigned char *record)
+void FunctionCursor::position(const unsigned char *record)
 {
   unsigned char *copy;
 
@@ -92,7 +92,7 @@ void DictionaryCursor::position(const unsigned char *record)
   record_id++;
 }
 
-int DictionaryCursor::rnd_end()
+int FunctionCursor::rnd_end()
 { 
   size_t length_of_vector= row_cache.size();
 
@@ -108,7 +108,7 @@ int DictionaryCursor::rnd_end()
   return 0;
 }
 
-int DictionaryCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
+int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
   size_t position_id= (size_t)my_get_ptr(pos, ref_length);
@@ -119,7 +119,7 @@ int DictionaryCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 }
 
 
-int DictionaryCursor::info(uint32_t flag)
+int FunctionCursor::info(uint32_t flag)
 {
   memset(&stats, 0, sizeof(stats));
   if (flag & HA_STATUS_AUTO)

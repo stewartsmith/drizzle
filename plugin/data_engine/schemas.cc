@@ -24,48 +24,66 @@
 using namespace std;
 using namespace drizzled;
 
-CharacterSetsTool::CharacterSetsTool() :
-  Tool("CHARACTER_SETS")
+SchemasTool::SchemasTool() :
+  Tool("SCHEMAS")
 {
-  add_field("CHARACTER_SET_NAME");
-  add_field("DEFAULT_COLLATE_NAME");
-  add_field("DESCRIPTION");
-  add_field("MAXLEN", Tool::NUMBER);
+  add_field("SCHEMA_NAME");
+  add_field("DEFAULT_COLLATION_NAME");
 }
 
-CharacterSetsTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg)
+SchemasTool::Generator::Generator(Field **arg) :
+  Tool::Generator(arg),
+  is_schema_primed(false),
+  is_schema_parsed(false)
 {
-  cs= all_charsets;
 }
 
-bool CharacterSetsTool::Generator::populate(Field **)
+bool SchemasTool::Generator::nextSchema()
 {
-  for (; cs < all_charsets+255 ; cs++)
+  if (is_schema_primed)
   {
-    const CHARSET_INFO * const tmp_cs= cs[0];
+    schema_iterator++;
+  }
+  else
+  {
+    plugin::StorageEngine::getSchemaNames(schema_names);
+    schema_iterator= schema_names.begin();
+    is_schema_primed= true;
+  }
 
-    if (tmp_cs && (tmp_cs->state & MY_CS_PRIMARY) &&
-        (tmp_cs->state & MY_CS_AVAILABLE) &&
-        ! (tmp_cs->state & MY_CS_HIDDEN))
-    {
-      /* CHARACTER_SET_NAME */
-      push(tmp_cs->csname);
+  if (schema_iterator == schema_names.end())
+    return false;
 
-      /* DEFAULT_COLLATE_NAME */
-      push(tmp_cs->name);
+  schema.Clear();
+  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
 
-      /* DESCRIPTION */
-      push(tmp_cs->comment);
+  return true;
+}
+  
 
-      /* MAXLEN */
-      push((int64_t) tmp_cs->mbmaxlen);
 
-      cs++;
-
-      return true;
-    }
+bool SchemasTool::Generator::populate(Field **)
+{
+  if (nextSchema())
+  {
+    fill();
+    return true;
   }
 
   return false;
+}
+
+/**
+  A lack of a parsed schema file means we are using defaults.
+*/
+void SchemasTool::Generator::fill()
+{
+  /* SCHEMA_NAME */
+  push(schema.name());
+
+  /* DEFAULT_COLLATION_NAME */
+  if (is_schema_parsed)
+    push(schema.collation());
+  else
+    push(scs->name);
 }

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/session_list.h>
 #include "drizzled/plugin/client.h"
@@ -40,7 +40,8 @@ ProcesslistTool::ProcesslistTool() :
   add_field("INFO", message::Table::Field::VARCHAR, PROCESS_LIST_WIDTH);
 }
 
-ProcesslistTool::Generator::Generator()
+ProcesslistTool::Generator::Generator(Field **arg) :
+  Tool::Generator(arg)
 {
   now= time(NULL);
 

@@ -21,90 +21,53 @@
 #ifndef PLUGIN_DATA_ENGINE_TABLES_H
 #define PLUGIN_DATA_ENGINE_TABLES_H
 
-class TablesTool : public Tool
+class TablesTool : public SchemasTool
 {
 public:
 
   TablesTool();
+
   TablesTool(const char *arg) :
-    Tool(arg)
+    SchemasTool(arg)
   { }
 
-  class Generator : public Tool::Generator 
+  class Generator : public SchemasTool::Generator 
   {
-    std::set<std::string> schema_names;
+    drizzled::message::Table table_proto;
     std::set<std::string> table_names;
-    std::set<std::string>::iterator schema_iterator;
     std::set<std::string>::iterator table_iterator;
-    uint32_t schema_counter;
+    bool is_tables_primed;
+
+    void fill();
+    bool nextTableCore();
 
   public:
-    Generator();
-
-    const std::string &schema_name()
-    {
-      return (*schema_iterator);
-    }
+    Generator(Field **arg);
 
     const std::string &table_name()
     {
       return (*table_iterator);
     }
 
+    const drizzled::message::Table& getTableProto()
+    {
+      return table_proto;
+    }
+
+    bool isTablesPrimed()
+    {
+      return is_tables_primed;
+    }
+
     bool populate(Field ** fields);
-    virtual bool fill(Field ** fields);
+    bool nextTable();
   };
 
-  Generator *generator()
+  Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
 
-};
-
-class TablesNameTool : public TablesTool
-{
-public:
-
-  TablesNameTool();
-
-  class Generator : public TablesTool::Generator 
-  {
-
-  public:
-    Generator() :
-      TablesTool::Generator()
-    { }
-
-    bool fill(Field ** fields);
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
-};
-
-class TablesInfoTool : public TablesTool
-{
-public:
-
-  TablesInfoTool();
-
-  class Generator : public TablesTool::Generator 
-  {
-  public:
-    Generator() :
-      TablesTool::Generator()
-    { }
-
-    bool fill(Field ** fields);
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
-  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_TABLES_H

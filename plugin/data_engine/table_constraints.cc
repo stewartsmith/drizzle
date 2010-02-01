@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 #include <drizzled/charset.h>
 
 using namespace std;
@@ -27,10 +27,9 @@ using namespace drizzled;
 TableConstraintsTool::TableConstraintsTool() :
   Tool("TABLE_CONSTRAINTS")
 {
-  add_field("CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field("CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("CONSTRAINT_TYPE", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_SCHEMA");
+  add_field("CONSTRAINT_NAME");
+  add_field("TABLE_SCHEMA");
+  add_field("TABLE_NAME");
+  add_field("CONSTRAINT_TYPE");
 }

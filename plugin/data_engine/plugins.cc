@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/dictionary.h>
+#include <plugin/data_engine/function.h>
 
 using namespace std;
 using namespace drizzled;
@@ -32,7 +32,8 @@ PluginsTool::PluginsTool() :
   add_field("MODULE_NAME", message::Table::Field::VARCHAR, 64);
 }
 
-PluginsTool::Generator::Generator()
+PluginsTool::Generator::Generator(Field **arg) :
+  Tool::Generator(arg)
 {
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   const map<string, const drizzled::plugin::Plugin *> &plugin_map=

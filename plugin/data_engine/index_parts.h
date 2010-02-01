@@ -18,34 +18,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_COLLATION_CHARACTER_SET_APPLICABILITY_H
-#define PLUGIN_DATA_ENGINE_COLLATION_CHARACTER_SET_APPLICABILITY_H
+#ifndef PLUGIN_DATA_ENGINE_INDEX_PARTS_H
+#define PLUGIN_DATA_ENGINE_INDEX_PARTS_H
 
-class CollationCharacterSetApplicabilityTool : public Tool
+
+class IndexPartsTool : public IndexesTool
 {
 public:
+  IndexPartsTool();
 
-  CollationCharacterSetApplicabilityTool();
-
-  bool populate(Field ** fields);
-
-  class Generator : public Tool::Generator 
+  class Generator : public IndexesTool::Generator 
   {
-    CHARSET_INFO **cs;
-    CHARSET_INFO **cl;
+    int32_t index_part_iterator;
+    bool is_index_part_primed;
+    drizzled::message::Table::Index::IndexPart index_part;
+
+    void fill();
 
   public:
-    Generator();
+    Generator(Field **arg);
 
-    bool populate(Field ** fields);
+    bool populate(Field **fields);
+
+    bool nextIndexPartsCore();
+    bool nextIndexParts();
 
   };
 
-  Generator *generator()
+  Generator *generator(Field **arg)
   {
-    return new Generator;
+    return new Generator(arg);
   }
-
 };
 
-#endif // PLUGIN_DATA_ENGINE_COLLATION_CHARACTER_SET_APPLICABILITY_H
+#endif // PLUGIN_DATA_ENGINE_INDEX_PARTS_H

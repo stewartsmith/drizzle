@@ -18,15 +18,49 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_KEY_COLUMN_USAGE_H
-#define PLUGIN_DATA_ENGINE_KEY_COLUMN_USAGE_H
+#ifndef PLUGIN_DATA_ENGINE_SCHEMAS_H
+#define PLUGIN_DATA_ENGINE_SCHEMAS_H
 
-
-class KeyColumnUsageTool : public Tool
+class SchemasTool : public Tool
 {
 public:
 
-  KeyColumnUsageTool();
+  SchemasTool();
+  SchemasTool(const char *arg) :
+    Tool(arg)
+  { }
+
+  class Generator : public Tool::Generator 
+  {
+    drizzled::message::Schema schema;
+    std::set<std::string> schema_names;
+    std::set<std::string>::const_iterator schema_iterator;
+    bool is_schema_primed;
+    bool is_schema_parsed;
+
+    void fill();
+
+  public:
+    Generator(Field **arg);
+
+    const std::string &schema_name()
+    {
+      assert(is_schema_primed);
+      return is_schema_parsed ? schema.name() : (*schema_iterator);
+    }
+
+    bool populate(Field **fields);
+    bool nextSchema();
+    bool isSchemaPrimed()
+    {
+      return is_schema_primed;
+    }
+  };
+
+  Generator *generator(Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
 
-#endif // PLUGIN_DATA_ENGINE_KEY_COLUMN_USAGE_H
+#endif // PLUGIN_DATA_ENGINE_SCHEMAS_H

@@ -22,89 +22,45 @@
 #define PLUGIN_DATA_ENGINE_INDEXES_H
 
 
-class IndexesTool : public Tool
+class IndexesTool : public TablesTool
 {
 public:
   IndexesTool();
 
-  class Generator : public Tool::Generator 
-  {
-    std::set<std::string> schema_names;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator schema_iterator;
-    std::set<std::string>::iterator table_iterator;
-    uint32_t schema_counter;
-    int32_t index_iterator;
-    drizzled::message::Table table_proto;
+  IndexesTool(const char *arg) :
+    TablesTool(arg)
+  { }
 
-    void fetch_proto(void);
-    void fetch_tables();
+  class Generator : public TablesTool::Generator 
+  {
+    int32_t index_iterator;
+    bool is_index_primed;
+    drizzled::message::Table::Index index;
+
+    bool nextIndexCore();
+    virtual void fill();
 
   public:
-    Generator();
+    Generator(Field **arg);
 
-    const std::string &schema_name()
+    const drizzled::message::Table::Index& getIndex()
     {
-      return (*schema_iterator);
+      return index;
     }
 
-    const std::string &table_name()
+    bool isIndexesPrimed()
     {
-      return (*table_iterator);
+      return is_index_primed;
     }
+
+    bool nextIndex();
 
     bool populate(Field **fields);
-    virtual void fill(Field **fields, const drizzled::message::Table::Index &index);
   };
 
-  Generator *generator()
+  Generator *generator(Field **arg)
   {
-    return new Generator;
-  }
-};
-
-
-class IndexDefinitionTool : public Tool
-{
-public:
-  IndexDefinitionTool();
-
-  class Generator : public Tool::Generator 
-  {
-    std::set<std::string> schema_names;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator schema_iterator;
-    std::set<std::string>::iterator table_iterator;
-    uint32_t schema_counter;
-    int32_t index_iterator;
-    int32_t component_iterator;
-    drizzled::message::Table table_proto;
-
-    void fetch_proto(void);
-    void fetch_tables();
-
-  public:
-    Generator();
-
-    const std::string &schema_name()
-    {
-      return (*schema_iterator);
-    }
-
-    const std::string &table_name()
-    {
-      return (*table_iterator);
-    }
-
-    bool populate(Field **fields);
-    virtual void fill(Field **fields,
-                      const drizzled::message::Table::Index &index,
-                      const drizzled::message::Table::Index::IndexPart &part);
-  };
-
-  Generator *generator()
-  {
-    return new Generator;
+    return new Generator(arg);
   }
 };
 

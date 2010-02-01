@@ -5674,6 +5674,7 @@ keyword_sp:
         | CONSISTENT_SYM           {}
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
+        | DATABASES                {}
         | DATAFILE_SYM             {}
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
