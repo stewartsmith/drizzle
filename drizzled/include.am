@@ -386,7 +386,6 @@ nobase_dist_include_HEADERS+= \
 		drizzled/statement/set_option.h \
 		drizzled/statement/show_create.h \
 		drizzled/statement/show_create_schema.h \
-		drizzled/statement/show_engine_status.h \
 		drizzled/statement/show_errors.h \
 		drizzled/statement/show_processlist.h \
 		drizzled/statement/show_status.h \
@@ -728,7 +727,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/statement/set_option.cc \
 		drizzled/statement/show_create.cc \
 		drizzled/statement/show_create_schema.cc \
-		drizzled/statement/show_engine_status.cc \
 		drizzled/statement/show_errors.cc \
 		drizzled/statement/show_processlist.cc \
 		drizzled/statement/show_status.cc \

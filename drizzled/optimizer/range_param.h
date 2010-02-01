@@ -34,6 +34,26 @@ namespace optimizer
 class RangeParameter
 {
 public:
+
+  RangeParameter()
+    :
+      session(NULL),
+      table(NULL),
+      cond(NULL),
+      prev_tables(),
+      read_tables(),
+      current_table(),
+      key_parts(NULL),
+      key_parts_end(NULL),
+      mem_root(NULL),
+      old_root(NULL),
+      keys(0),
+      using_real_indexes(false),
+      remove_jump_scans(false),
+      alloced_sel_args(0),
+      force_default_mrr(false)
+  {}
+
   Session	*session;   /* Current thread handle */
   Table *table; /* Table being analyzed */
   COND *cond;   /* Used inside get_mm_tree(). */
@@ -74,13 +94,30 @@ public:
 class Parameter : public RangeParameter
 {
 public:
+
+  Parameter()
+    :
+      RangeParameter(),
+      max_key_part(0),
+      range_count(0),
+      quick(false),
+      fields_bitmap_size(0),
+      needed_fields(),
+      tmp_covered_fields(),
+      needed_reg(NULL),
+      imerge_cost_buff(NULL),
+      imerge_cost_buff_size(0),
+      is_ror_scan(false),
+      n_ranges(0)
+  {}
+
   KEY_PART *key[MAX_KEY]; /* First key parts of keys used in the query */
   uint32_t max_key_part;
   /* Number of ranges in the last checked tree->key */
   uint32_t range_count;
-  unsigned char min_key[MAX_KEY_LENGTH+MAX_FIELD_WIDTH],
-    max_key[MAX_KEY_LENGTH+MAX_FIELD_WIDTH];
-  bool quick;				// Don't calulate possible keys
+  unsigned char min_key[MAX_KEY_LENGTH+MAX_FIELD_WIDTH];
+  unsigned char max_key[MAX_KEY_LENGTH+MAX_FIELD_WIDTH];
+  bool quick; // Don't calulate possible keys
 
   uint32_t fields_bitmap_size;
   MyBitmap needed_fields;    /* bitmask of fields needed by the query */

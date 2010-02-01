@@ -260,7 +260,6 @@ public:
                                      HTON_PRIMARY_KEY_IN_READ_INDEX |
                                      HTON_PARTIAL_COLUMN_READ |
                                      HTON_TABLE_SCAN_ON_INDEX |
-                                     HTON_MRR_CANT_SORT |
                                      HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
