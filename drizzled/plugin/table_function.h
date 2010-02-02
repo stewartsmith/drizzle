@@ -24,6 +24,7 @@
 #define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
 
 #include "drizzled/plugin/plugin.h"
+#inclkude "drizzled/table_function_container.h"
 
 #include <string>
 

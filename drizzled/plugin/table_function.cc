@@ -31,47 +31,18 @@ using namespace std;
 namespace drizzled
 {
 
-typedef hash_map<string, Tool *> ToolMap;
-typedef pair<string, Tool&> ToolMapPair;
-
-ToolMap table_map;
-SchemaList schema_list;
-
+TableFunctionContainer table_functions;
 
 bool plugin::TableFunction::addPlugin(plugin::Tool *tool)
 {
-  pair<ToolMap::iterator, bool> ret;
-  string schema= tool->getSchemaHome();
-  string path= tool->getPath();
-
-  transform(path.begin(), path.end(),
-      path.begin(), ::tolower);
-
-  transform(schema.begin(), schema.end(),
-      schema.begin(), ::tolower);
-
-  schema_list.insert(schema);
-
-  ret= table_map.insert(make_pair(path, tool));
-  assert(ret.second == true);
+  assert(tool != NULL);
+  table_functions.addTool(*tool); 
   return false;
 }
 
 void plugin::TableFunction::removePlugin(plugin::Tool *tool)
 {
-  pair<ToolMap::iterator, bool> ret;
-  string schema= tool->getSchemaHome();
-  string path= tool->getPath();
-
-  transform(path.begin(), path.end(),
-      path.begin(), ::tolower);
-
-  transform(schema.begin(), schema.end(),
-      schema.begin(), ::tolower);
-
-  schema_list.erase(schema);
-
-  ret= table_map.remove(make_pair(path, tool));
+/* TODO - We should do this or valgrind will be unhappy */
 }
 
 
