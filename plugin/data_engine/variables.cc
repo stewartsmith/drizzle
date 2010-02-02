@@ -23,10 +23,3 @@
 
 using namespace std;
 using namespace drizzled;
-
-VariablesTool::VariablesTool() :
-  Tool("GLOBAL_VARIABLES")
-{
-  add_field("VARIABLE_NAME", message::Table::Field::VARCHAR, 64);
-  add_field("VARIABLE_VALUE", message::Table::Field::VARCHAR, 16300);
-}

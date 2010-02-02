@@ -38,13 +38,28 @@ StatusTool::StatusTool(const char *arg, bool scope_arg) :
   add_field("VARIABLE_VALUE", 16300);
 }
 
-StatusTool::Generator::Generator(Field **arg, bool scope_arg, drizzle_show_var *variables_args) :
+StatusTool::Generator::Generator(Field **arg, bool scope_arg, drizzle_show_var *variables_args,
+                                 bool is_variables) :
   Tool::Generator(arg),
   scope(scope_arg),
   variables(variables_args)
 {
+  if (is_variables)
+  {
+    status_ptr= NULL;
+  }
+  else if (scope)
+  {
+    status_ptr= &status;
+  }
+  else
+  {
+    Session *session= current_session;
+    status_ptr= &session->status_var;
+  }
+
   pthread_mutex_lock(&LOCK_status);
-  if (scope)
+  if (scope && status_ptr)
   {
     calc_sum_of_all_status(getStatus());
     pthread_mutex_lock(&LOCK_global_system_variables);
@@ -53,7 +68,7 @@ StatusTool::Generator::Generator(Field **arg, bool scope_arg, drizzle_show_var *
 
 StatusTool::Generator::~Generator()
 {
-  if (scope)
+  if (scope && status_ptr)
     pthread_mutex_unlock(&LOCK_global_system_variables);
   pthread_mutex_unlock(&LOCK_status);
 }
@@ -95,7 +110,7 @@ void StatusTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_t
   char * const buff= (char *) &buff_data;
   Session *session= current_session;
   const char *pos, *end;                  // We assign a lot of const's
-  enum enum_var_type option_type= OPT_GLOBAL;
+  enum enum_var_type option_type= scope ? OPT_GLOBAL : OPT_SESSION;
   struct system_status_var *status_var;
 
   /* Scope represents if the status should be session or global */

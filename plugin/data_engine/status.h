@@ -32,22 +32,29 @@ public:
 
   virtual drizzle_show_var *getVariables()= 0;
 
+  virtual bool isVariables()
+  {
+    return false;
+  }
+
   class Generator : public Tool::Generator 
   {
     bool scope;
     drizzle_show_var *variables;
     system_status_var status;
+    system_status_var *status_ptr;
 
     void fill(const char *name, char *value, SHOW_TYPE show_type);
+
     system_status_var *getStatus()
     {
-      Session *session= current_session;
-      return scope ? &status :  &session->status_var;
+      return status_ptr;
     }
 
-
   public:
-    Generator(Field **arg, bool scope_arg, drizzle_show_var *);
+    Generator(Field **arg, bool scope_arg,
+              drizzle_show_var *show_arg,
+              bool is_variables);
     ~Generator();
 
     bool populate();
@@ -56,7 +63,7 @@ public:
 
   Generator *generator(Field **arg)
   {
-    return new Generator(arg, scope, getVariables());
+    return new Generator(arg, scope, getVariables(), isVariables());
   }
 };
 
@@ -112,6 +119,12 @@ public:
   drizzle_show_var *getVariables()
   {
     return getCommandStatusVars();
+  }
+
+  system_status_var *getStatus()
+  {
+    Session *session= current_session;
+    return &session->status_var;
   }
 };
 

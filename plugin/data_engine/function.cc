@@ -33,7 +33,9 @@ Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_SKIP_STORE_LOCK |
-                                  HTON_TEMPORARY_NOT_SUPPORTED)
+                                  HTON_TEMPORARY_NOT_SUPPORTED),
+  global_variables(true),
+  session_variables(false)
 {
   addTool(character_sets);
   addTool(collations);
@@ -50,6 +52,7 @@ Function::Function(const std::string &name_arg) :
   addTool(schemas);
   addTool(session_statements);
   addTool(session_status);
+  addTool(session_variables);
   addTool(table_constraints);
   addTool(tables);
 }

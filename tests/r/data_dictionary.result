@@ -367,6 +367,8 @@ COLUMN_NAME
 #
 #
 #
+#
+#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
@@ -380,6 +382,9 @@ SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
 count(*)
 #
 SELECT count(*) FROM data_dictionary.SESSION_STATUS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.SESSION_VARIABLES;
 count(*)
 #
 use data_dictionary;
@@ -522,6 +527,12 @@ SESSION_STATEMENTS	CREATE TABLE `session_statements` (
 show create table SESSION_STATUS;
 Table	Create Table
 SESSION_STATUS	CREATE TABLE `session_status` (
+  `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
+) ENGINE=FUNCTION
+show create table SESSION_VARIABLES;
+Table	Create Table
+SESSION_VARIABLES	CREATE TABLE `session_variables` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
 ) ENGINE=FUNCTION
