@@ -27,8 +27,12 @@ class IndexesTool : public TablesTool
 public:
   IndexesTool();
 
-  IndexesTool(const char *arg) :
-    TablesTool(arg)
+  IndexesTool(const char *schema_arg, const char *table_arg) :
+    TablesTool(schema_arg, table_arg)
+  { }
+
+  IndexesTool(const char *table_arg) :
+    TablesTool(table_arg)
   { }
 
   class Generator : public TablesTool::Generator 

@@ -58,8 +58,10 @@ class Function : public drizzled::plugin::StorageEngine
 {
   typedef drizzled::hash_map<std::string, Tool *> ToolMap;
   typedef std::pair<std::string, Tool&> ToolMapPair;
+  typedef std::set<std::string> SchemaList;
 
   ToolMap table_map;
+  SchemaList schema_list;
 
   CharacterSetsTool character_sets;
   CollationsTool collations;
@@ -83,9 +85,18 @@ class Function : public drizzled::plugin::StorageEngine
   void addTool(Tool& tool)
   {
     std::pair<ToolMap::iterator, bool> ret;
+    std::string schema= tool.getSchemaHome();
+    std::string path= tool.getPath();
 
-    ret= table_map.insert(make_pair(tool.getPath(),
-                                    &tool));
+    transform(path.begin(), path.end(),
+              path.begin(), ::tolower);
+
+    transform(schema.begin(), schema.end(),
+              schema.begin(), ::tolower);
+
+    schema_list.insert(schema);
+
+    ret= table_map.insert(std::make_pair(path, &tool));
     assert(ret.second == true);
   }
 

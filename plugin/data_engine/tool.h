@@ -24,17 +24,16 @@
 class Tool
 {
   drizzled::message::Table proto;
-  std::string name;
-  std::string path;
+  drizzled::TableIdentifier identifier;
 
-public:
-  Tool(const char *arg)
+  void setName(); // init name
+
+  void init()
   {
     drizzled::message::Table::StorageEngine *engine;
     drizzled::message::Table::TableOptions *table_options;
 
-    setName(arg);
-    proto.set_name(name.c_str());
+    proto.set_name(identifier.getTableName());
     proto.set_type(drizzled::message::Table::FUNCTION);
 
     table_options= proto.mutable_options();
@@ -43,6 +42,19 @@ public:
 
     engine= proto.mutable_engine();
     engine->set_name(engine_name);
+  }
+
+public:
+  Tool(const char *schema_arg, const char *table_arg) :
+    identifier(schema_arg, table_arg)
+  {
+    init();
+  }
+
+  Tool(const char *table_arg) :
+    identifier("data_dictionary", table_arg)
+  {
+    init();
   }
 
   enum ColumnType {
@@ -116,7 +128,7 @@ public:
       (*columns_iterator)->store(arg, length ? length : strlen(arg), scs);
       columns_iterator++;
     }
-    
+
     void push(const std::string& arg)
     {
       (*columns_iterator)->store(arg.c_str(), arg.length(), scs);
@@ -144,25 +156,19 @@ public:
     arg.CopyFrom(proto);
   }
 
-  std::string &getName()
+  const char *getName()
   { 
-    return name;
+    return identifier.getTableName();
   }
 
-  std::string &getPath()
+  const char *getSchemaHome()
   { 
-    return path;
+    return identifier.getSchemaName();
   }
 
-  void setName(const char *arg)
+  const char *getPath()
   { 
-    path.clear();
-    name= arg;
-
-    path.append("./data_dictionary/");
-    path.append(name);
-    transform(path.begin(), path.end(),
-              path.begin(), ::tolower);
+    return identifier.getPath();
   }
 
   virtual Generator *generator(Field **arg)
@@ -185,10 +191,6 @@ public:
                  Tool::ColumnType type,
                  uint32_t field_length,
                  bool is_default_null= false);
-
-private:
-
-  Tool() {};
 };
 
 #endif // PLUGIN_DATA_ENGINE_TOOL_H

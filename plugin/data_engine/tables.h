@@ -27,8 +27,12 @@ public:
 
   TablesTool();
 
-  TablesTool(const char *arg) :
-    SchemasTool(arg)
+  TablesTool(const char *schema_arg, const char *table_arg) :
+    SchemasTool(schema_arg, table_arg)
+  { }
+
+  TablesTool(const char *table_arg) :
+    SchemasTool(table_arg)
   { }
 
   class Generator : public SchemasTool::Generator 

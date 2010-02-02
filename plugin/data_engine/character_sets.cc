@@ -25,7 +25,7 @@ using namespace std;
 using namespace drizzled;
 
 CharacterSetsTool::CharacterSetsTool() :
-  Tool("CHARACTER_SETS")
+  Tool("DATA_DICTIONARY", "CHARACTER_SETS")
 {
   add_field("CHARACTER_SET_NAME");
   add_field("DEFAULT_COLLATE_NAME");

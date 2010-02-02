@@ -73,7 +73,6 @@ Tool *Function::getTool(const char *path)
 
   if (iter == table_map.end())
   {
-    fprintf(stderr, "\n %s\n", path);
     assert(path == NULL);
   }
   return (*iter).second;
@@ -92,16 +91,10 @@ int Function::doGetTableDefinition(Session &,
   transform(tab_name.begin(), tab_name.end(),
             tab_name.begin(), ::tolower);
 
-  if (tab_name.compare(0, schema_name_prefix.length(), schema_name_prefix) != 0)
-  {
-    return ENOENT;
-  }
-
   ToolMap::iterator iter= table_map.find(tab_name);
 
   if (iter == table_map.end())
   {
-    fprintf(stderr, "\n Error from doGetTableDefinition() %s\n", tab_name.c_str());
     return ENOENT;
   }
 
@@ -128,7 +121,11 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
        it++)
   {
     Tool *tool= (*it).second;
-    set_of_names.insert(tool->getName());
+    
+    if (db.find(tool->getName()))
+    {
+      set_of_names.insert(tool->getName());
+    }
   }
 }
 
