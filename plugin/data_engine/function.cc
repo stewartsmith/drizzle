@@ -20,11 +20,14 @@
 
 #include <plugin/data_engine/function.h>
 #include <plugin/data_engine/cursor.h>
+#include <drizzled/table_function_container.h>
 
 #include <string>
 
 using namespace std;
 using namespace drizzled;
+
+static TableFunctionContainer table_functions;
 
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
@@ -38,24 +41,24 @@ Function::Function(const std::string &name_arg) :
   global_variables(true),
   session_variables(false)
 {
-  addTool(character_sets);
-  addTool(collations);
-  addTool(columns);
-  addTool(global_statements);
-  addTool(global_status);
-  addTool(global_variables);
-  addTool(index_parts);
-  addTool(indexes);
-  addTool(modules);
-  addTool(plugins);
-  addTool(processlist);
-  addTool(referential_constraints);
-  addTool(schemas);
-  addTool(session_statements);
-  addTool(session_status);
-  addTool(session_variables);
-  addTool(table_constraints);
-  addTool(tables);
+  table_functions.addTool(character_sets);
+  table_functions.addTool(collations);
+  table_functions.addTool(columns);
+  table_functions.addTool(global_statements);
+  table_functions.addTool(global_status);
+  table_functions.addTool(global_variables);
+  table_functions.addTool(index_parts);
+  table_functions.addTool(indexes);
+  table_functions.addTool(modules);
+  table_functions.addTool(plugins);
+  table_functions.addTool(processlist);
+  table_functions.addTool(referential_constraints);
+  table_functions.addTool(schemas);
+  table_functions.addTool(session_statements);
+  table_functions.addTool(session_status);
+  table_functions.addTool(session_variables);
+  table_functions.addTool(table_constraints);
+  table_functions.addTool(tables);
 }
 
 
@@ -66,16 +69,8 @@ Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 
 Tool *Function::getTool(const char *path)
 {
-  ToolMap::iterator iter= table_map.find(path);
-
-  if (iter == table_map.end())
-  {
-    assert(path == NULL);
-  }
-  return (*iter).second;
-
+  return table_functions.getTool(path);
 }
-
 
 int Function::doGetTableDefinition(Session &,
                                      const char *path,
@@ -88,17 +83,15 @@ int Function::doGetTableDefinition(Session &,
   transform(tab_name.begin(), tab_name.end(),
             tab_name.begin(), ::tolower);
 
-  ToolMap::iterator iter= table_map.find(tab_name);
+  Tool *tool= table_functions.getTool(tab_name);
 
-  if (iter == table_map.end())
+  if (not tool)
   {
     return ENOENT;
   }
 
   if (table_proto)
   {
-    Tool *tool= (*iter).second;
-
     tool->define(*table_proto);
   }
 
@@ -110,17 +103,7 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
                                         string &db, 
                                         set<string> &set_of_names)
 {
-  for (ToolMap::iterator it= table_map.begin();
-       it != table_map.end();
-       it++)
-  {
-    Tool *tool= (*it).second;
-    
-    if (not db.compare(tool->getSchemaHome()))
-    {
-      set_of_names.insert(tool->getName());
-    }
-  }
+  table_functions.getNames(db, set_of_names);
 }
 
 

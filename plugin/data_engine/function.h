@@ -56,11 +56,6 @@ static const char *function_exts[] = {
 
 class Function : public drizzled::plugin::StorageEngine
 {
-  typedef drizzled::hash_map<std::string, Tool *> ToolMap;
-  typedef std::pair<std::string, Tool&> ToolMapPair;
-
-  ToolMap table_map;
-
   CharacterSetsTool character_sets;
   CollationsTool collations;
   ColumnsTool columns;
@@ -79,23 +74,6 @@ class Function : public drizzled::plugin::StorageEngine
   TablesTool tables;
   VariablesTool global_variables;
   VariablesTool session_variables;
-
-  void addTool(Tool& tool)
-  {
-    std::pair<ToolMap::iterator, bool> ret;
-    std::string schema= tool.getSchemaHome();
-    std::string path= tool.getPath();
-
-    transform(path.begin(), path.end(),
-              path.begin(), ::tolower);
-
-    transform(schema.begin(), schema.end(),
-              schema.begin(), ::tolower);
-
-    ret= table_map.insert(std::make_pair(path, &tool));
-    assert(ret.second == true);
-  }
-
 
 public:
   Function(const std::string &name_arg);
