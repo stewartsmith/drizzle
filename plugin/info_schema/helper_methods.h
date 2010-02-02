@@ -26,7 +26,7 @@
 bool show_status_array(Session *session, 
                        const char *wild,
                        SHOW_VAR *variables,
-                       enum enum_var_type value_type,
+                       sql_var_t value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
                        bool ucase_names,

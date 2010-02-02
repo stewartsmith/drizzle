@@ -147,7 +147,7 @@ int VariablesISMethods::fillTable(Session *session,
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   const string schema_table_name= schema_table->getTableName();
-  enum enum_var_type option_type= OPT_SESSION;
+  sql_var_t option_type= OPT_SESSION;
   bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
   bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
 

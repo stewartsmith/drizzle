@@ -416,7 +416,7 @@ static bool setup_select_in_parentheses(LEX *lex)
   const ::drizzled::plugin::Function *udf;
   TableList *table_list;
   struct sys_var_with_base variable;
-  enum enum_var_type var_type;
+  enum sql_var_t var_type;
   Key::Keytype key_type;
   enum ha_key_alg key_alg;
   enum row_type row_type;

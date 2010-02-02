@@ -186,7 +186,7 @@ int StatusISMethods::fillTable(Session *session,
   int res= 0;
   STATUS_VAR *tmp1, tmp;
   const string schema_table_name= schema_table->getTableName();
-  enum enum_var_type option_type;
+  sql_var_t option_type;
   bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
 
   if (schema_table_name.compare("STATUS") == 0)

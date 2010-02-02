@@ -22,16 +22,16 @@
 #define PLUGIN_DATA_ENGINE_VARIABLES_H
 
 
-class VariablesTool : public StatusTool
+class VariablesTool : public StateTool
 {
 public:
   VariablesTool(bool global) :
-    StatusTool(global ? "GLOBAL_VARIABLES" : "SESSION_VARIABLES", global)
+    StateTool(global ? "GLOBAL_VARIABLES" : "SESSION_VARIABLES", global)
   { }
 
-  bool isVariables()
+  bool hasStatus()
   {
-    return true;
+    return false;
   }
 
   drizzle_show_var *getVariables()

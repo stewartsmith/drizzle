@@ -30,50 +30,53 @@
 using namespace std;
 using namespace drizzled;
 
-StatusTool::StatusTool(const char *arg, bool scope_arg) :
+StateTool::StateTool(const char *arg, bool global) :
   Tool(arg),
-  scope(scope_arg)
+  option_type(global ? OPT_GLOBAL : OPT_SESSION)
 {
   add_field("VARIABLE_NAME");
   add_field("VARIABLE_VALUE", 16300);
 }
 
-StatusTool::Generator::Generator(Field **arg, bool scope_arg, drizzle_show_var *variables_args,
-                                 bool is_variables) :
+StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
+                                drizzle_show_var *variables_args,
+                                bool status_arg) :
   Tool::Generator(arg),
-  scope(scope_arg),
+  option_type(option_arg),
+  has_status(status_arg),
   variables(variables_args)
 {
-  if (is_variables)
+  if (not has_status)
   {
     status_ptr= NULL;
+    pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   }
-  else if (scope)
+  else if (option_type == OPT_GLOBAL  && has_status)
   {
     status_ptr= &status;
+    pthread_mutex_lock(&LOCK_status);
+    calc_sum_of_all_status(&status);
   }
   else
   {
     Session *session= current_session;
     status_ptr= &session->status_var;
   }
+}
 
-  pthread_mutex_lock(&LOCK_status);
-  if (scope && status_ptr)
+StateTool::Generator::~Generator()
+{
+  if (not has_status)
   {
-    calc_sum_of_all_status(getStatus());
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    pthread_rwlock_unlock(&LOCK_system_variables_hash);
+  }
+  else if (option_type == OPT_GLOBAL)
+  {
+    pthread_mutex_unlock(&LOCK_status);
   }
 }
 
-StatusTool::Generator::~Generator()
-{
-  if (scope && status_ptr)
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-  pthread_mutex_unlock(&LOCK_status);
-}
-
-bool StatusTool::Generator::populate()
+bool StateTool::Generator::populate()
 {
   while (variables && variables->name)
   {
@@ -104,17 +107,20 @@ bool StatusTool::Generator::populate()
 
   return false;
 }
-void StatusTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_type)
+
+
+void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_type)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
   Session *session= current_session;
   const char *pos, *end;                  // We assign a lot of const's
-  enum enum_var_type option_type= scope ? OPT_GLOBAL : OPT_SESSION;
   struct system_status_var *status_var;
 
   /* Scope represents if the status should be session or global */
   status_var= getStatus();
+
+  pthread_mutex_lock(&LOCK_global_system_variables);
 
   if (show_type == SHOW_SYS)
   {
@@ -203,6 +209,7 @@ void StatusTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_t
     assert(0);
     break;
   }
+  pthread_mutex_unlock(&LOCK_global_system_variables);
   push(name);
   push(pos, (uint32_t) (end - pos));
 }

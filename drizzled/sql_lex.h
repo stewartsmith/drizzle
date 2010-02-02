@@ -828,7 +828,7 @@ public:
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
   };
-  enum enum_var_type option_type;
+  sql_var_t option_type;
 
   int nest_level;
   uint8_t describe;

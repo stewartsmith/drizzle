@@ -128,18 +128,18 @@ public:
     :sys_var(name_arg), plugin_var(plugin_var_arg) {}
   sys_var_pluginvar *cast_pluginvar() { return this; }
   bool is_readonly() const { return plugin_var->flags & PLUGIN_VAR_READONLY; }
-  bool check_type(enum_var_type type)
+  bool check_type(sql_var_t type)
   { return !(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) && type != OPT_GLOBAL; }
   bool check_update_type(Item_result type);
   SHOW_TYPE show_type();
-  unsigned char* real_value_ptr(Session *session, enum_var_type type);
+  unsigned char* real_value_ptr(Session *session, sql_var_t type);
   TYPELIB* plugin_var_typelib(void);
-  unsigned char* value_ptr(Session *session, enum_var_type type,
+  unsigned char* value_ptr(Session *session, sql_var_t type,
                            const LEX_STRING *base);
   bool check(Session *session, set_var *var);
-  bool check_default(enum_var_type)
+  bool check_default(sql_var_t)
     { return is_readonly(); }
-  void set_default(Session *session, enum_var_type);
+  void set_default(Session *session, sql_var_t);
   bool update(Session *session, set_var *var);
 };
 
@@ -1314,7 +1314,7 @@ SHOW_TYPE sys_var_pluginvar::show_type()
 }
 
 
-unsigned char* sys_var_pluginvar::real_value_ptr(Session *session, enum_var_type type)
+unsigned char* sys_var_pluginvar::real_value_ptr(Session *session, sql_var_t type)
 {
   assert(session || (type == OPT_GLOBAL));
   if (plugin_var->flags & PLUGIN_VAR_SessionLOCAL)
@@ -1346,7 +1346,7 @@ TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 }
 
 
-unsigned char* sys_var_pluginvar::value_ptr(Session *session, enum_var_type type, const LEX_STRING *)
+unsigned char* sys_var_pluginvar::value_ptr(Session *session, sql_var_t type, const LEX_STRING *)
 {
   unsigned char* result;
 
@@ -1395,7 +1395,7 @@ bool sys_var_pluginvar::check(Session *session, set_var *var)
 }
 
 
-void sys_var_pluginvar::set_default(Session *session, enum_var_type type)
+void sys_var_pluginvar::set_default(Session *session, sql_var_t type)
 {
   const void *src;
   void *tgt;

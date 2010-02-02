@@ -94,13 +94,13 @@ static bool set_option_bit(Session *session, set_var *var);
 static bool set_option_autocommit(Session *session, set_var *var);
 static int  check_pseudo_thread_id(Session *session, set_var *var);
 static int check_tx_isolation(Session *session, set_var *var);
-static void fix_tx_isolation(Session *session, enum_var_type type);
+static void fix_tx_isolation(Session *session, sql_var_t type);
 static int check_completion_type(Session *session, set_var *var);
-static void fix_completion_type(Session *session, enum_var_type type);
-static void fix_max_join_size(Session *session, enum_var_type type);
-static void fix_session_mem_root(Session *session, enum_var_type type);
-static void fix_trans_mem_root(Session *session, enum_var_type type);
-static void fix_server_id(Session *session, enum_var_type type);
+static void fix_completion_type(Session *session, sql_var_t type);
+static void fix_max_join_size(Session *session, sql_var_t type);
+static void fix_session_mem_root(Session *session, sql_var_t type);
+static void fix_trans_mem_root(Session *session, sql_var_t type);
+static void fix_server_id(Session *session, sql_var_t type);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
@@ -350,7 +350,7 @@ bool sys_var_str::check(Session *session, set_var *var)
   Set the OPTION_BIG_SELECTS flag if max_join_size == HA_POS_ERROR.
 */
 
-static void fix_max_join_size(Session *session, enum_var_type type)
+static void fix_max_join_size(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
   {
@@ -380,14 +380,14 @@ static int check_tx_isolation(Session *session, set_var *var)
   If one doesn't use the SESSION modifier, the isolation level
   is only active for the next command.
 */
-static void fix_tx_isolation(Session *session, enum_var_type type)
+static void fix_tx_isolation(Session *session, sql_var_t type)
 {
   if (type == OPT_SESSION)
     session->session_tx_isolation= ((enum_tx_isolation)
                                     session->variables.tx_isolation);
 }
 
-static void fix_completion_type(Session *, enum_var_type) {}
+static void fix_completion_type(Session *, sql_var_t) {}
 
 static int check_completion_type(Session *, set_var *var)
 {
@@ -402,7 +402,7 @@ static int check_completion_type(Session *, set_var *var)
 }
 
 
-static void fix_session_mem_root(Session *session, enum_var_type type)
+static void fix_session_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
     reset_root_defaults(session->mem_root,
@@ -411,7 +411,7 @@ static void fix_session_mem_root(Session *session, enum_var_type type)
 }
 
 
-static void fix_trans_mem_root(Session *session, enum_var_type type)
+static void fix_trans_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
     reset_root_defaults(&session->transaction.mem_root,
@@ -420,7 +420,7 @@ static void fix_trans_mem_root(Session *session, enum_var_type type)
 }
 
 
-static void fix_server_id(Session *, enum_var_type)
+static void fix_server_id(Session *, sql_var_t)
 {
 }
 
@@ -529,7 +529,7 @@ bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
 }
 
 
-void sys_var_uint32_t_ptr::set_default(Session *, enum_var_type)
+void sys_var_uint32_t_ptr::set_default(Session *, sql_var_t)
 {
   bool not_used;
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -556,7 +556,7 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 }
 
 
-void sys_var_uint64_t_ptr::set_default(Session *, enum_var_type)
+void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
 {
   bool not_used;
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -579,7 +579,7 @@ bool sys_var_size_t_ptr::update(Session *session, set_var *var)
 }
 
 
-void sys_var_size_t_ptr::set_default(Session *, enum_var_type)
+void sys_var_size_t_ptr::set_default(Session *, sql_var_t)
 {
   bool not_used;
   pthread_mutex_lock(&LOCK_global_system_variables);
@@ -595,7 +595,7 @@ bool sys_var_bool_ptr::update(Session *, set_var *var)
 }
 
 
-void sys_var_bool_ptr::set_default(Session *, enum_var_type)
+void sys_var_bool_ptr::set_default(Session *, sql_var_t)
 {
   *value= (bool) option_limits->def_value;
 }
@@ -608,13 +608,13 @@ bool sys_var_enum::update(Session *, set_var *var)
 }
 
 
-unsigned char *sys_var_enum::value_ptr(Session *, enum_var_type, const LEX_STRING *)
+unsigned char *sys_var_enum::value_ptr(Session *, sql_var_t, const LEX_STRING *)
 {
   return (unsigned char*) enum_names->type_names[*value];
 }
 
 
-unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
+unsigned char *sys_var_enum_const::value_ptr(Session *, sql_var_t,
                                              const LEX_STRING *)
 {
   return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
@@ -657,7 +657,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
  }
 
 
- void sys_var_session_uint32_t::set_default(Session *session, enum_var_type type)
+ void sys_var_session_uint32_t::set_default(Session *session, sql_var_t type)
  {
    if (type == OPT_GLOBAL)
    {
@@ -673,7 +673,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_session_uint32_t::value_ptr(Session *session,
-                                                enum_var_type type,
+                                                sql_var_t type,
                                                 const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
@@ -705,7 +705,7 @@ bool sys_var_session_ha_rows::update(Session *session, set_var *var)
 }
 
 
-void sys_var_session_ha_rows::set_default(Session *session, enum_var_type type)
+void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
   {
@@ -723,7 +723,7 @@ void sys_var_session_ha_rows::set_default(Session *session, enum_var_type type)
 
 
 unsigned char *sys_var_session_ha_rows::value_ptr(Session *session,
-                                                  enum_var_type type,
+                                                  sql_var_t type,
                                                   const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
@@ -762,7 +762,7 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
 }
 
 
-void sys_var_session_uint64_t::set_default(Session *session, enum_var_type type)
+void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
   {
@@ -779,7 +779,7 @@ void sys_var_session_uint64_t::set_default(Session *session, enum_var_type type)
 
 
 unsigned char *sys_var_session_uint64_t::value_ptr(Session *session,
-                                                   enum_var_type type,
+                                                   sql_var_t type,
                                                    const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
@@ -815,7 +815,7 @@ bool sys_var_session_size_t::update(Session *session,  set_var *var)
 }
 
 
-void sys_var_session_size_t::set_default(Session *session, enum_var_type type)
+void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
   {
@@ -832,7 +832,7 @@ void sys_var_session_size_t::set_default(Session *session, enum_var_type type)
 
 
 unsigned char *sys_var_session_size_t::value_ptr(Session *session,
-                                                 enum_var_type type,
+                                                 sql_var_t type,
                                                  const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
@@ -851,7 +851,7 @@ bool sys_var_session_bool::update(Session *session,  set_var *var)
 }
 
 
-void sys_var_session_bool::set_default(Session *session,  enum_var_type type)
+void sys_var_session_bool::set_default(Session *session,  sql_var_t type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= (bool) option_limits->def_value;
@@ -861,7 +861,7 @@ void sys_var_session_bool::set_default(Session *session,  enum_var_type type)
 
 
 unsigned char *sys_var_session_bool::value_ptr(Session *session,
-                                               enum_var_type type,
+                                               sql_var_t type,
                                                const LEX_STRING *)
 {
   if (type == OPT_GLOBAL)
@@ -982,7 +982,7 @@ err:
   If type is not given, return local value if exists, else global.
 */
 
-Item *sys_var::item(Session *session, enum_var_type var_type, const LEX_STRING *base)
+Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base)
 {
   if (check_type(var_type))
   {
@@ -1098,7 +1098,7 @@ bool sys_var_session_enum::update(Session *session, set_var *var)
 }
 
 
-void sys_var_session_enum::set_default(Session *session, enum_var_type type)
+void sys_var_session_enum::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= (uint32_t) option_limits->def_value;
@@ -1108,7 +1108,7 @@ void sys_var_session_enum::set_default(Session *session, enum_var_type type)
 
 
 unsigned char *sys_var_session_enum::value_ptr(Session *session,
-                                               enum_var_type type,
+                                               sql_var_t type,
                                                const LEX_STRING *)
 {
   uint32_t tmp= ((type == OPT_GLOBAL) ?
@@ -1130,7 +1130,7 @@ bool sys_var_session_bit::update(Session *session, set_var *var)
 }
 
 
-unsigned char *sys_var_session_bit::value_ptr(Session *session, enum_var_type,
+unsigned char *sys_var_session_bit::value_ptr(Session *session, sql_var_t,
                                               const LEX_STRING *)
 {
   /*
@@ -1195,7 +1195,7 @@ bool sys_var_collation_sv::update(Session *session, set_var *var)
 }
 
 
-void sys_var_collation_sv::set_default(Session *session, enum_var_type type)
+void sys_var_collation_sv::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= *global_default;
@@ -1207,7 +1207,7 @@ void sys_var_collation_sv::set_default(Session *session, enum_var_type type)
 
 
 unsigned char *sys_var_collation_sv::value_ptr(Session *session,
-                                               enum_var_type type,
+                                               sql_var_t type,
                                                const LEX_STRING *)
 {
   const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
@@ -1225,13 +1225,13 @@ bool sys_var_timestamp::update(Session *session,  set_var *var)
 }
 
 
-void sys_var_timestamp::set_default(Session *session, enum_var_type)
+void sys_var_timestamp::set_default(Session *session, sql_var_t)
 {
   session->user_time=0;
 }
 
 
-unsigned char *sys_var_timestamp::value_ptr(Session *session, enum_var_type,
+unsigned char *sys_var_timestamp::value_ptr(Session *session, sql_var_t,
                                             const LEX_STRING *)
 {
   session->sys_var_tmp.int32_t_value= (int32_t) session->start_time;
@@ -1248,7 +1248,7 @@ bool sys_var_last_insert_id::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_last_insert_id::value_ptr(Session *session,
-                                                 enum_var_type,
+                                                 sql_var_t,
                                                  const LEX_STRING *)
 {
   /*
@@ -1292,7 +1292,7 @@ bool sys_var_session_time_zone::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
-                                                    enum_var_type type,
+                                                    sql_var_t type,
                                                     const LEX_STRING *)
 {
   /*
@@ -1316,7 +1316,7 @@ unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
 }
 
 
-void sys_var_session_time_zone::set_default(Session *session, enum_var_type type)
+void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
 {
  pthread_mutex_lock(&LOCK_global_system_variables);
  if (type == OPT_GLOBAL)
@@ -1387,7 +1387,7 @@ bool sys_var_session_lc_time_names::update(Session *session, set_var *var)
 
 
 unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session,
-                                                        enum_var_type type,
+                                                        sql_var_t type,
                                                         const LEX_STRING *)
 {
   return type == OPT_GLOBAL ?
@@ -1396,7 +1396,7 @@ unsigned char *sys_var_session_lc_time_names::value_ptr(Session *session,
 }
 
 
-void sys_var_session_lc_time_names::set_default(Session *session, enum_var_type type)
+void sys_var_session_lc_time_names::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -1434,7 +1434,7 @@ bool sys_var_microseconds::update(Session *session, set_var *var)
 }
 
 
-void sys_var_microseconds::set_default(Session *session, enum_var_type type)
+void sys_var_microseconds::set_default(Session *session, sql_var_t type)
 {
   int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
@@ -1984,7 +1984,7 @@ err:
 
 
 unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
-                                                         enum_var_type type,
+                                                         sql_var_t type,
                                                          const LEX_STRING *)
 {
   unsigned char* result;
@@ -1999,7 +1999,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 }
 
 
-void sys_var_session_storage_engine::set_default(Session *session, enum_var_type type)
+void sys_var_session_storage_engine::set_default(Session *session, sql_var_t type)
 {
   plugin::StorageEngine *old_value, *new_value, **value;
   if (type == OPT_GLOBAL)
@@ -2062,7 +2062,7 @@ symbolic_mode_representation(Session *session, uint32_t val, LEX_STRING *rep)
 
 
 unsigned char *sys_var_session_optimizer_switch::value_ptr(Session *session,
-                                                           enum_var_type type,
+                                                           sql_var_t type,
                                                            const LEX_STRING *)
 {
   LEX_STRING opts;
@@ -2073,7 +2073,7 @@ unsigned char *sys_var_session_optimizer_switch::value_ptr(Session *session,
 }
 
 
-void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_type type)
+void sys_var_session_optimizer_switch::set_default(Session *session, sql_var_t type)
 {
   if (type == OPT_GLOBAL)
     global_system_variables.*offset= 0;

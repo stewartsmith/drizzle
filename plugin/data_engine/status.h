@@ -22,24 +22,25 @@
 #define PLUGIN_DATA_ENGINE_STATUS_H
 
 
-class StatusTool : public Tool
+class StateTool : public Tool
 {
-  bool scope;
+  sql_var_t option_type;
 
 public:
 
-  StatusTool(const char *arg, bool scope_arg);
+  StateTool(const char *arg, bool global);
 
   virtual drizzle_show_var *getVariables()= 0;
 
-  virtual bool isVariables()
+  virtual bool hasStatus()
   {
-    return false;
+    return true;
   }
 
   class Generator : public Tool::Generator 
   {
-    bool scope;
+    sql_var_t option_type;
+    bool has_status;
     drizzle_show_var *variables;
     system_status_var status;
     system_status_var *status_ptr;
@@ -52,9 +53,9 @@ public:
     }
 
   public:
-    Generator(Field **arg, bool scope_arg,
+    Generator(Field **arg, sql_var_t option_arg,
               drizzle_show_var *show_arg,
-              bool is_variables);
+              bool status_arg);
     ~Generator();
 
     bool populate();
@@ -63,15 +64,15 @@ public:
 
   Generator *generator(Field **arg)
   {
-    return new Generator(arg, scope, getVariables(), isVariables());
+    return new Generator(arg, option_type, getVariables(), hasStatus());
   }
 };
 
-class GlobalStatusTool : public StatusTool
+class StatusTool : public StateTool
 {
 public:
-  GlobalStatusTool() :
-    StatusTool("GLOBAL_STATUS", true)
+  StatusTool(bool global) :
+    StateTool(global ? "GLOBAL_STATUS" : "SESSION_STATUS", global)
   { }
 
   drizzle_show_var *getVariables()
@@ -81,51 +82,16 @@ public:
 };
 
 
-class SessionStatusTool : public StatusTool
+class StatementsTool : public StateTool
 {
 public:
-  SessionStatusTool() :
-    StatusTool("SESSION_STATUS", false)
-  { }
-
-  drizzle_show_var *getVariables()
-  {
-    return getFrontOfStatusVars();
-  }
-};
-
-
-class GlobalStatementsTool : public StatusTool
-{
-public:
-  GlobalStatementsTool() :
-    StatusTool("GLOBAL_STATEMENTS", true)
-  { }
+  StatementsTool(bool global) :
+    StateTool(global ? "GLOBAL_STATEMENTS" : "SESSION_STATEMENTS", global)
+    { }
 
   drizzle_show_var *getVariables()
   {
     return getCommandStatusVars();
   }
 };
-
-
-class SessionStatementsTool : public StatusTool
-{
-public:
-  SessionStatementsTool() :
-    StatusTool("SESSION_STATEMENTS", false)
-  { }
-
-  drizzle_show_var *getVariables()
-  {
-    return getCommandStatusVars();
-  }
-
-  system_status_var *getStatus()
-  {
-    Session *session= current_session;
-    return &session->status_var;
-  }
-};
-
 #endif // PLUGIN_DATA_ENGINE_STATUS_H

@@ -34,6 +34,10 @@ Function::Function(const std::string &name_arg) :
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED),
+  global_statements(true),
+  session_statements(false),
+  global_status(true),
+  session_status(false),
   global_variables(true),
   session_variables(false)
 {
