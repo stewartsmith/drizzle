@@ -26,9 +26,6 @@
 using namespace std;
 using namespace drizzled;
 
-static const string schema_name("data_dictionary");
-static const string schema_name_prefix("./data_dictionary/");
-
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
@@ -113,16 +110,13 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
                                         string &db, 
                                         set<string> &set_of_names)
 {
-  if (db.compare(schema_name))
-    return;
-
   for (ToolMap::iterator it= table_map.begin();
        it != table_map.end();
        it++)
   {
     Tool *tool= (*it).second;
     
-    if (db.find(tool->getName()))
+    if (not db.compare(tool->getSchemaHome()))
     {
       set_of_names.insert(tool->getName());
     }

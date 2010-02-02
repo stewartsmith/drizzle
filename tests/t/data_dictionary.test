@@ -113,3 +113,11 @@ CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
 
+# Test that the data dictionary is not leaking its tables to other schema
+CREATE SCHEMA A;
+use A;
+create table A (a int);
+SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
+DROP SCHEMA A;
+
+
