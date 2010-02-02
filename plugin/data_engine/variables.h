@@ -25,7 +25,6 @@
 class VariablesTool : public Tool
 {
 public:
-
   VariablesTool();
 };
 

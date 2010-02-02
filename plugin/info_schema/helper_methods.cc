@@ -183,8 +183,8 @@ bool show_status_array(Session *session,
           break;
         case SHOW_KEY_CACHE_LONGLONG:
           value= (char*) dflt_key_cache + (ulong)value;
-	  end= int64_t10_to_str(*(int64_t*) value, buff, 10);
-	  break;
+          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+          break;
         case SHOW_UNDEF:
           break;                                        // Return empty string
         case SHOW_SYS:                                  // Cannot happen

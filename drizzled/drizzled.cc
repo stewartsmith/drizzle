@@ -1355,9 +1355,9 @@ static int init_thread_environment()
 
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
   (void) pthread_mutex_init(&LOCK_thread_count, &attr);
+  (void) pthread_mutex_init(&LOCK_global_system_variables, &attr);
 
   (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);

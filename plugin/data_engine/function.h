@@ -64,17 +64,19 @@ class Function : public drizzled::plugin::StorageEngine
   CharacterSetsTool character_sets;
   CollationsTool collations;
   ColumnsTool columns;
-  IndexesTool indexes;
+  GlobalStatementsTool global_statements;
+  GlobalStatusTool global_status;
   IndexPartsTool index_parts;
+  IndexesTool indexes;
   ModulesTool modules;
   PluginsTool plugins;
   ProcesslistTool processlist;
   ReferentialConstraintsTool referential_constraints;
   SchemasTool schemas;
-  StatusTool global_status;
-  StatusTool session_status;
-  TablesTool tables;
+  SessionStatementsTool session_statements;
+  SessionStatusTool session_status;
   TableConstraintsTool table_constraints;
+  TablesTool tables;
   VariablesTool global_variables;
   VariablesTool session_variables;
 

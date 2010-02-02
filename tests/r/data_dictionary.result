@@ -361,6 +361,27 @@ COLUMN_NAME
 #
 #
 #
+#
+#
+#
+#
+#
+#
+SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.GLOBAL_STATUS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.GLOBAL_VARIABLES;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.SESSION_STATUS;
+count(*)
+#
 use data_dictionary;
 show create table CHARACTER_SETS ;
 Table	Create Table
@@ -401,6 +422,12 @@ COLUMNS	CREATE TABLE `columns` (
 show create table GLOBAL_STATUS ;
 Table	Create Table
 GLOBAL_STATUS	CREATE TABLE `global_status` (
+  `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
+) ENGINE=FUNCTION
+show create table GLOBAL_STATEMENTS ;
+Table	Create Table
+GLOBAL_STATEMENTS	CREATE TABLE `global_statements` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
 ) ENGINE=FUNCTION
@@ -485,6 +512,18 @@ Table	Create Table
 SCHEMAS	CREATE TABLE `schemas` (
   `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT '',
   `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FUNCTION
+show create table SESSION_STATEMENTS;
+Table	Create Table
+SESSION_STATEMENTS	CREATE TABLE `session_statements` (
+  `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
+) ENGINE=FUNCTION
+show create table SESSION_STATUS;
+Table	Create Table
+SESSION_STATUS	CREATE TABLE `session_status` (
+  `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
 ) ENGINE=FUNCTION
 show create table TABLES ;
 Table	Create Table

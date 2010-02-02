@@ -74,6 +74,7 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 SHOW_VAR *getFrontOfStatusVars();
+SHOW_VAR *getCommandStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 

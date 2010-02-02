@@ -860,6 +860,19 @@ SHOW_VAR *getFrontOfStatusVars()
   return all_status_vars.front();
 }
 
+SHOW_VAR *getCommandStatusVars()
+{
+  SHOW_VAR *tmp= all_status_vars.front();
+
+  for (; tmp->name; tmp++)
+  {
+    if (tmp->type == SHOW_ARRAY)
+      return (SHOW_VAR *) tmp->value;
+  }
+
+  return NULL;
+}
+
 /*
   Adds an array of SHOW_VAR entries to the output of SHOW STATUS
 

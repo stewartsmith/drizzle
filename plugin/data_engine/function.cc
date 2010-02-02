@@ -35,19 +35,21 @@ Function::Function(const std::string &name_arg) :
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {
-
   addTool(character_sets);
   addTool(collations);
   addTool(columns);
+  addTool(global_statements);
   addTool(global_status);
   addTool(global_variables);
-  addTool(indexes);
   addTool(index_parts);
+  addTool(indexes);
   addTool(modules);
   addTool(plugins);
   addTool(processlist);
   addTool(referential_constraints);
   addTool(schemas);
+  addTool(session_statements);
+  addTool(session_status);
   addTool(table_constraints);
   addTool(tables);
 }

@@ -33,7 +33,7 @@ ColumnsTool::ColumnsTool() :
   add_field("TABLE_NAME");
 
   add_field("COLUMN_NAME");
-  add_field("ORDINAL_POSITION", message::Table::Field::BIGINT);
+  add_field("ORDINAL_POSITION", Tool::NUMBER);
   add_field("COLUMN_DEFAULT");
   add_field("IS_NULLABLE", Tool::BOOLEAN);
   add_field("DATATYPE");
