@@ -399,6 +399,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/structs.h \
 		drizzled/symbol_hash.h \
 		drizzled/table.h \
+		drizzled/table_function_container.h \
 		drizzled/table_ident.h \
 		drizzled/table_identifier.h \
 		drizzled/table_list.h \
