@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.103])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.104])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -31,6 +31,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   m4_define([PCT_ALL_ARGS],[$*])
   m4_define([PCT_REQUIRE_CXX],[no])
   m4_define([PCT_FORCE_GCC42],[no])
+  m4_define([PCT_DONT_SUPPRESS_INCLUDE],[no])
   m4_define([PCT_VERSION_FROM_VC],[no])
   m4_define([PCT_USE_VISIBILITY],[yes])
   m4_foreach([pct_arg],[$*],[
@@ -46,6 +47,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
       [skip-visibility], [
         m4_undefine([PCT_USE_VISIBILITY])
         m4_define([PCT_USE_VISIBILITY],[no])
+      ],
+      [dont-suppress-include], [
+        m4_undefine([PCT_DONT_SUPPRESS_INCLUDE])
+        m4_define([PCT_DONT_SUPPRESS_INCLUDE],[yes])
       ],
       [version-from-vc], [
         m4_undefine([PCT_VERSION_FROM_VC])
@@ -71,7 +76,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   
   AC_CANONICAL_TARGET
   
-  AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects foreign)
+  m4_if(PCT_DONT_SUPRESS_INCLUDE,yes,[
+    AM_INIT_AUTOMAKE(-Wall -Werror subdir-objects foreign)
+  ],[
+    AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects foreign)
+  ])
+
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
   m4_if(m4_esyscmd(test -d gnulib && echo -n 0),0,[
@@ -128,8 +138,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_C_RESTRICT
 
   AC_HEADER_TIME
+  AC_STRUCT_TM
   AC_TYPE_SIZE_T
   AC_SYS_LARGEFILE
+  PANDORA_CLOCK_GETTIME
 
   # off_t is not a builtin type
   AC_CHECK_SIZEOF(off_t, 4)
