@@ -78,7 +78,6 @@ extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
 extern uint32_t dropping_tables;
 extern bool opt_endinfo;
-extern bool locked_in_memory;
 extern uint32_t volatile thread_running;
 extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;

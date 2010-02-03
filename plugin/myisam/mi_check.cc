@@ -1753,19 +1753,8 @@ int movepoint(register MI_INFO *info, unsigned char *record, my_off_t oldpos,
 
 	/* Tell system that we want all memory for our cache */
 
-void lock_memory(MI_CHECK *param)
+void lock_memory(MI_CHECK *)
 {
-#ifdef SUN_OS				/* Key-cacheing thrases on sun 4.1 */
-  if (param->opt_lock_memory)
-  {
-    int success = mlockall(MCL_CURRENT);	/* or plock(DATLOCK); */
-    if (geteuid() == 0 && success != 0)
-      mi_check_print_warning(param,
-			     "Failed to lock memory. errno %d",errno);
-  }
-#else
-  (void)param;
-#endif
 } /* lock_memory */
 
 
