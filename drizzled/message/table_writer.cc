@@ -198,6 +198,25 @@ static void fill_table(message::Table *table, const char *name)
 
 }
 
+static void fill_table1(message::Table *table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table->set_name("t1");
+  table->set_type(message::Table::INTERNAL);
+
+  tableopts= table->mutable_options();
+  tableopts->set_comment("Table without a StorageEngine message");
+
+  {
+    field= table->add_field();
+    field->set_name("number");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+}
+
 static void usage(char *argv0)
 {
   cerr << "Usage:  " << argv0 << " [-t N] TABLE_NAME.dfe" << endl;
@@ -239,6 +258,9 @@ int main(int argc, char* argv[])
   {
   case 0:
     fill_table(&table, "example_table");
+    break;
+  case 1:
+    fill_table1(&table);
     break;
   default:
     fprintf(stderr, "Invalid table number.\n\n");
