@@ -29,8 +29,6 @@
 
 #include "helper_methods.h"
 #include "character_set.h"
-#include "collation.h"
-#include "collation_char_set.h"
 #include "columns.h"
 #include "key_column_usage.h"
 #include "modules.h"
@@ -59,9 +57,6 @@ using namespace std;
  */
 static int infoSchemaInit(drizzled::plugin::Registry& registry)
 {
-  registry.add(CharacterSetIS::getTable());
-  registry.add(CollationIS::getTable());
-  registry.add(CollationCharSetIS::getTable());
   registry.add(ColumnsIS::getTable());
   registry.add(GlobalStatusIS::getTable());
   registry.add(SessionVariablesIS::getTable());
@@ -94,15 +89,6 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
  */
 static int infoSchemaDone(drizzled::plugin::Registry& registry)
 {
-  registry.remove(CharacterSetIS::getTable());
-  CharacterSetIS::cleanup();
-
-  registry.remove(CollationIS::getTable());
-  CollationIS::cleanup();
-
-  registry.remove(CollationCharSetIS::getTable());
-  CollationCharSetIS::cleanup();
-
   registry.remove(ColumnsIS::getTable());
   ColumnsIS::cleanup();
 

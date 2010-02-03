@@ -104,7 +104,7 @@ CREATE SCHEMA drizzleslap;
 
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATEMENTS as a, data_dictionary.GLOBAL_STATEMENTS as b ORDER BY VARIABLE_NAME" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATUS as a, data_dictionary.GLOBAL_STATUS as b ORDER BY VARIABLE_NAME" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_VARIABLES as a, data_dictionary.GLOBAL_VARIABLES as b ORDER BY VARIABLE_NAME" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_VARIABLES as a, data_dictionary.GLOBAL_VARIABLES as b" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_STATEMENTS as a, data_dictionary.SESSION_STATEMENTS as b ORDER BY VARIABLE_NAME" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_STATUS as a, data_dictionary.SESSION_STATUS as b ORDER BY VARIABLE_NAME" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_VARIABLES as a, data_dictionary.SESSION_VARIABLES as b ORDER BY VARIABLE_NAME" --delimiter=";"
