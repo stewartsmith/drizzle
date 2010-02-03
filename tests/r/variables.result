@@ -1,4 +1,6 @@
 drop table if exists t1,t2;
+drop schema if exists data_dictionary;
+create schema data_dictionary;
 set @my_myisam_key_cache_size           =@@global.myisam_key_cache_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
@@ -84,34 +86,34 @@ set max_join_size=100;
 show variables like 'max_join_size';
 Variable_name	Value
 max_join_size	100
-select * from information_schema.session_variables where variable_name like 'max_join_size';
+select * from data_dictionary.session_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
 max_join_size	100
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	10
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
 max_join_size	10
 set GLOBAL max_join_size=2000;
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2000
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
 max_join_size	2000
 set max_join_size=DEFAULT;
 show variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2000
-select * from information_schema.session_variables where variable_name like 'max_join_size';
+select * from data_dictionary.session_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
 max_join_size	2000
 set GLOBAL max_join_size=DEFAULT;
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2147483647
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
 max_join_size	2147483647
 set @@max_join_size=1000, @@global.max_join_size=2000;
@@ -144,54 +146,54 @@ set global timed_mutexes=ON;
 show variables like 'timed_mutexes';
 Variable_name	Value
 timed_mutexes	ON
-select * from information_schema.session_variables where variable_name like 'timed_mutexes';
+select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
 timed_mutexes	ON
 set global timed_mutexes=0;
 show variables like 'timed_mutexes';
 Variable_name	Value
 timed_mutexes	OFF
-select * from information_schema.session_variables where variable_name like 'timed_mutexes';
+select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
 timed_mutexes	OFF
 set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 Variable_name	Value
 storage_engine	MEMORY
-select * from information_schema.session_variables where variable_name like 'storage_engine';
+select * from data_dictionary.session_variables where variable_name like 'storage_engine';
 VARIABLE_NAME	VARIABLE_VALUE
 storage_engine	MEMORY
 show global variables like 'storage_engine';
 Variable_name	Value
 storage_engine	InnoDB
-select * from information_schema.global_variables where variable_name like 'storage_engine';
+select * from data_dictionary.global_variables where variable_name like 'storage_engine';
 VARIABLE_NAME	VARIABLE_VALUE
 storage_engine	InnoDB
 set GLOBAL myisam_max_sort_file_size=2000000;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	2000000
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
 myisam_max_sort_file_size	2000000
 set GLOBAL myisam_max_sort_file_size=default;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	2147483647
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
 myisam_max_sort_file_size	2147483647
 set global drizzle_protocol_buffer_length=1024;
 show global variables like 'drizzle_protocol_buffer_%';
 Variable_name	Value
 drizzle_protocol_buffer_length	1024
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
+select * from data_dictionary.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
 drizzle_protocol_buffer_length	1024
 show global variables like 'drizzle_protocol_buffer_%';
 Variable_name	Value
 drizzle_protocol_buffer_length	1024
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
+select * from data_dictionary.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
 drizzle_protocol_buffer_length	1024
 set global drizzle_protocol_buffer_length=1;
@@ -214,12 +216,12 @@ query_prealloc_size	8192
 range_alloc_block_size	
 transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
-select * from information_schema.session_variables where variable_name like '%alloc%';
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
-range_alloc_block_size	
+range_alloc_block_size	8192
 transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
 set @@range_alloc_block_size=1024*16;
@@ -238,12 +240,12 @@ query_prealloc_size	18432
 range_alloc_block_size	
 transaction_alloc_block_size	19456
 transaction_prealloc_size	20480
-select * from information_schema.session_variables where variable_name like '%alloc%';
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
 query_alloc_block_size	17408
 query_prealloc_size	18432
-range_alloc_block_size	
+range_alloc_block_size	18432
 transaction_alloc_block_size	19456
 transaction_prealloc_size	20480
 set @@range_alloc_block_size=default;
@@ -257,12 +259,12 @@ query_prealloc_size	8192
 range_alloc_block_size	
 transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
-select * from information_schema.session_variables where variable_name like '%alloc%';
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
-range_alloc_block_size	
+range_alloc_block_size	8192
 transaction_alloc_block_size	8192
 transaction_prealloc_size	4096
 SELECT @@version LIKE 'non-existent';
@@ -367,7 +369,7 @@ set global myisam_max_sort_file_size=4294967296;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	MAX_FILE_SIZE
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
 myisam_max_sort_file_size	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
@@ -414,7 +416,7 @@ Error	1292	Truncated incorrect table_open_cache value: '18446744073709551615'
 SHOW VARIABLES LIKE 'table_open_cache';
 Variable_name	Value
 table_open_cache	100
-SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
+SELECT * FROM DATA_DICTIONARY.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
 VARIABLE_NAME	VARIABLE_VALUE
 table_open_cache	100
 SET GLOBAL table_open_cache=DEFAULT;
@@ -534,12 +536,12 @@ set @@global.character_set_filesystem=utf8;
 ERROR HY000: Unknown system variable 'character_set_filesystem'
 set character_set_filesystem=utf8;
 ERROR HY000: Unknown system variable 'character_set_filesystem'
-set @old_sql_big_selects = @@sql_big_selects;
+set @sql_big_selects = @@sql_big_selects;
 set @@sql_big_selects = 1;
 show variables like 'sql_big_selects';
 Variable_name	Value
 sql_big_selects	ON
-set @@sql_big_selects = @old_sql_big_selects;
+set @@sql_big_selects = @sql_big_selects;
 set @@sql_notes = 0, @@sql_warnings = 0;
 show variables like 'sql_notes';
 Variable_name	Value
@@ -604,3 +606,4 @@ show global variables where variable_name='table_definition_cache' or Variable_n
 Variable_name	Value
 table_definition_cache	#
 table_lock_wait_timeout	#
+drop schema data_dictionary;

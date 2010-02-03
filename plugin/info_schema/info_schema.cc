@@ -63,23 +63,25 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(CollationIS::getTable());
   registry.add(CollationCharSetIS::getTable());
   registry.add(ColumnsIS::getTable());
-  registry.add(KeyColumnUsageIS::getTable());
   registry.add(GlobalStatusIS::getTable());
+  registry.add(SessionVariablesIS::getTable());
   registry.add(GlobalVariablesIS::getTable());
-  registry.add(OpenTablesIS::getTable());
+  registry.add(SessionStatusIS::getTable());
   registry.add(ModulesIS::getTable());
   registry.add(PluginsIS::getTable());
   registry.add(ProcessListIS::getTable());
   registry.add(ReferentialConstraintsIS::getTable());
-  registry.add(SchemataIS::getTable());
-  registry.add(SessionStatusIS::getTable());
-  registry.add(SessionVariablesIS::getTable());
-  registry.add(StatisticsIS::getTable());
-  registry.add(StatusIS::getTable());
   registry.add(TableConstraintsIS::getTable());
-  registry.add(TablesIS::getTable());
-  registry.add(TableNamesIS::getTable());
+  registry.add(StatusIS::getTable());
+  registry.add(KeyColumnUsageIS::getTable());
   registry.add(VariablesIS::getTable());
+  registry.add(StatisticsIS::getTable());
+  registry.add(TablesIS::getTable());
+  registry.add(OpenTablesIS::getTable());
+  registry.add(SchemataIS::getTable());
+  registry.add(TableNamesIS::getTable());
+#if 0
+#endif
 
   return 0;
 }

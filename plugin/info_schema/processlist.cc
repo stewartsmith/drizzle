@@ -150,7 +150,7 @@ plugin::InfoSchemaTable *ProcessListIS::getTable()
 
   if (pl_table == NULL)
   {
-    pl_table= new plugin::InfoSchemaTable("PROCESSLIST",
+    pl_table= new plugin::InfoSchemaTable("OLD_PROCESSLIST",
                                           *columns,
                                           -1, -1, false, false, 0,
                                           methods);

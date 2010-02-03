@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include "plugin/data_engine/schemas.h"
 
 using namespace std;
 using namespace drizzled;
@@ -30,10 +29,10 @@ IndexesTool::IndexesTool() :
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
   add_field("INDEX_NAME");
-  add_field("IS_PRIMARY", Tool::BOOLEAN);
-  add_field("IS_UNIQUE", Tool::BOOLEAN);
-  add_field("IS_NULLABLE", Tool::BOOLEAN);
-  add_field("KEY_LENGTH", Tool::NUMBER);
+  add_field("IS_PRIMARY", plugin::TableFunction::BOOLEAN);
+  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
+  add_field("KEY_LENGTH", plugin::TableFunction::NUMBER);
   add_field("INDEX_TYPE");
   add_field("INDEX_COMMENT", 1024);
 }

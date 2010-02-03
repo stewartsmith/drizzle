@@ -1409,7 +1409,7 @@ select database();
 database()
 имя_базы_в_кодировке_утф8_длиной_больше_чем_45
 use test;
-select SCHEMA_NAME from information_schema.schemata
+select SCHEMA_NAME from data_dictionary.schemas
 where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
 SCHEMA_NAME
 имя_базы_в_кодировке_утф8_длиной_больше_чем_45
@@ -1421,15 +1421,15 @@ index имя_индекса_в_кодировке_утф8_длиной_боль�
 );
 select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 имя_поля_в_кодировке_утф8_длиной_больше_чем_45
-select TABLE_NAME from information_schema.tables where
+select TABLE_NAME from information_schema.old_tables where
 table_schema='test';
 TABLE_NAME
 имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
-select COLUMN_NAME from information_schema.columns where
+select COLUMN_NAME from information_schema.old_columns where
 table_schema='test';
 COLUMN_NAME
 имя_поля_в_кодировке_утф8_длиной_больше_чем_45
-select INDEX_NAME from information_schema.statistics where
+select INDEX_NAME from data_dictionary.indexes where
 table_schema='test';
 INDEX_NAME
 имя_индекса_в_кодировке_утф8_длиной_больше_чем_48
@@ -1440,9 +1440,9 @@ Table	Create Table
   KEY `имя_индекса_в_кодировке_утф8_длиной_больше_чем_48` (`имя_поля_в_кодировке_утф8_длиной_больше_чем_45`)
 ) ENGINE=DEFAULT
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-create table t1 like information_schema.processlist;
+create table t1 like information_schema.old_processlist;
 ERROR HY000: Table storage engine 'INFORMATION_ENGINE' does not support the create option 'TEMPORARY'
-create table t1 like information_schema.processlist engine=innodb;
+create table t1 like information_schema.old_processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1456,9 +1456,9 @@ t1	CREATE TABLE `t1` (
   `INFO` varchar(16383) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
-create temporary table t1 like information_schema.processlist;
+create temporary table t1 like information_schema.old_processlist;
 ERROR HY000: Table storage engine 'INFORMATION_ENGINE' does not support the create option 'TEMPORARY'
-create temporary table t1 like information_schema.processlist engine=myisam;
+create temporary table t1 like information_schema.old_processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (

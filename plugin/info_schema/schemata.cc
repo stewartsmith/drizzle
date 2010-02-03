@@ -126,7 +126,7 @@ plugin::InfoSchemaTable *SchemataIS::getTable()
 
   if (sch_table == NULL)
   {
-    sch_table= new plugin::InfoSchemaTable("SCHEMATA",
+    sch_table= new plugin::InfoSchemaTable("OLD_SCHEMATA",
                                            *columns,
                                            1, -1, false, false, 0,
                                            methods);

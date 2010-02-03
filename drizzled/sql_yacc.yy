@@ -4832,7 +4832,7 @@ show_param:
                new(std::nothrow) statement::Select(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
+             if (prepare_schema_table(YYSession, lex, 0, "OLD_SCHEMATA"))
                DRIZZLE_YYABORT;
            }
          | opt_full TABLES opt_db show_wild
@@ -4856,7 +4856,7 @@ show_param:
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
+             if (prepare_schema_table(YYSession, lex, 0, "OLD_TABLES"))
                DRIZZLE_YYABORT;
            }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
@@ -4869,7 +4869,7 @@ show_param:
               DRIZZLE_YYABORT;
             if ($5)
               $4->change_db($5);
-            if (prepare_schema_table(YYSession, lex, $4, "COLUMNS"))
+            if (prepare_schema_table(YYSession, lex, $4, "OLD_COLUMNS"))
               DRIZZLE_YYABORT;
           }
         | keys_or_index from_or_in table_ident opt_db where_clause
@@ -4881,7 +4881,7 @@ show_param:
               DRIZZLE_YYABORT;
             if ($4)
               $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "STATISTICS"))
+            if (prepare_schema_table(YYSession, lex, $3, "OLD_STATISTICS"))
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
@@ -4924,7 +4924,7 @@ show_param:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
+            if (prepare_schema_table(YYSession, lex, 0, "OLD_STATUS"))
               DRIZZLE_YYABORT;
           }
         | PROCESSLIST_SYM
@@ -4944,7 +4944,7 @@ show_param:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "VARIABLES"))
+            if (prepare_schema_table(YYSession, lex, 0, "OLD_VARIABLES"))
               DRIZZLE_YYABORT;
           }
         | CREATE DATABASE opt_if_not_exists ident
@@ -5014,7 +5014,7 @@ describe:
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
             lex->verbose= 0;
-            if (prepare_schema_table(YYSession, lex, $2, "COLUMNS"))
+            if (prepare_schema_table(YYSession, lex, $2, "OLD_COLUMNS"))
               DRIZZLE_YYABORT;
           }
           opt_describe_column {}

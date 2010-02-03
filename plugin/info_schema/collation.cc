@@ -140,7 +140,7 @@ plugin::InfoSchemaTable *CollationIS::getTable()
 
   if (coll_table == NULL)
   {
-    coll_table= new(nothrow) plugin::InfoSchemaTable("COLLATIONS",
+    coll_table= new(nothrow) plugin::InfoSchemaTable("OLD_COLLATIONS",
                                                      *columns,
                                                      -1, -1, false, false, 0,
                                                      methods);

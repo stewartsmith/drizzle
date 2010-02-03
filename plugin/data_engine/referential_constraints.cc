@@ -18,28 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include <plugin/data_engine/schemas.h>
 
 using namespace std;
 using namespace drizzled;
 
 ReferentialConstraintsTool::ReferentialConstraintsTool() :
-  Tool("REFERENTIAL_CONSTRAINTS")
+  SchemasTool("REFERENTIAL_CONSTRAINTS")
 {
-  add_field("CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field("CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("CONSTRAINT_SCHEMA");
+  add_field("CONSTRAINT_NAME");
 
-  add_field("UNIQUE_CONSTRAINT_CATALOG", message::Table::Field::VARCHAR, 512);
-  add_field("UNIQUE_CONSTRAINT_SCHEMA", message::Table::Field::VARCHAR, 64);
-  add_field("UNIQUE_CONSTRAINT_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("UNIQUE_CONSTRAINT_SCHEMA");
+  add_field("UNIQUE_CONSTRAINT_NAME");
 
 
-  add_field("MATCH_OPTION", message::Table::Field::VARCHAR, 64);
-  add_field("UPDATE_RULE", message::Table::Field::VARCHAR, 64);
-  add_field("DELETE_RULE", message::Table::Field::VARCHAR, 64);
-  add_field("TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("MATCH_OPTION");
+  add_field("UPDATE_RULE");
+  add_field("DELETE_RULE");
+  add_field("TABLE_NAME");
 
-  add_field("REFERENCED_TABLE_NAME", message::Table::Field::VARCHAR, 64);
+  add_field("REFERENCED_TABLE_NAME");
 }

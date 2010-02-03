@@ -112,7 +112,7 @@ plugin::InfoSchemaTable *PluginsIS::getTable()
 
   if (plugins_table == NULL)
   {
-    plugins_table= new plugin::InfoSchemaTable("PLUGINS",
+    plugins_table= new plugin::InfoSchemaTable("OLD_PLUGINS",
                                                *columns,
                                                -1, -1, false, false, 0,
                                                methods);

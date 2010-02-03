@@ -103,7 +103,7 @@ plugin::InfoSchemaTable *GlobalStatusIS::getTable()
 
   if (glob_status_table == NULL)
   {
-    glob_status_table= new plugin::InfoSchemaTable("GLOBAL_STATUS",
+    glob_status_table= new plugin::InfoSchemaTable("OLD_GLOBAL_STATUS",
                                                    *status_columns,
                                                    -1, -1, false, false,
                                                    0, 
@@ -133,7 +133,7 @@ plugin::InfoSchemaTable *SessionStatusIS::getTable()
 {
   if (sess_status_table == NULL)
   {
-    sess_status_table= new plugin::InfoSchemaTable("SESSION_STATUS",
+    sess_status_table= new plugin::InfoSchemaTable("OPEN_SESSION_STATUS",
                                                    *status_columns,
                                                    -1, -1, false, false,
                                                    0, 
@@ -160,7 +160,7 @@ plugin::InfoSchemaTable *StatusIS::getTable()
 {
   if (status_table == NULL)
   {
-    status_table= new plugin::InfoSchemaTable("STATUS",
+    status_table= new plugin::InfoSchemaTable("OLD_STATUS",
                                               *status_columns,
                                               -1, -1, true, false, 0,
                                               methods);
@@ -187,7 +187,6 @@ int StatusISMethods::fillTable(Session *session,
   STATUS_VAR *tmp1, tmp;
   const string schema_table_name= schema_table->getTableName();
   sql_var_t option_type;
-  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
 
   if (schema_table_name.compare("STATUS") == 0)
   {
@@ -220,7 +219,7 @@ int StatusISMethods::fillTable(Session *session,
   res= show_status_array(session, wild,
                          getFrontOfStatusVars(),
                          option_type, tmp1, "", table,
-                         upper_case_names,
+                         false,
                          schema_table);
   pthread_mutex_unlock(&LOCK_status);
   return res;

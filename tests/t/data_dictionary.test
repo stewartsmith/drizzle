@@ -99,7 +99,7 @@ CREATE SCHEMA drizzleslap;
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.processlist" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.referential_constraints" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.schemas" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.tables" --delimiter=";"
 
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATEMENTS as a, data_dictionary.GLOBAL_STATEMENTS as b ORDER BY VARIABLE_NAME" --delimiter=";"

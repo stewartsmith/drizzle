@@ -31,7 +31,7 @@ using namespace std;
 using namespace drizzled;
 
 StateTool::StateTool(const char *arg, bool global) :
-  Tool(arg),
+  plugin::TableFunction("DATA_DICTIONARY", arg),
   option_type(global ? OPT_GLOBAL : OPT_SESSION)
 {
   add_field("VARIABLE_NAME");
@@ -41,7 +41,7 @@ StateTool::StateTool(const char *arg, bool global) :
 StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
                                 drizzle_show_var *variables_args,
                                 bool status_arg) :
-  Tool::Generator(arg),
+  plugin::TableFunction::Generator(arg),
   option_type(option_arg),
   has_status(status_arg),
   variables(variables_args)

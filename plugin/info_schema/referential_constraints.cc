@@ -162,7 +162,7 @@ plugin::InfoSchemaTable *ReferentialConstraintsIS::getTable()
 
   if (rc_table == NULL)
   {
-    rc_table= new plugin::InfoSchemaTable("REFERENTIAL_CONSTRAINTS",
+    rc_table= new plugin::InfoSchemaTable("OLD_REFERENTIAL_CONSTRAINTS",
                                           *columns,
                                           1, 9, false, true,
                                           0,

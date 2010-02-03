@@ -25,21 +25,21 @@ using namespace std;
 using namespace drizzled;
 
 ModulesTool::ModulesTool() :
-  Tool("MODULES")
+  plugin::TableFunction("DATA_DICTIONARY", "MODULES")
 {
   add_field("MODULE_NAME");
   add_field("MODULE_VERSION", 20);
   add_field("MODULE_AUTHOR");
-  add_field("IS_BUILTIN", Tool::BOOLEAN);
+  add_field("IS_BUILTIN", plugin::TableFunction::BOOLEAN);
   add_field("MODULE_LIBRARY", 254);
   add_field("MODULE_DESCRIPTION", 254);
   add_field("MODULE_LICENSE", 80);
 }
 
 ModulesTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg)
+  plugin::TableFunction::Generator(arg)
 {
-  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
+  plugin::Registry &registry= plugin::Registry::singleton();
   modules= registry.getList(true);
   it= modules.begin();
 }
@@ -50,8 +50,8 @@ bool ModulesTool::Generator::populate()
     return false;
 
   {
-    drizzled::plugin::Module *module= *it;
-    const drizzled::plugin::Manifest &manifest= module->getManifest();
+    plugin::Module *module= *it;
+    const plugin::Manifest &manifest= module->getManifest();
 
     push(module->getName());
 

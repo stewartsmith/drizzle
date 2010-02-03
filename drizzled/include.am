@@ -309,6 +309,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/plugin/registry.h \
 		drizzled/plugin/scheduler.h \
 		drizzled/plugin/storage_engine.h \
+		drizzled/plugin/table_function.h \
 		drizzled/plugin/transaction_applier.h \
 		drizzled/plugin/transaction_reader.h \
 		drizzled/plugin/transaction_replicator.h \
@@ -667,6 +668,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/plugin/registry.cc \
 		drizzled/plugin/scheduler.cc \
 		drizzled/plugin/storage_engine.cc \
+		drizzled/plugin/table_function.cc \
 		drizzled/plugin/transaction_applier.cc \
 		drizzled/plugin/transaction_replicator.cc \
 		drizzled/query_id.cc \
@@ -736,6 +738,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/statement/update.cc \
 		drizzled/strfunc.cc \
 		drizzled/table.cc \
+		drizzled/table_function_container.cc \
 		drizzled/table_identifier.cc \
 		drizzled/table_list.cc \
 		drizzled/table_share.cc \

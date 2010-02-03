@@ -22,12 +22,12 @@
 #define PLUGIN_DATA_ENGINE_PLUGINS_H
 
 
-class PluginsTool : public Tool
+class PluginsTool : public drizzled::plugin::TableFunction
 {
 public:
   PluginsTool();
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator it;
     std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator end;

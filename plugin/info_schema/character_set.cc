@@ -117,7 +117,7 @@ plugin::InfoSchemaTable *CharacterSetIS::getTable()
 
   if (char_set_table == NULL)
   {
-    char_set_table= new plugin::InfoSchemaTable("CHARACTER_SETS",
+    char_set_table= new plugin::InfoSchemaTable("OLD_CHARACTER_SETS",
                                                 *columns,
                                                 -1, -1, false, false, 0,
                                                 methods);

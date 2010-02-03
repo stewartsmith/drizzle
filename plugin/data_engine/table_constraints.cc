@@ -25,7 +25,7 @@ using namespace std;
 using namespace drizzled;
 
 TableConstraintsTool::TableConstraintsTool() :
-  Tool("TABLE_CONSTRAINTS")
+  TablesTool("TABLE_CONSTRAINTS")
 {
   add_field("CONSTRAINT_SCHEMA");
   add_field("CONSTRAINT_NAME");

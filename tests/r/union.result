@@ -1203,9 +1203,9 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` varchar(5) DEFAULT NULL
 ) ENGINE=DEFAULT
-select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
+select row_format from data_dictionary.TABLES where table_schema="test" and table_name="t2";
 row_format
-Compact
+DEFAULT
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (

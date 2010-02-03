@@ -236,7 +236,7 @@ plugin::InfoSchemaTable *ColumnsIS::getTable()
 
   if (cols_table == NULL)
   {
-    cols_table= new plugin::InfoSchemaTable("COLUMNS",
+    cols_table= new plugin::InfoSchemaTable("OLD_COLUMNS",
                                             *columns,
                                             1, 2, false, true,
                                             0,

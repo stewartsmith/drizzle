@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include <plugin/data_engine/schemas.h>
 #include <assert.h>
 
 using namespace std;
@@ -33,15 +32,15 @@ ColumnsTool::ColumnsTool() :
   add_field("TABLE_NAME");
 
   add_field("COLUMN_NAME");
-  add_field("ORDINAL_POSITION", Tool::NUMBER);
+  add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
   add_field("COLUMN_DEFAULT");
-  add_field("IS_NULLABLE", Tool::BOOLEAN);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
   add_field("DATATYPE");
 
-  add_field("CHARACTER_MAXIMUM_LENGTH", Tool::NUMBER);
-  add_field("CHARACTER_OCTET_LENGTH", Tool::NUMBER);
-  add_field("NUMERIC_PRECISION", Tool::NUMBER);
-  add_field("NUMERIC_SCALE", Tool::NUMBER);
+  add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER);
+  add_field("CHARACTER_OCTET_LENGTH", plugin::TableFunction::NUMBER);
+  add_field("NUMERIC_PRECISION", plugin::TableFunction::NUMBER);
+  add_field("NUMERIC_SCALE", plugin::TableFunction::NUMBER);
 
   add_field("COLLATION_NAME");
   add_field("COLUMN_COMMENT", 1024);

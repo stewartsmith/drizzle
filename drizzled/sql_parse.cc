@@ -360,7 +360,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   Select_Lex *schema_select_lex= NULL;
 
 
-  if (schema_table_name.compare("TABLES") == 0 ||
+  if (schema_table_name.compare("OLD_TABLES") == 0 ||
       schema_table_name.compare("TABLE_NAMES") == 0)
   {
     LEX_STRING db;
@@ -381,8 +381,8 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       return (1);
     }
   }
-  else if (schema_table_name.compare("COLUMNS") == 0 ||
-           schema_table_name.compare("STATISTICS") == 0)
+  else if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
+           schema_table_name.compare("OLD_STATISTICS") == 0)
   {
     assert(table_ident);
     TableList **query_tables_last= lex->query_tables_last;

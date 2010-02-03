@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
+#include <plugin/data_engine/schemas.h>
 
 using namespace std;
 using namespace drizzled;
@@ -30,9 +30,9 @@ IndexPartsTool::IndexPartsTool() :
   add_field("TABLE_NAME");
   add_field("INDEX_NAME");
   add_field("COLUMN_NAME");
-  add_field("COLUMN_NUMBER", Tool::NUMBER);
-  add_field("COMPARE_LENGTH", Tool::NUMBER);
-  add_field("IS_ORDER_REVERSE", Tool::BOOLEAN);
+  add_field("COLUMN_NUMBER", plugin::TableFunction::NUMBER);
+  add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER);
+  add_field("IS_ORDER_REVERSE", plugin::TableFunction::BOOLEAN);
 }
 
 IndexPartsTool::Generator::Generator(Field **arg) :

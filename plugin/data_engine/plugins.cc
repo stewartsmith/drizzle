@@ -24,19 +24,19 @@ using namespace std;
 using namespace drizzled;
 
 PluginsTool::PluginsTool() :
-  Tool("PLUGINS")
+  plugin::TableFunction("DATA_DICTIONARY", "PLUGINS")
 {
   add_field("PLUGIN_NAME");
   add_field("PLUGIN_TYPE");
-  add_field("IS_ACTIVE", Tool::BOOLEAN);
+  add_field("IS_ACTIVE", plugin::TableFunction::BOOLEAN);
   add_field("MODULE_NAME");
 }
 
 PluginsTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg)
+  plugin::TableFunction::Generator(arg)
 {
-  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  const map<string, const drizzled::plugin::Plugin *> &plugin_map=
+  plugin::Registry &registry= plugin::Registry::singleton();
+  const map<string, const plugin::Plugin *> &plugin_map=
     registry.getPluginsMap();
 
   it= plugin_map.begin();
@@ -45,7 +45,7 @@ PluginsTool::Generator::Generator(Field **arg) :
 
 bool PluginsTool::Generator::populate()
 {
-  const drizzled::plugin::Plugin *plugin= (*it).second;
+  const plugin::Plugin *plugin= (*it).second;
 
   if (it == end)
     return false;

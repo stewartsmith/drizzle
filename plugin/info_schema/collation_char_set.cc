@@ -105,7 +105,7 @@ plugin::InfoSchemaTable *CollationCharSetIS::getTable()
 
   if (coll_cs_table == NULL)
   {
-    coll_cs_table= new plugin::InfoSchemaTable("COLLATION_CHARACTER_SET_APPLICABILITY",
+    coll_cs_table= new plugin::InfoSchemaTable("OLD_COLLATION_CHARACTER_SET_APPLICABILITY",
                                                *columns,
                                                -1, -1, false, false, 0,
                                                methods);
