@@ -179,7 +179,6 @@ public:
   }
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
-  bool check_set(Session *session, set_var *var, TYPELIB *enum_names);
   virtual bool update(Session *session, set_var *var)=0;
   virtual void set_default(Session *, enum_var_type)
   {}
