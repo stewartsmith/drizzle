@@ -40,7 +40,6 @@
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -744,10 +743,6 @@ bool Session::executeStatement()
     command= COM_END;                           // Wrong command
 
   assert(packet_length);
-
-  string query_to_rewrite(l_packet + 1, packet_length - 1);
-  plugin::QueryRewriter::rewriteQuery(query_to_rewrite);
-
   return ! dispatch_command(l_command, this, l_packet+1, (uint32_t) (packet_length-1));
 }
 
