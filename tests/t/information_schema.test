@@ -390,7 +390,7 @@ select * from `information_schema`.`OLD_TABLE_CONSTRAINTS` where `TABLE_NAME` = 
 --echo # Test that the query is visible to self and others.
 --echo #
 
-SELECT info FROM information_schema.old_processlist WHERE id = CONNECTION_ID();
+SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID();
 
 #
 # test that SHOW PROCESSLIST works correctly
@@ -402,7 +402,7 @@ show processlist;
 # do a query on the PROCESSLIST table in I_S to ensure it works correctly
 #
 SELECT info, command, db
-FROM information_schema.old_processlist
+FROM data_dictionary.processlist
 WHERE id = CONNECTION_ID();
 
 #

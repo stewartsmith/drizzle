@@ -1440,36 +1440,36 @@ Table	Create Table
   KEY `имя_индекса_в_кодировке_утф8_длиной_больше_чем_48` (`имя_поля_в_кодировке_утф8_длиной_больше_чем_45`)
 ) ENGINE=DEFAULT
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-create table t1 like information_schema.old_processlist;
-ERROR HY000: Table storage engine 'INFORMATION_ENGINE' does not support the create option 'TEMPORARY'
-create table t1 like information_schema.old_processlist engine=innodb;
+create table t1 like data_dictionary.processlist;
+ERROR HY000: Can't create table 'test.t1' (errno: 1)
+create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `ID` bigint NOT NULL DEFAULT '0',
   `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(64) NOT NULL DEFAULT '',
-  `DB` varchar(64) DEFAULT NULL,
+  `HOST` varchar(1025) NOT NULL DEFAULT '',
+  `DB` varchar(64) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) DEFAULT NULL,
-  `INFO` varchar(16383) DEFAULT NULL
+  `STATE` varchar(64) NOT NULL DEFAULT '',
+  `INFO` varchar(100) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB
 drop table t1;
-create temporary table t1 like information_schema.old_processlist;
-ERROR HY000: Table storage engine 'INFORMATION_ENGINE' does not support the create option 'TEMPORARY'
-create temporary table t1 like information_schema.old_processlist engine=myisam;
+create temporary table t1 like data_dictionary.processlist;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
+create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `ID` bigint NOT NULL DEFAULT '0',
   `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(64) NOT NULL DEFAULT '',
-  `DB` varchar(64) DEFAULT NULL,
+  `HOST` varchar(1025) NOT NULL DEFAULT '',
+  `DB` varchar(64) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) DEFAULT NULL,
-  `INFO` varchar(16383) DEFAULT NULL
+  `STATE` varchar(64) NOT NULL DEFAULT '',
+  `INFO` varchar(100) NOT NULL DEFAULT ''
 ) ENGINE=MyISAM
 drop table t1;
 

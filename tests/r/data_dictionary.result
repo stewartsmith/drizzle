@@ -335,14 +335,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
@@ -468,7 +460,7 @@ PROCESSLIST	CREATE TABLE `processlist` (
   `DB` varchar(64) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(16) NOT NULL DEFAULT '',
+  `STATE` varchar(64) NOT NULL DEFAULT '',
   `INFO` varchar(100) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table REFERENTIAL_CONSTRAINTS ;

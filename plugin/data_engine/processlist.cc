@@ -40,7 +40,7 @@ ProcesslistTool::ProcesslistTool() :
   add_field("DB");
   add_field("COMMAND", 16);
   add_field("TIME", plugin::TableFunction::NUMBER);
-  add_field("STATE", 16);
+  add_field("STATE");
   add_field("INFO", PROCESS_LIST_WIDTH);
 }
 

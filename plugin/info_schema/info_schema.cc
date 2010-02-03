@@ -32,7 +32,6 @@
 #include "columns.h"
 #include "key_column_usage.h"
 #include "open_tables.h"
-#include "processlist.h"
 #include "referential_constraints.h"
 #include "schemata.h"
 #include "table_constraints.h"
@@ -60,7 +59,6 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(SessionVariablesIS::getTable());
   registry.add(GlobalVariablesIS::getTable());
   registry.add(SessionStatusIS::getTable());
-  registry.add(ProcessListIS::getTable());
   registry.add(ReferentialConstraintsIS::getTable());
   registry.add(TableConstraintsIS::getTable());
   registry.add(StatusIS::getTable());
@@ -99,9 +97,6 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
   registry.remove(OpenTablesIS::getTable());
   OpenTablesIS::cleanup();
-
-  registry.remove(ProcessListIS::getTable());
-  ProcessListIS::cleanup();
 
   registry.remove(ReferentialConstraintsIS::getTable());
   ReferentialConstraintsIS::cleanup();
