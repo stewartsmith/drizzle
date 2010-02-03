@@ -223,7 +223,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     string query_to_rewrite(session->query, session->query_length);
     plugin::QueryRewriter::rewriteQuery(query_to_rewrite);
 
-    mysql_parse(session, session->query, session->query_length, &end_of_stmt);
+    mysql_parse(session, query_to_rewrite.c_str(), query_to_rewrite.length(), &end_of_stmt);
 
     break;
   }

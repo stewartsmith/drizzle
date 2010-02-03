@@ -55,7 +55,7 @@ public:
     : 
       Plugin(name_arg, "QueryRewriter")
   {
-    is_enabled= true;
+    is_enabled= false;
   }
 
   virtual ~QueryRewriter() {}
