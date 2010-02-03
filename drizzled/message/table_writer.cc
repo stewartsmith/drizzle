@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <getopt.h>
 #include <drizzled/message/table.pb.h>
 
 using namespace std;
@@ -197,21 +198,46 @@ static void fill_table(message::Table *table, const char *name)
 
 }
 
+static void usage(char *argv0)
+{
+  cerr << "Usage:  " << argv0 << " [-t N] TABLE_NAME.dfe" << endl;
+  cerr << endl;
+  cerr << "-t N\tTable Number" << endl;
+  cerr << "\t0 - default" << endl;
+  cerr << endl;
+}
+
 int main(int argc, char* argv[])
 {
+  int opt;
+  int table_number= 0;
+
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  if (argc != 2)
+  while ((opt= getopt(argc, argv, "t:")) != -1)
   {
-    cerr << "Usage:  " << argv[0] << " SCHEMA" << endl;
-    return -1;
+    switch (opt)
+    {
+    case 't':
+      table_number= atoi(optarg);
+      break;
+    default:
+      usage(argv[0]);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (optind >= argc) {
+    fprintf(stderr, "Expected Table name argument\n\n");
+    usage(argv[0]);
+    exit(EXIT_FAILURE);
   }
 
   message::Table table;
 
   fill_table(&table, "example_table");
 
-  fstream output(argv[1], ios::out | ios::trunc | ios::binary);
+  fstream output(argv[optind], ios::out | ios::trunc | ios::binary);
   if (!table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;
