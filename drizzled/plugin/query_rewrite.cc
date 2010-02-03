@@ -33,14 +33,14 @@ using namespace std;
 namespace drizzled
 {
 
-static plugin::QueryRewriter *handler= NULL;
+vector<plugin::QueryRewriter *> all_rewriters;
 
 
 bool plugin::QueryRewriter::addPlugin(plugin::QueryRewriter *in_rewriter)
 {
   if (in_rewriter != NULL)
   {
-    handler= in_rewriter;
+    all_rewriters.push_back(in_rewriter);
   }
   return false;
 }
@@ -50,7 +50,9 @@ void plugin::QueryRewriter::removePlugin(plugin::QueryRewriter *in_rewriter)
 {
   if (in_rewriter != NULL)
   {
-    handler= NULL;
+    all_rewriters.erase(find(all_rewriters.begin(),
+                             all_rewriters.end(),
+                             in_rewriter));
   }
 }
 
@@ -61,9 +63,14 @@ void plugin::QueryRewriter::removePlugin(plugin::QueryRewriter *in_rewriter)
  */
 void plugin::QueryRewriter::rewriteQuery(std::string &to_rewrite)
 {
-  if (handler != NULL)
+  for (vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
+       iter != all_rewriters.end();
+       ++iter)
   {
-    handler->rewrite(to_rewrite);
+    if ((*iter)->isEnabled())
+    {
+      (*iter)->rewrite(to_rewrite);
+    }
   }
 }
 
