@@ -43,7 +43,7 @@ bool Item_func_set_user_var::fix_fields(Session *session, Item **ref)
      if this variable is a constant item in the query (it is if update_query_id
      is different from query_id).
   */
-  entry->update_query_id= session->query_id;
+  entry->update_query_id= session->getQueryId();
   /*
     As it is wrong and confusing to associate any
     character set with NULL, @a should be latin2

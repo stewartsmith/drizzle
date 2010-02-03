@@ -522,6 +522,16 @@ public:
 private:
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
+  /*
+    Id of current query. Statement can be reused to execute several queries
+    query_id is global in context of the whole MySQL server.
+    ID is automatically generated from an atomic counter.
+    It's used in Cursor code for various purposes: to check which columns
+    from table are necessary for this select, to check if it's necessary to
+    update auto-updatable fields (like auto_increment and timestamp).
+  */
+  query_id_t query_id;
+  query_id_t warn_query_id;
 public:
   void **getEngineData(const drizzled::plugin::StorageEngine *engine);
   Ha_trx_info *getEngineInfo(const drizzled::plugin::StorageEngine *engine,
@@ -653,16 +663,6 @@ public:
   uint32_t total_warn_count;
   Diagnostics_area main_da;
 
-  /*
-    Id of current query. Statement can be reused to execute several queries
-    query_id is global in context of the whole MySQL server.
-    ID is automatically generated from mutex-protected counter.
-    It's used in handler code for various purposes: to check which columns
-    from table are necessary for this select, to check if it's necessary to
-    update auto-updatable fields (like auto_increment and timestamp).
-  */
-  query_id_t query_id;
-  query_id_t warn_id;
   ulong col_access;
 
   /* Statement id is thread-wide. This counter is used to generate ids */
@@ -776,10 +776,29 @@ public:
     return proc_info;
   }
 
+  /** Sets this Session's current query ID */
+  inline void setQueryId(query_id_t in_query_id)
+  {
+    query_id= in_query_id;
+  }
+
   /** Returns the current query ID */
   inline query_id_t getQueryId()  const
   {
     return query_id;
+  }
+
+
+  /** Sets this Session's warning query ID */
+  inline void setWarningQueryId(query_id_t in_query_id)
+  {
+    warn_query_id= in_query_id;
+  }
+
+  /** Returns the Session's warning query ID */
+  inline query_id_t getWarningQueryId()  const
+  {
+    return warn_query_id;
   }
 
   /** Returns the current query text */

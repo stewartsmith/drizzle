@@ -31,6 +31,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 class String;
 
@@ -42,6 +43,9 @@ typedef struct charset_info_st CHARSET_INFO;
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+  std::string String_to_std_string(String const& s);
+  String* set_String_from_std_string(String* s, std::string const& cs);
 
   int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
   int stringcmp(const String *a,const String *b);
