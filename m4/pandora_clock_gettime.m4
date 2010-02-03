@@ -8,29 +8,8 @@ dnl with or without modifications, as long as this notice is preserved.
 #--------------------------------------------------------------------
 
 AC_DEFUN([PANDORA_CLOCK_GETTIME],[
-  AC_CACHE_CHECK([for working clock_gettime],[ac_cv_have_clock_gettime],[
-    AC_COMPILE_IFELSE([
-      AC_LANG_PROGRAM([[
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-      ]],[[
-  struct timespec tp;
-  int ret= clock_gettime(CLOCK_REALTIME, &tp);
-    ]])],[
-      ac_cv_have_clock_gettime=yes
-    ],[
-      ac_cv_have_clock_gettime=no
-    ])
-  ])
-  AS_IF([test "x${ac_cv_have_clock_gettime}" = xyes],[
+  AC_SEARCH_LIBS([clock_gettime],[rt])
+  AS_IF([test "x${ac_cv_search_clock_gettime}" != "xno"],[
     AC_DEFINE([HAVE_CLOCK_GETTIME],[1],[Have a working clock_gettime function])
   ])
 ])
