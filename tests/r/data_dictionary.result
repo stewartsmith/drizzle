@@ -343,17 +343,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
