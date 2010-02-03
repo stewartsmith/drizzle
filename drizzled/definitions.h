@@ -234,10 +234,6 @@ enum test_flag_bit
 #define MODE_NO_ZERO_DATE		(2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
 
-/* @@optimizer_switch flags */
-#define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
-#define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
 #define MY_CHARSET_BIN_MB_MAXLEN 1
 
 // uncachable cause

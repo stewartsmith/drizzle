@@ -154,13 +154,6 @@ bool show_status_array(Session *session,
         case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
           end= int10_to_str((long) *(uint32_t*) value, buff, 10);
           break;
-        case SHOW_HAVE:
-        {
-          SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
-          pos= show_comp_option_name[(int) tmp_option];
-          end= strchr(pos, '\0');
-          break;
-        }
         case SHOW_CHAR:
         {
           if (!(pos= value))

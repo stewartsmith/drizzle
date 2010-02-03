@@ -197,8 +197,6 @@ static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
 
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
-static sys_var_session_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
-                                                               &SV::optimizer_switch);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &SV::storage_engine);
@@ -297,10 +295,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
-/* Read only variables */
-
-extern SHOW_COMP_OPTION have_symlink;
-static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
   @@varname in SELECT or SET). Sorted in alphabetical order to facilitate
@@ -2014,54 +2008,4 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
     *value= var->save_result.storage_engine;
   }
   return 0;
-}
-
-bool
-sys_var_session_optimizer_switch::
-symbolic_mode_representation(Session *session, uint32_t val, LEX_STRING *rep)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE*8];
-  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
-
-  tmp.length(0);
-
-  for (uint32_t i= 0; val; val>>= 1, i++)
-  {
-    if (val & 1)
-    {
-      tmp.append(optimizer_switch_typelib.type_names[i],
-                 optimizer_switch_typelib.type_lengths[i]);
-      tmp.append(',');
-    }
-  }
-
-  if (tmp.length())
-    tmp.length(tmp.length() - 1); /* trim the trailing comma */
-
-  rep->str= session->strmake(tmp.ptr(), tmp.length());
-
-  rep->length= rep->str ? tmp.length() : 0;
-
-  return rep->length != tmp.length();
-}
-
-
-unsigned char *sys_var_session_optimizer_switch::value_ptr(Session *session,
-                                                           enum_var_type type,
-                                                           const LEX_STRING *)
-{
-  LEX_STRING opts;
-  uint32_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
-                  session->variables.*offset);
-  (void) symbolic_mode_representation(session, val, &opts);
-  return (unsigned char *) opts.str;
-}
-
-
-void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_type type)
-{
-  if (type == OPT_GLOBAL)
-    global_system_variables.*offset= 0;
-  else
-    session->variables.*offset= global_system_variables.*offset;
 }

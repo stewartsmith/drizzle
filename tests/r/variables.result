@@ -212,16 +212,12 @@ innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
 range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
 select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
 range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
 set @@range_alloc_block_size=1024*16;
 set @@query_alloc_block_size=1024*17+2;
 set @@query_prealloc_size=1024*18;
@@ -234,16 +230,12 @@ innodb_use_sys_malloc	ON
 query_alloc_block_size	17408
 query_prealloc_size	18432
 range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
 select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
 query_alloc_block_size	17408
 query_prealloc_size	18432
 range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
 set @@range_alloc_block_size=default;
 set @@query_alloc_block_size=default, @@query_prealloc_size=default;
 show variables like '%alloc%';
@@ -252,16 +244,12 @@ innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
 range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
 select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
 range_alloc_block_size	
-transaction_alloc_block_size	8192
-transaction_prealloc_size	4096
 SELECT @@version LIKE 'non-existent';
 @@version LIKE 'non-existent'
 0

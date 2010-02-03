@@ -162,26 +162,6 @@ using namespace std;
 using namespace drizzled;
 
 /* Constants */
-
-
-const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
-static const char *optimizer_switch_names[]=
-{
-  "no_materialization", "no_semijoin",
-  NULL
-};
-
-/* Corresponding defines are named OPTIMIZER_SWITCH_XXX */
-static const unsigned int optimizer_switch_names_len[]=
-{
-  /*no_materialization*/          19,
-  /*no_semijoin*/                 11
-};
-
-TYPELIB optimizer_switch_typelib= { array_elements(optimizer_switch_names)-1,"",
-                                    optimizer_switch_names,
-                                    (unsigned int *)optimizer_switch_names_len };
-
 static const char *tc_heuristic_recover_names[]=
 {
   "COMMIT", "ROLLBACK", NULL

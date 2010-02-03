@@ -45,7 +45,6 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib;
-extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -667,26 +666,6 @@ public:
 };
 
 
-
-class sys_var_session_optimizer_switch :public sys_var_session_enum
-{
-public:
-  sys_var_session_optimizer_switch(sys_var_chain *chain, const char *name_arg,
-                                   uint32_t SV::*offset_arg)
-    :sys_var_session_enum(chain, name_arg, offset_arg, &optimizer_switch_typelib)
-  {}
-  bool check(Session *session, set_var *var)
-  {
-    return check_set(session, var, enum_names);
-  }
-  void set_default(Session *session, enum_var_type type);
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
-  static bool symbolic_mode_representation(Session *session, uint32_t sql_mode,
-                                           LEX_STRING *rep);
-};
-
-
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
@@ -827,63 +806,6 @@ public:
   }
   SHOW_TYPE show_type(void) { return show_type_value; }
   bool is_readonly(void) const { return 1; }
-};
-
-
-class sys_var_have_option: public sys_var
-{
-protected:
-  virtual SHOW_COMP_OPTION get_option() = 0;
-public:
-  sys_var_have_option(sys_var_chain *chain, const char *variable_name):
-    sys_var(variable_name)
-  { chain_sys_var(chain); }
-  unsigned char *value_ptr(Session *, enum_var_type,
-                           const LEX_STRING *)
-  {
-    return (unsigned char*) show_comp_option_name[get_option()];
-  }
-  bool update(Session *, set_var *) { return 1; }
-  bool check_default(enum_var_type)
-  { return 1; }
-  bool check_type(enum_var_type type) { return type != OPT_GLOBAL; }
-  bool check_update_type(Item_result)
-  { return 1; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool is_readonly() const { return 1; }
-};
-
-
-class sys_var_have_variable: public sys_var_have_option
-{
-  SHOW_COMP_OPTION *have_variable;
-
-public:
-  sys_var_have_variable(sys_var_chain *chain, const char *variable_name,
-                        SHOW_COMP_OPTION *have_variable_arg):
-    sys_var_have_option(chain, variable_name),
-    have_variable(have_variable_arg)
-  { }
-  SHOW_COMP_OPTION get_option() { return *have_variable; }
-};
-
-
-class sys_var_have_plugin: public sys_var_have_option
-{
-  const char *plugin_name_str;
-  const uint32_t plugin_name_len;
-  const int plugin_type;
-
-public:
-  sys_var_have_plugin(sys_var_chain *chain, const char *variable_name,
-                      const char *plugin_name_str_arg, uint32_t plugin_name_len_arg,
-                      int plugin_type_arg):
-    sys_var_have_option(chain, variable_name),
-    plugin_name_str(plugin_name_str_arg), plugin_name_len(plugin_name_len_arg),
-    plugin_type(plugin_type_arg)
-  { }
-  /* the following method is declared in sql_plugin.cc */
-  SHOW_COMP_OPTION get_option();
 };
 
 
