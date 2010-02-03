@@ -78,6 +78,13 @@ static void new_index_to_table(message::Table *table,
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
 
+  int key_length= 0;
+
+  for(int i=0; i< num_index_parts; i++)
+    key_length+= compare_lengths[i];
+
+  index->set_key_length(key_length);
+
   while (x < num_index_parts)
   {
     index_part= index->add_index_part();
