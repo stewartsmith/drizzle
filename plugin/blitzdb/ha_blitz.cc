@@ -811,13 +811,38 @@ BlitzShare *ha_blitz::get_share(const char *path) {
   }
 
   /* Prepare Index Structure(s) */
+  KEY *curr = table->s->key_info;
   share_ptr->btrees = new BlitzTree[table->s->keys];
 
-  for (uint32_t i = 0; i < table->s->keys; i++) {
+  for (uint32_t i = 0; i < table->s->keys; i++, curr++) {
     share_ptr->btrees[i].open(path, i, BDBOWRITER);
+    share_ptr->btrees[i].parts = new BlitzKeyPart[curr->key_parts];
 
     if (table->key_info[i].flags & HA_NOSAME)
       share_ptr->btrees[i].unique = true;
+
+    share_ptr->btrees[i].nparts = curr->key_parts;
+
+    /* Record Meta Data of the Key Segments */
+    for (uint32_t j = 0; j < curr->key_parts; j++) {
+      Field *f = curr->key_part[j].field;
+
+      if (f->null_ptr) {
+        share_ptr->btrees[i].parts[j].null_bitmask = f->null_bit;
+        share_ptr->btrees[i].parts[j].null_pos
+          = (uint32_t)(f->null_ptr - (unsigned char *)table->record[0]);
+      }
+
+      share_ptr->btrees[i].parts[j].flag = curr->key_part[j].key_part_flag;
+
+      if (f->type() == DRIZZLE_TYPE_BLOB) {
+        share_ptr->btrees[i].parts[j].flag |= HA_BLOB_PART;
+      }
+
+      share_ptr->btrees[i].parts[j].type = curr->key_part[j].type;
+      share_ptr->btrees[i].parts[j].offset = curr->key_part[j].offset;
+      share_ptr->btrees[i].parts[j].length = curr->key_part[j].length;
+    }
   }
 
   /* Set Meta Data */
@@ -853,8 +878,10 @@ static int free_share(BlitzShare *share) {
       return HA_ERR_CRASHED_ON_USAGE;
     }
 
-    for (uint32_t i = 0; i < share->nkeys; i++)
+    for (uint32_t i = 0; i < share->nkeys; i++) {
+      delete[] share->btrees[i].parts;
       share->btrees[i].close();
+    }
 
     tcmapout2(blitz_table_cache, share->table_name.c_str());
     delete[] share->btrees;

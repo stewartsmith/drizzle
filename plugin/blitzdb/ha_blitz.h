@@ -140,6 +140,25 @@ public:
   char *get_system_entry(const char *key, const size_t klen, int *vlen);
 };
 
+/* This class is only used by the BlitzTree object which has a long life
+   span. In general we use the Cursor's local KEY_PART_INFO array for
+   obtaining key information. We create our own array of key information
+   because there is no guarantee that the pointer to the internal key_info
+   array will always be alive. */
+class BlitzKeyPart {
+public:
+  BlitzKeyPart() : offset(0), null_pos(0), flag(0), length(0), type(0),
+                   null_bitmask(0) {}
+  ~BlitzKeyPart() {}
+
+  uint32_t offset;      /* Offset of the key in the row */
+  uint32_t null_pos;    /* Offset of the NULL indicator in the row */
+  uint16_t flag;
+  uint16_t length;      /* Length of the key */
+  uint8_t type;         /* Type of the key */
+  uint8_t null_bitmask; /* Bitmask to test for NULL */
+};
+
 /* Class that reprensents a BTREE index. Takes care of all I/O
    to the b+tree index structure */
 class BlitzTree {
@@ -147,12 +166,14 @@ private:
   TCBDB *btree;
 
 public:
-  BlitzTree() : type(0), unique(false) {}
+  BlitzTree() : nparts(0), type(0), unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
+  BlitzKeyPart *parts; /* Array of Key Part(s) */
+  int nparts;          /* Number of parts in this key */
   int type;
-  bool unique;
+  bool unique;         /* Whether this key is unique */
 
   /* BTREE INDEX CREATION RELATED */
   int open(const char *path, const int key_num, int mode);
