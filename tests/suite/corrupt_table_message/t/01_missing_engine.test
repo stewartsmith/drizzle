@@ -1,0 +1,6 @@
+--exec ../drizzled/message/table_writer -t 1 var/master-data/test/t1.blk
+FLUSH TABLES;
+SHOW TABLES;
+SHOW CREATE TABLE t1;
+SELECT * from test.t1;
+DROP TABLE test.t1;
