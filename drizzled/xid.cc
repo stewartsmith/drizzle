@@ -27,9 +27,6 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset_info.h"
 
-XID::XID()
-{}
-
 bool XID::eq(XID *xid)
 {
   return eq(xid->gtrid_length, xid->bqual_length, xid->data);

@@ -74,19 +74,15 @@ static std::set<std::string> set_of_table_definition_ext;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
-                                     size_t savepoint_offset_arg,
                                      bool support_2pc)
     : Plugin(name_arg, "StorageEngine"),
       two_phase_commit(support_2pc),
       enabled(true),
       flags(flags_arg),
-      savepoint_offset(savepoint_alloc_size),
-      orig_savepoint_offset(savepoint_offset_arg),
       slot(0)
 {
   if (enabled)
   {
-    savepoint_alloc_size+= orig_savepoint_offset;
     slot= total_ha++;
     if (two_phase_commit)
         total_ha_2pc++;
@@ -97,7 +93,6 @@ plugin::StorageEngine::StorageEngine(const string name_arg,
 
 plugin::StorageEngine::~StorageEngine()
 {
-  savepoint_alloc_size-= orig_savepoint_offset;
   pthread_mutex_destroy(&proto_cache_mutex);
 }
 

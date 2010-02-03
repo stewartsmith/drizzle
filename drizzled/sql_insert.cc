@@ -28,6 +28,7 @@
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/transaction_services.h"
 
 using namespace drizzled;
 
@@ -1732,7 +1733,8 @@ bool select_create::send_eof()
     */
     if (!table->s->tmp_table)
     {
-      ha_autocommit_or_rollback(session, 0);
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.ha_autocommit_or_rollback(session, 0);
       (void) session->endActiveTransaction();
     }
 

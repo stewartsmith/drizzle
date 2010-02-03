@@ -43,6 +43,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
+#include "drizzled/transaction_services.h"
+
 extern pid_t current_pid;
 
 using namespace std;
@@ -544,6 +546,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     ALTER Table
   */
 
+  TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
 
   discard= test(tablespace_op == DISCARD_TABLESPACE);
@@ -567,7 +570,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     goto err;
 
   /* The ALTER Table is always in its own transaction */
-  error = ha_autocommit_or_rollback(session, 0);
+  error= transaction_services.ha_autocommit_or_rollback(session, false);
   if (! session->endActiveTransaction())
     error=1;
   if (error)
@@ -575,7 +578,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
   write_bin_log(session, session->query, session->query_length);
 
 err:
-  ha_autocommit_or_rollback(session, error);
+  (void) transaction_services.ha_autocommit_or_rollback(session, error);
   session->tablespace_op=false;
 
   if (error == 0)
@@ -1260,7 +1263,7 @@ copy_data_between_tables(Table *from, Table *to,
                          enum enum_enable_or_disable keys_onoff,
                          bool error_if_not_empty)
 {
-  int error;
+  int error= 0;
   CopyField *copy,*copy_end;
   ulong found_count,delete_count;
   Session *session= current_session;
@@ -1280,9 +1283,7 @@ copy_data_between_tables(Table *from, Table *to,
 
     This needs to be done before external_lock
   */
-  error= ha_enable_transaction(session, false);
-  if (error)
-    return -1;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (!(copy= new CopyField[to->s->fields]))
     return -1;
@@ -1414,17 +1415,11 @@ copy_data_between_tables(Table *from, Table *to,
   }
   to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
-  if (ha_enable_transaction(session, true))
-  {
-    error= 1;
-    goto err;
-  }
-
   /*
     Ensure that the new table is saved properly to disk so that we
     can do a rename
   */
-  if (ha_autocommit_or_rollback(session, 0))
+  if (transaction_services.ha_autocommit_or_rollback(session, false))
     error=1;
   if (! session->endActiveTransaction())
     error=1;

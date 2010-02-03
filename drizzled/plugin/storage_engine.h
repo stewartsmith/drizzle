@@ -113,6 +113,7 @@ class Table;
 
 namespace drizzled
 {
+class NamedSavepoint;
 namespace plugin
 {
 
@@ -144,17 +145,6 @@ private:
   bool enabled;
 
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
-  /*
-    to store per-savepoint data storage engine is provided with an area
-    of a requested size (0 is ok here).
-    savepoint_offset must be initialized statically to the size of
-    the needed memory to store per-savepoint information.
-    After xxx_init it is changed to be an offset to savepoint storage
-    area and need not be used by storage engine.
-    see binlog_engine and binlog_savepoint_set/rollback for an example.
-  */
-  size_t savepoint_offset;
-  size_t orig_savepoint_offset;
 
   void setTransactionReadWrite(Session& session);
 
@@ -195,17 +185,16 @@ protected:
    * Implementing classes should override these to provide savepoint
    * functionality.
    */
-  virtual int savepoint_set_hook(Session *, void *) { return 0; }
+  virtual int savepoint_set_hook(Session *, NamedSavepoint &) { return 0; }
 
-  virtual int savepoint_rollback_hook(Session *, void *) { return 0; }
+  virtual int savepoint_rollback_hook(Session *, NamedSavepoint &) { return 0; }
 
-  virtual int savepoint_release_hook(Session *, void *) { return 0; }
+  virtual int savepoint_release_hook(Session *, NamedSavepoint &) { return 0; }
 
 public:
 
   StorageEngine(const std::string name_arg,
                 const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                size_t savepoint_offset_arg= 0,
                 bool support_2pc= false);
 
   virtual ~StorageEngine();
@@ -311,25 +300,23 @@ public:
     The void * points to an uninitialized storage area of requested size
     (see savepoint_offset description)
   */
-  int savepoint_set(Session *session, void *sp)
+  int savepoint_set(Session *session, NamedSavepoint &sp)
   {
-    return savepoint_set_hook(session, (unsigned char *)sp+savepoint_offset);
+    return savepoint_set_hook(session, sp);
   }
 
   /*
     The void * points to a storage area, that was earlier passed
     to the savepoint_set call
   */
-  int savepoint_rollback(Session *session, void *sp)
+  int savepoint_rollback(Session *session, NamedSavepoint &sp)
   {
-     return savepoint_rollback_hook(session,
-                                    (unsigned char *)sp+savepoint_offset);
+     return savepoint_rollback_hook(session, sp);
   }
 
-  int savepoint_release(Session *session, void *sp)
+  int savepoint_release(Session *session, NamedSavepoint &sp)
   {
-    return savepoint_release_hook(session,
-                                  (unsigned char *)sp+savepoint_offset);
+    return savepoint_release_hook(session, sp);
   }
 
   virtual int  prepare(Session *, bool) { return 0; }

@@ -62,6 +62,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
+#include "drizzled/transaction_services.h"
 
 #include <map>
 #include <algorithm>
@@ -99,7 +100,6 @@ static int check_completion_type(Session *session, set_var *var);
 static void fix_completion_type(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
-static void fix_trans_mem_root(Session *session, enum_var_type type);
 static void fix_server_id(Session *session, enum_var_type type);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
@@ -189,12 +189,6 @@ static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_s
                                                         &SV::query_prealloc_size,
                                                         false, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
-static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
-                                                           &SV::trans_alloc_block_size,
-                                                           false, fix_trans_mem_root);
-static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
-                                                        &SV::trans_prealloc_size,
-                                                        false, fix_session_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -409,16 +403,6 @@ static void fix_session_mem_root(Session *session, enum_var_type type)
                         session->variables.query_alloc_block_size,
                         session->variables.query_prealloc_size);
 }
-
-
-static void fix_trans_mem_root(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    reset_root_defaults(&session->transaction.mem_root,
-                        session->variables.trans_alloc_block_size,
-                        session->variables.trans_prealloc_size);
-}
-
 
 static void fix_server_id(Session *, enum_var_type)
 {
@@ -1481,8 +1465,9 @@ static bool set_option_autocommit(Session *session, set_var *var)
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
-      if (ha_commit(session))
-	return 1;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      if (transaction_services.ha_commit_trans(session, true))
+        return 1;
     }
     else
     {
