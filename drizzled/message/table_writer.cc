@@ -235,7 +235,16 @@ int main(int argc, char* argv[])
 
   message::Table table;
 
-  fill_table(&table, "example_table");
+  switch (table_number)
+  {
+  case 0:
+    fill_table(&table, "example_table");
+    break;
+  default:
+    fprintf(stderr, "Invalid table number.\n\n");
+    usage(argv[0]);
+    exit(EXIT_FAILURE);
+  }
 
   fstream output(argv[optind], ios::out | ios::trunc | ios::binary);
   if (!table.SerializeToOstream(&output))
