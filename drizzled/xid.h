@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_XID_H
 #define DRIZZLED_XID_H
 
+#include <cstring>
+
 extern uint32_t server_id;
 
 /**
@@ -49,7 +51,13 @@ public:
   long bqual_length;
   char data[XIDDATASIZE];  // not \0-terminated !
 
-  XID();
+  XID() :
+    formatID(-1), /* -1 == null */
+    gtrid_length(0),
+    bqual_length(0)
+  {
+    memset(data, 0, XIDDATASIZE);
+  }
   bool eq(XID *xid);
   bool eq(long g, long b, const char *d);
   void set(XID *xid);
@@ -87,12 +95,19 @@ extern const char *xa_state_names[];
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 
-typedef struct st_xid_state {
+class XID_STATE 
+{
+public:
+  XID_STATE() :
+    xid(),
+    xa_state(XA_NOTR),
+    in_session(false)
+  {}
   /* For now, this is only used to catch duplicated external xids */
   XID  xid;                           // transaction identifier
   enum xa_states xa_state;            // used by external XA only
   bool in_session;
-} XID_STATE;
+};
 
 bool xid_cache_init(void);
 void xid_cache_free(void);

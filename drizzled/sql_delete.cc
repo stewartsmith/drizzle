@@ -29,6 +29,7 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/transaction_services.h"
 
 using namespace drizzled;
 
@@ -382,21 +383,19 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
 bool mysql_truncate(Session& session, TableList *table_list)
 {
   bool error;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   uint64_t save_options= session.options;
   table_list->lock_type= TL_WRITE;
   session.options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  ha_enable_transaction(&session, false);
   mysql_init_select(session.lex);
   error= mysql_delete(&session, table_list, (COND*) 0, (SQL_LIST*) 0,
                       HA_POS_ERROR, 0L, true);
-  ha_enable_transaction(&session, true);
   /*
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= ha_autocommit_or_rollback(&session, error);
-  ha_commit(&session);
+  error= transaction_services.ha_autocommit_or_rollback(&session, error);
   session.options= save_options;
 
   return error;

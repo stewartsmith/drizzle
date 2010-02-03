@@ -54,7 +54,11 @@ class StorageEngine;
 
 struct Session_TRANS
 {
-  Session_TRANS() {};
+  Session_TRANS() :
+    no_2pc(false),
+    ha_list(NULL),
+    modified_non_trans_table(false)
+  {}
 
   /* true is not all entries in the engines[] support 2pc */
   bool        no_2pc;
