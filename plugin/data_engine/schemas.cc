@@ -42,7 +42,7 @@ SchemasTool::Generator::Generator(Field **arg) :
 */
 bool SchemasTool::Generator::checkSchema()
 {
-  return false;
+  return isWild(schema_name());
 }
 
 bool SchemasTool::Generator::nextSchemaCore()

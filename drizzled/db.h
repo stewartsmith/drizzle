@@ -31,7 +31,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
 
 bool check_db_dir_existence(const char *db_name);
-int get_database_metadata(const char *dbname, drizzled::message::Schema *db);
+int get_database_metadata(const std::string &dbname, drizzled::message::Schema &db);
 
 const CHARSET_INFO *get_default_db_collation(const char *db_name);
 

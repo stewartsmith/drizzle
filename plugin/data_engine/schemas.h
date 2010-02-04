@@ -31,7 +31,6 @@
 #include "drizzled/message/schema.pb.h"
 #include "drizzled/field.h"
 
-
 class SchemasTool : public drizzled::plugin::TableFunction
 {
 public:

@@ -95,14 +95,14 @@ def	information_schema	old_tables	OLD_TABLES	PLUGIN_NAME	Plugin_name	8	256	0	Y	0
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_schemata	OLD_SCHEMATA	SCHEMA_NAME	Database	8	256	18	N	1	0	45
+def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database	8	256	18	N	1	0	45
 Database
 information_schema
 mysql
 test
 show databases like "test%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_schemata	OLD_SCHEMATA	SCHEMA_NAME	Database (test%)	8	256	4	N	1	0	45
+def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database (test%)	8	256	4	N	1	0	45
 Database (test%)
 test
 create table t1 (f1 int not null, f2 int not null, f3 int not null, f4 int not null, primary key(f1,f2,f3,f4));
@@ -486,7 +486,6 @@ create database `mysqlttest\1`;
 create table `mysqlttest\1`.`a\b` (a int);
 show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
-a\b
 show fields from `mysqlttest\1`.`a\b`;
 Field	Type	Null	Key	Default	Extra
 a	int	YES		NULL	

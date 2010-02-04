@@ -32,6 +32,9 @@
 #include <string>
 #include <set>
 
+extern int wild_case_compare(const CHARSET_INFO * const cs, 
+                             const char *str,const char *wildstr);
+
 namespace drizzled
 {
 
@@ -107,6 +110,7 @@ public:
     void push(const std::string& arg);
     void push(bool arg);
 
+    bool isWild(const std::string &predicate);
   };
 
   void define(drizzled::message::Table &arg)

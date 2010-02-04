@@ -6,8 +6,8 @@ NULL	test	utf8	utf8_general_ci	NULL
 select schema_name from data_dictionary.schemas;
 schema_name
 information_schema
-
-
+mysql
+test
 show databases like 't%';
 Database (t%)
 test
@@ -621,13 +621,9 @@ CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	
 SELECT * 
 FROM information_schema.old_referential_constraints;
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	UNIQUE_CONSTRAINT_SCHEMA	UNIQUE_CONSTRAINT_NAME	MATCH_OPTION	UPDATE_RULE	DELETE_RULE	TABLE_NAME	REFERENCED_TABLE_NAME
-SELECT schema_name
-FROM data_dictionary.schemas
-ORDER BY schema_name;
-schema_name
-
-
-information_schema
+SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
+count(schema_name)
+#
 SHOW STATUS;
 Variable_name	Value
 #	#
@@ -862,3 +858,6 @@ information_schema	OLD_STATISTICS
 information_schema	OLD_TABLES
 information_schema	OLD_TABLE_CONSTRAINTS
 information_schema	OPEN_SESSION_STATUS
+SELECT count(*) FROM data_dictionary.plugins;
+count(*)
+#

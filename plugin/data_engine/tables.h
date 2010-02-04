@@ -65,6 +65,7 @@ public:
 
     bool populate();
     bool nextTable();
+    bool checkTableName();
   };
 
   Generator *generator(Field **arg)

@@ -1,14 +1,12 @@
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
 DROP SCHEMA IF EXISTS data_dictionary;
 CREATE SCHEMA data_dictionary;
-select * from data_dictionary.SCHEMAS where schema_name > 'm';
-SCHEMA_NAME	DEFAULT_COLLATION_NAME
-select schema_name from data_dictionary.schemas;
-schema_name
-data_dictionary
-information_schema
-
-
+select count(*) from data_dictionary.SCHEMAS where schema_name > 'm';
+count(*)
+#
+select count(*) from data_dictionary.schemas;
+count(*)
+#
 create database mysqltest;
 create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
 create table test.t2(a int);
@@ -340,12 +338,9 @@ WHERE table_name IN
 WHERE ENGINE IS NULL)
 ORDER BY table_name;
 table_name	column_name
-SELECT schema_name FROM data_dictionary.schemas ORDER BY schema_name;
-schema_name
-
-
-data_dictionary
-information_schema
+SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
+count(schema_name)
+#
 SELECT count(*) FROM data_dictionary.session_status ORDER BY variable_name;
 count(*)
 #

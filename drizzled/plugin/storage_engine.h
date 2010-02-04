@@ -419,8 +419,10 @@ public:
                        bool generate_warning);
   static void getTableNames(const std::string& db_name, std::set<std::string> &set_of_names);
 
+  // @note All schema methods defined here
   static void getSchemaNames(std::set<std::string>& set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
+ 
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

@@ -353,6 +353,42 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
+static bool _schema_select(Session *session, Select_Lex *sel,
+                           const string& schema_table_name)
+{
+  LEX_STRING db, table;
+  /*
+     We have to make non const db_name & table_name
+     because of lower_case_table_names
+  */
+  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
+  session->make_lex_string(&table, schema_table_name, false);
+
+  if (! sel->add_table_to_list(session, new Table_ident(db, table),
+                               NULL, 0, TL_READ))
+  {
+    return true;
+  }
+  return false;
+}
+
+int prepare_new_schema_table(Session *session, LEX *lex,
+                             const string& schema_table_name)
+{
+  Select_Lex *schema_select_lex= NULL;
+
+  Select_Lex *select_lex= lex->current_select;
+  assert(select_lex);
+  if (_schema_select(session, select_lex, schema_table_name))
+  {
+    return(1);
+  }
+  TableList *table_list= (TableList*) select_lex->table_list.first;
+  assert(table_list);
+  table_list->schema_select_lex= schema_select_lex;
+
+  return 0;
+}
 
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
                          const string& schema_table_name)

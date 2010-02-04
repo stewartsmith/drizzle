@@ -24,6 +24,8 @@
 #include <drizzled/gettext.h>
 #include "drizzled/plugin/registry.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
 
 #include <vector>
 
@@ -184,4 +186,17 @@ void plugin::TableFunction::Generator::push(bool arg)
   }
 
   columns_iterator++;
+}
+
+bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
+{
+
+  if (not (current_session)->lex->wild)
+    return false;
+
+  bool match=  wild_case_compare(system_charset_info,
+                                 predicate.c_str(),
+                                 (current_session)->lex->wild->c_str());
+
+  return match;
 }

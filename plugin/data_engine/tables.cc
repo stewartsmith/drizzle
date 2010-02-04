@@ -77,6 +77,9 @@ bool TablesTool::Generator::nextTableCore()
                                              &table_proto);
   }
 
+  if (checkTableName())
+    return false;
+
   return true;
 }
 
@@ -84,12 +87,21 @@ bool TablesTool::Generator::nextTable()
 {
   while (not nextTableCore())
   {
+
+    if (is_tables_primed && table_iterator != table_names.end())
+      continue;
+
     if (not nextSchema())
       return false;
     is_tables_primed= false;
   }
 
   return true;
+}
+
+bool TablesTool::Generator::checkTableName()
+{
+  return isWild(table_name());
 }
 
 bool TablesTool::Generator::populate()
@@ -182,5 +194,9 @@ bool TableNames::Generator::checkSchema()
 {
   Session *session= current_session;
 
+  if (session->lex->select_lex.db)
+  {
+    return schema_name().compare(session->lex->select_lex.db);
+  }
   return session->db.compare(schema_name());
 }
