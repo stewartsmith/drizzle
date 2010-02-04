@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 ?
+ *  Copyright (C) 2010 Akiban Technologies Inc.
  *
  *  Authors:
  *
@@ -59,7 +59,7 @@ void plugin::QueryRewriter::removePlugin(plugin::QueryRewriter *in_rewriter)
 
 /*
  * This is the QueryRewriter::rewrite entry point.
- * This gets called from with the Drizzle kernel.
+ * This gets called from within the Drizzle kernel.
  */
 void plugin::QueryRewriter::rewriteQuery(std::string &to_rewrite)
 {
@@ -67,10 +67,7 @@ void plugin::QueryRewriter::rewriteQuery(std::string &to_rewrite)
        iter != all_rewriters.end();
        ++iter)
   {
-    if ((*iter)->isEnabled())
-    {
-      (*iter)->rewrite(to_rewrite);
-    }
+    (*iter)->rewrite(to_rewrite);
   }
 }
 

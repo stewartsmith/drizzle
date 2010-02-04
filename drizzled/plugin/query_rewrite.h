@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 ?
+ *  Copyright (C) 2010 Akiban Technologies Inc.
  *
  *  Authors:
  *
@@ -31,7 +31,6 @@
  * @file Defines the API for a QueryRewriter.  
  */
 
-
 namespace drizzled
 {
 
@@ -47,16 +46,13 @@ class QueryRewriter : public Plugin
   QueryRewriter();
   QueryRewriter(const QueryRewriter&);
   QueryRewriter& operator=(const QueryRewriter&);
-  atomic<bool> is_enabled;
 
 public:
 
   explicit QueryRewriter(std::string name_arg)
     : 
       Plugin(name_arg, "QueryRewriter")
-  {
-    is_enabled= false;
-  }
+  {}
 
   virtual ~QueryRewriter() {}
 
@@ -70,21 +66,13 @@ public:
   static bool addPlugin(QueryRewriter *in_rewriter);
   static void removePlugin(QueryRewriter *in_rewriter);
 
-  virtual bool isEnabled() const
-  {
-    return is_enabled;
-  }
-
-  virtual void enable()
-  {
-    is_enabled= true;
-  }
-
-  virtual void disable()
-  {
-    is_enabled= false;
-  }
-
+  /**
+   * Take a query to be rewritten and go through all the rewriters that are registered as plugins
+   * and let the enabled ones rewrite they query.
+   * TODO: does it make sense to have multiple rewriters?
+   *
+   * @param[out] to_rewrite string representing the query to rewrite
+   */
   static void rewriteQuery(std::string &to_rewrite);
 
 };
