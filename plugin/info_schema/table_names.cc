@@ -159,19 +159,7 @@ int TabNamesISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaT
     return 1;
   }
   field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-  if (session->lex->verbose)
-  {
-    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    column= tab_columns[3];
-    field= new Item_field(context, NULL, NULL, column->getName().c_str());
-    if (session->add_item_to_list(field))
-    {
-      return 1;
-    }
-    field->set_name(column->getOldName().c_str(),
-                    column->getOldName().length(),
-                    system_charset_info);
-  }
+
   return 0;
 }
 

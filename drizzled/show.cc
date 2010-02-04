@@ -729,7 +729,7 @@ public:
   {}
 };
 
-void mysqld_list_processes(Session *session,const char *user, bool)
+void mysqld_list_processes(Session *session,const char *user)
 {
   Item *field;
   List<Item> field_list;

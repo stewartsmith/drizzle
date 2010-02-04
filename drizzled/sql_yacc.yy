@@ -4835,7 +4835,7 @@ show_param:
              if (prepare_schema_table(YYSession, lex, 0, "OLD_SCHEMATA"))
                DRIZZLE_YYABORT;
            }
-         | opt_full TABLES opt_db show_wild
+         | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
@@ -4843,7 +4843,7 @@ show_param:
                new(std::nothrow) statement::Select(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             lex->select_lex.db= $3;
+             lex->select_lex.db= $2;
              if (prepare_schema_table(YYSession, lex, 0, "TABLE_NAMES"))
                DRIZZLE_YYABORT;
            }
@@ -4859,7 +4859,7 @@ show_param:
              if (prepare_schema_table(YYSession, lex, 0, "OLD_TABLES"))
                DRIZZLE_YYABORT;
            }
-        | opt_full COLUMNS from_or_in table_ident opt_db show_wild
+        | COLUMNS from_or_in table_ident opt_db show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
@@ -4867,9 +4867,9 @@ show_param:
               new(std::nothrow) statement::Select(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            if ($5)
-              $4->change_db($5);
-            if (prepare_schema_table(YYSession, lex, $4, "OLD_COLUMNS"))
+            if ($4)
+              $3->change_db($4);
+            if (prepare_schema_table(YYSession, lex, $3, "OLD_COLUMNS"))
               DRIZZLE_YYABORT;
           }
         | keys_or_index from_or_in table_ident opt_db where_clause
@@ -4973,11 +4973,6 @@ opt_db:
         | from_or_in ident { $$= $2.str; }
         ;
 
-opt_full:
-          /* empty */ { Lex->verbose= false; }
-        | FULL        { Lex->verbose= true; }
-        ;
-
 from_or_in:
           FROM
         | IN_SYM
@@ -5013,7 +5008,6 @@ describe:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
-            lex->verbose= 0;
             if (prepare_schema_table(YYSession, lex, $2, "OLD_COLUMNS"))
               DRIZZLE_YYABORT;
           }

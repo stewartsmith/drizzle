@@ -96,7 +96,7 @@ int mysqld_show_status(Session *session);
 int mysqld_show_variables(Session *session,const char *wild);
 bool mysqld_show_storage_engines(Session *session);
 bool mysqld_show_column_types(Session *session);
-void mysqld_list_processes(Session *session,const char *user, bool verbose);
+void mysqld_list_processes(Session *session,const char *user);
 void calc_sum_of_all_status(STATUS_VAR *to);
 
 int add_status_vars(SHOW_VAR *list);

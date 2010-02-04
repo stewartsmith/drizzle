@@ -269,9 +269,9 @@ int ColumnsISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTa
   for (; *field_num >= 0; field_num++)
   {
     column= tab_columns[*field_num];
-    if (! session->lex->verbose && (*field_num == 13 ||
-                                    *field_num == 17 ||
-                                    *field_num == 18))
+    if ((*field_num == 13 ||
+         *field_num == 17 ||
+         *field_num == 18))
     {
       continue;
     }

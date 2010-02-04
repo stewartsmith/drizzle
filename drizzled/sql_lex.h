@@ -839,9 +839,6 @@ public:
   */
   uint8_t derived_tables;
 
-  /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
-  bool verbose;
-  
   /* Was the IGNORE symbol found in statement */
   bool ignore;
 

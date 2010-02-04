@@ -30,7 +30,7 @@ where table_schema = "mysqltest" and table_name like "t%";
 #show tables like 't%';
 --replace_column 8 # 12 # 13 #
 #show table status;
-#show full columns from t3 like "a%";
+#show columns from t3 like "a%";
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
 

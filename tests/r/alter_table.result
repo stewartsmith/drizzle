@@ -50,11 +50,11 @@ NAME varchar(80) DEFAULT '' NOT NULL,
 PRIMARY KEY (GROUP_ID,LANG_ID),
 KEY NAME (NAME));
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
-SHOW FULL COLUMNS FROM t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-GROUP_ID	int	NULL	NO	PRI	0		#	
-LANG_ID	int	NULL	NO	PRI	0		#	
-NAME	varchar(80)	utf8_general_ci	NO	MUL	NULL		#	
+show COLUMNS FROM t1;
+Field	Type	Null	Key	Default	Extra
+GROUP_ID	int	NO	PRI	0	
+LANG_ID	int	NO	PRI	0	
+NAME	varchar(80)	NO	MUL	NULL	
 DROP TABLE t1;
 create table t1 (n int);
 insert into t1 values(9),(3),(12),(10);
