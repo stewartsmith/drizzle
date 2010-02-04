@@ -44,6 +44,9 @@
 #include <bitset>
 #include <algorithm>
 
+namespace drizzled
+{
+
 #define HA_MAX_ALTER_FLAGS 40
 
 
@@ -158,7 +161,7 @@ inline key_part_map make_prev_keypart_map(T a)
   must be set to 0.
 */
 
-class Cursor :public drizzled::memory::SqlAlloc
+class Cursor :public memory::SqlAlloc
 {
 protected:
   TableShare *table_share;   /* The table definition */
@@ -166,8 +169,8 @@ protected:
 
   ha_rows estimation_rows_to_insert;
 public:
-  drizzled::plugin::StorageEngine *engine;      /* storage engine of this Cursor */
-  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  plugin::StorageEngine *engine;      /* storage engine of this Cursor */
+  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return engine;
   }
@@ -233,9 +236,9 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  Cursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &share_arg);
+  Cursor(plugin::StorageEngine &engine_arg, TableShare &share_arg);
   virtual ~Cursor(void);
-  virtual Cursor *clone(drizzled::memory::Root *mem_root);
+  virtual Cursor *clone(memory::Root *mem_root);
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
@@ -717,29 +720,29 @@ int prepare_create_field(CreateField *sql_field,
                          int *timestamps, int *timestamps_with_niladic);
 
 bool mysql_create_table(Session *session,
-                        drizzled::TableIdentifier &identifier,
+                        TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
-                        drizzled::message::Table *table_proto,
+                        message::Table *table_proto,
                         AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
 
 bool mysql_create_table_no_lock(Session *session,
-                                drizzled::TableIdentifier &identifier,
+                                TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
-                                drizzled::message::Table *table_proto,
+                                message::Table *table_proto,
                                 AlterInfo *alter_info,
                                 bool tmp_table,
                                 uint32_t select_field_count,
                                 bool is_if_not_exists);
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
-                             drizzled::message::Table& create_table_proto,
-                             drizzled::plugin::StorageEngine*,
+                             message::Table& create_table_proto,
+                             plugin::StorageEngine*,
                              bool is_if_not_exists,
                              bool is_engine_set);
 
-bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
+bool mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
 
@@ -805,5 +808,6 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 Field *
 find_field_in_table_sef(Table *table, const char *name);
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CURSOR_H */

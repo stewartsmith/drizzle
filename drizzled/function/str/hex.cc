@@ -22,6 +22,9 @@
 #include <drizzled/function/str/hex.h>
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+
 /**
   convert a hex digit into number.
 */
@@ -59,7 +62,7 @@ String *Item_func_hex::val_str(String *str)
 
     if ((null_value= args[0]->null_value))
       return 0;
-    ptr= int64_t2str(dec,ans,16);
+    ptr= internal::int64_t2str(dec,ans,16);
     if (str->copy(ans,(uint32_t) (ptr-ans),default_charset()))
       return &my_empty_string;			// End of memory
     return str;
@@ -120,3 +123,5 @@ String *Item_func_unhex::val_str(String *str)
   }
   return &tmp_value;
 }
+
+} /* namespace drizzled */

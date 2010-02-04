@@ -13,8 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#ifndef DRIZZLED_INTERNAL_MY_UCTYPE_H
-#define DRIZZLED_INTERNAL_MY_UCTYPE_H
+#include "config.h"
+#include <cstddef>
+#include "drizzled/charset_info.h"
+
+namespace drizzled
+{
 
 /*
   Unicode ctype data
@@ -1479,4 +1483,4 @@ MY_UNI_CTYPE my_uni_ctype[256]={
 	{0,uctype_pageFF}
 };
 
-#endif /* DRIZZLED_INTERNAL_MY_UCTYPE_H */
+} /* namespace drizzled */

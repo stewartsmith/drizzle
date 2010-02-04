@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/dec.h>
 
+namespace drizzled
+{
+
 class Item_func_atan :public Item_dec_func
 {
 public:
@@ -31,5 +34,7 @@ public:
   double val_real();
   const char *func_name() const { return "atan"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_ATAN_H */

@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num1.h>
 
+namespace drizzled
+{
+
 class Item_func_int_val :public Item_func_num1
 {
 public:
@@ -30,5 +33,7 @@ public:
   void fix_num_length_and_dec();
   void find_num_type();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_INT_VAL_H */

@@ -48,23 +48,26 @@
 #endif
 
 using namespace std;
-using namespace drizzled;
- 
-typedef plugin::Manifest builtin_plugin[];
-extern builtin_plugin PANDORA_BUILTIN_LIST;
-static plugin::Manifest *drizzled_builtins[]=
+
+typedef drizzled::plugin::Manifest drizzled_builtin_plugin[];
+extern drizzled_builtin_plugin PANDORA_BUILTIN_LIST;
+static drizzled::plugin::Manifest *drizzled_builtins[]=
 {
   PANDORA_BUILTIN_LIST, NULL
 };
+
+namespace drizzled
+{
+ 
 
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_add= NULL;
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
+const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
@@ -355,10 +358,8 @@ static bool plugin_initialize(plugin::Registry &registry,
 }
 
 
-extern "C" unsigned char *get_bookmark_hash_key(const unsigned char *, size_t *, bool);
-
-
-unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, bool)
+static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
+                                            size_t *length, bool)
 {
   struct st_bookmark *var= (st_bookmark *)buff;
   *length= var->name_len + 1;
@@ -618,7 +619,7 @@ static int check_func_bool(Session *, drizzle_sys_var *var,
       goto err;
     if (tmp > 1)
     {
-      llstr(tmp, buff);
+      internal::llstr(tmp, buff);
       strvalue= buff;
       goto err;
     }
@@ -1419,10 +1420,7 @@ void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
-                                         char *);
-
-bool get_one_plugin_option(int, const struct my_option *, char *)
+static bool get_one_plugin_option(int, const struct my_option *, char *)
 {
   return 0;
 }
@@ -1861,3 +1859,4 @@ void my_print_help_inc_plugins(my_option *main_options)
 
 }
 
+} /* namespace drizzled */

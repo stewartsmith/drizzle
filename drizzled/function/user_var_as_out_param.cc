@@ -18,9 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
+#include <cassert>
+
 #include <drizzled/function/user_var_as_out_param.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {
@@ -87,3 +92,4 @@ void Item_user_var_as_out_param::print(String *str,
   str->append(name.str,name.length);
 }
 
+} /* namespace drizzled */

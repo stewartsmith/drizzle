@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/real.h>
 
+namespace drizzled
+{
+
 class Item_func_rand :public Item_real_func
 {
   uint64_t seed1;
@@ -42,5 +45,7 @@ public:
 private:
   void seed_random (Item * val);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_RAND_H */

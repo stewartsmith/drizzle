@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_ord :public Item_int_func
 {
   String value;
@@ -31,5 +34,7 @@ public:
   int64_t val_int();
   const char *func_name() const { return "ord"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_ORD_H */

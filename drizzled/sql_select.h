@@ -33,6 +33,8 @@
 
 #include <vector>
 
+namespace drizzled
+{
 
 class select_result;
 
@@ -63,7 +65,14 @@ typedef struct st_rollup
   List<Item> *fields;
 } ROLLUP;
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file??? */
+
 #include "drizzled/join.h"
+
+namespace drizzled
+{
 
 /*****************************************************************************
   Make som simple condition optimization:
@@ -138,7 +147,7 @@ bool change_refs_to_tmp_fields(Session *session,
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
-int join_read_const_table(JoinTable *tab, drizzled::optimizer::Position *pos);
+int join_read_const_table(JoinTable *tab, optimizer::Position *pos);
 int join_read_system(JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
@@ -162,13 +171,13 @@ int join_read_next_same_or_null(READ_RECORD *info);
 
 void calc_used_field_length(Session *, JoinTable *join_tab);
 StoredKey *get_store_key(Session *session, 
-                         drizzled::optimizer::KeyUse *keyuse,
+                         optimizer::KeyUse *keyuse,
                          table_map used_tables,
                          KEY_PART_INFO *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null);
-extern "C" int join_tab_cmp(const void* ptr1, const void* ptr2);
-extern "C" int join_tab_cmp_straight(const void* ptr1, const void* ptr2);
+int join_tab_cmp(const void* ptr1, const void* ptr2);
+int join_tab_cmp_straight(const void* ptr1, const void* ptr2);
 void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(JOIN *join);
 uint32_t max_part_bit(key_part_map bits);
@@ -180,7 +189,6 @@ order_st *create_distinct_group(Session *session,
                                 List<Item> &all_fields,
                                 bool *all_order_by_fields_used);
 bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab);
-int join_tab_cmp(const void* ptr1, const void* ptr2);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 
                                Table *table,
@@ -196,8 +204,8 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         std::vector<drizzled::optimizer::SargableParam> &sargables);
-ha_rows get_quick_record_count(Session *session, drizzled::optimizer::SqlSelect *select, Table *table, const key_map *keys,ha_rows limit);
+                         std::vector<optimizer::SargableParam> &sargables);
+ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
@@ -212,10 +220,17 @@ void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
 bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
 bool create_ref_for_key(JOIN *join, JoinTable *j, 
-                        drizzled::optimizer::KeyUse *org_keyuse, 
+                        optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file??? */
+
 #include "drizzled/stored_key.h"
+
+namespace drizzled
+{
 
 bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
 int safe_index_read(JoinTable *tab);
@@ -224,5 +239,7 @@ int test_if_item_cache_changed(List<Cached_item> &list);
 
 void print_join(Session *session, String *str,
                 List<TableList> *tables, enum_query_type);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_SELECT_H */

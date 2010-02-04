@@ -24,6 +24,9 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
 
+namespace drizzled
+{
+
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
@@ -732,3 +735,5 @@ void Select_Lex::cleanup_all_joins(bool full)
     for (sl= unit->first_select(); sl; sl= sl->next_select())
       sl->cleanup_all_joins(full);
 }
+
+} /* namespace drizzled */

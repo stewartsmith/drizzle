@@ -45,12 +45,12 @@
 
 #include "drizzled/transaction_services.h"
 
-extern pid_t current_pid;
-
 using namespace std;
 
 namespace drizzled
 {
+
+extern pid_t current_pid;
 
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<CreateField> &create,
@@ -739,7 +739,7 @@ bool alter_table(Session *session,
   ostringstream oss;
   oss << drizzle_data_home << "/" << db << "/" << table_name;
 
-  (void) unpack_filename(new_name_buff, oss.str().c_str());
+  (void) internal::unpack_filename(new_name_buff, oss.str().c_str());
 
   /*
     If this is just a rename of a view, short cut to the
@@ -849,7 +849,7 @@ bool alter_table(Session *session,
     table_options= create_proto->mutable_options();
 
     create_info->row_type= table->s->row_type;
-    table_options->set_row_type((drizzled::message::Table_TableOptions_RowType)table->s->row_type);
+    table_options->set_row_type((message::Table_TableOptions_RowType)table->s->row_type);
   }
 
   if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
@@ -946,7 +946,7 @@ bool alter_table(Session *session,
       }
       else
       {
-        *fn_ext(new_name)= 0;
+        *internal::fn_ext(new_name)= 0;
         if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
           error= -1;
       }
@@ -1227,7 +1227,7 @@ err:
     bool save_abort_on_warning= session->abort_on_warning;
     session->abort_on_warning= true;
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                                 f_val, strlength(f_val), t_type,
+                                 f_val, internal::strlength(f_val), t_type,
                                  alter_info->datetime_field->field_name);
     session->abort_on_warning= save_abort_on_warning;
   }
@@ -1332,8 +1332,8 @@ copy_data_between_tables(Table *from, Table *to,
     }
     else
     {
-      from->sort.io_cache= new IO_CACHE;
-      memset(from->sort.io_cache, 0, sizeof(IO_CACHE));
+      from->sort.io_cache= new internal::IO_CACHE;
+      memset(from->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;

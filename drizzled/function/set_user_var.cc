@@ -18,13 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/client.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /*
   When a user variable is updated (in a SET command or a query like
@@ -438,3 +439,4 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
 }
 
 
+} /* namespace drizzled */

@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/insert.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 String *Item_func_insert::val_str(String *str)
 {
@@ -88,3 +91,5 @@ void Item_func_insert::fix_length_and_dec()
   }
   max_length= (ulong) max_result_length;
 }
+
+} /* namespace drizzled */

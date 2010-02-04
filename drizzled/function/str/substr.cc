@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/substr.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 String *Item_func_substr::val_str(String *str)
 {
@@ -224,3 +227,5 @@ String *Item_func_substr_index::val_str(String *str)
   tmp_value.mark_as_const();
   return (&tmp_value);
 }
+
+} /* namespace drizzled */

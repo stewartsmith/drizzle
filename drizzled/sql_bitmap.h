@@ -29,7 +29,8 @@
 
 #include <cstring>
 
-
+namespace drizzled
+{
 
 typedef uint64_t table_map;          /* Used for table bits in join */
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
@@ -361,5 +362,7 @@ static inline bool bitmap_cmp(const MyBitmap *map1, const MyBitmap *map2)
                 (map2)->getBitmap(),
                 4*map1->numOfWordsInMap()) == 0;
 }
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_BITMAP_H */

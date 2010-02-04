@@ -22,6 +22,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 
 size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
@@ -580,7 +582,7 @@ void my_hash_sort_mb_bin(const CHARSET_INFO * const,
      Remove trailing spaces. We have to do this to be able to compare
     'A ' and 'A' as identical
   */
-  key= skip_trailing_space(key, len);
+  key= internal::skip_trailing_space(key, len);
 
   for (; pos < (const unsigned char*) key ; pos++)
   {
@@ -1136,6 +1138,7 @@ size_t my_numcells_mb(const CHARSET_INFO * const cs, const char *b, const char *
 }
 
 
+
 int my_mb_ctype_mb(const CHARSET_INFO * const cs, int *ctype,
                    const unsigned char *s, const unsigned char *e)
 {
@@ -1166,3 +1169,4 @@ MY_COLLATION_HANDLER my_collation_mb_bin_handler =
     my_propagate_simple
 };
 
+} /* namespace drizzled */

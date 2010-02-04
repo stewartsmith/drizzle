@@ -34,6 +34,9 @@
   Item_field::fix_outer_field() functions.
 */
 
+namespace drizzled
+{
+
 class Item_outer_ref :public Item_direct_ref
 {
 public:
@@ -76,5 +79,6 @@ public:
   virtual Ref_Type ref_type() { return OUTER_REF; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_OUTER_REF_H */

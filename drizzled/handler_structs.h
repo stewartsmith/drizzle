@@ -37,19 +37,18 @@
 #include <drizzled/lex_string.h>
 #include "drizzled/global_charset_info.h"
 
+namespace drizzled
+{
 
 class Ha_trx_info;
 struct st_key;
 typedef struct st_key KEY;
-struct st_key_cache;
 typedef struct st_key_cache KEY_CACHE;
 
-namespace drizzled
-{
+
 namespace plugin
 {
 class StorageEngine;
-}
 }
 
 struct Session_TRANS
@@ -105,7 +104,7 @@ typedef struct st_ha_create_information
   uint32_t table_options;
   uint32_t used_fields;
   enum row_type row_type;
-  drizzled::plugin::StorageEngine *db_type;
+  plugin::StorageEngine *db_type;
   bool table_existed;			/* 1 in create if table existed */
 } HA_CREATE_INFO;
 
@@ -180,5 +179,7 @@ typedef struct st_handler_buffer
   unsigned char *buffer_end;     /* End of buffer */
   unsigned char *end_of_used_area;     /* End of area that was used by handler */
 } HANDLER_BUFFER;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HANDLER_STRUCTS_H */

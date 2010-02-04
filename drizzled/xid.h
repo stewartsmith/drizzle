@@ -22,6 +22,9 @@
 
 #include <cstring>
 
+namespace drizzled
+{
+
 extern uint32_t server_id;
 
 /**
@@ -32,15 +35,13 @@ extern uint32_t server_id;
 
 */
 
-typedef uint64_t my_xid; // this line is the same as in log_event.h
+typedef uint64_t my_xid;
 
 #define DRIZZLE_XIDDATASIZE 128
 #define DRIZZLE_XID_PREFIX "MySQLXid"
 #define DRIZZLE_XID_PREFIX_LEN 8 // must be a multiple of 8
 #define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
 #define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
-
-#define XIDDATASIZE DRIZZLE_XIDDATASIZE
 
 class XID {
 
@@ -49,14 +50,14 @@ public:
   long formatID;
   long gtrid_length;
   long bqual_length;
-  char data[XIDDATASIZE];  // not \0-terminated !
+  char data[DRIZZLE_XIDDATASIZE];  // not \0-terminated !
 
   XID() :
     formatID(-1), /* -1 == null */
     gtrid_length(0),
     bqual_length(0)
   {
-    memset(data, 0, XIDDATASIZE);
+    memset(data, 0, DRIZZLE_XIDDATASIZE);
   }
   bool eq(XID *xid);
   bool eq(long g, long b, const char *d);
@@ -115,5 +116,7 @@ XID_STATE *xid_cache_search(XID *xid);
 bool xid_cache_insert(XID *xid, enum xa_states xa_state);
 bool xid_cache_insert(XID_STATE *xid_state);
 void xid_cache_delete(XID_STATE *xid_state);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_XID_H */

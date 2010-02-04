@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/item/direct_ref.h>
+
+namespace drizzled
+{
 
 double Item_direct_ref::val_real()
 {
@@ -71,3 +74,4 @@ bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
   return (null_value=(*ref)->get_date(ltime,fuzzydate));
 }
 
+} /* namespace drizzled */

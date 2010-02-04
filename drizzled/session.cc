@@ -54,7 +54,8 @@
 #include <climits>
 
 using namespace std;
-using namespace drizzled;
+namespace drizzled
+{
 
 extern "C"
 {
@@ -73,7 +74,7 @@ const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
 extern uint32_t max_used_connections;
-extern drizzled::atomic<uint32_t> connection_count;
+extern atomic<uint32_t> connection_count;
 
 
 /****************************************************************************
@@ -109,7 +110,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  int fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = internal::create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -389,7 +390,7 @@ Session::~Session()
   if (client->isConnected())
   {
     if (global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
+        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),internal::my_progname,
                       thread_id,
                       (security_ctx.user.c_str() ?
                        security_ctx.user.c_str() : ""));
@@ -976,8 +977,8 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   if (file > 0)
   {
     (void) end_io_cache(cache);
-    (void) my_close(file, MYF(0));
-    (void) my_delete(path, MYF(0));		// Delete file on error
+    (void) internal::my_close(file, MYF(0));
+    (void) internal::my_delete(path, MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -986,7 +987,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 bool select_to_file::send_eof()
 {
   int error= test(end_io_cache(cache));
-  if (my_close(file, MYF(MY_WME)))
+  if (internal::my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
   {
@@ -1008,7 +1009,7 @@ void select_to_file::cleanup()
   if (file >= 0)
   {
     (void) end_io_cache(cache);
-    (void) my_close(file, MYF(0));
+    (void) internal::my_close(file, MYF(0));
     file= -1;
   }
   path[0]= '\0';
@@ -1018,7 +1019,7 @@ void select_to_file::cleanup()
 select_to_file::select_to_file(file_exchange *ex)
   : exchange(ex),
     file(-1),
-    cache(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
+    cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     row_count(0L)
 {
   path[0]=0;
@@ -1055,7 +1056,7 @@ select_export::~select_export()
 */
 
 
-static int create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
+static int create_file(Session *session, char *path, file_exchange *exchange, internal::IO_CACHE *cache)
 {
   int file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
@@ -1064,15 +1065,15 @@ static int create_file(Session *session, char *path, file_exchange *exchange, IO
   option|= MY_REPLACE_DIR;			// Force use of db directory
 #endif
 
-  if (!dirname_length(exchange->file_name))
+  if (!internal::dirname_length(exchange->file_name))
   {
     strcpy(path, drizzle_real_data_home);
     if (! session->db.empty())
       strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
-    (void) fn_format(path, exchange->file_name, path, "", option);
+    (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
+    (void) internal::fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
 
   if (opt_secure_file_priv &&
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
@@ -1088,13 +1089,13 @@ static int create_file(Session *session, char *path, file_exchange *exchange, IO
     return -1;
   }
   /* Create the file world readable */
-  if ((file= my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
+  if ((file= internal::my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
-  if (init_io_cache(cache, file, 0L, WRITE_CACHE, 0L, 1, MYF(MY_WME)))
+  if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
-    my_close(file, MYF(0));
-    my_delete(path, MYF(0));  // Delete file on error, it was just created
+    internal::my_close(file, MYF(0));
+    internal::my_delete(path, MYF(0));  // Delete file on error, it was just created
     return -1;
   }
   return file;
@@ -2105,3 +2106,5 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
   }
   return error;
 }
+
+} /* namespace drizzled */

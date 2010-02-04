@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/find_in_set.h>
 
 /* Search after a string in a string of strings separated by ',' */
 /* Returns number of found type >= 1 or 0 if not found */
 /* This optimizes searching in enums to bit testing! */
+
+namespace drizzled
+{
 
 void Item_func_find_in_set::fix_length_and_dec()
 {
@@ -102,3 +105,4 @@ int64_t Item_func_find_in_set::val_int()
   return 0;
 }
 
+} /* namespace drizzled */

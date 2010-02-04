@@ -29,6 +29,9 @@
      with NULL value.
 */
 
+namespace drizzled
+{
+
 class Item_ref_null_helper: public Item_ref
 {
 protected:
@@ -56,5 +59,7 @@ public:
             (*ref)->used_tables() | RAND_TABLE_BIT);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_REF_NULL_HELPER_H */

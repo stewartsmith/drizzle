@@ -30,17 +30,19 @@
 
 #include <vector>
 
+
+namespace drizzled
+{
+
 /* some forward declarations needed */
 class Session;
 class Table;
 
-namespace drizzled
+namespace plugin
 {
-  namespace plugin
-  {
-    class TransactionReplicator;
-    class TransactionApplier;
-  }
+  class TransactionReplicator;
+  class TransactionApplier;
+}
 
 /**
  * This is a class which manages transforming internal 
@@ -95,7 +97,7 @@ private:
    *
    * @param The session processing the transaction
    */
-  drizzled::message::Transaction *getActiveTransaction(Session *in_session) const;
+  message::Transaction *getActiveTransaction(Session *in_session) const;
   /** 
    * Helper method which attaches a transaction context
    * the supplied transaction based on the supplied Session's
@@ -105,7 +107,7 @@ private:
    * @param The transaction message to initialize
    * @param The Session processing this transaction
    */
-  void initTransaction(drizzled::message::Transaction &in_command, Session *in_session) const;
+  void initTransaction(message::Transaction &in_command, Session *in_session) const;
   /** 
    * Helper method which finalizes data members for the 
    * supplied transaction's context.
@@ -113,7 +115,7 @@ private:
    * @param The transaction message to finalize 
    * @param The Session processing this transaction
    */
-  void finalizeTransaction(drizzled::message::Transaction &in_command, Session *in_session) const;
+  void finalizeTransaction(message::Transaction &in_command, Session *in_session) const;
   /**
    * Helper method which deletes transaction memory and
    * unsets Session's transaction and statement messages.
@@ -127,7 +129,7 @@ private:
    *
    * @param The transaction to check
    */
-  bool transactionContainsBulkSegment(const drizzled::message::Transaction &transaction) const;
+  bool transactionContainsBulkSegment(const message::Transaction &transaction) const;
   /**
    * Helper method which initializes a Statement message
    *
@@ -135,8 +137,8 @@ private:
    * @param The type of the statement
    * @param The session processing this statement
    */
-  void initStatement(drizzled::message::Statement &statement,
-                     drizzled::message::Statement::Type in_type,
+  void initStatement(message::Statement &statement,
+                     message::Statement::Type in_type,
                      Session *in_session) const;
   /**
    * Helper method which returns an initialized Statement
@@ -214,7 +216,7 @@ private:
    *
    * @param Message to push out
    */
-  void push(drizzled::message::Transaction &to_push);
+  void push(message::Transaction &to_push);
 public:
   /**
    * Constructor
@@ -243,28 +245,28 @@ public:
    *
    * @param Pointer to a replicator to attach/register
    */
-  void attachReplicator(drizzled::plugin::TransactionReplicator *in_replicator);
+  void attachReplicator(plugin::TransactionReplicator *in_replicator);
   /**
    * Detaches/unregisters a replicator with our internal
    * collection of replicators.
    *
    * @param Pointer to the replicator to detach
    */
-  void detachReplicator(drizzled::plugin::TransactionReplicator *in_replicator);
+  void detachReplicator(plugin::TransactionReplicator *in_replicator);
   /**
    * Attaches a applier to our internal collection of
    * appliers.
    *
    * @param Pointer to a applier to attach/register
    */
-  void attachApplier(drizzled::plugin::TransactionApplier *in_applier);
+  void attachApplier(plugin::TransactionApplier *in_applier);
   /**
    * Detaches/unregisters a applier with our internal
    * collection of appliers.
    *
    * @param Pointer to the applier to detach
    */
-  void detachApplier(drizzled::plugin::TransactionApplier *in_applier);
+  void detachApplier(plugin::TransactionApplier *in_applier);
   /**
    * Commits a normal transaction (see above) and pushes the
    * transaction message out to the replicators.
@@ -286,7 +288,7 @@ public:
    * @param The statement to initialize
    * @param The session processing this statement
    */
-  void finalizeStatement(drizzled::message::Statement &statement,
+  void finalizeStatement(message::Statement &statement,
                          Session *in_session) const;
   /**
    * Creates a new InsertRecord GPB message and pushes it to
@@ -350,6 +352,6 @@ public:
   uint64_t getLastAppliedTimestamp() const;
 };
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_REPLICATION_SERVICES_H */

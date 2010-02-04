@@ -637,6 +637,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/lock.cc \
 		drizzled/lookup_symbol.cc \
 		drizzled/my_decimal.cc \
+		drizzled/my_getsystime.cc \
 		drizzled/my_hash.cc \
 		drizzled/my_time.cc \
 		drizzled/my_tree.cc \
@@ -762,7 +763,17 @@ noinst_LTLIBRARIES += \
 		drizzled/libserialutil.la \
 		drizzled/libtypelib.la
 
-drizzled_libcharset_la_SOURCES = drizzled/charset.cc drizzled/charset-def.cc
+drizzled_libcharset_la_SOURCES = \
+		drizzled/charset.cc \
+		drizzled/charset-def.cc \
+		drizzled/ctype-bin.cc \
+		drizzled/ctype-mb.cc \
+		drizzled/ctype-simple.cc \
+		drizzled/ctype-uca.cc \
+		drizzled/ctype-uni.cc \
+		drizzled/ctype-utf8.cc \
+		drizzled/ctype.cc
+
 drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
 drizzled_liberror_la_SOURCES = drizzled/my_error.cc
 drizzled_libgetopt_la_SOURCES = drizzled/my_getopt.cc

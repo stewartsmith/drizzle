@@ -21,6 +21,9 @@
 #include "config.h"
 #include "drizzled/file_exchange.h"
 
+namespace drizzled
+{
+
 file_exchange::file_exchange(char *name, bool flag, enum_filetype filetype_arg)
   : filetype(filetype_arg),
     file_name(name),
@@ -34,3 +37,5 @@ file_exchange::file_exchange(char *name, bool flag, enum_filetype filetype_arg)
     skip_lines(0),
     cs(NULL)
 { }
+
+} /* namespace drizzled */
