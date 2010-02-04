@@ -31,6 +31,8 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/transaction_context.h"
+#include "drizzled/resource_context.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
@@ -39,6 +41,10 @@
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
+
+#include <vector>
+#include <algorithm>
+#include <functional>
 
 namespace drizzled
 {
@@ -143,7 +149,7 @@ namespace drizzled
 
   The server stores its transaction-related data in
   session->transaction. This structure has two members of type
-  Session_TRANS. These members correspond to the statement and
+  TransactionContext. These members correspond to the statement and
   normal transactions respectively:
 
   - session->transaction.stmt contains a list of engines
@@ -348,8 +354,8 @@ namespace drizzled
 */
 void TransactionServices::trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine)
 {
-  Session_TRANS *trans;
-  Ha_trx_info *ha_info;
+  TransactionContext *trans;
+  ResourceContext *resource_context;
 
   if (all)
   {
@@ -359,12 +365,13 @@ void TransactionServices::trans_register_ha(Session *session, bool all, plugin::
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->getEngineInfo(engine, all ? 1 : 0);
+  resource_context= session->getResourceContext(engine, all ? 1 : 0);
 
-  if (ha_info->is_started())
+  if (resource_context->is_started())
     return; /* already registered, return */
 
-  ha_info->register_ha(trans, engine);
+  resource_context->setResource(engine);
+  trans->registerResource(resource_context);
 
   trans->no_2pc|= not engine->has_2pc();
   if (session->transaction.xid_state.xid.is_null())
@@ -386,31 +393,35 @@ void TransactionServices::trans_register_ha(Session *session, bool all, plugin::
 */
 static
 bool
-ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
-                                    bool all)
+ha_check_and_coalesce_trx_read_only(Session *session,
+                                    TransactionContext::ResourceContexts &resource_contexts,
+                                    bool normal_transaction)
 {
   /* The number of storage engines that have actual changes. */
   unsigned rw_ha_count= 0;
-  Ha_trx_info *ha_info;
+  ResourceContext *resource_context;
 
-  for (ha_info= ha_list; ha_info; ha_info= ha_info->next())
+  for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+       it != resource_contexts.end();
+       ++it)
   {
-    if (ha_info->is_trx_read_write())
+    resource_context= *it;
+    if (resource_context->is_trx_read_write())
       ++rw_ha_count;
 
-    if (! all)
+    if (! normal_transaction)
     {
-      Ha_trx_info *ha_info_all= session->getEngineInfo(ha_info->engine(), 1);
-      assert(ha_info != ha_info_all);
+      ResourceContext *resource_context_all= session->getResourceContext(resource_context->getResource(), true);
+      assert(resource_context != resource_context_all);
       /*
         Merge read-only/read-write information about statement
         transaction to its enclosing normal transaction. Do this
         only if in a real transaction -- that is, if we know
-        that ha_info_all is registered in session->transaction.all.
+        that resource_context_all is registered in session->transaction.all.
         Since otherwise we only clutter the normal transaction flags.
       */
-      if (ha_info_all->is_started()) /* false if autocommit. */
-        ha_info_all->coalesce_trx_with(ha_info);
+      if (resource_context_all->is_started()) /* false if autocommit. */
+        resource_context_all->coalesce_trx_with(resource_context);
     }
     else if (rw_ha_count > 1)
     {
@@ -440,16 +451,17 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
     stored functions or triggers. So we simply do nothing now.
     TODO: This should be fixed in later ( >= 5.1) releases.
 */
-int TransactionServices::ha_commit_trans(Session *session, bool all)
+int TransactionServices::ha_commit_trans(Session *session, bool normal_transaction)
 {
   int error= 0, cookie= 0;
   /*
     'all' means that this is either an explicit commit issued by
     user, or an implicit commit issued by a DDL.
   */
-  Session_TRANS *trans= all ? &session->transaction.all : &session->transaction.stmt;
-  bool is_real_trans= all || session->transaction.all.ha_list == 0;
-  Ha_trx_info *ha_info= trans->ha_list;
+  TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
+  TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+
+  bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
 
   /*
     We must not commit the normal transaction if a statement
@@ -457,39 +469,42 @@ int TransactionServices::ha_commit_trans(Session *session, bool all)
     flags will not get propagated to its normal transaction's
     counterpart.
   */
-  assert(session->transaction.stmt.ha_list == NULL ||
+  assert(session->transaction.stmt.getResourceContexts().empty() ||
               trans == &session->transaction.stmt);
 
-  if (ha_info)
+  if (resource_contexts.empty() == false)
   {
     bool must_2pc;
 
     if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
     {
-      ha_rollback_trans(session, all);
+      ha_rollback_trans(session, normal_transaction);
       return 1;
     }
 
-    must_2pc= ha_check_and_coalesce_trx_read_only(session, ha_info, all);
+    must_2pc= ha_check_and_coalesce_trx_read_only(session, resource_contexts, normal_transaction);
 
-    if (!trans->no_2pc && must_2pc)
+    if (! trans->no_2pc && must_2pc)
     {
-      for (; ha_info && !error; ha_info= ha_info->next())
+      for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+           it != resource_contexts.end() && ! error;
+           ++it)
       {
+        ResourceContext *resource_context= *it;
         int err;
-        plugin::StorageEngine *engine= ha_info->engine();
+        plugin::StorageEngine *engine= resource_context->getResource();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
           implementation in engines that are always read-only.
         */
-        if (! ha_info->is_trx_read_write())
+        if (! resource_context->is_trx_read_write())
           continue;
         /*
           Sic: we know that prepare() is not NULL since otherwise
           trans->no_2pc would have been set.
         */
-        if ((err= engine->prepare(session, all)))
+        if ((err= engine->prepare(session, normal_transaction)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -498,12 +513,12 @@ int TransactionServices::ha_commit_trans(Session *session, bool all)
       }
       if (error)
       {
-        ha_rollback_trans(session, all);
+        ha_rollback_trans(session, normal_transaction);
         error= 1;
         goto end;
       }
     }
-    error=ha_commit_one_phase(session, all) ? (cookie ? 2 : 1) : 0;
+    error= ha_commit_one_phase(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
       start_waiting_global_read_lock(session);
@@ -515,34 +530,39 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int TransactionServices::ha_commit_one_phase(Session *session, bool all)
+int TransactionServices::ha_commit_one_phase(Session *session, bool normal_transaction)
 {
   int error=0;
-  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
-  bool is_real_trans=all || session->transaction.all.ha_list == 0;
-  Ha_trx_info *ha_info= trans->ha_list, *ha_info_next;
-  if (ha_info)
+  TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
+  TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+
+  bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
+
+  if (resource_contexts.empty() == false)
   {
-    for (; ha_info; ha_info= ha_info_next)
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
     {
       int err;
-      plugin::StorageEngine *engine= ha_info->engine();
-      if ((err= engine->commit(session, all)))
+      ResourceContext *resource_context= *it;
+      plugin::StorageEngine *engine= resource_context->getResource();
+      if ((err= engine->commit(session, normal_transaction)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-        error=1;
+        error= 1;
       }
       status_var_increment(session->status_var.ha_commit_count);
-      ha_info_next= ha_info->next();
-      ha_info->reset(); /* keep it conveniently zero-filled */
+      resource_context->reset(); /* keep it conveniently zero-filled */
     }
-    trans->ha_list= 0;
-    trans->no_2pc=0;
+    trans->reset();
+
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
-    if (all)
+
+    if (normal_transaction)
     {
-      session->variables.tx_isolation=session->session_tx_isolation;
+      session->variables.tx_isolation= session->session_tx_isolation;
       session->transaction.cleanup();
     }
   }
@@ -561,38 +581,39 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool all)
   return error;
 }
 
-
-int TransactionServices::ha_rollback_trans(Session *session, bool all)
+int TransactionServices::ha_rollback_trans(Session *session, bool normal_transaction)
 {
-  int error=0;
-  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
-  Ha_trx_info *ha_info= trans->ha_list, *ha_info_next;
-  bool is_real_trans=all || session->transaction.all.ha_list == 0;
+  int error= 0;
+  TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
+  TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+
+  bool is_real_trans= normal_transaction || session->transaction.all.getResourceContexts().empty();
 
   /*
     We must not rollback the normal transaction if a statement
     transaction is pending.
   */
-  assert(session->transaction.stmt.ha_list == NULL ||
+  assert(session->transaction.stmt.getResourceContexts().empty() ||
               trans == &session->transaction.stmt);
 
-  if (ha_info)
+  if (resource_contexts.empty() == false)
   {
-    for (; ha_info; ha_info= ha_info_next)
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
     {
       int err;
-      plugin::StorageEngine *engine= ha_info->engine();
-      if ((err= engine->rollback(session, all)))
+      ResourceContext *resource_context= *it;
+      plugin::StorageEngine *engine= resource_context->getResource();
+      if ((err= engine->rollback(session, normal_transaction)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error=1;
       }
       status_var_increment(session->status_var.ha_rollback_count);
-      ha_info_next= ha_info->next();
-      ha_info->reset(); /* keep it conveniently zero-filled */
+      resource_context->reset(); /* keep it conveniently zero-filled */
     }
-    trans->ha_list= 0;
-    trans->no_2pc=0;
+    trans->reset();
     
     /* 
      * We need to signal the ROLLBACK to ReplicationServices here
@@ -606,13 +627,13 @@ int TransactionServices::ha_rollback_trans(Session *session, bool all)
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
-    if (all)
+    if (normal_transaction)
     {
       session->variables.tx_isolation=session->session_tx_isolation;
       session->transaction.cleanup();
     }
   }
-  if (all)
+  if (normal_transaction)
     session->transaction_rollback_request= false;
 
   /*
@@ -624,10 +645,14 @@ int TransactionServices::ha_rollback_trans(Session *session, bool all)
     the error log; but we don't want users to wonder why they have this
     message in the error log, so we don't send it.
   */
-  if (is_real_trans && session->transaction.all.modified_non_trans_table && session->killed != Session::KILL_CONNECTION)
+  if (is_real_trans &&
+      session->transaction.all.modified_non_trans_table &&
+      session->killed != Session::KILL_CONNECTION)
+  {
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
+  }
   return error;
 }
 
@@ -644,9 +669,9 @@ int TransactionServices::ha_rollback_trans(Session *session, bool all)
 */
 int TransactionServices::ha_autocommit_or_rollback(Session *session, int error)
 {
-  if (session->transaction.stmt.ha_list)
+  if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
-    if (!error)
+    if (! error)
     {
       if (ha_commit_trans(session, false))
         error= 1;
@@ -658,9 +683,8 @@ int TransactionServices::ha_autocommit_or_rollback(Session *session, int error)
         (void) ha_rollback_trans(session, true);
     }
 
-    session->variables.tx_isolation=session->session_tx_isolation;
+    session->variables.tx_isolation= session->session_tx_isolation;
   }
-
   return error;
 }
 
@@ -709,23 +733,34 @@ bool TransactionServices::mysql_xa_recover(Session *session)
   return 0;
 }
 
+struct ResourceContextCompare : public std::binary_function<ResourceContext *, ResourceContext *, bool>
+{
+  result_type operator()(const ResourceContext *lhs, const ResourceContext *rhs) const
+  {
+    return lhs->getResource()->getSlot() < rhs->getResource()->getSlot();
+  }
+};
 
 int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
-  Session_TRANS *trans= &session->transaction.all;
-  Ha_trx_info *ha_info, *ha_info_next;
+  TransactionContext *trans= &session->transaction.all;
+  TransactionContext::ResourceContexts &tran_resource_contexts= trans->getResourceContexts();
+  TransactionContext::ResourceContexts &sv_resource_contexts= sv.getResourceContexts();
 
-  trans->no_2pc=0;
+  trans->no_2pc= false;
   /*
     rolling back to savepoint in all storage engines that were part of the
     transaction when the savepoint was set
   */
-  for (ha_info= sv.ha_list; ha_info; ha_info= ha_info->next())
+  for (TransactionContext::ResourceContexts::iterator it= sv_resource_contexts.begin();
+       it != sv_resource_contexts.end();
+       ++it)
   {
     int err;
-    plugin::StorageEngine *engine= ha_info->engine();
-    assert(engine);
+    ResourceContext *resource_context= *it;
+    plugin::StorageEngine *engine= resource_context->getResource();
+    assert(engine != NULL);
     if ((err= engine->rollbackToSavepoint(session, sv)))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -738,21 +773,46 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
     rolling back the transaction in all storage engines that were not part of
     the transaction when the savepoint was set
   */
-  for (ha_info= trans->ha_list; ha_info != sv.ha_list;
-       ha_info= ha_info_next)
   {
-    int err;
-    plugin::StorageEngine *engine= ha_info->engine();
-    if ((err= engine->rollback(session, !(0))))
-    { // cannot happen
-      my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
-      error= 1;
+    TransactionContext::ResourceContexts sorted_tran_resource_contexts(tran_resource_contexts);
+    TransactionContext::ResourceContexts sorted_sv_resource_contexts(sv_resource_contexts);
+    TransactionContext::ResourceContexts set_difference_contexts;
+
+    sort(sorted_tran_resource_contexts.begin(),
+         sorted_tran_resource_contexts.end(),
+         ResourceContextCompare());
+    sort(sorted_sv_resource_contexts.begin(),
+         sorted_sv_resource_contexts.end(),
+         ResourceContextCompare());
+    set_difference(sorted_tran_resource_contexts.begin(),
+                   sorted_tran_resource_contexts.end(),
+                   sorted_sv_resource_contexts.begin(),
+                   sorted_sv_resource_contexts.end(),
+                   set_difference_contexts.begin(),
+                   ResourceContextCompare());
+    /* 
+     * set_difference_contexts now contains all resource contexts
+     * which are in the transaction context but were NOT in the
+     * savepoint's resource contexts.
+     */
+        
+    for (TransactionContext::ResourceContexts::iterator it= set_difference_contexts.begin();
+         it != set_difference_contexts.end();
+         ++it)
+    {
+      ResourceContext *resource_context= *it;
+      int err;
+      plugin::StorageEngine *engine= resource_context->getResource();
+      if ((err= engine->rollback(session, !(0))))
+      { // cannot happen
+        my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
+        error= 1;
+      }
+      status_var_increment(session->status_var.ha_rollback_count);
+      resource_context->reset(); /* keep it conveniently zero-filled */
     }
-    status_var_increment(session->status_var.ha_rollback_count);
-    ha_info_next= ha_info->next();
-    ha_info->reset(); /* keep it conveniently zero-filled */
   }
-  trans->ha_list= sv.ha_list;
+  trans->setResourceContexts(sv_resource_contexts);
   return error;
 }
 
@@ -765,46 +825,47 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
 int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
-  Session_TRANS *trans= &session->transaction.all;
-  Ha_trx_info *ha_info= trans->ha_list;
-  for (; ha_info; ha_info= ha_info->next())
+  TransactionContext *trans= &session->transaction.all;
+  TransactionContext::ResourceContexts &resource_contexts= trans->getResourceContexts();
+
+  if (resource_contexts.empty() == false)
   {
-    int err;
-    plugin::StorageEngine *engine= ha_info->engine();
-    assert(engine);
-#ifdef NOT_IMPLEMENTED /*- TODO (examine this againt the original code base) */
-    if (! engine->savepoint_set)
+    for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+         it != resource_contexts.end();
+         ++it)
     {
-      my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "NamedSavepoint");
-      error= 1;
-      break;
-    } 
-#endif
-    if ((err= engine->setSavepoint(session, sv)))
-    { // cannot happen
-      my_error(ER_GET_ERRNO, MYF(0), err);
-      error= 1;
+      ResourceContext *resource_context= *it;
+      int err;
+      plugin::StorageEngine *engine= resource_context->getResource();
+      assert(engine);
+      if ((err= engine->setSavepoint(session, sv)))
+      { // cannot happen
+        my_error(ER_GET_ERRNO, MYF(0), err);
+        error= 1;
+      }
+      status_var_increment(session->status_var.ha_savepoint_count);
     }
-    status_var_increment(session->status_var.ha_savepoint_count);
   }
   /*
-    Remember the list of registered storage engines. All new
-    engines are prepended to the beginning of the list.
+    Remember the list of registered storage engines.
   */
-  sv.ha_list= trans->ha_list;
+  sv.setResourceContexts(resource_contexts);
   return error;
 }
 
 int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
-  Ha_trx_info *ha_info= sv.ha_list;
 
-  for (; ha_info; ha_info= ha_info->next())
+  TransactionContext::ResourceContexts &resource_contexts= sv.getResourceContexts();
+
+  for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
+       it != resource_contexts.end();
+       ++it)
   {
     int err;
-    plugin::StorageEngine *engine= ha_info->engine();
-    /* Savepoint life time is enclosed into transaction life time. */
+    ResourceContext *resource_context= *it;
+    plugin::StorageEngine *engine= resource_context->getResource();
     assert(engine);
     if ((err= engine->releaseSavepoint(session, sv)))
     { // cannot happen

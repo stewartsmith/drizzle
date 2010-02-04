@@ -18,57 +18,43 @@
  */
 
 #include "config.h"
-#include <drizzled/ha_trx_info.h>
-#include <drizzled/plugin/storage_engine.h>
-#include <drizzled/session.h>
+#include "drizzled/resource_context.h"
 
-using namespace drizzled;
+#include <cassert>
 
-void Ha_trx_info::register_ha(Session_TRANS *trans,
-                              plugin::StorageEngine *engine_arg)
+using namespace std;
+
+namespace drizzled
 {
-  assert(m_flags == 0);
-  assert(m_engine == NULL);
-  assert(m_next == NULL);
-
-  m_engine= engine_arg;
-  m_flags= (int) TRX_READ_ONLY; /* Assume read-only at start. */
-
-  m_next= trans->ha_list;
-  trans->ha_list= this;
-}
-
 
 /** Clear, prepare for reuse. */
-void Ha_trx_info::reset()
+void ResourceContext::reset()
 {
-  m_next= NULL;
-  m_engine= NULL;
-  m_flags= 0;
+  resource= NULL;
+  modified_data= false;
 }
 
-void Ha_trx_info::set_trx_read_write()
-{
-  assert(is_started());
-  m_flags|= (int) TRX_READ_WRITE;
-}
-
-
-bool Ha_trx_info::is_trx_read_write() const
+void ResourceContext::set_trx_read_write()
 {
   assert(is_started());
-  return m_flags & (int) TRX_READ_WRITE;
+  modified_data= true;
 }
 
 
-bool Ha_trx_info::is_started() const
+bool ResourceContext::is_trx_read_write() const
 {
-  return m_engine != NULL;
+  assert(is_started());
+  return modified_data;
 }
 
+
+bool ResourceContext::is_started() const
+{
+  return resource != NULL;
+}
 
 /** Mark this transaction read-write if the argument is read-write. */
-void Ha_trx_info::coalesce_trx_with(const Ha_trx_info *stmt_trx)
+void ResourceContext::coalesce_trx_with(const ResourceContext *stmt_trx)
 {
   /*
     Must be called only after the transaction has been started.
@@ -80,16 +66,4 @@ void Ha_trx_info::coalesce_trx_with(const Ha_trx_info *stmt_trx)
     set_trx_read_write();
 }
 
-
-Ha_trx_info *Ha_trx_info::next() const
-{
-  assert(is_started());
-  return m_next;
-}
-
-
-plugin::StorageEngine *Ha_trx_info::engine() const
-{
-  assert(is_started());
-  return m_engine;
-}
+} /* namespace drizzled */

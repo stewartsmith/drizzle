@@ -198,7 +198,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/gettext.h \
 		drizzled/global_charset_info.h \
 		drizzled/ha_statistics.h \
-		drizzled/ha_trx_info.h \
+		drizzled/resource_context.h \
 		drizzled/cursor.h \
 		drizzled/handler_structs.h \
 		drizzled/hash.h \
@@ -411,6 +411,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/thr_lock.h \
 		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
+		drizzled/transaction_context.h \
 		drizzled/transaction_services.h \
 		drizzled/tzfile.h \
 		drizzled/tztime.h \
@@ -591,7 +592,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/function/units.cc \
 		drizzled/function/user_var_as_out_param.cc \
 		drizzled/ha_commands.cc \
-		drizzled/ha_trx_info.cc \
+		drizzled/resource_context.cc \
 		drizzled/hybrid_type_traits.cc \
 		drizzled/hybrid_type_traits_decimal.cc \
 		drizzled/hybrid_type_traits_integer.cc \

@@ -98,7 +98,7 @@ plugin::StorageEngine::~StorageEngine()
 
 void plugin::StorageEngine::setTransactionReadWrite(Session& session)
 {
-  Ha_trx_info *ha_info= session.getEngineInfo(this);
+  ResourceContext *resource_context= session.getResourceContext(this);
 
   /*
     When a storage engine method is called, the transaction must
@@ -108,12 +108,12 @@ void plugin::StorageEngine::setTransactionReadWrite(Session& session)
     Unfortunately here we can't know know for sure if the engine
     has registered the transaction or not, so we must check.
   */
-  if (ha_info->is_started())
+  if (resource_context->is_started())
   {
     /*
      * table_share can be NULL in plugin::StorageEngine::dropTable().
      */
-    ha_info->set_trx_read_write();
+    resource_context->set_trx_read_write();
   }
 }
 

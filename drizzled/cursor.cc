@@ -696,7 +696,7 @@ inline
 void
 Cursor::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= ha_session()->getEngineInfo(engine);
+  ResourceContext *resource_context= ha_session()->getResourceContext(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -705,9 +705,9 @@ Cursor::mark_trx_read_write()
     Unfortunately here we can't know know for sure if the engine
     has registered the transaction or not, so we must check.
   */
-  if (ha_info->is_started())
+  if (resource_context->is_started())
   {
-      ha_info->set_trx_read_write();
+    resource_context->set_trx_read_write();
   }
 }
 

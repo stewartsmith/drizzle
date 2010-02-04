@@ -17,17 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HA_TRX_INFO_H
-#define DRIZZLED_HA_TRX_INFO_H
+#ifndef DRIZZLED_RESOURCE_CONTEXT_H
+#define DRIZZLED_RESOURCE_CONTEXT_H
 
+#include <cstddef>
 
-class Session_TRANS;
 namespace drizzled
 {
 namespace plugin
 {
 class StorageEngine;
-}
 }
 
 /**
@@ -44,45 +43,52 @@ class StorageEngine;
   methods, and also to evaluate if a full two phase commit is
   necessary.
 
-  @sa General description of transaction handling in handler.cc.
+  @sa General description of transaction handling in drizzled/transaction_services.cc.
 */
-
-class Ha_trx_info
+class ResourceContext
 {
 public:
-  /** Register this storage engine in the given transaction context. */
-  void register_ha(Session_TRANS *trans,
-                   drizzled::plugin::StorageEngine *engine_arg);
+  ResourceContext() :
+    resource(NULL),
+    modified_data(false)
+  {}
 
   /** Clear, prepare for reuse. */
   void reset();
-  Ha_trx_info() { reset(); }
 
   void set_trx_read_write();
   bool is_trx_read_write() const;
   bool is_started() const;
 
   /** Mark this transaction read-write if the argument is read-write. */
-  void coalesce_trx_with(const Ha_trx_info *stmt_trx);
-  Ha_trx_info *next() const;
-  drizzled::plugin::StorageEngine *engine() const;
+  void coalesce_trx_with(const ResourceContext *stmt_trx);
+  drizzled::plugin::StorageEngine *getResource() const
+  {
+    return resource;
+  }
 
-private:
-  enum { TRX_READ_ONLY= 0, TRX_READ_WRITE= 1 };
-  /** Auxiliary, used for ha_list management */
-  Ha_trx_info *m_next;
   /**
-    Although a given Ha_trx_info instance is currently always used
+   * Sets the resource.
+   */
+  void setResource(drizzled::plugin::StorageEngine *in_engine)
+  {
+    resource= in_engine;
+  }
+private:
+  /**
+    Although a given ResourceContext instance is currently always used
     for the same storage engine, 'engine' is not-NULL only when the
     corresponding storage is a part of a transaction.
   */
-  drizzled::plugin::StorageEngine *m_engine;
+  drizzled::plugin::StorageEngine *resource;
   /**
     Transaction flags related to this engine.
     Not-null only if this instance is a part of transaction.
     May assume a combination of enum values above.
   */
-  unsigned char       m_flags;
+  bool modified_data;
 };
 
-#endif /* DRIZZLED_HA_TRX_INFO_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_RESOURCE_CONTEXT_H */

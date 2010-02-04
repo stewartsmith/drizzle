@@ -38,7 +38,6 @@
 #include "drizzled/global_charset_info.h"
 
 
-class Ha_trx_info;
 struct st_key;
 typedef struct st_key KEY;
 struct st_key_cache;
@@ -51,51 +50,6 @@ namespace plugin
 class StorageEngine;
 }
 }
-
-struct Session_TRANS
-{
-  Session_TRANS() :
-    no_2pc(false),
-    ha_list(NULL),
-    modified_non_trans_table(false)
-  {}
-
-  /* true is not all entries in the engines[] support 2pc */
-  bool        no_2pc;
-  /* storage engines that registered in this transaction */
-  Ha_trx_info *ha_list;
-  /*
-    The purpose of this flag is to keep track of non-transactional
-    tables that were modified in scope of:
-    - transaction, when the variable is a member of
-    Session::transaction.all
-    - top-level statement or sub-statement, when the variable is a
-    member of Session::transaction.stmt
-    This member has the following life cycle:
-    * stmt.modified_non_trans_table is used to keep track of
-    modified non-transactional tables of top-level statements. At
-    the end of the previous statement and at the beginning of the session,
-    it is reset to false.  If such functions
-    as mysql_insert, mysql_update, mysql_delete etc modify a
-    non-transactional table, they set this flag to true.  At the
-    end of the statement, the value of stmt.modified_non_trans_table
-    is merged with all.modified_non_trans_table and gets reset.
-    * all.modified_non_trans_table is reset at the end of transaction
-
-    * Since we do not have a dedicated context for execution of a
-    sub-statement, to keep track of non-transactional changes in a
-    sub-statement, we re-use stmt.modified_non_trans_table.
-    At entrance into a sub-statement, a copy of the value of
-    stmt.modified_non_trans_table (containing the changes of the
-    outer statement) is saved on stack. Then
-    stmt.modified_non_trans_table is reset to false and the
-    substatement is executed. Then the new value is merged with the
-    saved value.
-  */
-  bool modified_non_trans_table;
-
-  void reset() { no_2pc= false; modified_non_trans_table= false; }
-};
 
 typedef struct st_ha_create_information
 {

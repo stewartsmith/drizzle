@@ -148,10 +148,10 @@ void **Session::getEngineData(const plugin::StorageEngine *engine)
   return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
 }
 
-Ha_trx_info *Session::getEngineInfo(const plugin::StorageEngine *engine,
-                                    size_t index)
+ResourceContext *Session::getResourceContext(const plugin::StorageEngine *engine,
+                                             size_t index)
 {
-  return &ha_data[engine->getSlot()].ha_info[index];
+  return &ha_data[engine->getSlot()].resource_context[index];
 }
 
 extern "C"
