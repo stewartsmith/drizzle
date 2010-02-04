@@ -740,69 +740,52 @@ void create_select_for_variable(const char *var_name)
 static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
                  const char ** found_semicolon)
 {
-  /*
-    Warning.
-    The purpose of query_cache_send_result_to_client() is to lookup the
-    query in the query cache first, to avoid parsing and executing it.
-    So, the natural implementation would be to:
-    - first, call query_cache_send_result_to_client,
-    - second, if caching failed, initialise the lexical and syntactic parser.
-    The problem is that the query cache depends on a clean initialization
-    of (among others) lex->safe_to_cache_query and session->server_status,
-    which are reset respectively in
-    - lex_start()
-    - mysql_reset_session_for_next_command()
-    So, initializing the lexical analyser *before* using the query cache
-    is required for the cache to work properly.
-    FIXME: cleanup the dependencies in the code to simplify this.
-  */
   lex_start(session);
   session->reset_for_next_command();
 
+  LEX *lex= session->lex;
+
+  Lex_input_stream lip(session, inBuf, length);
+
+  bool err= parse_sql(session, &lip);
+  *found_semicolon= lip.found_semicolon;
+
+  if (!err)
   {
-    LEX *lex= session->lex;
-
-    Lex_input_stream lip(session, inBuf, length);
-
-    bool err= parse_sql(session, &lip);
-    *found_semicolon= lip.found_semicolon;
-
-    if (!err)
     {
+      if (! session->is_error())
       {
-	if (! session->is_error())
-	{
-          /*
-            Binlog logs a string starting from session->query and having length
-            session->query_length; so we set session->query_length correctly (to not
-            log several statements in one event, when we executed only first).
-            We set it to not see the ';' (otherwise it would get into binlog
-            and Query_log_event::print() would give ';;' output).
-            This also helps display only the current query in SHOW
-            PROCESSLIST.
-            Note that we don't need LOCK_thread_count to modify query_length.
-          */
-          if (*found_semicolon &&
-              (session->query_length= (ulong)(*found_semicolon - session->query)))
-            session->query_length--;
-          DRIZZLE_QUERY_EXEC_START(session->query,
-                                   session->thread_id,
-                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-          /* Actually execute the query */
-          mysql_execute_command(session);
-          DRIZZLE_QUERY_EXEC_DONE(0);
-	}
+        /*
+          Binlog logs a string starting from session->query and having length
+          session->query_length; so we set session->query_length correctly (to not
+          log several statements in one event, when we executed only first).
+          We set it to not see the ';' (otherwise it would get into binlog
+          and Query_log_event::print() would give ';;' output).
+          This also helps display only the current query in SHOW
+          PROCESSLIST.
+          Note that we don't need LOCK_thread_count to modify query_length.
+        */
+        if (*found_semicolon &&
+            (session->query_length= (ulong)(*found_semicolon - session->query)))
+          session->query_length--;
+        DRIZZLE_QUERY_EXEC_START(session->query,
+                                 session->thread_id,
+                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+        /* Actually execute the query */
+        mysql_execute_command(session);
+        DRIZZLE_QUERY_EXEC_DONE(0);
       }
     }
-    else
-    {
-      assert(session->is_error());
-    }
-    lex->unit.cleanup();
-    session->set_proc_info("freeing items");
-    session->end_statement();
-    session->cleanup_after_query();
   }
+  else
+  {
+    assert(session->is_error());
+  }
+
+  lex->unit.cleanup();
+  session->set_proc_info("freeing items");
+  session->end_statement();
+  session->cleanup_after_query();
 
   return;
 }
