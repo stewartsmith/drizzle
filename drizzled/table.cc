@@ -260,6 +260,12 @@ int drizzled::parse_table_proto(Session& session,
 {
   int error= 0;
 
+  if (! table.IsInitialized())
+  {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), table.InitializationErrorString().c_str());
+    return ER_CORRUPT_TABLE_DEFINITION;
+  }
+
   share->setTableProto(new(nothrow) message::Table(table));
 
   share->storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
