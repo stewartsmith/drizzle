@@ -423,50 +423,6 @@ public:
 };
 
 
-class sys_var_enum :public sys_var
-{
-  uint32_t *value;
-  TYPELIB *enum_names;
-public:
-  sys_var_enum(sys_var_chain *chain, const char *name_arg, uint32_t *value_arg,
-	       TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_arg), enum_names(typelib)
-  { chain_sys_var(chain); }
-  bool check(Session *session, set_var *var)
-  {
-    return check_enum(session, var, enum_names);
-  }
-  bool update(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
-  bool check_update_type(Item_result)
-  { return 0; }
-};
-
-
-class sys_var_enum_const :public sys_var
-{
-  uint32_t SV::*offset;
-  TYPELIB *enum_names;
-public:
-  sys_var_enum_const(sys_var_chain *chain, const char *name_arg, uint32_t SV::*offset_arg,
-      TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg,func), offset(offset_arg), enum_names(typelib)
-  { chain_sys_var(chain); }
-  bool check(Session *, set_var *)
-  { return 1; }
-  bool update(Session *, set_var *)
-  { return 1; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result)
-  { return 1; }
-  bool is_readonly() const { return 1; }
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
-};
-
-
 class sys_var_session :public sys_var
 {
 public:

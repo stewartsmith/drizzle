@@ -578,25 +578,6 @@ void sys_var_bool_ptr::set_default(Session *, enum_var_type)
 }
 
 
-bool sys_var_enum::update(Session *, set_var *var)
-{
-  *value= (uint32_t) var->save_result.uint32_t_value;
-  return 0;
-}
-
-
-unsigned char *sys_var_enum::value_ptr(Session *, enum_var_type, const LEX_STRING *)
-{
-  return (unsigned char*) enum_names->type_names[*value];
-}
-
-
-unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
-                                             const LEX_STRING *)
-{
-  return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
-}
-
 /*
   32 bit types for session variables
 */
