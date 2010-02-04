@@ -83,7 +83,7 @@ enum enum_mysql_show_type
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
   SHOW_ARRAY, SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
-  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE, 
+  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
   SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
   SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
 };
@@ -114,8 +114,6 @@ struct st_show_var_func_container {
 #define PLUGIN_VAR_LONG         0x0003
 #define PLUGIN_VAR_LONGLONG     0x0004
 #define PLUGIN_VAR_STR          0x0005
-#define PLUGIN_VAR_ENUM         0x0006
-#define PLUGIN_VAR_SET          0x0007
 #define PLUGIN_VAR_UNSIGNED     0x0080
 #define PLUGIN_VAR_SessionLOCAL     0x0100 /* Variable is per-connection */
 #define PLUGIN_VAR_READONLY     0x0200 /* Server variable is read only */
@@ -211,12 +209,6 @@ typedef void (*mysql_var_update_func)(Session *session,
   type blk_sz;                  \
 } DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  type *value; type def_val;    \
-  TYPELIB *typelib;             \
-} DRIZZLE_SYSVAR_NAME(name)
-
 #define DECLARE_SessionVAR_FUNC(type) \
   type *(*resolve)(Session *session, int offset)
 
@@ -288,16 +280,6 @@ DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define DRIZZLE_SYSVAR_ENUM(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, unsigned long) = { \
-  PLUGIN_VAR_ENUM | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, typelib }
-
-#define DRIZZLE_SYSVAR_SET(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, typelib }
-
 #define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
 DECLARE_DRIZZLE_SessionVAR_BASIC(name, char) = { \
   PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
@@ -337,16 +319,6 @@ DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, int64_t) = { \
 DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_ENUM(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, unsigned long) = { \
-  PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL, typelib }
-
-#define DRIZZLE_SessionVAR_SET(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL, typelib }
 
 /* accessor macros */
 

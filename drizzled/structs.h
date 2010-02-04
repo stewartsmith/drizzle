@@ -141,8 +141,6 @@ typedef struct st_read_record {			/* Parameter to read_record */
   JoinTable *do_insideout_scan;
 } READ_RECORD;
 
-extern const char *show_comp_option_name[];
-
 typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 
 	/* Bits in form->status */

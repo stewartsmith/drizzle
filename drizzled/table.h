@@ -490,13 +490,6 @@ struct st_lex;
 class select_union;
 class Tmp_Table_Param;
 
-typedef struct st_changed_table_list
-{
-  struct	st_changed_table_list *next;
-  char		*key;
-  uint32_t key_length;
-} CHANGED_TableList;
-
 struct open_table_list_st
 {
   std::string	db;

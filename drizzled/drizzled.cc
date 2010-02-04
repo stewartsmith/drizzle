@@ -162,26 +162,6 @@ using namespace std;
 using namespace drizzled;
 
 /* Constants */
-
-
-const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
-static const char *optimizer_switch_names[]=
-{
-  "no_materialization", "no_semijoin",
-  NULL
-};
-
-/* Corresponding defines are named OPTIMIZER_SWITCH_XXX */
-static const unsigned int optimizer_switch_names_len[]=
-{
-  /*no_materialization*/          19,
-  /*no_semijoin*/                 11
-};
-
-TYPELIB optimizer_switch_typelib= { array_elements(optimizer_switch_names)-1,"",
-                                    optimizer_switch_names,
-                                    (unsigned int *)optimizer_switch_names_len };
-
 static const char *tc_heuristic_recover_names[]=
 {
   "COMMIT", "ROLLBACK", NULL
@@ -234,7 +214,6 @@ static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool locked_in_memory;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
@@ -688,22 +667,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
 }
 
 
-static void set_effective_user(struct passwd *user_info_arg)
-{
-  assert(user_info_arg != 0);
-  if (setregid((gid_t)-1, user_info_arg->pw_gid) == -1)
-  {
-    sql_perror("setregid");
-    unireg_abort(1);
-  }
-  if (setreuid((uid_t)-1, user_info_arg->pw_uid) == -1)
-  {
-    sql_perror("setreuid");
-    unireg_abort(1);
-  }
-}
-
-
 /** Change root user if started with @c --chroot . */
 static void set_root(const char *path)
 {
@@ -906,21 +869,6 @@ extern "C" void handle_segfault(int sig)
               "to be used with the LD_ASSUME_KERNEL environment variable. "
               "Please consult\n"
               "the documentation for your distribution on how to do that.\n"));
-
-  if (locked_in_memory)
-  {
-    fprintf(stderr,
-            _("\nThe '--memlock' argument, which was enabled, uses system "
-              "calls that are\n"
-              "unreliable and unstable on some operating systems and "
-              "operating-system\n"
-              "versions (notably, some versions of Linux).  "
-              "This crash could be due to use\n"
-              "of those buggy OS calls.  You should consider whether you "
-              "really need the\n"
-              "'--memlock' parameter and/or consult the OS "
-              "distributor about 'mlockall'\n bugs.\n"));
-  }
 
 #ifdef HAVE_WRITE_CORE
   if (test_flags.test(TEST_CORE_ON_SIGNAL))
@@ -1503,28 +1451,8 @@ static int init_server_components(plugin::Registry &plugins)
     unireg_abort(1);
   }
 
-#if defined(MCL_CURRENT)
-  if (locked_in_memory && !getuid())
-  {
-    if (setreuid((uid_t)-1, 0) == -1)
-    {                        // this should never happen
-      sql_perror("setreuid");
-      unireg_abort(1);
-    }
-    if (mlockall(MCL_CURRENT))
-    {
-      if (global_system_variables.log_warnings)
-            errmsg_printf(ERRMSG_LVL_WARN, _("Failed to lock memory. Errno: %d\n"),errno);
-      locked_in_memory= 0;
-    }
-    if (user_info)
-      set_user(drizzled_user, user_info);
-  }
-  else
-#endif
-    locked_in_memory=0;
-
   init_update_queries();
+
   return(0);
 }
 
@@ -1575,12 +1503,7 @@ int main(int argc, char **argv)
 
   if ((user_info= check_user(drizzled_user)))
   {
-#if defined(MCL_CURRENT)
-    if (locked_in_memory) // getuid() == 0 here
-      set_effective_user(user_info);
-    else
-#endif
-      set_user(drizzled_user, user_info);
+    set_user(drizzled_user, user_info);
   }
 
   if (server_id == 0)
@@ -1810,10 +1733,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_BOOL, OPT_ARG, 1, 0, 0,
    0, 0, 0},
-  {"memlock", OPT_MEMLOCK,
-   N_("Lock drizzled in memory."),
-   (char**) &locked_in_memory,
-   (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -2060,16 +1979,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
-  {"transaction_alloc_block_size", OPT_TRANS_ALLOC_BLOCK_SIZE,
-   N_("Allocation block size for transactions to be stored in binary log"),
-   (char**) &global_system_variables.trans_alloc_block_size,
-   (char**) &max_system_variables.trans_alloc_block_size, 0, GET_UINT,
-   REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"transaction_prealloc_size", OPT_TRANS_PREALLOC_SIZE,
-   N_("Persistent buffer for transactions to be stored in binary log"),
-   (char**) &global_system_variables.trans_prealloc_size,
-   (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
-   REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 

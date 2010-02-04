@@ -569,9 +569,7 @@ typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_str_t, char *);
 
-typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
 typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_enum_t, unsigned long);
-typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
 typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_set_t, uint64_t);
 
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_int_t, int);
@@ -705,104 +703,6 @@ static int check_func_str(Session *session, drizzle_sys_var *,
     str= session->strmake(str, length);
   *(const char**)save= str;
   return 0;
-}
-
-
-static int check_func_enum(Session *, drizzle_sys_var *var,
-                           void *save, drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  const char *strvalue= "NULL", *str;
-  TYPELIB *typelib;
-  int64_t tmp;
-  long result;
-  int length;
-
-  if (var->flags & PLUGIN_VAR_SessionLOCAL)
-    typelib= ((sessionvar_enum_t*) var)->typelib;
-  else
-    typelib= ((sysvar_enum_t*) var)->typelib;
-
-  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
-  {
-    length= sizeof(buff);
-    if (!(str= value->val_str(value, buff, &length)))
-      goto err;
-    if ((result= (long)find_type(typelib, str, length, 1)-1) < 0)
-    {
-      strvalue= str;
-      goto err;
-    }
-  }
-  else
-  {
-    if (value->val_int(value, &tmp))
-      goto err;
-    if (tmp >= typelib->count)
-    {
-      llstr(tmp, buff);
-      strvalue= buff;
-      goto err;
-    }
-    result= (long) tmp;
-  }
-  *(long*)save= result;
-  return 0;
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->name, strvalue);
-  return 1;
-}
-
-
-static int check_func_set(Session *, drizzle_sys_var *var,
-                          void *save, drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
-  const char *strvalue= "NULL", *str;
-  TYPELIB *typelib;
-  uint64_t result;
-  uint32_t error_len;
-  bool not_used;
-  int length;
-
-  if (var->flags & PLUGIN_VAR_SessionLOCAL)
-    typelib= ((sessionvar_set_t*) var)->typelib;
-  else
-    typelib= ((sysvar_set_t*)var)->typelib;
-
-  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
-  {
-    length= sizeof(buff);
-    if (!(str= value->val_str(value, buff, &length)))
-      goto err;
-    result= find_set(typelib, str, length, NULL,
-                     &error, &error_len, &not_used);
-    if (error_len)
-    {
-      length= min((uint32_t)sizeof(buff), error_len);
-      strncpy(buff, error, length);
-      buff[length]= '\0';
-      strvalue= buff;
-      goto err;
-    }
-  }
-  else
-  {
-    if (value->val_int(value, (int64_t *)&result))
-      goto err;
-    if (unlikely((result >= (1UL << typelib->count)) &&
-                 (typelib->count < sizeof(long)*8)))
-    {
-      llstr(result, buff);
-      strvalue= buff;
-      goto err;
-    }
-  }
-  *(uint64_t*)save= result;
-  return 0;
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->name, strvalue);
-  return 1;
 }
 
 
@@ -953,11 +853,9 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     size= ALIGN_SIZE(sizeof(int));
     break;
   case PLUGIN_VAR_LONG:
-  case PLUGIN_VAR_ENUM:
     size= ALIGN_SIZE(sizeof(long));
     break;
   case PLUGIN_VAR_LONGLONG:
-  case PLUGIN_VAR_SET:
     size= ALIGN_SIZE(sizeof(uint64_t));
     break;
   case PLUGIN_VAR_STR:
@@ -1154,17 +1052,6 @@ static char **mysql_sys_var_ptr_str(Session* a_session, int offset)
   return (char **)intern_sys_var_ptr(a_session, offset, true);
 }
 
-static uint64_t *mysql_sys_var_ptr_set(Session* a_session, int offset)
-{
-  return (uint64_t *)intern_sys_var_ptr(a_session, offset, true);
-}
-
-static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
-{
-  return (unsigned long *)intern_sys_var_ptr(a_session, offset, true);
-}
-
-
 void plugin_sessionvar_init(Session *session)
 {
   session->variables.storage_engine= NULL;
@@ -1304,9 +1191,6 @@ SHOW_TYPE sys_var_pluginvar::show_type()
     return SHOW_LONGLONG;
   case PLUGIN_VAR_STR:
     return SHOW_CHAR_PTR;
-  case PLUGIN_VAR_ENUM:
-  case PLUGIN_VAR_SET:
-    return SHOW_CHAR;
   default:
     assert(0);
     return SHOW_UNDEF;
@@ -1331,14 +1215,8 @@ unsigned char* sys_var_pluginvar::real_value_ptr(Session *session, enum_var_type
 TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 {
   switch (plugin_var->flags & (PLUGIN_VAR_TYPEMASK | PLUGIN_VAR_SessionLOCAL)) {
-  case PLUGIN_VAR_ENUM:
-    return ((sysvar_enum_t *)plugin_var)->typelib;
-  case PLUGIN_VAR_SET:
-    return ((sysvar_set_t *)plugin_var)->typelib;
-  case PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL:
+  case PLUGIN_VAR_SessionLOCAL:
     return ((sessionvar_enum_t *)plugin_var)->typelib;
-  case PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL:
-    return ((sessionvar_set_t *)plugin_var)->typelib;
   default:
     return NULL;
   }
@@ -1352,29 +1230,6 @@ unsigned char* sys_var_pluginvar::value_ptr(Session *session, enum_var_type type
 
   result= real_value_ptr(session, type);
 
-  if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_ENUM)
-    result= (unsigned char*) get_type(plugin_var_typelib(), *(ulong*)result);
-  else if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_SET)
-  {
-    char buffer[STRING_BUFFER_USUAL_SIZE];
-    String str(buffer, sizeof(buffer), system_charset_info);
-    TYPELIB *typelib= plugin_var_typelib();
-    uint64_t mask= 1, value= *(uint64_t*) result;
-    uint32_t i;
-
-    str.length(0);
-    for (i= 0; i < typelib->count; i++, mask<<=1)
-    {
-      if (!(value & mask))
-        continue;
-      str.append(typelib->type_names[i], typelib->type_lengths[i]);
-      str.append(',');
-    }
-
-    result= (unsigned char*) "";
-    if (str.length())
-      result= (unsigned char*) session->strmake(str.ptr(), str.length()-1);
-  }
   return result;
 }
 
@@ -1423,12 +1278,6 @@ void sys_var_pluginvar::set_default(Session *session, enum_var_type type)
 	  break;
 	case PLUGIN_VAR_LONGLONG:
 	  src= &((sessionvar_uint64_t_t*) plugin_var)->def_val;
-	  break;
-	case PLUGIN_VAR_ENUM:
-	  src= &((sessionvar_enum_t*) plugin_var)->def_val;
-	  break;
-	case PLUGIN_VAR_SET:
-	  src= &((sessionvar_set_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_BOOL:
 	  src= &((sessionvar_bool_t*) plugin_var)->def_val;
@@ -1523,20 +1372,6 @@ void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED:
     OPTION_SET_LIMITS(GET_ULL, options, (sysvar_uint64_t_t*) opt);
     break;
-  case PLUGIN_VAR_ENUM:
-    options->var_type= GET_ENUM;
-    options->typelib= ((sysvar_enum_t*) opt)->typelib;
-    options->def_value= ((sysvar_enum_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= options->typelib->count - 1;
-    break;
-  case PLUGIN_VAR_SET:
-    options->var_type= GET_SET;
-    options->typelib= ((sysvar_set_t*) opt)->typelib;
-    options->def_value= ((sysvar_set_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= (1UL << options->typelib->count) - 1;
-    break;
   case PLUGIN_VAR_BOOL:
     options->var_type= GET_BOOL;
     options->def_value= ((sysvar_bool_t*) opt)->def_val;
@@ -1564,20 +1399,6 @@ void plugin_opt_set_limits(struct my_option *options,
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_SessionLOCAL:
     OPTION_SET_LIMITS(GET_ULL, options, (sessionvar_uint64_t_t*) opt);
-    break;
-  case PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL:
-    options->var_type= GET_ENUM;
-    options->typelib= ((sessionvar_enum_t*) opt)->typelib;
-    options->def_value= ((sessionvar_enum_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= options->typelib->count - 1;
-    break;
-  case PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL:
-    options->var_type= GET_SET;
-    options->typelib= ((sessionvar_set_t*) opt)->typelib;
-    options->def_value= ((sessionvar_set_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= (1UL << options->typelib->count) - 1;
     break;
   case PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL:
     options->var_type= GET_BOOL;
@@ -1690,12 +1511,6 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     case PLUGIN_VAR_STR:
       (((sessionvar_str_t *)opt)->resolve)= mysql_sys_var_ptr_str;
       break;
-    case PLUGIN_VAR_ENUM:
-      (((sessionvar_enum_t *)opt)->resolve)= mysql_sys_var_ptr_enum;
-      break;
-    case PLUGIN_VAR_SET:
-      (((sessionvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
-      break;
     default:
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown variable type code 0x%x in plugin '%s'."),
                       opt->flags, plugin_name);
@@ -1746,18 +1561,6 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
                             opt->name, plugin_name);
         }
       }
-      break;
-    case PLUGIN_VAR_ENUM:
-      if (!opt->check)
-        opt->check= check_func_enum;
-      if (!opt->update)
-        opt->update= update_func_long;
-      break;
-    case PLUGIN_VAR_SET:
-      if (!opt->check)
-        opt->check= check_func_set;
-      if (!opt->update)
-        opt->update= update_func_int64_t;
       break;
     default:
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown variable type code 0x%x in plugin '%s'."),

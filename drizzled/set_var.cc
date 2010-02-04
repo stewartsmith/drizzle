@@ -62,6 +62,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
+#include "drizzled/transaction_services.h"
 
 #include <map>
 #include <algorithm>
@@ -99,7 +100,6 @@ static int check_completion_type(Session *session, set_var *var);
 static void fix_completion_type(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
-static void fix_trans_mem_root(Session *session, enum_var_type type);
 static void fix_server_id(Session *session, enum_var_type type);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
@@ -189,12 +189,6 @@ static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_s
                                                         &SV::query_prealloc_size,
                                                         false, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
-static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
-                                                           &SV::trans_alloc_block_size,
-                                                           false, fix_trans_mem_root);
-static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
-                                                        &SV::trans_prealloc_size,
-                                                        false, fix_session_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -203,8 +197,6 @@ static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
 
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
-static sys_var_session_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
-                                                               &SV::optimizer_switch);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &SV::storage_engine);
@@ -303,10 +295,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
-/* Read only variables */
-
-extern SHOW_COMP_OPTION have_symlink;
-static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /*
   Additional variables (not derived from sys_var class, not accessible as
   @@varname in SELECT or SET). Sorted in alphabetical order to facilitate
@@ -318,7 +306,6 @@ static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symli
 static SHOW_VAR fixed_vars[]= {
   {"back_log",                (char*) &back_log,                SHOW_INT},
   {"language",                language,                         SHOW_CHAR},
-  {"locked_in_memory",	      (char*) &locked_in_memory,        SHOW_MY_BOOL},
   {"pid_file",                (char*) pidfile_name,             SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,           SHOW_CHAR},
   {"thread_stack",            (char*) &my_thread_stack_size,    SHOW_INT},
@@ -409,16 +396,6 @@ static void fix_session_mem_root(Session *session, enum_var_type type)
                         session->variables.query_alloc_block_size,
                         session->variables.query_prealloc_size);
 }
-
-
-static void fix_trans_mem_root(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    reset_root_defaults(&session->transaction.mem_root,
-                        session->variables.trans_alloc_block_size,
-                        session->variables.trans_prealloc_size);
-}
-
 
 static void fix_server_id(Session *, enum_var_type)
 {
@@ -600,25 +577,6 @@ void sys_var_bool_ptr::set_default(Session *, enum_var_type)
   *value= (bool) option_limits->def_value;
 }
 
-
-bool sys_var_enum::update(Session *, set_var *var)
-{
-  *value= (uint32_t) var->save_result.uint32_t_value;
-  return 0;
-}
-
-
-unsigned char *sys_var_enum::value_ptr(Session *, enum_var_type, const LEX_STRING *)
-{
-  return (unsigned char*) enum_names->type_names[*value];
-}
-
-
-unsigned char *sys_var_enum_const::value_ptr(Session *, enum_var_type,
-                                             const LEX_STRING *)
-{
-  return (unsigned char*) enum_names->type_names[global_system_variables.*offset];
-}
 
 /*
   32 bit types for session variables
@@ -904,72 +862,6 @@ bool sys_var::check_enum(Session *,
 
 err:
   my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), value);
-  return 1;
-}
-
-
-bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
-{
-  bool not_used;
-  char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
-  uint32_t error_len= 0;
-  String str(buff, sizeof(buff), system_charset_info), *res;
-
-  if (var->value->result_type() == STRING_RESULT)
-  {
-    if (!(res= var->value->val_str(&str)))
-    {
-      strcpy(buff, "NULL");
-      goto err;
-    }
-
-    if (! m_allow_empty_value && res->length() == 0)
-    {
-      buff[0]= 0;
-      goto err;
-    }
-
-    var->save_result.uint32_t_value= ((uint32_t)
-                                      find_set(enum_names, res->c_ptr(),
-                                               res->length(),
-                                               NULL,
-                                               &error, &error_len,
-                                               &not_used));
-    if (error_len)
-    {
-      size_t len = min((uint32_t)(sizeof(buff) - 1), error_len);
-      strncpy(buff, error, len);
-      buff[len]= '\0';
-      goto err;
-    }
-  }
-  else
-  {
-    uint64_t tmp= var->value->val_int();
-
-    if (! m_allow_empty_value && tmp == 0)
-    {
-      buff[0]= '0';
-      buff[1]= 0;
-      goto err;
-    }
-
-    /*
-      For when the enum is made to contain 64 elements, as 1ULL<<64 is
-      undefined, we guard with a "count<64" test.
-    */
-    if (unlikely((tmp >= ((1UL) << enum_names->count)) &&
-                 (enum_names->count < 64)))
-    {
-      llstr(tmp, buff);
-      goto err;
-    }
-    var->save_result.uint32_t_value= (uint32_t) tmp;  // Save for update
-  }
-  return 0;
-
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), buff);
   return 1;
 }
 
@@ -1481,8 +1373,9 @@ static bool set_option_autocommit(Session *session, set_var *var)
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
-      if (ha_commit(session))
-	return 1;
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      if (transaction_services.ha_commit_trans(session, true))
+        return 1;
     }
     else
     {
@@ -2029,54 +1922,4 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
     *value= var->save_result.storage_engine;
   }
   return 0;
-}
-
-bool
-sys_var_session_optimizer_switch::
-symbolic_mode_representation(Session *session, uint32_t val, LEX_STRING *rep)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE*8];
-  String tmp(buff, sizeof(buff), &my_charset_utf8_general_ci);
-
-  tmp.length(0);
-
-  for (uint32_t i= 0; val; val>>= 1, i++)
-  {
-    if (val & 1)
-    {
-      tmp.append(optimizer_switch_typelib.type_names[i],
-                 optimizer_switch_typelib.type_lengths[i]);
-      tmp.append(',');
-    }
-  }
-
-  if (tmp.length())
-    tmp.length(tmp.length() - 1); /* trim the trailing comma */
-
-  rep->str= session->strmake(tmp.ptr(), tmp.length());
-
-  rep->length= rep->str ? tmp.length() : 0;
-
-  return rep->length != tmp.length();
-}
-
-
-unsigned char *sys_var_session_optimizer_switch::value_ptr(Session *session,
-                                                           enum_var_type type,
-                                                           const LEX_STRING *)
-{
-  LEX_STRING opts;
-  uint32_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
-                  session->variables.*offset);
-  (void) symbolic_mode_representation(session, val, &opts);
-  return (unsigned char *) opts.str;
-}
-
-
-void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_type type)
-{
-  if (type == OPT_GLOBAL)
-    global_system_variables.*offset= 0;
-  else
-    session->variables.*offset= global_system_variables.*offset;
 }

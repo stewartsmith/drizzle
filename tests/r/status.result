@@ -38,13 +38,13 @@ Variable_name	Value
 Max_used_connections	1
 SELECT * FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_USED_CONNECTIONS	1
+Max_used_connections	1
 SHOW STATUS LIKE 'max_used_connections';
 Variable_name	Value
 Max_used_connections	3
 SELECT * FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_USED_CONNECTIONS	3
+Max_used_connections	3
 CREATE TABLE t1 ( a INT );
 INSERT INTO t1 VALUES (1), (2);
 SELECT a FROM t1 LIMIT 1;

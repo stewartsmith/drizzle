@@ -39,7 +39,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/global_charset_info.h"
-
+#include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
@@ -251,7 +251,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
-  ha_autocommit_or_rollback(session, session->is_error());
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.ha_autocommit_or_rollback(session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();

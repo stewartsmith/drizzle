@@ -229,8 +229,7 @@ int JOIN::prepare(Item ***rref_pointer_array,
         in_subs= (Item_in_subselect*)subselect;
 
       {
-        bool do_materialize= !test(session->variables.optimizer_switch &
-                                   OPTIMIZER_SWITCH_NO_MATERIALIZATION);
+        bool do_materialize= true;
         /*
           Check if the subquery predicate can be executed via materialization.
           The required conditions are:
