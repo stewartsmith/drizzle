@@ -6,7 +6,8 @@ DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
 --enable_warnings
 
 
-select * from information_schema.OLD_SCHEMATA where schema_name > 'm';
+--replace_column 1 #
+select count(*) from data_dictionary.schemas where schema_name > 'm';
 select schema_name from data_dictionary.schemas;
 show databases like 't%';
 show databases;
@@ -174,7 +175,7 @@ alter table old_tables;
 #
 use information_schema;
 --error 1044
-create temporary table old_schemata(f1 char(10));
+create temporary table OLD_TABLE_CONSTRAINTS(f1 char(10));
 #
 #
 # Bug#14089 FROM list subquery always fails when information_schema is current database
@@ -357,15 +358,15 @@ USE test;
 --echo End of 5.0 tests.
 
 #
-# Bug#30795 Query on information_schema.OLD_SCHEMATA, wrong result
+# Bug#30795 Query on data_dictionary.schemas, wrong result
 #
-SELECT SCHEMA_NAME FROM information_schema.OLD_SCHEMATA
+SELECT SCHEMA_NAME FROM data_dictionary.schemas
 WHERE SCHEMA_NAME ='information_schema';
                                                                                                  
 #
 # Bug#31381 Error in retrieving Data from INFORMATION_SCHEMA
 #
-SELECT TABLE_COLLATION FROM information_schema.OLD_TABLES
+SELECT TABLE_COLLATION FROM data_dictionary.tables
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 
 #
