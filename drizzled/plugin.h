@@ -209,12 +209,6 @@ typedef void (*mysql_var_update_func)(Session *session,
   type blk_sz;                  \
 } DRIZZLE_SYSVAR_NAME(name)
 
-#define DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  type *value; type def_val;    \
-  TYPELIB *typelib;             \
-} DRIZZLE_SYSVAR_NAME(name)
-
 #define DECLARE_SessionVAR_FUNC(type) \
   type *(*resolve)(Session *session, int offset)
 

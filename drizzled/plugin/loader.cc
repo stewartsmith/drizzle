@@ -569,9 +569,7 @@ typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_str_t, char *);
 
-typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
 typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_enum_t, unsigned long);
-typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
 typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_set_t, uint64_t);
 
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_int_t, int);
