@@ -335,6 +335,8 @@ COLUMN_NAME
 #
 #
 #
+#
+#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
@@ -432,6 +434,11 @@ INDEX_PARTS	CREATE TABLE `index_parts` (
   `COMPARE_LENGTH` bigint NOT NULL DEFAULT '0',
   `IS_ORDER_REVERSE` varchar(5) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
+show create table LOCAL_TABLE_NAMES;
+Table	Create Table
+LOCAL_TABLE_NAMES	CREATE TABLE `local_table_names` (
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
 show create table MODULES ;
 Table	Create Table
 MODULES	CREATE TABLE `modules` (
@@ -482,6 +489,11 @@ SCHEMAS	CREATE TABLE `schemas` (
   `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT '',
   `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
+show create table SCHEMA_NAMES;
+Table	Create Table
+SCHEMA_NAMES	CREATE TABLE `schema_names` (
+  `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
 show create table SESSION_STATEMENTS;
 Table	Create Table
 SESSION_STATEMENTS	CREATE TABLE `session_statements` (
@@ -520,6 +532,28 @@ TABLE_CONSTRAINTS	CREATE TABLE `table_constraints` (
   `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `CONSTRAINT_TYPE` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
+select * from LOCAL_TABLE_NAMES;
+TABLE_NAME
+CHARACTER_SETS
+COLLATIONS
+COLUMNS
+GLOBAL_STATEMENTS
+GLOBAL_STATUS
+GLOBAL_VARIABLES
+INDEXES
+INDEX_PARTS
+LOCAL_TABLE_NAMES
+MODULES
+PLUGINS
+PROCESSLIST
+REFERENTIAL_CONSTRAINTS
+SCHEMAS
+SCHEMA_NAMES
+SESSION_STATEMENTS
+SESSION_STATUS
+SESSION_VARIABLES
+TABLES
+TABLE_CONSTRAINTS
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
@@ -529,4 +563,7 @@ create table A (a int);
 SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
 COUNT(*)
 1
+select * from data_dictionary.LOCAL_TABLE_NAMES;
+TABLE_NAME
+a
 DROP SCHEMA A;

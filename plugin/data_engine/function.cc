@@ -87,12 +87,14 @@ static PluginsTool *plugins;
 static ProcesslistTool *processlist;
 static ReferentialConstraintsTool *referential_constraints;
 static SchemasTool *schemas;
+static SchemaNames *schema_names;
 static StatementsTool *global_statements;
 static StatementsTool *session_statements;
 static StatusTool *global_status;
 static StatusTool *session_status;
 static TableConstraintsTool *table_constraints;
 static TablesTool *tables;
+static TableNames *local_tables;
 static VariablesTool *global_variables;
 static VariablesTool *session_variables;
 
@@ -115,34 +117,39 @@ static int init(drizzled::plugin::Registry &registry)
   processlist= new(std::nothrow)ProcesslistTool;
   referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
   schemas= new(std::nothrow)SchemasTool;
+  schema_names= new(std::nothrow)SchemaNames;
   global_statements= new(std::nothrow)StatementsTool(true);
   session_statements= new(std::nothrow)StatementsTool(false);
   global_status= new(std::nothrow)StatusTool(true);
   session_status= new(std::nothrow)StatusTool(false);
   table_constraints= new(std::nothrow)TableConstraintsTool;
   tables= new(std::nothrow)TablesTool;
+  local_tables= new(std::nothrow)TableNames;
   global_variables= new(std::nothrow)VariablesTool(true);
   session_variables= new(std::nothrow)VariablesTool(false);
 
   registry.add(function_plugin);
+
   registry.add(character_sets);
   registry.add(collations);
   registry.add(columns);
+  registry.add(global_statements);
+  registry.add(global_status);
+  registry.add(global_variables);
   registry.add(index_parts);
   registry.add(indexes);
+  registry.add(local_tables);
   registry.add(modules);
   registry.add(plugins);
   registry.add(processlist);
   registry.add(referential_constraints);
+  registry.add(schema_names);
   registry.add(schemas);
-  registry.add(global_statements);
   registry.add(session_statements);
-  registry.add(global_status);
   registry.add(session_status);
+  registry.add(session_variables);
   registry.add(table_constraints);
   registry.add(tables);
-  registry.add(global_variables);
-  registry.add(session_variables);
   
   return 0;
 }
@@ -151,24 +158,27 @@ static int finalize(drizzled::plugin::Registry &registry)
 {
   registry.remove(function_plugin);
   delete function_plugin;
+
   delete character_sets;
   delete collations;
   delete columns;
+  delete global_statements;
+  delete global_status;
+  delete global_variables;
   delete index_parts;
   delete indexes;
+  delete local_tables;
   delete modules;
   delete plugins;
   delete processlist;
   delete referential_constraints;
+  delete schema_names;
   delete schemas;
-  delete global_statements;
   delete session_statements;
-  delete global_status;
   delete session_status;
+  delete session_variables;
   delete table_constraints;
   delete tables;
-  delete global_variables;
-  delete session_variables;
 
   return 0;
 }

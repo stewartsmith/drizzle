@@ -19,6 +19,7 @@
  */
 
 #include "plugin/data_engine/schemas.h"
+#include "drizzled/session.h"
 
 extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
 
@@ -175,4 +176,11 @@ void TablesTool::Generator::fill()
 
   /* TABLE_COMMENT */
   push(table_proto.options().comment());
+}
+
+bool TableNames::Generator::checkSchema()
+{
+  Session *session= current_session;
+
+  return session->db.compare(schema_name());
 }

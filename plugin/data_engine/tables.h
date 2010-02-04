@@ -42,7 +42,7 @@ public:
     std::set<std::string>::iterator table_iterator;
     bool is_tables_primed;
 
-    void fill();
+    virtual void fill();
     bool nextTableCore();
 
   public:
@@ -72,6 +72,37 @@ public:
     return new Generator(arg);
   }
 
+};
+
+class TableNames : public TablesTool
+{
+public:
+  TableNames() :
+    TablesTool("LOCAL_TABLE_NAMES")
+  {
+    add_field("TABLE_NAME");
+  }
+
+  class Generator : public TablesTool::Generator 
+  {
+    void fill()
+    {
+      /* TABLE_NAME */
+      push(table_name());
+    }
+
+    bool checkSchema();
+
+  public:
+    Generator(Field **arg) :
+      TablesTool::Generator(arg)
+    { }
+  };
+
+  Generator *generator(Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_TABLES_H

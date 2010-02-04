@@ -54,7 +54,8 @@ public:
     bool is_schema_primed;
     bool is_schema_parsed;
 
-    void fill();
+    virtual void fill();
+    virtual bool checkSchema();
 
   public:
     Generator(Field **arg);
@@ -66,6 +67,7 @@ public:
     }
 
     bool populate();
+    bool nextSchemaCore();
     bool nextSchema();
     bool isSchemaPrimed()
     {
@@ -79,7 +81,34 @@ public:
   }
 };
 
-#include "drizzled/plugin/table_function.h"
+class SchemaNames : public SchemasTool
+{
+public:
+  SchemaNames() :
+    SchemasTool("SCHEMA_NAMES")
+  {
+    add_field("SCHEMA_NAME");
+  }
+
+  class Generator : public SchemasTool::Generator 
+  {
+    void fill()
+    {
+      /* SCHEMA_NAME */
+      push(schema_name());
+    }
+
+  public:
+    Generator(Field **arg) :
+      SchemasTool::Generator(arg)
+    { }
+  };
+
+  Generator *generator(Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
 
 #include "plugin/data_engine/tables.h"
 #include "plugin/data_engine/columns.h"

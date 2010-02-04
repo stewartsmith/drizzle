@@ -37,7 +37,15 @@ SchemasTool::Generator::Generator(Field **arg) :
 {
 }
 
-bool SchemasTool::Generator::nextSchema()
+/**
+  @note return true if a match occurs.
+*/
+bool SchemasTool::Generator::checkSchema()
+{
+  return false;
+}
+
+bool SchemasTool::Generator::nextSchemaCore()
 {
   if (is_schema_primed)
   {
@@ -56,9 +64,22 @@ bool SchemasTool::Generator::nextSchema()
   schema.Clear();
   is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
 
+  if (checkSchema())
+      return false;
+
   return true;
 }
   
+bool SchemasTool::Generator::nextSchema()
+{
+  while (not nextSchemaCore())
+  {
+    if (schema_iterator == schema_names.end())
+      return false;
+  }
+
+  return true;
+}
 
 
 bool SchemasTool::Generator::populate()
