@@ -5,5 +5,5 @@ SHOW TABLES;
 SHOW CREATE TABLE t1;
 --error 1693
 SELECT * from test.t1;
-#DROP TABLE test.t1;
+DROP TABLE test.t1;
 --remove_file var/master-data/test/t1.blk
