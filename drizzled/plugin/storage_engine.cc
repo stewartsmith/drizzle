@@ -710,6 +710,13 @@ int plugin::StorageEngine::dropTable(Session& session,
                                                          identifier,
                                                          &src_proto);
 
+  if (error_proto)
+  {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             src_proto.InitializationErrorString().c_str());
+    return ER_CORRUPT_TABLE_DEFINITION;
+  }
+
   engine= plugin::StorageEngine::findByName(session,
                                             src_proto.engine().name());
 
