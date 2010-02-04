@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-01-29 10:55+0000\n"
+"PO-Revision-Date: 2010-02-03 12:05+0000\n"
 "Last-Translator: Jobin Augustine <Unknown>\n"
 "Language-Team: Malayalam <ml@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-01-30 04:39+0000\n"
+"X-Launchpad-Export-Date: 2010-02-04 04:47+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -39,8 +39,7 @@ msgstr ""
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
-"ആജ്ഞ ശൃംഖലാകേന്ദ്രത്തിലേക്കു അയക്കുകയും ഫലം കുത്തനെ കാണിക്കുകയും ചെയ്യുക"
+msgstr "കമാന്റ് സെര്‍വറിലേക്കു അയക്കുകയും ഫലം കുത്തനെ കാണിക്കുകയും ചെയ്യുക."
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
@@ -68,7 +67,7 @@ msgstr "PAGER സെറ്റുചെയ്ത്, query യുടെ ഫലം
 
 #: client/drizzle.cc:288
 msgid "Print current command."
-msgstr "ഇപ്പൊഴത്തെ ആജ്ഞ കാണിക്കുക"
+msgstr "ഇപ്പൊഴത്തെ കമാന്റ് കാണിക്കുക"
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
@@ -90,7 +89,7 @@ msgstr ""
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr "സ്ഥിതിവിവരം ​ശൃംഖലാകേന്ദ്രത്തില്‍ നിന്നു എടുക്കുക"
+msgstr "സ്ഥിതിവിവരം ​സെര്‍വറില്‍ നിന്നു എടുക്കുക"
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
@@ -221,22 +220,27 @@ msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"കമന്റുകള്‍ സൂഷിച്ചു വക്കുക. കമന്റുകള്‍ സെര്‍വര്‍ ലേക്ക് അയക്കുക. "
+"സ്വാഭാവികമായി കമന്റുകള്‍ ഉപേക്ഷിക്കും (--skip-comments). --comments  "
+"ഉപയോഗിച്ച് ഇനേബിള്‍ചെയ്യാവുന്നതാണ്."
 
 #: client/drizzle.cc:1445
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "സെര്‍വര്‍ / ക്ലയെന്റ്റ് പ്രോടോകോളില്‍ കമ്പ്രഷന്‍ ഉപയോഗിക്കുക."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
 msgstr ""
+"പുറത്തു കടക്കുമ്പോള്‍  തുറന്ന ഫയലുകളുടെയും മെമ്മോറിയുടെയും ഉപയോഗം "
+"പരിശോധിക്കുക."
 
 #: client/drizzle.cc:1451
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "പുറത്തു കടക്കുമ്പോള്‍  കുറച്ചു debug വിവരം പ്രിന്റ്‌ ചെയ്യുക"
 
 #: client/drizzle.cc:1453
 msgid "Database to use."
-msgstr ""
+msgstr "ഉപയോഗിക്കേണ്ട ഡാറ്റാബേസ്."
 
 #: client/drizzle.cc:1456
 msgid "(not used)"
@@ -244,19 +248,23 @@ msgstr "(ഉപയോഗിച്ചിട്ടില്ലാത്തത്)"
 
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "ഡീലിമിറ്റെര്‍ ഉപയോഗിക്കണം"
 
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
+"കമാന്‍ഡ് എക്സിക്യൂട്ട് ചെയ്തതിനു ശേഷം പുറത്തു കടക്കുക (--force ഉം ഹിസ്റ്ററി "
+"ഫയലും ഒഴിവാക്കുക)"
 
 #: client/drizzle.cc:1462
 msgid "Print the output of a query (rows) vertically."
 msgstr ""
+"ക്വറി (query) യുടെ ഫലം (റിസള്‍ട്ട്‌, അതായത് വരികള്‍ (rows) ) കുത്തനെ  "
+"(ഒന്നിന് താഴെ ഒന്നായി) പ്രിന്റ്‌ ചെയ്യുക."
 
 #: client/drizzle.cc:1465
 msgid "Continue even if we get an sql error."
-msgstr ""
+msgstr "സീക്ക്വല്‍ (SQL) എറര്‍ കിട്ടിയാലും തുടരുക."
 
 #: client/drizzle.cc:1469
 msgid ""
@@ -265,6 +273,13 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
+"പേരുള്ള കമാന്റുകള്‍ (named commands) എനേബിള്‍ ചെയ്യുക. പേരുള്ള കമാന്റുകള്‍ "
+"എന്ന് പറഞ്ഞാല്‍ ഈ പ്രോഗ്രാമിന്റെ ഉള്ളിലുള്ള കമാന്റുകള്‍ ആണ്; കൂടുതല്‍ "
+"വിവരങ്ങള്‍ക്ക് drizzle> help കാണുക.ഇത് എനേബിള്‍ ചെയ്താല്‍, പേരുള്ള "
+"കമാന്റുകള്‍ ക്വറിയുടെ ഇതു വരിയിലും ഉപയോഗിക്കാം. അല്ലെങ്കില്‍ എന്റര്‍ നു "
+"മുന്‍പുള്ള ആദ്യ വരിയില്‍ മാത്രമേ ഉപയോഗിക്കാന്‍ പറ്റുകയുള്ളൂ.  --disable-"
+"named-commands  ഉപയോഗിച്ച് ഇതിനെ ഡിസേബിള്‍ (disable) ചെയ്യാം. ഇത് "
+"സ്വാഭാവികമായി ഡിസേബിള്‍ (disable) ആണ്."
 
 #: client/drizzle.cc:1473
 msgid ""
@@ -274,40 +289,50 @@ msgid ""
 "G'. Long format commands still work from the first line. WARNING: option "
 "deprecated; use --disable-named-commands instead."
 msgstr ""
+"പേരുള്ള കമാന്റ്സ് ഡിസേബിള്‍ ചെയ്തിരിക്കുകയാണ്.  \\* ഫോം മാത്രം "
+"ഉപയോഗിക്കുകയോ, സെമികോലെന്‍ (;) വച്ച് അവസാനിപ്പിക്കുന്ന വരിയുടെ തുടക്കത്തില്‍ "
+"മാത്രം പേരുള്ള കമാന്റ്സ് ഉപയോഗിക്കുകയോ ചെയ്യുക. വെര്‍ഷന്‍ 10.9 മുതല്‍ "
+"ക്ലയെന്റുകള്‍ തുടങ്ങുന്നത് സ്വാഭാവികമായി ഈ ഒപ്ഷന്‍ എനേബിള്‍ "
+"ചെയ്തുകൊണ്ടായിരിക്കും. '-G' ഉപയോഗിച്ച് ഡിസേബിള്‍ ചെയ്യാം. ആദ്യ വരി മുതല്‍ "
+"ലോങ്ങ്‌ ഫോര്‍മാറ്റില്‍ (Long format) ഉള്ള  കമാന്റുകള്‍ അപ്പോഴും "
+"പ്രവര്‍ത്തിക്കും. മുന്നറിയിപ്പ്: ഈ ഒപ്ഷന്‍ കാലഹരണപെട്ടു.ഇതിനു പകരം --disable-"
+"named-commands ഉപയോഗിക്കു."
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
-msgstr ""
+msgstr "ഫങ്ങ്ഷന്റെ പെരിനു ശേഷമുള്ള സ്പേസുകള്‍ ഉപേക്ഷിക്കുക."
 
 #: client/drizzle.cc:1477
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
+msgstr "എനേബിള്‍ / ഡിസേബിള്‍ LOAD DATA LOCAL INFILE"
 
 #: client/drizzle.cc:1480
 msgid "Turn off beep on error."
-msgstr ""
+msgstr "പിശകുണ്ടാകുന്പോഴുള്ള ബീപ്പ് ശബ്ദം ഒഴിവാക്കുക."
 
 #: client/drizzle.cc:1482
 msgid "Connect to host."
-msgstr ""
+msgstr "വ്യൂഹത്തിലേക്ക് ബന്ധിപ്പിക്കുക."
 
 #: client/drizzle.cc:1484
 msgid "Write line numbers for errors."
-msgstr ""
+msgstr "പിശകുകള്ക്ക് വരിയുടെ അക്കവും കുറിക്കുക."
 
 #: client/drizzle.cc:1487
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
+"തെറ്റിന്റെ (എറോര്‍) കൂടെ ലൈന്‍ നമ്പര്‍ എഴുതേണ്ടതില്ല. മുന്നറിയിപ്പ്: -L  "
+"എന്ന ഒപ്ഷന്‍ കാലഹരണപെട്ടു. പകരം ഇതിന്റെ നീളത്തില്‍ ഉള്ള വെര്‍ഷന്‍ഉപയോഗിക്കൂ"
 
 #: client/drizzle.cc:1489
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "എല്ലാ ക്വറിയുടെയും അവസ്സാനം ബഫെര്‍ കളയൂ (ഫ്ലെഷ് ചെയ്യൂ)"
 
 #: client/drizzle.cc:1491
 msgid "Write column names in results."
-msgstr ""
+msgstr "ഫലങ്ങളുടെ കൂടെ കോളങ്ങളുടെ നാമവും എഴുതുക."
 
 #: client/drizzle.cc:1495
 msgid ""
