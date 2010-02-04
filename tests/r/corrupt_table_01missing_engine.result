@@ -6,3 +6,5 @@ SHOW CREATE TABLE t1;
 ERROR HY000: Corrupt or invalid table definition: engine
 SELECT * from test.t1;
 ERROR HY000: Corrupt or invalid table definition: engine
+DROP TABLE test.t1;
+ERROR HY000: Corrupt or invalid table definition: engine
