@@ -20,8 +20,15 @@
   2-3 times faster than quicksort
 */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/* Radixsort */
 
@@ -52,3 +59,6 @@ void radixsort_for_str_ptr(unsigned char **base, uint32_t number_of_elements, si
   next:;
   }
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

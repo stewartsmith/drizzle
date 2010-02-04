@@ -21,13 +21,15 @@
 /* Functions to map drizzle errno to sql_state */
 #include "config.h"
 
-#include CSTDINT_H
 #include <algorithm>
 
 #include <drizzled/sql_state.h>
 #include <drizzled/error.h>
 
 using namespace std;
+
+namespace drizzled
+{
 
 typedef struct st_map_errno_to_sqlstate
 {
@@ -267,3 +269,5 @@ const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno)
   return "HY000";
 
 }
+
+} /* namespace drizzled */

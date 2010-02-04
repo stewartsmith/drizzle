@@ -20,8 +20,16 @@
 */
 
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
+
 /* We need to use qsort with 2 different compare functions */
 #ifdef QSORT_EXTRA_CMP_ARGUMENT
 #define CMP(A,B) ((*cmp)(cmp_argument,(A),(B)))
@@ -207,3 +215,6 @@ void my_qsort(void *base_ptr, size_t count, size_t size,
   free(pivot);
   return;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

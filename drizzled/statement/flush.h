@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -58,8 +58,8 @@ private:
   bool reloadCache();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_FLUSH_H */

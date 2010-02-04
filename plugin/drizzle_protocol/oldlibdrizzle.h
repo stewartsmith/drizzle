@@ -44,7 +44,7 @@ class ClientDrizzleProtocol: public drizzled::plugin::Client
 {
 private:
   NET net;
-  String packet;
+  drizzled::String packet;
   uint32_t client_capabilities;
   bool using_mysql41_protocol;
 
@@ -70,16 +70,16 @@ public:
   virtual void sendEOF(void);
   virtual void sendError(uint32_t sql_errno, const char *err);
 
-  virtual bool sendFields(List<Item> *list);
+  virtual bool sendFields(drizzled::List<drizzled::Item> *list);
 
   using Client::store;
-  virtual bool store(Field *from);
+  virtual bool store(drizzled::Field *from);
   virtual bool store(void);
   virtual bool store(int32_t from);
   virtual bool store(uint32_t from);
   virtual bool store(int64_t from);
   virtual bool store(uint64_t from);
-  virtual bool store(double from, uint32_t decimals, String *buffer);
+  virtual bool store(double from, uint32_t decimals, drizzled::String *buffer);
   virtual bool store(const char *from, size_t length);
 
   virtual bool haveError(void);

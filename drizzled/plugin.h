@@ -28,6 +28,9 @@
 #include "drizzled/definitions.h"
 
 
+namespace drizzled
+{
+
 class Session;
 class Item;
 struct charset_info_st;
@@ -46,19 +49,19 @@ extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
-namespace drizzled { namespace plugin { class StorageEngine; } }
+namespace plugin { class StorageEngine; }
 
 /*
   Macros for beginning and ending plugin declarations. Between
   DRIZZLE_DECLARE_PLUGIN and DRIZZLE_DECLARE_PLUGIN_END there should
-  be a drizzled::plugin::Manifest for each plugin to be declared.
+  be a plugin::Manifest for each plugin to be declared.
 */
 
 
 #define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
 #define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
 #define DRIZZLE_DECLARE_PLUGIN \
-           drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
+  ::drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
@@ -371,10 +374,10 @@ struct drizzle_value
 extern "C" {
 #endif
 
-extern bool plugin_init(drizzled::plugin::Registry &registry,
+extern bool plugin_init(plugin::Registry &registry,
                         int *argc, char **argv,
                         bool skip_init);
-extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
+extern void plugin_shutdown(plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
@@ -401,7 +404,7 @@ int session_tx_isolation(const Session *session);
 
   @param prefix  prefix for temporary file name
   @retval -1    error
-  @retval >= 0  a file handle that can be passed to dup or my_close
+  @retval >= 0  a file handle that can be passed to dup or internal::my_close
 */
 int mysql_tmpfile(const char *prefix);
 
@@ -489,6 +492,8 @@ void mysql_query_cache_invalidate4(Session *session,
 #ifdef __cplusplus
 }
 #endif
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_H */
 

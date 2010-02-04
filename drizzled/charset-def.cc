@@ -17,6 +17,8 @@
 #include "drizzled/charset.h"
 #include "drizzled/charset_info.h"
 
+namespace drizzled
+{
 
 /*
   Include all compiled character sets into the client
@@ -74,3 +76,5 @@ bool init_compiled_charsets(myf)
 
   return false;
 }
+
+} /* namespace drizzled */

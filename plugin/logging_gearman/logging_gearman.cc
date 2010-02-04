@@ -169,7 +169,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-class LoggingGearman : public drizzled::plugin::Logging
+class LoggingGearman : public plugin::Logging
 {
 
   int gearman_client_ok;
@@ -178,7 +178,7 @@ class LoggingGearman : public drizzled::plugin::Logging
 public:
 
   LoggingGearman()
-    : drizzled::plugin::Logging("LoggingGearman"),
+    : plugin::Logging("LoggingGearman"),
       gearman_client_ok(0)
   {
     gearman_return_t ret;
@@ -290,7 +290,7 @@ public:
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
+static int logging_gearman_plugin_init(plugin::Registry &registry)
 {
   handler= new LoggingGearman();
   registry.add(handler);
@@ -298,7 +298,7 @@ static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
+static int logging_gearman_plugin_deinit(plugin::Registry &registry)
 {
   registry.remove(handler);
   delete handler;

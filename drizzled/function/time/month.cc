@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/function/time/month.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_month::val_int()
 {
@@ -36,7 +39,7 @@ int64_t Item_func_month::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -114,3 +117,5 @@ String* Item_func_monthname::val_str(String* str)
   str->set(month_name, strlen(month_name), system_charset_info);
   return str;
 }
+
+} /* namespace drizzled */

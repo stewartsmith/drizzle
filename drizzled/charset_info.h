@@ -22,9 +22,8 @@
 
 #include <sys/types.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+namespace drizzled
+{
 
 #define MY_CS_NAME_SIZE			32
 #define MY_CS_CTYPE_TABLE_SIZE		257
@@ -320,8 +319,8 @@ extern CHARSET_INFO my_charset_utf8mb4_general_ci;
 extern CHARSET_INFO my_charset_utf8mb4_unicode_ci;
 
 #define MY_UTF8MB4                 "utf8"
-#define my_charset_utf8_general_ci my_charset_utf8mb4_general_ci
-#define my_charset_utf8_bin        my_charset_utf8mb4_bin
+#define my_charset_utf8_general_ci ::drizzled::my_charset_utf8mb4_general_ci
+#define my_charset_utf8_bin        ::drizzled::my_charset_utf8mb4_bin
 
 
 /* declarations for simple charsets */
@@ -475,7 +474,7 @@ int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
 
 int my_strcasecmp_mb_bin(const CHARSET_INFO * const, const char *s, const char *t);
 
-void my_hash_sort_mb_bin(const CHARSET_INFO *,
+void my_hash_sort_mb_bin(const CHARSET_INFO * const,
                          const unsigned char *key, size_t len, uint32_t *nr1, uint32_t *nr2);
 
 size_t my_strnxfrm_mb(const CHARSET_INFO * const,
@@ -704,8 +703,6 @@ int my_strnncollsp_binary(const CHARSET_INFO * const cs,
 
 int make_escape_code(const CHARSET_INFO * const cs, const char *escape);
 
-#ifdef	__cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CHARSET_INFO_H */

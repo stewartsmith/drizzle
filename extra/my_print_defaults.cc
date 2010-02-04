@@ -27,8 +27,7 @@
 
 #include <stdio.h>
 
-extern "C"
-bool get_one_option(int optid, const struct my_option *, char *);
+using namespace drizzled;
 
 const char *config_file="drizzle";		/* Default config file */
 uint32_t verbose= 0, opt_defaults_file_used= 0;
@@ -56,16 +55,16 @@ static struct my_option my_long_options[] =
    0, 0, 0, 0, 0, 0},
   {"defaults-extra-file", 'e',
    "Read this file after the global config file and before the config file in the users home directory; should be the first option",
-   (char**) &my_defaults_extra_file, (char**) &my_defaults_extra_file, 0,
+   (char**) &internal::my_defaults_extra_file, (char**) &internal::my_defaults_extra_file, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"defaults-group-suffix", 'g',
    "In addition to the given groups, read also groups with this suffix",
-   (char**) &my_defaults_group_suffix, (char**) &my_defaults_group_suffix,
+   (char**) &internal::my_defaults_group_suffix, (char**) &internal::my_defaults_group_suffix,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"extra-file", 'e',
    "Deprecated. Synonym for --defaults-extra-file.",
-   (char**) &my_defaults_extra_file,
-   (char**) &my_defaults_extra_file, 0, GET_STR,
+   (char**) &internal::my_defaults_extra_file,
+   (char**) &internal::my_defaults_extra_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"no-defaults", 'n', "Return an empty string (useful for scripts).",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -80,20 +79,20 @@ static struct my_option my_long_options[] =
 
 static void usage(bool version)
 {
-  printf("%s  Ver 1.6 for %s-%s at %s\n",my_progname,HOST_VENDOR,HOST_OS,
+  printf("%s  Ver 1.6 for %s-%s at %s\n",internal::my_progname,HOST_VENDOR,HOST_OS,
 	 HOST_CPU);
   if (version)
     return;
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
   puts("Prints all arguments that is give to some program using the default files");
-  printf("Usage: %s [OPTIONS] groups\n", my_progname);
+  printf("Usage: %s [OPTIONS] groups\n", internal::my_progname);
   my_print_help(my_long_options);
-  my_print_default_files(config_file);
+  internal::my_print_default_files(config_file);
   my_print_variables(my_long_options);
-  printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", my_progname);
+  printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", internal::my_progname);
 }
 
-bool get_one_option(int optid, const struct my_option *, char *)
+static bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch (optid) {
     case 'c':
@@ -141,8 +140,8 @@ int main(int argc, char **argv)
   MY_INIT(argv[0]);
 
   org_argv= argv;
-  args_used= get_defaults_options(argc, argv, &defaults, &extra_defaults,
-                                  &group_suffix);
+  args_used= internal::get_defaults_options(argc, argv, &defaults, &extra_defaults,
+                                            &group_suffix);
 
   /* Copy defaults-xxx arguments & program name */
   count=args_used+1;
@@ -157,7 +156,7 @@ int main(int argc, char **argv)
     exit(1);
   memcpy(load_default_groups, argv, (argc + 1) * sizeof(*argv));
 
-  if ((error= load_defaults(config_file, (const char **) load_default_groups,
+  if ((error= internal::load_defaults(config_file, (const char **) load_default_groups,
 			   &count, &arguments)))
   {
     if (verbose && opt_defaults_file_used)
@@ -176,7 +175,7 @@ int main(int argc, char **argv)
   for (argument= arguments+1 ; *argument ; argument++)
     puts(*argument);
   free((char*) load_default_groups);
-  free_defaults(arguments);
+  internal::free_defaults(arguments);
 
   return error;
 }

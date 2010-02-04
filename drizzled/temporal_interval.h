@@ -176,6 +176,6 @@ private:
 
 };
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TEMPORAL_INTERVAL_H */

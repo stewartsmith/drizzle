@@ -21,6 +21,8 @@
 
 #include "heap_priv.h"
 
+using namespace drizzled;
+
 static void hp_clear_keys(HP_SHARE *info);
 
 void heap_clear(HP_INFO *info)

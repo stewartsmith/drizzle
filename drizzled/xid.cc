@@ -27,6 +27,9 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset_info.h"
 
+namespace drizzled
+{
+
 bool XID::eq(XID *xid)
 {
   return eq(xid->gtrid_length, xid->bqual_length, xid->data);
@@ -115,8 +118,8 @@ uint32_t XID::key_length()
 pthread_mutex_t LOCK_xid_cache;
 HASH xid_cache;
 
-extern "C" unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
-extern "C" void xid_free_hash(void *);
+unsigned char *xid_get_hash_key(const unsigned char *, size_t *, bool);
+void xid_free_hash(void *);
 
 unsigned char *xid_get_hash_key(const unsigned char *ptr, size_t *length,
                         bool )
@@ -190,3 +193,5 @@ void xid_cache_delete(XID_STATE *xid_state)
   hash_delete(&xid_cache, (unsigned char *)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
 }
+
+} /* namespace drizzled */

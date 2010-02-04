@@ -68,7 +68,14 @@
 #include <algorithm>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
+
+namespace internal
+{
+extern bool timed_mutexes;
+}
 
 extern plugin::StorageEngine *myisam_engine;
 extern bool timed_mutexes;
@@ -215,8 +222,8 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
                                              check_tx_isolation);
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
-static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str  sys_version(&vars, "version", drizzled::version().c_str());
+static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &internal::timed_mutexes);
+static sys_var_const_str  sys_version(&vars, "version", version().c_str());
 
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);
@@ -382,7 +389,7 @@ static int check_completion_type(Session *, set_var *var)
   if (val < 0 || val > 2)
   {
     char buf[64];
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->getName().c_str(), llstr(val, buf));
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->getName().c_str(), internal::llstr(val, buf));
     return 1;
   }
   return 0;
@@ -410,9 +417,9 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
     char buf[22];
 
     if (unsignd)
-      ullstr((uint64_t) val, buf);
+      internal::ullstr((uint64_t) val, buf);
     else
-      llstr(val, buf);
+      internal::llstr(val, buf);
 
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
@@ -852,7 +859,7 @@ bool sys_var::check_enum(Session *,
     uint64_t tmp=var->value->val_int();
     if (tmp >= enum_names->count)
     {
-      llstr(tmp,buff);
+      internal::llstr(tmp,buff);
       value=buff;				// Wrong value is here
       goto err;
     }
@@ -1065,7 +1072,7 @@ bool sys_var_collation::check(Session *, set_var *var)
     if (!(tmp=get_charset((int) var->value->val_int())))
     {
       char buf[20];
-      int10_to_str((int) var->value->val_int(), buf, -10);
+      internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_error(ER_UNKNOWN_COLLATION, MYF(0), buf);
       return 1;
     }
@@ -1240,7 +1247,7 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
     if (!(locale_match= my_locale_by_number((uint32_t) var->value->val_int())))
     {
       char buf[20];
-      int10_to_str((int) var->value->val_int(), buf, -10);
+      internal::int10_to_str((int) var->value->val_int(), buf, -10);
       my_printf_error(ER_UNKNOWN_ERROR, "Unknown locale: '%s'", MYF(0), buf);
       return 1;
     }
@@ -1923,3 +1930,5 @@ bool sys_var_session_storage_engine::update(Session *session, set_var *var)
   }
   return 0;
 }
+
+} /* namespace drizzled */

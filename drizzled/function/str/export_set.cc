@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/export_set.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 String* Item_func_export_set::val_str(String* str)
 {
@@ -104,3 +107,4 @@ void Item_func_export_set::fix_length_and_dec()
     return;
 }
 
+} /* namespace drizzled */

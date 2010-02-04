@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/item/uint.h>
 #include <drizzled/item/outer_ref.h>
+
+namespace drizzled
+{
 
 /*
   Prepare referenced outer field then call usual Item_direct_ref::fix_fields
@@ -60,4 +63,4 @@ void Item_outer_ref::fix_after_pullout(Select_Lex *new_parent,
 }
 
 
-
+} /* namespace drizzled */

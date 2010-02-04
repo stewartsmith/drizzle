@@ -27,6 +27,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /*
   Returns the number of bytes required for strnxfrm().
@@ -564,7 +566,7 @@ double my_strntod_8bit(const CHARSET_INFO * const,
   if (length == INT32_MAX)
     length= 65535;                          /* Should be big enough */
   *end= str + length;
-  return my_strtod(str, end, err);
+  return internal::my_strtod(str, end, err);
 }
 
 
@@ -901,7 +903,7 @@ size_t my_lengthsp_8bit(const CHARSET_INFO * const,
                         const char *ptr, size_t length)
 {
   const char *end;
-  end= (const char *) skip_trailing_space((const unsigned char *)ptr, length);
+  end= (const char *) internal::skip_trailing_space((const unsigned char *)ptr, length);
   return (size_t) (end-ptr);
 }
 
@@ -1103,7 +1105,7 @@ bool my_coll_init_simple(CHARSET_INFO *cs, cs_alloc_func)
 int64_t my_strtoll10_8bit(const CHARSET_INFO * const,
                           const char *nptr, char **endptr, int *error)
 {
-  return my_strtoll10(nptr, endptr, error);
+  return internal::my_strtoll10(nptr, endptr, error);
 }
 
 
@@ -1634,3 +1636,5 @@ my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
   my_strxfrm_desc_and_reverse(str, frmend, flags, level);
   return frmend - str;
 }
+
+} /* namespace drizzled */

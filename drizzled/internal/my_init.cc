@@ -13,7 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "my_static.h"
 #include "drizzled/my_error.h"
 #include "drizzled/internal/m_string.h"
@@ -21,6 +23,11 @@
 #include "drizzled/charset.h"
 #include <cstdio>
 #include <cstdlib>
+
+namespace drizzled
+{
+namespace internal
+{
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */
@@ -91,3 +98,6 @@ void my_end()
 
   my_init_done=0;
 } /* my_end */
+
+} /* namespace internal */
+} /* namespace drizzled */

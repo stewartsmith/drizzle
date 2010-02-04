@@ -36,12 +36,12 @@ public:
     Scheduler(name_arg) {}
 
   /* When we enter this function, LOCK_thread_count is held! */
-  virtual bool addSession(Session *session)
+  virtual bool addSession(drizzled::Session *session)
   {
-    if (my_thread_init())
+    if (drizzled::internal::my_thread_init())
     {
-      session->disconnect(ER_OUT_OF_RESOURCES, true);
-      statistic_increment(aborted_connects, &LOCK_status);
+      session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
+      statistic_increment(drizzled::aborted_connects, &LOCK_status);
       return true;
     }
 
@@ -56,10 +56,10 @@ public:
     return false;
   }
 
-  virtual void killSessionNow(Session *session)
+  virtual void killSessionNow(drizzled::Session *session)
   {
-    Session::unlink(session);
-    my_thread_end();
+    drizzled::Session::unlink(session);
+    drizzled::internal::my_thread_end();
   }
 };
 

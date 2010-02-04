@@ -25,6 +25,9 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 extern my_decimal decimal_zero;
 
 /****************************************************************************
@@ -447,3 +450,4 @@ resizing using the precision and decimals from the slave.
   return from+len;
 }
 
+} /* namespace drizzled */

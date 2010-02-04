@@ -73,15 +73,6 @@
 
 #include <locale.h>
 
-#define mysqld_charset &my_charset_utf8_general_ci
-
-#ifdef HAVE_purify
-#define IF_PURIFY(A,B) (A)
-#else
-#define IF_PURIFY(A,B) (B)
-#endif
-
-#define MAX_MEM_TABLE_SIZE SIZE_MAX
 
 #include <errno.h>
 #include <sys/stat.h>
@@ -121,6 +112,25 @@
 #include <sys/fpu.h>
 #endif
 
+#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
+
+#include <drizzled/gettext.h>
+
+
+#ifdef HAVE_purify
+#define IF_PURIFY(A,B) (A)
+#else
+#define IF_PURIFY(A,B) (B)
+#endif
+
+#define MAX_MEM_TABLE_SIZE SIZE_MAX
+
+using namespace std;
+
+namespace drizzled
+{
+
+#define mysqld_charset &my_charset_utf8_general_ci
 inline void setup_fpu()
 {
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
@@ -150,16 +160,9 @@ inline void setup_fpu()
 #endif /* __i386__ && HAVE_FPU_CONTROL_H && _FPU_DOUBLE */
 }
 
-#include "drizzled/internal/my_pthread.h"			// For thr_setconcurency()
-
-#include <drizzled/gettext.h>
-
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);
 #endif
-
-using namespace std;
-using namespace drizzled;
 
 /* Constants */
 static const char *tc_heuristic_recover_names[]=
@@ -359,7 +362,7 @@ static uint32_t thr_kill_signal;
   Number of currently active user connections. The variable is protected by
   LOCK_thread_count.
 */
-drizzled::atomic<uint32_t> connection_count;
+atomic<uint32_t> connection_count;
 
 /** 
   Refresh value. We use to test this to find out if a refresh even has happened recently.
@@ -372,7 +375,7 @@ bool drizzle_rm_tmp_tables();
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
-extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
+bool drizzled_get_one_option(int, const struct my_option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
@@ -492,7 +495,7 @@ extern "C" void print_signal_warning(int sig)
 void unireg_end(void)
 {
   clean_up(1);
-  my_thread_end();
+  internal::my_thread_end();
 #if defined(SIGNALS_DONT_BREAK_READ)
   exit(0);
 #else
@@ -510,7 +513,7 @@ void unireg_abort(int exit_code)
     usage();
   clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
-  my_end();
+  internal::my_end();
   exit(exit_code);
 }
 
@@ -530,7 +533,7 @@ static void clean_up(bool print_message)
   xid_cache_free();
   free_status_vars();
   if (defaults_argv)
-    free_defaults(defaults_argv);
+    internal::free_defaults(defaults_argv);
   free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
@@ -544,7 +547,7 @@ static void clean_up(bool print_message)
   (void) unlink(pidfile_name);	// This may not always exist
 
   if (print_message && server_start_time)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
   /* Returns NULL on globerrs, we don't want to try to free that */
   //void *freeme=
   (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
@@ -858,7 +861,7 @@ extern "C" void handle_segfault(int sig)
                       "nsswitch.conf, or use a\n"
                       "drizzled that is not statically linked.\n"));
 
-  if (thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
+  if (internal::thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
     fprintf(stderr,
             _("\nYou are running a statically-linked LinuxThreads binary "
               "on an NPTL system.\n"
@@ -889,80 +892,12 @@ extern "C" void handle_segfault(int sig)
 #define SA_NODEFER 0
 #endif
 
-static void init_signals(void)
-{
-  sigset_t set;
-  struct sigaction sa;
-
-  if (!(test_flags.test(TEST_NO_STACKTRACE) || 
-        test_flags.test(TEST_CORE_ON_SIGNAL)))
-  {
-    sa.sa_flags = SA_RESETHAND | SA_NODEFER;
-    sigemptyset(&sa.sa_mask);
-    sigprocmask(SIG_SETMASK,&sa.sa_mask,NULL);
-
-    init_stacktrace();
-    sa.sa_handler=handle_segfault;
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGABRT, &sa, NULL);
-#ifdef SIGBUS
-    sigaction(SIGBUS, &sa, NULL);
-#endif
-    sigaction(SIGILL, &sa, NULL);
-    sigaction(SIGFPE, &sa, NULL);
-  }
-
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
-  {
-    /* Change limits so that we will get a core file */
-    struct rlimit rl;
-    rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
-    if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN,
-                      _("setrlimit could not change the size of core files "
-                        "to 'infinity';  We may not be able to generate a "
-                        "core file on signals"));
-  }
-  (void) sigemptyset(&set);
-  my_sigset(SIGPIPE,SIG_IGN);
-  sigaddset(&set,SIGPIPE);
-#ifndef IGNORE_SIGHUP_SIGQUIT
-  sigaddset(&set,SIGQUIT);
-  sigaddset(&set,SIGHUP);
-#endif
-  sigaddset(&set,SIGTERM);
-
-  /* Fix signals if blocked by parents (can happen on Mac OS X) */
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sa.sa_handler = print_signal_warning;
-  sigaction(SIGTERM, &sa, (struct sigaction*) 0);
-  sa.sa_flags = 0;
-  sa.sa_handler = print_signal_warning;
-  sigaction(SIGHUP, &sa, (struct sigaction*) 0);
-#ifdef SIGTSTP
-  sigaddset(&set,SIGTSTP);
-#endif
-  if (test_flags.test(TEST_SIGINT))
-  {
-    my_sigset(thr_kill_signal, end_thread_signal);
-    // May be SIGINT
-    sigdelset(&set, thr_kill_signal);
-  }
-  else
-    sigaddset(&set,SIGINT);
-  sigprocmask(SIG_SETMASK,&set,NULL);
-  pthread_sigmask(SIG_SETMASK,&set,NULL);
-  return;;
-}
-
-void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
   All global error messages are sent here where the first one is stored
   for the client.
 */
-void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -1011,7 +946,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     }
   }
   if (!session || MyFlags & ME_NOREFRESH)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str);
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",internal::my_progname,str);
 }
 
 
@@ -1120,7 +1055,7 @@ static SHOW_VAR status_vars[]= {
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
   {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
+  {"Created_tmp_files",	       (char*) &internal::my_tmp_file_created,SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
   {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
   {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
@@ -1146,11 +1081,11 @@ static SHOW_VAR status_vars[]= {
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
   {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
-  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
+  {"Open_files",               (char*) &internal::my_file_opened,    SHOW_INT_NOFLUSH},
+  {"Open_streams",             (char*) &internal::my_stream_opened,  SHOW_INT_NOFLUSH},
   {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
   {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
+  {"Opened_files",             (char*) &internal::my_file_total_opened, SHOW_INT_NOFLUSH},
   {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
   {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
   {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
@@ -1176,7 +1111,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
                                  char **argv, const char **groups)
 {
   time_t curr_time;
-  umask(((~my_umask) & 0666));
+  umask(((~internal::my_umask) & 0666));
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
@@ -1215,7 +1150,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   else
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  strcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
+  strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
 
   /*
     Add server status variables to the dynamic list of
@@ -1225,7 +1160,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
 
-  load_defaults(conf_file_name, groups, &argc, &argv);
+  internal::load_defaults(conf_file_name, groups, &argc, &argv);
   defaults_argv=argv;
   defaults_argc=argc;
   get_options(&defaults_argc, defaults_argv);
@@ -1363,7 +1298,7 @@ static int init_server_components(plugin::Registry &plugins)
       We need to eat any 'loose' arguments first before we conclude
       that there are unprocessed options.
       But we need to preserve defaults_argv pointer intact for
-      free_defaults() to work. Thus we use a copy here.
+      internal::free_defaults() to work. Thus we use a copy here.
     */
     my_getopt_skip_unknown= 0;
 
@@ -1376,7 +1311,7 @@ static int init_server_components(plugin::Registry &plugins)
       fprintf(stderr,
               _("%s: Too many arguments (first extra is '%s').\n"
                 "Use --verbose --help to get a list of available options\n"),
-              my_progname, *tmp_argv);
+              internal::my_progname, *tmp_argv);
       unireg_abort(1);
     }
   }
@@ -1454,128 +1389,6 @@ static int init_server_components(plugin::Registry &plugins)
   init_update_queries();
 
   return(0);
-}
-
-
-int main(int argc, char **argv)
-{
-#if defined(ENABLE_NLS)
-# if defined(HAVE_LOCALE_H)
-  setlocale(LC_ALL, "");
-# endif
-  bindtextdomain("drizzle", LOCALEDIR);
-  textdomain("drizzle");
-#endif
-
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin::Client *client;
-  Session *session;
-
-  MY_INIT(argv[0]);		// init my_sys library & pthreads
-  /* nothing should come before this line ^^^ */
-
-  /* Set signal used to kill Drizzle */
-#if defined(SIGUSR2)
-  thr_kill_signal= thd_lib_detected == THD_LIB_LT ? SIGINT : SIGUSR2;
-#else
-  thr_kill_signal= SIGINT;
-#endif
-
-  if (init_common_variables(DRIZZLE_CONFIG_NAME,
-			    argc, argv, load_default_groups))
-    unireg_abort(1);				// Will do exit
-
-  init_signals();
-
-
-  select_thread=pthread_self();
-  select_thread_in_use=1;
-
-  if (chdir(drizzle_real_data_home) && !opt_help)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
-    unireg_abort(1);
-  }
-  drizzle_data_home= drizzle_data_home_buff;
-  drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
-  drizzle_data_home[1]=0;
-  drizzle_data_home_len= 2;
-
-  if ((user_info= check_user(drizzled_user)))
-  {
-    set_user(drizzled_user, user_info);
-  }
-
-  if (server_id == 0)
-  {
-    server_id= 1;
-  }
-
-  if (init_server_components(plugins))
-    unireg_abort(1);
-
-  if (plugin::Listen::setup())
-    unireg_abort(1);
-
-  /*
-    init signals & alarm
-    After this we can't quit by a simple unireg_abort
-  */
-  error_handler_hook= my_message_sql;
-
-  if (drizzle_rm_tmp_tables() ||
-      my_tz_init((Session *)0, default_tz_name))
-  {
-    abort_loop= true;
-    select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, SIGTERM);
-
-    (void) unlink(pidfile_name);	// Not needed anymore
-
-    exit(1);
-  }
-
-  init_status_vars();
-
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname,
-                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
-
-
-  /* Listen for new connections and start new session for each connection
-     accepted. The listen.getClient() method will return NULL when the server
-     should be shutdown. */
-  while ((client= plugin::Listen::getClient()) != NULL)
-  {
-    if (!(session= new Session(client)))
-    {
-      delete client;
-      continue;
-    }
-
-    /* If we error on creation we drop the connection and delete the session. */
-    if (session->schedule())
-      Session::unlink(session);
-  }
-
-  /* (void) pthread_attr_destroy(&connection_attrib); */
-
-
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  select_thread_in_use=0;			// For close_connections
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
-
-  /* Wait until cleanup is done */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (!ready_to_exit)
-    pthread_cond_wait(&COND_server_end,&LOCK_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-  clean_up(1);
-  plugin::Registry::shutdown();
-  clean_up_mutexes();
-  my_end();
-  return 0;
 }
 
 
@@ -1758,7 +1571,7 @@ struct my_option my_long_options[] =
    0, 0, 0, 0},
   {"symbolic-links", 's',
    N_("Enable symbolic link support."),
-   (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
+   (char**) &internal::my_use_symdir, (char**) &internal::my_use_symdir, 0, GET_BOOL, NO_ARG,
    /*
      The system call realpath() produces warnings under valgrind and
      purify. These are not suppressed: instead we disable symlinks
@@ -1768,7 +1581,7 @@ struct my_option my_long_options[] =
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
       "supported)"),
-   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
+   (char**) &internal::timed_mutexes, (char**) &internal::timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
    N_("Path for temporary files."),
@@ -1988,7 +1801,7 @@ static void print_version(void)
     Note: the instance manager keys off the string 'Ver' so it can find the
     version from the output of 'drizzled --version', so don't change it!
   */
-  printf("%s  Ver %s for %s-%s on %s (%s)\n",my_progname,
+  printf("%s  Ver %s for %s-%s on %s (%s)\n",internal::my_progname,
 	 PANDORA_RELEASE_VERSION, HOST_VENDOR, HOST_OS, HOST_CPU,
          COMPILATION_COMMENT);
 }
@@ -2007,9 +1820,9 @@ static void usage(void)
          "license\n\n"
          "Starts the Drizzle database server\n"));
 
-  printf(_("Usage: %s [OPTIONS]\n"), my_progname);
+  printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
   {
-     print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
+     internal::print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
      puts("");
  
      /* Print out all the options including plugin supplied options */
@@ -2109,9 +1922,8 @@ static void drizzle_init_variables(void)
 }
 
 
-extern "C" bool
-drizzled_get_one_option(int optid, const struct my_option *opt,
-                        char *argument)
+bool drizzled_get_one_option(int optid, const struct my_option *opt,
+                             char *argument)
 {
   switch(optid) {
   case 'a':
@@ -2165,7 +1977,7 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     test_flags.set(TEST_NO_STACKTRACE);
     break;
   case (int) OPT_SKIP_SYMLINKS:
-    my_use_symdir=0;
+    internal::my_use_symdir=0;
     break;
   case (int) OPT_BIND_ADDRESS:
     {
@@ -2212,9 +2024,7 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
   return 0;
 }
 
-extern "C" void option_error_reporter(enum loglevel level, const char *format, ...);
-
-extern "C" void option_error_reporter(enum loglevel level, const char *format, ...)
+static void option_error_reporter(enum loglevel level, const char *format, ...)
 {
   va_list args;
   va_start(args, format);
@@ -2250,13 +2060,13 @@ static void get_options(int *argc,char **argv)
              /* no need to do this for argv as we are discarding it. */
 
 #if defined(HAVE_BROKEN_REALPATH)
-  my_use_symdir=0;
-  my_disable_symlinks=1;
+  internal::my_use_symdir=0;
+  internal::my_disable_symlinks=1;
   have_symlink=SHOW_OPTION_NO;
 #else
-  if (!my_use_symdir)
+  if (!internal::my_use_symdir)
   {
-    my_disable_symlinks=1;
+    internal::my_disable_symlinks=1;
     have_symlink=SHOW_OPTION_DISABLED;
   }
 #endif
@@ -2276,13 +2086,13 @@ static void get_options(int *argc,char **argv)
     Set some global variables from the global_system_variables
     In most cases the global variables will not be used
   */
-  my_default_record_cache_size=global_system_variables.read_buff_size;
+  internal::my_default_record_cache_size=global_system_variables.read_buff_size;
 }
 
 
 static const char *get_relative_path(const char *path)
 {
-  if (test_if_hard_path(path) &&
+  if (internal::test_if_hard_path(path) &&
       (strncmp(path, PREFIX, strlen(PREFIX)) == 0) &&
       strcmp(PREFIX,FN_ROOTDIR))
   {
@@ -2298,13 +2108,13 @@ static const char *get_relative_path(const char *path)
 static void fix_paths(string &progname)
 {
   char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
-  convert_dirname(drizzle_home,drizzle_home,NULL);
+  internal::convert_dirname(drizzle_home,drizzle_home,NULL);
   /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
 #if defined(HAVE_BROKEN_REALPATH)
-   my_load_path(drizzle_home, drizzle_home, NULL);
+   internal::my_load_path(drizzle_home, drizzle_home, NULL);
 #else
   if (!realpath(drizzle_home,rp_buff))
-    my_load_path(rp_buff, drizzle_home, NULL);
+    internal::my_load_path(rp_buff, drizzle_home, NULL);
   rp_buff[FN_REFLEN-1]= '\0';
   strcpy(drizzle_home,rp_buff);
   /* Ensure that drizzle_home ends in FN_LIBCHAR */
@@ -2315,14 +2125,14 @@ static void fix_paths(string &progname)
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  convert_dirname(drizzle_real_data_home,drizzle_real_data_home,NULL);
-  (void) fn_format(buff, drizzle_real_data_home, "", "",
+  internal::convert_dirname(drizzle_real_data_home,drizzle_real_data_home,NULL);
+  (void) internal::fn_format(buff, drizzle_real_data_home, "", "",
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  (void) unpack_dirname(drizzle_unpacked_real_data_home, buff);
-  convert_dirname(language,language,NULL);
-  (void) my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-  (void) my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
-  (void) my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
+  (void) internal::unpack_dirname(drizzle_unpacked_real_data_home, buff);
+  internal::convert_dirname(language,language,NULL);
+  (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
+  (void) internal::my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
+  (void) internal::my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
 
   if (opt_plugin_dir_ptr == NULL)
   {
@@ -2357,7 +2167,7 @@ static void fix_paths(string &progname)
       /* drizzled.o doesn't exist - we are not in a source dir.
        * Go on as usual
        */
-      (void) my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
+      (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
                                           drizzle_home);
     }
     else
@@ -2366,25 +2176,25 @@ static void fix_paths(string &progname)
       size_t last_libchar_pos= progdir.rfind(FN_LIBCHAR,progdir.size()-2)+1;
       string source_plugindir(progdir.substr(0,last_libchar_pos));
       source_plugindir.append("plugin/.libs");
-      (void) my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
+      (void) internal::my_load_path(opt_plugin_dir, source_plugindir.c_str(), "");
     }
   }
   else
   {
-    (void) my_load_path(opt_plugin_dir, opt_plugin_dir_ptr, drizzle_home);
+    (void) internal::my_load_path(opt_plugin_dir, opt_plugin_dir_ptr, drizzle_home);
   }
   opt_plugin_dir_ptr= opt_plugin_dir;
 
   const char *sharedir= get_relative_path(PKGDATADIR);
-  if (test_if_hard_path(sharedir))
+  if (internal::test_if_hard_path(sharedir))
     strncpy(buff,sharedir,sizeof(buff)-1);
   else
   {
     strcpy(buff, drizzle_home);
     strncat(buff, sharedir, sizeof(buff)-strlen(drizzle_home)-1);
   }
-  convert_dirname(buff,buff,NULL);
-  (void) my_load_path(language,language,buff);
+  internal::convert_dirname(buff,buff,NULL);
+  (void) internal::my_load_path(language,language,buff);
 
   {
     char *tmp_string;
@@ -2413,11 +2223,204 @@ static void fix_paths(string &progname)
    */
   if (opt_secure_file_priv)
   {
-    convert_dirname(buff, opt_secure_file_priv, NULL);
+    internal::convert_dirname(buff, opt_secure_file_priv, NULL);
     free(opt_secure_file_priv);
     opt_secure_file_priv= strdup(buff);
     if (opt_secure_file_priv == NULL)
       exit(1);
   }
+}
+
+} /* namespace drizzled */
+
+using namespace drizzled;
+
+
+static void init_signals(void)
+{
+  sigset_t set;
+  struct sigaction sa;
+
+  if (!(test_flags.test(TEST_NO_STACKTRACE) || 
+        test_flags.test(TEST_CORE_ON_SIGNAL)))
+  {
+    sa.sa_flags = SA_RESETHAND | SA_NODEFER;
+    sigemptyset(&sa.sa_mask);
+    sigprocmask(SIG_SETMASK,&sa.sa_mask,NULL);
+
+    init_stacktrace();
+    sa.sa_handler=handle_segfault;
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGABRT, &sa, NULL);
+#ifdef SIGBUS
+    sigaction(SIGBUS, &sa, NULL);
+#endif
+    sigaction(SIGILL, &sa, NULL);
+    sigaction(SIGFPE, &sa, NULL);
+  }
+
+  if (test_flags.test(TEST_CORE_ON_SIGNAL))
+  {
+    /* Change limits so that we will get a core file */
+    struct rlimit rl;
+    rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
+    if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
+        errmsg_printf(ERRMSG_LVL_WARN,
+                      _("setrlimit could not change the size of core files "
+                        "to 'infinity';  We may not be able to generate a "
+                        "core file on signals"));
+  }
+  (void) sigemptyset(&set);
+  my_sigset(SIGPIPE,SIG_IGN);
+  sigaddset(&set,SIGPIPE);
+#ifndef IGNORE_SIGHUP_SIGQUIT
+  sigaddset(&set,SIGQUIT);
+  sigaddset(&set,SIGHUP);
+#endif
+  sigaddset(&set,SIGTERM);
+
+  /* Fix signals if blocked by parents (can happen on Mac OS X) */
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = print_signal_warning;
+  sigaction(SIGTERM, &sa, (struct sigaction*) 0);
+  sa.sa_flags = 0;
+  sa.sa_handler = print_signal_warning;
+  sigaction(SIGHUP, &sa, (struct sigaction*) 0);
+#ifdef SIGTSTP
+  sigaddset(&set,SIGTSTP);
+#endif
+  if (test_flags.test(TEST_SIGINT))
+  {
+    my_sigset(thr_kill_signal, end_thread_signal);
+    // May be SIGINT
+    sigdelset(&set, thr_kill_signal);
+  }
+  else
+    sigaddset(&set,SIGINT);
+  sigprocmask(SIG_SETMASK,&set,NULL);
+  pthread_sigmask(SIG_SETMASK,&set,NULL);
+  return;;
+}
+
+int main(int argc, char **argv)
+{
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
+  setlocale(LC_ALL, "");
+# endif
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
+#endif
+
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugin::Client *client;
+  Session *session;
+
+  MY_INIT(argv[0]);		// init my_sys library & pthreads
+  /* nothing should come before this line ^^^ */
+
+  /* Set signal used to kill Drizzle */
+#if defined(SIGUSR2)
+  thr_kill_signal= internal::thd_lib_detected == THD_LIB_LT ? SIGINT : SIGUSR2;
+#else
+  thr_kill_signal= SIGINT;
+#endif
+
+  if (init_common_variables(DRIZZLE_CONFIG_NAME,
+			    argc, argv, load_default_groups))
+    unireg_abort(1);				// Will do exit
+
+  init_signals();
+
+
+  select_thread=pthread_self();
+  select_thread_in_use=1;
+
+  if (chdir(drizzle_real_data_home) && !opt_help)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
+    unireg_abort(1);
+  }
+  drizzle_data_home= drizzle_data_home_buff;
+  drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
+  drizzle_data_home[1]=0;
+  drizzle_data_home_len= 2;
+
+  if ((user_info= check_user(drizzled_user)))
+  {
+    set_user(drizzled_user, user_info);
+  }
+
+  if (server_id == 0)
+  {
+    server_id= 1;
+  }
+
+  if (init_server_components(plugins))
+    unireg_abort(1);
+
+  if (plugin::Listen::setup())
+    unireg_abort(1);
+
+  /*
+    init signals & alarm
+    After this we can't quit by a simple unireg_abort
+  */
+  error_handler_hook= my_message_sql;
+
+  if (drizzle_rm_tmp_tables() ||
+      my_tz_init((Session *)0, default_tz_name))
+  {
+    abort_loop= true;
+    select_thread_in_use=0;
+    (void) pthread_kill(signal_thread, SIGTERM);
+
+    (void) unlink(pidfile_name);	// Not needed anymore
+
+    exit(1);
+  }
+
+  init_status_vars();
+
+  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
+                PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
+
+
+  /* Listen for new connections and start new session for each connection
+     accepted. The listen.getClient() method will return NULL when the server
+     should be shutdown. */
+  while ((client= plugin::Listen::getClient()) != NULL)
+  {
+    if (!(session= new Session(client)))
+    {
+      delete client;
+      continue;
+    }
+
+    /* If we error on creation we drop the connection and delete the session. */
+    if (session->schedule())
+      Session::unlink(session);
+  }
+
+  /* (void) pthread_attr_destroy(&connection_attrib); */
+
+
+  (void) pthread_mutex_lock(&LOCK_thread_count);
+  select_thread_in_use=0;			// For close_connections
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  (void) pthread_cond_broadcast(&COND_thread_count);
+
+  /* Wait until cleanup is done */
+  (void) pthread_mutex_lock(&LOCK_thread_count);
+  while (!ready_to_exit)
+    pthread_cond_wait(&COND_server_end,&LOCK_thread_count);
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
+
+  clean_up(1);
+  plugin::Registry::shutdown();
+  clean_up_mutexes();
+  internal::my_end();
+  return 0;
 }
 

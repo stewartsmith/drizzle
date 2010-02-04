@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_DUMP_H
 #define DRIZZLED_SELECT_DUMP_H
 
+namespace drizzled
+{
 
 class select_dump :public select_to_file {
 public:
@@ -29,5 +31,6 @@ public:
   bool send_data(List<Item> &items);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_DUMP_H */

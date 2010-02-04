@@ -60,8 +60,6 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/memory/root.h"
 
-using namespace drizzled;
-
 #define BLACK		1
 #define RED		0
 #define DEFAULT_ALLOC_SIZE 8192
@@ -71,6 +69,10 @@ using namespace drizzled;
 (tree->offset_to_key ? (void*)((unsigned char*) element+tree->offset_to_key) :\
 			*((void**) (element+1)))
 #define ELEMENT_CHILD(element, offs) (*(TREE_ELEMENT**)((char*)element + offs))
+
+namespace drizzled
+{
+
 
 static void delete_tree_element(TREE *,TREE_ELEMENT *);
 static int tree_walk_left_root_right(TREE *,TREE_ELEMENT *,
@@ -709,3 +711,5 @@ static void rb_delete_fixup(TREE *tree, TREE_ELEMENT ***parent)
   }
   x->colour= BLACK;
 }
+
+} /* namespace drizzled */

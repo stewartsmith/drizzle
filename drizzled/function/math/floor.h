@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int_val.h>
 
+namespace drizzled
+{
+
 class Item_func_floor :public Item_func_int_val
 {
 public:
@@ -32,5 +35,7 @@ public:
   double real_op();
   my_decimal *decimal_op(my_decimal *);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_FLOOR_H */

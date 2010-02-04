@@ -41,6 +41,11 @@
 
 #include "m_string.h"
 
+namespace drizzled
+{
+namespace internal
+{
+
 #if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)
 
 char _dig_vec_upper[] =
@@ -145,3 +150,6 @@ char *int64_t10_to_str(int64_t val,char *dst,int radix)
   return dst-1;
 }
 #endif
+
+} /* namespace internal */
+} /* namespace drizzled */

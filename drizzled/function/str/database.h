@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_database :public Item_str_func
 {
 public:
@@ -35,5 +38,7 @@ public:
   const char *func_name() const { return "database"; }
   const char *fully_qualified_func_name() const { return "database()"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_DATABASE_H */

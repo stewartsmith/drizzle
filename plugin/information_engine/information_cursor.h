@@ -27,15 +27,16 @@
 #include <drizzled/plugin/info_schema_table.h>
 #include <plugin/information_engine/information_engine.h>
 
-class InformationCursor: public Cursor
+class InformationCursor: public drizzled::Cursor
 {
 private:
-  THR_LOCK_DATA lock;      /* MySQL lock */
+  drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   InformationEngine::Share *share;
   drizzled::plugin::InfoSchemaTable::Rows::iterator iter;
 
 public:
-  InformationCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  InformationCursor(drizzled::plugin::StorageEngine &engine,
+                    drizzled::TableShare &table_arg);
   ~InformationCursor() {}
 
   int open(const char *name, int mode, uint32_t test_if_locked);
@@ -58,7 +59,7 @@ public:
   /**
    * @return an upper bound estimate for the number of rows in the table
    */
-  ha_rows estimate_rows_upper_bound()
+  drizzled::ha_rows estimate_rows_upper_bound()
   {
     if (share)
     {

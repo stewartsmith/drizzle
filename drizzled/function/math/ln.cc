@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/ln.h>
 
+namespace drizzled
+{
+
 /** Gateway to natural LOG function. */
 double Item_func_ln::val_real()
 {
@@ -36,3 +39,4 @@ double Item_func_ln::val_real()
   return log(value);
 }
 
+} /* namespace drizzled */

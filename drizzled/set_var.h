@@ -27,7 +27,8 @@
 #include "drizzled/item/string.h"
 #include "drizzled/item/field.h"
 
-uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
+namespace drizzled
+{
 
 /* Classes to support the SET command */
 
@@ -83,6 +84,8 @@ extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
+
+uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
 
 struct sys_var_chain
 {
@@ -623,10 +626,10 @@ public:
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  drizzled::plugin::StorageEngine *SV::*offset;
+  plugin::StorageEngine *SV::*offset;
 public:
   sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
-                                 drizzled::plugin::StorageEngine *SV::*offset_arg)
+                                 plugin::StorageEngine *SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -831,7 +834,7 @@ public:
   Classes for parsing of the SET command
 ****************************************************************************/
 
-class set_var_base :public drizzled::memory::SqlAlloc
+class set_var_base :public memory::SqlAlloc
 {
 public:
   set_var_base() {}
@@ -854,7 +857,7 @@ public:
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     size_t size_t_value;
-    drizzled::plugin::StorageEngine *storage_engine;
+    plugin::StorageEngine *storage_engine;
     Time_zone *time_zone;
     MY_LOCALE *locale_value;
   } save_result;
@@ -925,5 +928,7 @@ extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SET_VAR_H */

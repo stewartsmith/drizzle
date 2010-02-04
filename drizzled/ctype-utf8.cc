@@ -26,9 +26,6 @@
 
 #include <algorithm>
 
-using namespace std;
-
-
 #ifndef EILSEQ
 #define EILSEQ ENOENT
 #endif
@@ -40,9 +37,11 @@ using namespace std;
 #define MY_UTF8MB4_BIN        MY_UTF8MB4 "_bin"
 
 
-#include "drizzled/internal/my_uctype.h"
+using namespace std;
 
-extern "C"
+namespace drizzled
+{
+
 void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2);
@@ -2226,7 +2225,6 @@ my_hash_add(uint32_t *n1, uint32_t *n2, uint32_t ch)
 }
 
 
-extern "C"
 void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
                           const unsigned char *s, size_t slen,
                           uint32_t *n1, uint32_t *n2)
@@ -2823,6 +2821,7 @@ All other characters are encoded using five bytes:
 
 */
 
+} /* namespace drizzled */
 
 #ifdef MY_TEST_UTF8
 #include <stdio.h>

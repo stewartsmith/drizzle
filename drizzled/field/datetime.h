@@ -23,6 +23,9 @@
 
 #include <drizzled/field/str.h>
 
+namespace drizzled
+{
+
 class Field_datetime :public Field_str {
 public:
 
@@ -78,5 +81,7 @@ public:
   bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_DATETIME_H */

@@ -31,7 +31,8 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/transaction_services.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /**
   Implement DELETE SQL word.
@@ -195,8 +196,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
     if (usable_index == MAX_KEY)
     {
-      table->sort.io_cache= new IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
+      table->sort.io_cache= new internal::IO_CACHE;
+      memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
 
       if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
@@ -400,3 +401,5 @@ bool mysql_truncate(Session& session, TableList *table_list)
 
   return error;
 }
+
+} /* namespace drizzled */

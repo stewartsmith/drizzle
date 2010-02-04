@@ -22,6 +22,9 @@
 
 #include <drizzled/item/hex_string.h>
 
+namespace drizzled
+{
+
 class Item_bin_string: public Item_hex_string
 {
 public:
@@ -51,5 +54,7 @@ public:
   }
   void cleanup();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_BIN_STRING_H */

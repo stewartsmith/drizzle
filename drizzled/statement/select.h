@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -41,7 +41,7 @@ public:
   bool execute();
 };
 
-} /* end namespace statement */
-} /* end namespace drizzled */
+} /* namespace statement */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_SELECT_H */
