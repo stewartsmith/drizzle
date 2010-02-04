@@ -258,6 +258,13 @@ int BlackholeEngine::doGetTableDefinition(Session&,
   {
     close(fd);
     delete input;
+    if (! table_proto->IsInitialized())
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_proto->InitializationErrorString().c_str());
+      return ER_CORRUPT_TABLE_DEFINITION;
+    }
+
     return HA_ERR_CRASHED_ON_USAGE;
   }
 

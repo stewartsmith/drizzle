@@ -584,7 +584,7 @@ public:
     if (ret != ENOENT)
       *err= ret;
 
-    return *err == EEXIST;
+    return *err == EEXIST || *err != ENOENT;
   }
 };
 
