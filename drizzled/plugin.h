@@ -114,7 +114,6 @@ struct st_show_var_func_container {
 #define PLUGIN_VAR_LONG         0x0003
 #define PLUGIN_VAR_LONGLONG     0x0004
 #define PLUGIN_VAR_STR          0x0005
-#define PLUGIN_VAR_SET          0x0007
 #define PLUGIN_VAR_UNSIGNED     0x0080
 #define PLUGIN_VAR_SessionLOCAL     0x0100 /* Variable is per-connection */
 #define PLUGIN_VAR_READONLY     0x0200 /* Server variable is read only */
@@ -287,11 +286,6 @@ DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define DRIZZLE_SYSVAR_SET(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, typelib }
-
 #define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
 DECLARE_DRIZZLE_SessionVAR_BASIC(name, char) = { \
   PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
@@ -331,11 +325,6 @@ DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, int64_t) = { \
 DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
-
-#define DRIZZLE_SessionVAR_SET(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL, typelib }
 
 /* accessor macros */
 
