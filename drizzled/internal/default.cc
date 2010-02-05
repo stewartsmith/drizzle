@@ -33,7 +33,9 @@
  --print-defaults	  ; Print the modified command line and exit
 ****************************************************************************/
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include <drizzled/configmake.h>
@@ -48,9 +50,12 @@
 #include <cstdio>
 #include <algorithm>
 
-
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
+namespace internal
+{
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
@@ -676,7 +681,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
                                 ptr, name, line)))
 	  goto err;
 
-        drizzled::CachedDirectory dir_cache(ptr);
+        CachedDirectory dir_cache(ptr);
 
         if (dir_cache.fail())
         {
@@ -691,12 +696,12 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
           goto err;
         }
 
-        drizzled::CachedDirectory::Entries files= dir_cache.getEntries();
-        drizzled::CachedDirectory::Entries::iterator file_iter= files.begin();
+        CachedDirectory::Entries files= dir_cache.getEntries();
+        CachedDirectory::Entries::iterator file_iter= files.begin();
 
         while (file_iter != files.end())
         {
-          drizzled::CachedDirectory::Entry *entry= *file_iter;
+          CachedDirectory::Entry *entry= *file_iter;
           ext= fn_ext(entry->filename.c_str());
 
           /* check extension */
@@ -983,3 +988,6 @@ static void init_default_directories(void)
   ADD_COMMON_DIRECTORIES();
   ADD_DIRECTORY("~/");
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

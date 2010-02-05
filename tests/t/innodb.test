@@ -161,7 +161,6 @@ release savepoint `my_savepoint`;
 select n from t1;
 -- error 1305
 rollback to savepoint `my_savepoint`;
---error 1305
 rollback to savepoint savept2;
 insert into t1 values (8);
 savepoint sv;

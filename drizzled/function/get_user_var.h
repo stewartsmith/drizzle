@@ -20,8 +20,12 @@
 #ifndef DRIZZLED_FUNCTION_GET_USER_VAR_H
 #define DRIZZLED_FUNCTION_GET_USER_VAR_H
 
-class user_var_entry;
 #include <drizzled/function/func.h>
+
+namespace drizzled
+{
+
+class user_var_entry;
 
 class Item_func_get_user_var :public Item_func
 {
@@ -51,5 +55,7 @@ public:
   { return const_item() ? 0 : RAND_TABLE_BIT; }
   bool eq(const Item *item, bool binary_cmp) const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_GET_USER_VAR_H */

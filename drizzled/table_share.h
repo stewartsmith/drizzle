@@ -33,6 +33,9 @@
 #include "drizzled/memory/root.h"
 #include "drizzled/message/table.pb.h"
 
+namespace drizzled
+{
+
 class TableShare
 {
 public:
@@ -169,7 +172,7 @@ public:
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
-  drizzled::memory::Root mem_root;
+  memory::Root mem_root;
   TYPELIB keynames;			/* Pointers to keynames */
   TYPELIB fieldnames;			/* Pointer to fieldnames */
   TYPELIB *intervals;			/* pointer to interval info */
@@ -207,11 +210,11 @@ private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;
 
-  drizzled::message::Table *table_proto;
+  message::Table *table_proto;
 public:
 
   /* This is only used in one location currently */
-  inline void setTableProto(drizzled::message::Table *arg)
+  inline void setTableProto(message::Table *arg)
   {
     assert(table_proto == NULL);
     table_proto= arg;
@@ -252,12 +255,12 @@ public:
     max_rows= arg;
   }
 
-  drizzled::plugin::StorageEngine *storage_engine;			/* storage engine plugin */
-  inline drizzled::plugin::StorageEngine *db_type() const	/* table_type for handler */
+  plugin::StorageEngine *storage_engine;			/* storage engine plugin */
+  inline plugin::StorageEngine *db_type() const	/* table_type for handler */
   {
     return storage_engine;
   }
-  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return storage_engine;
   }
@@ -405,7 +408,7 @@ public:
             const char *new_path)
   {
     memset(this, 0, sizeof(TableShare));
-    drizzled::memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              INTERNAL_TMP_TABLE;
     db.str=                 (char*) key;
@@ -434,7 +437,7 @@ public:
 
   void free_table_share()
   {
-    drizzled::memory::Root new_mem_root;
+    memory::Root new_mem_root;
     assert(ref_count == 0);
 
     /*
@@ -521,5 +524,7 @@ public:
                               TableList *table_list, char *key,
                               uint32_t key_length, uint32_t, int *error);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_SHARE_H */

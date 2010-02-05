@@ -18,13 +18,16 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/divide.h>
 #include <drizzled/session.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 double Item_func_div::real_op()
 {
@@ -112,3 +115,4 @@ void Item_func_div::fix_length_and_dec()
   return;
 }
 
+} /* namespace drizzled */

@@ -23,6 +23,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 void MyBitmap::createLastWordMask()
 {
   /* Get the number of used bits (1..8) in the last byte */
@@ -366,7 +369,7 @@ uint32_t MyBitmap::getBitsSet()
   *last_word_ptr&= ~last_word_mask; /*Reset last bits to zero*/
   while (m < end)
   {
-    res+= my_count_bits_uint16(*m++);
+    res+= internal::my_count_bits_uint16(*m++);
   }
   return res;
 }
@@ -854,4 +857,7 @@ int main()
   will build the bitmap tests and ./test_bitmap will execute it
 */
 
+
 #endif
+
+} /* namespace drizzled */

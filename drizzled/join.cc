@@ -60,9 +60,11 @@
 #include <algorithm>
 
 using namespace std;
-using namespace drizzled;
 
-extern drizzled::plugin::StorageEngine *heap_engine;
+namespace drizzled
+{
+
+extern plugin::StorageEngine *heap_engine;
 extern std::bitset<12> test_flags;
 
 /** Declarations of static functions used in this source file. */
@@ -229,8 +231,7 @@ int JOIN::prepare(Item ***rref_pointer_array,
         in_subs= (Item_in_subselect*)subselect;
 
       {
-        bool do_materialize= !test(session->variables.optimizer_switch &
-                                   OPTIMIZER_SWITCH_NO_MATERIALIZATION);
+        bool do_materialize= true;
         /*
           Check if the subquery predicate can be executed via materialization.
           The required conditions are:
@@ -3292,9 +3293,9 @@ static bool choose_plan(JOIN *join, table_map join_tables)
       Apply heuristic: pre-sort all access plans with respect to the number of
       records accessed.
   */
-  my_qsort(join->best_ref + join->const_tables,
-           join->tables - join->const_tables, sizeof(JoinTable*),
-           straight_join ? join_tab_cmp_straight : join_tab_cmp);
+  internal::my_qsort(join->best_ref + join->const_tables,
+                     join->tables - join->const_tables, sizeof(JoinTable*),
+                     straight_join ? join_tab_cmp_straight : join_tab_cmp);
   if (straight_join)
   {
     optimize_straight_join(join, join_tables);
@@ -3997,7 +3998,7 @@ static bool greedy_search(JOIN      *join,
   JoinTable  *best_table; // the next plan node to be added to the curr QEP
 
   /* number of tables that remain to be optimized */
-  size_remain= my_count_bits(remaining_tables);
+  size_remain= internal::my_count_bits(remaining_tables);
 
   do {
     /* Find the extension of the current QEP with the lowest cost */
@@ -6244,3 +6245,5 @@ static void free_blobs(Field **ptr)
 /**
   @} (end of group Query_Optimizer)
 */
+
+} /* namespace drizzled */

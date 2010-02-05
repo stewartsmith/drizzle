@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_concat :public Item_str_func
 {
   String tmp_value;
@@ -43,5 +46,7 @@ public:
   const char *func_name() const { return "concat_ws"; }
   table_map not_null_tables() const { return 0; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_CONCAT_H */

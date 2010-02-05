@@ -22,8 +22,11 @@
 
 #include "drizzled/function/time/date.h"
 
+namespace drizzled
+{
+
 /* forward declarations */
-namespace drizzled {class Date;}
+class Date;
 
 class Item_func_last_day :public Item_date
 {
@@ -33,7 +36,7 @@ public:
   /**
    * All functions which inherit from Item_date must implement
    * their own get_temporal() method, which takes a supplied
-   * drizzled::Date reference and populates it with a correct
+   * Date reference and populates it with a correct
    * date based on the semantics of the function.
    *
    * For LAST_DATE(), we interpret the function's argument
@@ -46,9 +49,11 @@ public:
    * For a NULL parameter, we return false and set null_value
    * to true.
    *
-   * @param Reference to a drizzled::Date to populate
+   * @param Reference to a Date to populate
    */
-  bool get_temporal(drizzled::Date &temporal);
+  bool get_temporal(Date &temporal);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_LAST_DAY_H */

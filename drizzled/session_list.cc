@@ -37,4 +37,4 @@ vector<Session*> &getSessionList()
   return session_list;
 }
 
-}
+} /* namespace drizzled */

@@ -15,8 +15,15 @@
 
 /* Kopierar biblioteksstrukturen och extensionen fr}n ett filnamn */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
         /*
 	  Copy directory and/or extension between filenames.
@@ -36,3 +43,6 @@ char * fn_same(char *to, const char *name, int flag)
 
   return(fn_format(to,to,dev,ext,flag));
 } /* fn_same */
+
+} /* namespace internal */
+} /* namespace drizzled */

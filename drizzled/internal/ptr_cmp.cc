@@ -19,11 +19,17 @@
   The bytes are compare as unsigned chars.
   */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 
 #include <assert.h>
 
 #include "plugin/myisam/myisampack.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b);
 static int ptr_compare_0(size_t *compare_length, unsigned char **a, unsigned char **b);
@@ -193,3 +199,5 @@ my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length)
  return pos;
 }
 
+} /* namespace internal */
+} /* namespace drizzled */

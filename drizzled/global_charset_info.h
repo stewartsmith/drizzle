@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_GLOBAL_CHARSET_INFO_H
 #define DRIZZLED_GLOBAL_CHARSET_INFO_H
 
+namespace drizzled
+{
+
 typedef struct charset_info_st CHARSET_INFO;
 
 /*
@@ -30,5 +33,7 @@ extern const CHARSET_INFO *default_charset_info;
 extern const CHARSET_INFO *system_charset_info;
 extern const CHARSET_INFO *files_charset_info;
 extern const CHARSET_INFO *table_alias_charset;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_GLOBAL_CHARSET_INFO_H */

@@ -18,6 +18,8 @@
 #include <string.h>
 #include <cassert>
 
+using namespace drizzled;
+
 /* Read first record with the current key */
 
 int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)

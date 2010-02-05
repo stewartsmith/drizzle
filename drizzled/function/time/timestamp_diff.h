@@ -22,6 +22,9 @@
 
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_timestamp_diff :public Item_int_func
 {
   const interval_type int_type;
@@ -37,6 +40,8 @@ public:
   }
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_TIMESTAMP_DIFF_H */
 

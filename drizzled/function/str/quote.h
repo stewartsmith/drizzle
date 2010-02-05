@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_quote :public Item_str_func
 {
   String tmp_value;
@@ -35,5 +38,7 @@ public:
     max_length= args[0]->max_length * 2 + 2;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_QUOTE_H */

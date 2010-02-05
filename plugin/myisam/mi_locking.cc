@@ -25,6 +25,7 @@
 #include <drizzled/util/test.h>
 
 using namespace std;
+using namespace drizzled;
 
 	/* lock table by F_UNLCK, F_RDLCK or F_WRLCK */
 
