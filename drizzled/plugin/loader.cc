@@ -871,7 +871,8 @@ static st_bookmark *register_var(const string &plugin, const char *name,
     const string varname(make_bookmark_name(plugin, name, flags));
 
     result= static_cast<st_bookmark*>(alloc_root(&plugin_mem_root,
-                                      sizeof(struct st_bookmark) + varname.size()));
+                                      sizeof(struct st_bookmark) + varname.size() + 1));
+    memset(result->key, 0, varname.size()+1);
     memcpy(result->key, varname.c_str(), varname.size());
     result->name_len= varname.size() - 2;
     result->offset= -1;
