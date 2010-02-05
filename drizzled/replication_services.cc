@@ -780,7 +780,7 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   cleanupTransaction(transaction, in_session);
 }
 
-void ReplicationServices::push(drizzled::message::Transaction &to_push)
+void ReplicationServices::push(message::Transaction &to_push)
 {
   vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;

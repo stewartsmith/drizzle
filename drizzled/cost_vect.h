@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_COST_VECT_H
 #define DRIZZLED_COST_VECT_H
 
-#include <stdint.h>
+namespace drizzled
+{
 
 class COST_VECT
 {
@@ -79,5 +80,7 @@ public:
     io_count= io_count_sum;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_COST_VECT_H */

@@ -23,6 +23,9 @@
 
 #include "drizzled/field/str.h"
 
+namespace drizzled
+{
+
 class Field_enum :public Field_str 
 {
 protected:
@@ -55,7 +58,7 @@ public:
   {
     flags|= ENUM_FLAG;
   }
-  Field *new_field(drizzled::memory::Root *root, Table *new_table, bool keep_type);
+  Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
   enum ha_base_keytype key_type() const;
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
   int  store(double nr);
@@ -115,5 +118,7 @@ public:
   /* enum and set are sorted as integers */
   const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_ENUM_H */

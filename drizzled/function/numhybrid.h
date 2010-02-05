@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 class Item_func_numhybrid: public Item_func
 {
 protected:
@@ -83,5 +86,7 @@ public:
   virtual String *str_op(String *)= 0;
   bool is_null() { update_null_value(); return null_value; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_NUMHYBRID_H */

@@ -26,18 +26,24 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
-extern int cleanup_done;
 extern "C" pthread_handler_t signal_hand(void *);
+
+namespace drizzled
+{
+extern int cleanup_done;
 extern bool volatile abort_loop;
 extern bool volatile shutdown_in_progress;
 extern char pidfile_name[FN_REFLEN];
-
-extern std::bitset<12> test_flags;
-
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
+extern std::bitset<12> test_flags;
+}
+
+using namespace drizzled;
+
 
 
 /**
@@ -62,9 +68,9 @@ static void kill_server(void *sig_ptr)
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
   if (sig == SIGTERM || sig == 0)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),my_progname);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig);
+    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
 
   close_connections();
   if (sig != SIGTERM && sig != 0)
@@ -106,10 +112,10 @@ pthread_handler_t signal_hand(void *)
 {
   sigset_t set;
   int sig;
-  my_thread_init();				// Init new thread
+  internal::my_thread_init();				// Init new thread
   signal_thread_in_use= true;
 
-  if (thd_lib_detected != THD_LIB_LT && 
+  if (internal::thd_lib_detected != THD_LIB_LT && 
       (test_flags.test(TEST_SIGINT)))
   {
     (void) sigemptyset(&set);			// Setup up SIGINT for debug
@@ -164,7 +170,7 @@ pthread_handler_t signal_hand(void *)
       while ((error= sigwait(&set,&sig)) == EINTR) ;
     if (cleanup_done)
     {
-      my_thread_end();
+      internal::my_thread_end();
       signal_thread_in_use= false;
 
       return NULL;
@@ -244,7 +250,7 @@ static int deinit(drizzled::plugin::Registry&)
   uint32_t i;
   /*
     Wait up to 10 seconds for signal thread to die. We use this mainly to
-    avoid getting warnings that my_thread_end has not been called
+    avoid getting warnings that internal::my_thread_end has not been called
   */
   for (i= 0 ; i < 100 && signal_thread_in_use; i++)
   {

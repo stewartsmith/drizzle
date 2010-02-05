@@ -23,10 +23,10 @@
 #include <unistd.h>
 #include "drizzled/memory/root.h"
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace memory
 {
 

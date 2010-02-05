@@ -41,6 +41,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 String *MemcachedVersion::val_str(String*)
 {

@@ -33,6 +33,7 @@
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/replication_services.h>
+#include "drizzled/transaction_services.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/table_identifier.h>
@@ -50,7 +51,9 @@
 #include <sstream>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 extern pid_t current_pid;
 
@@ -181,7 +184,7 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
     to[length]= hexchars[(*from) & 15];
   }
 
-  if (check_if_legal_tablename(to) &&
+  if (internal::check_if_legal_tablename(to) &&
       length + 4 < to_length)
   {
     memcpy(to + length, "@@@", 4);
@@ -318,7 +321,7 @@ size_t build_tmptable_filename(char *buff, size_t bufflen)
   if (bufflen < path_str.str().length())
     length= 0;
   else
-    length= unpack_filename(buff, path_str.str().c_str());
+    length= internal::unpack_filename(buff, path_str.str().c_str());
 
   return length;
 }
@@ -1443,8 +1446,8 @@ int mysql_prepare_create_table(Session *session,
     return(true);
   }
   /* Sort keys in optimized order */
-  my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
-	   (qsort_cmp) sort_keys);
+  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
+	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
   it.rewind();
@@ -1563,7 +1566,7 @@ bool mysql_create_table_no_lock(Session *session,
   bool		error= true;
   TableShare share;
   bool lex_identified_temp_table=
-    (table_proto->type() == drizzled::message::Table::TEMPORARY);
+    (table_proto->type() == message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
   if (!alter_info->create_list.elements)
@@ -1736,7 +1739,7 @@ bool mysql_create_table(Session *session,
   Table *name_lock= NULL;
   bool result;
   bool lex_identified_temp_table=
-    (table_proto->type() == drizzled::message::Table::TEMPORARY);
+    (table_proto->type() == message::Table::TEMPORARY);
 
   if (! lex_identified_temp_table)
   {
@@ -1820,7 +1823,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
   for (uint32_t i=2 ; i< 100; i++)
   {
     *buff_end= '_';
-    int10_to_str(i, buff_end+1, 10);
+    internal::int10_to_str(i, buff_end+1, 10);
     if (!check_if_keyname_exists(buff,start,end))
       return memory::sql_strdup(buff);
   }
@@ -1975,6 +1978,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Item *item;
   LEX *lex= session->lex;
   int result_code= 0;
+  TransactionServices &transaction_services= TransactionServices::singleton();
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
@@ -2052,7 +2056,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
       session->client->store(buff, length);
-      ha_autocommit_or_rollback(session, 0);
+      transaction_services.ha_autocommit_or_rollback(session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
@@ -2175,7 +2179,7 @@ send_result:
         }
       }
     }
-    ha_autocommit_or_rollback(session, 0);
+    transaction_services.ha_autocommit_or_rollback(session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -2187,7 +2191,7 @@ send_result:
   return(false);
 
 err:
-  ha_autocommit_or_rollback(session, 1);
+  transaction_services.ha_autocommit_or_rollback(session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
@@ -2211,8 +2215,8 @@ err:
 */
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
-                             drizzled::message::Table& create_table_proto,
-                             drizzled::plugin::StorageEngine *engine_arg,
+                             message::Table& create_table_proto,
+                             plugin::StorageEngine *engine_arg,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
@@ -2225,7 +2229,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   uint32_t not_used;
   message::Table src_proto;
   bool lex_identified_temp_table=
-    (create_table_proto.type() == drizzled::message::Table::TEMPORARY);
+    (create_table_proto.type() == message::Table::TEMPORARY);
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2532,7 +2536,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
       else
       {
 	/* calculating table's checksum */
-	ha_checksum crc= 0;
+	internal::ha_checksum crc= 0;
         unsigned char null_mask=256 -  (1 << t->s->last_null_bit_pos);
 
         t->use_all_columns();
@@ -2543,7 +2547,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 	{
 	  for (;;)
 	  {
-	    ha_checksum row_crc= 0;
+	    internal::ha_checksum row_crc= 0;
             int error= t->cursor->rnd_next(t->record[0]);
             if (unlikely(error))
             {
@@ -2558,7 +2562,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
               if (!(t->s->db_create_options & HA_OPTION_PACK_RECORD))
                 t->record[0][0] |= 1;
 
-	      row_crc= my_checksum(row_crc, t->record[0], t->s->null_bytes);
+	      row_crc= internal::my_checksum(row_crc, t->record[0], t->s->null_bytes);
             }
 
 	    for (uint32_t i= 0; i < t->s->fields; i++ )
@@ -2569,10 +2573,10 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 	      {
 		String tmp;
 		f->val_str(&tmp);
-		row_crc= my_checksum(row_crc, (unsigned char*) tmp.ptr(), tmp.length());
+		row_crc= internal::my_checksum(row_crc, (unsigned char*) tmp.ptr(), tmp.length());
 	      }
 	      else
-		row_crc= my_checksum(row_crc, f->ptr,
+		row_crc= internal::my_checksum(row_crc, f->ptr,
 				     f->pack_length());
 	    }
 
@@ -2599,3 +2603,5 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     table->table=0;
   return(true);
 }
+
+} /* namespace drizzled */

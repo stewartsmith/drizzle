@@ -23,6 +23,9 @@
 #include <drizzled/item/ident.h>
 #include <drizzled/item/field.h>
 
+namespace drizzled
+{
+
 class Item_copy_string :public Item
 {
   enum enum_field_types cached_field_type;
@@ -66,5 +69,7 @@ public:
   bool const_item() const { return 0; }
   bool is_null() { return null_value; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_COPY_STRING_H */

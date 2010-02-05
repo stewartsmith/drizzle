@@ -32,8 +32,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
@@ -742,7 +743,8 @@ void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(String *key_names,
 {
   char buf[64];
   key_names->append(index_info->name);
-  uint32_t length= int64_t2str(max_used_key_length, buf, 10) - buf;
+  uint32_t length= internal::int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
+} /* namespace drizzled */

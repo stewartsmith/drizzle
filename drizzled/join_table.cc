@@ -22,6 +22,8 @@
 #include <drizzled/join_table.h>
 #include <drizzled/field/blob.h>
 
+namespace drizzled
+{
 
 void JoinTable::readCachedRecord()
 {
@@ -68,3 +70,5 @@ void JoinTable::readCachedRecord()
   }
   this->cache.pos=pos;
 }
+
+} /* namespace drizzled */

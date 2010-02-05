@@ -31,7 +31,8 @@
 #include <cerrno>
 #include <cstring>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 void sql_perror(const char *message)
 {
@@ -48,3 +49,5 @@ bool errmsg_printf (int priority, char const *format, ...)
   va_end(args);
   return rv;
 }
+
+} /* namespace drizzled */

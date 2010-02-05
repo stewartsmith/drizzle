@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/calendar.h"
 #include "drizzled/function/time/extract.h"
+
+namespace drizzled
+{
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.
@@ -83,11 +86,11 @@ int64_t Item_extract::val_int()
   }
 
   /* We could have either a datetime or a time.. */
-  drizzled::DateTime datetime_temporal;
-  drizzled::Time time_temporal;
+  DateTime datetime_temporal;
+  Time time_temporal;
 
   /* Abstract pointer type we'll use in the final switch */
-  drizzled::Temporal *temporal;
+  Temporal *temporal;
 
   if (date_value)
   {
@@ -341,3 +344,5 @@ bool Item_extract::eq(const Item *item, bool binary_cmp) const
       return 0;
   return 1;
 }
+
+} /* namespace drizzled */

@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/weight_string.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 void Item_func_weight_string::fix_length_and_dec()
 {
@@ -66,3 +69,4 @@ nl:
   return 0;
 }
 
+} /* namespace drizzled */

@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/timestamp_diff.h"
 #include "drizzled/time_functions.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_timestamp_diff::val_int()
 {
@@ -171,3 +174,5 @@ void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
   }
   str->append(')');
 }
+
+} /* namespace drizzled */

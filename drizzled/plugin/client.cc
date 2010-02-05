@@ -21,7 +21,9 @@
 #include "drizzled/plugin/client.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 bool plugin::Client::store(const DRIZZLE_TIME *from)
 {
@@ -77,3 +79,6 @@ bool plugin::Client::store(const char *from)
     return store();
   return store(from, strlen(from));
 }
+
+
+} /* namespace drizzled */

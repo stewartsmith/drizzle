@@ -13,9 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/internal/m_string.h"                           /* strcmp() */
+#include "config.h"
 
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 /**
   Append str to array, or move to the end if it already exists
@@ -59,3 +65,6 @@ bool array_append_string_unique(const char *str,
 
   return false;                                 /* Success */
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

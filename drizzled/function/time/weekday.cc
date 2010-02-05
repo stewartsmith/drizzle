@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/weekday.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_weekday::val_int()
 {
@@ -35,7 +38,7 @@ int64_t Item_func_weekday::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -91,3 +94,5 @@ int64_t Item_func_weekday::val_int()
   int64_t julian_day= julian_day_number_from_gregorian_date(temporal.years(), temporal.months(), temporal.days());
   return (int64_t) day_of_week(julian_day, sunday_first) + test(odbc_type);
 }
+
+} /* namespace drizzled */

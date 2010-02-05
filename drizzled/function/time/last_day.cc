@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/last_day.h"
 #include "drizzled/error.h"
 #include "drizzled/calendar.h"
@@ -27,12 +27,15 @@
 #include <sstream>
 #include <string>
 
+namespace drizzled
+{
+
 /**
  * Interpret the first argument as a DateTime string and then populate
  * our supplied temporal object with a Date representing the last day of 
  * the corresponding month and year.
  */
-bool Item_func_last_day::get_temporal(drizzled::Date &to)
+bool Item_func_last_day::get_temporal(Date &to)
 {
   assert(fixed);
 
@@ -44,7 +47,7 @@ bool Item_func_last_day::get_temporal(drizzled::Date &to)
   }
 
   /* We use a DateTime to match as many temporal formats as possible. */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -125,3 +128,5 @@ bool Item_func_last_day::get_temporal(drizzled::Date &to)
 
   return true;
 }
+
+} /* namespace drizzled */

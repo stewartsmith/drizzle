@@ -28,6 +28,9 @@
 #include "drizzled/function_hash.h"
 #include "drizzled/symbol_hash.h"
 
+namespace drizzled
+{
+
 const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function)
 {
   const SYMBOL* ret_sym= NULL;
@@ -43,3 +46,4 @@ const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function)
   return NULL;
 }
   
+} /* namespace drizzled */

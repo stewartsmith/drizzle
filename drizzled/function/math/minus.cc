@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/minus.h>
+
+namespace drizzled
+{
 
 /**
   The following function is here to allow the user to force
@@ -71,3 +74,4 @@ my_decimal *Item_func_minus::decimal_op(my_decimal *decimal_value)
   return 0;
 }
 
+} /* namespace drizzled */

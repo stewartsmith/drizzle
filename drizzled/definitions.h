@@ -30,6 +30,9 @@
 
 #include <stdint.h>
 
+namespace drizzled
+{
+
 /* These paths are converted to other systems (WIN95) before use */
 
 #define LANGUAGE	"english/"
@@ -37,7 +40,7 @@
 #define LOG_PREFIX	"ML"
 #define PROGDIR		"bin/"
 
-#define ER(X) error_message((X))
+#define ER(X) ::drizzled::error_message((X))
 
 #define LIBLEN FN_REFLEN-FN_LEN			/* Max l{ngd p} dev */
 /* extra 4+4 bytes for slave tmp tables */
@@ -234,10 +237,6 @@ enum test_flag_bit
 #define MODE_NO_ZERO_DATE		(2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
 
-/* @@optimizer_switch flags */
-#define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
-#define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
 #define MY_CHARSET_BIN_MB_MAXLEN 1
 
 // uncachable cause
@@ -425,7 +424,7 @@ enum start_transaction_option_t
 #define HA_MRR_USE_DEFAULT_IMPL 64
 
 typedef int myf;
-#define MYF(v)		(myf) (v)
+#define MYF(v)		(static_cast<drizzled::myf>(v))
 
 #define MY_I_S_MAYBE_NULL 1
 #define MY_I_S_UNSIGNED   2
@@ -679,5 +678,7 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 # undef _DTRACE_VERSION
 # define _DTRACE_VERSION 0
 #endif
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DEFINITIONS_H */

@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_set_collation :public Item_str_func
 {
 public:
@@ -33,5 +36,7 @@ public:
   enum Functype functype() const { return COLLATE_FUNC; }
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_SET_COLLATION_H */

@@ -23,6 +23,9 @@
 
 #include <drizzled/field/str.h>
 
+namespace drizzled
+{
+
 /*
  * Everything saved in this will disappear. It will always return NULL
  */
@@ -113,5 +116,7 @@ public:
     return 4;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_NULL_H */

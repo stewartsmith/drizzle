@@ -52,11 +52,6 @@ UNIV_INTERN dict_index_t*	dict_ind_compact;
 #include "que0que.h"
 #include "rem0cmp.h"
 #include "row0merge.h"
-#if defined(BUILD_DRIZZLE)
-# include "drizzled/charset_info.h"
-#else
-# include "m_ctype.h" /* my_isspace() */
-#endif /* BUILD_DRIZZLE */
 #include "ha_prototypes.h" /* innobase_strcasecmp() */
 
 #include <ctype.h>
@@ -2618,7 +2613,7 @@ static
 const char*
 dict_accept(
 /*========*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scan from this */
 	const char*	string,	/*!< in: accept only this string as the next
 				non-whitespace string */
@@ -2629,7 +2624,7 @@ dict_accept(
 
 	*success = FALSE;
 
-	while (my_isspace(cs, *ptr)) {
+	while (innobase_isspace(cs, *ptr)) {
 		ptr++;
 	}
 
@@ -2654,7 +2649,7 @@ static
 const char*
 dict_scan_id(
 /*=========*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scanned to */
 	mem_heap_t*	heap,	/*!< in: heap where to allocate the id
 				(NULL=id will not be allocated, but it
@@ -2676,7 +2671,7 @@ dict_scan_id(
 
 	*id = NULL;
 
-	while (my_isspace(cs, *ptr)) {
+	while (innobase_isspace(cs, *ptr)) {
 		ptr++;
 	}
 
@@ -2707,7 +2702,7 @@ dict_scan_id(
 			len++;
 		}
 	} else {
-		while (!my_isspace(cs, *ptr) && *ptr != '(' && *ptr != ')'
+		while (!innobase_isspace(cs, *ptr) && *ptr != '(' && *ptr != ')'
 		       && (accept_also_dot || *ptr != '.')
 		       && *ptr != ',' && *ptr != '\0') {
 
@@ -2773,7 +2768,7 @@ static
 const char*
 dict_scan_col(
 /*==========*/
-	const struct charset_info_st*	cs,	/*!< in: the character set of ptr */
+	const void*	cs,	/*!< in: the character set of ptr */
 	const char*		ptr,	/*!< in: scanned to */
 	ibool*			success,/*!< out: TRUE if success */
 	dict_table_t*		table,	/*!< in: table in which the column is */
@@ -2824,7 +2819,7 @@ static
 const char*
 dict_scan_table_name(
 /*=================*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scanned to */
 	dict_table_t**	table,	/*!< out: table object or NULL */
 	const char*	name,	/*!< in: foreign key table name */
@@ -2923,7 +2918,7 @@ static
 const char*
 dict_skip_word(
 /*===========*/
-	const struct charset_info_st*	cs,/*!< in: the character set of ptr */
+	const void*	cs,/*!< in: the character set of ptr */
 	const char*	ptr,	/*!< in: scanned to */
 	ibool*		success)/*!< out: TRUE if success, FALSE if just spaces
 				left in string or a syntax error */
@@ -3109,7 +3104,7 @@ dict_create_foreign_constraints_low(
 /*================================*/
 	trx_t*		trx,	/*!< in: transaction */
 	mem_heap_t*	heap,	/*!< in: memory heap */
-	const struct charset_info_st*	cs,/*!< in: the character set of sql_string */
+	const void*	cs,/*!< in: the character set of sql_string */
 	const char*	sql_string,
 				/*!< in: CREATE TABLE or ALTER TABLE statement
 				where foreign keys are declared like:
@@ -3228,11 +3223,11 @@ loop:
 
 		ut_a(success);
 
-		if (!my_isspace(cs, *ptr) && *ptr != '"' && *ptr != '`') {
+		if (!innobase_isspace(cs, *ptr) && *ptr != '"' && *ptr != '`') {
 			goto loop;
 		}
 
-		while (my_isspace(cs, *ptr)) {
+		while (innobase_isspace(cs, *ptr)) {
 			ptr++;
 		}
 
@@ -3275,7 +3270,7 @@ loop:
 		goto loop;
 	}
 
-	if (!my_isspace(cs, *ptr)) {
+	if (!innobase_isspace(cs, *ptr)) {
 		goto loop;
 	}
 
@@ -3364,7 +3359,7 @@ col_loop1:
 	}
 	ptr = dict_accept(cs, ptr, "REFERENCES", &success);
 
-	if (!success || !my_isspace(cs, *ptr)) {
+	if (!success || !innobase_isspace(cs, *ptr)) {
 		dict_foreign_report_syntax_err(
 			name, start_of_latest_foreign, ptr);
 		return(DB_CANNOT_ADD_CONSTRAINT);
@@ -3744,7 +3739,7 @@ dict_foreign_parse_drop_constraints(
 	const char*		ptr;
 	const char*		id;
 	FILE*			ef	= dict_foreign_err_file;
-	const struct charset_info_st*	cs;
+	const void*	cs;
 
 	ut_a(trx);
 	ut_a(trx->mysql_thd);
@@ -3770,14 +3765,14 @@ loop:
 
 	ptr = dict_accept(cs, ptr, "DROP", &success);
 
-	if (!my_isspace(cs, *ptr)) {
+	if (!innobase_isspace(cs, *ptr)) {
 
 		goto loop;
 	}
 
 	ptr = dict_accept(cs, ptr, "FOREIGN", &success);
 
-	if (!success || !my_isspace(cs, *ptr)) {
+	if (!success || !innobase_isspace(cs, *ptr)) {
 
 		goto loop;
 	}

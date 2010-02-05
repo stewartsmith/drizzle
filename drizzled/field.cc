@@ -45,7 +45,8 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /*****************************************************************************
   Instansiate templates and static variables
@@ -1143,7 +1144,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
       set_warning(level, code, cuted_increment))
   {
     char str_nr[22];
-    char *str_end= int64_t10_to_str(nr, str_nr, -10);
+    char *str_end= internal::int64_t10_to_str(nr, str_nr, -10);
     make_truncated_value_warning(session, level, str_nr, (uint32_t) (str_end - str_nr),
                                  ts_type, field_name);
   }
@@ -1191,3 +1192,5 @@ void Field::setWriteSet(bool arg)
   else
     table->clearWriteSet(field_index);
 }
+
+} /* namespace drizzled */

@@ -20,6 +20,9 @@
 #include "config.h"
 #include "drizzled/sql_select.h"
 
+namespace drizzled
+{
+
 /*
   Call given derived table processor (preparing or filling tables)
 
@@ -241,3 +244,5 @@ bool mysql_derived_filling(Session *session, LEX *lex, TableList *orig_table_lis
   }
   return res;
 }
+
+} /* namespace drizzled */

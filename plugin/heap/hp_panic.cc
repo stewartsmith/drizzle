@@ -16,6 +16,7 @@
 #include "heap_priv.h"
 
 using namespace std;
+using namespace drizzled;
 
 	/* if flag == HA_PANIC_CLOSE then all files are removed for more
 	   memory */

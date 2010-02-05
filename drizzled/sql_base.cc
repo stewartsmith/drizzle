@@ -52,9 +52,10 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
 
-
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 extern bool volatile shutdown_in_progress;
 
@@ -69,14 +70,10 @@ HASH open_cache;				/* Used by mysql_test */
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
-extern "C"
-{
-  void free_cache_entry(void *entry);
-  unsigned char *table_cache_key(const unsigned char *record,
-                                 size_t *length,
-                                 bool );
-}
-
+void free_cache_entry(void *entry);
+unsigned char *table_cache_key(const unsigned char *record,
+                               size_t *length,
+                               bool );
 
 
 unsigned char *table_cache_key(const unsigned char *record,
@@ -208,7 +205,7 @@ bool list_open_tables(const char *db,
 
     if (db && my_strcasecmp(system_charset_info, db, entry->s->db.str))
       continue;
-    if (wild && wild_compare(entry->s->table_name.str, wild, 0))
+    if (wild && internal::wild_compare(entry->s->table_name.str, wild, 0))
       continue;
 
     for (it= open_list.begin(); it < open_list.end(); it++)
@@ -4573,3 +4570,5 @@ void kill_drizzle(void)
   pthread_kill(signal_thread, SIGTERM);
   shutdown_in_progress= 1;			// Safety if kill didn't work
 }
+
+} /* namespace drizzled */

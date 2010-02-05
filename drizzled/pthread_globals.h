@@ -22,6 +22,9 @@
 
 #include <pthread.h>
 
+namespace drizzled
+{
+
 extern pthread_mutex_t LOCK_create_db;
 extern pthread_mutex_t LOCK_open;
 extern pthread_mutex_t LOCK_thread_count;
@@ -35,5 +38,7 @@ extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
 extern pthread_t signal_thread;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PTHREAD_GLOBALS_H */

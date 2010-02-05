@@ -54,7 +54,9 @@
 #include <float.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 const String my_null_string("NULL", 4, default_charset_info);
 
@@ -467,7 +469,7 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
     if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
     {
       char buff[22], *end;
-      end= int64_t10_to_str(value, buff, -10);
+      end= internal::int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
                                    NULL);
@@ -1774,3 +1776,4 @@ Field *create_tmp_field(Session *session,
   }
 }
 
+} /* namespace drizzled */
