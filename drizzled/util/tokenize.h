@@ -25,7 +25,7 @@ namespace drizzled
 {
 
 template <class ContainerT>
-void tokenize(const std::string& str, ContainerT& tokens, const std::string& delimiters= " ", const bool trimEmpty= false)
+void tokenize(const std::string& str, ContainerT& tokens, const std::string& delimiters= " ", bool trimEmpty= false)
 {
   std::string::size_type pos;
   std::string::size_type lastPos= 0;
