@@ -78,3 +78,105 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
 
   return 0;
 }
+
+/* 
+ * Comparison Function for TC's B+Tree. This is the only function
+ * in BlitzDB where you can feel free to write redundant code for
+ * performance. Avoid function calls unless it is necessary. If
+ * you reaaaally want to separate the code block for readability,
+ * make sure to separate the code with C++ template for inlining.
+ *                                               - Toru
+ *
+ * -1 = a < b
+ *  0 = a == b
+ *  1 = a > b
+ */
+int blitz_keycmp_cb(const char *a, int,
+                    const char *b, int, void *opaque) {
+  BlitzTree *tree = (BlitzTree *)opaque;
+  BlitzKeyPart *curr_part;
+
+  int next_part_offset = 0;
+  char *a_pos = (char *)a;
+  char *b_pos = (char *)b;
+
+  for (int i = 0; i < tree->nparts; i++) {
+    fprintf(stderr, "current part: %d\n", i);
+    curr_part = &tree->parts[i];
+
+    switch ((enum enum_field_types)curr_part->type) {
+    case DRIZZLE_TYPE_LONG: {
+      int32_t a_long_val, b_long_val;
+      a_long_val = sint4korr(a_pos);
+      b_long_val = sint4korr(b_pos);
+
+      if (a_long_val < b_long_val)
+        return -1;
+      else if (a_long_val > b_long_val)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break; 
+    }
+    case DRIZZLE_TYPE_LONGLONG: {
+      int64_t a_longlong_val, b_longlong_val;
+      a_longlong_val = sint8korr(a_pos);
+      b_longlong_val = sint8korr(b_pos);
+
+      if (a_longlong_val < b_longlong_val)
+        return -1;
+      else if (a_longlong_val > b_longlong_val)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break;
+    }
+    case DRIZZLE_TYPE_DOUBLE: {
+      double a_double_val, b_double_val;
+      float8get(a_double_val, a_pos);
+      float8get(b_double_val, b_pos);
+
+      if (a_double_val < b_double_val)
+        return -1;
+      else if (a_double_val > b_double_val)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break;
+    }
+    case DRIZZLE_TYPE_VARCHAR: {
+      uint16_t a_varchar_len, b_varchar_len;
+      int key_changed;
+
+      /* Length of a VARCHAR field is always represented with 2 bytes. */
+      a_varchar_len = uint2korr(a_pos);
+      b_varchar_len = uint2korr(b_pos);
+
+      /* Shift the pointer 2 bytes to point at the actual data. */
+      a_pos += sizeof(a_varchar_len);
+      b_pos += sizeof(b_varchar_len);
+
+      /* Compare the texts by respecting collation. */
+      key_changed = my_strnncoll(&my_charset_utf8_general_ci,
+                                 (unsigned char *)a_pos, a_varchar_len,
+                                 (unsigned char *)b_pos, b_varchar_len);
+      if (key_changed < 0)
+        return -1;
+      else if (key_changed > 0)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break; 
+    }
+    default:
+      break;
+    }
+
+    a_pos += next_part_offset;
+    b_pos += next_part_offset;
+    curr_part++;
+  }
+
+  /* Getting here means that the keys are identical */
+  return 0;
+}

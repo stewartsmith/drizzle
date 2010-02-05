@@ -34,6 +34,11 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
+  if (!tcbdbsetcmpfunc(btree, blitz_keycmp_cb, this)) {
+    tcbdbdel(btree);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
   snprintf(buf, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
 
   if (!tcbdbopen(btree, buf, mode)) {

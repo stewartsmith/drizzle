@@ -48,6 +48,10 @@ using namespace std;
 const string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
+/* Callback function for TC's B+Tree key comparison. */
+extern int blitz_keycmp_cb(const char *a, int alen,
+                           const char *b, int blen, void *opaque);
+
 static const char *ha_blitz_exts[] = {
   BLITZ_DATA_EXT,
   BLITZ_INDEX_EXT,

@@ -839,7 +839,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
         share_ptr->btrees[i].parts[j].flag |= HA_BLOB_PART;
       }
 
-      share_ptr->btrees[i].parts[j].type = curr->key_part[j].type;
+      share_ptr->btrees[i].parts[j].type = f->type();
       share_ptr->btrees[i].parts[j].offset = curr->key_part[j].offset;
       share_ptr->btrees[i].parts[j].length = curr->key_part[j].length;
     }
