@@ -12,7 +12,7 @@ select schema_name from data_dictionary.schemas;
 show databases like 't%';
 show databases;
 
-# Test for information_schema.old_tables &
+# Test for data_dictionary.tables &
 # show tables
 
 create database mysqltest;
@@ -23,7 +23,7 @@ create table mysqltest.t4(a int);
 create table t5 (id int auto_increment primary key);
 insert into t5 values (10);
 
-select table_name from information_schema.old_TABLES
+select table_name from data_dictionary.tables
 where table_schema = "mysqltest" and table_name like "t%";
 
 select * from information_schema.old_STATISTICS where TABLE_SCHEMA = "mysqltest";
@@ -73,27 +73,27 @@ where table_schema="information_schema" and table_name="COLUMNS" and
 #
 # Bug#2718 information_schema: errors in "tables"
 #
-select TABLE_ROWS from information_schema.old_tables where 
+--replace_column 1 #
+select count(*) from data_dictionary.tables where 
 table_schema="information_schema" and table_name="COLUMNS";
-select table_type from information_schema.old_tables
+
+--replace_column 1 #
+select count(*) from data_dictionary.tables
 where table_schema="mysql" and table_name="user";
 
 #
 # Bug #7215  information_schema: columns are longtext instead of varchar
 # Bug #7217  information_schema: columns are varbinary() instead of timestamp
 #
-select table_schema,table_name, column_name from
-information_schema.old_columns 
-where data_type = 'longtext';
-select table_name, column_name, data_type from information_schema.old_columns
-where data_type = 'datetime';
+select table_schema, table_name, column_name from data_dictionary.columns where data_type = 'longtext';
+select table_name, column_name, data_type from data_dictionary.columns where data_type = 'datetime';
 
 #
-# Bug #8164  subquery with information_schema.OLD_COLUMNS, 100 % CPU
+# Bug #8164  subquery with data_dictionary.COLUMNS, 100 % CPU
 #
-SELECT COUNT(*) FROM information_schema.OLD_TABLES A
+SELECT COUNT(*) FROM data_dictionary.tables A
 WHERE NOT EXISTS 
-(SELECT * FROM information_schema.OLD_COLUMNS B
+(SELECT * FROM data_dictionary.columns B
   WHERE A.TABLE_SCHEMA = B.TABLE_SCHEMA
   AND A.TABLE_NAME = B.TABLE_NAME);
 
@@ -111,7 +111,7 @@ create table t1
   x_float FLOAT,
   x_double_precision DOUBLE PRECISION );
 SELECT COLUMN_NAME, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH
-FROM information_schema.OLD_COLUMNS
+FROM data_dictionary.columns
 WHERE TABLE_NAME= 't1';
 drop table t1;
 
@@ -119,10 +119,9 @@ drop table t1;
 # Bug #9404  information_schema: Weird error messages
 # with SELECT SUM() ... GROUP BY queries
 #
-SELECT table_schema, count(*) FROM information_schema.old_TABLES
+SELECT table_schema, count(*) FROM data_dictionary.tables
 WHERE table_name NOT LIKE 'ndb_%' AND 
-table_name NOT LIKE 'falcon%' AND
-plugin_name IS NULL
+table_name NOT LIKE 'falcon%'
 GROUP BY TABLE_SCHEMA;
 
 #
@@ -166,9 +165,9 @@ alter database information_schema;
 --error ER_DBACCESS_DENIED_ERROR
 drop database information_schema;
 use information_schema;
---error 1044
+--error 1109
 drop table old_tables;
---error 1044
+--error 1109
 alter table old_tables;
 #
 # Bug #9683 INFORMATION_SCH: Creation of temporary table allowed in Information_schema DB
@@ -232,7 +231,7 @@ set @a:= '.';
 create table t1(f1 char(5));
 create table t2(f1 char(5));
 select concat(@a, table_name), @a, table_name
-from information_schema.old_tables where table_schema = 'test';
+from data_dictionary.tables where table_schema = 'test';
 drop table t1,t2;
 
 #
@@ -240,7 +239,7 @@ drop table t1,t2;
 #
 
 SELECT t.table_name, c1.column_name
-  FROM information_schema.old_tables t
+  FROM data_dictionary.tables t
        INNER JOIN
        information_schema.old_columns c1
        ON t.table_schema = c1.table_schema AND
@@ -253,10 +252,9 @@ SELECT t.table_name, c1.column_name
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
         )
-  AND t.table_name NOT LIKE 'falcon%'
-  AND t.plugin_name IS NULL;
+  AND t.table_name NOT LIKE 'falcon%';
 SELECT t.table_name, c1.column_name
-  FROM information_schema.old_tables t
+  FROM data_dictionary.tables t
        INNER JOIN
        information_schema.old_columns c1
        ON t.table_schema = c1.table_schema AND
@@ -269,25 +267,24 @@ SELECT t.table_name, c1.column_name
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
         )
-  AND t.table_name NOT LIKE 'falcon%'
-  AND t.plugin_name IS NULL;
+  AND t.table_name NOT LIKE 'falcon%';
 
 #
 # Bug#21231: query with a simple non-correlated subquery over
 #            INFORMARTION_SCHEMA.TABLES 
 #
 
-SELECT MAX(table_name) FROM information_schema.old_tables;
-SELECT table_name from information_schema.old_tables
+SELECT MAX(table_name) FROM data_dictionary.tables;
+SELECT table_name from data_dictionary.tables
   WHERE table_name=(SELECT MAX(table_name)
-                      FROM information_schema.old_tables);
+                      FROM data_dictionary.tables);
 #
 # Bug#23299 Some queries against INFORMATION_SCHEMA with subqueries fail
 #
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
 
-select table_name from information_schema.old_tables
+select table_name from data_dictionary.tables
 where table_schema = 'test' and table_name not in
 (select table_name from information_schema.old_columns
  where table_schema = 'test' and column_name = 'f3');
@@ -297,18 +294,17 @@ drop table t1,t2;
 #
 # Bug#24630  Subselect query crashes mysqld
 #
-select 1 as f1 from information_schema.old_tables  where "CHARACTER_SETS"=
-(select cast(table_name as char)  from information_schema.old_tables
+select 1 as f1 from data_dictionary.tables  where "CHARACTER_SETS"=
+(select cast(table_name as char)  from data_dictionary.tables
  order by table_name limit 1) limit 1;
 
 select t.table_name, group_concat(t.table_schema, '.', t.table_name),
        count(*) as num1
-from information_schema.old_tables t
+from data_dictionary.tables t
 inner join information_schema.old_columns c1
 on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
 where t.table_schema = 'information_schema' AND
       t.table_name not like 'falcon%' AND
-      t.plugin_name IS NULL AND
         c1.ordinal_position =
         (select isnull(c2.column_type) -
          isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
@@ -372,8 +368,8 @@ WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 #
 # Bug#31633 Information schema = NULL queries crash the server
 #
-select * from information_schema.old_columns where table_schema = NULL;
-select * from `information_schema`.`OLD_COLUMNS` where `TABLE_NAME` = NULL;
+select * from data_dictionary.columns where table_schema = NULL;
+select * from `data_dictionary`.`columns` where `TABLE_NAME` = NULL;
 select * from `information_schema`.`OLD_KEY_COLUMN_USAGE` where `TABLE_SCHEMA` = NULL;
 select * from `information_schema`.`OLD_KEY_COLUMN_USAGE` where `TABLE_NAME` = NULL;
 select * from `information_schema`.`OLD_REFERENTIAL_CONSTRAINTS` where `CONSTRAINT_SCHEMA` = NULL;
@@ -381,9 +377,8 @@ select * from `information_schema`.`OLD_REFERENTIAL_CONSTRAINTS` where `TABLE_NA
 select * from data_dictionary.schemas where schema_name = NULL;
 select * from `information_schema`.`OLD_STATISTICS` where `TABLE_SCHEMA` = NULL;
 select * from `information_schema`.`OLD_STATISTICS` where `TABLE_NAME` = NULL;
-select * from information_schema.old_tables where table_schema = NULL;
-select * from information_schema.old_tables where table_catalog = NULL;
-select * from information_schema.old_tables where table_name = NULL;
+select * from data_dictionary.tables where table_schema = NULL;
+select * from data_dictionary.tables where table_name = NULL;
 select * from `information_schema`.`OLD_TABLE_CONSTRAINTS` where `TABLE_SCHEMA` = NULL;
 select * from `information_schema`.`OLD_TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL;
 
@@ -424,10 +419,9 @@ ORDER BY collation_name;
 # perform a query on COLUMNS
 #
 SELECT table_name, column_name
-FROM information_schema.old_columns
+FROM data_dictionary.columns
 WHERE table_name IN
-(SELECT table_name FROM information_schema.old_tables 
- WHERE plugin_name IS NULL)
+(SELECT table_name FROM data_dictionary.tables )
 ORDER BY table_name;
 
 #
@@ -479,8 +473,8 @@ FROM information_schema.old_table_constraints;
 # query TABLES
 #
 SELECT table_schema, table_name
-FROM information_schema.old_tables
-WHERE plugin_name IS NULL
+FROM data_dictionary.tables
+WHERE table_schema="data_dictionary"
 ORDER BY table_name;
 
 # 

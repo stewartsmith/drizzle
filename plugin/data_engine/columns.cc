@@ -35,7 +35,7 @@ ColumnsTool::ColumnsTool() :
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
   add_field("COLUMN_DEFAULT");
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
-  add_field("DATATYPE");
+  add_field("DATA_TYPE");
 
   add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER);
   add_field("CHARACTER_OCTET_LENGTH", plugin::TableFunction::NUMBER);

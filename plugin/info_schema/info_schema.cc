@@ -28,14 +28,10 @@
 #include "drizzled/show.h"
 
 #include "helper_methods.h"
-#include "character_set.h"
 #include "columns.h"
 #include "key_column_usage.h"
-#include "open_tables.h"
 #include "referential_constraints.h"
 #include "table_constraints.h"
-#include "tables.h"
-#include "table_names.h"
 #include "statistics.h"
 #include "status.h"
 #include "variables.h"
@@ -64,9 +60,6 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(KeyColumnUsageIS::getTable());
   registry.add(VariablesIS::getTable());
   registry.add(StatisticsIS::getTable());
-  registry.add(TablesIS::getTable());
-  registry.add(OpenTablesIS::getTable());
-  registry.add(TableNamesIS::getTable());
 #if 0
 #endif
 
@@ -93,9 +86,6 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(GlobalVariablesIS::getTable());
   GlobalVariablesIS::cleanup();
 
-  registry.remove(OpenTablesIS::getTable());
-  OpenTablesIS::cleanup();
-
   registry.remove(ReferentialConstraintsIS::getTable());
   ReferentialConstraintsIS::cleanup();
 
@@ -113,12 +103,6 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
   registry.remove(TableConstraintsIS::getTable());
   TableConstraintsIS::cleanup();
-
-  registry.remove(TablesIS::getTable());
-  TablesIS::cleanup();
-
-  registry.remove(TableNamesIS::getTable());
-  TableNamesIS::cleanup();
 
   registry.remove(VariablesIS::getTable());
   VariablesIS::cleanup();

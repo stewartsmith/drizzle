@@ -178,6 +178,12 @@ public:
       /* Create_time */
       push(0);
 
+      /* Update_time */
+      push(0);
+
+      /* Check_time */
+      push(0);
+
       /* Collation */
       push(getTableProto().options().collation());
 

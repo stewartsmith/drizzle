@@ -328,28 +328,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
@@ -397,7 +375,7 @@ COLUMNS	CREATE TABLE `columns` (
   `ORDINAL_POSITION` bigint NOT NULL DEFAULT '0',
   `COLUMN_DEFAULT` varchar(64) NOT NULL DEFAULT '',
   `IS_NULLABLE` varchar(5) NOT NULL DEFAULT '',
-  `DATATYPE` varchar(64) NOT NULL DEFAULT '',
+  `DATA_TYPE` varchar(64) NOT NULL DEFAULT '',
   `CHARACTER_MAXIMUM_LENGTH` bigint NOT NULL DEFAULT '0',
   `CHARACTER_OCTET_LENGTH` bigint NOT NULL DEFAULT '0',
   `NUMERIC_PRECISION` bigint NOT NULL DEFAULT '0',

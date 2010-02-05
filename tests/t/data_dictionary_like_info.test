@@ -60,7 +60,7 @@ where COLLATION_NAME like 'latin1%';
 #
 # Bug#2719 data_dictionary: errors in "columns"
 #
-select DATATYPE from data_dictionary.columns
+select DATA_TYPE from data_dictionary.columns
 where table_schema="data_dictionary" and table_name="COLUMNS" and
 (column_name="character_set_name" or column_name="collation_name");
 
@@ -78,9 +78,9 @@ where table_schema="mysql" and table_name="user";
 #
 select table_schema,table_name, column_name from
 data_dictionary.columns 
-where DATATYPE = 'longtext';
-select table_name, column_name, DATATYPE from data_dictionary.columns
-where DATATYPE = 'datetime';
+where DATA_TYPE = 'longtext';
+select table_name, column_name, DATA_TYPE from data_dictionary.columns
+where DATA_TYPE = 'datetime';
 
 #
 # Bug #8164  subquery with DATA_DICTIONARY.COLUMNS, 100 % CPU
@@ -129,7 +129,7 @@ GROUP BY TABLE_SCHEMA;
 # Bug #12301 data_dictionary: NUMERIC_SCALE must be 0 for integer columns
 #
 create table t1(f1 LONGBLOB, f2 LONGTEXT);
-select column_name,DATATYPE,CHARACTER_OCTET_LENGTH,
+select column_name, DATA_TYPE, CHARACTER_OCTET_LENGTH,
        CHARACTER_MAXIMUM_LENGTH
 from data_dictionary.columns
 where table_name='t1';
@@ -203,12 +203,12 @@ drop table t1;
 #
 # Bug#15307 GROUP_CONCAT() with ORDER BY returns empty set on data_dictionary
 #
-select DATATYPE, group_concat(table_schema, '.', table_name), count(*) as num
+select DATA_TYPE, group_concat(table_schema, '.', table_name), count(*) as num
 from data_dictionary.columns where
 table_schema='data_dictionary' and
-(DATATYPE = 'varchar' or DATATYPE = 'varchar'
- or DATATYPE = 'varchar')
-group by DATATYPE order by DATATYPE, num;
+(DATA_TYPE = 'varchar' or DATA_TYPE = 'varchar'
+ or DATA_TYPE = 'varchar')
+group by DATA_TYPE order by DATA_TYPE, num;
 
 #
 # Bug#19236 bad COLUMNS.CHARACTER_MAXIMUM_LENGHT and CHARACTER_OCTET_LENGTH
@@ -303,13 +303,13 @@ where t.table_schema = 'data_dictionary' AND
       t.table_name not like 'falcon%' AND
       t.ENGINE IS NULL AND
         c1.ordinal_position =
-        (select isnull(c2.DATATYPE) -
+        (select isnull(c2.DATA_TYPE) -
          isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
          count(*) as num
          from data_dictionary.columns c2 where
          c2.table_schema='data_dictionary' and
-         (c2.DATATYPE = 'varchar' or c2.DATATYPE = 'varchar')
-          group by c2.DATATYPE order by num limit 1)
+         (c2.DATA_TYPE = 'varchar' or c2.DATA_TYPE = 'varchar')
+          group by c2.DATA_TYPE order by num limit 1)
 group by t.table_name order by num1, t.table_name;
 
 #
