@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/dec.h>
 
+namespace drizzled
+{
+
 class Item_func_sqrt :public Item_dec_func
 {
 public:
@@ -31,5 +34,6 @@ public:
   const char *func_name() const { return "sqrt"; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_SQRT_H */

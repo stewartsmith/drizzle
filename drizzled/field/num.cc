@@ -26,6 +26,9 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/my_sys.h"
 
+namespace drizzled
+{
+
 /**
   Numeric fields base class constructor.
 */
@@ -216,3 +219,4 @@ uint32_t Field_num::is_equal(CreateField *new_field_ptr)
 }
 
 
+} /* namespace drizzled */

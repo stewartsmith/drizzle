@@ -20,15 +20,30 @@
 #ifndef DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H
 #define DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H
 
+namespace drizzled
+{
+
 class Session;
 class Select_Lex_Unit;
 class select_result;
 
-namespace drizzled
-{
-
 namespace optimizer
 {
+
+/** select type for EXPLAIN */
+enum select_type
+{ 
+  ST_PRIMARY,
+  ST_SIMPLE,
+  ST_DERIVED,
+  ST_DEPENDENT_SUBQUERY,
+  ST_UNCACHEABLE_SUBQUERY,
+  ST_SUBQUERY,
+	ST_DEPENDENT_UNION,
+  ST_UNCACHEABLE_UNION,
+  ST_UNION,
+  ST_UNION_RESULT
+};
 
 class ExplainPlan
 {

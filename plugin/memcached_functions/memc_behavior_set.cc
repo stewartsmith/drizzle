@@ -42,6 +42,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 void MemcachedBehaviorSet::setFailureString(const char *error)
 {

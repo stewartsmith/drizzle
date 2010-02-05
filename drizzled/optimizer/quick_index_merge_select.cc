@@ -28,13 +28,11 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
 
-extern "C"
-int refpos_order_cmp(void *arg, const void *a, const void *b);
+namespace drizzled
+{
 
-extern "C"
-int refpos_order_cmp(void *arg, const void *a, const void *b)
+static int refpos_order_cmp(void *arg, const void *a, const void *b)
 {
   Cursor *cursor= (Cursor*)arg;
   return cursor->cmp_ref((const unsigned char *) a, (const unsigned char *) b);
@@ -268,7 +266,7 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
 
     KEY *key_info= head->key_info + (*it)->index;
     key_names->append(key_info->name);
-    length= int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)
@@ -276,10 +274,11 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
     KEY *key_info= head->key_info + pk_quick_select->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
 }
 
 
+} /* namespace drizzled */

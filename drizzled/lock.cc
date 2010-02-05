@@ -83,6 +83,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_sys.h"
 
+namespace drizzled
+{
 
 /**
   @defgroup Locking Locking
@@ -1129,3 +1131,5 @@ void broadcast_refresh(void)
 /**
   @} (end of group Locking)
 */
+
+} /* namespace drizzled */

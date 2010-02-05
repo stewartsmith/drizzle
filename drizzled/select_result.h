@@ -21,9 +21,12 @@
 #ifndef DRIZZLED_SELECT_RESULT_H
 #define DRIZZLED_SELECT_RESULT_H
 
+namespace drizzled
+{
+
 class JOIN;
 
-class select_result :public drizzled::memory::SqlAlloc {
+class select_result :public memory::SqlAlloc {
 protected:
   Session *session;
   Select_Lex_Unit *unit;
@@ -71,5 +74,7 @@ public:
   }
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_RESULT_H */

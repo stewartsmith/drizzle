@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 {
 
   unsigned int method;
-  my_init();
+  drizzled::internal::my_init();
 
   MY_INIT(argv[0]);
 
@@ -192,7 +192,7 @@ void scheduler(az_method use_aio)
     if (pthread_create(&mainthread, &attr, timer_thread,
                        (void *)&opt_timer_length) != 0)
     {
-      fprintf(stderr,"%s: Could not create timer thread\n", my_progname);
+      fprintf(stderr,"%s: Could not create timer thread\n", drizzled::internal::my_progname);
       exit(1);
     }
   }

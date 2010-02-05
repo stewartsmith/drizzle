@@ -50,9 +50,9 @@ private:
    */
   pthread_mutex_t LOCK_event_loop;
 
-  std::queue<Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
-  std::queue<Session *> sessions_to_be_killed; /* queue of sessions to be killed */
-  std::queue<Session *> sessions_need_processing; /* queue of sessions that needs some processing */
+  std::queue<drizzled::Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
+  std::queue<drizzled::Session *> sessions_to_be_killed; /* queue of sessions to be killed */
+  std::queue<drizzled::Session *> sessions_need_processing; /* queue of sessions that needs some processing */
   /**
    * Collection of sessions with added events
    *
@@ -60,7 +60,7 @@ private:
    * promising to encounter an io event earlier than another; so no order
    * indeed! We will change this to unordered_set/hash_set when c++0x comes.
    */
-  std::set<Session *> sessions_waiting_for_io;
+  std::set<drizzled::Session *> sessions_waiting_for_io;
 
 public:
   PoolOfThreadsScheduler(const char *name_arg);
@@ -75,7 +75,7 @@ public:
    * @return 
    *  True if there is an error.
    */
-  bool addSession(Session *session);
+  bool addSession(drizzled::Session *session);
   
   
   /**
@@ -87,7 +87,7 @@ public:
    *
    * @param[in]  session The connection to kill
    */
-  void killSession(Session *session);
+  void killSession(drizzled::Session *session);
 
   /**
    * @brief

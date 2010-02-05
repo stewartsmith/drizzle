@@ -33,8 +33,10 @@
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 static uint32_t used_blob_length(CACHE_FIELD **ptr);
 
@@ -249,3 +251,5 @@ void reset_cache_write(JOIN_CACHE *cache)
 /**
   @} (end of group Query_Optimizer)
 */
+
+} /* namespace drizzled */

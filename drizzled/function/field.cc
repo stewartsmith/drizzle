@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/field.h>
 #include <drizzled/item/cmpfunc.h>
 
 // Conversion functions
+
+namespace drizzled
+{
 
 int64_t Item_func_field::val_int()
 {
@@ -87,3 +90,5 @@ void Item_func_field::fix_length_and_dec()
   if (cmp_type == STRING_RESULT)
     agg_arg_charsets(cmp_collation, args, arg_count, MY_COLL_CMP_CONV, 1);
 }
+
+} /* namespace drizzled */

@@ -22,6 +22,9 @@
 
 #include <drizzled/item.h>
 
+namespace drizzled
+{
+
 class Item_basic_constant :public Item
 {
 public:
@@ -39,5 +42,7 @@ public:
       name= orig_name;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_BASIC_CONSTANT_H */

@@ -22,6 +22,9 @@
 
 #include <drizzled/item/int.h>
 
+namespace drizzled
+{
+
 class Item_return_int :public Item_int
 {
   enum_field_types int_field_type;
@@ -33,5 +36,6 @@ public:
   enum_field_types field_type() const { return int_field_type; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_RETURN_INT_H */

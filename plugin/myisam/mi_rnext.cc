@@ -15,6 +15,8 @@
 
 #include "myisam_priv.h"
 
+using namespace drizzled;
+
 	/*
 	   Read next row with the same key as previous read
 	   One may have done a write, update or delete of the previous row.

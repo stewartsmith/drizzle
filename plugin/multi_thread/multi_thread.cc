@@ -69,7 +69,7 @@ void MultiThreadScheduler::killSessionNow(Session *session)
   /* Locks LOCK_thread_count and deletes session */
   Session::unlink(session);
   thread_count.decrement();
-  my_thread_end();
+  internal::my_thread_end();
   pthread_exit(0);
   /* We should never reach this point. */
 }
@@ -108,7 +108,7 @@ static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
                            N_("Maximum number of user threads available."),
                            NULL, NULL, 2048, 1, 4096, 0);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(max_threads),
   NULL
 };
@@ -124,7 +124,7 @@ DRIZZLE_DECLARE_PLUGIN
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
   NULL,   /* status variables */
-  system_variables,   /* system variables */
+  sys_variables,   /* system variables */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

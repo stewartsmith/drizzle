@@ -33,7 +33,9 @@
 #include <list>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 /**
   Re-read record if more columns are needed for error message.
@@ -290,8 +292,8 @@ int mysql_update(Session *session, TableList *table_list,
       SORT_FIELD  *sortorder;
       ha_rows examined_rows;
 
-      table->sort.io_cache = new IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
+      table->sort.io_cache = new internal::IO_CACHE;
+      memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
           (table->sort.found_records= filesort(session, table, sortorder, length,
@@ -316,7 +318,7 @@ int mysql_update(Session *session, TableList *table_list,
 	update these in a separate loop based on the pointer.
       */
 
-      IO_CACHE tempfile;
+      internal::IO_CACHE tempfile;
       if (open_cached_file(&tempfile, drizzle_tmpdir,TEMP_PREFIX,
 			   DISK_BUFFER_SIZE, MYF(MY_WME)))
 	goto err;
@@ -388,7 +390,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select= new optimizer::SqlSelect;
 	select->head=table;
       }
-      if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))
+      if (reinit_io_cache(&tempfile,internal::READ_CACHE,0L,0,0))
 	error=1;
       // Read row ptrs from this cursor
       memcpy(select->file, &tempfile, sizeof(tempfile));
@@ -616,3 +618,5 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
 
   return false;
 }
+
+} /* namespace drizzled */

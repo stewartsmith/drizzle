@@ -24,6 +24,9 @@
 
 #include <bitset>
 
+namespace drizzled
+{
+
 /* Used for finding keys */
 #if MAX_INDEXES <= 64
 typedef std::bitset<72> key_map;
@@ -39,5 +42,7 @@ bool is_keymap_prefix(const key_map& map, const uint32_t n);
 bool is_overlapping(const key_map& map, const key_map& map2);
 void set_prefix(key_map& map, const uint32_t n);
 void key_map_subtract(key_map& map1, key_map& map2);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_KEY_MAP_H */

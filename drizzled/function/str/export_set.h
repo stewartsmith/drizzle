@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_export_set: public Item_str_func
 {
  public:
@@ -32,5 +35,7 @@ class Item_func_export_set: public Item_str_func
   void fix_length_and_dec();
   const char *func_name() const { return "export_set"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_EXPORT_SET_H */

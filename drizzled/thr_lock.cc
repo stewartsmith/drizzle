@@ -65,7 +65,8 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 
 #include "thr_lock.h"
 #include "drizzled/internal/m_string.h"
@@ -86,6 +87,9 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 #include <drizzled/util/test.h>
 
 using namespace std;
+
+namespace drizzled
+{
 
 bool thr_lock_inited= false;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
@@ -131,24 +135,24 @@ void thr_lock_init(THR_LOCK *lock)
   lock->write_wait.last= &lock->write_wait.data;
   lock->write.last= &lock->write.data;
 
-  pthread_mutex_lock(&THR_LOCK_lock);		/* Add to locks in use */
+  pthread_mutex_lock(&internal::THR_LOCK_lock);		/* Add to locks in use */
   thr_lock_thread_list.push_front(lock);
-  pthread_mutex_unlock(&THR_LOCK_lock);
+  pthread_mutex_unlock(&internal::THR_LOCK_lock);
 }
 
 
 void thr_lock_delete(THR_LOCK *lock)
 {
   pthread_mutex_destroy(&lock->mutex);
-  pthread_mutex_lock(&THR_LOCK_lock);
+  pthread_mutex_lock(&internal::THR_LOCK_lock);
   thr_lock_thread_list.remove(lock);
-  pthread_mutex_unlock(&THR_LOCK_lock);
+  pthread_mutex_unlock(&internal::THR_LOCK_lock);
 }
 
 
 void thr_lock_info_init(THR_LOCK_INFO *info)
 {
-  struct st_my_thread_var *tmp= my_thread_var;
+  internal::st_my_thread_var *tmp= my_thread_var;
   info->thread= tmp->pthread_self;
   info->thread_id= tmp->id;
   info->n_cursors= 0;
@@ -184,7 +188,7 @@ static enum enum_thr_lock_result
 wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
               bool in_wait_list)
 {
-  struct st_my_thread_var *thread_var= my_thread_var;
+  internal::st_my_thread_var *thread_var= my_thread_var;
   pthread_cond_t *cond= &thread_var->suspend;
   struct timespec wait_timeout;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
@@ -197,7 +201,7 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     wait->last= &data->next;
   }
 
-  statistic_increment(locks_waited, &THR_LOCK_lock);
+  statistic_increment(locks_waited, &internal::THR_LOCK_lock);
 
   /* Set up control struct to allow others to abort locks */
   thread_var->current_mutex= &data->lock->mutex;
@@ -305,7 +309,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	  lock->read_no_write_count++;
 	if (lock->get_status)
 	  (*lock->get_status)(data->status_param, 0);
-	statistic_increment(locks_immediate,&THR_LOCK_lock);
+	statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
 	goto end;
       }
       if (lock->write.data->type == TL_WRITE_ONLY)
@@ -327,7 +331,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	(*lock->get_status)(data->status_param, 0);
       if (lock_type == TL_READ_NO_INSERT)
 	lock->read_no_write_count++;
-      statistic_increment(locks_immediate,&THR_LOCK_lock);
+      statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
       goto end;
     }
     /*
@@ -376,7 +380,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	lock->write.last= &data->next;
 	if (data->lock->get_status)
 	  (*data->lock->get_status)(data->status_param, 0);
-	statistic_increment(locks_immediate,&THR_LOCK_lock);
+	statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
 	goto end;
       }
     }
@@ -406,7 +410,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	  lock->write.last= &data->next;
 	  if (data->lock->get_status)
 	    (*data->lock->get_status)(data->status_param, concurrent_insert);
-	  statistic_increment(locks_immediate,&THR_LOCK_lock);
+	  statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
 	  goto end;
 	}
       }
@@ -810,3 +814,5 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, uint64_t thread_id)
   pthread_mutex_unlock(&lock->mutex);
   return(found);
 }
+
+} /* namespace drizzled */

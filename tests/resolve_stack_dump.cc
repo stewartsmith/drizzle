@@ -18,20 +18,22 @@
  */
 
 #include "config.h"
+
+#include <cstdio>
+#include <cerrno>
+
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
-#include <errno.h>
 #include "drizzled/my_getopt.h"
-#include <stdio.h>
+
+using namespace drizzled;
 
 #define INIT_SYM_TABLE  4096
 #define INC_SYM_TABLE  4096
 #define MAX_SYM_SIZE   128
 #define DUMP_VERSION "1.4"
 #define HEX_INVALID  (unsigned char)255
-
-extern "C" bool get_one_option(int optid, const struct my_option *, char *);
 
 typedef struct sym_entry
 {
@@ -63,7 +65,7 @@ static void verify_sort(void);
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,DUMP_VERSION,
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,DUMP_VERSION,
 	 VERSION,HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
@@ -75,7 +77,7 @@ static void usage(void)
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
   printf("Resolve numeric stack strace dump into symbols.\n\n");
   printf("Usage: %s [OPTIONS] symbols-file [numeric-dump-file]\n",
-	 my_progname);
+	 internal::my_progname);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
   printf("\n\
@@ -88,7 +90,7 @@ static void die(const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  fprintf(stderr, "%s: ", my_progname);
+  fprintf(stderr, "%s: ", internal::my_progname);
   vfprintf(stderr, fmt, args);
   fprintf(stderr, "\n");
   va_end(args);
@@ -96,7 +98,7 @@ static void die(const char* fmt, ...)
 }
 
 
-bool get_one_option(int optid, const struct my_option *, char *)
+static bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch(optid) {
   case 'V':

@@ -28,8 +28,9 @@
 #include <algorithm>
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 optimizer::QuickRorUnionSelect::QuickRorUnionSelect(Session *session_param,
                                                     Table *table)
@@ -269,3 +270,4 @@ void optimizer::QuickRorUnionSelect::add_keys_and_lengths(String *key_names,
   }
 }
 
+} /* namespace drizzled */

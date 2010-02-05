@@ -28,9 +28,16 @@
 #include "drizzled/lex_string.h"
 #include "drizzled/thr_lock.h"
 
+namespace drizzled
+{
+
+namespace internal
+{
+typedef struct st_io_cache IO_CACHE;
+}
+
 class Table;
 class Field;
-typedef struct st_io_cache IO_CACHE;
 
 typedef struct st_keyfile_info {	/* used with ha_info() */
   unsigned char ref[MAX_REFLENGTH];		/* Pointer to current row */
@@ -120,7 +127,7 @@ struct RegInfo {		/* Extra info about reg */
 struct st_read_record;				/* For referense later */
 class Session;
 class Cursor;
-namespace drizzled { namespace optimizer { class SqlSelect; } }
+namespace optimizer { class SqlSelect; }
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
@@ -128,7 +135,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;
-  drizzled::optimizer::SqlSelect *select;
+  optimizer::SqlSelect *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
   uint32_t index;
@@ -136,14 +143,14 @@ typedef struct st_read_record {			/* Parameter to read_record */
   unsigned char *record;
   unsigned char *rec_buf;                /* to read field values  after filesort */
   unsigned char	*cache,*cache_pos,*cache_end,*read_positions;
-  IO_CACHE *io_cache;
+  internal::IO_CACHE *io_cache;
   bool print_error, ignore_not_found_rows;
   JoinTable *do_insideout_scan;
 } READ_RECORD;
 
-extern const char *show_comp_option_name[];
-
 typedef int *(*update_var)(Session *, struct drizzle_show_var *);
+
+} /* namespace drizzled */
 
 	/* Bits in form->status */
 #define STATUS_NO_RECORD	(1+2)	/* Record isn't usably */

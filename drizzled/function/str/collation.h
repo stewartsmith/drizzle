@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_collation :public Item_str_func
 {
 public:
@@ -36,5 +39,7 @@ public:
   };
   table_map not_null_tables() const { return 0; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_COLLATION_H */
