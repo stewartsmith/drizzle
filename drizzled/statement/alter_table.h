@@ -23,11 +23,10 @@
 
 #include <drizzled/statement/create_table.h>
 
-class Session;
-class TableList;
-
 namespace drizzled
 {
+class Session;
+class TableList;
 
 namespace message
 {

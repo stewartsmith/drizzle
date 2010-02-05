@@ -26,51 +26,53 @@ Created July 18, 2007 Vasil Dimov
 #ifndef i_s_h
 #define i_s_h
 
+#include "drizzled/plugin/info_schema_table.h"
+
 class TrxISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class LocksISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpResetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpmemISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
 class CmpmemResetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 

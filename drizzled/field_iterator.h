@@ -25,6 +25,9 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/natural_join_column.h>
 
+namespace drizzled
+{
+
 class Table;
 class TableList;
 
@@ -32,7 +35,7 @@ class TableList;
   Iterator over the fields of a generic table reference.
 */
 
-class Field_iterator: public drizzled::memory::SqlAlloc
+class Field_iterator: public memory::SqlAlloc
 {
 public:
   Field_iterator() {}                         /* Remove gcc warning */
@@ -128,5 +131,6 @@ public:
   Natural_join_column *get_natural_column_ref();
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_ITERATOR_H */

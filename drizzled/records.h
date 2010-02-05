@@ -1,4 +1,4 @@
-/*
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2009 Sun Microsystems
@@ -19,6 +19,9 @@
 
 #ifndef DRIZZLED_RECORDS_H
 #define DRIZZLED_RECORDS_H
+
+namespace drizzled
+{
 
 /**
   Initialize READ_RECORD structure to perform full index scan (in forward
@@ -112,10 +115,12 @@ void init_read_record_idx(READ_RECORD *info,
 void init_read_record(READ_RECORD *info, 
                       Session *session, 
                       Table *reg_form,
-                      drizzled::optimizer::SqlSelect *select,
+                      optimizer::SqlSelect *select,
                       int use_record_cache, 
                       bool print_errors);
 
 void end_read_record(READ_RECORD *info);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_RECORDS_H */

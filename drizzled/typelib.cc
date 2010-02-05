@@ -15,12 +15,16 @@
 
 /* Functions to handle typelib */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/internal/m_string.h"
-#include "drizzled/charset_info.h"
+#include "config.h"
+
 #include <stdio.h>
 
-using namespace drizzled;
+#include "drizzled/internal/m_string.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/typelib.h"
+
+namespace drizzled
+{
 
 static const char field_separator=',';
 
@@ -233,3 +237,5 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
 
   return to;
 }
+
+} /* namespace drizzled */

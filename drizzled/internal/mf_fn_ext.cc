@@ -13,9 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#include "config.h"
 
-#include "drizzled/internal/mysys_priv.h"
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Return a pointer to the extension of the filename.
@@ -50,3 +56,6 @@ char *fn_ext(const char *name)
   pos=strchr(gpos,FN_EXTCHAR);
   return((char*) (pos ? pos : strchr(gpos, '\0')));
 } /* fn_ext */
+
+} /* namespace internal */
+} /* namespace drizzled */

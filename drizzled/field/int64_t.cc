@@ -32,6 +32,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
@@ -289,3 +291,4 @@ const unsigned char *Field_int64_t::unpack(unsigned char* to, const unsigned cha
   return from + sizeof(val);
 }
 
+} /* namespace drizzled */

@@ -32,10 +32,10 @@
 class SchemataISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
-  virtual int oldFormat(Session *session,
+  virtual int oldFormat(drizzled::Session *session,
                         drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 

@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_found_rows :public Item_int_func
 {
 public:
@@ -31,5 +34,7 @@ public:
   const char *func_name() const { return "found_rows"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_FOUND_ROWS_H */

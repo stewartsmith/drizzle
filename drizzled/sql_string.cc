@@ -20,13 +20,30 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset.h"
+#include "drizzled/global_charset_info.h"
 
 #include <algorithm>
 
 #include "drizzled/sql_string.h"
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
+
+// Converstion functions to and from std::string.
+
+std::string String_to_std_string(String const& s)
+{
+   return std::string(s.ptr(), s.length());
+}
+
+String* set_String_from_std_string(String* s, std::string const& cs)
+{
+   s->set_ascii(cs.c_str(), cs.length());
+   s->copy();
+   return s;
+}
 
 /*****************************************************************************
 ** String functions
@@ -169,10 +186,12 @@ bool String::set_real(double num,uint32_t decimals, const CHARSET_INFO * const c
   str_charset=cs;
   if (decimals >= NOT_FIXED_DEC)
   {
-    len= my_gcvt(num, MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
+    len= internal::my_gcvt(num,
+                           internal::MY_GCVT_ARG_DOUBLE,
+                           sizeof(buff) - 1, buff, NULL);
     return copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
-  len= my_fcvt(num, decimals, buff, NULL);
+  len= internal::my_fcvt(num, decimals, buff, NULL);
   return copy(buff, (uint32_t) len, &my_charset_utf8_general_ci, cs,
               &dummy_errors);
 }
@@ -480,8 +499,9 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
       {
 	if (realloc(str_length+(uint32_t) diff))
 	  return true;
-	bmove_upp((unsigned char*) Ptr+str_length+diff, (unsigned char*) Ptr+str_length,
-		  str_length-offset-arg_length);
+	internal::bmove_upp((unsigned char*) Ptr+str_length+diff,
+                            (unsigned char*) Ptr+str_length,
+                            str_length-offset-arg_length);
       }
       if (to_length)
 	memcpy(Ptr+offset,to,to_length);
@@ -768,19 +788,46 @@ void String::swap(String &s)
   std::swap(str_charset, s.str_charset);
 }
 
-
-bool operator==(const String &s1, const String &s2)
+void String::q_append(const uint32_t n)
 {
-  return stringcmp(&s1,&s2) == 0;
+  int4store(Ptr + str_length, n);
+  str_length += 4;
+}
+void String::q_append(double d)
+{
+  float8store(Ptr + str_length, d);
+  str_length += 8;
+}
+void String::q_append(double *d)
+{
+  float8store(Ptr + str_length, *d);
+  str_length += 8;
+}
+void String::q_append(const char *data, uint32_t data_len)
+{
+  memcpy(Ptr + str_length, data, data_len);
+  str_length += data_len;
 }
 
-bool operator!=(const String &s1, const String &s2)
+void String::write_at_position(int position, uint32_t value)
 {
-  return !(s1 == s2);
+  int4store(Ptr + position,value);
 }
-
 bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end)
 {
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
+
+} /* namespace drizzled */
+
+bool operator==(const drizzled::String &s1, const drizzled::String &s2)
+{
+  return stringcmp(&s1,&s2) == 0;
+}
+
+bool operator!=(const drizzled::String &s1, const drizzled::String &s2)
+{
+  return !(s1 == s2);
+}
+

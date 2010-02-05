@@ -32,8 +32,9 @@
 #include <algorithm>
 #include <climits>
 
-using namespace drizzled;
 using namespace std;
+namespace drizzled
+{
 
 class READ_INFO {
   int	cursor;
@@ -47,7 +48,7 @@ class READ_INFO {
   int	*stack,*stack_pos;
   bool	found_end_of_line,start_of_line,eof;
   bool  need_end_io_cache;
-  IO_CACHE cache;
+  internal::IO_CACHE cache;
 
 public:
   bool error,line_cuted,found_null,enclosed;
@@ -72,7 +73,7 @@ public:
   */
   void end_io_cache()
   {
-    ::end_io_cache(&cache);
+    internal::end_io_cache(&cache);
     need_end_io_cache = 0;
   }
 
@@ -255,16 +256,16 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 #ifdef DONT_ALLOW_FULL_LOAD_DATA_PATHS
     ex->file_name+=dirname_length(ex->file_name);
 #endif
-    if (!dirname_length(ex->file_name))
+    if (!internal::dirname_length(ex->file_name))
     {
       strcpy(name, drizzle_real_data_home);
       strncat(name, tdb, FN_REFLEN-strlen(drizzle_real_data_home)-1);
-      (void) fn_format(name, ex->file_name, name, "",
+      (void) internal::fn_format(name, ex->file_name, name, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
     }
     else
     {
-      (void) fn_format(name, ex->file_name, drizzle_real_data_home, "",
+      (void) internal::fn_format(name, ex->file_name, drizzle_real_data_home, "",
 		       MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
       if (opt_secure_file_priv &&
@@ -294,7 +295,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
       if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
 	is_fifo = 1;
     }
-    if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
+    if ((file=internal::my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
     {
       my_error(ER_CANT_OPEN_FILE, MYF(0), name, errno);
       return(true);
@@ -314,7 +315,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   if (read_info.error)
   {
     if	(file >= 0)
-      my_close(file,MYF(0));			// no files in net reading
+      internal::my_close(file,MYF(0));			// no files in net reading
     return(true);				// Can't allocate buffers
   }
 
@@ -372,7 +373,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     table->next_number_field=0;
   }
   if (file >= 0)
-    my_close(file,MYF(0));
+    internal::my_close(file,MYF(0));
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
@@ -784,8 +785,8 @@ READ_INFO::READ_INFO(int file_par, size_t tot_length,
   {
     end_of_buff=buffer+buff_length;
     if (init_io_cache(&cache,(false) ? -1 : cursor, 0,
-		      (false) ? READ_NET :
-		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
+		      (false) ? internal::READ_NET :
+		      (is_fifo ? internal::READ_FIFO : internal::READ_CACHE),0L,1,
 		      MYF(MY_WME)))
     {
       free((unsigned char*) buffer);
@@ -809,7 +810,7 @@ READ_INFO::~READ_INFO()
   if (!error)
   {
     if (need_end_io_cache)
-      ::end_io_cache(&cache);
+      internal::end_io_cache(&cache);
     free(buffer);
     error=1;
   }
@@ -1141,3 +1142,4 @@ bool READ_INFO::find_start_of_fields()
 }
 
 
+} /* namespace drizzled */

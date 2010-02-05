@@ -30,6 +30,8 @@
 #include <set>
 #include <algorithm>
 
+namespace drizzled
+{
 class Session;
 class TableList;
 class Table;
@@ -38,8 +40,6 @@ typedef struct drizzle_lex_string LEX_STRING;
 
 extern const std::string INFORMATION_SCHEMA_NAME;
 
-namespace drizzled
-{
 namespace plugin
 {
 
@@ -555,7 +555,7 @@ public:
    */
   void addRow(unsigned char *buf, size_t len)
   {
-    uint32_t cs= drizzled::algorithm::crc32((const char *) buf, len);
+    uint32_t cs= algorithm::crc32((const char *) buf, len);
     Rows::iterator it= std::find_if(rows.begin(),
                                     rows.end(),
                                     FindRowByChecksum(cs));

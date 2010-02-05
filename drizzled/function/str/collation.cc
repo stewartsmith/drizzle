@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/collation.h>
+
+namespace drizzled
+{
 
 String *Item_func_collation::val_str(String *str)
 {
@@ -33,4 +36,4 @@ String *Item_func_collation::val_str(String *str)
   return str;
 }
 
-
+} /* namespace drizzled */

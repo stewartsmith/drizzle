@@ -308,7 +308,7 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
  */
 bool shouldQuoteFieldValue(Table::Field::FieldType in_type);
 
-} /* end namespace drizzled::message */
-} /* end namespace drizzled */
+} /* namespace message */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MESSAGE_STATEMENT_TRANSFORM_H */

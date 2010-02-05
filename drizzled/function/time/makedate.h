@@ -22,6 +22,9 @@
 
 #include <drizzled/function/time/date.h>
 
+namespace drizzled
+{
+
 class Item_func_makedate :public Item_date_func
 {
 public:
@@ -32,9 +35,11 @@ public:
   void fix_length_and_dec()
   {
     decimals=0;
-    max_length=drizzled::Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+    max_length=Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
   int64_t val_int();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_MAKEDATE_H */

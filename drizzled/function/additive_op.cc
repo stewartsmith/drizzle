@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/additive_op.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 /**
   Set precision of results for additive operations (+ and -)
@@ -45,3 +48,4 @@ void Item_func_additive_op::result_precision()
                                              unsigned_flag);
 }
 
+} /* namespace drizzled */

@@ -23,19 +23,22 @@
 #include "drizzled/function/time/date.h"
 #include "drizzled/temporal.h"
 
+namespace drizzled
+{
+
 /* Abstract CURDATE function. See also Item_func_curtime. */
 class Item_func_curdate :public Item_date
 {
 protected:
   DRIZZLE_TIME ltime;
-  drizzled::Date cached_temporal;
+  Date cached_temporal;
 public:
   Item_func_curdate() :Item_date() {}
   void fix_length_and_dec();
   /**
    * All functions which inherit from Item_date must implement
    * their own get_temporal() method, which takes a supplied
-   * drizzled::Date reference and populates it with a correct
+   * Date reference and populates it with a correct
    * date based on the semantics of the function.
    *
    * For CURDATE() and sisters, there is no argument, and we 
@@ -44,9 +47,9 @@ public:
    * Always returns true, since a Date can always be constructed
    * from a time_t
    *
-   * @param Reference to a drizzled::Date to populate
+   * @param Reference to a Date to populate
    */
-  bool get_temporal(drizzled::Date &temporal);
+  bool get_temporal(Date &temporal);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
 };
 
@@ -65,5 +68,7 @@ public:
   const char *func_name() const { return "utc_date"; }
   void store_now_in_TIME(DRIZZLE_TIME *now_time);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_CURDATE_H */

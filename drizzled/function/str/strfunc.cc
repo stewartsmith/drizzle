@@ -37,6 +37,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 Item_str_func::~Item_str_func() {}
 
 bool Item_str_func::fix_fields(Session *session, Item **ref)
@@ -105,3 +108,4 @@ void Item_str_func::left_right_max_length()
 
 String my_empty_string("",default_charset_info);
 
+} /* namespace drizzled */

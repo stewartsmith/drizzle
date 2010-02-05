@@ -27,10 +27,13 @@
 #include "drizzled/sql_list.h"
 #include "drizzled/cursor.h" /* for default_key_create_info */
 
+namespace drizzled
+{
+
 class Item;
 class Table_ident;
 
-namespace drizzled { namespace memory { class Root; } }
+namespace memory { class Root; }
 
 class Foreign_key: public Key 
 {
@@ -76,7 +79,7 @@ public:
    * If out of memory, a partial copy is returned and an error is set
    * in Session.
    */
-  Foreign_key(const Foreign_key &rhs, drizzled::memory::Root *mem_root);
+  Foreign_key(const Foreign_key &rhs, memory::Root *mem_root);
 
 
   /**
@@ -84,7 +87,7 @@ public:
    * 
    * @see comment for Key_part_spec::clone
    */
-  virtual Key *clone(drizzled::memory::Root *mem_root) const
+  virtual Key *clone(memory::Root *mem_root) const
   {
     return new (mem_root) Foreign_key(*this, mem_root);
   }
@@ -93,5 +96,7 @@ public:
   /* Used to validate foreign key options */
   bool validate(List<CreateField> &table_fields);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FOREIGN_KEY_H */

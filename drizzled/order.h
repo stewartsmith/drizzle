@@ -23,6 +23,11 @@
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/field.h>
 
+namespace drizzled
+{
+
+class Item;
+
 /* Order clause list element */
 
 struct order_st {
@@ -40,5 +45,7 @@ struct order_st {
   char	 *buff;				/* If tmp-table group */
   table_map used, depend_map;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ORDER_H */

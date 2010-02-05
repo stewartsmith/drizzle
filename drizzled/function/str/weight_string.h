@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_weight_string :public Item_str_func
 {
   String tmp_value;
@@ -34,5 +37,7 @@ public:
   String *val_str(String *);
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_WEIGHT_STRING_H */
