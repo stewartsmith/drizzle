@@ -55,4 +55,4 @@ public:
   int info(uint32_t flag);
 };
 
-#endif
+#endif /* PLUGIN_TABLEPROTOTESTER_TABLEPROTOTESTER_H */
