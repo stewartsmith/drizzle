@@ -4917,14 +4917,35 @@ show_param:
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
+             lex->sql_command= SQLCOM_SELECT;
              lex->statement=
                new(std::nothrow) statement::Select(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, "OLD_TABLES"))
+
+             Session *session= YYSession;
+
+             std::string column_name= "Tables_in_";
+
+             if ($3)
+             {
+               message::Schema schema_message;
+               lex->select_lex.db= $3;
+
+               if (not plugin::StorageEngine::getSchemaDefinition($3, schema_message))
+               {
+                 my_error(ER_BAD_DB_ERROR, MYF(0), $3);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "LOCAL_TABLE_STATUS"))
                DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
            }
         | COLUMNS from_or_in table_ident opt_db show_wild
           {

@@ -97,6 +97,7 @@ static TablesTool *tables;
 static TableNames *local_tables;
 static VariablesTool *global_variables;
 static VariablesTool *session_variables;
+static TableStatus *table_status;
 
 
 static int init(drizzled::plugin::Registry &registry)
@@ -117,14 +118,15 @@ static int init(drizzled::plugin::Registry &registry)
   processlist= new(std::nothrow)ProcesslistTool;
   referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
   schemas= new(std::nothrow)SchemasTool;
-  schema_names= new(std::nothrow)SchemaNames;
   global_statements= new(std::nothrow)StatementsTool(true);
-  session_statements= new(std::nothrow)StatementsTool(false);
   global_status= new(std::nothrow)StatusTool(true);
+  local_tables= new(std::nothrow)TableNames;
+  schema_names= new(std::nothrow)SchemaNames;
+  session_statements= new(std::nothrow)StatementsTool(false);
   session_status= new(std::nothrow)StatusTool(false);
   table_constraints= new(std::nothrow)TableConstraintsTool;
+  table_status= new(std::nothrow)TableStatus;
   tables= new(std::nothrow)TablesTool;
-  local_tables= new(std::nothrow)TableNames;
   global_variables= new(std::nothrow)VariablesTool(true);
   session_variables= new(std::nothrow)VariablesTool(false);
 
@@ -149,6 +151,7 @@ static int init(drizzled::plugin::Registry &registry)
   registry.add(session_status);
   registry.add(session_variables);
   registry.add(table_constraints);
+  registry.add(table_status);
   registry.add(tables);
   
   return 0;
@@ -178,6 +181,7 @@ static int finalize(drizzled::plugin::Registry &registry)
   delete session_status;
   delete session_variables;
   delete table_constraints;
+  delete table_status;
   delete tables;
 
   return 0;

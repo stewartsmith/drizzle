@@ -48,6 +48,8 @@ public:
   public:
     Generator(Field **arg);
 
+    void pushRow(drizzled::message::Table::TableOptions::RowType type);
+
     const std::string &table_name()
     {
       return (*table_iterator);
@@ -78,6 +80,10 @@ public:
 class TableNames : public TablesTool
 {
 public:
+  TableNames(const char *table_arg) :
+    TablesTool(table_arg)
+  { }
+
   TableNames() :
     TablesTool("LOCAL_TABLE_NAMES")
   {
@@ -97,6 +103,97 @@ public:
   public:
     Generator(Field **arg) :
       TablesTool::Generator(arg)
+    { }
+  };
+
+  Generator *generator(Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+class TableStatus : public TableNames
+{
+public:
+  TableStatus() :
+    TableNames("LOCAL_TABLE_STATUS")
+  {
+    add_field("Name");
+    add_field("Engine");
+    add_field("Version");
+    add_field("Row_format");
+    add_field("Rows");
+    add_field("Avg_row_length");
+    add_field("Data_length");
+    add_field("Max_data_length");
+    add_field("Index_length");
+    add_field("Data_free");
+    add_field("Auto_increment");
+    add_field("Create_time");
+    add_field("Update_time");
+    add_field("Check_time");
+    add_field("Collation");
+    add_field("Checksum");
+    add_field("Create_options");
+    add_field("Comment");
+  }
+
+  class Generator : public TableNames::Generator 
+  {
+    void fill()
+    {
+      /* Name */
+      push(table_name());
+
+      /* Engine */
+      push(getTableProto().engine().name());
+
+      /* Version */
+      push(0);
+
+      /* Row_format */
+      pushRow(getTableProto().options().row_type());
+
+      /* Rows */
+      push(0);
+
+      /* Avg_row_length */
+      push(0);
+
+      /* Data_length */
+      push(0);
+
+      /* Max_data_length */
+      push(0);
+
+      /* Index_length */
+      push(0);
+
+      /* Data_free */
+      push(0);
+
+      /* Auto_increment */
+      push(0);
+
+      /* Create_time */
+      push(0);
+
+      /* Collation */
+      push(getTableProto().options().collation());
+
+      /* Checksum */
+      push(0);
+
+      /* Create_options */
+      push("");
+
+      /* Comment */
+      push(getTableProto().options().comment());
+    }
+
+  public:
+    Generator(Field **arg) :
+      TableNames::Generator(arg)
     { }
   };
 

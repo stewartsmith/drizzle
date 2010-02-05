@@ -73,26 +73,25 @@ def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_VALUE	Value	8	65200	
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_tables	OLD_TABLES	TABLE_NAME	Name	8	256	0	N	1	0	45
-def	information_schema	old_tables	OLD_TABLES	ENGINE	Engine	8	256	0	Y	0	0	45
-def	information_schema	old_tables	OLD_TABLES	VERSION	Version	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	ROW_FORMAT	Row_format	8	40	0	Y	0	0	45
-def	information_schema	old_tables	OLD_TABLES	TABLE_ROWS	Rows	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	AVG_ROW_LENGTH	Avg_row_length	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	DATA_LENGTH	Data_length	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	MAX_DATA_LENGTH	Max_data_length	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	INDEX_LENGTH	Index_length	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	DATA_FREE	Data_free	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	AUTO_INCREMENT	Auto_increment	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	CREATE_TIME	Create_time	6	19	0	Y	128	0	63
-def	information_schema	old_tables	OLD_TABLES	UPDATE_TIME	Update_time	6	19	0	Y	128	0	63
-def	information_schema	old_tables	OLD_TABLES	CHECK_TIME	Check_time	6	19	0	Y	128	0	63
-def	information_schema	old_tables	OLD_TABLES	TABLE_COLLATION	Collation	8	256	0	Y	0	0	45
-def	information_schema	old_tables	OLD_TABLES	CHECKSUM	Checksum	5	20	0	Y	32768	0	63
-def	information_schema	old_tables	OLD_TABLES	CREATE_OPTIONS	Create_options	8	1020	0	Y	0	0	45
-def	information_schema	old_tables	OLD_TABLES	TABLE_COMMENT	Comment	8	8192	0	N	1	0	45
-def	information_schema	old_tables	OLD_TABLES	PLUGIN_NAME	Plugin_name	8	256	0	Y	0	0	45
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Name	Name	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Engine	Engine	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Version	Version	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Row_format	Row_format	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Rows	Rows	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Avg_row_length	Avg_row_length	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Data_length	Data_length	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Max_data_length	Max_data_length	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Index_length	Index_length	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Data_free	Data_free	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Auto_increment	Auto_increment	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Create_time	Create_time	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Update_time	Update_time	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Check_time	Check_time	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Collation	Collation	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Checksum	Checksum	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Create_options	Create_options	8	256	0	N	1	0	45
+def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Comment	Comment	8	256	0	N	1	0	45
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database	8	256	18	N	1	0	45
@@ -333,37 +332,37 @@ insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 truncate table t1;
 truncate table t2;
 truncate table t3;
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 drop table t1, t2, t3;
 CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;

@@ -114,6 +114,40 @@ bool TablesTool::Generator::populate()
   return true;
 }
 
+void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
+{
+  const char *str;
+
+  switch (type)
+  {
+  default:
+  case message::Table::TableOptions::ROW_TYPE_DEFAULT:
+    str= "DEFAULT";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_FIXED:
+    str= "FIXED";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
+    str= "DYNAMIC";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
+    str= "COMPRESSED";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
+    str= "REDUNDANT";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_COMPACT:
+    str= "COMPACT";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_PAGE:
+    str= "PAGE";
+    break;
+  }
+  message::Table::TableOptions options= table_proto.options();
+
+  push(str);
+}
+
 void TablesTool::Generator::fill()
 {
 
@@ -150,38 +184,7 @@ void TablesTool::Generator::fill()
   push(table_proto.engine().name());
 
   /* ROW_FORMAT */
-  {
-    const char *str;
-
-    switch (table_proto.options().row_type())
-    {
-    default:
-    case message::Table::TableOptions::ROW_TYPE_DEFAULT:
-      str= "DEFAULT";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_FIXED:
-      str= "FIXED";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
-      str= "DYNAMIC";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
-      str= "COMPRESSED";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
-      str= "REDUNDANT";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_COMPACT:
-      str= "COMPACT";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_PAGE:
-      str= "PAGE";
-      break;
-    }
-    message::Table::TableOptions options= table_proto.options();
-
-    push(str);
-  }
+  pushRow(table_proto.options().row_type());
 
   /* TABLE_COLLATION */
   push(table_proto.options().collation());

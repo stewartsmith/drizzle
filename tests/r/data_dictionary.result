@@ -332,6 +332,24 @@ COLUMN_NAME
 #
 #
 #
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
@@ -538,6 +556,7 @@ GLOBAL_VARIABLES
 INDEXES
 INDEX_PARTS
 LOCAL_TABLE_NAMES
+LOCAL_TABLE_STATUS
 MODULES
 PLUGINS
 PROCESSLIST
