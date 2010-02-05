@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_SINGLEROW_SUBSELECT_H
 #define DRIZZLED_SELECT_SINGLEROW_SUBSELECT_H
 
+namespace drizzled
+{
 
 /* Single value subselect interface class */
 class select_singlerow_subselect :public select_subselect
@@ -31,5 +33,7 @@ public:
   {}
   bool send_data(List<Item> &items);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_SINGLEROW_SUBSELECT_H */

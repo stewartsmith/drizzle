@@ -18,10 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include "plugin/data_engine/schemas.h"
 #include "drizzled/session.h"
 
-extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+namespace drizzled
+{
+extern size_t build_table_filename(char *buff,
+                                   size_t bufflen,
+                                   const char *db,
+                                   const char *table_name,
+                                   bool is_tmp);
+}
 
 using namespace std;
 using namespace drizzled;

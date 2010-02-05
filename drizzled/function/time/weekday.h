@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 class Item_func_weekday :public Item_func
 {
   bool odbc_type;
@@ -49,5 +52,7 @@ public:
     maybe_null=1;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_WEEKDAY_H */

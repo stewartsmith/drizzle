@@ -27,6 +27,9 @@
 
 #include <string>
 
+namespace drizzled
+{
+
 /**
  * Class representing a BLOB data type column
  */
@@ -219,6 +222,8 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_BLOB_H */
 

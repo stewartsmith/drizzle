@@ -41,6 +41,9 @@
 #include <bitset>
 #include <string>
 
+namespace drizzled
+{
+
 class select_result_interceptor;
 
 /* YACC and LEX Definitions */
@@ -50,6 +53,8 @@ class Table_ident;
 class file_exchange;
 class Lex_Column;
 class Item_outer_ref;
+
+} /* namespace drizzled */
 
 /*
   The following hack is needed because mysql_yacc.cc does not define
@@ -81,6 +86,9 @@ class Item_outer_ref;
 
 #define DERIVED_NONE	0
 #define DERIVED_SUBQUERY	1
+
+namespace drizzled
+{
 
 typedef List<Item> List_item;
 
@@ -247,13 +255,13 @@ public:
 
   static void *operator new(size_t size)
   {
-    return drizzled::memory::sql_alloc(size);
+    return memory::sql_alloc(size);
   }
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
+  static void *operator new(size_t size, memory::Root *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
   {  }
-  static void operator delete(void *, drizzled::memory::Root *)
+  static void operator delete(void *, memory::Root *)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}
@@ -729,7 +737,12 @@ enum enum_comment_state
   DISCARD_COMMENT
 };
 
+} /* namespace drizzled */
+
 #include "drizzled/lex_input_stream.h"
+
+namespace drizzled
+{
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list
@@ -801,7 +814,7 @@ public:
   SQL_LIST save_list;
   CreateField *last_field;
   Item_sum *in_sum_func;
-  drizzled::plugin::Function *udf;
+  plugin::Function *udf;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -814,7 +827,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
-  drizzled::statement::Statement *statement;
+  statement::Statement *statement;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like
@@ -926,6 +939,8 @@ extern bool is_lex_native_function(const LEX_STRING *name);
 /**
   @} (End of group Semantic_Analysis)
 */
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLE_SERVER */
 #endif /* DRIZZLED_SQL_LEX_H */

@@ -26,8 +26,8 @@
 #include <sstream>
 #include <iostream>
 
-namespace plugin
-{
+using namespace drizzled;
+
 namespace rot13
 {
 
@@ -79,8 +79,8 @@ public:
   }
 };
 
-using drizzled::plugin::Create_function;
-using drizzled::plugin::Registry;
+using plugin::Create_function;
+using plugin::Registry;
 typedef Create_function<Function> PluginFunction;
 PluginFunction *rot13_func= NULL;
 
@@ -98,7 +98,6 @@ static int deinit(Registry &registry)
   return 0;
 }
 
-} // rot13 namespace
-} // plugin namespace
+} /* namespace rot13 */
 
-DRIZZLE_PLUGIN(plugin::rot13::init, plugin::rot13::deinit, NULL, NULL);
+DRIZZLE_PLUGIN(rot13::init, rot13::deinit, NULL, NULL);

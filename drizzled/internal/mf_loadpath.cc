@@ -13,8 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/* Returns full load-path for a file. to may be = path */
 	/* if path is a hard-path return path */
@@ -48,3 +55,6 @@ char * my_load_path(char * to, const char *path,
   strcpy(to,buff);
   return(to);
 } /* my_load_path */
+
+} /* namespace internal */
+} /* namespace drizzled */

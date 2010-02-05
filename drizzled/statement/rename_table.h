@@ -23,11 +23,11 @@
 
 #include <drizzled/statement.h>
 
+namespace drizzled
+{
 class Session;
 class TableList;
 
-namespace drizzled
-{
 namespace statement
 {
 
@@ -54,8 +54,8 @@ private:
 
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_RENAME_TABLE_H */

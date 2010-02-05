@@ -17,6 +17,11 @@
 #include "drizzled/internal/m_string.h"
 #include <errno.h>
 
+namespace drizzled
+{
+namespace internal
+{
+
 #define MAX_NEGATIVE_NUMBER	((uint64_t) 0x8000000000000000LL)
 #define INIT_CNT  9
 #define LFACTOR   1000000000ULL
@@ -234,3 +239,6 @@ no_conv:
   *endptr= (char *) nptr;
   return 0;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

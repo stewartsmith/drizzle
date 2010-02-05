@@ -59,7 +59,7 @@ public:
    * This provides a new Client object that can be used by a Session.
    * @param[in] fd File descriptor that had activity.
    */
-  virtual drizzled::plugin::Client *getClient(int fd)= 0;
+  virtual plugin::Client *getClient(int fd)= 0;
 
   /**
    * Add a new Listen object to the list of listeners we manage.

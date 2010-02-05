@@ -79,11 +79,6 @@
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
-/**
-  Force the used temporary table to be a MyISAM table (because we will use
-  fulltext functions when reading from it.
-*/
-#define TMP_TABLE_FORCE_MYISAM          (UINT64_C(1) << 32)
 #define OPTION_PROFILING                (UINT64_C(1) << 33)
 
 /*
@@ -129,21 +124,6 @@
   You should add new commands to the end of this list, otherwise old
   servers won't be able to handle them as 'unsupported'.
 */
-
-enum enum_server_command
-{
-  COM_SLEEP,
-  COM_QUIT,
-  COM_INIT_DB,
-  COM_QUERY,
-  COM_SHUTDOWN,
-  COM_CONNECT,
-  COM_PING,
-  /* don't forget to update const char *command_name[] in sql_parse.cc */
-  /* Must be last */
-  COM_END
-};
-
 
 /*
   Length of random string sent by server on handshake; this is also length of
@@ -237,6 +217,26 @@ enum enum_server_command
 #define DRIZZLE_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
 #define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
+#if defined(__cplusplus)
+
+namespace drizzled
+{
+
+enum enum_server_command
+{
+  COM_SLEEP,
+  COM_QUIT,
+  COM_INIT_DB,
+  COM_QUERY,
+  COM_SHUTDOWN,
+  COM_CONNECT,
+  COM_PING,
+  /* don't forget to update const char *command_name[] in sql_parse.cc */
+  /* Must be last */
+  COM_END
+};
+
+
 enum enum_field_types { DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_DOUBLE,
                         DRIZZLE_TYPE_NULL,
@@ -257,5 +257,8 @@ enum enum_field_types { DRIZZLE_TYPE_LONG,
 enum Item_result {STRING_RESULT=0, REAL_RESULT, INT_RESULT, ROW_RESULT,
                   DECIMAL_RESULT};
 
+} /* namespace drizzled */
+
+#endif /* defined(__cplusplus) */
 
 #endif /* DRIZZLED_COMMON_H */

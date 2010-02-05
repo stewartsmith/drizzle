@@ -18,14 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef PLUGIN_DATA_ENGINE_FUNCTION_H
+#define PLUGIN_DATA_ENGINE_FUNCTION_H
+
 #include <assert.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
 
-#ifndef PLUGIN_DATA_ENGINE_FUNCTION_H
-#define PLUGIN_DATA_ENGINE_FUNCTION_H
 
 #include <plugin/data_engine/schemas.h>
 
@@ -38,7 +38,7 @@
 
 #include <plugin/data_engine/status.h>
 
-extern const CHARSET_INFO *default_charset_info;
+extern const drizzled::CHARSET_INFO *default_charset_info;
 
 static const char *function_exts[] = {
   NULL
@@ -55,20 +55,21 @@ public:
 
   drizzled::plugin::TableFunction *getTool(const char *name_arg);
 
-  int doCreateTable(Session *,
+  int doCreateTable(drizzled::Session *,
                     const char *,
-                    Table&,
+                    drizzled::Table&,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(Session&, const std::string) 
+  int doDropTable(drizzled::Session&, const std::string) 
   { 
     return EPERM; 
   }
 
-  virtual Cursor *create(TableShare &table, drizzled::memory::Root *mem_root);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table,
+                                   drizzled::memory::Root *mem_root);
 
   const char **bas_ext() const 
   {
@@ -84,7 +85,7 @@ public:
                        std::string &db, 
                        std::set<std::string> &set_of_names);
 
-  int doGetTableDefinition(Session &session,
+  int doGetTableDefinition(drizzled::Session &session,
                            const char *path,
                            const char *db,
                            const char *table_name,

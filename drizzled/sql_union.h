@@ -20,7 +20,12 @@
 #ifndef DRIZZLED_SQL_UNION_H
 #define DRIZZLED_SQL_UNION_H
 
+namespace drizzled
+{
+
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_UNION_H */

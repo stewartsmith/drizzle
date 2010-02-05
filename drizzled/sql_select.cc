@@ -64,8 +64,9 @@
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,
@@ -647,8 +648,8 @@ bool update_ref_and_keys(Session *session,
   {
     optimizer::KeyUse key_end,*prev,*save_pos,*use;
 
-    my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
-	  (qsort_cmp) sort_keyuse);
+    internal::my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
+                       (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     insert_dynamic(keyuse,(unsigned char*) &key_end);
@@ -5248,8 +5249,8 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
         make_unireg_sortorder(order, &length, join->sortorder)))
     goto err;
 
-  table->sort.io_cache= new IO_CACHE;
-  memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
+  table->sort.io_cache= new internal::IO_CACHE;
+  memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -6702,3 +6703,5 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 /**
   @} (end of group Query_Optimizer)
 */
+
+} /* namespace drizzled */

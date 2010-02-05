@@ -23,6 +23,8 @@
 #include "myisam_priv.h"
 #include <cstdlib>
 
+using namespace drizzled;
+
 int mi_close(MI_INFO *info)
 {
   int error=0,flag;
@@ -77,7 +79,7 @@ int mi_close(MI_INFO *info)
       */
       if (share->mode != O_RDONLY && mi_is_crashed(info))
 	mi_state_info_write(share->kfile, &share->state, 1);
-      if (my_close(share->kfile,MYF(0)))
+      if (internal::my_close(share->kfile,MYF(0)))
         error = errno;
     }
     if (share->decode_trees)
@@ -100,7 +102,7 @@ int mi_close(MI_INFO *info)
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
 
-  if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
+  if (info->dfile >= 0 && internal::my_close(info->dfile,MYF(0)))
     error = errno;
 
   free((unsigned char*) info);

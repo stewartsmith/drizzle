@@ -46,7 +46,7 @@ public:
     bool nextTableCore();
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     void pushRow(drizzled::message::Table::TableOptions::RowType type);
 
@@ -70,7 +70,7 @@ public:
     bool checkTableName();
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }
@@ -101,12 +101,12 @@ public:
     bool checkSchema();
 
   public:
-    Generator(Field **arg) :
+    Generator(drizzled::Field **arg) :
       TablesTool::Generator(arg)
     { }
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }
@@ -192,12 +192,12 @@ public:
     }
 
   public:
-    Generator(Field **arg) :
+    Generator(drizzled::Field **arg) :
       TableNames::Generator(arg)
     { }
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

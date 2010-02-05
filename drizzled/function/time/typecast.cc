@@ -24,6 +24,9 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/charset.h"
 
+namespace drizzled
+{
+
 bool Item_char_typecast::eq(const Item *item, bool binary_cmp) const
 {
   if (this == item)
@@ -271,3 +274,5 @@ int64_t Item_date_typecast::val_int()
     return 0;
   return (int64_t) (ltime.year * 10000L + ltime.month * 100 + ltime.day);
 }
+
+} /* namespace drizzled */

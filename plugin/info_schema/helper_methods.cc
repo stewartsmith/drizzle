@@ -117,19 +117,19 @@ bool show_status_array(Session *session,
           /* fall through */
         case SHOW_DOUBLE:
           /* 6 is the default precision for '%f' in sprintf() */
-          end= buff + my_fcvt(*(double *) value, 6, buff, NULL);
+          end= buff + internal::my_fcvt(*(double *) value, 6, buff, NULL);
           break;
         case SHOW_LONG_STATUS:
           value= ((char *) status_var + (ulong) value);
           /* fall through */
         case SHOW_LONG:
-          end= int10_to_str(*(long*) value, buff, 10);
+          end= internal::int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_LONGLONG_STATUS:
           value= ((char *) status_var + (uint64_t) value);
           /* fall through */
         case SHOW_LONGLONG:
-          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+          end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
           break;
         case SHOW_SIZE:
           {
@@ -142,7 +142,7 @@ bool show_status_array(Session *session,
           }
           break;
         case SHOW_HA_ROWS:
-          end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
+          end= internal::int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
           break;
         case SHOW_BOOL:
           end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
@@ -152,15 +152,8 @@ bool show_status_array(Session *session,
           break;
         case SHOW_INT:
         case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-          end= int10_to_str((long) *(uint32_t*) value, buff, 10);
+          end= internal::int10_to_str((long) *(uint32_t*) value, buff, 10);
           break;
-        case SHOW_HAVE:
-        {
-          SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
-          pos= show_comp_option_name[(int) tmp_option];
-          end= strchr(pos, '\0');
-          break;
-        }
         case SHOW_CHAR:
         {
           if (!(pos= value))
@@ -177,11 +170,11 @@ bool show_status_array(Session *session,
         }
         case SHOW_KEY_CACHE_LONG:
           value= (char*) dflt_key_cache + (ulong)value;
-          end= int10_to_str(*(long*) value, buff, 10);
+          end= internal::int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_KEY_CACHE_LONGLONG:
           value= (char*) dflt_key_cache + (ulong)value;
-          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+          end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
           break;
         case SHOW_UNDEF:
           break;                                        // Return empty string

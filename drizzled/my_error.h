@@ -22,6 +22,9 @@
 
 #include "drizzled/definitions.h"
 
+namespace drizzled
+{
+
 /* Max width of screen (for error messages) */
 #define SC_MAXWIDTH 256
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
@@ -91,10 +94,6 @@ extern error_handler_func error_handler_hook;
 #define GLOBERRS (EE_ERROR_LAST - EE_ERROR_FIRST + 1) /* Nr of global errors */
 #define EE(X)    (globerrs[(X) - EE_ERROR_FIRST])
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Error message numbers in global map */
 extern const char * globerrs[GLOBERRS];
 
@@ -109,9 +108,7 @@ const char **my_error_unregister(int first, int last);
 void my_message(uint32_t my_err, const char *str,myf MyFlags);
 void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MY_ERROR_H */
 

@@ -24,7 +24,7 @@
 #include "drizzled/plugin/info_schema_table.h"
 
 /**
- * @class OpenTablesISMethods
+ * @class Opendrizzled::TablesISMethods
  * @brief
  *   Class which implements any methods that the OPEN_TABLES
  *   I_S table needs besides the default methods
@@ -32,8 +32,8 @@
 class OpenTablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 

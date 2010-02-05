@@ -22,6 +22,9 @@
 
 #include "drizzled/thr_lock.h"
 
+namespace drizzled
+{
+
 class Session;
 class Table;
 class TableList;
@@ -58,5 +61,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list);
 bool lock_table_names(Session *session, TableList *table_list);
 void unlock_table_names(TableList *table_list, TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_LOCK_H */

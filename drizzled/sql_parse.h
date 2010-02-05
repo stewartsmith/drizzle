@@ -24,8 +24,10 @@
 #include "drizzled/common.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/comp_creator.h"
-#include <drizzled/table_identifier.h>
+#include "drizzled/table_identifier.h"
 
+namespace drizzled
+{
 
 class Session;
 class TableList;
@@ -44,7 +46,7 @@ bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
-bool create_table_precheck(drizzled::TableIdentifier &identifier);
+bool create_table_precheck(TableIdentifier &identifier);
 
 Item *negate_expression(Session *session, Item *expr);
 
@@ -89,5 +91,7 @@ Item * all_any_subquery_creator(Item *left_expr,
 
 void sql_kill(Session *session, unsigned long id, bool only_kill_query);
 char* query_table_status(Session *session,const char *db,const char *table_name);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_PARSE_H */

@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                      LEX_STRING component);
 
@@ -49,5 +52,7 @@ public:
   const char *func_name() const { return "get_system_var"; }
 };
 
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_GET_SYSTEM_VAR_H */

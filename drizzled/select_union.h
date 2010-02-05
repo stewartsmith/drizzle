@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_UNION_H
 #define DRIZZLED_SELECT_UNION_H
 
+namespace drizzled
+{
 
 class select_union :public select_result_interceptor
 {
@@ -38,5 +40,7 @@ public:
                            bool is_distinct, uint64_t options,
                            const char *alias, bool bit_fields_as_long);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_UNION_H */

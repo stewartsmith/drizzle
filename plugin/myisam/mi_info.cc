@@ -19,9 +19,11 @@
 #include <sys/stat.h>
 #include "drizzled/my_error.h"
 
+using namespace drizzled;
+
 	/* Get position to last record */
 
-my_off_t mi_position(MI_INFO *info)
+internal::my_off_t mi_position(MI_INFO *info)
 {
   return info->lastpos;
 }

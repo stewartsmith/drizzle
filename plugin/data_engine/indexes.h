@@ -44,7 +44,7 @@ public:
     virtual void fill();
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     const drizzled::message::Table::Index& getIndex()
     {
@@ -61,7 +61,7 @@ public:
     bool populate();
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

@@ -140,7 +140,7 @@ typedef Function drizzle_compentry_func_t;
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-
+using namespace drizzled;
 using namespace std;
 
 const string VER("14.14");
@@ -233,8 +233,6 @@ void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
 static int get_options(int argc,char **argv);
-extern "C" bool get_one_option(int optid, const struct my_option *opt,
-                               char *argument);
 static int com_quit(string *str,const char*),
   com_go(string *str,const char*), com_ego(string *str,const char*),
   com_print(string *str,const char*),
@@ -1210,12 +1208,12 @@ int main(int argc,char *argv[])
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
 
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(argc, (char **) argv))
   {
-    free_defaults(defaults_argv);
-    my_end();
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
     exit(1);
   }
 
@@ -1232,8 +1230,8 @@ int main(int argc,char *argv[])
   if (execute_commands(&command_error) != false)
   {
     /* we've executed a command so exit before we go into readline mode */
-    free_defaults(defaults_argv);
-    my_end();
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
     exit(command_error);
   }
 
@@ -1242,8 +1240,8 @@ int main(int argc,char *argv[])
     status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line, stdin);
     if (status.line_buff == NULL)
     {
-      free_defaults(defaults_argv);
-      my_end();
+      internal::free_defaults(defaults_argv);
+      internal::my_end();
       exit(1);
     }
   }
@@ -1337,7 +1335,7 @@ void drizzle_end(int sig)
     if (verbose)
       tee_fprintf(stdout, _("Writing history-file %s\n"),histfile);
     if (!write_history(histfile_tmp))
-      my_rename(histfile_tmp, histfile, MYF(MY_WME));
+      internal::my_rename(histfile_tmp, histfile, MYF(MY_WME));
   }
   delete status.line_buff;
   status.line_buff= 0;
@@ -1358,8 +1356,8 @@ void drizzle_end(int sig)
   free(part_username);
   free(default_prompt);
   free(current_prompt);
-  free_defaults(defaults_argv);
-  my_end();
+  internal::free_defaults(defaults_argv);
+  internal::my_end();
   exit(status.exit_status);
 }
 
@@ -1588,7 +1586,7 @@ static void usage(int version)
   const char* readline= "readline";
 
   printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"),
-         my_progname, VER.c_str(), drizzle_version(),
+         internal::my_progname, VER.c_str(), drizzle_version(),
          HOST_VENDOR, HOST_OS, HOST_CPU,
          readline, rl_library_version);
 
@@ -1599,15 +1597,14 @@ static void usage(int version)
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
-  printf(_("Usage: %s [OPTIONS] [database]\n"), my_progname);
+  printf(_("Usage: %s [OPTIONS] [database]\n"), internal::my_progname);
   my_print_help(my_long_options);
-  print_defaults("drizzle", load_default_groups);
+  internal::print_defaults("drizzle", load_default_groups);
   my_print_variables(my_long_options);
 }
 
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *, char *argument)
+static bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -1690,7 +1687,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,NULL);
     if (status.line_buff == NULL)
     {
-      my_end();
+      internal::my_end();
       exit(1);
     }
     status.line_buff->addString(argument);
@@ -3635,7 +3632,7 @@ static int com_source(string *, const char *line)
                                my_iscntrl(charset_info,end[-1])))
     end--;
   end[0]=0;
-  unpack_filename(source_name,source_name);
+  internal::unpack_filename(source_name,source_name);
   /* open file name */
   if (!(sql_file = fopen(source_name, "r")))
   {
@@ -3981,7 +3978,7 @@ com_status(string *, const char *)
   tee_fprintf(stdout, "Connection:\t\t%s\n", drizzle_con_host(&con));
 /* XXX need to save this from result
   if ((id= drizzleclient_insert_id(&drizzle)))
-    tee_fprintf(stdout, "Insert id:\t\t%s\n", llstr(id, buff));
+    tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
 */
 
   if (strcmp(drizzle_con_uds(&con), ""))

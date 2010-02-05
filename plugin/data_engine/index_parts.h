@@ -36,7 +36,7 @@ public:
     void fill();
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     bool populate();
 
@@ -45,7 +45,7 @@ public:
 
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

@@ -24,6 +24,8 @@
 #include <drizzled/function/math/real.h>
 
 // A class to handle logarithmic and trigonometric functions
+namespace drizzled
+{
 
 class Item_dec_func :public Item_real_func
 {
@@ -37,6 +39,7 @@ class Item_dec_func :public Item_real_func
   }
 };
 
+} /* namespace drizzled */
 
 
 #endif /* DRIZZLED_FUNCTION_MATH_DEC_H */

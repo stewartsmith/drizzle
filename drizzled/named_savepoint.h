@@ -1,10 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Definitions required for Tool plugin
- *
- *  Copyright (C) 2010 Sun Microsystems
- *  Copyright (C) 2010 Monty Taylor
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,35 +17,53 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_TABLE_FUNCTION_H
-#define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
+/**
+ * @file Simple named savepoint class.
+ */
 
-#include "drizzled/plugin/plugin.h"
-#inclkude "drizzled/table_function_container.h"
+#ifndef DRIZZLED_NAMED_SAVEPOINT_H
+#define DRIZZLED_NAMED_SAVEPOINT_H
 
-#include <string>
+class Ha_trx_info;
 
 namespace drizzled
 {
-namespace plugin
-{
 
-class TableFunction : public Plugin
+/**
+ * This is a class which stores information about
+ * a named savepoint in a transaction
+ */
+class NamedSavepoint
 {
-  TableFunction();
-  TableFunction(const TableFunction &);
-  TableFunction& operator=(const TableFunction &);
 public:
-  explicit TableFunction(std::string name_arg)
-    : Plugin(name_arg, "TableFunction")
+  /**
+   * Constructor
+   */
+  NamedSavepoint(const char *in_name, size_t in_name_length) :
+    ha_list(NULL),
+    name(in_name, in_name_length)
   {}
-  virtual ~TableFunction() {}
-
-  static bool addPlugin(TableFunction *function);
-  static void removePlugin(TableFunction *function);
+  ~NamedSavepoint()
+  {}
+  Ha_trx_info *ha_list;
+  const std::string &getName() const
+  {
+    return name;
+  }
+  const std::string &getName()
+  {
+    return name;
+  }
+  NamedSavepoint(const NamedSavepoint &other)
+  {
+    name.assign(other.getName());
+    ha_list= other.ha_list;
+  }
+private:
+  std::string name;
+  NamedSavepoint();
 };
 
-} /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_TABLE_FUNCTION_H */
+#endif /* DRIZZLED_NAMED_SAVEPOINT_H */

@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/error.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 Item_func_get_system_var::
 Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
@@ -83,3 +86,5 @@ Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                                       NULL, 0);
 }
 
+
+} /* namespace drizzled */

@@ -21,8 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_COLLATIONS_H
 #define PLUGIN_DATA_ENGINE_COLLATIONS_H
 
-#include "config.h"
-
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/field.h"
 
@@ -34,17 +32,17 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    CHARSET_INFO **cs;
-    CHARSET_INFO **cl;
+    drizzled::CHARSET_INFO **cs;
+    drizzled::CHARSET_INFO **cl;
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     bool populate();
 
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

@@ -37,6 +37,9 @@
 #include <drizzled/definitions.h>
 #include <drizzled/sql_string.h>
 
+namespace drizzled
+{
+
 #define DECIMAL_LONGLONG_DIGITS 22
 #define DECIMAL_LONG_DIGITS 10
 #define DECIMAL_LONG3_DIGITS 8
@@ -387,5 +390,6 @@ int my_decimal_intg(const my_decimal *a)
 
 void my_decimal_trim(uint32_t *precision, uint32_t *scale);
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MY_DECIMAL_H */

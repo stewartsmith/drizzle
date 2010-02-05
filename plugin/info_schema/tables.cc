@@ -359,7 +359,7 @@ int TablesISMethods::processTable(plugin::InfoSchemaTable *store_table,
     if (share->block_size)
     {
       ptr= strcpy(ptr, " block_size=")+12;
-      ptr= int64_t10_to_str(share->block_size, ptr, 10);
+      ptr= internal::int64_t10_to_str(share->block_size, ptr, 10);
     }
 
     table->field[19]->store(option_buff+1,

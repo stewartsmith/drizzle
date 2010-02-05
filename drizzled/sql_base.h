@@ -20,9 +20,10 @@
 #ifndef DRIZZLED_SQL_BASE_H
 #define DRIZZLED_SQL_BASE_H
 
-#include <stdint.h>
 #include <drizzled/table.h>
 
+namespace drizzled
+{
 class TableShare;
 class Name_resolution_context;
 
@@ -146,9 +147,9 @@ bool list_open_tables(const char *db,
                       const char *wild,
                       bool(*func)(Table *table,
                                   open_table_list_st& open_list,
-                                  drizzled::plugin::InfoSchemaTable *schema_table),
+                                  plugin::InfoSchemaTable *schema_table),
                       Table *display,
-                      drizzled::plugin::InfoSchemaTable *schema_table);
+                      plugin::InfoSchemaTable *schema_table);
 
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,
@@ -157,4 +158,7 @@ inline TableList *find_table_in_global_list(TableList *table,
   return find_table_in_list(table, &TableList::next_global,
                             db_name, table_name);
 }
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_SQL_BASE_H */

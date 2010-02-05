@@ -19,6 +19,8 @@
 
 #include "myisam_priv.h"
 
+using namespace drizzled;
+
 /*
 	   Read a row based on position.
 	   If filepos= HA_OFFSET_ERROR then read next row
@@ -29,7 +31,7 @@
 	   HA_ERR_END_OF_FILE = EOF.
 */
 
-int mi_rrnd(MI_INFO *info, unsigned char *buf, register my_off_t filepos)
+int mi_rrnd(MI_INFO *info, unsigned char *buf, register internal::my_off_t filepos)
 {
   bool skip_deleted_blocks;
 

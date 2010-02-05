@@ -21,56 +21,11 @@
 #ifndef PLUGIN_DATA_ENGINE_STATUS_H
 #define PLUGIN_DATA_ENGINE_STATUS_H
 
-#include "config.h"
-
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/field.h"
+#include "plugin/data_engine/state_tool.h"
+#include "plugin/data_engine/variables.h"
 
-class StateTool : public drizzled::plugin::TableFunction
-{
-  sql_var_t option_type;
-
-public:
-
-  StateTool(const char *arg, bool global);
-
-  virtual drizzle_show_var *getVariables()= 0;
-
-  virtual bool hasStatus()
-  {
-    return true;
-  }
-
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    sql_var_t option_type;
-    bool has_status;
-    drizzle_show_var *variables;
-    system_status_var status;
-    system_status_var *status_ptr;
-
-    void fill(const char *name, char *value, SHOW_TYPE show_type);
-
-    system_status_var *getStatus()
-    {
-      return status_ptr;
-    }
-
-  public:
-    Generator(Field **arg, sql_var_t option_arg,
-              drizzle_show_var *show_arg,
-              bool status_arg);
-    ~Generator();
-
-    bool populate();
-
-  };
-
-  Generator *generator(Field **arg)
-  {
-    return new Generator(arg, option_type, getVariables(), hasStatus());
-  }
-};
 
 class StatusTool : public StateTool
 {
@@ -79,9 +34,9 @@ public:
     StateTool(global ? "GLOBAL_STATUS" : "SESSION_STATUS", global)
   { }
 
-  drizzle_show_var *getVariables()
+  drizzled::drizzle_show_var *getVariables()
   {
-    return getFrontOfStatusVars();
+    return drizzled::getFrontOfStatusVars();
   }
 };
 
@@ -93,12 +48,10 @@ public:
     StateTool(global ? "GLOBAL_STATEMENTS" : "SESSION_STATEMENTS", global)
     { }
 
-  drizzle_show_var *getVariables()
+  drizzled::drizzle_show_var *getVariables()
   {
-    return getCommandStatusVars();
+    return drizzled::getCommandStatusVars();
   }
 };
-
-#include "plugin/data_engine/variables.h"
 
 #endif // PLUGIN_DATA_ENGINE_STATUS_H

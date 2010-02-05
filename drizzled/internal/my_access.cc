@@ -13,8 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   List of file names that causes problem on windows
@@ -114,3 +121,5 @@ int check_if_legal_tablename(const char *name)
 }
 
 
+} /* namespace internal */
+} /* namespace drizzled */

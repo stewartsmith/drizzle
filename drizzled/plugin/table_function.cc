@@ -31,7 +31,8 @@
 
 using namespace std;
 
-using namespace drizzled;
+namespace drizzled
+{
 
 static TableFunctionContainer table_functions;
 
@@ -200,3 +201,5 @@ bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 
   return match;
 }
+
+} /* namespace drizzled */

@@ -40,6 +40,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 #define PTR_SANE(p) ((p) && (char*)(p) >= heap_start && (char*)(p) <= heap_end)
 
 char *heap_start;
@@ -174,7 +177,7 @@ void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
   fprintf(stderr, "Stack range sanity check OK, backtrace follows:\n");
 
   /* We are 1 frame above signal frame with NPTL and 2 frames above with LT */
-  sigreturn_frame_count = thd_lib_detected == THD_LIB_LT ? 2 : 1;
+  sigreturn_frame_count = internal::thd_lib_detected == THD_LIB_LT ? 2 : 1;
 
   while (fp < (unsigned char**) stack_bottom)
   {
@@ -204,9 +207,15 @@ end:
           "problem, so please do resolve it\n");
 }
 #endif /* TARGET_OS_LINUX */
+
+} /* namespace drizzled */
+
 #endif /* HAVE_STACKTRACE */
 
 /* Produce a core for the thread */
+
+namespace drizzled
+{
 
 void write_core(int sig)
 {
@@ -226,3 +235,5 @@ void write_core(int sig)
   sigsend(P_PID,P_MYID,sig);
 #endif
 }
+
+} /* namespace drizzled */

@@ -22,6 +22,9 @@
 
 #include <drizzled/function/numhybrid.h>
 
+namespace drizzled
+{
+
 /* function where type of result detected by first argument */
 class Item_func_num1: public Item_func_numhybrid
 {
@@ -35,5 +38,6 @@ public:
   { assert(0); return 0; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_NUM1_H */

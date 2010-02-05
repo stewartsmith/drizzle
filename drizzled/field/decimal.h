@@ -23,6 +23,9 @@
 
 #include <drizzled/field/num.h>
 
+namespace drizzled
+{
+
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_decimal :public Field_num {
 public:
@@ -85,6 +88,8 @@ public:
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                                       uint32_t param_data, bool low_byte_first);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_DECIMAL_H */
 

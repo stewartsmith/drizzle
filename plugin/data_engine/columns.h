@@ -37,7 +37,7 @@ public:
     bool nextColumn();
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     bool populate();
     void fill();
@@ -48,7 +48,7 @@ public:
     }
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

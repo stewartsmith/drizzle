@@ -16,6 +16,7 @@
 #include "myisam_priv.h"
 #include <drizzled/util/test.h>
 
+using namespace drizzled;
 
 	/*
 	** Find current row with read on position or read on key

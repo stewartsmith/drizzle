@@ -41,6 +41,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern pthread_mutex_t LOCK_global_system_variables;
 static const string engine_name("MyISAM");
@@ -65,11 +66,11 @@ static const char *ha_myisam_exts[] = {
   NULL
 };
 
-class MyisamEngine : public drizzled::plugin::StorageEngine
+class MyisamEngine : public plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
+   : plugin::StorageEngine(name_arg,
                                      HTON_HAS_DATA_DICTIONARY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_STATS_RECORDS_IS_EXACT |
@@ -85,7 +86,7 @@ public:
   { }
 
   virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+                         memory::Root *mem_root)
   {
     return new (mem_root) ha_myisam(*this, table);
   }
@@ -96,7 +97,7 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
-                    drizzled::message::Table&);
+                    message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
 
@@ -107,10 +108,10 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
@@ -131,7 +132,7 @@ int MyisamEngine::doGetTableDefinition(Session&,
                                        const char *,
                                        const char *,
                                        const bool,
-                                       drizzled::message::Table *table_proto)
+                                       message::Table *table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -196,7 +197,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   HA_KEYSEG *keyseg;
   TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
-  if (!(drizzled::memory::multi_malloc(false,
+  if (!(memory::multi_malloc(false,
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
           keydef_out, share->keys * sizeof(MI_KEYDEF),
           &keyseg, (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
@@ -450,8 +451,6 @@ static int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
 }
 
 
-extern "C" {
-
 volatile int *killed_ptr(MI_CHECK *param)
 {
   /* In theory Unsafe conversion, but should be ok for now */
@@ -523,9 +522,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
   pthread_mutex_unlock(&file->s->intern_lock);
 }
 
-}
-
-ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
+ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,
                      TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
   file(0),
@@ -533,7 +530,7 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine &engine_arg,
   is_ordered(true)
 { }
 
-Cursor *ha_myisam::clone(drizzled::memory::Root *mem_root)
+Cursor *ha_myisam::clone(memory::Root *mem_root)
 {
   ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)
@@ -713,7 +710,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
       {
         char buf[40];
         /* TODO: respect myisam_repair_threads variable */
-        snprintf(buf, 40, "Repair with %d threads", my_count_bits(key_map));
+        snprintf(buf, 40, "Repair with %d threads", internal::my_count_bits(key_map));
         session->set_proc_info(buf);
         error = mi_repair_parallel(&param, file, fixed_name,
             param.testflag & T_QUICK);
@@ -786,8 +783,8 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
     {
       char llbuff[22],llbuff2[22];
       mi_check_print_warning(&param,"Number of rows changed from %s to %s",
-			     llstr(rows,llbuff),
-			     llstr(file->state->records,llbuff2));
+			     internal::llstr(rows,llbuff),
+			     internal::llstr(file->state->records,llbuff2));
     }
   }
   else
@@ -1187,7 +1184,7 @@ int ha_myisam::restart_rnd_next(unsigned char *buf, unsigned char *pos)
 int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
-  int error=mi_rrnd(file, buf, my_get_ptr(pos,ref_length));
+  int error=mi_rrnd(file, buf, internal::my_get_ptr(pos,ref_length));
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
@@ -1195,8 +1192,8 @@ int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 
 void ha_myisam::position(const unsigned char *)
 {
-  my_off_t row_position= mi_position(file);
-  my_store_ptr(ref, ref_length, row_position);
+  internal::my_off_t row_position= mi_position(file);
+  internal::my_store_ptr(ref, ref_length, row_position);
 }
 
 int ha_myisam::info(uint32_t flag)
@@ -1288,11 +1285,11 @@ int ha_myisam::info(uint32_t flag)
      if table is symlinked (Ie;  Real name is not same as generated name)
    */
     data_file_name= index_file_name= 0;
-    fn_format(name_buff, file->filename, "", MI_NAME_DEXT,
+    internal::fn_format(name_buff, file->filename, "", MI_NAME_DEXT,
               MY_APPEND_EXT | MY_UNPACK_FILENAME);
     if (strcmp(name_buff, misam_info.data_file_name))
       data_file_name=misam_info.data_file_name;
-    fn_format(name_buff, file->filename, "", MI_NAME_IEXT,
+    internal::fn_format(name_buff, file->filename, "", MI_NAME_IEXT,
               MY_APPEND_EXT | MY_UNPACK_FILENAME);
     if (strcmp(name_buff, misam_info.index_file_name))
       index_file_name=misam_info.index_file_name;
@@ -1300,7 +1297,7 @@ int ha_myisam::info(uint32_t flag)
   if (flag & HA_STATUS_ERRKEY)
   {
     errkey  = misam_info.errkey;
-    my_store_ptr(dup_ref, ref_length, misam_info.dupp_key_pos);
+    internal::my_store_ptr(dup_ref, ref_length, misam_info.dupp_key_pos);
   }
   if (flag & HA_STATUS_TIME)
     stats.update_time = misam_info.update_time;
@@ -1359,7 +1356,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
-                                drizzled::message::Table& create_proto)
+                                message::Table& create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1384,13 +1381,13 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   create_info.index_file_name=  NULL;
   create_info.language= share->table_charset->number;
 
-  if (create_proto.type() == drizzled::message::Table::TEMPORARY)
+  if (create_proto.type() == message::Table::TEMPORARY)
     create_flags|= HA_CREATE_TMP_TABLE;
   if (options & HA_OPTION_PACK_RECORD)
     create_flags|= HA_PACK_RECORD;
 
-  /* TODO: Check that the following fn_format is really needed */
-  error= mi_create(fn_format(buff, table_name, "", "",
+  /* TODO: Check that the following internal::fn_format is really needed */
+  error= mi_create(internal::fn_format(buff, table_name, "", "",
                              MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,
@@ -1501,7 +1498,7 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(drizzled::plugin::Registry &registry)
+static int myisam_init(plugin::Registry &registry)
 {
   int error;
   engine= new MyisamEngine(engine_name);
@@ -1522,7 +1519,7 @@ static int myisam_init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int myisam_deinit(drizzled::plugin::Registry &registry)
+static int myisam_deinit(plugin::Registry &registry)
 {
   registry.remove(engine);
   delete engine;
@@ -1702,7 +1699,7 @@ static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
                             N_("Default pointer size to be used for MyISAM tables."),
                             NULL, NULL, 6, 2, 7, 0);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(key_cache_block_size),
   DRIZZLE_SYSVAR(key_cache_size),
   DRIZZLE_SYSVAR(key_cache_division_limit),
@@ -1726,7 +1723,7 @@ DRIZZLE_DECLARE_PLUGIN
   myisam_init, /* Plugin Init */
   myisam_deinit, /* Plugin Deinit */
   NULL,                       /* status variables                */
-  system_variables,           /* system variables */
+  sys_variables,           /* system variables */
   NULL                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
