@@ -1,0 +1,3 @@
+drop table if exists t1;
+SHOW TABLES;
+Tables_in_test
