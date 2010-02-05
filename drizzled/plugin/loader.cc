@@ -794,12 +794,6 @@ static const string make_bookmark_name(const string &plugin, const char *name, i
 {
   /* Embed the flags into the first char of the string */
   string varname(1, static_cast<char>(flags & PLUGIN_VAR_TYPEMASK));
-
-  size_t pluginlen= 0;
-  if (not plugin.empty())
-    pluginlen= plugin.size()+1;
-  /* Add one for the _ */
-
   varname.append(plugin);
   varname.push_back('_');
   varname.append(name);
