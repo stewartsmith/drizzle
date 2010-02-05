@@ -36,6 +36,7 @@
 
 using namespace std;
 using namespace google;
+using namespace drizzled;
 
 #define TABLEPROTOTESTER_EXT ".TBT"
 
@@ -84,9 +85,9 @@ public:
   void doGetTableNames(drizzled::CachedDirectory &directory,
                        string&, set<string>& set_of_names)
   {
-//    set_of_names.insert();
     (void)directory;
-    (void)set_of_names;
+    set_of_names.insert("t1");
+
   }
 
   /* The following defines can be increased if necessary */
@@ -133,6 +134,24 @@ int TableProtoTesterEngine::doDropTable(Session&, const string)
   return EPERM;
 }
 
+static void fill_table1(message::Table *table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table->set_name("t1");
+  table->set_type(message::Table::INTERNAL);
+
+  tableopts= table->mutable_options();
+  tableopts->set_comment("Table without a StorageEngine message");
+
+  {
+    field= table->add_field();
+    field->set_name("number");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+}
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                           const char* path,
                                           const char *,
@@ -140,8 +159,12 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                           const bool,
                                           drizzled::message::Table *table_proto)
 {
-  (void)path;
-  (void)table_proto;
+  if (strcmp(path, "./test/t1") == 0)
+  {
+    if (table_proto)
+      fill_table1(table_proto);
+    return EEXIST;
+  }
   return ENOENT;
 }
 
