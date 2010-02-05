@@ -21,15 +21,19 @@
 #ifndef PLUGIN_DATA_ENGINE_CHARACTER_SETS_H
 #define PLUGIN_DATA_ENGINE_CHARACTER_SETS_H
 
+#include "config.h"
 
-class CharacterSetsTool : public Tool
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/field.h"
+
+class CharacterSetsTool : public drizzled::plugin::TableFunction
 {
 public:
 
   CharacterSetsTool();
   ~CharacterSetsTool() {}
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     CHARSET_INFO **cs;
 
@@ -40,11 +44,10 @@ public:
 
   };
 
-  Generator *generator(Field **arg)
+  CharacterSetsTool::Generator *generator(Field **arg)
   {
     return new Generator(arg);
   }
-
 };
 
-#endif // PLUGIN_DATA_ENGINE_CHARACTER_SETS_H
+#endif /* PLUGIN_DATA_ENGINE_CHARACTER_SETS_H */

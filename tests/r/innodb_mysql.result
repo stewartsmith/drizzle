@@ -1132,7 +1132,7 @@ ROW_FORMAT = COMPACT;
 # - initial check;
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM INFORMATION_SCHEMA.OLD_TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
 test	t1	Compact
@@ -1142,7 +1142,7 @@ test	t1	Compact
 ALTER TABLE t1 ROW_FORMAT = REDUNDANT;
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM INFORMATION_SCHEMA.OLD_TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
 test	t1	Redundant

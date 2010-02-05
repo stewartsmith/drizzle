@@ -22,22 +22,12 @@
 #include <assert.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/storage_engine.h>
-#include "drizzled/hash.h"
+#include <drizzled/plugin/table_function.h>
 
 #ifndef PLUGIN_DATA_ENGINE_FUNCTION_H
 #define PLUGIN_DATA_ENGINE_FUNCTION_H
 
-static const std::string engine_name("FUNCTION");
-
-#include <plugin/data_engine/tool.h>
-
 #include <plugin/data_engine/schemas.h>
-#include <plugin/data_engine/tables.h>
-#include <plugin/data_engine/columns.h>
-#include <plugin/data_engine/indexes.h>
-#include <plugin/data_engine/index_parts.h>
-#include <plugin/data_engine/referential_constraints.h>
-#include <plugin/data_engine/table_constraints.h>
 
 #include <plugin/data_engine/character_sets.h>
 #include <plugin/data_engine/collations.h>
@@ -45,8 +35,8 @@ static const std::string engine_name("FUNCTION");
 #include <plugin/data_engine/modules.h>
 #include <plugin/data_engine/plugins.h>
 #include <plugin/data_engine/processlist.h>
+
 #include <plugin/data_engine/status.h>
-#include <plugin/data_engine/variables.h>
 
 extern const CHARSET_INFO *default_charset_info;
 
@@ -56,33 +46,14 @@ static const char *function_exts[] = {
 
 class Function : public drizzled::plugin::StorageEngine
 {
-  CharacterSetsTool character_sets;
-  CollationsTool collations;
-  ColumnsTool columns;
-  IndexPartsTool index_parts;
-  IndexesTool indexes;
-  ModulesTool modules;
-  PluginsTool plugins;
-  ProcesslistTool processlist;
-  ReferentialConstraintsTool referential_constraints;
-  SchemasTool schemas;
-  StatementsTool global_statements;
-  StatementsTool session_statements;
-  StatusTool global_status;
-  StatusTool session_status;
-  TableConstraintsTool table_constraints;
-  TablesTool tables;
-  VariablesTool global_variables;
-  VariablesTool session_variables;
 
 public:
   Function(const std::string &name_arg);
 
   ~Function()
-  {
-  }
+  { }
 
-  Tool *getTool(const char *name_arg);
+  drizzled::plugin::TableFunction *getTool(const char *name_arg);
 
   int doCreateTable(Session *,
                     const char *,
@@ -102,6 +73,11 @@ public:
   const char **bas_ext() const 
   {
     return function_exts;
+  }
+
+  drizzled::plugin::TableFunction *getFunction(const std::string &path)
+  {
+    return drizzled::plugin::TableFunction::getFunction(path);
   }
 
   void doGetTableNames(drizzled::CachedDirectory&, 

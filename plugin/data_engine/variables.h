@@ -21,7 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_VARIABLES_H
 #define PLUGIN_DATA_ENGINE_VARIABLES_H
 
-
 class VariablesTool : public StateTool
 {
 public:

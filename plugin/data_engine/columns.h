@@ -21,7 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_COLUMNS_H
 #define PLUGIN_DATA_ENGINE_COLUMNS_H
 
-
 class ColumnsTool : public TablesTool
 {
 public:

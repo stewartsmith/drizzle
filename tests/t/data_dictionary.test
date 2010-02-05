@@ -69,16 +69,21 @@ show create table GLOBAL_STATEMENTS ;
 show create table GLOBAL_VARIABLES ;
 show create table INDEXES ;
 show create table INDEX_PARTS ;
+show create table LOCAL_TABLE_NAMES;
 show create table MODULES ;
 show create table PLUGINS ;
 show create table PROCESSLIST ;
 show create table REFERENTIAL_CONSTRAINTS ;
 show create table SCHEMAS ;
+show create table SCHEMA_NAMES;
 show create table SESSION_STATEMENTS;
 show create table SESSION_STATUS;
 show create table SESSION_VARIABLES;
 show create table TABLES ;
 show create table TABLE_CONSTRAINTS ;
+
+# Test the behavior of LOCAL_TABLE_NAMES
+select * from LOCAL_TABLE_NAMES;
 
 
 # Slap tests for concurrency
@@ -99,12 +104,12 @@ CREATE SCHEMA drizzleslap;
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.processlist" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.referential_constraints" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.schemas" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.tables" --delimiter=";"
 
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATEMENTS as a, data_dictionary.GLOBAL_STATEMENTS as b ORDER BY VARIABLE_NAME" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_STATUS as a, data_dictionary.GLOBAL_STATUS as b ORDER BY VARIABLE_NAME" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_VARIABLES as a, data_dictionary.GLOBAL_VARIABLES as b ORDER BY VARIABLE_NAME" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.GLOBAL_VARIABLES as a, data_dictionary.GLOBAL_VARIABLES as b" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_STATEMENTS as a, data_dictionary.SESSION_STATEMENTS as b ORDER BY VARIABLE_NAME" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_STATUS as a, data_dictionary.SESSION_STATUS as b ORDER BY VARIABLE_NAME" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_VARIABLES as a, data_dictionary.SESSION_VARIABLES as b ORDER BY VARIABLE_NAME" --delimiter=";"
@@ -118,6 +123,10 @@ CREATE SCHEMA A;
 use A;
 create table A (a int);
 SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
+
+# Test the behavior of LOCAL_TABLE_NAMES
+select * from data_dictionary.LOCAL_TABLE_NAMES;
+
 DROP SCHEMA A;
 
 

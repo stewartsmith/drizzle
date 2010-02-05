@@ -612,11 +612,6 @@ bool Item::change_context_processor(unsigned char *)
   return false;
 }
 
-bool Item::reset_query_id_processor(unsigned char *)
-{
-  return false;
-}
-
 bool Item::register_field_in_read_map(unsigned char *)
 {
   return false;

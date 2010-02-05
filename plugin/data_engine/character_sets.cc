@@ -18,23 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include "plugin/data_engine/character_sets.h"
 
 using namespace std;
 using namespace drizzled;
 
 CharacterSetsTool::CharacterSetsTool() :
-  Tool("DATA_DICTIONARY", "CHARACTER_SETS")
+  plugin::TableFunction("DATA_DICTIONARY", "CHARACTER_SETS")
 {
   add_field("CHARACTER_SET_NAME");
   add_field("DEFAULT_COLLATE_NAME");
   add_field("DESCRIPTION");
-  add_field("MAXLEN", Tool::NUMBER);
+  add_field("MAXLEN", plugin::TableFunction::NUMBER);
 }
 
 CharacterSetsTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg)
+  plugin::TableFunction::Generator(arg)
 {
   cs= all_charsets;
 }

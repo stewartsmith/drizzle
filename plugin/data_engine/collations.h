@@ -21,14 +21,18 @@
 #ifndef PLUGIN_DATA_ENGINE_COLLATIONS_H
 #define PLUGIN_DATA_ENGINE_COLLATIONS_H
 
+#include "config.h"
 
-class CollationsTool : public Tool
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/field.h"
+
+class CollationsTool : public drizzled::plugin::TableFunction
 {
 public:
 
   CollationsTool();
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     CHARSET_INFO **cs;
     CHARSET_INFO **cl;

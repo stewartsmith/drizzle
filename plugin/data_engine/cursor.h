@@ -27,8 +27,8 @@
 
 class FunctionCursor: public Cursor
 {
-  Tool *tool;
-  Tool::Generator *generator;
+  drizzled::plugin::TableFunction *tool;
+  drizzled::plugin::TableFunction::Generator *generator;
   size_t record_id;
   std::vector<unsigned char *> row_cache;
 

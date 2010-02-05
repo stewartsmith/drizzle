@@ -18,32 +18,185 @@
  */
 
 #include "config.h"
+
 #include <drizzled/plugin/table_function.h>
+#include <drizzled/table_function_container.h>
 #include <drizzled/gettext.h>
 #include "drizzled/plugin/registry.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
 
 #include <vector>
 
-class Session;
-
 using namespace std;
 
-namespace drizzled
+using namespace drizzled;
+
+static TableFunctionContainer table_functions;
+
+void plugin::TableFunction::init()
 {
+  drizzled::message::Table::StorageEngine *engine;
+  drizzled::message::Table::TableOptions *table_options;
 
-TableFunctionContainer table_functions;
+  proto.set_name(identifier.getTableName());
+  proto.set_type(drizzled::message::Table::FUNCTION);
 
-bool plugin::TableFunction::addPlugin(plugin::Tool *tool)
+  table_options= proto.mutable_options();
+  table_options->set_collation_id(default_charset_info->number);
+  table_options->set_collation(default_charset_info->name);
+
+  engine= proto.mutable_engine();
+  engine->set_name("FunctionEngine");
+}
+
+bool plugin::TableFunction::addPlugin(plugin::TableFunction *tool)
 {
   assert(tool != NULL);
-  table_functions.addTool(*tool); 
+  table_functions.addFunction(tool); 
   return false;
 }
 
-void plugin::TableFunction::removePlugin(plugin::Tool *tool)
+plugin::TableFunction *plugin::TableFunction::getFunction(const string &arg)
 {
-/* TODO - We should do this or valgrind will be unhappy */
+  return table_functions.getFunction(arg);
 }
 
+void plugin::TableFunction::getNames(const string &arg,
+                                     set<std::string> &set_of_names)
+{
+  table_functions.getNames(arg, set_of_names);
+}
 
-} /* namespace drizzled */
+plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
+{
+  return new Generator(arg);
+}
+
+void plugin::TableFunction::add_field(const char *label,
+                              uint32_t field_length)
+{
+  add_field(label, TableFunction::STRING, field_length);
+}
+
+void plugin::TableFunction::add_field(const char *label,
+                              TableFunction::ColumnType type,
+                              bool is_default_null)
+{
+  add_field(label, type, 5, is_default_null);
+}
+
+void plugin::TableFunction::add_field(const char *label,
+                              TableFunction::ColumnType type,
+                              uint32_t field_length,
+                              bool is_default_null)
+{
+  drizzled::message::Table::Field *field;
+  drizzled::message::Table::Field::FieldOptions *field_options;
+  drizzled::message::Table::Field::FieldConstraints *field_constraints;
+
+  field= proto.add_field();
+  field->set_name(label);
+
+  field_options= field->mutable_options();
+  field_constraints= field->mutable_constraints();
+  field_options->set_default_null(is_default_null);
+  field_constraints->set_is_nullable(is_default_null);
+
+  switch (type) 
+  {
+  default:
+  case TableFunction::BOOLEAN:
+    field_length= 5;
+  case TableFunction::STRING:
+    drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+    field->set_type(drizzled::message::Table::Field::VARCHAR);
+
+    string_field_options= field->mutable_string_options();
+    string_field_options->set_length(field_length);
+
+    break;
+  case TableFunction::NUMBER:
+    field->set_type(drizzled::message::Table::Field::BIGINT);
+    break;
+  }
+}
+
+plugin::TableFunction::Generator::Generator(Field **arg) :
+  columns(arg)
+{
+  scs= system_charset_info;
+}
+
+bool plugin::TableFunction::Generator::sub_populate()
+{
+  columns_iterator= columns;
+  return populate();
+}
+
+void plugin::TableFunction::Generator::push(uint64_t arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(uint32_t arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(int64_t arg)
+{
+  (*columns_iterator)->store(arg, false);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(int32_t arg)
+{
+  (*columns_iterator)->store(arg, false);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
+{
+  assert(columns_iterator);
+  assert(*columns_iterator);
+  assert(arg);
+  (*columns_iterator)->store(arg, length ? length : strlen(arg), scs);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(const std::string& arg)
+{
+  (*columns_iterator)->store(arg.c_str(), arg.length(), scs);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(bool arg)
+{
+  if (arg)
+  {
+    (*columns_iterator)->store("TRUE", 4, scs);
+  }
+  else
+  {
+    (*columns_iterator)->store("FALSE", 5, scs);
+  }
+
+  columns_iterator++;
+}
+
+bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
+{
+
+  if (not (current_session)->lex->wild)
+    return false;
+
+  bool match=  wild_case_compare(system_charset_info,
+                                 predicate.c_str(),
+                                 (current_session)->lex->wild->c_str());
+
+  return match;
+}

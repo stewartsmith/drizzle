@@ -21,7 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_INDEXES_H
 #define PLUGIN_DATA_ENGINE_INDEXES_H
 
-
 class IndexesTool : public TablesTool
 {
 public:

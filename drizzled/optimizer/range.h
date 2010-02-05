@@ -28,7 +28,7 @@
 #include <queue>
 
 class JOIN;
-class TRP_ROR_INTERSECT; 
+class RorIntersectReadPlan; 
 typedef class Item COND;
 typedef struct st_io_cache IO_CACHE;
 

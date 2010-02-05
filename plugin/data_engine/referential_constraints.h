@@ -21,12 +21,11 @@
 #ifndef PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H
 #define PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H
 
-
-class ReferentialConstraintsTool : public Tool
+class ReferentialConstraintsTool : public SchemasTool
 {
 public:
 
   ReferentialConstraintsTool();
 };
 
-#endif // PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H
+#endif /* PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H */

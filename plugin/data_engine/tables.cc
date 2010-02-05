@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include "plugin/data_engine/schemas.h"
+#include "drizzled/session.h"
 
 extern size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
 
@@ -77,6 +77,9 @@ bool TablesTool::Generator::nextTableCore()
                                              &table_proto);
   }
 
+  if (checkTableName())
+    return false;
+
   return true;
 }
 
@@ -84,12 +87,21 @@ bool TablesTool::Generator::nextTable()
 {
   while (not nextTableCore())
   {
+
+    if (is_tables_primed && table_iterator != table_names.end())
+      continue;
+
     if (not nextSchema())
       return false;
     is_tables_primed= false;
   }
 
   return true;
+}
+
+bool TablesTool::Generator::checkTableName()
+{
+  return isWild(table_name());
 }
 
 bool TablesTool::Generator::populate()
@@ -100,6 +112,40 @@ bool TablesTool::Generator::populate()
   fill();
 
   return true;
+}
+
+void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
+{
+  const char *str;
+
+  switch (type)
+  {
+  default:
+  case message::Table::TableOptions::ROW_TYPE_DEFAULT:
+    str= "DEFAULT";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_FIXED:
+    str= "FIXED";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
+    str= "DYNAMIC";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
+    str= "COMPRESSED";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
+    str= "REDUNDANT";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_COMPACT:
+    str= "COMPACT";
+    break;
+  case message::Table::TableOptions::ROW_TYPE_PAGE:
+    str= "PAGE";
+    break;
+  }
+  message::Table::TableOptions options= table_proto.options();
+
+  push(str);
 }
 
 void TablesTool::Generator::fill()
@@ -138,42 +184,22 @@ void TablesTool::Generator::fill()
   push(table_proto.engine().name());
 
   /* ROW_FORMAT */
-  {
-    const char *str;
-
-    switch (table_proto.options().row_type())
-    {
-    default:
-    case message::Table::TableOptions::ROW_TYPE_DEFAULT:
-      str= "DEFAULT";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_FIXED:
-      str= "FIXED";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
-      str= "DYNAMIC";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
-      str= "COMPRESSED";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
-      str= "REDUNDANT";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_COMPACT:
-      str= "COMPACT";
-      break;
-    case message::Table::TableOptions::ROW_TYPE_PAGE:
-      str= "PAGE";
-      break;
-    }
-    message::Table::TableOptions options= table_proto.options();
-
-    push(str);
-  }
+  pushRow(table_proto.options().row_type());
 
   /* TABLE_COLLATION */
   push(table_proto.options().collation());
 
   /* TABLE_COMMENT */
   push(table_proto.options().comment());
+}
+
+bool TableNames::Generator::checkSchema()
+{
+  Session *session= current_session;
+
+  if (session->lex->select_lex.db)
+  {
+    return schema_name().compare(session->lex->select_lex.db);
+  }
+  return session->db.compare(schema_name());
 }

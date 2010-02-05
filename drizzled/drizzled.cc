@@ -1149,11 +1149,9 @@ static SHOW_VAR com_status_vars[]= {
   {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
-  {"show_engine_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_ENGINE_STATUS]), SHOW_LONG_STATUS},
   {"show_errors",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
   {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
   {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
-  {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
   {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
   {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
   {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
@@ -1306,16 +1304,16 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (default_collation_name)
   {
     const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
-    if (!default_collation)
+    if (not default_collation)
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
+      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
-    if (!my_charset_same(default_charset_info, default_collation))
+    if (not my_charset_same(default_charset_info, default_collation))
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
-                      default_collation_name,
-                      default_charset_info->csname);
+      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
+                    default_collation_name,
+                    default_charset_info->csname);
       return 1;
     }
     default_charset_info= default_collation;
@@ -1325,7 +1323,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   global_system_variables.optimizer_switch= 0;
 
-  if (!(character_set_filesystem=
+  if (not (character_set_filesystem=
         get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
   global_system_variables.character_set_filesystem= character_set_filesystem;

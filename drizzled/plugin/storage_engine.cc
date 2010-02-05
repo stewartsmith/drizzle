@@ -952,7 +952,7 @@ bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, 
   }
   else
   {
-    ret= get_database_metadata(schema_name.c_str(), &proto);
+    ret= get_database_metadata(schema_name.c_str(), proto);
   }
 
   return ret == 0 ? true : false;

@@ -18,9 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/pthread_globals.h>
-#include <drizzled/session_list.h>
+#include <plugin/data_engine/processlist.h>
+
+#include <netdb.h>
+
+#include "drizzled/pthread_globals.h"
+#include "drizzled/session.h"
+#include "drizzled/session_list.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
 
@@ -28,20 +32,20 @@ using namespace std;
 using namespace drizzled;
 
 ProcesslistTool::ProcesslistTool() :
-  Tool("PROCESSLIST")
+  plugin::TableFunction("DATA_DICTIONARY", "PROCESSLIST")
 {
-  add_field("ID", Tool::NUMBER);
+  add_field("ID", plugin::TableFunction::NUMBER);
   add_field("USER", 16);
   add_field("HOST", NI_MAXHOST);
   add_field("DB");
   add_field("COMMAND", 16);
-  add_field("TIME", Tool::NUMBER);
-  add_field("STATE", 16);
+  add_field("TIME", plugin::TableFunction::NUMBER);
+  add_field("STATE");
   add_field("INFO", PROCESS_LIST_WIDTH);
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg)
+  plugin::TableFunction::Generator(arg)
 {
   now= time(NULL);
 

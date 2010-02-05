@@ -18,26 +18,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include "plugin/data_engine/collations.h"
 
 using namespace std;
 using namespace drizzled;
 
+
 CollationsTool::CollationsTool() :
-  Tool("COLLATIONS")
+  plugin::TableFunction("DATA_DICTIONARY", "COLLATIONS")
 {
   add_field("CHARACTER_SET_NAME");
   add_field("COLLATION_NAME");
   add_field("DESCRIPTION");
-  add_field("ID", Tool::NUMBER);
-  add_field("IS_DEFAULT", Tool::BOOLEAN);
-  add_field("IS_COMPILED", Tool::BOOLEAN);
-  add_field("SORTLEN", Tool::NUMBER);
+  add_field("ID", plugin::TableFunction::NUMBER);
+  add_field("IS_DEFAULT", plugin::TableFunction::BOOLEAN);
+  add_field("IS_COMPILED", plugin::TableFunction::BOOLEAN);
+  add_field("SORTLEN", plugin::TableFunction::NUMBER);
 }
 
 CollationsTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg)
+  plugin::TableFunction::Generator(arg)
 {
   cs= all_charsets;
   cl= all_charsets;

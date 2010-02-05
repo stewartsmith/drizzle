@@ -21,14 +21,13 @@
 #ifndef PLUGIN_DATA_ENGINE_MODULES_H
 #define PLUGIN_DATA_ENGINE_MODULES_H
 
-
-class ModulesTool : public Tool
+class ModulesTool : public drizzled::plugin::TableFunction
 {
 public:
 
   ModulesTool();
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     std::vector<drizzled::plugin::Module *> modules;
     std::vector<drizzled::plugin::Module *>::iterator it;

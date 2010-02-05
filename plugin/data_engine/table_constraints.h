@@ -22,7 +22,7 @@
 #define PLUGIN_DATA_ENGINE_TABLE_CONSTAINTS_H
 
 
-class TableConstraintsTool : public Tool
+class TableConstraintsTool : public TablesTool
 {
 public:
 

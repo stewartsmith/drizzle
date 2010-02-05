@@ -20,56 +20,25 @@
 
 #include <plugin/data_engine/function.h>
 #include <plugin/data_engine/cursor.h>
-#include <drizzled/table_function_container.h>
 
 #include <string>
 
 using namespace std;
 using namespace drizzled;
 
-static TableFunctionContainer table_functions;
-
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
+                                  HTON_HAS_DATA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
-                                  HTON_TEMPORARY_NOT_SUPPORTED),
-  global_statements(true),
-  session_statements(false),
-  global_status(true),
-  session_status(false),
-  global_variables(true),
-  session_variables(false)
+                                  HTON_TEMPORARY_NOT_SUPPORTED)
 {
-  table_functions.addTool(character_sets);
-  table_functions.addTool(collations);
-  table_functions.addTool(columns);
-  table_functions.addTool(global_statements);
-  table_functions.addTool(global_status);
-  table_functions.addTool(global_variables);
-  table_functions.addTool(index_parts);
-  table_functions.addTool(indexes);
-  table_functions.addTool(modules);
-  table_functions.addTool(plugins);
-  table_functions.addTool(processlist);
-  table_functions.addTool(referential_constraints);
-  table_functions.addTool(schemas);
-  table_functions.addTool(session_statements);
-  table_functions.addTool(session_status);
-  table_functions.addTool(session_variables);
-  table_functions.addTool(table_constraints);
-  table_functions.addTool(tables);
 }
 
 
 Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 {
   return new (mem_root) FunctionCursor(*this, table);
-}
-
-Tool *Function::getTool(const char *path)
-{
-  return table_functions.getTool(path);
 }
 
 int Function::doGetTableDefinition(Session &,
@@ -83,16 +52,16 @@ int Function::doGetTableDefinition(Session &,
   transform(tab_name.begin(), tab_name.end(),
             tab_name.begin(), ::tolower);
 
-  Tool *tool= table_functions.getTool(tab_name);
+  drizzled::plugin::TableFunction *function= getFunction(tab_name);
 
-  if (not tool)
+  if (not function)
   {
     return ENOENT;
   }
 
   if (table_proto)
   {
-    tool->define(*table_proto);
+    function->define(*table_proto);
   }
 
   return EEXIST;
@@ -100,32 +69,120 @@ int Function::doGetTableDefinition(Session &,
 
 
 void Function::doGetTableNames(drizzled::CachedDirectory&, 
-                                        string &db, 
-                                        set<string> &set_of_names)
+                               string &db, 
+                               set<string> &set_of_names)
 {
-  table_functions.getNames(db, set_of_names);
+  drizzled::plugin::TableFunction::getNames(db, set_of_names);
 }
 
 
-static plugin::StorageEngine *function_plugin= NULL;
+static drizzled::plugin::StorageEngine *function_plugin= NULL;
+static CharacterSetsTool *character_sets;
+static CollationsTool *collations;
+static ColumnsTool *columns;
+static IndexPartsTool *index_parts;
+static IndexesTool *indexes;
+static ModulesTool *modules;
+static PluginsTool *plugins;
+static ProcesslistTool *processlist;
+static ReferentialConstraintsTool *referential_constraints;
+static SchemasTool *schemas;
+static SchemaNames *schema_names;
+static StatementsTool *global_statements;
+static StatementsTool *session_statements;
+static StatusTool *global_status;
+static StatusTool *session_status;
+static TableConstraintsTool *table_constraints;
+static TablesTool *tables;
+static TableNames *local_tables;
+static VariablesTool *global_variables;
+static VariablesTool *session_variables;
+static TableStatus *table_status;
 
-static int init(plugin::Registry &registry)
+
+static int init(drizzled::plugin::Registry &registry)
 {
-  function_plugin= new(std::nothrow) Function(engine_name);
-  if (! function_plugin)
+  function_plugin= new(std::nothrow) Function("FunctionEngine");
+  if (not function_plugin)
   {
     return 1;
   }
 
+  character_sets= new(std::nothrow)CharacterSetsTool;
+  collations= new(std::nothrow)CollationsTool;
+  columns= new(std::nothrow)ColumnsTool;
+  index_parts= new(std::nothrow)IndexPartsTool;
+  indexes= new(std::nothrow)IndexesTool;
+  modules= new(std::nothrow)ModulesTool;
+  plugins= new(std::nothrow)PluginsTool;
+  processlist= new(std::nothrow)ProcesslistTool;
+  referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
+  schemas= new(std::nothrow)SchemasTool;
+  global_statements= new(std::nothrow)StatementsTool(true);
+  global_status= new(std::nothrow)StatusTool(true);
+  local_tables= new(std::nothrow)TableNames;
+  schema_names= new(std::nothrow)SchemaNames;
+  session_statements= new(std::nothrow)StatementsTool(false);
+  session_status= new(std::nothrow)StatusTool(false);
+  table_constraints= new(std::nothrow)TableConstraintsTool;
+  table_status= new(std::nothrow)TableStatus;
+  tables= new(std::nothrow)TablesTool;
+  global_variables= new(std::nothrow)VariablesTool(true);
+  session_variables= new(std::nothrow)VariablesTool(false);
+
   registry.add(function_plugin);
+
+  registry.add(character_sets);
+  registry.add(collations);
+  registry.add(columns);
+  registry.add(global_statements);
+  registry.add(global_status);
+  registry.add(global_variables);
+  registry.add(index_parts);
+  registry.add(indexes);
+  registry.add(local_tables);
+  registry.add(modules);
+  registry.add(plugins);
+  registry.add(processlist);
+  registry.add(referential_constraints);
+  registry.add(schema_names);
+  registry.add(schemas);
+  registry.add(session_statements);
+  registry.add(session_status);
+  registry.add(session_variables);
+  registry.add(table_constraints);
+  registry.add(table_status);
+  registry.add(tables);
   
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
   registry.remove(function_plugin);
   delete function_plugin;
+
+  delete character_sets;
+  delete collations;
+  delete columns;
+  delete global_statements;
+  delete global_status;
+  delete global_variables;
+  delete index_parts;
+  delete indexes;
+  delete local_tables;
+  delete modules;
+  delete plugins;
+  delete processlist;
+  delete referential_constraints;
+  delete schema_names;
+  delete schemas;
+  delete session_statements;
+  delete session_status;
+  delete session_variables;
+  delete table_constraints;
+  delete table_status;
+  delete tables;
 
   return 0;
 }
@@ -133,10 +190,10 @@ static int finalize(plugin::Registry &registry)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "DICTIONARY",
+  "FunctionEngine",
   "1.0",
   "Brian Aker",
-  "Function provides the information for data_dictionary,etc.",
+  "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
   finalize,     /* Plugin Deinit */

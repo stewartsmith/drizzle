@@ -21,14 +21,18 @@
 #ifndef PLUGIN_DATA_ENGINE_PROCESSLIST_H
 #define PLUGIN_DATA_ENGINE_PROCESSLIST_H
 
+#include "config.h"
 
-class ProcesslistTool : public Tool
+#include "drizzled/plugin/table_function.h"
+
+
+class ProcesslistTool : public drizzled::plugin::TableFunction
 {
 public:
 
   ProcesslistTool();
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     time_t now;
     std::vector<Session*>::iterator it;

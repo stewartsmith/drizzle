@@ -126,13 +126,11 @@ void init_update_queries(void)
 
   sql_command_flags[SQLCOM_SHOW_STATUS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_DATABASES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_OPEN_TABLES]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
@@ -181,7 +179,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  session->query_id= query_id.value();
+  session->setQueryId(query_id.value());
 
   switch( command ) {
   /* Ignore these statements. */
@@ -355,6 +353,42 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
+static bool _schema_select(Session *session, Select_Lex *sel,
+                           const string& schema_table_name)
+{
+  LEX_STRING db, table;
+  /*
+     We have to make non const db_name & table_name
+     because of lower_case_table_names
+  */
+  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
+  session->make_lex_string(&table, schema_table_name, false);
+
+  if (! sel->add_table_to_list(session, new Table_ident(db, table),
+                               NULL, 0, TL_READ))
+  {
+    return true;
+  }
+  return false;
+}
+
+int prepare_new_schema_table(Session *session, LEX *lex,
+                             const string& schema_table_name)
+{
+  Select_Lex *schema_select_lex= NULL;
+
+  Select_Lex *select_lex= lex->current_select;
+  assert(select_lex);
+  if (_schema_select(session, select_lex, schema_table_name))
+  {
+    return(1);
+  }
+  TableList *table_list= (TableList*) select_lex->table_list.first;
+  assert(table_list);
+  table_list->schema_select_lex= schema_select_lex;
+
+  return 0;
+}
 
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
                          const string& schema_table_name)
@@ -362,7 +396,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   Select_Lex *schema_select_lex= NULL;
 
 
-  if (schema_table_name.compare("TABLES") == 0 ||
+  if (schema_table_name.compare("OLD_TABLES") == 0 ||
       schema_table_name.compare("TABLE_NAMES") == 0)
   {
     LEX_STRING db;
@@ -383,8 +417,8 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
       return (1);
     }
   }
-  else if (schema_table_name.compare("COLUMNS") == 0 ||
-           schema_table_name.compare("STATISTICS") == 0)
+  else if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
+           schema_table_name.compare("OLD_STATISTICS") == 0)
   {
     assert(table_ident);
     TableList **query_tables_last= lex->query_tables_last;

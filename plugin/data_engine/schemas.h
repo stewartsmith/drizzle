@@ -21,21 +21,31 @@
 #ifndef PLUGIN_DATA_ENGINE_SCHEMAS_H
 #define PLUGIN_DATA_ENGINE_SCHEMAS_H
 
-class SchemasTool : public Tool
+#include "config.h"
+
+#include <set>
+
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/current_session.h"
+#include "drizzled/plugin/storage_engine.h"
+#include "drizzled/message/schema.pb.h"
+#include "drizzled/field.h"
+
+class SchemasTool : public drizzled::plugin::TableFunction
 {
 public:
 
   SchemasTool();
 
   SchemasTool(const char *schema_arg, const char *table_arg) :
-    Tool(schema_arg, table_arg)
+    drizzled::plugin::TableFunction(schema_arg, table_arg)
   { }
 
   SchemasTool(const char *table_arg) :
-    Tool(table_arg)
+    drizzled::plugin::TableFunction("data_dictionary", table_arg)
   { }
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     drizzled::message::Schema schema;
     std::set<std::string> schema_names;
@@ -43,7 +53,8 @@ public:
     bool is_schema_primed;
     bool is_schema_parsed;
 
-    void fill();
+    virtual void fill();
+    virtual bool checkSchema();
 
   public:
     Generator(Field **arg);
@@ -55,6 +66,7 @@ public:
     }
 
     bool populate();
+    bool nextSchemaCore();
     bool nextSchema();
     bool isSchemaPrimed()
     {
@@ -67,5 +79,42 @@ public:
     return new Generator(arg);
   }
 };
+
+class SchemaNames : public SchemasTool
+{
+public:
+  SchemaNames() :
+    SchemasTool("SCHEMA_NAMES")
+  {
+    add_field("SCHEMA_NAME");
+  }
+
+  class Generator : public SchemasTool::Generator 
+  {
+    void fill()
+    {
+      /* SCHEMA_NAME */
+      push(schema_name());
+    }
+
+  public:
+    Generator(Field **arg) :
+      SchemasTool::Generator(arg)
+    { }
+  };
+
+  Generator *generator(Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+#include "plugin/data_engine/tables.h"
+#include "plugin/data_engine/columns.h"
+#include "plugin/data_engine/indexes.h"
+#include "plugin/data_engine/index_parts.h"
+#include "plugin/data_engine/referential_constraints.h"
+#include "plugin/data_engine/table_constraints.h"
+
 
 #endif // PLUGIN_DATA_ENGINE_SCHEMAS_H

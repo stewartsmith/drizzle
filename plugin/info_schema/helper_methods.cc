@@ -54,7 +54,7 @@ bool show_status_array(Session *session,
                        sql_var_t value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
-                       bool ucase_names,
+                       bool ,
                        plugin::InfoSchemaTable *schema_table)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
@@ -76,8 +76,6 @@ bool show_status_array(Session *session,
   {
     strncpy(prefix_end, variables->name, len);
     name_buffer[sizeof(name_buffer)-1]=0;       /* Safety */
-    if (ucase_names)
-      make_upper(name_buffer);
 
     /*
       if var->type is SHOW_FUNC, call the function.
@@ -90,7 +88,7 @@ bool show_status_array(Session *session,
     if (show_type == SHOW_ARRAY)
     {
       show_status_array(session, wild, (SHOW_VAR *) var->value, value_type,
-                        status_var, name_buffer, table, ucase_names, schema_table);
+                        status_var, name_buffer, table, false, schema_table);
     }
     else
     {

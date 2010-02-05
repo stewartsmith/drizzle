@@ -241,7 +241,7 @@ plugin::InfoSchemaTable *TablesIS::getTable()
 
   if (tbls_table == NULL)
   {
-    tbls_table= new plugin::InfoSchemaTable("TABLES",
+    tbls_table= new plugin::InfoSchemaTable("OLD_TABLES",
                                             *columns,
                                             1, 2, false, true,
                                             0,

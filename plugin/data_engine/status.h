@@ -21,8 +21,12 @@
 #ifndef PLUGIN_DATA_ENGINE_STATUS_H
 #define PLUGIN_DATA_ENGINE_STATUS_H
 
+#include "config.h"
 
-class StateTool : public Tool
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/field.h"
+
+class StateTool : public drizzled::plugin::TableFunction
 {
   sql_var_t option_type;
 
@@ -37,7 +41,7 @@ public:
     return true;
   }
 
-  class Generator : public Tool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     sql_var_t option_type;
     bool has_status;
@@ -94,4 +98,7 @@ public:
     return getCommandStatusVars();
   }
 };
+
+#include "plugin/data_engine/variables.h"
+
 #endif // PLUGIN_DATA_ENGINE_STATUS_H

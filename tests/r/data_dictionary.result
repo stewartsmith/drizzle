@@ -350,21 +350,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 count(*)
 #
@@ -391,7 +376,7 @@ CHARACTER_SETS	CREATE TABLE `character_sets` (
   `DEFAULT_COLLATE_NAME` varchar(64) NOT NULL DEFAULT '',
   `DESCRIPTION` varchar(64) NOT NULL DEFAULT '',
   `MAXLEN` bigint NOT NULL DEFAULT '0'
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table COLLATIONS ;
 Table	Create Table
 COLLATIONS	CREATE TABLE `collations` (
@@ -402,7 +387,7 @@ COLLATIONS	CREATE TABLE `collations` (
   `IS_DEFAULT` varchar(5) NOT NULL DEFAULT '',
   `IS_COMPILED` varchar(5) NOT NULL DEFAULT '',
   `SORTLEN` bigint NOT NULL DEFAULT '0'
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table COLUMNS ;
 Table	Create Table
 COLUMNS	CREATE TABLE `columns` (
@@ -419,25 +404,25 @@ COLUMNS	CREATE TABLE `columns` (
   `NUMERIC_SCALE` bigint NOT NULL DEFAULT '0',
   `COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_COMMENT` varchar(1024) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table GLOBAL_STATUS ;
 Table	Create Table
 GLOBAL_STATUS	CREATE TABLE `global_status` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table GLOBAL_STATEMENTS ;
 Table	Create Table
 GLOBAL_STATEMENTS	CREATE TABLE `global_statements` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table GLOBAL_VARIABLES ;
 Table	Create Table
 GLOBAL_VARIABLES	CREATE TABLE `global_variables` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table INDEXES ;
 Table	Create Table
 INDEXES	CREATE TABLE `indexes` (
@@ -450,7 +435,7 @@ INDEXES	CREATE TABLE `indexes` (
   `KEY_LENGTH` bigint NOT NULL DEFAULT '0',
   `INDEX_TYPE` varchar(64) NOT NULL DEFAULT '',
   `INDEX_COMMENT` varchar(1024) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table INDEX_PARTS ;
 Table	Create Table
 INDEX_PARTS	CREATE TABLE `index_parts` (
@@ -461,7 +446,12 @@ INDEX_PARTS	CREATE TABLE `index_parts` (
   `COLUMN_NUMBER` bigint NOT NULL DEFAULT '0',
   `COMPARE_LENGTH` bigint NOT NULL DEFAULT '0',
   `IS_ORDER_REVERSE` varchar(5) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
+show create table LOCAL_TABLE_NAMES;
+Table	Create Table
+LOCAL_TABLE_NAMES	CREATE TABLE `local_table_names` (
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
 show create table MODULES ;
 Table	Create Table
 MODULES	CREATE TABLE `modules` (
@@ -472,7 +462,7 @@ MODULES	CREATE TABLE `modules` (
   `MODULE_LIBRARY` varchar(254) NOT NULL DEFAULT '',
   `MODULE_DESCRIPTION` varchar(254) NOT NULL DEFAULT '',
   `MODULE_LICENSE` varchar(80) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table PLUGINS ;
 Table	Create Table
 PLUGINS	CREATE TABLE `plugins` (
@@ -480,7 +470,7 @@ PLUGINS	CREATE TABLE `plugins` (
   `PLUGIN_TYPE` varchar(64) NOT NULL DEFAULT '',
   `IS_ACTIVE` varchar(5) NOT NULL DEFAULT '',
   `MODULE_NAME` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table PROCESSLIST ;
 Table	Create Table
 PROCESSLIST	CREATE TABLE `processlist` (
@@ -490,16 +480,14 @@ PROCESSLIST	CREATE TABLE `processlist` (
   `DB` varchar(64) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(16) NOT NULL DEFAULT '',
+  `STATE` varchar(64) NOT NULL DEFAULT '',
   `INFO` varchar(100) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table REFERENTIAL_CONSTRAINTS ;
 Table	Create Table
 REFERENTIAL_CONSTRAINTS	CREATE TABLE `referential_constraints` (
-  `CONSTRAINT_CATALOG` varchar(512) NOT NULL DEFAULT '',
   `CONSTRAINT_SCHEMA` varchar(64) NOT NULL DEFAULT '',
   `CONSTRAINT_NAME` varchar(64) NOT NULL DEFAULT '',
-  `UNIQUE_CONSTRAINT_CATALOG` varchar(512) NOT NULL DEFAULT '',
   `UNIQUE_CONSTRAINT_SCHEMA` varchar(64) NOT NULL DEFAULT '',
   `UNIQUE_CONSTRAINT_NAME` varchar(64) NOT NULL DEFAULT '',
   `MATCH_OPTION` varchar(64) NOT NULL DEFAULT '',
@@ -507,31 +495,36 @@ REFERENTIAL_CONSTRAINTS	CREATE TABLE `referential_constraints` (
   `DELETE_RULE` varchar(64) NOT NULL DEFAULT '',
   `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `REFERENCED_TABLE_NAME` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table SCHEMAS ;
 Table	Create Table
 SCHEMAS	CREATE TABLE `schemas` (
   `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT '',
   `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
+show create table SCHEMA_NAMES;
+Table	Create Table
+SCHEMA_NAMES	CREATE TABLE `schema_names` (
+  `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
 show create table SESSION_STATEMENTS;
 Table	Create Table
 SESSION_STATEMENTS	CREATE TABLE `session_statements` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table SESSION_STATUS;
 Table	Create Table
 SESSION_STATUS	CREATE TABLE `session_status` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table SESSION_VARIABLES;
 Table	Create Table
 SESSION_VARIABLES	CREATE TABLE `session_variables` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(16300) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table TABLES ;
 Table	Create Table
 TABLES	CREATE TABLE `tables` (
@@ -542,7 +535,7 @@ TABLES	CREATE TABLE `tables` (
   `ROW_FORMAT` varchar(10) NOT NULL DEFAULT '',
   `TABLE_COLLATION` varchar(64) NOT NULL DEFAULT '',
   `TABLE_COMMENT` varchar(2048) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
 show create table TABLE_CONSTRAINTS ;
 Table	Create Table
 TABLE_CONSTRAINTS	CREATE TABLE `table_constraints` (
@@ -551,7 +544,30 @@ TABLE_CONSTRAINTS	CREATE TABLE `table_constraints` (
   `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
   `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `CONSTRAINT_TYPE` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=FUNCTION
+) ENGINE=FunctionEngine
+select * from LOCAL_TABLE_NAMES;
+TABLE_NAME
+CHARACTER_SETS
+COLLATIONS
+COLUMNS
+GLOBAL_STATEMENTS
+GLOBAL_STATUS
+GLOBAL_VARIABLES
+INDEXES
+INDEX_PARTS
+LOCAL_TABLE_NAMES
+LOCAL_TABLE_STATUS
+MODULES
+PLUGINS
+PROCESSLIST
+REFERENTIAL_CONSTRAINTS
+SCHEMAS
+SCHEMA_NAMES
+SESSION_STATEMENTS
+SESSION_STATUS
+SESSION_VARIABLES
+TABLES
+TABLE_CONSTRAINTS
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
@@ -561,4 +577,7 @@ create table A (a int);
 SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
 COUNT(*)
 1
+select * from data_dictionary.LOCAL_TABLE_NAMES;
+TABLE_NAME
+a
 DROP SCHEMA A;

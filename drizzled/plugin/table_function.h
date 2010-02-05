@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Definitions required for Tool plugin
+ *  Definitions required for TableFunction plugin
  *
  *  Copyright (C) 2010 Sun Microsystems
  *  Copyright (C) 2010 Monty Taylor
@@ -24,28 +24,141 @@
 #define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
 
 #include "drizzled/plugin/plugin.h"
-#inclkude "drizzled/table_function_container.h"
+#include "drizzled/table_identifier.h"
+#include "drizzled/message/table.pb.h"
+#include "drizzled/charset.h"
+#include "drizzled/field.h"
 
 #include <string>
+#include <set>
+
+extern int wild_case_compare(const CHARSET_INFO * const cs, 
+                             const char *str,const char *wildstr);
 
 namespace drizzled
 {
+
 namespace plugin
 {
+
 
 class TableFunction : public Plugin
 {
   TableFunction();
   TableFunction(const TableFunction &);
   TableFunction& operator=(const TableFunction &);
+
+  drizzled::message::Table proto;
+  drizzled::TableIdentifier identifier;
+  std::string local_path;
+  std::string local_schema;
+
+  void setName(); // init name
+
+  void init();
+
 public:
-  explicit TableFunction(std::string name_arg)
-    : Plugin(name_arg, "TableFunction")
-  {}
+  TableFunction(const char *schema_arg, const char *table_arg) :
+    Plugin(table_arg, "TableFunction"),
+    identifier(schema_arg, table_arg)
+  {
+    init();
+  }
+
   virtual ~TableFunction() {}
 
   static bool addPlugin(TableFunction *function);
-  static void removePlugin(TableFunction *function);
+  static void removePlugin(TableFunction *) 
+  { }
+  static TableFunction *getFunction(const std::string &arg);
+  static void getNames(const std::string &arg,
+                       std::set<std::string> &set_of_names);
+
+  enum ColumnType {
+    BOOLEAN,
+    NUMBER,
+    STRING
+  };
+
+  class Generator 
+  {
+    Field **columns;
+    Field **columns_iterator;
+
+  public:
+    const CHARSET_INFO *scs;
+
+    Generator(Field **arg);
+    virtual ~Generator()
+    { }
+
+    /*
+      Return type is bool meaning "are there more rows".
+    */
+    bool sub_populate();
+
+    virtual bool populate()
+    {
+      return false;
+    }
+
+    void push(uint64_t arg);
+    void push(uint32_t arg);
+    void push(int64_t arg);
+    void push(int32_t arg);
+    void push(const char *arg, uint32_t length= 0);
+    void push(const std::string& arg);
+    void push(bool arg);
+
+    bool isWild(const std::string &predicate);
+  };
+
+  void define(drizzled::message::Table &arg)
+  { 
+    arg.CopyFrom(proto);
+  }
+
+  const std::string &getSchemaHome()
+  { 
+    if (local_schema.length() == 0)
+    {
+      local_schema= identifier.getSchemaName();
+      transform(local_schema.begin(), local_schema.end(),
+                local_schema.begin(), ::tolower);
+    }
+
+    return local_schema;
+  }
+
+  const std::string &getPath()
+  { 
+    if (local_path.length() == 0)
+    {
+      local_path= identifier.getPath();
+      transform(local_path.begin(), local_path.end(),
+                local_path.begin(), ::tolower);
+    }
+
+    return local_path;
+  }
+
+  virtual Generator *generator(Field **arg);
+
+  void add_field(const char *label,
+                 drizzled::message::Table::Field::FieldType type,
+                 uint32_t length= 0);
+
+  void add_field(const char *label,
+                 uint32_t field_length= 64);
+
+  void add_field(const char *label,
+                 TableFunction::ColumnType type,
+                 bool is_default_null= false);
+
+  void add_field(const char *label,
+                 TableFunction::ColumnType type,
+                 uint32_t field_length,
+                 bool is_default_null= false);
 };
 
 } /* namespace plugin */

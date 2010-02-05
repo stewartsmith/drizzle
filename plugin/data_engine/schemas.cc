@@ -18,27 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/charset.h>
+#include <plugin/data_engine/schemas.h>
 
 using namespace std;
 using namespace drizzled;
 
 SchemasTool::SchemasTool() :
-  Tool("SCHEMAS")
+  plugin::TableFunction("DATA_DICTIONARY", "SCHEMAS")
 {
   add_field("SCHEMA_NAME");
   add_field("DEFAULT_COLLATION_NAME");
 }
 
 SchemasTool::Generator::Generator(Field **arg) :
-  Tool::Generator(arg),
+  plugin::TableFunction::Generator(arg),
   is_schema_primed(false),
   is_schema_parsed(false)
 {
 }
 
-bool SchemasTool::Generator::nextSchema()
+/**
+  @note return true if a match occurs.
+*/
+bool SchemasTool::Generator::checkSchema()
+{
+  return isWild(schema_name());
+}
+
+bool SchemasTool::Generator::nextSchemaCore()
 {
   if (is_schema_primed)
   {
@@ -57,9 +64,22 @@ bool SchemasTool::Generator::nextSchema()
   schema.Clear();
   is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
 
+  if (checkSchema())
+      return false;
+
   return true;
 }
   
+bool SchemasTool::Generator::nextSchema()
+{
+  while (not nextSchemaCore())
+  {
+    if (schema_iterator == schema_names.end())
+      return false;
+  }
+
+  return true;
+}
 
 
 bool SchemasTool::Generator::populate()

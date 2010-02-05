@@ -1,8 +1,8 @@
-SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES
+SELECT * FROM DATA_DICTIONARY.GLOBAL_VARIABLES
 WHERE Variable_name LIKE 'transaction_log%';
 VARIABLE_NAME	VARIABLE_VALUE
-TRANSACTION_LOG_ENABLE	ON
-TRANSACTION_LOG_ENABLE_CHECKSUM	OFF
-TRANSACTION_LOG_LOG_FILE	transaction.log
-TRANSACTION_LOG_SYNC_METHOD	1
-TRANSACTION_LOG_TRUNCATE_DEBUG	OFF
+transaction_log_enable	ON
+transaction_log_enable_checksum	OFF
+transaction_log_log_file	transaction.log
+transaction_log_sync_method	1
+transaction_log_truncate_debug	OFF
