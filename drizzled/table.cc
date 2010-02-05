@@ -2366,14 +2366,9 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 
 static void make_internal_temporary_table_path(Session *session, char* path)
 {
-  /* if we run out of slots or we are not using tempool */
   snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
            session->thread_id, session->tmp_table++);
 
-  /*
-    No need to change table name to lower case as we are only creating
-    MyISAM or HEAP tables here
-  */
   internal::fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 }
 
