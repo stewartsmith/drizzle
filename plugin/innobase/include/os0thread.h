@@ -47,6 +47,7 @@ typedef void*			os_thread_t;
 typedef unsigned long		os_thread_id_t;	/*!< In Windows the thread id
 						is an unsigned long int */
 #else
+#include <pthread.h>
 typedef pthread_t		os_thread_t;
 typedef os_thread_t		os_thread_id_t;	/*!< In Unix we use the thread
 						handle itself as the id of

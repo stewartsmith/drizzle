@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/binary.h>
+
+namespace drizzled
+{
 
 void Item_func_binary::print(String *str, enum_query_type query_type)
 {
@@ -28,3 +31,4 @@ void Item_func_binary::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN(" as binary)"));
 }
 
+} /* namespace drizzled */

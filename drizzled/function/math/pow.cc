@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/pow.h>
 
+namespace drizzled
+{
+
 double Item_func_pow::val_real()
 {
   assert(fixed == 1);
@@ -31,3 +34,4 @@ double Item_func_pow::val_real()
   return fix_result(pow(value,val2));
 }
 
+} /* namespace drizzled */

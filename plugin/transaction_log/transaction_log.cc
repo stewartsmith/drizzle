@@ -85,7 +85,7 @@
 #include <vector>
 #include <string>
 
-#include "drizzled/internal/my_sys.h" /* for my_sync */
+#include "drizzled/internal/my_sys.h" /* for internal::my_sync */
 
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
@@ -318,14 +318,14 @@ int TransactionLog::syncLogFile()
   switch (sysvar_transaction_log_sync_method)
   {
   case SYNC_METHOD_EVERY_WRITE:
-    return my_sync(log_file, 0);
+    return internal::my_sync(log_file, 0);
   case SYNC_METHOD_EVERY_SECOND:
     {
       time_t now_time= time(NULL);
       if (last_sync_time <= (now_time - 1))
       {
         last_sync_time= now_time;
-        return my_sync(log_file, 0);
+        return internal::my_sync(log_file, 0);
       }
       return 0;
     }
@@ -565,7 +565,7 @@ static DRIZZLE_SYSVAR_UINT(sync_method,
                            2,
                            0);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(truncate_debug),
   DRIZZLE_SYSVAR(log_file),
@@ -574,4 +574,4 @@ static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, deinit, NULL, system_variables);
+DRIZZLE_PLUGIN(init, deinit, NULL, sys_variables);

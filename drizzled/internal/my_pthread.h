@@ -18,20 +18,12 @@
 #ifndef DRIZZLED_INTERNAL_MY_PTHREAD_H
 #define DRIZZLED_INTERNAL_MY_PTHREAD_H
 
-#include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
 
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */
 #endif
-
-#ifdef  __cplusplus
-#define EXTERNC extern "C"
-extern "C" {
-#else
-#define EXTERNC
-#endif /* __cplusplus */
 
 #include <pthread.h>
 #ifndef _REENTRANT
@@ -43,6 +35,11 @@ extern "C" {
 #ifdef HAVE_SYNCH_H
 #include <synch.h>
 #endif
+
+namespace drizzled
+{
+namespace internal
+{
 
 #define pthread_key(T,V) pthread_key_t V
 #define pthread_handler_t void *
@@ -185,7 +182,7 @@ struct st_my_thread_var
 };
 
 extern struct st_my_thread_var *_my_thread_var(void);
-#define my_thread_var (_my_thread_var())
+#define my_thread_var (::drizzled::internal::_my_thread_var())
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
   report errors with them
@@ -240,7 +237,7 @@ extern uint32_t thd_lib_detected;
 #define status_var_add(V,C)     (V)+=(C)
 #define status_var_sub(V,C)     (V)-=(C)
 
-#ifdef  __cplusplus
-}
-#endif
+} /* namespace internal */
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_INTERNAL_MY_PTHREAD_H */

@@ -17,6 +17,8 @@
 
 #include <string.h>
 
+using namespace drizzled;
+
 /* Read next record with the same key */
 
 int heap_rnext(HP_INFO *info, unsigned char *record)

@@ -27,6 +27,7 @@
 #include <cassert>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 template<class T>

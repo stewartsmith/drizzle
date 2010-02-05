@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_ENUM_NESTED_LOOP_STATE_H
 #define DRIZZLED_ENUM_NESTED_LOOP_STATE_H
 
+namespace drizzled
+{
+
 /** The states in which a nested loop join can be in */
 enum enum_nested_loop_state
 {
@@ -37,5 +40,7 @@ class JoinTable;
 typedef enum_nested_loop_state (*Next_select_func)(JOIN *, JoinTable *, bool);
 typedef int (*Read_record_func)(JoinTable *tab);
 Next_select_func setup_end_select_func(JOIN *join);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ENUM_NESTED_LOOP_STATE_H */

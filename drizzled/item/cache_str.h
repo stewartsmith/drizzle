@@ -22,6 +22,9 @@
 #ifndef DRIZZLED_ITEM_CACHE_STR_H
 #define DRIZZLED_ITEM_CACHE_STR_H
 
+namespace drizzled
+{
+
 class Item_cache_str: public Item_cache
 {
   char buffer[STRING_BUFFER_USUAL_SIZE];
@@ -39,5 +42,7 @@ public:
   const CHARSET_INFO *charset() const { return value->charset(); };
   int save_in_field(Field *field, bool no_conversions);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_STR_H */

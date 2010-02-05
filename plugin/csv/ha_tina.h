@@ -50,13 +50,13 @@ public:
   */
   off_t saved_data_file_length;
   pthread_mutex_t mutex;
-  THR_LOCK lock;
+  drizzled::THR_LOCK lock;
   bool update_file_opened;
   bool tina_write_opened;
   int meta_file;           /* Meta file we use */
   int tina_write_filedes;  /* File Cursor for readers */
   bool crashed;             /* Meta file is crashed */
-  ha_rows rows_recorded;    /* Number of rows in tables */
+  drizzled::ha_rows rows_recorded;    /* Number of rows in tables */
   uint32_t data_file_version;   /* Version of the data file used */
 };
 
@@ -65,9 +65,9 @@ struct tina_set {
   off_t end;
 };
 
-class ha_tina: public Cursor
+class ha_tina: public drizzled::Cursor
 {
-  THR_LOCK_DATA lock;      /* MySQL lock */
+  drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   TinaShare *share;       /* Shared lock info */
   off_t current_position;  /* Current position in the file during a file scan */
   off_t next_position;     /* Next position in the file scan */
@@ -77,7 +77,7 @@ class ha_tina: public Cursor
   Transparent_file *file_buff;
   int data_file;                   /* File Cursor for readers */
   int update_temp_file;
-  String buffer;
+  drizzled::String buffer;
   /*
     The chain contains "holes" in the file, occured because of
     deletes/updates. It is used in rnd_end() to get rid of them
@@ -98,7 +98,7 @@ class ha_tina: public Cursor
   int init_data_file();
 
 public:
-  ha_tina(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  ha_tina(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~ha_tina()
   {
     if (chain_alloced)
@@ -122,7 +122,7 @@ public:
     (e.g. save number of records seen on full table scan and/or use file size
     as upper bound)
   */
-  ha_rows estimate_rows_upper_bound() { return HA_POS_ERROR; }
+  drizzled::ha_rows estimate_rows_upper_bound() { return HA_POS_ERROR; }
 
   int open(const char *name, int mode, uint32_t open_options);
   int close(void);
@@ -135,7 +135,7 @@ public:
   int rnd_end();
   TinaShare *get_share(const char *table_name);
   int free_share();
-  int repair(Session* session, HA_CHECK_OPT* check_opt);
+  int repair(drizzled::Session* session, drizzled::HA_CHECK_OPT* check_opt);
   /* This is required for SQL layer to know that we support autorepair */
   void position(const unsigned char *record);
   int info(uint);

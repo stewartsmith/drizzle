@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+
 #include <drizzled/error.h>
 #include <drizzled/name_resolution_context.h>
 #include <drizzled/table.h>
@@ -25,7 +26,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/item/default_value.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool Item_default_value::eq(const Item *item, bool binary_cmp) const
 {
@@ -141,3 +143,6 @@ Item *Item_default_value::transform(Item_transformer transformer, unsigned char 
     current_session->change_item_tree(&arg, new_item);
   return (this->*transformer)(args);
 }
+
+
+} /* namespace drizzled */

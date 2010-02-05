@@ -18,12 +18,16 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/item/empty_string.h>
+
+namespace drizzled
+{
 
 void Item_empty_string::make_field(SendField *tmp_field)
 { 
   init_make_field(tmp_field, string_field_type());
 }
 
+} /* namespace drizzled */
 

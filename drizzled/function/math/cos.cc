@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/cos.h>
 
+namespace drizzled
+{
+
 double Item_func_cos::val_real()
 {
   assert(fixed == 1);
@@ -30,3 +33,4 @@ double Item_func_cos::val_real()
   return cos(value);
 }
 
+} /* namespace drizzled */

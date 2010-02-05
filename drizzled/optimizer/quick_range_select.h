@@ -22,10 +22,12 @@
 
 #include "drizzled/optimizer/range.h"
 
-class Cursor;
+#include <vector>
 
 namespace drizzled
 {
+
+class Cursor;
 
 namespace optimizer
 {
@@ -99,13 +101,13 @@ public:
 
   uint32_t mrr_flags; /**< Flags to be used with MRR interface */
 
-  drizzled::memory::Root alloc;
+  memory::Root alloc;
 
   QuickRangeSelect(Session *session,
                      Table *table,
                      uint32_t index_arg,
                      bool no_alloc,
-                     drizzled::memory::Root *parent_alloc,
+                     memory::Root *parent_alloc,
                      bool *create_err);
 
   ~QuickRangeSelect();
@@ -226,7 +228,7 @@ private:
     mrr_buf_size= 0;
   }
 
-  friend class ::TRP_ROR_INTERSECT; 
+  friend class ::drizzled::RorIntersectReadPlan; 
 
   friend
   QuickRangeSelect *get_quick_select_for_ref(Session *session, Table *table,
@@ -247,7 +249,7 @@ private:
                                             SEL_ARG *key_tree,
                                             uint32_t mrr_flags,
                                             uint32_t mrr_buf_size,
-                                            drizzled::memory::Root *alloc);
+                                            memory::Root *alloc);
   friend class QuickSelectDescending;
 
   friend class QuickIndexMergeSelect;
@@ -295,13 +297,13 @@ private:
 
   int reset(void) 
   { 
-    rev_it.rewind(); 
+    rev_it= rev_ranges.begin();
     return QuickRangeSelect::reset();
   }
 
-  List<QuickRange> rev_ranges;
+  std::vector<QuickRange *> rev_ranges;
 
-  List_iterator<QuickRange> rev_it;
+  std::vector<QuickRange *>::iterator rev_it;
 
 };
 

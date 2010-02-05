@@ -29,7 +29,6 @@ using namespace drizzled;
 
 class Crc32Function :public Item_int_func
 {
-  String value;
 public:
   int64_t val_int();
   
@@ -57,6 +56,7 @@ public:
 int64_t Crc32Function::val_int()
 {
   assert(fixed == true);
+  String value;
   String *res=args[0]->val_str(&value);
   
   if (res == NULL)

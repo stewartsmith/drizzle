@@ -22,6 +22,9 @@
 
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_unix_timestamp :public Item_int_func
 {
   String value;
@@ -36,5 +39,7 @@ public:
     max_length=10*MY_CHARSET_BIN_MB_MAXLEN;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_UNIX_TIMESTAMP_H */

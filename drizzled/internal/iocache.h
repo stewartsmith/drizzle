@@ -23,9 +23,10 @@
 
 #include "drizzled/internal/my_sys.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+namespace drizzled
+{
+namespace internal
+{
 
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
@@ -190,8 +191,7 @@ extern bool open_cached_file(IO_CACHE *cache,const char *dir,
 extern bool real_open_cached_file(IO_CACHE *cache);
 extern void close_cached_file(IO_CACHE *cache);
 
-#if defined(__cplusplus)
-}
-#endif
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_IOCACHE_H */

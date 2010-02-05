@@ -23,6 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 
+namespace drizzled
+{
+
 const char *Field_iterator_table::name()
 {
   return (*ptr)->field_name;
@@ -281,3 +284,4 @@ Field_iterator_table_ref::get_natural_column_ref()
   return nj_col;
 }
 
+} /* namespace drizzled */

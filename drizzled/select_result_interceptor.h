@@ -23,6 +23,9 @@
 
 #include <drizzled/select_result.h>
 
+namespace drizzled
+{
+
 /*
   Base class for select_result descendands which intercept and
   transform result set rows. As the rows are not sent to the client,
@@ -39,5 +42,7 @@ public:
   { return false; }
 };
 
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_RESULT_INTERCEPTOR_H */
