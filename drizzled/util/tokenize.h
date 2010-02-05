@@ -45,7 +45,7 @@ void tokenize(const std::string& str, ContainerT& tokens, const std::string& del
     }
     else
     {
-      if(pos != lastPos || not trimEmpty)
+      if (pos != lastPos || not trimEmpty)
         tokens.push_back(typename ContainerT::value_type(str.data()+lastPos,
                                                          static_cast<typename ContainerT::value_type::size_type>(pos)-lastPos));
     }
