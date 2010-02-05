@@ -21,6 +21,8 @@
 #include <math.h>
 #include <drizzled/function/math/atan.h>
 
+namespace drizzled
+{
 
 double Item_func_atan::val_real()
 {
@@ -38,3 +40,4 @@ double Item_func_atan::val_real()
   return atan(value);
 }
 
+} /* namespace drizzled */

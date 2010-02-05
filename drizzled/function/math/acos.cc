@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/acos.h>
 
+namespace drizzled
+{
+
 double Item_func_acos::val_real()
 {
   assert(fixed == 1);
@@ -31,3 +34,4 @@ double Item_func_acos::val_real()
   return acos(value);
 }
 
+} /* namespace drizzled */

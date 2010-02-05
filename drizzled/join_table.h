@@ -36,6 +36,9 @@
 
 #include <bitset>
 
+namespace drizzled
+{
+
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
@@ -115,10 +118,10 @@ public:
     embedding_map(0)
   {}
   Table *table;
-  drizzled::optimizer::KeyUse *keyuse; /**< pointer to first used key */
-  drizzled::optimizer::SqlSelect *select;
+  optimizer::KeyUse *keyuse; /**< pointer to first used key */
+  optimizer::SqlSelect *select;
   COND *select_cond;
-  drizzled::optimizer::QuickSelectInterface *quick;
+  optimizer::QuickSelectInterface *quick;
   /**
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
@@ -234,10 +237,12 @@ public:
   {
     return (select && select->quick &&
             (select->quick->get_type() ==
-             drizzled::optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX));
+             optimizer::QuickSelectInterface::QS_TYPE_GROUP_MIN_MAX));
   }
 
   void readCachedRecord();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_JOIN_TABLE_H */

@@ -37,12 +37,9 @@
 #include <drizzled/gettext.h>
 
 using namespace std;
+using namespace drizzled;
 
-extern "C"
-{
-  bool get_one_option(int optid, const struct my_option *, char *argument);
-  void * worker_thread(void *arg);
-}
+extern "C" void * worker_thread(void *arg);
 
 int exitcode= 0;
 
@@ -150,7 +147,7 @@ static const char *load_default_groups[]= { "drizzleimport","client",0 };
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,my_progname,
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,internal::my_progname,
     IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
@@ -167,13 +164,13 @@ If one uses sockets to connect to the Drizzle server, the server will open and\n
 read the text file directly. In other cases the client will open the text\n\
 file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 
-  printf("\nUsage: %s [OPTIONS] database textfile...",my_progname);
-  print_defaults("drizzle",load_default_groups);
+  printf("\nUsage: %s [OPTIONS] database textfile...",internal::my_progname);
+  internal::print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 }
 
-bool get_one_option(int optid, const struct my_option *, char *argument)
+static bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -278,11 +275,11 @@ static int write_to_table(char *filename, drizzle_con_st *con)
   drizzle_result_st result;
   drizzle_return_t ret;
 
-  fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
+  internal::fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
   if (!opt_local_file)
     strcpy(hard_path,filename);
   else
-    my_load_path(hard_path, filename, NULL); /* filename includes the path */
+    internal::my_load_path(hard_path, filename, NULL); /* filename includes the path */
 
   if (opt_delete)
   {
@@ -377,7 +374,7 @@ static void lock_table(drizzle_con_st *con, int tablecount, char **raw_tablename
   query.append("LOCK TABLES ");
   for (i=0 ; i < tablecount ; i++)
   {
-    fn_format(tablename, raw_tablename[i], "", "", 1 | 2);
+    internal::fn_format(tablename, raw_tablename[i], "", "", 1 | 2);
     query.append(tablename);
     query.append(" WRITE,");
   }
@@ -552,7 +549,7 @@ error:
   counter--;
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
-  my_thread_end();
+  internal::my_thread_end();
 
   return 0;
 }
@@ -564,12 +561,12 @@ int main(int argc, char **argv)
   char **argv_to_free;
   MY_INIT(argv[0]);
 
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
   /* argv is changed in the program */
   argv_to_free= argv;
   if (get_options(&argc, &argv))
   {
-    free_defaults(argv_to_free);
+    internal::free_defaults(argv_to_free);
     return(1);
   }
 
@@ -606,7 +603,7 @@ int main(int argc, char **argv)
         counter--;
         pthread_mutex_unlock(&counter_mutex);
         fprintf(stderr,"%s: Could not create thread\n",
-                my_progname);
+                internal::my_progname);
       }
     }
 
@@ -634,7 +631,7 @@ int main(int argc, char **argv)
     drizzle_return_t ret;
     if (!(con= db_connect(current_host,current_db,current_user,opt_password)))
     {
-      free_defaults(argv_to_free);
+      internal::free_defaults(argv_to_free);
       return(1);
     }
 
@@ -659,7 +656,7 @@ int main(int argc, char **argv)
     db_disconnect(current_host, con);
   }
   free(opt_password);
-  free_defaults(argv_to_free);
-  my_end();
+  internal::free_defaults(argv_to_free);
+  internal::my_end();
   return(exitcode);
 }

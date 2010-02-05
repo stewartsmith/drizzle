@@ -18,11 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
-  This is a private header of sql-common library, containing
-  declarations for my_time.c
-*/
-
 #ifndef DRIZZLED_MY_TIME_H
 #define DRIZZLED_MY_TIME_H
 
@@ -37,9 +32,8 @@
 # endif
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace drizzled
+{
 
 extern uint64_t log_10_int[20];
 extern unsigned char days_in_month[];
@@ -195,9 +189,6 @@ extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
 
-
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MY_TIME_H */

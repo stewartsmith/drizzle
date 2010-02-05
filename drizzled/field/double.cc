@@ -34,6 +34,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
   double precision floating point numbers
@@ -162,9 +164,9 @@ String *Field_double::val_str(String *val_buffer,
   size_t len;
 
   if (dec >= NOT_FIXED_DEC)
-    len= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, to_length - 1, to, NULL);
+    len= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, to_length - 1, to, NULL);
   else
-    len= my_fcvt(nr, dec, to, NULL);
+    len= internal::my_fcvt(nr, dec, to, NULL);
 
   val_buffer->length((uint32_t) len);
 
@@ -221,3 +223,4 @@ void Field_double::sql_type(String &res) const
   }
 }
 
+} /* namespace drizzled */

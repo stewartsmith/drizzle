@@ -23,6 +23,9 @@
 #include "drizzled/sql_error.h"
 #include "drizzled/my_time.h"
 
+namespace drizzled
+{
+
 typedef struct st_drizzle_time DRIZZLE_TIME;
 
 /* Calc weekday from daynr */
@@ -133,5 +136,7 @@ bool calc_time_diff(DRIZZLE_TIME *l_time1,
                     int l_sign,
                     int64_t *seconds_out, 
                     long *microseconds_out);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TIME_FUNCTIONS_H */

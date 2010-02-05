@@ -18,11 +18,13 @@
   thread variables.
 */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/internal/m_string.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <signal.h>
 
 #if TIME_WITH_SYS_TIME
@@ -35,6 +37,11 @@
 #  include <time.h>
 # endif
 #endif
+
+namespace drizzled
+{
+namespace internal
+{
 
 uint32_t thd_lib_detected= 0;
 
@@ -256,3 +263,6 @@ static uint32_t get_thread_lib(void)
 #endif
   return THD_LIB_OTHER;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

@@ -30,15 +30,15 @@
 #include <netinet/tcp.h>
 #include <cerrno>
 
-extern uint32_t back_log;
-extern uint32_t drizzled_bind_timeout;
-
 using namespace std;
 
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 
 namespace drizzled
 {
+extern uint32_t back_log;
+extern uint32_t drizzled_bind_timeout;
+
 
 int plugin::ListenTcp::acceptTcp(int fd)
 {

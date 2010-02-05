@@ -39,8 +39,11 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 extern size_t table_def_size;
-typedef drizzled::hash_map<string, TableShare *> TableDefCache;
+typedef hash_map<string, TableShare *> TableDefCache;
 TableDefCache table_def_cache;
 static pthread_mutex_t LOCK_table_share;
 bool table_def_inited= false;
@@ -269,3 +272,5 @@ TableShare *TableShare::getShare(const char *db, const char *table_name)
     return NULL;
   }
 }
+
+} /* namespace drizzled */

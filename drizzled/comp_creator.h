@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_COMP_CREATOR_H
 #define DRIZZLED_COMP_CREATOR_H
 
+namespace drizzled
+{
+
 class Item;
 class Item_bool_func2;
 
@@ -42,5 +45,7 @@ Comp_creator *comp_gt_creator(bool invert);
 Comp_creator *comp_le_creator(bool invert);
 Comp_creator *comp_lt_creator(bool invert);
 Comp_creator *comp_ne_creator(bool invert);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_COMP_CREATOR_H */

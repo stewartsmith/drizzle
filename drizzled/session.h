@@ -33,16 +33,25 @@
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
+#include "drizzled/named_savepoint.h"
 
 #include <netdb.h>
 #include <map>
 #include <string>
 #include <bitset>
+#include <deque>
+
+#include <drizzled/security_context.h>
+#include <drizzled/open_tables_state.h>
+
+#include <drizzled/internal_error_handler.h>
+#include <drizzled/diagnostics_area.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
 namespace drizzled
 {
+
 namespace plugin
 {
 class Client;
@@ -53,6 +62,9 @@ namespace message
 class Transaction;
 class Statement;
 }
+namespace internal
+{
+struct st_my_thread_var;
 }
 
 class Lex_input_stream;
@@ -60,7 +72,6 @@ class user_var_entry;
 class CopyField;
 class Table_ident;
 
-struct st_my_thread_var;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -76,7 +87,7 @@ extern uint32_t tc_heuristic_recover;
   to hande the entire table-share for a local table. Once Hash is done,
   we should consider exchanging the map for it.
 */
-typedef std::map <std::string, drizzled::message::Table> ProtoCache;
+typedef std::map <std::string, message::Table> ProtoCache;
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
@@ -115,7 +126,13 @@ typedef struct drizzled_lock_st
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file */
 #include <drizzled/lex_column.h>
+
+namespace drizzled
+{
 
 class select_result;
 class Time_zone;
@@ -176,12 +193,10 @@ struct system_variables
   size_t range_alloc_block_size;
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
-  uint32_t trans_alloc_block_size;
-  uint32_t trans_prealloc_size;
   uint64_t group_concat_max_len;
   uint64_t pseudo_thread_id;
 
-  drizzled::plugin::StorageEngine *storage_engine;
+  plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
@@ -202,7 +217,12 @@ struct system_variables
 
 extern struct system_variables global_system_variables;
 
-#include "sql_lex.h"
+} /* namespace drizzled */
+
+#include "drizzled/sql_lex.h"
+
+namespace drizzled
+{
 
 /**
  * Per-session local status counters
@@ -278,22 +298,9 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-struct st_savepoint
-{
-  struct st_savepoint *prev;
-  char *name;
-  size_t length;
-  Ha_trx_info *ha_list;
-};
-
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
 
-#include <drizzled/security_context.h>
-#include <drizzled/open_tables_state.h>
-
-#include <drizzled/internal_error_handler.h>
-#include <drizzled/diagnostics_area.h>
 
 /**
   Storage engine specific thread local data.
@@ -391,7 +398,7 @@ public:
    * itself to the list on creation (see Item::Item() for details))
    */
   Item *free_list;
-  drizzled::memory::Root *mem_root; /**< Pointer to current memroot */
+  memory::Root *mem_root; /**< Pointer to current memroot */
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -447,9 +454,9 @@ public:
   */
   static const char * const DEFAULT_WHERE;
 
-  drizzled::memory::Root warn_root; /**< Allocation area for warnings and errors */
-  drizzled::plugin::Client *client; /**< Pointer to client object */
-  drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
+  memory::Root warn_root; /**< Allocation area for warnings and errors */
+  plugin::Client *client; /**< Pointer to client object */
+  plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   struct system_variables variables; /**< Mutable local variables local to the session */
@@ -499,7 +506,7 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
-  struct st_my_thread_var *mysys_var;
+  internal::st_my_thread_var *mysys_var;
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
@@ -523,20 +530,25 @@ public:
 private:
   /* container for handler's private per-connection data */
   Ha_data ha_data[MAX_HA];
+  /*
+    Id of current query. Statement can be reused to execute several queries
+    query_id is global in context of the whole MySQL server.
+    ID is automatically generated from an atomic counter.
+    It's used in Cursor code for various purposes: to check which columns
+    from table are necessary for this select, to check if it's necessary to
+    update auto-updatable fields (like auto_increment and timestamp).
+  */
+  query_id_t query_id;
+  query_id_t warn_query_id;
 public:
-  void **getEngineData(const drizzled::plugin::StorageEngine *engine);
-  Ha_trx_info *getEngineInfo(const drizzled::plugin::StorageEngine *engine,
+  void **getEngineData(const plugin::StorageEngine *engine);
+  Ha_trx_info *getEngineInfo(const plugin::StorageEngine *engine,
                              size_t index= 0);
 
-
-  /* container for replication data */
-  void *replication_data;
-
   struct st_transactions {
-    SAVEPOINT *savepoints;
+    std::deque<drizzled::NamedSavepoint> savepoints;
     Session_TRANS all;			// Trans since BEGIN WORK
     Session_TRANS stmt;			// Trans for current statement
-    bool on;                            // see ha_enable_transaction()
     XID_STATE xid_state;
 
     /*
@@ -544,20 +556,16 @@ public:
        List contain only transactional tables, that not invalidated in query
        cache (instead of full list of changed in transaction tables).
     */
-    CHANGED_TableList* changed_tables;
-    drizzled::memory::Root mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
-      changed_tables= 0;
-      savepoints= 0;
-      free_root(&mem_root,MYF(drizzled::memory::KEEP_PREALLOC));
+      savepoints.clear();
     }
-    st_transactions()
-    {
-      memset(this, 0, sizeof(*this));
-      xid_state.xid.null();
-      drizzled::memory::init_sql_alloc(&mem_root, drizzled::memory::ROOT_MIN_BLOCK_SIZE, 0);
-    }
+    st_transactions() :
+      savepoints(),
+      all(),
+      stmt(),
+      xid_state()
+    { }
   } transaction;
   Field *dup_field;
   sigset_t signals;
@@ -654,16 +662,6 @@ public:
   uint32_t total_warn_count;
   Diagnostics_area main_da;
 
-  /*
-    Id of current query. Statement can be reused to execute several queries
-    query_id is global in context of the whole MySQL server.
-    ID is automatically generated from mutex-protected counter.
-    It's used in handler code for various purposes: to check which columns
-    from table are necessary for this select, to check if it's necessary to
-    update auto-updatable fields (like auto_increment and timestamp).
-  */
-  query_id_t query_id;
-  query_id_t warn_id;
   ulong col_access;
 
   /* Statement id is thread-wide. This counter is used to generate ids */
@@ -777,10 +775,29 @@ public:
     return proc_info;
   }
 
+  /** Sets this Session's current query ID */
+  inline void setQueryId(query_id_t in_query_id)
+  {
+    query_id= in_query_id;
+  }
+
   /** Returns the current query ID */
   inline query_id_t getQueryId()  const
   {
     return query_id;
+  }
+
+
+  /** Sets this Session's warning query ID */
+  inline void setWarningQueryId(query_id_t in_query_id)
+  {
+    warn_query_id= in_query_id;
+  }
+
+  /** Returns the Session's warning query ID */
+  inline query_id_t getWarningQueryId()  const
+  {
+    return warn_query_id;
   }
 
   /** Returns the current query text */
@@ -872,7 +889,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(drizzled::plugin::Client *client_arg);
+  Session(plugin::Client *client_arg);
   virtual ~Session();
 
   void cleanup(void);
@@ -1021,18 +1038,11 @@ public:
   {
     return !lex->only_view_structure();
   }
-  inline void* trans_alloc(unsigned int size)
-  {
-    return alloc_root(&transaction.mem_root,size);
-  }
 
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
 
-  void add_changed_table(Table *table);
-  void add_changed_table(const char *key, long key_length);
-  CHANGED_TableList * changed_table_dup(const char *key, long key_length);
   int send_explain_fields(select_result *result);
   /**
     Clear the current error, if any.
@@ -1208,7 +1218,7 @@ public:
    * Session being managed by the ReplicationServices component, or
    * NULL if no active message.
    */
-  drizzled::message::Transaction *getTransactionMessage() const
+  message::Transaction *getTransactionMessage() const
   {
     return transaction_message;
   }
@@ -1217,7 +1227,7 @@ public:
    * Returns a pointer to the active Statement message for this
    * Session, or NULL if no active message.
    */
-  drizzled::message::Statement *getStatementMessage() const
+  message::Statement *getStatementMessage() const
   {
     return statement_message;
   }
@@ -1228,7 +1238,7 @@ public:
    *
    * @param[in] Pointer to the message
    */
-  void setTransactionMessage(drizzled::message::Transaction *in_message)
+  void setTransactionMessage(message::Transaction *in_message)
   {
     transaction_message= in_message;
   }
@@ -1239,14 +1249,14 @@ public:
    *
    * @param[in] Pointer to the message
    */
-  void setStatementMessage(drizzled::message::Statement *in_message)
+  void setStatementMessage(message::Statement *in_message)
   {
     statement_message= in_message;
   }
 private:
   /** Pointers to memory managed by the ReplicationServices component */
-  drizzled::message::Transaction *transaction_message;
-  drizzled::message::Statement *statement_message;
+  message::Transaction *transaction_message;
+  message::Statement *statement_message;
   /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;
@@ -1268,7 +1278,7 @@ private:
     - for prepared queries, only to allocate runtime data. The parsed
     tree itself is reused between executions and thus is stored elsewhere.
   */
-  drizzled::memory::Root main_mem_root;
+  memory::Root main_mem_root;
 
   /**
    * Marks all tables in the list which were used by current substatement
@@ -1428,9 +1438,9 @@ private:
 public:
 
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, const char *path);
-  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, drizzled::TableIdentifier &identifier);
-  Table *open_temporary_table(drizzled::TableIdentifier &identifier,
+  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
+  Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);
 
   /* Reopen operations */
@@ -1451,7 +1461,7 @@ public:
     @return
     pointer to plugin::StorageEngine
   */
-  drizzled::plugin::StorageEngine *getDefaultStorageEngine()
+  plugin::StorageEngine *getDefaultStorageEngine()
   {
     if (variables.storage_engine)
       return variables.storage_engine;
@@ -1466,6 +1476,9 @@ class JOIN;
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file */
 #include <drizzled/select_to_file.h>
 #include <drizzled/select_export.h>
 #include <drizzled/select_dump.h>
@@ -1477,6 +1490,9 @@ class JOIN;
 #include <drizzled/select_singlerow_subselect.h>
 #include <drizzled/select_max_min_finder_subselect.h>
 #include <drizzled/select_exists_subselect.h>
+
+namespace drizzled
+{
 
 /**
  * A structure used to describe sort information
@@ -1502,11 +1518,18 @@ typedef struct st_sort_buffer
   SORT_FIELD *sortorder;
 } SORT_BUFFER;
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file */
+
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
 #include <drizzled/my_var.h>
 #include <drizzled/select_dumpvar.h>
+
+namespace drizzled
+{
 
 /* Bits in sql_command_flags */
 
@@ -1531,5 +1554,7 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SESSION_H */

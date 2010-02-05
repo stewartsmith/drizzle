@@ -39,7 +39,7 @@ bool statement::CreateTable::execute()
   bool res= false;
   bool link_to_local= false;
   bool lex_identified_temp_table= 
-    create_table_proto.type() == drizzled::message::Table::TEMPORARY;
+    create_table_proto.type() == message::Table::TEMPORARY;
 
   if (is_engine_set)
   {

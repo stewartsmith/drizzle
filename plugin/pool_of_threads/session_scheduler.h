@@ -18,17 +18,20 @@
 
 #include <event.h>
 
+namespace drizzled
+{
 class Session;
+}
 
 class session_scheduler
 {
 public:
   bool logged_in;
   struct event io_event;
-  Session *session;
+  drizzled::Session *session;
   bool thread_attached;  /* Indicates if Session is attached to the OS thread */
 
-  session_scheduler(Session *);
+  session_scheduler(drizzled::Session *);
   bool thread_attach();
   void thread_detach();
 };

@@ -23,6 +23,9 @@
 
 #include <drizzled/table.h>
 
+namespace drizzled
+{
+
 class Index_hint;
 class COND_EQUAL;
 class Natural_join_column;
@@ -33,13 +36,10 @@ class Tmp_Table_Param;
 class Item_subselect;
 class Table;
 
-namespace drizzled
-{
 namespace plugin
 {
   class InfoSchemaTable;
   class StorageEngine;
-}
 }
 
 struct nested_join_st;
@@ -224,7 +224,7 @@ public:
   nested_join_st *nested_join; ///< if the element is a nested join
   TableList *embedding; ///< nested join containing the table
   List<TableList> *join_list; ///< join list the table belongs to
-  drizzled::plugin::StorageEngine *db_type; ///< table_type for handler
+  plugin::StorageEngine *db_type; ///< table_type for handler
   char timestamp_buffer[20]; ///< buffer for timestamp (19+1)
   bool internal_tmp_table;
   /** true if an alias for this table was specified in the SQL. */
@@ -262,7 +262,7 @@ public:
    * @retval
    *  true - out of memory
    */
-  bool set_insert_values(drizzled::memory::Root *mem_root);
+  bool set_insert_values(memory::Root *mem_root);
   /**
    * Find underlying base tables (TableList) which represent given
    * table_to_find (Table)
@@ -413,5 +413,7 @@ public:
 };
 
 void close_thread_tables(Session *session);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_LIST_H */

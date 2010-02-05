@@ -34,6 +34,7 @@
 
 using namespace std;
 using namespace google;
+using namespace drizzled;
 
 #define BLACKHOLE_EXT ".blk"
 

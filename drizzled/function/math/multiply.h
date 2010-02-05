@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num_op.h>
 
+namespace drizzled
+{
+
 class Item_func_mul :public Item_num_op
 {
 public:
@@ -33,5 +36,7 @@ public:
   my_decimal *decimal_op(my_decimal *);
   void result_precision();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_MULTIPLY_H */

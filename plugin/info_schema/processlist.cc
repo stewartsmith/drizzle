@@ -191,7 +191,7 @@ int ProcessListISMethods::fillTable(Session* session,
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
-      struct st_my_thread_var *mysys_var;
+      internal::st_my_thread_var *mysys_var;
       const char *val;
 
       if (! tmp->client->isConnected())

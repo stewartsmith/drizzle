@@ -18,8 +18,8 @@
  */
 
 /*
- *   Errors a drizzled can give you
- *   */
+ * Errors a drizzled can give you
+ */
 
 #include "config.h"
 #include "drizzled/internal/my_sys.h"
@@ -27,6 +27,9 @@
 #include <drizzled/definitions.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
+
+namespace drizzled
+{
 
 static const char *drizzled_error_messages[]=
 {
@@ -1486,3 +1489,4 @@ bool init_errmessage(void)
   return(false);
 }
 
+} /* namespace drizzled */

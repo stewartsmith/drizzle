@@ -1,4 +1,4 @@
-/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -22,6 +22,9 @@
 #define DRIZZLED_FIELD_NUM_H
 
 #include "drizzled/field.h"
+
+namespace drizzled
+{
 
 class Field_num :public Field 
 {
@@ -49,5 +52,6 @@ public:
                int64_t signed_min, int64_t signed_max);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_NUM_H */

@@ -33,6 +33,7 @@
 #include <map>
 
 using namespace std;
+using namespace drizzled;
 
 /*
   First, if you want to understand storage engines you should look at
@@ -364,7 +365,7 @@ ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);
 
   /* The size of the offset value we will use for position() */
-  ref_length= sizeof(my_off_t);
+  ref_length= sizeof(internal::my_off_t);
   archive_reader_open= false;
 }
 
@@ -395,7 +396,7 @@ ArchiveShare::ArchiveShare(const char *name):
 {
   memset(&archive_write, 0, sizeof(azio_stream));     /* Archive file we are working with */
   table_name.append(name);
-  fn_format(data_file_name, table_name.c_str(), "",
+  internal::fn_format(data_file_name, table_name.c_str(), "",
             ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
   /*
     We will use this lock for rows.
@@ -691,7 +692,7 @@ int ArchiveEngine::doCreateTable(Session *,
   /*
     We reuse name_buff since it is available.
   */
-  fn_format(name_buff, table_name, "", ARZ,
+  internal::fn_format(name_buff, table_name, "", ARZ,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   errno= 0;
@@ -1084,7 +1085,7 @@ int ha_archive::rnd_next(unsigned char *buf)
 
 void ha_archive::position(const unsigned char *)
 {
-  my_store_ptr(ref, ref_length, current_position);
+  internal::my_store_ptr(ref, ref_length, current_position);
   return;
 }
 
@@ -1099,7 +1100,7 @@ void ha_archive::position(const unsigned char *)
 int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-  current_position= (my_off_t)my_get_ptr(pos, ref_length);
+  current_position= (internal::my_off_t)internal::my_get_ptr(pos, ref_length);
   if (azseek(&archive, (size_t)current_position, SEEK_SET) == (size_t)(-1L))
     return(HA_ERR_CRASHED_ON_USAGE);
   return(get_row(&archive, buf));
@@ -1149,7 +1150,7 @@ int ha_archive::optimize()
   azread_frm(&archive, proto_string);
 
   /* Lets create a file to contain the new data */
-  fn_format(writer_filename, share->table_name.c_str(), "", ARN,
+  internal::fn_format(writer_filename, share->table_name.c_str(), "", ARN,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
@@ -1232,7 +1233,7 @@ int ha_archive::optimize()
   azclose(&archive);
 
   // make the file we just wrote be our data file
-  rc = my_rename(writer_filename,share->data_file_name,MYF(0));
+  rc = internal::my_rename(writer_filename,share->data_file_name,MYF(0));
 
   free(proto_string);
   return(rc);

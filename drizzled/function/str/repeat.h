@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_repeat :public Item_str_func
 {
   String tmp_value;
@@ -32,5 +35,6 @@ public:
   const char *func_name() const { return "repeat"; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_REPEAT_H */

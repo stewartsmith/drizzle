@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -44,8 +44,8 @@ public:
   HA_CHECK_OPT check_opt;			// check/repair options
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_CHECK_H */

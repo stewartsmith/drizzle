@@ -26,6 +26,9 @@
 #include "drizzled/charset.h"
 #include "drizzled/charset_info.h"
 
+namespace drizzled
+{
+
 const uint32_t NO_RECORD= UINT32_MAX;
 
 const int LOWFIND= 1;
@@ -531,3 +534,4 @@ unsigned char *hash_element(HASH *hash,uint32_t idx)
   return 0;
 }
 
+} /* namespace drizzled */

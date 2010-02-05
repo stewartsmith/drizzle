@@ -37,8 +37,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
+#include <drizzled/join.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 extern plugin::StorageEngine *myisam_engine;
 
@@ -2352,8 +2354,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
 {
   for (StoredKey **copy= tab->ref.key_copy ; *copy ; copy++)
   {
-    enum StoredKey::store_key_result store_res;
-    store_res= (*copy)->copy();
+    StoredKey::store_key_result store_res= (*copy)->copy();
     tab->ref.key_err= store_res;
 
     /*
@@ -3172,3 +3173,5 @@ void subselect_hash_sj_engine::print(String *str, enum_query_type query_type)
            "<the access method for lookups is not yet created>"
          ));
 }
+
+} /* namespace drizzled */

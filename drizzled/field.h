@@ -36,6 +36,9 @@
 #include <string>
 #include <vector>
 
+namespace drizzled
+{
+
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
@@ -137,7 +140,7 @@ public:
   bool is_created_from_null_item;
 
   static void *operator new(size_t size);
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
+  static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
   { }
 
@@ -204,7 +207,7 @@ public:
      Check whether a field type can be partially indexed by a key.
 
      This is a static method, rather than a virtual function, because we need
-     to check the type of a non-Field in drizzled::alter_table().
+     to check the type of a non-Field in alter_table().
 
      @param type  field type
 
@@ -364,15 +367,15 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(drizzled::memory::Root *root,
+  virtual Field *new_field(memory::Root *root,
                            Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(drizzled::memory::Root *root, Table *new_table,
+  virtual Field *new_key_field(memory::Root *root, Table *new_table,
                                unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(drizzled::memory::Root *mem_root, Table *new_table);
+  Field *clone(memory::Root *mem_root, Table *new_table);
   inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
@@ -737,7 +740,13 @@ public:
   void setWriteSet(bool arg= true);
 };
 
+} /* namespace drizzled */
+
+/** @TODO Why is this in the middle of the file???*/
 #include "drizzled/create_field.h"
+
+namespace drizzled
+{
 
 /**
  * A class for sending field information to a client.
@@ -766,7 +775,7 @@ public:
 /**
  * A class for quick copying data to fields
  */
-class CopyField :public drizzled::memory::SqlAlloc
+class CopyField :public memory::SqlAlloc
 {
   /**
     Convenience definition of a copy function returned by
@@ -797,7 +806,7 @@ public:
 };
 
 Field *make_field(TableShare *share,
-                  drizzled::memory::Root *root,
+                  memory::Root *root,
                   unsigned char *ptr,
                   uint32_t field_length,
                   bool is_nullable,
@@ -831,5 +840,7 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 bool test_if_important_data(const CHARSET_INFO * const cs,
                             const char *str,
                             const char *strend);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_H */

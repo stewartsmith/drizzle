@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/user.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 /**
   @todo
@@ -68,4 +71,4 @@ bool Item_func_current_user::fix_fields(Session *session, Item **ref)
   return init(ctx->user.c_str(), ctx->ip.c_str());
 }
 
-
+} /* namespace drizzled */

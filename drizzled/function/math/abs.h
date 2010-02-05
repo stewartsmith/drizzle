@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num1.h>
 
+namespace drizzled
+{
+
 class Item_func_abs :public Item_func_num1
 {
 public:
@@ -33,5 +36,7 @@ public:
   const char *func_name() const { return "abs"; }
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_ABS_H */

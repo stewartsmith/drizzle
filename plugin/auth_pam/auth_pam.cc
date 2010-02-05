@@ -30,6 +30,8 @@
 #include <security/pam_misc.h>
 #endif
 
+using namespace drizzled;
+
 typedef struct {
     const char *name;
     const char *password;

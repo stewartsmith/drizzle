@@ -40,8 +40,10 @@
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 extern my_decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
@@ -874,10 +876,6 @@ my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
 
 /***************************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Declarations for auxilary C-callbacks */
 
 static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
@@ -892,10 +890,6 @@ static int item_sum_distinct_walk(void *element,
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 /* Item_sum_distinct */
 
@@ -2514,10 +2508,6 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
   return 0;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static int count_distinct_walk(void *,
                                uint32_t ,
                                void *arg)
@@ -2525,12 +2515,6 @@ static int count_distinct_walk(void *,
   (*((uint64_t*)arg))++;
   return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 void Item_sum_count_distinct::cleanup()
 {
@@ -3322,7 +3306,7 @@ void Item_func_group_concat::make_unique()
 double Item_func_group_concat::val_real()
 {
   String *res;  res=val_str(&str_value);
-  return res ? my_atof(res->c_ptr()) : 0.0;
+  return res ? internal::my_atof(res->c_ptr()) : 0.0;
 }
 
 int64_t Item_func_group_concat::val_int()
@@ -3333,7 +3317,7 @@ int64_t Item_func_group_concat::val_int()
   if (!(res= val_str(&str_value)))
     return (int64_t) 0;
   end_ptr= (char*) res->ptr()+ res->length();
-  return my_strtoll10(res->ptr(), &end_ptr, &error);
+  return internal::my_strtoll10(res->ptr(), &end_ptr, &error);
 }
 
 String* Item_func_group_concat::val_str(String* )
@@ -3396,3 +3380,5 @@ Item_func_group_concat::~Item_func_group_concat()
   if (!original && unique_filter)
     delete unique_filter;
 }
+
+} /* namespace drizzled */

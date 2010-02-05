@@ -20,8 +20,11 @@
 #ifndef DRIZZLED_STORED_KEY_H
 #define DRIZZLED_STORED_KEY_H
 
+namespace drizzled
+{
+
 /** class to store an field/item as a key struct */
-class StoredKey :public drizzled::memory::SqlAlloc
+class StoredKey :public memory::SqlAlloc
 {
 public:
   bool null_key; /**< If true, the value of the key has a null part */
@@ -172,5 +175,7 @@ protected:
     return (err > 2 ?  STORE_KEY_FATAL : (store_key_result) err);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STORED_KEY_H */

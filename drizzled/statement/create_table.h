@@ -24,10 +24,10 @@
 #include "drizzled/statement.h"
 #include "drizzled/foreign_key.h"
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -45,8 +45,8 @@ public:
   }
 
   bool execute();
-  drizzled::message::Table create_table_proto;
-  drizzled::message::Table::Field *current_proto_field;
+  message::Table create_table_proto;
+  message::Table::Field *current_proto_field;
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
   KEY_CREATE_INFO key_create_info;
@@ -73,8 +73,8 @@ public:
   bool is_engine_set;
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_CREATE_TABLE_H */
