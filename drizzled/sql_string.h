@@ -22,42 +22,41 @@
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
+#include <drizzled/common.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			(uint8_t)31
 #endif
 
-#include <drizzled/common.h>
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
+namespace drizzled
+{
 
 class String;
 
 extern String my_empty_string;
 extern const String my_null_string;
-namespace drizzled { namespace memory { class Root; } }
+namespace memory { class Root; }
 typedef struct charset_info_st CHARSET_INFO;
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+std::string String_to_std_string(String const& s);
+String* set_String_from_std_string(String* s, std::string const& cs);
 
-  int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
-  int stringcmp(const String *a,const String *b);
-  String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
-  uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                                   char *to, uint32_t to_length,
-                                   const CHARSET_INFO * const from_cs,
-                                   const char *from, uint32_t from_length,
-                                   uint32_t nchars,
-                                   const char **well_formed_error_pos,
-                                   const char **cannot_convert_error_pos,
-                                   const char **from_end_pos);
+int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
+int stringcmp(const String *a,const String *b);
+String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
+uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
+                                 char *to, uint32_t to_length,
+                                 const CHARSET_INFO * const from_cs,
+                                 const char *from, uint32_t from_length,
+                                 uint32_t nchars,
+                                 const char **well_formed_error_pos,
+                                 const char **cannot_convert_error_pos,
+                                 const char **from_end_pos);
 
-#if defined(__cplusplus)
-}
-#endif
 
 class String
 {
@@ -74,10 +73,10 @@ public:
   String(char *str, uint32_t len, const CHARSET_INFO * const cs);
   String(const String &str);
 
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root);
+  static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
   { }
-  static void operator delete(void *, drizzled::memory::Root *)
+  static void operator delete(void *, memory::Root *)
   { }
   ~String();
 
@@ -287,35 +286,12 @@ public:
     q_*** methods writes values of parameters itself
     qs_*** methods writes string representation of value
   */
-  void q_append(const char c)
-  {
-    Ptr[str_length++] = c;
-  }
-  void q_append(const uint32_t n)
-  {
-    int4store(Ptr + str_length, n);
-    str_length += 4;
-  }
-  void q_append(double d)
-  {
-    float8store(Ptr + str_length, d);
-    str_length += 8;
-  }
-  void q_append(double *d)
-  {
-    float8store(Ptr + str_length, *d);
-    str_length += 8;
-  }
-  void q_append(const char *data, uint32_t data_len)
-  {
-    memcpy(Ptr + str_length, data, data_len);
-    str_length += data_len;
-  }
-
-  void write_at_position(int position, uint32_t value)
-  {
-    int4store(Ptr + position,value);
-  }
+  void q_append(const char c);
+  void q_append(const uint32_t n);
+  void q_append(double d);
+  void q_append(double *d);
+  void q_append(const char *data, uint32_t data_len);
+  void write_at_position(int position, uint32_t value);
 
   /* Inline (general) functions used by the protocol functions */
 
@@ -355,9 +331,10 @@ public:
 bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
                              char *end);
 
-extern "C++" {
-bool operator==(const String &s1, const String &s2);
-bool operator!=(const String &s1, const String &s2);
-}
+} /* namespace drizzled */
+
+bool operator==(const drizzled::String &s1, const drizzled::String &s2);
+bool operator!=(const drizzled::String &s1, const drizzled::String &s2);
+
 
 #endif /* DRIZZLED_SQL_STRING_H */

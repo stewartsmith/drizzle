@@ -18,10 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
+#include <drizzled/join.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/item/cmpfunc.h>
@@ -29,7 +30,8 @@
 #include <drizzled/item/outer_ref.h>
 #include <drizzled/plugin/client.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -1256,3 +1258,6 @@ void Item_field::print(String *str, enum_query_type query_type)
   }
   Item_ident::print(str, query_type);
 }
+
+
+} /* namespace drizzled */

@@ -32,6 +32,9 @@
 
 #include "drizzled/temporal.h"
 
+namespace drizzled
+{
+
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
   2038-01-01 00:00:00 UTC stored as number of seconds since Unix
@@ -84,7 +87,7 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
   :Field_str(ptr_arg,
-             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              null_ptr_arg,
              null_bit_arg,
              field_name_arg,
@@ -107,7 +110,7 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
   :Field_str((unsigned char*) NULL,
-             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+             DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              maybe_null_arg ? (unsigned char*) "": 0,
              0,
              field_name_arg,
@@ -157,7 +160,7 @@ int Field_timestamp::store(const char *from,
                            uint32_t len,
                            const CHARSET_INFO * const )
 {
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
@@ -200,7 +203,7 @@ int Field_timestamp::store(int64_t from, bool)
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   if (! temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using stringstream */
@@ -237,7 +240,7 @@ int64_t Field_timestamp::val_int(void)
 #endif
     longget(temp, ptr);
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
   /* We must convert into a "timestamp-formatted integer" ... */
@@ -264,7 +267,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
 
   val_buffer->set_charset(&my_charset_bin);	/* Safety */
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
   int rlen;
@@ -288,7 +291,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
   
   memset(ltime, 0, sizeof(*ltime));
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
 
   /* @TODO Goodbye the below code when DRIZZLE_TIME is finally gone.. */
@@ -394,3 +397,5 @@ void Field_timestamp::store_timestamp(time_t timestamp)
 #endif
     longstore(ptr,(uint32_t) timestamp);
 }
+
+} /* namespace drizzled */

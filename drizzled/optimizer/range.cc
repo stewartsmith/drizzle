@@ -143,7 +143,8 @@
 #include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
-using namespace drizzled;
+namespace drizzled
+{
 
 #define HA_END_SPACE_KEY 0
 
@@ -237,7 +238,7 @@ static void get_sweep_read_cost(Table *table,
 class SEL_IMERGE;
 
 
-class SEL_TREE :public drizzled::memory::SqlAlloc
+class SEL_TREE :public memory::SqlAlloc
 {
 public:
   /*
@@ -313,30 +314,30 @@ static ha_rows check_quick_select(optimizer::Parameter *param,
                                   uint32_t *bufsize,
                                   COST_VECT *cost);
 
-static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
-                                                  SEL_TREE *tree,
-                                                  bool index_read_must_be_used,
-                                                  bool update_tbl_stats,
+static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
+                                                      SEL_TREE *tree,
+                                                      bool index_read_must_be_used,
+                                                      bool update_tbl_stats,
+                                                      double read_time);
+
+static
+optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Parameter *param,
+                                                        SEL_TREE *tree,
+                                                        double read_time,
+                                                        bool *are_all_covering);
+
+static
+optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Parameter *param,
+                                                                 SEL_TREE *tree,
+                                                                 double read_time);
+
+static
+optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
+                                                  SEL_IMERGE *imerge,
                                                   double read_time);
 
 static
-optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
-                                                     SEL_TREE *tree,
-                                                     double read_time,
-                                                     bool *are_all_covering);
-
-static
-optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                              SEL_TREE *tree,
-                                                              double read_time);
-
-static
-optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
-                                                    SEL_IMERGE *imerge,
-                                                    double read_time);
-
-static
-optimizer::TRP_GROUP_MIN_MAX *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
+optimizer::GroupMinMaxReadPlan *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
 
 static void print_sel_tree(optimizer::Parameter *param,
                            SEL_TREE *tree,
@@ -365,7 +366,7 @@ static bool get_range(optimizer::SEL_ARG **e1, optimizer::SEL_ARG **e2, optimize
 
 static bool eq_tree(optimizer::SEL_ARG* a, optimizer::SEL_ARG *b);
 
-optimizer::SEL_ARG drizzled::optimizer::null_element(optimizer::SEL_ARG::IMPOSSIBLE);
+optimizer::SEL_ARG optimizer::null_element(optimizer::SEL_ARG::IMPOSSIBLE);
 
 static bool null_part_in_key(KEY_PART *key_part,
                              const unsigned char *key,
@@ -387,7 +388,7 @@ bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2, optimizer::RangePar
   This class relies on memory manager to do the cleanup.
 */
 
-class SEL_IMERGE : public drizzled::memory::SqlAlloc
+class SEL_IMERGE : public memory::SqlAlloc
 {
   enum { PREALLOCED_TREES= 10};
 public:
@@ -622,7 +623,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 
   if (head->sort.io_cache)
   {
-    memcpy(select->file, head->sort.io_cache, sizeof(IO_CACHE));
+    memcpy(select->file, head->sort.io_cache, sizeof(internal::IO_CACHE));
     select->records=(ha_rows) (select->file->end_of_file/
 			       head->cursor->ref_length);
     delete head->sort.io_cache;
@@ -636,7 +637,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    file(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
+    file(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     free_cond(false)
 {
   quick_keys.reset();
@@ -1004,8 +1005,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         read_time= key_read_time;
     }
 
-    optimizer::TABLE_READ_PLAN *best_trp= NULL;
-    optimizer::TRP_GROUP_MIN_MAX *group_trp= NULL;
+    optimizer::TableReadPlan *best_trp= NULL;
+    optimizer::GroupMinMaxReadPlan *group_trp= NULL;
     double best_read_time= read_time;
 
     if (cond)
@@ -1051,8 +1052,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       */
       if (tree->merges.is_empty())
       {
-        optimizer::TRP_RANGE *range_trp= NULL;
-        optimizer::TRP_ROR_INTERSECT *rori_trp= NULL;
+        optimizer::RangeReadPlan *range_trp= NULL;
+        optimizer::RorIntersectReadPlan *rori_trp= NULL;
         bool can_build_covering= false;
 
         /* Get best 'range' plan and prepare data for making other plans */
@@ -1093,9 +1094,9 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       else
       {
         /* Try creating index_merge/ROR-union scan. */
-        SEL_IMERGE *imerge;
-        optimizer::TABLE_READ_PLAN *best_conj_trp= NULL;
-        optimizer::TABLE_READ_PLAN *new_conj_trp= NULL;
+        SEL_IMERGE *imerge= NULL;
+        optimizer::TableReadPlan *best_conj_trp= NULL;
+        optimizer::TableReadPlan *new_conj_trp= NULL;
         List_iterator_fast<SEL_IMERGE> it(tree->merges);
         while ((imerge= it++))
         {
@@ -1204,16 +1205,16 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 */
 
 static
-optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
-                                                    SEL_IMERGE *imerge,
-                                                    double read_time)
+optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
+                                                  SEL_IMERGE *imerge,
+                                                  double read_time)
 {
   SEL_TREE **ptree;
-  optimizer::TRP_INDEX_MERGE *imerge_trp= NULL;
+  optimizer::IndexMergeReadPlan *imerge_trp= NULL;
   uint32_t n_child_scans= imerge->trees_next - imerge->trees;
-  optimizer::TRP_RANGE **range_scans= NULL;
-  optimizer::TRP_RANGE **cur_child= NULL;
-  optimizer::TRP_RANGE **cpk_scan= NULL;
+  optimizer::RangeReadPlan **range_scans= NULL;
+  optimizer::RangeReadPlan **cur_child= NULL;
+  optimizer::RangeReadPlan **cpk_scan= NULL;
   bool imerge_too_expensive= false;
   double imerge_cost= 0.0;
   ha_rows cpk_scan_records= 0;
@@ -1222,15 +1223,15 @@ optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
   bool all_scans_ror_able= true;
   bool all_scans_rors= true;
   uint32_t unique_calc_buff_size;
-  optimizer::TABLE_READ_PLAN **roru_read_plans= NULL;
-  optimizer::TABLE_READ_PLAN **cur_roru_plan= NULL;
+  optimizer::TableReadPlan **roru_read_plans= NULL;
+  optimizer::TableReadPlan **cur_roru_plan= NULL;
   double roru_index_costs;
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  if (!(range_scans= (optimizer::TRP_RANGE**)alloc_root(param->mem_root,
-                                                        sizeof(optimizer::TRP_RANGE*)*
-                                                        n_child_scans)))
+  if (! (range_scans= (optimizer::RangeReadPlan**)alloc_root(param->mem_root,
+                                                             sizeof(optimizer::RangeReadPlan*)*
+                                                             n_child_scans)))
     return NULL;
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
@@ -1280,7 +1281,7 @@ optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
   }
   if (all_scans_rors)
   {
-    roru_read_plans= (optimizer::TABLE_READ_PLAN**)range_scans;
+    roru_read_plans= (optimizer::TableReadPlan **) range_scans;
     goto skip_to_ror_scan;
   }
   if (cpk_scan)
@@ -1323,7 +1324,7 @@ optimizer::TABLE_READ_PLAN *get_best_disjunct_quick(optimizer::Parameter *param,
                          param->session->variables.sortbuff_size);
   if (imerge_cost < read_time)
   {
-    if ((imerge_trp= new (param->mem_root) optimizer::TRP_INDEX_MERGE))
+    if ((imerge_trp= new (param->mem_root) optimizer::IndexMergeReadPlan))
     {
       imerge_trp->read_cost= imerge_cost;
       imerge_trp->records= non_cpk_scan_records + cpk_scan_records;
@@ -1341,11 +1342,11 @@ build_ror_index_merge:
 
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
-  if (!(roru_read_plans=
-          (optimizer::TABLE_READ_PLAN**)alloc_root(param->mem_root,
-                                                   sizeof(optimizer::TABLE_READ_PLAN*)*
+  if (! (roru_read_plans=
+          (optimizer::TableReadPlan **) alloc_root(param->mem_root,
+                                                   sizeof(optimizer::TableReadPlan*)*
                                                    n_child_scans)))
-    return(imerge_trp);
+    return imerge_trp;
 skip_to_ror_scan:
   roru_index_costs= 0.0;
   roru_total_records= 0;
@@ -1374,7 +1375,7 @@ skip_to_ror_scan:
     else
       cost= read_time;
 
-    optimizer::TABLE_READ_PLAN *prev_plan= *cur_child;
+    optimizer::TableReadPlan *prev_plan= *cur_child;
     if (!(*cur_roru_plan= get_best_ror_intersect(param, *ptree, cost,
                                                  &dummy)))
     {
@@ -1386,7 +1387,7 @@ skip_to_ror_scan:
     }
     else
       roru_index_costs +=
-        ((optimizer::TRP_ROR_INTERSECT*)(*cur_roru_plan))->index_scan_costs;
+        ((optimizer::RorIntersectReadPlan*)(*cur_roru_plan))->index_scan_costs;
     roru_total_records += (*cur_roru_plan)->records;
     roru_intersect_part *= (*cur_roru_plan)->records /
                            param->table->cursor->stats.records;
@@ -1421,10 +1422,10 @@ skip_to_ror_scan:
                      sweep_cost.total_cost();
   }
 
-  optimizer::TRP_ROR_UNION *roru= NULL;
+  optimizer::RorUnionReadPlan *roru= NULL;
   if (roru_total_cost < read_time)
   {
-    if ((roru= new (param->mem_root) optimizer::TRP_ROR_UNION))
+    if ((roru= new (param->mem_root) optimizer::RorUnionReadPlan))
     {
       roru->first_ror= roru_read_plans;
       roru->last_ror= roru_read_plans + n_child_scans;
@@ -1954,10 +1955,10 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
 */
 
 static
-optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter *param,
-                                                     SEL_TREE *tree,
-                                                     double read_time,
-                                                     bool *are_all_covering)
+optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Parameter *param,
+                                                   SEL_TREE *tree,
+                                                   double read_time,
+                                                   bool *are_all_covering)
 {
   uint32_t idx;
   double min_cost= DBL_MAX;
@@ -2006,8 +2007,8 @@ optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter 
     ROR_SCAN_INFO's.
     Step 2: Get best ROR-intersection using an approximate algorithm.
   */
-  my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
-           (qsort_cmp)cmp_ror_scan_info);
+  internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
+                     (qsort_cmp)cmp_ror_scan_info);
   print_ror_scans_arr(param->table, "ordered",
                                           tree->ror_scans,
                                           tree->ror_scans_end);
@@ -2080,10 +2081,10 @@ optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter 
   }
 
   /* Ok, return ROR-intersect plan if we have found one */
-  optimizer::TRP_ROR_INTERSECT *trp= NULL;
+  optimizer::RorIntersectReadPlan *trp= NULL;
   if (min_cost < read_time && (cpk_scan_used || best_num > 1))
   {
-    if (! (trp= new (param->mem_root) optimizer::TRP_ROR_INTERSECT))
+    if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
       return trp;
 
     if (! (trp->first_scan=
@@ -2141,9 +2142,9 @@ optimizer::TRP_ROR_INTERSECT *get_best_ror_intersect(const optimizer::Parameter 
 */
 
 static
-optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                              SEL_TREE *tree,
-                                                              double read_time)
+optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Parameter *param,
+                                                            SEL_TREE *tree,
+                                                            double read_time)
 {
   ROR_SCAN_INFO **ror_scan_mark;
   ROR_SCAN_INFO **ror_scans_end= tree->ror_scans_end;
@@ -2197,8 +2198,9 @@ optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Paramet
         (*scan)->covered_fields.getFirst();
     }
 
-    my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark, sizeof(ROR_SCAN_INFO*),
-             (qsort_cmp)cmp_ror_scan_info_covering);
+    internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
+                       sizeof(ROR_SCAN_INFO*),
+                       (qsort_cmp)cmp_ror_scan_info_covering);
 
     print_ror_scans_arr(param->table,
                                              "remaining scans",
@@ -2233,8 +2235,8 @@ optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Paramet
   if (total_cost > read_time)
     return NULL;
 
-  optimizer::TRP_ROR_INTERSECT *trp= NULL;
-  if (! (trp= new (param->mem_root) optimizer::TRP_ROR_INTERSECT))
+  optimizer::RorIntersectReadPlan *trp= NULL;
+  if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
   {
     return trp;
   }
@@ -2282,11 +2284,11 @@ optimizer::TRP_ROR_INTERSECT *get_best_covering_ror_intersect(optimizer::Paramet
     NULL if no plan found or error occurred
 */
 
-static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
-                                                  SEL_TREE *tree,
-                                                  bool index_read_must_be_used,
-                                                  bool update_tbl_stats,
-                                                  double read_time)
+static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
+                                                      SEL_TREE *tree,
+                                                      bool index_read_must_be_used,
+                                                      bool update_tbl_stats,
+                                                      double read_time)
 {
   uint32_t idx;
   optimizer::SEL_ARG **key= NULL;
@@ -2295,7 +2297,7 @@ static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
   ha_rows best_records= 0;
   uint32_t best_mrr_flags= 0;
   uint32_t best_buf_size= 0;
-  optimizer::TRP_RANGE *read_plan= NULL;
+  optimizer::RangeReadPlan *read_plan= NULL;
   /*
     Note that there may be trees that have type SEL_TREE::KEY but contain no
     key reads at all, e.g. tree for expression "key1 is not null" where key1
@@ -2344,8 +2346,8 @@ static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
-    if ((read_plan= new (param->mem_root) optimizer::TRP_RANGE(*key_to_read, idx,
-                                                               best_mrr_flags)))
+    if ((read_plan= new (param->mem_root) optimizer::RangeReadPlan(*key_to_read, idx,
+                                                                   best_mrr_flags)))
     {
       read_plan->records= best_records;
       read_plan->is_ror= tree->ror_scans_map.test(idx);
@@ -2358,7 +2360,7 @@ static optimizer::TRP_RANGE *get_key_scans_params(optimizer::Parameter *param,
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimizer::Parameter *param, bool, memory::Root *)
+optimizer::QuickSelectInterface *optimizer::IndexMergeReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickIndexMergeSelect *quick_imerge;
   optimizer::QuickRangeSelect *quick= NULL;
@@ -2370,7 +2372,7 @@ optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimize
 
   quick_imerge->records= records;
   quick_imerge->read_time= read_cost;
-  for (optimizer::TRP_RANGE **range_scan= range_scans; 
+  for (optimizer::RangeReadPlan **range_scan= range_scans; 
        range_scan != range_scans_end;
        range_scan++)
   {
@@ -2386,9 +2388,9 @@ optimizer::QuickSelectInterface *optimizer::TRP_INDEX_MERGE::make_quick(optimize
   return quick_imerge;
 }
 
-optimizer::QuickSelectInterface *optimizer::TRP_ROR_INTERSECT::make_quick(optimizer::Parameter *param,
-                                                                          bool retrieve_full_rows,
-                                                                          memory::Root *parent_alloc)
+optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(optimizer::Parameter *param,
+                                                                             bool retrieve_full_rows,
+                                                                             memory::Root *parent_alloc)
 {
   optimizer::QuickRorIntersectSelect *quick_intersect= NULL;
   optimizer::QuickRangeSelect *quick= NULL;
@@ -2441,10 +2443,10 @@ optimizer::QuickSelectInterface *optimizer::TRP_ROR_INTERSECT::make_quick(optimi
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_ROR_UNION::make_quick(optimizer::Parameter *param, bool, memory::Root *)
+optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickRorUnionSelect *quick_roru= NULL;
-  optimizer::TABLE_READ_PLAN **scan= NULL;
+  optimizer::TableReadPlan **scan= NULL;
   optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
@@ -3233,16 +3235,15 @@ get_mm_leaf(optimizer::RangeParameter *param,
       max_str[0]= min_str[0]=0;
 
     field_length-= maybe_null;
-    int escape_code=
-      make_escape_code(field->charset(),
-                       ((Item_func_like*)(param->cond))->escape);
+    int escape_code= make_escape_code(field->charset(),
+                                      ((Item_func_like*)(param->cond))->escape);
     like_error= my_like_range(field->charset(),
-			      res->ptr(), res->length(),
+                              res->ptr(), res->length(),
                               escape_code,
-			      wild_one, wild_many,
-			      field_length,
-			      (char*) min_str+offset, (char*) max_str+offset,
-			      &min_length, &max_length);
+                              internal::wild_one, internal::wild_many,
+                              field_length,
+                              (char*) min_str+offset, (char*) max_str+offset,
+                              &min_length, &max_length);
     if (like_error)				// Can't optimize with LIKE
       goto end;
 
@@ -3311,7 +3312,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     if (value->real_item()->type() == Item::FIELD_ITEM
         && value->result_type() == STRING_RESULT)
     {
-      char buff[drizzled::DateTime::MAX_STRING_LENGTH];
+      char buff[DateTime::MAX_STRING_LENGTH];
       String tmp(buff, sizeof(buff), &my_charset_bin);
       String *res= value->val_str(&tmp);
 
@@ -3323,13 +3324,13 @@ get_mm_leaf(optimizer::RangeParameter *param,
          * Create a datetime from the string and compare to fixed timestamp
          * instances representing the epoch boundaries.
          */
-        drizzled::DateTime value_datetime;
+        DateTime value_datetime;
 
         if (! value_datetime.from_string(res->c_ptr(), (size_t) res->length()))
           goto end;
 
-        drizzled::Timestamp max_timestamp;
-        drizzled::Timestamp min_timestamp;
+        Timestamp max_timestamp;
+        Timestamp min_timestamp;
 
         (void) max_timestamp.from_time_t((time_t) INT32_MAX);
         (void) min_timestamp.from_time_t((time_t) 0);
@@ -3341,13 +3342,13 @@ get_mm_leaf(optimizer::RangeParameter *param,
            * Datetime in right-hand side column is before UNIX epoch, so adjust to
            * lower bound.
            */
-          char new_value_buff[drizzled::DateTime::MAX_STRING_LENGTH];
+          char new_value_buff[DateTime::MAX_STRING_LENGTH];
           int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
           new_value_length= min_timestamp.to_string(new_value_string.c_ptr(),
-				    drizzled::DateTime::MAX_STRING_LENGTH);
-	  assert((new_value_length+1) < drizzled::DateTime::MAX_STRING_LENGTH);
+				    DateTime::MAX_STRING_LENGTH);
+	  assert((new_value_length+1) < DateTime::MAX_STRING_LENGTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
@@ -3357,13 +3358,13 @@ get_mm_leaf(optimizer::RangeParameter *param,
            * Datetime in right hand side column is after UNIX epoch, so adjust
            * to the higher bound of the epoch.
            */
-          char new_value_buff[drizzled::DateTime::MAX_STRING_LENGTH];
+          char new_value_buff[DateTime::MAX_STRING_LENGTH];
           int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
           new_value_length= max_timestamp.to_string(new_value_string.c_ptr(),
-					drizzled::DateTime::MAX_STRING_LENGTH);
-	  assert((new_value_length+1) < drizzled::DateTime::MAX_STRING_LENGTH);
+					DateTime::MAX_STRING_LENGTH);
+	  assert((new_value_length+1) < DateTime::MAX_STRING_LENGTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
@@ -5350,13 +5351,13 @@ cost_group_min_max(Table* table,
 
   RETURN
     If mem_root != NULL
-    - valid TRP_GROUP_MIN_MAX object if this QUICK class can be used for
+    - valid GroupMinMaxReadPlan object if this QUICK class can be used for
       the query
     -  NULL o/w.
     If mem_root == NULL
     - NULL
 */
-static optimizer::TRP_GROUP_MIN_MAX *
+static optimizer::GroupMinMaxReadPlan *
 get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
 {
   Session *session= param->session;
@@ -5373,7 +5374,7 @@ get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
   uint32_t used_key_parts= 0;   /* Number of index key parts used for access. */
   unsigned char key_infix[MAX_KEY_LENGTH]; /* Constants from equality predicates.*/
   uint32_t key_infix_len= 0;          /* Length of key_infix. */
-  optimizer::TRP_GROUP_MIN_MAX *read_plan= NULL; /* The eventually constructed TRP. */
+  optimizer::GroupMinMaxReadPlan *read_plan= NULL; /* The eventually constructed TRP. */
   uint32_t key_part_nr;
   order_st *tmp_group= NULL;
   Item *item= NULL;
@@ -5772,20 +5773,20 @@ get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
 
   /* The query passes all tests, so construct a new TRP object. */
   read_plan=
-    new(param->mem_root) optimizer::TRP_GROUP_MIN_MAX(have_min,
-                                                      have_max,
-                                                      min_max_arg_part,
-                                                      group_prefix_len,
-                                                      used_key_parts,
-                                                      group_key_parts,
-                                                      index_info,
-                                                      index,
-                                                      key_infix_len,
-                                                      (key_infix_len > 0) ? key_infix : NULL,
-                                                      tree,
-                                                      best_index_tree,
-                                                      best_param_idx,
-                                                      best_quick_prefix_records);
+    new(param->mem_root) optimizer::GroupMinMaxReadPlan(have_min,
+                                                        have_max,
+                                                        min_max_arg_part,
+                                                        group_prefix_len,
+                                                        used_key_parts,
+                                                        group_key_parts,
+                                                        index_info,
+                                                        index,
+                                                        key_infix_len,
+                                                        (key_infix_len > 0) ? key_infix : NULL,
+                                                        tree,
+                                                        best_index_tree,
+                                                        best_param_idx,
+                                                        best_quick_prefix_records);
   if (read_plan)
   {
     if (tree && read_plan->quick_prefix_records == 0)
@@ -6117,7 +6118,7 @@ optimizer::SEL_ARG *get_index_range_tree(uint32_t index,
     records             [out] The number of rows retrieved
 
   DESCRIPTION
-    This method computes the access cost of a TRP_GROUP_MIN_MAX instance and
+    This method computes the access cost of a GroupMinMaxReadPlan instance and
     the number of rows returned. It updates this->read_cost and this->records.
 
   NOTES
@@ -6241,7 +6242,7 @@ void cost_group_min_max(Table* table,
   Construct a new quick select object for queries with group by with min/max.
 
   SYNOPSIS
-    TRP_GROUP_MIN_MAX::make_quick()
+    GroupMinMaxReadPlan::make_quick()
     param              Parameter from test_quick_select
     retrieve_full_rows ignored
     parent_alloc       Memory pool to use, if any.
@@ -6258,7 +6259,7 @@ void cost_group_min_max(Table* table,
     NULL otherwise.
 */
 optimizer::QuickSelectInterface *
-optimizer::TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
+optimizer::GroupMinMaxReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
   optimizer::QuickGroupMinMaxSelect *quick= NULL;
 
@@ -6346,7 +6347,7 @@ optimizer::TRP_GROUP_MIN_MAX::make_quick(optimizer::Parameter *param, bool, memo
 }
 
 
-optimizer::QuickSelectInterface *optimizer::TRP_RANGE::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
+optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *parent_alloc)
 {
   optimizer::QuickRangeSelect *quick= NULL;
   if ((quick= optimizer::get_quick_select(param,
@@ -6407,3 +6408,4 @@ static void print_ror_scans_arr(Table *table,
     tmp.append(STRING_WITH_LEN("(empty)"));
 }
 
+} /* namespace drizzled */

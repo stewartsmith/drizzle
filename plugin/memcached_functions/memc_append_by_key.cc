@@ -41,6 +41,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 int64_t MemcachedAppendByKey::val_int()
 {

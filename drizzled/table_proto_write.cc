@@ -100,7 +100,7 @@ int fill_table_proto(message::Table *table_proto,
       break;
     case DRIZZLE_TYPE_DOUBLE:
       {
-        attribute->set_type(drizzled::message::Table::Field::DOUBLE);
+        attribute->set_type(message::Table::Field::DOUBLE);
 
         /* 
          * For DOUBLE, we only add a specific scale and precision iff
@@ -108,7 +108,7 @@ int fill_table_proto(message::Table *table_proto,
          */
         if (field_arg->decimals != NOT_FIXED_DEC)
         {
-          drizzled::message::Table::Field::NumericFieldOptions *numeric_field_options;
+          message::Table::Field::NumericFieldOptions *numeric_field_options;
 
           numeric_field_options= attribute->mutable_numeric_options();
 
@@ -490,7 +490,7 @@ int rename_table_proto_file(const char *from, const char* to)
   from_path.append(file_ext);
   to_path.append(file_ext);
 
-  return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
+  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
 }
 
 int delete_table_proto_file(const char *file_name)
@@ -499,13 +499,13 @@ int delete_table_proto_file(const char *file_name)
   string file_ext = ".dfe";
 
   new_path.append(file_ext);
-  return my_delete(new_path.c_str(), MYF(0));
+  return internal::my_delete(new_path.c_str(), MYF(0));
 }
 
 int drizzle_write_proto_file(const std::string file_name,
                              message::Table *table_proto)
 {
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
 
   if (fd == -1)
     return errno;

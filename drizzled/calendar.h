@@ -88,6 +88,9 @@
  */
 #define IS_JULIAN_LEAP_YEAR(y) (days_in_year_julian((y)) == 366)
 
+namespace drizzled
+{
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -335,5 +338,7 @@ uint32_t months_to_year_month(uint32_t months);
 #ifdef __cplusplus
 }
 #endif
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CALENDAR_H */

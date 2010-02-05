@@ -18,16 +18,19 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/function/time/date.h"
 #include "drizzled/temporal.h"
+
+namespace drizzled
+{
 
 String *Item_date::val_str(String *str)
 {
   assert(fixed);
 
   /* We have our subclass convert a Date temporal for us */
-  drizzled::Date temporal;
+  Date temporal;
   if (! get_temporal(temporal))
     return (String *) NULL; /* get_temporal throws error. */
 
@@ -50,7 +53,7 @@ int64_t Item_date::val_int()
   assert(fixed);
 
   /* We have our subclass convert a Date temporal for us */
-  drizzled::Date temporal;
+  Date temporal;
   if (! get_temporal(temporal))
     return 0; /* get_temporal throws error. */
 
@@ -59,3 +62,5 @@ int64_t Item_date::val_int()
   temporal.to_int32_t(&int_value);
   return (int64_t) int_value;
 }
+
+} /* namespace drizzled */

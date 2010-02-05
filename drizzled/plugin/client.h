@@ -23,11 +23,11 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
 
+namespace drizzled
+{
 class Session;
 class String;
 
-namespace drizzled
-{
 namespace plugin
 {
 
@@ -142,7 +142,7 @@ public:
 
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_CLIENT_H */

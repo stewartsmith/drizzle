@@ -17,6 +17,8 @@
 
 #include <string.h>
 
+using namespace drizzled;
+
 	/* Read prev record for key */
 
 

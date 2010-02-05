@@ -273,7 +273,6 @@ n
 rollback to savepoint `my_savepoint`;
 ERROR 42000: SAVEPOINT my_savepoint does not exist
 rollback to savepoint savept2;
-ERROR 42000: SAVEPOINT savept2 does not exist
 insert into t1 values (8);
 savepoint sv;
 commit;

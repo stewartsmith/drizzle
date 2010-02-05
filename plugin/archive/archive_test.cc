@@ -62,8 +62,7 @@ int main(int argc, char *argv[])
   if (argc > 2)
     return 0;
 
-  my_init();
-
+  drizzled::internal::my_init();
   MY_INIT(argv[0]);
 
   for (method= AZ_METHOD_BLOCK; method < AZ_METHOD_MAX; method++)
@@ -100,7 +99,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  my_end();
+  drizzled::internal::my_end();
 
   return 0;
 }

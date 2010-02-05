@@ -29,6 +29,7 @@
 
 
 using namespace std;
+using namespace drizzled;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
@@ -87,7 +88,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
-  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  internal::my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;
 
   kfile= -1;
@@ -96,9 +97,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   head_length=sizeof(share_buff.state.header);
   memset(&info, 0, sizeof(info));
 
-  (void)fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
+  (void)internal::fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
   if (!realpath(org_name,rp_buff))
-    my_load_path(rp_buff,org_name, NULL);
+    internal::my_load_path(rp_buff,org_name, NULL);
   rp_buff[FN_REFLEN-1]= '\0';
   strcpy(name_buff,rp_buff);
   pthread_mutex_lock(&THR_LOCK_myisam);
@@ -111,16 +112,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.state.key_del=key_del;
     share_buff.key_cache= dflt_key_cache;
 
-    if ((kfile=my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
+    if ((kfile=internal::my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
       if ((errno != EROFS && errno != EACCES) ||
 	  mode != O_RDONLY ||
-	  (kfile=my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
+	  (kfile=internal::my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
 	goto err;
     }
     share->mode=open_mode;
     errpos=1;
-    if (my_read(kfile, share->state.header.file_version, head_length,
+    if (internal::my_read(kfile, share->state.header.file_version, head_length,
 		MYF(MY_NABP)))
     {
       errno= HA_ERR_NOT_A_TABLE;
@@ -150,7 +151,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     if (!strcmp(name_buff, org_name) || sym_link_size == -1)
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
-    (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
+    (void) internal::fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
 
     info_length=mi_uint2korr(share->state.header.header_length);
@@ -165,7 +166,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
     lseek(kfile,0,SEEK_SET);
     errpos=3;
-    if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
+    if (internal::my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
       errno=HA_ERR_CRASHED;
       goto err;
@@ -222,8 +223,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-    share->base.max_data_file_length=(my_off_t) max_data_file_length;
-    share->base.max_key_file_length=(my_off_t) max_key_file_length;
+    share->base.max_data_file_length=(internal::my_off_t) max_data_file_length;
+    share->base.max_key_file_length=(internal::my_off_t) max_key_file_length;
 
     if (share->options & HA_OPTION_COMPRESS_RECORD)
       share->base.max_key_length+=2;	/* For safety */
@@ -255,9 +256,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     memcpy(share->state.rec_per_key_part, rec_per_key_part,
            sizeof(long)*key_parts);
     memcpy(share->state.key_root, key_root,
-           sizeof(my_off_t)*keys);
+           sizeof(internal::my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
-           sizeof(my_off_t) * share->state.header.max_block_size_index);
+           sizeof(internal::my_off_t) * share->state.header.max_block_size_index);
     strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
     strcpy(share->index_file_name,  index_name);
@@ -526,7 +527,7 @@ err:
     free((unsigned char*) m_info);
     /* fall through */
   case 5:
-    my_close(info.dfile,MYF(0));
+    internal::my_close(info.dfile,MYF(0));
     if (old_info)
       break;					/* Don't remove open table */
     /* fall through */
@@ -536,7 +537,7 @@ err:
   case 3:
     /* fall through */
   case 1:
-    my_close(kfile,MYF(0));
+    internal::my_close(kfile,MYF(0));
     /* fall through */
   case 0:
   default:
@@ -588,7 +589,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
-  uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
+  uint64_t max_val= ~ (uint64_t) 0;		/* internal::my_off_t is unsigned */
 
   if (!a || max_val / a < b)
     return max_val;
@@ -753,7 +754,7 @@ uint32_t mi_state_info_write(int file, MI_STATE_INFO *state, uint32_t pWrite)
   if (pWrite & 1)
     return(my_pwrite(file, buff, (size_t) (ptr-buff), 0L,
 			  MYF(MY_NABP | MY_THREADSAFE)) != 0);
-  return(my_write(file, buff, (size_t) (ptr-buff),
+  return(internal::my_write(file, buff, (size_t) (ptr-buff),
 		       MYF(MY_NABP)) != 0);
 }
 
@@ -779,7 +780,7 @@ static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *stat
   state->state.empty	= mi_sizekorr(ptr);	ptr +=8;
   state->state.key_empty= mi_sizekorr(ptr);	ptr +=8;
   state->auto_increment=mi_uint8korr(ptr);	ptr +=8;
-  state->state.checksum=(ha_checksum) mi_uint8korr(ptr);	ptr +=8;
+  state->state.checksum=(internal::ha_checksum) mi_uint8korr(ptr);	ptr +=8;
   state->process= mi_uint4korr(ptr);		ptr +=4;
   state->unique = mi_uint4korr(ptr);		ptr +=4;
   state->status = mi_uint4korr(ptr);		ptr +=4;
@@ -820,7 +821,7 @@ uint32_t mi_state_info_read_dsk(int file, MI_STATE_INFO *state, bool pRead)
     if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
       return 1;
   }
-  else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+  else if (internal::my_read(file, buff, state->state_length,MYF(MY_NABP)))
     return 1;
   mi_state_info_read(buff, state);
 
@@ -865,7 +866,7 @@ uint32_t mi_base_info_write(int file, MI_BASE_INFO *base)
   mi_int4store(ptr,UINT32_C(0));         		ptr +=4;
 
   memset(ptr, 0, 6);					ptr +=6; /* extra */
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 
@@ -919,7 +920,7 @@ uint32_t mi_keydef_write(int file, MI_KEYDEF *keydef)
   mi_int2store(ptr,keydef->keylength);		ptr +=2;
   mi_int2store(ptr,keydef->minlength);		ptr +=2;
   mi_int2store(ptr,keydef->maxlength);		ptr +=2;
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
@@ -961,7 +962,7 @@ int mi_keyseg_write(int file, const HA_KEYSEG *keyseg)
   mi_int4store(ptr, pos);
   ptr+=4;
 
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 
@@ -1001,7 +1002,7 @@ uint32_t mi_uniquedef_write(int file, MI_UNIQUEDEF *def)
   *ptr++=  (unsigned char) def->key;
   *ptr++ = (unsigned char) def->null_are_equal;
 
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
@@ -1025,7 +1026,7 @@ uint32_t mi_recinfo_write(int file, MI_COLUMNDEF *recinfo)
   mi_int2store(ptr,recinfo->length);	ptr +=2;
   *ptr++ = recinfo->null_bit;
   mi_int2store(ptr,recinfo->null_pos);	ptr+= 2;
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
@@ -1049,7 +1050,7 @@ exist a dup()-like call that would give us two different file descriptors.
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup)
 {
   (void)file_to_dup; 
-  info->dfile=my_open(share->data_file_name, share->mode,
+  info->dfile=internal::my_open(share->data_file_name, share->mode,
                       MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
@@ -1057,7 +1058,7 @@ int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup)
 
 int mi_open_keyfile(MYISAM_SHARE *share)
 {
-  if ((share->kfile=my_open(share->unique_file_name, share->mode,
+  if ((share->kfile=internal::my_open(share->unique_file_name, share->mode,
                             MYF(MY_WME))) < 0)
     return 1;
   return 0;

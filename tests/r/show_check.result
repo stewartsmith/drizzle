@@ -181,17 +181,6 @@ t1	CREATE TABLE `t1` (
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
 drop table t1;
-flush tables;
-show open tables;
-Database	Table	In_use	Name_locked
-information_schema	open_tables	0	0
-create table t1(n int);
-insert into t1 values (1);
-show open tables;
-Database	Table	In_use	Name_locked
-test	t1	0	0
-information_schema	open_tables	0	0
-drop table t1;
 create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="test" ENGINE=MYISAM ROW_FORMAT=fixed;
 show create table t1;
 Table	Create Table
@@ -483,44 +472,6 @@ t1	CREATE TABLE `t1` (
   KEY `c2` (`c2`) USING BTREE
 ) ENGINE=DEFAULT
 DROP TABLE t1;
-
-# Bug#12183: SHOW OPEN TABLES behavior doesn't match grammar.
-
-DROP DATABASE IF EXISTS mysqltest1;
-CREATE DATABASE mysqltest1;
-use mysqltest1;
-
-CREATE TABLE t1(a INT);
-CREATE TABLE t2(a INT);
-
-FLUSH TABLES;
-
-SELECT 1 FROM t1;
-1
-SELECT 1 FROM t2;
-1
-
-SHOW OPEN TABLES FROM mysqltest1;
-Database	Table	In_use	Name_locked
-mysqltest1	t1	0	0
-mysqltest1	t2	0	0
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE 'z%';
-Database	Table	In_use	Name_locked
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE 't1%';
-Database	Table	In_use	Name_locked
-mysqltest1	t1	0	0
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE '%1%';
-Database	Table	In_use	Name_locked
-mysqltest1	t1	0	0
-
-FLUSH TABLES;
-
-DROP DATABASE mysqltest1;
-use test;
-
 SHOW TABLES FROM non_existing_database;
 ERROR 42000: Unknown database 'non_existing_database'
 End of 4.1 tests
@@ -546,16 +497,6 @@ show keys from `mysqlttest\1`.`a\b`;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
-show engine foobar status;
-ERROR 42000: Unknown table engine 'foobar'
-show engine foobar logs;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'logs' at line 1
-show engine foobar mutex;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'mutex' at line 1
-show engine mutex status;
-ERROR 42000: Unknown table engine 'mutex'
-show engine csv status;
-Type	Name	Status
 drop table if exists `été`;
 create table `été` (field1 int);
 show full tables;

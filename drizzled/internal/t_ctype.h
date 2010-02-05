@@ -31,6 +31,11 @@
 #ifndef DRIZZLED_INTERNAL_T_CTYPE_H
 #define DRIZZLED_INTERNAL_T_CTYPE_H
 
+namespace drizzled
+{
+namespace internal
+{
+
 typedef unsigned char tchar;
 
 #define TOT_LEVELS 5
@@ -252,5 +257,8 @@ enum level_symbols {
 
 /* Function prototype called by sql/field.cc */
 void ThNormalize(unsigned char* ptr, uint32_t field_length, const unsigned char* from, uint32_t length);
+
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_T_CTYPE_H */

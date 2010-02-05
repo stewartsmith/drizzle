@@ -292,6 +292,80 @@
    fun:_ZN7Session3runEv
 }
 
+{
+   azwrite_row deflate
+   Memcheck:Cond
+   fun:memcpy
+   obj:/lib/libz.so.1.2.3.3
+   obj:/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   azwrite_row deflate
+   Memcheck:Cond
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   azwrite_row
+   Memcheck:Value8
+   fun:memcpy
+   obj:/lib/libz.so.1.2.3.3
+   obj:/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:azwrite_row
+   fun:_ZN10ha_archive14real_write_rowEPhP11azio_stream
+   fun:_ZN10ha_archive9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   pthread azio_stream issue
+   Memcheck:Param
+   pwrite64(buf)
+   obj:/lib/libpthread-2.9.so
+   fun:_ZL8do_flushP11azio_streami
+   fun:azflush
+   fun:_ZN10ha_archive4infoEj
+   fun:_ZN8drizzledL20make_join_statisticsEPNS_4JOINEPNS_9TableListEPNS_4ItemEPNS_16st_dynamic_arrayE
+   fun:_ZN8drizzled4JOIN8optimizeEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_mPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
+   fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+   fun:session_thread
+   fun:start_thread
+}
+{
+   Deflate
+   Memcheck:Cond
+   fun:deflate
+   ...
+   fun:azclose
+   ...
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
 
 #
 # Warning from my_thread_init becasue mysqld dies before kill thread exists
@@ -708,12 +782,52 @@
    fun:row_ins_step
    fun:row_insert_for_mysql
    fun:_ZN11ha_innobase9write_rowEPh
-   fun:_ZN6Cursor12ha_write_rowEPh
-   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
-   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
-   fun:_ZL21mysql_execute_commandP7Session
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
 }
+
+{
+   InnoDB makes babies cry
+   Memcheck:Cond
+   ...
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
+{
+   Static leak fun in innodb
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_del_mark_set_clust_rec
+   fun:row_upd_clust_step
+   fun:row_upd_step
+   fun:que_run_threads
+   fun:que_eval_sql
+   fun:row_rename_table_for_mysql
+   fun:_ZN14InnobaseEngine13doRenameTableEPN8drizzled7SessionEPKcS4_
+   fun:_ZN8drizzled18mysql_rename_tableEPNS_6plugin13StorageEngineEPKcS4_S4_S4_j
+   fun:_ZN8drizzled11alter_tableEPNS_7SessionEPcS2_PNS_24st_ha_create_informationEPNS_7message5TableEPNS_9TableListEPNS_9AlterInfoEjPNS_8order_stEb
+   fun:_ZN8drizzled9statement10AlterTable7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
 
 {
    More InnoDB Garbage
@@ -727,12 +841,12 @@
    fun:row_ins_step
    fun:row_insert_for_mysql
    fun:_ZN11ha_innobase9write_rowEPh
-   fun:_ZN6Cursor12ha_write_rowEPh
-   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
-   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
-   fun:_ZL21mysql_execute_commandP7Session
-   fun:_ZL11mysql_parseP7SessionPKcjPS2_
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
 }
 
 {
@@ -745,15 +859,27 @@
    fun:row_ins_step
    fun:row_insert_for_mysql
    fun:_ZN11ha_innobase9write_rowEPh
-   fun:_ZN6Cursor12ha_write_rowEPh
-   fun:_Z12write_recordP7SessionP5TableP12st_copy_info
-   fun:_Z12mysql_insertP7SessionP9TableListR4ListI4ItemERS3_IS5_ES6_S6_15enum_duplicatesb
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
-   fun:_ZL21mysql_execute_commandP7Session
-   fun:_ZL11mysql_parseP7SessionPKcjPS2_
-   fun:_Z16dispatch_command19enum_server_commandP7SessionPcj
-   fun:_ZN7Session16executeStatementEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
 }
+
+
+{
+   InnoDB plugin startup evil
+   Memcheck:Leak
+   ...
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin8RegistryE
+   fun:plugin_init
+   fun:main
+}
+
 
 {
    pthread thing
@@ -1061,3 +1187,168 @@
    fun:start_thread
 }
 
+{
+   pwrite64 issue
+   Memcheck:Param
+   pwrite64(buf)
+   ...
+   fun:azflush
+   fun:_ZN10ha_archive4infoEj
+   fun:_ZN8drizzledL20make_join_statisticsEPNS_4JOINEPNS_9TableListEPNS_4ItemEPNS_16st_dynamic_arrayE
+   fun:_ZN8drizzled4JOIN8optimizeEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_mPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
+   fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+   fun:session_thread
+   fun:start_thread
+}
+
+{
+   pthread issue
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN8drizzled8internal8my_writeEiPKhmi
+   fun:_ZN8drizzled8internal19my_b_flush_io_cacheEPNS0_11st_io_cacheEi
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   fun:_ZN8drizzled17create_sort_indexEPNS_7SessionEPNS_4JOINEPNS_8order_stEmmb
+   fun:_ZN8drizzled4JOIN4execEv
+   fun:_ZN8drizzled30subselect_single_select_engine4execEv
+   fun:_ZN8drizzled14Item_subselect4execEv
+   fun:_ZN8drizzled24Item_singlerow_subselect7val_strEPNS_6StringE
+   fun:_ZN8drizzled14Arg_comparator14compare_stringEv
+   fun:_ZN8drizzled12Item_func_eq7val_intEv
+   fun:_ZN8drizzled15remove_eq_condsEPNS_7SessionEPNS_4ItemEPNS2_11cond_resultE
+   fun:_ZN8drizzled13optimize_condEPNS_4JOINEPNS_4ItemEPNS_4ListINS_9TableListEEEPNS2_11cond_resultE
+   fun:_ZN8drizzled4JOIN8optimizeEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_mPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
+}
+
+{
+   pthread issue
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN8drizzled8internal8my_writeEiPKhmi
+   fun:_ZN8drizzled8internal19my_b_flush_io_cacheEPNS0_11st_io_cacheEi
+   fun:_ZN8drizzled8internalL11_my_b_writeEPNS0_11st_io_cacheEPKhm
+   fun:_ZN8drizzledL10write_keysEPNS_13st_sort_paramEPPhjPNS_8internal11st_io_cacheES6_
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   fun:_ZN8drizzled17create_sort_indexEPNS_7SessionEPNS_4JOINEPNS_8order_stEmmb
+   fun:_ZN8drizzled4JOIN4execEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_mPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
+   fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   Heap Engine panic issue
+   Memcheck:Addr8
+   fun:_Z8hp_panicN8drizzled17ha_panic_functionE
+   fun:_ZL11heap_deinitRN8drizzled6plugin8RegistryE
+   fun:_ZN8drizzledL13delete_moduleERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_shutdown
+   fun:_ZN8drizzledL8clean_upEb
+   fun:_ZN8drizzled10unireg_endEv
+   fun:_ZL11kill_serverPv
+   fun:signal_hand
+   fun:start_thread
+   fun:clone
+}
+
+{
+   my_write
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN8drizzled8internal8my_writeEiPKhmi
+   fun:_ZN8drizzled8internal19my_b_flush_io_cacheEPNS0_11st_io_cacheEi
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   fun:_ZN8drizzled17create_sort_indexEPNS_7SessionEPNS_4JOINEPNS_8order_stEmmb
+   fun:_ZN8drizzled4JOIN4execEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_mPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
+   fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+   fun:session_thread
+   fun:start_thread
+}
+
+{
+   ptr_compare_0 craziness 
+   Memcheck:Cond
+   fun:_ZN8drizzled8internalL13ptr_compare_0EPmPPhS3_
+   fun:_ZN8drizzled8internal9my_qsort2EPvmmPFiPKvS3_S3_ES1_
+   fun:_ZN8drizzled8internal18my_string_ptr_sortEPhjm
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   fun:_ZN8drizzled17create_sort_indexEPNS_7SessionEPNS_4JOINEPNS_8order_stEmmb
+   fun:_ZN8drizzled4JOIN4execEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_mPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
+   fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+   fun:session_thread
+   fun:start_thread
+}
+
+
+{
+   Badness inside of libc.
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/ld-2.9.so
+   obj:/lib/libc-2.9.so
+   obj:/lib/ld-2.9.so
+   fun:__libc_dlopen_mode
+   fun:__nss_lookup_function
+   obj:/lib/libc-2.9.so
+   fun:getaddrinfo
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+
+{
+   More crap in innodb heap.
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_heap_create_block
+   fun:mem_heap_add_block
+   fun:dict_mem_table_create
+   fun:_ZN14InnobaseEngine13doCreateTableEPN8drizzled7SessionEPKcRNS0_5TableERNS0_7message5TableE
+   fun:_ZN8drizzled6plugin13StorageEngine11createTableERNS_7SessionERNS_15TableIdentifierEbRNS_7message5TableEb
+   fun:_ZN8drizzled16rea_create_tableEPNS_7SessionERNS_15TableIdentifierEPNS_7message5TableEPNS_24st_ha_create_informationERNS_4ListINS_11CreateFieldEEEjPNS_6st_keyE
+   fun:_ZN8drizzled26mysql_create_table_no_lockEPNS_7SessionERNS_15TableIdentifierEPNS_24st_ha_create_informationEPNS_7message5TableEPNS_9AlterInfoEbjb
+   fun:_ZN8drizzled18mysql_create_tableEPNS_7SessionERNS_15TableIdentifierEPNS_24st_ha_create_informationEPNS_7message5TableEPNS_9AlterInfoEbjb
+   fun:_ZN8drizzled9statement11CreateTable7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+   obj:*
+}

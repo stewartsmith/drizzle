@@ -111,6 +111,9 @@ test-big:
 test-big-junitxml:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml )
 
+test-jp:
+	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=jp )
+
 test-plugins:
 	( cd tests && $(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS) )
 
