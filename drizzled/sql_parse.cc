@@ -395,29 +395,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
 {
   Select_Lex *schema_select_lex= NULL;
 
-
-  if (schema_table_name.compare("OLD_TABLES") == 0 ||
-      schema_table_name.compare("TABLE_NAMES") == 0)
-  {
-    LEX_STRING db;
-    size_t dummy;
-    if (lex->select_lex.db == NULL &&
-        lex->copy_db_to(&lex->select_lex.db, &dummy))
-    {
-      return (1);
-    }
-    schema_select_lex= new Select_Lex();
-    db.str= schema_select_lex->db= lex->select_lex.db;
-    schema_select_lex->table_list.first= NULL;
-    db.length= strlen(db.str);
-
-    if (check_db_name(&db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
-      return (1);
-    }
-  }
-  else if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
+  if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
            schema_table_name.compare("OLD_STATISTICS") == 0)
   {
     assert(table_ident);
