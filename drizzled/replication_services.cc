@@ -187,7 +187,7 @@ void ReplicationServices::initTransaction(message::Transaction &in_transaction,
 {
   message::TransactionContext *trx= in_transaction.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
-  trx->set_transaction_id(in_session->getTransactionId());
+  trx->set_transaction_id(in_session->getQueryId());
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
 
@@ -780,7 +780,7 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   cleanupTransaction(transaction, in_session);
 }
 
-void ReplicationServices::push(drizzled::message::Transaction &to_push)
+void ReplicationServices::push(message::Transaction &to_push)
 {
   vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;

@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 /* Handling of user definable variables */
 
 class user_var_entry;
@@ -58,7 +61,7 @@ public:
   my_decimal *val_decimal_result(my_decimal *);
   bool update_hash(void *ptr, uint32_t length, enum Item_result type,
   		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
-  bool send(drizzled::plugin::Client *client, String *str_arg);
+  bool send(plugin::Client *client, String *str_arg);
   void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
   bool update();
@@ -77,5 +80,7 @@ public:
   void save_org_in_field(Field *field) { (void)save_in_field(field, 1, 0); }
   bool register_field_in_read_map(unsigned char *arg);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_SET_USER_VAR_H */

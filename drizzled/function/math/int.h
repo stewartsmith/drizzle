@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/sql_list.h>
 
+namespace drizzled
+{
+
 class Item_int_func :public Item_func
 {
 public:
@@ -39,5 +42,7 @@ public:
   enum Item_result result_type () const { return INT_RESULT; }
   void fix_length_and_dec() {}
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_INT_H */

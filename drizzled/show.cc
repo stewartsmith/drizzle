@@ -60,7 +60,9 @@
 #include <algorithm>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 inline const char *
 str_or_nil(const char *str)
@@ -70,23 +72,21 @@ str_or_nil(const char *str)
 
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
-
-
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
 {
   register int flag;
   while (*wildstr)
   {
-    while (*wildstr && *wildstr != wild_many && *wildstr != wild_one)
+    while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
     {
-      if (*wildstr == wild_prefix && wildstr[1])
+      if (*wildstr == internal::wild_prefix && wildstr[1])
         wildstr++;
       if (my_toupper(cs, *wildstr++) != my_toupper(cs, *str++))
         return (1);
     }
     if (! *wildstr )
       return (*str != 0);
-    if (*wildstr++ == wild_one)
+    if (*wildstr++ == internal::wild_one)
     {
       if (! *str++)
         return (1);	/* One char; skip */
@@ -95,13 +95,13 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
     {						/* Found '*' */
       if (! *wildstr)
         return (0);		/* '*' as last char: OK */
-      flag=(*wildstr != wild_many && *wildstr != wild_one);
+      flag=(*wildstr != internal::wild_many && *wildstr != internal::wild_one);
       do
       {
         if (flag)
         {
           char cmp;
-          if ((cmp= *wildstr) == wild_prefix && wildstr[1])
+          if ((cmp= *wildstr) == internal::wild_prefix && wildstr[1])
             cmp= wildstr[1];
           cmp= my_toupper(cs, cmp);
           while (*str && my_toupper(cs, *str) != cmp)
@@ -178,7 +178,7 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
     file_name_len= filename_to_tablename(entry->filename.c_str(), uname,
                                          sizeof(uname));
-    if (wild && wild_compare(uname, wild, 0))
+    if (wild && internal::wild_compare(uname, wild, 0))
     {
       ++entry_iter;
       continue;
@@ -681,7 +681,7 @@ static void store_key_options(String *packet, Table *table, KEY *key_info)
       table->s->getKeyBlockSize() != key_info->block_size)
   {
     packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-    end= int64_t10_to_str(key_info->block_size, buff, 10);
+    end= internal::int64_t10_to_str(key_info->block_size, buff, 10);
     packet->append(buff, (uint32_t) (end - buff));
   }
 
@@ -752,7 +752,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
-      struct st_my_thread_var *mysys_var;
+      internal::st_my_thread_var *mysys_var;
       if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
 
@@ -1475,7 +1475,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names,
     file_name= session->make_lex_string(file_name, (*it).c_str(),
                                         (*it).length(), true);
     const char* wild= lookup_field_vals->table_value.str;
-    if (wild && wild_compare((*it).c_str(), wild, 0))
+    if (wild && internal::wild_compare((*it).c_str(), wild, 0))
       continue;
 
     table_names.push_back(file_name);
@@ -2111,3 +2111,4 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   return false;
 }
 
+} /* namespace drizzled */

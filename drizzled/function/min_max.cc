@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/min_max.h>
 #include <drizzled/item/cmpfunc.h>
+
+namespace drizzled
+{
 
 void Item_func_min_max::fix_length_and_dec()
 {
@@ -276,3 +279,4 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
   return res;
 }
 
+} /* namespace drizzled */

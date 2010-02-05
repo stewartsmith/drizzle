@@ -40,6 +40,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 int64_t MemcachedCas::val_int()
 {

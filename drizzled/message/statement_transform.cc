@@ -38,7 +38,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 enum message::TransformSqlError
 message::transformStatementToSql(const message::Statement &source,
@@ -704,3 +706,5 @@ bool message::shouldQuoteFieldValue(message::Table::Field::FieldType in_type)
     return true;
   } 
 }
+
+} /* namespace drizzled */

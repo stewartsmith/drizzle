@@ -21,6 +21,10 @@
 #ifndef DRIZZLED_OPEN_TABLES_STATE_H
 #define DRIZZLED_OPEN_TABLES_STATE_H
 
+#include "drizzled/lock.h"
+
+namespace drizzled
+{
 
 /**
   Class that holds information about tables which were opened and locked
@@ -97,5 +101,7 @@ public:
     backups_available= false;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_OPEN_TABLES_STATE_H */

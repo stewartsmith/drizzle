@@ -33,8 +33,11 @@
 #include <limits>
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
+
 
 void Item_func::set_arguments(List<Item> &list)
 {
@@ -629,3 +632,4 @@ Item *Item_func::get_tmp_table_item(Session *session)
 }
 
 
+} /* namespace drizzled */

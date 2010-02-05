@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_SELECT_INSERT_H
 #define DRIZZLED_SELECT_INSERT_H
 
+namespace drizzled
+{
+
 class select_insert :public select_result_interceptor {
  public:
   TableList *table_list;
@@ -45,5 +48,7 @@ class select_insert :public select_result_interceptor {
   /* not implemented: select_insert is never re-used in prepared statements */
   void cleanup();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_INSERT_H */

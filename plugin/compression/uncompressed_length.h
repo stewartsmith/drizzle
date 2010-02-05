@@ -24,9 +24,9 @@
 #include <drizzled/function/math/int.h>
 
 
-class Item_func_uncompressed_length : public Item_int_func
+class Item_func_uncompressed_length : public drizzled::Item_int_func
 {
-  String value;
+  drizzled::String value;
 public:
   Item_func_uncompressed_length():Item_int_func(){}
   const char *func_name() const{return "uncompressed_length";}

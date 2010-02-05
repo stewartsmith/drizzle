@@ -27,10 +27,10 @@
 #include <string>
 #include <vector>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace plugin
 {
 
@@ -73,7 +73,7 @@ public:
 
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

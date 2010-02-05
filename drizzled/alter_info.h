@@ -33,6 +33,9 @@
 
 #include <bitset>
 
+namespace drizzled
+{
+
 /* Some forward declarations needed */
 class CreateField;
 class AlterDrop;
@@ -82,7 +85,7 @@ public:
   List<AlterColumn> alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
-  drizzled::message::AlterTable alter_proto;
+  message::AlterTable alter_proto;
   std::bitset<32> flags;
   enum enum_enable_or_disable keys_onoff;
   enum tablespace_op_type tablespace_op;
@@ -92,10 +95,12 @@ public:
   bool error_if_not_empty;
 
   AlterInfo();
-  AlterInfo(const AlterInfo &rhs, drizzled::memory::Root *mem_root);
+  AlterInfo(const AlterInfo &rhs, memory::Root *mem_root);
 private:
   AlterInfo &operator=(const AlterInfo &rhs); // not implemented
   AlterInfo(const AlterInfo &rhs);            // not implemented
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ALTER_INFO_H */

@@ -30,10 +30,10 @@
 /* Prototype */
 extern "C"
 void libevent_io_callback(int Fd, short Operation, void *ctx);
-bool libevent_should_close_connection(Session* session);
-void libevent_session_add(Session* session);
+bool libevent_should_close_connection(drizzled::Session* session);
+void libevent_session_add(drizzled::Session* session);
 
-session_scheduler::session_scheduler(Session *parent_session)
+session_scheduler::session_scheduler(drizzled::Session *parent_session)
   : logged_in(false), thread_attached(false)
 {
   memset(&io_event, 0, sizeof(struct event));

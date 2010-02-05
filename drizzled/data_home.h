@@ -20,8 +20,13 @@
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
+namespace drizzled
+{
+
 extern uint32_t drizzle_data_home_len;
 extern char *drizzle_data_home,
              drizzle_real_data_home[], drizzle_unpacked_real_data_home[];
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DATA_HOME_H */

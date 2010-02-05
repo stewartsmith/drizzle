@@ -35,8 +35,10 @@
 #include <math.h>
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 extern const double log_10[309];
 
@@ -817,7 +819,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       String *str_val;
       String tmp;
       /* DateTime used to pick up as many string conversion possibilities as possible. */
-      drizzled::DateTime temporal;
+      DateTime temporal;
 
       str_val= str_arg->val_str(&tmp);
       if (! str_val)
@@ -3064,7 +3066,7 @@ static int cmp_decimal(void *, my_decimal *a, my_decimal *b)
 
 void in_vector::sort()
 {
-  my_qsort2(base,used_count,size,compare, (void *) collation);
+  internal::my_qsort2(base,used_count,size,compare, (void *) collation);
 }
 
 
@@ -4355,7 +4357,7 @@ int64_t Item_func_like::val_int()
 	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
 		    make_escape_code(cmp.cmp_collation.collation, escape),
-                    wild_one,wild_many) ? 0 : 1;
+                    internal::wild_one,internal::wild_many) ? 0 : 1;
 }
 
 
@@ -4372,9 +4374,9 @@ Item_func::optimize_type Item_func_like::select_optimize() const
     if (!res2)
       return OPTIMIZE_NONE;
 
-    if (*res2->ptr() != wild_many)
+    if (*res2->ptr() != internal::wild_many)
     {
-      if (args[0]->result_type() != STRING_RESULT || *res2->ptr() != wild_one)
+      if (args[0]->result_type() != STRING_RESULT || *res2->ptr() != internal::wild_one)
 	return OPTIMIZE_OP;
     }
   }
@@ -4430,11 +4432,11 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       */
 
       if (len > MIN_TURBOBM_PATTERN_LEN + 2 &&
-          *first == wild_many &&
-          *last  == wild_many)
+          *first == internal::wild_many &&
+          *last  == internal::wild_many)
       {
         const char* tmp = first + 1;
-        for (; *tmp != wild_many && *tmp != wild_one; tmp++)
+        for (; *tmp != internal::wild_many && *tmp != internal::wild_one; tmp++)
         {
           if (escape == tmp)
             break;
@@ -5169,3 +5171,4 @@ void Item_equal::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

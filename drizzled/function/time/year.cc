@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/year.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_year::val_int()
 {
@@ -35,7 +38,7 @@ int64_t Item_func_year::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -100,7 +103,7 @@ int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   
   if (! temporal.from_int64_t(args[0]->val_int()))
   {
@@ -127,3 +130,4 @@ int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
   return (int64_t) temporal.years();
 }
 
+} /* namespace drizzled */

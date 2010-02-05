@@ -27,9 +27,11 @@
 #include "drizzled/session.h"
 #include "drizzled/time_functions.h"
 
+namespace drizzled
+{
+
 /* Some functions to calculate dates */
 
-#ifndef TESTTIME
 
 int calc_weekday(long daynr,bool sunday_first_day_of_week)
 {
@@ -282,5 +284,4 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
   return neg;
 }
 
-
-#endif
+} /* namespace drizzled */

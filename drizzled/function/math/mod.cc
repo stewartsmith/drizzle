@@ -25,6 +25,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 int64_t Item_func_mod::int_op()
 {
   assert(fixed == 1);
@@ -105,3 +108,4 @@ void Item_func_mod::fix_length_and_dec()
   unsigned_flag= args[0]->unsigned_flag;
 }
 
+} /* namespace drizzled */

@@ -130,7 +130,6 @@ public:
   bool matches(const char *data, size_t data_len, Temporal *to);
 };
 
-} /* end namespace drizzled */
 
 /**
  * Initializes the regular expressions used by the datetime
@@ -148,5 +147,7 @@ bool init_temporal_formats();
  * Frees all memory allocated for temporal format objects
  */
 void deinit_temporal_formats();
+
+} /* end namespace drizzled */
 
 #endif /* DRIZZLED_TEMPORAL_FORMAT_H */

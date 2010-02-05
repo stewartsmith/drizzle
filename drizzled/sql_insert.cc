@@ -28,8 +28,10 @@
 #include <drizzled/lock.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/transaction_services.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 extern plugin::StorageEngine *heap_engine;
 extern plugin::StorageEngine *myisam_engine;
@@ -1467,7 +1469,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
+  bool lex_identified_temp_table= (table_proto->type() == message::Table::TEMPORARY);
 
   if (!(lex_identified_temp_table) &&
       create_table->table->db_stat)
@@ -1608,7 +1610,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
-  bool lex_identified_temp_table= (table_proto->type() == drizzled::message::Table::TEMPORARY);
+  bool lex_identified_temp_table= (table_proto->type() == message::Table::TEMPORARY);
 
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
@@ -1732,7 +1734,8 @@ bool select_create::send_eof()
     */
     if (!table->s->tmp_table)
     {
-      ha_autocommit_or_rollback(session, 0);
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.ha_autocommit_or_rollback(session, 0);
       (void) session->endActiveTransaction();
     }
 
@@ -1789,3 +1792,4 @@ void select_create::abort()
   }
 }
 
+} /* namespace drizzled */

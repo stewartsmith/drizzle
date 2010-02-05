@@ -22,6 +22,9 @@
 
 #include <drizzled/function/time/weekday.h>
 
+namespace drizzled
+{
+
 class Item_func_dayname :public Item_func_weekday
 {
  public:
@@ -37,5 +40,7 @@ class Item_func_dayname :public Item_func_weekday
     maybe_null=1;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_DAYNAME_H */

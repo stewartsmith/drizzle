@@ -44,6 +44,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 /**
  * value function for memc_get UDF

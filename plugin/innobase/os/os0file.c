@@ -58,6 +58,7 @@ Created 10/21/1995 Heikki Tuuri
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <unistd.h>
 #ifndef UNIV_HOTBACKUP
 # include "os0sync.h"
 # include "os0thread.h"
