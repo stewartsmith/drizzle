@@ -28,6 +28,9 @@
 #ifndef DRIZZLED_BASE_H
 #define DRIZZLED_BASE_H
 
+namespace drizzled
+{
+
 /* The following is bits in the flag parameter to ha_open() */
 
 #define HA_OPEN_ABORT_IF_LOCKED		0	/* default */
@@ -503,8 +506,8 @@ typedef struct st_key_multi_range
 typedef uint64_t	ha_rows;
 #define rows2double(A)	uint64_t2double(A)
 
-#define HA_POS_ERROR	(~ (ha_rows) 0)
-#define HA_OFFSET_ERROR	(~ (my_off_t) 0)
+#define HA_POS_ERROR	(~ (::drizzled::ha_rows) 0)
+#define HA_OFFSET_ERROR	(~ (::drizzled::internal::my_off_t) 0)
 
 #if SIZEOF_OFF_T == 4
 #define MAX_FILE_SIZE	INT32_MAX
@@ -513,5 +516,7 @@ typedef uint64_t	ha_rows;
 #endif
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_BASE_H */

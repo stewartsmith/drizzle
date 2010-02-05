@@ -23,6 +23,9 @@
 
 #include <drizzled/field/num.h>
 
+namespace drizzled
+{
+
 class Field_long :public Field_num {
 public:
 
@@ -70,6 +73,8 @@ public:
                               uint32_t param_data,
                               bool low_byte_first);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_LONG_H */
 

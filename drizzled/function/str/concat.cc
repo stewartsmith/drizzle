@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/concat.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
@@ -26,6 +26,9 @@
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 String *Item_func_concat::val_str(String *str)
 {
@@ -347,3 +350,4 @@ void Item_func_concat_ws::fix_length_and_dec()
   max_length= (ulong) max_result_length;
 }
 
+} /* namespace drizzled */

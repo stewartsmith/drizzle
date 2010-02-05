@@ -21,6 +21,7 @@
 #include <string.h>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
@@ -56,7 +57,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 					/* Next/prev gives first/last */
     if (info->opt_flag & READ_CACHE_USED)
     {
-      reinit_io_cache(&info->rec_cache,READ_CACHE,0,
+      reinit_io_cache(&info->rec_cache, internal::READ_CACHE,0,
 		      (bool) (info->lock_type != F_UNLCK),
 		      (bool) test(info->update & HA_STATE_ROW_CHANGED)
 		      );
@@ -84,11 +85,11 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	  (READ_CACHE_USED | WRITE_CACHE_USED | MEMMAP_USED)))
     {
       cache_size= (extra_arg ? *(uint32_t*) extra_arg :
-		   my_default_record_cache_size);
+		   internal::my_default_record_cache_size);
       if (!(init_io_cache(&info->rec_cache,info->dfile,
 			 (uint) min((uint32_t)info->state->data_file_length+1,
 				    cache_size),
-			  READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
+			  internal::READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=READ_CACHE_USED;
@@ -101,7 +102,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_REINIT_CACHE:
     if (info->opt_flag & READ_CACHE_USED)
     {
-      reinit_io_cache(&info->rec_cache,READ_CACHE,info->nextpos,
+      reinit_io_cache(&info->rec_cache,internal::READ_CACHE,info->nextpos,
 		      (bool) (info->lock_type != F_UNLCK),
 		      (bool) test(info->update & HA_STATE_ROW_CHANGED));
       info->update&= ~HA_STATE_ROW_CHANGED;
@@ -117,12 +118,12 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     }
 
     cache_size= (extra_arg ? *(uint32_t*) extra_arg :
-		 my_default_record_cache_size);
+		 internal::my_default_record_cache_size);
     if (!(info->opt_flag &
 	  (READ_CACHE_USED | WRITE_CACHE_USED | OPT_NO_ROWS)) &&
 	!share->state.header.uniques)
       if (!(init_io_cache(&info->rec_cache,info->dfile, cache_size,
-			 WRITE_CACHE,info->state->data_file_length,
+			 internal::WRITE_CACHE,info->state->data_file_length,
 			  (bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
@@ -272,7 +273,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     }
     if (share->kfile >= 0)
       _mi_decrement_open_count(info);
-    if (share->kfile >= 0 && my_close(share->kfile,MYF(0)))
+    if (share->kfile >= 0 && internal::my_close(share->kfile,MYF(0)))
       error=errno;
     {
       list<MI_INFO *>::iterator it= myisam_open_list.begin();
@@ -281,7 +282,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	MI_INFO *tmpinfo= *it;
 	if (tmpinfo->s == info->s)
 	{
-	  if (tmpinfo->dfile >= 0 && my_close(tmpinfo->dfile,MYF(0)))
+	  if (tmpinfo->dfile >= 0 && internal::my_close(tmpinfo->dfile,MYF(0)))
 	    error = errno;
 	  tmpinfo->dfile= -1;
 	}
@@ -302,9 +303,9 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (share->not_flushed)
     {
       share->not_flushed=0;
-      if (my_sync(share->kfile, MYF(0)))
+      if (internal::my_sync(share->kfile, MYF(0)))
 	error= errno;
-      if (my_sync(info->dfile, MYF(0)))
+      if (internal::my_sync(info->dfile, MYF(0)))
 	error= errno;
       if (error)
       {

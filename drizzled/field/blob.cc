@@ -30,6 +30,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 {
   return max(UINT32_MAX,
@@ -647,3 +650,5 @@ uint32_t Field_blob::max_display_length()
     return 0;
   }
 }
+
+} /* namespace drizzled */

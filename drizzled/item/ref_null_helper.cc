@@ -18,10 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include <drizzled/item/ref.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/subselect.h>
+
+namespace drizzled
+{
 
 double Item_ref_null_helper::val_real()
 {
@@ -81,4 +83,4 @@ void Item_ref_null_helper::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
-
+} /* namespace drizzled */

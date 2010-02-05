@@ -23,6 +23,9 @@
 
 #include <drizzled/field/str.h>
 
+namespace drizzled
+{
+
 class TableShare;
 typedef struct charset_info_st CHARSET_INFO;
 
@@ -71,6 +74,8 @@ public:
   bool get_time(DRIZZLE_TIME *ltime);
   timestamp_auto_set_type get_auto_set_type() const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_TIMESTAMP_H */
 

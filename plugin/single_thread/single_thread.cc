@@ -24,24 +24,20 @@ using namespace drizzled;
 static SingleThreadScheduler *scheduler= NULL;
 
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(plugin::Registry &registry)
 {
   scheduler= new SingleThreadScheduler("single_thread");
   registry.add(scheduler);
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(plugin::Registry &registry)
 {
   registry.remove(scheduler);
   delete scheduler;
 
   return 0;
 }
-
-static drizzle_sys_var* system_variables[]= {
-  NULL
-};
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -54,7 +50,7 @@ DRIZZLE_DECLARE_PLUGIN
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
   NULL,   /* status variables */
-  system_variables,   /* system variables */
+  NULL,   /* system variables */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

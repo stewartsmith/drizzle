@@ -15,7 +15,9 @@
 
 /* Routines to handle mallocing of results which will be freed the same time */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 
 #include <algorithm>

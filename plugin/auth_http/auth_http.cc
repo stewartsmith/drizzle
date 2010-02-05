@@ -26,6 +26,7 @@
 
 #include <string>
 
+using namespace drizzled;
 using namespace std;
 
 static bool sysvar_auth_http_enable= false;

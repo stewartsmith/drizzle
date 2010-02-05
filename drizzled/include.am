@@ -271,6 +271,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/my_var.h \
 		drizzled/name_resolution_context.h \
 		drizzled/name_resolution_context_state.h \
+		drizzled/named_savepoint.h \
 		drizzled/natural_join_column.h \
 		drizzled/nested_join.h \
 		drizzled/open_tables_state.h \
@@ -385,7 +386,6 @@ nobase_dist_include_HEADERS+= \
 		drizzled/statement/set_option.h \
 		drizzled/statement/show_create.h \
 		drizzled/statement/show_create_schema.h \
-		drizzled/statement/show_engine_status.h \
 		drizzled/statement/show_errors.h \
 		drizzled/statement/show_processlist.h \
 		drizzled/statement/show_status.h \
@@ -411,6 +411,7 @@ nobase_dist_include_HEADERS+= \
 		drizzled/thr_lock.h \
 		drizzled/time_functions.h \
 		drizzled/tmp_table_param.h \
+		drizzled/transaction_services.h \
 		drizzled/tzfile.h \
 		drizzled/tztime.h \
 		drizzled/unique.h \
@@ -636,6 +637,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/lock.cc \
 		drizzled/lookup_symbol.cc \
 		drizzled/my_decimal.cc \
+		drizzled/my_getsystime.cc \
 		drizzled/my_hash.cc \
 		drizzled/my_time.cc \
 		drizzled/my_tree.cc \
@@ -726,7 +728,6 @@ drizzled_drizzled_SOURCES = \
 		drizzled/statement/set_option.cc \
 		drizzled/statement/show_create.cc \
 		drizzled/statement/show_create_schema.cc \
-		drizzled/statement/show_engine_status.cc \
 		drizzled/statement/show_errors.cc \
 		drizzled/statement/show_processlist.cc \
 		drizzled/statement/show_status.cc \
@@ -745,6 +746,7 @@ drizzled_drizzled_SOURCES = \
 		drizzled/temporal_interval.cc \
 		drizzled/thr_lock.cc \
 		drizzled/time_functions.cc \
+		drizzled/transaction_services.cc \
 		drizzled/tztime.cc \
 		drizzled/uniques.cc \
 		drizzled/user_var_entry.cc \
@@ -761,7 +763,17 @@ noinst_LTLIBRARIES += \
 		drizzled/libserialutil.la \
 		drizzled/libtypelib.la
 
-drizzled_libcharset_la_SOURCES = drizzled/charset.cc drizzled/charset-def.cc
+drizzled_libcharset_la_SOURCES = \
+		drizzled/charset.cc \
+		drizzled/charset-def.cc \
+		drizzled/ctype-bin.cc \
+		drizzled/ctype-mb.cc \
+		drizzled/ctype-simple.cc \
+		drizzled/ctype-uca.cc \
+		drizzled/ctype-uni.cc \
+		drizzled/ctype-utf8.cc \
+		drizzled/ctype.cc
+
 drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
 drizzled_liberror_la_SOURCES = drizzled/my_error.cc
 drizzled_libgetopt_la_SOURCES = drizzled/my_getopt.cc

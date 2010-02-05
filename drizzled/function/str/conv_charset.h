@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_conv_charset :public Item_str_func
 {
   bool use_cached_value;
@@ -64,5 +67,7 @@ public:
   const char *func_name() const { return "convert"; }
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_CONV_CHARSET_H */

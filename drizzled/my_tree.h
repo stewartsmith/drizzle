@@ -22,9 +22,8 @@
 #include "drizzled/qsort_cmp.h"
 #include "drizzled/memory/root.h"
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+namespace drizzled
+{
 
 /* Worst case tree is half full. This gives use 2^(MAX_TREE_HEIGHT/2) leafs */
 static const int MAX_TREE_HEIGHT= 64;
@@ -54,7 +53,7 @@ typedef struct st_tree {
   size_t allocated;
   qsort_cmp2 compare;
   void *custom_arg;
-  drizzled::memory::Root mem_root;
+  memory::Root mem_root;
   bool with_delete;
   tree_element_free free;
   uint32_t flag;
@@ -88,9 +87,6 @@ void *tree_search_next(TREE *tree, TREE_ELEMENT ***last_pos, int l_offs,
 ha_rows tree_record_pos(TREE *tree, const void *key,
                         enum ha_rkey_function search_flag, void *custom_arg);
 
-
-#ifdef	__cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MY_TREE_H */

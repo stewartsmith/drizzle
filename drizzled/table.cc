@@ -56,7 +56,9 @@
 #include "drizzled/table_proto.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 extern pid_t current_pid;
 extern plugin::StorageEngine *heap_engine;
@@ -208,9 +210,9 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
     default_item= new Item_int(default_value->c_str(),
-			       (int64_t) my_strtoll10(default_value->c_str(),
-						      NULL,
-						      &error),
+			       (int64_t) internal::my_strtoll10(default_value->c_str(),
+                                                                NULL,
+                                                                &error),
 			       default_value->length());
     break;
   case DRIZZLE_TYPE_DOUBLE:
@@ -254,9 +256,9 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int drizzled::parse_table_proto(Session& session,
-                                message::Table &table,
-                                TableShare *share)
+int parse_table_proto(Session& session,
+                      message::Table &table,
+                      TableShare *share)
 {
   int error= 0;
 
@@ -873,10 +875,10 @@ int drizzled::parse_table_proto(Session& session,
     }
     case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
-      field_length= drizzled::DateTime::MAX_STRING_LENGTH;
+      field_length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_DATE:
-      field_length= drizzled::Date::MAX_STRING_LENGTH;
+      field_length= Date::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
     {
@@ -1649,7 +1651,7 @@ void Table::resetTable(Session *session,
   keys_in_use_for_group_by.reset();
   keys_in_use_for_order_by.reset();
 
-  memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
   memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
 
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
@@ -1897,7 +1899,7 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
   from_s.append(ext);
   to_s.append(to);
   to_s.append(ext);
-  return (my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
+  return (internal::my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
 }
 
 /*
@@ -2372,7 +2374,7 @@ static void make_internal_temporary_table_path(Session *session, char* path)
     No need to change table name to lower case as we are only creating
     MyISAM or HEAP tables here
   */
-  fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  internal::fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 }
 
 Table *
@@ -2390,8 +2392,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t  blob_count,group_null_items, string_count;
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
-  bool  using_unique_constraint= 0;
-  bool  use_packed_rows= 0;
+  bool  using_unique_constraint= false;
+  bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
   char  *tmpname,path[FN_REFLEN];
   unsigned char	*pos, *group_buff, *bitmaps;
@@ -2413,7 +2415,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   if (group)
   {
-    if (!param->quick_group)
+    if (! param->quick_group)
       group= 0;					// Can't use group key
     else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
     {
@@ -2425,10 +2427,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       */
       (*tmp->item)->marker= 4;
       if ((*tmp->item)->max_length >= CONVERT_IF_BIGGER_TO_BLOB)
-	using_unique_constraint=1;
+	using_unique_constraint= true;
     }
     if (param->group_length >= MAX_BLOB_WIDTH)
-      using_unique_constraint=1;
+      using_unique_constraint= true;
     if (group)
       distinct= 0;				// Can't use distinct
   }
@@ -2659,26 +2661,25 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
   if (blob_count || using_unique_constraint ||
-      (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
-      OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
+      (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     share->storage_engine= myisam_engine;
     table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
-      using_unique_constraint=1;
+      using_unique_constraint= true;
   }
   else
   {
     share->storage_engine= heap_engine;
     table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
   }
-  if (!table->cursor)
+  if (! table->cursor)
     goto err;
 
 
-  if (!using_unique_constraint)
+  if (! using_unique_constraint)
     reclength+= group_null_items;	// null flag is stored separately
 
   share->blob_fields= blob_count;
@@ -3206,7 +3207,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
   if (share->keys)
   {						// Get keys for ni_create
-    bool using_unique_constraint= 0;
+    bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) alloc_root(&this->mem_root,
                                             sizeof(*seg) * keyinfo->key_parts);
     if (!seg)
@@ -3220,7 +3221,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       /* Can't create a key; Make a unique constraint instead of a key */
       share->keys=    0;
       share->uniques= 1;
-      using_unique_constraint=1;
+      using_unique_constraint= true;
       memset(&uniquedef, 0, sizeof(uniquedef));
       uniquedef.keysegs=keyinfo->key_parts;
       uniquedef.seg=seg;
@@ -3270,7 +3271,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 	  In this case we have to tell MyISAM that two NULL should
 	  on INSERT be regarded at the same value
 	*/
-	if (!using_unique_constraint)
+	if (! using_unique_constraint)
 	  keydef.flag|= HA_NULL_ARE_EQUAL;
       }
     }
@@ -3622,7 +3623,7 @@ Table::Table()
   keys_in_use_for_group_by.reset();
   keys_in_use_for_order_by.reset();
 
-  memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+  memset(quick_rows, 0, sizeof(ha_rows) * MAX_KEY);
   memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
 
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
@@ -3703,3 +3704,4 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   return false;
 }
 
+} /* namespace drizzled */

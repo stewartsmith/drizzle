@@ -19,11 +19,13 @@
 
 #include "config.h"
 
-#include CSTDINT_H
 #include <cassert>
 
 #include <drizzled/sql_string.h>
 #include <drizzled/function/math/int.h>
+
+namespace drizzled
+{
 
 Item_int_func::~Item_int_func() {}
 
@@ -44,3 +46,5 @@ String *Item_int_func::val_str(String *str)
   str->set_int(nr, unsigned_flag, &my_charset_bin);
   return str;
 }
+
+} /* namespace drizzled */

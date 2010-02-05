@@ -68,7 +68,7 @@ int64_t BenchmarkFunction::val_int()
   {
     if (args[0]->null_value == false)
     {
-      int64_t10_to_str((int64_t)loop_count, buff, -10);
+      internal::int64_t10_to_str((int64_t)loop_count, buff, -10);
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");

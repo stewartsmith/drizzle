@@ -17,6 +17,8 @@
 
 #include <string.h>
 
+using namespace drizzled;
+
 int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
               key_part_map keypart_map, enum ha_rkey_function find_flag)
 {

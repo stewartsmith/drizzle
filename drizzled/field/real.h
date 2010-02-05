@@ -23,6 +23,9 @@
 
 #include <drizzled/field/num.h>
 
+namespace drizzled
+{
+
 /* base class for float and double and decimal (old one) */
 class Field_real :public Field_num {
 public:
@@ -49,5 +52,7 @@ public:
   virtual unsigned char *pack(unsigned char* to, const unsigned char *from,
                       uint32_t max_length, bool low_byte_first);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_REAL_H */

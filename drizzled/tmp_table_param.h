@@ -21,13 +21,16 @@
 #ifndef DRIZZLED_TMP_TABLE_PARAM_H
 #define DRIZZLED_TMP_TABLE_PARAM_H
 
+namespace drizzled
+{
+
 /*
   Param to create temporary tables when doing SELECT:s
   NOTE
     This structure is copied using memcpy as a part of JOIN.
 */
 
-class Tmp_Table_Param :public drizzled::memory::SqlAlloc
+class Tmp_Table_Param :public memory::SqlAlloc
 {
 private:
   /* Prevent use of these (not safe because of lists and copy_field) */
@@ -85,5 +88,7 @@ public:
   void init(void);
   void cleanup(void);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TMP_TABLE_PARAM_H */

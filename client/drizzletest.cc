@@ -72,12 +72,12 @@
 #endif
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
-{
-  unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
-  bool get_one_option(int optid, const struct my_option *, char *argument);
-}
+unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
+
+bool get_one_option(int optid, const struct my_option *, char *argument);
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -920,7 +920,7 @@ static void free_used_memory(void)
 
   free_all_replace();
   free(opt_pass);
-  free_defaults(default_argv);
+  internal::free_defaults(default_argv);
 
   return;
 }
@@ -929,7 +929,7 @@ static void free_used_memory(void)
 static void cleanup_and_exit(int exit_code)
 {
   free_used_memory();
-  my_end();
+  internal::my_end();
 
   if (!silent) {
     switch (exit_code) {
@@ -1142,9 +1142,9 @@ static void cat_file(string* ds, const char* filename)
   uint32_t len;
   char buff[512];
 
-  if ((fd= my_open(filename, O_RDONLY, MYF(0))) < 0)
+  if ((fd= internal::my_open(filename, O_RDONLY, MYF(0))) < 0)
     die("Failed to open file '%s'", filename);
-  while((len= my_read(fd, (unsigned char*)&buff,
+  while((len= internal::my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
     char *p= buff, *start= buff;
@@ -1166,7 +1166,7 @@ static void cat_file(string* ds, const char* filename)
     /* Output any chars that might be left */
     ds->append(start, p-start);
   }
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 }
 
 
@@ -1351,9 +1351,9 @@ static int compare_files2(int fd, const char* filename2)
   const char *fname= filename2;
   string tmpfile;
 
-  if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+  if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
-    my_close(fd, MYF(0));
+    internal::my_close(fd, MYF(0));
     if (opt_testdir != NULL)
     {
       tmpfile= opt_testdir;
@@ -1362,17 +1362,17 @@ static int compare_files2(int fd, const char* filename2)
       tmpfile.append(filename2);
       fname= tmpfile.c_str();
     }
-    if ((fd2= my_open(fname, O_RDONLY, MYF(0))) < 0)
+    if ((fd2= internal::my_open(fname, O_RDONLY, MYF(0))) < 0)
     {
-      my_close(fd, MYF(0));
+      internal::my_close(fd, MYF(0));
     
       die("Failed to open second file: '%s'", fname);
     }
   }
-  while((len= my_read(fd, (unsigned char*)&buff,
+  while((len= internal::my_read(fd, (unsigned char*)&buff,
                       sizeof(buff), MYF(0))) > 0)
   {
-    if ((len2= my_read(fd2, (unsigned char*)&buff2,
+    if ((len2= internal::my_read(fd2, (unsigned char*)&buff2,
                        sizeof(buff2), MYF(0))) < len)
     {
       /* File 2 was smaller */
@@ -1392,14 +1392,14 @@ static int compare_files2(int fd, const char* filename2)
       break;
     }
   }
-  if (!error && my_read(fd2, (unsigned char*)&buff2,
+  if (!error && internal::my_read(fd2, (unsigned char*)&buff2,
                         sizeof(buff2), MYF(0)) > 0)
   {
     /* File 1 was smaller */
     error= RESULT_LENGTH_MISMATCH;
   }
 
-  my_close(fd2, MYF(0));
+  internal::my_close(fd2, MYF(0));
 
   return error;
 }
@@ -1423,12 +1423,12 @@ static int compare_files(const char* filename1, const char* filename2)
   int fd;
   int error;
 
-  if ((fd= my_open(filename1, O_RDONLY, MYF(0))) < 0)
+  if ((fd= internal::my_open(filename1, O_RDONLY, MYF(0))) < 0)
     die("Failed to open first file: '%s'", filename1);
 
   error= compare_files2(fd, filename2);
 
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 
   return error;
 }
@@ -1452,26 +1452,26 @@ static int string_cmp(string* ds, const char *fname)
   int fd;
   char temp_file_path[FN_REFLEN];
 
-  if ((fd= create_temp_file(temp_file_path, NULL,
+  if ((fd= internal::create_temp_file(temp_file_path, NULL,
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for ds");
 
   /* Write ds to temporary file and set file pos to beginning*/
-  if (my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
+  if (internal::my_write(fd, (unsigned char *) ds->c_str(), ds->length(),
                MYF(MY_FNABP | MY_WME)) ||
       lseek(fd, 0, SEEK_SET) == MY_FILEPOS_ERROR)
   {
-    my_close(fd, MYF(0));
+    internal::my_close(fd, MYF(0));
     /* Remove the temporary file */
-    my_delete(temp_file_path, MYF(0));
+    internal::my_delete(temp_file_path, MYF(0));
     die("Failed to write file '%s'", temp_file_path);
   }
 
   error= compare_files2(fd, fname);
 
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
   /* Remove the temporary file */
-  my_delete(temp_file_path, MYF(0));
+  internal::my_delete(temp_file_path, MYF(0));
 
   return(error);
 }
@@ -1513,18 +1513,18 @@ static void check_result(string* ds)
     */
     char reject_file[FN_REFLEN];
     size_t reject_length;
-    dirname_part(reject_file, result_file_name, &reject_length);
+    internal::dirname_part(reject_file, result_file_name, &reject_length);
 
     if (access(reject_file, W_OK) == 0)
     {
       /* Result file directory is writable, save reject file there */
-      fn_format(reject_file, result_file_name, NULL,
+      internal::fn_format(reject_file, result_file_name, NULL,
                 ".reject", MY_REPLACE_EXT);
     }
     else
     {
       /* Put reject file in opt_logdir */
-      fn_format(reject_file, result_file_name, opt_logdir,
+      internal::fn_format(reject_file, result_file_name, opt_logdir,
                 ".reject", MY_REPLACE_DIR | MY_REPLACE_EXT);
     }
     str_to_file(reject_file, ds->c_str(), ds->length());
@@ -1565,7 +1565,7 @@ static void check_require(string* ds, const string &fname)
   if (string_cmp(ds, fname.c_str()))
   {
     char reason[FN_REFLEN];
-    fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
+    internal::fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
     abort_not_supported_test("Test requires: '%s'", reason);
   }
   return;
@@ -2145,12 +2145,12 @@ static int open_file(const char *name)
 {
   char buff[FN_REFLEN];
 
-  if (!test_if_hard_path(name))
+  if (!internal::test_if_hard_path(name))
   {
     sprintf(buff,"%s%s",opt_basedir,name);
     name=buff;
   }
-  fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
+  internal::fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
 
   if (cur_file == file_stack_end)
     die("Source directives are nesting too deep");
@@ -2469,7 +2469,7 @@ static void do_remove_file(struct st_command *command)
                      rm_args, sizeof(rm_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= my_delete(ds_filename.c_str(), MYF(0)) != 0;
+  error= internal::my_delete(ds_filename.c_str(), MYF(0)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2503,7 +2503,7 @@ static void do_copy_file(struct st_command *command)
                      sizeof(copy_file_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= (my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
+  error= (internal::my_copy(ds_from_file.c_str(), ds_to_file.c_str(),
                   MYF(MY_DONT_OVERWRITE_FILE)) != 0);
   handle_command_error(command, error);
   return;
@@ -2601,7 +2601,7 @@ static void do_mkdir(struct st_command *command)
                      mkdir_args, sizeof(mkdir_args)/sizeof(struct command_arg),
                      ' ');
 
-  error= mkdir(ds_dirname.c_str(), (0777 & my_umask_dir)) != 0;
+  error= mkdir(ds_dirname.c_str(), (0777 & internal::my_umask_dir)) != 0;
   handle_command_error(command, error);
   return;
 }
@@ -2992,10 +2992,10 @@ static void do_perl(struct st_command *command)
   read_until_delimiter(&ds_script, &ds_delimiter);
 
   /* Create temporary file name */
-  if ((fd= create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
+  if ((fd= internal::create_temp_file(temp_file_path, getenv("MYSQLTEST_VARDIR"),
                             "tmp", MYF(MY_WME))) < 0)
     die("Failed to create temporary file for perl command");
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 
   str_to_file(temp_file_path, ds_script.c_str(), ds_script.length());
 
@@ -3015,7 +3015,7 @@ static void do_perl(struct st_command *command)
   error= pclose(res_file);
 
   /* Remove the temporary file */
-  my_delete(temp_file_path, MYF(0));
+  internal::my_delete(temp_file_path, MYF(0));
 
   handle_command_error(command, WEXITSTATUS(error));
   return;
@@ -3315,7 +3315,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
   if (!*p)
     die("Missing argument to %.*s", command->first_word_len, command->query);
   sleep_start= p;
-  /* Check that arg starts with a digit, not handled by my_strtod */
+  /* Check that arg starts with a digit, not handled by internal::my_strtod */
   if (!my_isdigit(charset_info, *sleep_start))
     die("Invalid argument to %.*s \"%s\"", command->first_word_len,
         command->query,command->first_argument);
@@ -3884,7 +3884,7 @@ static void do_connect(struct st_command *command)
     if (*ds_sock.c_str() != FN_LIBCHAR)
     {
       char buff[FN_REFLEN];
-      fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
+      internal::fn_format(buff, ds_sock.c_str(), TMPDIR, "", 0);
       ds_sock.clear();
       ds_sock.append(buff);
     }
@@ -4649,7 +4649,7 @@ static struct my_option my_long_options[] =
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,MTEST_VERSION,
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,MTEST_VERSION,
          drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
@@ -4660,7 +4660,7 @@ static void usage(void)
   printf("Drizzle version modified by Brian, Jay, Monty Taylor, PatG and Stewart\n");
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
   printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
-  printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
+  printf("Usage: %s [OPTIONS] [database] < test_file\n", internal::my_progname);
   my_print_help(my_long_options);
   printf("  --no-defaults       Don't read default options from any options file.\n");
   my_print_variables(my_long_options);
@@ -4678,12 +4678,12 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   case 'x':
   {
     char buff[FN_REFLEN];
-    if (!test_if_hard_path(argument))
+    if (!internal::test_if_hard_path(argument))
     {
       sprintf(buff,"%s%s",opt_basedir,argument);
       argument= buff;
     }
-    fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
+    internal::fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     assert(cur_file == file_stack && cur_file->file == 0);
     if (!(cur_file->file= fopen(buff, "r")))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
@@ -4695,12 +4695,12 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   case 'm':
   {
     static char buff[FN_REFLEN];
-    if (!test_if_hard_path(argument))
+    if (!internal::test_if_hard_path(argument))
     {
       sprintf(buff,"%s%s",opt_basedir,argument);
       argument= buff;
     }
-    fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
+    internal::fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     timer_file= buff;
     unlink(timer_file);       /* Ignore error, may not exist */
     break;
@@ -4760,7 +4760,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
 
 static int parse_args(int argc, char **argv)
 {
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
   default_argv= argv;
 
   if ((handle_options(&argc, &argv, my_long_options, get_one_option)))
@@ -4795,23 +4795,23 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int fd;
   char buff[FN_REFLEN];
   int flags= O_WRONLY | O_CREAT;
-  if (!test_if_hard_path(fname))
+  if (!internal::test_if_hard_path(fname))
   {
     sprintf(buff,"%s%s",opt_basedir,fname);
     fname= buff;
   }
-  fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
+  internal::fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);
 
   if (!append)
     flags|= O_TRUNC;
-  if ((fd= my_open(buff, flags,
+  if ((fd= internal::my_open(buff, flags,
                    MYF(MY_WME | MY_FFNF))) < 0)
     die("Could not open '%s' for writing: errno = %d", buff, errno);
   if (append && lseek(fd, 0, SEEK_END) == MY_FILEPOS_ERROR)
     die("Could not find end of file '%s': errno = %d", buff, errno);
-  if (my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
+  if (internal::my_write(fd, (unsigned char*)str, size, MYF(MY_WME|MY_FNABP)))
     die("write failed");
-  my_close(fd, MYF(0));
+  internal::my_close(fd, MYF(0));
 }
 
 /*
@@ -4833,7 +4833,7 @@ void str_to_file(const char *fname, const char *str, int size)
 void dump_result_to_log_file(const char *buf, int size)
 {
   char log_file[FN_REFLEN];
-  str_to_file(fn_format(log_file, result_file_name, opt_logdir, ".log",
+  str_to_file(internal::fn_format(log_file, result_file_name, opt_logdir, ".log",
                         *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               buf, size);
@@ -4844,7 +4844,7 @@ void dump_result_to_log_file(const char *buf, int size)
 void dump_progress(void)
 {
   char progress_file[FN_REFLEN];
-  str_to_file(fn_format(progress_file, result_file_name,
+  str_to_file(internal::fn_format(progress_file, result_file_name,
                         opt_logdir, ".progress",
                         *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
@@ -4855,7 +4855,7 @@ void dump_warning_messages(void)
 {
   char warn_file[FN_REFLEN];
 
-  str_to_file(fn_format(warn_file, result_file_name, opt_logdir, ".warnings",
+  str_to_file(internal::fn_format(warn_file, result_file_name, opt_logdir, ".warnings",
                         *opt_logdir ? MY_REPLACE_DIR | MY_REPLACE_EXT :
                         MY_REPLACE_EXT),
               ds_warning_messages.c_str(), ds_warning_messages.length());
@@ -6039,7 +6039,19 @@ void timer_output(void)
 
 uint64_t timer_now(void)
 {
-  return my_micro_time() / 1000;
+#if defined(HAVE_GETHRTIME)
+  return gethrtime()/1000/1000;
+#else
+  uint64_t newtime;
+  struct timeval t;
+  /*
+    The following loop is here because gettimeofday may fail on some systems
+  */
+  while (gettimeofday(&t, NULL) != 0)
+  {}
+  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
+  return newtime/1000;
+#endif  /* defined(HAVE_GETHRTIME) */
 }
 
 

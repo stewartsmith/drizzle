@@ -26,7 +26,8 @@
 #include "drizzled/create_field.h"
 #include "drizzled/internal/my_sys.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 extern const CHARSET_INFO *system_charset_info;
 
@@ -136,5 +137,4 @@ bool Foreign_key::validate(List<CreateField> &table_fields)
   return false;
 }
 
-
-
+} /* namespace drizzled */

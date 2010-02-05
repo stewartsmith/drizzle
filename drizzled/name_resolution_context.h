@@ -22,6 +22,9 @@
 
 #include "drizzled/item.h"
 
+namespace drizzled
+{
+
 class TableList;
 class Security_context;
 class Session;
@@ -44,7 +47,7 @@ class Select_Lex;
  * structure before and after INSERT/CREATE and its SELECT to make correct
  * field name resolution.
  */
-class Name_resolution_context: public drizzled::memory::SqlAlloc
+class Name_resolution_context: public memory::SqlAlloc
 {
 public:
   /**
@@ -132,5 +135,7 @@ public:
     (*error_processor)(session, error_processor_data);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_NAME_RESOLUTION_CONTEXT_H */

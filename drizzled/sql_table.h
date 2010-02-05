@@ -28,6 +28,9 @@
 
 #include "drizzled/base.h"
 
+namespace drizzled
+{
+
 class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
@@ -41,8 +44,8 @@ class Cursor;
 static const uint32_t FN_FROM_IS_TMP(1 << 0);
 static const uint32_t FN_TO_IS_TMP(1 << 0);
 
-namespace drizzled { namespace message { class Table; } }
-namespace drizzled { class TableIdentifier; }
+namespace message { class Table; }
+class TableIdentifier;
 
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary);
@@ -50,7 +53,7 @@ void write_bin_log_drop_table(Session *session,
                               bool if_exists, const char *db_name,
                               const char *table_name);
 bool quick_rm_table(Session& session,
-                    drizzled::TableIdentifier &identifier);
+                    TableIdentifier &identifier);
 void close_cached_table(Session *session, Table *table);
 
 void wait_while_table_is_used(Session *session, Table *table,
@@ -70,7 +73,7 @@ void write_bin_log(Session *session,
 
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
-bool check_engine(Session *, const char *, drizzled::message::Table *, HA_CREATE_INFO *);
+bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
 /*
   Preparation for table creation
@@ -99,7 +102,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
 */
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
-                               drizzled::message::Table *create_proto,
+                               message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
@@ -113,5 +116,7 @@ int mysql_prepare_create_table(Session *session,
 size_t build_tmptable_filename(char *buff, size_t bufflen);
 size_t build_table_filename(char *buff, size_t bufflen, const char *db,
                             const char *table_name, bool is_tmp);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_TABLE_H */

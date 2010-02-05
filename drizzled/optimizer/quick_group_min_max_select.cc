@@ -27,10 +27,14 @@
 #include "drizzled/optimizer/quick_range_select.h"
 #include "drizzled/optimizer/sel_arg.h"
 #include "drizzled/internal/m_string.h"
+#include "drizzled/util/functors.h"
+
+#include <vector>
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
@@ -120,9 +124,6 @@ int optimizer::QuickGroupMinMaxSelect::init()
 
   if (min_max_arg_part)
   {
-    if (my_init_dynamic_array(&min_max_ranges, sizeof(optimizer::QuickRange*), 16, 16))
-      return 1;
-
     if (have_min)
     {
       if (! (min_functions= new List<Item_sum>))
@@ -160,8 +161,6 @@ int optimizer::QuickGroupMinMaxSelect::init()
         return 1;
     }
   }
-  else
-    min_max_ranges.elements= 0;
 
   return 0;
 }
@@ -175,8 +174,11 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
   }
   if (min_max_arg_part)
   {
-    delete_dynamic(&min_max_ranges);
+    for_each(min_max_ranges.begin(),
+             min_max_ranges.end(),
+             DeletePtr());
   }
+  min_max_ranges.clear();
   free_root(&alloc,MYF(0));
   delete min_functions_it;
   delete max_functions_it;
@@ -212,8 +214,7 @@ bool optimizer::QuickGroupMinMaxSelect::add_range(optimizer::SEL_ARG *sel_range)
                                    range_flag);
   if (! range)
     return true;
-  if (insert_dynamic(&min_max_ranges, (unsigned char*)&range))
-    return true;
+  min_max_ranges.push_back(range);
   return false;
 }
 
@@ -240,14 +241,12 @@ void optimizer::QuickGroupMinMaxSelect::adjust_prefix_ranges()
 void optimizer::QuickGroupMinMaxSelect::update_key_stat()
 {
   max_used_key_length= real_prefix_len;
-  if (min_max_ranges.elements > 0)
+  if (! min_max_ranges.empty())
   {
     optimizer::QuickRange *cur_range= NULL;
     if (have_min)
     { /* Check if the right-most range has a lower boundary. */
-      get_dynamic(&min_max_ranges,
-                  (unsigned char*) &cur_range,
-                  min_max_ranges.elements - 1);
+      cur_range= min_max_ranges.back();
       if (! (cur_range->flag & NO_MIN_RANGE))
       {
         max_used_key_length+= min_max_arg_len;
@@ -257,7 +256,7 @@ void optimizer::QuickGroupMinMaxSelect::update_key_stat()
     }
     if (have_max)
     { /* Check if the left-most range has an upper boundary. */
-      get_dynamic(&min_max_ranges, (unsigned char*)&cur_range, 0);
+      cur_range= min_max_ranges.front();
       if (! (cur_range->flag & NO_MAX_RANGE))
       {
         max_used_key_length+= min_max_arg_len;
@@ -387,7 +386,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min()
   int result= 0;
 
   /* Find the MIN key using the eventually extended group prefix. */
-  if (min_max_ranges.elements > 0)
+  if (! min_max_ranges.empty())
   {
     if ((result= next_min_in_range()))
       return result;
@@ -452,7 +451,7 @@ int optimizer::QuickGroupMinMaxSelect::next_max()
   int result= 0;
 
   /* Get the last key in the (possibly extended) group. */
-  if (min_max_ranges.elements > 0)
+  if (! min_max_ranges.empty())
     result= next_max_in_range();
   else
     result= cursor->index_read_map(record,
@@ -520,17 +519,20 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
 
   max_key.reserve(real_prefix_len + min_max_arg_len);
 
-  assert(min_max_ranges.elements > 0);
+  assert(! min_max_ranges.empty());
 
-  for (uint32_t range_idx= 0; range_idx < min_max_ranges.elements; range_idx++)
+  for (vector<optimizer::QuickRange *>::iterator it= min_max_ranges.begin();
+       it != min_max_ranges.end();
+       ++it)
   { /* Search from the left-most range to the right. */
-    get_dynamic(&min_max_ranges, (unsigned char*)&cur_range, range_idx);
+    cur_range= *it;
 
     /*
       If the current value for the min/max argument is bigger than the right
       boundary of cur_range, there is no need to check this range.
     */
-    if (range_idx != 0 && !(cur_range->flag & NO_MAX_RANGE) &&
+    if (it != min_max_ranges.begin() && 
+        ! (cur_range->flag & NO_MAX_RANGE) &&
         (key_cmp(min_max_arg_part,
                  (const unsigned char*) cur_range->max_key,
                  min_max_arg_len) == 1))
@@ -635,17 +637,19 @@ int optimizer::QuickGroupMinMaxSelect::next_max_in_range()
   basic_string<unsigned char> min_key;
   min_key.reserve(real_prefix_len + min_max_arg_len);
 
-  assert(min_max_ranges.elements > 0);
+  assert(! min_max_ranges.empty());
 
-  for (uint32_t range_idx= min_max_ranges.elements; range_idx > 0; range_idx--)
+  for (vector<optimizer::QuickRange *>::reverse_iterator rit= min_max_ranges.rbegin();
+       rit != min_max_ranges.rend();
+       ++rit)
   { /* Search from the right-most range to the left. */
-    get_dynamic(&min_max_ranges, (unsigned char*)&cur_range, range_idx - 1);
+    cur_range= *rit;
 
     /*
       If the current value for the min/max argument is smaller than the left
       boundary of cur_range, there is no need to check this range.
     */
-    if (range_idx != min_max_ranges.elements &&
+    if (rit != min_max_ranges.rbegin() &&
         ! (cur_range->flag & NO_MIN_RANGE) &&
         (key_cmp(min_max_arg_part,
                  (const unsigned char*) cur_range->min_key,
@@ -739,7 +743,8 @@ void optimizer::QuickGroupMinMaxSelect::add_keys_and_lengths(String *key_names,
 {
   char buf[64];
   key_names->append(index_info->name);
-  uint32_t length= int64_t2str(max_used_key_length, buf, 10) - buf;
+  uint32_t length= internal::int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
+} /* namespace drizzled */

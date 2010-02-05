@@ -20,9 +20,10 @@
 #ifndef DRIZZLED_DTCOLLATION_H
 #define DRIZZLED_DTCOLLATION_H
 
-#include <stdint.h>
-
 #include <drizzled/definitions.h>
+
+namespace drizzled
+{
 
 class Item;
 typedef struct charset_info_st CHARSET_INFO;
@@ -133,5 +134,7 @@ void my_coll_agg_error(DTCollation &c1, DTCollation &c2, DTCollation &c3,
                        const char *fname);
 void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
                        int item_sep);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DTCOLLATION_H */

@@ -17,21 +17,15 @@ drop table if exists `Ｔ１２`;
 # Test ENUM values with Japanese characters in utf8 encoding
 #
 
-SET NAMES utf8;
-SET character_set_database = utf8;
-
-CREATE TABLE `Ｔ１` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = innodb;
-CREATE TABLE `Ｔ２` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = innodb;
-CREATE TABLE `Ｔ３` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = innodb;
-CREATE TABLE `Ｔ４` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ５` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ６` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = myisam;
-CREATE TABLE `Ｔ７` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
-CREATE TABLE `Ｔ８` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
-CREATE TABLE `Ｔ９` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = MEMORY;
-CREATE TABLE `Ｔ１０` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
-CREATE TABLE `Ｔ１１` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
-CREATE TABLE `Ｔ１２` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`)) DEFAULT CHARSET = utf8 engine = bdb;
+CREATE TABLE `Ｔ１` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`))  engine = innodb;
+CREATE TABLE `Ｔ２` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`))  engine = innodb;
+CREATE TABLE `Ｔ３` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`))  engine = innodb;
+CREATE TEMPORARY TABLE `Ｔ４` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`))  engine = myisam;
+CREATE TEMPORARY TABLE `Ｔ５` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`))  engine = myisam;
+CREATE TEMPORARY TABLE `Ｔ６` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`))  engine = myisam;
+CREATE TEMPORARY TABLE `Ｔ７` (`Ｃ１` ENUM('ｱ','ｲ','ｳ'), INDEX(`Ｃ１`))  engine = MEMORY;
+CREATE TEMPORARY TABLE `Ｔ８` (`Ｃ１` ENUM('あ','い','う'), INDEX(`Ｃ１`))  engine = MEMORY;
+CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` ENUM('龔','龖','龗'), INDEX(`Ｃ１`))  engine = MEMORY;
 
 INSERT INTO `Ｔ１` VALUES ('ｱ'),('ｲ'),('ｳ');
 INSERT INTO `Ｔ２` VALUES ('あ'),('い'),('う');
@@ -42,9 +36,6 @@ INSERT INTO `Ｔ６` VALUES ('龔'),('龖'),('龗');
 INSERT INTO `Ｔ７` VALUES ('ｱ'),('ｲ'),('ｳ');
 INSERT INTO `Ｔ８` VALUES ('あ'),('い'),('う');
 INSERT INTO `Ｔ９` VALUES ('龔'),('龖'),('龗');
-INSERT INTO `Ｔ１０` VALUES ('ｱ'),('ｲ'),('ｳ');
-INSERT INTO `Ｔ１１` VALUES ('あ'),('い'),('う');
-INSERT INTO `Ｔ１２` VALUES ('龔'),('龖'),('龗');
 
 SELECT * FROM `Ｔ１`;
 SELECT * FROM `Ｔ２`;
@@ -55,9 +46,6 @@ SELECT * FROM `Ｔ６`;
 SELECT * FROM `Ｔ７`;
 SELECT * FROM `Ｔ８`;
 SELECT * FROM `Ｔ９`;
-SELECT * FROM `Ｔ１０`;
-SELECT * FROM `Ｔ１１`;
-SELECT * FROM `Ｔ１２`;
 
 SHOW CREATE TABLE `Ｔ１`;
 SHOW CREATE TABLE `Ｔ２`;
@@ -68,9 +56,6 @@ SHOW CREATE TABLE `Ｔ６`;
 SHOW CREATE TABLE `Ｔ７`;
 SHOW CREATE TABLE `Ｔ８`;
 SHOW CREATE TABLE `Ｔ９`;
-SHOW CREATE TABLE `Ｔ１０`;
-SHOW CREATE TABLE `Ｔ１１`;
-SHOW CREATE TABLE `Ｔ１２`;
 
 DESC `Ｔ１`;
 DESC `Ｔ２`;
@@ -81,9 +66,6 @@ DESC `Ｔ６`;
 DESC `Ｔ７`;
 DESC `Ｔ８`;
 DESC `Ｔ９`;
-DESC `Ｔ１０`;
-DESC `Ｔ１１`;
-DESC `Ｔ１２`;
 
 #
 # Test problem with enum values after the colum with  NOT NULL restriction
@@ -98,9 +80,6 @@ ALTER TABLE `Ｔ６` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
 ALTER TABLE `Ｔ７` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
 ALTER TABLE `Ｔ８` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
 ALTER TABLE `Ｔ９` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ１０` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ１１` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
-ALTER TABLE `Ｔ１２` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
 
 SHOW CREATE TABLE `Ｔ１`;
 SHOW CREATE TABLE `Ｔ２`;
@@ -111,9 +90,6 @@ SHOW CREATE TABLE `Ｔ６`;
 SHOW CREATE TABLE `Ｔ７`;
 SHOW CREATE TABLE `Ｔ８`;
 SHOW CREATE TABLE `Ｔ９`;
-SHOW CREATE TABLE `Ｔ１０`;
-SHOW CREATE TABLE `Ｔ１１`;
-SHOW CREATE TABLE `Ｔ１２`;
 
 DESC `Ｔ１`;
 DESC `Ｔ２`;
@@ -124,9 +100,6 @@ DESC `Ｔ６`;
 DESC `Ｔ７`;
 DESC `Ｔ８`;
 DESC `Ｔ９`;
-DESC `Ｔ１０`;
-DESC `Ｔ１１`;
-DESC `Ｔ１２`;
 
 DROP TABLE `Ｔ１`;
 DROP TABLE `Ｔ２`;
@@ -137,6 +110,3 @@ DROP TABLE `Ｔ６`;
 DROP TABLE `Ｔ７`;
 DROP TABLE `Ｔ８`;
 DROP TABLE `Ｔ９`;
-DROP TABLE `Ｔ１０`;
-DROP TABLE `Ｔ１１`;
-DROP TABLE `Ｔ１２`;

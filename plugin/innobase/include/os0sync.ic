@@ -27,6 +27,8 @@ Created 9/6/1995 Heikki Tuuri
 #include <winbase.h>
 #endif
 
+#include <pthread.h>
+
 /**********************************************************//**
 Acquires ownership of a fast mutex. Currently in Windows this is the same
 as os_fast_mutex_lock!
