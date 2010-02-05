@@ -47,6 +47,11 @@
 
 using namespace std;
 
+namespace drizzled
+{
+namespace internal
+{
+
 /* Magic value returned by dtoa() to indicate overflow */
 #define DTOA_OVERFLOW 9999
 
@@ -2468,3 +2473,6 @@ ret1:
     *rve= s;
   return s0;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

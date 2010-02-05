@@ -30,6 +30,8 @@ Created 9/8/1995 Heikki Tuuri
 
 #ifdef __WIN__
 #include <windows.h>
+#else
+#include <sys/select.h>
 #endif
 
 #ifndef UNIV_HOTBACKUP

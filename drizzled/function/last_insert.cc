@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/last_insert.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 int64_t Item_func_last_insert_id::val_int()
 {
@@ -50,3 +53,4 @@ bool Item_func_last_insert_id::fix_fields(Session *session, Item **ref)
   return Item_int_func::fix_fields(session, ref);
 }
 
+} /* namespace drizzled */

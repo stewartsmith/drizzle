@@ -22,6 +22,9 @@
 
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_year :public Item_int_func
 {
 public:
@@ -36,5 +39,7 @@ public:
     maybe_null=1;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_YEAR_H */

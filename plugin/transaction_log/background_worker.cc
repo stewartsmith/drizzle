@@ -70,7 +70,9 @@ bool initTransactionLogBackgroundWorker()
   int error;
   if ((error= pthread_create(&thread, NULL, collectTransactionLogStats, 0)))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Unable to create background worker thread. Got error %s.\n"),
+    drizzled::errmsg_printf(ERRMSG_LVL_ERROR,
+                            _("Unable to create background worker thread. "
+                              "Got error %s.\n"),
                   strerror(error));
     return true;
   }

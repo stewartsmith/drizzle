@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
+
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
 #include <drizzled/item/cache_row.h>
 
+namespace drizzled
+{
 
 void Item_cache_row::make_field(SendField *)
 {
@@ -183,3 +186,6 @@ void Item_cache_row::cleanup()
     values= 0;
   return;
 }
+
+
+} /* namespace drizzled */

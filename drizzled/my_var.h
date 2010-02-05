@@ -21,7 +21,10 @@
 #ifndef DRIZZLED_MY_VAR_H
 #define DRIZZLED_MY_VAR_H
 
-class my_var : public drizzled::memory::SqlAlloc  {
+namespace drizzled
+{
+
+class my_var : public memory::SqlAlloc  {
 public:
   LEX_STRING s;
   bool local;
@@ -32,5 +35,7 @@ public:
   {}
   ~my_var() {}
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MY_VAR_H */

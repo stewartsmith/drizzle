@@ -106,9 +106,7 @@ the virtual method table (vtable) in GCC 3. */
 in compiling more Posix-compatible. These headers also define __WIN__
 if we are compiling on Windows. */
 
-# if defined(BUILD_DRIZZLE)
-#  include "drizzled/internal/my_pthread.h"
-# else
+# if !defined(BUILD_DRIZZLE)
 #  ifndef UNIV_HOTBACKUP
 #   include <my_global.h>
 #   include <my_pthread.h>

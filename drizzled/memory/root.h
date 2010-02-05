@@ -21,10 +21,6 @@
 
 #include <drizzled/definitions.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 namespace drizzled
 {
 namespace memory
@@ -93,10 +89,7 @@ char *strdup_root(Root *root,const char *str);
 char *strmake_root(Root *root,const char *str,size_t len);
 void *memdup_root(Root *root,const void *str, size_t len);
 
-}
-}
+} /* namespace memory */
+} /* namespace drizzled */
 
-#if defined(__cplusplus)
-}
-#endif
 #endif /* DRIZZLED_MEMORY_ROOT_H */

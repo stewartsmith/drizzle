@@ -24,6 +24,9 @@
 #include "drizzled/function/time/dayofyear.h"
 #include "drizzled/internal/my_sys.h"
 
+namespace drizzled
+{
+
 int64_t Item_func_dayofyear::val_int()
 {
   assert(fixed);
@@ -36,7 +39,7 @@ int64_t Item_func_dayofyear::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -90,3 +93,5 @@ int64_t Item_func_dayofyear::val_int()
   return (int64_t) julian_day_number_from_gregorian_date(temporal.years(), temporal.months(), temporal.days())
                  - julian_day_number_from_gregorian_date(temporal.years(), 1, 1) + 1;
 }
+
+} /* namespace drizzled */

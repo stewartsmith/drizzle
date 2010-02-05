@@ -54,12 +54,12 @@
 #include <vector>
 #include <string.h>
 
-extern std::vector<drizzled::TemporalFormat *> known_datetime_formats;
-extern std::vector<drizzled::TemporalFormat *> known_date_formats;
-extern std::vector<drizzled::TemporalFormat *> known_time_formats;
-
 namespace drizzled 
 {
+
+extern std::vector<TemporalFormat *> known_datetime_formats;
+extern std::vector<TemporalFormat *> known_date_formats;
+extern std::vector<TemporalFormat *> known_time_formats;
 
 Temporal::Temporal()
 :
@@ -206,12 +206,12 @@ bool Time::operator>=(const Time& rhs)
  * This operator is called in the following situation:
  *
  * @code
- * drizzled::Time lhs;
+ * Time lhs;
  * lhs.from_string("20:00:00");
- * drizzled::Time rhs;
+ * Time rhs;
  * rhs.from_string("19:00:00");
  *
- * drizzled::Time result= lhs - rhs;
+ * Time result= lhs - rhs;
  * @endcode
  *
  * @note
@@ -1577,4 +1577,4 @@ bool NanoTimestamp::is_valid() const
       && (_nseconds <= UINT32_C(999999999));
 }
 
-} /* end namespace drizzled */
+} /* namespace drizzled */

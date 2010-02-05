@@ -20,8 +20,10 @@
 #ifndef DRIZZLED_HYBRID_TYPE_TRAITS_DECIMAL_H
 #define DRIZZLED_HYBRID_TYPE_TRAITS_DECIMAL_H
 
-#include <stdint.h>
 #include <drizzled/hybrid_type_traits.h>
+
+namespace drizzled
+{
 
 class Item;
 class Field;
@@ -52,5 +54,6 @@ public:
   Hybrid_type_traits_decimal();
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HYBRID_TYPE_TRAITS_DECIMAL_H */

@@ -37,8 +37,8 @@
 class MemcachedAnalysisISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int fillTable(Session *session,
-                        Table *table,
+  virtual int fillTable(drizzled::Session *session,
+                        drizzled::Table *table,
                         drizzled::plugin::InfoSchemaTable *schema_table);
 };
 
