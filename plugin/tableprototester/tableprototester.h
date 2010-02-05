@@ -21,10 +21,10 @@
 
 #include <drizzled/cursor.h>
 
-class TableProtoTesterCursor: public Cursor
+class TableProtoTesterCursor: public drizzled::Cursor
 {
 public:
-  TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~TableProtoTesterCursor()
   {}
 
@@ -41,12 +41,12 @@ public:
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
 
-  int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
-                     enum ha_rkey_function find_flag);
+  int index_read_map(unsigned char * buf, const unsigned char * key, drizzled::key_part_map keypart_map,
+                     drizzled::ha_rkey_function find_flag);
   int index_read_idx_map(unsigned char * buf, uint32_t idx, const unsigned char * key,
-                         key_part_map keypart_map,
-                         enum ha_rkey_function find_flag);
-  int index_read_last_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map);
+                         drizzled::key_part_map keypart_map,
+                         drizzled::ha_rkey_function find_flag);
+  int index_read_last_map(unsigned char * buf, const unsigned char * key, drizzled::key_part_map keypart_map);
   int index_next(unsigned char * buf);
   int index_prev(unsigned char * buf);
   int index_first(unsigned char * buf);
