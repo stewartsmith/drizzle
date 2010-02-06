@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include <plugin/data_engine/function.h>
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/m_string.h>
@@ -140,19 +142,19 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
     /* fall through */
   case SHOW_DOUBLE:
     /* 6 is the default precision for '%f' in sprintf() */
-    end= buff + my_fcvt(*(double *) value, 6, buff, NULL);
+    end= buff + internal::my_fcvt(*(double *) value, 6, buff, NULL);
     break;
   case SHOW_LONG_STATUS:
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_LONG:
-    end= int10_to_str(*(long*) value, buff, 10);
+    end= internal::int10_to_str(*(long*) value, buff, 10);
     break;
   case SHOW_LONGLONG_STATUS:
     value= ((char *) status_var + (uint64_t) value);
     /* fall through */
   case SHOW_LONGLONG:
-    end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+    end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
     break;
   case SHOW_SIZE:
     {
@@ -165,7 +167,7 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
     }
     break;
   case SHOW_HA_ROWS:
-    end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
+    end= internal::int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
     break;
   case SHOW_BOOL:
     end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
@@ -175,15 +177,8 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
     break;
   case SHOW_INT:
   case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-    end= int10_to_str((long) *(uint32_t*) value, buff, 10);
+    end= internal::int10_to_str((long) *(uint32_t*) value, buff, 10);
     break;
-  case SHOW_HAVE:
-    {
-      SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
-      pos= show_comp_option_name[(int) tmp_option];
-      end= strchr(pos, '\0');
-      break;
-    }
   case SHOW_CHAR:
     {
       if (!(pos= value))

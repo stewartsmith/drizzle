@@ -46,5 +46,6 @@ public:
   }
 };
 
-} // namepsace drizzled
+} /* namepsace drizzled */
+
 #endif /* DRIZZLED_TABLE_FUNCTION_CONTAINER_H */

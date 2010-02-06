@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/found_rows.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 int64_t Item_func_found_rows::val_int()
 {
@@ -30,3 +33,4 @@ int64_t Item_func_found_rows::val_int()
   return session->found_rows();
 }
 
+} /* namespace drizzled */

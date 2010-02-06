@@ -34,7 +34,7 @@ using namespace drizzled;
 *****************************************************************************/
 
 FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
-                                     TableShare &table_arg) :
+                               TableShare &table_arg) :
   Cursor(engine_arg, table_arg)
 {}
 
@@ -89,7 +89,7 @@ void FunctionCursor::position(const unsigned char *record)
   copy= (unsigned char *)malloc(table->s->reclength);
   memcpy(copy, record, table->s->reclength);
   row_cache.push_back(copy);
-  my_store_ptr(ref, ref_length, record_id);
+  internal::my_store_ptr(ref, ref_length, record_id);
   record_id++;
 }
 
@@ -112,7 +112,7 @@ int FunctionCursor::rnd_end()
 int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
-  size_t position_id= (size_t)my_get_ptr(pos, ref_length);
+  size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
   memcpy(buf, row_cache[position_id], table->s->reclength);
 

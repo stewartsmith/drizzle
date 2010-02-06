@@ -31,6 +31,9 @@
 #include <sstream>
 #include <string>
 
+namespace drizzled
+{
+
 
 /****************************************************************************
 ** Drizzle date type stored in 3 bytes
@@ -97,7 +100,7 @@ int Field_date::store(const char *from,
    * and matches on datetime format strings can occur.
    */
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
@@ -133,7 +136,7 @@ int Field_date::store(int64_t from, bool)
    * if unable to create a valid DateTime.  
    */
   ASSERT_COLUMN_MARKED_FOR_WRITE;
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using stringstream */
@@ -275,3 +278,5 @@ void Field_date::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("date"));
 }
+
+} /* namespace drizzled */

@@ -18,4 +18,9 @@
 
 #include "drizzled/sql_list.h"
 
+namespace drizzled
+{
+
 list_node end_of_list;
+
+} /* namespace drizzled */

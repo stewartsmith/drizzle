@@ -23,18 +23,18 @@
 
 #include "drizzled/plugin/info_schema_table.h"
 
-bool show_status_array(Session *session, 
+bool show_status_array(drizzled::Session *session, 
                        const char *wild,
-                       SHOW_VAR *variables,
-                       sql_var_t value_type,
-                       struct system_status_var *status_var,
-                       const char *prefix, Table *table,
+                       drizzled::SHOW_VAR *variables,
+                       drizzled::sql_var_t value_type,
+                       drizzled::system_status_var *status_var,
+                       const char *prefix, drizzled::Table *table,
                        bool ucase_names,
                        drizzled::plugin::InfoSchemaTable *schema_table);
 
-void store_key_column_usage(Table *table, 
-                            LEX_STRING *db_name,
-                            LEX_STRING *table_name, 
+void store_key_column_usage(drizzled::Table *table, 
+                            drizzled::LEX_STRING *db_name,
+                            drizzled::LEX_STRING *table_name, 
                             const char *key_name,
                             uint32_t key_len, 
                             const char *con_type, 

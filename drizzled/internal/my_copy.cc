@@ -13,7 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 
 #include <fcntl.h>
 
@@ -35,6 +37,11 @@ struct utimbuf {
 #endif
 
 #include <drizzled/util/test.h>
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   int my_copy(const char *from, const char *to, myf MyFlags)
@@ -123,3 +130,6 @@ err:
   }
   return(-1);
 } /* my_copy */
+
+} /* namespace internal */
+} /* namespace drizzled */

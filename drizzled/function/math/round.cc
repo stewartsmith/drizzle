@@ -27,6 +27,9 @@
 
 #include "drizzled/function/math/round.h"
 
+namespace drizzled
+{
+
 extern const double log_10[309];
 
 
@@ -228,3 +231,4 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
   return 0;
 }
 
+} /* namespace drizzled */

@@ -19,6 +19,7 @@
 
 	/* Read first record with the current key */
 
+using namespace drizzled;
 
 int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
 {

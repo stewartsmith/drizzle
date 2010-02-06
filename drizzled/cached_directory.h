@@ -37,10 +37,6 @@
 #include <cstdlib>
 #include <cerrno>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 namespace drizzled
 {
 
@@ -162,9 +158,5 @@ private:
 };
 
 } /* namespace drizzled */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* DRIZZLED_CACHED_DIRECTORY_H */

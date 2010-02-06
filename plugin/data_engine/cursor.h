@@ -25,7 +25,7 @@
 
 #include <plugin/data_engine/function.h>
 
-class FunctionCursor: public Cursor
+class FunctionCursor: public drizzled::Cursor
 {
   drizzled::plugin::TableFunction *tool;
   drizzled::plugin::TableFunction::Generator *generator;
@@ -33,7 +33,8 @@ class FunctionCursor: public Cursor
   std::vector<unsigned char *> row_cache;
 
 public:
-  FunctionCursor(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  FunctionCursor(drizzled::plugin::StorageEngine &engine,
+                 drizzled::TableShare &table_arg);
   ~FunctionCursor() {}
 
   int open(const char *name, int mode, uint32_t test_if_locked);

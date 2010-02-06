@@ -57,6 +57,7 @@ TODO:
 #include <map>
 
 using namespace std;
+using namespace drizzled;
 
 /*
   unsigned char + unsigned char + uint64_t + uint64_t + uint64_t + uint64_t + unsigned char
@@ -75,9 +76,9 @@ using namespace std;
 static int read_meta_file(int meta_file, ha_rows *rows);
 static int write_meta_file(int meta_file, ha_rows rows, bool dirty);
 
-extern "C" void tina_get_status(void* param, int concurrent_insert);
-extern "C" void tina_update_status(void* param);
-extern "C" bool tina_check_status(void* param);
+void tina_get_status(void* param, int concurrent_insert);
+void tina_update_status(void* param);
+bool tina_check_status(void* param);
 
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
@@ -169,9 +170,9 @@ int Tina::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    fn_format(buff, table_path.c_str(), "", *ext,
+    internal::fn_format(buff, table_path.c_str(), "", *ext,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (my_delete_with_symlink(buff, MYF(0)))
+    if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
 	break;
@@ -267,7 +268,7 @@ TinaShare::TinaShare(const char *table_name_arg)
     crashed(false), rows_recorded(0), data_file_version(0)
 {
   thr_lock_init(&lock);
-  fn_format(data_file_name, table_name_arg, "", CSV_EXT,
+  internal::fn_format(data_file_name, table_name_arg, "", CSV_EXT,
             MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 }
 
@@ -304,7 +305,7 @@ TinaShare *ha_tina::get_share(const char *table_name)
       return NULL;
     }
 
-    fn_format(meta_file_name, table_name, "", CSM_EXT,
+    internal::fn_format(meta_file_name, table_name, "", CSM_EXT,
               MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
     if (stat(share->data_file_name, &file_stat))
@@ -326,7 +327,7 @@ TinaShare *ha_tina::get_share(const char *table_name)
       Usually this will result in auto-repair, and we will get a good
       meta-file in the end.
     */
-    if ((share->meta_file= my_open(meta_file_name,
+    if ((share->meta_file= internal::my_open(meta_file_name,
                                    O_RDWR|O_CREAT, MYF(0))) == -1)
       share->crashed= true;
 
@@ -369,7 +370,7 @@ static int read_meta_file(int meta_file, ha_rows *rows)
   unsigned char *ptr= meta_buffer;
 
   lseek(meta_file, 0, SEEK_SET);
-  if (my_read(meta_file, (unsigned char*)meta_buffer, META_BUFFER_SIZE, 0)
+  if (internal::my_read(meta_file, (unsigned char*)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(HA_ERR_CRASHED_ON_USAGE);
 
@@ -391,7 +392,7 @@ static int read_meta_file(int meta_file, ha_rows *rows)
       ((bool)(*ptr)== true))
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  my_sync(meta_file, MYF(MY_WME));
+  internal::my_sync(meta_file, MYF(MY_WME));
 
   return(0);
 }
@@ -436,11 +437,11 @@ static int write_meta_file(int meta_file, ha_rows rows, bool dirty)
   *ptr= (unsigned char)dirty;
 
   lseek(meta_file, 0, SEEK_SET);
-  if (my_write(meta_file, (unsigned char *)meta_buffer, META_BUFFER_SIZE, 0)
+  if (internal::my_write(meta_file, (unsigned char *)meta_buffer, META_BUFFER_SIZE, 0)
       != META_BUFFER_SIZE)
     return(-1);
 
-  my_sync(meta_file, MYF(MY_WME));
+  internal::my_sync(meta_file, MYF(MY_WME));
 
   return(0);
 }
@@ -455,7 +456,7 @@ int ha_tina::init_tina_writer()
   (void)write_meta_file(share->meta_file, share->rows_recorded, true);
 
   if ((share->tina_write_filedes=
-        my_open(share->data_file_name, O_RDWR|O_APPEND, MYF(0))) == -1)
+        internal::my_open(share->data_file_name, O_RDWR|O_APPEND, MYF(0))) == -1)
   {
     share->crashed= true;
     return(1);
@@ -477,11 +478,11 @@ int ha_tina::free_share()
     /* Write the meta file. Mark it as crashed if needed. */
     (void)write_meta_file(share->meta_file, share->rows_recorded,
                           share->crashed ? true :false);
-    if (my_close(share->meta_file, MYF(0)))
+    if (internal::my_close(share->meta_file, MYF(0)))
       result_code= 1;
     if (share->tina_write_opened)
     {
-      if (my_close(share->tina_write_filedes, MYF(0)))
+      if (internal::my_close(share->tina_write_filedes, MYF(0)))
         result_code= 1;
       share->tina_write_opened= false;
     }
@@ -894,7 +895,7 @@ int ha_tina::open(const char *name, int, uint32_t)
   }
 
   local_data_file_version= share->data_file_version;
-  if ((data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
+  if ((data_file= internal::my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
     return(0);
 
   /*
@@ -920,7 +921,7 @@ int ha_tina::open(const char *name, int, uint32_t)
 int ha_tina::close(void)
 {
   int rc= 0;
-  rc= my_close(data_file, MYF(0));
+  rc= internal::my_close(data_file, MYF(0));
   return(free_share() || rc);
 }
 
@@ -945,7 +946,7 @@ int ha_tina::write_row(unsigned char * buf)
       return(-1);
 
    /* use pwrite, as concurrent reader could have changed the position */
-  if (my_write(share->tina_write_filedes, (unsigned char*)buffer.ptr(), size,
+  if (internal::my_write(share->tina_write_filedes, (unsigned char*)buffer.ptr(), size,
                MYF(MY_WME | MY_NABP)))
     return(-1);
 
@@ -970,7 +971,7 @@ int ha_tina::open_update_temp_file_if_needed()
   if (!share->update_file_opened)
   {
     if ((update_temp_file=
-           my_create(fn_format(updated_fname, share->table_name.c_str(),
+           internal::my_create(internal::fn_format(updated_fname, share->table_name.c_str(),
                                "", CSN_EXT,
                                MY_REPLACE_EXT | MY_UNPACK_FILENAME),
                      0, O_RDWR | O_TRUNC, MYF(MY_WME))) < 0)
@@ -1014,7 +1015,7 @@ int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
   if (open_update_temp_file_if_needed())
     goto err;
 
-  if (my_write(update_temp_file, (unsigned char*)buffer.ptr(), size,
+  if (internal::my_write(update_temp_file, (unsigned char*)buffer.ptr(), size,
                MYF(MY_WME | MY_NABP)))
     goto err;
   temp_file_length+= size;
@@ -1070,8 +1071,8 @@ int ha_tina::init_data_file()
   if (local_data_file_version != share->data_file_version)
   {
     local_data_file_version= share->data_file_version;
-    if (my_close(data_file, MYF(0)) ||
-        (data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
+    if (internal::my_close(data_file, MYF(0)) ||
+        (data_file= internal::my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1)
       return 1;
   }
   file_buff->init_buff(data_file);
@@ -1170,20 +1171,20 @@ int ha_tina::rnd_next(unsigned char *buf)
 */
 void ha_tina::position(const unsigned char *)
 {
-  my_store_ptr(ref, ref_length, current_position);
+  internal::my_store_ptr(ref, ref_length, current_position);
   return;
 }
 
 
 /*
   Used to fetch a row from a posiion stored with ::position().
-  my_get_ptr() retrieves the data for you.
+  internal::my_get_ptr() retrieves the data for you.
 */
 
 int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   ha_statistic_increment(&SSV::ha_read_rnd_count);
-  current_position= (off_t)my_get_ptr(pos,ref_length);
+  current_position= (off_t)internal::my_get_ptr(pos,ref_length);
   return(find_current_row(buf));
 }
 
@@ -1244,8 +1245,8 @@ int ha_tina::rnd_end()
       The sort is needed when there were updates/deletes with random orders.
       It sorts so that we move the firts blocks to the beginning.
     */
-    my_qsort(chain, (size_t)(chain_ptr - chain), sizeof(tina_set),
-             (qsort_cmp)sort_set);
+    internal::my_qsort(chain, (size_t)(chain_ptr - chain), sizeof(tina_set),
+                       (qsort_cmp)sort_set);
 
     off_t write_begin= 0, write_end;
 
@@ -1266,7 +1267,7 @@ int ha_tina::rnd_end()
       /* if there is something to write, write it */
       if (write_length)
       {
-        if (my_write(update_temp_file,
+        if (internal::my_write(update_temp_file,
                      (unsigned char*) (file_buff->ptr() +
                                (write_begin - file_buff->start())),
                      (size_t)write_length, MYF_RW))
@@ -1289,15 +1290,15 @@ int ha_tina::rnd_end()
 
     }
 
-    if (my_sync(update_temp_file, MYF(MY_WME)) ||
-        my_close(update_temp_file, MYF(0)))
+    if (internal::my_sync(update_temp_file, MYF(MY_WME)) ||
+        internal::my_close(update_temp_file, MYF(0)))
       return(-1);
 
     share->update_file_opened= false;
 
     if (share->tina_write_opened)
     {
-      if (my_close(share->tina_write_filedes, MYF(0)))
+      if (internal::my_close(share->tina_write_filedes, MYF(0)))
         return(-1);
       /*
         Mark that the writer fd is closed, so that init_tina_writer()
@@ -1310,15 +1311,16 @@ int ha_tina::rnd_end()
       Close opened fildes's. Then move updated file in place
       of the old datafile.
     */
-    if (my_close(data_file, MYF(0)) ||
-        my_rename(fn_format(updated_fname, share->table_name.c_str(),
-                            "", CSN_EXT,
-                            MY_REPLACE_EXT | MY_UNPACK_FILENAME),
-                  share->data_file_name, MYF(0)))
+    if (internal::my_close(data_file, MYF(0)) ||
+        internal::my_rename(internal::fn_format(updated_fname,
+                                                share->table_name.c_str(),
+                                                "", CSN_EXT,
+                                                MY_REPLACE_EXT | MY_UNPACK_FILENAME),
+                            share->data_file_name, MYF(0)))
       return(-1);
 
     /* Open the file again */
-    if (((data_file= my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1))
+    if (((data_file= internal::my_open(share->data_file_name, O_RDONLY, MYF(0))) == -1))
       return(-1);
     /*
       As we reopened the data file, increase share->data_file_version
@@ -1345,7 +1347,7 @@ int ha_tina::rnd_end()
 
   return(0);
 error:
-  my_close(update_temp_file, MYF(0));
+  internal::my_close(update_temp_file, MYF(0));
   share->update_file_opened= false;
   return(-1);
 }
@@ -1403,20 +1405,20 @@ int Tina::doCreateTable(Session *, const char *table_name,
   }
 
 
-  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSM_EXT,
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, table_name, "", CSM_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
   write_meta_file(create_file, 0, false);
-  my_close(create_file, MYF(0));
+  internal::my_close(create_file, MYF(0));
 
-  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSV_EXT,
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, table_name, "", CSV_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
-  my_close(create_file, MYF(0));
+  internal::my_close(create_file, MYF(0));
 
   pthread_mutex_lock(&proto_cache_mutex);
   proto_cache.insert(make_pair(table_name, create_proto));

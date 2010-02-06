@@ -21,8 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_SCHEMAS_H
 #define PLUGIN_DATA_ENGINE_SCHEMAS_H
 
-#include "config.h"
-
 #include <set>
 
 #include "drizzled/plugin/table_function.h"
@@ -57,7 +55,7 @@ public:
     virtual bool checkSchema();
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     const std::string &schema_name()
     {
@@ -74,7 +72,7 @@ public:
     }
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }
@@ -98,12 +96,12 @@ public:
     }
 
   public:
-    Generator(Field **arg) :
+    Generator(drizzled::Field **arg) :
       SchemasTool::Generator(arg)
     { }
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

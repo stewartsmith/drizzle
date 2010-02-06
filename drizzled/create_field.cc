@@ -47,9 +47,10 @@
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
 
+namespace drizzled
+{
 
 /** Create a field suitable for create of table. */
 CreateField::CreateField(Field *old_field, Field *orig_field)
@@ -297,14 +298,14 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_TIMESTAMP:
       if (!fld_length)
       {
-        length= drizzled::DateTime::MAX_STRING_LENGTH;
+        length= DateTime::MAX_STRING_LENGTH;
       }
 
       /* This assert() should be correct due to absence of length
          specifiers for timestamp. Previous manipulation also wasn't
          ever called (from examining lcov)
       */
-      assert(length == (uint32_t)drizzled::DateTime::MAX_STRING_LENGTH);
+      assert(length == (uint32_t)DateTime::MAX_STRING_LENGTH);
 
       flags|= UNSIGNED_FLAG;
       if (fld_default_value)
@@ -346,10 +347,10 @@ bool CreateField::init(Session *,
       }
       break;
     case DRIZZLE_TYPE_DATE:
-      length= drizzled::Date::MAX_STRING_LENGTH;
+      length= Date::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_DATETIME:
-      length= drizzled::DateTime::MAX_STRING_LENGTH;
+      length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
       {
@@ -387,3 +388,5 @@ bool CreateField::init(Session *,
 
   return false; /* success */
 }
+
+} /* namespace drizzled */

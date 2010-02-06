@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -39,12 +39,12 @@ public:
   {}
 
   bool execute();
-  drizzled::message::Table create_table_proto;
+  message::Table create_table_proto;
   AlterInfo alter_info;
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_DROP_INDEX_H */

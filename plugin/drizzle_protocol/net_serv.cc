@@ -63,7 +63,8 @@ bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
 {
   net->vio = vio;
   net->max_packet= (uint32_t) buffer_length;
-  net->max_packet_size= max(buffer_length, global_system_variables.max_allowed_packet);
+  net->max_packet_size= max(buffer_length,
+                            drizzled::global_system_variables.max_allowed_packet);
 
   if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
                                           NET_HEADER_SIZE + COMP_HEADER_SIZE)))

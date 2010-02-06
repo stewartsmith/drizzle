@@ -21,8 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_PROCESSLIST_H
 #define PLUGIN_DATA_ENGINE_PROCESSLIST_H
 
-#include "config.h"
-
 #include "drizzled/plugin/table_function.h"
 
 
@@ -35,16 +33,16 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     time_t now;
-    std::vector<Session*>::iterator it;
+    std::vector<drizzled::Session*>::iterator it;
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
     ~Generator();
 
     bool populate();
   };
 
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

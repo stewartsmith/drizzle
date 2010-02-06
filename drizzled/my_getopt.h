@@ -18,6 +18,9 @@
 
 #include "drizzled/typelib.h"
 
+namespace drizzled
+{
+
 #define GET_NO_ARG     1
 #define GET_BOOL       2
 #define GET_INT        3
@@ -38,11 +41,6 @@
 
 #define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 enum loglevel {
    ERROR_LEVEL,
@@ -72,6 +70,7 @@ struct my_option
   void       *app_type;                 /* To be used by an application */
 };
 
+
 typedef bool (* my_get_one_option) (int, const struct my_option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
 typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct my_option *);
@@ -92,9 +91,7 @@ int64_t getopt_ll_limit_value(int64_t, const struct my_option *,
                                bool *fix);
 bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MY_GETOPT_H */
 

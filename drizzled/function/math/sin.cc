@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/sin.h>
 
+namespace drizzled
+{
+
 double Item_func_sin::val_real()
 {
   assert(fixed == 1);
@@ -31,3 +34,4 @@ double Item_func_sin::val_real()
 }
 
 
+} /* namespace drizzled */

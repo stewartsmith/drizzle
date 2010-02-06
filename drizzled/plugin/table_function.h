@@ -32,11 +32,11 @@
 #include <string>
 #include <set>
 
-extern int wild_case_compare(const CHARSET_INFO * const cs, 
-                             const char *str,const char *wildstr);
-
 namespace drizzled
 {
+
+extern int wild_case_compare(const CHARSET_INFO * const cs, 
+                             const char *str,const char *wildstr);
 
 namespace plugin
 {
@@ -48,8 +48,8 @@ class TableFunction : public Plugin
   TableFunction(const TableFunction &);
   TableFunction& operator=(const TableFunction &);
 
-  drizzled::message::Table proto;
-  drizzled::TableIdentifier identifier;
+  message::Table proto;
+  TableIdentifier identifier;
   std::string local_path;
   std::string local_schema;
 
@@ -113,7 +113,7 @@ public:
     bool isWild(const std::string &predicate);
   };
 
-  void define(drizzled::message::Table &arg)
+  void define(message::Table &arg)
   { 
     arg.CopyFrom(proto);
   }
@@ -145,7 +145,7 @@ public:
   virtual Generator *generator(Field **arg);
 
   void add_field(const char *label,
-                 drizzled::message::Table::Field::FieldType type,
+                 message::Table::Field::FieldType type,
                  uint32_t length= 0);
 
   void add_field(const char *label,

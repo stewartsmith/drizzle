@@ -22,6 +22,9 @@
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TableList *tab)
 {
@@ -67,3 +70,5 @@ const char *Natural_join_column::db_name()
                       table_ref->table->s->db.str));
   return table_ref->db;
 }
+
+} /* namespace drizzled */

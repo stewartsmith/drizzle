@@ -52,7 +52,9 @@ This file contains the implementation of error and warnings related
 #include <drizzled/plugin/client.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 /*
   Store a new message in an error object
@@ -241,3 +243,5 @@ bool mysqld_show_warnings(Session *session,
   session->my_eof();
   return(false);
 }
+
+} /* namespace drizzled */

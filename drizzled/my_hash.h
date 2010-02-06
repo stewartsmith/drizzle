@@ -22,11 +22,10 @@
 #ifndef DRIZZLED_MY_HASH_H
 #define DRIZZLED_MY_HASH_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "drizzled/dynamic_array.h"
+
+namespace drizzled
+{
 
 typedef struct charset_info_st CHARSET_INFO;
 
@@ -77,7 +76,6 @@ bool hash_delete(HASH *hash,unsigned char *record);
 
 #define hash_inited(H) ((H)->array.buffer != 0)
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_MY_HASH_H */

@@ -15,7 +15,14 @@
 
 /* Funktions for comparing with wild-cards */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/* Test if a string is "comparable" to a wild-card string */
 	/* returns 0 if the strings are "comparable" */
@@ -86,3 +93,6 @@ int wild_compare(register const char *str, register const char *wildstr,
   }
   return (*str != 0);
 } /* wild_compare */
+
+} /* namespace internal */
+} /* namespace drizzled */

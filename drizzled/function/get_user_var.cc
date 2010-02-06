@@ -26,8 +26,10 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 
-String *
-Item_func_get_user_var::val_str(String *str)
+namespace drizzled
+{
+
+String *Item_func_get_user_var::val_str(String *str)
 {
   assert(fixed == 1);
   if (!var_entry)
@@ -149,3 +151,5 @@ bool Item_func_get_user_var::eq(const Item *item,
   return (name.length == other->name.length &&
 	  !memcmp(name.str, other->name.str, name.length));
 }
+
+} /* namespace drizzled */

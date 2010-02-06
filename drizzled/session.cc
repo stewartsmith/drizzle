@@ -44,6 +44,7 @@
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/transaction_services.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -53,7 +54,8 @@
 #include <climits>
 
 using namespace std;
-using namespace drizzled;
+namespace drizzled
+{
 
 extern "C"
 {
@@ -72,7 +74,7 @@ const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
 extern uint32_t max_used_connections;
-extern drizzled::atomic<uint32_t> connection_count;
+extern atomic<uint32_t> connection_count;
 
 
 /****************************************************************************
@@ -108,7 +110,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  int fd = create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = internal::create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -230,11 +232,9 @@ Session::Session(plugin::Client *client_arg)
   query_length= 0;
   warn_query_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
-  replication_data= 0;
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
-  transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
@@ -369,7 +369,8 @@ void Session::cleanup(void)
   }
 #endif
   {
-    ha_rollback(this);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.ha_rollback_trans(this, true);
     xid_cache_delete(&transaction.xid_state);
   }
   hash_free(&user_vars);
@@ -389,7 +390,7 @@ Session::~Session()
   if (client->isConnected())
   {
     if (global_system_variables.log_warnings)
-        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
+        errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),internal::my_progname,
                       thread_id,
                       (security_ctx.user.c_str() ?
                        security_ctx.user.c_str() : ""));
@@ -407,7 +408,6 @@ Session::~Session()
   plugin_sessionvar_cleanup(this);
 
   free_root(&warn_root,MYF(0));
-  free_root(&transaction.mem_root,MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
   dbug_sentry= Session_SENTRY_GONE;
 
@@ -559,13 +559,9 @@ void Session::prepareForQueries()
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
-  ha_enable_transaction(this,true);
 
   reset_root_defaults(mem_root, variables.query_alloc_block_size,
                       variables.query_prealloc_size);
-  reset_root_defaults(&transaction.mem_root,
-                      variables.trans_alloc_block_size,
-                      variables.trans_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
 }
@@ -778,6 +774,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   bool result= true;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -793,7 +790,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
        * (Which of course should never happen...)
        */
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (ha_commit(this))
+      if (transaction_services.ha_commit_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
@@ -811,7 +808,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     case ROLLBACK_AND_CHAIN:
     {
       server_status&= ~SERVER_STATUS_IN_TRANS;
-      if (ha_rollback(this))
+      if (transaction_services.ha_rollback_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
@@ -835,6 +832,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
 bool Session::endActiveTransaction()
 {
   bool result= true;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (transaction.xid_state.xa_state != XA_NOTR)
   {
@@ -844,7 +842,7 @@ bool Session::endActiveTransaction()
   if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
     server_status&= ~SERVER_STATUS_IN_TRANS;
-    if (ha_commit(this))
+    if (transaction_services.ha_commit_trans(this, true))
       result= false;
   }
   options&= ~(OPTION_BEGIN);
@@ -933,81 +931,6 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
   return lex_str;
 }
 
-/* routings to adding tables to list of changed in transaction tables */
-inline static void list_include(CHANGED_TableList** prev,
-				CHANGED_TableList* curr,
-				CHANGED_TableList* new_table)
-{
-  if (new_table)
-  {
-    *prev = new_table;
-    (*prev)->next = curr;
-  }
-}
-
-/* add table to list of changed in transaction tables */
-
-void Session::add_changed_table(Table *table)
-{
-  assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
-	      table->cursor->has_transactions());
-  add_changed_table(table->s->table_cache_key.str,
-                    (long) table->s->table_cache_key.length);
-}
-
-
-void Session::add_changed_table(const char *key, long key_length)
-{
-  CHANGED_TableList **prev_changed = &transaction.changed_tables;
-  CHANGED_TableList *curr = transaction.changed_tables;
-
-  for (; curr; prev_changed = &(curr->next), curr = curr->next)
-  {
-    int cmp =  (long)curr->key_length - (long)key_length;
-    if (cmp < 0)
-    {
-      list_include(prev_changed, curr, changed_table_dup(key, key_length));
-      return;
-    }
-    else if (cmp == 0)
-    {
-      cmp = memcmp(curr->key, key, curr->key_length);
-      if (cmp < 0)
-      {
-        list_include(prev_changed, curr, changed_table_dup(key, key_length));
-        return;
-      }
-      else if (cmp == 0)
-      {
-        return;
-      }
-    }
-  }
-  *prev_changed = changed_table_dup(key, key_length);
-}
-
-
-CHANGED_TableList* Session::changed_table_dup(const char *key, long key_length)
-{
-  CHANGED_TableList* new_table =
-    (CHANGED_TableList*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TableList))+
-				      key_length + 1);
-  if (!new_table)
-  {
-    my_error(EE_OUTOFMEMORY, MYF(ME_BELL),
-             ALIGN_SIZE(sizeof(TableList)) + key_length + 1);
-    killed= KILL_CONNECTION;
-    return 0;
-  }
-
-  new_table->key= ((char*)new_table)+ ALIGN_SIZE(sizeof(CHANGED_TableList));
-  new_table->next = 0;
-  new_table->key_length = key_length;
-  ::memcpy(new_table->key, key, key_length);
-  return new_table;
-}
-
-
 int Session::send_explain_fields(select_result *result)
 {
   List<Item> field_list;
@@ -1061,8 +984,8 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
   if (file > 0)
   {
     (void) end_io_cache(cache);
-    (void) my_close(file, MYF(0));
-    (void) my_delete(path, MYF(0));		// Delete file on error
+    (void) internal::my_close(file, MYF(0));
+    (void) internal::my_delete(path, MYF(0));		// Delete file on error
     file= -1;
   }
 }
@@ -1071,7 +994,7 @@ void select_to_file::send_error(uint32_t errcode,const char *err)
 bool select_to_file::send_eof()
 {
   int error= test(end_io_cache(cache));
-  if (my_close(file, MYF(MY_WME)))
+  if (internal::my_close(file, MYF(MY_WME)))
     error= 1;
   if (!error)
   {
@@ -1093,7 +1016,7 @@ void select_to_file::cleanup()
   if (file >= 0)
   {
     (void) end_io_cache(cache);
-    (void) my_close(file, MYF(0));
+    (void) internal::my_close(file, MYF(0));
     file= -1;
   }
   path[0]= '\0';
@@ -1103,7 +1026,7 @@ void select_to_file::cleanup()
 select_to_file::select_to_file(file_exchange *ex)
   : exchange(ex),
     file(-1),
-    cache(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
+    cache(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     row_count(0L)
 {
   path[0]=0;
@@ -1140,7 +1063,7 @@ select_export::~select_export()
 */
 
 
-static int create_file(Session *session, char *path, file_exchange *exchange, IO_CACHE *cache)
+static int create_file(Session *session, char *path, file_exchange *exchange, internal::IO_CACHE *cache)
 {
   int file;
   uint32_t option= MY_UNPACK_FILENAME | MY_RELATIVE_PATH;
@@ -1149,15 +1072,15 @@ static int create_file(Session *session, char *path, file_exchange *exchange, IO
   option|= MY_REPLACE_DIR;			// Force use of db directory
 #endif
 
-  if (!dirname_length(exchange->file_name))
+  if (!internal::dirname_length(exchange->file_name))
   {
     strcpy(path, drizzle_real_data_home);
     if (! session->db.empty())
       strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
-    (void) fn_format(path, exchange->file_name, path, "", option);
+    (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
+    (void) internal::fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
 
   if (opt_secure_file_priv &&
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
@@ -1173,13 +1096,13 @@ static int create_file(Session *session, char *path, file_exchange *exchange, IO
     return -1;
   }
   /* Create the file world readable */
-  if ((file= my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
+  if ((file= internal::my_create(path, 0666, O_WRONLY|O_EXCL, MYF(MY_WME))) < 0)
     return file;
   (void) fchmod(file, 0666);			// Because of umask()
-  if (init_io_cache(cache, file, 0L, WRITE_CACHE, 0L, 1, MYF(MY_WME)))
+  if (init_io_cache(cache, file, 0L, internal::WRITE_CACHE, 0L, 1, MYF(MY_WME)))
   {
-    my_close(file, MYF(0));
-    my_delete(path, MYF(0));  // Delete file on error, it was just created
+    internal::my_close(file, MYF(0));
+    internal::my_delete(path, MYF(0));  // Delete file on error, it was just created
     return -1;
   }
   return file;
@@ -2074,8 +1997,9 @@ void Session::close_thread_tables()
    */
   if (backups_available == false)
   {
+    TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
-    ha_autocommit_or_rollback(this, is_error());
+    transaction_services.ha_autocommit_or_rollback(this, is_error());
     main_da.can_overwrite_status= false;
     transaction.stmt.reset();
   }
@@ -2189,3 +2113,5 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
   }
   return error;
 }
+
+} /* namespace drizzled */

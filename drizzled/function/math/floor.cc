@@ -21,6 +21,8 @@
 #include <math.h>
 #include <drizzled/function/math/floor.h>
 
+namespace drizzled
+{
 
 int64_t Item_func_floor::int_op()
 {
@@ -67,4 +69,4 @@ my_decimal *Item_func_floor::decimal_op(my_decimal *decimal_value)
   return 0;
 }
 
-
+} /* namespace drizzled */

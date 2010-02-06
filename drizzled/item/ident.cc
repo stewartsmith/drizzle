@@ -23,8 +23,10 @@
 #include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
 
@@ -191,3 +193,4 @@ void Item_ident_for_show::make_field(SendField *tmp_field)
   tmp_field->decimals= field->decimals();
 }
 
+} /* namespace drizzled */

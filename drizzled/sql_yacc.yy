@@ -136,18 +136,12 @@
 #include "drizzled/internal/m_string.h"
 
 
-using namespace drizzled;
-
-class Table_ident;
-class Item;
-class Item_num;
-
 int yylex(void *yylval, void *yysession);
 
 #define yyoverflow(A,B,C,D,E,F)               \
   {                                           \
     ulong val= *(F);                          \
-    if (my_yyoverflow((B), (D), &val))        \
+    if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
       yyerror((char*) (A));                   \
       return 2;                               \
@@ -174,6 +168,14 @@ int yylex(void *yylval, void *yysession);
 
 
 #define YYDEBUG 0
+
+namespace drizzled
+{
+
+class Table_ident;
+class Item;
+class Item_num;
+
 
 static bool check_reserved_words(LEX_STRING *name)
 {
@@ -395,50 +397,55 @@ static bool setup_select_in_parentheses(LEX *lex)
   return false;
 }
 
+} /* namespace drizzled; */
+
+using namespace drizzled;
 %}
 %union {
   int  num;
   ulong ulong_num;
   uint64_t ulonglong_number;
   int64_t longlong_number;
-  LEX_STRING lex_str;
-  LEX_STRING *lex_str_ptr;
-  LEX_SYMBOL symbol;
-  Table_ident *table;
+  drizzled::LEX_STRING lex_str;
+  drizzled::LEX_STRING *lex_str_ptr;
+  drizzled::LEX_SYMBOL symbol;
+  drizzled::Table_ident *table;
   char *simple_string;
-  Item *item;
-  Item_num *item_num;
-  List<Item> *item_list;
-  List<String> *string_list;
-  String *string;
-  Key_part_spec *key_part;
-  const ::drizzled::plugin::Function *udf;
-  TableList *table_list;
-  struct sys_var_with_base variable;
-  enum sql_var_t var_type;
-  Key::Keytype key_type;
-  enum ha_key_alg key_alg;
-  enum row_type row_type;
-  enum column_format_type column_format_type;
-  enum ha_rkey_function ha_rkey_mode;
-  enum enum_tx_isolation tx_isolation;
-  enum Cast_target cast_type;
-  const CHARSET_INFO *charset;
-  thr_lock_type lock_type;
-  interval_type interval, interval_time_st;
-  enum enum_drizzle_timestamp_type date_time_type;
-  Select_Lex *select_lex;
-  chooser_compare_func_creator boolfunc2creator;
-  struct st_lex *lex;
-  struct p_elem_val *p_elem_value;
-  enum index_hint_type index_hint;
-  enum enum_filetype filetype;
-  enum ha_build_method build_method;
-  enum Foreign_key::fk_option m_fk_option;
+  drizzled::Item *item;
+  drizzled::Item_num *item_num;
+  drizzled::List<drizzled::Item> *item_list;
+  drizzled::List<drizzled::String> *string_list;
+  drizzled::String *string;
+  drizzled::Key_part_spec *key_part;
+  const drizzled::plugin::Function *udf;
+  drizzled::TableList *table_list;
+  struct drizzled::sys_var_with_base variable;
+  enum drizzled::sql_var_t var_type;
+  drizzled::Key::Keytype key_type;
+  enum drizzled::ha_key_alg key_alg;
+  enum drizzled::row_type row_type;
+  enum drizzled::column_format_type column_format_type;
+  enum drizzled::ha_rkey_function ha_rkey_mode;
+  enum drizzled::enum_tx_isolation tx_isolation;
+  enum drizzled::Cast_target cast_type;
+  const drizzled::CHARSET_INFO *charset;
+  drizzled::thr_lock_type lock_type;
+  drizzled::interval_type interval, interval_time_st;
+  enum drizzled::enum_drizzle_timestamp_type date_time_type;
+  drizzled::Select_Lex *select_lex;
+  drizzled::chooser_compare_func_creator boolfunc2creator;
+  struct drizzled::st_lex *lex;
+  enum drizzled::index_hint_type index_hint;
+  enum drizzled::enum_filetype filetype;
+  enum drizzled::ha_build_method build_method;
+  enum drizzled::Foreign_key::fk_option m_fk_option;
 }
 
 %{
+namespace drizzled
+{
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+}
 %}
 
 %pure_parser                                    /* We have threads */
@@ -4131,7 +4138,7 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (LEX_STRING*) memory::sql_memdup(&$2,sizeof(LEX_STRING)); }
+          { $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING)); }
         ;
 
 opt_all:
@@ -4367,28 +4374,28 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 real_ulong_num:
-          NUM           { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | dec_num_error { }
 	;
 
 ulonglong_num:
-          NUM           { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 dec_num_error:
@@ -5439,12 +5446,12 @@ NUM_literal:
           NUM
           {
             int error;
-            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) internal::my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | LONG_NUM
           {
             int error;
-            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) internal::my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | ULONGLONG_NUM
           { $$ = new Item_uint($1.str, $1.length); }

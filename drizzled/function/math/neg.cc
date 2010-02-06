@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/neg.h>
+
+namespace drizzled
+{
 
 double Item_func_neg::real_op()
 {
@@ -85,3 +88,5 @@ void Item_func_neg::fix_length_and_dec()
   unsigned_flag= 0;
   return;
 }
+
+} /* namespace drizzled */

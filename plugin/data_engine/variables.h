@@ -21,6 +21,8 @@
 #ifndef PLUGIN_DATA_ENGINE_VARIABLES_H
 #define PLUGIN_DATA_ENGINE_VARIABLES_H
 
+#include "plugin/data_engine/state_tool.h"
+
 class VariablesTool : public StateTool
 {
 public:
@@ -33,7 +35,7 @@ public:
     return false;
   }
 
-  drizzle_show_var *getVariables()
+  drizzled::drizzle_show_var *getVariables()
   {
     return enumerate_sys_vars(current_session, false); // Final value unused
   }

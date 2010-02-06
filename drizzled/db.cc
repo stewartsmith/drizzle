@@ -46,11 +46,13 @@
 
 #include "drizzled/internal/my_sys.h"
 
-using namespace std;
-using namespace drizzled;
-
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
+
+using namespace std;
+
+namespace drizzled
+{
 
 const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD", ".opt"};
 static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
@@ -210,7 +212,7 @@ int get_database_metadata(const std::string &dbname, message::Schema &schema_mes
 
 */
 
-bool mysql_create_db(Session *session, const char *db, drizzled::message::Schema *schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const char *db, message::Schema *schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   long result= 1;
@@ -730,7 +732,7 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     else
     {
       sprintf(filePath, "%s/%s", org_path, filename.c_str());
-      if (my_delete_with_symlink(filePath,MYF(MY_WME)))
+      if (internal::my_delete_with_symlink(filePath,MYF(MY_WME)))
       {
 	return -1;
       }
@@ -977,3 +979,5 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
     session->set_db(new_db_name->str, new_db_name->length);
   }
 }
+
+} /* namespace drizzled */

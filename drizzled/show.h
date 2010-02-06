@@ -34,6 +34,9 @@
 #include "drizzled/sql_parse.h"
 #include "drizzled/plugin.h"
 
+namespace drizzled
+{
+
 /* Forward declarations */
 class String;
 class JOIN;
@@ -41,13 +44,12 @@ class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
-namespace drizzled
-{
+
 namespace plugin
 {
   class InfoSchemaTable;
 }
-}
+
 
 class Table;
 typedef class Item COND;
@@ -67,10 +69,10 @@ typedef struct st_lookup_field_values
 
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
                                   LOOKUP_FIELD_VALUES *lookup_field_vals,
-                                  drizzled::plugin::InfoSchemaTable *schema_table);
+                                  plugin::InfoSchemaTable *schema_table);
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
                              LOOKUP_FIELD_VALUES *lookup_field_values,
-                             drizzled::plugin::InfoSchemaTable *schema_table);
+                             plugin::InfoSchemaTable *schema_table);
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 SHOW_VAR *getFrontOfStatusVars();
@@ -104,5 +106,7 @@ void remove_status_vars(SHOW_VAR *list);
 void init_status_vars();
 void free_status_vars();
 void reset_status_vars();
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SHOW_H */

@@ -23,7 +23,9 @@
 #include "drizzled/table_function_container.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 plugin::TableFunction *TableFunctionContainer::getFunction(const std::string &path)
 {
@@ -66,3 +68,5 @@ void TableFunctionContainer::addFunction(plugin::TableFunction *tool)
   ret= table_map.insert(std::make_pair(tool->getPath(), tool));
   assert(ret.second == true);
 }
+
+} /* namespace drizzled */

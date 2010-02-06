@@ -27,7 +27,8 @@
 #include "drizzled/item/string.h"
 #include "drizzled/item/field.h"
 
-uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
+namespace drizzled
+{
 
 /* Classes to support the SET command */
 
@@ -45,7 +46,6 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib;
-extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -79,12 +79,13 @@ extern uint32_t ha_open_options;
 extern char *drizzled_bind_host;
 extern uint32_t dropping_tables;
 extern bool opt_endinfo;
-extern bool locked_in_memory;
 extern uint32_t volatile thread_running;
 extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
+
+uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
 
 struct sys_var_chain
 {
@@ -181,7 +182,6 @@ public:
   }
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
-  bool check_set(Session *session, set_var *var, TYPELIB *enum_names);
   virtual bool update(Session *session, set_var *var)=0;
   virtual void set_default(Session *, sql_var_t)
   {}
@@ -426,50 +426,6 @@ public:
 };
 
 
-class sys_var_enum :public sys_var
-{
-  uint32_t *value;
-  TYPELIB *enum_names;
-public:
-  sys_var_enum(sys_var_chain *chain, const char *name_arg, uint32_t *value_arg,
-	       TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg,func), value(value_arg), enum_names(typelib)
-  { chain_sys_var(chain); }
-  bool check(Session *session, set_var *var)
-  {
-    return check_enum(session, var, enum_names);
-  }
-  bool update(Session *session, set_var *var);
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
-  bool check_update_type(Item_result)
-  { return 0; }
-};
-
-
-class sys_var_enum_const :public sys_var
-{
-  uint32_t SV::*offset;
-  TYPELIB *enum_names;
-public:
-  sys_var_enum_const(sys_var_chain *chain, const char *name_arg, uint32_t SV::*offset_arg,
-      TYPELIB *typelib, sys_after_update_func func)
-    :sys_var(name_arg,func), offset(offset_arg), enum_names(typelib)
-  { chain_sys_var(chain); }
-  bool check(Session *, set_var *)
-  { return 1; }
-  bool update(Session *, set_var *)
-  { return 1; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result)
-  { return 1; }
-  bool is_readonly() const { return 1; }
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
-};
-
-
 class sys_var_session :public sys_var
 {
 public:
@@ -667,33 +623,13 @@ public:
 };
 
 
-
-class sys_var_session_optimizer_switch :public sys_var_session_enum
-{
-public:
-  sys_var_session_optimizer_switch(sys_var_chain *chain, const char *name_arg,
-                                   uint32_t SV::*offset_arg)
-    :sys_var_session_enum(chain, name_arg, offset_arg, &optimizer_switch_typelib)
-  {}
-  bool check(Session *session, set_var *var)
-  {
-    return check_set(session, var, enum_names);
-  }
-  void set_default(Session *session, sql_var_t type);
-  unsigned char *value_ptr(Session *session, sql_var_t type,
-                           const LEX_STRING *base);
-  static bool symbolic_mode_representation(Session *session, uint32_t sql_mode,
-                                           LEX_STRING *rep);
-};
-
-
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  drizzled::plugin::StorageEngine *SV::*offset;
+  plugin::StorageEngine *SV::*offset;
 public:
   sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
-                                 drizzled::plugin::StorageEngine *SV::*offset_arg)
+                                 plugin::StorageEngine *SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -830,63 +766,6 @@ public:
 };
 
 
-class sys_var_have_option: public sys_var
-{
-protected:
-  virtual SHOW_COMP_OPTION get_option() = 0;
-public:
-  sys_var_have_option(sys_var_chain *chain, const char *variable_name):
-    sys_var(variable_name)
-  { chain_sys_var(chain); }
-  unsigned char *value_ptr(Session *, sql_var_t,
-                           const LEX_STRING *)
-  {
-    return (unsigned char*) show_comp_option_name[get_option()];
-  }
-  bool update(Session *, set_var *) { return 1; }
-  bool check_default(sql_var_t)
-  { return 1; }
-  bool check_type(sql_var_t type) { return type != OPT_GLOBAL; }
-  bool check_update_type(Item_result)
-  { return 1; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool is_readonly() const { return 1; }
-};
-
-
-class sys_var_have_variable: public sys_var_have_option
-{
-  SHOW_COMP_OPTION *have_variable;
-
-public:
-  sys_var_have_variable(sys_var_chain *chain, const char *variable_name,
-                        SHOW_COMP_OPTION *have_variable_arg):
-    sys_var_have_option(chain, variable_name),
-    have_variable(have_variable_arg)
-  { }
-  SHOW_COMP_OPTION get_option() { return *have_variable; }
-};
-
-
-class sys_var_have_plugin: public sys_var_have_option
-{
-  const char *plugin_name_str;
-  const uint32_t plugin_name_len;
-  const int plugin_type;
-
-public:
-  sys_var_have_plugin(sys_var_chain *chain, const char *variable_name,
-                      const char *plugin_name_str_arg, uint32_t plugin_name_len_arg,
-                      int plugin_type_arg):
-    sys_var_have_option(chain, variable_name),
-    plugin_name_str(plugin_name_str_arg), plugin_name_len(plugin_name_len_arg),
-    plugin_type(plugin_type_arg)
-  { }
-  /* the following method is declared in sql_plugin.cc */
-  SHOW_COMP_OPTION get_option();
-};
-
-
 class sys_var_session_time_zone :public sys_var_session
 {
 public:
@@ -955,7 +834,7 @@ public:
   Classes for parsing of the SET command
 ****************************************************************************/
 
-class set_var_base :public drizzled::memory::SqlAlloc
+class set_var_base :public memory::SqlAlloc
 {
 public:
   set_var_base() {}
@@ -978,7 +857,7 @@ public:
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     size_t size_t_value;
-    drizzled::plugin::StorageEngine *storage_engine;
+    plugin::StorageEngine *storage_engine;
     Time_zone *time_zone;
     MY_LOCALE *locale_value;
   } save_result;
@@ -1049,5 +928,7 @@ extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SET_VAR_H */

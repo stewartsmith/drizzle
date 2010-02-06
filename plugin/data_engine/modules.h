@@ -33,13 +33,13 @@ public:
     std::vector<drizzled::plugin::Module *>::iterator it;
 
   public:
-    Generator(Field **arg);
+    Generator(drizzled::Field **arg);
 
     bool populate();
   };
 
   
-  Generator *generator(Field **arg)
+  Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }

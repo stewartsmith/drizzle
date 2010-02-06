@@ -21,6 +21,9 @@
 #include <drizzled/function/math/rand.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 static uint32_t sql_rnd()
 {
   return (uint32_t) (rand() * 0xffffffff); /* make all bits random */
@@ -85,3 +88,5 @@ double Item_func_rand::val_real()
   seed2= (seed1 + seed2 + 33) % max_value;
   return (((double) seed1) / max_value_dbl);
 }
+
+} /* namespace drizzled */

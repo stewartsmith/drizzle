@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_sign :public Item_int_func
 {
 public:
@@ -30,5 +33,7 @@ public:
   const char *func_name() const { return "sign"; }
   int64_t val_int();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_SIGN_H */
