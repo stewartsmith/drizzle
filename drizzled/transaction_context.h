@@ -32,10 +32,10 @@ public:
   TransactionContext() :
     no_2pc(false),
     resource_contexts(),
-    modified_non_trans_table(false)
+    modified_non_trans_data(false)
   {}
 
-  void reset() { no_2pc= false; modified_non_trans_table= false; resource_contexts.clear();}
+  void reset() { no_2pc= false; modified_non_trans_data= false; resource_contexts.clear();}
 
   typedef std::vector<ResourceContext *> ResourceContexts;
 
@@ -54,41 +54,31 @@ public:
     resource_contexts.push_back(resource);
   }
 
+  /**
+   * Marks that this transaction has modified state
+   * of some non-transactional data.
+   */
+  void markModifiedNonTransData()
+  {
+    modified_non_trans_data= true;
+  }
+
+  /**
+   * Returns true if the transaction has modified
+   * state of some non-transactional data.
+   */
+  bool hasModifiedNonTransData() const
+  {
+    return modified_non_trans_data;
+  }
+
   /* true is not all entries in the resource contexts support 2pc */
   bool no_2pc;
 private:
-  /* storage engines that registered in this transaction */
+  /** Resource that registered in this transaction */
   ResourceContexts resource_contexts;
-public:
-  /*
-    The purpose of this flag is to keep track of non-transactional
-    tables that were modified in scope of:
-    - transaction, when the variable is a member of
-    Session::transaction.all
-    - top-level statement or sub-statement, when the variable is a
-    member of Session::transaction.stmt
-    This member has the following life cycle:
-    * stmt.modified_non_trans_table is used to keep track of
-    modified non-transactional tables of top-level statements. At
-    the end of the previous statement and at the beginning of the session,
-    it is reset to false.  If such functions
-    as mysql_insert, mysql_update, mysql_delete etc modify a
-    non-transactional table, they set this flag to true.  At the
-    end of the statement, the value of stmt.modified_non_trans_table
-    is merged with all.modified_non_trans_table and gets reset.
-    * all.modified_non_trans_table is reset at the end of transaction
-
-    * Since we do not have a dedicated context for execution of a
-    sub-statement, to keep track of non-transactional changes in a
-    sub-statement, we re-use stmt.modified_non_trans_table.
-    At entrance into a sub-statement, a copy of the value of
-    stmt.modified_non_trans_table (containing the changes of the
-    outer statement) is saved on stack. Then
-    stmt.modified_non_trans_table is reset to false and the
-    substatement is executed. Then the new value is merged with the
-    saved value.
-  */
-  bool modified_non_trans_table;
+  /** Whether this transaction has changed non-transaction data state */
+  bool modified_non_trans_data;
 };
 
 } /* namespace drizzled */

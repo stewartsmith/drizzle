@@ -646,7 +646,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
     message in the error log, so we don't send it.
   */
   if (is_real_trans &&
-      session->transaction.all.modified_non_trans_table &&
+      session->transaction.all.hasModifiedNonTransData() &&
       session->killed != Session::KILL_CONNECTION)
   {
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,

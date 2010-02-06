@@ -413,12 +413,12 @@ bool mysql_insert(Session *session,TableList *table_list,
     transactional_table= table->cursor->has_transactions();
 
     changed= (info.copied || info.deleted || info.updated);
-    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table)
+    if ((changed && error <= 0) || session->transaction.stmt.hasModifiedNonTransData())
     {
-      if (session->transaction.stmt.modified_non_trans_table)
-	session->transaction.all.modified_non_trans_table= true;
+      if (session->transaction.stmt.hasModifiedNonTransData())
+	session->transaction.all.markModifiedNonTransData();
     }
-    assert(transactional_table || !changed || session->transaction.stmt.modified_non_trans_table);
+    assert(transactional_table || !changed || session->transaction.stmt.hasModifiedNonTransData());
 
   }
   session->set_proc_info("end");
@@ -696,7 +696,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
     then both on update triggers will work instead. Similarly both on
     delete triggers will be invoked if we will delete conflicting records.
 
-    Sets session->transaction.stmt.modified_non_trans_table to true if table which is updated didn't have
+    Sets session->transaction.stmt.modified_non_trans_data to true if table which is updated didn't have
     transactions.
 
   RETURN VALUE
@@ -895,7 +895,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             goto err;
           info->deleted++;
           if (!table->cursor->has_transactions())
-            session->transaction.stmt.modified_non_trans_table= true;
+            session->transaction.stmt.markModifiedNonTransData();
           /* Let us attempt do write_row() once more */
         }
       }
@@ -926,7 +926,7 @@ gok_or_after_err:
   if (key)
     free(key);
   if (!table->cursor->has_transactions())
-    session->transaction.stmt.modified_non_trans_table= true;
+    session->transaction.stmt.markModifiedNonTransData();
   return(0);
 
 err:
@@ -1326,11 +1326,11 @@ bool select_insert::send_eof()
       We must invalidate the table in the query cache before binlog writing
       and ha_autocommit_or_rollback.
     */
-    if (session->transaction.stmt.modified_non_trans_table)
-      session->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.hasModifiedNonTransData())
+      session->transaction.all.markModifiedNonTransData();
   }
   assert(trans_table || !changed ||
-              session->transaction.stmt.modified_non_trans_table);
+              session->transaction.stmt.hasModifiedNonTransData());
 
   table->cursor->ha_release_auto_increment();
 
@@ -1392,7 +1392,7 @@ void select_insert::abort() {
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->cursor->has_transactions();
     assert(transactional_table || !changed ||
-		session->transaction.stmt.modified_non_trans_table);
+		session->transaction.stmt.hasModifiedNonTransData());
     table->cursor->ha_release_auto_increment();
   }
 
@@ -1701,8 +1701,6 @@ void select_create::store_values(List<Item> &values)
 
 void select_create::send_error(uint32_t errcode,const char *err)
 {
-
-
   /*
     This will execute any rollbacks that are necessary before writing
     the transcation cache.
@@ -1754,8 +1752,6 @@ bool select_create::send_eof()
 
 void select_create::abort()
 {
-
-
   /*
     In select_insert::abort() we roll back the statement, including
     truncating the transaction cache of the binary log. To do this, we
@@ -1772,8 +1768,6 @@ void select_create::abort()
     log state.
   */
   select_insert::abort();
-  session->transaction.stmt.modified_non_trans_table= false;
-
 
   if (m_plock)
   {

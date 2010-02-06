@@ -257,7 +257,6 @@ Session::Session(plugin::Client *client_arg)
   else
     options &= ~OPTION_BIG_SELECTS;
 
-  transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
   open_options=ha_open_options;
   update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
@@ -793,7 +792,6 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       if (transaction_services.ha_commit_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
-      transaction.all.modified_non_trans_table= false;
       break;
     case COMMIT_RELEASE:
       do_release= 1; /* fall through */
@@ -811,7 +809,6 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       if (transaction_services.ha_rollback_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
-      transaction.all.modified_non_trans_table= false;
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
         result= startTransaction();
       break;
@@ -846,7 +843,6 @@ bool Session::endActiveTransaction()
       result= false;
   }
   options&= ~(OPTION_BEGIN);
-  transaction.all.modified_non_trans_table= false;
   return result;
 }
 
@@ -1697,7 +1693,7 @@ char **session_query(Session *session)
 
 int session_non_transactional_update(const Session *session)
 {
-  return(session->transaction.all.modified_non_trans_table);
+  return(session->transaction.all.hasModifiedNonTransData());
 }
 
 void session_mark_transaction_to_rollback(Session *session, bool all)
@@ -1775,15 +1771,6 @@ void Session::reset_for_next_command()
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
-  /*
-    If in autocommit mode and not in a transaction, reset
-    OPTION_STATUS_NO_TRANS_UPDATE to not get warnings
-    in ha_rollback_trans() about some tables couldn't be rolled back.
-  */
-  if (!(options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
-  {
-    transaction.all.modified_non_trans_table= false;
-  }
 
   clear_error();
   main_da.reset_diagnostics_area();

@@ -1378,7 +1378,6 @@ static bool set_option_autocommit(Session *session, set_var *var)
     {
       /* We changed to auto_commit mode */
       session->options&= ~(uint64_t) (OPTION_BEGIN);
-      session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
       TransactionServices &transaction_services= TransactionServices::singleton();
       if (transaction_services.ha_commit_trans(session, true))
@@ -1386,7 +1385,6 @@ static bool set_option_autocommit(Session *session, set_var *var)
     }
     else
     {
-      session->transaction.all.modified_non_trans_table= false;
       session->server_status&= ~SERVER_STATUS_AUTOCOMMIT;
     }
   }

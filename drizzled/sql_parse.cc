@@ -500,7 +500,7 @@ mysql_execute_command(Session *session)
 
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
-  assert(session->transaction.stmt.modified_non_trans_table == false);
+  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
