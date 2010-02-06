@@ -563,7 +563,7 @@ void plugin_shutdown(plugin::Registry &registry)
 #define DRIZZLE_SYSVAR_NAME(name) name
 #define PLUGIN_VAR_TYPEMASK 0x007f
 
-#define EXTRA_OPTIONS 3 /* options for: 'foo', 'plugin-foo' and NULL */
+static const uint32_t EXTRA_OPTIONS= 1; /* handle the NULL option */
 
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_bool_t, bool);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
@@ -790,43 +790,42 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
   return(var);
 }
 
+static const string make_bookmark_name(const string &plugin, const char *name, int flags)
+{
+  /* Embed the flags into the first char of the string */
+  string varname(1, static_cast<char>(flags & PLUGIN_VAR_TYPEMASK));
+  varname.append(plugin);
+  varname.push_back('_');
+  varname.append(name);
+
+  for (string::iterator p= varname.begin() + 1; p != varname.end(); ++p)
+  {
+    if (*p == '-')
+    {
+      *p= '_';
+    }
+  }
+  return varname;
+}
 
 /*
   called by register_var, construct_options and test_plugin_options.
   Returns the 'bookmark' for the named variable.
   LOCK_system_variables_hash should be at least read locked
 */
-static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
+static st_bookmark *find_bookmark(const string &plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
-  uint32_t namelen, length, pluginlen= 0;
-  char *varname, *p;
 
   if (!(flags & PLUGIN_VAR_SessionLOCAL))
     return NULL;
 
-  namelen= strlen(name);
-  if (plugin)
-    pluginlen= strlen(plugin) + 1;
-  length= namelen + pluginlen + 2;
-  varname= (char*) malloc(length);
+  const string varname(make_bookmark_name(plugin, name, flags));
 
-  if (plugin)
-  {
-    sprintf(varname+1,"%s_%s",plugin,name);
-    for (p= varname + 1; *p; p++)
-      if (*p == '-')
-        *p= '_';
-  }
-  else
-    memcpy(varname + 1, name, namelen + 1);
-
-  varname[0]= flags & PLUGIN_VAR_TYPEMASK;
 
   result= (st_bookmark*) hash_search(&bookmark_hash,
-                                     (const unsigned char*) varname, length - 1);
+                                     (const unsigned char*) varname.c_str(), varname.size() - 1);
 
-  free(varname);
   return result;
 }
 
@@ -836,15 +835,14 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
   returns null for non session-local variables.
   Requires that a write lock is obtained on LOCK_system_variables_hash
 */
-static st_bookmark *register_var(const char *plugin, const char *name,
+static st_bookmark *register_var(const string &plugin, const char *name,
                                  int flags)
 {
-  uint32_t length= strlen(plugin) + strlen(name) + 3, size= 0, offset, new_size;
-  st_bookmark *result;
-  char *varname, *p;
-
   if (!(flags & PLUGIN_VAR_SessionLOCAL))
     return NULL;
+
+  uint32_t size= 0, offset, new_size;
+  st_bookmark *result;
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
@@ -867,19 +865,16 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     return NULL;
   };
 
-  varname= ((char*) malloc(length));
-  sprintf(varname+1, "%s_%s", plugin, name);
-  for (p= varname + 1; *p; p++)
-    if (*p == '-')
-      *p= '_';
 
-  if (!(result= find_bookmark(NULL, varname + 1, flags)))
+  if (!(result= find_bookmark(plugin, name, flags)))
   {
-    result= (st_bookmark*) alloc_root(&plugin_mem_root,
-                                      sizeof(struct st_bookmark) + length-1);
-    varname[0]= flags & PLUGIN_VAR_TYPEMASK;
-    memcpy(result->key, varname, length);
-    result->name_len= length - 2;
+    const string varname(make_bookmark_name(plugin, name, flags));
+
+    result= static_cast<st_bookmark*>(alloc_root(&plugin_mem_root,
+                                      sizeof(struct st_bookmark) + varname.size() + 1));
+    memset(result->key, 0, varname.size()+1);
+    memcpy(result->key, varname.c_str(), varname.size());
+    result->name_len= varname.size() - 2;
     result->offset= -1;
 
     assert(size && !(size & (size-1))); /* must be power of 2 */
@@ -935,7 +930,6 @@ static st_bookmark *register_var(const char *plugin, const char *name,
       assert(0);
     }
   }
-  free(varname);
   return result;
 }
 
@@ -1429,56 +1423,25 @@ static bool get_one_plugin_option(int, const struct my_option *, char *)
 static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
                              my_option *options)
 {
-  const char *plugin_name= tmp->getManifest().name;
-  uint32_t namelen= strlen(plugin_name), optnamelen;
-  uint32_t buffer_length= namelen * 4 +  75;
-  char *name= (char*) alloc_root(mem_root, buffer_length);
-  bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
+  
+  int localoptionid= 256;
+  const string plugin_name(tmp->getManifest().name);
+
+  size_t namelen= plugin_name.size(), optnamelen;
+
   char *optname, *p;
   int index= 0, offset= 0;
   drizzle_sys_var *opt, **plugin_option;
   st_bookmark *v;
 
-  /* support --skip-plugin-foo syntax */
-  memcpy(name, plugin_name, namelen + 1);
-  my_casedn_str(&my_charset_utf8_general_ci, name);
-  sprintf(name+namelen+1, "plugin-%s", name);
-  /* Now we have namelen + 1 + 7 + namelen + 1 == namelen * 2 + 9. */
+  string name(plugin_name);
+  transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-  for (p= name + namelen*2 + 8; p > name; p--)
-    if (*p == '_')
-      *p= '-';
-
-  sprintf(name+namelen*2+10,
-          "Enable %s plugin. Disable with --skip-%s (will save memory).",
-          plugin_name, name);
-  /*
-    Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
-    20 + namelen + 20 + 1 == namelen * 4 + 67.
-  */
-
-  options[0].comment= name + namelen*2 + 10;
-
-  /*
-    This whole code around variables and command line parameters is turd
-    soup.
-
-    e.g. the below assignemnt of having the plugin alaways enabled is never
-    changed so that './drizzled --skip-innodb --help' shows innodb as enabled.
-
-    But this is just as broken as it was in MySQL and properly fixing everything
-    is a decent amount of "future work"
-  */
-  *enabled_value= true; /* by default, plugin enabled */
-
-  options[1].name= (options[0].name= name) + namelen + 1;
-  options[0].id= options[1].id= 256; /* must be >255. dup id ok */
-  options[0].var_type= options[1].var_type= GET_BOOL;
-  options[0].arg_type= options[1].arg_type= NO_ARG;
-  options[0].def_value= options[1].def_value= true;
-  options[0].value= options[0].u_max_value=
-  options[1].value= options[1].u_max_value= (char**) enabled_value;
-  options+= 2;
+  for (string::iterator iter= name.begin(); iter != name.end(); ++iter)
+  {
+    if (*iter == '_')
+      *iter= '-';
+  }
 
   /*
     Two passes as the 2nd pass will take pointer addresses for use
@@ -1511,7 +1474,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
       break;
     default:
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown variable type code 0x%x in plugin '%s'."),
-                      opt->flags, plugin_name);
+                      opt->flags, plugin_name.c_str());
       return(-1);
     };
   }
@@ -1556,13 +1519,13 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
           errmsg_printf(ERRMSG_LVL_WARN, _("Server variable %s of plugin %s was forced "
                             "to be read-only: string variable without "
                             "update_func and PLUGIN_VAR_MEMALLOC flag"),
-                            opt->name, plugin_name);
+                            opt->name, plugin_name.c_str());
         }
       }
       break;
     default:
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown variable type code 0x%x in plugin '%s'."),
-                      opt->flags, plugin_name);
+                      opt->flags, plugin_name.c_str());
       return(-1);
     }
 
@@ -1573,7 +1536,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     if (!opt->name)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Missing variable name in plugin '%s'."),
-                      plugin_name);
+                    plugin_name.c_str());
       return(-1);
     }
 
@@ -1581,7 +1544,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     {
       optnamelen= strlen(opt->name);
       optname= (char*) alloc_root(mem_root, namelen + optnamelen + 2);
-      sprintf(optname, "%s-%s", name, opt->name);
+      sprintf(optname, "%s-%s", name.c_str(), opt->name);
       optnamelen= namelen + optnamelen + 1;
     }
     else
@@ -1590,7 +1553,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
       if (!(v= find_bookmark(name, opt->name, opt->flags)))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("Thread local variable '%s' not allocated "
-                        "in plugin '%s'."), opt->name, plugin_name);
+                      "in plugin '%s'."), opt->name, plugin_name.c_str());
         return(-1);
       }
 
@@ -1611,7 +1574,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     options->name= optname;
     options->comment= opt->comment;
     options->app_type= opt;
-    options->id= (options-1)->id + 1;
+    options->id= localoptionid++;
 
     plugin_opt_set_limits(options, opt);
 
@@ -1621,12 +1584,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     else
       options->value= options->u_max_value= *(char***) (opt + 1);
 
-    options[1]= options[0];
-    options[1].name= p= (char*) alloc_root(mem_root, optnamelen + 8);
-    options[1].comment= 0; // hidden
-    sprintf(p,"plugin-%s",optname);
-
-    options+= 2;
+    options++;
   }
 
   return(0);
@@ -1639,7 +1597,7 @@ static my_option *construct_help_options(memory::Root *mem_root, plugin::Module 
   my_option *opts;
   uint32_t count= EXTRA_OPTIONS;
 
-  for (opt= p->getManifest().system_vars; opt && *opt; opt++, count+= 2) {};
+  for (opt= p->getManifest().system_vars; opt && *opt; opt++, count++) {};
 
   opts= (my_option*)alloc_root(mem_root, (sizeof(my_option) * count));
   if (opts == NULL)
@@ -1694,7 +1652,7 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
   uint32_t len, count= EXTRA_OPTIONS;
 
   for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
-    count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
+    count++;
 
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
@@ -1732,7 +1690,7 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
       if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
         continue;
 
-      if ((var= find_bookmark(tmp->getName().c_str(), o->name, o->flags)))
+      if ((var= find_bookmark(tmp->getName(), o->name, o->flags)))
         v= new sys_var_pluginvar(var->key + 1, o);
       else
       {
