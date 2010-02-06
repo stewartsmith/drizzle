@@ -555,7 +555,7 @@ protected:
 
 private:
   /* Private helpers */
-  inline void mark_trx_read_write();
+  inline void setTransactionReadWrite();
 private:
   /*
     Low-level primitives for storage engines.  These should be

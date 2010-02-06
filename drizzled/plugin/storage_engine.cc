@@ -108,12 +108,9 @@ void plugin::StorageEngine::setTransactionReadWrite(Session& session)
     Unfortunately here we can't know know for sure if the engine
     has registered the transaction or not, so we must check.
   */
-  if (resource_context->is_started())
+  if (resource_context->isStarted())
   {
-    /*
-     * table_share can be NULL in plugin::StorageEngine::dropTable().
-     */
-    resource_context->set_trx_read_write();
+    resource_context->markModifiedData();
   }
 }
 

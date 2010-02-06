@@ -367,7 +367,7 @@ void TransactionServices::trans_register_ha(Session *session, bool all, plugin::
 
   resource_context= session->getResourceContext(engine, all ? 1 : 0);
 
-  if (resource_context->is_started())
+  if (resource_context->isStarted())
     return; /* already registered, return */
 
   resource_context->setResource(engine);
@@ -398,7 +398,7 @@ ha_check_and_coalesce_trx_read_only(Session *session,
                                     bool normal_transaction)
 {
   /* The number of storage engines that have actual changes. */
-  unsigned rw_ha_count= 0;
+  unsigned num_resources_modified_data= 0;
   ResourceContext *resource_context;
 
   for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
@@ -406,13 +406,13 @@ ha_check_and_coalesce_trx_read_only(Session *session,
        ++it)
   {
     resource_context= *it;
-    if (resource_context->is_trx_read_write())
-      ++rw_ha_count;
+    if (resource_context->hasModifiedData())
+      ++num_resources_modified_data;
 
     if (! normal_transaction)
     {
-      ResourceContext *resource_context_all= session->getResourceContext(resource_context->getResource(), true);
-      assert(resource_context != resource_context_all);
+      ResourceContext *resource_context_normal= session->getResourceContext(resource_context->getResource(), true);
+      assert(resource_context != resource_context_normal);
       /*
         Merge read-only/read-write information about statement
         transaction to its enclosing normal transaction. Do this
@@ -420,10 +420,10 @@ ha_check_and_coalesce_trx_read_only(Session *session,
         that resource_context_all is registered in session->transaction.all.
         Since otherwise we only clutter the normal transaction flags.
       */
-      if (resource_context_all->is_started()) /* false if autocommit. */
-        resource_context_all->coalesce_trx_with(resource_context);
+      if (resource_context_normal->isStarted()) /* false if autocommit. */
+        resource_context_normal->coalesceWith(resource_context);
     }
-    else if (rw_ha_count > 1)
+    else if (num_resources_modified_data > 1)
     {
       /*
         It is a normal transaction, so we don't need to merge read/write
@@ -433,7 +433,7 @@ ha_check_and_coalesce_trx_read_only(Session *session,
       break;
     }
   }
-  return rw_ha_count > 1;
+  return num_resources_modified_data > 1;
 }
 
 
@@ -498,7 +498,7 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
           transaction is read-only. This allows for simpler
           implementation in engines that are always read-only.
         */
-        if (! resource_context->is_trx_read_write())
+        if (! resource_context->hasModifiedData())
           continue;
         /*
           Sic: we know that prepare() is not NULL since otherwise
@@ -571,9 +571,9 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
     if (is_real_trans)
     {
       /* 
-        * We commit the normal transaction by finalizing the transaction message
-        * and propogating the message to all registered replicators.
-        */
+       * We commit the normal transaction by finalizing the transaction message
+       * and propogating the message to all registered replicators.
+       */
       ReplicationServices &replication_services= ReplicationServices::singleton();
       replication_services.commitTransaction(session);
     }

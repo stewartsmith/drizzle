@@ -31,21 +31,20 @@ class StorageEngine;
 }
 
 /**
-  Either statement transaction or normal transaction - related
-  thread-specific storage engine data.
-
-  If a storage engine participates in a statement/transaction,
-  an instance of this class is present in
-  session->transaction.{stmt|all}.ha_list. The addition to
-  {stmt|all}.ha_list is made by trans_register_ha().
-
-  When it's time to commit or rollback, each element of ha_list
-  is used to access storage engine's prepare()/commit()/rollback()
-  methods, and also to evaluate if a full two phase commit is
-  necessary.
-
-  @sa General description of transaction handling in drizzled/transaction_services.cc.
-*/
+ * Either statement transaction or normal transaction - related
+ * session-specific storage engine data.
+ *
+ * If a storage engine participates in a statement/transaction,
+ * an instance of this class is present in
+ * session->transaction.{stmt|all}.resource_contexts.
+ *
+ * When it's time to commit or rollback, each element of ha_list
+ * is used to access resource manager's prepare()/commit()/rollback()
+ * methods, and also to evaluate if a full two phase commit is
+ * necessary.
+ * 
+ * @sa General description of transaction handling in drizzled/transaction_services.cc.
+ */
 class ResourceContext
 {
 public:
@@ -57,19 +56,41 @@ public:
   /** Clear, prepare for reuse. */
   void reset();
 
-  void set_trx_read_write();
-  bool is_trx_read_write() const;
-  bool is_started() const;
+  /**
+   * Marks that the underlying resource manager
+   * has modified data state.
+   */
+  void markModifiedData();
 
-  /** Mark this transaction read-write if the argument is read-write. */
-  void coalesce_trx_with(const ResourceContext *stmt_trx);
+  /**
+   * Returns true if the underlying resource manager
+   * has modified data state.
+   */
+  bool hasModifiedData() const;
+
+  /**
+   * Returns true if the underlying resource
+   * manager has registered with the transaction
+   * manager for this transaction.
+   */
+  bool isStarted() const;
+
+  /** 
+   * Mark this context as modifying data if the argument has also modified data
+   */
+  void coalesceWith(const ResourceContext *stmt_trx);
+
+  /**
+   * Returns the underlying resource manager
+   * this context tracks.
+   */
   drizzled::plugin::StorageEngine *getResource() const
   {
     return resource;
   }
 
   /**
-   * Sets the resource.
+   * Sets the underlying resource
    */
   void setResource(drizzled::plugin::StorageEngine *in_engine)
   {
@@ -77,16 +98,15 @@ public:
   }
 private:
   /**
-    Although a given ResourceContext instance is currently always used
-    for the same storage engine, 'engine' is not-NULL only when the
-    corresponding storage is a part of a transaction.
+    Although a given ResourceContext instance is always used
+    for the same resource manager, 'resource' is not-NULL only when the
+    corresponding resource manager is a part of a transaction.
   */
   drizzled::plugin::StorageEngine *resource;
   /**
-    Transaction flags related to this engine.
-    Not-null only if this instance is a part of transaction.
-    May assume a combination of enum values above.
-  */
+   * Whether the underlying resource manager has changed
+   * some data state.
+   */
   bool modified_data;
 };
 

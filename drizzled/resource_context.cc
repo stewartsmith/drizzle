@@ -34,36 +34,33 @@ void ResourceContext::reset()
   modified_data= false;
 }
 
-void ResourceContext::set_trx_read_write()
+void ResourceContext::markModifiedData()
 {
-  assert(is_started());
+  assert(isStarted());
   modified_data= true;
 }
 
-
-bool ResourceContext::is_trx_read_write() const
+bool ResourceContext::hasModifiedData() const
 {
-  assert(is_started());
+  assert(isStarted());
   return modified_data;
 }
 
-
-bool ResourceContext::is_started() const
+bool ResourceContext::isStarted() const
 {
   return resource != NULL;
 }
 
-/** Mark this transaction read-write if the argument is read-write. */
-void ResourceContext::coalesce_trx_with(const ResourceContext *stmt_trx)
+void ResourceContext::coalesceWith(const ResourceContext *stmt_ctx)
 {
   /*
     Must be called only after the transaction has been started.
     Can be called many times, e.g. when we have many
     read-write statements in a transaction.
   */
-  assert(is_started());
-  if (stmt_trx->is_trx_read_write())
-    set_trx_read_write();
+  assert(isStarted());
+  if (stmt_ctx->hasModifiedData())
+    markModifiedData();
 }
 
 } /* namespace drizzled */
