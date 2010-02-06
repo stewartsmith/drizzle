@@ -23,8 +23,13 @@
   variables with printf() as there is no usable printf() standard one can use.
 */
 
+#include "config.h"
+#include "drizzled/internal/m_string.h"
 
-#include "m_string.h"
+namespace drizzled
+{
+namespace internal
+{
 
 char *llstr(int64_t value,char *buff)
 {
@@ -37,3 +42,6 @@ char *ullstr(int64_t value,char *buff)
   int64_t10_to_str(value,buff,10);
   return buff;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

@@ -36,6 +36,9 @@
 # endif
 #endif
 
+namespace drizzled
+{
+
 uint64_t my_getsystime()
 {
 #ifdef HAVE_CLOCK_GETTIME
@@ -126,3 +129,4 @@ uint64_t my_micro_time_and_time(time_t *time_arg)
   return newtime;
 }
 
+} /* namespace drizzled */

@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_make_set :public Item_str_func
 {
   Item *item;
@@ -51,5 +54,7 @@ public:
   Item *transform(Item_transformer transformer, unsigned char *arg);
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_MAKE_SET_H */

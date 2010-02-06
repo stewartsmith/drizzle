@@ -16,9 +16,8 @@
 #ifndef DRIZZLED_DECIMAL_H
 #define DRIZZLED_DECIMAL_H
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+namespace drizzled
+{
 
 typedef enum
 {TRUNCATE=0, HALF_EVEN, HALF_UP, CEILING, FLOOR}
@@ -104,9 +103,7 @@ void max_decimal(int precision, int frac, decimal_t *to);
 #define E_DEC_ERROR            31
 #define E_DEC_FATAL_ERROR      30
 
-#if defined(__cplusplus)
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_DECIMAL_H */
 

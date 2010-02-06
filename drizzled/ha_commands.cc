@@ -40,7 +40,9 @@
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
@@ -164,3 +166,5 @@ int ha_end()
 
   return error;
 }
+
+} /* namespace drizzled */

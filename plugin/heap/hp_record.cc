@@ -24,6 +24,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /**
   Calculate size of the record for the purpose of storing in chunks

@@ -21,6 +21,9 @@
 #include "drizzled/charset_info.h"
 #include "drizzled/global_charset_info.h"
 
+namespace drizzled
+{
+
 /*
   Return bitmap for strings used in a set
 
@@ -158,3 +161,4 @@ uint32_t find_type2(const TYPELIB *typelib, const char *x, uint32_t length,
   return(0);
 } /* find_type */
 
+} /* namespace drizzled */

@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 class Item_real_func :public Item_func
 {
 public:
@@ -35,5 +38,7 @@ public:
   enum Item_result result_type () const { return REAL_RESULT; }
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_REAL_H */

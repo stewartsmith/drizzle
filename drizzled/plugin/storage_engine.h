@@ -35,6 +35,9 @@
 #include <vector>
 #include <set>
 
+namespace drizzled
+{
+
 class TableList;
 class Session;
 class XID;
@@ -110,10 +113,8 @@ static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_
 
 
 class Table;
-
-namespace drizzled
-{
 class NamedSavepoint;
+
 namespace plugin
 {
 
@@ -177,7 +178,7 @@ protected:
     @brief
     Used as a protobuf storage currently by TEMP only engines.
   */
-  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
+  typedef std::map <std::string, message::Table> ProtoCache;
   ProtoCache proto_cache;
   pthread_mutex_t proto_cache_mutex;
 
@@ -204,7 +205,7 @@ public:
                                    const char *db,
                                    const char *table_name,
                                    const bool is_tmp,
-                                   drizzled::message::Table *table_proto)
+                                   message::Table *table_proto)
   {
     (void)session;
     (void)path;
@@ -315,7 +316,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commitByXid(XID *) { return 0; }
   virtual int  rollbackByXid(XID *) { return 0; }
-  virtual Cursor *create(TableShare &, drizzled::memory::Root *)= 0;
+  virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -344,7 +345,7 @@ protected:
   virtual int doCreateTable(Session *session,
                             const char *table_name,
                             Table& table_arg,
-                            drizzled::message::Table& proto)= 0;
+                            message::Table& proto)= 0;
 
   virtual int doRenameTable(Session* session,
                             const char *from, const char *to);
@@ -360,7 +361,7 @@ public:
   }
 
   // TODO: move these to protected
-  virtual void doGetTableNames(drizzled::CachedDirectory &directory,
+  virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                std::set<std::string>& set_of_names);
   virtual int doDropTable(Session& session,
@@ -393,7 +394,7 @@ public:
   static int recover(HASH *commit_list);
   static int startConsistentSnapshot(Session *session);
   static int dropTable(Session& session,
-                       drizzled::TableIdentifier &identifier,
+                       TableIdentifier &identifier,
                        bool generate_warning);
   static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
 
@@ -403,14 +404,14 @@ public:
   }
 
   static int createTable(Session& session,
-                         drizzled::TableIdentifier &identifier,
+                         TableIdentifier &identifier,
                          bool update_create_info,
-                         drizzled::message::Table& table_proto,
+                         message::Table& table_proto,
                          bool used= true);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
-  Cursor *getCursor(TableShare &share, drizzled::memory::Root *alloc);
+  Cursor *getCursor(TableShare &share, memory::Root *alloc);
 
   uint32_t max_record_length() const
   { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }

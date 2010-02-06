@@ -13,18 +13,22 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
 
-#include "my_time.h"
+#include "drizzled/my_time.h"
 
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include <drizzled/util/test.h>
+#include "drizzled/definitions.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 static int check_time_range(DRIZZLE_TIME *my_time, int *warning);
 
@@ -570,7 +574,7 @@ bool str_to_time(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
     /* Fix the date to assume that seconds was given */
     if (!found_hours && !found_days)
     {
-      bmove_upp((unsigned char*) (date+4), (unsigned char*) (date+state),
+      internal::bmove_upp((unsigned char*) (date+4), (unsigned char*) (date+state),
                 sizeof(long)*(state-1));
       memset(date, 0, sizeof(long)*(4-state));
     }
@@ -1253,3 +1257,4 @@ uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *my_time)
   return 0;
 }
 
+} /* namespace drizzled */

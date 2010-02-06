@@ -23,6 +23,9 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/temporal.h>
 
+namespace drizzled
+{
+
 class Item_typecast :public Item_str_func
 {
 public:
@@ -134,7 +137,7 @@ public:
   {
     collation.set(&my_charset_bin);
     maybe_null= 1;
-    max_length= drizzled::DateTime::MAX_STRING_LENGTH * MY_CHARSET_BIN_MB_MAXLEN;
+    max_length= DateTime::MAX_STRING_LENGTH * MY_CHARSET_BIN_MB_MAXLEN;
     decimals= DATETIME_DEC;
   }
   bool result_as_int64_t() { return true; }
@@ -152,5 +155,7 @@ public:
     return save_date_in_field(field);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_TYPECAST_H */

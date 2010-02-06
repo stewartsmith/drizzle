@@ -13,10 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/my_error.h"
 #include <errno.h>
 
+namespace drizzled
+{
+namespace internal
+{
 
 	/* Write a chunk of bytes to a file */
 
@@ -87,3 +93,6 @@ size_t my_write(int Filedes, const unsigned char *Buffer, size_t Count, myf MyFl
     return(0);			/* Want only errors */
   return(writenbytes+written);
 } /* my_write */
+
+} /* namespace internal */
+} /* namespace drizzled */

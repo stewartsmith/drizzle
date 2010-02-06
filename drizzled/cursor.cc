@@ -46,18 +46,20 @@
 #include "drizzled/transaction_services.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 /****************************************************************************
 ** General Cursor functions
 ****************************************************************************/
-Cursor::Cursor(drizzled::plugin::StorageEngine &engine_arg,
+Cursor::Cursor(plugin::StorageEngine &engine_arg,
                TableShare &share_arg)
   : table_share(&share_arg), table(0),
     estimation_rows_to_insert(0), engine(&engine_arg),
     ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
-    ref_length(sizeof(my_off_t)),
+    ref_length(sizeof(internal::my_off_t)),
     inited(NONE),
     locked(false), implicit_emptied(0),
     next_insert_id(0), insert_id_for_cur_row(0)
@@ -1570,3 +1572,5 @@ int Cursor::ha_delete_row(const unsigned char *buf)
 
   return 0;
 }
+
+} /* namespace drizzled */

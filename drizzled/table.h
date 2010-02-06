@@ -36,6 +36,9 @@
 #include "drizzled/atomics.h"
 #include "drizzled/query_id.h"
 
+namespace drizzled
+{
+
 class Item;
 class Item_subselect;
 class Select_Lex_Unit;
@@ -234,7 +237,7 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
-  drizzled::memory::Root mem_root;
+  memory::Root mem_root;
   filesort_info_st sort;
 
   Table();
@@ -271,13 +274,13 @@ public:
     return s->storage_engine->index_flags(s->key_info[idx].algorithm);
   }
 
-  inline drizzled::plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return s->storage_engine;
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(drizzled::message::Table *table_proto);
+  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
@@ -519,14 +522,14 @@ uint32_t convert_month_to_period(uint32_t month);
 int test_if_number(char *str,int *res,bool allow_wildcards);
 void change_byte(unsigned char *,uint,char,char);
 
-namespace drizzled { namespace optimizer { class SqlSelect; } }
+namespace optimizer { class SqlSelect; }
 
 ha_rows filesort(Session *session,
                  Table *form,
-                 struct st_sort_field *sortorder,
-		             uint32_t s_length,
-                 drizzled::optimizer::SqlSelect *select,
-		             ha_rows max_rows,
+                 st_sort_field *sortorder,
+                 uint32_t s_length,
+                 optimizer::SqlSelect *select,
+                 ha_rows max_rows,
                  bool sort_positions,
                  ha_rows *examined_rows);
 
@@ -534,11 +537,11 @@ void filesort_free_buffers(Table *table, bool full);
 void change_double_for_sort(double nr,unsigned char *to);
 double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
-int get_quick_record(drizzled::optimizer::SqlSelect *select);
+int get_quick_record(optimizer::SqlSelect *select);
 
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(drizzled::memory::Root *mem_root, List<String> &strings);
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
 ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
@@ -547,5 +550,7 @@ int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
 bool check_db_name(LEX_STRING *org_name);
 bool check_table_name(const char *name, uint32_t length);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_H */

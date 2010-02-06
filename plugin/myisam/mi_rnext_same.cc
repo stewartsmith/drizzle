@@ -15,6 +15,8 @@
 
 #include "myisam_priv.h"
 
+using namespace drizzled;
+
 	/*
 	   Read next row with the same key as previous read, but abort if
 	   the key changes.

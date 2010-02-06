@@ -705,7 +705,7 @@ bool TransactionServices::mysql_xa_recover(Session *session)
   field_list.push_back(new Item_int("formatID", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_int("gtrid_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_int("bqual_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_empty_string("data",XIDDATASIZE));
+  field_list.push_back(new Item_empty_string("data", DRIZZLE_XIDDATASIZE));
 
   if (session->client->sendFields(&field_list))
     return 1;

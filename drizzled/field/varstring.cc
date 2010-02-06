@@ -27,8 +27,10 @@
 
 #include <string>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 /****************************************************************************
   VARCHAR type
@@ -481,3 +483,5 @@ Field *Field_varstring::new_key_field(memory::Root *root,
   }
   return res;
 }
+
+} /* namespace drizzled */

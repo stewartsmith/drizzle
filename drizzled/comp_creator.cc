@@ -21,6 +21,9 @@
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/cmpfunc.h>
 
+namespace drizzled
+{
+
 Comp_creator *comp_eq_creator(bool invert)
 {
   return invert?
@@ -67,3 +70,5 @@ Comp_creator *comp_ne_creator(bool invert)
     (Comp_creator *)Eq_creator::instance():
     (Comp_creator *)Ne_creator::instance();
 }
+
+} /* namespace drizzled */

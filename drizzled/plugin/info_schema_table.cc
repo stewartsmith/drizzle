@@ -29,10 +29,10 @@
 
 using namespace std;
 
-const std::string INFORMATION_SCHEMA_NAME("information_schema");
-
 namespace drizzled
 {
+
+const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
 vector<plugin::InfoSchemaTable *> all_schema_tables;
 
@@ -49,7 +49,7 @@ plugin::InfoSchemaRecord::InfoSchemaRecord(unsigned char *buf, size_t in_len)
     checksum(0)
 {
   memcpy(record, buf, rec_len);
-  checksum= drizzled::algorithm::crc32((const char *) record, rec_len);
+  checksum= algorithm::crc32((const char *) record, rec_len);
 }
 
 plugin::InfoSchemaRecord::InfoSchemaRecord(const plugin::InfoSchemaRecord &rhs)
@@ -57,7 +57,7 @@ plugin::InfoSchemaRecord::InfoSchemaRecord(const plugin::InfoSchemaRecord &rhs)
     rec_len(rhs.rec_len)
 {
   memcpy(record, rhs.record, rec_len);
-  checksum= drizzled::algorithm::crc32((const char *) record, rec_len);
+  checksum= algorithm::crc32((const char *) record, rec_len);
 }
 
 bool plugin::InfoSchemaTable::addPlugin(plugin::InfoSchemaTable *schema_table)

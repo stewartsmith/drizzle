@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_replace :public Item_str_func
 {
   String tmp_value,tmp_value2;
@@ -32,5 +35,7 @@ public:
   void fix_length_and_dec();
   const char *func_name() const { return "replace"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_REPLACE_H */

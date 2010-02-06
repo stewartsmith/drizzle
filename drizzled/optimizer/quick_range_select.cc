@@ -27,7 +27,9 @@
 #include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 
 optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
@@ -483,7 +485,7 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
   uint32_t length;
   KEY *key_info= head->key_info + index;
   key_names->append(key_info->name);
-  length= int64_t2str(max_used_key_length, buf, 10) - buf;
+  length= internal::int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
@@ -622,3 +624,4 @@ bool optimizer::QuickSelectDescending::range_reads_after_key(optimizer::QuickRan
 }
 
 
+} /* namespace drizzled */

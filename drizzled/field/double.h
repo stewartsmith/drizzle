@@ -23,6 +23,9 @@
 
 #include <drizzled/field/real.h>
 
+namespace drizzled
+{
+
 class Field_double :public Field_real {
 public:
 
@@ -65,6 +68,8 @@ public:
   uint32_t row_pack_length() { return pack_length(); }
   void sql_type(String &str) const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_DOUBLE_H */
 

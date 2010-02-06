@@ -30,14 +30,20 @@
    memory simultaneously with iteration, so it should be ~2-3x faster.
  */
 
-typedef struct st_io_cache IO_CACHE;
+namespace drizzled
+{
 
-class Unique :public drizzled::memory::SqlAlloc
+namespace internal
+{
+typedef struct st_io_cache IO_CACHE;
+}
+
+class Unique : public memory::SqlAlloc
 {
   DYNAMIC_ARRAY file_ptrs;
   ulong max_elements;
   size_t max_in_memory_size;
-  IO_CACHE *file;
+  internal::IO_CACHE *file;
   TREE tree;
   unsigned char *record_pointers;
   bool flush();
@@ -73,5 +79,7 @@ public:
   friend int unique_write_to_file(unsigned char* key, uint32_t count, Unique *unique);
   friend int unique_write_to_ptrs(unsigned char* key, uint32_t count, Unique *unique);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UNIQUE_H */

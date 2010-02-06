@@ -28,7 +28,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 int rr_sequential(READ_RECORD *info);
 static int rr_quick(READ_RECORD *info);
@@ -70,7 +71,7 @@ void init_read_record(READ_RECORD *info,
                       int use_record_cache, 
                       bool print_error)
 {
-  IO_CACHE *tempfile;
+  internal::IO_CACHE *tempfile;
 
   memset(info, 0, sizeof(*info));
   info->session=session;
@@ -103,7 +104,7 @@ void init_read_record(READ_RECORD *info,
     info->read_record= (table->sort.addon_field ?
                         rr_unpack_from_tempfile : rr_from_tempfile);
     info->io_cache=tempfile;
-    reinit_io_cache(info->io_cache,READ_CACHE,0L,0,0);
+    reinit_io_cache(info->io_cache,internal::READ_CACHE,0L,0,0);
     info->ref_pos=table->cursor->ref;
     if (!table->cursor->inited)
       table->cursor->ha_rnd_init(0);
@@ -122,7 +123,7 @@ void init_read_record(READ_RECORD *info,
                                                 table->cursor->stats.deleted) >
         (uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
         info->io_cache->end_of_file/info->ref_length * table->s->reclength >
-        (my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
+        (internal::my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
         !table->s->blob_fields &&
         info->ref_length <= MAX_REFLENGTH)
     {
@@ -412,7 +413,7 @@ static int rr_from_cache(READ_RECORD *info)
 {
   register uint32_t i;
   uint32_t length;
-  my_off_t rest_of_file;
+  internal::my_off_t rest_of_file;
   int16_t error;
   unsigned char *position,*ref_position,*record_pos;
   uint32_t record;
@@ -437,7 +438,7 @@ static int rr_from_cache(READ_RECORD *info)
     }
     length=info->rec_cache_size;
     rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
-    if ((my_off_t) length > rest_of_file)
+    if ((internal::my_off_t) length > rest_of_file)
       length= (uint32_t) rest_of_file;
     if (!length || my_b_read(info->io_cache,info->cache,length))
     {
@@ -454,8 +455,8 @@ static int rr_from_cache(READ_RECORD *info)
       int3store(ref_position,(long) i);
       ref_position+=3;
     }
-    my_qsort(info->read_positions, length, info->struct_length,
-             (qsort_cmp) rr_cmp);
+    internal::my_qsort(info->read_positions, length, info->struct_length,
+                       (qsort_cmp) rr_cmp);
 
     position=info->read_positions;
     for (i=0 ; i < length ; i++)
@@ -499,3 +500,5 @@ static int rr_cmp(unsigned char *a,unsigned char *b)
   return (int) a[7] - (int) b[7];
 #endif
 }
+
+} /* namespace drizzled */

@@ -41,6 +41,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
@@ -8629,3 +8631,5 @@ CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci=
     &my_charset_utf8mb4_handler,
     &my_collation_any_uca_handler
 };
+
+} /* namespace drizzled */

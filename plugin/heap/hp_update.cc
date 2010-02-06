@@ -17,6 +17,8 @@
 
 #include "heap_priv.h"
 
+using namespace drizzled;
+
 int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned char *new_record)
 {
   HP_KEYDEF *keydef, *end, *p_lastinx;

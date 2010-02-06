@@ -28,6 +28,9 @@
 #include "drizzled/item/field.h"
 #include "drizzled/item/bin_string.h"
 
+namespace drizzled
+{
+
 class Select_Lex;
 class Select_Lex_Unit;
 class JOIN;
@@ -402,7 +405,7 @@ public:
 };
 
 
-class subselect_engine: public drizzled::memory::SqlAlloc
+class subselect_engine: public memory::SqlAlloc
 {
 protected:
   select_result_interceptor *result; /* results storage class */
@@ -418,7 +421,7 @@ public:
                          INDEXSUBQUERY_ENGINE, HASH_SJ_ENGINE};
 
   subselect_engine(Item_subselect *si, select_result_interceptor *res)
-    :session(0)
+    :session(NULL)
   {
     result= res;
     item= si;
@@ -703,5 +706,7 @@ public:
   }
   virtual enum_engine_type engine_type() { return HASH_SJ_ENGINE; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_SUBSELECT_H */

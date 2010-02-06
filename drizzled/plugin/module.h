@@ -23,10 +23,10 @@
 #include "drizzled/lex_string.h"
 #include "drizzled/plugin/manifest.h"
 
-class sys_var;
-
 namespace drizzled
 {
+class sys_var;
+
 namespace plugin
 {
 

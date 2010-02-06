@@ -86,34 +86,34 @@ Variable_name	Value
 max_join_size	100
 select * from information_schema.session_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	100
+max_join_size	100
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	10
 select * from information_schema.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	10
+max_join_size	10
 set GLOBAL max_join_size=2000;
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2000
 select * from information_schema.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	2000
+max_join_size	2000
 set max_join_size=DEFAULT;
 show variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2000
 select * from information_schema.session_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	2000
+max_join_size	2000
 set GLOBAL max_join_size=DEFAULT;
 show global variables like 'max_join_size';
 Variable_name	Value
 max_join_size	2147483647
 select * from information_schema.global_variables where variable_name like 'max_join_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MAX_JOIN_SIZE	2147483647
+max_join_size	2147483647
 set @@max_join_size=1000, @@global.max_join_size=2000;
 select @@local.max_join_size, @@global.max_join_size;
 @@local.max_join_size	@@global.max_join_size
@@ -146,54 +146,54 @@ Variable_name	Value
 timed_mutexes	ON
 select * from information_schema.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
-TIMED_MUTEXES	ON
+timed_mutexes	ON
 set global timed_mutexes=0;
 show variables like 'timed_mutexes';
 Variable_name	Value
 timed_mutexes	OFF
 select * from information_schema.session_variables where variable_name like 'timed_mutexes';
 VARIABLE_NAME	VARIABLE_VALUE
-TIMED_MUTEXES	OFF
+timed_mutexes	OFF
 set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
 Variable_name	Value
 storage_engine	MEMORY
 select * from information_schema.session_variables where variable_name like 'storage_engine';
 VARIABLE_NAME	VARIABLE_VALUE
-STORAGE_ENGINE	MEMORY
+storage_engine	MEMORY
 show global variables like 'storage_engine';
 Variable_name	Value
 storage_engine	InnoDB
 select * from information_schema.global_variables where variable_name like 'storage_engine';
 VARIABLE_NAME	VARIABLE_VALUE
-STORAGE_ENGINE	InnoDB
+storage_engine	InnoDB
 set GLOBAL myisam_max_sort_file_size=2000000;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	2000000
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MYISAM_MAX_SORT_FILE_SIZE	2000000
+myisam_max_sort_file_size	2000000
 set GLOBAL myisam_max_sort_file_size=default;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
 myisam_max_sort_file_size	2147483647
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MYISAM_MAX_SORT_FILE_SIZE	2147483647
+myisam_max_sort_file_size	2147483647
 set global drizzle_protocol_buffer_length=1024;
 show global variables like 'drizzle_protocol_buffer_%';
 Variable_name	Value
 drizzle_protocol_buffer_length	1024
 select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
-DRIZZLE_PROTOCOL_BUFFER_LENGTH	1024
+drizzle_protocol_buffer_length	1024
 show global variables like 'drizzle_protocol_buffer_%';
 Variable_name	Value
 drizzle_protocol_buffer_length	1024
 select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 VARIABLE_NAME	VARIABLE_VALUE
-DRIZZLE_PROTOCOL_BUFFER_LENGTH	1024
+drizzle_protocol_buffer_length	1024
 set global drizzle_protocol_buffer_length=1;
 Warnings:
 Error	1292	Truncated incorrect buffer_length value: '1'
@@ -214,10 +214,10 @@ query_prealloc_size	8192
 range_alloc_block_size	
 select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
-INNODB_USE_SYS_MALLOC	ON
-QUERY_ALLOC_BLOCK_SIZE	8192
-QUERY_PREALLOC_SIZE	8192
-RANGE_ALLOC_BLOCK_SIZE	
+innodb_use_sys_malloc	ON
+query_alloc_block_size	8192
+query_prealloc_size	8192
+range_alloc_block_size	
 set @@range_alloc_block_size=1024*16;
 set @@query_alloc_block_size=1024*17+2;
 set @@query_prealloc_size=1024*18;
@@ -232,10 +232,10 @@ query_prealloc_size	18432
 range_alloc_block_size	
 select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
-INNODB_USE_SYS_MALLOC	ON
-QUERY_ALLOC_BLOCK_SIZE	17408
-QUERY_PREALLOC_SIZE	18432
-RANGE_ALLOC_BLOCK_SIZE	
+innodb_use_sys_malloc	ON
+query_alloc_block_size	17408
+query_prealloc_size	18432
+range_alloc_block_size	
 set @@range_alloc_block_size=default;
 set @@query_alloc_block_size=default, @@query_prealloc_size=default;
 show variables like '%alloc%';
@@ -246,10 +246,10 @@ query_prealloc_size	8192
 range_alloc_block_size	
 select * from information_schema.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
-INNODB_USE_SYS_MALLOC	ON
-QUERY_ALLOC_BLOCK_SIZE	8192
-QUERY_PREALLOC_SIZE	8192
-RANGE_ALLOC_BLOCK_SIZE	
+innodb_use_sys_malloc	ON
+query_alloc_block_size	8192
+query_prealloc_size	8192
+range_alloc_block_size	
 SELECT @@version LIKE 'non-existent';
 @@version LIKE 'non-existent'
 0
@@ -354,7 +354,7 @@ Variable_name	Value
 myisam_max_sort_file_size	MAX_FILE_SIZE
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 VARIABLE_NAME	VARIABLE_VALUE
-MYISAM_MAX_SORT_FILE_SIZE	MAX_FILE_SIZE
+myisam_max_sort_file_size	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
 set @@global.global.myisam_key_cache_size= 1;
 ERROR HY000: Unknown system variable 'global'
@@ -401,7 +401,7 @@ Variable_name	Value
 table_open_cache	100
 SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
 VARIABLE_NAME	VARIABLE_VALUE
-TABLE_OPEN_CACHE	100
+table_open_cache	100
 SET GLOBAL table_open_cache=DEFAULT;
 *** Various tests with LC_TIME_NAMES
 *** LC_TIME_NAMES: testing case insensitivity

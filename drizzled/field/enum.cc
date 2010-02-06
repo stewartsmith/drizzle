@@ -29,7 +29,8 @@
 #include <sstream>
 #include <string>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /****************************************************************************
 ** enum type.
@@ -275,3 +276,5 @@ Field *Field_enum::new_field(memory::Root *root, Table *new_table,
     res->typelib= copy_typelib(root, typelib);
   return res;
 }
+
+} /* namespace drizzled */

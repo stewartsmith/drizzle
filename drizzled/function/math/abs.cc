@@ -21,6 +21,8 @@
 #include <math.h>
 #include <drizzled/function/math/abs.h>
 
+namespace drizzled
+{
 
 double Item_func_abs::real_op()
 {
@@ -59,3 +61,4 @@ void Item_func_abs::fix_length_and_dec()
   unsigned_flag= args[0]->unsigned_flag;
 }
 
+} /* namespace drizzled */

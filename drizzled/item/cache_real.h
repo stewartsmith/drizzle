@@ -21,6 +21,10 @@
 #define DRIZZLED_ITEM_CACHE_REAL_H
 
 #include <drizzled/item/cache.h>
+
+namespace drizzled
+{
+
 class Item_cache_real: public Item_cache
 {
   double value;
@@ -34,5 +38,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return REAL_RESULT; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_REAL_H */

@@ -20,12 +20,15 @@
 #ifndef DRIZZLED_SELECT_CREATE_H
 #define DRIZZLED_SELECT_CREATE_H
 
+namespace drizzled
+{
+
 class select_create: public select_insert {
   order_st *group;
   TableList *create_table;
   bool is_if_not_exists;
   HA_CREATE_INFO *create_info;
-  drizzled::message::Table *table_proto;
+  message::Table *table_proto;
   TableList *select_tables;
   AlterInfo *alter_info;
   Field **field;
@@ -37,7 +40,7 @@ public:
   select_create (TableList *table_arg,
                  bool is_if_not_exists_arg,
                  HA_CREATE_INFO *create_info_par,
-                 drizzled::message::Table *proto,
+                 message::Table *proto,
                  AlterInfo *alter_info_arg,
                  List<Item> &select_fields,enum_duplicates duplic, bool ignore,
                  TableList *select_tables_arg)
@@ -63,5 +66,7 @@ public:
   const HA_CREATE_INFO *get_create_info() { return create_info; };
   int prepare2(void) { return 0; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_CREATE_H */

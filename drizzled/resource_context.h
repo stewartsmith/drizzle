@@ -24,6 +24,7 @@
 
 namespace drizzled
 {
+
 namespace plugin
 {
 class StorageEngine;

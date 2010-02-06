@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num_op.h>
 
+namespace drizzled
+{
+
 class Item_func_additive_op :public Item_num_op
 {
 public:
@@ -30,5 +33,6 @@ public:
   void result_precision();
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_ADDITIVE_OP_H */

@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
+namespace drizzled
+{
+
 /**
   Query type constants.
 
@@ -334,5 +337,7 @@ enum enum_duplicates
   DUP_REPLACE,
   DUP_UPDATE
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ENUM_H */

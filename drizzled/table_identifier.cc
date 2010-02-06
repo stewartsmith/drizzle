@@ -25,7 +25,9 @@
 #include <drizzled/table_identifier.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 // Prototypes, these will be removed.
 size_t build_tmptable_filename(char *buff, size_t bufflen);
@@ -60,3 +62,5 @@ const char *TableIdentifier::getPath()
 
   return path;
 }
+
+} /* namespace drizzled */

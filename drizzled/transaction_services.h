@@ -24,16 +24,16 @@
 #ifndef DRIZZLED_TRANSACTION_SERVICES_H
 #define DRIZZLED_TRANSACTION_SERVICES_H
 
-/* some forward declarations needed */
-class Session;
-
 namespace drizzled
 {
-  namespace plugin
-  {
-    class StorageEngine;
-  }
 
+/* some forward declarations needed */
+namespace plugin
+{
+  class StorageEngine;
+}
+
+class Session;
 class NamedSavepoint;
 
 /**

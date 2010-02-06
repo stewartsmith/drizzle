@@ -161,9 +161,9 @@ int plugin::StorageEngine::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    fn_format(buff, table_path.c_str(), "", *ext,
+    internal::fn_format(buff, table_path.c_str(), "", *ext,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (my_delete_with_symlink(buff, MYF(0)))
+    if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
 	break;
@@ -771,7 +771,7 @@ int plugin::StorageEngine::dropTable(Session& session,
 int plugin::StorageEngine::createTable(Session& session,
                                        TableIdentifier &identifier,
                                        bool update_create_info,
-                                       drizzled::message::Table& table_proto, bool proto_used)
+                                       message::Table& table_proto, bool proto_used)
 {
   int error= 1;
   Table table;
@@ -1303,7 +1303,7 @@ int plugin::StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
 
   path.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  return my_delete(path.c_str(), MYF(0));
+  return internal::my_delete(path.c_str(), MYF(0));
 }
 
 int plugin::StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
@@ -1314,7 +1314,7 @@ int plugin::StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, Table
   src_path.append(DEFAULT_DEFINITION_FILE_EXT);
   dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  return my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
+  return internal::my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
 }
 
 int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_proto)
@@ -1323,7 +1323,7 @@ int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, 
 
   file_name.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
 
   if (fd == -1)
     return errno;

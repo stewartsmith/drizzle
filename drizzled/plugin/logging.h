@@ -26,10 +26,10 @@
 
 #include <string>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace plugin
 {
 
