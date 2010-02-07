@@ -52,10 +52,17 @@ bool PluginsTool::Generator::populate()
   if (it == end)
     return false;
 
+  /* PLUGIN_NAME */
   push(plugin->getName());
+
+  /* PLUGIN_TYPE */
   push(plugin->getTypeName());
+
+  /* IS_ACTIVE */
   push(plugin->isActive());
-  push(plugin->isActive());
+
+  /* MODULE_NAME */
+  push();
 
   it++;
 

@@ -109,6 +109,7 @@ public:
     void push(const char *arg, uint32_t length= 0);
     void push(const std::string& arg);
     void push(bool arg);
+    void push();
 
     bool isWild(const std::string &predicate);
   };
@@ -153,7 +154,7 @@ public:
 
   void add_field(const char *label,
                  TableFunction::ColumnType type,
-                 bool is_default_null= false);
+                 bool is_default_null= true);
 
   void add_field(const char *label,
                  TableFunction::ColumnType type,

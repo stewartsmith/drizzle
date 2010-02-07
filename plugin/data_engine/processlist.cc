@@ -77,20 +77,22 @@ bool ProcesslistTool::Generator::populate()
 
 
   /* USER */
-  val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user";
-  push(val);
+  if (tmp_sctx->user.length())
+    push(tmp_sctx->user);
+  else 
+    push("unauthenticated user");
 
   /* HOST */
-  push(tmp_sctx->ip.c_str());
+  push(tmp_sctx->ip);
 
   /* DB */
   if (! tmp->db.empty())
   {
-    push(tmp->db.c_str());
+    push(tmp->db);
   }
   else
   {
-    push("<none selected>");
+    push();
   }
 
   /* COMMAND */
@@ -116,18 +118,11 @@ bool ProcesslistTool::Generator::populate()
                 tmp->mysys_var &&
                 tmp->mysys_var->current_cond ?
                 "Waiting on cond" : NULL);
-  push(val ? val : "unknown");
+  val ? push(val) : push();
 
   /* INFO */
   size_t length= strlen(tmp->process_list_info);
-  if (length)
-  {
-    push(tmp->process_list_info, length);
-  }
-  else
-  {
-    push("");
-  }
+  length ?  push(tmp->process_list_info, length) : push();
 
   it++;
 

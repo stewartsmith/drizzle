@@ -35,6 +35,20 @@ extern size_t build_table_filename(char *buff,
 using namespace std;
 using namespace drizzled;
 
+static const string STANDARD("STANDARD");
+static const string TEMPORARY("TEMPORARY");
+static const string INTERNAL("INTERNAL");
+static const string FUNCTION("FUNCTION");
+
+static const string DEFAULT("DEFAULT");
+static const string FIXED("FIXED");
+static const string DYNAMIC("DYNAMIC");
+static const string COMPRESSED("COMPRESSED");
+static const string REDUNDANT("REDUNDANT");
+static const string COMPACT("COMPACT");
+static const string PAGE("PAGE");
+
+
 TablesTool::TablesTool() :
   SchemasTool("TABLES")
 {
@@ -125,36 +139,31 @@ bool TablesTool::Generator::populate()
 
 void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
 {
-  const char *str;
-
   switch (type)
   {
   default:
   case message::Table::TableOptions::ROW_TYPE_DEFAULT:
-    str= "DEFAULT";
+    push(DEFAULT);
     break;
   case message::Table::TableOptions::ROW_TYPE_FIXED:
-    str= "FIXED";
+    push(FIXED);
     break;
   case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
-    str= "DYNAMIC";
+    push(DYNAMIC);
     break;
   case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
-    str= "COMPRESSED";
+    push(COMPRESSED);
     break;
   case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
-    str= "REDUNDANT";
+    push(REDUNDANT);
     break;
   case message::Table::TableOptions::ROW_TYPE_COMPACT:
-    str= "COMPACT";
+    push(COMPACT);
     break;
   case message::Table::TableOptions::ROW_TYPE_PAGE:
-    str= "PAGE";
+    push(PAGE);
     break;
   }
-  message::Table::TableOptions options= table_proto.options();
-
-  push(str);
 }
 
 void TablesTool::Generator::fill()
@@ -168,25 +177,22 @@ void TablesTool::Generator::fill()
 
   /* TABLE_TYPE */
   {
-    const char *str;
-
     switch (table_proto.type())
     {
     default:
     case message::Table::STANDARD:
-      str= "STANDARD";
+      push(STANDARD);
       break;
     case message::Table::TEMPORARY:
-      str= "TEMPORARY";
+      push(TEMPORARY);
       break;
     case message::Table::INTERNAL:
-      str= "INTERNAL";
+      push(INTERNAL);
       break;
     case message::Table::FUNCTION:
-      str= "FUNCTION";
+      push(FUNCTION);
       break;
     }
-    push(str);
   }
 
   /* ENGINE */

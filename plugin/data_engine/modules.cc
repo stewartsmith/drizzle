@@ -26,6 +26,11 @@
 using namespace std;
 using namespace drizzled;
 
+static const string GPL("GPL");
+static const string LGPL("LGPL");
+static const string BSD("BSD");
+static const string PROPRIETARY("PROPRIETARY");
+
 ModulesTool::ModulesTool() :
   plugin::TableFunction("DATA_DICTIONARY", "MODULES")
 {
@@ -55,30 +60,37 @@ bool ModulesTool::Generator::populate()
     plugin::Module *module= *it;
     const plugin::Manifest &manifest= module->getManifest();
 
+    /* MODULE_NAME */
     push(module->getName());
 
+    /* MODULE_VERSION */
     push(manifest.version ? manifest.version : 0);
 
-    push(manifest.author ? manifest.author : "<unknown>");
+    /* MODULE_AUTHOR */
+    manifest.author ? push(manifest.author) : push();
 
+    /* IS_BUILTIN */
     push((module->plugin_dl == NULL));
 
-    push ((module->plugin_dl == NULL) ? "builtin" : module->plugin_dl->getName());
+    /* MODULE_LIBRARY */
+    push((module->plugin_dl == NULL) ? "builtin" : module->plugin_dl->getName());
 
-    push(manifest.descr ? manifest.descr : "none");
+    /* MODULE_DESCRIPTION */
+    manifest.descr ? push(manifest.descr) : push();
 
+    /* MODULE_LICENSE */
     switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      push("GPL");
+      push(GPL);
       break;
     case PLUGIN_LICENSE_BSD:
-      push("BSD");
+      push(BSD);
       break;
     case PLUGIN_LICENSE_LGPL:
-      push("LGPL");
+      push(LGPL);
       break;
     default:
-      push("PROPRIETARY");
+      push(PROPRIETARY);
       break;
     }
   }
