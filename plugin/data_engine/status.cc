@@ -211,5 +211,8 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
   }
   pthread_mutex_unlock(&LOCK_global_system_variables);
   push(name);
-  push(pos, (uint32_t) (end - pos));
+  if (end - pos)
+    push(pos, (uint32_t) (end - pos));
+  else 
+    push();
 }
