@@ -27,6 +27,24 @@ class TableConstraintsTool : public TablesTool
 public:
 
   TableConstraintsTool();
+
+  class Generator : public TablesTool::Generator 
+  {
+    bool populate()
+    {
+      return false;
+    }
+
+  public:
+    Generator(drizzled::Field **arg) :
+      TablesTool::Generator(arg)
+    { }
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
 
 #endif // PLUGIN_DATA_ENGINE_TABLE_CONSTAINTS_H

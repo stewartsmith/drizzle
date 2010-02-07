@@ -95,7 +95,7 @@ public:
     /*
       Return type is bool meaning "are there more rows".
     */
-    bool sub_populate();
+    bool sub_populate(uint32_t field_size);
 
     virtual bool populate()
     {

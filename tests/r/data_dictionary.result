@@ -346,6 +346,12 @@ count(*)
 SELECT count(*) FROM data_dictionary.SESSION_VARIABLES;
 count(*)
 #
+SELECT count(*) FROM data_dictionary.REFERENTIAL_CONSTRAINTS;
+count(*)
+#
+SELECT count(*) FROM data_dictionary.TABLE_CONSTRAINTS;
+count(*)
+#
 use data_dictionary;
 show create table CHARACTER_SETS ;
 Table	Create Table

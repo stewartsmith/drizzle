@@ -21,11 +21,29 @@
 #ifndef PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H
 #define PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H
 
-class ReferentialConstraintsTool : public SchemasTool
+class ReferentialConstraintsTool : public TablesTool
 {
 public:
 
   ReferentialConstraintsTool();
+
+  class Generator : public TablesTool::Generator 
+  {
+    bool populate()
+    {
+      return false;
+    }
+
+  public:
+    Generator(drizzled::Field **arg) :
+      TablesTool::Generator(arg)
+    { }
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
 };
 
 #endif /* PLUGIN_DATA_ENGINE_REFERENTIAL_CONSTRAINTS_H */

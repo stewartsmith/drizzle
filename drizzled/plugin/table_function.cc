@@ -76,7 +76,7 @@ plugin::TableFunction::Generator *plugin::TableFunction::generator(Field **arg)
 }
 
 void plugin::TableFunction::add_field(const char *label,
-                              uint32_t field_length)
+                                      uint32_t field_length)
 {
   add_field(label, TableFunction::STRING, field_length);
 }
@@ -130,10 +130,21 @@ plugin::TableFunction::Generator::Generator(Field **arg) :
   scs= system_charset_info;
 }
 
-bool plugin::TableFunction::Generator::sub_populate()
+bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 {
+  bool ret;
+  uint64_t difference;
+
   columns_iterator= columns;
-  return populate();
+  ret= populate();
+  difference= columns_iterator - columns;
+
+  if (ret == true)
+  {
+    assert(difference == field_size);
+  }
+
+  return ret;
 }
 
 void plugin::TableFunction::Generator::push(uint64_t arg)
@@ -165,7 +176,13 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
   assert(columns_iterator);
   assert(*columns_iterator);
   assert(arg);
-  (*columns_iterator)->store(arg, length ? length : strlen(arg), scs);
+  length= length ? length : strlen(arg);
+
+  if (length)
+    (*columns_iterator)->store(arg, length ? length : strlen(arg), scs);
+  else
+    (*columns_iterator)->store(" ", 1, scs);
+
   columns_iterator++;
 }
 

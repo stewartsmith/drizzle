@@ -101,6 +101,11 @@ bool StateTool::Generator::populate()
     {
       fill(variables->name, var->value, var->type);
     }
+    else
+    {
+      variables++;
+      continue;
+    }
 
     variables++;
 

@@ -26,7 +26,7 @@ using namespace std;
 using namespace drizzled;
 
 ReferentialConstraintsTool::ReferentialConstraintsTool() :
-  SchemasTool("REFERENTIAL_CONSTRAINTS")
+  TablesTool("REFERENTIAL_CONSTRAINTS")
 {
   add_field("CONSTRAINT_SCHEMA");
   add_field("CONSTRAINT_NAME");
