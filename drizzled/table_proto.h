@@ -47,8 +47,6 @@ int rea_create_table(Session *session,
                      List<CreateField> &create_field,
                      uint32_t key_count,KEY *key_info);
 
-drizzled::message::Table::Field::FieldType enum_field_types_to_field_message_type(const enum_field_types type);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_PROTO_H */
