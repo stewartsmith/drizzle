@@ -2513,10 +2513,6 @@ sub mysqld_arguments ($$$$) {
 
     mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
 
-    if ( $idx > 0 or !$use_innodb)
-    {
-      mtr_add_arg($args, "%s--loose-skip-innodb", $prefix);
-    }
   }
   else
   {
