@@ -33,6 +33,7 @@
 
 #include "drizzled/global_charset_info.h"
 
+#include "libinnodb_version_func.h"
 
 using namespace std;
 using namespace google;
@@ -233,9 +234,10 @@ static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
 static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 {
-
   embedded_innodb_engine= new EmbeddedInnoDBEngine("EmbeddedInnoDB");
   registry.add(embedded_innodb_engine);
+
+  libinnodb_version_func_initialize(registry);
 
   return 0;
 }
@@ -244,6 +246,8 @@ static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
 {
   registry.remove(embedded_innodb_engine);
   delete embedded_innodb_engine;
+
+  libinnodb_version_func_finalize(registry);
 
   return 0;
 }
