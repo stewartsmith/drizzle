@@ -1084,7 +1084,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
               Try constructing covering ROR-intersect only if it looks possible
               and worth doing.
             */
-            if (!rori_trp->is_covering && can_build_covering &&
+            if (rori_trp->isRowRetrievalNecessary() && can_build_covering &&
                 (rori_trp= get_best_covering_ror_intersect(&param, tree,
                                                            best_read_time)))
               best_trp= rori_trp;
@@ -1386,8 +1386,10 @@ skip_to_ror_scan:
       roru_index_costs += (*cur_roru_plan)->read_cost;
     }
     else
+    {
       roru_index_costs +=
-        ((optimizer::RorIntersectReadPlan*)(*cur_roru_plan))->index_scan_costs;
+        ((optimizer::RorIntersectReadPlan *)(*cur_roru_plan))->getCostOfIndexScans();
+    }
     roru_total_records += (*cur_roru_plan)->records;
     roru_intersect_part *= (*cur_roru_plan)->records /
                            param->table->cursor->stats.records;
@@ -2093,7 +2095,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
       return NULL;
     memcpy(trp->first_scan, intersect_scans, best_num*sizeof(ROR_SCAN_INFO*));
     trp->last_scan=  trp->first_scan + best_num;
-    trp->is_covering= intersect_best->is_covering;
+    trp->setRowRetrievalNecessary(intersect_best->is_covering);
     trp->read_cost= intersect_best->total_cost;
     /* Prevent divisons by zero */
     ha_rows best_rows = double2rows(intersect_best->out_rows);
@@ -2101,7 +2103,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
       best_rows= 1;
     set_if_smaller(param->table->quick_condition_rows, best_rows);
     trp->records= best_rows;
-    trp->index_scan_costs= intersect_best->index_scan_costs;
+    trp->setCostOfIndexScans(intersect_best->index_scan_costs);
     trp->cpk_scan= cpk_scan_used? cpk_scan: NULL;
   }
   return(trp);
@@ -2248,7 +2250,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     return NULL;
   memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(ROR_SCAN_INFO*));
   trp->last_scan=  trp->first_scan + best_num;
-  trp->is_covering= true;
+  trp->setRowRetrievalNecessary(true);
   trp->read_cost= total_cost;
   trp->records= records;
   trp->cpk_scan= NULL;

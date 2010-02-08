@@ -143,18 +143,60 @@ private:
 class RorIntersectReadPlan : public TableReadPlan
 {
 public:
-  RorIntersectReadPlan() {}                      /* Remove gcc warning */
+
+  RorIntersectReadPlan() 
+    :
+      first_scan(NULL),
+      last_scan(NULL),
+      cpk_scan(NULL),
+      is_covering(false),
+      index_scan_costs(0.0)
+  {}
+
   virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
+
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
+
+  void setRowRetrievalNecessary(bool in_is_covering)
+  {
+    is_covering= in_is_covering;
+  }
+
+  void setCostOfIndexScans(double in_index_scan_costs)
+  {
+    index_scan_costs= in_index_scan_costs;
+  }
+
+  /**
+   * @return true if row retrival phase is necessary.
+   */
+  bool isRowRetrievalNecessary() const
+  {
+    return ! is_covering;
+  }
+
+  /**
+   * @return the sum of the cost of each index scan
+   */
+  double getCostOfIndexScans() const
+  {
+    return index_scan_costs;
+  }
 
   /* Array of pointers to ROR range scans used in this intersection */
   struct st_ror_scan_info **first_scan;
   struct st_ror_scan_info **last_scan; /* End of the above array */
   struct st_ror_scan_info *cpk_scan;  /* Clustered PK scan, if there is one */
-  bool is_covering; /* true if no row retrieval phase is necessary */
-  double index_scan_costs; /* SUM(cost(index_scan)) */
+
+private:
+
+  /** true if no row retrieval phase is necessary */
+  bool is_covering; 
+  /* SUM(cost(index_scan)) */
+  double index_scan_costs; 
+
 };
 
 
@@ -202,25 +244,9 @@ public:
 
 class GroupMinMaxReadPlan : public TableReadPlan
 {
-private:
-  bool have_min;
-  bool have_max;
-  KEY_PART_INFO *min_max_arg_part;
-  uint32_t group_prefix_len;
-  uint32_t used_key_parts;
-  uint32_t group_key_parts;
-  KEY *index_info;
-  uint32_t index;
-  uint32_t key_infix_len;
-  unsigned char key_infix[MAX_KEY_LENGTH];
-  SEL_TREE *range_tree; /* Represents all range predicates in the query. */
-  SEL_ARG *index_tree; /* The SEL_ARG sub-tree corresponding to index_info. */
-  uint32_t param_idx; /* Index of used key in param->key. */
-  /* Number of records selected by the ranges in index_tree. */
-public:
-  ha_rows quick_prefix_records;
 
 public:
+
   GroupMinMaxReadPlan(bool have_min_arg, 
                       bool have_max_arg,
                       KEY_PART_INFO *min_max_arg_part_arg,
@@ -258,6 +284,25 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
+
+  /* Number of records selected by the ranges in index_tree. */
+  ha_rows quick_prefix_records;
+
+private:
+
+  bool have_min;
+  bool have_max;
+  KEY_PART_INFO *min_max_arg_part;
+  uint32_t group_prefix_len;
+  uint32_t used_key_parts;
+  uint32_t group_key_parts;
+  KEY *index_info;
+  uint32_t index;
+  uint32_t key_infix_len;
+  unsigned char key_infix[MAX_KEY_LENGTH];
+  SEL_TREE *range_tree; /* Represents all range predicates in the query. */
+  SEL_ARG *index_tree; /* The SEL_ARG sub-tree corresponding to index_info. */
+  uint32_t param_idx; /* Index of used key in param->key. */
 };
 
 
