@@ -19,6 +19,7 @@
 #include <drizzled/unireg.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/message/statement_transform.h"
 
 #include "drizzled/internal/my_sys.h"
 
@@ -37,37 +38,6 @@
 using namespace std;
 
 namespace drizzled {
-
-drizzled::message::Table::Field::FieldType enum_field_types_to_field_message_type(const enum_field_types type)
-{
-  switch (type) {
-  case DRIZZLE_TYPE_LONG:
-    return message::Table::Field::INTEGER;
-  case DRIZZLE_TYPE_DOUBLE:
-    return message::Table::Field::DOUBLE;
-  case DRIZZLE_TYPE_NULL:
-    assert(1); /* Not a user definable type */
-    return message::Table::Field::INTEGER; /* unreachable */
-  case DRIZZLE_TYPE_TIMESTAMP:
-    return message::Table::Field::TIMESTAMP;
-  case DRIZZLE_TYPE_LONGLONG:
-    return message::Table::Field::BIGINT;
-  case DRIZZLE_TYPE_DATETIME:
-    return message::Table::Field::DATETIME;
-  case DRIZZLE_TYPE_DATE:
-    return message::Table::Field::DATE;
-  case DRIZZLE_TYPE_VARCHAR:
-    return message::Table::Field::VARCHAR;
-  case DRIZZLE_TYPE_DECIMAL:
-    return message::Table::Field::DECIMAL;
-  case DRIZZLE_TYPE_ENUM:
-    return message::Table::Field::ENUM;
-  case DRIZZLE_TYPE_BLOB:
-    return message::Table::Field::BLOB;
-  }
-
-  return message::Table::Field::INTEGER; /* unreachable */
-}
 
 int fill_table_proto(message::Table *table_proto,
                      const char *table_name,
@@ -125,7 +95,7 @@ int fill_table_proto(message::Table *table_proto,
 
     message::Table::Field::FieldType parser_type= attribute->type();
 
-    attribute->set_type(enum_field_types_to_field_message_type(field_arg->sql_type));
+    attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
 
     switch (attribute->type()) {
     default: /* Only deal with types that need extra information */
@@ -601,3 +571,4 @@ err_handler:
 } /* rea_create_table */
 
 } /* namespace drizzled */
+
