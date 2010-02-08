@@ -25,11 +25,14 @@
 #include <sstream>
 #include <string>
 
+namespace drizzled
+{
+
 /**
  * Interpret the first argument as a Julian Day Number and fill
  * our supplied temporal object.
  */
-bool Item_func_from_days::get_temporal(drizzled::Date &to)
+bool Item_func_from_days::get_temporal(Date &to)
 {
   assert(fixed);
 
@@ -60,3 +63,5 @@ bool Item_func_from_days::get_temporal(drizzled::Date &to)
   }
   return true;
 }
+
+} /* namespace drizzled */

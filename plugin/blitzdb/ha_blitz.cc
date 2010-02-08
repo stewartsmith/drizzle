@@ -20,6 +20,8 @@
 #include "ha_blitz.h"
 #include <sys/stat.h>
 
+using namespace drizzled;
+
 static int free_share(BlitzShare *share);
 static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;

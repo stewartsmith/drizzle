@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/sqrt.h>
 
+namespace drizzled
+{
+
 double Item_func_sqrt::val_real()
 {
   assert(fixed == 1);
@@ -30,3 +33,4 @@ double Item_func_sqrt::val_real()
   return sqrt(value);
 }
 
+} /* namespace drizzled */

@@ -18,11 +18,14 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/pad.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/alloc_buffer.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 void Item_func_rpad::fix_length_and_dec()
 {
@@ -226,3 +229,4 @@ err:
   return 0;
 }
 
+} /* namespace drizzled */

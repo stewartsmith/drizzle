@@ -19,6 +19,8 @@
 
 #include "ha_blitz.h"
 
+using namespace drizzled;
+
 /* Given two native rows, this function checks all unique fields to
    find whether the value has been updated. If a unique field value
    is updated, it checks if the new key exists in the database already.

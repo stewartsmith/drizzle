@@ -118,7 +118,7 @@ int drizzleclient_vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode
 {
   int r=0;
 
-  *old_mode= test(!(vio->fcntl_mode & O_NONBLOCK));
+  *old_mode= drizzled::test(!(vio->fcntl_mode & O_NONBLOCK));
 
   if (vio->sd >= 0)
   {

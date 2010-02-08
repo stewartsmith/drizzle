@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_format :public Item_str_func
 {
   String tmp_str;
@@ -32,5 +35,7 @@ public:
   const char *func_name() const { return "format"; }
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_FORMAT_H */

@@ -19,6 +19,8 @@
 
 #include "ha_blitz.h"
 
+using namespace drizzled;
+
 #define BLITZ_TC_EXTRA_MMAP_SIZE (1024 * 1024 * 256)
 #define BLITZ_TC_BUCKET_NUM 1000000
 

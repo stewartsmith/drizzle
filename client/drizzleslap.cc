@@ -97,13 +97,11 @@
 #include <drizzled/gettext.h>
 
 using namespace std;
+using namespace drizzled;
 
 #ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
 #endif
-
-extern "C"
-bool get_one_option(int optid, const struct my_option *, char *argument);
 
 /* Global Thread counter */
 uint32_t thread_counter;
@@ -325,16 +323,16 @@ int main(int argc, char **argv)
   option_string *eptr;
   unsigned int x;
 
-  my_init();
+  internal::my_init();
 
   MY_INIT(argv[0]);
 
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(&argc,&argv))
   {
-    free_defaults(defaults_argv);
-    my_end();
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
     exit(1);
   }
 
@@ -351,9 +349,9 @@ int main(int argc, char **argv)
 
   if (argc > 2)
   {
-    fprintf(stderr,"%s: Too many arguments\n",my_progname);
-    free_defaults(defaults_argv);
-    my_end();
+    fprintf(stderr,"%s: Too many arguments\n",internal::my_progname);
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
     exit(1);
   }
 
@@ -428,8 +426,8 @@ burnin:
   if (shared_memory_base_name)
     free(shared_memory_base_name);
 #endif
-  free_defaults(defaults_argv);
-  my_end();
+  internal::free_defaults(defaults_argv);
+  internal::my_end();
 
   return 0;
 }
@@ -711,7 +709,7 @@ static struct my_option my_long_options[] =
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname, SLAP_VERSION,
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
          drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
@@ -724,12 +722,12 @@ static void usage(void)
        \nand you are welcome to modify and redistribute it under the GPL \
        license\n");
   puts("Run a query multiple times against the server\n");
-  printf("Usage: %s [OPTIONS]\n",my_progname);
-  print_defaults("drizzle",load_default_groups);
+  printf("Usage: %s [OPTIONS]\n",internal::my_progname);
+  internal::print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
 }
 
-bool get_one_option(int optid, const struct my_option *, char *argument)
+static bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -1298,7 +1296,7 @@ get_options(int *argc,char ***argv)
   {
     fprintf(stderr,
             "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
-            my_progname);
+            internal::my_progname);
     exit(1);
   }
 
@@ -1307,7 +1305,7 @@ get_options(int *argc,char ***argv)
   {
     fprintf(stderr,
             "%s: Either auto-generate-sql-guid-primary or auto-generate-sql-add-autoincrement can be used!\n",
-            my_progname);
+            internal::my_progname);
     exit(1);
   }
 
@@ -1315,7 +1313,7 @@ get_options(int *argc,char ***argv)
   {
     fprintf(stderr,
             "%s: Either auto-generate-sql-execute-number or number-of-queries can be used!\n",
-            my_progname);
+            internal::my_progname);
     exit(1);
   }
 
@@ -1335,7 +1333,7 @@ get_options(int *argc,char ***argv)
                           S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
       {
         fprintf(stderr,"%s: Could not open csv file: %sn\n",
-                my_progname, opt_csv_str);
+                internal::my_progname, opt_csv_str);
         exit(1);
       }
     }
@@ -1456,7 +1454,7 @@ get_options(int *argc,char ***argv)
         {
           fprintf(stderr,
                   "%s: Can't perform key test without a primary key!\n",
-                  my_progname);
+                  internal::my_progname);
           exit(1);
         }
 
@@ -1492,7 +1490,7 @@ get_options(int *argc,char ***argv)
         {
           fprintf(stderr,
                   "%s: Can't perform update test without a primary key!\n",
-                  my_progname);
+                  internal::my_progname);
           exit(1);
         }
 
@@ -1540,12 +1538,12 @@ get_options(int *argc,char ***argv)
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
-                my_progname);
+                internal::my_progname);
         exit(1);
       }
       if ((data_file= open(create_string, O_RDWR)) == -1)
       {
-        fprintf(stderr,"%s: Could not open create file\n", my_progname);
+        fprintf(stderr,"%s: Could not open create file\n", internal::my_progname);
         exit(1);
       }
       if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
@@ -1597,12 +1595,12 @@ get_options(int *argc,char ***argv)
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
-                my_progname);
+                internal::my_progname);
         exit(1);
       }
       if ((data_file= open(user_supplied_query, O_RDWR)) == -1)
       {
-        fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
+        fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
         exit(1);
       }
       if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
@@ -1644,12 +1642,12 @@ get_options(int *argc,char ***argv)
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
-              my_progname);
+              internal::my_progname);
       exit(1);
     }
     if ((data_file= open(user_supplied_pre_statements, O_RDWR)) == -1)
     {
-      fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
+      fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
       exit(1);
     }
     if ((uint64_t)(sbuf.st_size + 1) > SIZE_MAX)
@@ -1691,12 +1689,12 @@ get_options(int *argc,char ***argv)
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
-              my_progname);
+              internal::my_progname);
       exit(1);
     }
     if ((data_file= open(user_supplied_post_statements, O_RDWR)) == -1)
     {
-      fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
+      fprintf(stderr,"%s: Could not open query supplied file\n", internal::my_progname);
       exit(1);
     }
 
@@ -1811,7 +1809,7 @@ generate_primary_key_list(drizzle_con_st *con, option_string *engine_stmt)
   {
     if (run_query(con, &result, "SELECT id from t1", strlen("SELECT id from t1")))
     {
-      fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", my_progname,
+      fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", internal::my_progname,
               drizzle_con_error(con));
       exit(1);
     }
@@ -1894,7 +1892,7 @@ create_schema(drizzle_con_st *con, const char *db, statement *stmt,
 
   if (run_query(con, NULL, query, len))
   {
-    fprintf(stderr,"%s: Cannot create schema %s : %s\n", my_progname, db,
+    fprintf(stderr,"%s: Cannot create schema %s : %s\n", internal::my_progname, db,
             drizzle_con_error(con));
     exit(1);
   }
@@ -1918,7 +1916,7 @@ create_schema(drizzle_con_st *con, const char *db, statement *stmt,
     if (drizzle_select_db(con,  &result, db, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
     {
-      fprintf(stderr,"%s: Cannot select schema '%s': %s\n",my_progname, db,
+      fprintf(stderr,"%s: Cannot select schema '%s': %s\n",internal::my_progname, db,
               ret == DRIZZLE_RETURN_ERROR_CODE ?
               drizzle_result_error(&result) : drizzle_con_error(con));
       exit(1);
@@ -1933,7 +1931,7 @@ create_schema(drizzle_con_st *con, const char *db, statement *stmt,
                   engine_stmt->string);
     if (run_query(con, NULL, query, len))
     {
-      fprintf(stderr,"%s: Cannot set default engine: %s\n", my_progname,
+      fprintf(stderr,"%s: Cannot set default engine: %s\n", internal::my_progname,
               drizzle_con_error(con));
       exit(1);
     }
@@ -1958,7 +1956,7 @@ limit_not_met:
       if (run_query(con, NULL, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
+                internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -1969,7 +1967,7 @@ limit_not_met:
       if (run_query(con, NULL, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
+                internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -2002,7 +2000,7 @@ drop_schema(drizzle_con_st *con, const char *db)
   if (run_query(con, NULL, query, len))
   {
     fprintf(stderr,"%s: Cannot drop database '%s' ERROR : %s\n",
-            my_progname, db, drizzle_con_error(con));
+            internal::my_progname, db, drizzle_con_error(con));
     exit(1);
   }
 
@@ -2021,7 +2019,7 @@ run_statements(drizzle_con_st *con, statement *stmt)
     if (run_query(con, NULL, ptr->string, ptr->length))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
+              internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
       exit(1);
     }
   }
@@ -2085,7 +2083,7 @@ run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
         if (pthread_create(&mainthread, &attr, run_task,
                            (void *)con) != 0)
         {
-          fprintf(stderr,"%s: Could not create thread\n", my_progname);
+          fprintf(stderr,"%s: Could not create thread\n", internal::my_progname);
           exit(1);
         }
         thread_counter++;
@@ -2105,7 +2103,7 @@ run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
     if (pthread_create(&mainthread, &attr, timer_thread,
                        (void *)&opt_timer_length) != 0)
     {
-      fprintf(stderr,"%s: Could not create timer thread\n", my_progname);
+      fprintf(stderr,"%s: Could not create timer thread\n", internal::my_progname);
       exit(1);
     }
   }
@@ -2246,7 +2244,7 @@ limit_not_met:
         if (run_query(&con, &result, buffer, length))
         {
           fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
+                  internal::my_progname, (uint32_t)length, buffer, drizzle_con_error(&con));
           exit(1);
         }
       }
@@ -2256,7 +2254,7 @@ limit_not_met:
       if (run_query(&con, &result, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(&con));
+                internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(&con));
         exit(1);
       }
     }
@@ -2577,7 +2575,7 @@ print_conclusions_csv(conclusions *con)
            con->real_users, /* Children used max_timing */
            con->avg_rows  /* Queries run */
            );
-  my_write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer), MYF(0));
+  internal::my_write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer), MYF(0));
 }
 
 void
@@ -2700,7 +2698,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
                           connect_to_schema ? create_schema_string : NULL,
                           opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
-    fprintf(stderr,"%s: Error creating drizzle object\n", my_progname);
+    fprintf(stderr,"%s: Error creating drizzle object\n", internal::my_progname);
     exit(1);
   }
 
@@ -2716,7 +2714,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
   }
   if (connect_error)
   {
-    fprintf(stderr,"%s: Error when connecting to server: %d %s\n", my_progname,
+    fprintf(stderr,"%s: Error when connecting to server: %d %s\n", internal::my_progname,
             ret, drizzle_con_error(con));
     exit(1);
   }

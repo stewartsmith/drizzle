@@ -24,8 +24,6 @@ noinst_HEADERS+= \
 		drizzled/internal/my_pthread.h \
 		drizzled/internal/my_static.h \
 		drizzled/internal/my_sys.h \
-		drizzled/internal/my_uctype.h \
-		drizzled/internal/mysys_priv.h \
 		drizzled/internal/t_ctype.h \
 		drizzled/internal/utf8.h
 
@@ -41,12 +39,6 @@ drizzled_internal_libinternal_la_LIBADD= \
 drizzled_internal_libinternal_la_SOURCES= \
 		drizzled/internal/bmove_upp.cc \
 		drizzled/internal/checksum.cc \
-		drizzled/internal/ctype-bin.cc \
-		drizzled/internal/ctype-mb.cc \
-		drizzled/internal/ctype-simple.cc \
-		drizzled/internal/ctype-uca.cc \
-		drizzled/internal/ctype-utf8.cc \
-		drizzled/internal/ctype.cc \
 		drizzled/internal/default.cc \
 		drizzled/internal/dtoa.cc \
 		drizzled/internal/int2str.cc \
@@ -73,7 +65,6 @@ drizzled_internal_libinternal_la_SOURCES= \
 		drizzled/internal/my_copy.cc \
 		drizzled/internal/my_create.cc \
 		drizzled/internal/my_delete.cc \
-		drizzled/internal/my_getsystime.cc \
 		drizzled/internal/my_init.cc \
 		drizzled/internal/my_open.cc \
 		drizzled/internal/my_read.cc \

@@ -31,6 +31,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
 ** long int
@@ -286,3 +288,4 @@ const unsigned char *Field_long::unpack(unsigned char* to, const unsigned char *
   return from + sizeof(val);
 }
 
+} /* namespace drizzled */

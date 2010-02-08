@@ -115,6 +115,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /*
   Internally decimal numbers are stored base 10^9 (see DIG_BASE below)
@@ -920,8 +922,8 @@ internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
   if (endp+1 < end_of_string && (*endp == 'e' || *endp == 'E'))
   {
     int str_error;
-    const int64_t exponent= my_strtoll10(endp+1, (char**) &end_of_string,
-                                    &str_error);
+    const int64_t exponent= internal::my_strtoll10(endp+1, (char**) &end_of_string,
+                                                   &str_error);
 
     if (end_of_string != endp +1)               /* If at least one digit */
     {
@@ -974,7 +976,7 @@ int decimal2double(const decimal_t *from, double *to)
   rc = decimal2string(from, strbuf, &len, 0, 0, 0);
   end= strbuf + len;
 
-  *to= my_strtod(strbuf, &end, &error);
+  *to= internal::my_strtod(strbuf, &end, &error);
 
   return (rc != E_DEC_OK) ? rc : (error ? E_DEC_OVERFLOW : E_DEC_OK);
 }
@@ -995,7 +997,9 @@ int double2decimal(const double from, decimal_t *to)
 {
   char buff[FLOATING_POINT_BUFFER], *end;
   int res;
-  end= buff + my_gcvt(from, MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
+  end= buff + internal::my_gcvt(from,
+                                internal::MY_GCVT_ARG_DOUBLE,
+                                sizeof(buff) - 1, buff, NULL);
   res= string2decimal(buff, to, &end);
   return(res);
 }
@@ -2343,6 +2347,8 @@ int decimal_mod(const decimal_t *from1, const decimal_t *from2, decimal_t *to)
   return do_div_mod(from1, from2, 0, to, 0);
 }
 
+} /* namespace drizzled */
+
 #ifdef MAIN
 
 int full= 0;
@@ -2486,7 +2492,7 @@ void test_ull2d(uint64_t from, const char *orig, int ex)
   int res;
 
   res=uint64_t2decimal(from, &a);
-  int64_t10_to_str(from,s,10);
+  internal::int64_t10_to_str(from,s,10);
   printf("%-40s => res=%d    ", s, res);
   print_decimal(&a, orig, res, ex);
   printf("\n");
@@ -2498,7 +2504,7 @@ void test_ll2d(int64_t from, const char *orig, int ex)
   int res;
 
   res=int64_t2decimal(from, &a);
-  int64_t10_to_str(from,s,-10);
+  internal::int64_t10_to_str(from,s,-10);
   printf("%-40s => res=%d    ", s, res);
   print_decimal(&a, orig, res, ex);
   printf("\n");
@@ -2514,7 +2520,7 @@ void test_d2ull(const char *s, const char *orig, int ex)
   string2decimal(s, &a, &end);
   res=decimal2uint64_t(&a, &x);
   if (full) dump_decimal(&a);
-  int64_t10_to_str(x,s1,10);
+  internal::int64_t10_to_str(x,s1,10);
   printf("%-40s => res=%d    %s\n", s, res, s1);
   check_result_code(res, ex);
   if (orig && strcmp(orig, s1))
@@ -2534,7 +2540,7 @@ void test_d2ll(const char *s, const char *orig, int ex)
   string2decimal(s, &a, &end);
   res=decimal2int64_t(&a, &x);
   if (full) dump_decimal(&a);
-  int64_t10_to_str(x,s1,-10);
+  internal::int64_t10_to_str(x,s1,-10);
   printf("%-40s => res=%d    %s\n", s, res, s1);
   check_result_code(res, ex);
   if (orig && strcmp(orig, s1))

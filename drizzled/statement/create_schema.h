@@ -24,10 +24,10 @@
 #include <drizzled/statement.h>
 #include <drizzled/message/schema.pb.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -43,7 +43,7 @@ public:
 
   bool execute();
   bool is_if_not_exists;
-  drizzled::message::Schema schema_message;
+  message::Schema schema_message;
 };
 
 } /* end namespace statement */

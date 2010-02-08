@@ -104,8 +104,8 @@ public:
   int shutdown(void);
 
   /* DATA DICTIONARY CREATION RELATED */
-  int create_data_table(drizzled::message::Table &proto, Table &table,
-                        const char *path);
+  int create_data_table(drizzled::message::Table &proto,
+                        drizzled::Table &table, const char *path);
   int open_data_table(const char *path, const int mode);
   int close_data_table(void);
   bool rename_table(const char *from, const char *to);
@@ -217,10 +217,10 @@ public:
   bool primary_key_exists; /* Whether a PK exists in this table */
 };
 
-class ha_blitz: public Cursor {
+class ha_blitz: public drizzled::Cursor {
 private:
-  BlitzShare *share;         /* Shared object among all threads */
-  THR_LOCK_DATA lock;        /* Drizzle Lock */
+  BlitzShare *share;            /* Shared object among all threads */
+  drizzled::THR_LOCK_DATA lock; /* Drizzle Lock */
 
   /* THREAD STATE */
   bool table_scan;           /* Whether a table scan is occuring */
@@ -247,7 +247,8 @@ private:
   int errkey_id;
 
 public:
-  ha_blitz(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg);
+  ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
+           drizzled::TableShare &table_arg);
   ~ha_blitz() {}
 
   /* TABLE CONTROL RELATED FUNCTIONS */
@@ -272,10 +273,10 @@ public:
   //int index_next(unsigned char *buf);
   //int index_prev(unsigned char *buf);
   int index_read(unsigned char *buf, const unsigned char *key,
-                 uint32_t key_len, enum ha_rkey_function find_flag);
+                 uint32_t key_len, enum drizzled::ha_rkey_function find_flag);
   int index_read_idx(unsigned char *buf, uint32_t key_num,
                      const unsigned char *key, uint32_t key_len,
-                     enum ha_rkey_function find_flag);
+                     enum drizzled::ha_rkey_function find_flag);
   int index_end(void);
 
   /* UPDATE RELATED FUNCTIONS */
@@ -317,13 +318,14 @@ class BlitzEngine : public drizzled::plugin::StorageEngine {
 public:
   BlitzEngine(const string &name_arg)
     : drizzled::plugin::StorageEngine(name_arg,
-                                      HTON_FILE_BASED |
-                                      HTON_STATS_RECORDS_IS_EXACT |
-                                      HTON_SKIP_STORE_LOCK) {
+                                      drizzled::HTON_FILE_BASED |
+                                      drizzled::HTON_STATS_RECORDS_IS_EXACT |
+                                      drizzled::HTON_SKIP_STORE_LOCK) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 
-  virtual Cursor *create(TableShare &table, drizzled::memory::Root *mem_root) {
+  virtual drizzled::Cursor *create(drizzled::TableShare &table,
+                                   drizzled::memory::Root *mem_root) {
     return new (mem_root) ha_blitz(*this, table);
   }
 
@@ -331,14 +333,15 @@ public:
     return ha_blitz_exts;
   }
 
-  int doCreateTable(Session *session, const char *table_name,
-                    Table &table_arg, drizzled::message::Table&);
+  int doCreateTable(drizzled::Session *session, const char *table_name,
+                    drizzled::Table &table_arg, drizzled::message::Table&);
 
-  int doRenameTable(Session *session, const char *from, const char *to);
+  int doRenameTable(drizzled::Session *session, const char *from, const char *to);
 
-  int doDropTable(Session&, const string table_name); 
+  int doDropTable(drizzled::Session&, const string table_name); 
 
-  int doGetTableDefinition(Session& session, const char *path, const char *db,
+  int doGetTableDefinition(drizzled::Session& session,
+                           const char *path, const char *db,
                            const char *table_name, const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
@@ -349,7 +352,7 @@ public:
   uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }
   uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LEN; }
 
-  uint32_t index_flags(enum ha_key_alg) const {
+  uint32_t index_flags(enum drizzled::ha_key_alg) const {
     return (HA_ONLY_WHOLE_INDEX | HA_KEYREAD_ONLY);
   }
 };

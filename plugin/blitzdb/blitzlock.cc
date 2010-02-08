@@ -19,6 +19,8 @@
 
 #include "ha_blitz.h"
 
+using namespace drizzled;
+
 BlitzLock::BlitzLock() : scanner_count(0), updater_count(0) {
   pthread_cond_init(&condition, NULL);
   pthread_mutex_init(&mutex, NULL);

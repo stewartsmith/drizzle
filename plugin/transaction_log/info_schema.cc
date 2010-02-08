@@ -61,6 +61,7 @@
 #include "config.h"
 #include <drizzled/session.h>
 #include <drizzled/show.h>
+#include <drizzled/util/functors.h>
 
 #include "transaction_log.h"
 #include "transaction_log_entry.h"
@@ -79,16 +80,6 @@ using namespace drizzled;
 
 extern TransactionLog *transaction_log; /* the singleton transaction log */
 extern TransactionLogIndex *transaction_log_index; /* the singleton transaction log index */
-
-class DeletePtr
-{
-public:
-  template<typename T>
-  inline void operator()(const T *ptr) const
-  {
-    delete ptr;
-  }
-};
 
 /*
  * Vectors of columns for I_S tables.

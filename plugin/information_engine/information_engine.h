@@ -35,10 +35,10 @@ class InformationEngine : public drizzled::plugin::StorageEngine
 public:
   InformationEngine(const std::string &name_arg)
     : drizzled::plugin::StorageEngine(name_arg,
-                                      HTON_ALTER_NOT_SUPPORTED |
-                                      HTON_SKIP_STORE_LOCK |
-                                      HTON_HIDDEN |
-                                      HTON_TEMPORARY_NOT_SUPPORTED)
+                                      drizzled::HTON_ALTER_NOT_SUPPORTED |
+                                      drizzled::HTON_SKIP_STORE_LOCK |
+                                      drizzled::HTON_HIDDEN |
+                                      drizzled::HTON_TEMPORARY_NOT_SUPPORTED)
   {
     pthread_mutex_init(&mutex, NULL);
   }
@@ -55,7 +55,7 @@ public:
     drizzled::plugin::InfoSchemaTable *table;
 
   public:
-    THR_LOCK lock;
+    drizzled::THR_LOCK lock;
 
     Share(const std::string &in_name) :
       count(1)
@@ -143,20 +143,21 @@ public:
   void freeShare(Share *share);
 
 
-  int doCreateTable(Session *,
+  int doCreateTable(drizzled::Session *,
                     const char *,
-                    Table&,
+                    drizzled::Table&,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(Session&, const std::string) 
+  int doDropTable(drizzled::Session&, const std::string) 
   { 
     return EPERM; 
   }
 
-  virtual Cursor *create(TableShare &table, drizzled::memory::Root *mem_root);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table,
+                                   drizzled::memory::Root *mem_root);
 
   const char **bas_ext() const 
   {
@@ -167,7 +168,7 @@ public:
                        std::string &db, 
                        std::set<std::string> &set_of_names);
 
-  int doGetTableDefinition(Session &session,
+  int doGetTableDefinition(drizzled::Session &session,
                            const char *path,
                            const char *db,
                            const char *table_name,
