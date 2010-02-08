@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SELECT_SUBSELECT_H
 #define DRIZZLED_SELECT_SUBSELECT_H
 
+namespace drizzled
+{
 
 /* Base subselect interface class */
 class select_subselect :public select_result_interceptor
@@ -32,5 +34,7 @@ public:
   bool send_data(List<Item> &items)=0;
   bool send_eof() { return 0; };
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_SUBSELECT_H */

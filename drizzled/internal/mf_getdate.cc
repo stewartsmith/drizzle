@@ -15,9 +15,16 @@
 
 /* Get date in a printable form: yyyy-mm-dd hh:mm:ss */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
-#include <stdio.h>
+#include <cstdio>
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   get date as string
@@ -71,3 +78,6 @@ void get_date(register char * to, int flag, time_t date)
 	     start_time->tm_min,
 	     start_time->tm_sec);
 } /* get_date */
+
+} /* namespace internal */
+} /* namespace drizzled */

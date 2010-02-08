@@ -18,12 +18,15 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/session.h>
 
 #include "drizzled/temporal.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_unix_timestamp::val_int()
 {
@@ -50,7 +53,7 @@ int64_t Item_func_unix_timestamp::val_int()
     return 0;
   }
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
 
   temporal.set_years(ltime.year);
   temporal.set_months(ltime.month);
@@ -63,10 +66,10 @@ int64_t Item_func_unix_timestamp::val_int()
   if (! temporal.is_valid())
   {
     null_value= true;
-    char buff[drizzled::DateTime::MAX_STRING_LENGTH];
+    char buff[DateTime::MAX_STRING_LENGTH];
     int buff_len;
-    buff_len= temporal.to_string(buff, drizzled::DateTime::MAX_STRING_LENGTH);
-    assert((buff_len+1) < drizzled::DateTime::MAX_STRING_LENGTH);
+    buff_len= temporal.to_string(buff, DateTime::MAX_STRING_LENGTH);
+    assert((buff_len+1) < DateTime::MAX_STRING_LENGTH);
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), buff);
     return 0;
   }
@@ -76,3 +79,5 @@ int64_t Item_func_unix_timestamp::val_int()
 
   return (int64_t) tmp;
 }
+
+} /* namespace drizzled */

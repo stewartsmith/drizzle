@@ -22,9 +22,8 @@
 
 #include "drizzled/my_error.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+namespace drizzled
+{
 
 bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
@@ -727,8 +726,6 @@ enum drizzled_error_code {
   ER_ERROR_LAST= ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE
 };
 
-#ifdef  __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ERROR_H */

@@ -17,5 +17,5 @@
 
 .PHONY: test test-all test-drizzle test-valgrind test-junitxml test-big test-big-juinitxml test-plugins
 
-test test-all test-drizzle test-valgrind test-junitxml test-big test-big-juinitxml test-plugins:
+test test-all test-drizzle test-valgrind test-junitxml test-big test-big-juinitxml test-plugins test-jp:
 	@cd ${top_builddir} && $(MAKE) $(AM_MAKEFLAGS) $@

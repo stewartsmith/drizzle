@@ -28,7 +28,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 
 optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_param,
@@ -283,7 +285,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
     key_names->append(key_info->name);
-    length= int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 
@@ -292,9 +294,10 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
     KEY *key_info= head->key_info + cpk_quick->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
+    length= internal::int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
 }
 
+} /* namespace drizzled */

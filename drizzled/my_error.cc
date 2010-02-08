@@ -22,6 +22,9 @@
 #include "drizzled/my_error.h"
 #include "drizzled/definitions.h"
 
+namespace drizzled
+{
+
 /* Error message numbers in global map */
 const char * globerrs[GLOBERRS];
 
@@ -295,3 +298,5 @@ void my_error_unregister_all(void)
   }
   my_errmsgs_list= &my_errmsgs_globerrs;
 }
+
+} /* namespace drizzled */

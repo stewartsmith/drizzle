@@ -22,6 +22,9 @@
 
 #include "drizzled/item/basic_constant.h"
 
+namespace drizzled
+{
+
 class Item_null :public Item_basic_constant
 {
 public:
@@ -42,7 +45,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   int save_in_field(Field *field, bool no_conversions);
   int save_safe_in_field(Field *field);
-  bool send(drizzled::plugin::Client *client, String *str);
+  bool send(plugin::Client *client, String *str);
   enum Item_result result_type () const { return STRING_RESULT; }
   enum_field_types field_type() const   { return DRIZZLE_TYPE_NULL; }
   bool basic_const_item() const { return 1; }
@@ -65,5 +68,7 @@ public:
     save_in_field(result_field, no_conversions);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_NULL_H */

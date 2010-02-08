@@ -23,6 +23,9 @@
 
 #include <drizzled/field.h>
 
+namespace drizzled
+{
+
 typedef struct charset_info_st CHARSET_INFO;
 
 /* base class for all string related classes */
@@ -95,5 +98,7 @@ bool check_string_copy_error(Field_str *field,
                              const char *end,
                              const CHARSET_INFO * const cs);
 
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_STR_H */

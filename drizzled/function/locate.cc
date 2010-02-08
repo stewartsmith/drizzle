@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/locate.h>
+
+namespace drizzled
+{
 
 void Item_func_locate::fix_length_and_dec()
 {
@@ -83,3 +86,4 @@ void Item_func_locate::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

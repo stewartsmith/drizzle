@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_rpad :public Item_str_func
 {
   String tmp_value, rpad_str;
@@ -44,5 +47,7 @@ public:
   void fix_length_and_dec();
   const char *func_name() const { return "lpad"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_PAD_H */

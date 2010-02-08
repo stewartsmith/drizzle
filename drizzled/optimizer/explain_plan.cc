@@ -33,7 +33,9 @@
 #include <sstream>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 static const string access_method_str[]=
 {
@@ -255,7 +257,7 @@ void optimizer::ExplainPlan::printPlan()
         item_list.push_back(new Item_string(key_info->name,
                                             strlen(key_info->name),
                                             system_charset_info));
-        uint32_t length= int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
+        uint32_t length= internal::int64_t2str(tab->ref.key_length, keylen_str_buf, 10) -
                                      keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, 
                                             length,
@@ -275,7 +277,7 @@ void optimizer::ExplainPlan::printPlan()
         KEY *key_info=table->key_info+ tab->index;
         item_list.push_back(new Item_string(key_info->name,
               strlen(key_info->name),cs));
-        uint32_t length= int64_t2str(key_info->key_length, keylen_str_buf, 10) -
+        uint32_t length= internal::int64_t2str(key_info->key_length, keylen_str_buf, 10) -
                                      keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf,
                                             length,
@@ -575,3 +577,5 @@ bool optimizer::ExplainPlan::explainUnion(Session *session,
   }
   return (res || session->is_error());
 }
+
+} /* namespace drizzled */

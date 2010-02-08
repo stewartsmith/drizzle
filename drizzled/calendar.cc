@@ -40,6 +40,9 @@
 
 #include "drizzled/calendar.h"
 
+namespace drizzled
+{
+
 /** Static arrays for number of days in a month and their "day ends" */
 static const uint32_t __leap_days_in_month[12]=       {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static const uint32_t __normal_days_in_month[12]=     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -492,3 +495,5 @@ uint32_t months_to_year_month(uint32_t months)
 
   return (years * 100) + (months % 12) + 1;
 }
+
+} /* namespace drizzled */

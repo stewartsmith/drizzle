@@ -20,12 +20,12 @@
 #ifndef DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H
 #define DRIZZLED_OPTIMIZER_EXPLAIN_PLAN_H
 
+namespace drizzled
+{
+
 class Session;
 class Select_Lex_Unit;
 class select_result;
-
-namespace drizzled
-{
 
 namespace optimizer
 {

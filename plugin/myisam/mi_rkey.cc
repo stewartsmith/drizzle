@@ -17,6 +17,8 @@
 
 #include "myisam_priv.h"
 
+using namespace drizzled;
+
 	/* Read a record using key */
 	/* Ordinary search_flag is 0 ; Give error if no record with key */
 

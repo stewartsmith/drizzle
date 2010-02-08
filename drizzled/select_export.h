@@ -21,12 +21,13 @@
 #ifndef DRIZZLED_SELECT_EXPORT_H
 #define DRIZZLED_SELECT_EXPORT_H
 
-
 /*
  List of all possible characters of a numeric value text representation.
 */
 #define NUMERIC_CHARS ".0123456789e+-"
 
+namespace drizzled
+{
 
 class select_export :public select_to_file {
   uint32_t field_term_length;
@@ -57,5 +58,7 @@ public:
   int prepare(List<Item> &list, Select_Lex_Unit *u);
   bool send_data(List<Item> &items);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_EXPORT_H */

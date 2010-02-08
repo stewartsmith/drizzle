@@ -21,6 +21,9 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
+namespace drizzled
+{
+
 /**
   Query type constants.
 
@@ -291,7 +294,6 @@ enum enum_sql_command {
   SQLCOM_SHOW_KEYS,
   SQLCOM_SHOW_VARIABLES,
   SQLCOM_SHOW_STATUS,
-  SQLCOM_SHOW_ENGINE_STATUS,
   SQLCOM_SHOW_ENGINE_MUTEX,
   SQLCOM_SHOW_PROCESSLIST,
   SQLCOM_SHOW_CREATE,
@@ -317,7 +319,6 @@ enum enum_sql_command {
   SQLCOM_RELEASE_SAVEPOINT,
   SQLCOM_BEGIN,
   SQLCOM_RENAME_TABLE,
-  SQLCOM_SHOW_OPEN_TABLES,
   SQLCOM_SHOW_WARNS,
   SQLCOM_EMPTY_QUERY,
   SQLCOM_SHOW_ERRORS,
@@ -336,5 +337,7 @@ enum enum_duplicates
   DUP_REPLACE,
   DUP_UPDATE
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ENUM_H */

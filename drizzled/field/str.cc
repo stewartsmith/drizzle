@@ -26,7 +26,13 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+
+namespace internal
+{
 extern char _dig_vec_upper[];
+}
 
 Field_str::Field_str(unsigned char *ptr_arg,
                      uint32_t len_arg,
@@ -135,7 +141,7 @@ int Field_str::store(double nr)
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
+  length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
     if (table->in_use->abort_on_warning)
@@ -184,8 +190,8 @@ bool check_string_copy_error(Field_str *field,
     {
       *t++= '\\';
       *t++= 'x';
-      *t++= _dig_vec_upper[((unsigned char) *pos) >> 4];
-      *t++= _dig_vec_upper[((unsigned char) *pos) & 15];
+      *t++= internal::_dig_vec_upper[((unsigned char) *pos) >> 4];
+      *t++= internal::_dig_vec_upper[((unsigned char) *pos) & 15];
     }
   }
   if (end_orig > end)
@@ -211,3 +217,4 @@ uint32_t Field_str::max_data_length() const
   return field_length + (field_length > 255 ? 2 : 1);
 }
 
+} /* namespace drizzled */

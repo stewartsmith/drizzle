@@ -13,7 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/my_error.h"
 
 #include <fcntl.h>
@@ -21,6 +23,12 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+
+
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Open a file
@@ -121,3 +129,6 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
   }
   return -1;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

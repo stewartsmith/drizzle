@@ -24,6 +24,9 @@
 #include "drizzled/item/field.h"
 #include "drizzled/item/basic_constant.h"
 
+namespace drizzled
+{
+
 class Item_cache: public Item_basic_constant
 {
 protected:
@@ -83,5 +86,7 @@ public:
     return test(example && example->basic_const_item());
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_H */

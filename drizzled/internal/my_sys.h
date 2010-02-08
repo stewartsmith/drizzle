@@ -53,6 +53,11 @@ extern int errno;			/* declare errno */
 
 #include "drizzled/qsort_cmp.h"
 
+namespace drizzled
+{
+namespace internal
+{
+
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC      0
 #endif
@@ -60,13 +65,20 @@ extern int errno;			/* declare errno */
 #define MAP_NORESERVE 0         /* For irix and AIX */
 #endif
 
+/*
+  EDQUOT is used only in 3 C files only in mysys/. If it does not exist on
+  system, we set it to some value which can never happen.
+*/
+#ifndef EDQUOT
+#define EDQUOT (-1)
+#endif
 
 /* Sun Studio does not inject this into main namespace yet */
 #if defined(__cplusplus)
   using std::FILE;
 #endif
 
-#define MY_INIT(name);		{ my_progname= name; my_init(); }
+#define MY_INIT(name);		{ ::drizzled::internal::my_progname= name; ::drizzled::internal::my_init(); }
 
 
 	/* General bitmaps for my_func's */
@@ -130,9 +142,6 @@ extern int errno;			/* declare errno */
 #define GETDATE_GMT		8
 #define GETDATE_FIXEDLENGTH	16
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef uint64_t my_off_t;
 
@@ -349,8 +358,7 @@ extern void thd_increment_bytes_sent(uint32_t length);
 extern void thd_increment_bytes_received(uint32_t length);
 extern void thd_increment_net_big_packet_count(uint32_t length);
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_MY_SYS_H */

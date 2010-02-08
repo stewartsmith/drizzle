@@ -45,6 +45,8 @@
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
+namespace drizzled
+{
 
 static void do_field_eq(CopyField *copy)
 {
@@ -821,3 +823,5 @@ int field_conv(Field *to,Field *from)
   else
     return to->store(from->val_int(), test(from->flags & UNSIGNED_FLAG));
 }
+
+} /* namespace drizzled */
