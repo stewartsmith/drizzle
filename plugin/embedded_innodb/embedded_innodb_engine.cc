@@ -35,6 +35,8 @@
 
 #include "libinnodb_version_func.h"
 
+#include "embedded_innodb-1.0/innodb.h"
+
 using namespace std;
 using namespace google;
 using namespace drizzled;
@@ -234,6 +236,19 @@ static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
 static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 {
+  int err;
+
+  ib_init();
+  /* call ib_cfg_*() */
+
+  err= ib_startup("barracuda");
+
+  if (err != DB_SUCCESS)
+  {
+    fprintf(stderr, "Error starting Embedded InnoDB %d\n", err);
+    return -1;
+  }
+
   embedded_innodb_engine= new EmbeddedInnoDBEngine("EmbeddedInnoDB");
   registry.add(embedded_innodb_engine);
 
@@ -244,10 +259,20 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 
 static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
 {
+  int err;
+
   registry.remove(embedded_innodb_engine);
   delete embedded_innodb_engine;
 
   libinnodb_version_func_finalize(registry);
+
+  err= ib_shutdown();
+
+  if (err != DB_SUCCESS)
+  {
+    fprintf(stderr,"Error %d shutting down Embedded InnoDB!", err);
+    return err;
+  }
 
   return 0;
 }
