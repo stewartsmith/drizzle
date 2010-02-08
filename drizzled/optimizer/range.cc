@@ -1260,7 +1260,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
     all_scans_ror_able &= ((*ptree)->n_ror_scans > 0);
     all_scans_rors &= (*cur_child)->is_ror;
     if (pk_is_clustered &&
-        param->real_keynr[(*cur_child)->key_idx] ==
+        param->real_keynr[(*cur_child)->getKeyIndex()] ==
         param->table->s->primary_key)
     {
       cpk_scan= cur_child;
@@ -1368,7 +1368,7 @@ skip_to_ror_scan:
     {
       /* Ok, we have index_only cost, now get full rows scan cost */
       cost= param->table->cursor->
-              read_time(param->real_keynr[(*cur_child)->key_idx], 1,
+              read_time(param->real_keynr[(*cur_child)->getKeyIndex()], 1,
                         (*cur_child)->records) +
               rows2double((*cur_child)->records) / TIME_FOR_COMPARE;
     }
@@ -2352,7 +2352,7 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
       read_plan->records= best_records;
       read_plan->is_ror= tree->ror_scans_map.test(idx);
       read_plan->read_cost= read_time;
-      read_plan->mrr_buf_size= best_buf_size;
+      read_plan->setMRRBufferSize(best_buf_size);
     }
   }
 

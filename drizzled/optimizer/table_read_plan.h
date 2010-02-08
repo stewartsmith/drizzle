@@ -100,20 +100,41 @@ class RangeReadPlan : public TableReadPlan
 
 public:
 
-  SEL_ARG *key; /* set of intervals to be used in "range" method retrieval */
-  uint32_t     key_idx; /* key number in Parameter::key */
-  uint32_t     mrr_flags;
-  uint32_t     mrr_buf_size;
-
   RangeReadPlan(SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
     :
       key(key_arg),
       key_idx(idx_arg),
-      mrr_flags(mrr_flags_arg)
+      mrr_flags(mrr_flags_arg),
+      mrr_buf_size(0)
   {}
+
   virtual ~RangeReadPlan() {}                     /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param, bool, memory::Root *parent_alloc);
+
+  void setMRRBufferSize(uint32_t in_mrr_buf_size)
+  {
+    mrr_buf_size= in_mrr_buf_size;
+  }
+
+  uint32_t getKeyIndex() const
+  {
+    return key_idx;
+  }
+
+  uint32_t getMRRBufferSize() const
+  {
+    return mrr_buf_size;
+  }
+
+private:
+
+  /** set of intervals to be used in "range" method retrieval */
+  SEL_ARG *key;
+  /** key number in Parameter::key */
+  uint32_t     key_idx;
+  uint32_t     mrr_flags;
+  uint32_t     mrr_buf_size;
 
 };
 
