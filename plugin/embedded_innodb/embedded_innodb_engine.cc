@@ -38,7 +38,7 @@ using namespace std;
 using namespace google;
 using namespace drizzled;
 
-#define EMBEDDED_INNODB_EXT ".EINNODB"
+#define EMBEDDED_INNODB_EXT ".EID"
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
   NULL
