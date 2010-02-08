@@ -249,7 +249,7 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
     return -1;
   }
 
-  embedded_innodb_engine= new EmbeddedInnoDBEngine("EmbeddedInnoDB");
+  embedded_innodb_engine= new EmbeddedInnoDBEngine("InnoDB");
   registry.add(embedded_innodb_engine);
 
   libinnodb_version_func_initialize(registry);
@@ -277,10 +277,26 @@ static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
   return 0;
 }
 
+static char* innodb_data_file_path= NULL;
+
+static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Placeholder to be compatible with InnoDB plugin.",
+  NULL, NULL, NULL);
+static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
+  "Placeholder: to be compatible with InnoDB plugin.",
+  NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
+
+static drizzle_sys_var* innobase_system_variables[]= {
+  DRIZZLE_SYSVAR(data_file_path),
+  DRIZZLE_SYSVAR(lock_wait_timeout),
+  NULL
+};
+
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "EMBEDDED_INNODB",
+  "INNODB",
   "1.0",
   "Stewart Smith",
   "Used to test rest of server with various table proto messages",
@@ -288,7 +304,7 @@ DRIZZLE_DECLARE_PLUGIN
   embedded_innodb_init,     /* Plugin Init */
   embedded_innodb_fini,     /* Plugin Deinit */
   NULL,               /* status variables */
-  NULL,               /* system variables */
+  innobase_system_variables, /* system variables */
   NULL                /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
