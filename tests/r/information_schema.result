@@ -421,7 +421,7 @@ SELECT *
 FROM data_dictionary.character_sets
 ORDER BY character_set_name;
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-binary	binary		1
+binary	binary	UTF-8 Unicode	1
 utf8	utf8_general_ci	UTF-8 Unicode	4
 SELECT *
 FROM data_dictionary.collations
