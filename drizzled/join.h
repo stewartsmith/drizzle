@@ -109,10 +109,10 @@ public:
   bool simple_group;
   /**
     Is set only in case if we have a GROUP BY clause
-    and no order_st BY after constant elimination of 'order'.
+    and no ORDER BY after constant elimination of 'order'.
   */
   bool no_order;
-  /** Is set if we have a GROUP BY and we have order_st BY on a constant. */
+  /** Is set if we have a GROUP BY and we have ORDER BY on a constant. */
   bool skip_sort_order;
   bool union_part; /**< this subselect is part of union */
   bool optimized; /**< flag to avoid double optimization in EXPLAIN */
