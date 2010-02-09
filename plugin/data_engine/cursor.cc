@@ -67,6 +67,12 @@ int FunctionCursor::rnd_next(unsigned char *)
   bool more_rows;
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
 
+  /* Fix bug in the debug logic for field */
+  for (Field **field=table->field ; *field ; field++)
+  {
+    (*field)->setWriteSet();
+  }
+
   more_rows= generator->sub_populate(table->s->fields);
 
   if (more_rows)
