@@ -579,7 +579,7 @@ public:
     if (ret != ENOENT)
       *err= ret;
 
-    return *err == EEXIST;
+    return *err == EEXIST || *err != ENOENT;
   }
 };
 
@@ -705,6 +705,13 @@ int plugin::StorageEngine::dropTable(Session& session,
                                                          identifier,
                                                          &src_proto);
 
+  if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
+  {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             src_proto.InitializationErrorString().c_str());
+    return ER_CORRUPT_TABLE_DEFINITION;
+  }
+
   engine= plugin::StorageEngine::findByName(session,
                                             src_proto.engine().name());
 
@@ -731,6 +738,14 @@ int plugin::StorageEngine::dropTable(Session& session,
 
   if (error_proto && error == 0)
     return 0;
+
+  if (((error_proto != EEXIST && error_proto != ENOENT)
+      && !engine && generate_warning)
+      | ( error && !engine && generate_warning))
+  {
+    my_error(ER_GET_ERRNO, MYF(0), error_proto);
+    return error_proto;
+  }
 
   if (error && generate_warning)
   {
