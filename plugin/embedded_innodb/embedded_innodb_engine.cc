@@ -121,11 +121,73 @@ int EmbeddedInnoDBCursor::close(void)
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doCreateTable(Session*, const char *,
-                                   Table&,
-                                   drizzled::message::Table&)
+int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
+                                   Table& table_obj,
+                                   drizzled::message::Table& table_message)
 {
-  return EEXIST;
+  ib_tbl_sch_t innodb_table_schema= NULL;
+  ib_idx_sch_t innodb_pkey= NULL;
+  ib_trx_t innodb_schema_transaction;
+  ib_id_t innodb_table_id;
+  ib_err_t innodb_err= DB_SUCCESS;
+
+  (void)session;
+  (void)table_obj;
+  (void)table_message;
+
+  innodb_err= ib_table_schema_create(path+2, &innodb_table_schema, IB_TBL_COMPACT, 0);
+
+  if (innodb_err != DB_SUCCESS)
+  {
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_CREATE_TABLE,
+                        _("Cannot create table %s. InnoDB Error %d (%s)\n"),
+                        path, innodb_err, ib_strerror(innodb_err));
+    return HA_ERR_GENERIC;
+  }
+
+  ib_table_schema_add_col(innodb_table_schema, "c1", IB_VARCHAR, IB_COL_NONE, 0, 32);
+
+  ib_table_schema_add_index(innodb_table_schema, "PRIMARY_KEY", &innodb_pkey);
+  ib_index_schema_add_col(innodb_pkey, "c1", 0);
+
+  ib_index_schema_set_clustered(innodb_pkey);
+
+  innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  ib_schema_lock_exclusive(innodb_schema_transaction);
+
+  innodb_err= ib_table_create(innodb_schema_transaction, innodb_table_schema,
+                              &innodb_table_id);
+
+  if (innodb_err != DB_SUCCESS)
+  {
+    ib_trx_rollback(innodb_schema_transaction);
+    ib_table_schema_delete(innodb_table_schema);
+
+    if (innodb_err == DB_TABLE_IS_BEING_USED)
+      return EEXIST;
+
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_CREATE_TABLE,
+                        _("Cannot create table %s. InnoDB Error %d (%s)\n"),
+                        path, innodb_err, ib_strerror(innodb_err));
+    return HA_ERR_GENERIC;
+  }
+
+  innodb_err= ib_trx_commit(innodb_schema_transaction);
+
+  ib_table_schema_delete(innodb_table_schema);
+
+  if (innodb_err != DB_SUCCESS)
+  {
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_CREATE_TABLE,
+                        _("Cannot create table %s. InnoDB Error %d (%s)\n"),
+                        path, innodb_err, ib_strerror(innodb_err));
+    return HA_ERR_GENERIC;
+  }
+
+  return 0;
 }
 
 

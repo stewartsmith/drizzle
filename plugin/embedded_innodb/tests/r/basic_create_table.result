@@ -1,0 +1,3 @@
+CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int);
+ERROR HY000: Can't create table 'test.t1' (errno: 17)
