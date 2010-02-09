@@ -88,10 +88,18 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
  * you reaaaally want to separate the code block for readability,
  * make sure to separate the code with C++ template for inlining.
  *                                               - Toru
+ * Currently Handles:
+ *   INT       (interpreted as LONG_INT)
+ *   BIGINT    (interpreted as LONGLONG)
+ *   TIMESTAMP (interpreted as ULONG_INT)
+ *   DATETIME  (interpreted as ULONGLONG)
+ *   DOUBLE    (interpreted as DOUBLE)
+ *   VARCHAR   (VARTEXT1 or VARTEXT2)
  *
- * -1 = a < b
- *  0 = a == b
- *  1 = a > b
+ * Returns:
+ *   -1 = a < b
+ *    0 = a == b
+ *    1 = a > b
  */
 int blitz_keycmp_cb(const char *a, int,
                     const char *b, int, void *opaque) {
@@ -103,37 +111,58 @@ int blitz_keycmp_cb(const char *a, int,
   char *b_pos = (char *)b;
 
   for (int i = 0; i < tree->nparts; i++) {
-    fprintf(stderr, "current part: %d\n", i);
     curr_part = &tree->parts[i];
 
-    switch ((enum enum_field_types)curr_part->type) {
-    case DRIZZLE_TYPE_LONG: {
-      int32_t a_long_val, b_long_val;
-      a_long_val = sint4korr(a_pos);
-      b_long_val = sint4korr(b_pos);
+    switch ((enum ha_base_keytype)curr_part->type) {
+    case HA_KEYTYPE_LONG_INT: {
+      int32_t a_int_val = sint4korr(a_pos);
+      int32_t b_int_val = sint4korr(b_pos);
 
-      if (a_long_val < b_long_val)
+      if (a_int_val < b_int_val)
         return -1;
-      else if (a_long_val > b_long_val)
+      else if (a_int_val > b_int_val)
         return 1;
 
       next_part_offset = curr_part->length;
       break; 
     }
-    case DRIZZLE_TYPE_LONGLONG: {
-      int64_t a_longlong_val, b_longlong_val;
-      a_longlong_val = sint8korr(a_pos);
-      b_longlong_val = sint8korr(b_pos);
+    case HA_KEYTYPE_ULONG_INT: {
+      uint32_t a_int_val = uint4korr(a_pos);
+      uint32_t b_int_val = uint4korr(b_pos);
 
-      if (a_longlong_val < b_longlong_val)
+      if (a_int_val < b_int_val)
         return -1;
-      else if (a_longlong_val > b_longlong_val)
+      else if (a_int_val > b_int_val)
         return 1;
 
       next_part_offset = curr_part->length;
       break;
     }
-    case DRIZZLE_TYPE_DOUBLE: {
+    case HA_KEYTYPE_LONGLONG: {
+      int64_t a_int_val = sint8korr(a_pos);
+      int64_t b_int_val = sint8korr(b_pos);
+
+      if (a_int_val < b_int_val)
+        return -1;
+      else if (a_int_val > b_int_val)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break;
+    }
+    case HA_KEYTYPE_ULONGLONG: {
+      uint64_t a_int_val = uint8korr(a_pos);
+      uint64_t b_int_val = uint8korr(b_pos);
+
+      if (a_int_val < b_int_val)
+        return -1;
+      else if (a_int_val > b_int_val)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break;
+    }
+    case HA_KEYTYPE_DOUBLE: {
       double a_double_val, b_double_val;
       float8get(a_double_val, a_pos);
       float8get(b_double_val, b_pos);
@@ -146,15 +175,31 @@ int blitz_keycmp_cb(const char *a, int,
       next_part_offset = curr_part->length;
       break;
     }
-    case DRIZZLE_TYPE_VARCHAR: {
-      uint16_t a_varchar_len, b_varchar_len;
+    case HA_KEYTYPE_VARTEXT1: {
+      uint8_t a_varchar_len = *(uint8_t *)a_pos;
+      uint8_t b_varchar_len = *(uint8_t *)b_pos;
       int key_changed;
 
-      /* Length of a VARCHAR field is always represented with 2 bytes. */
-      a_varchar_len = uint2korr(a_pos);
-      b_varchar_len = uint2korr(b_pos);
+      a_pos++;
+      b_pos++;
 
-      /* Shift the pointer 2 bytes to point at the actual data. */
+      /* Compare the texts by respecting collation. */
+      key_changed = my_strnncoll(&my_charset_utf8_general_ci,
+                                 (unsigned char *)a_pos, a_varchar_len,
+                                 (unsigned char *)b_pos, b_varchar_len);
+      if (key_changed < 0)
+        return -1;
+      else if (key_changed > 0)
+        return 1;
+
+      next_part_offset = curr_part->length;
+      break;
+    }
+    case HA_KEYTYPE_VARTEXT2: {
+      uint16_t a_varchar_len = uint2korr(a_pos);
+      uint16_t b_varchar_len = uint2korr(b_pos);
+      int key_changed;
+
       a_pos += sizeof(a_varchar_len);
       b_pos += sizeof(b_varchar_len);
 
