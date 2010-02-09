@@ -41,6 +41,7 @@
 #include "drizzled/plugin/library.h"
 #include "drizzled/strfunc.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/util/tokenize.h"
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
@@ -64,6 +65,7 @@ class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_add= NULL;
+char *opt_plugin_remove= NULL;
 char *opt_plugin_load= NULL;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
@@ -148,9 +150,11 @@ public:
 
 
 /* prototypes */
+static void plugin_prune_list(vector<string> &plugin_list,
+                              const vector<string> &plugins_to_remove);
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             string plugin_list);
+                             const vector<string> &plugin_list);
 static int test_plugin_options(memory::Root *, plugin::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
@@ -432,23 +436,30 @@ bool plugin_init(plugin::Registry &registry,
 
 
   bool load_failed= false;
-  /* Register all dynamic plugins */
+  vector<string> plugin_list;
   if (opt_plugin_load)
   {
-    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                  opt_plugin_load);
+    tokenize(opt_plugin_load, plugin_list, ",", true);
   }
   else
   {
-    string tmp_plugin_list(opt_plugin_load_default);
-    if (opt_plugin_add)
-    {
-      tmp_plugin_list.push_back(',');
-      tmp_plugin_list.append(opt_plugin_add);
-    }
-    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                  tmp_plugin_list);
+    tokenize(opt_plugin_load_default, plugin_list, ",", true);
   }
+  if (opt_plugin_add)
+  {
+    tokenize(opt_plugin_add, plugin_list, ",", true);
+  }
+
+  if (opt_plugin_remove)
+  {
+    vector<string> plugins_to_remove;
+    tokenize(opt_plugin_remove, plugins_to_remove, ",", true);
+    plugin_prune_list(plugin_list, plugins_to_remove);
+  }
+  
+  /* Register all dynamic plugins */
+  load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                plugin_list);
   if (load_failed)
   {
     free_root(&tmp_root, MYF(0));
@@ -486,24 +497,51 @@ bool plugin_init(plugin::Registry &registry,
   return false;
 }
 
+class PrunePlugin :
+  public unary_function<string, bool>
+{
+  const string to_match;
+  PrunePlugin();
+  PrunePlugin& operator=(const PrunePlugin&);
+public:
+  explicit PrunePlugin(const string &match_in) :
+    to_match(match_in)
+  { }
 
+  result_type operator()(const string &match_against)
+  {
+    return match_against == to_match;
+  }
+};
+
+static void plugin_prune_list(vector<string> &plugin_list,
+                              const vector<string> &plugins_to_remove)
+{
+  for (vector<string>::const_iterator iter= plugins_to_remove.begin();
+       iter != plugins_to_remove.end();
+       ++iter)
+  {
+    plugin_list.erase(remove_if(plugin_list.begin(),
+                                plugin_list.end(),
+                                PrunePlugin(*iter)),
+                      plugin_list.end());
+  }
+}
 
 /*
   called only by plugin_init()
 */
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             string plugin_list)
+                             const vector<string> &plugin_list)
 {
   plugin::Library *library= NULL;
 
-  const string DELIMITER(",");
-  string::size_type last_pos= plugin_list.find_first_not_of(DELIMITER);
-  string::size_type pos= plugin_list.find_first_of(DELIMITER, last_pos);
-  while (string::npos != pos || string::npos != last_pos)
+  for (vector<string>::const_iterator iter= plugin_list.begin();
+       iter != plugin_list.end();
+       ++iter)
   {
-    const string plugin_name(plugin_list.substr(last_pos, pos - last_pos));
-
+    const string plugin_name(*iter);
     library= registry.addLibrary(plugin_name);
     if (library == NULL)
     {
@@ -523,8 +561,6 @@ static bool plugin_load_list(plugin::Registry &registry,
       return true;
 
     }
-    last_pos= plugin_list.find_first_not_of(DELIMITER, pos);
-    pos= plugin_list.find_first_of(DELIMITER, last_pos);
   }
   return false;
 }
