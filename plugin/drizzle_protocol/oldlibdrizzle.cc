@@ -638,11 +638,11 @@ bool ClientDrizzleProtocol::checkConnection(void)
 
     if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
+      my_error(ER_BAD_HOST_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
       return false;
     }
 
-    session->security_ctx.ip.assign(ip);
+    session->getSecurityContext().setIp(ip);
   }
   drizzleclient_net_keepalive(&net, true);
 
@@ -697,7 +697,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
         ||    (pkt_len= drizzleclient_net_read(&net)) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
-      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
       return false;
     }
   }
@@ -719,7 +719,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
 
   if (end >= (char*) net.read_pos + pkt_len + 2)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
     return false;
   }
 
@@ -749,7 +749,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
 
   if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
     return false;
   }
 
@@ -761,7 +761,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
     user_len-= 2;
   }
 
-  session->security_ctx.user.assign(user);
+  session->getSecurityContext().setUser(user);
 
   return session->checkUser(passwd, passwd_len, l_db);
 }

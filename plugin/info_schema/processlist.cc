@@ -190,7 +190,7 @@ int ProcessListISMethods::fillTable(Session* session,
     for (vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
-      Security_context *tmp_sctx= &tmp->security_ctx;
+      const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
       internal::st_my_thread_var *mysys_var;
       const char *val;
 
@@ -209,10 +209,10 @@ int ProcessListISMethods::fillTable(Session* session,
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
-      val= tmp_sctx->user.c_str() ? tmp_sctx->user.c_str() : "unauthenticated user";
+      val= tmp_sctx->getUser().c_str() ? tmp_sctx->getUser().c_str() : "unauthenticated user";
       table->field[1]->store(val, strlen(val), cs);
       /* HOST */
-      table->field[2]->store(tmp_sctx->ip.c_str(), strlen(tmp_sctx->ip.c_str()), cs);
+      table->field[2]->store(tmp_sctx->getIp().c_str(), strlen(tmp_sctx->getIp().c_str()), cs);
       /* DB */
       if (! tmp->db.empty())
       {
