@@ -168,9 +168,12 @@ public:
 class BlitzTree {
 private:
   TCBDB *btree;
+  char *keybuf;
+  size_t keybuf_len;
 
 public:
-  BlitzTree() : nparts(0), type(0), unique(false) {}
+  BlitzTree() : keybuf_len(BLITZ_MAX_KEY_LEN), nparts(0), type(0),
+                unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */

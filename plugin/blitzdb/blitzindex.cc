@@ -29,6 +29,11 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
   if ((btree = tcbdbnew()) == NULL)
     return HA_ERR_OUT_OF_MEM;
 
+  if ((keybuf = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
+    tcbdbdel(btree);
+    return HA_ERR_OUT_OF_MEM;
+  }
+
   if (!tcbdbsetmutex(btree)) {
     tcbdbdel(btree);
     return HA_ERR_CRASHED_ON_USAGE;
@@ -86,6 +91,7 @@ int BlitzTree::close(void) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
+  free(keybuf);
   tcbdbdel(btree);
   return 0;
 }
@@ -98,8 +104,27 @@ int BlitzTree::write(const char *key, const size_t klen,
 int BlitzTree::write_unique(const char *key, const size_t klen,
                             const char *val, const size_t vlen) {
   int rv = 0;
+  size_t total = klen + sizeof(uint16_t) + vlen;
 
-  if (!tcbdbputkeep(btree, key, klen, val, vlen)) {
+  if (total > keybuf_len) {
+    if ((keybuf = (char *)realloc(keybuf, total)) == NULL) {
+      errno = HA_ERR_OUT_OF_MEM;
+      return errno;
+    }
+    keybuf_len = total;
+  }
+
+  /* Serialize a key for storing in the B+Tree. We merge the key
+     and value so that we only use the internal nodes of the B+Tree.
+     This is to avoid reading leaf nodes and thus reduce total IO. */
+  char *pos = keybuf;
+  memcpy(pos, key, klen);
+  pos += klen;
+  int2store(pos, vlen);
+  pos += sizeof(uint16_t);
+  memcpy(pos, val, vlen);
+
+  if (!tcbdbputkeep(btree, keybuf, total, "", 0)) {
     if (tcbdbecode(btree) == TCEKEEP) {
       errno = HA_ERR_FOUND_DUPP_KEY;
       rv = HA_ERR_FOUND_DUPP_KEY;

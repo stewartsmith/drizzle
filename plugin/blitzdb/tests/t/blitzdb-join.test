@@ -1,0 +1,19 @@
+# Test Routine for JOIN operations in BlitzDB
+
+--disable_warnings
+drop table if exists t1, t2;
+--enable_warnings
+
+# Test simple JOIN syntax without indexing
+create table t1 (a int) engine = blitzdb;
+create table t2 (a int) engine = blitzdb;
+
+insert into t1 values (1), (2), (3);
+insert into t2 values (1), (4), (8);
+
+select * from t1 JOIN t2 where t1.a = t2.a;
+select * from t1 LEFT JOIN t2 on t1.a = t2.a;
+select * from t1 RIGHT JOIN t2 on t1.a = t2.a;
+select * from t1 UNION select * from t2;
+
+drop table t1, t2;

@@ -476,8 +476,6 @@ int ha_blitz::index_end(void) {
 }
 
 int ha_blitz::write_row(unsigned char *drizzle_row) {
-  size_t row_len = max_row_length();
-  unsigned char *row_buf = get_pack_buffer(row_len);
   int rv;
   
   ha_statistic_increment(&SSV::ha_write_count);
@@ -509,26 +507,44 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   char temp_pkbuf[BLITZ_MAX_KEY_LEN];
   size_t pk_len = make_primary_key(temp_pkbuf, drizzle_row);
 
-  row_len = pack_row(row_buf, drizzle_row);
+  /* Obtain a buffer that can accommodate this row. We then pack
+     the provided row into it. Note that this code works most
+     efficiently for rows smaller than BLITZ_MAX_ROW_STACK */
+  unsigned char *row_buf = get_pack_buffer(max_row_length());
+  size_t row_len = pack_row(row_buf, drizzle_row);
 
-  /* Loop over the keys and write them to it's exclusive tree.
-     If writing to a certain index fails, we delete the entries in
-     the reverse order that we wrote to the tree. */
-  uint32_t curr_key = 0;
+  uint32_t curr_key;
+  uint32_t lock_id;
+
+  if (share->nkeys > 0) {
+    lock_id = share->blitz_lock.slot_id(temp_pkbuf, pk_len);
+    share->blitz_lock.slotted_lock(lock_id);
+  }
+
+  curr_key = 0;
 
   /* We isolate this condition outside the key loop to avoid the CPU
      from going through unnecessary conditional branching on heavy
      insertion load. */
   if (share->primary_key_exists) {
-    rv = share->btrees[curr_key].write_unique(temp_pkbuf, pk_len, "", 0);
+    /* TODO: optimize this. */
+    rv = share->btrees[curr_key].write_unique(temp_pkbuf, pk_len,
+                                              temp_pkbuf, pk_len);
 
     if (rv == HA_ERR_FOUND_DUPP_KEY) {
       this->errkey_id = curr_key;
+
+      if (share->nkeys > 0)
+        share->blitz_lock.slotted_unlock(lock_id);
+
       return rv;
     }
     curr_key = 1;
   }
 
+  /* Loop over the keys and write them to it's exclusive tree.
+     If writing to a certain index fails, we delete the entries in
+     the reverse order that we wrote to the tree. */
   while (curr_key < share->nkeys) {
     /* TODO: write to tree(s) and check for error. */
     curr_key++;
@@ -536,6 +552,9 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
   /* Write the 'real' row to the Data Dictionary. */
   rv = share->dict.write_row(temp_pkbuf, pk_len, row_buf, row_len);
+
+  if (share->nkeys > 0)
+    share->blitz_lock.slotted_unlock(lock_id);
 
   /* TODO: Check rv for error. If writing to the dictionary had failed,
            we must delete all index entries for this row. What we need
