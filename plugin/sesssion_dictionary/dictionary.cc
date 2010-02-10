@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,35 +18,51 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_COLLATIONS_H
-#define PLUGIN_DATA_ENGINE_COLLATIONS_H
+#include "config.h"
+#include "plugin/sesssion_dictionary/dictionary.h"
 
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
+static ProcesslistTool *processlist;
 
-class CollationsTool : public drizzled::plugin::TableFunction
+static int init(drizzled::plugin::Registry &registry)
 {
-public:
+  processlist= new(std::nothrow)ProcesslistTool;
+  registry.add(processlist);
+  
+  return 0;
+}
 
-  CollationsTool();
+static int finalize(drizzled::plugin::Registry &registry)
+{
+  registry.remove(processlist);
+  delete processlist;
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    drizzled::CHARSET_INFO **cs;
-    drizzled::CHARSET_INFO **cl;
+  return 0;
+}
 
-  public:
-    Generator(drizzled::Field **arg);
+int foo(void);
+int foo(void)
+{
+  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
+  init(registry);
+  finalize(registry);
 
-    bool populate();
+  return 0;
+}
 
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-
-};
-
-#endif // PLUGIN_DATA_ENGINE_COLLATIONS_H
+#if 0
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "schema_dictionary",
+  "1.0",
+  "Brian Aker",
+  "Data Dictionary for schema, table, column, indexes, etc",
+  PLUGIN_LICENSE_GPL,
+  init,
+  finalize,
+  NULL,
+  NULL,
+  NULL
+}
+DRIZZLE_DECLARE_PLUGIN_END;
+#endif

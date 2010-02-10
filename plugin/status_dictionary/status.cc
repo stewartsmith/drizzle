@@ -20,7 +20,8 @@
 
 #include "config.h"
 
-#include <plugin/data_engine/function.h>
+#include "plugin/status_dictionary/dictionary.h"
+
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/definitions.h>

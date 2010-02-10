@@ -19,8 +19,7 @@
  */
 
 #include "config.h"
-
-#include "plugin/data_engine/collations.h"
+#include "plugin/collation_dictionary/dictionary.h"
 
 using namespace std;
 using namespace drizzled;

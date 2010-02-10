@@ -79,53 +79,18 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
 
 
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
-static CharacterSetsTool *character_sets;
-static CollationsTool *collations;
-static ModulesTool *modules;
-static PluginsTool *plugins;
-static ProcesslistTool *processlist;
-static StatementsTool *global_statements;
-static StatementsTool *session_statements;
-static StatusTool *global_status;
-static StatusTool *session_status;
-static VariablesTool *global_variables;
-static VariablesTool *session_variables;
-
 
 static int init(drizzled::plugin::Registry &registry)
 {
   function_plugin= new(std::nothrow) Function("FunctionEngine");
+
   if (not function_plugin)
   {
     return 1;
   }
 
-  character_sets= new(std::nothrow)CharacterSetsTool;
-  collations= new(std::nothrow)CollationsTool;
-  modules= new(std::nothrow)ModulesTool;
-  plugins= new(std::nothrow)PluginsTool;
-  processlist= new(std::nothrow)ProcesslistTool;
-  global_statements= new(std::nothrow)StatementsTool(true);
-  global_status= new(std::nothrow)StatusTool(true);
-  session_statements= new(std::nothrow)StatementsTool(false);
-  session_status= new(std::nothrow)StatusTool(false);
-  global_variables= new(std::nothrow)VariablesTool(true);
-  session_variables= new(std::nothrow)VariablesTool(false);
-
   registry.add(function_plugin);
 
-  registry.add(character_sets);
-  registry.add(collations);
-  registry.add(global_statements);
-  registry.add(global_status);
-  registry.add(global_variables);
-  registry.add(modules);
-  registry.add(plugins);
-  registry.add(processlist);
-  registry.add(session_statements);
-  registry.add(session_status);
-  registry.add(session_variables);
-  
   return 0;
 }
 
@@ -133,18 +98,6 @@ static int finalize(drizzled::plugin::Registry &registry)
 {
   registry.remove(function_plugin);
   delete function_plugin;
-
-  delete character_sets;
-  delete collations;
-  delete global_statements;
-  delete global_status;
-  delete global_variables;
-  delete modules;
-  delete plugins;
-  delete processlist;
-  delete session_statements;
-  delete session_status;
-  delete session_variables;
 
   return 0;
 }

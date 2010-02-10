@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,34 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_PROCESSLIST_H
-#define PLUGIN_DATA_ENGINE_PROCESSLIST_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+#define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+
+#include <set>
 
 #include "drizzled/plugin/table_function.h"
 
+#include "plugin/sesssion_dictionary/processlist.h"
 
-class ProcesslistTool : public drizzled::plugin::TableFunction
-{
-public:
-
-  ProcesslistTool();
-
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    time_t now;
-    std::vector<drizzled::Session*>::iterator it;
-
-  public:
-    Generator(drizzled::Field **arg);
-    ~Generator();
-
-    bool populate();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif // PLUGIN_DATA_ENGINE_PROCESSLIST_H
+#endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

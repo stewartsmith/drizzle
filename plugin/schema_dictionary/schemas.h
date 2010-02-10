@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_SCHEMAS_H
-#define PLUGIN_DATA_ENGINE_SCHEMAS_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H
+#define PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H
 
 class SchemasTool : public drizzled::plugin::TableFunction
 {
@@ -100,4 +100,4 @@ public:
 };
 
 
-#endif // PLUGIN_DATA_ENGINE_SCHEMAS_H
+#endif // PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H

@@ -26,16 +26,6 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/plugin/table_function.h>
 
-
-#include <plugin/data_engine/character_sets.h>
-#include <plugin/data_engine/collations.h>
-
-#include <plugin/data_engine/modules.h>
-#include <plugin/data_engine/plugins.h>
-#include <plugin/data_engine/processlist.h>
-
-#include <plugin/data_engine/status.h>
-
 extern const drizzled::CHARSET_INFO *default_charset_info;
 
 static const char *function_exts[] = {

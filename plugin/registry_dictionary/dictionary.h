@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,31 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_MODULES_H
-#define PLUGIN_DATA_ENGINE_MODULES_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+#define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 
-class ModulesTool : public drizzled::plugin::TableFunction
-{
-public:
+#include <set>
 
-  ModulesTool();
+#include "drizzled/plugin/table_function.h"
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    std::vector<drizzled::plugin::Module *> modules;
-    std::vector<drizzled::plugin::Module *>::iterator it;
+#include "plugin/registry_dictionary/plugins.h"
+#include "plugin/registry_dictionary/modules.h"
 
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-  };
-
-  
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif // PLUGIN_DATA_ENGINE_MODULES_H
+#endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

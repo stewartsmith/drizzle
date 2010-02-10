@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_TABLES_H
-#define PLUGIN_DATA_ENGINE_TABLES_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_TABLES_H
+#define PLUGIN_SCHEMA_DICTIONARY_TABLES_H
 
 class TablesTool : public SchemasTool
 {
@@ -209,4 +209,4 @@ public:
   }
 };
 
-#endif // PLUGIN_DATA_ENGINE_TABLES_H
+#endif // PLUGIN_SCHEMA_DICTIONARY_TABLES_H

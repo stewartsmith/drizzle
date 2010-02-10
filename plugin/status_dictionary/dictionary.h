@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,34 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_CHARACTER_SETS_H
-#define PLUGIN_DATA_ENGINE_CHARACTER_SETS_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+#define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 
 #include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
 
-class CharacterSetsTool : public drizzled::plugin::TableFunction
-{
-public:
+#include "drizzled/session.h"
 
-  CharacterSetsTool();
-  ~CharacterSetsTool() {}
+#include "plugin/status_dictionary/state_tool.h"
+#include "plugin/status_dictionary/status.h"
+#include "plugin/status_dictionary/variables.h"
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    drizzled::CHARSET_INFO **cs;
-
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-
-  };
-
-  CharacterSetsTool::Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif /* PLUGIN_DATA_ENGINE_CHARACTER_SETS_H */
+#endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

@@ -18,19 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_PLUGINS_H
-#define PLUGIN_DATA_ENGINE_PLUGINS_H
+#ifndef PLUGIN_REGISTRY_DICTIONARY_MODULES_H
+#define PLUGIN_REGISTRY_DICTIONARY_MODULES_H
 
-
-class PluginsTool : public drizzled::plugin::TableFunction
+class ModulesTool : public drizzled::plugin::TableFunction
 {
 public:
-  PluginsTool();
+
+  ModulesTool();
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator it;
-    std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator end;
+    std::vector<drizzled::plugin::Module *> modules;
+    std::vector<drizzled::plugin::Module *>::iterator it;
 
   public:
     Generator(drizzled::Field **arg);
@@ -38,10 +38,11 @@ public:
     bool populate();
   };
 
+  
   Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
   }
 };
 
-#endif // PLUGIN_DATA_ENGINE_PLUGINS_H
+#endif // PLUGIN_REGISTRY_DICTIONARY_MODULES_H

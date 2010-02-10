@@ -86,6 +86,17 @@ static int finalize(drizzled::plugin::Registry &registry)
   return 0;
 }
 
+int foo(void);
+int foo(void)
+{
+  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
+  init(registry);
+  finalize(registry);
+
+  return 0;
+}
+
+#if 0
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -101,3 +112,4 @@ DRIZZLE_DECLARE_PLUGIN
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;
+#endif

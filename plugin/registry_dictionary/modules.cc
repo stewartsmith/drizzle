@@ -20,8 +20,8 @@
 
 #include "config.h"
 
-#include <plugin/data_engine/function.h>
-#include <drizzled/plugin/library.h>
+#include "plugin/registry_dictionary/dictionary.h"
+#include "drizzled/plugin/library.h"
 
 using namespace std;
 using namespace drizzled;

@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include <plugin/data_engine/function.h>
+#include <plugin/registry_dictionary/dictionary.h>
 
 using namespace std;
 using namespace drizzled;

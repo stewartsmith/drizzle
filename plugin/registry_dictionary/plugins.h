@@ -18,40 +18,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_STATUS_H
-#define PLUGIN_DATA_ENGINE_STATUS_H
-
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/field.h"
-#include "plugin/data_engine/state_tool.h"
-#include "plugin/data_engine/variables.h"
+#ifndef PLUGIN_REGISTRY_DICTIONARY_PLUGINS_H
+#define PLUGIN_REGISTRY_DICTIONARY_PLUGINS_H
 
 
-class StatusTool : public StateTool
+class PluginsTool : public drizzled::plugin::TableFunction
 {
 public:
-  StatusTool(bool global) :
-    StateTool(global ? "GLOBAL_STATUS" : "SESSION_STATUS", global)
-  { }
+  PluginsTool();
 
-  drizzled::drizzle_show_var *getVariables()
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    return drizzled::getFrontOfStatusVars();
+    std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator it;
+    std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator end;
+
+  public:
+    Generator(drizzled::Field **arg);
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
   }
 };
 
-
-class StatementsTool : public StateTool
-{
-public:
-  StatementsTool(bool global) :
-    StateTool(global ? "GLOBAL_STATEMENTS" : "SESSION_STATEMENTS", global)
-    { }
-
-  drizzled::drizzle_show_var *getVariables()
-  {
-    return drizzled::getCommandStatusVars();
-  }
-};
-
-#endif // PLUGIN_DATA_ENGINE_STATUS_H
+#endif // PLUGIN_REGISTRY_DICTIONARY_PLUGINS_H

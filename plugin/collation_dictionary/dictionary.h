@@ -21,21 +21,9 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 #define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 
-#include <set>
-
-#include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/table_function.h"
 
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/message/schema.pb.h"
-
-#include "plugin/schema_dictionary/schemas.h"
-#include "plugin/schema_dictionary/tables.h"
-#include "plugin/schema_dictionary/columns.h"
-#include "plugin/schema_dictionary/indexes.h"
-#include "plugin/schema_dictionary/index_parts.h"
-#include "plugin/schema_dictionary/referential_constraints.h"
-#include "plugin/schema_dictionary/table_constraints.h"
+#include <plugin/collation_dictionary/character_sets.h>
+#include <plugin/collation_dictionary/collations.h>
 
 #endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

@@ -18,9 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_STATE_TOOL_H
-#define PLUGIN_DATA_ENGINE_STATE_TOOL_H
-
+#ifndef PLUGIN_STATUS_DICTIONARY_STATE_TOOL_H
+#define PLUGIN_STATUS_DICTIONARY_STATE_TOOL_H
 
 class StateTool : public drizzled::plugin::TableFunction
 {
@@ -68,4 +67,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_DATA_ENGINE_STATE_TOOL_H */
+#endif /* PLUGIN_STATUS_DICTIONARY_STATE_TOOL_H */

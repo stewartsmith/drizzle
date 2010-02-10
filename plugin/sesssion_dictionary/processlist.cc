@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include <plugin/data_engine/processlist.h>
+#include "plugin/sesssion_dictionary/dictionary.h"
 
 #include <netdb.h>
 

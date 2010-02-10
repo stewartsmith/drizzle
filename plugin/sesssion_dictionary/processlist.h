@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,24 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
-#define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+#ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
+#define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
 
-#include <set>
+class ProcesslistTool : public drizzled::plugin::TableFunction
+{
+public:
 
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/plugin/table_function.h"
+  ProcesslistTool();
 
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/message/schema.pb.h"
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    time_t now;
+    std::vector<drizzled::Session*>::iterator it;
 
-#include "plugin/schema_dictionary/schemas.h"
-#include "plugin/schema_dictionary/tables.h"
-#include "plugin/schema_dictionary/columns.h"
-#include "plugin/schema_dictionary/indexes.h"
-#include "plugin/schema_dictionary/index_parts.h"
-#include "plugin/schema_dictionary/referential_constraints.h"
-#include "plugin/schema_dictionary/table_constraints.h"
+  public:
+    Generator(drizzled::Field **arg);
+    ~Generator();
 
-#endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+#endif // PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
