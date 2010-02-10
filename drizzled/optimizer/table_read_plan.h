@@ -146,8 +146,7 @@ public:
 
   RorIntersectReadPlan() 
     :
-      first_scan(NULL),
-      last_scan(NULL),
+      ror_range_scans(),
       cpk_scan(NULL),
       is_covering(false),
       index_scan_costs(0.0)
@@ -185,9 +184,8 @@ public:
     return index_scan_costs;
   }
 
-  /* Array of pointers to ROR range scans used in this intersection */
-  struct st_ror_scan_info **first_scan;
-  struct st_ror_scan_info **last_scan; /* End of the above array */
+  /** Vector of pointers to ROR range scans used in this intersection */
+  std::vector<struct st_ror_scan_info *> ror_range_scans;
   struct st_ror_scan_info *cpk_scan;  /* Clustered PK scan, if there is one */
 
 private:
@@ -214,8 +212,6 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
-  //TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
-  //TableReadPlan **last_ror;  /* end of the above array */
   /** vector of plans for merged scans */
   std::vector<TableReadPlan *> merged_scans;
 };

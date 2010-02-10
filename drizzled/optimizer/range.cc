@@ -348,6 +348,9 @@ static void print_ror_scans_arr(Table *table,
                                 const char *msg,
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end);
+static void print_ror_scans_vector(Table *table,
+                                   const char *msg,
+                                   vector<struct st_ror_scan_info *> &vec);
 
 static SEL_TREE *tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
 
@@ -2088,12 +2091,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
       return trp;
 
-    if (! (trp->first_scan=
-           (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                       sizeof(ROR_SCAN_INFO*)*best_num)))
-      return NULL;
-    memcpy(trp->first_scan, intersect_scans, best_num*sizeof(ROR_SCAN_INFO*));
-    trp->last_scan=  trp->first_scan + best_num;
+    trp->ror_range_scans.assign(intersect_scans, intersect_scans + best_num);
     trp->setRowRetrievalNecessary(intersect_best->is_covering);
     trp->read_cost= intersect_best->total_cost;
     /* Prevent divisons by zero */
@@ -2243,12 +2241,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   }
 
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  if (!(trp->first_scan= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                     sizeof(ROR_SCAN_INFO*)*
-                                                     best_num)))
-    return NULL;
-  memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(ROR_SCAN_INFO*));
-  trp->last_scan=  trp->first_scan + best_num;
+  trp->ror_range_scans.assign(tree->ror_scans, tree->ror_scans + best_num);
   trp->setRowRetrievalNecessary(true);
   trp->read_cost= total_cost;
   trp->records= records;
@@ -2403,16 +2396,17 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
                                                 (retrieve_full_rows? (! is_covering) : false),
                                                 parent_alloc)))
   {
-    print_ror_scans_arr(param->table,
-                        "creating ROR-intersect",
-                        first_scan,
-                        last_scan);
+    print_ror_scans_vector(param->table,
+                           "creating ROR-intersect",
+                           ror_range_scans);
     alloc= parent_alloc ? parent_alloc : &quick_intersect->alloc;
-    for (; first_scan != last_scan; ++first_scan)
+    for (vector<struct st_ror_scan_info *>::iterator it= ror_range_scans.begin();
+         it != ror_range_scans.end();
+         ++it)
     {
       if (! (quick= optimizer::get_quick_select(param,
-                                                (*first_scan)->idx,
-                                                (*first_scan)->sel_arg,
+                                                (*it)->idx,
+                                                (*it)->sel_arg,
                                                 HA_MRR_USE_DEFAULT_IMPL | HA_MRR_SORTED,
                                                 0,
                                                 alloc)) ||
@@ -6405,6 +6399,25 @@ static void print_ror_scans_arr(Table *table,
     if (tmp.length())
       tmp.append(',');
     tmp.append(table->key_info[(*start)->keynr].name);
+  }
+  if (! tmp.length())
+    tmp.append(STRING_WITH_LEN("(empty)"));
+}
+
+static void print_ror_scans_vector(Table *table,
+                                   const char *,
+                                   vector<struct st_ror_scan_info *> &vec)
+{
+  char buff[1024];
+  String tmp(buff,sizeof(buff),&my_charset_bin);
+  tmp.length(0);
+  for (vector<struct st_ror_scan_info *>::iterator it= vec.begin();
+       it != vec.end();
+       ++it)
+  {
+    if (tmp.length())
+      tmp.append(',');
+    tmp.append(table->key_info[(*it)->keynr].name);
   }
   if (! tmp.length())
     tmp.append(STRING_WITH_LEN("(empty)"));
