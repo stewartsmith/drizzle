@@ -21,6 +21,8 @@
 #include "config.h"
 #include "plugin/status_dictionary/dictionary.h"
 
+using namespace drizzled;
+
 static StatementsTool *global_statements;
 static StatementsTool *session_statements;
 static StatusTool *global_status;
@@ -67,24 +69,13 @@ static int finalize(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-int foo(void);
-int foo(void)
-{
-  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  init(registry);
-  finalize(registry);
-
-  return 0;
-}
-
-#if 0
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "schema_dictionary",
+  "status_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for schema, table, column, indexes, etc",
+  "Dictionary for status, statement, and variable information.",
   PLUGIN_LICENSE_GPL,
   init,
   finalize,
@@ -93,4 +84,3 @@ DRIZZLE_DECLARE_PLUGIN
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;
-#endif

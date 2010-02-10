@@ -21,6 +21,8 @@
 #include "config.h"
 #include "plugin/sesssion_dictionary/dictionary.h"
 
+using namespace drizzled;
+
 static ProcesslistTool *processlist;
 
 static int init(drizzled::plugin::Registry &registry)
@@ -39,24 +41,13 @@ static int finalize(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-int foo(void);
-int foo(void)
-{
-  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  init(registry);
-  finalize(registry);
-
-  return 0;
-}
-
-#if 0
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "schema_dictionary",
+  "session_dictionary",
   "1.0",
   "Brian Aker",
-  "Data Dictionary for schema, table, column, indexes, etc",
+  "Dictionary for session information, aka proccesslist, etc.",
   PLUGIN_LICENSE_GPL,
   init,
   finalize,
@@ -65,4 +56,3 @@ DRIZZLE_DECLARE_PLUGIN
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;
-#endif

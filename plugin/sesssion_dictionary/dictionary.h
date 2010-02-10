@@ -21,10 +21,7 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 #define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 
-#include <set>
-
 #include "drizzled/plugin/table_function.h"
-
 #include "plugin/sesssion_dictionary/processlist.h"
 
 #endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

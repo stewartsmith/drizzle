@@ -30,6 +30,8 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
 
+#include <set>
+
 using namespace std;
 using namespace drizzled;
 
