@@ -16,7 +16,6 @@
 #ifndef DRIZZLED_PARSER_H
 #define DRIZZLED_PARSER_H
 
-#include "config.h"
 #include <drizzled/foreign_key.h>
 #include <drizzled/lex_symbol.h>
 #include <drizzled/function/locate.h>
