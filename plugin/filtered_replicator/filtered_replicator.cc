@@ -568,7 +568,7 @@ static void set_filtered_schemas(Session *,
 
 static int check_filtered_tables(Session *, 
                                  drizzle_sys_var *,
-                                 void *,
+                                 void *save,
                                  drizzle_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -578,8 +578,10 @@ static int check_filtered_tables(Session *,
   if (input && filtered_replicator)
   {
     filtered_replicator->setTableFilter(input);
+    *(bool *) save= (bool) true;
     return 0;
   }
+  *(bool *) save= (bool) false;
   return 1;
 }
 
@@ -590,7 +592,7 @@ static void set_filtered_tables(Session *,
 {
   if (filtered_replicator)
   {
-    if (*(bool *)save != true)
+    if (*(bool *)save != false)
     {
       /* update the value of the system variable */
       filtered_replicator->updateTableSysvar((const char **) var_ptr);
