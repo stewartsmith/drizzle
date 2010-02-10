@@ -1,0 +1,2 @@
+DROP TABLE t1;
+ERROR HY000: Got error 17 from storage engine
