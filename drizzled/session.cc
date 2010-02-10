@@ -1590,7 +1590,6 @@ void Tmp_Table_Param::init()
   quick_group= 1;
   table_charset= 0;
   precomputed_group_by= 0;
-  bit_fields_as_long= 0;
 }
 
 void Tmp_Table_Param::cleanup(void)
