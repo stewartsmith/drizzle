@@ -16,14 +16,6 @@
 #ifndef PLUGIN_ARCHIVE_HA_ARCHIVE_H
 #define PLUGIN_ARCHIVE_HA_ARCHIVE_H
 
-#include <inttypes.h>
-#include <zlib.h>
-#include "azio.h"
-#include <drizzled/thr_lock.h>
-#include <drizzled/my_hash.h>
-#include <drizzled/cursor.h>
-#include <string>
-
 /*
   Please read ha_archive.cc first. If you are looking for more general
   answers on how storage engines work, look at ha_example.cc and
