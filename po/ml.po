@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-02-03 12:05+0000\n"
-"Last-Translator: Jobin Augustine <Unknown>\n"
+"PO-Revision-Date: 2010-02-09 11:51+0000\n"
+"Last-Translator: Rino Tom Thomas <rinotomthomas@gmail.com>\n"
 "Language-Team: Malayalam <ml@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-02-04 04:47+0000\n"
+"X-Launchpad-Export-Date: 2010-02-10 04:43+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -339,6 +339,8 @@ msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"ഫലത്തിന്റെ കൂടെ വരികളുടെ പേരു എഴുതരുത്. WARNING: -N തരം "
+"താഴ്തപ്പെട്ടിരിക്കുന്നു, പകരം ഇതിന്റെ നീണ്ട രൂപം ഉപയോഗിക്കുക."
 
 #: client/drizzle.cc:1498
 msgid ""
@@ -348,13 +350,15 @@ msgstr ""
 
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr ""
+msgstr "SIGINT (CTRL-C) അവഗണിക്കുക"
 
 #: client/drizzle.cc:1504
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"സ്വതവേ നിര്‍വചിക്കപ്പെട്ട ഡാറ്റാബേസ് മാത്രം പുതുക്കുക. പുതുക്കല്‍ നിരയിലുള്ള "
+"മറ്റു ഡാറ്റാബേസുകള്‍ പുതുക്കലില്‍ നിനന്‍ ഒഴിവാക്കുന്നതിനു ഇതു സഹായകം ആകുന്നു."
 
 #: client/drizzle.cc:1507
 msgid ""
@@ -376,6 +380,8 @@ msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"ശൃംഖലയിലേക്കു ബന്ധപ്പെടുന്നതിന്‍ രഹസ്യാടയാളവാക്ക് ഉപയോഗിക്കുക. "
+"രഹസ്യാടയാളവാക്ക് നല്കിയില്ലെന്കില്‍  tty-യിലൂടെ അതു ചോദിക്കപ്പെടുന്നതാണ്‍."
 
 #: client/drizzle.cc:1515
 msgid ""
@@ -385,7 +391,7 @@ msgstr ""
 
 #: client/drizzle.cc:1516
 msgid "built-in default"
-msgstr ""
+msgstr "നിര്മിത സഹജമായി നിര്‍വചിക്കപ്പെട്ട മൂല്യം"
 
 #: client/drizzle.cc:1518
 msgid "Set the drizzle prompt to this value."
@@ -409,7 +415,7 @@ msgstr ""
 
 #: client/drizzle.cc:1529
 msgid "Shutdown the server."
-msgstr ""
+msgstr "ശൃംഖല നിര്ത്തുക."
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -418,11 +424,11 @@ msgstr ""
 
 #: client/drizzle.cc:1533
 msgid "Socket file to use for connection."
-msgstr ""
+msgstr "ബന്ധപ്പെടുന്നതിനായി ഉപയോഗിക്കുന്ന സോക്കറ്റ്(socket) രചന."
 
 #: client/drizzle.cc:1536
 msgid "Output in table format."
-msgstr ""
+msgstr "പട്ടിക രൂപത്തിലുള്ള ഫലം."
 
 #: client/drizzle.cc:1539
 msgid ""
@@ -455,11 +461,11 @@ msgstr ""
 
 #: client/drizzle.cc:1553 drizzled/drizzled.cc:1822
 msgid "Output version information and exit."
-msgstr ""
+msgstr "വേര്ഷന്‍ വിവരങ്ങള്‍ കാണിച്ചു നിര്ത്തുക."
 
 #: client/drizzle.cc:1555
 msgid "Wait and retry if connection is down."
-msgstr ""
+msgstr "ബന്ധം പോയിക്കിടക്കുകയാണെന്കില്‍ കാത്തിരുന്നു വീണ്ടും പരിശ്രമിക്കുക"
 
 #: client/drizzle.cc:1558
 msgid "Number of seconds before connection timeout."
@@ -467,7 +473,7 @@ msgstr ""
 
 #: client/drizzle.cc:1563
 msgid "Max length of input line"
-msgstr ""
+msgstr "നിക്ഷേപിക്കപ്പെടുന്ന വരിയുടെ പരമദീര്ഘം"
 
 #: client/drizzle.cc:1568
 msgid "Automatic limit for SELECT when using --safe-updates"
@@ -488,7 +494,7 @@ msgstr ""
 
 #: client/drizzle.cc:1585
 msgid "Ping the server to check if it's alive."
-msgstr ""
+msgstr "ശൃംഖല സജീവമാണോ എന്നരിയാന്‍ തട്ടിനോക്കുക."
 
 #: client/drizzle.cc:1595
 #, c-format
@@ -544,7 +550,7 @@ msgstr ""
 
 #: client/drizzle.cc:2076
 msgid "Unknown command: "
-msgstr ""
+msgstr "അറിയപ്പെടാത്ത ആജ്ഞ: "
 
 #: client/drizzle.cc:2490
 msgid ""
@@ -555,15 +561,15 @@ msgstr ""
 
 #: client/drizzle.cc:2579
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "ബന്ധം ഇല്ല. വീണ്ടും ബന്ധിപ്പിക്കാന്‍ ശ്രമിക്കുന്നു..."
 
 #: client/drizzle.cc:2585
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "ശൃംഖലയുമായി ബന്ധപ്പെടാന്‍ സാധിക്കുന്നില്ല\n"
 
 #: client/drizzle.cc:2663
 msgid "List of all Drizzle commands:"
-msgstr ""
+msgstr "എല്ലാ ഡ്രിസ്സില്‍(Drizzle) ആജ്ഞകളുടെയും പട്ടിക:"
 
 #: client/drizzle.cc:2665
 msgid "Note that all text commands must be first on line and end with ';'"
@@ -571,33 +577,33 @@ msgstr ""
 
 #: client/drizzle.cc:2720
 msgid "No query specified\n"
-msgstr ""
+msgstr "ചോദ്യം(query) ഒന്നും പറയപ്പെട്ടിട്ടില്ല\n"
 
 #: client/drizzle.cc:2735
 msgid "Ignoring query to other database"
-msgstr ""
+msgstr "മറ്റു ഡാറ്റാബേസുകള്ക്ക് ചോദ്യം(query) അവഗണിക്കുന്നു"
 
 #: client/drizzle.cc:2785
 msgid "Empty set"
-msgstr ""
+msgstr "ശൂന്യമായ കൂട്ടം"
 
 #: client/drizzle.cc:2798
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "കൂട്ടത്തിലെ %ld വരി"
+msgstr[1] "കൂട്ടത്തിലെ %ld വരികള്‍"
 
 #: client/drizzle.cc:2807
 msgid "Query OK"
-msgstr ""
+msgstr "ചോദ്യം(Query) ശരിയാണ്‍"
 
 #: client/drizzle.cc:2809
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "ചോദ്യം(Query) ശരിയാണ്‍, %ld വരിയെ ബാധിച്ചു"
+msgstr[1] "ചോദ്യം(Query) ശരിയാണ്‍, %ld വരികളെ ബാധിച്ചു"
 
 #: client/drizzledump.cc:345
 msgid ""
@@ -666,7 +672,7 @@ msgstr ""
 #: client/drizzledump.cc:621
 #, c-format
 msgid "Input filename too long: %s"
-msgstr ""
+msgstr "നിക്ഷേപിക്കപ്പെട്ട രചനാനാമം വളരെ ദീര്ഘിച്ചുപോയി: %s"
 
 #: client/drizzledump.cc:656
 #, c-format
@@ -705,12 +711,12 @@ msgstr ""
 #: client/drizzledump.cc:767
 #, c-format
 msgid "Got error: %s (%d) %s"
-msgstr ""
+msgstr "പിശകു കിട്ടിയത്: %s (%d) %s"
 
 #: client/drizzledump.cc:774
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "പിശകു കിട്ടിയത്: %d %s"
 
 #: client/drizzledump.cc:872 client/drizzledump.cc:879
 #: client/drizzledump.cc:892
@@ -721,16 +727,16 @@ msgstr ""
 #: client/drizzledump.cc:956
 #, c-format
 msgid "-- Connecting to %s...\n"
-msgstr ""
+msgstr "-- %s- ലേക്ക് ബന്ധിപ്പിക്കുന്നു...\n"
 
 #: client/drizzledump.cc:977
 #, c-format
 msgid "-- Disconnecting from %s...\n"
-msgstr ""
+msgstr "-- %s-ല്‍ നിന്നും വിച്ഛ്േപ്പിക്കുന്നു...\n"
 
 #: client/drizzledump.cc:988
 msgid "Couldn't allocate memory"
-msgstr ""
+msgstr "സ്മൃതി നീക്കിവയ്ക്കാന്‍ സാധിക്കുന്നില്ല"
 
 #: client/drizzledump.cc:1332
 #, c-format
@@ -742,7 +748,7 @@ msgstr ""
 #: client/drizzledump.cc:1346
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
-msgstr ""
+msgstr "-- %s പട്ടികയുടെ പട്ടികാഘടന വീണ്ടെടുക്കുന്നു...\n"
 
 #: client/drizzledump.cc:1460
 #, c-format
@@ -762,7 +768,7 @@ msgstr ""
 #: client/drizzledump.cc:1788
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
-msgstr ""
+msgstr "പട്ടികയുടെ പട്ടികാ ഘടന വീണ്ടെടുക്കുന്നതില്‍ പിശക്: \"%s\""
 
 #: client/drizzledump.cc:1795
 #, c-format
@@ -798,7 +804,7 @@ msgstr ""
 
 #: client/drizzledump.cc:1926
 msgid "-- Retrieving rows...\n"
-msgstr ""
+msgstr "-- വരികള്‍ വീണ്ടെടുക്കുന്നു...\n"
 
 #: client/drizzledump.cc:1929
 #, c-format
@@ -822,7 +828,7 @@ msgstr ""
 
 #: client/drizzledump.cc:2411 client/drizzledump.cc:2525
 msgid "when doing refresh"
-msgstr ""
+msgstr "പുതുക്കുന്പോള്‍"
 
 #: client/drizzledump.cc:2497
 msgid "alloc_root failure."
@@ -831,7 +837,7 @@ msgstr ""
 #: client/drizzledump.cc:2512
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "പട്ടിക കണ്ടെത്താന്‍ സാധിക്കുന്നില്ല: \"%s\""
 
 #: client/drizzledump.cc:2790 client/drizzledump.cc:2797
 #: client/drizzledump.cc:2807
@@ -857,7 +863,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:537
 msgid "Aborting\n"
-msgstr ""
+msgstr "പരിസമാപ്തിയിലെത്തും മുമ്പ് ഉപേക്ഷിക്കുന്നു\n"
 
 #: drizzled/drizzled.cc:658
 msgid "One can only use the --user switch if running as root\n"
@@ -955,7 +961,7 @@ msgstr ""
 #: drizzled/drizzled.cc:969
 #, c-format
 msgid "Writing a core file\n"
-msgstr ""
+msgstr "ഒരു പ്രധാന രചന എഴുതുന്നു\n"
 
 #: drizzled/drizzled.cc:1015
 msgid ""
@@ -979,7 +985,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1335
 msgid "Out of memory"
-msgstr ""
+msgstr "സ്മൃതി ലഭ്യമല്ല"
 
 #: drizzled/drizzled.cc:1346
 msgid "Failed to initialize plugins."
@@ -1138,7 +1144,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1810
 msgid "Path for temporary files."
-msgstr ""
+msgstr "താത്കാലിക രചനകള്ക്കുളള വഴി."
 
 #: drizzled/drizzled.cc:1814
 msgid "Default transaction isolation level."
