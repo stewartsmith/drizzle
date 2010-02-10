@@ -23,8 +23,8 @@
 
 #include <set>
 
-#include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/table_function.h"
+#include "drizzled/plugin/storage_engine.h"
 
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
