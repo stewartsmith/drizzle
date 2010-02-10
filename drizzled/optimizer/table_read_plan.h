@@ -262,6 +262,7 @@ public:
                       uint32_t param_idx_arg, 
                       ha_rows quick_prefix_records_arg)
     :
+      quick_prefix_records(quick_prefix_records_arg),
       have_min(have_min_arg),
       have_max(have_max_arg),
       min_max_arg_part(min_max_arg_part_arg),
@@ -273,8 +274,7 @@ public:
       key_infix_len(key_infix_len_arg),
       range_tree(tree_arg),
       index_tree(index_tree_arg),
-      param_idx(param_idx_arg),
-      quick_prefix_records(quick_prefix_records_arg)
+      param_idx(param_idx_arg)
     {
       if (key_infix_len)
         memcpy(this->key_infix, key_infix_arg, key_infix_len);
