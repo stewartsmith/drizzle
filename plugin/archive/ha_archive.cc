@@ -1,4 +1,5 @@
 /* Copyright (C) 2003 MySQL AB
+   Copyright (C) 2010 Brian Aker
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -15,25 +16,12 @@
 
 
 #include "config.h"
-#include "drizzled/field.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/timestamp.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
 
-#include "ha_archive.h"
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-
-#include <cstdio>
-#include <string>
-#include <map>
+#include "plugin/archive/archive_engine.h"
 
 using namespace std;
 using namespace drizzled;
+
 
 /*
   First, if you want to understand storage engines you should look at
@@ -106,15 +94,11 @@ using namespace drizzled;
 /* Variables for archive share methods */
 pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-static unsigned int global_version;
+/* When the engine starts up set the first version */
+static uint64_t global_version= 1;
 
-/* The file extension */
-#define ARZ ".arz"               // The data file
-#define ARN ".ARN"               // Files used during an optimize call
-
-
-
-static bool archive_use_aio= false;
+// We use this to find out the state of the archive aio option.
+extern bool archive_aio_state(void);
 
 /*
   Number of rows that will force a bulk insert.
@@ -125,69 +109,6 @@ static bool archive_use_aio= false;
   Size of header used for row
 */
 #define ARCHIVE_ROW_HEADER_SIZE 4
-
-/*
-  We just implement one additional file extension.
-*/
-static const char *ha_archive_exts[] = {
-  ARZ,
-  NULL
-};
-
-class ArchiveEngine : public drizzled::plugin::StorageEngine
-{
-  typedef std::map<string, ArchiveShare*> ArchiveMap;
-  ArchiveMap archive_open_tables;
-
-public:
-  ArchiveEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_FILE_BASED |
-                                     HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_HAS_RECORDS |
-                                     HTON_HAS_DATA_DICTIONARY),
-     archive_open_tables()
-  {
-    table_definition_ext= ARZ;
-  }
-
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
-  {
-    return new (mem_root) ha_archive(*this, table);
-  }
-
-  const char **bas_ext() const {
-    return ha_archive_exts;
-  }
-
-  int doCreateTable(Session *session, const char *table_name,
-                    Table& table_arg,
-                    drizzled::message::Table& proto);
-
-  int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
-
-  void doGetTableNames(drizzled::CachedDirectory &directory, string& , set<string>& set_of_names);
-
-  int doDropTable(Session&, const string table_path);
-  ArchiveShare *findOpenTable(const string table_name);
-  void addOpenTable(const string &table_name, ArchiveShare *);
-  void deleteOpenTable(const string &table_name);
-
-  uint32_t max_supported_keys()          const { return 1; }
-  uint32_t max_supported_key_length()    const { return sizeof(uint64_t); }
-  uint32_t max_supported_key_part_length() const { return sizeof(uint64_t); }
-
-  uint32_t index_flags(enum  ha_key_alg) const
-  {
-    return HA_ONLY_WHOLE_INDEX;
-  }
-};
 
 ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
 {
@@ -306,54 +227,6 @@ int ArchiveEngine::doGetTableDefinition(Session&,
   }
 
   return error;
-}
-
-static ArchiveEngine *archive_engine= NULL;
-
-/*
-  Initialize the archive Cursor.
-
-  SYNOPSIS
-    archive_db_init()
-    void *
-
-  RETURN
-    false       OK
-    true        Error
-*/
-
-static int archive_db_init(drizzled::plugin::Registry &registry)
-{
-
-  pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
-  archive_engine= new ArchiveEngine("ARCHIVE");
-  registry.add(archive_engine);
-
-  /* When the engine starts up set the first version */
-  global_version= 1;
-
-  return false;
-}
-
-/*
-  Release the archive Cursor.
-
-  SYNOPSIS
-    archive_db_done()
-    void
-
-  RETURN
-    false       OK
-*/
-
-static int archive_db_done(drizzled::plugin::Registry &registry)
-{
-  registry.remove(archive_engine);
-  delete archive_engine;
-
-  pthread_mutex_destroy(&archive_mutex);
-
-  return 0;
 }
 
 
@@ -545,7 +418,7 @@ int ha_archive::init_archive_reader()
   {
     az_method method;
 
-    switch (archive_use_aio)
+    switch (archive_aio_state())
     {
     case false:
       method= AZ_METHOD_BLOCK;
@@ -1452,30 +1325,3 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   free((char*) r);
   return;
 }
-
-static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
-  PLUGIN_VAR_NOCMDOPT,
-  "Whether or not to use asynchronous IO.",
-  NULL, NULL, true);
-
-static drizzle_sys_var* archive_system_variables[]= {
-  DRIZZLE_SYSVAR(aio),
-  NULL
-};
-
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "ARCHIVE",
-  "3.5",
-  "Brian Aker, MySQL AB",
-  "Archive storage engine",
-  PLUGIN_LICENSE_GPL,
-  archive_db_init, /* Plugin Init */
-  archive_db_done, /* Plugin Deinit */
-  NULL,                       /* status variables                */
-  archive_system_variables,   /* system variables                */
-  NULL                        /* config options                  */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
-

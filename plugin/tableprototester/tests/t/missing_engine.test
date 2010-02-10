@@ -1,0 +1,5 @@
+
+SHOW TABLES;
+
+--error 1693
+SHOW CREATE TABLE t1;
