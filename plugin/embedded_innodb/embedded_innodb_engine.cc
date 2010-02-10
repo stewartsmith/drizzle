@@ -121,12 +121,45 @@ int EmbeddedInnoDBCursor::close(void)
   return 0;
 }
 
+static int create_table_add_field(ib_tbl_sch_t schema,
+                                  message::Table::Field field,
+                                  ib_err_t *err)
+{
+  ib_col_attr_t column_attr= IB_COL_NONE;
+
+  if (!( field.has_constraints()
+         && field.constraints().is_nullable()))
+    column_attr= IB_COL_NOT_NULL;
+
+  switch (field.type())
+  {
+  case message::Table::Field::VARCHAR:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_VARCHAR,
+                                  column_attr, 0,
+                                  field.string_options().length());
+    break;
+  case message::Table::Field::INTEGER:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 4);
+    break;
+  case message::Table::Field::BIGINT:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 8);
+    break;
+  default:
+    my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "Column Type");
+    return(HA_ERR_UNSUPPORTED);
+  }
+
+  return 0;
+}
+
 int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
                                    Table& table_obj,
                                    drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t innodb_table_schema= NULL;
-  ib_idx_sch_t innodb_pkey= NULL;
+//  ib_idx_sch_t innodb_pkey= NULL;
   ib_trx_t innodb_schema_transaction;
   ib_id_t innodb_table_id;
   ib_err_t innodb_err= DB_SUCCESS;
@@ -146,13 +179,37 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     return HA_ERR_GENERIC;
   }
 
+  for (int colnr= 0; colnr < table_message.field_size() ; colnr++)
+  {
+    const message::Table::Field field = table_message.field(colnr);
+
+    int field_err= create_table_add_field(innodb_table_schema, field,
+                                          &innodb_err);
+
+    if (innodb_err != DB_SUCCESS || field_err != 0)
+      ib_table_schema_delete(innodb_table_schema); /* cleanup */
+
+    if (innodb_err != DB_SUCCESS)
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                          ER_CANT_CREATE_TABLE,
+                          _("Cannot create field %s on table %s."
+                            " InnoDB Error %d (%s)\n"),
+                          field.name().c_str(), path,
+                          innodb_err, ib_strerror(innodb_err));
+      return HA_ERR_GENERIC;
+    }
+    if (field_err != 0)
+      return field_err;
+  }
+/*
   ib_table_schema_add_col(innodb_table_schema, "c1", IB_VARCHAR, IB_COL_NONE, 0, 32);
 
   ib_table_schema_add_index(innodb_table_schema, "PRIMARY_KEY", &innodb_pkey);
   ib_index_schema_add_col(innodb_pkey, "c1", 0);
 
   ib_index_schema_set_clustered(innodb_pkey);
-
+*/
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   ib_schema_lock_exclusive(innodb_schema_transaction);
 
