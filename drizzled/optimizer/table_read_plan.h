@@ -214,8 +214,10 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
-  TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
-  TableReadPlan **last_ror;  /* end of the above array */
+  //TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
+  //TableReadPlan **last_ror;  /* end of the above array */
+  /** vector of plans for merged scans */
+  std::vector<TableReadPlan *> merged_scans;
 };
 
 

@@ -1429,8 +1429,7 @@ skip_to_ror_scan:
   {
     if ((roru= new (param->mem_root) optimizer::RorUnionReadPlan))
     {
-      roru->first_ror= roru_read_plans;
-      roru->last_ror= roru_read_plans + n_child_scans;
+      roru->merged_scans.assign(roru_read_plans, roru_read_plans + n_child_scans);
       roru->read_cost= roru_total_cost;
       roru->records= roru_total_records;
       return roru;
@@ -2448,7 +2447,6 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
 optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickRorUnionSelect *quick_roru= NULL;
-  optimizer::TableReadPlan **scan= NULL;
   optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
@@ -2456,9 +2454,11 @@ optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimiz
   */
   if ((quick_roru= new optimizer::QuickRorUnionSelect(param->session, param->table)))
   {
-    for (scan= first_ror; scan != last_ror; scan++)
+    for (vector<optimizer::TableReadPlan *>::iterator it= merged_scans.begin();
+         it != merged_scans.end();
+         ++it)
     {
-      if (! (quick= (*scan)->make_quick(param, false, &quick_roru->alloc)) ||
+      if (! (quick= (*it)->make_quick(param, false, &quick_roru->alloc)) ||
           quick_roru->push_quick_back(quick))
       {
         return NULL;
