@@ -21,14 +21,6 @@
 #ifndef PLUGIN_DATA_ENGINE_SCHEMAS_H
 #define PLUGIN_DATA_ENGINE_SCHEMAS_H
 
-#include <set>
-
-#include "drizzled/plugin/table_function.h"
-#include "drizzled/current_session.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/message/schema.pb.h"
-#include "drizzled/field.h"
-
 class SchemasTool : public drizzled::plugin::TableFunction
 {
 public:
@@ -106,13 +98,6 @@ public:
     return new Generator(arg);
   }
 };
-
-#include "plugin/data_engine/tables.h"
-#include "plugin/data_engine/columns.h"
-#include "plugin/data_engine/indexes.h"
-#include "plugin/data_engine/index_parts.h"
-#include "plugin/data_engine/referential_constraints.h"
-#include "plugin/data_engine/table_constraints.h"
 
 
 #endif // PLUGIN_DATA_ENGINE_SCHEMAS_H

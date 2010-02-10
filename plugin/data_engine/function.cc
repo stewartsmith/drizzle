@@ -81,25 +81,15 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
 static CharacterSetsTool *character_sets;
 static CollationsTool *collations;
-static ColumnsTool *columns;
-static IndexPartsTool *index_parts;
-static IndexesTool *indexes;
 static ModulesTool *modules;
 static PluginsTool *plugins;
 static ProcesslistTool *processlist;
-static ReferentialConstraintsTool *referential_constraints;
-static SchemasTool *schemas;
-static SchemaNames *schema_names;
 static StatementsTool *global_statements;
 static StatementsTool *session_statements;
 static StatusTool *global_status;
 static StatusTool *session_status;
-static TableConstraintsTool *table_constraints;
-static TablesTool *tables;
-static TableNames *local_tables;
 static VariablesTool *global_variables;
 static VariablesTool *session_variables;
-static TableStatus *table_status;
 
 
 static int init(drizzled::plugin::Registry &registry)
@@ -112,23 +102,13 @@ static int init(drizzled::plugin::Registry &registry)
 
   character_sets= new(std::nothrow)CharacterSetsTool;
   collations= new(std::nothrow)CollationsTool;
-  columns= new(std::nothrow)ColumnsTool;
-  index_parts= new(std::nothrow)IndexPartsTool;
-  indexes= new(std::nothrow)IndexesTool;
   modules= new(std::nothrow)ModulesTool;
   plugins= new(std::nothrow)PluginsTool;
   processlist= new(std::nothrow)ProcesslistTool;
-  referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
-  schemas= new(std::nothrow)SchemasTool;
   global_statements= new(std::nothrow)StatementsTool(true);
   global_status= new(std::nothrow)StatusTool(true);
-  local_tables= new(std::nothrow)TableNames;
-  schema_names= new(std::nothrow)SchemaNames;
   session_statements= new(std::nothrow)StatementsTool(false);
   session_status= new(std::nothrow)StatusTool(false);
-  table_constraints= new(std::nothrow)TableConstraintsTool;
-  table_status= new(std::nothrow)TableStatus;
-  tables= new(std::nothrow)TablesTool;
   global_variables= new(std::nothrow)VariablesTool(true);
   session_variables= new(std::nothrow)VariablesTool(false);
 
@@ -136,25 +116,15 @@ static int init(drizzled::plugin::Registry &registry)
 
   registry.add(character_sets);
   registry.add(collations);
-  registry.add(columns);
   registry.add(global_statements);
   registry.add(global_status);
   registry.add(global_variables);
-  registry.add(index_parts);
-  registry.add(indexes);
-  registry.add(local_tables);
   registry.add(modules);
   registry.add(plugins);
   registry.add(processlist);
-  registry.add(referential_constraints);
-  registry.add(schema_names);
-  registry.add(schemas);
   registry.add(session_statements);
   registry.add(session_status);
   registry.add(session_variables);
-  registry.add(table_constraints);
-  registry.add(table_status);
-  registry.add(tables);
   
   return 0;
 }
@@ -166,25 +136,15 @@ static int finalize(drizzled::plugin::Registry &registry)
 
   delete character_sets;
   delete collations;
-  delete columns;
   delete global_statements;
   delete global_status;
   delete global_variables;
-  delete index_parts;
-  delete indexes;
-  delete local_tables;
   delete modules;
   delete plugins;
   delete processlist;
-  delete referential_constraints;
-  delete schema_names;
-  delete schemas;
   delete session_statements;
   delete session_status;
   delete session_variables;
-  delete table_constraints;
-  delete table_status;
-  delete tables;
 
   return 0;
 }

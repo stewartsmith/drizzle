@@ -19,9 +19,7 @@
  */
 
 #include "config.h"
-
-#include <plugin/data_engine/schemas.h>
-#include <assert.h>
+#include "plugin/schema_dictionary/dictionary.h"
 
 using namespace std;
 using namespace drizzled;

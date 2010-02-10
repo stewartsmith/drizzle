@@ -27,8 +27,6 @@
 #include <drizzled/plugin/table_function.h>
 
 
-#include <plugin/data_engine/schemas.h>
-
 #include <plugin/data_engine/character_sets.h>
 #include <plugin/data_engine/collations.h>
 

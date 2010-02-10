@@ -19,9 +19,7 @@
  */
 
 #include "config.h"
-
-#include "plugin/data_engine/schemas.h"
-#include "drizzled/session.h"
+#include "plugin/schema_dictionary/dictionary.h"
 
 namespace drizzled
 {
