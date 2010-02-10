@@ -50,7 +50,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "schema_dictionary",
+  "collation_dictionary",
   "1.0",
   "Brian Aker",
   "Data Dictionary for schema, table, column, indexes, etc",
