@@ -406,10 +406,10 @@ SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID();
 info
 SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID()
 show processlist;
-Id	User	Host	db	Command	Time	State	Info
+ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
 #	#	#	test	Query	#	#	show processlist
-#	#	#	test	Sleep	#	#	
-#	#	#	mysqltest	Sleep	#	#	
+#	#	#	test	Sleep	#	#	show processlist
+#	#	#	mysqltest	Sleep	#	#	show processlist
 SELECT info, command, db
 FROM data_dictionary.processlist
 WHERE id = CONNECTION_ID();
