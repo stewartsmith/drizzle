@@ -1,5 +1,7 @@
 CREATE TABLE t1 (a int);
---error 1005
+--error 1693
+SHOW CREATE TABLE t1;
+--error 1050
 CREATE TABLE t1 (a int);
 CREATE TABLE t2 (a int, b varchar(20), c bigint);
 --error 1178

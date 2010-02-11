@@ -255,13 +255,20 @@ int EmbeddedInnoDBEngine::doDropTable(Session&, const string)
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
-                                          const char* ,
+                                          const char* path,
                                           const char *,
                                           const char *,
                                           const bool,
                                           drizzled::message::Table *)
 {
-  return ENOENT;
+  ib_crsr_t innodb_cursor;
+
+  if (ib_cursor_open_table(path+2, NULL, &innodb_cursor) != DB_SUCCESS)
+    return ENOENT;
+
+  ib_cursor_close(innodb_cursor);
+
+  return EEXIST;
 }
 
 const char *EmbeddedInnoDBCursor::index_type(uint32_t)
