@@ -22,6 +22,9 @@
 
 #include "drizzled/definitions.h"
 
+namespace drizzled
+{
+
 /* Max width of screen (for error messages) */
 #define SC_MAXWIDTH 256
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
@@ -31,9 +34,6 @@
 
 typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
 extern error_handler_func error_handler_hook;
-
-namespace drizzled
-{
 
 bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
