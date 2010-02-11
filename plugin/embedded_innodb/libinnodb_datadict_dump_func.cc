@@ -152,8 +152,6 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 
   err = ib_schema_tables_iterate(arg.transaction, visit_tables, &arg);
 
-  cerr << endl << endl << dict_dump << endl << endl;
-
   str->alloc(dict_dump.length());
   str->length(dict_dump.length());
   strncpy(str->ptr(), dict_dump.c_str(), dict_dump.length());
