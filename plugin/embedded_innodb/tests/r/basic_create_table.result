@@ -1,3 +1,6 @@
 CREATE TABLE t1 (a int);
 CREATE TABLE t1 (a int);
 ERROR HY000: Can't create table 'test.t1' (errno: 17)
+CREATE TABLE t2 (a int, b varchar(20), c bigint);
+CREATE TABLE t3 (d datetime);
+ERROR 42000: The storage engine for the table doesn't support Column Type
