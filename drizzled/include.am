@@ -463,7 +463,6 @@ drizzled_drizzled_SOURCES = \
 			    drizzled/drizzled.cc \
 			    drizzled/dtcollation.cc \
 			    drizzled/errmsg_print.cc \
-			    drizzled/error.cc \
 			    drizzled/field.cc \
 			    drizzled/field/blob.cc \
 			    drizzled/field/date.cc \
