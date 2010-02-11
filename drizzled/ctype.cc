@@ -13,9 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#include "config.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 
+namespace drizzled
+{
 
 /*
 
@@ -60,3 +63,5 @@ typedef struct my_cs_file_info
   CHARSET_INFO cs;
   int (*add_collation)(CHARSET_INFO *cs);
 } MY_CHARSET_LOADER;
+
+} /* namespace drizzled */

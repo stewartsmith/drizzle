@@ -16,6 +16,7 @@
 #include "myisam_priv.h"
 
 using namespace std;
+using namespace drizzled;
 
 	/* if flag == HA_PANIC_CLOSE then all misam files are closed */
 	/* if flag == HA_PANIC_WRITE then all misam files are unlocked and
@@ -56,7 +57,7 @@ int mi_panic(enum ha_panic_function flag)
       {
 	if (flush_io_cache(&info->rec_cache))
 	  error=errno;
-	reinit_io_cache(&info->rec_cache,READ_CACHE,0,
+	reinit_io_cache(&info->rec_cache,internal::READ_CACHE,0,
 		       (bool) (info->lock_type != F_UNLCK),1);
       }
       if (info->lock_type != F_UNLCK && ! info->was_locked)
@@ -66,9 +67,9 @@ int mi_panic(enum ha_panic_function flag)
 	  error=errno;
       }
 #ifdef CANT_OPEN_FILES_TWICE
-      if (info->s->kfile >= 0 && my_close(info->s->kfile,MYF(0)))
+      if (info->s->kfile >= 0 && internal::my_close(info->s->kfile,MYF(0)))
 	error = errno;
-      if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
+      if (info->dfile >= 0 && internal::my_close(info->dfile,MYF(0)))
 	error = errno;
       info->s->kfile=info->dfile= -1;	/* Files aren't open anymore */
       break;
@@ -78,13 +79,13 @@ int mi_panic(enum ha_panic_function flag)
       {					/* Open closed files */
 	char name_buff[FN_REFLEN];
 	if (info->s->kfile < 0)
-	  if ((info->s->kfile= my_open(fn_format(name_buff,info->filename,"",
+	  if ((info->s->kfile= internal::my_open(internal::fn_format(name_buff,info->filename,"",
 					      N_NAME_IEXT,4),info->mode,
 				    MYF(MY_WME))) < 0)
 	    error = errno;
 	if (info->dfile < 0)
 	{
-	  if ((info->dfile= my_open(fn_format(name_buff,info->filename,"",
+	  if ((info->dfile= internal::my_open(internal::fn_format(name_buff,info->filename,"",
 					      N_NAME_DEXT,4),info->mode,
 				    MYF(MY_WME))) < 0)
 	    error = errno;

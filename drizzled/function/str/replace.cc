@@ -18,10 +18,13 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/replace.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 /**
   Replace all occurences of string2 in string1 with string3.
@@ -157,3 +160,4 @@ void Item_func_replace::fix_length_and_dec()
 }
 
 
+} /* namespace drizzled */

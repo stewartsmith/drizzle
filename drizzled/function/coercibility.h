@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_coercibility :public Item_int_func
 {
 public:
@@ -32,5 +35,7 @@ public:
   void fix_length_and_dec() { max_length=10; maybe_null= 0; }
   table_map not_null_tables() const { return 0; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_COERCIBILITY_H */

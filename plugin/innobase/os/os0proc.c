@@ -32,6 +32,7 @@ Created 9/30/1995 Heikki Tuuri
 #include "ut0mem.h"
 #include "ut0byte.h"
 #include <errno.h>
+#include <unistd.h>
 
 /* FreeBSD for example has only MAP_ANON, Linux has MAP_ANONYMOUS and
 MAP_ANON but MAP_ANON is marked as deprecated */

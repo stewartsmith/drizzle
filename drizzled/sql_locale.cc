@@ -23,6 +23,9 @@
 #include "drizzled/typelib.h"
 #include "drizzled/charset_info.h"
 
+namespace drizzled
+{
+
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/
 static const char *my_locale_month_names_ar_AE[13] =
  {"يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر", NULL };
@@ -2609,3 +2612,5 @@ MY_LOCALE *my_locale_by_name(const char *name)
   }
   return NULL;
 }
+
+} /* namespace drizzled */

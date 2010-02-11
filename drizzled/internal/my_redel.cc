@@ -13,7 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/error.h"
 #if defined(HAVE_UTIME_H)
@@ -29,6 +31,11 @@ struct utimbuf {
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/*
 	  Rename with copy stat form old file
@@ -114,3 +121,6 @@ int my_copystat(const char *from, const char *to, int MyFlags)
 #endif
   return 0;
 } /* my_copystat */
+
+} /* namespace internal */
+} /* namespace drizzled */

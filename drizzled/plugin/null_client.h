@@ -61,7 +61,7 @@ public:
   virtual bool wasAborted(void) { return false; }
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_NULL_CLIENT_H */

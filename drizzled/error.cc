@@ -19,14 +19,17 @@
  */
 
 /*
- *   Errors a drizzled can give you
- *   */
+ * Errors a drizzled can give you
+ */
 
 #include "config.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
+
+namespace drizzled
+{
 
 static const char *drizzled_error_messages[]=
 {
@@ -1761,3 +1764,5 @@ void my_error_unregister_all(void)
   }
   my_errmsgs_list= &my_errmsgs_globerrs;
 }
+
+} /* namespace drizzled */

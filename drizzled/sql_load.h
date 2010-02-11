@@ -24,6 +24,9 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/item.h>
 
+namespace drizzled
+{
+
 class TableList;
 class file_exchange;
 class Session;
@@ -38,5 +41,6 @@ int mysql_load(Session *session, file_exchange *ex, TableList *table_list,
     
 int write_record(Session *session, Table *table, COPY_INFO *info);
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_LOAD_H */

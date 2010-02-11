@@ -45,9 +45,10 @@
 using namespace CMATH_NAMESPACE;
 #endif
 
-using namespace drizzled;
 using namespace std;
 
+namespace drizzled
+{
 
 int unique_write_to_file(unsigned char* key, uint32_t,
                          Unique *unique)
@@ -72,7 +73,7 @@ int unique_write_to_ptrs(unsigned char* key,
 Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
 	       uint32_t size_arg, size_t max_in_memory_size_arg)
   : max_in_memory_size(max_in_memory_size_arg),
-    file(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
+    file(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     size(size_arg),
     elements(0)
 {
@@ -371,7 +372,7 @@ Unique::reset()
   if (elements)
   {
     reset_dynamic(&file_ptrs);
-    reinit_io_cache(file, WRITE_CACHE, 0L, 0, 1);
+    reinit_io_cache(file, internal::WRITE_CACHE, 0L, 0, 1);
   }
   elements= 0;
 }
@@ -455,7 +456,7 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
                        uint32_t key_length, BUFFPEK *begin, BUFFPEK *end,
                        tree_walk_action walk_action, void *walk_action_arg,
                        qsort_cmp2 compare, void *compare_arg,
-                       IO_CACHE *file)
+                       internal::IO_CACHE *file)
 {
   if (end <= begin ||
       merge_buffer_size < (ulong) (key_length * (end - begin + 1))) 
@@ -594,7 +595,7 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
   /* flush current tree to the file to have some memory for merge buffer */
   if (flush())
     return 1;
-  if (flush_io_cache(file) || reinit_io_cache(file, READ_CACHE, 0L, 0, 0))
+  if (flush_io_cache(file) || reinit_io_cache(file, internal::READ_CACHE, 0L, 0, 0))
     return 1;
   if (!(merge_buffer= (unsigned char *) malloc(max_in_memory_size)))
     return 1;
@@ -632,20 +633,20 @@ bool Unique::get(Table *table)
   if (flush())
     return 1;
 
-  IO_CACHE *outfile=table->sort.io_cache;
+  internal::IO_CACHE *outfile=table->sort.io_cache;
   BUFFPEK *file_ptr= (BUFFPEK*) file_ptrs.buffer;
   uint32_t maxbuffer= file_ptrs.elements - 1;
   unsigned char *sort_buffer;
-  my_off_t save_pos;
+  internal::my_off_t save_pos;
   bool error=1;
 
       /* Open cached file if it isn't open */
-  outfile=table->sort.io_cache= new IO_CACHE;
-  memset(outfile, 0, sizeof(IO_CACHE));
+  outfile=table->sort.io_cache= new internal::IO_CACHE;
+  memset(outfile, 0, sizeof(internal::IO_CACHE));
 
   if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile,drizzle_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
     return 1;
-  reinit_io_cache(outfile, WRITE_CACHE, 0L, 0, 0);
+  reinit_io_cache(outfile, internal::WRITE_CACHE, 0L, 0, 0);
 
   memset(&sort_param, 0, sizeof(sort_param));
   sort_param.max_rows= elements;
@@ -669,7 +670,7 @@ bool Unique::get(Table *table)
   if (merge_many_buff(&sort_param,sort_buffer,file_ptr,&maxbuffer,file))
     goto err;
   if (flush_io_cache(file) ||
-      reinit_io_cache(file,READ_CACHE,0L,0,0))
+      reinit_io_cache(file,internal::READ_CACHE,0L,0,0))
     goto err;
   if (merge_buffers(&sort_param, file, outfile, sort_buffer, file_ptr,
 		    file_ptr, file_ptr+maxbuffer,0))
@@ -683,8 +684,10 @@ err:
 
   /* Setup io_cache for reading */
   save_pos=outfile->pos_in_file;
-  if (reinit_io_cache(outfile,READ_CACHE,0L,0,0))
+  if (reinit_io_cache(outfile,internal::READ_CACHE,0L,0,0))
     error=1;
   outfile->end_of_file=save_pos;
   return error;
 }
+
+} /* namespace drizzled */

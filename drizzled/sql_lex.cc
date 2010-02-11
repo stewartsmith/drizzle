@@ -16,8 +16,8 @@
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
-#define DRIZZLE_LEX 1
 #include "config.h"
+#define DRIZZLE_LEX 1
 #include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
@@ -30,8 +30,13 @@
 
 using namespace std;
 
-static int lex_one_token(void *arg, void *yysession);
+/* Stay outside of the namespace because otherwise bison goes nuts */
 int DRIZZLElex(void *arg, void *yysession);
+
+namespace drizzled
+{
+
+static int lex_one_token(void *arg, void *yysession);
 
 /**
   save order by and tables in own lists.
@@ -572,6 +577,7 @@ static inline uint32_t int_token(const char *str,uint32_t length)
   return ((unsigned char) str[-1] <= (unsigned char) cmp[-1]) ? smaller : bigger;
 }
 
+} /* namespace drizzled */
 /*
   DRIZZLElex remember the following states from the following DRIZZLElex()
 
@@ -581,8 +587,8 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 */
 int DRIZZLElex(void *arg, void *yysession)
 {
-  Session *session= (Session *)yysession;
-  Lex_input_stream *lip= session->m_lip;
+  drizzled::Session *session= (drizzled::Session *)yysession;
+  drizzled::Lex_input_stream *lip= session->m_lip;
   YYSTYPE *yylval=(YYSTYPE*) arg;
   int token;
 
@@ -599,7 +605,7 @@ int DRIZZLElex(void *arg, void *yysession)
     return token;
   }
 
-  token= lex_one_token(arg, yysession);
+  token= drizzled::lex_one_token(arg, yysession);
 
   switch(token) {
   case WITH:
@@ -610,7 +616,7 @@ int DRIZZLElex(void *arg, void *yysession)
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
-    token= lex_one_token(arg, yysession);
+    token= drizzled::lex_one_token(arg, yysession);
     if (token == ROLLUP_SYM)
     {
       return WITH_ROLLUP_SYM;
@@ -631,6 +637,9 @@ int DRIZZLElex(void *arg, void *yysession)
 
   return token;
 }
+
+namespace drizzled
+{
 
 int lex_one_token(void *arg, void *yysession)
 {
@@ -2172,3 +2181,5 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             current_index_hint_clause,
                                             str, length));
 }
+
+} /* namespace drizzled */

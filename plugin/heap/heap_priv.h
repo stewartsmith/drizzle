@@ -35,10 +35,6 @@
   as possible and keep memory consumption down.
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define CHUNK_STATUS_DELETED 0    /* this chunk has been deleted and can be reused */
 #define CHUNK_STATUS_ACTIVE  1    /* this chunk represents the first part of a live record */
 #define CHUNK_STATUS_LINKED  2    /* this chunk is a continuation from another chunk (part of chunkset) */
@@ -110,8 +106,9 @@ extern uint32_t hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key
 extern bool hp_if_null_in_key(HP_KEYDEF *keyinfo, const unsigned char *record);
 extern int hp_close(HP_INFO *info);
 extern void hp_clear(HP_SHARE *info);
-extern uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *old,
-                           key_part_map keypart_map);
+extern uint32_t hp_rb_pack_key(HP_KEYDEF *keydef,
+                               unsigned char *key, const unsigned char *old,
+                               drizzled::key_part_map keypart_map);
 
    /* Chunkset management (alloc/free/encode/decode) functions */
 
@@ -128,9 +125,5 @@ extern uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigne
 
 
 extern pthread_mutex_t THR_LOCK_heap;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* PLUGIN_HEAP_HEAP_PRIV_H */

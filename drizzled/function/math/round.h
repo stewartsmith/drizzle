@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num1.h>
 
+namespace drizzled
+{
+
 class Item_func_round :public Item_func_num1
 {
   bool truncate;
@@ -35,5 +38,7 @@ public:
   my_decimal *decimal_op(my_decimal *);
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_ROUND_H */

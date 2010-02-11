@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_FUNCTION_STR_LOAD_FILE_H
 #define DRIZZLED_FUNCTION_STR_LOAD_FILE_H
 
+namespace drizzled
+{
+
 class Item_load_file :public Item_str_func
 {
   String tmp_value;
@@ -34,5 +37,7 @@ public:
     max_length=MAX_BLOB_WIDTH;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_LOAD_FILE_H */

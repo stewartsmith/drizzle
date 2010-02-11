@@ -143,7 +143,8 @@
 #include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
-using namespace drizzled;
+namespace drizzled
+{
 
 #define HA_END_SPACE_KEY 0
 
@@ -237,7 +238,7 @@ static void get_sweep_read_cost(Table *table,
 class SEL_IMERGE;
 
 
-class SEL_TREE :public drizzled::memory::SqlAlloc
+class SEL_TREE :public memory::SqlAlloc
 {
 public:
   /*
@@ -365,7 +366,7 @@ static bool get_range(optimizer::SEL_ARG **e1, optimizer::SEL_ARG **e2, optimize
 
 static bool eq_tree(optimizer::SEL_ARG* a, optimizer::SEL_ARG *b);
 
-optimizer::SEL_ARG drizzled::optimizer::null_element(optimizer::SEL_ARG::IMPOSSIBLE);
+optimizer::SEL_ARG optimizer::null_element(optimizer::SEL_ARG::IMPOSSIBLE);
 
 static bool null_part_in_key(KEY_PART *key_part,
                              const unsigned char *key,
@@ -387,7 +388,7 @@ bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2, optimizer::RangePar
   This class relies on memory manager to do the cleanup.
 */
 
-class SEL_IMERGE : public drizzled::memory::SqlAlloc
+class SEL_IMERGE : public memory::SqlAlloc
 {
   enum { PREALLOCED_TREES= 10};
 public:
@@ -622,7 +623,7 @@ optimizer::SqlSelect *optimizer::make_select(Table *head,
 
   if (head->sort.io_cache)
   {
-    memcpy(select->file, head->sort.io_cache, sizeof(IO_CACHE));
+    memcpy(select->file, head->sort.io_cache, sizeof(internal::IO_CACHE));
     select->records=(ha_rows) (select->file->end_of_file/
 			       head->cursor->ref_length);
     delete head->sort.io_cache;
@@ -636,7 +637,7 @@ optimizer::SqlSelect::SqlSelect()
   :
     quick(NULL),
     cond(NULL),
-    file(static_cast<IO_CACHE *>(memory::sql_calloc(sizeof(IO_CACHE)))),
+    file(static_cast<internal::IO_CACHE *>(memory::sql_calloc(sizeof(internal::IO_CACHE)))),
     free_cond(false)
 {
   quick_keys.reset();
@@ -2006,8 +2007,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     ROR_SCAN_INFO's.
     Step 2: Get best ROR-intersection using an approximate algorithm.
   */
-  my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
-           (qsort_cmp)cmp_ror_scan_info);
+  internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
+                     (qsort_cmp)cmp_ror_scan_info);
   print_ror_scans_arr(param->table, "ordered",
                                           tree->ror_scans,
                                           tree->ror_scans_end);
@@ -2197,8 +2198,9 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
         (*scan)->covered_fields.getFirst();
     }
 
-    my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark, sizeof(ROR_SCAN_INFO*),
-             (qsort_cmp)cmp_ror_scan_info_covering);
+    internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
+                       sizeof(ROR_SCAN_INFO*),
+                       (qsort_cmp)cmp_ror_scan_info_covering);
 
     print_ror_scans_arr(param->table,
                                              "remaining scans",
@@ -3233,16 +3235,15 @@ get_mm_leaf(optimizer::RangeParameter *param,
       max_str[0]= min_str[0]=0;
 
     field_length-= maybe_null;
-    int escape_code=
-      make_escape_code(field->charset(),
-                       ((Item_func_like*)(param->cond))->escape);
+    int escape_code= make_escape_code(field->charset(),
+                                      ((Item_func_like*)(param->cond))->escape);
     like_error= my_like_range(field->charset(),
-			      res->ptr(), res->length(),
+                              res->ptr(), res->length(),
                               escape_code,
-			      wild_one, wild_many,
-			      field_length,
-			      (char*) min_str+offset, (char*) max_str+offset,
-			      &min_length, &max_length);
+                              internal::wild_one, internal::wild_many,
+                              field_length,
+                              (char*) min_str+offset, (char*) max_str+offset,
+                              &min_length, &max_length);
     if (like_error)				// Can't optimize with LIKE
       goto end;
 
@@ -3311,7 +3312,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     if (value->real_item()->type() == Item::FIELD_ITEM
         && value->result_type() == STRING_RESULT)
     {
-      char buff[drizzled::DateTime::MAX_STRING_LENGTH];
+      char buff[DateTime::MAX_STRING_LENGTH];
       String tmp(buff, sizeof(buff), &my_charset_bin);
       String *res= value->val_str(&tmp);
 
@@ -3323,13 +3324,13 @@ get_mm_leaf(optimizer::RangeParameter *param,
          * Create a datetime from the string and compare to fixed timestamp
          * instances representing the epoch boundaries.
          */
-        drizzled::DateTime value_datetime;
+        DateTime value_datetime;
 
         if (! value_datetime.from_string(res->c_ptr(), (size_t) res->length()))
           goto end;
 
-        drizzled::Timestamp max_timestamp;
-        drizzled::Timestamp min_timestamp;
+        Timestamp max_timestamp;
+        Timestamp min_timestamp;
 
         (void) max_timestamp.from_time_t((time_t) INT32_MAX);
         (void) min_timestamp.from_time_t((time_t) 0);
@@ -3341,13 +3342,13 @@ get_mm_leaf(optimizer::RangeParameter *param,
            * Datetime in right-hand side column is before UNIX epoch, so adjust to
            * lower bound.
            */
-          char new_value_buff[drizzled::DateTime::MAX_STRING_LENGTH];
+          char new_value_buff[DateTime::MAX_STRING_LENGTH];
           int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
           new_value_length= min_timestamp.to_string(new_value_string.c_ptr(),
-				    drizzled::DateTime::MAX_STRING_LENGTH);
-	  assert((new_value_length+1) < drizzled::DateTime::MAX_STRING_LENGTH);
+				    DateTime::MAX_STRING_LENGTH);
+	  assert((new_value_length+1) < DateTime::MAX_STRING_LENGTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
@@ -3357,13 +3358,13 @@ get_mm_leaf(optimizer::RangeParameter *param,
            * Datetime in right hand side column is after UNIX epoch, so adjust
            * to the higher bound of the epoch.
            */
-          char new_value_buff[drizzled::DateTime::MAX_STRING_LENGTH];
+          char new_value_buff[DateTime::MAX_STRING_LENGTH];
           int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
           new_value_length= max_timestamp.to_string(new_value_string.c_ptr(),
-					drizzled::DateTime::MAX_STRING_LENGTH);
-	  assert((new_value_length+1) < drizzled::DateTime::MAX_STRING_LENGTH);
+					DateTime::MAX_STRING_LENGTH);
+	  assert((new_value_length+1) < DateTime::MAX_STRING_LENGTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
@@ -6407,3 +6408,4 @@ static void print_ror_scans_arr(Table *table,
     tmp.append(STRING_WITH_LEN("(empty)"));
 }
 
+} /* namespace drizzled */

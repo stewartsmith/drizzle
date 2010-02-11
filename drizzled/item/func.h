@@ -37,6 +37,9 @@
 
 /* For type casts */
 
+namespace drizzled
+{
+
 enum Cast_target
 {
   ITEM_CAST_BINARY,
@@ -46,5 +49,7 @@ enum Cast_target
   ITEM_CAST_CHAR,
   ITEM_CAST_DECIMAL
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_FUNC_H */

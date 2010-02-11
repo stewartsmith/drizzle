@@ -22,6 +22,9 @@
 
 #include <drizzled/item/num.h>
 
+namespace drizzled
+{
+
 class Item_int :public Item_num
 {
 public:
@@ -54,5 +57,7 @@ public:
   { return (uint32_t)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_INT_H */

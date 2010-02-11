@@ -20,11 +20,11 @@
 #ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 #define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 
-class SEL_TREE;
-struct st_ror_scan_info;
-
 namespace drizzled
 {
+
+class SEL_TREE;
+struct st_ror_scan_info;
 
 namespace optimizer
 {
@@ -70,10 +70,10 @@ public:
   */
   virtual QuickSelectInterface *make_quick(Parameter *param,
                                            bool retrieve_full_rows,
-                                           drizzled::memory::Root *parent_alloc= NULL) = 0;
+                                           memory::Root *parent_alloc= NULL) = 0;
 
-  /* Table read plans are allocated on drizzled::memory::Root and are never deleted */
-  static void *operator new(size_t size, drizzled::memory::Root *mem_root)
+  /* Table read plans are allocated on memory::Root and are never deleted */
+  static void *operator new(size_t size, memory::Root *mem_root)
   { 
     return (void*) alloc_root(mem_root, (uint32_t) size); 
   }
@@ -81,7 +81,7 @@ public:
   static void operator delete(void *, size_t)
   { }
 
-  static void operator delete(void *, drizzled::memory::Root *)
+  static void operator delete(void *, memory::Root *)
     { /* Never called */ }
 
   virtual ~TableReadPlan() {} /* Remove gcc warning */
@@ -113,7 +113,7 @@ public:
   {}
   virtual ~RangeReadPlan() {}                     /* Remove gcc warning */
 
-  QuickSelectInterface *make_quick(Parameter *param, bool, drizzled::memory::Root *parent_alloc);
+  QuickSelectInterface *make_quick(Parameter *param, bool, memory::Root *parent_alloc);
 
 };
 
@@ -126,7 +126,7 @@ public:
   virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
+                                   memory::Root *parent_alloc);
 
   /* Array of pointers to ROR range scans used in this intersection */
   struct st_ror_scan_info **first_scan;
@@ -150,7 +150,7 @@ public:
   virtual ~RorUnionReadPlan() {}                 /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
+                                   memory::Root *parent_alloc);
   TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
   TableReadPlan **last_ror;  /* end of the above array */
 };
@@ -169,7 +169,7 @@ public:
   virtual ~IndexMergeReadPlan() {}               /* Remove gcc warning */
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
+                                   memory::Root *parent_alloc);
   RangeReadPlan **range_scans; /* array of ptrs to plans of merged scans */
   RangeReadPlan **range_scans_end; /* end of the array */
 };
@@ -236,7 +236,7 @@ public:
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
-                                   drizzled::memory::Root *parent_alloc);
+                                   memory::Root *parent_alloc);
 };
 
 

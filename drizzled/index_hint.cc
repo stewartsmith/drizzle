@@ -33,6 +33,9 @@
 #include "drizzled/index_hint.h"
 #include "drizzled/sql_table.h"
 
+namespace drizzled
+{
+
 /*
  * Names of the index hints (for error messages). Keep in sync with
  * index_hint_type
@@ -65,3 +68,5 @@ void Index_hint::print(Session *session, String *str)
   }
   str->append(')');
 }
+
+} /* namespace drizzled */

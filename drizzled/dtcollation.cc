@@ -28,6 +28,8 @@
 #include <drizzled/session.h>
 #include "drizzled/charset.h"
 
+namespace drizzled
+{
 
 DTCollation::DTCollation()
 {
@@ -334,3 +336,4 @@ void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
     my_error(ER_CANT_AGGREGATE_NCOLLATIONS,MYF(0),fname);
 }
 
+} /* namespace drizzled */

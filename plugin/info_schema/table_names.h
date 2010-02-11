@@ -32,7 +32,7 @@
 class TabNamesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int oldFormat(Session *session,
+  virtual int oldFormat(drizzled::Session *session,
                         drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 

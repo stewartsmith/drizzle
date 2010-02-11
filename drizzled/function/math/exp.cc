@@ -22,6 +22,8 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/math/exp.h>
 
+namespace drizzled
+{
 
 double Item_func_exp::val_real()
 {
@@ -32,3 +34,4 @@ double Item_func_exp::val_real()
   return fix_result(exp(value));
 }
 
+} /* namespace drizzled */
