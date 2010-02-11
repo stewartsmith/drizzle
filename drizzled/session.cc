@@ -758,8 +758,6 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
   }
 
   query.assign(in_packet, in_packet + in_packet_length);
-  if (query.empty())
-    return false;
 
   return true;
 }
