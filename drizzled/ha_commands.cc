@@ -115,19 +115,4 @@ int ha_init()
   return error;
 }
 
-int ha_end()
-{
-  int error= 0;
-
-  /*
-    This should be eventualy based  on the graceful shutdown flag.
-    So if flag is equal to HA_PANIC_CLOSE, the deallocate
-    the errors.
-  */
-  if (ha_finish_errors())
-    error= 1;
-
-  return error;
-}
-
 } /* namespace drizzled */
