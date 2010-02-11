@@ -25,7 +25,6 @@
 #include <drizzled/session.h>
 #include "drizzled/session_list.h"
 #include <sys/stat.h>
-#include "drizzled/my_error.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/query_id.h>
