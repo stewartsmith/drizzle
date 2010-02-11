@@ -45,6 +45,7 @@ typedef drizzle_lex_string LEX_STRING;
 struct my_option;
 
 extern char *opt_plugin_add;
+extern char *opt_plugin_remove;
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];

@@ -38,7 +38,7 @@ public:
   void cleanup();
   bool create_result_table(Session *session, List<Item> *column_types,
                            bool is_distinct, uint64_t options,
-                           const char *alias, bool bit_fields_as_long);
+                           const char *alias);
 };
 
 } /* namespace drizzled */
