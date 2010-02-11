@@ -20,8 +20,8 @@
 
 #include "config.h"
 
-#include <plugin/data_engine/function.h>
-#include <plugin/data_engine/cursor.h>
+#include <plugin/function_engine/function.h>
+#include <plugin/function_engine/cursor.h>
 
 #include <string>
 

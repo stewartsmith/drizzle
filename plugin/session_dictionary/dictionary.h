@@ -18,41 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "plugin/sesssion_dictionary/dictionary.h"
+#ifndef PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
+#define PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H
 
-using namespace drizzled;
+#include "drizzled/plugin/table_function.h"
+#include "plugin/session_dictionary/processlist.h"
 
-static ProcesslistTool *processlist;
-
-static int init(drizzled::plugin::Registry &registry)
-{
-  processlist= new(std::nothrow)ProcesslistTool;
-  registry.add(processlist);
-  
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(processlist);
-  delete processlist;
-
-  return 0;
-}
-
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "session_dictionary",
-  "1.0",
-  "Brian Aker",
-  "Dictionary for session information, aka proccesslist, etc.",
-  PLUGIN_LICENSE_GPL,
-  init,
-  finalize,
-  NULL,
-  NULL,
-  NULL
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+#endif  /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

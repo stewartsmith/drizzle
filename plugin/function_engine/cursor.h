@@ -23,7 +23,7 @@
 
 #include <drizzled/cursor.h>
 
-#include <plugin/data_engine/function.h>
+#include <plugin/function_engine/function.h>
 
 class FunctionCursor: public drizzled::Cursor
 {
