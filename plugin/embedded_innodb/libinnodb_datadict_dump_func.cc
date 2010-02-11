@@ -63,7 +63,7 @@ static int visit_table(void* arg_param, const char* name, ib_tbl_fmt_t tbl_fmt,
                        ib_ulint_t page_size, int n_cols, int n_indexes)
 {
   struct schema_visitor_arg *arg= (struct schema_visitor_arg*)arg_param;
-  std::stringstream ss(*arg->str);
+  std::stringstream ss;
 
   ss << name << " Format: ";
 
@@ -152,11 +152,11 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 
   err = ib_schema_tables_iterate(arg.transaction, visit_tables, &arg);
 
+  cerr << endl << endl << dict_dump << endl << endl;
 
-
-  str->alloc(dict_dump.length()+1);
+  str->alloc(dict_dump.length());
   str->length(dict_dump.length());
-  strncpy(str->ptr(), dict_dump.c_str(), dict_dump.length()+1);
+  strncpy(str->ptr(), dict_dump.c_str(), dict_dump.length());
 
   return str;
 }
