@@ -34,6 +34,7 @@
 #include "drizzled/global_charset_info.h"
 
 #include "libinnodb_version_func.h"
+#include "libinnodb_datadict_dump_func.h"
 
 #include "embedded_innodb-1.0/innodb.h"
 
@@ -253,6 +254,7 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
   registry.add(embedded_innodb_engine);
 
   libinnodb_version_func_initialize(registry);
+  libinnodb_datadict_dump_func_initialize(registry);
 
   return 0;
 }
@@ -265,6 +267,7 @@ static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
   delete embedded_innodb_engine;
 
   libinnodb_version_func_finalize(registry);
+  libinnodb_datadict_dump_func_finalize(registry);
 
   err= ib_shutdown();
 
