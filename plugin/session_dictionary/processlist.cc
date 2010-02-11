@@ -66,26 +66,25 @@ bool ProcesslistTool::Generator::populate()
 {
   const char *val;
   Session* tmp;
-  Security_context *tmp_sctx;
 
   if (it == getSessionList().end())
     return false;
 
   tmp= *it;
-  tmp_sctx= &tmp->security_ctx;
+  const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
 
   /* ID */
   push((int64_t) tmp->thread_id);
 
 
   /* USER */
-  if (tmp_sctx->user.length())
-    push(tmp_sctx->user);
+  if (not tmp_sctx->getUser().empty())
+    push(tmp_sctx->getUser());
   else 
     push("unauthenticated user");
 
   /* HOST */
-  push(tmp_sctx->ip);
+  push(tmp_sctx->getIp());
 
   /* DB */
   if (! tmp->db.empty())

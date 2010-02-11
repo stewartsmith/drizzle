@@ -1,10 +1,12 @@
 *.dirstamp
 *.gmo
+*.gz
 *.la
 *.linted
 *.lo
 *.orig
 *.rej
+*.rpm
 *replication.pb.*
 *stamp-h
 ./ChangeLog
@@ -185,6 +187,7 @@ plugin/myisam/myisamlog
 plugin/myisam/myisampack
 po/POTFILES
 po/POTFILES.in
+po/remove-potcdate.sed
 po/stamp-po
 protocol.gcno
 qcache.gcno
@@ -262,6 +265,7 @@ strings/tests/Makefile.in
 support-files/Makefile.in
 support-files/drizzle-log-rotate
 support-files/drizzle.server
+support-files/drizzle.spec
 support-files/libdrizzle.pc
 support-files/libdrizzleclient.pc
 support-files/smf/Makefile.in

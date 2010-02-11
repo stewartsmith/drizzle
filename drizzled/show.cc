@@ -714,7 +714,12 @@ public:
   uint64_t thread_id;
   time_t start_time;
   uint32_t   command;
-  string user, host, db, proc_info, state_info, query;
+  string user;
+  string host;
+  string db;
+  string proc_info;
+  string state_info;
+  string query;
   thread_info(uint64_t thread_id_arg,
               time_t start_time_arg,
               uint32_t command_arg,
@@ -730,7 +735,7 @@ public:
   {}
 };
 
-void mysqld_list_processes(Session *session,const char *user)
+void mysqld_list_processes(Session *session, const char *user)
 {
   Item *field;
   List<Item> field_list;
@@ -757,9 +762,9 @@ void mysqld_list_processes(Session *session,const char *user)
     for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
-      Security_context *tmp_sctx= &tmp->security_ctx;
+      const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
       internal::st_my_thread_var *mysys_var;
-      if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->client->isConnected() && (not user || (not tmp_sctx->getUser().compare(user))))
       {
 
         if ((mysys_var= tmp->mysys_var))
@@ -785,10 +790,10 @@ void mysqld_list_processes(Session *session,const char *user)
         thread_infos.push_back(thread_info(tmp->thread_id,
                                            tmp->start_time,
                                            tmp->command,
-                                           tmp_sctx->user.empty()
+                                           tmp_sctx->getUser().empty()
                                              ? string("unauthenticated user")
-                                             : tmp_sctx->user,
-                                           tmp_sctx->ip,
+                                             : tmp_sctx->getUser(),
+                                           tmp_sctx->getIp(),
                                            tmp->db,
                                            tmp_proc_info,
                                            tmp_state_info,

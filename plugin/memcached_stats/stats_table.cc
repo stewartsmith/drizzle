@@ -30,7 +30,7 @@
 #include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/show.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 #include "stats_table.h"
 #include "sysvar_holder.h"

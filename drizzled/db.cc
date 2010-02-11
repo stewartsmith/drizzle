@@ -26,8 +26,7 @@
 #include <fstream>
 
 #include <drizzled/message/schema.pb.h>
-#include "drizzled/my_error.h"
-#include <drizzled/error.h>
+#include "drizzled/error.h"
 #include <drizzled/gettext.h>
 #include <drizzled/my_hash.h>
 #include "drizzled/internal/m_string.h"
