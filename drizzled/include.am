@@ -162,7 +162,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/trim.h \
 			      drizzled/function/str/user.h \
 			      drizzled/function/str/uuid.h \
-			      drizzled/function/str/weight_string.h \
 			      drizzled/function/time/curdate.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
@@ -558,7 +557,6 @@ drizzled_drizzled_SOURCES = \
 			    drizzled/function/str/trim.cc \
 			    drizzled/function/str/user.cc \
 			    drizzled/function/str/uuid.cc \
-			    drizzled/function/str/weight_string.cc \
 			    drizzled/function/time/curdate.cc \
 			    drizzled/function/time/date.cc \
 			    drizzled/function/time/date_add_interval.cc \
