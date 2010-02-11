@@ -982,7 +982,7 @@ innobase_mysql_print_thd(
           session->security_ctx.user.c_str()
   );
   fprintf(f,
-          "\n%s", session->getQueryString()
+          "\n%s", session->getQueryString().c_str()
   );
 	putc('\n', f);
 }
@@ -1359,7 +1359,7 @@ innobase_trx_allocate(
 	trx = trx_allocate_for_mysql();
 
 	trx->mysql_thd = session;
-	trx->mysql_query_str = session_query(session);
+	trx->mysql_query_str = session->query.c_str();
 
 	innobase_trx_init(session, trx);
 
@@ -5804,9 +5804,9 @@ InnobaseEngine::doCreateTable(
 		}
 	}
 
-	if (*trx->mysql_query_str) {
+	if (trx->mysql_query_str) {
 		error = row_table_add_foreign_constraints(trx,
-			*trx->mysql_query_str, norm_name,
+			trx->mysql_query_str, norm_name,
 			lex_identified_temp_table);
 
 		error = convert_error_code_to_mysql(error, iflags, NULL);

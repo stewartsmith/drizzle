@@ -841,7 +841,7 @@ extern "C" void handle_segfault(int sig)
     fprintf(stderr, _("Trying to get some variables.\n"
                       "Some pointers may be invalid and cause the "
                       "dump to abort...\n"));
-    safe_print_str("session->query", session->query, 1024);
+    safe_print_str("session->query", session->query.c_str(), 1024);
     fprintf(stderr, "session->thread_id=%"PRIu32"\n", (uint32_t) session->thread_id);
     fprintf(stderr, "session->killed=%s\n", kreason);
   }

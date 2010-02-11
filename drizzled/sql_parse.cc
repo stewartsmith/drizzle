@@ -226,10 +226,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
     const char* end_of_stmt= NULL;
 
-    string query_to_rewrite(session->query, session->query_length);
-    plugin::QueryRewriter::rewriteQuery(query_to_rewrite);
+    plugin::QueryRewriter::rewriteQuery(session->query);
 
-    mysql_parse(session, query_to_rewrite.c_str(), query_to_rewrite.length(), &end_of_stmt);
+    mysql_parse(session, session->query.c_str(), session->query.length(), &end_of_stmt);
 
     break;
   }
@@ -320,8 +319,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query= 0;
-  session->query_length= 0;
+  session->query.clear();
 
   session->set_proc_info(NULL);
   free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
@@ -461,10 +459,10 @@ mysql_execute_command(Session *session)
   /* list of all tables in query */
   TableList *all_tables;
   /* A peek into the query string */
-  size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query_length;
+  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
+                        PROCESS_LIST_WIDTH : session->query.length();
 
-  memcpy(session->process_list_info, session->query, proc_info_len);
+  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
   session->process_list_info[proc_info_len]= '\0';
 
   /*
@@ -772,9 +770,9 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
           PROCESSLIST.
           Note that we don't need LOCK_thread_count to modify query_length.
         */
-        if (*found_semicolon &&
+        /*if (*found_semicolon &&
             (session->query_length= (ulong)(*found_semicolon - session->query)))
-          session->query_length--;
+          session->query_length--;*/
         DRIZZLE_QUERY_EXEC_START(session->query,
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));

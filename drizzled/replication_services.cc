@@ -760,7 +760,7 @@ void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
   cleanupTransaction(transaction, in_session);
 }
 
-void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
+void ReplicationServices::rawStatement(Session *in_session, const string &query)
 {
   if (! is_active)
     return;
@@ -769,7 +769,6 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   message::Statement *statement= transaction->add_statement();
 
   initStatement(*statement, message::Statement::RAW_SQL, in_session);
-  string query(in_query, in_query_len);
   statement->set_sql(query);
   finalizeStatement(*statement, in_session);
 
