@@ -26,8 +26,10 @@
 #include "drizzled/sql_select.h"
 #include "drizzled/strfunc.h"
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 class Item;
 class Item_field;
@@ -326,3 +328,5 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
     }
   }
 }
+
+} /* namespace drizzled */

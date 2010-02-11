@@ -21,6 +21,8 @@
 #include <math.h>
 #include <drizzled/function/math/asin.h>
 
+namespace drizzled
+{
 
 double Item_func_asin::val_real()
 {
@@ -32,3 +34,4 @@ double Item_func_asin::val_real()
   return asin(value);
 }
 
+} /* namespace drizzled */

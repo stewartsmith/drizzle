@@ -34,7 +34,7 @@ class BlackholeShare
 public:
   explicit BlackholeShare(const std::string table_name_arg);
   ~BlackholeShare();
-  THR_LOCK lock;
+  drizzled::THR_LOCK lock;
   uint32_t use_count;
   const std::string table_name;
 };
@@ -44,13 +44,14 @@ public:
   Class definition for the blackhole storage engine
   "Dumbest named feature ever"
 */
-class ha_blackhole: public Cursor
+class ha_blackhole: public drizzled::Cursor
 {
-  THR_LOCK_DATA lock;      /* MySQL lock */
+  drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   BlackholeShare *share;
 
 public:
-  ha_blackhole(drizzled::plugin::StorageEngine &engine, TableShare &table_arg);
+  ha_blackhole(drizzled::plugin::StorageEngine &engine,
+               drizzled::TableShare &table_arg);
   ~ha_blackhole()
   {}
 
@@ -68,12 +69,14 @@ public:
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   BlackholeShare *get_share(const char *table_name);
   void free_share();
-  int index_read_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map,
-                     enum ha_rkey_function find_flag);
+  int index_read_map(unsigned char * buf, const unsigned char * key,
+                     drizzled::key_part_map keypart_map,
+                     drizzled::ha_rkey_function find_flag);
   int index_read_idx_map(unsigned char * buf, uint32_t idx, const unsigned char * key,
-                         key_part_map keypart_map,
-                         enum ha_rkey_function find_flag);
-  int index_read_last_map(unsigned char * buf, const unsigned char * key, key_part_map keypart_map);
+                         drizzled::key_part_map keypart_map,
+                         drizzled::ha_rkey_function find_flag);
+  int index_read_last_map(unsigned char * buf, const unsigned char * key,
+                          drizzled::key_part_map keypart_map);
   int index_next(unsigned char * buf);
   int index_prev(unsigned char * buf);
   int index_first(unsigned char * buf);

@@ -24,6 +24,8 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 
+using namespace drizzled;
+
 /*
   Errors a handler can give you
 */

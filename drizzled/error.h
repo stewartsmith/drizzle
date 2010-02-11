@@ -23,6 +23,9 @@
 #include <string>
 #include "drizzled/definitions.h"
 
+namespace drizzled
+{
+
 /* Max width of screen (for error messages) */
 #define SC_MAXWIDTH 256
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
@@ -50,8 +53,7 @@ void my_message(uint32_t my_err, const char *str, myf MyFlags);
 void my_printf_error(uint32_t my_err, const char *format,
                      myf MyFlags, ...)
                      __attribute__((format(printf, 2, 4)));
-#ifdef __cplusplus
-}
-#endif
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ERROR_H */

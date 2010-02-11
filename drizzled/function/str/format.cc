@@ -24,6 +24,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 /**
   Change a number to format '3,333,333,333.000'.
 
@@ -136,3 +139,5 @@ void Item_func_format::print(String *str, enum_query_type query_type)
   args[1]->print(str, query_type);
   str->append(')');
 }
+
+} /* namespace drizzled */

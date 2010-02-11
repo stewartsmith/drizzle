@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SECURITY_CONTEXT_H
 #define DRIZZLED_SECURITY_CONTEXT_H
 
+namespace drizzled
+{
 
 /**
   @class Security_context
@@ -46,5 +48,7 @@ public:
     return (ip.c_str() ? ip.c_str() : (char *)"%");
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SECURITY_CONTEXT_H */

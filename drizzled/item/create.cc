@@ -74,7 +74,7 @@
 #include <drizzled/function/math/cos.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
-#include <drizzled/function/math//exp.h>
+#include <drizzled/function/math/exp.h>
 #include <drizzled/function/field.h>
 #include <drizzled/function/find_in_set.h>
 #include <drizzled/function/math/floor.h>
@@ -106,7 +106,9 @@
 #include <map>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 class Item;
 
@@ -2891,3 +2893,5 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
   }
   return res;
 }
+
+} /* namespace drizzled */

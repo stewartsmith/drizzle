@@ -25,8 +25,15 @@
 #include "drizzled/base.h"
 #include "drizzled/qsort_cmp.h"
 
-typedef struct st_sort_field SORT_FIELD;
+namespace drizzled
+{
+
+namespace internal
+{
 typedef struct st_io_cache IO_CACHE;
+}
+
+typedef struct st_sort_field SORT_FIELD;
 class Field;
 class Table;
 
@@ -97,12 +104,14 @@ typedef struct st_sort_param {
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
 		    BUFFPEK *buffpek,
-		    uint32_t *maxbuffer, IO_CACHE *t_file);
-uint32_t read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
+		    uint32_t *maxbuffer, internal::IO_CACHE *t_file);
+uint32_t read_to_buffer(internal::IO_CACHE *fromfile,BUFFPEK *buffpek,
 		    uint32_t sort_length);
-int merge_buffers(SORTPARAM *param,IO_CACHE *from_file,
-		  IO_CACHE *to_file, unsigned char *sort_buffer,
+int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
+		  internal::IO_CACHE *to_file, unsigned char *sort_buffer,
 		  BUFFPEK *lastbuff,BUFFPEK *Fb,
 		  BUFFPEK *Tb,int flag);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_SORT_H */

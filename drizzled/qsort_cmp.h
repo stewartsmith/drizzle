@@ -20,18 +20,14 @@
 #ifndef DRIZZLED_QSORT_CMP_H
 #define DRIZZLED_QSORT_CMP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
- 
+namespace drizzled
+{
+
 /** Wow. Figure out this logic. I dare you */
 typedef int (*qsort_cmp)(const void *,const void *);
 typedef int (*qsort_cmp2)(void*, const void *,const void *);
 typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 
-
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_QSORT_CMP_H */

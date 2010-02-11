@@ -16,6 +16,10 @@
 #include "config.h"
 #include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Converts integer to its string representation in decimal notation.
@@ -67,3 +71,6 @@ char *int10_to_str(int32_t val,char *dst,int radix)
   while ((*dst++ = *p++) != 0) ;
   return dst-1;
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

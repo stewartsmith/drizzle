@@ -19,7 +19,8 @@
 
 #include <drizzled/item/row.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /**
   Row items used for comparing rows and IN operations on rows:
@@ -197,3 +198,5 @@ void Item_row::bring_value()
   for (uint32_t i= 0; i < arg_count; i++)
     items[i]->bring_value();
 }
+
+} /* namespace drizzled */

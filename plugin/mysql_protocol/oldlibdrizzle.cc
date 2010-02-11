@@ -36,7 +36,10 @@ using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
+namespace drizzled
+{
 extern uint32_t global_thread_id;
+}
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static uint32_t port;
@@ -558,28 +561,28 @@ bool ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, -10) - buff));
+                      (size_t) (internal::int10_to_str(from, buff, -10) - buff));
 }
 
 bool ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, 10) - buff));
+                      (size_t) (internal::int10_to_str(from, buff, 10) - buff));
 }
 
 bool ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, -10) - buff));
+                      (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
 }
 
 bool ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, 10) - buff));
+                      (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
 }
 
 bool ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
@@ -826,7 +829,7 @@ static DRIZZLE_SYSVAR_UINT(buffer_length, buffer_length, PLUGIN_VAR_RQCMDARG,
 static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
                           N_("Address to bind to."), NULL, NULL, NULL);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(port),
   DRIZZLE_SYSVAR(connect_timeout),
   DRIZZLE_SYSVAR(read_timeout),
@@ -848,7 +851,7 @@ DRIZZLE_DECLARE_PLUGIN
   init,             /* Plugin Init */
   deinit,           /* Plugin Deinit */
   NULL,             /* status variables */
-  system_variables, /* system variables */
+  sys_variables, /* system variables */
   NULL              /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

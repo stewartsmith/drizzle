@@ -22,6 +22,9 @@
 
 #include <drizzled/plugin/registry.h>
 
+namespace drizzled
+{
+
 struct drizzle_show_var;
 struct drizzle_sys_var;
 
@@ -35,8 +38,6 @@ enum plugin_license_type {
 };
 
 
-namespace drizzled
-{
 namespace plugin
 {
 

@@ -27,7 +27,9 @@
 
 using namespace std;
 
-extern "C"
+namespace drizzled
+{
+
 void my_hash_sort_bin(const CHARSET_INFO * const,
                       const unsigned char *key, size_t len,
                       uint32_t *nr1, uint32_t *nr2);
@@ -282,7 +284,7 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
      Remove trailing spaces. We have to do this to be able to compare
     'A ' and 'A' as identical
   */
-  key= skip_trailing_space(key, len);
+  key= internal::skip_trailing_space(key, len);
 
   for (; pos < (unsigned char*) key ; pos++)
   {
@@ -552,3 +554,5 @@ CHARSET_INFO my_charset_bin =
     &my_charset_handler,
     &my_collation_binary_handler
 };
+
+} /* namespace drizzled */

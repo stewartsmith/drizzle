@@ -29,6 +29,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
 
+using namespace drizzled;
 /** InnoDB table share */
 typedef struct st_innobase_share {
 	THR_LOCK	lock;		/*!< MySQL lock protecting
@@ -98,7 +99,7 @@ class ha_innobase: public Cursor
 
 	/* Init values for the class: */
  public:
-	UNIV_INTERN ha_innobase(drizzled::plugin::StorageEngine &engine,
+	UNIV_INTERN ha_innobase(plugin::StorageEngine &engine,
                                 TableShare &table_arg);
 	UNIV_INTERN ~ha_innobase();
 	/*

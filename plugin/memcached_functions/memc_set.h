@@ -37,10 +37,10 @@
 #include <string>
 
 /* implements memc_set */
-class MemcachedSet :public Item_int_func
+class MemcachedSet :public drizzled::Item_int_func
 {
-  String failure_buff;
-  String value;
+  drizzled::String failure_buff;
+  drizzled::String value;
 public:
   int64_t val_int();
   MemcachedSet() :Item_int_func() {}

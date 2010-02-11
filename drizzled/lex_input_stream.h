@@ -34,6 +34,9 @@
   should be seen once out-of-bound data is removed.
 */
 
+namespace drizzled
+{
+
 class Lex_input_stream
 {
 public:
@@ -387,4 +390,7 @@ public:
   const char *m_cpp_text_end;
 
 };
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_LEX_INPUT_STREAM_H */

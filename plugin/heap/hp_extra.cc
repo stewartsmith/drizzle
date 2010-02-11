@@ -20,6 +20,8 @@
 
 #include "heap_priv.h"
 
+using namespace drizzled;
+
 static void heap_extra_keyflag(register HP_INFO *info,
                                enum ha_extra_function function);
 

@@ -18,10 +18,6 @@
 #ifndef PLUGIN_MYISAM_KEYCACHE_H
 #define PLUGIN_MYISAM_KEYCACHE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum flush_type
 {
   FLUSH_KEEP,           /* flush block and keep it in the cache */
@@ -34,7 +30,6 @@ enum flush_type
   FLUSH_FORCE_WRITE
 };
 
-typedef uint64_t my_off_t;
 
 /* declare structures that is used by st_key_cache */
 
@@ -45,10 +40,18 @@ typedef struct st_keycache_page KEYCACHE_PAGE;
 struct st_hash_link;
 typedef struct st_hash_link HASH_LINK;
 
+namespace drizzled
+{
+namespace internal
+{
+typedef uint64_t my_off_t;
+struct st_my_thread_var;
+}
+
 /* info about requests in a waiting queue */
 typedef struct st_keycache_wqueue
 {
-  struct st_my_thread_var *last_thread;  /* circular list of waiting threads */
+  drizzled::internal::st_my_thread_var *last_thread;  /* circular list of waiting threads */
 } KEYCACHE_WQUEUE;
 
 #define CHANGED_BLOCKS_HASH 128             /* must be power of 2 */
@@ -120,34 +123,63 @@ typedef struct st_key_cache
   bool in_init;		/* Set to 1 in MySQL during init/resize     */
 } KEY_CACHE;
 
-/* The default key cache */
-extern KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
+} /* namespace drizzled */
 
-extern int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-			  uint32_t use_mem, uint32_t division_limit,
+/* The default key cache */
+extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
+
+extern int init_key_cache(drizzled::KEY_CACHE *keycache, uint32_t key_cache_block_size,
+			  size_t use_mem, uint32_t division_limit,
 			  uint32_t age_threshold);
-extern int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-			    uint32_t use_mem, uint32_t division_limit,
+extern int resize_key_cache(drizzled::KEY_CACHE *keycache, uint32_t key_cache_block_size,
+			    size_t use_mem, uint32_t division_limit,
 			    uint32_t age_threshold);
-extern unsigned char *key_cache_read(KEY_CACHE *keycache,
-                            int file, my_off_t filepos, int level,
+extern unsigned char *key_cache_read(drizzled::KEY_CACHE *keycache,
+                            int file, drizzled::internal::my_off_t filepos, int level,
                             unsigned char *buff, uint32_t length,
 			    uint32_t block_length,int return_buffer);
-extern int key_cache_insert(KEY_CACHE *keycache,
-                            int file, my_off_t filepos, int level,
+extern int key_cache_insert(drizzled::KEY_CACHE *keycache,
+                            int file, drizzled::internal::my_off_t filepos, int level,
                             unsigned char *buff, uint32_t length);
-extern int key_cache_write(KEY_CACHE *keycache,
-                           int file, my_off_t filepos, int level,
+extern int key_cache_write(drizzled::KEY_CACHE *keycache,
+                           int file, drizzled::internal::my_off_t filepos, int level,
                            unsigned char *buff, uint32_t length,
 			   uint32_t block_length,int force_write);
-extern int flush_key_blocks(KEY_CACHE *keycache,
+extern int flush_key_blocks(drizzled::KEY_CACHE *keycache,
                             int file, enum flush_type type);
-extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
+extern void end_key_cache(drizzled::KEY_CACHE *keycache, bool cleanup);
 
 extern void reset_key_cache_counters();
 
-#ifdef __cplusplus
+/*
+  Next highest power of two
+
+  SYNOPSIS
+    my_round_up_to_next_power()
+    v		Value to check
+
+  RETURN
+    Next or equal power of 2
+    Note: 0 will return 0
+
+  NOTES
+    Algorithm by Sean Anderson, according to:
+    http://graphics.stanford.edu/~seander/bithacks.html
+    (Orignal code public domain)
+
+    Comments shows how this works with 01100000000000000000000000001011
+*/
+
+static inline uint32_t my_round_up_to_next_power(uint32_t v)
+{
+  v--;			/* 01100000000000000000000000001010 */
+  v|= v >> 1;		/* 01110000000000000000000000001111 */
+  v|= v >> 2;		/* 01111100000000000000000000001111 */
+  v|= v >> 4;		/* 01111111110000000000000000001111 */
+  v|= v >> 8;		/* 01111111111111111100000000001111 */
+  v|= v >> 16;		/* 01111111111111111111111111111111 */
+  return v+1;		/* 10000000000000000000000000000000 */
 }
-#endif
+
 
 #endif /* PLUGIN_MYISAM_KEYCACHE_H */

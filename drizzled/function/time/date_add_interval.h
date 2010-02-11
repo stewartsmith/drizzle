@@ -22,6 +22,9 @@
 
 #include <drizzled/function/time/date.h>
 
+namespace drizzled
+{
+
 class Item_date_add_interval :public Item_date_func
 {
   String value;
@@ -41,5 +44,7 @@ public:
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_DATE_ADD_INTERVAL_H */

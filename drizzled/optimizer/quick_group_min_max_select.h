@@ -97,7 +97,7 @@ public:
     The following two members are public to allow easy access from
     GroupMinMaxReadPlan::make_quick()
   */
-  drizzled::memory::Root alloc; /**< Memory pool for this and quick_prefix_select data. */
+  memory::Root alloc; /**< Memory pool for this and quick_prefix_select data. */
   QuickRangeSelect *quick_prefix_select; /**< For retrieval of group prefixes. */
 
 private:
@@ -294,7 +294,7 @@ public:
                          ha_rows records,
                          uint key_infix_len, 
                          unsigned char *key_infix,
-                         drizzled::memory::Root *parent_alloc);
+                         memory::Root *parent_alloc);
 
   ~QuickGroupMinMaxSelect();
 

@@ -43,8 +43,8 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 using namespace std;
-using namespace drizzled;
 using namespace google;
+using namespace drizzled;
 
 static const char *replace_with_spaces= "\n\r";
 
@@ -242,3 +242,4 @@ int main(int argc, char* argv[])
 
   return (result == true ? 0 : 1);
 }
+

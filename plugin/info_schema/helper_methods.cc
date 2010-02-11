@@ -54,7 +54,7 @@ bool show_status_array(Session *session,
                        enum enum_var_type value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
-                       bool ucase_names,
+                       bool ,
                        plugin::InfoSchemaTable *schema_table)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
@@ -76,8 +76,6 @@ bool show_status_array(Session *session,
   {
     strncpy(prefix_end, variables->name, len);
     name_buffer[sizeof(name_buffer)-1]=0;       /* Safety */
-    if (ucase_names)
-      make_upper(name_buffer);
 
     /*
       if var->type is SHOW_FUNC, call the function.
@@ -90,7 +88,7 @@ bool show_status_array(Session *session,
     if (show_type == SHOW_ARRAY)
     {
       show_status_array(session, wild, (SHOW_VAR *) var->value, value_type,
-                        status_var, name_buffer, table, ucase_names, schema_table);
+                        status_var, name_buffer, table, false, schema_table);
     }
     else
     {
@@ -119,19 +117,19 @@ bool show_status_array(Session *session,
           /* fall through */
         case SHOW_DOUBLE:
           /* 6 is the default precision for '%f' in sprintf() */
-          end= buff + my_fcvt(*(double *) value, 6, buff, NULL);
+          end= buff + internal::my_fcvt(*(double *) value, 6, buff, NULL);
           break;
         case SHOW_LONG_STATUS:
           value= ((char *) status_var + (ulong) value);
           /* fall through */
         case SHOW_LONG:
-          end= int10_to_str(*(long*) value, buff, 10);
+          end= internal::int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_LONGLONG_STATUS:
           value= ((char *) status_var + (uint64_t) value);
           /* fall through */
         case SHOW_LONGLONG:
-          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+          end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
           break;
         case SHOW_SIZE:
           {
@@ -144,7 +142,7 @@ bool show_status_array(Session *session,
           }
           break;
         case SHOW_HA_ROWS:
-          end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
+          end= internal::int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
           break;
         case SHOW_BOOL:
           end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
@@ -154,15 +152,8 @@ bool show_status_array(Session *session,
           break;
         case SHOW_INT:
         case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-          end= int10_to_str((long) *(uint32_t*) value, buff, 10);
+          end= internal::int10_to_str((long) *(uint32_t*) value, buff, 10);
           break;
-        case SHOW_HAVE:
-        {
-          SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
-          pos= show_comp_option_name[(int) tmp_option];
-          end= strchr(pos, '\0');
-          break;
-        }
         case SHOW_CHAR:
         {
           if (!(pos= value))
@@ -179,11 +170,11 @@ bool show_status_array(Session *session,
         }
         case SHOW_KEY_CACHE_LONG:
           value= (char*) dflt_key_cache + (ulong)value;
-          end= int10_to_str(*(long*) value, buff, 10);
+          end= internal::int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_KEY_CACHE_LONGLONG:
           value= (char*) dflt_key_cache + (ulong)value;
-	  end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+	  end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
 	  break;
         case SHOW_UNDEF:
           break;                                        // Return empty string

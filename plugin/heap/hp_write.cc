@@ -25,6 +25,8 @@
 #define HIGHFIND 4
 #define HIGHUSED 8
 
+using namespace drizzled;
+
 static HASH_INFO *hp_find_free_hash(HP_SHARE *info, HP_BLOCK *block,
 				     uint32_t records);
 

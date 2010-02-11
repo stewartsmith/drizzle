@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/elt.h>
+
+namespace drizzled
+{
 
 void Item_func_elt::fix_length_and_dec()
 {
@@ -79,4 +82,4 @@ String *Item_func_elt::val_str(String *str)
   return result;
 }
 
-
+} /* namespace drizzled */

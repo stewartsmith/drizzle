@@ -29,6 +29,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 extern const double log_10[309];
 
 /*
@@ -140,3 +143,5 @@ my_decimal *Field_real::val_decimal(my_decimal *decimal_value)
   double2my_decimal(E_DEC_FATAL_ERROR, val_real(), decimal_value);
   return decimal_value;
 }
+
+} /* namespace drizzled */

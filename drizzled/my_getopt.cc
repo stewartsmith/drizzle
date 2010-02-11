@@ -13,7 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 #include <drizzled/gettext.h>
 
 #include "drizzled/internal/m_string.h"
@@ -28,11 +29,13 @@
 #include <algorithm>
 
 using namespace std;
+namespace drizzled
+{
 
 typedef void (*init_func_p)(const struct my_option *option, char **variable,
                             int64_t value);
 
-extern "C" void default_reporter(enum loglevel level, const char *format, ...);
+void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
 
 static int findopt(char *optpat, uint32_t length,
@@ -73,7 +76,7 @@ char *disabled_my_option= (char*) "0";
 
 bool my_getopt_skip_unknown= 0;
 
-extern "C" void default_reporter(enum loglevel level, const char *format, ...)
+void default_reporter(enum loglevel level, const char *format, ...)
 {
   va_list args;
   va_start(args, format);
@@ -144,7 +147,7 @@ int handle_options(int *argc, char ***argv,
 	    {
               my_getopt_error_reporter(ERROR_LEVEL,
                                        "%s: Option '-O' requires an argument",
-                                       my_progname);
+                                       internal::my_progname);
 	      return EXIT_ARGUMENT_REQUIRED;
 	    }
 	    cur_arg= *pos;
@@ -161,7 +164,7 @@ int handle_options(int *argc, char ***argv,
 	    {
               my_getopt_error_reporter(ERROR_LEVEL,
                                        "%s: Option '--set-variable' requires an argument",
-                                       my_progname);
+                                       internal::my_progname);
 	      return EXIT_ARGUMENT_REQUIRED;
 	    }
 	  }
@@ -174,7 +177,7 @@ int handle_options(int *argc, char ***argv,
 	    {
               my_getopt_error_reporter(ERROR_LEVEL,
                                        "%s: Option '--set-variable' requires an argument",
-                                       my_progname);
+                                       internal::my_progname);
 	      return EXIT_ARGUMENT_REQUIRED;
 	    }
 	    cur_arg= *pos;
@@ -239,7 +242,8 @@ int handle_options(int *argc, char ***argv,
 		  {
                     my_getopt_error_reporter(ERROR_LEVEL,
                                              "%s: ambiguous option '--%s-%s' (--%s-%s)",
-                                             my_progname, special_opt_prefix[i],
+                                             internal::my_progname,
+                                             special_opt_prefix[i],
                                              cur_arg, special_opt_prefix[i],
                                              prev_found);
 		    return EXIT_AMBIGUOUS_OPTION;
@@ -289,7 +293,7 @@ int handle_options(int *argc, char ***argv,
               my_getopt_error_reporter(option_is_loose ?
                                        WARNING_LEVEL : ERROR_LEVEL,
                                        "%s: unknown variable '%s'",
-                                       my_progname, cur_arg);
+                                       internal::my_progname, cur_arg);
 	      if (!option_is_loose)
 		return EXIT_UNKNOWN_VARIABLE;
 	    }
@@ -298,7 +302,7 @@ int handle_options(int *argc, char ***argv,
               my_getopt_error_reporter(option_is_loose ?
                                        WARNING_LEVEL : ERROR_LEVEL,
                                        "%s: unknown option '--%s'",
-                                       my_progname, cur_arg);
+                                       internal::my_progname, cur_arg);
 	      if (!option_is_loose)
 		return EXIT_UNKNOWN_OPTION;
 	    }
@@ -315,14 +319,14 @@ int handle_options(int *argc, char ***argv,
 	  {
             my_getopt_error_reporter(ERROR_LEVEL,
                                      "%s: variable prefix '%s' is not unique",
-                                     my_progname, opt_str);
+                                     internal::my_progname, opt_str);
 	    return EXIT_VAR_PREFIX_NOT_UNIQUE;
 	  }
 	  else
 	  {
             my_getopt_error_reporter(ERROR_LEVEL,
                                      "%s: ambiguous option '--%s' (%s, %s)",
-                                     my_progname, opt_str, prev_found,
+                                     internal::my_progname, opt_str, prev_found,
                                      optp->name);
 	    return EXIT_AMBIGUOUS_OPTION;
 	  }
@@ -330,7 +334,8 @@ int handle_options(int *argc, char ***argv,
 	if ((optp->var_type & GET_TYPE_MASK) == GET_DISABLED)
 	{
           fprintf(stderr,
-                  _("%s: %s: Option '%s' used, but is disabled\n"), my_progname,
+                  _("%s: %s: Option '%s' used, but is disabled\n"),
+                  internal::my_progname,
                   option_is_loose ? _("WARNING") : _("ERROR"), opt_str);
 	  if (option_is_loose)
 	  {
@@ -343,7 +348,7 @@ int handle_options(int *argc, char ***argv,
 	{
           my_getopt_error_reporter(ERROR_LEVEL,
                                    "%s: option '%s' cannot take an argument",
-                                   my_progname, optp->name);
+                                   internal::my_progname, optp->name);
 	  return EXIT_NO_ARGUMENT_ALLOWED;
 	}
 	value= optp->var_type & GET_ASK_ADDR ?
@@ -355,7 +360,7 @@ int handle_options(int *argc, char ***argv,
 	  {
             my_getopt_error_reporter(ERROR_LEVEL,
                                      "%s: option '--%s' cannot take an argument",
-                                     my_progname, optp->name);
+                                     internal::my_progname, optp->name);
 	    return EXIT_NO_ARGUMENT_ALLOWED;
 	  }
 	  if ((optp->var_type & GET_TYPE_MASK) == GET_BOOL)
@@ -375,9 +380,10 @@ int handle_options(int *argc, char ***argv,
 	    else
 	    {
 	      my_getopt_error_reporter(WARNING_LEVEL,
-				       "%s: ignoring option '--%s' due to \
-invalid value '%s'",
-				       my_progname, optp->name, optend);
+				       "%s: ignoring option '--%s' due to "
+                                       "invalid value '%s'",
+				       internal::my_progname,
+                                       optp->name, optend);
 	      continue;
 	    }
 	    get_one_option(optp->id, optp,
@@ -407,7 +413,7 @@ invalid value '%s'",
 	  {
             my_getopt_error_reporter(ERROR_LEVEL,
                                      "%s: option '--%s' requires an argument",
-                                     my_progname, optp->name);
+                                     internal::my_progname, optp->name);
 	    return EXIT_ARGUMENT_REQUIRED;
 	  }
 	  argument= *pos;
@@ -431,7 +437,7 @@ invalid value '%s'",
 	      {
                 fprintf(stderr,
                         _("%s: ERROR: Option '-%c' used, but is disabled\n"),
-                        my_progname, optp->id);
+                        internal::my_progname, optp->id);
 		return EXIT_OPTION_DISABLED;
 	      }
 	      if ((optp->var_type & GET_TYPE_MASK) == GET_BOOL &&
@@ -464,8 +470,9 @@ invalid value '%s'",
 		  if (!pos[1])
 		  {
                     my_getopt_error_reporter(ERROR_LEVEL,
-                                             "%s: option '-%c' requires an argument",
-                                             my_progname, optp->id);
+                                             "%s: option '-%c' requires "
+                                             "an argument",
+                                             internal::my_progname, optp->id);
                     return EXIT_ARGUMENT_REQUIRED;
 		  }
 		  argument= *++pos;
@@ -477,8 +484,10 @@ invalid value '%s'",
                                  set_maximum_value)))
               {
                 my_getopt_error_reporter(ERROR_LEVEL,
-                                         "%s: Error while setting value '%s' to '%s'",
-                                         my_progname, argument, optp->name);
+                                         "%s: Error while setting value '%s' "
+                                         "to '%s'",
+                                         internal::my_progname,
+                                         argument, optp->name);
                 return error;
               }
               get_one_option(optp->id, optp, argument);
@@ -489,7 +498,7 @@ invalid value '%s'",
           {
             my_getopt_error_reporter(ERROR_LEVEL,
                                      "%s: unknown option '-%c'",
-                                     my_progname, *optend);
+                                     internal::my_progname, *optend);
             return EXIT_UNKNOWN_OPTION;
           }
         }
@@ -500,7 +509,7 @@ invalid value '%s'",
       {
         my_getopt_error_reporter(ERROR_LEVEL,
                                  "%s: Error while setting value '%s' to '%s'",
-                                 my_progname, argument, optp->name);
+                                 internal::my_progname, argument, optp->name);
         return error;
       }
       get_one_option(optp->id, optp, argument);
@@ -824,7 +833,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
   else if (adjusted)
     my_getopt_error_reporter(WARNING_LEVEL,
                              "option '%s': signed value %s adjusted to %s",
-                             optp->name, llstr(old, buf1), llstr(num, buf2));
+                             optp->name, internal::llstr(old, buf1), internal::llstr(num, buf2));
   return num;
 }
 
@@ -909,7 +918,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
   else if (adjusted)
     my_getopt_error_reporter(WARNING_LEVEL,
                              "option '%s': unsigned value %s adjusted to %s",
-                             optp->name, ullstr(old, buf1), ullstr(num, buf2));
+                             optp->name, internal::ullstr(old, buf1), internal::ullstr(num, buf2));
 
   return num;
 }
@@ -932,12 +941,12 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
   double num;
   int error;
   char *end= arg + 1000;                     /* Big enough as *arg is \0 terminated */
-  num= my_strtod(arg, &end, &error);
+  num= internal::my_strtod(arg, &end, &error);
   if (end[0] != 0 || error)
   {
     fprintf(stderr,
             _("%s: ERROR: Invalid decimal value for option '%s'\n"),
-            my_progname, optp->name);
+            internal::my_progname, optp->name);
     *err= EXIT_ARGUMENT_INVALID;
     return 0.0;
   }
@@ -1241,15 +1250,15 @@ void my_print_variables(const struct my_option *options)
 	printf("%lu\n", *((ulong*) value));
 	break;
       case GET_SIZE:
-	int64_t2str((uint64_t)(*(size_t*)value), buff, 10);
+	internal::int64_t2str((uint64_t)(*(size_t*)value), buff, 10);
 	printf("%s\n", buff);
 	break;
       case GET_LL:
-	printf("%s\n", llstr(*((int64_t*) value), buff));
+	printf("%s\n", internal::llstr(*((int64_t*) value), buff));
 	break;
       case GET_ULL:
       case GET_UINT64:
-	int64_t2str(*((uint64_t*) value), buff, 10);
+	internal::int64_t2str(*((uint64_t*) value), buff, 10);
 	printf("%s\n", buff);
 	break;
       case GET_DOUBLE:
@@ -1262,3 +1271,5 @@ void my_print_variables(const struct my_option *options)
     }
   }
 }
+
+} /* namespace drizzled */

@@ -20,9 +20,16 @@
   rename files and symlinks like they would be one unit.
 */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/error.h"
 #include "drizzled/internal/m_string.h"
+
+namespace drizzled
+{
+namespace internal
+{
 
 int my_create_with_symlink(const char *linkname, const char *filename,
                            int createflags, int access_flags, myf MyFlags)
@@ -187,3 +194,6 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   }
   return(result);
 }
+
+} /* namespace internal */
+} /* namespace drizzled */

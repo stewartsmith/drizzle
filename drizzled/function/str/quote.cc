@@ -18,9 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/quote.h>
 
+namespace drizzled
+{
 
 #define get_esc_bit(mask, num) (1 & (*((mask) + ((num) >> 3))) >> ((num) & 7))
 
@@ -119,3 +121,5 @@ null:
   null_value= 1;
   return 0;
 }
+
+} /* namespace drizzled */
