@@ -41,6 +41,7 @@
 #include "drizzled/plugin/library.h"
 #include "drizzled/strfunc.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/util/tokenize.h"
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
@@ -48,23 +49,27 @@
 #endif
 
 using namespace std;
-using namespace drizzled;
- 
-typedef plugin::Manifest builtin_plugin[];
-extern builtin_plugin PANDORA_BUILTIN_LIST;
-static plugin::Manifest *drizzled_builtins[]=
+
+typedef drizzled::plugin::Manifest drizzled_builtin_plugin[];
+extern drizzled_builtin_plugin PANDORA_BUILTIN_LIST;
+static drizzled::plugin::Manifest *drizzled_builtins[]=
 {
   PANDORA_BUILTIN_LIST, NULL
 };
+
+namespace drizzled
+{
+ 
 
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_add= NULL;
+char *opt_plugin_remove= NULL;
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
+const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
@@ -145,9 +150,11 @@ public:
 
 
 /* prototypes */
+static void plugin_prune_list(vector<string> &plugin_list,
+                              const vector<string> &plugins_to_remove);
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             string plugin_list);
+                             const vector<string> &plugin_list);
 static int test_plugin_options(memory::Root *, plugin::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
@@ -355,10 +362,8 @@ static bool plugin_initialize(plugin::Registry &registry,
 }
 
 
-extern "C" unsigned char *get_bookmark_hash_key(const unsigned char *, size_t *, bool);
-
-
-unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, bool)
+static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
+                                            size_t *length, bool)
 {
   struct st_bookmark *var= (st_bookmark *)buff;
   *length= var->name_len + 1;
@@ -431,23 +436,30 @@ bool plugin_init(plugin::Registry &registry,
 
 
   bool load_failed= false;
-  /* Register all dynamic plugins */
+  vector<string> plugin_list;
   if (opt_plugin_load)
   {
-    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                  opt_plugin_load);
+    tokenize(opt_plugin_load, plugin_list, ",", true);
   }
   else
   {
-    string tmp_plugin_list(opt_plugin_load_default);
-    if (opt_plugin_add)
-    {
-      tmp_plugin_list.push_back(',');
-      tmp_plugin_list.append(opt_plugin_add);
-    }
-    load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                  tmp_plugin_list);
+    tokenize(opt_plugin_load_default, plugin_list, ",", true);
   }
+  if (opt_plugin_add)
+  {
+    tokenize(opt_plugin_add, plugin_list, ",", true);
+  }
+
+  if (opt_plugin_remove)
+  {
+    vector<string> plugins_to_remove;
+    tokenize(opt_plugin_remove, plugins_to_remove, ",", true);
+    plugin_prune_list(plugin_list, plugins_to_remove);
+  }
+  
+  /* Register all dynamic plugins */
+  load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                plugin_list);
   if (load_failed)
   {
     free_root(&tmp_root, MYF(0));
@@ -485,24 +497,51 @@ bool plugin_init(plugin::Registry &registry,
   return false;
 }
 
+class PrunePlugin :
+  public unary_function<string, bool>
+{
+  const string to_match;
+  PrunePlugin();
+  PrunePlugin& operator=(const PrunePlugin&);
+public:
+  explicit PrunePlugin(const string &match_in) :
+    to_match(match_in)
+  { }
 
+  result_type operator()(const string &match_against)
+  {
+    return match_against == to_match;
+  }
+};
+
+static void plugin_prune_list(vector<string> &plugin_list,
+                              const vector<string> &plugins_to_remove)
+{
+  for (vector<string>::const_iterator iter= plugins_to_remove.begin();
+       iter != plugins_to_remove.end();
+       ++iter)
+  {
+    plugin_list.erase(remove_if(plugin_list.begin(),
+                                plugin_list.end(),
+                                PrunePlugin(*iter)),
+                      plugin_list.end());
+  }
+}
 
 /*
   called only by plugin_init()
 */
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             string plugin_list)
+                             const vector<string> &plugin_list)
 {
   plugin::Library *library= NULL;
 
-  const string DELIMITER(",");
-  string::size_type last_pos= plugin_list.find_first_not_of(DELIMITER);
-  string::size_type pos= plugin_list.find_first_of(DELIMITER, last_pos);
-  while (string::npos != pos || string::npos != last_pos)
+  for (vector<string>::const_iterator iter= plugin_list.begin();
+       iter != plugin_list.end();
+       ++iter)
   {
-    const string plugin_name(plugin_list.substr(last_pos, pos - last_pos));
-
+    const string plugin_name(*iter);
     library= registry.addLibrary(plugin_name);
     if (library == NULL)
     {
@@ -522,8 +561,6 @@ static bool plugin_load_list(plugin::Registry &registry,
       return true;
 
     }
-    last_pos= plugin_list.find_first_not_of(DELIMITER, pos);
-    pos= plugin_list.find_first_of(DELIMITER, last_pos);
   }
   return false;
 }
@@ -562,16 +599,14 @@ void plugin_shutdown(plugin::Registry &registry)
 #define DRIZZLE_SYSVAR_NAME(name) name
 #define PLUGIN_VAR_TYPEMASK 0x007f
 
-#define EXTRA_OPTIONS 3 /* options for: 'foo', 'plugin-foo' and NULL */
+static const uint32_t EXTRA_OPTIONS= 1; /* handle the NULL option */
 
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_bool_t, bool);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_bool_t, bool);
 typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_DRIZZLE_SessionVAR_BASIC(sessionvar_str_t, char *);
 
-typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
 typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_enum_t, unsigned long);
-typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
 typedef DECLARE_DRIZZLE_SessionVAR_TYPELIB(sessionvar_set_t, uint64_t);
 
 typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_int_t, int);
@@ -620,7 +655,7 @@ static int check_func_bool(Session *, drizzle_sys_var *var,
       goto err;
     if (tmp > 1)
     {
-      llstr(tmp, buff);
+      internal::llstr(tmp, buff);
       strvalue= buff;
       goto err;
     }
@@ -708,104 +743,6 @@ static int check_func_str(Session *session, drizzle_sys_var *,
 }
 
 
-static int check_func_enum(Session *, drizzle_sys_var *var,
-                           void *save, drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  const char *strvalue= "NULL", *str;
-  TYPELIB *typelib;
-  int64_t tmp;
-  long result;
-  int length;
-
-  if (var->flags & PLUGIN_VAR_SessionLOCAL)
-    typelib= ((sessionvar_enum_t*) var)->typelib;
-  else
-    typelib= ((sysvar_enum_t*) var)->typelib;
-
-  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
-  {
-    length= sizeof(buff);
-    if (!(str= value->val_str(value, buff, &length)))
-      goto err;
-    if ((result= (long)find_type(typelib, str, length, 1)-1) < 0)
-    {
-      strvalue= str;
-      goto err;
-    }
-  }
-  else
-  {
-    if (value->val_int(value, &tmp))
-      goto err;
-    if (tmp >= typelib->count)
-    {
-      llstr(tmp, buff);
-      strvalue= buff;
-      goto err;
-    }
-    result= (long) tmp;
-  }
-  *(long*)save= result;
-  return 0;
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->name, strvalue);
-  return 1;
-}
-
-
-static int check_func_set(Session *, drizzle_sys_var *var,
-                          void *save, drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
-  const char *strvalue= "NULL", *str;
-  TYPELIB *typelib;
-  uint64_t result;
-  uint32_t error_len;
-  bool not_used;
-  int length;
-
-  if (var->flags & PLUGIN_VAR_SessionLOCAL)
-    typelib= ((sessionvar_set_t*) var)->typelib;
-  else
-    typelib= ((sysvar_set_t*)var)->typelib;
-
-  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
-  {
-    length= sizeof(buff);
-    if (!(str= value->val_str(value, buff, &length)))
-      goto err;
-    result= find_set(typelib, str, length, NULL,
-                     &error, &error_len, &not_used);
-    if (error_len)
-    {
-      length= min((uint32_t)sizeof(buff), error_len);
-      strncpy(buff, error, length);
-      buff[length]= '\0';
-      strvalue= buff;
-      goto err;
-    }
-  }
-  else
-  {
-    if (value->val_int(value, (int64_t *)&result))
-      goto err;
-    if (unlikely((result >= (1UL << typelib->count)) &&
-                 (typelib->count < sizeof(long)*8)))
-    {
-      llstr(result, buff);
-      strvalue= buff;
-      goto err;
-    }
-  }
-  *(uint64_t*)save= result;
-  return 0;
-err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->name, strvalue);
-  return 1;
-}
-
-
 static void update_func_bool(Session *, drizzle_sys_var *,
                              void *tgt, const void *save)
 {
@@ -889,43 +826,42 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
   return(var);
 }
 
+static const string make_bookmark_name(const string &plugin, const char *name, int flags)
+{
+  /* Embed the flags into the first char of the string */
+  string varname(1, static_cast<char>(flags & PLUGIN_VAR_TYPEMASK));
+  varname.append(plugin);
+  varname.push_back('_');
+  varname.append(name);
+
+  for (string::iterator p= varname.begin() + 1; p != varname.end(); ++p)
+  {
+    if (*p == '-')
+    {
+      *p= '_';
+    }
+  }
+  return varname;
+}
 
 /*
   called by register_var, construct_options and test_plugin_options.
   Returns the 'bookmark' for the named variable.
   LOCK_system_variables_hash should be at least read locked
 */
-static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
+static st_bookmark *find_bookmark(const string &plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
-  uint32_t namelen, length, pluginlen= 0;
-  char *varname, *p;
 
   if (!(flags & PLUGIN_VAR_SessionLOCAL))
     return NULL;
 
-  namelen= strlen(name);
-  if (plugin)
-    pluginlen= strlen(plugin) + 1;
-  length= namelen + pluginlen + 2;
-  varname= (char*) malloc(length);
+  const string varname(make_bookmark_name(plugin, name, flags));
 
-  if (plugin)
-  {
-    sprintf(varname+1,"%s_%s",plugin,name);
-    for (p= varname + 1; *p; p++)
-      if (*p == '-')
-        *p= '_';
-  }
-  else
-    memcpy(varname + 1, name, namelen + 1);
-
-  varname[0]= flags & PLUGIN_VAR_TYPEMASK;
 
   result= (st_bookmark*) hash_search(&bookmark_hash,
-                                     (const unsigned char*) varname, length - 1);
+                                     (const unsigned char*) varname.c_str(), varname.size() - 1);
 
-  free(varname);
   return result;
 }
 
@@ -935,15 +871,14 @@ static st_bookmark *find_bookmark(const char *plugin, const char *name, int flag
   returns null for non session-local variables.
   Requires that a write lock is obtained on LOCK_system_variables_hash
 */
-static st_bookmark *register_var(const char *plugin, const char *name,
+static st_bookmark *register_var(const string &plugin, const char *name,
                                  int flags)
 {
-  uint32_t length= strlen(plugin) + strlen(name) + 3, size= 0, offset, new_size;
-  st_bookmark *result;
-  char *varname, *p;
-
   if (!(flags & PLUGIN_VAR_SessionLOCAL))
     return NULL;
+
+  uint32_t size= 0, offset, new_size;
+  st_bookmark *result;
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
@@ -953,11 +888,9 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     size= ALIGN_SIZE(sizeof(int));
     break;
   case PLUGIN_VAR_LONG:
-  case PLUGIN_VAR_ENUM:
     size= ALIGN_SIZE(sizeof(long));
     break;
   case PLUGIN_VAR_LONGLONG:
-  case PLUGIN_VAR_SET:
     size= ALIGN_SIZE(sizeof(uint64_t));
     break;
   case PLUGIN_VAR_STR:
@@ -968,19 +901,16 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     return NULL;
   };
 
-  varname= ((char*) malloc(length));
-  sprintf(varname+1, "%s_%s", plugin, name);
-  for (p= varname + 1; *p; p++)
-    if (*p == '-')
-      *p= '_';
 
-  if (!(result= find_bookmark(NULL, varname + 1, flags)))
+  if (!(result= find_bookmark(plugin, name, flags)))
   {
-    result= (st_bookmark*) alloc_root(&plugin_mem_root,
-                                      sizeof(struct st_bookmark) + length-1);
-    varname[0]= flags & PLUGIN_VAR_TYPEMASK;
-    memcpy(result->key, varname, length);
-    result->name_len= length - 2;
+    const string varname(make_bookmark_name(plugin, name, flags));
+
+    result= static_cast<st_bookmark*>(alloc_root(&plugin_mem_root,
+                                      sizeof(struct st_bookmark) + varname.size() + 1));
+    memset(result->key, 0, varname.size()+1);
+    memcpy(result->key, varname.c_str(), varname.size());
+    result->name_len= varname.size() - 2;
     result->offset= -1;
 
     assert(size && !(size & (size-1))); /* must be power of 2 */
@@ -1036,7 +966,6 @@ static st_bookmark *register_var(const char *plugin, const char *name,
       assert(0);
     }
   }
-  free(varname);
   return result;
 }
 
@@ -1153,17 +1082,6 @@ static char **mysql_sys_var_ptr_str(Session* a_session, int offset)
 {
   return (char **)intern_sys_var_ptr(a_session, offset, true);
 }
-
-static uint64_t *mysql_sys_var_ptr_set(Session* a_session, int offset)
-{
-  return (uint64_t *)intern_sys_var_ptr(a_session, offset, true);
-}
-
-static unsigned long *mysql_sys_var_ptr_enum(Session* a_session, int offset)
-{
-  return (unsigned long *)intern_sys_var_ptr(a_session, offset, true);
-}
-
 
 void plugin_sessionvar_init(Session *session)
 {
@@ -1304,9 +1222,6 @@ SHOW_TYPE sys_var_pluginvar::show_type()
     return SHOW_LONGLONG;
   case PLUGIN_VAR_STR:
     return SHOW_CHAR_PTR;
-  case PLUGIN_VAR_ENUM:
-  case PLUGIN_VAR_SET:
-    return SHOW_CHAR;
   default:
     assert(0);
     return SHOW_UNDEF;
@@ -1331,14 +1246,8 @@ unsigned char* sys_var_pluginvar::real_value_ptr(Session *session, enum_var_type
 TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 {
   switch (plugin_var->flags & (PLUGIN_VAR_TYPEMASK | PLUGIN_VAR_SessionLOCAL)) {
-  case PLUGIN_VAR_ENUM:
-    return ((sysvar_enum_t *)plugin_var)->typelib;
-  case PLUGIN_VAR_SET:
-    return ((sysvar_set_t *)plugin_var)->typelib;
-  case PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL:
+  case PLUGIN_VAR_SessionLOCAL:
     return ((sessionvar_enum_t *)plugin_var)->typelib;
-  case PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL:
-    return ((sessionvar_set_t *)plugin_var)->typelib;
   default:
     return NULL;
   }
@@ -1352,29 +1261,6 @@ unsigned char* sys_var_pluginvar::value_ptr(Session *session, enum_var_type type
 
   result= real_value_ptr(session, type);
 
-  if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_ENUM)
-    result= (unsigned char*) get_type(plugin_var_typelib(), *(ulong*)result);
-  else if ((plugin_var->flags & PLUGIN_VAR_TYPEMASK) == PLUGIN_VAR_SET)
-  {
-    char buffer[STRING_BUFFER_USUAL_SIZE];
-    String str(buffer, sizeof(buffer), system_charset_info);
-    TYPELIB *typelib= plugin_var_typelib();
-    uint64_t mask= 1, value= *(uint64_t*) result;
-    uint32_t i;
-
-    str.length(0);
-    for (i= 0; i < typelib->count; i++, mask<<=1)
-    {
-      if (!(value & mask))
-        continue;
-      str.append(typelib->type_names[i], typelib->type_lengths[i]);
-      str.append(',');
-    }
-
-    result= (unsigned char*) "";
-    if (str.length())
-      result= (unsigned char*) session->strmake(str.ptr(), str.length()-1);
-  }
   return result;
 }
 
@@ -1423,12 +1309,6 @@ void sys_var_pluginvar::set_default(Session *session, enum_var_type type)
 	  break;
 	case PLUGIN_VAR_LONGLONG:
 	  src= &((sessionvar_uint64_t_t*) plugin_var)->def_val;
-	  break;
-	case PLUGIN_VAR_ENUM:
-	  src= &((sessionvar_enum_t*) plugin_var)->def_val;
-	  break;
-	case PLUGIN_VAR_SET:
-	  src= &((sessionvar_set_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_BOOL:
 	  src= &((sessionvar_bool_t*) plugin_var)->def_val;
@@ -1523,20 +1403,6 @@ void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED:
     OPTION_SET_LIMITS(GET_ULL, options, (sysvar_uint64_t_t*) opt);
     break;
-  case PLUGIN_VAR_ENUM:
-    options->var_type= GET_ENUM;
-    options->typelib= ((sysvar_enum_t*) opt)->typelib;
-    options->def_value= ((sysvar_enum_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= options->typelib->count - 1;
-    break;
-  case PLUGIN_VAR_SET:
-    options->var_type= GET_SET;
-    options->typelib= ((sysvar_set_t*) opt)->typelib;
-    options->def_value= ((sysvar_set_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= (1UL << options->typelib->count) - 1;
-    break;
   case PLUGIN_VAR_BOOL:
     options->var_type= GET_BOOL;
     options->def_value= ((sysvar_bool_t*) opt)->def_val;
@@ -1565,20 +1431,6 @@ void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_SessionLOCAL:
     OPTION_SET_LIMITS(GET_ULL, options, (sessionvar_uint64_t_t*) opt);
     break;
-  case PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL:
-    options->var_type= GET_ENUM;
-    options->typelib= ((sessionvar_enum_t*) opt)->typelib;
-    options->def_value= ((sessionvar_enum_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= options->typelib->count - 1;
-    break;
-  case PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL:
-    options->var_type= GET_SET;
-    options->typelib= ((sessionvar_set_t*) opt)->typelib;
-    options->def_value= ((sessionvar_set_t*) opt)->def_val;
-    options->min_value= options->block_size= 0;
-    options->max_value= (1UL << options->typelib->count) - 1;
-    break;
   case PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL:
     options->var_type= GET_BOOL;
     options->def_value= ((sessionvar_bool_t*) opt)->def_val;
@@ -1598,10 +1450,7 @@ void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
-                                         char *);
-
-bool get_one_plugin_option(int, const struct my_option *, char *)
+static bool get_one_plugin_option(int, const struct my_option *, char *)
 {
   return 0;
 }
@@ -1610,56 +1459,25 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
                              my_option *options)
 {
-  const char *plugin_name= tmp->getManifest().name;
-  uint32_t namelen= strlen(plugin_name), optnamelen;
-  uint32_t buffer_length= namelen * 4 +  75;
-  char *name= (char*) alloc_root(mem_root, buffer_length);
-  bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
+  
+  int localoptionid= 256;
+  const string plugin_name(tmp->getManifest().name);
+
+  size_t namelen= plugin_name.size(), optnamelen;
+
   char *optname, *p;
   int index= 0, offset= 0;
   drizzle_sys_var *opt, **plugin_option;
   st_bookmark *v;
 
-  /* support --skip-plugin-foo syntax */
-  memcpy(name, plugin_name, namelen + 1);
-  my_casedn_str(&my_charset_utf8_general_ci, name);
-  sprintf(name+namelen+1, "plugin-%s", name);
-  /* Now we have namelen + 1 + 7 + namelen + 1 == namelen * 2 + 9. */
+  string name(plugin_name);
+  transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-  for (p= name + namelen*2 + 8; p > name; p--)
-    if (*p == '_')
-      *p= '-';
-
-  sprintf(name+namelen*2+10,
-          "Enable %s plugin. Disable with --skip-%s (will save memory).",
-          plugin_name, name);
-  /*
-    Now we have namelen * 2 + 10 (one char unused) + 7 + namelen + 9 +
-    20 + namelen + 20 + 1 == namelen * 4 + 67.
-  */
-
-  options[0].comment= name + namelen*2 + 10;
-
-  /*
-    This whole code around variables and command line parameters is turd
-    soup.
-
-    e.g. the below assignemnt of having the plugin alaways enabled is never
-    changed so that './drizzled --skip-innodb --help' shows innodb as enabled.
-
-    But this is just as broken as it was in MySQL and properly fixing everything
-    is a decent amount of "future work"
-  */
-  *enabled_value= true; /* by default, plugin enabled */
-
-  options[1].name= (options[0].name= name) + namelen + 1;
-  options[0].id= options[1].id= 256; /* must be >255. dup id ok */
-  options[0].var_type= options[1].var_type= GET_BOOL;
-  options[0].arg_type= options[1].arg_type= NO_ARG;
-  options[0].def_value= options[1].def_value= true;
-  options[0].value= options[0].u_max_value=
-  options[1].value= options[1].u_max_value= (char**) enabled_value;
-  options+= 2;
+  for (string::iterator iter= name.begin(); iter != name.end(); ++iter)
+  {
+    if (*iter == '_')
+      *iter= '-';
+  }
 
   /*
     Two passes as the 2nd pass will take pointer addresses for use
@@ -1690,15 +1508,9 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     case PLUGIN_VAR_STR:
       (((sessionvar_str_t *)opt)->resolve)= mysql_sys_var_ptr_str;
       break;
-    case PLUGIN_VAR_ENUM:
-      (((sessionvar_enum_t *)opt)->resolve)= mysql_sys_var_ptr_enum;
-      break;
-    case PLUGIN_VAR_SET:
-      (((sessionvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
-      break;
     default:
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown variable type code 0x%x in plugin '%s'."),
-                      opt->flags, plugin_name);
+                      opt->flags, plugin_name.c_str());
       return(-1);
     };
   }
@@ -1743,25 +1555,13 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
           errmsg_printf(ERRMSG_LVL_WARN, _("Server variable %s of plugin %s was forced "
                             "to be read-only: string variable without "
                             "update_func and PLUGIN_VAR_MEMALLOC flag"),
-                            opt->name, plugin_name);
+                            opt->name, plugin_name.c_str());
         }
       }
       break;
-    case PLUGIN_VAR_ENUM:
-      if (!opt->check)
-        opt->check= check_func_enum;
-      if (!opt->update)
-        opt->update= update_func_long;
-      break;
-    case PLUGIN_VAR_SET:
-      if (!opt->check)
-        opt->check= check_func_set;
-      if (!opt->update)
-        opt->update= update_func_int64_t;
-      break;
     default:
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown variable type code 0x%x in plugin '%s'."),
-                      opt->flags, plugin_name);
+                      opt->flags, plugin_name.c_str());
       return(-1);
     }
 
@@ -1772,7 +1572,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     if (!opt->name)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Missing variable name in plugin '%s'."),
-                      plugin_name);
+                    plugin_name.c_str());
       return(-1);
     }
 
@@ -1780,7 +1580,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     {
       optnamelen= strlen(opt->name);
       optname= (char*) alloc_root(mem_root, namelen + optnamelen + 2);
-      sprintf(optname, "%s-%s", name, opt->name);
+      sprintf(optname, "%s-%s", name.c_str(), opt->name);
       optnamelen= namelen + optnamelen + 1;
     }
     else
@@ -1789,7 +1589,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
       if (!(v= find_bookmark(name, opt->name, opt->flags)))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("Thread local variable '%s' not allocated "
-                        "in plugin '%s'."), opt->name, plugin_name);
+                      "in plugin '%s'."), opt->name, plugin_name.c_str());
         return(-1);
       }
 
@@ -1810,7 +1610,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     options->name= optname;
     options->comment= opt->comment;
     options->app_type= opt;
-    options->id= (options-1)->id + 1;
+    options->id= localoptionid++;
 
     plugin_opt_set_limits(options, opt);
 
@@ -1820,12 +1620,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     else
       options->value= options->u_max_value= *(char***) (opt + 1);
 
-    options[1]= options[0];
-    options[1].name= p= (char*) alloc_root(mem_root, optnamelen + 8);
-    options[1].comment= 0; // hidden
-    sprintf(p,"plugin-%s",optname);
-
-    options+= 2;
+    options++;
   }
 
   return(0);
@@ -1838,7 +1633,7 @@ static my_option *construct_help_options(memory::Root *mem_root, plugin::Module 
   my_option *opts;
   uint32_t count= EXTRA_OPTIONS;
 
-  for (opt= p->getManifest().system_vars; opt && *opt; opt++, count+= 2) {};
+  for (opt= p->getManifest().system_vars; opt && *opt; opt++, count++) {};
 
   opts= (my_option*)alloc_root(mem_root, (sizeof(my_option) * count));
   if (opts == NULL)
@@ -1893,7 +1688,7 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
   uint32_t len, count= EXTRA_OPTIONS;
 
   for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
-    count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
+    count++;
 
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
@@ -1931,7 +1726,7 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
       if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
         continue;
 
-      if ((var= find_bookmark(tmp->getName().c_str(), o->name, o->flags)))
+      if ((var= find_bookmark(tmp->getName(), o->name, o->flags)))
         v= new sys_var_pluginvar(var->key + 1, o);
       else
       {
@@ -2058,3 +1853,4 @@ void my_print_help_inc_plugins(my_option *main_options)
 
 }
 
+} /* namespace drizzled */

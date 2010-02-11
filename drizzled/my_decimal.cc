@@ -20,6 +20,9 @@
 #include "drizzled/field.h"
 #include "drizzled/internal/my_sys.h"
 
+namespace drizzled
+{
+
 /**
   report result of decimal operation.
 
@@ -236,3 +239,5 @@ void my_decimal_trim(uint32_t *precision, uint32_t *scale)
     return;
   }
 }
+
+} /* namespace drizzled */

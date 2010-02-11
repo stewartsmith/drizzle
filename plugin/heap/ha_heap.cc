@@ -38,11 +38,11 @@ static const char *ha_heap_exts[] = {
   NULL
 };
 
-class HeapEngine : public drizzled::plugin::StorageEngine
+class HeapEngine : public plugin::StorageEngine
 {
 public:
   HeapEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
+   : plugin::StorageEngine(name_arg,
                                      HTON_STATS_RECORDS_IS_EXACT |
                                      HTON_NULL_IN_KEY |
                                      HTON_FAST_KEY_READ |
@@ -65,7 +65,7 @@ public:
   int doCreateTable(Session *session,
                     const char *table_name,
                     Table& table_arg,
-                    drizzled::message::Table &create_proto);
+                    message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
      for MEMORY.
@@ -75,7 +75,7 @@ public:
   int heap_create_table(Session *session, const char *table_name,
                         Table *table_arg,
                         bool internal_table,
-                        drizzled::message::Table &create_proto,
+                        message::Table &create_proto,
                         HP_SHARE **internal_share);
 
   int doRenameTable(Session*, const char * from, const char * to);
@@ -87,10 +87,10 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
@@ -113,7 +113,7 @@ int HeapEngine::doGetTableDefinition(Session&,
                                      const char *,
                                      const char *,
                                      const bool,
-                                     drizzled::message::Table *table_proto)
+                                     message::Table *table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -151,7 +151,7 @@ int HeapEngine::doDropTable(Session&, const string table_path)
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(drizzled::plugin::Registry &registry)
+static int heap_init(plugin::Registry &registry)
 {
   heap_storage_engine= new HeapEngine(engine_name);
   registry.add(heap_storage_engine);
@@ -159,7 +159,7 @@ static int heap_init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int heap_deinit(drizzled::plugin::Registry &registry)
+static int heap_deinit(plugin::Registry &registry)
 {
   registry.remove(heap_storage_engine);
   delete heap_storage_engine;
@@ -177,7 +177,7 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 ** MEMORY tables
 *****************************************************************************/
 
-ha_heap::ha_heap(drizzled::plugin::StorageEngine &engine_arg,
+ha_heap::ha_heap(plugin::StorageEngine &engine_arg,
                  TableShare &table_arg)
   :Cursor(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
@@ -205,7 +205,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     memset(&create_info, 0, sizeof(create_info));
     file= 0;
     HP_SHARE *internal_share= NULL;
-    drizzled::message::Table create_proto;
+    message::Table create_proto;
 
     if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
                                                 internal_table,
@@ -692,7 +692,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
                               Table &table_arg,
-                              drizzled::message::Table& create_proto)
+                              message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
@@ -716,7 +716,7 @@ int HeapEngine::doCreateTable(Session *session,
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   Table *table_arg,
                                   bool internal_table, 
-                                  drizzled::message::Table &create_proto,
+                                  message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
@@ -894,7 +894,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.max_chunk_size= share->block_size;
   hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
 
-  error= heap_create(fn_format(buff,table_name,"","",
+  error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
                     keys, keydef,
                     column_count, columndef,

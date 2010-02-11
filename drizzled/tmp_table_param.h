@@ -21,13 +21,16 @@
 #ifndef DRIZZLED_TMP_TABLE_PARAM_H
 #define DRIZZLED_TMP_TABLE_PARAM_H
 
+namespace drizzled
+{
+
 /*
   Param to create temporary tables when doing SELECT:s
   NOTE
     This structure is copied using memcpy as a part of JOIN.
 */
 
-class Tmp_Table_Param :public drizzled::memory::SqlAlloc
+class Tmp_Table_Param :public memory::SqlAlloc
 {
 private:
   /* Prevent use of these (not safe because of lists and copy_field) */
@@ -67,12 +70,6 @@ public:
   uint32_t  convert_blob_length;
 
   const CHARSET_INFO *table_charset;
-  /*
-    If true, create_tmp_field called from create_tmp_table will convert
-    all BIT fields to 64-bit longs. This is a workaround the limitation
-    that MEMORY tables cannot index BIT columns.
-  */
-  bool bit_fields_as_long;
 
   Tmp_Table_Param()
     :copy_field(0),
@@ -82,8 +79,7 @@ public:
     schema_table(false),
     precomputed_group_by(false),
     force_copy_fields(false),
-    convert_blob_length(0),
-    bit_fields_as_long(false)
+    convert_blob_length(0)
   {}
   ~Tmp_Table_Param()
   {
@@ -92,5 +88,7 @@ public:
   void init(void);
   void cleanup(void);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TMP_TABLE_PARAM_H */

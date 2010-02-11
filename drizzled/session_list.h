@@ -22,10 +22,10 @@
 
 #include <vector>
 
-class Session;
-
 namespace drizzled
 {
+
+class Session;
 
 std::vector<Session *> &getSessionList();
 

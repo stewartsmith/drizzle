@@ -24,7 +24,7 @@
 #include "drizzled/plugin/info_schema_table.h"
 
 /**
- * @class TablesISMethods
+ * @class drizzled::TablesISMethods
  * @brief
  *   Class which implements any methods that the TABLE_NAMES
  *   I_S table needs besides the default methods
@@ -33,9 +33,10 @@ class TablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int processTable(drizzled::plugin::InfoSchemaTable *store_table,
-                           Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name);
+                           drizzled::Session *session, drizzled::TableList *tables,
+                           drizzled::Table *table, bool res,
+                           drizzled::LEX_STRING *db_name,
+                           drizzled::LEX_STRING *table_name);
 };
 
 class TablesIS

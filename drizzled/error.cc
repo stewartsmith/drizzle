@@ -19,14 +19,17 @@
  */
 
 /*
- *   Errors a drizzled can give you
- *   */
+ * Errors a drizzled can give you
+ */
 
 #include "config.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
+
+namespace drizzled
+{
 
 static const char *drizzled_error_messages[]=
 {
@@ -1415,7 +1418,9 @@ N_("Received an invalid time value '%s'."),
 /* ER_INVALID_ENUM_VALUE */
 N_("Received an invalid enum value '%s'."),
 /* ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE */
-N_("Tables which are replicated require a primary key.")
+N_("Tables which are replicated require a primary key."),
+/* ER_CORRUPT_TABLE_DEFINITION */
+N_("Corrupt or invalid table definition: %s")
 };
 
 const char * error_message(unsigned int code)
@@ -1761,3 +1766,5 @@ void my_error_unregister_all(void)
   }
   my_errmsgs_list= &my_errmsgs_globerrs;
 }
+
+} /* namespace drizzled */

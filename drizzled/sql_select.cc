@@ -64,8 +64,9 @@
 #include "drizzled/optimizer/quick_ror_intersect_select.h"
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,
@@ -321,9 +322,9 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
                               for a, b and c in this list.
   @param conds                top level item of an expression representing
                               WHERE clause of the top level select
-  @param og_num               total number of order_st BY and GROUP BY clauses
+  @param og_num               total number of ORDER BY and GROUP BY clauses
                               arguments
-  @param order                linked list of order_st BY agruments
+  @param order                linked list of ORDER BY agruments
   @param group                linked list of GROUP BY arguments
   @param having               top level item of HAVING expression
   @param select_options       select options (BIG_RESULT, etc)
@@ -647,8 +648,8 @@ bool update_ref_and_keys(Session *session,
   {
     optimizer::KeyUse key_end,*prev,*save_pos,*use;
 
-    my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
-	  (qsort_cmp) sort_keyuse);
+    internal::my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
+                       (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     insert_dynamic(keyuse,(unsigned char*) &key_end);
@@ -1488,22 +1489,22 @@ bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
 }
 
 /**
-  Remove the following expressions from order_st BY and GROUP BY:
+  Remove the following expressions from ORDER BY and GROUP BY:
   Constant expressions @n
   Expression that only uses tables that are of type EQ_REF and the reference
   is in the order_st list or if all refereed tables are of the above type.
 
   In the following, the X field can be removed:
   @code
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t1.a,t2.X
-  SELECT * FROM t1,t2,t3 WHERE t1.a=t2.a AND t2.b=t3.b order_st BY t1.a,t3.X
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t1.a,t2.X
+  SELECT * FROM t1,t2,t3 WHERE t1.a=t2.a AND t2.b=t3.b ORDER BY t1.a,t3.X
   @endcode
 
   These can't be optimized:
   @code
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t2.X,t1.a
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a AND t1.b=t2.b order_st BY t1.a,t2.c
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t2.b,t1.a
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t2.X,t1.a
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a AND t1.b=t2.b ORDER BY t1.a,t2.c
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t2.b,t1.a
   @endcode
 */
 bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab)
@@ -3839,8 +3840,8 @@ int join_read_always_key(JoinTable *tab)
 }
 
 /**
-  This function is used when optimizing away order_st BY in
-  SELECT * FROM t1 WHERE a=1 order_st BY a DESC,b DESC.
+  This function is used when optimizing away ORDER BY in
+  SELECT * FROM t1 WHERE a=1 ORDER BY a DESC,b DESC.
 */
 int join_read_last_key(JoinTable *tab)
 {
@@ -4509,7 +4510,7 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
 
     /*
       Skip key parts that are constants in the WHERE clause.
-      These are already skipped in the order_st BY by const_expression_in_where()
+      These are already skipped in the ORDER BY by const_expression_in_where()
     */
     for (; const_key_parts & 1 ; const_key_parts>>= 1)
       key_part++;
@@ -4748,7 +4749,7 @@ bool find_field_in_item_list (Field *field, void *data)
 }
 
 /**
-  Test if we can skip the order_st BY by using an index.
+  Test if we can skip the ORDER BY by using an index.
 
   SYNOPSIS
     test_if_skip_sort_order()
@@ -4970,7 +4971,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         bool is_covering= table->covering_keys.test(nr) || (nr == table->s->primary_key && table->cursor->primary_key_is_clustered());
 
         /*
-          Don't use an index scan with order_st BY without limit.
+          Don't use an index scan with ORDER BY without limit.
           For GROUP BY without limit always use index scan
           if there is a suitable index.
           Why we hold to this asymmetry hardly can be explained
@@ -5132,7 +5133,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
   }
 
 check_reverse_order:
-  if (order_direction == -1)		// If order_st BY ... DESC
+  if (order_direction == -1)		// If ORDER BY ... DESC
   {
     if (select && select->quick)
     {
@@ -5155,7 +5156,7 @@ check_reverse_order:
           return 0; // Use filesort
         }
 
-        /* order_st BY range_key DESC */
+        /* ORDER BY range_key DESC */
         tmp= new optimizer::QuickSelectDescending((optimizer::QuickRangeSelect*)(select->quick),
                                                   used_key_parts, 
                                                   &error);
@@ -5173,7 +5174,7 @@ check_reverse_order:
              tab->ref.key >= 0 && tab->ref.key_parts <= used_key_parts)
     {
       /*
-        SELECT * FROM t1 WHERE a=1 order_st BY a DESC,b DESC
+        SELECT * FROM t1 WHERE a=1 ORDER BY a DESC,b DESC
 
         Use a traversal function that starts by reading the last row
         with key part (A) and then traverse the index backwards.
@@ -5248,8 +5249,8 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
         make_unireg_sortorder(order, &length, join->sortorder)))
     goto err;
 
-  table->sort.io_cache= new IO_CACHE;
-  memset(table->sort.io_cache, 0, sizeof(IO_CACHE));
+  table->sort.io_cache= new internal::IO_CACHE;
+  memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -5604,13 +5605,13 @@ bool cp_buffer_from_ref(Session *session, table_reference_st *ref)
 *****************************************************************************/
 
 /**
-  Resolve an order_st BY or GROUP BY column reference.
+  Resolve an ORDER BY or GROUP BY column reference.
 
   Given a column reference (represented by 'order') from a GROUP BY or order_st
   BY clause, find the actual column it represents. If the column being
   resolved is from the GROUP BY clause, the procedure searches the SELECT
   list 'fields' and the columns in the FROM list 'tables'. If 'order' is from
-  the order_st BY clause, only the SELECT list is being searched.
+  the ORDER BY clause, only the SELECT list is being searched.
 
   If 'order' is resolved to an Item, then order->item is set to the found
   Item. If there is no item for the found column (that is, it was resolved
@@ -6197,7 +6198,7 @@ bool setup_copy_fields(Session *session,
     itr++;
   itr.sublist(res_selected_fields, elements);
   /*
-    Put elements from HAVING, order_st BY and GROUP BY last to ensure that any
+    Put elements from HAVING, ORDER BY and GROUP BY last to ensure that any
     reference used in these will resolve to a item that is already calculated
   */
   param->copy_funcs.concat(&extra_funcs);
@@ -6702,3 +6703,5 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
 /**
   @} (end of group Query_Optimizer)
 */
+
+} /* namespace drizzled */

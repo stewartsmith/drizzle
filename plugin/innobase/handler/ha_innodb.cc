@@ -84,6 +84,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
+#include "drizzled/named_savepoint.h"
+
+#include <drizzled/transaction_services.h>
 
 /** @file ha_innodb.cc */
 
@@ -127,7 +130,7 @@ extern "C" {
 #include <string>
 
 using namespace std;
-
+using namespace drizzled;
 
 #ifndef DRIZZLE_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t
@@ -158,7 +161,7 @@ undefined.  Map it to NULL. */
 # define EQ_CURRENT_SESSION(session) ((session) == current_session)
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
-static drizzled::plugin::StorageEngine* innodb_engine_ptr= NULL;
+static plugin::StorageEngine* innodb_engine_ptr= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -245,20 +248,20 @@ static const char* ha_innobase_exts[] = {
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
-class InnobaseEngine : public drizzled::plugin::StorageEngine
+class InnobaseEngine : public plugin::StorageEngine
 {
 public:
-  InnobaseEngine(string name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_NULL_IN_KEY |
-                                     HTON_CAN_INDEX_BLOBS |
-                                     HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-                                     HTON_PRIMARY_KEY_IN_READ_INDEX |
-                                     HTON_PARTIAL_COLUMN_READ |
-                                     HTON_TABLE_SCAN_ON_INDEX |
-                                     HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
+  InnobaseEngine(string name_arg) :
+    plugin::StorageEngine(name_arg,
+                          HTON_NULL_IN_KEY |
+                          HTON_CAN_INDEX_BLOBS |
+                          HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+                          HTON_PRIMARY_KEY_IN_READ_INDEX |
+                          HTON_PARTIAL_COLUMN_READ |
+                          HTON_TABLE_SCAN_ON_INDEX |
+                          HTON_HAS_DOES_TRANSACTIONS)
   {
-    table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
+    table_definition_ext= plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
 
@@ -271,11 +274,11 @@ public:
 			whose resources should be free'd */
 
   virtual int savepoint_set_hook(Session* session,
-                                 void *savepoint);
+                                 drizzled::NamedSavepoint &savepoint);
   virtual int savepoint_rollback_hook(Session* session,
-                                      void *savepoint);
+                                     drizzled::NamedSavepoint &savepoint);
   virtual int savepoint_release_hook(Session* session,
-                                     void *savepoint);
+                                     drizzled::NamedSavepoint &savepoint);
   virtual int commit(Session* session, bool all);
   virtual int rollback(Session* session, bool all);
 
@@ -298,7 +301,7 @@ public:
   /*================*/
   				/* out: number of prepared transactions
   				stored in xid_list */
-  	XID*	xid_list,	/* in/out: prepared transactions */
+  	::drizzled::XID*	xid_list,	/* in/out: prepared transactions */
   	uint	len);		/* in: number of slots in xid_list */
   /***********************************************************************
   This function is used to commit one X/Open XA distributed transaction
@@ -308,7 +311,7 @@ public:
   commit_by_xid(
   /*===================*/
   			/* out: 0 or error number */
-  	XID*	xid);	/* in: X/Open XA transaction identification */
+  	::drizzled::XID*	xid);	/* in: X/Open XA transaction identification */
   /***********************************************************************
   This function is used to rollback one X/Open XA distributed transaction
   which is in the prepared state */
@@ -317,10 +320,10 @@ public:
   rollback_by_xid(
   /*=====================*/
   			/* out: 0 or error number */
-  	XID	*xid);	/* in: X/Open XA transaction identification */
+  	::drizzled::XID	*xid);	/* in: X/Open XA transaction identification */
 
   virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+                         memory::Root *mem_root)
   {
     return new (mem_root) ha_innobase(*this, table);
   }
@@ -384,7 +387,7 @@ public:
   UNIV_INTERN int doCreateTable(Session *session,
                                 const char *table_name,
                                 Table& form,
-                                drizzled::message::Table&);
+                                message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
@@ -504,7 +507,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(drizzled::plugin::Registry &registry);
+innobase_deinit(plugin::Registry &registry);
 
 /*****************************************************************//**
 Commits a transaction in an InnoDB database. */
@@ -1014,7 +1017,7 @@ extern "C" UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
-	const struct charset_info_st*,	/*!< in: the 'from' character set */
+	const void*,			/*!< in: the 'from' character set */
 	char*			to,	/*!< out: converted identifier */
 	const char*		from,	/*!< in: identifier to convert */
 	ulint			len)	/*!< in: length of 'to', in bytes */
@@ -1028,7 +1031,7 @@ extern "C" UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
-	const struct charset_info_st*,	/*!< in: the 'from' character set */
+	const void*,			/*!< in: the 'from' character set */
 	char*			to,	/*!< out: converted identifier */
 	const char*		from,	/*!< in: identifier to convert */
 	ulint			len)	/*!< in: length of 'to', in bytes */
@@ -1064,12 +1067,29 @@ innobase_casedn_str(
 Determines the connection character set.
 @return	connection character set */
 extern "C" UNIV_INTERN
-const charset_info_st*
+const void*
 innobase_get_charset(
 /*=================*/
 	void*	mysql_session)	/*!< in: MySQL thread handle */
 {
-	return(session_charset(static_cast<Session*>(mysql_session)));
+	return session_charset(static_cast<Session*>(mysql_session));
+}
+
+extern "C" UNIV_INTERN
+bool
+innobase_isspace(
+	const void *cs,
+	char char_to_test)
+{
+	return my_isspace(static_cast<const CHARSET_INFO *>(cs), char_to_test);
+}
+
+UNIV_INTERN
+int
+innobase_fast_mutex_init(
+        os_fast_mutex_t*        fast_mutex)
+{
+	return pthread_mutex_init(fast_mutex, MY_MUTEX_INIT_FAST);
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -1174,12 +1194,12 @@ innobase_mysql_tmpfile(void)
 	if (fd >= 0) {
 		/* Copy the file descriptor, so that the additional resources
 		allocated by create_temp_file() can be freed by invoking
-		my_close().
+		internal::my_close().
 
 		Because the file descriptor returned by this function
 		will be passed to fdopen(), it will be closed by invoking
 		fclose(), which in turn will invoke close() instead of
-		my_close(). */
+		internal::my_close(). */
 		fd2 = dup(fd);
 		if (fd2 < 0) {
 			errno=errno;
@@ -1187,7 +1207,7 @@ innobase_mysql_tmpfile(void)
 				 MYF(ME_BELL+ME_WAITTANG),
 				 "ib*", errno);
 		}
-		my_close(fd, MYF(MY_WME));
+		internal::my_close(fd, MYF(MY_WME));
 	}
 	return(fd2);
 }
@@ -1376,7 +1396,7 @@ check_trx_exists(
 /*********************************************************************//**
 Construct ha_innobase Cursor. */
 UNIV_INTERN
-ha_innobase::ha_innobase(drizzled::plugin::StorageEngine &engine_arg,
+ha_innobase::ha_innobase(plugin::StorageEngine &engine_arg,
                          TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
   primary_key(0), /* needs initialization because index_flags() may be called 
@@ -1439,12 +1459,13 @@ static inline
 void
 innobase_register_stmt(
 /*===================*/
-        drizzled::plugin::StorageEngine*	engine,	/*!< in: Innobase hton */
+        plugin::StorageEngine*	engine,	/*!< in: Innobase hton */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
 	assert(engine == innodb_engine_ptr);
 	/* Register the statement */
-	trans_register_ha(session, FALSE, engine);
+  TransactionServices &transaction_services= TransactionServices::singleton();
+	transaction_services.trans_register_ha(session, FALSE, engine);
 }
 
 /*********************************************************************//**
@@ -1458,7 +1479,7 @@ static inline
 void
 innobase_register_trx_and_stmt(
 /*===========================*/
-        drizzled::plugin::StorageEngine *engine, /*!< in: Innobase StorageEngine */
+        plugin::StorageEngine *engine, /*!< in: Innobase StorageEngine */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
 	/* NOTE that actually innobase_register_stmt() registers also
@@ -1469,7 +1490,8 @@ innobase_register_trx_and_stmt(
 	if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 
 		/* No autocommit mode, register for a transaction */
-		trans_register_ha(session, TRUE, engine);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.trans_register_ha(session, TRUE, engine);
 	}
 }
 
@@ -1709,7 +1731,7 @@ static
 int
 innobase_init(
 /*==========*/
-	drizzled::plugin::Registry	&registry)	/*!< in: Drizzle Plugin Registry */
+	plugin::Registry	&registry)	/*!< in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/*!< Set if using current lib */
 	int		err;
@@ -1759,7 +1781,7 @@ innobase_init(
 		}
 	}
 
-	os_innodb_umask = (ulint)my_umask;
+	os_innodb_umask = (ulint)internal::my_umask;
 
 	/* First calculate the default path for innodb_data_home_dir etc.,
 	in case the user has not given any value.
@@ -2020,7 +2042,7 @@ Closes an InnoDB database.
 @return	TRUE if error */
 static
 int
-innobase_deinit(drizzled::plugin::Registry &registry)
+innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
@@ -2336,12 +2358,11 @@ InnobaseEngine::savepoint_rollback_hook(
 /*===========================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
-	void*	savepoint)	/*!< in: savepoint data */
+	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
 {
 	ib_int64_t	mysql_binlog_cache_pos;
 	int		error = 0;
 	trx_t*		trx;
-	char		sp_name[64];
 
 	assert(this == innodb_engine_ptr);
 
@@ -2354,11 +2375,8 @@ InnobaseEngine::savepoint_rollback_hook(
 	innobase_release_stat_resources(trx);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-
-	int64_t2str((ulint)savepoint, sp_name, 36);
-
-	error = (int) trx_rollback_to_savepoint_for_mysql(trx, sp_name,
-						&mysql_binlog_cache_pos);
+	error= (int)trx_rollback_to_savepoint_for_mysql(trx, named_savepoint.getName().c_str(),
+                                                        &mysql_binlog_cache_pos);
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
 
@@ -2371,21 +2389,17 @@ InnobaseEngine::savepoint_release_hook(
 /*=======================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
-	void*	savepoint)	/*!< in: savepoint data */
+	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
 {
 	int		error = 0;
 	trx_t*		trx;
-	char		sp_name[64];
 
 	assert(this == innodb_engine_ptr);
 
 	trx = check_trx_exists(session);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-
-	int64_t2str((ulint)savepoint, sp_name, 36);
-
-	error = (int) trx_release_savepoint_for_mysql(trx, sp_name);
+	error = (int) trx_release_savepoint_for_mysql(trx, named_savepoint.getName().c_str());
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
@@ -2397,7 +2411,7 @@ int
 InnobaseEngine::savepoint_set_hook(
 /*===============*/
 	Session*	session,/*!< in: handle to the MySQL thread */
-	void*	savepoint)	/*!< in: savepoint data */
+	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
 {
 	int	error = 0;
 	trx_t*	trx;
@@ -2422,10 +2436,7 @@ InnobaseEngine::savepoint_set_hook(
 	assert(trx->active_trans);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
-	char sp_name[64];
-	int64_t2str((ulint)savepoint,sp_name,36);
-
-	error = (int) trx_savepoint_for_mysql(trx, sp_name, (ib_int64_t)0);
+	error = (int) trx_savepoint_for_mysql(trx, named_savepoint.getName().c_str(), (ib_int64_t)0);
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
 }
@@ -2723,7 +2734,7 @@ ha_innobase::open(
 				table->s->stored_rec_length
 				+ table->s->max_key_length
 				+ MAX_REF_PARTS * 3;
-	if (!(unsigned char*) drizzled::memory::multi_malloc(false,
+	if (!(unsigned char*) memory::multi_malloc(false,
 			&upd_buff, upd_and_key_val_buff_len,
 			&key_val_buff, upd_and_key_val_buff_len,
 			NULL)) {
@@ -5366,7 +5377,7 @@ create_options_are_valid(
 	Session*	session,	/*!< in: connection thread. */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-        drizzled::message::Table& create_proto)
+        message::Table& create_proto)
 {
 	ibool	kbs_specified	= FALSE;
 	ibool	ret		= TRUE;
@@ -5525,7 +5536,7 @@ InnobaseEngine::doCreateTable(
 	const char*	table_name,	/*!< in: table name */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-        drizzled::message::Table& create_proto)
+        message::Table& create_proto)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5540,7 +5551,7 @@ InnobaseEngine::doCreateTable(
 	/* Cache the value of innodb_file_format, in case it is
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
-        bool lex_identified_temp_table= (create_proto.type() == drizzled::message::Table::TEMPORARY);
+        bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
 
 	assert(session != NULL);
 
@@ -6452,7 +6463,7 @@ ha_innobase::info(
 		snprintf(path, sizeof(path), "%s/%s%s",
 			       drizzle_data_home, ib_table->name, ".dfe");
 
-		unpack_filename(path,path);
+		internal::unpack_filename(path,path);
 
 		/* Note that we do not know the access time of the table,
 		nor the CHECK TABLE time, nor the UPDATE or INSERT time. */
@@ -7353,7 +7364,7 @@ static
 bool
 innodb_show_status(
 /*===============*/
-	drizzled::plugin::StorageEngine*	engine,	/*!< in: the innodb StorageEngine */
+	plugin::StorageEngine*	engine,	/*!< in: the innodb StorageEngine */
 	Session*	session,/*!< in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print)
 {
@@ -7440,7 +7451,7 @@ static
 bool
 innodb_mutex_show_status(
 /*=====================*/
-	drizzled::plugin::StorageEngine*	engine,		/*!< in: the innodb StorageEngine */
+	plugin::StorageEngine*	engine,		/*!< in: the innodb StorageEngine */
 	Session*	session,	/*!< in: the MySQL query thread of the
 					caller */
 	stat_print_fn*	stat_print)
@@ -8290,8 +8301,8 @@ This function is used to recover X/Open XA distributed transactions.
 int
 InnobaseEngine::recover(
 /*================*/
-	XID*		xid_list,/*!< in/out: prepared transactions */
-	uint		len)	/*!< in: number of slots in xid_list */
+	::drizzled::XID*	xid_list,/*!< in/out: prepared transactions */
+	uint			len)	/*!< in: number of slots in xid_list */
 {
 	assert(this == innodb_engine_ptr);
 
@@ -8300,7 +8311,7 @@ InnobaseEngine::recover(
 		return(0);
 	}
 
-	return(trx_recover_for_mysql(xid_list, len));
+	return(trx_recover_for_mysql((::XID *)xid_list, len));
 }
 
 /*******************************************************************//**
@@ -8310,13 +8321,13 @@ which is in the prepared state
 int
 InnobaseEngine::commit_by_xid(
 /*===================*/
-	XID*	xid)	/*!< in: X/Open XA transaction identification */
+	::drizzled::XID*	xid)	/*!< in: X/Open XA transaction identification */
 {
 	trx_t*	trx;
 
 	assert(this == innodb_engine_ptr);
 
-	trx = trx_get_trx_by_xid(xid);
+	trx = trx_get_trx_by_xid((::XID *)xid);
 
 	if (trx) {
 		innobase_commit_low(trx);
@@ -8334,14 +8345,14 @@ which is in the prepared state
 int
 InnobaseEngine::rollback_by_xid(
 /*=====================*/
-	XID*		xid)	/*!< in: X/Open XA transaction
+	::drizzled::XID*		xid)	/*!< in: X/Open XA transaction
 				identification */
 {
 	trx_t*	trx;
 
 	assert(this == innodb_engine_ptr);
 
-	trx = trx_get_trx_by_xid(xid);
+	trx = trx_get_trx_by_xid((::XID *)xid);
 
 	if (trx) {
 		return(innobase_rollback_trx(trx));

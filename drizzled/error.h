@@ -29,12 +29,13 @@
 #define MY_FILE_ERROR	((size_t) -1)
 #define ME_FATALERROR   1024    /* Fatal statement error */
 
-typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
-extern error_handler_func error_handler_hook;
+namespace drizzled
+{
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+typedef void (*error_handler_func)(uint32_t my_err,
+                                   const char *str,
+                                   myf MyFlags);
+extern error_handler_func error_handler_hook;
 
 bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
@@ -767,7 +768,8 @@ enum drizzled_error_code {
   ER_INVALID_TIME_VALUE,
   ER_INVALID_ENUM_VALUE,
   ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE,
-  ER_ERROR_LAST= ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE
+  ER_CORRUPT_TABLE_DEFINITION,
+  ER_ERROR_LAST= ER_CORRUPT_TABLE_DEFINITION
 };
 
 enum drizzle_exit_codes {
@@ -804,8 +806,6 @@ const char **my_error_unregister(int first, int last);
 void my_message(uint32_t my_err, const char *str,myf MyFlags);
 void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
 
-#ifdef  __cplusplus
-}
-#endif
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ERROR_H */

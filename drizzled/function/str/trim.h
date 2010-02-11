@@ -22,6 +22,9 @@
 
 #include <drizzled/function/str/strfunc.h>
 
+namespace drizzled
+{
+
 class Item_func_trim :public Item_str_func
 {
 protected:
@@ -58,6 +61,6 @@ public:
   const char *mode_name() const { return "trailing"; }
 };
 
-
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_TRIM_H */

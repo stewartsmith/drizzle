@@ -19,6 +19,7 @@
 #include <drizzled/unireg.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/message/statement_transform.h"
 
 #include "drizzled/internal/my_sys.h"
 
@@ -94,21 +95,20 @@ int fill_table_proto(message::Table *table_proto,
 
     message::Table::Field::FieldType parser_type= attribute->type();
 
-    switch (field_arg->sql_type) {
-    case DRIZZLE_TYPE_LONG:
-      attribute->set_type(message::Table::Field::INTEGER);
-      break;
-    case DRIZZLE_TYPE_DOUBLE:
-      {
-        attribute->set_type(drizzled::message::Table::Field::DOUBLE);
+    attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
 
-        /* 
+    switch (attribute->type()) {
+    default: /* Only deal with types that need extra information */
+      break;
+    case message::Table::Field::DOUBLE:
+      {
+        /*
          * For DOUBLE, we only add a specific scale and precision iff
          * the fixed decimal point has been specified...
          */
         if (field_arg->decimals != NOT_FIXED_DEC)
         {
-          drizzled::message::Table::Field::NumericFieldOptions *numeric_field_options;
+          message::Table::Field::NumericFieldOptions *numeric_field_options;
 
           numeric_field_options= attribute->mutable_numeric_options();
 
@@ -117,26 +117,12 @@ int fill_table_proto(message::Table *table_proto,
         }
       }
       break;
-    case DRIZZLE_TYPE_NULL  :
-      assert(1); /* Not a user definable type */
-    case DRIZZLE_TYPE_TIMESTAMP:
-      attribute->set_type(message::Table::Field::TIMESTAMP);
-      break;
-    case DRIZZLE_TYPE_LONGLONG:
-      attribute->set_type(message::Table::Field::BIGINT);
-      break;
-    case DRIZZLE_TYPE_DATETIME:
-      attribute->set_type(message::Table::Field::DATETIME);
-      break;
-    case DRIZZLE_TYPE_DATE:
-      attribute->set_type(message::Table::Field::DATE);
-      break;
-    case DRIZZLE_TYPE_VARCHAR:
+    case message::Table::Field::VARCHAR:
       {
         message::Table::Field::StringFieldOptions *string_field_options;
 
         string_field_options= attribute->mutable_string_options();
-        attribute->set_type(message::Table::Field::VARCHAR);
+
         if (! use_existing_fields || string_field_options->length()==0)
           string_field_options->set_length(field_arg->length
                                            / field_arg->charset->mbmaxlen);
@@ -150,24 +136,22 @@ int fill_table_proto(message::Table *table_proto,
         }
         break;
       }
-    case DRIZZLE_TYPE_DECIMAL:
+    case message::Table::Field::DECIMAL:
       {
         message::Table::Field::NumericFieldOptions *numeric_field_options;
 
-        attribute->set_type(message::Table::Field::DECIMAL);
         numeric_field_options= attribute->mutable_numeric_options();
         /* This is magic, I hate magic numbers -Brian */
         numeric_field_options->set_precision(field_arg->length + ( field_arg->decimals ? -2 : -1));
         numeric_field_options->set_scale(field_arg->decimals);
         break;
       }
-    case DRIZZLE_TYPE_ENUM:
+    case message::Table::Field::ENUM:
       {
         message::Table::Field::SetFieldOptions *set_field_options;
 
         assert(field_arg->interval);
 
-        attribute->set_type(message::Table::Field::ENUM);
         set_field_options= attribute->mutable_set_options();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
@@ -181,10 +165,8 @@ int fill_table_proto(message::Table *table_proto,
         set_field_options->set_collation(field_arg->charset->name);
         break;
       }
-    case DRIZZLE_TYPE_BLOB:
+    case message::Table::Field::BLOB:
       {
-	attribute->set_type(message::Table::Field::BLOB);
-
         message::Table::Field::StringFieldOptions *string_field_options;
 
         string_field_options= attribute->mutable_string_options();
@@ -193,8 +175,6 @@ int fill_table_proto(message::Table *table_proto,
       }
 
       break;
-    default:
-      assert(0); /* Tell us, since this shouldn't happend */
     }
 
     assert (!use_existing_fields || parser_type == attribute->type());
@@ -490,7 +470,7 @@ int rename_table_proto_file(const char *from, const char* to)
   from_path.append(file_ext);
   to_path.append(file_ext);
 
-  return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
+  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
 }
 
 int delete_table_proto_file(const char *file_name)
@@ -499,13 +479,13 @@ int delete_table_proto_file(const char *file_name)
   string file_ext = ".dfe";
 
   new_path.append(file_ext);
-  return my_delete(new_path.c_str(), MYF(0));
+  return internal::my_delete(new_path.c_str(), MYF(0));
 }
 
 int drizzle_write_proto_file(const std::string file_name,
                              message::Table *table_proto)
 {
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
 
   if (fd == -1)
     return errno;
@@ -591,3 +571,4 @@ err_handler:
 } /* rea_create_table */
 
 } /* namespace drizzled */
+

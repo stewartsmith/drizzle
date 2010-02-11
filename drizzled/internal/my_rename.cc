@@ -13,10 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/error.h"
 #include "drizzled/internal/m_string.h"
-#undef my_rename
+
+namespace drizzled
+{
+namespace internal
+{
 
 	/* On unix rename deletes to file if it exists */
 
@@ -63,3 +69,6 @@ int my_rename(const char *from, const char *to, myf MyFlags)
   }
   return(error);
 } /* my_rename */
+
+} /* namespace internal */
+} /* namespace drizzled */

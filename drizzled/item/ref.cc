@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include "drizzled/session.h"
 #include "drizzled/error.h"
 #include "drizzled/show.h"
@@ -26,7 +26,8 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/item/sum.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
@@ -575,3 +576,5 @@ void Item_ref::fix_after_pullout(Select_Lex *new_parent, Item **)
     depended_from= NULL;
   }
 }
+
+} /* namespace drizzled */

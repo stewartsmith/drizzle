@@ -21,6 +21,9 @@
 #include <math.h>
 #include <drizzled/function/math/log.h>
 
+namespace drizzled
+{
+
 /**
   Extended but so slower LOG function.
 
@@ -82,3 +85,4 @@ double Item_func_log10::val_real()
   return log10(value);
 }
 
+} /* namespace drizzled */

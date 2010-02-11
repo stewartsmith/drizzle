@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/integer.h>
+
+namespace drizzled
+{
 
 void Item_func_integer::fix_length_and_dec()
 {
@@ -29,3 +32,4 @@ void Item_func_integer::fix_length_and_dec()
   decimals=0;
 }
 
+} /* namespace drizzled */

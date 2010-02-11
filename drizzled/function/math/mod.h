@@ -23,6 +23,9 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/num_op.h>
 
+namespace drizzled
+{
+
 class Item_func_mod :public Item_num_op
 {
 public:
@@ -34,5 +37,7 @@ public:
   void result_precision();
   void fix_length_and_dec();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_MOD_H */

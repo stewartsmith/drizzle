@@ -37,8 +37,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/item/ref_null_helper.h>
 #include <drizzled/item/direct_ref.h>
+#include <drizzled/join.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 extern plugin::StorageEngine *myisam_engine;
 
@@ -1645,7 +1647,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *fu
   {
     /*
       IN/SOME/ALL/ANY subqueries aren't support LIMIT clause. Without it
-      order_st BY clause becomes meaningless thus we drop it here.
+      ORDER BY clause becomes meaningless thus we drop it here.
     */
     Select_Lex *sl= current->master_unit()->first_select();
     for (; sl; sl= sl->next_select())
@@ -2352,8 +2354,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
 {
   for (StoredKey **copy= tab->ref.key_copy ; *copy ; copy++)
   {
-    enum StoredKey::store_key_result store_res;
-    store_res= (*copy)->copy();
+    StoredKey::store_key_result store_res= (*copy)->copy();
     tab->ref.key_err= store_res;
 
     /*
@@ -2952,7 +2953,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   if (tmp_result_sink->create_result_table(
                          session, tmp_columns, true,
                          session->options | TMP_TABLE_ALL_COLUMNS,
-                         "materialized subselect", true))
+                         "materialized subselect"))
     return(true);
 
   tmp_table= tmp_result_sink->table;
@@ -3172,3 +3173,5 @@ void subselect_hash_sj_engine::print(String *str, enum_query_type query_type)
            "<the access method for lookups is not yet created>"
          ));
 }
+
+} /* namespace drizzled */

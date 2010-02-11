@@ -21,14 +21,20 @@
 #ifndef DRIZZLED_SELECT_TO_FILE_H
 #define DRIZZLED_SELECT_TO_FILE_H
 
+namespace drizzled
+{
+
+namespace internal
+{
 typedef struct st_io_cache IO_CACHE;
+}
 
 class select_to_file : public select_result_interceptor
 {
 protected:
   file_exchange *exchange;
   int file;
-  IO_CACHE *cache;
+  internal::IO_CACHE *cache;
   ha_rows row_count;
   char path[FN_REFLEN];
 
@@ -40,5 +46,6 @@ public:
   void cleanup();
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_TO_FILE_H */

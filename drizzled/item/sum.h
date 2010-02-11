@@ -29,11 +29,12 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
 
-extern "C"
+namespace drizzled
+{
+
 int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
                                        const void* key2);
 
-extern "C"
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2);
 
@@ -1045,5 +1046,7 @@ public:
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_SUM_H */

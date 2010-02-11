@@ -59,6 +59,8 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
+using namespace drizzled::internal;
 
 
 #define my_off_t2double(A)  ((double) (my_off_t) (A))
@@ -74,19 +76,17 @@ static ha_checksum calc_checksum(ha_rows count);
 static int writekeys(MI_SORT_PARAM *sort_param);
 static int sort_one_index(MI_CHECK *param, MI_INFO *info,MI_KEYDEF *keyinfo,
 			  my_off_t pagepos, int new_file);
-extern "C"
-{
-  int sort_key_read(MI_SORT_PARAM *sort_param,void *key);
-  int sort_get_next_record(MI_SORT_PARAM *sort_param);
-  int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,const void *b);
-  int sort_key_write(MI_SORT_PARAM *sort_param, const void *a);
-  my_off_t get_record_for_key(MI_INFO *info,MI_KEYDEF *keyinfo,
-                              unsigned char *key);
-  int sort_insert_key(MI_SORT_PARAM  *sort_param,
-                      register SORT_KEY_BLOCKS *key_block,
-                      unsigned char *key, my_off_t prev_block);
-  int sort_delete_record(MI_SORT_PARAM *sort_param);
-}
+int sort_key_read(MI_SORT_PARAM *sort_param,void *key);
+int sort_get_next_record(MI_SORT_PARAM *sort_param);
+int sort_key_cmp(MI_SORT_PARAM *sort_param, const void *a,const void *b);
+int sort_key_write(MI_SORT_PARAM *sort_param, const void *a);
+my_off_t get_record_for_key(MI_INFO *info,MI_KEYDEF *keyinfo,
+                            unsigned char *key);
+int sort_insert_key(MI_SORT_PARAM  *sort_param,
+                    register SORT_KEY_BLOCKS *key_block,
+                    unsigned char *key, my_off_t prev_block);
+int sort_delete_record(MI_SORT_PARAM *sort_param);
+
 /*static int flush_pending_blocks(MI_CHECK *param);*/
 static SORT_KEY_BLOCKS	*alloc_key_blocks(MI_CHECK *param, uint32_t blocks,
 					  uint32_t buffer_length);
@@ -1459,7 +1459,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   if (!rep_quick)
   {
     /* Get real path for data file */
-    if ((new_file=my_create(fn_format(param->temp_filename,
+    if ((new_file=my_create(internal::fn_format(param->temp_filename,
                                       share->data_file_name, "",
                                       DATA_TMP_EXT, 2+4),
                             0,param->tmpfile_createflag,
@@ -1576,7 +1576,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
 
   if (!rep_quick)
   {
-    my_close(info->dfile,MYF(0));
+    internal::my_close(info->dfile,MYF(0));
     info->dfile=new_file;
     info->state->data_file_length=sort_param.filepos;
     share->state.version=(ulong) time((time_t*) 0);	/* Force reopen */
@@ -1609,7 +1609,7 @@ err:
     /* Replace the actual file with the temporary file */
     if (new_file >= 0)
     {
-      my_close(new_file,MYF(0));
+      internal::my_close(new_file,MYF(0));
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
@@ -1626,7 +1626,7 @@ err:
 		  llstr(sort_param.start_recpos,llbuff));
     if (new_file >= 0)
     {
-      my_close(new_file,MYF(0));
+      internal::my_close(new_file,MYF(0));
       my_delete(param->temp_filename, MYF(MY_WME));
       info->rec_cache.file=-1; /* don't flush data to new_file, it's closed */
     }
@@ -1753,19 +1753,8 @@ int movepoint(register MI_INFO *info, unsigned char *record, my_off_t oldpos,
 
 	/* Tell system that we want all memory for our cache */
 
-void lock_memory(MI_CHECK *param)
+void lock_memory(MI_CHECK *)
 {
-#ifdef SUN_OS				/* Key-cacheing thrases on sun 4.1 */
-  if (param->opt_lock_memory)
-  {
-    int success = mlockall(MCL_CURRENT);	/* or plock(DATLOCK); */
-    if (geteuid() == 0 && success != 0)
-      mi_check_print_warning(param,
-			     "Failed to lock memory. errno %d",errno);
-  }
-#else
-  (void)param;
-#endif
 } /* lock_memory */
 
 
@@ -1805,8 +1794,8 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
     printf("- Sorting index for MyISAM-table '%s'\n",name);
 
   /* Get real path for index file */
-  fn_format(param->temp_filename,name,"", MI_NAME_IEXT,2+4+32);
-  if ((new_file=my_create(fn_format(param->temp_filename,param->temp_filename,
+  internal::fn_format(param->temp_filename,name,"", MI_NAME_IEXT,2+4+32);
+  if ((new_file=my_create(internal::fn_format(param->temp_filename,param->temp_filename,
 				    "", INDEX_TMP_EXT,2+4),
 			  0,param->tmpfile_createflag,MYF(0))) <= 0)
   {
@@ -1848,9 +1837,9 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
 	/* Put same locks as old file */
   share->r_locks= share->w_locks= share->tot_locks= 0;
   (void) _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
-  my_close(share->kfile,MYF(MY_WME));
+  internal::my_close(share->kfile,MYF(MY_WME));
   share->kfile = -1;
-  my_close(new_file,MYF(MY_WME));
+  internal::my_close(new_file,MYF(MY_WME));
   if (change_to_newfile(share->index_file_name,MI_NAME_IEXT,INDEX_TMP_EXT,0,
 			MYF(0)) ||
       mi_open_keyfile(share))
@@ -1874,7 +1863,7 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
   return(0);
 
 err:
-  my_close(new_file,MYF(MY_WME));
+  internal::my_close(new_file,MYF(MY_WME));
 err2:
   my_delete(param->temp_filename,MYF(MY_WME));
   return(-1);
@@ -1963,9 +1952,9 @@ int change_to_newfile(const char * filename, const char * old_ext,
   (void)raid_chunks;
   char old_filename[FN_REFLEN],new_filename[FN_REFLEN];
   /* Get real path to filename */
-  (void) fn_format(old_filename,filename,"",old_ext,2+4+32);
+  (void) internal::fn_format(old_filename,filename,"",old_ext,2+4+32);
   return my_redel(old_filename,
-		  fn_format(new_filename,old_filename,"",new_ext,2+4),
+		  internal::fn_format(new_filename,old_filename,"",new_ext,2+4),
 		  MYF(MY_WME | MY_LINK_WARNING | MyFlags));
 } /* change_to_newfile */
 
@@ -2083,7 +2072,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   if (!rep_quick)
   {
     /* Get real path for data file */
-    if ((new_file=my_create(fn_format(param->temp_filename,
+    if ((new_file=my_create(internal::fn_format(param->temp_filename,
                                       share->data_file_name, "",
                                       DATA_TMP_EXT, 2+4),
                             0,param->tmpfile_createflag,
@@ -2235,7 +2224,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
 	sort_param.filepos;
       /* Only whole records */
       share->state.version=(ulong) time((time_t*) 0);
-      my_close(info->dfile,MYF(0));
+      internal::my_close(info->dfile,MYF(0));
       info->dfile=new_file;
       share->data_file_type=sort_info.new_data_file_type;
       share->pack.header_length=(ulong) new_header_length;
@@ -2310,7 +2299,7 @@ err:
     /* Replace the actual file with the temporary file */
     if (new_file >= 0)
     {
-      my_close(new_file,MYF(0));
+      internal::my_close(new_file,MYF(0));
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
@@ -2326,7 +2315,7 @@ err:
       mi_check_print_error(param,"%d when fixing table",errno);
     if (new_file >= 0)
     {
-      my_close(new_file,MYF(0));
+      internal::my_close(new_file,MYF(0));
       my_delete(param->temp_filename, MYF(MY_WME));
       if (info->dfile == new_file)
         info->dfile= -1;
@@ -2492,7 +2481,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
   if (!rep_quick)
   {
     /* Get real path for data file */
-    if ((new_file=my_create(fn_format(param->temp_filename,
+    if ((new_file=my_create(internal::fn_format(param->temp_filename,
                                       share->data_file_name, "",
                                       DATA_TMP_EXT,
                                       2+4),
@@ -2744,7 +2733,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
       Exchange the data file descriptor of the table, so that we use the
       new file from now on.
      */
-    my_close(info->dfile,MYF(0));
+    internal::my_close(info->dfile,MYF(0));
     info->dfile=new_file;
 
     share->data_file_type=sort_info.new_data_file_type;
@@ -2820,7 +2809,7 @@ err:
     /* Replace the actual file with the temporary file */
     if (new_file >= 0)
     {
-      my_close(new_file,MYF(0));
+      internal::my_close(new_file,MYF(0));
       info->dfile=new_file= -1;
       if (change_to_newfile(share->data_file_name,MI_NAME_DEXT,
 			    DATA_TMP_EXT, share->base.raid_chunks,
@@ -2836,7 +2825,7 @@ err:
       mi_check_print_error(param,"%d when fixing table",errno);
     if (new_file >= 0)
     {
-      my_close(new_file,MYF(0));
+      internal::my_close(new_file,MYF(0));
       my_delete(param->temp_filename, MYF(MY_WME));
       if (info->dfile == new_file)
         info->dfile= -1;

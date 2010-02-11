@@ -22,6 +22,9 @@
 
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
+
 class Item_func_period_diff :public Item_int_func
 {
 public:
@@ -34,5 +37,7 @@ public:
     max_length=6*MY_CHARSET_BIN_MB_MAXLEN;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_PERIOD_DIFF_H */

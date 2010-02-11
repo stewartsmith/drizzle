@@ -171,12 +171,6 @@ msgstr ""
 msgid "Use compression in server/client protocol."
 msgstr "Use compression in server/client protocol."
 
-msgid "Check memory and open file usage at exit ."
-msgstr "Check memory and open file usage at exit ."
-
-msgid "Print some debug info at exit."
-msgstr "Print some debug info at exit."
-
 msgid "Database to use."
 msgstr "Database to use."
 
@@ -336,9 +330,6 @@ msgid ""
 msgstr ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 
-msgid "Socket file to use for connection."
-msgstr "Socket file to use for connection."
-
 msgid "Output in table format."
 msgstr "Output in table format."
 
@@ -396,6 +387,9 @@ msgstr "Number of lines before each import progress report."
 
 msgid "Ping the server to check if it's alive."
 msgstr "Ping the server to check if it's alive."
+
+msgid "Use MySQL Protocol."
+msgstr ""
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
@@ -885,6 +879,10 @@ msgstr "Default storage engine (%s) is not available"
 msgid "Failed to lock memory. Errno: %d\n"
 msgstr "Failed to lock memory. Error: %d\n"
 
+#, fuzzy, c-format
+msgid "Data directory %s does not exist\n"
+msgstr "%s %s does not exist"
+
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
 
@@ -1017,32 +1015,6 @@ msgstr "The maximum length of the result of function  group_concat."
 
 msgid "The size of the buffer that is used for full joins."
 msgstr "The size of the buffer that is used for full joins."
-
-msgid ""
-"The size of the buffer used for index blocks for MyISAM tables. Increase "
-"this to get better index handling (for all reads and multiple writes) to as "
-"much as you can afford;"
-msgstr ""
-"The size of the buffer used for index blocks for MyISAM tables. Increase "
-"this to get better index handling (for all reads and multiple writes) to as "
-"much as you can afford;"
-
-msgid ""
-"This characterizes the number of hits a hot block has to be untouched until "
-"it is considered aged enough to be downgraded to a warm block. This "
-"specifies the percentage ratio of that number of hits to the total number of "
-"blocks in key cache"
-msgstr ""
-"This characterises the number of hits a hot block has to be untouched until "
-"it is considered aged enough to be downgraded to a warm block. This "
-"specifies the percentage ratio of that number of hits to the total number of "
-"blocks in key cache"
-
-msgid "The default size of key cache blocks"
-msgstr "The default size of key cache blocks"
-
-msgid "The minimum percentage of warm blocks in key cache"
-msgstr "The minimum percentage of warm blocks in key cache"
 
 msgid "Max packetlength to send/receive from to server."
 msgstr "Max packetlength to send/receive from to server."
@@ -1752,19 +1724,20 @@ msgstr "Can't load function '%-.192s'"
 msgid "Can't initialize function '%-.192s'; %-.80s"
 msgstr "Can't initialise function '%-.192s'; %-.80s"
 
-msgid "No paths allowed for shared library"
+#, fuzzy
+msgid "No paths allowed for plugin library"
 msgstr "No paths allowed for shared library"
 
-#, c-format
-msgid "Function '%-.192s' already exists"
+#, fuzzy, c-format
+msgid "Plugin '%-.192s' already exists"
 msgstr "Function '%-.192s' already exists"
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
 msgstr "Can't open shared library '%-.192s' (errno: %d %-.128s)"
 
-#, c-format
-msgid "Can't find symbol '%-.128s' in library"
+#, fuzzy, c-format
+msgid "Can't find symbol '%-.128s' in library '%-.128s'"
 msgstr "Can't find symbol '%-.128s' in library"
 
 #, c-format
@@ -2694,10 +2667,6 @@ msgstr "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
-
-#, c-format
-msgid "File '%-.192s' has unknown type '%-.64s' in its header"
-msgstr "File '%-.192s' has unknown type '%-.64s' in its header"
 
 #, c-format
 msgid "'%-.192s.%-.192s' is not %s"
@@ -4176,6 +4145,14 @@ msgstr "Received an invalid time value '%s'."
 msgid "Received an invalid enum value '%s'."
 msgstr "Received an invalid enum value '%s'."
 
+#, fuzzy
+msgid "Tables which are replicated require a primary key."
+msgstr "This table type requires a primary key"
+
+#, c-format
+msgid "error: could not open directory: %s\n"
+msgstr ""
+
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
 msgstr ""
@@ -4205,15 +4182,14 @@ msgid "GPB ERROR: %s.\n"
 msgstr ""
 
 #, c-format
-msgid "Raw buffer read: %s.\n"
+msgid ""
+"HEXDUMP:\n"
+"\n"
+"%s\n"
 msgstr ""
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
-msgstr ""
-
-#, c-format
-msgid "BUFFER: %s\n"
 msgstr ""
 
 #, c-format
@@ -4224,12 +4200,74 @@ msgstr ""
 msgid "Usage: %s TRANSACTION_LOG\n"
 msgstr "Usage: %s [OPTIONS]\n"
 
+msgid "Warning: "
+msgstr "Warning: "
+
+msgid "Info: "
+msgstr "Info: "
+
+#, c-format
+msgid "%s: %s: Option '%s' used, but is disabled\n"
+msgstr "%s: %s: Option '%s' used, but is disabled\n"
+
+msgid "WARNING"
+msgstr "WARNING"
+
+msgid "ERROR"
+msgstr "ERROR"
+
+#, c-format
+msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
+msgstr "%s: ERROR: Option '-%c' used, but is disabled\n"
+
+#, c-format
+msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
+msgstr "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
+
+#, c-format
+msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
+msgstr "%s: ERROR: Invalid decimal value for option '%s'\n"
+
+#, c-format
+msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
+msgstr "%*s(Defaults to on; use --skip-%s to disable.)\n"
+
+#, c-format
+msgid ""
+"\n"
+"Variables (--variable-name=value)\n"
+"and boolean options {false|true}  Value (after reading options)\n"
+"--------------------------------- -----------------------------\n"
+msgstr ""
+"\n"
+"Variables (--variable-name=value)\n"
+"and boolean options {false|true}  Value (after reading options)\n"
+"--------------------------------- -----------------------------\n"
+
+msgid "(No default value)"
+msgstr "(No default value)"
+
+msgid "true"
+msgstr "true"
+
+msgid "false"
+msgstr "false"
+
+#, c-format
+msgid "(Disabled)\n"
+msgstr "(Disabled)\n"
+
 #, c-format
 msgid "errmsg plugin '%s' errmsg() failed"
 msgstr "errmsg plugin '%s' errmsg() failed"
 
-msgid "Could not add Function!"
-msgstr ""
+#, fuzzy, c-format
+msgid "A function named %s already exists!\n"
+msgstr "Function '%-.192s' already exists"
+
+#, fuzzy
+msgid "Could not add Function!\n"
+msgstr "Found %d prepared XA transactions"
 
 msgid "No sockets could be bound for listening"
 msgstr ""
@@ -4297,11 +4335,12 @@ msgstr ""
 msgid "Plugin '%s' init function returned error.\n"
 msgstr ""
 
-msgid "plugin-load parameter too long"
-msgstr "plugin-load parameter too long"
+#, fuzzy, c-format
+msgid "Couldn't load plugin library named '%s'."
+msgstr "Couldn't load plugin named '%s' with soname '%s'."
 
-#, c-format
-msgid "Couldn't load plugin named '%s' with soname '%s'."
+#, fuzzy, c-format
+msgid "Couldn't load plugin named '%s'."
 msgstr "Couldn't load plugin named '%s' with soname '%s'."
 
 msgid "Out of memory."
@@ -4372,11 +4411,11 @@ msgid "qcache plugin '%s' flush() failed"
 msgstr "qcache plugin '%s' flush() failed"
 
 #, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists."
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
 
 #, fuzzy, c-format
-msgid "Fatal error: Failed initializing %s plugin."
+msgid "Fatal error: Failed initializing %s plugin.\n"
 msgstr "Failed to initialise plugins."
 
 #, c-format
@@ -4422,20 +4461,16 @@ msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Could not remove temporary table: '%s', error: %d"
 
 #, fuzzy, c-format
+msgid "Variable named %s already exists!\n"
+msgstr "Tablespace '%-.192s' already exists"
+
+#, fuzzy, c-format
+msgid "Could not add Variable: %s\n"
+msgstr "Couldn't find table: \"%s\""
+
+#, fuzzy, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
 msgstr "Table %s had a open data handler in reopen_table"
-
-#, c-format
-msgid "Couldn't repair table: %s.%s"
-msgstr "Couldn't repair table: %s.%s"
-
-#, c-format
-msgid ""
-"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
-"s`.`%s`' to replication"
-msgstr ""
-"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
-"s`.`%s`' to replication"
 
 msgid ""
 "Table name cannot be encoded and fit within filesystem name length "
@@ -4530,195 +4565,6 @@ msgstr "%s: option `-W %s' is ambiguous\n"
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s: option `-W %s' doesn't allow an argument\n"
-
-#, c-format
-msgid "error: could not open directory: %s\n"
-msgstr ""
-
-#, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Can't create/write to file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Error reading file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Error writing file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Error on close of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Out of memory (Needed %u bytes)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Error on delete of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Error on rename of '%s' to '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr "Unexpected eof found when reading file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Can't lock file (Errcode: %d)"
-
-#, c-format
-msgid "Can't unlock file (Errcode: %d)"
-msgstr "Can't unlock file (Errcode: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Can't read dir of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Can't get stat of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't change size of file (Errcode: %d)"
-msgstr "Can't change size of file (Errcode: %d)"
-
-#, c-format
-msgid "Can't open stream from handle (Errcode: %d)"
-msgstr "Can't open stream from handle (Errcode: %d)"
-
-#, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Can't get working directory (Errcode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Can't change dir to '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Warning: '%s' had %d links"
-msgstr "Warning: '%s' had %d links"
-
-#, c-format
-msgid "Warning: %d files and %d streams is left open\n"
-msgstr "Warning: %d files and %d streams is left open\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr "Disk is full writing '%s'. Waiting for someone to free space..."
-
-#, c-format
-msgid "Can't create directory '%s' (Errcode: %d)"
-msgstr "Can't create directory '%s' (Errcode: %d)"
-
-#, c-format
-msgid ""
-"Character set '%s' is not a compiled character set and is not specified in "
-"the %s file"
-msgstr ""
-"Character set '%s' is not a compiled character set and is not specified in "
-"the %s file"
-
-#, c-format
-msgid "Out of resources when opening file '%s' (Errcode: %d)"
-msgstr "Out of resources when opening file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't read value for symlink '%s' (Error %d)"
-msgstr "Can't read value for symlink '%s' (Error %d)"
-
-#, c-format
-msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
-msgstr "Can't create symlink '%s' pointing at '%s' (Error %d)"
-
-#, c-format
-msgid "Error on realpath() on '%s' (Error %d)"
-msgstr "Error on realpath() on '%s' (Error %d)"
-
-#, c-format
-msgid "Can't sync file '%s' to disk (Errcode: %d)"
-msgstr "Can't sync file '%s' to disk (Errcode: %d)"
-
-#, c-format
-msgid ""
-"Collation '%s' is not a compiled collation and is not specified in the %s "
-"file"
-msgstr ""
-"Collation '%s' is not a compiled collation and is not specified in the %s "
-"file"
-
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "File '%s' not found (Errcode: %d)"
-
-#, c-format
-msgid "File '%s' (fileno: %d) was not closed"
-msgstr "File '%s' (fileno: %d) was not closed"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Unknown error %d"
-
-msgid "Warning: "
-msgstr "Warning: "
-
-msgid "Info: "
-msgstr "Info: "
-
-#, c-format
-msgid "%s: %s: Option '%s' used, but is disabled\n"
-msgstr "%s: %s: Option '%s' used, but is disabled\n"
-
-msgid "WARNING"
-msgstr "WARNING"
-
-msgid "ERROR"
-msgstr "ERROR"
-
-#, c-format
-msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
-msgstr "%s: ERROR: Option '-%c' used, but is disabled\n"
-
-#, c-format
-msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-msgstr "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-
-#, c-format
-msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
-msgstr "%s: ERROR: Invalid decimal value for option '%s'\n"
-
-#, c-format
-msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
-msgstr "%*s(Defaults to on; use --skip-%s to disable.)\n"
-
-#, c-format
-msgid ""
-"\n"
-"Variables (--variable-name=value)\n"
-"and boolean options {false|true}  Value (after reading options)\n"
-"--------------------------------- -----------------------------\n"
-msgstr ""
-"\n"
-"Variables (--variable-name=value)\n"
-"and boolean options {false|true}  Value (after reading options)\n"
-"--------------------------------- -----------------------------\n"
-
-msgid "(No default value)"
-msgstr "(No default value)"
-
-msgid "true"
-msgstr "true"
-
-msgid "false"
-msgstr "false"
-
-#, c-format
-msgid "(Disabled)\n"
-msgstr "(Disabled)\n"
 
 msgid "Enable HTTP Auth check"
 msgstr "Enable HTTP Auth check"
@@ -4945,9 +4791,10 @@ msgstr ""
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr "Statement closed indirectly because of a preceding %s() call"
 
+#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
@@ -4970,6 +4817,10 @@ msgstr ""
 #, fuzzy
 msgid "Address to bind to."
 msgstr "IP address to bind to."
+
+#, c-format
+msgid "Failed to send error message to libnotify\n"
+msgstr ""
 
 msgid "Error Messages to stderr"
 msgstr "Error Messages to stderr"
@@ -5079,6 +4930,29 @@ msgstr "Unknown thread accessing table"
 
 msgid "Block size to be used for MyISAM index pages."
 msgstr "Block size to be used for MyISAM index pages."
+
+msgid ""
+"This characterizes the number of hits a hot block has to be untouched until "
+"it is considered aged enough to be downgraded to a warm block. This "
+"specifies the percentage ratio of that number of hits to the total number of "
+"blocks in key cache"
+msgstr ""
+"This characterises the number of hits a hot block has to be untouched until "
+"it is considered aged enough to be downgraded to a warm block. This "
+"specifies the percentage ratio of that number of hits to the total number of "
+"blocks in key cache"
+
+msgid "The minimum percentage of warm blocks in key cache"
+msgstr "The minimum percentage of warm blocks in key cache"
+
+msgid ""
+"The size of the buffer used for index blocks for MyISAM tables. Increase "
+"this to get better index handling (for all reads and multiple writes) to as "
+"much as you can afford;"
+msgstr ""
+"The size of the buffer used for index blocks for MyISAM tables. Increase "
+"this to get better index handling (for all reads and multiple writes) to as "
+"much as you can afford;"
 
 msgid ""
 "Number of threads to use when repairing MyISAM tables. The value of 1 "
@@ -5302,9 +5176,13 @@ msgstr ""
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Can't create interrupt-thread (error %d, errno: %d)"
 
-#, c-format
-msgid "Failed to open transaction log file %s.  Got error: %s\n"
-msgstr ""
+#, fuzzy, c-format
+msgid "Unable to create background worker thread. Got error %s.\n"
+msgstr "Can't create completion port thread (error %d)"
+
+#, fuzzy
+msgid "Failed to open transaction log file "
+msgstr "Socket file to use for connection."
 
 #, c-format
 msgid ""
@@ -5322,6 +5200,22 @@ msgstr ""
 msgid "Failed to sync log file. Got error: %s\n"
 msgstr "Failed to lock memory. Error: %d\n"
 
+#, fuzzy, c-format
+msgid "Failed to allocate the TransactionLog instance.  Got error: %s\n"
+msgstr "Failed to lock memory. Error: %d\n"
+
+#, fuzzy, c-format
+msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
+msgstr "Failed to lock memory. Error: %d\n"
+
+#, fuzzy, c-format
+msgid "Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"
+msgstr "Failed to lock memory. Error: %d\n"
+
+#, fuzzy, c-format
+msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
+msgstr "Failed to lock memory. Error: %d\n"
+
 msgid "Enable transaction log"
 msgstr ""
 
@@ -5329,18 +5223,158 @@ msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
 #, fuzzy
-msgid "Path to the file to use for transaction log."
+msgid "Path to the file to use for transaction log"
 msgstr "Socket file to use for connection."
 
-msgid "Enable CRC32 Checksumming"
+msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
 
-msgid "Transaction Message Log"
+msgid ""
+"0 == rely on operating system to sync log file (default), 1 == sync file at "
+"each transaction write, 2 == sync log file once per second"
+msgstr ""
+
+#, c-format
+msgid "Failed to open transaction log file %s.  Got error: %s\n"
+msgstr ""
+
+#, c-format
+msgid "Raw buffer read: %s.\n"
 msgstr ""
 
 #, c-format
 msgid "Unable to parse transaction. Got error: %s.\n"
 msgstr ""
+
+#, c-format
+msgid "BUFFER: %s\n"
+msgstr ""
+
+#~ msgid "Check memory and open file usage at exit ."
+#~ msgstr "Check memory and open file usage at exit ."
+
+#~ msgid "Print some debug info at exit."
+#~ msgstr "Print some debug info at exit."
+
+#~ msgid "Socket file to use for connection."
+#~ msgstr "Socket file to use for connection."
+
+#~ msgid "The default size of key cache blocks"
+#~ msgstr "The default size of key cache blocks"
+
+#~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
+#~ msgstr "File '%-.192s' has unknown type '%-.64s' in its header"
+
+#~ msgid "plugin-load parameter too long"
+#~ msgstr "plugin-load parameter too long"
+
+#~ msgid "Couldn't repair table: %s.%s"
+#~ msgstr "Couldn't repair table: %s.%s"
+
+#~ msgid ""
+#~ "When opening HEAP table, could not allocate memory to write 'DELETE FROM `"
+#~ "%s`.`%s`' to replication"
+#~ msgstr ""
+#~ "When opening HEAP table, could not allocate memory to write 'DELETE FROM `"
+#~ "%s`.`%s`' to replication"
+
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Can't create/write to file '%s' (Errcode: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Error reading file '%s' (Errcode: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Error writing file '%s' (Errcode: %d)"
+
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Error on close of '%s' (Errcode: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Out of memory (Needed %u bytes)"
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Error on delete of '%s' (Errcode: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Error on rename of '%s' to '%s' (Errcode: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr "Unexpected eof found when reading file '%s' (Errcode: %d)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Can't lock file (Errcode: %d)"
+
+#~ msgid "Can't unlock file (Errcode: %d)"
+#~ msgstr "Can't unlock file (Errcode: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Can't read dir of '%s' (Errcode: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Can't get stat of '%s' (Errcode: %d)"
+
+#~ msgid "Can't change size of file (Errcode: %d)"
+#~ msgstr "Can't change size of file (Errcode: %d)"
+
+#~ msgid "Can't open stream from handle (Errcode: %d)"
+#~ msgstr "Can't open stream from handle (Errcode: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Can't get working directory (Errcode: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Can't change dir to '%s' (Errcode: %d)"
+
+#~ msgid "Warning: '%s' had %d links"
+#~ msgstr "Warning: '%s' had %d links"
+
+#~ msgid "Warning: %d files and %d streams is left open\n"
+#~ msgstr "Warning: %d files and %d streams is left open\n"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr "Disk is full writing '%s'. Waiting for someone to free space..."
+
+#~ msgid "Can't create directory '%s' (Errcode: %d)"
+#~ msgstr "Can't create directory '%s' (Errcode: %d)"
+
+#~ msgid ""
+#~ "Character set '%s' is not a compiled character set and is not specified "
+#~ "in the %s file"
+#~ msgstr ""
+#~ "Character set '%s' is not a compiled character set and is not specified "
+#~ "in the %s file"
+
+#~ msgid "Out of resources when opening file '%s' (Errcode: %d)"
+#~ msgstr "Out of resources when opening file '%s' (Errcode: %d)"
+
+#~ msgid "Can't read value for symlink '%s' (Error %d)"
+#~ msgstr "Can't read value for symlink '%s' (Error %d)"
+
+#~ msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
+#~ msgstr "Can't create symlink '%s' pointing at '%s' (Error %d)"
+
+#~ msgid "Error on realpath() on '%s' (Error %d)"
+#~ msgstr "Error on realpath() on '%s' (Error %d)"
+
+#~ msgid "Can't sync file '%s' to disk (Errcode: %d)"
+#~ msgstr "Can't sync file '%s' to disk (Errcode: %d)"
+
+#~ msgid ""
+#~ "Collation '%s' is not a compiled collation and is not specified in the %s "
+#~ "file"
+#~ msgstr ""
+#~ "Collation '%s' is not a compiled collation and is not specified in the %s "
+#~ "file"
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "File '%s' not found (Errcode: %d)"
+
+#~ msgid "File '%s' (fileno: %d) was not closed"
+#~ msgstr "File '%s' (fileno: %d) was not closed"
+
+#~ msgid "Unknown error %d"
+#~ msgstr "Unknown error %d"
 
 #~ msgid "Buffer length for TCP/IP and socket communication."
 #~ msgstr "Buffer length for TCP/IP and socket communication."
@@ -5369,9 +5403,6 @@ msgstr ""
 
 #~ msgid "session_add_event event_add error in libevent_init\n"
 #~ msgstr "session_add_event event_add error in libevent_init\n"
-
-#~ msgid "Can't create completion port thread (error %d)"
-#~ msgstr "Can't create completion port thread (error %d)"
 
 #~ msgid "libevent_thread_proc: my_thread_init() failed\n"
 #~ msgstr "libevent_thread_proc: my_thread_init() failed\n"

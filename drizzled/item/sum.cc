@@ -40,8 +40,10 @@
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 extern my_decimal decimal_zero;
 extern plugin::StorageEngine *heap_engine;
@@ -874,10 +876,6 @@ my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
 
 /***************************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Declarations for auxilary C-callbacks */
 
 static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
@@ -892,10 +890,6 @@ static int item_sum_distinct_walk(void *element,
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 /* Item_sum_distinct */
 
@@ -2514,10 +2508,6 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
   return 0;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static int count_distinct_walk(void *,
                                uint32_t ,
                                void *arg)
@@ -2525,12 +2515,6 @@ static int count_distinct_walk(void *,
   (*((uint64_t*)arg))++;
   return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 void Item_sum_count_distinct::cleanup()
 {
@@ -2836,7 +2820,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
 
 
 /**
-  function of sort for syntax: GROUP_CONCAT(expr,... order_st BY col,... )
+  function of sort for syntax: GROUP_CONCAT(expr,... ORDER BY col,... )
 */
 
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
@@ -3253,7 +3237,7 @@ bool Item_func_group_concat::setup(Session *session)
   {
     /*
       Currently we have to force conversion of BLOB values to VARCHAR's
-      if we are to store them in TREE objects used for order_st BY and
+      if we are to store them in TREE objects used for ORDER BY and
       DISTINCT. This leads to truncation if the BLOB's size exceeds
       Field_varstring::MAX_SIZE.
     */
@@ -3265,7 +3249,7 @@ bool Item_func_group_concat::setup(Session *session)
     We have to create a temporary table to get descriptions of fields
     (types, sizes and so on).
 
-    Note that in the table, we first have the order_st BY fields, then the
+    Note that in the table, we first have the ORDER BY fields, then the
     field list.
   */
   if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
@@ -3288,7 +3272,7 @@ bool Item_func_group_concat::setup(Session *session)
     tree= &tree_base;
     /*
       Create a tree for sorting. The tree is used to sort (according to the
-      syntax of this function). If there is no order_st BY clause, we don't
+      syntax of this function). If there is no ORDER BY clause, we don't
       create this tree.
     */
     init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
@@ -3322,7 +3306,7 @@ void Item_func_group_concat::make_unique()
 double Item_func_group_concat::val_real()
 {
   String *res;  res=val_str(&str_value);
-  return res ? my_atof(res->c_ptr()) : 0.0;
+  return res ? internal::my_atof(res->c_ptr()) : 0.0;
 }
 
 int64_t Item_func_group_concat::val_int()
@@ -3333,7 +3317,7 @@ int64_t Item_func_group_concat::val_int()
   if (!(res= val_str(&str_value)))
     return (int64_t) 0;
   end_ptr= (char*) res->ptr()+ res->length();
-  return my_strtoll10(res->ptr(), &end_ptr, &error);
+  return internal::my_strtoll10(res->ptr(), &end_ptr, &error);
 }
 
 String* Item_func_group_concat::val_str(String* )
@@ -3396,3 +3380,5 @@ Item_func_group_concat::~Item_func_group_concat()
   if (!original && unique_filter)
     delete unique_filter;
 }
+
+} /* namespace drizzled */

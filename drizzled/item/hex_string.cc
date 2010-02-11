@@ -18,14 +18,17 @@
  */
 
 #include "config.h"
+
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/hex_string.h>
 
 #include <algorithm>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 static char _dig_vec_lower[] =
   "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -147,3 +150,4 @@ Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 }
 
 
+} /* namespace drizzled */

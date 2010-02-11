@@ -69,7 +69,7 @@ public:
                     message::Transaction *to_fill)= 0;
 };
 
-} /* end namespace drizzled::plugin */
+} /* end namespace plugin */
 } /* end namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_TRANSACTION_READER_H */

@@ -27,7 +27,8 @@
 #include <drizzled/item/default_value.h>
 #include <drizzled/field/null.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool Item_insert_value::eq(const Item *item, bool binary_cmp) const
 {
@@ -102,4 +103,4 @@ void Item_insert_value::print(String *str, enum_query_type query_type)
 }
 
 
-
+} /* namespace drizzled */
