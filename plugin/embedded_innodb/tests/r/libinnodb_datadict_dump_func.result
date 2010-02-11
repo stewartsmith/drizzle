@@ -1,0 +1,7 @@
+SELECT LIBINNODB_datadict_dump();
+LIBINNODB_datadict_dump()
+InnoDB Data Dictionary Contents
+-------------------------------
+SYS_FOREIGN Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 3
+SYS_FOREIGN_COLS Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 1
+
