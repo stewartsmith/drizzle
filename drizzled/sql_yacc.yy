@@ -5024,11 +5024,25 @@ show_param:
           }
         | PROCESSLIST_SYM
           {
-            Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
-            Lex->statement=
-              new(std::nothrow) statement::ShowProcesslist(YYSession);
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Select(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "PROCESSLIST"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+           }
           }
         | opt_var_type  VARIABLES show_wild
           {

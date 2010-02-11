@@ -23,6 +23,8 @@
 #ifndef DRIZZLED_PLUGIN_TABLE_FUNCTION_H
 #define DRIZZLED_PLUGIN_TABLE_FUNCTION_H
 
+#include <drizzled/definitions.h>
+#include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/table_identifier.h"
 #include "drizzled/message/table.pb.h"
