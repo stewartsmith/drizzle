@@ -178,6 +178,7 @@ Session::Session(plugin::Client *client_arg)
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
+  query(),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -228,7 +229,6 @@ Session::Session(plugin::Client *client_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
-  query.clear();
   warn_query_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   mysys_var= 0;

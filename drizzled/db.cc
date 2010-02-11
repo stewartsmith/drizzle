@@ -416,13 +416,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   }
   if (deleted >= 0)
   {
-    const char *query;
-    uint32_t query_length;
-
     assert(! session->query.empty());
-
-    query= session->query.c_str();
-    query_length= session->query.length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
     replication_services.rawStatement(session, session->getQueryString());

@@ -220,7 +220,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->query,
+    DRIZZLE_QUERY_START(session->query.c_str(),
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
@@ -754,7 +754,7 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length)
     {
       if (! session->is_error())
       {
-        DRIZZLE_QUERY_EXEC_START(session->query,
+        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
         /* Actually execute the query */
@@ -1773,7 +1773,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
-  DRIZZLE_QUERY_PARSE_START(session->query);
+  DRIZZLE_QUERY_PARSE_START(session->query.c_str());
 
   /* Set Lex_input_stream. */
 
