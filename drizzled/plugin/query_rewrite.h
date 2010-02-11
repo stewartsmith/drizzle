@@ -43,10 +43,6 @@ namespace plugin
 class QueryRewriter : public Plugin
 {
 
-  QueryRewriter();
-  QueryRewriter(const QueryRewriter&);
-  QueryRewriter& operator=(const QueryRewriter&);
-
 public:
 
   explicit QueryRewriter(std::string name_arg)
@@ -74,6 +70,13 @@ public:
    * @param[out] to_rewrite string representing the query to rewrite
    */
   static void rewriteQuery(std::string &to_rewrite);
+
+private:
+
+  QueryRewriter();
+  QueryRewriter(const QueryRewriter&);
+  QueryRewriter& operator=(const QueryRewriter&);
+
 
 };
 
