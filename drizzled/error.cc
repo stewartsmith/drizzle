@@ -1418,7 +1418,9 @@ N_("Received an invalid time value '%s'."),
 /* ER_INVALID_ENUM_VALUE */
 N_("Received an invalid enum value '%s'."),
 /* ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE */
-N_("Tables which are replicated require a primary key.")
+N_("Tables which are replicated require a primary key."),
+/* ER_CORRUPT_TABLE_DEFINITION */
+N_("Corrupt or invalid table definition: %s")
 };
 
 const char * error_message(unsigned int code)

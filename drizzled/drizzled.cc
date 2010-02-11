@@ -1453,6 +1453,7 @@ enum options_drizzled
   OPT_TIMED_MUTEXES,
   OPT_TABLE_LOCK_WAIT_TIMEOUT,
   OPT_PLUGIN_ADD,
+  OPT_PLUGIN_REMOVE,
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
@@ -1710,6 +1711,12 @@ struct my_option my_long_options[] =
       "to the default list of plugins. "
       "[for example: --plugin_add=crc32,logger_gearman]"),
    (char**) &opt_plugin_add, (char**) &opt_plugin_add, 0,
+   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"plugin_remove", OPT_PLUGIN_ADD,
+   N_("Optional comma separated list of plugins to not load at startup. Effectively "
+      "removes a plugin from the list of plugins to be loaded. "
+      "[for example: --plugin_remove=crc32,logger_gearman]"),
+   (char**) &opt_plugin_remove, (char**) &opt_plugin_remove, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
    N_("Optional comma separated list of plugins to load at starup instead of "
