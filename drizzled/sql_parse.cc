@@ -66,8 +66,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** found_semicolon);
+static void mysql_parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -224,11 +223,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     DRIZZLE_QUERY_START(session->query,
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-    const char* end_of_stmt= NULL;
 
     plugin::QueryRewriter::rewriteQuery(session->query);
 
-    mysql_parse(session, session->query.c_str(), session->query.length(), &end_of_stmt);
+    mysql_parse(session, session->query.c_str(), session->query.length());
 
     break;
   }
@@ -738,12 +736,9 @@ void create_select_for_variable(const char *var_name)
   @param       session     Current thread
   @param       inBuf   Begining of the query text
   @param       length  Length of the query text
-  @param[out]  found_semicolon For multi queries, position of the character of
-                               the next query in the query text.
 */
 
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** found_semicolon)
+static void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   lex_start(session);
   session->reset_for_next_command();
@@ -753,26 +748,12 @@ static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
   Lex_input_stream lip(session, inBuf, length);
 
   bool err= parse_sql(session, &lip);
-  *found_semicolon= lip.found_semicolon;
 
   if (!err)
   {
     {
       if (! session->is_error())
       {
-        /*
-          Binlog logs a string starting from session->query and having length
-          session->query_length; so we set session->query_length correctly (to not
-          log several statements in one event, when we executed only first).
-          We set it to not see the ';' (otherwise it would get into binlog
-          and Query_log_event::print() would give ';;' output).
-          This also helps display only the current query in SHOW
-          PROCESSLIST.
-          Note that we don't need LOCK_thread_count to modify query_length.
-        */
-        /*if (*found_semicolon &&
-            (session->query_length= (ulong)(*found_semicolon - session->query)))
-          session->query_length--;*/
         DRIZZLE_QUERY_EXEC_START(session->query,
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
