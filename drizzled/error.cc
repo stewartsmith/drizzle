@@ -60,15 +60,15 @@ public:
 
   // Insert the message for the error.  If the error already has an existing
   // mapping, an error is logged, but the function continues.
-  void add(uint32_t error_num, std::string const& message);
+  void add(uint32_t error_num, const std::string &message);
 
   // If there is no error mapping for the error_num, ErrorStringNotFound is raised.
-  std::string const& find(uint32_t error_num) const;
+  const std::string &find(uint32_t error_num) const;
 
 private:
   // Disable copy and assignment.
-  ErrorMap(ErrorMap const& e);
-  ErrorMap& operator=(ErrorMap const& e);
+  ErrorMap(const ErrorMap &e);
+  ErrorMap& operator=(const ErrorMap &e);
 
   typedef drizzled::hash_map<uint32_t, std::string> ErrorMessageMap;
   ErrorMessageMap mapping_;
@@ -82,7 +82,7 @@ ErrorMap& get_error_map()
 
 } // anonymous namespace
 
-void add_error_message(uint32_t error_code, std::string const& message)
+void add_error_message(uint32_t error_code, const std::string &message)
 {
   get_error_map().add(error_code, message);
 }
@@ -184,7 +184,7 @@ namespace
 
 // Insert the message for the error.  If the error already has an existing
 // mapping, an error is logged, but the function continues.
-void ErrorMap::add(uint32_t error_num, std::string const& message)
+void ErrorMap::add(uint32_t error_num, const std::string &message)
 {
   if (mapping_.find(error_num) == mapping_.end())
   {
@@ -197,7 +197,7 @@ void ErrorMap::add(uint32_t error_num, std::string const& message)
   }
 }
 
-std::string const& ErrorMap::find(uint32_t error_num) const
+const std::string &ErrorMap::find(uint32_t error_num) const
 {
   ErrorMessageMap::const_iterator pos= mapping_.find(error_num);
   if (pos == mapping_.end())
@@ -905,6 +905,7 @@ ErrorMap::ErrorMap()
   add(ER_INVALID_TIME_VALUE, N_("Received an invalid time value '%s'."));
   add(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   add(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
+  add(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition: %s"));
 
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   add(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));
