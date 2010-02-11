@@ -48,7 +48,7 @@ typedef memcached_server_function memcached_server_fn;
 #endif
 
 extern "C"
-memcached_return  server_function(memcached_st *ptr,
+memcached_return  server_function(const memcached_st *ptr,
                                   memcached_server_st *server,
                                   void *context);
 
@@ -63,12 +63,22 @@ struct server_function_context
 };
 
 extern "C"
-memcached_return  server_function(memcached_st *memc,
+memcached_return  server_function(const memcached_st *const_memc,
                                   memcached_server_st *server,
                                   void *context)
 {
   server_function_context *ctx= static_cast<server_function_context *>(context);
   const CHARSET_INFO * const scs= system_charset_info;
+  memcached_st memc_stack;
+  memcached_st *memc;
+
+  memc= memcached_clone(&memc_stack, const_memc);
+
+  if (not memc)
+  {
+    my_printf_error(ER_UNKNOWN_ERROR, _("Unable to allocate memory for memcached_clone()."), MYF(0));
+    return MEMCACHED_FAILURE;
+  }
     
   char *server_name= memcached_server_name(memc, *server);
   in_port_t server_port= memcached_server_port(memc, *server);
@@ -79,6 +89,7 @@ memcached_return  server_function(memcached_st *memc,
   if (ret != MEMCACHED_SUCCESS)
   {
     my_printf_error(ER_UNKNOWN_ERROR, _("Unable get stats from memcached server %s.  Got error from memcached_stat_servername()."), MYF(0), server_name);
+    memcached_free(memc);
     return ret;
   }
 
@@ -106,6 +117,8 @@ memcached_return  server_function(memcached_st *memc,
   free(list);
   /* store the actual record now */
   ctx->schema_table->addRow(ctx->table->record[0], ctx->table->s->reclength);
+  memcached_free(memc);
+
   return MEMCACHED_SUCCESS;
 }
 
