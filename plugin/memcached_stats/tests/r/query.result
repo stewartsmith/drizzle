@@ -4,7 +4,7 @@ select variable_name, variable_value
 from data_dictionary.global_variables
 where variable_name = 'memcached_stats_servers';
 variable_name	variable_value
-memcached_stats_servers	
+memcached_stats_servers	18446744073709551615
 set global memcached_stats_servers = 'localhost:MC_A_PORT';;
 select variable_name, variable_value
 from data_dictionary.global_variables

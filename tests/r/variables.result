@@ -213,7 +213,7 @@ Variable_name	Value
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
-range_alloc_block_size	
+range_alloc_block_size	8192
 select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
@@ -231,7 +231,7 @@ Variable_name	Value
 innodb_use_sys_malloc	ON
 query_alloc_block_size	17408
 query_prealloc_size	18432
-range_alloc_block_size	
+range_alloc_block_size	18432
 select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON
@@ -245,7 +245,7 @@ Variable_name	Value
 innodb_use_sys_malloc	ON
 query_alloc_block_size	8192
 query_prealloc_size	8192
-range_alloc_block_size	
+range_alloc_block_size	8192
 select * from data_dictionary.session_variables where variable_name like '%alloc%';
 VARIABLE_NAME	VARIABLE_VALUE
 innodb_use_sys_malloc	ON

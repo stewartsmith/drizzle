@@ -56,20 +56,20 @@ drop table t1;
 -- after Bug#29394 is implemented.
 show variables like "server_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
-def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	65200	1	N	1	0	45
 Variable_name	Value
 server_id	1
 show variables like "SERVER_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
-def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	65200	1	N	1	0	45
 Variable_name	Value
 server_id	1
 show variables like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
-def	information_schema	old_variables	OLD_VARIABLES	VARIABLE_VALUE	Value	8	65200	0	Y	0	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	65200	0	N	1	0	45
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr

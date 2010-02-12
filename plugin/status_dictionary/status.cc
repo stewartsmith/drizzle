@@ -98,7 +98,12 @@ bool StateTool::Generator::populate()
         ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
     }
 
-    if (var->type != SHOW_ARRAY)
+    if (isWild(variables->name))
+    {
+      variables++;
+      continue;
+    }
+    else if (var->type != SHOW_ARRAY)
     {
       fill(variables->name, var->value, var->type);
     }

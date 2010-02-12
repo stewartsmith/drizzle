@@ -37,8 +37,6 @@ static TableStatus *table_status;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  fprintf(stderr, "\n\n GOT HERE \n\n");
-
   columns= new(std::nothrow)ColumnsTool;
   index_parts= new(std::nothrow)IndexPartsTool;
   indexes= new(std::nothrow)IndexesTool;
