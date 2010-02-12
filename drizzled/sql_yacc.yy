@@ -743,7 +743,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VAR_SAMP_SYM
 %token  WARNINGS
 %token  WEEK_SYM
-%token  WEIGHT_STRING_SYM
 %token  WHEN_SYM                      /* SQL-2003-R */
 %token  WHERE                         /* SQL-2003-R */
 %token  WITH                          /* SQL-2003-R */
@@ -803,11 +802,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         delete_option
 
 %type <ulong_num>
-        ulong_num real_ulong_num
-        ws_nweights
-        ws_level_flag_desc ws_level_flag_reverse ws_level_flags
-        opt_ws_levels ws_level_list ws_level_list_item ws_level_number
-        ws_level_range ws_level_list_or_range 
+        ulong_num
 
 %type <ulonglong_number>
         ulonglong_num
@@ -1865,74 +1860,6 @@ collation_name_or_default:
 opt_default:
           /* empty */ {}
         | DEFAULT {}
-        ;
-
-ws_nweights:
-        '(' real_ulong_num
-        {
-          if ($2 == 0)
-          {
-            my_parse_error(ER(ER_SYNTAX_ERROR));
-            DRIZZLE_YYABORT;
-          }
-        }
-        ')'
-        { $$= $2; }
-        ;
-
-ws_level_flag_desc:
-        ASC { $$= 0; }
-        | DESC { $$= 1 << MY_STRXFRM_DESC_SHIFT; }
-        ;
-
-ws_level_flag_reverse:
-        REVERSE_SYM { $$= 1 << MY_STRXFRM_REVERSE_SHIFT; } ;
-
-ws_level_flags:
-        /* empty */ { $$= 0; }
-        | ws_level_flag_desc { $$= $1; }
-        | ws_level_flag_desc ws_level_flag_reverse { $$= $1 | $2; }
-        | ws_level_flag_reverse { $$= $1 ; }
-        ;
-
-ws_level_number:
-        real_ulong_num
-        {
-          $$= $1 < 1 ? 1 : ($1 > MY_STRXFRM_NLEVELS ? MY_STRXFRM_NLEVELS : $1);
-          $$--;
-        }
-        ;
-
-ws_level_list_item:
-        ws_level_number ws_level_flags
-        {
-          $$= (1 | $2) << $1;
-        }
-        ;
-
-ws_level_list:
-        ws_level_list_item { $$= $1; }
-        | ws_level_list ',' ws_level_list_item { $$|= $3; }
-        ;
-
-ws_level_range:
-        ws_level_number '-' ws_level_number
-        {
-          uint32_t start= $1;
-          uint32_t end= $3;
-          for ($$= 0; start <= end; start++)
-            $$|= (1 << start);
-        }
-        ;
-
-ws_level_list_or_range:
-        ws_level_list { $$= $1; }
-        | ws_level_range { $$= $1; }
-        ;
-
-opt_ws_levels:
-        /* empty*/ { $$= 0; }
-        | LEVEL_SYM ws_level_list_or_range { $$= $2; }
         ;
 
 opt_primary:
@@ -3202,19 +3129,6 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_reverse($3); }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
-        | WEIGHT_STRING_SYM '(' expr opt_ws_levels ')'
-          { $$= new (YYSession->mem_root) Item_func_weight_string($3, 0, $4); }
-        | WEIGHT_STRING_SYM '(' expr AS CHAR_SYM ws_nweights opt_ws_levels ')'
-          {
-            $$= new (YYSession->mem_root)
-                Item_func_weight_string($3, $6, $7|MY_STRXFRM_PAD_WITH_SPACE);
-          }
-        | WEIGHT_STRING_SYM '(' expr AS BINARY ws_nweights ')'
-          {
-            $3= create_func_char_cast(YYSession, $3, $6, &my_charset_bin);
-            $$= new (YYSession->mem_root)
-                Item_func_weight_string($3, $6, MY_STRXFRM_PAD_WITH_SPACE);
-          }
         ;
 
 /*
@@ -4285,14 +4199,6 @@ ulong_num:
         | DECIMAL_NUM   { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | FLOAT_NUM     { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
-
-real_ulong_num:
-          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | dec_num_error { }
-	;
 
 ulonglong_num:
           NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
@@ -5800,7 +5706,6 @@ keyword_sp:
         | VALUE_SYM                {}
         | WARNINGS                 {}
         | WEEK_SYM                 {}
-        | WEIGHT_STRING_SYM        {}
         | WORK_SYM                 {}
         | YEAR_SYM                 {}
         ;

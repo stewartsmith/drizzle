@@ -35,7 +35,9 @@ using namespace drizzled;
 
 FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
                                TableShare &table_arg) :
-  Cursor(engine_arg, table_arg)
+  Cursor(engine_arg, table_arg),
+  estimate_of_rows(100), // Completely fabricated, I used to use the value 2.
+  rows_returned(0)
 {}
 
 int FunctionCursor::open(const char *name, int, uint32_t)
@@ -56,6 +58,7 @@ int FunctionCursor::close(void)
 int FunctionCursor::rnd_init(bool)
 {
   record_id= 0;
+  rows_returned= 0;
   generator= tool->generator(table->field);
 
   return 0;
@@ -84,6 +87,7 @@ int FunctionCursor::rnd_next(unsigned char *)
     delete generator;
     generator= NULL;
   }
+  rows_returned++;
 
   return more_rows ? 0 : HA_ERR_END_OF_FILE;
 }
@@ -108,6 +112,9 @@ int FunctionCursor::rnd_end()
     free(row_cache[x]);
   }
 
+  if (rows_returned > estimate_of_rows)
+    estimate_of_rows= rows_returned;
+
   row_cache.clear();
   record_id= 0;
   delete generator; // Do this in case of an early exit from rnd_next()
@@ -129,7 +136,11 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 int FunctionCursor::info(uint32_t flag)
 {
   memset(&stats, 0, sizeof(stats));
+
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
+
+  stats.records= estimate_of_rows;
+
   return 0;
 }

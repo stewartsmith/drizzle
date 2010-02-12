@@ -1,7 +1,7 @@
 [plugin]
 title=Memcached Client UDFs
 description=UDF plugin for libmemcached
-load_by_default=yes
+load_by_default=no
 headers=memcached_functions.h 
         memc_get.h memc_get_by_key.h
         memc_set.h memc_set_by_key.h 

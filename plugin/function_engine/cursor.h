@@ -31,6 +31,8 @@ class FunctionCursor: public drizzled::Cursor
   drizzled::plugin::TableFunction::Generator *generator;
   size_t record_id;
   std::vector<unsigned char *> row_cache;
+  drizzled::ha_rows estimate_of_rows;
+  drizzled::ha_rows rows_returned;
 
 public:
   FunctionCursor(drizzled::plugin::StorageEngine &engine,
@@ -55,6 +57,14 @@ public:
   void position(const unsigned char *record);
 
   int info(uint32_t flag);
+
+  /**
+   * @return an upper bound estimate for the number of rows in the table
+   */
+  drizzled::ha_rows estimate_rows_upper_bound()
+  {
+    return estimate_of_rows;
+  }
 };
 
 #endif /* PLUGIN_DATA_ENGINE_DATA_CURSOR_H */

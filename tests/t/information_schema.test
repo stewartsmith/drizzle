@@ -122,7 +122,7 @@ drop table t1;
 SELECT table_schema, count(*) FROM data_dictionary.tables
 WHERE table_name NOT LIKE 'ndb_%' AND 
 table_name NOT LIKE 'falcon%'
-GROUP BY TABLE_SCHEMA;
+GROUP BY TABLE_SCHEMA ORDER BY table_schema;
 
 #
 # Bug #9434 SHOW CREATE DATABASE information_schema;
@@ -252,7 +252,9 @@ SELECT t.table_name, c1.column_name
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
         )
-  AND t.table_name NOT LIKE 'falcon%';
+  AND t.table_name NOT LIKE 'falcon%'
+  ORDER BY t.table_name, c1.column_name;
+
 SELECT t.table_name, c1.column_name
   FROM data_dictionary.tables t
        INNER JOIN
@@ -267,7 +269,8 @@ SELECT t.table_name, c1.column_name
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
         )
-  AND t.table_name NOT LIKE 'falcon%';
+  AND t.table_name NOT LIKE 'falcon%'
+  ORDER BY t.table_name, c1.column_name;
 
 #
 # Bug#21231: query with a simple non-correlated subquery over
@@ -277,7 +280,8 @@ SELECT t.table_name, c1.column_name
 SELECT MAX(table_name) FROM data_dictionary.tables;
 SELECT table_name from data_dictionary.tables
   WHERE table_name=(SELECT MAX(table_name)
-                      FROM data_dictionary.tables);
+                      FROM data_dictionary.tables)
+  ORDER BY table_name;
 #
 # Bug#23299 Some queries against INFORMATION_SCHEMA with subqueries fail
 #
@@ -287,7 +291,9 @@ create table t2 (f1 int, f2 int);
 select table_name from data_dictionary.tables
 where table_schema = 'test' and table_name not in
 (select table_name from information_schema.old_columns
- where table_schema = 'test' and column_name = 'f3');
+ where table_schema = 'test' and column_name = 'f3')
+ORDER BY table_name;
+
 drop table t1,t2;
 
 
@@ -336,7 +342,7 @@ create table t1 (
   f7 datetime not null,
   f8 datetime default '2006-01-01'
 );
-select column_default from information_schema.old_columns where table_name= 't1';
+select column_default from information_schema.old_columns where table_name= 't1' ORDER BY column_default;
 show columns from t1;
 drop table t1;
 
