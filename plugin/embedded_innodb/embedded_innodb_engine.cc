@@ -87,9 +87,7 @@ public:
                            drizzled::message::Table *table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &,
-                       string&, set<string>& )
-  {
-  }
+                       string& database_name, set<string>& set_of_names);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 64; }
@@ -289,6 +287,79 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
   }
 
   return 0;
+}
+
+void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
+                                           string& database_name,
+                                           set<string>& set_of_names)
+{
+  ib_trx_t   transaction;
+  ib_crsr_t  cursor;
+  string search_string(database_name);
+
+  search_string.append("/");
+
+  transaction = ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  ib_schema_lock_exclusive(transaction);
+
+  int err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
+  assert(err == DB_SUCCESS);
+
+  ib_cursor_first(cursor);
+
+  ib_tpl_t read_tuple;
+
+  read_tuple= ib_clust_read_tuple_create(cursor);
+  /*
+    What we really want to do here is not the ib_cursor_first() as above
+    but instead using a search tuple to find the first instance of
+    "database_name/" in SYS_TABLES.NAME.
+
+    There is currently a bug in libinnodb (1.0.3.5325) that means this ends in
+    a failed assert() rather than speeedy bliss.
+
+    It should be fixed in the next release.
+
+    See: http://forums.innodb.com/read.php?8,1090,1094#msg-1094
+
+    we want something like:
+
+    ib_col_set_value(read_tuple, 0,
+    search_string.c_str(), search_string.length());
+
+    err = ib_cursor_moveto(cursor, read_tuple, IB_CUR_GE, &res);
+  */
+
+  while (err == DB_SUCCESS)
+  {
+    err= ib_cursor_read_row(cursor, read_tuple);
+
+    const char *table_name;
+    int table_name_len;
+    ib_col_meta_t column_metadata;
+
+    table_name= (const char*)ib_col_get_value(read_tuple, 0);
+    table_name_len=  ib_col_get_meta(read_tuple, 0, &column_metadata);
+
+    if (search_string.compare(0, search_string.length(),
+                              table_name, search_string.length()) == 0)
+    {
+      const char *just_table_name= strchr(table_name, '/');
+      assert(just_table_name);
+      just_table_name++; /* skip over '/' */
+      set_of_names.insert(just_table_name);
+    }
+
+
+    err= ib_cursor_next(cursor);
+    read_tuple= ib_tuple_clear(read_tuple);
+  }
+
+  ib_tuple_delete(read_tuple);
+
+  ib_cursor_close(cursor);
+
+  ib_trx_commit(transaction);
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
