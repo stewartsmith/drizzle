@@ -172,12 +172,13 @@ private:
   size_t keybuf_len;
 
 public:
-  BlitzTree() : keybuf_len(BLITZ_MAX_KEY_LEN), nparts(0), type(0),
-                unique(false) {}
+  BlitzTree() : keybuf_len(BLITZ_MAX_KEY_LEN), length(0), nparts(0),
+                type(0), unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
   BlitzKeyPart *parts; /* Array of Key Part(s) */
+  int length;          /* Length of the entire key */
   int nparts;          /* Number of parts in this key */
   int type;
   bool unique;         /* Whether this key is unique */
@@ -195,6 +196,9 @@ public:
   int write_unique(const char *key, const size_t klen, const char *val,
                    const size_t vlen);
   int delete_all(void);
+
+  /* BTREE INDEX READ RELATED */
+  char *first_key(int *row_len);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 

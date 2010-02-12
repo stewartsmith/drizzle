@@ -120,7 +120,7 @@ int BlitzTree::write_unique(const char *key, const size_t klen,
   char *pos = keybuf;
   memcpy(pos, key, klen);
   pos += klen;
-  int2store(pos, vlen);
+  int2store(pos, (uint16_t)vlen);
   pos += sizeof(uint16_t);
   memcpy(pos, val, vlen);
 
@@ -131,6 +131,21 @@ int BlitzTree::write_unique(const char *key, const size_t klen,
     }
   }
   return rv;
+}
+
+char *BlitzTree::first_key(int *row_len) {
+  BDBCUR *cursor = tcbdbcurnew(btree);
+  char *key;
+
+  /* Means that the index is empty. */
+  if (!tcbdbcurfirst(cursor)) {
+    tcbdbcurdel(cursor);
+    return NULL;
+  }
+
+  key = (char *)tcbdbcurkey(cursor, row_len);
+  tcbdbcurdel(cursor);
+  return key;
 }
 
 int BlitzTree::delete_all(void) {

@@ -172,6 +172,48 @@ copenhagen	denmark
 dublin	ireland
 edinburgh	scotland
 drop table t1;
+create table t1 (a varchar(10) primary key, b int) engine = blitzdb;
+insert into t1 values ('aaa', 1), ('bbb', 2), ('ccc', 3), ('ddd', 4);
+insert into t1 values ('eee', 5), ('fff', 6), ('ggg', 7), ('hhh', 8);
+select * from t1 where a = 'aaa';
+a	b
+aaa	1
+select * from t1 where a = 'bbb';
+a	b
+bbb	2
+select * from t1 where a = 'ccc';
+a	b
+ccc	3
+select * from t1 where a = 'ddd';
+a	b
+ddd	4
+select * from t1;
+a	b
+aaa	1
+bbb	2
+ccc	3
+ddd	4
+eee	5
+fff	6
+ggg	7
+hhh	8
+delete from t1 where a = 'ggg';
+delete from t1 where a = 'hhh';
+select * from t1;
+a	b
+aaa	1
+bbb	2
+ccc	3
+ddd	4
+eee	5
+fff	6
+update t1 set a = 'zzz' where a = 'fff';
+select * from t1 where a = 'fff';
+a	b
+select * from t1 where a = 'zzz';
+a	b
+zzz	6
+drop table t1;
 create table t1 (id varchar(255) primary key, num int) engine = blitzdb;
 insert into t1 values ('a', 1);
 insert into t1 values ('b', 2);

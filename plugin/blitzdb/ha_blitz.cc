@@ -433,36 +433,44 @@ int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
 /* This is where the read related index logic lives. It is used by both
    BlitzDB and the Database Kernel (specifically, by the optimizer). */
 int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
-                             const unsigned char *key, uint32_t key_len,
+                             const unsigned char *key, uint32_t ,
                              enum ha_rkey_function /*find_flag*/) {
-  /* A PK in BlitzDB is the 'actual' key in the data dictionary.
-     Therefore we do a direct lookup on the data dictionary. All
-     other indexes are clustered btree. */
-  if (key_num == table->s->primary_key) {
-    char *pk, *fetched_row;
-    int fetched_len, blitz_key_len;
+  char *pk, *fetched_row;
+  int pk_len, row_len;
 
-    pk = native_to_blitz_key(key, key_num, &blitz_key_len);
-    fetched_row = share->dict.get_row((const char *)pk, blitz_key_len,
-                                      &fetched_len);
+  /* If the key is NULL, we are required to return the first row
+     in the index. We have no choice but to consult the B+Tree here. */
+  if (key == NULL) {
+    if ((pk = share->btrees[key_num].first_key(&pk_len)) == NULL)
+      return HA_ERR_END_OF_FILE;
 
-    if (fetched_row == NULL)
-      return HA_ERR_KEY_NOT_FOUND;
-
-    /* Found the row. Unpack it into Drizzle's buffer */
-    unpack_row(buf, fetched_row, fetched_len);
-    free(fetched_row);
-
-    /* Now keep track of the key. This is because another function that
-       needs this information such as delete_row() might be called before
-       BlitzDB reaches index_end(). */
-    memcpy(key_buffer, key, key_len);
-    updateable_key = key_buffer;
-    updateable_key_len = key_len;
-    return 0;
+    /* TODO: Parse the fetched key then access the row from the
+             data dictionary. */
+    free(pk);
+  } else {
+    /* BlitzDB's PK optimization allows direct access to
+       the Data Dictionary. */
+    if (key_num == table->s->primary_key) {
+      pk = native_to_blitz_key(key, key_num, &pk_len);
+      fetched_row = share->dict.get_row((const char *)pk, pk_len, &row_len);
+    } else {
+      return HA_ERR_UNSUPPORTED;
+    }
   }
 
-  return HA_ERR_UNSUPPORTED;
+  if (fetched_row == NULL)
+    return HA_ERR_KEY_NOT_FOUND;
+
+  /* Found the row. Unpack it to Drizzle's buffer. */
+  unpack_row(buf, fetched_row, row_len);
+
+  /* Keep track of the key. */
+  memcpy(key_buffer, pk, pk_len);
+  updateable_key = key_buffer;
+  updateable_key_len = pk_len;
+
+  free(fetched_row);
+  return 0;
 }
 
 int ha_blitz::index_end(void) {
@@ -684,6 +692,8 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
   KEY_PART_INFO *key_part_end = key_part + key->key_parts;
 
   unsigned char *pos = (unsigned char *)pack_to;
+  unsigned char *end;
+  int offset = 0;
 
   memset(pack_to, 0, BLITZ_MAX_KEY_LEN);
 
@@ -699,8 +709,9 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
       *pos++ = 1;
     }
 
-    key_part->field->pack(pos, row + key_part->offset);
-    pos += key_part->field->pack_length();
+    end = key_part->field->pack(pos, row + key_part->offset);
+    offset = end - pos;
+    pos += offset;
   }
 
   return ((char *)pos - pack_to);
@@ -712,23 +723,49 @@ char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
   KEY *key = &table->key_info[key_num];
   KEY_PART_INFO *key_part = key->key_part;
   KEY_PART_INFO *key_part_end = key_part + key->key_parts;
-  int total_key_len = 0;
 
   unsigned char *key_pos = (unsigned char *)native_key;
-  unsigned char *keybuf_pos = (unsigned char *)this->key_buffer;
+  unsigned char *keybuf_pos = (unsigned char *)key_buffer;
+  unsigned char *end;
+  int key_size = 0;
+  int offset = 0;
 
   memset(key_buffer, 0, BLITZ_MAX_KEY_LEN);
 
   for (; key_part != key_part_end; key_part++) {
-    key_part->field->pack(keybuf_pos, key_pos);
+    if (key_part->null_bit) {
+      if (!(*keybuf_pos++ = (*key_pos == 0))) {
+        keybuf_pos += key_part->store_length;
+        continue;
+      }
+    }
 
+    /* This is a temporary workaround for a bug in Drizzle's VARCHAR
+       where a 1 byte representable length varchar's actual data is
+       positioned 2 bytes ahead of the beginning of the buffer. The
+       correct behavior is to be positioned 1 byte ahead. Furthermore,
+       this is only applicable with varchar keys on READ. */
+    if (key_part->type == HA_KEYTYPE_VARTEXT1) {
+      /* Dereference the 1 byte length of the value. */
+      uint8_t varlen = *(uint8_t *)key_pos;
+      *keybuf_pos++ = varlen;
+
+      /* Read the value by skipping 2 bytes. This is the workaround. */
+      memcpy(keybuf_pos, key_pos + sizeof(uint16_t), varlen);
+      offset = (sizeof(uint8_t) + varlen);
+      keybuf_pos += varlen;
+    } else {
+      end = key_part->field->pack(keybuf_pos, key_pos);
+      offset = end - keybuf_pos;
+      keybuf_pos += offset;
+    }
+
+    key_size += offset;
     key_pos += key_part->field->key_length();
-    keybuf_pos += key_part->field->pack_length();
-    total_key_len += key_part->field->pack_length();
   }
 
-  *return_key_len = total_key_len;
-  return this->key_buffer;
+  *return_key_len = key_size;
+  return key_buffer;
 }
 
 size_t ha_blitz::pack_row(unsigned char *row_buffer,
@@ -842,6 +879,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
     if (table->key_info[i].flags & HA_NOSAME)
       share_ptr->btrees[i].unique = true;
 
+    share_ptr->btrees[i].length = curr->key_length;
     share_ptr->btrees[i].nparts = curr->key_parts;
 
     /* Record Meta Data of the Key Segments */

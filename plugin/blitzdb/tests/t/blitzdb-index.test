@@ -103,6 +103,26 @@ select count (*) from t1;
 select * from t1;
 drop table t1;
 
+# Test HA_KEYTYPE_VARTEXT1 as a Primary Key
+create table t1 (a varchar(10) primary key, b int) engine = blitzdb;
+insert into t1 values ('aaa', 1), ('bbb', 2), ('ccc', 3), ('ddd', 4);
+insert into t1 values ('eee', 5), ('fff', 6), ('ggg', 7), ('hhh', 8);
+
+select * from t1 where a = 'aaa';
+select * from t1 where a = 'bbb';
+select * from t1 where a = 'ccc';
+select * from t1 where a = 'ddd';
+
+select * from t1;
+delete from t1 where a = 'ggg';
+delete from t1 where a = 'hhh';
+select * from t1;
+
+update t1 set a = 'zzz' where a = 'fff';
+select * from t1 where a = 'fff';
+select * from t1 where a = 'zzz';
+drop table t1;
+
 # Test UPDATE on a VARCHAR key
 create table t1 (id varchar(255) primary key, num int) engine = blitzdb;
 insert into t1 values ('a', 1);
