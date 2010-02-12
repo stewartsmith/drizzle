@@ -60,7 +60,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   AC_CONFIG_MACRO_DIR([m4])
 
-  m4_if(m4_esyscmd(test -d src && echo -n 0),0,[
+  m4_if(m4_substr(m4_esyscmd(test -d src && echo 0),0,1),0,[
     AC_CONFIG_HEADERS([src/config.h])
   ],[
     AC_CONFIG_HEADERS([config.h])
@@ -84,7 +84,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-  m4_if(m4_esyscmd(test -d gnulib && echo -n 0),0,[
+  m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_EARLY
   ])
   
@@ -123,7 +123,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   ])
   
-  m4_if(m4_esyscmd(test -d gnulib && echo -n 0),0,[
+  m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_INIT
     AC_CONFIG_LIBOBJ_DIR([gnulib])
   ])
@@ -226,7 +226,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AM_CPPFLAGS="-I\${top_srcdir}/gnulib -I\${top_builddir}/gnulib ${AM_CPPFLAGS}"
     ])
   ])
-  m4_if(m4_esyscmd(test -d src && echo -n 0),0,[
+  m4_if(m4_substr(m4_esyscmd(test -d src && echo 0),0,1),0,[
     AM_CPPFLAGS="-I\$(top_srcdir)/src -I\$(top_builddir)/src ${AM_CPPFLAGS}"
   ],[
     AM_CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${AM_CPPFLAGS}"

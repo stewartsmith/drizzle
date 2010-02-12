@@ -30,7 +30,7 @@ AC_DEFUN([PANDORA_WITH_GETTEXT],[
     fi
   fi])
 
-  m4_if(m4_esyscmd(test -d po && echo -n 0), 0, [
+  m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
     AM_GNU_GETTEXT(external, need-formatstring-macros)
     AM_GNU_GETTEXT_VERSION([0.17])
     AS_IF([test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"],[
