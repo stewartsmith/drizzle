@@ -249,9 +249,46 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
 }
 
 
-int EmbeddedInnoDBEngine::doDropTable(Session&, const string)
+int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
 {
-  return EPERM;
+  ib_trx_t innodb_schema_transaction;
+  ib_err_t innodb_err;
+
+  innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  innodb_err= ib_table_drop(table_name.c_str()+2);
+
+  if (innodb_err == DB_TABLE_NOT_FOUND)
+  {
+    ib_trx_rollback(innodb_schema_transaction);
+    return ENOENT;
+  }
+  else if (innodb_err != DB_SUCCESS)
+  {
+    ib_trx_rollback(innodb_schema_transaction);
+
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_DELETE_FILE,
+                        _("Cannot DROP table %s. InnoDB Error %d (%s)\n"),
+                        table_name.c_str(),
+                        innodb_err, ib_strerror(innodb_err));
+    return HA_ERR_GENERIC;
+  }
+
+  innodb_err= ib_trx_commit(innodb_schema_transaction);
+  if (innodb_err != DB_SUCCESS)
+  {
+    ib_trx_rollback(innodb_schema_transaction);
+
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_DELETE_FILE,
+                        _("Cannot DROP table %s. InnoDB Error %d (%s)\n"),
+                        table_name.c_str(),
+                        innodb_err, ib_strerror(innodb_err));
+    return HA_ERR_GENERIC;
+  }
+
+  return 0;
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,

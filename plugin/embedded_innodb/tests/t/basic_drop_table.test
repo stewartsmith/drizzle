@@ -1,0 +1,5 @@
+DROP TABLE t1;
+DROP TABLE t2;
+--error 1051
+DROP TABLE t3;
+

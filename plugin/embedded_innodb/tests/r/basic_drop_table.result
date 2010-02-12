@@ -1,0 +1,4 @@
+DROP TABLE t1;
+DROP TABLE t2;
+DROP TABLE t3;
+ERROR 42S02: Unknown table 't3'
