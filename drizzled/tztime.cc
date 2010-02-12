@@ -25,6 +25,9 @@
 #include "drizzled/session.h"
 #include "drizzled/time_functions.h"
 
+namespace drizzled
+{
+
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo
 {
@@ -835,7 +838,7 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
 time_t
 Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
-  return ::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
+  return ::drizzled::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
 }
 
 
@@ -851,7 +854,7 @@ Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) cons
 void
 Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
-  ::gmt_sec_to_TIME(tmp, t, tz_info);
+  ::drizzled::gmt_sec_to_TIME(tmp, t, tz_info);
 }
 
 
@@ -1010,7 +1013,7 @@ static Time_zone_offset tz_OFFSET0(0);
 
 Time_zone *my_tz_SYSTEM= &tz_SYSTEM;
 
-class Tz_names_entry: public drizzled::memory::SqlAlloc
+class Tz_names_entry: public memory::SqlAlloc
 {
 public:
   String name;
@@ -1078,3 +1081,5 @@ my_tz_find(Session *,
 {
   return NULL;
 }
+
+} /* namespace drizzled */

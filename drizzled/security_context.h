@@ -21,30 +21,43 @@
 #ifndef DRIZZLED_SECURITY_CONTEXT_H
 #define DRIZZLED_SECURITY_CONTEXT_H
 
+namespace drizzled
+{
 
 /**
-  @class Security_context
+  @class SecurityContext
   @brief A set of Session members describing the current authenticated user.
 */
 
-class Security_context {
+class SecurityContext {
 public:
-  Security_context() {}
-  /*
-    host - host of the client
-    user - user of the client, set to NULL until the user has been read from
-    the connection
-    priv_user - The user privilege we are using. May be "" for anonymous user.
-    ip - client IP
-  */
+  SecurityContext() {}
+
+  const std::string& getIp() const
+  {
+    return ip;
+  }
+
+  void setIp(const char *newip)
+  {
+    ip.assign(newip);
+  }
+
+  const std::string& getUser() const
+  {
+    return user;
+  }
+
+  void setUser(const char *newuser)
+  {
+    user.assign(newuser);
+  }
+
+private:
   std::string user;
   std::string ip;
-
-  void skip_grants();
-  inline const char *priv_host_name()
-  {
-    return (ip.c_str() ? ip.c_str() : (char *)"%");
-  }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SECURITY_CONTEXT_H */

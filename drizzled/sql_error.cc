@@ -52,7 +52,9 @@ This file contains the implementation of error and warnings related
 #include <drizzled/plugin/client.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 /*
   Store a new message in an error object
@@ -81,9 +83,9 @@ void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 
 void drizzle_reset_errors(Session *session, bool force)
 {
-  if (session->query_id != session->warn_id || force)
+  if (session->getQueryId() != session->getWarningQueryId() || force)
   {
-    session->warn_id= session->query_id;
+    session->setWarningQueryId(session->getQueryId());
     free_root(&session->warn_root,MYF(0));
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
@@ -118,7 +120,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
       !(session->options & OPTION_SQL_NOTES))
     return(0);
 
-  if (session->query_id != session->warn_id)
+  if (session->getQueryId() != session->getWarningQueryId())
     drizzle_reset_errors(session, 0);
   session->got_warning= 1;
 
@@ -241,3 +243,5 @@ bool mysqld_show_warnings(Session *session,
   session->my_eof();
   return(false);
 }
+
+} /* namespace drizzled */

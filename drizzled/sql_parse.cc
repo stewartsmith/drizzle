@@ -13,8 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define DRIZZLE_LEX 1
 #include "config.h"
+
+#define DRIZZLE_LEX 1
+
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -39,7 +41,7 @@
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/global_charset_info.h"
-
+#include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
@@ -53,8 +55,12 @@
 
 #include "drizzled/internal/my_sys.h"
 
-using namespace drizzled;
 using namespace std;
+
+extern int DRIZZLEparse(void *session); // from sql_yacc.cc
+
+namespace drizzled
+{
 
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
@@ -126,13 +132,11 @@ void init_update_queries(void)
 
   sql_command_flags[SQLCOM_SHOW_STATUS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_DATABASES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_OPEN_TABLES]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
@@ -181,7 +185,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
-  session->query_id= query_id.value();
+  session->setQueryId(query_id.value());
 
   switch( command ) {
   /* Ignore these statements. */
@@ -253,7 +257,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
-  ha_autocommit_or_rollback(session, session->is_error());
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.ha_autocommit_or_rollback(session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -825,7 +830,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 {
   register CreateField *new_field;
   LEX  *lex= session->lex;
-  drizzled::statement::AlterTable *statement= (drizzled::statement::AlterTable *)lex->statement;
+  statement::AlterTable *statement= (statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
     return true;
@@ -1301,11 +1306,11 @@ void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
-    (SELECT ... order_st BY order_list [LIMIT n]) order_st BY ...
+    (SELECT ... ORDER BY order_list [LIMIT n]) ORDER BY ...
     @endvarbatim
     or of the form
     @varbatim
-    (SELECT ... order_st BY LIMIT n) order_st BY ...
+    (SELECT ... ORDER BY LIMIT n) ORDER BY ...
     @endvarbatim
 
   @param session_arg		   thread handle
@@ -1336,7 +1341,7 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   fake_select_lex->select_limit= 0;
 
   fake_select_lex->context.outer_context=first_sl->context.outer_context;
-  /* allow item list resolving in fake select for order_st BY */
+  /* allow item list resolving in fake select for ORDER BY */
   fake_select_lex->context.resolve_in_select_list= true;
   fake_select_lex->context.select_lex= fake_select_lex;
 
@@ -1344,8 +1349,8 @@ bool Select_Lex_Unit::add_fake_select_lex(Session *session_arg)
   {
     /*
       This works only for
-      (SELECT ... order_st BY list [LIMIT n]) order_st BY order_list [LIMIT m],
-      (SELECT ... LIMIT n) order_st BY order_list [LIMIT m]
+      (SELECT ... ORDER BY list [LIMIT n]) ORDER BY order_list [LIMIT m],
+      (SELECT ... LIMIT n) ORDER BY order_list [LIMIT m]
       just before the parser starts processing order_list
     */
     global_parameters= fake_select_lex;
@@ -1785,8 +1790,6 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
   return true;
 }
 
-extern int DRIZZLEparse(void *session); // from sql_yacc.cc
-
 
 /**
   This is a wrapper of DRIZZLEparse(). All the code should call parse_sql()
@@ -1832,3 +1835,5 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 /**
   @} (end of group Runtime_Environment)
 */
+
+} /* namespace drizzled */

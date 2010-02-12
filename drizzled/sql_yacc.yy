@@ -36,119 +36,16 @@
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
+
 #include "config.h"
-#include <drizzled/foreign_key.h>
-#include <drizzled/lex_symbol.h>
-#include <drizzled/function/locate.h>
-#include <drizzled/function/str/char.h>
-#include <drizzled/function/str/collation.h>
-#include <drizzled/function/str/database.h>
-#include <drizzled/function/str/insert.h>
-#include <drizzled/function/str/left.h>
-#include <drizzled/function/str/repeat.h>
-#include <drizzled/function/str/replace.h>
-#include <drizzled/function/str/reverse.h>
-#include <drizzled/function/str/right.h>
-#include <drizzled/function/str/set_collation.h>
-#include <drizzled/function/str/substr.h>
-#include <drizzled/function/str/trim.h>
-#include <drizzled/function/str/user.h>
-#include <drizzled/function/str/weight_string.h>
-
-#include <drizzled/function/time/curdate.h>
-#include <drizzled/function/time/date_add_interval.h>
-#include <drizzled/function/time/dayofmonth.h>
-#include <drizzled/function/time/extract.h>
-#include <drizzled/function/time/hour.h>
-#include <drizzled/function/time/microsecond.h>
-#include <drizzled/function/time/minute.h>
-#include <drizzled/function/time/month.h>
-#include <drizzled/function/time/now.h>
-#include <drizzled/function/time/quarter.h>
-#include <drizzled/function/time/second.h>
-#include <drizzled/function/time/sysdate_local.h>
-#include <drizzled/function/time/timestamp_diff.h>
-#include <drizzled/function/time/typecast.h>
-#include <drizzled/function/time/year.h>
-
-#include <drizzled/error.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/item/copy_string.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/item/null.h>
-#include <drizzled/session.h>
-#include <drizzled/item/func.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/item/create.h>
-#include <drizzled/item/default_value.h>
-#include <drizzled/item/insert_value.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/function/get_system_var.h>
-#include <drizzled/thr_lock.h>
-#include <drizzled/message/table.pb.h>
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/statement.h>
-#include <drizzled/statement/alter_schema.h>
-#include <drizzled/statement/alter_table.h>
-#include <drizzled/statement/analyze.h>
-#include <drizzled/statement/change_schema.h>
-#include <drizzled/statement/check.h>
-#include <drizzled/statement/checksum.h>
-#include <drizzled/statement/commit.h>
-#include <drizzled/statement/create_index.h>
-#include <drizzled/statement/create_schema.h>
-#include <drizzled/statement/create_table.h>
-#include <drizzled/statement/delete.h>
-#include <drizzled/statement/drop_index.h>
-#include <drizzled/statement/drop_schema.h>
-#include <drizzled/statement/drop_table.h>
-#include <drizzled/statement/empty_query.h>
-#include <drizzled/statement/flush.h>
-#include <drizzled/statement/insert.h>
-#include <drizzled/statement/insert_select.h>
-#include <drizzled/statement/kill.h>
-#include <drizzled/statement/load.h>
-#include <drizzled/statement/release_savepoint.h>
-#include <drizzled/statement/rename_table.h>
-#include <drizzled/statement/replace.h>
-#include <drizzled/statement/replace_select.h>
-#include <drizzled/statement/rollback.h>
-#include <drizzled/statement/rollback_to_savepoint.h>
-#include <drizzled/statement/savepoint.h>
-#include <drizzled/statement/select.h>
-#include <drizzled/statement/set_option.h>
-#include <drizzled/statement/show_create.h>
-#include <drizzled/statement/show_create_schema.h>
-#include <drizzled/statement/show_engine_status.h>
-#include <drizzled/statement/show_errors.h>
-#include <drizzled/statement/show_processlist.h>
-#include <drizzled/statement/show_status.h>
-#include <drizzled/statement/show_warnings.h>
-#include <drizzled/statement/start_transaction.h>
-#include <drizzled/statement/truncate.h>
-#include <drizzled/statement/unlock_tables.h>
-#include <drizzled/statement/update.h>
-#include <drizzled/db.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-
-
-using namespace drizzled;
-
-class Table_ident;
-class Item;
-class Item_num;
+#include "drizzled/parser.h"
 
 int yylex(void *yylval, void *yysession);
 
 #define yyoverflow(A,B,C,D,E,F)               \
   {                                           \
     ulong val= *(F);                          \
-    if (my_yyoverflow((B), (D), &val))        \
+    if (drizzled::my_yyoverflow((B), (D), &val)) \
     {                                         \
       yyerror((char*) (A));                   \
       return 2;                               \
@@ -175,6 +72,14 @@ int yylex(void *yylval, void *yysession);
 
 
 #define YYDEBUG 0
+
+namespace drizzled
+{
+
+class Table_ident;
+class Item;
+class Item_num;
+
 
 static bool check_reserved_words(LEX_STRING *name)
 {
@@ -396,50 +301,55 @@ static bool setup_select_in_parentheses(LEX *lex)
   return false;
 }
 
+} /* namespace drizzled; */
+
+using namespace drizzled;
 %}
 %union {
   int  num;
   ulong ulong_num;
   uint64_t ulonglong_number;
   int64_t longlong_number;
-  LEX_STRING lex_str;
-  LEX_STRING *lex_str_ptr;
-  LEX_SYMBOL symbol;
-  Table_ident *table;
+  drizzled::LEX_STRING lex_str;
+  drizzled::LEX_STRING *lex_str_ptr;
+  drizzled::LEX_SYMBOL symbol;
+  drizzled::Table_ident *table;
   char *simple_string;
-  Item *item;
-  Item_num *item_num;
-  List<Item> *item_list;
-  List<String> *string_list;
-  String *string;
-  Key_part_spec *key_part;
-  const ::drizzled::plugin::Function *udf;
-  TableList *table_list;
-  struct sys_var_with_base variable;
-  enum enum_var_type var_type;
-  Key::Keytype key_type;
-  enum ha_key_alg key_alg;
-  enum row_type row_type;
-  enum column_format_type column_format_type;
-  enum ha_rkey_function ha_rkey_mode;
-  enum enum_tx_isolation tx_isolation;
-  enum Cast_target cast_type;
-  const CHARSET_INFO *charset;
-  thr_lock_type lock_type;
-  interval_type interval, interval_time_st;
-  enum enum_drizzle_timestamp_type date_time_type;
-  Select_Lex *select_lex;
-  chooser_compare_func_creator boolfunc2creator;
-  struct st_lex *lex;
-  struct p_elem_val *p_elem_value;
-  enum index_hint_type index_hint;
-  enum enum_filetype filetype;
-  enum ha_build_method build_method;
-  enum Foreign_key::fk_option m_fk_option;
+  drizzled::Item *item;
+  drizzled::Item_num *item_num;
+  drizzled::List<drizzled::Item> *item_list;
+  drizzled::List<drizzled::String> *string_list;
+  drizzled::String *string;
+  drizzled::Key_part_spec *key_part;
+  const drizzled::plugin::Function *udf;
+  drizzled::TableList *table_list;
+  struct drizzled::sys_var_with_base variable;
+  enum drizzled::enum_var_type var_type;
+  drizzled::Key::Keytype key_type;
+  enum drizzled::ha_key_alg key_alg;
+  enum drizzled::row_type row_type;
+  enum drizzled::column_format_type column_format_type;
+  enum drizzled::ha_rkey_function ha_rkey_mode;
+  enum drizzled::enum_tx_isolation tx_isolation;
+  enum drizzled::Cast_target cast_type;
+  const drizzled::CHARSET_INFO *charset;
+  drizzled::thr_lock_type lock_type;
+  drizzled::interval_type interval, interval_time_st;
+  enum drizzled::enum_drizzle_timestamp_type date_time_type;
+  drizzled::Select_Lex *select_lex;
+  drizzled::chooser_compare_func_creator boolfunc2creator;
+  struct drizzled::st_lex *lex;
+  enum drizzled::index_hint_type index_hint;
+  enum drizzled::enum_filetype filetype;
+  enum drizzled::ha_build_method build_method;
+  enum drizzled::Foreign_key::fk_option m_fk_option;
 }
 
 %{
+namespace drizzled
+{
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+}
 %}
 
 %pure_parser                                    /* We have threads */
@@ -4132,7 +4042,7 @@ table_alias:
 opt_table_alias:
           /* empty */ { $$=0; }
         | table_alias ident
-          { $$= (LEX_STRING*) memory::sql_memdup(&$2,sizeof(LEX_STRING)); }
+          { $$= (drizzled::LEX_STRING*) memory::sql_memdup(&$2,sizeof(drizzled::LEX_STRING)); }
         ;
 
 opt_all:
@@ -4368,28 +4278,28 @@ delete_limit_clause:
         ;
 
 ulong_num:
-          NUM           { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 real_ulong_num:
-          NUM           { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | dec_num_error { }
 	;
 
 ulonglong_num:
-          NUM           { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 dec_num_error:
@@ -4860,26 +4770,6 @@ show_param:
              if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
                DRIZZLE_YYABORT;
            }
-        | OPEN_SYM TABLES opt_db show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->select_lex.db= $3;
-            if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
-              DRIZZLE_YYABORT;
-          }
-        | ENGINE_SYM ident_or_text STATUS_SYM /* This should either go... well it should go */
-          {
-            Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
-            Lex->statement=
-              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2.str);
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
           {
             LEX *lex= Lex;
@@ -4948,7 +4838,7 @@ show_param:
             if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
               DRIZZLE_YYABORT;
           }
-        | opt_full PROCESSLIST_SYM
+        | PROCESSLIST_SYM
           {
             Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
             Lex->statement=
@@ -5378,12 +5268,12 @@ NUM_literal:
           NUM
           {
             int error;
-            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) internal::my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | LONG_NUM
           {
             int error;
-            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) internal::my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | ULONGLONG_NUM
           { $$ = new Item_uint($1.str, $1.length); }

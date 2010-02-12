@@ -28,6 +28,9 @@
 #include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
 
+namespace drizzled
+{
+
 class TableList;
 class Item_field;
 class Name_resolution_context;
@@ -39,13 +42,11 @@ class Item_in_subselect;
 class SendField;
 class Field;
 
-namespace drizzled
-{
 namespace plugin
 {
 class Client;
 }
-}
+
 
 /**
   Dummy error processor used by default by Name_resolution_context.
@@ -76,7 +77,7 @@ typedef bool (Item::*Item_processor) (unsigned char *arg);
  * statement "tree" or Lex.  Each item represents something in the
  * execution plan.
  */
-class Item: public drizzled::memory::SqlAlloc
+class Item: public memory::SqlAlloc
 {
   /* Prevent use of these */
   Item(const Item &);
@@ -219,17 +220,6 @@ public:
     fixed= true;
   }
 
-  /**
-   * Save value in field, but don't give any warnings.
-   *
-   * @note
-   *
-   * This is used to temporary store and retrieve a value in a column,
-   * for example in optimizer/range to adjust the key value to fit the column.
-   * Return: Function returns 1 on overflow and -1 on fatal errors
-   */
-  int save_in_field_no_warnings(Field *field, bool no_conversions);
-
   virtual int save_in_field(Field *field, bool no_conversions);
   virtual void save_org_in_field(Field *field)
   {
@@ -242,7 +232,7 @@ public:
   /**
    * This is only called from items that is not of type item_field.
    */
-  virtual bool send(drizzled::plugin::Client *client, String *str);
+  virtual bool send(plugin::Client *client, String *str);
   /**
     Compares this Item to another Item, returning true if Item's
     are functionally equal.
@@ -677,7 +667,6 @@ public:
   virtual bool collect_item_field_processor(unsigned char * arg);
   virtual bool find_item_in_field_list_processor(unsigned char *arg);
   virtual bool change_context_processor(unsigned char *context);
-  virtual bool reset_query_id_processor(unsigned char *query_id_arg);
   virtual bool register_field_in_read_map(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
 
@@ -764,7 +753,13 @@ public:
   bool eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs);
 };
 
+} /* namespace drizzled */
+
+/** @TODO Why is this in the middle? */
 #include <drizzled/item/ident.h>
+
+namespace drizzled
+{
 
 /**
   Mark item and Select_Lexs as dependent if item was resolved in
@@ -897,8 +892,9 @@ Field *create_tmp_field(Session *session,
                         Field **def_field,
                         bool group,
                         bool modify_item,
-                        bool table_cant_handle_bit_fields,
                         bool make_copy_field,
                         uint32_t convert_blob_length);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_H */

@@ -22,6 +22,9 @@
 
 #include <drizzled/item/cache.h>
 
+namespace drizzled
+{
+
 class Item_cache_decimal: public Item_cache
 {
 protected:
@@ -36,5 +39,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return DECIMAL_RESULT; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_DECIMAL_H */

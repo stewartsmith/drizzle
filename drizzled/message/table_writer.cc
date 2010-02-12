@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <getopt.h>
 #include <drizzled/message/table.pb.h>
 
 using namespace std;
@@ -77,6 +78,13 @@ static void new_index_to_table(message::Table *table,
   index->set_type(message::Table::Index::BTREE);
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
+
+  int key_length= 0;
+
+  for(int i=0; i< num_index_parts; i++)
+    key_length+= compare_lengths[i];
+
+  index->set_key_length(key_length);
 
   while (x < num_index_parts)
   {
@@ -190,21 +198,77 @@ static void fill_table(message::Table *table, const char *name)
 
 }
 
+static void fill_table1(message::Table *table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table->set_name("t1");
+  table->set_type(message::Table::INTERNAL);
+
+  tableopts= table->mutable_options();
+  tableopts->set_comment("Table without a StorageEngine message");
+
+  {
+    field= table->add_field();
+    field->set_name("number");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+}
+
+static void usage(char *argv0)
+{
+  cerr << "Usage:  " << argv0 << " [-t N] TABLE_NAME.dfe" << endl;
+  cerr << endl;
+  cerr << "-t N\tTable Number" << endl;
+  cerr << "\t0 - default" << endl;
+  cerr << endl;
+}
+
 int main(int argc, char* argv[])
 {
+  int opt;
+  int table_number= 0;
+
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  if (argc != 2)
+  while ((opt= getopt(argc, argv, "t:")) != -1)
   {
-    cerr << "Usage:  " << argv[0] << " SCHEMA" << endl;
-    return -1;
+    switch (opt)
+    {
+    case 't':
+      table_number= atoi(optarg);
+      break;
+    default:
+      usage(argv[0]);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (optind >= argc) {
+    fprintf(stderr, "Expected Table name argument\n\n");
+    usage(argv[0]);
+    exit(EXIT_FAILURE);
   }
 
   message::Table table;
 
-  fill_table(&table, "example_table");
+  switch (table_number)
+  {
+  case 0:
+    fill_table(&table, "example_table");
+    break;
+  case 1:
+    fill_table1(&table);
+    break;
+  default:
+    fprintf(stderr, "Invalid table number.\n\n");
+    usage(argv[0]);
+    exit(EXIT_FAILURE);
+  }
 
-  fstream output(argv[1], ios::out | ios::trunc | ios::binary);
+  fstream output(argv[optind], ios::out | ios::trunc | ios::binary);
   if (!table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;

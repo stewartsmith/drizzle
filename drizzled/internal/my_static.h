@@ -28,14 +28,10 @@
 #define MAX_KEYBLOCK	8192		/* Max keyblocklength == 8*IO_SIZE */
 #define MAX_BLOCK_TYPES MAX_KEYBLOCK/MIN_KEYBLOCK
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct st_remember {
-  int number;
-  void (*func)(int number);
-};
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   Structure that stores information of a allocated memory block
@@ -59,7 +55,6 @@ struct st_irem
 extern char curr_dir[FN_REFLEN], home_dir_buff[FN_REFLEN];
 
 extern volatile int _my_signals;
-extern struct st_remember _my_sig_remember[MAX_SIGNALS];
 
 extern unsigned char	*sf_min_adress,*sf_max_adress;
 extern uint	sf_malloc_count;
@@ -69,8 +64,7 @@ extern uint64_t query_performance_frequency, query_performance_offset;
 
 extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace internal */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_INTERNAL_MY_STATIC_H */

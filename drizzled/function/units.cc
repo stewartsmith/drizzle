@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/units.h>
+
+namespace drizzled
+{
 
 double Item_func_units::val_real()
 {
@@ -31,3 +34,4 @@ double Item_func_units::val_real()
 }
 
 
+} /* namespace drizzled */

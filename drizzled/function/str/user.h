@@ -23,6 +23,8 @@
 #include <drizzled/function/str/strfunc.h>
 #include "drizzled/global_charset_info.h"
 
+namespace drizzled
+{
 
 class Item_func_user :public Item_str_func
 {
@@ -65,5 +67,7 @@ public:
   const char *func_name() const { return "current_user"; }
   const char *fully_qualified_func_name() const { return "current_user()"; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_STR_USER_H */

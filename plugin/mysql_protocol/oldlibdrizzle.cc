@@ -36,7 +36,10 @@ using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
+namespace drizzled
+{
 extern uint32_t global_thread_id;
+}
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static uint32_t port;
@@ -558,28 +561,28 @@ bool ClientMySQLProtocol::store(int32_t from)
 {
   char buff[12];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, -10) - buff));
+                      (size_t) (internal::int10_to_str(from, buff, -10) - buff));
 }
 
 bool ClientMySQLProtocol::store(uint32_t from)
 {
   char buff[11];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, 10) - buff));
+                      (size_t) (internal::int10_to_str(from, buff, 10) - buff));
 }
 
 bool ClientMySQLProtocol::store(int64_t from)
 {
   char buff[22];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, -10) - buff));
+                      (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
 }
 
 bool ClientMySQLProtocol::store(uint64_t from)
 {
   char buff[21];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, 10) - buff));
+                      (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
 }
 
 bool ClientMySQLProtocol::store(double from, uint32_t decimals, String *buffer)
@@ -620,11 +623,11 @@ bool ClientMySQLProtocol::checkConnection(void)
 
     if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
+      my_error(ER_BAD_HOST_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
       return false;
     }
 
-    session->security_ctx.ip.assign(ip);
+    session->getSecurityContext().setIp(ip);
   }
   drizzleclient_net_keepalive(&net, true);
 
@@ -679,7 +682,7 @@ bool ClientMySQLProtocol::checkConnection(void)
         ||    (pkt_len= drizzleclient_net_read(&net)) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
-      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
       return false;
     }
   }
@@ -701,7 +704,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   if (end >= (char*) net.read_pos + pkt_len + 2)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
     return false;
   }
 
@@ -731,7 +734,7 @@ bool ClientMySQLProtocol::checkConnection(void)
 
   if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
     return false;
   }
 
@@ -743,7 +746,7 @@ bool ClientMySQLProtocol::checkConnection(void)
     user_len-= 2;
   }
 
-  session->security_ctx.user.assign(user);
+  session->getSecurityContext().setUser(user);
 
   return session->checkUser(passwd, passwd_len, l_db);
 }
@@ -826,7 +829,7 @@ static DRIZZLE_SYSVAR_UINT(buffer_length, buffer_length, PLUGIN_VAR_RQCMDARG,
 static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
                           N_("Address to bind to."), NULL, NULL, NULL);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(port),
   DRIZZLE_SYSVAR(connect_timeout),
   DRIZZLE_SYSVAR(read_timeout),
@@ -848,7 +851,7 @@ DRIZZLE_DECLARE_PLUGIN
   init,             /* Plugin Init */
   deinit,           /* Plugin Deinit */
   NULL,             /* status variables */
-  system_variables, /* system variables */
+  sys_variables, /* system variables */
   NULL              /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

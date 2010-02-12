@@ -32,8 +32,9 @@
 
 #define SHOW_VERSION "0.1"
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *opt, char *argument);
+using namespace drizzled;
+
+bool get_one_option(int optid, const struct my_option *opt, char *argument);
 
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
   unsigned int ret;
   azio_stream reader_handle;
 
-  my_init();
+  internal::my_init();
   MY_INIT(argv[0]);
   get_options(&argc, &argv);
 
@@ -236,7 +237,7 @@ int main(int argc, char *argv[])
   {
     int frm_file;
     char *ptr;
-    frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
+    frm_file= internal::my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
     if (ptr == NULL)
     {
@@ -244,8 +245,8 @@ int main(int argc, char *argv[])
       goto end;
     }
     azread_frm(&reader_handle, ptr);
-    my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
-    my_close(frm_file, MYF(0));
+    internal::my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
+    internal::my_close(frm_file, MYF(0));
     free(ptr);
   }
 
@@ -253,7 +254,7 @@ end:
   printf("\n");
   azclose(&reader_handle);
 
-  my_end();
+  internal::my_end();
   return 0;
 }
 
@@ -344,20 +345,20 @@ static void usage(void)
        \nand you are welcome to modify and redistribute it under the GPL \
        license\n");
   puts("Read and modify Archive files directly\n");
-  printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", my_progname);
-  print_defaults("drizzle", load_default_groups);
+  printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", internal::my_progname);
+  internal::print_defaults("drizzle", load_default_groups);
   my_print_help(my_long_options);
 }
 
 static void print_version(void)
 {
-  printf("%s  Ver %s, for %s-%s (%s)\n", my_progname, SHOW_VERSION,
+  printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
          HOST_VENDOR, HOST_OS, HOST_CPU);
 }
 
 static void get_options(int *argc, char ***argv)
 {
-  load_defaults("drizzle", load_default_groups, argc, argv);
+  internal::load_defaults("drizzle", load_default_groups, argc, argv);
   default_argv= *argv;
 
   handle_options(argc, argv, my_long_options, get_one_option);

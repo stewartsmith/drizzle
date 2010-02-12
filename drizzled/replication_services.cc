@@ -56,6 +56,7 @@
 #include "drizzled/plugin/transaction_applier.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/message/statement_transform.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
 #include "drizzled/error.h"
@@ -66,8 +67,6 @@ using namespace std;
 
 namespace drizzled
 {
-
-static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types in_type);
 
 ReplicationServices::ReplicationServices()
 {
@@ -187,7 +186,7 @@ void ReplicationServices::initTransaction(message::Transaction &in_transaction,
 {
   message::TransactionContext *trx= in_transaction.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
-  trx->set_transaction_id(in_session->getTransactionId());
+  trx->set_transaction_id(in_session->getQueryId());
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
 
@@ -392,7 +391,7 @@ void ReplicationServices::setInsertHeader(message::Statement &statement,
   {
     field_metadata= header->add_field_metadata();
     field_metadata->set_name(current_field->field_name);
-    field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+    field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
   }
 }
 
@@ -513,7 +512,7 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
-      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+      field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
 
     /*
@@ -531,7 +530,7 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
       /* Field is changed from old to new */
       field_metadata= header->add_set_field_metadata();
       field_metadata->set_name(current_field->field_name);
-      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+      field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
   }
 }
@@ -687,7 +686,7 @@ void ReplicationServices::setDeleteHeader(message::Statement &statement,
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
-      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+      field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
     }
   }
 }
@@ -780,7 +779,7 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   cleanupTransaction(transaction, in_session);
 }
 
-void ReplicationServices::push(drizzled::message::Transaction &to_push)
+void ReplicationServices::push(message::Transaction &to_push)
 {
   vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;
@@ -821,35 +820,6 @@ void ReplicationServices::push(drizzled::message::Transaction &to_push)
       ++appl_iter;
     }
     ++repl_iter;
-  }
-}
-
-static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types in_type)
-{
-  switch (in_type)
-  {
-    case DRIZZLE_TYPE_LONGLONG:
-      return message::Table::Field::BIGINT;
-    case DRIZZLE_TYPE_LONG:
-      return message::Table::Field::INTEGER;
-    case DRIZZLE_TYPE_DECIMAL:
-      return message::Table::Field::DECIMAL;
-    case DRIZZLE_TYPE_DOUBLE:
-      return message::Table::Field::DOUBLE;
-    case DRIZZLE_TYPE_DATE:
-      return message::Table::Field::DATE;
-    case DRIZZLE_TYPE_DATETIME:
-      return message::Table::Field::DATETIME;
-    case DRIZZLE_TYPE_TIMESTAMP:
-      return message::Table::Field::TIMESTAMP;
-    case DRIZZLE_TYPE_VARCHAR:
-      return message::Table::Field::VARCHAR;
-    case DRIZZLE_TYPE_BLOB:
-      return message::Table::Field::BLOB;
-    case DRIZZLE_TYPE_ENUM:
-      return message::Table::Field::ENUM;
-    default:
-      return message::Table::Field::VARCHAR;
   }
 }
 

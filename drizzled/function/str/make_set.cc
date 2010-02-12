@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 void Item_func_make_set::update_used_tables()
 {
@@ -138,3 +141,4 @@ void Item_func_make_set::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

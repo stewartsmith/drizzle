@@ -35,6 +35,8 @@
 #include <string>
 #include <vector>
 
+#include "drizzled/common.h"
+
 namespace drizzled
 {
 namespace message
@@ -308,7 +310,9 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
  */
 bool shouldQuoteFieldValue(Table::Field::FieldType in_type);
 
-} /* end namespace drizzled::message */
-} /* end namespace drizzled */
+drizzled::message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types type);
+
+} /* namespace message */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_MESSAGE_STATEMENT_TRANSFORM_H */

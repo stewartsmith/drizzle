@@ -16,14 +16,6 @@
 #ifndef PLUGIN_ARCHIVE_HA_ARCHIVE_H
 #define PLUGIN_ARCHIVE_HA_ARCHIVE_H
 
-#include <inttypes.h>
-#include <zlib.h>
-#include "azio.h"
-#include <drizzled/thr_lock.h>
-#include <drizzled/my_hash.h>
-#include <drizzled/cursor.h>
-#include <string>
-
 /*
   Please read ha_archive.cc first. If you are looking for more general
   answers on how storage engines work, look at ha_example.cc and
@@ -48,7 +40,7 @@ public:
   char data_file_name[FN_REFLEN];
   uint32_t use_count;
   pthread_mutex_t mutex;
-  THR_LOCK lock;
+  drizzled::THR_LOCK lock;
   azio_stream archive_write;     /* Archive file we are working with */
   bool archive_write_open;
   bool dirty;               /* Flag for if a flush should occur */
@@ -56,8 +48,8 @@ public:
   uint64_t mean_rec_length;
   char real_path[FN_REFLEN];
   unsigned int  version;
-  ha_rows rows_recorded;    /* Number of rows in tables */
-  ha_rows version_rows;
+  drizzled::ha_rows rows_recorded;    /* Number of rows in tables */
+  drizzled::ha_rows version_rows;
 };
 
 /*
@@ -68,16 +60,16 @@ public:
 */
 #define ARCHIVE_VERSION 3
 
-class ha_archive: public Cursor
+class ha_archive: public drizzled::Cursor
 {
-  THR_LOCK_DATA lock;        /* MySQL lock */
+  drizzled::THR_LOCK_DATA lock;        /* MySQL lock */
   ArchiveShare *share;      /* Shared lock info */
 
   azio_stream archive;            /* Archive file we are working with */
-  my_off_t current_position;  /* The position of the row we just read */
+  drizzled::internal::my_off_t current_position;  /* The position of the row we just read */
   unsigned char byte_buffer[IO_SIZE]; /* Initial buffer for our string */
-  String buffer;             /* Buffer used for blob storage */
-  ha_rows scan_rows;         /* Number of rows left in scan */
+  drizzled::String buffer;             /* Buffer used for blob storage */
+  drizzled::ha_rows scan_rows;         /* Number of rows left in scan */
   bool delayed_insert;       /* If the insert is delayed */
   bool bulk_insert;          /* If we are performing a bulk insert */
   const unsigned char *current_key;
@@ -91,7 +83,7 @@ class ha_archive: public Cursor
 
 public:
   ha_archive(drizzled::plugin::StorageEngine &engine_arg,
-             TableShare &table_arg);
+             drizzled::TableShare &table_arg);
   ~ha_archive()
   { }
 
@@ -99,12 +91,15 @@ public:
   { return "NONE"; }
   void get_auto_increment(uint64_t, uint64_t, uint64_t,
                           uint64_t *first_value, uint64_t *nb_reserved_values);
-  ha_rows records() { return share->rows_recorded; }
+  drizzled::ha_rows records() { return share->rows_recorded; }
   int index_init(uint32_t keynr, bool sorted);
   virtual int index_read(unsigned char * buf, const unsigned char * key,
-			 uint32_t key_len, enum ha_rkey_function find_flag);
-  virtual int index_read_idx(unsigned char * buf, uint32_t index, const unsigned char * key,
-			     uint32_t key_len, enum ha_rkey_function find_flag);
+			 uint32_t key_len,
+                         drizzled::ha_rkey_function find_flag);
+  virtual int index_read_idx(unsigned char * buf, uint32_t index,
+                             const unsigned char * key,
+			     uint32_t key_len,
+                             drizzled::ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
@@ -128,16 +123,17 @@ private:
   int optimize();
   int repair();
 public:
-  void start_bulk_insert(ha_rows rows);
+  void start_bulk_insert(drizzled::ha_rows rows);
   int end_bulk_insert();
-  enum row_type get_row_type() const
+  enum drizzled::row_type get_row_type() const
   {
-    return ROW_TYPE_COMPRESSED;
+    return drizzled::ROW_TYPE_COMPRESSED;
   }
-  THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
-                             enum thr_lock_type lock_type);
-  int check(Session* session);
-  bool check_and_repair(Session *session);
+  drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *session,
+                                       drizzled::THR_LOCK_DATA **to,
+                                       drizzled::thr_lock_type lock_type);
+  int check(drizzled::Session* session);
+  bool check_and_repair(drizzled::Session *session);
   uint32_t max_row_length(const unsigned char *buf);
   bool fix_rec_buff(unsigned int length);
   int unpack_row(azio_stream *file_to_read, unsigned char *record);

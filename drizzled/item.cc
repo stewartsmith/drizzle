@@ -54,7 +54,9 @@
 #include <float.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 const String my_null_string("NULL", 4, default_charset_info);
 
@@ -467,7 +469,7 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
     if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
     {
       char buff[22], *end;
-      end= int64_t10_to_str(value, buff, -10);
+      end= internal::int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
                                    NULL);
@@ -612,11 +614,6 @@ bool Item::change_context_processor(unsigned char *)
   return false;
 }
 
-bool Item::reset_query_id_processor(unsigned char *)
-{
-  return false;
-}
-
 bool Item::register_field_in_read_map(unsigned char *)
 {
   return false;
@@ -694,21 +691,6 @@ bool Item::is_expensive()
     is_expensive_cache= walk(&Item::is_expensive_processor, 0,
                              (unsigned char*)0);
   return test(is_expensive_cache);
-}
-
-int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
-{
-  int res;
-  Table *table= field->table;
-  Session *session= table->in_use;
-  enum_check_fields tmp= session->count_cuted_fields;
-  ulong sql_mode= session->variables.sql_mode;
-  session->variables.sql_mode&= ~(MODE_NO_ZERO_DATE);
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  res= save_in_field(field, no_conversions);
-  session->count_cuted_fields= tmp;
-  session->variables.sql_mode= sql_mode;
-  return res;
 }
 
 /*
@@ -1682,13 +1664,12 @@ static Field *create_tmp_field_from_item(Session *,
 Field *create_tmp_field(Session *session,
                         Table *table,
                         Item *item,
-                        Item::Type type, 
-                        Item ***copy_func, 
+                        Item::Type type,
+                        Item ***copy_func,
                         Field **from_field,
-                        Field **default_field, 
-                        bool group, 
+                        Field **default_field,
+                        bool group,
                         bool modify_item,
-                        bool, 
                         bool make_copy_field,
                         uint32_t convert_blob_length)
 {
@@ -1779,3 +1760,4 @@ Field *create_tmp_field(Session *session,
   }
 }
 
+} /* namespace drizzled */

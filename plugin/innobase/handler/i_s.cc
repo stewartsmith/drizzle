@@ -28,11 +28,11 @@ Created July 18, 2007 Vasil Dimov
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/my_sys.h"
 #include <drizzled/my_hash.h>
-#include "drizzled/my_error.h"
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
 #include <drizzled/plugin/info_schema_table.h>
+#include <drizzled/time_functions.h>
 #include "drizzled/global_charset_info.h"
 
 
@@ -48,6 +48,8 @@ extern "C" {
 #include "srv0start.h" /* for srv_was_started */
 }
 #include "handler0vars.h"
+
+using namespace drizzled;
 
 static const char plugin_author[] = "Innobase Oy";
 
@@ -71,13 +73,13 @@ do {									\
 
 #define STRUCT_FLD(name, value)	value
 
-drizzled::plugin::InfoSchemaTable *innodb_trx_schema_table= NULL;
-drizzled::plugin::InfoSchemaTable *innodb_locks_schema_table= NULL;
-drizzled::plugin::InfoSchemaTable *innodb_lock_waits_schema_table= NULL;
-drizzled::plugin::InfoSchemaTable *innodb_cmp_schema_table= NULL;
-drizzled::plugin::InfoSchemaTable *innodb_cmp_reset_schema_table= NULL;
-drizzled::plugin::InfoSchemaTable *innodb_cmpmem_schema_table= NULL;
-drizzled::plugin::InfoSchemaTable *innodb_cmpmem_reset_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_trx_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_locks_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_lock_waits_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_cmp_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_cmp_reset_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_cmpmem_schema_table= NULL;
+plugin::InfoSchemaTable *innodb_cmpmem_reset_schema_table= NULL;
 
 static TrxISMethods trx_methods;
 static CmpISMethods cmp_methods;
@@ -112,9 +114,6 @@ time_t			DRIZZLE_TYPE_DATETIME
 (field_length=0 ignored)
 ---------------------------------
 */
-
-/* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
-void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
 /*******************************************************************//**
 Auxiliary function to store time_t value in MYSQL_TYPE_DATETIME
@@ -198,10 +197,10 @@ field_store_ulint(
 }
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_trx */
-static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
+static plugin::ColumnInfo	innodb_trx_fields_info[] =
 {
 #define IDX_TRX_ID		0
-        drizzled::plugin::ColumnInfo("trx_id",
+        plugin::ColumnInfo("trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -209,7 +208,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_STATE		1
-        drizzled::plugin::ColumnInfo("trx_state",
+        plugin::ColumnInfo("trx_state",
                   TRX_QUE_STATE_STR_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -217,7 +216,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_STARTED		2
-        drizzled::plugin::ColumnInfo("trx_started",
+        plugin::ColumnInfo("trx_started",
                   0,
                   DRIZZLE_TYPE_DATETIME,
                   0,
@@ -225,7 +224,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_REQUESTED_LOCK_ID	3
-        drizzled::plugin::ColumnInfo("trx_requested_lock_id",
+        plugin::ColumnInfo("trx_requested_lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -233,7 +232,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_WAIT_STARTED	4
-        drizzled::plugin::ColumnInfo("trx_wait_started",
+        plugin::ColumnInfo("trx_wait_started",
                   0,
                   DRIZZLE_TYPE_DATETIME,
                   0,
@@ -241,7 +240,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_WEIGHT		5
-        drizzled::plugin::ColumnInfo("trx_weight",
+        plugin::ColumnInfo("trx_weight",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -249,7 +248,7 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_DRIZZLE_THREAD_ID	6
-        drizzled::plugin::ColumnInfo("trx_mysql_thread_id",
+        plugin::ColumnInfo("trx_mysql_thread_id",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -257,14 +256,14 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
                   ""),
 
 #define IDX_TRX_QUERY		7
-        drizzled::plugin::ColumnInfo("trx_query",
+        plugin::ColumnInfo("trx_query",
                   TRX_I_S_TRX_QUERY_MAX_LEN,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
                   ""),
 
-        drizzled::plugin::ColumnInfo()
+        plugin::ColumnInfo()
 };
 
 /*******************************************************************//**
@@ -277,7 +276,7 @@ fill_innodb_trx_from_cache(
 /*=======================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
 	Table*			table,	/*!< in/out: fill this table */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -357,7 +356,7 @@ int
 innodb_trx_init()
 /*============*/
 {
-	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_TRX")) == NULL)
+	if ((innodb_trx_schema_table= new plugin::InfoSchemaTable("INNODB_TRX")) == NULL)
 		return(1);
 
 	innodb_trx_schema_table->setColumnInfo(innodb_trx_fields_info);
@@ -368,10 +367,10 @@ innodb_trx_init()
 
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_locks */
-static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
+static plugin::ColumnInfo innodb_locks_fields_info[] =
 {
 #define IDX_LOCK_ID		0
-        drizzled::plugin::ColumnInfo("lock_id",
+        plugin::ColumnInfo("lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -379,7 +378,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_TRX_ID		1
-        drizzled::plugin::ColumnInfo("lock_trx_id",
+        plugin::ColumnInfo("lock_trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -387,7 +386,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_MODE		2
-        drizzled::plugin::ColumnInfo("lock_mode",
+        plugin::ColumnInfo("lock_mode",
 	 /* S[,GAP] X[,GAP] IS[,GAP] IX[,GAP] AUTO_INC UNKNOWN */
                   32,
                   DRIZZLE_TYPE_VARCHAR,
@@ -396,7 +395,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_TYPE		3
-        drizzled::plugin::ColumnInfo("lock_type",
+        plugin::ColumnInfo("lock_type",
                   32, /* RECORD|TABLE|UNKNOWN */
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -404,7 +403,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_TABLE		4
-        drizzled::plugin::ColumnInfo("lock_table",
+        plugin::ColumnInfo("lock_table",
                   1024,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -412,7 +411,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_INDEX		5
-        drizzled::plugin::ColumnInfo("lock_index",
+        plugin::ColumnInfo("lock_index",
                   1024,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -420,7 +419,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_SPACE		6
-        drizzled::plugin::ColumnInfo("lock_space",
+        plugin::ColumnInfo("lock_space",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -428,7 +427,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_PAGE		7
-        drizzled::plugin::ColumnInfo("lock_page",
+        plugin::ColumnInfo("lock_page",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -436,7 +435,7 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_REC		8
-        drizzled::plugin::ColumnInfo("lock_rec",
+        plugin::ColumnInfo("lock_rec",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -444,14 +443,14 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
                   ""),
 
 #define IDX_LOCK_DATA		9
-        drizzled::plugin::ColumnInfo("lock_data",
+        plugin::ColumnInfo("lock_data",
                   TRX_I_S_LOCK_DATA_MAX_LEN,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   MY_I_S_MAYBE_NULL,
                   ""),
 
-        drizzled::plugin::ColumnInfo()
+        plugin::ColumnInfo()
 };
 
 /*******************************************************************//**
@@ -465,7 +464,7 @@ fill_innodb_locks_from_cache(
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
 	Session*		session,/*!< in: MySQL client connection */
 	Table*			table,	/*!< in/out: fill this table */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -570,7 +569,7 @@ innodb_locks_init()
 /*==============*/
 {
 
-	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_LOCKS")) == NULL)
+	if ((innodb_locks_schema_table= new plugin::InfoSchemaTable("INNODB_LOCKS")) == NULL)
 		return(1);
 
 	innodb_locks_schema_table->setColumnInfo(innodb_locks_fields_info);
@@ -580,10 +579,10 @@ innodb_locks_init()
 
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_lock_waits */
-static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
+static plugin::ColumnInfo innodb_lock_waits_fields_info[] =
 {
 #define IDX_REQUESTING_TRX_ID	0
-        drizzled::plugin::ColumnInfo("requesting_trx_id",
+        plugin::ColumnInfo("requesting_trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -591,7 +590,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   ""),
 
 #define IDX_REQUESTED_LOCK_ID	1
-        drizzled::plugin::ColumnInfo("requested_lock_id",
+        plugin::ColumnInfo("requested_lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -599,7 +598,7 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   ""),
 
 #define IDX_BLOCKING_TRX_ID	2
-        drizzled::plugin::ColumnInfo("blocking_trx_id",
+        plugin::ColumnInfo("blocking_trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -607,14 +606,14 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
                   ""),
 
 #define IDX_BLOCKING_LOCK_ID	3
-        drizzled::plugin::ColumnInfo("blocking_lock_id",
+        plugin::ColumnInfo("blocking_lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
                   0,
                   ""),
 
-        drizzled::plugin::ColumnInfo()
+        plugin::ColumnInfo()
 };
 
 /*******************************************************************//**
@@ -627,7 +626,7 @@ fill_innodb_lock_waits_from_cache(
 /*==============================*/
 	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
 	Table*			table,	/*!< in/out: fill this table */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -694,7 +693,7 @@ innodb_lock_waits_init()
 /*===================*/
 {
 
-	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_LOCK_WAITS")) == NULL)
+	if ((innodb_lock_waits_schema_table= new plugin::InfoSchemaTable("INNODB_LOCK_WAITS")) == NULL)
 		return(1);
 
 	innodb_lock_waits_schema_table->setColumnInfo(innodb_lock_waits_fields_info);
@@ -716,7 +715,7 @@ TrxISMethods::fillTable(
 /*======================*/
 	Session*	session,/*!< in: thread */
 	Table*	table,	/*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	const char*		table_name;
 	int			ret;
@@ -800,51 +799,51 @@ TrxISMethods::fillTable(
 }
 
 /* Fields of the dynamic table information_schema.innodb_cmp. */
-static drizzled::plugin::ColumnInfo	i_s_cmp_fields_info[] =
+static plugin::ColumnInfo	i_s_cmp_fields_info[] =
 {
-        drizzled::plugin::ColumnInfo("page_size",
+        plugin::ColumnInfo("page_size",
                   5,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Compressed Page Size"),
 
-        drizzled::plugin::ColumnInfo("compress_ops",
+        plugin::ColumnInfo("compress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Total Number of Compressions"),
 
-        drizzled::plugin::ColumnInfo("compress_ops_ok",
+        plugin::ColumnInfo("compress_ops_ok",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Total Number of Successful Compressions"),
 
-        drizzled::plugin::ColumnInfo("compress_time",
+        plugin::ColumnInfo("compress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Total Duration of Compressions in Seconds"),
 
-        drizzled::plugin::ColumnInfo("uncompress_ops",
+        plugin::ColumnInfo("uncompress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Total Number of Decompressions"),
 
-        drizzled::plugin::ColumnInfo("uncompress_time",
+        plugin::ColumnInfo("uncompress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Total Duration of Decompressions in Seconds"),
 
-        drizzled::plugin::ColumnInfo()
+        plugin::ColumnInfo()
 };
 
 
@@ -858,7 +857,7 @@ i_s_cmp_fill_low(
 /*=============*/
 	Session*	session,/*!< in: thread */
 	Table*	table,	/*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table,
+        plugin::InfoSchemaTable *schema_table,
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
 	int	status	= 0;
@@ -904,7 +903,7 @@ CmpISMethods::fillTable(
 /*=========*/
 	Session*	session,/*!< in: thread */
 	Table*	table,	/*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	return(i_s_cmp_fill_low(session, table, schema_table, FALSE));
 }
@@ -917,7 +916,7 @@ CmpResetISMethods::fillTable(
 /*===============*/
 	Session*	session,/*!< in: thread */
 	Table*	table,	/*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	return(i_s_cmp_fill_low(session, table, schema_table, TRUE));
 }
@@ -930,7 +929,7 @@ i_s_cmp_init()
 /*=========*/
 {
 
-	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMP")) == NULL)
+	if ((innodb_cmp_schema_table= new plugin::InfoSchemaTable("INNODB_CMP")) == NULL)
 		return(1);
 
 	innodb_cmp_schema_table->setColumnInfo(i_s_cmp_fields_info);
@@ -947,7 +946,7 @@ i_s_cmp_reset_init()
 /*===============*/
 {
 
-	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMP_RESET")) == NULL)
+	if ((innodb_cmp_reset_schema_table= new plugin::InfoSchemaTable("INNODB_CMP_RESET")) == NULL)
 		return(1);
 
 	innodb_cmp_reset_schema_table->setColumnInfo(i_s_cmp_fields_info);
@@ -959,44 +958,44 @@ i_s_cmp_reset_init()
 
 
 /* Fields of the dynamic table information_schema.innodb_cmpmem. */
-static drizzled::plugin::ColumnInfo	i_s_cmpmem_fields_info[] =
+static plugin::ColumnInfo	i_s_cmpmem_fields_info[] =
 {
-        drizzled::plugin::ColumnInfo("page_size",
+        plugin::ColumnInfo("page_size",
                   5,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Buddy Block Size"),
 
-        drizzled::plugin::ColumnInfo("pages_used",
+        plugin::ColumnInfo("pages_used",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Currently in Use"),
 
-        drizzled::plugin::ColumnInfo("pages_free",
+        plugin::ColumnInfo("pages_free",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Currently Available"),
 
-        drizzled::plugin::ColumnInfo("relocation_ops",
+        plugin::ColumnInfo("relocation_ops",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
                   0,
                   "Total Number of Relocations"),
 
-        drizzled::plugin::ColumnInfo("relocation_time",
+        plugin::ColumnInfo("relocation_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
                   0,
                   "Total Duration of Relocations, in Seconds"),
 
-        drizzled::plugin::ColumnInfo()
+        plugin::ColumnInfo()
 };
 
 /*******************************************************************//**
@@ -1009,7 +1008,7 @@ i_s_cmpmem_fill_low(
 /*================*/
 	Session*	session,/*!< in: thread */
 	Table*	table,	/*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table,
+        plugin::InfoSchemaTable *schema_table,
 	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
 	int	status	= 0;
@@ -1052,7 +1051,7 @@ CmpmemISMethods::fillTable(
 /*============*/
 	Session*	session,/*!< in: thread */
 	Table*	table, /*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table)	
+        plugin::InfoSchemaTable *schema_table)	
 {
 	return(i_s_cmpmem_fill_low(session, table, schema_table, FALSE));
 }
@@ -1065,7 +1064,7 @@ CmpmemResetISMethods::fillTable(
 /*==================*/
 	Session*	session,/*!< in: thread */
 	Table*	table,	/*!< in/out: tables to fill */
-        drizzled::plugin::InfoSchemaTable *schema_table)
+        plugin::InfoSchemaTable *schema_table)
 {
 	return(i_s_cmpmem_fill_low(session, table, schema_table, TRUE));
 }
@@ -1078,7 +1077,7 @@ i_s_cmpmem_init()
 /*============*/
 {
 
-	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMPMEM")) == NULL)
+	if ((innodb_cmpmem_schema_table= new plugin::InfoSchemaTable("INNODB_CMPMEM")) == NULL)
 		return(1);
 
 	innodb_cmpmem_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
@@ -1094,7 +1093,7 @@ int
 i_s_cmpmem_reset_init()
 /*==================*/
 {
-	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMPMEM_RESET")) == NULL)
+	if ((innodb_cmpmem_reset_schema_table= new plugin::InfoSchemaTable("INNODB_CMPMEM_RESET")) == NULL)
 		return(1);
 
 	innodb_cmpmem_reset_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
@@ -1109,7 +1108,7 @@ Unbind a dynamic INFORMATION_SCHEMA table.
 int
 i_s_common_deinit(
 /*==============*/
-	drizzled::plugin::Registry &registry)	/*!< in/out: table schema object */
+	plugin::Registry &registry)	/*!< in/out: table schema object */
 {
 	registry.remove(innodb_trx_schema_table);
 	registry.remove(innodb_locks_schema_table);

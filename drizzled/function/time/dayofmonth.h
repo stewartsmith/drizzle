@@ -23,6 +23,8 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
 
+namespace drizzled
+{
 
 class Item_func_dayofmonth :public Item_int_func
 {
@@ -37,5 +39,7 @@ public:
     maybe_null=1;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_TIME_DAYOFMONTH_H */

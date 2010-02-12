@@ -18,9 +18,12 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/str/database.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 String *Item_func_database::val_str(String *str)
 {
@@ -36,3 +39,4 @@ String *Item_func_database::val_str(String *str)
   return str;
 }
 
+} /* namespace drizzled */

@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 /*
   Search after a key that starts with 'field'
 
@@ -544,3 +547,5 @@ next_loop:
   } while (!result && ++i < key_parts);
   return(result);
 }
+
+} /* namespace drizzled */

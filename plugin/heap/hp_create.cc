@@ -17,12 +17,12 @@
 
 #include <drizzled/common.h>
 #include <drizzled/error.h>
-#include "drizzled/my_error.h"
 
 #include <string.h>
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
@@ -406,8 +406,8 @@ static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_reco
   if (records_in_block < 10 && max_records)
     records_in_block= 10;
   if (!records_in_block || records_in_block*recbuffer >
-      (my_default_record_cache_size-sizeof(HP_PTRS)*HP_MAX_LEVELS))
-    records_in_block= (my_default_record_cache_size - sizeof(HP_PTRS) *
+      (internal::my_default_record_cache_size-sizeof(HP_PTRS)*HP_MAX_LEVELS))
+    records_in_block= (internal::my_default_record_cache_size - sizeof(HP_PTRS) *
 		      HP_MAX_LEVELS) / recbuffer + 1;
   block->records_in_block= records_in_block;
   block->recbuffer= recbuffer;

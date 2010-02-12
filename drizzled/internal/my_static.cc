@@ -18,10 +18,17 @@
   a shared library
 */
 
-#include "drizzled/internal/mysys_priv.h"
-#include "drizzled/my_error.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/error.h"
 #include "my_static.h"
 #include <stdlib.h>
+
+namespace drizzled
+{
+namespace internal
+{
 
 bool timed_mutexes= 0;
 
@@ -38,7 +45,6 @@ uint32_t   my_file_limit= MY_NFILE;
 	/* From mf_brkhant */
 int my_dont_interrupt=0;
 volatile int		_my_signals=0;
-struct st_remember _my_sig_remember[MAX_SIGNALS]={{0,0}};
 sigset_t my_signals;			/* signals blocked by mf_brkhant */
 
 	/* from mf_reccache.c */
@@ -71,3 +77,6 @@ bool my_disable_async_io= true;
 bool my_disable_flush_key_blocks=0;
 bool my_disable_symlinks=0;
 bool mysys_uses_curses=0;
+
+} /* namespace internal */
+} /* namespace drizzled */

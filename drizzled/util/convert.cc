@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 uint64_t drizzled_string_to_hex(char *to, const char *from, uint64_t from_size)
 {
   static const char hex_map[]= "0123456789ABCDEF";
@@ -77,3 +80,5 @@ void bytesToHexdumpFormat(string &to, const unsigned char *from, size_t from_len
     line_number.str("");
   }
 }
+
+} /* namespace drizzled */

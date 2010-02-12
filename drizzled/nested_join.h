@@ -27,6 +27,9 @@
 
 #include <bitset>
 
+namespace drizzled
+{
+
 struct nested_join_st
 {
   /* list of elements in the nested join */
@@ -63,5 +66,7 @@ struct nested_join_st
 
   List<Item> sj_outer_expr_list;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_NESTED_JOIN_H */

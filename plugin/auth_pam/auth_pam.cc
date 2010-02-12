@@ -30,6 +30,8 @@
 #include <security/pam_misc.h>
 #endif
 
+using namespace drizzled;
+
 typedef struct {
     const char *name;
     const char *password;
@@ -109,7 +111,7 @@ public:
     struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
     pam_handle_t *pamh= NULL;
 
-    userinfo.name= session->security_ctx.user.c_str();
+    userinfo.name= session->getSecurityContext().getUser().c_str();
     userinfo.password= password;
 
     retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);

@@ -303,10 +303,10 @@ bool libevent_should_close_connection(Session* session)
  */
 void *libevent_thread_proc(void *ctx)
 {
-  if (my_thread_init())
+  if (internal::my_thread_init())
   {
-    my_thread_global_end();
-    errmsg_printf(ERRMSG_LVL_ERROR, _("libevent_thread_proc: my_thread_init() failed\n"));
+    internal::my_thread_global_end();
+    errmsg_printf(ERRMSG_LVL_ERROR, _("libevent_thread_proc: internal::my_thread_init() failed\n"));
     exit(1);
   }
 
@@ -400,7 +400,7 @@ thread_exit:
   created_threads--;
   pthread_cond_broadcast(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-  my_thread_end();
+  internal::my_thread_end();
   pthread_exit(0);
 
   return NULL;                               /* purify: deadcode */
@@ -668,7 +668,7 @@ static DRIZZLE_SYSVAR_UINT(size, size,
                            N_("Size of Pool."),
                            NULL, NULL, 8, 1, 1024, 0);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(size),
   NULL,
 };
@@ -684,7 +684,7 @@ DRIZZLE_DECLARE_PLUGIN
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
   NULL,   /* status variables */
-  system_variables,   /* system variables */
+  sys_variables,   /* system variables */
   NULL    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

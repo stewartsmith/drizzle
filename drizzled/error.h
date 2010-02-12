@@ -20,16 +20,60 @@
 #ifndef DRIZZLED_ERROR_H
 #define DRIZZLED_ERROR_H
 
-#include "drizzled/my_error.h"
+#include "drizzled/definitions.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+/* Max width of screen (for error messages) */
+#define SC_MAXWIDTH 256
+#define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */
+#define NRERRBUFFS	(2)	/* Buffers for parameters */
+#define MY_FILE_ERROR	((size_t) -1)
+#define ME_FATALERROR   1024    /* Fatal statement error */
+
+namespace drizzled
+{
+
+typedef void (*error_handler_func)(uint32_t my_err,
+                                   const char *str,
+                                   myf MyFlags);
+extern error_handler_func error_handler_hook;
 
 bool init_errmessage(void);
 const char * error_message(unsigned int err_index);
 
 enum drizzled_error_code {
+
+  EE_ERROR_FIRST=1,
+  EE_CANTCREATEFILE,
+  EE_READ,
+  EE_WRITE,
+  EE_BADCLOSE,
+  EE_OUTOFMEMORY,
+  EE_DELETE,
+  EE_LINK,
+  EE_EOFERR,
+  EE_CANTLOCK,
+  EE_CANTUNLOCK,
+  EE_DIR,
+  EE_STAT,
+  EE_CANT_CHSIZE,
+  EE_CANT_OPEN_STREAM,
+  EE_GETWD,
+  EE_SETWD,
+  EE_LINK_WARNING,
+  EE_OPEN_WARNING,
+  EE_DISK_FULL,
+  EE_CANT_MKDIR,
+  EE_UNKNOWN_CHARSET,
+  EE_OUT_OF_FILERESOURCES,
+  EE_CANT_READLINK,
+  EE_CANT_SYMLINK,
+  EE_REALPATH,
+  EE_SYNC,
+  EE_UNKNOWN_COLLATION,
+  EE_FILENOTFOUND,
+  EE_FILE_NOT_CLOSED,
+  EE_ERROR_LAST= EE_FILE_NOT_CLOSED,
+
   ER_ERROR_FIRST= 1000,
   ER_UNUSED1000= ER_ERROR_FIRST,
   ER_UNUSED1001,
@@ -724,11 +768,44 @@ enum drizzled_error_code {
   ER_INVALID_TIME_VALUE,
   ER_INVALID_ENUM_VALUE,
   ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE,
-  ER_ERROR_LAST= ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE
+  ER_CORRUPT_TABLE_DEFINITION,
+  ER_ERROR_LAST= ER_CORRUPT_TABLE_DEFINITION
 };
 
-#ifdef  __cplusplus
-}
-#endif
+enum drizzle_exit_codes {
+  EXIT_UNSPECIFIED_ERROR = 1,
+  EXIT_UNKNOWN_OPTION,
+  EXIT_AMBIGUOUS_OPTION,
+  EXIT_NO_ARGUMENT_ALLOWED,
+  EXIT_ARGUMENT_REQUIRED,
+  EXIT_VAR_PREFIX_NOT_UNIQUE,
+  EXIT_UNKNOWN_VARIABLE,
+  EXIT_OUT_OF_MEMORY,
+  EXIT_UNKNOWN_SUFFIX,
+  EXIT_NO_PTR_TO_VARIABLE,
+  EXIT_CANNOT_CONNECT_TO_SERVICE,
+  EXIT_OPTION_DISABLED,
+  EXIT_ARGUMENT_INVALID
+};
+
+
+#define GLOBERRS (EE_ERROR_LAST - EE_ERROR_FIRST + 1) /* Nr of global errors */
+#define EE(X)    (globerrs[(X) - EE_ERROR_FIRST])
+
+/* Error message numbers in global map */
+extern const char * globerrs[GLOBERRS];
+
+void init_glob_errs(void);
+void my_error(int nr,myf MyFlags, ...);
+void my_printf_error(uint32_t my_err, const char *format,
+                     myf MyFlags, ...)
+                     __attribute__((format(printf, 2, 4)));
+int my_error_register(const char **errmsgs, int first, int last);
+void my_error_unregister_all(void);
+const char **my_error_unregister(int first, int last);
+void my_message(uint32_t my_err, const char *str,myf MyFlags);
+void my_message_no_curses(uint32_t my_err, const char *str,myf MyFlags);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ERROR_H */

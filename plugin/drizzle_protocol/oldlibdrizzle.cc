@@ -20,7 +20,6 @@
 #include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include "drizzled/my_error.h"
 #include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
@@ -33,12 +32,15 @@
 #include "oldlibdrizzle.h"
 #include "options.h"
 
-using namespace std;
-using namespace drizzled;
-
 #define PROTOCOL_VERSION 10
 
+namespace drizzled
+{
 extern uint32_t global_thread_id;
+}
+
+using namespace std;
+using namespace drizzled;
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
@@ -573,28 +575,28 @@ bool ClientDrizzleProtocol::store(int32_t from)
 {
   char buff[12];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, -10) - buff));
+                      (size_t) (internal::int10_to_str(from, buff, -10) - buff));
 }
 
 bool ClientDrizzleProtocol::store(uint32_t from)
 {
   char buff[11];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, 10) - buff));
+                      (size_t) (internal::int10_to_str(from, buff, 10) - buff));
 }
 
 bool ClientDrizzleProtocol::store(int64_t from)
 {
   char buff[22];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, -10) - buff));
+                      (size_t) (internal::int64_t10_to_str(from, buff, -10) - buff));
 }
 
 bool ClientDrizzleProtocol::store(uint64_t from)
 {
   char buff[21];
   return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, 10) - buff));
+                      (size_t) (internal::int64_t10_to_str(from, buff, 10) - buff));
 }
 
 bool ClientDrizzleProtocol::store(double from, uint32_t decimals, String *buffer)
@@ -635,11 +637,11 @@ bool ClientDrizzleProtocol::checkConnection(void)
 
     if (drizzleclient_net_peer_addr(&net, ip, &peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
+      my_error(ER_BAD_HOST_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
       return false;
     }
 
-    session->security_ctx.ip.assign(ip);
+    session->getSecurityContext().setIp(ip);
   }
   drizzleclient_net_keepalive(&net, true);
 
@@ -694,7 +696,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
         ||    (pkt_len= drizzleclient_net_read(&net)) == packet_error 
         || pkt_len < MIN_HANDSHAKE_SIZE)
     {
-      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+      my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
       return false;
     }
   }
@@ -716,7 +718,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
 
   if (end >= (char*) net.read_pos + pkt_len + 2)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
     return false;
   }
 
@@ -746,7 +748,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
 
   if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
     return false;
   }
 
@@ -758,7 +760,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
     user_len-= 2;
   }
 
-  session->security_ctx.user.assign(user);
+  session->getSecurityContext().setUser(user);
 
   return session->checkUser(passwd, passwd_len, l_db);
 }
@@ -808,14 +810,14 @@ void ClientDrizzleProtocol::writeEOFPacket(uint32_t server_status,
 
 static ListenDrizzleProtocol *listen_obj= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(plugin::Registry &registry)
 {
   listen_obj= new ListenDrizzleProtocol("drizzle_protocol", false);
   registry.add(listen_obj); 
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(plugin::Registry &registry)
 {
   registry.remove(listen_obj);
   delete listen_obj;
@@ -843,7 +845,7 @@ static DRIZZLE_SYSVAR_UINT(buffer_length, buffer_length, PLUGIN_VAR_RQCMDARG,
 static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
                           N_("Address to bind to."), NULL, NULL, NULL);
 
-static drizzle_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(port),
   DRIZZLE_SYSVAR(connect_timeout),
   DRIZZLE_SYSVAR(read_timeout),
@@ -865,7 +867,7 @@ DRIZZLE_DECLARE_PLUGIN
   init,             /* Plugin Init */
   deinit,           /* Plugin Deinit */
   NULL,             /* status variables */
-  system_variables, /* system variables */
+  sys_variables,    /* system variables */
   NULL              /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

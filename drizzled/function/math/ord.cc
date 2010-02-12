@@ -18,8 +18,11 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
+
 #include <drizzled/function/math/ord.h>
+
+namespace drizzled
+{
 
 int64_t Item_func_ord::val_int()
 {
@@ -45,3 +48,4 @@ int64_t Item_func_ord::val_int()
   return (int64_t) ((unsigned char) (*res)[0]);
 }
 
+} /* namespace drizzled */

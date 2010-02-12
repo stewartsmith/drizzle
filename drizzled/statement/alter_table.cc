@@ -43,12 +43,14 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/iocache.h"
 
-extern pid_t current_pid;
+#include "drizzled/transaction_services.h"
 
 using namespace std;
 
 namespace drizzled
 {
+
+extern pid_t current_pid;
 
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<CreateField> &create,
@@ -544,6 +546,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     ALTER Table
   */
 
+  TransactionServices &transaction_services= TransactionServices::singleton();
   session->set_proc_info("discard_or_import_tablespace");
 
   discard= test(tablespace_op == DISCARD_TABLESPACE);
@@ -567,7 +570,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     goto err;
 
   /* The ALTER Table is always in its own transaction */
-  error = ha_autocommit_or_rollback(session, 0);
+  error= transaction_services.ha_autocommit_or_rollback(session, false);
   if (! session->endActiveTransaction())
     error=1;
   if (error)
@@ -575,7 +578,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
   write_bin_log(session, session->query, session->query_length);
 
 err:
-  ha_autocommit_or_rollback(session, error);
+  (void) transaction_services.ha_autocommit_or_rollback(session, error);
   session->tablespace_op=false;
 
   if (error == 0)
@@ -644,7 +647,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
       table_list       The table to change.
       alter_info       Lists of fields, keys to be changed, added
                        or dropped.
-      order_num        How many order_st BY fields has been specified.
+      order_num        How many ORDER BY fields has been specified.
       order            List of fields to order_st BY.
       ignore           Whether we have ALTER IGNORE Table
 
@@ -736,7 +739,7 @@ bool alter_table(Session *session,
   ostringstream oss;
   oss << drizzle_data_home << "/" << db << "/" << table_name;
 
-  (void) unpack_filename(new_name_buff, oss.str().c_str());
+  (void) internal::unpack_filename(new_name_buff, oss.str().c_str());
 
   /*
     If this is just a rename of a view, short cut to the
@@ -846,7 +849,7 @@ bool alter_table(Session *session,
     table_options= create_proto->mutable_options();
 
     create_info->row_type= table->s->row_type;
-    table_options->set_row_type((drizzled::message::Table_TableOptions_RowType)table->s->row_type);
+    table_options->set_row_type((message::Table_TableOptions_RowType)table->s->row_type);
   }
 
   if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
@@ -943,7 +946,7 @@ bool alter_table(Session *session,
       }
       else
       {
-        *fn_ext(new_name)= 0;
+        *internal::fn_ext(new_name)= 0;
         if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
           error= -1;
       }
@@ -1224,7 +1227,7 @@ err:
     bool save_abort_on_warning= session->abort_on_warning;
     session->abort_on_warning= true;
     make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                                 f_val, strlength(f_val), t_type,
+                                 f_val, internal::strlength(f_val), t_type,
                                  alter_info->datetime_field->field_name);
     session->abort_on_warning= save_abort_on_warning;
   }
@@ -1260,7 +1263,7 @@ copy_data_between_tables(Table *from, Table *to,
                          enum enum_enable_or_disable keys_onoff,
                          bool error_if_not_empty)
 {
-  int error;
+  int error= 0;
   CopyField *copy,*copy_end;
   ulong found_count,delete_count;
   Session *session= current_session;
@@ -1280,9 +1283,7 @@ copy_data_between_tables(Table *from, Table *to,
 
     This needs to be done before external_lock
   */
-  error= ha_enable_transaction(session, false);
-  if (error)
-    return -1;
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   if (!(copy= new CopyField[to->s->fields]))
     return -1;
@@ -1331,8 +1332,8 @@ copy_data_between_tables(Table *from, Table *to,
     }
     else
     {
-      from->sort.io_cache= new IO_CACHE;
-      memset(from->sort.io_cache, 0, sizeof(IO_CACHE));
+      from->sort.io_cache= new internal::IO_CACHE;
+      memset(from->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
@@ -1414,17 +1415,11 @@ copy_data_between_tables(Table *from, Table *to,
   }
   to->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
-  if (ha_enable_transaction(session, true))
-  {
-    error= 1;
-    goto err;
-  }
-
   /*
     Ensure that the new table is saved properly to disk so that we
     can do a rename
   */
-  if (ha_autocommit_or_rollback(session, 0))
+  if (transaction_services.ha_autocommit_or_rollback(session, false))
     error=1;
   if (! session->endActiveTransaction())
     error=1;

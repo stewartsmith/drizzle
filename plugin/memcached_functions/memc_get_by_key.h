@@ -36,13 +36,13 @@
 #include <drizzled/function/str/strfunc.h>
 
 /* implements memc_get_by_key */
-class MemcachedGetByKey : public Item_str_func
+class MemcachedGetByKey : public drizzled::Item_str_func
 {
 public:
   MemcachedGetByKey()
     : 
       Item_str_func(),
-      failure_buff("FAILURE", &my_charset_bin)
+      failure_buff("FAILURE", &drizzled::my_charset_bin)
   {}
 
   const char *func_name() const
@@ -50,7 +50,7 @@ public:
     return "memc_get_by_key";
   }
 
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
 
   void fix_length_and_dec()
   {
@@ -58,8 +58,8 @@ public:
   }
 
 private:
-  String failure_buff;
-  String buffer;
+  drizzled::String failure_buff;
+  drizzled::String buffer;
 };
 
 #endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_BY_KEY_H */

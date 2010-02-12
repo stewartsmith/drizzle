@@ -24,7 +24,9 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <stdint.h>
+
+namespace drizzled
+{
 
 template <class T>
 std::string to_string(T t)
@@ -44,10 +46,9 @@ std::string& to_string(std::string &str, T t)
 
 void bytesToHexdumpFormat(std::string &s, const unsigned char *from, size_t from_length);
 
-extern "C"
-{
-  uint64_t drizzled_string_to_hex(char *to, const char *from,
-                                  uint64_t from_size);
-}
+uint64_t drizzled_string_to_hex(char *to, const char *from,
+                                uint64_t from_size);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UTIL_CONVERT_H */

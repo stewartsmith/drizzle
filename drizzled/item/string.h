@@ -22,6 +22,9 @@
 
 #include <drizzled/item/basic_constant.h>
 
+namespace drizzled
+{
+
 class Item_string :public Item_basic_constant
 {
 public:
@@ -153,5 +156,7 @@ public:
     str->append(func_name);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_STRING_H */

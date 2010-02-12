@@ -24,6 +24,9 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
 
+namespace drizzled
+{
+
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
@@ -101,7 +104,6 @@ bool select_union::flush()
                          duplicates on insert
       options            create options
       table_alias        name of the temporary table
-      bit_fields_as_long convert bit fields to uint64_t
 
   DESCRIPTION
     Create a temporary table that is used to store the result of a UNION,
@@ -115,16 +117,14 @@ bool select_union::flush()
 bool
 select_union::create_result_table(Session *session_arg, List<Item> *column_types,
                                   bool is_union_distinct, uint64_t options,
-                                  const char *table_alias,
-                                  bool bit_fields_as_long)
+                                  const char *table_alias)
 {
-  assert(table == 0);
+  assert(table == NULL);
   tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
-  tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
-                                 (order_st*) 0, is_union_distinct, 1,
+                                 (order_st*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
     return true;
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
@@ -273,7 +273,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                 sl->order_list.elements) +
                                sl->group_list.elements,
                                can_skip_order_by ?
-                               (order_st*) 0 : (order_st *)sl->order_list.first,
+                               (order_st*) NULL : (order_st *)sl->order_list.first,
                                (order_st*) sl->group_list.first,
                                sl->having,
                                sl, this);
@@ -353,7 +353,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                      TMP_TABLE_ALL_COLUMNS);
 
     if (union_result->create_result_table(session, &types, test(union_distinct),
-                                          create_options, "", false))
+                                          create_options, ""))
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
     result_table_list.db= (char*) "";
@@ -431,7 +431,7 @@ bool Select_Lex_Unit::exec()
 	{
 	  offset_limit_cnt= 0;
 	  /*
-	    We can't use LIMIT at this stage if we are using order_st BY for the
+	    We can't use LIMIT at this stage if we are using ORDER BY for the
 	    whole query
 	  */
 	  if (sl->order_list.first || describe)
@@ -732,3 +732,5 @@ void Select_Lex::cleanup_all_joins(bool full)
     for (sl= unit->first_select(); sl; sl= sl->next_select())
       sl->cleanup_all_joins(full);
 }
+
+} /* namespace drizzled */

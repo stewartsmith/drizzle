@@ -51,15 +51,15 @@ public:
   }
 
   ~MultiThreadScheduler();
-  bool addSession(Session *session);
-  void killSessionNow(Session *session);
+  bool addSession(drizzled::Session *session);
+  void killSessionNow(drizzled::Session *session);
   
-  void runSession(Session *session)
+  void runSession(drizzled::Session *session)
   {
-    if (my_thread_init())
+    if (drizzled::internal::my_thread_init())
     {
-      session->disconnect(ER_OUT_OF_RESOURCES, true);
-      statistic_increment(aborted_connects, &LOCK_status);
+      session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
+      statistic_increment(drizzled::aborted_connects, &LOCK_status);
       killSessionNow(session);
     }
 

@@ -13,10 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/internal/mysys_priv.h"
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "my_static.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string>
@@ -25,6 +27,10 @@
 #endif
 
 using namespace std;
+namespace drizzled
+{
+namespace internal
+{
 
 /*
   @brief
@@ -92,3 +98,6 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
 
   return(file);
 }
+
+} /* namespace internal */
+} /* namespace drizzled */
