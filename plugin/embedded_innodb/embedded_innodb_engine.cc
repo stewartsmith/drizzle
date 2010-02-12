@@ -259,12 +259,18 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
                                           const char *,
                                           const char *,
                                           const bool,
-                                          drizzled::message::Table *)
+                                          drizzled::message::Table *table)
 {
-  ib_crsr_t innodb_cursor;
+  ib_crsr_t innodb_cursor= NULL;
 
   if (ib_cursor_open_table(path+2, NULL, &innodb_cursor) != DB_SUCCESS)
     return ENOENT;
+
+  if (table)
+  {
+    message::Table::StorageEngine *engine= table->mutable_engine();
+    engine->set_name("innodb");
+  }
 
   ib_cursor_close(innodb_cursor);
 
