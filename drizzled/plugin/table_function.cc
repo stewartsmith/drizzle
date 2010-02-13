@@ -218,13 +218,14 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
+  Session *session= current_session;
 
-  if (not (current_session)->lex->wild)
+  if (not session->lex->wild)
     return false;
 
-  bool match=  wild_case_compare(system_charset_info,
-                                 predicate.c_str(),
-                                 (current_session)->lex->wild->c_str());
+  bool match= wild_case_compare(system_charset_info,
+                                predicate.c_str(),
+                                session->lex->wild->ptr());
 
   return match;
 }

@@ -76,6 +76,7 @@ static void store_key_options(String *packet, Table *table, KEY *key_info);
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
 {
   register int flag;
+
   while (*wildstr)
   {
     while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
@@ -116,6 +117,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char
       return (1);
     }
   }
+
   return (*str != '\0');
 }
 
