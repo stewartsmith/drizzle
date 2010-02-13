@@ -179,13 +179,13 @@ int get_database_metadata(const std::string &dbname, message::Schema &schema_mes
       rc= 0;
     }
 
-#if 0 
-    //@todo fill this in with something totally acceptable
+#if 0 //@todo fill this in with something totally acceptable
     schema_message.set_collation("utf8_general_ci"); 
 #endif
   }
 
-  close(fd);
+  if (fd != -1)
+    close(fd);
 
   return rc;
 }
