@@ -20,8 +20,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_static.h"
-#include "drizzled/my_error.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/error.h"
 
 namespace drizzled
 {

@@ -16,7 +16,7 @@
 #include "config.h"
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include <errno.h>
 
 namespace drizzled

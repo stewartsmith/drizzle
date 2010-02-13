@@ -457,19 +457,18 @@ public:
    */
   char *thread_stack;
 
-  /**
-    @note
-    Some members of Session (currently 'Statement::db',
-    'query')  are set and alloced by the slave SQL thread
-    (for the Session of that thread); that thread is (and must remain, for now)
-    the only responsible for freeing these 3 members. If you add members
-    here, and you add code to set them in replication, don't forget to
-    free_them_and_set_them_to_0 in replication properly. For details see
-    the 'err:' label of the handle_slave_sql() in sql/slave.cc.
+private:
+  SecurityContext security_ctx;
+public:
+  const SecurityContext& getSecurityContext() const
+  {
+    return security_ctx;
+  }
 
-    @see handle_slave_sql
-  */
-  Security_context security_ctx;
+  SecurityContext& getSecurityContext()
+  {
+    return security_ctx;
+  }
 
   /**
     Used in error messages to tell user in what part of MySQL we found an

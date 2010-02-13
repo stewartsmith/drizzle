@@ -68,7 +68,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/my_hash.h"
-#include "drizzled/my_error.h"
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/data_home.h"
@@ -978,8 +977,8 @@ innobase_mysql_print_thd(
           static_cast<uint64_t>(session_get_thread_id( session)),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
-          session->security_ctx.ip.c_str(),
-          session->security_ctx.user.c_str()
+          session->getSecurityContext().getIp().c_str(),
+          session->getSecurityContext().getUser().c_str()
   );
   fprintf(f,
           "\n%s", session->getQueryString().c_str()

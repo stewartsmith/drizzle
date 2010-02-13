@@ -37,7 +37,7 @@
 #include "drizzled/internal/aio_result.h"
 
 #include "drizzled/memory/root.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 #ifndef errno				/* did we already get it? */
 #ifdef HAVE_ERRNO_AS_DEFINE

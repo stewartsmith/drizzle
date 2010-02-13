@@ -17,7 +17,7 @@
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #if defined(HAVE_UTIME_H)
 #include <utime.h>
 #elif defined(HAVE_SYS_UTIME_H)

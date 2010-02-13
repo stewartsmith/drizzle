@@ -66,7 +66,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length);
+void mysql_parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -738,7 +738,7 @@ void create_select_for_variable(const char *var_name)
   @param       length  Length of the query text
 */
 
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length)
+void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   lex_start(session);
   session->reset_for_next_command();
