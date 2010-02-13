@@ -153,6 +153,36 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
+static int store_table_proto(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
+{
+  ib_crsr_t cursor;
+  ib_tpl_t proto_tuple;
+  ib_err_t err;
+
+  err= ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
+  assert (err==DB_SUCCESS);
+
+  proto_tuple= ib_clust_read_tuple_create(cursor);
+
+  err= ib_col_set_value(proto_tuple, 0, table_name, strlen(table_name));
+  assert (err==DB_SUCCESS);
+
+  string serialized_proto;
+  table_message.SerializeToString(&serialized_proto);
+
+  err= ib_col_set_value(proto_tuple, 1, serialized_proto.c_str(), serialized_proto.length());
+  assert (err==DB_SUCCESS);
+
+  err= ib_cursor_insert_row(cursor, proto_tuple);
+  assert (err==DB_SUCCESS);
+
+  ib_tuple_delete(proto_tuple);
+
+  ib_cursor_close(cursor);
+
+  return 0;
+}
+
 int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
                                    Table& table_obj,
                                    drizzled::message::Table& table_message)
@@ -230,6 +260,8 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     return HA_ERR_GENERIC;
   }
 
+  store_table_proto(innodb_schema_transaction, path+2, table_message);
+
   innodb_err= ib_trx_commit(innodb_schema_transaction);
 
   ib_table_schema_delete(innodb_table_schema);
@@ -246,6 +278,34 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
   return 0;
 }
 
+static int delete_table_proto_from_innodb(ib_trx_t transaction, const char* table_name)
+{
+  ib_crsr_t cursor;
+  ib_tpl_t search_tuple;
+  int res;
+  ib_err_t err;
+
+  ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
+  search_tuple= ib_clust_search_tuple_create(cursor);
+
+  ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
+
+//  ib_cursor_set_match_mode(cursor, IB_EXACT_MATCH);
+
+  err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  if (err == DB_RECORD_NOT_FOUND || res != 0)
+    goto rollback;
+
+  err= ib_cursor_delete_row(cursor);
+  assert (err == DB_SUCCESS);
+
+rollback:
+  ib_cursor_close(cursor);
+  ib_schema_unlock(transaction);
+  ib_tuple_delete(search_tuple);
+
+  return err;
+}
 
 int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
 {
@@ -253,6 +313,12 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
   ib_err_t innodb_err;
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  if(delete_table_proto_from_innodb(innodb_schema_transaction, table_name.c_str()+2) != DB_SUCCESS)
+  {
+    ib_trx_rollback(innodb_schema_transaction);
+    return HA_ERR_GENERIC;
+  }
 
   innodb_err= ib_table_drop(table_name.c_str()+2);
 
@@ -362,6 +428,59 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   ib_trx_commit(transaction);
 }
 
+static int read_table_proto_from_innodb(const char* table_name, drizzled::message::Table *table_message)
+{
+  ib_trx_t transaction;
+  ib_tpl_t search_tuple;
+  ib_tpl_t read_tuple;
+  ib_crsr_t cursor;
+  const char *proto;
+  ib_ulint_t proto_len;
+  ib_col_meta_t col_meta;
+  int res;
+  ib_err_t err;
+
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  ib_schema_lock_exclusive(transaction);
+
+  ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
+  search_tuple= ib_clust_search_tuple_create(cursor);
+
+  ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
+
+//  ib_cursor_set_match_mode(cursor, IB_EXACT_MATCH);
+
+  err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  if (err == DB_RECORD_NOT_FOUND || res != 0)
+    goto rollback;
+
+  read_tuple= ib_clust_read_tuple_create(cursor);
+  err= ib_cursor_read_row(cursor, read_tuple);
+  if (err == DB_RECORD_NOT_FOUND || res != 0)
+    goto rollback;
+
+  proto= (const char*)ib_col_get_value(read_tuple, 1);
+  proto_len= ib_col_get_meta(read_tuple, 1, &col_meta);
+
+  if (table_message->ParseFromArray(proto, proto_len) == false)
+    goto rollback;
+
+  ib_tuple_delete(search_tuple);
+  ib_tuple_delete(read_tuple);
+  ib_cursor_close(cursor);
+  ib_trx_commit(transaction);
+
+  return 0;
+
+rollback:
+  ib_cursor_close(cursor);
+  ib_schema_unlock(transaction);
+  ib_trx_rollback(transaction);
+  ib_tuple_delete(read_tuple);
+
+  return -1;
+}
+
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
                                           const char* path,
                                           const char *,
@@ -373,14 +492,12 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
 
   if (ib_cursor_open_table(path+2, NULL, &innodb_cursor) != DB_SUCCESS)
     return ENOENT;
+  ib_cursor_close(innodb_cursor);
 
   if (table)
   {
-    message::Table::StorageEngine *engine= table->mutable_engine();
-    engine->set_name("innodb");
+    read_table_proto_from_innodb(path+2, table);
   }
-
-  ib_cursor_close(innodb_cursor);
 
   return EEXIST;
 }

@@ -1,5 +1,4 @@
 CREATE TABLE t1 (a int);
---error 1693
 SHOW CREATE TABLE t1;
 --error 1050
 CREATE TABLE t1 (a int);
