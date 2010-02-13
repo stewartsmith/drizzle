@@ -473,6 +473,37 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
   return(HA_ERR_END_OF_FILE);
 }
 
+static int create_table_proto_table()
+{
+  ib_tbl_sch_t schema;
+  ib_idx_sch_t index_schema;
+  ib_trx_t transaction;
+  ib_id_t table_id;
+
+  ib_database_create("data_dictionary");
+
+  ib_table_schema_create("data_dictionary/innodb_table_proto", &schema,
+                         IB_TBL_COMPACT, 0);
+  ib_table_schema_add_col(schema, "table_name", IB_VARCHAR, IB_COL_NONE, 0,
+                          IB_MAX_TABLE_NAME_LEN);
+  ib_table_schema_add_col(schema, "proto", IB_BLOB, IB_COL_NONE, 0, 0);
+
+  ib_table_schema_add_index(schema, "PRIMARY_KEY", &index_schema);
+  ib_index_schema_add_col(index_schema, "table_name", 0);
+  ib_index_schema_set_clustered(index_schema);
+
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  ib_schema_lock_exclusive(transaction);
+
+  ib_table_create(transaction, schema, &table_id);
+
+  ib_trx_commit(transaction);
+
+  ib_table_schema_delete(schema);
+
+  return 0;
+}
+
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
 static int embedded_innodb_init(drizzled::plugin::Registry &registry)
@@ -489,6 +520,8 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
     fprintf(stderr, "Error starting Embedded InnoDB %d\n", err);
     return -1;
   }
+
+  create_table_proto_table();
 
   embedded_innodb_engine= new EmbeddedInnoDBEngine("InnoDB");
   registry.add(embedded_innodb_engine);
