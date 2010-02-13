@@ -65,7 +65,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
+void mysql_parse(Session *session, const char *inBuf, uint32_t length,
                  const char ** found_semicolon);
 
 /**
@@ -740,7 +740,7 @@ void create_select_for_variable(const char *var_name)
                                the next query in the query text.
 */
 
-static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
+void mysql_parse(Session *session, const char *inBuf, uint32_t length,
                  const char ** found_semicolon)
 {
   /*
