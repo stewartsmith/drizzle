@@ -1186,16 +1186,16 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (default_collation_name)
   {
     const CHARSET_INFO * const default_collation= get_charset_by_name(default_collation_name);
-    if (!default_collation)
+    if (not default_collation)
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
+      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
-    if (!my_charset_same(default_charset_info, default_collation))
+    if (not my_charset_same(default_charset_info, default_collation))
     {
-          errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
-                      default_collation_name,
-                      default_charset_info->csname);
+      errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_COLLATION_CHARSET_MISMATCH)),
+                    default_collation_name,
+                    default_charset_info->csname);
       return 1;
     }
     default_charset_info= default_collation;
@@ -1205,7 +1205,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   global_system_variables.optimizer_switch= 0;
 
-  if (!(character_set_filesystem=
+  if (not (character_set_filesystem=
         get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
   global_system_variables.character_set_filesystem= character_set_filesystem;
@@ -1227,17 +1227,25 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
 static int init_thread_environment()
 {
+   pthread_mutexattr_t attr; 
+   pthread_mutexattr_init(&attr);
+
   (void) pthread_mutex_init(&LOCK_create_db, NULL);
   (void) pthread_mutex_init(&LOCK_open, NULL);
-  (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
+
+  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
+  (void) pthread_mutex_init(&LOCK_thread_count, &attr);
+  (void) pthread_mutex_init(&LOCK_global_system_variables, &attr);
+
+  (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
   (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_server_end,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
+
+  pthread_mutexattr_destroy(&attr);
 
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))

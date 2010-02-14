@@ -100,7 +100,7 @@ enum enum_check_fields
   CHECK_FIELD_ERROR_FOR_NULL
 };
 
-enum enum_var_type
+enum sql_var_t
 {
   OPT_DEFAULT= 0,
   OPT_SESSION,

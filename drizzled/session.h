@@ -1041,6 +1041,9 @@ public:
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
+  LEX_STRING *make_lex_string(LEX_STRING *lex_str,
+                              const std::string &str,
+                              bool allocate_lex_string);
 
   int send_explain_fields(select_result *result);
   /**

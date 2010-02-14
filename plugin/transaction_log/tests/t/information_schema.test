@@ -1,21 +1,21 @@
 #
-# Tests the INFORMATION_SCHEMA views which come with the transaction
+# Tests the DATA_DICTIONARY views which come with the transaction
 # log
 #
 
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert.inc
 
-# Query the INFORMATION_SCHEMA views and verify
+# Query the DATA_DICTIONARY views and verify
 # that the information contained in them matches
 # the transaction log.
 
 --replace_column 2 X 7 X 8 X
-SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG;
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
 --replace_column 1 X 3 X
-SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES;
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 --replace_column 1 X 4 X 5 X
-SELECT * FROM INFORMATION_SCHEMA.TRANSACTION_LOG_TRANSACTIONS;
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

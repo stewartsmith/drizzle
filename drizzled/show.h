@@ -76,6 +76,7 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 SHOW_VAR *getFrontOfStatusVars();
+SHOW_VAR *getCommandStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
@@ -97,7 +98,7 @@ int mysqld_show_status(Session *session);
 int mysqld_show_variables(Session *session,const char *wild);
 bool mysqld_show_storage_engines(Session *session);
 bool mysqld_show_column_types(Session *session);
-void mysqld_list_processes(Session *session,const char *user, bool verbose);
+void mysqld_list_processes(Session *session,const char *user);
 void calc_sum_of_all_status(STATUS_VAR *to);
 
 int add_status_vars(SHOW_VAR *list);
