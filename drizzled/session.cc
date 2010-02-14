@@ -40,6 +40,7 @@
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -861,9 +862,7 @@ bool Session::startTransaction(start_transaction_option_t opt)
 
     if (opt == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
     {
-      // TODO make this a loop for all engines, not just this one (Inno only
-      // right now)
-      if (plugin::StorageEngine::startConsistentSnapshot(this))
+      if (plugin::TransactionalStorageEngine::startConsistentSnapshot(this))
       {
         result= false;
       }

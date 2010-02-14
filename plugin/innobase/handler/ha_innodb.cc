@@ -81,7 +81,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/blob.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/timestamp.h"
-#include "drizzled/plugin/storage_engine.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
@@ -162,7 +162,7 @@ undefined.  Map it to NULL. */
 # define EQ_CURRENT_SESSION(session) ((session) == current_session)
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
-static plugin::StorageEngine* innodb_engine_ptr= NULL;
+static plugin::XaStorageEngine* innodb_engine_ptr= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -249,11 +249,11 @@ static const char* ha_innobase_exts[] = {
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
-class InnobaseEngine : public plugin::StorageEngine
+class InnobaseEngine : public plugin::XaStorageEngine
 {
 public:
   InnobaseEngine(string name_arg) :
-    plugin::StorageEngine(name_arg,
+    plugin::XaStorageEngine(name_arg,
                           HTON_NULL_IN_KEY |
                           HTON_CAN_INDEX_BLOBS |
                           HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
@@ -280,14 +280,14 @@ public:
                                      drizzled::NamedSavepoint &savepoint);
   virtual int doReleaseSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
-  virtual int commit(Session* session, bool all);
-  virtual int rollback(Session* session, bool all);
+  virtual int doCommit(Session* session, bool all);
+  virtual int doRollback(Session* session, bool all);
 
   /***********************************************************************
   This function is used to prepare X/Open XA distributed transaction   */
   virtual
   int
-  prepare(
+  doPrepare(
   /*================*/
   			/* out: 0 or error number */
   	Session*	session,	/* in: handle to the MySQL thread of the user
@@ -298,18 +298,18 @@ public:
   This function is used to recover X/Open XA distributed transactions   */
   virtual
   int
-  recover(
+  doRecover(
   /*================*/
   				/* out: number of prepared transactions
   				stored in xid_list */
   	::drizzled::XID*	xid_list,	/* in/out: prepared transactions */
-  	uint	len);		/* in: number of slots in xid_list */
+  	size_t len);		/* in: number of slots in xid_list */
   /***********************************************************************
   This function is used to commit one X/Open XA distributed transaction
   which is in the prepared state */
   virtual
   int
-  commitByXid(
+  doCommitXid(
   /*===================*/
   			/* out: 0 or error number */
   	::drizzled::XID*	xid);	/* in: X/Open XA transaction identification */
@@ -318,7 +318,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  rollbackByXid(
+  doRollbackXid(
   /*=====================*/
   			/* out: 0 or error number */
   	::drizzled::XID	*xid);	/* in: X/Open XA transaction identification */
@@ -348,7 +348,7 @@ public:
   have one. */
   virtual
   int
-  start_consistent_snapshot(
+  doStartConsistentSnapshot(
   /*====================================*/
   			/* out: 0 */
   	Session*	session);	/* in: MySQL thread handle of the user for whom
@@ -375,7 +375,7 @@ public:
 
   virtual
   int
-  release_temporary_latches(
+  doReleaseTemporaryLatches(
   /*===============================*/
 				/* out: 0 */
 	Session*		session);	/* in: MySQL thread */
@@ -766,7 +766,7 @@ avoid deadlocks on the adaptive hash S-latch possibly held by session. For more
 documentation, see Cursor.cc.
 @return	0 */
 int
-InnobaseEngine::release_temporary_latches(
+InnobaseEngine::doReleaseTemporaryLatches(
 /*===============================*/
 	Session*		session)	/*!< in: MySQL thread */
 {
@@ -1460,7 +1460,7 @@ static inline
 void
 innobase_register_stmt(
 /*===================*/
-        plugin::StorageEngine*	engine,	/*!< in: Innobase hton */
+        plugin::TransactionalStorageEngine*	engine,	/*!< in: Innobase hton */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
 	assert(engine == innodb_engine_ptr);
@@ -1480,7 +1480,7 @@ static inline
 void
 innobase_register_trx_and_stmt(
 /*===========================*/
-        plugin::StorageEngine *engine, /*!< in: Innobase StorageEngine */
+        plugin::TransactionalStorageEngine *engine, /*!< in: Innobase StorageEngine */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
 	/* NOTE that actually innobase_register_stmt() registers also
@@ -1698,7 +1698,7 @@ ha_innobase::init_table_handle_for_HANDLER(void)
 
 	if (prebuilt->trx->active_trans == 0) {
 
-		innobase_register_trx_and_stmt(engine, user_session);
+		innobase_register_trx_and_stmt(innodb_engine_ptr, user_session);
 
 		prebuilt->trx->active_trans = 1;
 	}
@@ -2112,7 +2112,7 @@ assigns a new snapshot for a consistent read if the transaction does not yet
 have one.
 @return	0 */
 int
-InnobaseEngine::start_consistent_snapshot(
+InnobaseEngine::doStartConsistentSnapshot(
 /*====================================*/
 	Session*	session)	/*!< in: MySQL thread handle of the user for whom
 			the transaction should be committed */
@@ -2154,7 +2154,7 @@ Commits a transaction in an InnoDB database or marks an SQL statement
 ended.
 @return	0 */
 int
-InnobaseEngine::commit(
+InnobaseEngine::doCommit(
 /*============*/
 	Session* 	session,	/*!< in: MySQL thread handle of the user for whom
 			the transaction should be committed */
@@ -2284,7 +2284,7 @@ retry:
 Rolls back a transaction or the latest SQL statement.
 @return	0 or error number */
 int
-InnobaseEngine::rollback(
+InnobaseEngine::doRollback(
 /*==============*/
 	Session*	session,/*!< in: handle to the MySQL thread of the user
 			whose transaction should be rolled back */
@@ -2714,7 +2714,7 @@ ha_innobase::open(
 	holding btr_search_latch. This breaks the latching order as
 	we acquire dict_sys->mutex below and leads to a deadlock. */
 	if (session != NULL) {
-		engine->release_temporary_latches(session);
+		getTransactionalEngine()->releaseTemporaryLatches(session);
 	}
 
 	normalize_table_name(norm_name, name);
@@ -2929,7 +2929,7 @@ ha_innobase::close(void)
 
 	session = ha_session();
 	if (session != NULL) {
-		engine->release_temporary_latches(session);
+		getTransactionalEngine()->releaseTemporaryLatches(session);
 	}
 
 	row_prebuilt_free(prebuilt, FALSE);
@@ -3880,7 +3880,7 @@ no_commit:
 			no need to re-acquire locks on it. */
 
 			/* Altering to InnoDB format */
-			engine->commit(user_session, 1);
+			getTransactionalEngine()->commit(user_session, 1);
 			/* Note that this transaction is still active. */
 			prebuilt->trx->active_trans = 1;
 			/* We will need an IX lock on the destination table. */
@@ -3896,7 +3896,7 @@ no_commit:
 
 			/* Commit the transaction.  This will release the table
 			locks, so they have to be acquired again. */
-			engine->commit(user_session, 1);
+			getTransactionalEngine()->commit(user_session, 1);
 			/* Note that this transaction is still active. */
 			prebuilt->trx->active_trans = 1;
 			/* Re-acquire the table lock on the source table. */
@@ -7192,10 +7192,10 @@ ha_innobase::start_stmt(
 	/* Set the MySQL flag to mark that there is an active transaction */
 	if (trx->active_trans == 0) {
 
-		innobase_register_trx_and_stmt(engine, session);
+		innobase_register_trx_and_stmt(innodb_engine_ptr, session);
 		trx->active_trans = 1;
 	} else {
-		innobase_register_stmt(engine, session);
+		innobase_register_stmt(innodb_engine_ptr, session);
 	}
 
 	return(0);
@@ -7264,10 +7264,10 @@ ha_innobase::external_lock(
 		transaction */
 		if (trx->active_trans == 0) {
 
-			innobase_register_trx_and_stmt(engine, session);
+			innobase_register_trx_and_stmt(innodb_engine_ptr, session);
 			trx->active_trans = 1;
 		} else if (trx->n_mysql_tables_in_use == 0) {
-			innobase_register_stmt(engine, session);
+			innobase_register_stmt(innodb_engine_ptr, session);
 		}
 
 		if (trx->isolation_level == TRX_ISO_SERIALIZABLE
@@ -7329,7 +7329,7 @@ ha_innobase::external_lock(
 
 		if (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 			if (trx->active_trans != 0) {
-				engine->commit(session, TRUE);
+				getTransactionalEngine()->commit(session, TRUE);
 			}
 		} else {
 			if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
@@ -8201,7 +8201,7 @@ innobase_get_at_most_n_mbchars(
 This function is used to prepare an X/Open XA distributed transaction.
 @return	0 or error number */
 int
-InnobaseEngine::prepare(
+InnobaseEngine::doPrepare(
 /*================*/
 	Session*	session,/*!< in: handle to the MySQL thread of
 				the user whose XA transaction should
@@ -8300,10 +8300,10 @@ InnobaseEngine::prepare(
 This function is used to recover X/Open XA distributed transactions.
 @return	number of prepared transactions stored in xid_list */
 int
-InnobaseEngine::recover(
+InnobaseEngine::doRecover(
 /*================*/
 	::drizzled::XID*	xid_list,/*!< in/out: prepared transactions */
-	uint			len)	/*!< in: number of slots in xid_list */
+	size_t len)	/*!< in: number of slots in xid_list */
 {
 	assert(this == innodb_engine_ptr);
 
@@ -8320,7 +8320,7 @@ This function is used to commit one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::commitByXid(
+InnobaseEngine::doCommitXid(
 /*===================*/
 	::drizzled::XID*	xid)	/*!< in: X/Open XA transaction identification */
 {
@@ -8344,7 +8344,7 @@ This function is used to rollback one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::rollbackByXid(
+InnobaseEngine::doRollbackXid(
 /*=====================*/
 	::drizzled::XID*		xid)	/*!< in: X/Open XA transaction
 				identification */

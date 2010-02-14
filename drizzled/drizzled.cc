@@ -48,6 +48,7 @@
 #include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
@@ -1381,7 +1382,7 @@ static int init_server_components(plugin::Registry &plugins)
     }
   }
 
-  if (plugin::StorageEngine::recover(0))
+  if (plugin::XaStorageEngine::recoverAllXids(0))
   {
     unireg_abort(1);
   }

@@ -29,6 +29,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 
 namespace drizzled
 {
@@ -381,7 +382,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
 
     // Release latches in case bulk insert takes a long time
-    plugin::StorageEngine::releaseTemporaryLatches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     error=write_record(session, table ,&info);
     if (error)
@@ -1253,7 +1254,7 @@ bool select_insert::send_data(List<Item> &values)
     return(1);
 
   // Release latches in case bulk insert takes a long time
-  plugin::StorageEngine::releaseTemporaryLatches(session);
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
 

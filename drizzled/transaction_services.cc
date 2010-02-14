@@ -38,6 +38,7 @@
 #include "drizzled/item/empty_string.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
@@ -352,7 +353,7 @@ namespace drizzled
     times per transaction.
 
 */
-void TransactionServices::trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine)
+void TransactionServices::trans_register_ha(Session *session, bool all, plugin::TransactionalStorageEngine *engine)
 {
   TransactionContext *trans;
   ResourceContext *resource_context;
@@ -373,7 +374,7 @@ void TransactionServices::trans_register_ha(Session *session, bool all, plugin::
   resource_context->setResource(engine);
   trans->registerResource(resource_context);
 
-  trans->no_2pc|= not engine->has_2pc();
+  trans->no_2pc|= not engine->hasTwoPhaseCommit();
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
 }
@@ -492,7 +493,6 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
       {
         ResourceContext *resource_context= *it;
         int err;
-        plugin::StorageEngine *engine= resource_context->getResource();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -500,11 +500,9 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
         */
         if (! resource_context->hasModifiedData())
           continue;
-        /*
-          Sic: we know that prepare() is not NULL since otherwise
-          trans->no_2pc would have been set.
-        */
-        if ((err= engine->prepare(session, normal_transaction)))
+
+        plugin::StorageEngine *engine= resource_context->getResource();
+        if ((err= static_cast<plugin::XaStorageEngine *>(engine)->prepare(session, normal_transaction)))
         {
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
@@ -546,7 +544,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
     {
       int err;
       ResourceContext *resource_context= *it;
-      plugin::StorageEngine *engine= resource_context->getResource();
+      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
       if ((err= engine->commit(session, normal_transaction)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
@@ -604,7 +602,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
     {
       int err;
       ResourceContext *resource_context= *it;
-      plugin::StorageEngine *engine= resource_context->getResource();
+      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
       if ((err= engine->rollback(session, normal_transaction)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -759,7 +757,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
   {
     int err;
     ResourceContext *resource_context= *it;
-    plugin::StorageEngine *engine= resource_context->getResource();
+    plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
     assert(engine != NULL);
     if ((err= engine->rollbackToSavepoint(session, sv)))
     { // cannot happen
@@ -767,7 +765,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
       error= 1;
     }
     status_var_increment(session->status_var.ha_savepoint_rollback_count);
-    trans->no_2pc|= not engine->has_2pc();
+    trans->no_2pc|= not engine->hasTwoPhaseCommit();
   }
   /*
     rolling back the transaction in all storage engines that were not part of
@@ -802,7 +800,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
     {
       ResourceContext *resource_context= *it;
       int err;
-      plugin::StorageEngine *engine= resource_context->getResource();
+      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
       if ((err= engine->rollback(session, !(0))))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -836,7 +834,7 @@ int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
     {
       ResourceContext *resource_context= *it;
       int err;
-      plugin::StorageEngine *engine= resource_context->getResource();
+      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
       assert(engine);
       if ((err= engine->setSavepoint(session, sv)))
       { // cannot happen
@@ -865,7 +863,7 @@ int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &
   {
     int err;
     ResourceContext *resource_context= *it;
-    plugin::StorageEngine *engine= resource_context->getResource();
+    plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
     assert(engine);
     if ((err= engine->releaseSavepoint(session, sv)))
     { // cannot happen
