@@ -7,6 +7,7 @@ message Table {
     STANDARD = 0;
     TEMPORARY = 1;
     INTERNAL = 2;
+    FUNCTION = 3;
   }
 
   message StorageEngine {

@@ -72,9 +72,11 @@ str_or_nil(const char *str)
 
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
-int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
+
+int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
 {
   register int flag;
+
   while (*wildstr)
   {
     while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
@@ -115,6 +117,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
       return (1);
     }
   }
+
   return (*str != '\0');
 }
 
@@ -271,15 +274,20 @@ static bool store_db_create_info(const char *dbname, String *buffer, bool if_not
 {
   message::Schema schema;
 
-  if (!my_strcasecmp(system_charset_info, dbname,
-                     INFORMATION_SCHEMA_NAME.c_str()))
+  if (not my_strcasecmp(system_charset_info, dbname,
+                        INFORMATION_SCHEMA_NAME.c_str()))
   {
     dbname= INFORMATION_SCHEMA_NAME.c_str();
   }
+  else if (not my_strcasecmp(system_charset_info, dbname,
+                             "data_dictionary"))
+  {
+    dbname= "data_dictionary";
+  }
   else
   {
-    int r= get_database_metadata(dbname, &schema);
-    if(r < 0)
+    int r= get_database_metadata(dbname, schema);
+    if (r < 0)
       return true;
   }
 
@@ -729,7 +737,7 @@ public:
   {}
 };
 
-void mysqld_list_processes(Session *session, const char *user, bool)
+void mysqld_list_processes(Session *session, const char *user)
 {
   Item *field;
   List<Item> field_list;
@@ -858,6 +866,19 @@ class show_var_remove_if
 SHOW_VAR *getFrontOfStatusVars()
 {
   return all_status_vars.front();
+}
+
+SHOW_VAR *getCommandStatusVars()
+{
+  SHOW_VAR *tmp= all_status_vars.front();
+
+  for (; tmp->name; tmp++)
+  {
+    if (tmp->type == SHOW_ARRAY)
+      return (SHOW_VAR *) tmp->value;
+  }
+
+  return NULL;
 }
 
 /*
