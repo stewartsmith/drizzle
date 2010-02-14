@@ -171,7 +171,7 @@ plugin::InfoSchemaTable *KeyColumnUsageIS::getTable()
 
   if (key_col_table == NULL)
   {
-    key_col_table= new plugin::InfoSchemaTable("KEY_COLUMN_USAGE",
+    key_col_table= new plugin::InfoSchemaTable("OLD_KEY_COLUMN_USAGE",
                                                *columns,
                                                4, 5, false, true,
                                                0,

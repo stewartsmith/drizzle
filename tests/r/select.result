@@ -1933,24 +1933,24 @@ show tables from test like "s%";
 Tables_in_test (s%)
 show tables from test like "t?";
 Tables_in_test (t?)
-show full columns from t2;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	int	NULL	NO	PRI	NULL	auto_increment	#	
-fld1	int	NULL	NO	UNI	0		#	
-companynr	int	NULL	NO		0		#	
-fld3	varchar(30)	utf8_general_ci	NO	MUL			#	
-fld4	varchar(35)	utf8_general_ci	NO				#	
-fld5	varchar(35)	utf8_general_ci	NO				#	
-fld6	varchar(4)	utf8_general_ci	NO				#	
-show full columns from t2 from test like 'f%';
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-fld1	int	NULL	NO	UNI	0		#	
-fld3	varchar(30)	utf8_general_ci	NO	MUL			#	
-fld4	varchar(35)	utf8_general_ci	NO				#	
-fld5	varchar(35)	utf8_general_ci	NO				#	
-fld6	varchar(4)	utf8_general_ci	NO				#	
-show full columns from t2 from test like 's%';
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
+show columns from t2;
+Field	Type	Null	Key	Default	Extra
+auto	int	NO	PRI	NULL	auto_increment
+fld1	int	NO	UNI	0	
+companynr	int	NO		0	
+fld3	varchar(30)	NO	MUL		
+fld4	varchar(35)	NO			
+fld5	varchar(35)	NO			
+fld6	varchar(4)	NO			
+show columns from t2 from test like 'f%';
+Field	Type	Null	Key	Default	Extra
+fld1	int	NO	UNI	0	
+fld3	varchar(30)	NO	MUL		
+fld4	varchar(35)	NO			
+fld5	varchar(35)	NO			
+fld6	varchar(4)	NO			
+show columns from t2 from test like 's%';
+Field	Type	Null	Key	Default	Extra
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
 id bigint NOT NULL auto_increment,
@@ -2448,9 +2448,9 @@ create table t1 (f1 int not null auto_increment primary key, f2 varchar(10));
 create table t11 like t1;
 insert into t1 values(1,""),(2,"");
 show table status like 't1%';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
-t1	InnoDB	X	Compact	2	8192	X	X	X	X	X	X	X	X	utf8_general_ci	NULL			NULL
-t11	InnoDB	X	Compact	0	0	X	X	X	X	X	X	X	X	utf8_general_ci	NULL			NULL
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	InnoDB	X	DEFAULT	0	0	X	X	X	X	X	X	X	X	utf8_general_ci	0		
+t11	InnoDB	X	DEFAULT	0	0	X	X	X	X	X	X	X	X	utf8_general_ci	0		
 select 123 as a from t1 where f1 is null;
 a
 drop table t1,t11;

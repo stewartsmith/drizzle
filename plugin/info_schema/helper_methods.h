@@ -26,7 +26,7 @@
 bool show_status_array(drizzled::Session *session, 
                        const char *wild,
                        drizzled::SHOW_VAR *variables,
-                       drizzled::enum_var_type value_type,
+                       drizzled::sql_var_t value_type,
                        drizzled::system_status_var *status_var,
                        const char *prefix, drizzled::Table *table,
                        bool ucase_names,

@@ -24,6 +24,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
+#include <drizzled/message/schema.pb.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
@@ -335,7 +336,12 @@ public:
   static int dropTable(Session& session,
                        TableIdentifier &identifier,
                        bool generate_warning);
-  static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
+  static void getTableNames(const std::string& db_name, std::set<std::string> &set_of_names);
+
+  // @note All schema methods defined here
+  static void getSchemaNames(std::set<std::string>& set_of_names);
+  static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
+ 
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

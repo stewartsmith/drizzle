@@ -1512,8 +1512,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         field= item->tmp_table_field_from_field_type(&tmp_table, 0);
     else
       field= create_tmp_field(session, &tmp_table, item, item->type(),
-                              (Item ***) 0, &tmp_field, &def_field, 0, 0, 0, 0,
-                              0);
+                              (Item ***) 0, &tmp_field, &def_field, false,
+                              false, false, 0);
     if (!field ||
 	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :

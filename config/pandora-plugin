@@ -212,13 +212,13 @@ pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
     plugin_ac.write("""
 AC_ARG_WITH([%(name_with_dashes)s-plugin],[
 dnl indented wierd to make the help output correct
-AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=yes@:>@])
+AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=%(enabled)s@:>@])
 AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],[
     with_%(name)s_plugin="$withval"
     requested_%(name)s_plugin="yes"
   ],[
-    with_%(name)s_plugin="yes"
+    with_%(name)s_plugin="%(enabled)s"
     requested_%(name)s_plugin="no"
   ])
 AC_ARG_ENABLE([%(name_with_dashes)s-plugin],[
@@ -311,6 +311,7 @@ def expand_plugin_ini(plugin, plugin_dir):
     plugin['name_with_dashes']= plugin['name'].replace('_','-')
     if plugin.has_key('build_conditional'):
       plugin['has_build_conditional']=True
+      plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes" -a %(build_conditional)s' % plugin
     else:
       plugin['has_build_conditional']=False
       plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
@@ -338,6 +339,7 @@ def read_plugin_ini(plugin_dir):
                           license="PLUGIN_LICENSE_GPL",
                           name=os.path.basename(plugin_dir),
                           load_by_default="False",
+                          disabled="False",
                           static="False")
     parser=ConfigParser.ConfigParser(defaults= plugin_defaults)
     parser.read(plugin_file)
@@ -355,6 +357,12 @@ def read_plugin_ini(plugin_dir):
    
     if plugin.has_key('load_by_default'):
       plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
+    if plugin.has_key('disabled'):
+      plugin['disabled']=parser.getboolean('plugin','disabled')
+    if plugin['disabled']:
+      plugin['enabled']="no"
+    else:
+      plugin['enabled']="yes"
     if plugin.has_key('static'):
       plugin['static']= parser.getboolean('plugin','static')
     if plugin.has_key('testsuite'):

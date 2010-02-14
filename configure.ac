@@ -22,11 +22,9 @@ dnl Version from the AC_INIT call below is overridden later
 dnl So don't update it here
 AC_INIT([drizzle],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
-AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42, skip-visibility, version-from-vc)
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, skip-visibility, version-from-vc)
 
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
@@ -39,12 +37,11 @@ AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
-AS_IF([test "x$YACC" = "x" -a "$ac_cv_building_from_bzr" = "yes"],[
+AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
 
-PANDORA_WITH_GETTEXT
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
@@ -120,6 +117,7 @@ AC_CONFIG_FILES(Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/drizzle.server support-files/drizzle-log-rotate
  support-files/smf/install.sh dnl
+ support-files/drizzle.spec dnl
  support-files/smf/drizzle.xml dnl
  support-files/smf/drizzle)
 

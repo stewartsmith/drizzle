@@ -647,7 +647,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
       table_list       The table to change.
       alter_info       Lists of fields, keys to be changed, added
                        or dropped.
-      order_num        How many order_st BY fields has been specified.
+      order_num        How many ORDER BY fields has been specified.
       order            List of fields to order_st BY.
       ignore           Whether we have ALTER IGNORE Table
 
