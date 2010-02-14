@@ -198,7 +198,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
-			      drizzled/ha_trx_info.h \
 			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
 			      drizzled/hash.h \
@@ -323,6 +322,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
+			      drizzled/resource_context.h \
 			      drizzled/security_context.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
@@ -416,6 +416,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/time_functions.h \
 			      drizzled/tmp_table_param.h \
 			      drizzled/transaction_services.h \
+			      drizzled/transaction_context.h \
 			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
@@ -593,7 +594,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/units.cc \
 			   drizzled/function/user_var_as_out_param.cc \
 			   drizzled/ha_commands.cc \
-			   drizzled/ha_trx_info.cc \
 			   drizzled/hybrid_type_traits.cc \
 			   drizzled/hybrid_type_traits_decimal.cc \
 			   drizzled/hybrid_type_traits_integer.cc \
@@ -679,6 +679,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/query_id.cc \
 			   drizzled/records.cc \
 			   drizzled/replication_services.cc \
+			   drizzled/resource_context.cc \
 			   drizzled/session.cc \
 			   drizzled/session_list.cc \
 			   drizzled/set_var.cc \
@@ -753,6 +754,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/thr_lock.cc \
 			   drizzled/time_functions.cc \
 			   drizzled/transaction_services.cc \
+			   drizzled/transaction_context.cc \
 			   drizzled/tztime.cc \
 			   drizzled/uniques.cc \
 			   drizzled/user_var_entry.cc \
