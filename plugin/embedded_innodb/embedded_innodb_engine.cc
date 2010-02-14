@@ -544,15 +544,40 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
+  ib_cursor_first(cursor);
+
   return(0);
 }
 
 
 int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
 {
-  return(HA_ERR_END_OF_FILE);
+  ib_err_t err;
+
+  err= ib_cursor_read_row(cursor, tuple);
+
+  if (err != DB_SUCCESS) // FIXME
+    return HA_ERR_END_OF_FILE;
+
+  int colnr= 0;
+
+  for (Field **field=table->field ; *field ; field++, colnr++)
+  {
+    ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
+    (**field).set_notnull();
+  }
+
+  ib_tuple_clear(tuple);
+
+  err= ib_cursor_next(cursor);
+
+  return 0;
 }
 
+int EmbeddedInnoDBCursor::rnd_end()
+{
+  return 0;
+}
 
 int EmbeddedInnoDBCursor::rnd_pos(unsigned char *, unsigned char *)
 {

@@ -39,6 +39,7 @@ public:
   int write_row(unsigned char * buf);
   int rnd_init(bool scan);
   int rnd_next(unsigned char *buf);
+  int rnd_end();
   int rnd_pos(unsigned char * buf, unsigned char *pos);
 
   int index_read_map(unsigned char * buf, const unsigned char * key, drizzled::key_part_map keypart_map,
