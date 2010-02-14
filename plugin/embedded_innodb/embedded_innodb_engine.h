@@ -53,6 +53,11 @@ public:
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
+
+private:
+  ib_trx_t transaction;
+  ib_crsr_t cursor;
+  ib_tpl_t tuple;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */

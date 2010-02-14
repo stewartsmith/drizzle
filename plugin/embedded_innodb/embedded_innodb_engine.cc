@@ -21,8 +21,6 @@
 #include <drizzled/error.h>
 #include "drizzled/internal/my_pthread.h"
 
-#include "embedded_innodb_engine.h"
-
 #include <fcntl.h>
 
 #include <string>
@@ -37,6 +35,10 @@
 #include "libinnodb_datadict_dump_func.h"
 
 #include "embedded_innodb-1.0/innodb.h"
+
+#include "embedded_innodb_engine.h"
+
+#include <drizzled/field.h>
 
 using namespace std;
 using namespace google;
@@ -110,13 +112,24 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
   :Cursor(engine_arg, table_arg)
 { }
 
-int EmbeddedInnoDBCursor::open(const char *, int, uint32_t)
+int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  ib_err_t err= ib_cursor_open_table(name+2, transaction, &cursor);
+  assert (err==DB_SUCCESS);
+
+  tuple= ib_clust_read_tuple_create(cursor);
+
   return(0);
 }
 
 int EmbeddedInnoDBCursor::close(void)
 {
+  ib_tuple_delete(tuple);
+  ib_cursor_close(cursor);
+  ib_trx_commit(transaction);
+
   return 0;
 }
 
@@ -509,7 +522,24 @@ const char *EmbeddedInnoDBCursor::index_type(uint32_t)
 
 int EmbeddedInnoDBCursor::write_row(unsigned char *)
 {
-  return(table->next_number_field ? update_auto_increment() : 0);
+  if (table->next_number_field)
+    update_auto_increment();
+
+  ib_err_t err;
+  int colnr= 0;
+
+  for (Field **field=table->field ; *field ; field++, colnr++)
+  {
+    err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
+    assert (err==DB_SUCCESS);
+  }
+
+  err= ib_cursor_insert_row(cursor, tuple);
+  assert (err==DB_SUCCESS);
+
+  ib_tuple_clear(tuple);
+
+  return 0;
 }
 
 int EmbeddedInnoDBCursor::rnd_init(bool)
