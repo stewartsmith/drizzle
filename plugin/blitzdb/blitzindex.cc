@@ -96,6 +96,16 @@ int BlitzTree::close(void) {
   return 0;
 }
 
+int BlitzTree::create_cursor(void) {
+  bt_cursor = tcbdbcurnew(btree);
+  return (bt_cursor != NULL) ? 0 : HA_ERR_OUT_OF_MEM;
+}
+
+void BlitzTree::destroy_cursor(void) {
+  tcbdbcurdel(bt_cursor);
+  bt_cursor = NULL;
+}
+
 int BlitzTree::write(const char *key, const size_t klen,
                      const char *val, const size_t vlen) {
   return (tcbdbput(btree, key, klen, val, vlen)) ? 0 : 1;
@@ -134,17 +144,13 @@ int BlitzTree::write_unique(const char *key, const size_t klen,
 }
 
 char *BlitzTree::first_key(int *row_len) {
-  BDBCUR *cursor = tcbdbcurnew(btree);
   char *key;
 
   /* Means that the index is empty. */
-  if (!tcbdbcurfirst(cursor)) {
-    tcbdbcurdel(cursor);
+  if (!tcbdbcurfirst(bt_cursor))
     return NULL;
-  }
 
-  key = (char *)tcbdbcurkey(cursor, row_len);
-  tcbdbcurdel(cursor);
+  key = (char *)tcbdbcurkey(bt_cursor, row_len);
   return key;
 }
 

@@ -287,9 +287,9 @@ update t1 set id = 1.0 where id = 2.0;
 update t1 set id = 1.1 where id = 2.1;
 select * from t1;
 id	textual
+1	one-zero
+1.1	one-one
 2.2	one-two
 2.3	one-three
 2.4	one-four
-1	one-zero
-1.1	one-one
 drop table t1;

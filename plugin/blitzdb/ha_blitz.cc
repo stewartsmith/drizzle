@@ -384,13 +384,17 @@ void ha_blitz::position(const unsigned char *) {
          updateable_key_len);
 }
 
-const char *ha_blitz::index_type(uint32_t key_num) {
-  return (key_num == table->s->primary_key) ? "HASH" : "BTREE";
+const char *ha_blitz::index_type(uint32_t /*key_num*/) {
+  return "BTREE";
 }
 
 int ha_blitz::index_init(uint32_t key_num, bool) {
   active_index = key_num;
   sql_command_type = session_sql_command(current_session);
+
+  /* Means that the index file is empty. */
+  if (share->btrees[key_num].create_cursor() != 0)
+    return HA_ERR_OUT_OF_MEM;
 
   /* This is unlikely to happen but just for assurance, re-obtain
      the lock if this thread already has a certain lock. This makes
@@ -476,6 +480,8 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 int ha_blitz::index_end(void) {
   updateable_key = NULL;
   updateable_key_len = 0;
+
+  share->btrees[active_index].destroy_cursor();
 
   if (thread_locked)
     critical_section_exit();
@@ -604,7 +610,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
       return rv;
 
     /* Check if the old key is in the database. If it is then delete
-       it before writing the row with a new key. TODO: delete_keys(); */
+       it before writing the row with a new key. */
     char *key, *fetched;
     int klen, fetched_len;
 

@@ -168,12 +168,13 @@ public:
 class BlitzTree {
 private:
   TCBDB *btree;
+  BDBCUR *bt_cursor;
   char *keybuf;
   size_t keybuf_len;
 
 public:
-  BlitzTree() : keybuf_len(BLITZ_MAX_KEY_LEN), length(0), nparts(0),
-                type(0), unique(false) {}
+  BlitzTree() : bt_cursor(NULL), keybuf_len(BLITZ_MAX_KEY_LEN), length(0),
+                nparts(0), type(0), unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
@@ -189,6 +190,8 @@ public:
   int drop(const char *path, const int key_num);
   int rename(const char *from, const char *to, const int key_num);
   int close(void);
+  int create_cursor(void);
+  void destroy_cursor(void);
 
   /* BTREE INDEX WRITE RELATED */
   int write(const char *key, const size_t klen, const char *val,
