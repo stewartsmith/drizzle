@@ -842,7 +842,7 @@ public:
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
   };
-  enum enum_var_type option_type;
+  sql_var_t option_type;
 
   int nest_level;
   uint8_t describe;
@@ -852,9 +852,6 @@ public:
   */
   uint8_t derived_tables;
 
-  /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
-  bool verbose;
-  
   /* Was the IGNORE symbol found in statement */
   bool ignore;
 

@@ -51,7 +51,7 @@ static inline void make_upper(char *buf)
 bool show_status_array(Session *session, 
                        const char *wild,
                        SHOW_VAR *variables,
-                       enum enum_var_type value_type,
+                       sql_var_t value_type,
                        struct system_status_var *status_var,
                        const char *prefix, Table *table,
                        bool ,
@@ -174,8 +174,8 @@ bool show_status_array(Session *session,
           break;
         case SHOW_KEY_CACHE_LONGLONG:
           value= (char*) dflt_key_cache + (ulong)value;
-	  end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
-	  break;
+          end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
+          break;
         case SHOW_UNDEF:
           break;                                        // Return empty string
         case SHOW_SYS:                                  // Cannot happen
