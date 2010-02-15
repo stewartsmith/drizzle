@@ -1,0 +1,20 @@
+# Drizzle's data dictionary.
+
+CREATE SCHEMA data_dictionary;
+
+use data_dictionary;
+
+show create table CHARACTER_SETS ;
+show create table COLLATIONS ;
+
+SELECT * FROM character_sets ORDER BY CHARACTER_SET_NAME;
+SELECT * FROM collations ORDER BY COLLATION_NAME;
+
+# Slap tests for concurrency
+CREATE SCHEMA drizzleslap;
+
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.character_sets" --delimiter=";"
+#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.collations" --delimiter=";"
+
+DROP SCHEMA drizzleslap;
+DROP SCHEMA data_dictionary;

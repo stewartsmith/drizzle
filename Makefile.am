@@ -42,7 +42,7 @@ DIST_SUBDIRS = ${SUBDIRS} tests
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/autorun.sh Doxyfile \
-			config/bzr_revinfo \
+			config/pandora_vc_revinfo \
 			extra/run_cpplint.sh  \
 			extra/cpplint.py \
 			extra/clean_source.sh \
