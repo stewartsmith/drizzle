@@ -3111,7 +3111,22 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
         | DATABASE '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_database();
+	    std::string database_str("database");
+	    const plugin::Function *udf= plugin::Function::get(database_str.c_str(), database_str.length());
+            Session *session= YYSession;
+            Item *item= NULL;
+
+            if (udf)
+            {
+              item= Create_udf_func::s_singleton.create(session, udf, NULL);
+            } else {
+              my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", database_str.c_str());
+            }
+
+            if (! ($$= item))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
