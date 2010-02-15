@@ -29,7 +29,7 @@ class Session;
 namespace memory { class Root; }
 
 Session *_current_session(void);
-#define current_session _current_session()
+#define current_session ::drizzled::_current_session()
 memory::Root *current_mem_root(void);
 
 } /* namespace drizzled */

@@ -47,7 +47,7 @@ public:
   bool crashed;             /* Meta file is crashed */
   uint64_t mean_rec_length;
   char real_path[FN_REFLEN];
-  unsigned int  version;
+  uint64_t  version;
   drizzled::ha_rows rows_recorded;    /* Number of rows in tables */
   drizzled::ha_rows version_rows;
 };

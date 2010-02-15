@@ -73,7 +73,7 @@
 #include "config.h"
 #include "transaction_log.h"
 #include "transaction_log_index.h"
-#include "info_schema.h"
+#include "data_dictionary_schema.h"
 #include "print_transaction_message.h"
 #include "hexdump_transaction_message.h"
 #include "background_worker.h"
@@ -127,10 +127,10 @@ static bool sysvar_transaction_log_checksum_enabled= false;
  */
 static uint32_t sysvar_transaction_log_sync_method= 0;
 
-/** Views defined in info_schema.cc */
-extern plugin::InfoSchemaTable *transaction_log_view;
-extern plugin::InfoSchemaTable *transaction_log_entries_view;
-extern plugin::InfoSchemaTable *transaction_log_transactions_view;
+/** DATA_DICTIONARY views */
+static TransactionLogTool *transaction_log_tool;
+static TransactionLogEntriesTool *transaction_log_entries_tool;
+static TransactionLogTransactionsTool *transaction_log_transactions_tool;
 
 /** Index defined in transaction_log_index.cc */
 extern TransactionLogIndex *transaction_log_index;
@@ -430,15 +430,14 @@ static int init(drizzled::plugin::Registry &registry)
     }
     registry.add(transaction_log);
 
-    /* Setup the INFORMATION_SCHEMA views for the transaction log */
-    if (initViewMethods() ||
-        initViewColumns() || 
-        initViews())
-      return 1; /* Error message output handled in functions above */
+    /* Setup DATA_DICTIONARY views */
 
-    registry.add(transaction_log_view);
-    registry.add(transaction_log_entries_view);
-    registry.add(transaction_log_transactions_view);
+    transaction_log_tool= new(std::nothrow)TransactionLogTool;
+    registry.add(transaction_log_tool);
+    transaction_log_entries_tool= new(std::nothrow)TransactionLogEntriesTool;
+    registry.add(transaction_log_entries_tool);
+    transaction_log_transactions_tool= new(std::nothrow)TransactionLogTransactionsTool;
+    registry.add(transaction_log_transactions_tool);
 
     /* Setup the module's UDFs */
     print_transaction_message_func_factory=
@@ -487,14 +486,13 @@ static int deinit(drizzled::plugin::Registry &registry)
     delete transaction_log;
     delete transaction_log_index;
 
-    /* Cleanup the INFORMATION_SCHEMA views */
-    registry.remove(transaction_log_view);
-    registry.remove(transaction_log_entries_view);
-    registry.remove(transaction_log_transactions_view);
-
-    cleanupViewMethods();
-    cleanupViewColumns();
-    cleanupViews();
+    /* Cleanup the DATA_DICTIONARY views */
+    registry.remove(transaction_log_tool);
+    delete transaction_log_tool;
+    registry.remove(transaction_log_entries_tool);
+    delete transaction_log_entries_tool;
+    registry.remove(transaction_log_transactions_tool);
+    delete transaction_log_transactions_tool;
 
     /* Cleanup module UDFs */
     registry.remove(print_transaction_message_func_factory);

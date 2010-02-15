@@ -28,20 +28,10 @@
 #include "drizzled/show.h"
 
 #include "helper_methods.h"
-#include "character_set.h"
-#include "collation.h"
-#include "collation_char_set.h"
 #include "columns.h"
 #include "key_column_usage.h"
-#include "modules.h"
-#include "open_tables.h"
-#include "plugins.h"
-#include "processlist.h"
 #include "referential_constraints.h"
-#include "schemata.h"
 #include "table_constraints.h"
-#include "tables.h"
-#include "table_names.h"
 #include "statistics.h"
 #include "status.h"
 #include "variables.h"
@@ -59,27 +49,19 @@ using namespace std;
  */
 static int infoSchemaInit(drizzled::plugin::Registry& registry)
 {
-  registry.add(CharacterSetIS::getTable());
-  registry.add(CollationIS::getTable());
-  registry.add(CollationCharSetIS::getTable());
   registry.add(ColumnsIS::getTable());
-  registry.add(KeyColumnUsageIS::getTable());
   registry.add(GlobalStatusIS::getTable());
-  registry.add(GlobalVariablesIS::getTable());
-  registry.add(OpenTablesIS::getTable());
-  registry.add(ModulesIS::getTable());
-  registry.add(PluginsIS::getTable());
-  registry.add(ProcessListIS::getTable());
-  registry.add(ReferentialConstraintsIS::getTable());
-  registry.add(SchemataIS::getTable());
-  registry.add(SessionStatusIS::getTable());
   registry.add(SessionVariablesIS::getTable());
-  registry.add(StatisticsIS::getTable());
-  registry.add(StatusIS::getTable());
+  registry.add(GlobalVariablesIS::getTable());
+  registry.add(SessionStatusIS::getTable());
+  registry.add(ReferentialConstraintsIS::getTable());
   registry.add(TableConstraintsIS::getTable());
-  registry.add(TablesIS::getTable());
-  registry.add(TableNamesIS::getTable());
+  registry.add(StatusIS::getTable());
+  registry.add(KeyColumnUsageIS::getTable());
   registry.add(VariablesIS::getTable());
+  registry.add(StatisticsIS::getTable());
+#if 0
+#endif
 
   return 0;
 }
@@ -92,15 +74,6 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
  */
 static int infoSchemaDone(drizzled::plugin::Registry& registry)
 {
-  registry.remove(CharacterSetIS::getTable());
-  CharacterSetIS::cleanup();
-
-  registry.remove(CollationIS::getTable());
-  CollationIS::cleanup();
-
-  registry.remove(CollationCharSetIS::getTable());
-  CollationCharSetIS::cleanup();
-
   registry.remove(ColumnsIS::getTable());
   ColumnsIS::cleanup();
 
@@ -113,23 +86,8 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(GlobalVariablesIS::getTable());
   GlobalVariablesIS::cleanup();
 
-  registry.remove(OpenTablesIS::getTable());
-  OpenTablesIS::cleanup();
-
-  registry.remove(ModulesIS::getTable());
-  ModulesIS::cleanup();
-
-  registry.remove(PluginsIS::getTable());
-  PluginsIS::cleanup();
-
-  registry.remove(ProcessListIS::getTable());
-  ProcessListIS::cleanup();
-
   registry.remove(ReferentialConstraintsIS::getTable());
   ReferentialConstraintsIS::cleanup();
-
-  registry.remove(SchemataIS::getTable());
-  SchemataIS::cleanup();
 
   registry.remove(SessionStatusIS::getTable());
   SessionStatusIS::cleanup();
@@ -145,12 +103,6 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
 
   registry.remove(TableConstraintsIS::getTable());
   TableConstraintsIS::cleanup();
-
-  registry.remove(TablesIS::getTable());
-  TablesIS::cleanup();
-
-  registry.remove(TableNamesIS::getTable());
-  TableNamesIS::cleanup();
 
   registry.remove(VariablesIS::getTable());
   VariablesIS::cleanup();

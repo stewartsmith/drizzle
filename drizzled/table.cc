@@ -2370,16 +2370,11 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
 
-static void make_internal_temporary_table_path(Session *session, char* path)
+static void make_internal_temporary_table_path(Session *session, char *path)
 {
-  /* if we run out of slots or we are not using tempool */
   snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
            session->thread_id, session->tmp_table++);
 
-  /*
-    No need to change table name to lower case as we are only creating
-    MyISAM or HEAP tables here
-  */
   internal::fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 }
 
@@ -2401,7 +2396,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool  using_unique_constraint= false;
   bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
-  char  *tmpname,path[FN_REFLEN];
+  char  *tmpname;
+  char  path[FN_REFLEN];
   unsigned char	*pos, *group_buff, *bitmaps;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
