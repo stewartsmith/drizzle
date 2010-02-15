@@ -857,7 +857,7 @@ CREATE TABLE t1(c INT)
 --echo
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 
 --echo
@@ -869,7 +869,7 @@ ALTER TABLE t1 ROW_FORMAT = REDUNDANT;
 --echo
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 
 --echo
