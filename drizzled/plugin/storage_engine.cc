@@ -734,7 +734,6 @@ bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, 
 }
 
 void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
->>>>>>> MERGE-SOURCE
 {
   char tmp_path[FN_REFLEN];
 
