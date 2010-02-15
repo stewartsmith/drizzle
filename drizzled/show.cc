@@ -72,9 +72,11 @@ str_or_nil(const char *str)
 
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
-int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
+
+int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
 {
   register int flag;
+
   while (*wildstr)
   {
     while (*wildstr && *wildstr != internal::wild_many && *wildstr != internal::wild_one)
@@ -115,6 +117,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
       return (1);
     }
   }
+
   return (*str != '\0');
 }
 
@@ -271,15 +274,20 @@ static bool store_db_create_info(const char *dbname, String *buffer, bool if_not
 {
   message::Schema schema;
 
-  if (!my_strcasecmp(system_charset_info, dbname,
-                     INFORMATION_SCHEMA_NAME.c_str()))
+  if (not my_strcasecmp(system_charset_info, dbname,
+                        INFORMATION_SCHEMA_NAME.c_str()))
   {
     dbname= INFORMATION_SCHEMA_NAME.c_str();
   }
+  else if (not my_strcasecmp(system_charset_info, dbname,
+                             "data_dictionary"))
+  {
+    dbname= "data_dictionary";
+  }
   else
   {
-    int r= get_database_metadata(dbname, &schema);
-    if(r < 0)
+    int r= get_database_metadata(dbname, schema);
+    if (r < 0)
       return true;
   }
 
@@ -708,7 +716,12 @@ public:
   uint64_t thread_id;
   time_t start_time;
   uint32_t   command;
-  string user, host, db, proc_info, state_info, query;
+  string user;
+  string host;
+  string db;
+  string proc_info;
+  string state_info;
+  string query;
   thread_info(uint64_t thread_id_arg,
               time_t start_time_arg,
               uint32_t command_arg,
@@ -724,7 +737,7 @@ public:
   {}
 };
 
-void mysqld_list_processes(Session *session,const char *user, bool)
+void mysqld_list_processes(Session *session, const char *user)
 {
   Item *field;
   List<Item> field_list;
@@ -751,9 +764,9 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
     {
       tmp= *it;
-      Security_context *tmp_sctx= &tmp->security_ctx;
+      const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
       internal::st_my_thread_var *mysys_var;
-      if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->client->isConnected() && (not user || (not tmp_sctx->getUser().compare(user))))
       {
 
         if ((mysys_var= tmp->mysys_var))
@@ -779,10 +792,10 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         thread_infos.push_back(thread_info(tmp->thread_id,
                                            tmp->start_time,
                                            tmp->command,
-                                           tmp_sctx->user.empty()
+                                           tmp_sctx->getUser().empty()
                                              ? string("unauthenticated user")
-                                             : tmp_sctx->user,
-                                           tmp_sctx->ip,
+                                             : tmp_sctx->getUser(),
+                                           tmp_sctx->getIp(),
                                            tmp->db,
                                            tmp_proc_info,
                                            tmp_state_info,
@@ -853,6 +866,19 @@ class show_var_remove_if
 SHOW_VAR *getFrontOfStatusVars()
 {
   return all_status_vars.front();
+}
+
+SHOW_VAR *getCommandStatusVars()
+{
+  SHOW_VAR *tmp= all_status_vars.front();
+
+  for (; tmp->name; tmp++)
+  {
+    if (tmp->type == SHOW_ARRAY)
+      return (SHOW_VAR *) tmp->value;
+  }
+
+  return NULL;
 }
 
 /*

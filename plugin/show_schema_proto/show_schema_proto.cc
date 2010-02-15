@@ -81,7 +81,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   string proto_as_text("");
   message::Schema proto;
 
-  int err= get_database_metadata(db, &proto);
+  int err= get_database_metadata(db, proto);
 
   if (err != 0)
   {

@@ -5,8 +5,8 @@ Database	Create Database
 foo	CREATE DATABASE `foo`
 show schemas;
 Database
-information_schema
 foo
+information_schema
 mysql
 test
 drop schema foo;

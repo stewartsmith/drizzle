@@ -68,7 +68,7 @@ plugin::InfoSchemaTable *GlobalVariablesIS::getTable()
 
   if (glob_var_table == NULL)
   {
-    glob_var_table= new plugin::InfoSchemaTable("GLOBAL_VARIABLES",
+    glob_var_table= new plugin::InfoSchemaTable("OLD_GLOBAL_VARIABLES",
                                                 *status_columns,
                                                 -1, -1, false, false,
                                                 0, 
@@ -96,7 +96,7 @@ plugin::InfoSchemaTable *SessionVariablesIS::getTable()
 {
   if (sess_var_table == NULL)
   {
-    sess_var_table= new plugin::InfoSchemaTable("SESSION_VARIABLES",
+    sess_var_table= new plugin::InfoSchemaTable("OLD_SESSION_VARIABLES",
                                                 *status_columns,
                                                 -1, -1, false, false, 0,
                                                 methods);
@@ -122,7 +122,7 @@ plugin::InfoSchemaTable *VariablesIS::getTable()
 {
   if (var_table == NULL)
   {
-    var_table= new plugin::InfoSchemaTable("VARIABLES",
+    var_table= new plugin::InfoSchemaTable("OLD_VARIABLES",
                                            *status_columns,
                                            -1, -1, true, false, 0,
                                            methods);
@@ -147,9 +147,8 @@ int VariablesISMethods::fillTable(Session *session,
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   const string schema_table_name= schema_table->getTableName();
-  enum enum_var_type option_type= OPT_SESSION;
-  bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
-  bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
+  sql_var_t option_type= OPT_SESSION;
+  bool sorted_vars= (schema_table_name.compare("OLD_VARIABLES") == 0);
 
   if (lex->option_type == OPT_GLOBAL ||
       schema_table_name.compare("GLOBAL_VARIABLES") == 0)
@@ -159,7 +158,7 @@ int VariablesISMethods::fillTable(Session *session,
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
-                         option_type, NULL, "", table, upper_case_names, schema_table);
+                         option_type, NULL, "", table, false, schema_table);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
   return res;
 }
