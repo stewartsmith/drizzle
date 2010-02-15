@@ -715,7 +715,7 @@ void StorageEngine::getSchemaNames(set<string>& set_of_names)
 /*
   Return value is "if parsed"
 */
-bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
   int ret;
 
@@ -733,7 +733,7 @@ bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, 
   return ret == 0 ? true : false;
 }
 
-void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
+void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 {
   char tmp_path[FN_REFLEN];
 

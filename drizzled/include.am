@@ -754,7 +754,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/thr_lock.cc \
 			   drizzled/time_functions.cc \
 			   drizzled/transaction_services.cc \
-			   drizzled/transaction_context.cc \
 			   drizzled/tztime.cc \
 			   drizzled/uniques.cc \
 			   drizzled/user_var_entry.cc \
