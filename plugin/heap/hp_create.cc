@@ -17,7 +17,6 @@
 
 #include <drizzled/common.h>
 #include <drizzled/error.h>
-#include "drizzled/my_error.h"
 
 #include <string.h>
 #include <algorithm>
