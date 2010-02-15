@@ -21,7 +21,7 @@
 
 #include "drizzled/util/test.h"
 #include "drizzled/global_charset_info.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 #include <cassert>
 #include <algorithm>

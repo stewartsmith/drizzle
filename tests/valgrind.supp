@@ -330,7 +330,7 @@
    fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv
@@ -350,7 +350,7 @@
    fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
    fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv
@@ -846,7 +846,7 @@
    fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
 }
 
 {
@@ -864,7 +864,7 @@
    fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
 }
@@ -1200,7 +1200,7 @@
    fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
    fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv
@@ -1246,7 +1246,7 @@
    fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
    fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv
@@ -1281,7 +1281,7 @@
    fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
    fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv
@@ -1302,14 +1302,13 @@
    fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEm
    fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv
    fun:session_thread
    fun:start_thread
 }
-
 
 {
    Badness inside of libc.
@@ -1346,7 +1345,7 @@
    fun:_ZN8drizzled18mysql_create_tableEPNS_7SessionERNS_15TableIdentifierEPNS_24st_ha_create_informationEPNS_7message5TableEPNS_9AlterInfoEbjb
    fun:_ZN8drizzled9statement11CreateTable7executeEv
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
-   fun:_ZN8drizzledL11mysql_parseEPNS_7SessionEPKcjPS3_
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcjPS3_
    fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
    fun:_ZN8drizzled7Session16executeStatementEv
    fun:_ZN8drizzled7Session3runEv

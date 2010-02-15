@@ -7,14 +7,13 @@
 --exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh start
 
 --error 1105
-select * 
-from information_schema.memcached_stats;
+select * from information_schema.memcached_stats;
 
 #
 # Look at the current value of the memcached related system variable
 #
 select variable_name, variable_value
-from information_schema.global_variables
+from data_dictionary.global_variables
 where variable_name = 'memcached_stats_servers';
 
 #
@@ -28,7 +27,7 @@ where variable_name = 'memcached_stats_servers';
 #
 --replace_column 2 #
 select variable_name, variable_value
-from information_schema.global_variables
+from data_dictionary.global_variables
 where variable_name = 'memcached_stats_servers';
 
 --replace_column 2 # 3 # 4 # 5 # 6 # 7 # 8 # 9 # 13 # 14 # 15 # 21 # 22 # 23 # 24 # 25 #

@@ -1,14 +1,13 @@
-select * 
-from information_schema.memcached_stats;
+select * from information_schema.memcached_stats;
 ERROR HY000: No value in MEMCACHED_STATS_SERVERS variable.
 select variable_name, variable_value
-from information_schema.global_variables
+from data_dictionary.global_variables
 where variable_name = 'memcached_stats_servers';
 variable_name	variable_value
-memcached_stats_servers	
+memcached_stats_servers	18446744073709551615
 set global memcached_stats_servers = 'localhost:MC_A_PORT';;
 select variable_name, variable_value
-from information_schema.global_variables
+from data_dictionary.global_variables
 where variable_name = 'memcached_stats_servers';
 variable_name	variable_value
 memcached_stats_servers	#
