@@ -25,7 +25,6 @@
 #include <drizzled/function/str/left.h>
 #include <drizzled/function/str/repeat.h>
 #include <drizzled/function/str/replace.h>
-#include <drizzled/function/str/reverse.h>
 #include <drizzled/function/str/right.h>
 #include <drizzled/function/str/set_collation.h>
 #include <drizzled/function/str/substr.h>

@@ -153,7 +153,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/quote.h \
 			      drizzled/function/str/repeat.h \
 			      drizzled/function/str/replace.h \
-			      drizzled/function/str/reverse.h \
 			      drizzled/function/str/right.h \
 			      drizzled/function/str/set_collation.h \
 			      drizzled/function/str/str_conv.h \
@@ -549,7 +548,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/quote.cc \
 			   drizzled/function/str/repeat.cc \
 			   drizzled/function/str/replace.cc \
-			   drizzled/function/str/reverse.cc \
 			   drizzled/function/str/right.cc \
 			   drizzled/function/str/set_collation.cc \
 			   drizzled/function/str/str_conv.cc \

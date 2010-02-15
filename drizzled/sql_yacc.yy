@@ -301,6 +301,21 @@ static bool setup_select_in_parentheses(LEX *lex)
   return false;
 }
 
+static Item* reserved_keyword_function(const std::string &name, List<Item> *item_list)
+{
+  const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
+  Item *item= NULL;
+
+  if (udf)
+  {
+    item= Create_udf_func::s_singleton.create(current_session, udf, item_list);
+  } else {
+    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+  }
+
+  return item;
+}
+
 } /* namespace drizzled; */
 
 using namespace drizzled;
@@ -3111,23 +3126,12 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
         | DATABASE '(' ')'
           {
-	    std::string database_str("database");
-	    const plugin::Function *udf= plugin::Function::get(database_str.c_str(), database_str.length());
-            Session *session= YYSession;
-            Item *item= NULL;
-
-            if (udf)
-            {
-              item= Create_udf_func::s_singleton.create(session, udf, NULL);
-            } else {
-              my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", database_str.c_str());
-            }
-
-            if (! ($$= item))
+            std::string database_str("database");
+            if (! ($$= reserved_keyword_function(database_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
-          }
+	  }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | MICROSECOND_SYM '(' expr ')'
@@ -3141,7 +3145,15 @@ function_call_conflict:
         | REPLACE '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_replace($3,$5,$7); }
         | REVERSE_SYM '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_reverse($3); }
+          {
+            std::string reverse_str("reverse");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
         ;

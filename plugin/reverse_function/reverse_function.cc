@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,12 +20,27 @@
 
 #include "config.h"
 
-#include <drizzled/function/str/reverse.h>
+#include <drizzled/plugin/function.h>
+#include <drizzled/function/str/strfunc.h>
 
-namespace drizzled
+using namespace drizzled;
+
+class ReverseFunction :public Item_str_func
 {
+  String tmp_value;
+public:
+  ReverseFunction() :Item_str_func() {}
+  String *val_str(String *);
+  void fix_length_and_dec();
+  const char *func_name() const { return "reverse"; }
 
-String *Item_func_reverse::val_str(String *str)
+  bool check_argument_count(int n)
+  {
+    return n == 1;
+  }
+};
+
+String *ReverseFunction::val_str(String *str)
 {
   assert(fixed == 1);
   String *res = args[0]->val_str(str);
@@ -69,11 +85,40 @@ String *Item_func_reverse::val_str(String *str)
   return &tmp_value;
 }
 
-
-void Item_func_reverse::fix_length_and_dec()
+void ReverseFunction::fix_length_and_dec()
 {
   collation.set(args[0]->collation);
   max_length = args[0]->max_length;
 }
 
-} /* namespace drizzled */
+plugin::Create_function<ReverseFunction> *reverse_function= NULL;
+
+static int initialize(drizzled::plugin::Registry &registry)
+{
+  reverse_function= new plugin::Create_function<ReverseFunction>("reverse");
+  registry.add(reverse_function);
+  return 0;
+}
+
+static int finalize(drizzled::plugin::Registry &registry)
+{
+   registry.remove(reverse_function);
+   delete reverse_function;
+   return 0;
+}
+
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "reverse_function",
+  "1.0",
+  "Stewart Smith",
+  "reverses a string",
+  PLUGIN_LICENSE_GPL,
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
+  NULL,   /* status variables */
+  NULL,   /* system variables */
+  NULL    /* config options */
+}
+DRIZZLE_DECLARE_PLUGIN_END;
