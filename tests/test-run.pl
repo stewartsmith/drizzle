@@ -3248,7 +3248,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     mtr_tofile($dbx_init_file,
-               "stop in mysql_parse\n" .
+               "stop in drizzled::mysql_parse\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
@@ -3304,7 +3304,7 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
-	       "break mysql_parse\n" .
+	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
@@ -3369,7 +3369,7 @@ sub ddd_arguments {
     mtr_tofile($gdb_init_file,
 	       "file $$exe\n" .
 	       "set args $str\n" .
-	       "break mysql_parse\n" .
+	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end");

@@ -32,7 +32,6 @@
 #include <drizzled/function/str/substr.h>
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/user.h>
-#include <drizzled/function/str/weight_string.h>
 
 #include <drizzled/function/time/curdate.h>
 #include <drizzled/function/time/date_add_interval.h>

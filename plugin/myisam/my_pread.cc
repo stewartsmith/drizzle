@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "myisam_priv.h"
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 #include <cerrno>
 #include <unistd.h>
 
