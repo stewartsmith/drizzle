@@ -77,7 +77,7 @@ public:
     if (sysvar_auth_http_enable == false)
       return true;
 
-    assert(session->security_ctx.user.c_str());
+    assert(session->getSecurityContext().getUser().c_str());
     assert(password);
 
 
@@ -86,12 +86,12 @@ public:
 #if defined(HAVE_CURLOPT_USERNAME)
 
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
-                         session->security_ctx.user.c_str());
+                         session->getSecurityContext().getUser().c_str());
     rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password);
 
 #else
 
-    string userpwd= session->security_ctx.user;
+    string userpwd= session->getSecurityContext().getUser();
     userpwd.append(":");
     userpwd.append(password);
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpwd.c_str());

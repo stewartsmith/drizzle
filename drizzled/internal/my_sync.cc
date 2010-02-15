@@ -19,7 +19,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "drizzled/my_error.h"
+#include "drizzled/error.h"
 
 namespace drizzled
 {

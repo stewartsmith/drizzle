@@ -28,7 +28,6 @@ Smart ALTER TABLE
 #include <drizzled/table.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/my_error.h"
 
 extern "C" {
 #include "log0log.h"
