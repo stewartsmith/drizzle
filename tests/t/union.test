@@ -474,18 +474,24 @@ insert t1 select a+1, a+b from t1;
 insert t1 select a+1, a+b from t1;
 insert t1 select a+1, a+b from t1;
 FLUSH STATUS;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where a=7;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where b=13;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where b=13 union select count(*) from t1 where a=7;
+--replace_column 2 #
 show status like 'Slow_queries';
 select count(*) from t1 where a=7 union select count(*) from t1 where b=13;
+--replace_column 2 #
 show status like 'Slow_queries';
 # additional test for examined rows
 flush status;
 select a from t1 where b not in (1,2,3) union select a from t1 where b not in (4,5,6); 
+--replace_column 2 #
 show status like 'Slow_queries';
 drop table t1;
 

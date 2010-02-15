@@ -1189,12 +1189,12 @@ id	a
 4	ddddddd
 show status like 'Handler_read%';
 Variable_name	Value
-Handler_read_first	1
-Handler_read_key	8
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	6
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 DROP TABLE t1,t2;
 CREATE TABLE t1 (c int  PRIMARY KEY, e int NOT NULL);
 INSERT INTO t1 VALUES (1,0), (2,1);
