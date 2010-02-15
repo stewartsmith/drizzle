@@ -114,6 +114,14 @@ public:
       (void) realloc(str_length);
     return Ptr;
   }
+  inline char *c_str()
+  {
+    if (Ptr && str_length < Alloced_length)
+      Ptr[str_length]=0;
+    else
+      (void) realloc(str_length);
+    return Ptr;
+  }
   void append_identifier(const char *name, uint32_t length);
 
   void set(String &str,uint32_t offset,uint32_t arg_length)

@@ -32,6 +32,7 @@ AC_DEFUN([_PANDORA_SEARCH_LIBMEMCACHED],[
     ])
   ],[
     ac_cv_libmemcached="no"
+    ac_cv_libmemcachedprotocol="no"
   ])
   
   AC_CACHE_CHECK([if libmemcached has memcached_server_fn],
@@ -60,3 +61,8 @@ AC_DEFUN([PANDORA_REQUIRE_LIBMEMCACHED],[
       AC_MSG_ERROR([libmemcached is required for ${PACKAGE}]))
 ])
 
+AC_DEFUN([PANDORA_REQUIRE_LIBMEMCACHEDPROTOCOL],[
+  AC_REQUIRE([PANDORA_HAVE_LIBMEMCACHED])
+  AS_IF([test x$ac_cv_libmemcachedprotocol = xno],
+      AC_MSG_ERROR([libmemcachedprotocol is required for ${PACKAGE}]))
+])

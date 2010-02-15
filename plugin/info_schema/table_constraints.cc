@@ -129,7 +129,7 @@ plugin::InfoSchemaTable *TableConstraintsIS::getTable()
 
   if (tc_table == NULL)
   {
-    tc_table= new plugin::InfoSchemaTable("TABLE_CONSTRAINTS",
+    tc_table= new plugin::InfoSchemaTable("OLD_TABLE_CONSTRAINTS",
                                           *columns,
                                           3, 4, false, true,
                                           0,
