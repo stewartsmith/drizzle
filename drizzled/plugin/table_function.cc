@@ -151,30 +151,6 @@ bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
   return ret;
 }
 
-void plugin::TableFunction::Generator::push(uint64_t arg)
-{
-  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
-  columns_iterator++;
-}
-
-void plugin::TableFunction::Generator::push(uint32_t arg)
-{
-  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
-  columns_iterator++;
-}
-
-void plugin::TableFunction::Generator::push(int64_t arg)
-{
-  (*columns_iterator)->store(arg, false);
-  columns_iterator++;
-}
-
-void plugin::TableFunction::Generator::push(int32_t arg)
-{
-  (*columns_iterator)->store(arg, false);
-  columns_iterator++;
-}
-
 void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 {
   assert(columns_iterator);
@@ -194,25 +170,6 @@ void plugin::TableFunction::Generator::push()
 {
   assert((*columns_iterator)->type()  == DRIZZLE_TYPE_VARCHAR);
   (*columns_iterator)->set_null();
-  columns_iterator++;
-}
-
-void plugin::TableFunction::Generator::push(const std::string& arg)
-{
-  push(arg.c_str(), arg.length());
-}
-
-void plugin::TableFunction::Generator::push(bool arg)
-{
-  if (arg)
-  {
-    (*columns_iterator)->store("TRUE", 4, scs);
-  }
-  else
-  {
-    (*columns_iterator)->store("FALSE", 5, scs);
-  }
-
   columns_iterator++;
 }
 

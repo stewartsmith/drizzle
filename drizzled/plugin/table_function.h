@@ -104,13 +104,11 @@ public:
       return false;
     }
 
-    void push(uint64_t arg);
-    void push(uint32_t arg);
-    void push(int64_t arg);
-    void push(int32_t arg);
+    template<class T>
+    void push(T arg);
+
     void push(const char *arg, uint32_t length= 0);
     void push(const std::string& arg);
-    void push(bool arg);
     void push();
 
     bool isWild(const std::string &predicate);
@@ -163,6 +161,58 @@ public:
                  uint32_t field_length,
                  bool is_default_null= false);
 };
+
+template <class T>
+inline void TableFunction::Generator::push(T arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
+template <>
+inline void TableFunction::Generator::push(int32_t arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
+template<>
+inline void TableFunction::Generator::push(bool arg)
+{
+  if (arg)
+  {
+    (*columns_iterator)->store("TRUE", 4, scs);
+  }
+  else
+  {
+    (*columns_iterator)->store("FALSE", 5, scs);
+  }
+
+  columns_iterator++;
+}
+
+template<>
+inline void TableFunction::Generator::push(const char *arg)
+{
+  assert(columns_iterator);
+  assert(*columns_iterator);
+  assert(arg);
+  uint32_t length= strlen(arg);
+
+  if (not length)
+    return push();
+
+  (*columns_iterator)->store(arg, length, scs);
+  (*columns_iterator)->set_notnull();
+  columns_iterator++;
+}
+
+
+template<>
+inline void TableFunction::Generator::push(const std::string& arg)
+{
+  push(arg.c_str(), static_cast<uint32_t>(arg.length()));
+}
 
 } /* namespace plugin */
 } /* namespace drizzled */
