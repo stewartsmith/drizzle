@@ -348,6 +348,9 @@ static void print_ror_scans_arr(Table *table,
                                 const char *msg,
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end);
+static void print_ror_scans_vector(Table *table,
+                                   const char *msg,
+                                   vector<struct st_ror_scan_info *> &vec);
 
 static SEL_TREE *tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
 
@@ -1084,7 +1087,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
               Try constructing covering ROR-intersect only if it looks possible
               and worth doing.
             */
-            if (!rori_trp->is_covering && can_build_covering &&
+            if (rori_trp->isRowRetrievalNecessary() && can_build_covering &&
                 (rori_trp= get_best_covering_ror_intersect(&param, tree,
                                                            best_read_time)))
               best_trp= rori_trp;
@@ -1260,7 +1263,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
     all_scans_ror_able &= ((*ptree)->n_ror_scans > 0);
     all_scans_rors &= (*cur_child)->is_ror;
     if (pk_is_clustered &&
-        param->real_keynr[(*cur_child)->key_idx] ==
+        param->real_keynr[(*cur_child)->getKeyIndex()] ==
         param->table->s->primary_key)
     {
       cpk_scan= cur_child;
@@ -1368,7 +1371,7 @@ skip_to_ror_scan:
     {
       /* Ok, we have index_only cost, now get full rows scan cost */
       cost= param->table->cursor->
-              read_time(param->real_keynr[(*cur_child)->key_idx], 1,
+              read_time(param->real_keynr[(*cur_child)->getKeyIndex()], 1,
                         (*cur_child)->records) +
               rows2double((*cur_child)->records) / TIME_FOR_COMPARE;
     }
@@ -1386,8 +1389,10 @@ skip_to_ror_scan:
       roru_index_costs += (*cur_roru_plan)->read_cost;
     }
     else
+    {
       roru_index_costs +=
-        ((optimizer::RorIntersectReadPlan*)(*cur_roru_plan))->index_scan_costs;
+        ((optimizer::RorIntersectReadPlan *)(*cur_roru_plan))->getCostOfIndexScans();
+    }
     roru_total_records += (*cur_roru_plan)->records;
     roru_intersect_part *= (*cur_roru_plan)->records /
                            param->table->cursor->stats.records;
@@ -1427,8 +1432,7 @@ skip_to_ror_scan:
   {
     if ((roru= new (param->mem_root) optimizer::RorUnionReadPlan))
     {
-      roru->first_ror= roru_read_plans;
-      roru->last_ror= roru_read_plans + n_child_scans;
+      roru->merged_scans.assign(roru_read_plans, roru_read_plans + n_child_scans);
       roru->read_cost= roru_total_cost;
       roru->records= roru_total_records;
       return roru;
@@ -2087,13 +2091,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
       return trp;
 
-    if (! (trp->first_scan=
-           (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                       sizeof(ROR_SCAN_INFO*)*best_num)))
-      return NULL;
-    memcpy(trp->first_scan, intersect_scans, best_num*sizeof(ROR_SCAN_INFO*));
-    trp->last_scan=  trp->first_scan + best_num;
-    trp->is_covering= intersect_best->is_covering;
+    trp->ror_range_scans.assign(intersect_scans, intersect_scans + best_num);
+    trp->setRowRetrievalNecessary(intersect_best->is_covering);
     trp->read_cost= intersect_best->total_cost;
     /* Prevent divisons by zero */
     ha_rows best_rows = double2rows(intersect_best->out_rows);
@@ -2101,7 +2100,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
       best_rows= 1;
     set_if_smaller(param->table->quick_condition_rows, best_rows);
     trp->records= best_rows;
-    trp->index_scan_costs= intersect_best->index_scan_costs;
+    trp->setCostOfIndexScans(intersect_best->index_scan_costs);
     trp->cpk_scan= cpk_scan_used? cpk_scan: NULL;
   }
   return(trp);
@@ -2242,13 +2241,8 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   }
 
   uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  if (!(trp->first_scan= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                     sizeof(ROR_SCAN_INFO*)*
-                                                     best_num)))
-    return NULL;
-  memcpy(trp->first_scan, tree->ror_scans, best_num*sizeof(ROR_SCAN_INFO*));
-  trp->last_scan=  trp->first_scan + best_num;
-  trp->is_covering= true;
+  trp->ror_range_scans.assign(tree->ror_scans, tree->ror_scans + best_num);
+  trp->setRowRetrievalNecessary(true);
   trp->read_cost= total_cost;
   trp->records= records;
   trp->cpk_scan= NULL;
@@ -2352,7 +2346,7 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
       read_plan->records= best_records;
       read_plan->is_ror= tree->ror_scans_map.test(idx);
       read_plan->read_cost= read_time;
-      read_plan->mrr_buf_size= best_buf_size;
+      read_plan->setMRRBufferSize(best_buf_size);
     }
   }
 
@@ -2402,16 +2396,17 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
                                                 (retrieve_full_rows? (! is_covering) : false),
                                                 parent_alloc)))
   {
-    print_ror_scans_arr(param->table,
-                        "creating ROR-intersect",
-                        first_scan,
-                        last_scan);
+    print_ror_scans_vector(param->table,
+                           "creating ROR-intersect",
+                           ror_range_scans);
     alloc= parent_alloc ? parent_alloc : &quick_intersect->alloc;
-    for (; first_scan != last_scan; ++first_scan)
+    for (vector<struct st_ror_scan_info *>::iterator it= ror_range_scans.begin();
+         it != ror_range_scans.end();
+         ++it)
     {
       if (! (quick= optimizer::get_quick_select(param,
-                                                (*first_scan)->idx,
-                                                (*first_scan)->sel_arg,
+                                                (*it)->idx,
+                                                (*it)->sel_arg,
                                                 HA_MRR_USE_DEFAULT_IMPL | HA_MRR_SORTED,
                                                 0,
                                                 alloc)) ||
@@ -2446,7 +2441,6 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
 optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimizer::Parameter *param, bool, memory::Root *)
 {
   optimizer::QuickRorUnionSelect *quick_roru= NULL;
-  optimizer::TableReadPlan **scan= NULL;
   optimizer::QuickSelectInterface *quick= NULL;
   /*
     It is impossible to construct a ROR-union that will not retrieve full
@@ -2454,9 +2448,11 @@ optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimiz
   */
   if ((quick_roru= new optimizer::QuickRorUnionSelect(param->session, param->table)))
   {
-    for (scan= first_ror; scan != last_ror; scan++)
+    for (vector<optimizer::TableReadPlan *>::iterator it= merged_scans.begin();
+         it != merged_scans.end();
+         ++it)
     {
-      if (! (quick= (*scan)->make_quick(param, false, &quick_roru->alloc)) ||
+      if (! (quick= (*it)->make_quick(param, false, &quick_roru->alloc)) ||
           quick_roru->push_quick_back(quick))
       {
         return NULL;
@@ -6403,6 +6399,25 @@ static void print_ror_scans_arr(Table *table,
     if (tmp.length())
       tmp.append(',');
     tmp.append(table->key_info[(*start)->keynr].name);
+  }
+  if (! tmp.length())
+    tmp.append(STRING_WITH_LEN("(empty)"));
+}
+
+static void print_ror_scans_vector(Table *table,
+                                   const char *,
+                                   vector<struct st_ror_scan_info *> &vec)
+{
+  char buff[1024];
+  String tmp(buff,sizeof(buff),&my_charset_bin);
+  tmp.length(0);
+  for (vector<struct st_ror_scan_info *>::iterator it= vec.begin();
+       it != vec.end();
+       ++it)
+  {
+    if (tmp.length())
+      tmp.append(',');
+    tmp.append(table->key_info[(*it)->keynr].name);
   }
   if (! tmp.length())
     tmp.append(STRING_WITH_LEN("(empty)"));

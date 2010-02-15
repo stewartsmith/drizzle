@@ -25,7 +25,7 @@
 namespace drizzled
 {
 
-Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
+Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                      LEX_STRING component);
 
 /* A system variable */
@@ -33,10 +33,10 @@ Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
 class Item_func_get_system_var :public Item_func
 {
   sys_var *var;
-  enum_var_type var_type;
+  sql_var_t var_type;
   LEX_STRING component;
 public:
-  Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
+  Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
                            LEX_STRING *component_arg, const char *name_arg,
                            size_t name_len_arg);
   bool fix_fields(Session *session, Item **ref);
