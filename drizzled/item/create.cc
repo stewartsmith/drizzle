@@ -31,7 +31,6 @@
 #include <drizzled/function/str/elt.h>
 #include <drizzled/function/str/export_set.h>
 #include <drizzled/function/str/format.h>
-#include <drizzled/function/str/hex.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/function/str/pad.h>
@@ -708,21 +707,6 @@ protected:
 };
 
 
-class Create_func_hex : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_hex s_singleton;
-
-protected:
-  Create_func_hex() {}
-  virtual ~Create_func_hex() {}
-};
-
-
 class Create_func_ifnull : public Create_func_arg2
 {
 public:
@@ -1364,21 +1348,6 @@ public:
 protected:
   Create_func_ucase() {}
   virtual ~Create_func_ucase() {}
-};
-
-
-class Create_func_unhex : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_unhex s_singleton;
-
-protected:
-  Create_func_unhex() {}
-  virtual ~Create_func_unhex() {}
 };
 
 
@@ -2041,16 +2010,6 @@ Create_func_greatest::create_native(Session *session, LEX_STRING name,
   return new (session->mem_root) Item_func_max(*item_list);
 }
 
-
-Create_func_hex Create_func_hex::s_singleton;
-
-Item*
-Create_func_hex::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_hex(arg1);
-}
-
-
 Create_func_ifnull Create_func_ifnull::s_singleton;
 
 Item*
@@ -2614,16 +2573,6 @@ Create_func_ucase::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_ucase(arg1);
 }
 
-
-Create_func_unhex Create_func_unhex::s_singleton;
-
-Item*
-Create_func_unhex::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_unhex(arg1);
-}
-
-
 Create_func_unix_timestamp Create_func_unix_timestamp::s_singleton;
 
 Item*
@@ -2725,7 +2674,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("FROM_DAYS") }, BUILDER(Create_func_from_days)},
   { { C_STRING_WITH_LEN("FROM_UNIXTIME") }, BUILDER(Create_func_from_unixtime)},
   { { C_STRING_WITH_LEN("GREATEST") }, BUILDER(Create_func_greatest)},
-  { { C_STRING_WITH_LEN("HEX") }, BUILDER(Create_func_hex)},
   { { C_STRING_WITH_LEN("IFNULL") }, BUILDER(Create_func_ifnull)},
   { { C_STRING_WITH_LEN("INSTR") }, BUILDER(Create_func_instr)},
   { { C_STRING_WITH_LEN("ISNULL") }, BUILDER(Create_func_isnull)},
@@ -2770,7 +2718,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
   { { C_STRING_WITH_LEN("TO_DAYS") }, BUILDER(Create_func_to_days)},
   { { C_STRING_WITH_LEN("UCASE") }, BUILDER(Create_func_ucase)},
-  { { C_STRING_WITH_LEN("UNHEX") }, BUILDER(Create_func_unhex)},
   { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
   { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
   { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},

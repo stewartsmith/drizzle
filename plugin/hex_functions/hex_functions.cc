@@ -19,11 +19,49 @@
 
 #include "config.h"
 #include <drizzled/util/convert.h>
-#include <drizzled/function/str/hex.h>
 #include "drizzled/internal/m_string.h"
 
-namespace drizzled
+#include <drizzled/plugin/function.h>
+#include <drizzled/function/str/strfunc.h>
+
+using namespace drizzled;
+
+class HexFunction :public Item_str_func
 {
+  String tmp_value;
+public:
+  HexFunction() :Item_str_func() {}
+  const char *func_name() const { return "hex"; }
+  String *val_str(String *);
+  void fix_length_and_dec()
+  {
+    collation.set(default_charset());
+    decimals=0;
+    max_length=args[0]->max_length*2*collation.collation->mbmaxlen;
+  }
+
+  bool check_argument_count(int n) { return n == 1; }
+};
+
+class UnHexFunction :public Item_str_func
+{
+  String tmp_value;
+public:
+  UnHexFunction() :Item_str_func()
+  {
+    /* there can be bad hex strings */
+    maybe_null= 1;
+  }
+  const char *func_name() const { return "unhex"; }
+  String *val_str(String *);
+  void fix_length_and_dec()
+  {
+    collation.set(&my_charset_bin);
+    decimals=0;
+    max_length=(1+args[0]->max_length)/2;
+  }
+  bool check_argument_count(int n) { return n == 1; }
+};
 
 /**
   convert a hex digit into number.
@@ -38,7 +76,7 @@ static int hexchar_to_int(char c)
   return -1;
 }
 
-String *Item_func_hex::val_str(String *str)
+String *HexFunction::val_str(String *str)
 {
   String *res;
   assert(fixed == 1);
@@ -85,7 +123,7 @@ String *Item_func_hex::val_str(String *str)
 
   /** Convert given hex string to a binary string. */
 
-String *Item_func_unhex::val_str(String *str)
+String *UnHexFunction::val_str(String *str)
 {
   const char *from, *end;
   char *to;
@@ -124,4 +162,39 @@ String *Item_func_unhex::val_str(String *str)
   return &tmp_value;
 }
 
-} /* namespace drizzled */
+plugin::Create_function<HexFunction> *hex_function= NULL;
+plugin::Create_function<UnHexFunction> *unhex_function= NULL;
+
+static int initialize(drizzled::plugin::Registry &registry)
+{
+  hex_function= new plugin::Create_function<HexFunction>("hex");
+  unhex_function= new plugin::Create_function<UnHexFunction>("unhex");
+  registry.add(hex_function);
+  registry.add(unhex_function);
+  return 0;
+}
+
+static int finalize(drizzled::plugin::Registry &registry)
+{
+   registry.remove(hex_function);
+   registry.remove(unhex_function);
+   delete hex_function;
+   delete unhex_function;
+   return 0;
+}
+
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "hex_functions",
+  "1.0",
+  "Stewart Smith",
+  "Convert a string to HEX() or from UNHEX()",
+  PLUGIN_LICENSE_GPL,
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
+  NULL,   /* status variables */
+  NULL,   /* system variables */
+  NULL    /* config options */
+}
+DRIZZLE_DECLARE_PLUGIN_END;
