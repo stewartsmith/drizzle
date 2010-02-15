@@ -36,7 +36,6 @@
 #include <drizzled/function/str/pad.h>
 #include <drizzled/function/str/repeat.h>
 #include <drizzled/function/str/str_conv.h>
-#include <drizzled/function/str/substr.h>
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/uuid.h>
 
@@ -1258,21 +1257,6 @@ public:
 protected:
   Create_func_strcmp() {}
   virtual ~Create_func_strcmp() {}
-};
-
-
-class Create_func_substr_index : public Create_func_arg3
-{
-public:
-  using Create_func_arg3::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
-
-  static Create_func_substr_index s_singleton;
-
-protected:
-  Create_func_substr_index() {}
-  virtual ~Create_func_substr_index() {}
 };
 
 
@@ -2531,14 +2515,6 @@ Create_func_strcmp::create(Session *session, Item *arg1, Item *arg2)
 }
 
 
-Create_func_substr_index Create_func_substr_index::s_singleton;
-
-Item*
-Create_func_substr_index::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (session->mem_root) Item_func_substr_index(arg1, arg2, arg3);
-}
-
 Create_func_tan Create_func_tan::s_singleton;
 
 Item*
@@ -2713,7 +2689,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
   { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
-  { { C_STRING_WITH_LEN("SUBSTRING_INDEX") }, BUILDER(Create_func_substr_index)},
   { { C_STRING_WITH_LEN("TAN") }, BUILDER(Create_func_tan)},
   { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
   { { C_STRING_WITH_LEN("TO_DAYS") }, BUILDER(Create_func_to_days)},

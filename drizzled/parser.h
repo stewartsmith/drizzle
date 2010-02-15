@@ -27,7 +27,6 @@
 #include <drizzled/function/str/replace.h>
 #include <drizzled/function/str/right.h>
 #include <drizzled/function/str/set_collation.h>
-#include <drizzled/function/str/substr.h>
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/user.h>
 

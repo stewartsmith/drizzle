@@ -3089,13 +3089,51 @@ function_call_nonkeyword:
         | SUBDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 1); }
         | SUBSTRING '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5,$7); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            args->push_back($7);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr FROM expr FOR_SYM expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5,$7); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            args->push_back($7);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr FROM expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SYSDATE optional_braces
           { $$= new (YYSession->mem_root) Item_func_sysdate_local(); }
         | SYSDATE '(' expr ')'
