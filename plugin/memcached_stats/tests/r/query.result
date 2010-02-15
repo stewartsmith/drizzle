@@ -1,3 +1,4 @@
+create schema if not exists data_dictionary;
 select * from data_dictionary.memcached_stats;
 ERROR HY000: No value in MEMCACHED_STATS_SERVERS variable.
 select variable_name, variable_value

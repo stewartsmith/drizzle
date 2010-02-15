@@ -6,6 +6,10 @@
 --exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh stop
 --exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh start
 
+--disable_warnings
+create schema if not exists data_dictionary;
+--enable_warnings
+
 --error 1105
 select * from data_dictionary.memcached_stats;
 

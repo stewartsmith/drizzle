@@ -1,4 +1,4 @@
-create schema data_dictionary;
+create schema if not exists data_dictionary;
 select table_name
 from data_dictionary.tables
 where table_name like 'memcached%' ORDER BY table_name;
