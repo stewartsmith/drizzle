@@ -6,6 +6,8 @@
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert.inc
 
+CREATE SCHEMA DATA_DICTIONARY;
+
 # Query the DATA_DICTIONARY views and verify
 # that the information contained in them matches
 # the transaction log.
