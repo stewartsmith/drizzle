@@ -3,7 +3,10 @@
 #
 --disable_warnings
 drop table if exists t1,t2;
+drop schema if exists data_dictionary;
 --enable_warnings
+
+create schema data_dictionary;
 
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
@@ -64,24 +67,24 @@ drop table t1;
 set GLOBAL max_join_size=10;
 set max_join_size=100;
 show variables like 'max_join_size';
-select * from information_schema.session_variables where variable_name like 'max_join_size';
+select * from data_dictionary.session_variables where variable_name like 'max_join_size';
 --replace_result 18446744073709551615 HA_POS_ERROR 4294967295 HA_POS_ERROR
 show global variables like 'max_join_size';
 --replace_result 18446744073709551615 HA_POS_ERROR 4294967295 HA_POS_ERROR
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 set GLOBAL max_join_size=2000;
 show global variables like 'max_join_size';
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 set max_join_size=DEFAULT;
 --replace_result 18446744073709551615 HA_POS_ERROR 4294967295 HA_POS_ERROR
 show variables like 'max_join_size';
 --replace_result 18446744073709551615 HA_POS_ERROR 4294967295 HA_POS_ERROR
-select * from information_schema.session_variables where variable_name like 'max_join_size';
+select * from data_dictionary.session_variables where variable_name like 'max_join_size';
 set GLOBAL max_join_size=DEFAULT;
 --replace_result 18446744073709551615 HA_POS_ERROR 4294967295 HA_POS_ERROR
 show global variables like 'max_join_size';
 --replace_result 18446744073709551615 HA_POS_ERROR 4294967295 HA_POS_ERROR
-select * from information_schema.global_variables where variable_name like 'max_join_size';
+select * from data_dictionary.global_variables where variable_name like 'max_join_size';
 set @@max_join_size=1000, @@global.max_join_size=2000;
 select @@local.max_join_size, @@global.max_join_size;
 select @@identity,  length(@@version)>0;
@@ -93,31 +96,31 @@ explain extended select @@IDENTITY,last_insert_id(), @@identity;
 
 set global timed_mutexes=ON;
 show variables like 'timed_mutexes';
-select * from information_schema.session_variables where variable_name like 'timed_mutexes';
+select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
 set global timed_mutexes=0;
 show variables like 'timed_mutexes';
-select * from information_schema.session_variables where variable_name like 'timed_mutexes';
+select * from data_dictionary.session_variables where variable_name like 'timed_mutexes';
 
 set storage_engine=MYISAM, storage_engine="MEMORY";
 show local variables like 'storage_engine';
-select * from information_schema.session_variables where variable_name like 'storage_engine';
+select * from data_dictionary.session_variables where variable_name like 'storage_engine';
 show global variables like 'storage_engine';
-select * from information_schema.global_variables where variable_name like 'storage_engine';
+select * from data_dictionary.global_variables where variable_name like 'storage_engine';
 
 set GLOBAL myisam_max_sort_file_size=2000000;
 show global variables like 'myisam_max_sort_file_size';
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 set GLOBAL myisam_max_sort_file_size=default;
 --replace_result 9223372036853727232 FILE_SIZE 2146435072 FILE_SIZE
 show global variables like 'myisam_max_sort_file_size';
 --replace_result 9223372036853727232 FILE_SIZE 2146435072 FILE_SIZE
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 
 set global drizzle_protocol_buffer_length=1024;
 show global variables like 'drizzle_protocol_buffer_%';
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
+select * from data_dictionary.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 show global variables like 'drizzle_protocol_buffer_%';
-select * from information_schema.global_variables where variable_name like 'drizzle_protocol_buffer_%';
+select * from data_dictionary.global_variables where variable_name like 'drizzle_protocol_buffer_%';
 set global drizzle_protocol_buffer_length=1;
 show variables like 'drizzle_protocol_buffer_length';
 #warning 1292
@@ -125,17 +128,17 @@ set global drizzle_protocol_buffer_length=2000000000;
 show variables like 'drizzle_protocol_buffer_length';
 
 show variables like '%alloc%';
-select * from information_schema.session_variables where variable_name like '%alloc%';
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 set @@range_alloc_block_size=1024*16;
 set @@query_alloc_block_size=1024*17+2;
 set @@query_prealloc_size=1024*18;
 select @@query_alloc_block_size;
 show variables like '%alloc%';
-select * from information_schema.session_variables where variable_name like '%alloc%';
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 set @@range_alloc_block_size=default;
 set @@query_alloc_block_size=default, @@query_prealloc_size=default;
 show variables like '%alloc%';
-select * from information_schema.session_variables where variable_name like '%alloc%';
+select * from data_dictionary.session_variables where variable_name like '%alloc%';
 
 #
 # Bug #10904 Illegal mix of collations between
@@ -236,7 +239,7 @@ set global myisam_max_sort_file_size=4294967296;
 --replace_result 4294967296 MAX_FILE_SIZE 2146435072 MAX_FILE_SIZE
 show global variables like 'myisam_max_sort_file_size';
 --replace_result 4294967296 MAX_FILE_SIZE 2146435072 MAX_FILE_SIZE
-select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
+select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 set global myisam_max_sort_file_size=default;
 
 ## Bug #311084
@@ -294,7 +297,7 @@ drop table t1;
 
 SET GLOBAL table_open_cache=-1;
 SHOW VARIABLES LIKE 'table_open_cache';
-SELECT * FROM INFORMATION_SCHEMA.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
+SELECT * FROM DATA_DICTIONARY.SESSION_VARIABLES WHERE VARIABLE_NAME LIKE 'table_open_cache';
 SET GLOBAL table_open_cache=DEFAULT;
 
 #
@@ -396,7 +399,7 @@ set @@global.error_count=1;
 # Bug #10351: Setting ulong variable to > MAX_ULONG fails on 32-bit platform
 #
 --disable_query_log
-select VARIABLE_VALUE from information_schema.GLOBAL_VARIABLES where VARIABLE_NAME like "VERSION_COMPILE_MACHINE" into @arch;
+select VARIABLE_VALUE from data_dictionary.GLOBAL_VARIABLES where VARIABLE_NAME like "VERSION_COMPILE_MACHINE" into @arch;
 --enable_query_log
 # We technically do not care about 32bit hardware. -Brian
 #set @@max_heap_table_size= 4294967296;
@@ -427,12 +430,12 @@ set character_set_filesystem=utf8;
 #
 # Bug #17849: Show sql_big_selects in SHOW VARIABLES
 #
-set @old_sql_big_selects = @@sql_big_selects;
+set @sql_big_selects = @@sql_big_selects;
 set @@sql_big_selects = 1;
 show variables like 'sql_big_selects';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'sql_big_selects';
-set @@sql_big_selects = @old_sql_big_selects;
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'sql_big_selects';
+set @@sql_big_selects = @sql_big_selects;
 
 #
 # Bug #16195: SHOW VARIABLES doesn't report correctly sql_warnings and
@@ -440,18 +443,18 @@ set @@sql_big_selects = @old_sql_big_selects;
 # 
 set @@sql_notes = 0, @@sql_warnings = 0;
 show variables like 'sql_notes';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'sql_notes';
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'sql_notes';
 show variables like 'sql_warnings';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'sql_warnings';
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'sql_warnings';
 set @@sql_notes = 1, @@sql_warnings = 1;
 show variables like 'sql_notes';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'sql_notes';
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'sql_notes';
 show variables like 'sql_warnings';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'sql_warnings';
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'sql_warnings';
 
 #
 # Bug #15684: system variables cannot be SELECTed (e.g. @@version_comment)
@@ -471,41 +474,16 @@ select @@basedir, @@datadir, @@tmpdir;
 --replace_column 2 #
 show variables like 'basedir';
 --replace_column 2 #
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'basedir';
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'basedir';
 --replace_column 2 #
 show variables like 'datadir';
 --replace_column 2 #
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'datadir';
+# Bug 311025 Segmentation fault when accessing DATA_DICTIONARY
+#select * from data_dictionary.session_variables where variable_name like 'datadir';
 --replace_column 2 #
 show variables like 'tmpdir';
 --replace_column 2 #
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'tmpdir';
-
-#
-# Bug #19606: make ssl settings available via SHOW VARIABLES and @@variables
-# 
-# Don't actually output, since it depends on the system
-#--replace_column 1 # 2 # 3 # 4 # 5 #
-# Not supported in Drizzle
-#select @@ssl_ca, @@ssl_capath, @@ssl_cert, @@ssl_cipher, @@ssl_key;
-#--replace_column 2 #
-#show variables like 'ssl%';
-#--replace_column 2 #
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'ssl%' order by 1;
-
-#
-# Bug #19616: make log_queries_not_using_indexes available in SHOW VARIABLES
-# and as @@log_queries_not_using_indexes
-#
-# Not valid in Drizzle
-#select @@log_queries_not_using_indexes;
-#show variables like 'log_queries_not_using_indexes';
-# Bug 311025 Segmentation fault when accessing INFORMATION_SCHEMA
-#select * from information_schema.session_variables where variable_name like 'log_queries_not_using_indexes';
 
 #
 # Bug#20908: Crash if select @@""
@@ -558,3 +536,5 @@ set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 #
 --replace_column 2 #
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
+
+drop schema data_dictionary;
