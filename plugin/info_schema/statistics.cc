@@ -200,7 +200,7 @@ plugin::InfoSchemaTable *StatisticsIS::getTable()
 
   if (stats_table == NULL)
   {
-    stats_table= new plugin::InfoSchemaTable("STATISTICS",
+    stats_table= new plugin::InfoSchemaTable("OLD_STATISTICS",
                                              *columns,
                                              1, 2, false, true,
                                              0,

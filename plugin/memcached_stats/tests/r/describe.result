@@ -1,6 +1,6 @@
 select table_name
-from information_schema.tables
-where table_name like '%memcached%' ORDER BY table_name;
+from data_dictionary.tables
+where table_name like 'memcached%' ORDER BY table_name;
 table_name
 MEMCACHED_ANALYSIS
 MEMCACHED_STATS
