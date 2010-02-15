@@ -6,10 +6,6 @@
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert.inc
 
---disable_warnings
-CREATE SCHEMA IF NOT EXISTS DATA_DICTIONARY;
---enable_warnings
-
 # Query the DATA_DICTIONARY views and verify
 # that the information contained in them matches
 # the transaction log.
