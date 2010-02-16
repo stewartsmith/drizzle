@@ -35,6 +35,11 @@
 # endif
 #endif
 
+#if defined(HAVE_LOCALE_H)
+# include <locale.h>
+#endif
+
+
 #include "drizzled/plugin.h"
 #include "drizzled/gettext.h"
 #include "drizzled/configmake.h"

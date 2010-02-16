@@ -432,6 +432,7 @@ drizzled_libdrizzled_la_LIBADD= \
 				drizzled/util/libutil.la \
                                 drizzled/internal/libinternal.la \
                                 drizzled/message/libdrizzledmessage.la \
+				gnulib/libgnu.la \
                                 $(LIBZ) \
                                 $(LIBINTL) \
                                 ${LIBC_P} \

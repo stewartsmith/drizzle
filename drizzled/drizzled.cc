@@ -70,8 +70,6 @@
 #endif
 #include <sys/socket.h>
 
-#include <locale.h>
-
 
 #include <errno.h>
 #include <sys/stat.h>
