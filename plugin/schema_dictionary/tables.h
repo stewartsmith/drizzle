@@ -209,4 +209,4 @@ public:
   }
 };
 
-#endif // PLUGIN_SCHEMA_DICTIONARY_TABLES_H
+#endif /* PLUGIN_SCHEMA_DICTIONARY_TABLES_H */
