@@ -89,7 +89,9 @@ bool CollationsTool::Generator::populate()
 
         return true;
       }
-      cs++;
+      /* Sun Studio: unreachable
+       * cs++;
+       */
     }
 
     cl= all_charsets;
