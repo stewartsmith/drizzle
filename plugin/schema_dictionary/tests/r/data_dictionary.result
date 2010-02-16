@@ -243,12 +243,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -270,6 +264,8 @@ COLUMNS	CREATE TABLE `columns` (
   `NUMERIC_PRECISION` bigint NOT NULL DEFAULT '0',
   `NUMERIC_SCALE` bigint NOT NULL DEFAULT '0',
   `COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_KEY` varchar(5) NOT NULL DEFAULT '',
+  `EXTRA` varchar(20) NOT NULL DEFAULT '',
   `COLUMN_COMMENT` varchar(1024) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table INDEXES ;

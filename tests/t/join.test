@@ -576,6 +576,7 @@ flush status;
 select * from t1, t2, t3 where t3.a=t1.a and t2.a=t1.b;
 explain select * from t1, t2, t3 where t3.a=t1.a and t2.a=t1.b;
 --echo We expect rnd_next=5, and read_key must be 0 because of short-cutting:
+--replace_column 2 #
 show status like 'Handler_read%'; 
 drop table t1, t2, t3;
 
@@ -606,12 +607,14 @@ create table t2 (a int, b int, primary key(a));
 insert into t2 select @v:=A.a+10*B.a, @v  from t1 A, t1 B;
 
 explain select * from t1;
+--replace_column 2 #
 show status like '%cost%';
 select 'The cost of accessing t1 (dont care if it changes' '^';
 
 select 'vv: Following query must use ALL(t1), eq_ref(A), eq_ref(B): vv' Z;
 
 explain select * from t1, t2 A, t2 B where A.a = t1.a and B.a=A.b;
+--replace_column 2 #
 show status like '%cost%';
 select '^^: The above should be ~= 20 + cost(select * from t1). Value less than 20 is an error' Z;
 
