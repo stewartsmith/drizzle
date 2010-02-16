@@ -43,6 +43,9 @@ ColumnsTool::ColumnsTool() :
   add_field("NUMERIC_SCALE", plugin::TableFunction::NUMBER);
 
   add_field("COLLATION_NAME");
+
+  add_field("COLUMN_KEY", plugin::TableFunction::BOOLEAN);
+  add_field("EXTRA", 20);
   add_field("COLUMN_COMMENT", 1024);
 }
 
@@ -138,6 +141,12 @@ void ColumnsTool::Generator::fill()
 
  /* "COLLATION_NAME" */
   push(column.string_options().collation());
+
+ /* "COLUMN_KEY" */
+  push(false);
+
+ /* "EXTRA" */
+  push();
 
  /* "COLUMN_COMMENT" */
   push(column.comment());
