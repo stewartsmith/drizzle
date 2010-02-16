@@ -1132,20 +1132,20 @@ ROW_FORMAT = COMPACT;
 # - initial check;
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	Compact
+test	t1	COMPACT
 
 # - change ROW_FORMAT and check;
 
 ALTER TABLE t1 ROW_FORMAT = REDUNDANT;
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	Redundant
+test	t1	REDUNDANT
 
 # - that's it, cleanup.
 

@@ -360,36 +360,50 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     1                 out of memory or SHOW commands are not allowed
                       in this version of the server.
 */
+static bool _schema_select(Session *session, Select_Lex *sel,
+                           const string& schema_table_name)
+{
+  LEX_STRING db, table;
+  /*
+     We have to make non const db_name & table_name
+     because of lower_case_table_names
+  */
+  session->make_lex_string(&db, "data_dictionary", sizeof("data_dictionary"), false);
+  session->make_lex_string(&table, schema_table_name, false);
+
+  if (! sel->add_table_to_list(session, new Table_ident(db, table),
+                               NULL, 0, TL_READ))
+  {
+    return true;
+  }
+  return false;
+}
+
+int prepare_new_schema_table(Session *session, LEX *lex,
+                             const string& schema_table_name)
+{
+  Select_Lex *schema_select_lex= NULL;
+
+  Select_Lex *select_lex= lex->current_select;
+  assert(select_lex);
+  if (_schema_select(session, select_lex, schema_table_name))
+  {
+    return(1);
+  }
+  TableList *table_list= (TableList*) select_lex->table_list.first;
+  assert(table_list);
+  table_list->schema_select_lex= schema_select_lex;
+
+  return 0;
+}
 
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
                          const string& schema_table_name)
 {
   Select_Lex *schema_select_lex= NULL;
 
-
-  if (schema_table_name.compare("TABLES") == 0 ||
-      schema_table_name.compare("TABLE_NAMES") == 0)
-  {
-    LEX_STRING db;
-    size_t dummy;
-    if (lex->select_lex.db == NULL &&
-        lex->copy_db_to(&lex->select_lex.db, &dummy))
-    {
-      return (1);
-    }
-    schema_select_lex= new Select_Lex();
-    db.str= schema_select_lex->db= lex->select_lex.db;
-    schema_select_lex->table_list.first= NULL;
-    db.length= strlen(db.str);
-
-    if (check_db_name(&db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
-      return (1);
-    }
-  }
-  else if (schema_table_name.compare("COLUMNS") == 0 ||
-           schema_table_name.compare("STATISTICS") == 0)
+  if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
+           schema_table_name.compare("OLD_STATISTICS") == 0)
   {
     assert(table_ident);
     TableList **query_tables_last= lex->query_tables_last;
@@ -1641,6 +1655,11 @@ bool create_table_precheck(TableIdentifier &identifier)
   if (strcmp(identifier.getDBName(), "information_schema") == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
+    return true;
+  }
+  if (strcmp(identifier.getDBName(), DRIZZLE_DATA_DICTIONARY) == 0)
+  {
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DRIZZLE_DATA_DICTIONARY);
     return true;
   }
 

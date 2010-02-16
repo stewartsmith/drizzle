@@ -901,8 +901,15 @@ void Session::cleanup_after_query()
   @return  NULL on failure, or pointer to the LEX_STRING object
 */
 LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
-                                 const char* str, uint32_t length,
-                                 bool allocate_lex_string)
+                                     const std::string &str,
+                                     bool allocate_lex_string)
+{
+  return make_lex_string(lex_str, str.c_str(), str.length(), allocate_lex_string);
+}
+
+LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
+                                     const char* str, uint32_t length,
+                                     bool allocate_lex_string)
 {
   if (allocate_lex_string)
     if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))

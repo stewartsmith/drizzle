@@ -53,7 +53,7 @@ private:
 public:
   TableIdentifier( const char *db_arg,
                    const char *table_name_arg,
-                   tmp_table_type tmp_arg) :
+                   tmp_table_type tmp_arg= NO_TMP_TABLE) :
     path_inited(false),
     type(tmp_arg),
     db(db_arg),
@@ -68,6 +68,11 @@ public:
   const char *getPath();
 
   const char *getDBName() const
+  {
+    return db;
+  }
+
+  const char *getSchemaName() const
   {
     return db;
   }
