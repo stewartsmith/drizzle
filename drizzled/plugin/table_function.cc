@@ -171,7 +171,13 @@ void plugin::TableFunction::Generator::push(int64_t arg)
 
 void plugin::TableFunction::Generator::push(int32_t arg)
 {
-  (*columns_iterator)->store(arg, false);
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
+void plugin::TableFunction::Generator::push(size_t arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
   columns_iterator++;
 }
 
