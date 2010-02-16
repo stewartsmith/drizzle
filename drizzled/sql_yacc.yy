@@ -4656,7 +4656,7 @@ show_param:
              if (Lex->wild)
              {
                column_name.append(" (");
-               column_name.append(Lex->wild->c_str());
+               column_name.append(Lex->wild->ptr());
                column_name.append(")");
              }
 
@@ -4709,7 +4709,7 @@ show_param:
              if (Lex->wild)
              {
                column_name.append(" (");
-               column_name.append(Lex->wild->c_str());
+               column_name.append(Lex->wild->ptr());
                column_name.append(")");
              }
 
