@@ -33,6 +33,7 @@
 
 #include <string>
 #include <set>
+#include <algorithm>
 
 namespace drizzled
 {
