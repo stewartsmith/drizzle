@@ -968,12 +968,6 @@ DROP TABLE t1;
 
 --echo End of 5.1 tests
 
---source include/weight_string.inc
---source include/weight_string_l1.inc
-
---source include/weight_string.inc
---source include/weight_string_l1.inc
-
 #
 # Check strnxfrm() with odd length
 #

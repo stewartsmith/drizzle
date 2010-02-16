@@ -332,5 +332,5 @@ PRIMARY KEY (`id`)
 ) AUTO_INCREMENT=1;
 
 show fields from t1;
-select is_nullable from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
+select is_nullable from INFORMATION_SCHEMA.OLD_COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
 drop table t1;

@@ -707,4 +707,36 @@ bool message::shouldQuoteFieldValue(message::Table::Field::FieldType in_type)
   } 
 }
 
+drizzled::message::Table::Field::FieldType message::internalFieldTypeToFieldProtoType(enum enum_field_types type)
+{
+  switch (type) {
+  case DRIZZLE_TYPE_LONG:
+    return message::Table::Field::INTEGER;
+  case DRIZZLE_TYPE_DOUBLE:
+    return message::Table::Field::DOUBLE;
+  case DRIZZLE_TYPE_NULL:
+    assert(false); /* Not a user definable type */
+    return message::Table::Field::INTEGER; /* unreachable */
+  case DRIZZLE_TYPE_TIMESTAMP:
+    return message::Table::Field::TIMESTAMP;
+  case DRIZZLE_TYPE_LONGLONG:
+    return message::Table::Field::BIGINT;
+  case DRIZZLE_TYPE_DATETIME:
+    return message::Table::Field::DATETIME;
+  case DRIZZLE_TYPE_DATE:
+    return message::Table::Field::DATE;
+  case DRIZZLE_TYPE_VARCHAR:
+    return message::Table::Field::VARCHAR;
+  case DRIZZLE_TYPE_DECIMAL:
+    return message::Table::Field::DECIMAL;
+  case DRIZZLE_TYPE_ENUM:
+    return message::Table::Field::ENUM;
+  case DRIZZLE_TYPE_BLOB:
+    return message::Table::Field::BLOB;
+  }
+
+  assert(false);
+  return message::Table::Field::INTEGER; /* unreachable */
+}
+
 } /* namespace drizzled */
