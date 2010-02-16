@@ -59,7 +59,7 @@ bool CharacterSetsTool::Generator::populate()
       push(tmp_cs->comment);
 
       /* MAXLEN */
-      push((int64_t) tmp_cs->mbmaxlen);
+      push(tmp_cs->mbmaxlen);
 
       cs++;
 

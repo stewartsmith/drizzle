@@ -286,7 +286,7 @@ N_("No paths allowed for plugin library"),
 /* ER_UDF_EXISTS   */
 N_("Plugin '%-.192s' already exists"),
 /* ER_CANT_OPEN_LIBRARY   */
-N_("Can't open shared library '%-.192s' (errno: %d %-.128s)"),
+N_("Can't open shared library '%-.192s' (errno: %d %s)"),
 /* ER_CANT_FIND_DL_ENTRY */
 N_("Can't find symbol '%-.128s' in library '%-.128s'"),
 /* ER_FUNCTION_NOT_DEFINED   */

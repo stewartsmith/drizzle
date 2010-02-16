@@ -104,11 +104,15 @@ public:
       return false;
     }
 
-    template<class T>
-    void push(T arg);
+    void push(uint64_t arg);
+    void push(int64_t arg);
+    void push(uint32_t arg);
+    void push(int32_t arg);
+    void push(size_t arg);
 
     void push(const char *arg, uint32_t length= 0);
-    void push(const std::string& arg);
+    void push(const std::string &arg);
+    void push(bool arg);
     void push();
 
     bool isWild(const std::string &predicate);
@@ -162,21 +166,36 @@ public:
                  bool is_default_null= false);
 };
 
-template <class T>
-inline void TableFunction::Generator::push(T arg)
+inline void TableFunction::Generator::push(int64_t arg)
+{
+  (*columns_iterator)->store(arg, false);
+  columns_iterator++;
+}
+
+inline void TableFunction::Generator::push(uint64_t arg)
 {
   (*columns_iterator)->store(static_cast<int64_t>(arg), false);
   columns_iterator++;
 }
 
-template <>
 inline void TableFunction::Generator::push(int32_t arg)
 {
   (*columns_iterator)->store(static_cast<int64_t>(arg), false);
   columns_iterator++;
 }
 
-template<>
+inline void TableFunction::Generator::push(uint32_t arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
+inline void TableFunction::Generator::push(size_t arg)
+{
+  (*columns_iterator)->store(static_cast<int64_t>(arg), false);
+  columns_iterator++;
+}
+
 inline void TableFunction::Generator::push(bool arg)
 {
   if (arg)
@@ -191,25 +210,7 @@ inline void TableFunction::Generator::push(bool arg)
   columns_iterator++;
 }
 
-template<>
-inline void TableFunction::Generator::push(const char *arg)
-{
-  assert(columns_iterator);
-  assert(*columns_iterator);
-  assert(arg);
-  uint32_t length= strlen(arg);
-
-  if (not length)
-    return push();
-
-  (*columns_iterator)->store(arg, length, scs);
-  (*columns_iterator)->set_notnull();
-  columns_iterator++;
-}
-
-
-template<>
-inline void TableFunction::Generator::push(const std::string& arg)
+inline void TableFunction::Generator::push(const std::string &arg)
 {
   push(arg.c_str(), static_cast<uint32_t>(arg.length()));
 }
