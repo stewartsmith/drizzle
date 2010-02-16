@@ -210,6 +210,12 @@ delete from t1;
 insert into t1 values ('c'), ('a'), ('e'), ('b'), ('d');
 select * from t1;
 delete from t1;
+
+# Test it with multi byte characters (Japanese).
+insert into t1 values ('う'), ('お'), ('い'), ('あ'), ('え');
+insert into t1 values ('こ'), ('け'), ('か'), ('く'), ('き');
+select * from t1;
+
 drop table t1;
 
 # Test basic forward index scan on VARTEXT2 primary keys.

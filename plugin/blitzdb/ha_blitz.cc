@@ -26,6 +26,18 @@ static int free_share(BlitzShare *share);
 static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;
 
+/* A key stored in BlitzDB's B+Tree is a byte array that also includes
+   a key to that row in the data dictionary. Two keys are merged and
+   stored as a key because we want to avoid reading the leaf node and
+   thus save disk IO and some computation in the tree. Note that the
+   comparison function of BlitzDB's btree only takes into accound the
+   actual index key. See blitzcmp.cc for details.
+
+   With the above in mind, this helper function returns a pointer to
+   the dictionary key by calculating the offset. */
+static char *skip_btree_key(const char *key, const size_t skip_len,
+                            int *return_klen);
+
 int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
                                drizzled::message::Table &proto) {
   BlitzData dict;
@@ -408,67 +420,59 @@ int ha_blitz::index_init(uint32_t key_num, bool) {
 }
 
 int ha_blitz::index_first(unsigned char *buf) {
-  char *pk, *key, *row;
-  int pklen, klen, prefix_len, rlen;
+  char *dict_key, *bt_key, *row;
+  int dict_klen, bt_klen, prefix_len, rlen;
 
-  key = share->btrees[active_index].first_key(&klen);
+  bt_key = share->btrees[active_index].first_key(&bt_klen);
 
-  if (key == NULL)
+  if (bt_key == NULL)
     return HA_ERR_KEY_NOT_FOUND;
 
-  prefix_len = btree_key_length(key, active_index);
+  prefix_len = btree_key_length(bt_key, active_index);
+  dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
 
-  /* Set the PK pointer at the Dictionary Key region. */
-  pk = key + prefix_len;
-  pklen = uint2korr(pk);
-  pk += sizeof(uint16_t);
-
-  if ((row = share->dict.get_row(pk, pklen, &rlen)) == NULL) {
-    free(key);
+  if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
+    free(bt_key);
     return HA_ERR_KEY_NOT_FOUND;
   }
   
   unpack_row(buf, row, rlen);
 
   /* Keep track of the key. */ 
-  memcpy(key_buffer, key, klen);
+  memcpy(key_buffer, bt_key, bt_klen);
   updateable_key = key_buffer;
-  updateable_key_len = klen;
+  updateable_key_len = bt_klen;
   
-  free(key);
+  free(bt_key);
   free(row);
   return 0;
 }
 
 int ha_blitz::index_next(unsigned char *buf) {
-  char *pk, *key, *row;
-  int pklen, klen, prefix_len, rlen;
+  char *dict_key, *bt_key, *row;
+  int dict_klen, bt_klen, prefix_len, rlen;
 
-  key = share->btrees[active_index].next_key(&klen);
+  bt_key = share->btrees[active_index].next_key(&bt_klen);
 
-  if (key == NULL)
+  if (bt_key == NULL)
     return HA_ERR_KEY_NOT_FOUND;
   
-  prefix_len = btree_key_length(key, active_index);
+  prefix_len = btree_key_length(bt_key, active_index);
+  dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
 
-  /* Set the PK pointer at the Dictionary Key region. */
-  pk = key + prefix_len;
-  pklen = uint2korr(pk);
-  pk += sizeof(uint16_t);
-
-  if ((row = share->dict.get_row(pk, pklen, &rlen)) == NULL) {
-    free(key);
+  if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
+    free(bt_key);
     return HA_ERR_KEY_NOT_FOUND;
   }
 
   unpack_row(buf, row, rlen);
 
   /* Keep track of the key. */ 
-  memcpy(key_buffer, key, klen);
+  memcpy(key_buffer, bt_key, bt_klen);
   updateable_key = key_buffer;
-  updateable_key_len = klen;
+  updateable_key_len = bt_klen;
 
-  free(key);
+  free(bt_key);
   free(row);
   return 0;
 }
@@ -1065,6 +1069,14 @@ static int blitz_deinit(drizzled::plugin::Registry &registry) {
   registry.remove(blitz_engine);
   delete blitz_engine;
   return 0;
+}
+
+/* Read the prototype of this function for details. */
+static char *skip_btree_key(const char *key, const size_t skip_len,
+                            int *return_klen) {
+  char *pos = (char *)key;
+  *return_klen = uint2korr(pos + skip_len);
+  return pos + skip_len + sizeof(uint16_t);
 }
 
 DRIZZLE_PLUGIN(blitz_init, blitz_deinit, NULL, NULL);

@@ -356,6 +356,20 @@ c
 d
 e
 delete from t1;
+insert into t1 values ('う'), ('お'), ('い'), ('あ'), ('え');
+insert into t1 values ('こ'), ('け'), ('か'), ('く'), ('き');
+select * from t1;
+a
+あ
+い
+う
+え
+お
+か
+き
+く
+け
+こ
 drop table t1;
 create table t1 (a varchar(255) primary key) engine = blitzdb;
 insert into t1 values ('a'), ('b'), ('c'), ('d'), ('e');
