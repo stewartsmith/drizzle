@@ -143,15 +143,22 @@ int BlitzTree::write_unique(const char *key, const size_t klen,
   return rv;
 }
 
-char *BlitzTree::first_key(int *row_len) {
+char *BlitzTree::first_key(int *key_len) {
   char *key;
 
   /* Means that the index is empty. */
   if (!tcbdbcurfirst(bt_cursor))
     return NULL;
 
-  key = (char *)tcbdbcurkey(bt_cursor, row_len);
+  key = (char *)tcbdbcurkey(bt_cursor, key_len);
   return key;
+}
+
+char *BlitzTree::next_key(int *key_len) {
+  if (!tcbdbcurnext(bt_cursor))
+    return NULL;
+
+  return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
 int BlitzTree::delete_all(void) {

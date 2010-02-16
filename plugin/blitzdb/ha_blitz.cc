@@ -408,18 +408,69 @@ int ha_blitz::index_init(uint32_t key_num, bool) {
 }
 
 int ha_blitz::index_first(unsigned char *buf) {
-  if (active_index == table->s->primary_key) {
-    int length;
-    char *first_row = share->dict.first_row(&length);
+  char *pk, *key, *row;
+  int pklen, klen, prefix_len, rlen;
 
-    if (first_row == NULL)
-      return HA_ERR_KEY_NOT_FOUND;
+  key = share->btrees[active_index].first_key(&klen);
 
-    memcpy((char *)buf, first_row, length);
-    free(first_row);
-    return 0;
+  if (key == NULL)
+    return HA_ERR_KEY_NOT_FOUND;
+
+  prefix_len = btree_key_length(key, active_index);
+
+  /* Set the PK pointer at the Dictionary Key region. */
+  pk = key + prefix_len;
+  pklen = uint2korr(pk);
+  pk += sizeof(uint16_t);
+
+  if ((row = share->dict.get_row(pk, pklen, &rlen)) == NULL) {
+    free(key);
+    return HA_ERR_KEY_NOT_FOUND;
   }
-  return HA_ERR_UNSUPPORTED;
+  
+  unpack_row(buf, row, rlen);
+
+  /* Keep track of the key. */ 
+  memcpy(key_buffer, key, klen);
+  updateable_key = key_buffer;
+  updateable_key_len = klen;
+  
+  free(key);
+  free(row);
+  return 0;
+}
+
+int ha_blitz::index_next(unsigned char *buf) {
+  char *pk, *key, *row;
+  int pklen, klen, prefix_len, rlen;
+
+  key = share->btrees[active_index].next_key(&klen);
+
+  if (key == NULL)
+    return HA_ERR_KEY_NOT_FOUND;
+  
+  prefix_len = btree_key_length(key, active_index);
+
+  /* Set the PK pointer at the Dictionary Key region. */
+  pk = key + prefix_len;
+  pklen = uint2korr(pk);
+  pk += sizeof(uint16_t);
+
+  if ((row = share->dict.get_row(pk, pklen, &rlen)) == NULL) {
+    free(key);
+    return HA_ERR_KEY_NOT_FOUND;
+  }
+
+  unpack_row(buf, row, rlen);
+
+  /* Keep track of the key. */ 
+  memcpy(key_buffer, key, klen);
+  updateable_key = key_buffer;
+  updateable_key_len = klen;
+
+  free(key);
+  free(row);
+  return 0;
 }
 
 int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
@@ -721,6 +772,41 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
   }
 
   return ((char *)pos - pack_to);
+}
+
+size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
+  KEY *key_info = &table->key_info[key_num];
+
+  /* TODO: For better efficiency, workout whether the key
+           itself is fixed length or not rather than looking
+           at the table. */
+  if (share->fixed_length_table)
+    return key_info->key_length;
+
+  KEY_PART_INFO *key_part = key_info->key_part;
+  KEY_PART_INFO *key_part_end = key_part + key_info->key_parts;
+  char *pos = (char *)key;
+  uint64_t len = 0;
+  size_t rv = 0;
+
+  for (; key_part != key_part_end; key_part++) {
+    if (key_part->null_bit)
+      rv++;
+    if (key_part->type == HA_KEYTYPE_VARTEXT1) {
+      len = *(uint8_t *)pos;
+      rv += len + sizeof(uint8_t);
+    } else if (key_part->type == HA_KEYTYPE_VARTEXT2) {
+      len = uint2korr(pos);
+      rv += len + sizeof(uint16_t);
+    } else {
+      len = key_part->field->key_length();
+      rv += len;
+    }
+    pos += len;
+    len = 0;
+  }
+
+  return rv;
 }
 
 /* Converts a native Drizzle index key to BlitzDB's format. */

@@ -181,3 +181,42 @@ update t1 set id = 1.0 where id = 2.0;
 update t1 set id = 1.1 where id = 2.1;
 select * from t1;
 drop table t1;
+
+# Test basic forward index scan on INT primary keys.
+create table t1 (a int primary key) engine = blitzdb;
+insert into t1 values (1), (2), (3), (4), (5), (6);
+select * from t1;
+delete from t1;
+insert into t1 values (6), (1), (5), (3), (2), (4);
+select * from t1;
+delete from t1;
+drop table t1;
+
+# Test basic forward index scan on BIGINT primary keys.
+create table t1 (a bigint primary key) engine = blitzdb;
+insert into t1 values (10), (20), (30), (40), (50), (60);
+select * from t1;
+delete from t1;
+insert into t1 values (60), (10), (50), (30), (20), (40);
+select * from t1;
+delete from t1;
+drop table t1;
+
+# Test basic forward index scan on VARTEXT1 primary keys.
+create table t1 (a varchar(10) primary key) engine = blitzdb;
+insert into t1 values ('a'), ('b'), ('c'), ('d'), ('e');
+select * from t1;
+delete from t1;
+insert into t1 values ('c'), ('a'), ('e'), ('b'), ('d');
+select * from t1;
+delete from t1;
+drop table t1;
+
+# Test basic forward index scan on VARTEXT2 primary keys.
+create table t1 (a varchar(255) primary key) engine = blitzdb;
+insert into t1 values ('a'), ('b'), ('c'), ('d'), ('e');
+select * from t1;
+delete from t1;
+insert into t1 values ('c'), ('a'), ('e'), ('b'), ('d');
+select * from t1;
+drop table t1;

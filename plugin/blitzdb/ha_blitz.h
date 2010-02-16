@@ -201,7 +201,8 @@ public:
   int delete_all(void);
 
   /* BTREE INDEX READ RELATED */
-  char *first_key(int *row_len);
+  char *first_key(int *key_len);
+  char *next_key(int *key_len);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
@@ -279,9 +280,9 @@ public:
   /* INDEX RELATED FUNCTIONS */
   int index_init(uint32_t key_num, bool sorted);
   int index_first(unsigned char *buf);
-  //int index_last(unsigned char *buf);
-  //int index_next(unsigned char *buf);
+  int index_next(unsigned char *buf);
   //int index_prev(unsigned char *buf);
+  //int index_last(unsigned char *buf);
   int index_read(unsigned char *buf, const unsigned char *key,
                  uint32_t key_len, enum drizzled::ha_rkey_function find_flag);
   int index_read_idx(unsigned char *buf, uint32_t key_num,
@@ -311,6 +312,7 @@ public:
   /* INDEX KEY RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   size_t make_primary_key(char *pack_to, const unsigned char *row);
   size_t make_index_key(char *pack_to, int key_num, const unsigned char *row);
+  size_t btree_key_length(const char *key, const int key_num);
   char *native_to_blitz_key(const unsigned char *native_key,
                             const int key_num, int *return_key_length);
 
