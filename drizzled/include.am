@@ -440,7 +440,10 @@ drizzled_libdrizzled_la_LIBADD= \
 			        $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 			        $(GCOV_LIBS) 
 
-drizzled_libdrizzled_la_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
+drizzled_libdrizzled_la_DEPENDENCIES= \
+                                      drizzled/message/libdrizzledmessage.la \
+                                      ${noinst_LTLIBRARIES} \
+                                      $(pandora_plugin_libs)
 
 drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/alter_info.cc \
