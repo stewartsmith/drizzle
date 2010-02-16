@@ -24,6 +24,11 @@
 
 #include "pack.h"
 
+namespace plugin
+{
+namespace drizzle_protocol
+{
+
 /* Get the length of next field. Change parameter to point at fieldstart */
 uint32_t drizzleclient_net_field_length(unsigned char **packet)
 {
@@ -124,5 +129,8 @@ unsigned char *drizzleclient_net_store_length(unsigned char *packet, uint64_t le
   *packet++=254;
   int8store(packet,length);
   return packet+8;
+}
+
+}
 }
 

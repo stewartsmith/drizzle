@@ -20,9 +20,10 @@
 #ifndef PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H
 #define PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+namespace plugin
+{
+namespace drizzle_protocol
+{
 
 enum drizzle_option
 {
@@ -71,10 +72,6 @@ struct st_drizzleclient_options {
   void *extension;
 };
 
-
-#ifdef  __cplusplus
-}
-#endif
 
 #define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
 #define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
@@ -125,4 +122,6 @@ struct st_drizzleclient_options {
                                                & ~CLIENT_COMPRESS) \
                                                & ~CLIENT_SSL_VERIFY_SERVER_CERT)
 
+}
+}
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H */

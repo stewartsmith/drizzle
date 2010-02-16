@@ -29,7 +29,7 @@
 
 #include "pack.h"
 #include "errmsg.h"
-#include "oldlibdrizzle.h"
+#include "drizzle_protocol.h"
 #include "options.h"
 
 #define PROTOCOL_VERSION 10
@@ -40,6 +40,12 @@ extern uint32_t global_thread_id;
 }
 
 using namespace std;
+
+namespace plugin
+{
+namespace drizzle_protocol
+{
+
 using namespace drizzled;
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
@@ -74,7 +80,7 @@ in_port_t ListenDrizzleProtocol::getPort(void) const
   return (in_port_t) port;
 }
 
-plugin::Client *ListenDrizzleProtocol::getClient(int fd)
+::drizzled::plugin::Client *ListenDrizzleProtocol::getClient(int fd)
 {
   int new_fd;
   new_fd= acceptTcp(fd);
@@ -810,14 +816,14 @@ void ClientDrizzleProtocol::writeEOFPacket(uint32_t server_status,
 
 static ListenDrizzleProtocol *listen_obj= NULL;
 
-static int init(plugin::Registry &registry)
+static int init(::drizzled::plugin::Registry &registry)
 {
   listen_obj= new ListenDrizzleProtocol("drizzle_protocol", false);
   registry.add(listen_obj); 
   return 0;
 }
 
-static int deinit(plugin::Registry &registry)
+static int deinit(::drizzled::plugin::Registry &registry)
 {
   registry.remove(listen_obj);
   delete listen_obj;
@@ -856,6 +862,9 @@ static drizzle_sys_var* sys_variables[]= {
   NULL
 };
 
+}
+}
+
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -863,11 +872,11 @@ DRIZZLE_DECLARE_PLUGIN
   "0.1",
   "Eric Day",
   "Drizzle Protocol Module",
-  PLUGIN_LICENSE_GPL,
-  init,             /* Plugin Init */
-  deinit,           /* Plugin Deinit */
+  ::drizzled::PLUGIN_LICENSE_GPL,
+  plugin::drizzle_protocol::init,             /* Plugin Init */
+  plugin::drizzle_protocol::deinit,           /* Plugin Deinit */
   NULL,             /* status variables */
-  sys_variables,    /* system variables */
+  plugin::drizzle_protocol::sys_variables,    /* system variables */
   NULL              /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

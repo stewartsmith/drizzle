@@ -44,6 +44,12 @@
 
 using namespace std;
 
+namespace plugin
+{
+namespace drizzle_protocol
+{
+
+
 int drizzleclient_vio_errno(Vio *vio)
 {
   (void)vio;
@@ -315,4 +321,7 @@ void drizzleclient_vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
     perror("setsockopt");
     assert(error == 0);
   }
+}
+
+}
 }

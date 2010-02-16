@@ -25,12 +25,13 @@
 
 #include <stdint.h>
 
+namespace plugin
+{
+namespace drizzle_protocol
+{
+
 #define LIBDRIZZLE_ERRMSG_SIZE 512
 #define LIBDRIZZLE_SQLSTATE_LENGTH 5
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct st_net {
   Vio *vio;
@@ -90,8 +91,6 @@ typedef struct st_net {
   void drizzleclient_net_set_read_timeout(NET *net, uint32_t timeout);
   void drizzleclient_drizzleclient_net_clear_error(NET *net);
 
-#ifdef __cplusplus
 }
-#endif
-
+}
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_NET_SERV_H */
