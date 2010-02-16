@@ -177,6 +177,7 @@ Session::Session(plugin::Client *client_arg)
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
+  query(),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -227,8 +228,6 @@ Session::Session(plugin::Client *client_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
-  query= NULL;
-  query_length= 0;
   warn_query_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   mysys_var= 0;
@@ -755,14 +754,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  /* We must allocate some extra memory for the cached query string */
-  query_length= 0; /* Extra safety: Avoid races */
-  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db.length() + 1);
-  if (! query)
-    return false;
-
-  query[in_packet_length]=0;
-  query_length= in_packet_length;
+  query.assign(in_packet, in_packet + in_packet_length);
 
   return true;
 }
@@ -1686,11 +1678,6 @@ extern "C" unsigned long session_get_thread_id(const Session *session)
 const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());
-}
-
-char **session_query(Session *session)
-{
-  return(&session->query);
 }
 
 int session_non_transactional_update(const Session *session)
