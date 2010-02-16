@@ -6461,7 +6461,7 @@ ha_innobase::info(
 		}
 
 		snprintf(path, sizeof(path), "%s/%s%s",
-			       drizzle_data_home, ib_table->name, ".dfe");
+			       data_home, ib_table->name, ".dfe");
 
 		internal::unpack_filename(path,path);
 

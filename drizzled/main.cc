@@ -214,15 +214,15 @@ int main(int argc, char **argv)
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  if (chdir(drizzle_real_data_home) && !opt_help)
+  if (chdir(data_home_real) && !opt_help)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), drizzle_real_data_home);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Data directory %s does not exist\n"), data_home_real);
     unireg_abort(1);
   }
-  drizzle_data_home= drizzle_data_home_buff;
-  drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
-  drizzle_data_home[1]=0;
-  drizzle_data_home_len= 2;
+  data_home= data_home_buff;
+  data_home[0]=FN_CURLIB;		// all paths are relative from here
+  data_home[1]=0;
+  data_home_len= 2;
 
   if ((user_info= check_user(drizzled_user)))
   {

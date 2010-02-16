@@ -259,7 +259,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
    
 
   int rootdir_len= strlen(FN_ROOTDIR);
-  string table_path(drizzle_data_home);
+  string table_path(data_home);
   int without_rootdir= table_path.length()-rootdir_len;
 
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */

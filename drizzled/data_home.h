@@ -20,15 +20,14 @@
 #ifndef DRIZZLED_DATA_HOME_H
 #define DRIZZLED_DATA_HOME_H
 
-/* @TODO: These don't need drizzle_ prefixes any longer */
 namespace drizzled
 {
 
-extern uint32_t drizzle_data_home_len;
-extern char *drizzle_data_home;
-extern char drizzle_real_data_home[];
-extern char drizzle_unpacked_real_data_home[];
-extern char drizzle_data_home_buff[];
+extern char *data_home;
+extern uint32_t data_home_len;
+extern char data_home_real[];
+extern char data_home_real_unpacked[];
+extern char data_home_buff[];
 
 } /* namespace drizzled */
 

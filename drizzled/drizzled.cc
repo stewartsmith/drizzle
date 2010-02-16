@@ -289,15 +289,15 @@ time_t flush_status_time;
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
 char glob_hostname[FN_REFLEN];
-char drizzle_real_data_home[FN_REFLEN],
+char data_home_real[FN_REFLEN],
      language[FN_REFLEN], 
      *opt_tc_log_file;
-char drizzle_unpacked_real_data_home[FN_REFLEN];
+char data_home_real_unpacked[FN_REFLEN];
 const key_map key_map_empty(0);
 key_map key_map_full(0);                        // Will be initialized later
 
-uint32_t drizzle_data_home_len;
-char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
+uint32_t data_home_len;
+char data_home_buff[2], *data_home=data_home_real;
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
 
@@ -1285,8 +1285,8 @@ struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"datadir", 'h',
    N_("Path to the database root."),
-   (char**) &drizzle_data_home,
-   (char**) &drizzle_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &data_home,
+   (char**) &data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
@@ -1662,7 +1662,7 @@ static void drizzle_init_variables(void)
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
-  drizzle_data_home= drizzle_real_data_home;
+  data_home= data_home_real;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
@@ -1670,11 +1670,11 @@ static void drizzle_init_variables(void)
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
-  strncpy(drizzle_real_data_home, get_relative_path(LOCALSTATEDIR),
-          sizeof(drizzle_real_data_home)-1);
-  drizzle_data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
-  drizzle_data_home_buff[1]=0;
-  drizzle_data_home_len= 2;
+  strncpy(data_home_real, get_relative_path(LOCALSTATEDIR),
+          sizeof(data_home_real)-1);
+  data_home_buff[0]=FN_CURLIB;	// all paths are relative from here
+  data_home_buff[1]=0;
+  data_home_len= 2;
 
   /* Variables in libraries */
   default_character_set_name= "utf8";
@@ -1721,10 +1721,10 @@ bool drizzled_get_one_option(int optid, const struct my_option *opt,
       default_collation_name= 0;
     break;
   case 'h':
-    strncpy(drizzle_real_data_home,argument, sizeof(drizzle_real_data_home)-1);
+    strncpy(data_home_real,argument, sizeof(data_home_real)-1);
     /* Correct pointer set by my_getopt (for embedded library) */
-    drizzle_data_home= drizzle_real_data_home;
-    drizzle_data_home_len= strlen(drizzle_data_home);
+    data_home= data_home_real;
+    data_home_len= strlen(data_home);
     break;
   case 'u':
     if (!drizzled_user || !strcmp(drizzled_user, argument))
@@ -1909,14 +1909,14 @@ static void fix_paths(string &progname)
     pos[0]= FN_LIBCHAR;
     pos[1]= 0;
   }
-  internal::convert_dirname(drizzle_real_data_home,drizzle_real_data_home,NULL);
-  (void) internal::fn_format(buff, drizzle_real_data_home, "", "",
+  internal::convert_dirname(data_home_real,data_home_real,NULL);
+  (void) internal::fn_format(buff, data_home_real, "", "",
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  (void) internal::unpack_dirname(drizzle_unpacked_real_data_home, buff);
+  (void) internal::unpack_dirname(data_home_real_unpacked, buff);
   internal::convert_dirname(language,language,NULL);
   (void) internal::my_load_path(drizzle_home, drizzle_home,""); // Resolve current dir
-  (void) internal::my_load_path(drizzle_real_data_home, drizzle_real_data_home,drizzle_home);
-  (void) internal::my_load_path(pidfile_name, pidfile_name,drizzle_real_data_home);
+  (void) internal::my_load_path(data_home_real, data_home_real,drizzle_home);
+  (void) internal::my_load_path(pidfile_name, pidfile_name,data_home_real);
 
   if (opt_plugin_dir_ptr == NULL)
   {

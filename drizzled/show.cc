@@ -1389,7 +1389,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
       files.push_back(i_s_name_copy);
     }
 
-    if (find_schemas(session, files, drizzle_data_home,
+    if (find_schemas(session, files, data_home,
                      lookup_field_vals->db_value.str) == true)
     {
       return 1;
@@ -1426,7 +1426,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
 
   *with_i_schema= 1;
 
-  if (find_schemas(session, files, drizzle_data_home, NULL) == true)
+  if (find_schemas(session, files, data_home, NULL) == true)
   {
     return 1;
   }

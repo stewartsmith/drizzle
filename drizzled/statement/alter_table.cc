@@ -737,7 +737,7 @@ bool alter_table(Session *session,
   }
 
   ostringstream oss;
-  oss << drizzle_data_home << "/" << db << "/" << table_name;
+  oss << data_home << "/" << db << "/" << table_name;
 
   (void) internal::unpack_filename(new_name_buff, oss.str().c_str());
 

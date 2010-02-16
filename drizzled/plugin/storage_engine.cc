@@ -193,7 +193,7 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
   if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
     my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
   else
-    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+    my_casedn_str(files_charset_info, tmp_path + data_home_len);
 
   return tmp_path;
 }
@@ -927,7 +927,7 @@ public:
 
 void plugin::StorageEngine::getSchemaNames(set<string>& set_of_names)
 {
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+  CachedDirectory directory(data_home, CachedDirectory::DIRECTORY);
 
   CachedDirectory::Entries files= directory.getEntries();
 

@@ -1070,13 +1070,13 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
 
   if (!internal::dirname_length(exchange->file_name))
   {
-    strcpy(path, drizzle_real_data_home);
+    strcpy(path, data_home_real);
     if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
+      strncat(path, session->db.c_str(), FN_REFLEN-strlen(data_home_real)-1);
     (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
+    (void) internal::fn_format(path, exchange->file_name, data_home_real, "", option);
 
   if (opt_secure_file_priv &&
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
