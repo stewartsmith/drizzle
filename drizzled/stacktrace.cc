@@ -36,6 +36,10 @@
 #include <cstdio>
 #include <algorithm>
 
+#if defined(BACKTRACE_DEMANGLE)
+# include <cxxabi.h>
+#endif
+
 #include "drizzled/definitions.h"
 
 using namespace std;
@@ -74,8 +78,13 @@ void safe_print_str(const char* name, const char* val, int max_len)
 #define SIGRETURN_FRAME_OFFSET 23
 #endif
 
+#if defined(BACKTRACE_DEMANGLE)
 
-#if BACKTRACE_DEMANGLE
+static inline char *my_demangle(const char *mangled_name, int *status)
+{
+  return abi::__cxa_demangle(mangled_name, NULL, NULL, status);
+}
+
 static void my_demangle_symbols(char **addrs, int n)
 {
   int status, i;

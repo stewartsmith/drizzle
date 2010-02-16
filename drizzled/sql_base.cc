@@ -51,6 +51,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/drizzled.h"
 
 using namespace std;
 
@@ -58,8 +59,6 @@ namespace drizzled
 {
 
 extern bool volatile shutdown_in_progress;
-
-bool drizzle_rm_tmp_tables();
 
 /**
   @defgroup Data_Dictionary Data Dictionary

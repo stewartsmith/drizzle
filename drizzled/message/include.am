@@ -32,7 +32,7 @@ noinst_PROGRAMS += \
 		drizzled/message/master_list_writer \
 		drizzled/message/schema_reader
 
-noinst_LTLIBRARIES += drizzled/message/libdrizzledmessage.la
+lib_LTLIBRARIES += drizzled/message/libdrizzledmessage.la
 
 drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 

@@ -35,10 +35,6 @@ namespace drizzled
 #define BACKTRACE_DEMANGLE 1
 #endif
 
-#if defined(BACKTRACE_DEMANGLE)
-extern "C" char *my_demangle(const char *mangled_name, int *status);
-#endif
-
 #ifdef TARGET_OS_LINUX
 #if defined(HAVE_STACKTRACE) || (defined (__x86_64__) || defined (__i386__) )
 #undef HAVE_STACKTRACE

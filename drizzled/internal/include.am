@@ -34,7 +34,8 @@ drizzled_internal_libinternal_la_LIBADD= \
 		drizzled/liberror.la \
 		drizzled/libgetopt.la \
 		drizzled/libmemory.la \
-		drizzled/libtypelib.la
+		drizzled/libtypelib.la \
+		drizzled/libserialutil.la
 
 drizzled_internal_libinternal_la_SOURCES= \
 		drizzled/internal/bmove_upp.cc \

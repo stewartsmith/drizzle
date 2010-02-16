@@ -44,6 +44,7 @@
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/drizzled.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -72,8 +73,6 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
-extern uint32_t max_used_connections;
-extern atomic<uint32_t> connection_count;
 
 
 /****************************************************************************
