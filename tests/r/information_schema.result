@@ -77,6 +77,8 @@ select table_schema, table_name, column_name from data_dictionary.columns where 
 table_schema	table_name	column_name
 select table_name, column_name, data_type from data_dictionary.columns where data_type = 'datetime';
 table_name	column_name	data_type
+INNODB_TRX	trx_started	DATETIME
+INNODB_TRX	trx_wait_started	DATETIME
 SELECT COUNT(*) FROM data_dictionary.tables A
 WHERE NOT EXISTS 
 (SELECT * FROM data_dictionary.columns B
