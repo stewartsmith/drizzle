@@ -494,7 +494,8 @@ int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
 int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
                              const unsigned char *key, uint32_t ,
                              enum ha_rkey_function /*find_flag*/) {
-  char *pk, *fetched_row;
+  char *pk;
+  char *fetched_row = NULL;
   int pk_len, row_len;
 
   /* If the key is NULL, we are required to return the first row
@@ -582,15 +583,13 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   unsigned char *row_buf = get_pack_buffer(max_row_length());
   size_t row_len = pack_row(row_buf, drizzle_row);
 
-  uint32_t curr_key;
-  uint32_t lock_id;
+  uint32_t curr_key = 0;
+  uint32_t lock_id = 0;
 
   if (share->nkeys > 0) {
     lock_id = share->blitz_lock.slot_id(temp_pkbuf, pk_len);
     share->blitz_lock.slotted_lock(lock_id);
   }
-
-  curr_key = 0;
 
   /* We isolate this condition outside the key loop to avoid the CPU
      from going through unnecessary conditional branching on heavy

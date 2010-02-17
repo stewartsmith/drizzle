@@ -48,6 +48,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/db.h"
 
 
 #include <drizzled/table_proto.h>
@@ -579,7 +580,7 @@ public:
     if (ret != ENOENT)
       *err= ret;
 
-    return *err == EEXIST;
+    return *err == EEXIST || *err != ENOENT;
   }
 };
 
@@ -705,6 +706,13 @@ int plugin::StorageEngine::dropTable(Session& session,
                                                          identifier,
                                                          &src_proto);
 
+  if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
+  {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             src_proto.InitializationErrorString().c_str());
+    return ER_CORRUPT_TABLE_DEFINITION;
+  }
+
   engine= plugin::StorageEngine::findByName(session,
                                             src_proto.engine().name());
 
@@ -731,6 +739,14 @@ int plugin::StorageEngine::dropTable(Session& session,
 
   if (error_proto && error == 0)
     return 0;
+
+  if (((error_proto != EEXIST && error_proto != ENOENT)
+      && !engine && generate_warning)
+      | ( error && !engine && generate_warning))
+  {
+    my_error(ER_GET_ERRNO, MYF(0), error_proto);
+    return error_proto;
+  }
 
   if (error && generate_warning)
   {
@@ -896,7 +912,7 @@ class AddTableName :
 
 public:
 
-  AddTableName(CachedDirectory& directory_arg, string& database_name, set<string>& of_names) :
+  AddTableName(CachedDirectory& directory_arg, const string& database_name, set<string>& of_names) :
     directory(directory_arg),
     set_of_names(of_names)
   {
@@ -909,7 +925,50 @@ public:
   }
 };
 
-void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
+void plugin::StorageEngine::getSchemaNames(set<string>& set_of_names)
+{
+  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+
+  CachedDirectory::Entries files= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator fileIter= files.begin();
+       fileIter != files.end(); fileIter++)
+  {
+    CachedDirectory::Entry *entry= *fileIter;
+    set_of_names.insert(entry->filename);
+  }
+
+  set_of_names.insert("information_schema"); // special cases suck
+
+  // Add hook here for engines to register schema.
+#if 0
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           AddTableName(directory, db, set_of_names));
+#endif
+}
+
+/*
+  Return value is "if parsed"
+*/
+bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
+{
+  int ret;
+
+  if (schema_name.compare("information_schema") == 0)
+  {
+    proto.set_name("information_schema");
+    proto.set_collation("utf8_general_ci");
+    ret= 0;
+  }
+  else
+  {
+    ret= get_database_metadata(schema_name.c_str(), proto);
+  }
+
+  return ret == 0 ? true : false;
+}
+
+void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 {
   char tmp_path[FN_REFLEN];
 

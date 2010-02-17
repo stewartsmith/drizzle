@@ -28,7 +28,7 @@ namespace drizzled
 
 bool statement::ShowProcesslist::execute()
 {
-  mysqld_list_processes(session, NULL, session->lex->verbose);
+  mysqld_list_processes(session, NULL);
   return false;
 }
 

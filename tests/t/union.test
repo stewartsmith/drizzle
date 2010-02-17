@@ -801,7 +801,7 @@ create table t1 (a varchar(5));
 create table t2 select * from t1 union select 'abcdefghijkl';
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
-select row_format from information_schema.TABLES where table_schema="test" and table_name="t2";
+select row_format from data_dictionary.TABLES where table_schema="test" and table_name="t2";
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 drop table t1,t2;

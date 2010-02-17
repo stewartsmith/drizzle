@@ -262,6 +262,12 @@ int parse_table_proto(Session& session,
 {
   int error= 0;
 
+  if (! table.IsInitialized())
+  {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), table.InitializationErrorString().c_str());
+    return ER_CORRUPT_TABLE_DEFINITION;
+  }
+
   share->setTableProto(new(nothrow) message::Table(table));
 
   share->storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
@@ -2364,6 +2370,14 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
 
+static void make_internal_temporary_table_path(Session *session, char *path)
+{
+  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+           session->thread_id, session->tmp_table++);
+
+  internal::fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+}
+
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
@@ -2382,7 +2396,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool  using_unique_constraint= false;
   bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
-  char  *tmpname,path[FN_REFLEN];
+  char  *tmpname;
+  char  path[FN_REFLEN];
   unsigned char	*pos, *group_buff, *bitmaps;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
@@ -2398,16 +2413,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   status_var_increment(session->status_var.created_tmp_tables);
 
-  /* if we run out of slots or we are not using tempool */
-  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-           session->thread_id, session->tmp_table++);
-
-  /*
-    No need to change table name to lower case as we are only creating
-    MyISAM or HEAP tables here
-  */
-  internal::fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
-
+  make_internal_temporary_table_path(session, path);
 
   if (group)
   {
@@ -2553,7 +2559,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
             create_tmp_field(session, table, arg, arg->type(), &copy_func,
                              tmp_from_field, &default_field[fieldnr],
                              group != 0,not_all_columns,
-                             distinct, 0,
+                             false,
                              param->convert_blob_length);
 	  if (!new_field)
 	    goto err;					// Should be OOM
@@ -2598,20 +2604,12 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	We here distinguish between UNION and multi-table-updates by the fact
 	that in the later case group is set to the row pointer.
       */
-      Field *new_field= 
+      Field *new_field=
         create_tmp_field(session, table, item, type, &copy_func,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,
                          !force_copy_fields &&
                            (not_all_columns || group != 0),
-                         /*
-                           If item->marker == 4 then we force create_tmp_field
-                           to create a 64-bit longs for BIT fields because HEAP
-                           tables can't index BIT fields directly. We do the same
-                           for distinct, as we want the distinct index to be
-                           usable in this case too.
-                         */
-                         item->marker == 4 || param->bit_fields_as_long,
                          force_copy_fields,
                          param->convert_blob_length);
 
@@ -3682,36 +3680,6 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   force_index= table_list->force_index;
   covering_keys= s->keys_for_keyread;
   merge_keys.reset();
-}
-
-Field *Table::find_field_in_table_sef(const char *name)
-{
-  Field **field_ptr;
-  if (s->name_hash.records)
-  {
-    field_ptr= (Field**)hash_search(&s->name_hash,(unsigned char*) name,
-                                    strlen(name));
-    if (field_ptr)
-    {
-      /*
-        field_ptr points to field in TableShare. Convert it to the matching
-        field in table
-      */
-      field_ptr= (field + (field_ptr - s->field));
-    }
-  }
-  else
-  {
-    if (!(field_ptr= field))
-      return (Field *)0;
-    for (; *field_ptr; ++field_ptr)
-      if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
-        break;
-  }
-  if (field_ptr)
-    return *field_ptr;
-  else
-    return (Field *)0;
 }
 
 

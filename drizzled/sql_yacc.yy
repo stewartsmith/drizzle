@@ -36,105 +36,9 @@
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYSession->lex)
+
 #include "config.h"
-#include <drizzled/foreign_key.h>
-#include <drizzled/lex_symbol.h>
-#include <drizzled/function/locate.h>
-#include <drizzled/function/str/char.h>
-#include <drizzled/function/str/collation.h>
-#include <drizzled/function/str/database.h>
-#include <drizzled/function/str/insert.h>
-#include <drizzled/function/str/left.h>
-#include <drizzled/function/str/repeat.h>
-#include <drizzled/function/str/replace.h>
-#include <drizzled/function/str/reverse.h>
-#include <drizzled/function/str/right.h>
-#include <drizzled/function/str/set_collation.h>
-#include <drizzled/function/str/substr.h>
-#include <drizzled/function/str/trim.h>
-#include <drizzled/function/str/user.h>
-#include <drizzled/function/str/weight_string.h>
-
-#include <drizzled/function/time/curdate.h>
-#include <drizzled/function/time/date_add_interval.h>
-#include <drizzled/function/time/dayofmonth.h>
-#include <drizzled/function/time/extract.h>
-#include <drizzled/function/time/hour.h>
-#include <drizzled/function/time/microsecond.h>
-#include <drizzled/function/time/minute.h>
-#include <drizzled/function/time/month.h>
-#include <drizzled/function/time/now.h>
-#include <drizzled/function/time/quarter.h>
-#include <drizzled/function/time/second.h>
-#include <drizzled/function/time/sysdate_local.h>
-#include <drizzled/function/time/timestamp_diff.h>
-#include <drizzled/function/time/typecast.h>
-#include <drizzled/function/time/year.h>
-
-#include <drizzled/error.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/item/copy_string.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/uint.h>
-#include <drizzled/item/null.h>
-#include <drizzled/session.h>
-#include <drizzled/item/func.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/item/create.h>
-#include <drizzled/item/default_value.h>
-#include <drizzled/item/insert_value.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/function/get_system_var.h>
-#include <drizzled/thr_lock.h>
-#include <drizzled/message/table.pb.h>
-#include <drizzled/message/schema.pb.h>
-#include <drizzled/statement.h>
-#include <drizzled/statement/alter_schema.h>
-#include <drizzled/statement/alter_table.h>
-#include <drizzled/statement/analyze.h>
-#include <drizzled/statement/change_schema.h>
-#include <drizzled/statement/check.h>
-#include <drizzled/statement/checksum.h>
-#include <drizzled/statement/commit.h>
-#include <drizzled/statement/create_index.h>
-#include <drizzled/statement/create_schema.h>
-#include <drizzled/statement/create_table.h>
-#include <drizzled/statement/delete.h>
-#include <drizzled/statement/drop_index.h>
-#include <drizzled/statement/drop_schema.h>
-#include <drizzled/statement/drop_table.h>
-#include <drizzled/statement/empty_query.h>
-#include <drizzled/statement/flush.h>
-#include <drizzled/statement/insert.h>
-#include <drizzled/statement/insert_select.h>
-#include <drizzled/statement/kill.h>
-#include <drizzled/statement/load.h>
-#include <drizzled/statement/release_savepoint.h>
-#include <drizzled/statement/rename_table.h>
-#include <drizzled/statement/replace.h>
-#include <drizzled/statement/replace_select.h>
-#include <drizzled/statement/rollback.h>
-#include <drizzled/statement/rollback_to_savepoint.h>
-#include <drizzled/statement/savepoint.h>
-#include <drizzled/statement/select.h>
-#include <drizzled/statement/set_option.h>
-#include <drizzled/statement/show_create.h>
-#include <drizzled/statement/show_create_schema.h>
-#include <drizzled/statement/show_errors.h>
-#include <drizzled/statement/show_processlist.h>
-#include <drizzled/statement/show_status.h>
-#include <drizzled/statement/show_warnings.h>
-#include <drizzled/statement/start_transaction.h>
-#include <drizzled/statement/truncate.h>
-#include <drizzled/statement/unlock_tables.h>
-#include <drizzled/statement/update.h>
-#include <drizzled/db.h>
-#include "drizzled/global_charset_info.h"
-#include "drizzled/pthread_globals.h"
-#include "drizzled/charset.h"
-#include "drizzled/internal/m_string.h"
-
+#include "drizzled/parser.h"
 
 int yylex(void *yylval, void *yysession);
 
@@ -420,7 +324,7 @@ using namespace drizzled;
   const drizzled::plugin::Function *udf;
   drizzled::TableList *table_list;
   struct drizzled::sys_var_with_base variable;
-  enum drizzled::enum_var_type var_type;
+  enum drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
   enum drizzled::ha_key_alg key_alg;
   enum drizzled::row_type row_type;
@@ -839,7 +743,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VAR_SAMP_SYM
 %token  WARNINGS
 %token  WEEK_SYM
-%token  WEIGHT_STRING_SYM
 %token  WHEN_SYM                      /* SQL-2003-R */
 %token  WHERE                         /* SQL-2003-R */
 %token  WITH                          /* SQL-2003-R */
@@ -899,11 +802,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         delete_option
 
 %type <ulong_num>
-        ulong_num real_ulong_num
-        ws_nweights
-        ws_level_flag_desc ws_level_flag_reverse ws_level_flags
-        opt_ws_levels ws_level_list ws_level_list_item ws_level_number
-        ws_level_range ws_level_list_or_range 
+        ulong_num
 
 %type <ulonglong_number>
         ulonglong_num
@@ -1961,74 +1860,6 @@ collation_name_or_default:
 opt_default:
           /* empty */ {}
         | DEFAULT {}
-        ;
-
-ws_nweights:
-        '(' real_ulong_num
-        {
-          if ($2 == 0)
-          {
-            my_parse_error(ER(ER_SYNTAX_ERROR));
-            DRIZZLE_YYABORT;
-          }
-        }
-        ')'
-        { $$= $2; }
-        ;
-
-ws_level_flag_desc:
-        ASC { $$= 0; }
-        | DESC { $$= 1 << MY_STRXFRM_DESC_SHIFT; }
-        ;
-
-ws_level_flag_reverse:
-        REVERSE_SYM { $$= 1 << MY_STRXFRM_REVERSE_SHIFT; } ;
-
-ws_level_flags:
-        /* empty */ { $$= 0; }
-        | ws_level_flag_desc { $$= $1; }
-        | ws_level_flag_desc ws_level_flag_reverse { $$= $1 | $2; }
-        | ws_level_flag_reverse { $$= $1 ; }
-        ;
-
-ws_level_number:
-        real_ulong_num
-        {
-          $$= $1 < 1 ? 1 : ($1 > MY_STRXFRM_NLEVELS ? MY_STRXFRM_NLEVELS : $1);
-          $$--;
-        }
-        ;
-
-ws_level_list_item:
-        ws_level_number ws_level_flags
-        {
-          $$= (1 | $2) << $1;
-        }
-        ;
-
-ws_level_list:
-        ws_level_list_item { $$= $1; }
-        | ws_level_list ',' ws_level_list_item { $$|= $3; }
-        ;
-
-ws_level_range:
-        ws_level_number '-' ws_level_number
-        {
-          uint32_t start= $1;
-          uint32_t end= $3;
-          for ($$= 0; start <= end; start++)
-            $$|= (1 << start);
-        }
-        ;
-
-ws_level_list_or_range:
-        ws_level_list { $$= $1; }
-        | ws_level_range { $$= $1; }
-        ;
-
-opt_ws_levels:
-        /* empty*/ { $$= 0; }
-        | LEVEL_SYM ws_level_list_or_range { $$= $2; }
         ;
 
 opt_primary:
@@ -3298,19 +3129,6 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_reverse($3); }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
-        | WEIGHT_STRING_SYM '(' expr opt_ws_levels ')'
-          { $$= new (YYSession->mem_root) Item_func_weight_string($3, 0, $4); }
-        | WEIGHT_STRING_SYM '(' expr AS CHAR_SYM ws_nweights opt_ws_levels ')'
-          {
-            $$= new (YYSession->mem_root)
-                Item_func_weight_string($3, $6, $7|MY_STRXFRM_PAD_WITH_SPACE);
-          }
-        | WEIGHT_STRING_SYM '(' expr AS BINARY ws_nweights ')'
-          {
-            $3= create_func_char_cast(YYSession, $3, $6, &my_charset_bin);
-            $$= new (YYSession->mem_root)
-                Item_func_weight_string($3, $6, MY_STRXFRM_PAD_WITH_SPACE);
-          }
         ;
 
 /*
@@ -4382,14 +4200,6 @@ ulong_num:
         | FLOAT_NUM     { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
-real_ulong_num:
-          NUM           { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | HEX_NUM       { $$= (ulong) strtol($1.str, (char**) 0, 16); }
-        | LONG_NUM      { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulong) internal::my_strtoll10($1.str, (char**) 0, &error); }
-        | dec_num_error { }
-	;
-
 ulonglong_num:
           NUM           { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
         | ULONGLONG_NUM { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
@@ -4834,39 +4644,127 @@ show_param:
            DATABASES show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_DATABASES;
+             lex->sql_command= SQLCOM_SELECT;
              lex->statement=
                new(std::nothrow) statement::Select(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
+
+             Session *session= YYSession;
+
+             std::string column_name= "Database";
+             if (Lex->wild)
+             {
+               column_name.append(" (");
+               column_name.append(Lex->wild->c_str());
+               column_name.append(")");
+             }
+
+             if (Lex->current_select->where)
+             {
+               if (prepare_new_schema_table(YYSession, lex, "SCHEMAS"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(YYSession, lex, "SCHEMA_NAMES"))
+                 DRIZZLE_YYABORT;
+             }
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "SCHEMA_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(column_name.c_str(), column_name.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
            }
-         | opt_full TABLES opt_db show_wild
+         | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_TABLES;
+             lex->sql_command= SQLCOM_SELECT;
              lex->statement=
                new(std::nothrow) statement::Select(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, "TABLE_NAMES"))
+
+              Session *session= YYSession;
+
+              std::string column_name= "Tables_in_";
+
+              if ($2)
+              {
+                message::Schema schema_message;
+                column_name.append($2);
+                lex->select_lex.db= $2;
+                if (not plugin::StorageEngine::getSchemaDefinition($2, schema_message))
+                {
+                  my_error(ER_BAD_DB_ERROR, MYF(0), $2);
+                }
+              }
+              else
+              {
+                column_name.append(session->db);
+              }
+
+             if (Lex->wild)
+             {
+               column_name.append(" (");
+               column_name.append(Lex->wild->c_str());
+               column_name.append(")");
+             }
+
+             if (Lex->current_select->where)
+             {
+               if (prepare_new_schema_table(YYSession, lex, "TABLES"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(YYSession, lex, "LOCAL_TABLE_NAMES"))
+                 DRIZZLE_YYABORT;
+             }
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(column_name.c_str(), column_name.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
            }
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
-             lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
+             lex->sql_command= SQLCOM_SELECT;
              lex->statement=
                new(std::nothrow) statement::Select(YYSession);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-             lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
+
+             Session *session= YYSession;
+
+             std::string column_name= "Tables_in_";
+
+             if ($3)
+             {
+               message::Schema schema_message;
+               lex->select_lex.db= $3;
+
+               if (not plugin::StorageEngine::getSchemaDefinition($3, schema_message))
+               {
+                 my_error(ER_BAD_DB_ERROR, MYF(0), $3);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "LOCAL_TABLE_STATUS"))
                DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
            }
-        | opt_full COLUMNS from_or_in table_ident opt_db show_wild
+        | COLUMNS from_or_in table_ident opt_db show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
@@ -4874,9 +4772,9 @@ show_param:
               new(std::nothrow) statement::Select(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            if ($5)
-              $4->change_db($5);
-            if (prepare_schema_table(YYSession, lex, $4, "COLUMNS"))
+            if ($4)
+              $3->change_db($4);
+            if (prepare_schema_table(YYSession, lex, $3, "OLD_COLUMNS"))
               DRIZZLE_YYABORT;
           }
         | keys_or_index from_or_in table_ident opt_db where_clause
@@ -4888,7 +4786,7 @@ show_param:
               DRIZZLE_YYABORT;
             if ($4)
               $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "STATISTICS"))
+            if (prepare_schema_table(YYSession, lex, $3, "OLD_STATISTICS"))
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
@@ -4931,29 +4829,70 @@ show_param:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
+            if (prepare_schema_table(YYSession, lex, 0, "OLD_STATUS"))
               DRIZZLE_YYABORT;
           }
         | PROCESSLIST_SYM
           {
-            Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
-            Lex->statement=
-              new(std::nothrow) statement::ShowProcesslist(YYSession);
-            if (Lex->statement == NULL)
-              DRIZZLE_YYABORT;
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Select(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if (prepare_new_schema_table(session, lex, "PROCESSLIST"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+           }
           }
         | opt_var_type  VARIABLES show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_VARIABLES;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "VARIABLES"))
-              DRIZZLE_YYABORT;
-          }
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Select(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if ($1 == OPT_GLOBAL)
+             {
+               if (prepare_new_schema_table(session, lex, "GLOBAL_VARIABLES"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(session, lex, "SESSION_VARIABLES"))
+                 DRIZZLE_YYABORT;
+             }
+
+             std::string key("Variable_name");
+             std::string value("Value");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_VALUE");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
         | CREATE DATABASE opt_if_not_exists ident
           {
             Lex->sql_command=SQLCOM_SHOW_CREATE_DB;
@@ -4978,11 +4917,6 @@ show_param:
 opt_db:
           /* empty */  { $$= 0; }
         | from_or_in ident { $$= $2.str; }
-        ;
-
-opt_full:
-          /* empty */ { Lex->verbose= false; }
-        | FULL        { Lex->verbose= true; }
         ;
 
 from_or_in:
@@ -5020,8 +4954,7 @@ describe:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
-            lex->verbose= 0;
-            if (prepare_schema_table(YYSession, lex, $2, "COLUMNS"))
+            if (prepare_schema_table(YYSession, lex, $2, "OLD_COLUMNS"))
               DRIZZLE_YYABORT;
           }
           opt_describe_column {}
@@ -5660,6 +5593,7 @@ keyword_sp:
         | CONSISTENT_SYM           {}
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
+        | DATABASES                {}
         | DATAFILE_SYM             {}
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
@@ -5772,7 +5706,6 @@ keyword_sp:
         | VALUE_SYM                {}
         | WARNINGS                 {}
         | WEEK_SYM                 {}
-        | WEIGHT_STRING_SYM        {}
         | WORK_SYM                 {}
         | YEAR_SYM                 {}
         ;

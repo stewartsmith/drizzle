@@ -27,6 +27,10 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <strings.h>
 #include <limits.h>
 
@@ -58,6 +62,14 @@ CachedDirectory::CachedDirectory(const string& in_path, set<string>& allowed_ext
   (void) open(in_path, allowed_exts);
 }
 
+CachedDirectory::CachedDirectory(const string& in_path, enum CachedDirectory::FILTER filter) :
+  error(0)
+{
+  set<string> empty;
+  // TODO: Toss future exception
+  (void) open(in_path, empty, filter);
+}
+
 
 CachedDirectory::~CachedDirectory()
 {
@@ -77,6 +89,11 @@ bool CachedDirectory::open(const string &in_path)
 }
 
 bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
+{
+  return open(in_path, allowed_exts, CachedDirectory::NONE);
+}
+
+bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts, enum CachedDirectory::FILTER filter)
 {
   DIR *dirp= opendir(in_path.c_str());
 
@@ -125,7 +142,40 @@ bool CachedDirectory::open(const string &in_path, set<string> &allowed_exts)
     }
     else
     {
-      entries.push_back(new Entry(result->d_name));
+      switch (filter)
+      {
+      case DIRECTORY:
+        {
+          struct stat entrystat;
+
+          if (result->d_name[0] == '.')
+            continue;
+
+          stat(result->d_name, &entrystat);
+
+          if (S_ISDIR(entrystat.st_mode))
+          {
+            entries.push_back(new Entry(result->d_name));
+          }
+        }
+        break;
+      case FILE:
+        {
+          struct stat entrystat;
+
+          stat(result->d_name, &entrystat);
+
+          if (S_ISREG(entrystat.st_mode))
+          {
+            entries.push_back(new Entry(result->d_name));
+          }
+        }
+        break;
+      case NONE:
+      case MAX:
+        entries.push_back(new Entry(result->d_name));
+        break;
+      }
     }
   }
     

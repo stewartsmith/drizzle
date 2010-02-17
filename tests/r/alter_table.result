@@ -50,11 +50,11 @@ NAME varchar(80) DEFAULT '' NOT NULL,
 PRIMARY KEY (GROUP_ID,LANG_ID),
 KEY NAME (NAME));
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
-SHOW FULL COLUMNS FROM t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-GROUP_ID	int	NULL	NO	PRI	0		#	
-LANG_ID	int	NULL	NO	PRI	0		#	
-NAME	varchar(80)	utf8_general_ci	NO	MUL	NULL		#	
+show COLUMNS FROM t1;
+Field	Type	Null	Key	Default	Extra
+GROUP_ID	int	NO	PRI	0	
+LANG_ID	int	NO	PRI	0	
+NAME	varchar(80)	NO	MUL	NULL	
 DROP TABLE t1;
 create table t1 (n int);
 insert into t1 values(9),(3),(12),(10);
@@ -350,15 +350,15 @@ drop table if exists t1;
 create TEMPORARY table t1 (a int, b int, c int, d int, e int, f int, g int, h int,i int, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a,b,c,d,e,f,g,h,i) values(1,1,1,1,1,1,1,1,1);
 show table status like 't1';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 alter table t1 modify a int;
 show table status like 't1';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 drop table t1;
 create TEMPORARY table t1 (a int not null default 0, b int not null default 0, c int not null default 0, d int not null default 0, e int not null default 0, f int not null default 0, g int not null default 0, h int not null default 0,i int not null default 0, primary key (a,b,c,d,e,f,g,i,h)) engine=MyISAM;
 insert into t1 (a) values(1);
 show table status like 't1';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment	Plugin_name
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 drop table t1;
 CREATE TABLE t1 (a int PRIMARY KEY, b INT UNIQUE);
 ALTER TABLE t1 DROP PRIMARY KEY;
