@@ -123,7 +123,6 @@ void CollationsTool::Generator::fill()
   assert(tmp_cs);
   assert(tmp_cl);
 
-  fprintf(stderr, "CHAR %s\n", tmp_cs->name);
   assert(tmp_cs->name);
   /* CHARACTER_SET_NAME */
   push(tmp_cs->name);
