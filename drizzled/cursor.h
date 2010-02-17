@@ -443,8 +443,6 @@ public:
   */
   virtual void try_semi_consistent_read(bool) {}
   virtual void unlock_row(void) {}
-  virtual int start_stmt(Session *, thr_lock_type)
-  {return 0;}
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,

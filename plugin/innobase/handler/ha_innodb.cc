@@ -264,7 +264,10 @@ public:
     table_definition_ext= plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
-
+private:
+  virtual void doStartStatement(Session *session);
+  virtual void doEndStatement(Session *session);
+public:
   virtual
   int
   close_connection(
@@ -1662,68 +1665,6 @@ reset_template(
 	prebuilt->read_just_key = 0;
 }
 
-/*****************************************************************//**
-Call this when you have opened a new table handle in HANDLER, before you
-call index_read_idx() etc. Actually, we can let the cursor stay open even
-over a transaction commit! Then you should call this before every operation,
-fetch next etc. This function inits the necessary things even after a
-transaction commit. */
-UNIV_INTERN
-void
-ha_innobase::init_table_handle_for_HANDLER(void)
-/*============================================*/
-{
-	/* If current session does not yet have a trx struct, create one.
-	If the current handle does not yet have a prebuilt struct, create
-	one. Update the trx pointers in the prebuilt struct. Normally
-	this operation is done in external_lock. */
-
-	update_session(ha_session());
-
-	/* Initialize the prebuilt struct much like it would be inited in
-	external_lock */
-
-	innobase_release_stat_resources(prebuilt->trx);
-
-	/* If the transaction is not started yet, start it */
-
-	trx_start_if_not_started(prebuilt->trx);
-
-	/* Assign a read view if the transaction does not have it yet */
-
-	trx_assign_read_view(prebuilt->trx);
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-
-	if (prebuilt->trx->active_trans == 0) {
-
-		innobase_register_trx_and_stmt(innodb_engine_ptr, user_session);
-
-		prebuilt->trx->active_trans = 1;
-	}
-
-	/* We did the necessary inits in this function, no need to repeat them
-	in row_search_for_mysql */
-
-	prebuilt->sql_stat_start = FALSE;
-
-	/* We let HANDLER always to do the reads as consistent reads, even
-	if the trx isolation level would have been specified as SERIALIZABLE */
-
-	prebuilt->select_lock_type = LOCK_NONE;
-	prebuilt->stored_select_lock_type = LOCK_NONE;
-
-	/* Always fetch all columns in the index record */
-
-	prebuilt->hint_need_to_fetch_extra_cols = ROW_RETRIEVE_ALL_COLS;
-
-	/* We want always to fetch all columns in the whole row? Or do
-	we???? */
-
-	prebuilt->used_in_HANDLER = TRUE;
-	reset_template(prebuilt);
-}
-
 /*********************************************************************//**
 Opens an InnoDB database.
 @return	0 on success, error code on failure */
@@ -2176,10 +2117,7 @@ InnobaseEngine::doCommit(
 	/* The flag trx->active_trans is set to 1 in
 
 	1. ::external_lock(),
-	2. ::start_stmt(),
-	3. innobase_query_caching_of_table_permitted(),
 	4. InnobaseEngine::setSavepoint(),
-	5. ::init_table_handle_for_HANDLER(),
 	6. InnobaseEngine::start_consistent_snapshot(),
 
 	and it is only set to 0 in a commit or a rollback. If it is 0 we know
@@ -7116,91 +7054,6 @@ ha_innobase::reset()
 }
 
 /******************************************************************//**
-MySQL calls this function at the start of each SQL statement inside LOCK
-TABLES. Inside LOCK TABLES the ::external_lock method does not work to
-mark SQL statement borders. Note also a special case: if a temporary table
-is created inside LOCK TABLES, MySQL has not called external_lock() at all
-on that table.
-MySQL-5.0 also calls this before each statement in an execution of a stored
-procedure. To make the execution more deterministic for binlogging, MySQL-5.0
-locks all tables involved in a stored procedure with full explicit table
-locks (session_in_lock_tables(session) holds in store_lock()) before executing
-the procedure.
-@return	0 or error code */
-UNIV_INTERN
-int
-ha_innobase::start_stmt(
-/*====================*/
-	Session*	session,	/*!< in: handle to the user thread */
-	thr_lock_type	lock_type)
-{
-	trx_t*		trx;
-
-	update_session(session);
-
-	trx = prebuilt->trx;
-
-	/* Here we release the search latch and the InnoDB thread FIFO ticket
-	if they were reserved. They should have been released already at the
-	end of the previous statement, but because inside LOCK TABLES the
-	lock count method does not work to mark the end of a SELECT statement,
-	that may not be the case. We MUST release the search latch before an
-	INSERT, for example. */
-
-	innobase_release_stat_resources(trx);
-
-	/* Reset the AUTOINC statement level counter for multi-row INSERTs. */
-	trx->n_autoinc_rows = 0;
-
-	prebuilt->sql_stat_start = TRUE;
-	prebuilt->hint_need_to_fetch_extra_cols = 0;
-	reset_template(prebuilt);
-
-	if (!prebuilt->mysql_has_locked) {
-		/* This handle is for a temporary table created inside
-		this same LOCK TABLES; since MySQL does NOT call external_lock
-		in this case, we must use x-row locks inside InnoDB to be
-		prepared for an update of a row */
-
-		prebuilt->select_lock_type = LOCK_X;
-	} else {
-		if (trx->isolation_level != TRX_ISO_SERIALIZABLE
-			&& session_sql_command(session) == SQLCOM_SELECT
-			&& lock_type == TL_READ) {
-
-			/* For other than temporary tables, we obtain
-			no lock for consistent read (plain SELECT). */
-
-			prebuilt->select_lock_type = LOCK_NONE;
-		} else {
-			/* Not a consistent read: restore the
-			select_lock_type value. The value of
-			stored_select_lock_type was decided in:
-			1) ::store_lock(),
-			2) ::external_lock(),
-			3) ::init_table_handle_for_HANDLER(), and
-                      */
-
-			prebuilt->select_lock_type =
-				prebuilt->stored_select_lock_type;
-		}
-	}
-
-	trx->detailed_error[0] = '\0';
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-	if (trx->active_trans == 0) {
-
-		innobase_register_trx_and_stmt(innodb_engine_ptr, session);
-		trx->active_trans = 1;
-	} else {
-		innobase_register_stmt(innodb_engine_ptr, session);
-	}
-
-	return(0);
-}
-
-/******************************************************************//**
 Maps a MySQL trx isolation level code to the InnoDB isolation level code
 @return	InnoDB isolation level */
 static inline
@@ -7220,8 +7073,7 @@ innobase_map_isolation_level(
 
 /******************************************************************//**
 As MySQL will execute an external lock for every new table it uses when it
-starts to process an SQL statement (an exception is when MySQL calls
-start_stmt for the handle) we can use this function to store the pointer to
+starts to process an SQL statement.  We can use this function to store the pointer to
 the Session in the handle. We will also use this function to communicate
 to InnoDB that a new SQL statement has started and that we must store a
 savepoint to our transaction handle, so that we are able to roll back
@@ -7265,8 +7117,6 @@ ha_innobase::external_lock(
 
 			innobase_register_trx_and_stmt(innodb_engine_ptr, session);
 			trx->active_trans = 1;
-		} else if (trx->n_mysql_tables_in_use == 0) {
-			innobase_register_stmt(innodb_engine_ptr, session);
 		}
 
 		if (trx->isolation_level == TRX_ISO_SERIALIZABLE
@@ -7325,21 +7175,6 @@ ha_innobase::external_lock(
 
 		trx->mysql_n_tables_locked = 0;
 		prebuilt->used_in_HANDLER = FALSE;
-
-		if (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-			if (trx->active_trans != 0) {
-				getTransactionalEngine()->commit(session, TRUE);
-			}
-		} else {
-			if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
-						&& trx->global_read_view) {
-
-				/* At low transaction isolation levels we let
-				each consistent read set its own snapshot */
-
-				read_view_close_for_mysql(trx);
-			}
-		}
 	}
 
 	return(0);
@@ -7797,11 +7632,7 @@ ha_innobase::store_lock(
 		TABLESPACE or TRUNCATE TABLE then allow multiple
 		writers. Note that ALTER TABLE uses a TL_WRITE_ALLOW_READ
 		< TL_WRITE_CONCURRENT_INSERT.
-
-		We especially allow multiple writers if MySQL is at the
-		start of a stored procedure call (SQLCOM_CALL) or a
-		stored function call (MySQL does have in_lock_tables
-		TRUE there). */
+		*/
 
 		if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
 		     && lock_type <= TL_WRITE)
@@ -7817,10 +7648,7 @@ ha_innobase::store_lock(
 		would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
 		to t2. Convert the lock to a normal read lock to allow
 		concurrent inserts to t2.
-
-		We especially allow concurrent inserts if MySQL is at the
-		start of a stored procedure call (SQLCOM_CALL)
-		(MySQL does have session_in_lock_tables() TRUE there). */
+    */
 
 		if (lock_type == TL_READ_NO_INSERT) {
 
@@ -8194,6 +8022,51 @@ innobase_get_at_most_n_mbchars(
 	}
 
 	return(char_length);
+}
+
+/*******************************************************************//**
+This function is called before each SQL statement is started.
+*/
+void
+InnobaseEngine::doStartStatement(
+/*================*/
+	Session*	session)/*!< in: handle to the Drizzle session */
+{
+	trx_t*		trx= check_trx_exists(session);
+  (void) trx;
+
+  innobase_register_stmt(innodb_engine_ptr, session);
+}
+
+void
+InnobaseEngine::doEndStatement(
+  Session* session)
+{
+  trx_t*		trx= check_trx_exists(session);
+
+  /* Release a possible FIFO ticket and search latch. Since we
+  may reserve the kernel mutex, we have to release the search
+  system latch first to obey the latching order. */
+
+  innobase_release_stat_resources(trx);
+
+  if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    if (trx->active_trans != 0)
+    {
+      commit(session, TRUE);
+    }
+  }
+  else
+  {
+    if (trx->isolation_level <= TRX_ISO_READ_COMMITTED &&
+        trx->global_read_view)
+    {
+      /* At low transaction isolation levels we let
+      each consistent read set its own snapshot */
+      read_view_close_for_mysql(trx);
+    }
+  }
 }
 
 /*******************************************************************//**

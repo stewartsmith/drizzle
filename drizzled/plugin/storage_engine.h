@@ -145,6 +145,25 @@ private:
 
   virtual void setTransactionReadWrite(Session& session);
 
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL statement.
+   */
+  virtual void doStartStatement(Session *session)
+  {
+    (void) session;
+  }
+
+  /*
+   * Indicates to a storage engine the end of
+   * the current SQL statement in the supplied
+   * Session.
+   */
+  virtual void doEndStatement(Session *session)
+  {
+    (void) session;
+  }
+
 protected:
   std::string table_definition_ext;
 
@@ -237,6 +256,14 @@ public:
 
   // @todo match check_flag interface
   virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
+  void startStatement(Session *session)
+  {
+    doStartStatement(session);
+  }
+  void endStatement(Session *session)
+  {
+    doEndStatement(session);
+  }
 
   /*
     StorageEngine methods:
