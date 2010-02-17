@@ -33,8 +33,6 @@
 #include "referential_constraints.h"
 #include "table_constraints.h"
 #include "statistics.h"
-#include "status.h"
-#include "variables.h"
 
 #include <vector>
 
@@ -50,15 +48,9 @@ using namespace std;
 static int infoSchemaInit(drizzled::plugin::Registry& registry)
 {
   registry.add(ColumnsIS::getTable());
-  registry.add(GlobalStatusIS::getTable());
-  registry.add(SessionVariablesIS::getTable());
-  registry.add(GlobalVariablesIS::getTable());
-  registry.add(SessionStatusIS::getTable());
   registry.add(ReferentialConstraintsIS::getTable());
   registry.add(TableConstraintsIS::getTable());
-  registry.add(StatusIS::getTable());
   registry.add(KeyColumnUsageIS::getTable());
-  registry.add(VariablesIS::getTable());
   registry.add(StatisticsIS::getTable());
 #if 0
 #endif
@@ -80,32 +72,14 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(KeyColumnUsageIS::getTable());
   KeyColumnUsageIS::cleanup();
 
-  registry.remove(GlobalStatusIS::getTable());
-  GlobalStatusIS::cleanup();
-
-  registry.remove(GlobalVariablesIS::getTable());
-  GlobalVariablesIS::cleanup();
-
   registry.remove(ReferentialConstraintsIS::getTable());
   ReferentialConstraintsIS::cleanup();
-
-  registry.remove(SessionStatusIS::getTable());
-  SessionStatusIS::cleanup();
-
-  registry.remove(SessionVariablesIS::getTable());
-  SessionVariablesIS::cleanup();
 
   registry.remove(StatisticsIS::getTable());
   StatisticsIS::cleanup();
 
-  registry.remove(StatusIS::getTable());
-  StatusIS::cleanup();
-
   registry.remove(TableConstraintsIS::getTable());
   TableConstraintsIS::cleanup();
-
-  registry.remove(VariablesIS::getTable());
-  VariablesIS::cleanup();
 
   return 0;
 }

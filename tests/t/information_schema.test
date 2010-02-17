@@ -451,23 +451,23 @@ SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
 --replace_column 1 # 2 #
 SHOW STATUS;
 
-#--replace_column 1 # 2 #
-#SELECT *
-#FROM information_schema.old_session_variables
-#ORDER BY variable_name;
+--replace_column 1 # 2 #
+SELECT *
+FROM data_dictionary.session_variables
+ORDER BY variable_name;
 
 #--replace_column 1 # 2 #
 #SHOW VARIABLES;
 
 --replace_column 1 # 2 #
 SELECT *
-FROM information_schema.old_global_status
+FROM data_dictionary.global_status
 ORDER BY variable_name;
 
-#--replace_column 1 # 2 #
-#SELECT *
-#FROM information_schema.old_global_variables
-#ORDER BY variable_name;
+--replace_column 1 # 2 #
+SELECT *
+FROM data_dictionary.global_variables
+ORDER BY variable_name;
 
 #
 # query TABLE_CONSTRAINTS table
