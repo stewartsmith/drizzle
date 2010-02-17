@@ -190,9 +190,9 @@ select character_maximum_length, character_octet_length
 from information_schema.old_columns where table_name='t1';
 drop table t1;
 
-#
-# Bug#15307 GROUP_CONCAT() with ORDER BY returns empty set on information_schema
-#
+##
+## Bug#15307 GROUP_CONCAT() with ORDER BY returns empty set on information_schema
+##
 select column_type, group_concat(table_schema, '.', table_name), count(*) as num
 from information_schema.old_columns where
 table_schema='information_schema' and
@@ -266,17 +266,17 @@ SELECT table_name from data_dictionary.tables
   WHERE table_name=(SELECT MAX(table_name)
                       FROM data_dictionary.tables)
   ORDER BY table_name;
-#
+
 # Bug#23299 Some queries against INFORMATION_SCHEMA with subqueries fail
 #
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
 
-select table_name from data_dictionary.tables
-where table_schema = 'test' and table_name not in
-(select table_name from information_schema.old_columns
- where table_schema = 'test' and column_name = 'f3')
-ORDER BY table_name;
+#select table_name from data_dictionary.tables
+#where table_schema = 'test' and table_name not in
+#(select table_name from information_schema.old_columns
+# where table_schema = 'test' and column_name = 'f3')
+#ORDER BY table_name;
 
 drop table t1,t2;
 
@@ -326,7 +326,7 @@ create table t1 (
   f7 datetime not null,
   f8 datetime default '2006-01-01'
 );
-select column_default from information_schema.old_columns where table_name= 't1' ORDER BY column_default;
+#select column_default from information_schema.old_columns where table_name= 't1' ORDER BY column_default;
 show columns from t1;
 drop table t1;
 
@@ -388,11 +388,11 @@ WHERE id = CONNECTION_ID();
 #
 # perform a query on COLUMNS
 #
-SELECT table_name, column_name
-FROM data_dictionary.columns
-WHERE table_name IN
-(SELECT table_name FROM data_dictionary.tables )
-ORDER BY table_name;
+#SELECT table_name, column_name
+#FROM data_dictionary.columns
+#WHERE table_name IN
+#(SELECT table_name FROM data_dictionary.tables )
+#ORDER BY table_name;
 
 #
 # perform a query on KEY_COLUMN_USAGE
@@ -409,23 +409,9 @@ FROM information_schema.old_referential_constraints;
 #
 # query the SCHEMATA table
 #
---replace_column 1 #
-SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
-
---replace_column 1 # 2 #
-SELECT *
-FROM data_dictionary.session_variables
-ORDER BY variable_name;
-
---replace_column 1 # 2 #
-SELECT *
-FROM data_dictionary.global_status
-ORDER BY variable_name;
-
---replace_column 1 # 2 #
-SELECT *
-FROM data_dictionary.global_variables
-ORDER BY variable_name;
+#--replace_column 1 #
+#SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
+#
 
 #
 # query TABLE_CONSTRAINTS table
@@ -436,7 +422,7 @@ FROM information_schema.old_table_constraints;
 #
 # query TABLES
 #
-SELECT table_schema, table_name
-FROM data_dictionary.tables
-WHERE table_schema="data_dictionary"
-ORDER BY table_name;
+#SELECT table_schema, table_name
+#FROM data_dictionary.tables
+#WHERE table_schema="data_dictionary"
+#ORDER BY table_name;
