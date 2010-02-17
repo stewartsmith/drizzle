@@ -144,18 +144,28 @@ int BlitzTree::write_unique(const char *key, const size_t klen,
 }
 
 char *BlitzTree::first_key(int *key_len) {
-  char *key;
-
-  /* Means that the index is empty. */
   if (!tcbdbcurfirst(bt_cursor))
     return NULL;
 
-  key = (char *)tcbdbcurkey(bt_cursor, key_len);
-  return key;
+  return (char *)tcbdbcurkey(bt_cursor, key_len);
+}
+
+char *BlitzTree::final_key(int *key_len) {
+  if (!tcbdbcurlast(bt_cursor))
+    return NULL;
+
+  return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
 char *BlitzTree::next_key(int *key_len) {
   if (!tcbdbcurnext(bt_cursor))
+    return NULL;
+
+  return (char *)tcbdbcurkey(bt_cursor, key_len);
+}
+
+char *BlitzTree::prev_key(int *key_len) {
+  if (!tcbdbcurprev(bt_cursor))
     return NULL;
 
   return (char *)tcbdbcurkey(bt_cursor, key_len);

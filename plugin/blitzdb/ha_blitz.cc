@@ -477,6 +477,64 @@ int ha_blitz::index_next(unsigned char *buf) {
   return 0;
 }
 
+int ha_blitz::index_prev(unsigned char *buf) {
+  char *dict_key, *bt_key, *row;
+  int dict_klen, bt_klen, prefix_len, rlen;
+
+  bt_key = share->btrees[active_index].prev_key(&bt_klen);
+
+  if (bt_key == NULL)
+    return HA_ERR_KEY_NOT_FOUND;
+
+  prefix_len = btree_key_length(bt_key, active_index);
+  dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
+
+  if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
+    free(bt_key);
+    return HA_ERR_KEY_NOT_FOUND;
+  }
+
+  unpack_row(buf, row, rlen);
+
+  /* Keep track of the key. */ 
+  memcpy(key_buffer, bt_key, bt_klen);
+  updateable_key = key_buffer;
+  updateable_key_len = bt_klen;
+
+  free(bt_key);
+  free(row);
+  return 0;
+}
+
+int ha_blitz::index_last(unsigned char *buf) {
+  char *dict_key, *bt_key, *row;
+  int dict_klen, bt_klen, prefix_len, rlen;
+
+  bt_key = share->btrees[active_index].final_key(&bt_klen);
+
+  if (bt_key == NULL)
+    return HA_ERR_KEY_NOT_FOUND;
+
+  prefix_len = btree_key_length(bt_key, active_index);
+  dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
+
+  if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
+    free(bt_key);
+    return HA_ERR_KEY_NOT_FOUND;
+  }
+
+  unpack_row(buf, row, rlen);
+
+  /* Keep track of the key. */ 
+  memcpy(key_buffer, bt_key, bt_klen);
+  updateable_key = key_buffer;
+  updateable_key_len = bt_klen;
+
+  free(bt_key);
+  free(row);
+  return 0;
+}
+
 int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
                          uint32_t key_len, enum ha_rkey_function find_flag) {
 

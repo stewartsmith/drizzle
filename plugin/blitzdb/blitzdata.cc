@@ -231,7 +231,20 @@ bool BlitzData::delete_row(const char *key, const size_t klen) {
 }
 
 bool BlitzData::delete_all_rows() {
-  return tchdbvanish(data_table);
+  char buf[BLITZ_MAX_META_LEN];
+
+  /* Evacuate the meta data buffer since this will be wiped out. */
+  memcpy(buf, tc_meta_buffer, BLITZ_MAX_META_LEN);
+
+  /* Now it's safe to wipe everything. */
+  if (!tchdbvanish(data_table))
+    return false;
+
+  /* Copy the evacuated meta buffer back to the fresh TCHDB file. */
+  tc_meta_buffer = tchdbopaque(data_table);
+  memcpy(tc_meta_buffer, buf, BLITZ_MAX_META_LEN);
+  
+  return true;
 }
 
 /* Code from here on is for BlitzDB's internal system information management.

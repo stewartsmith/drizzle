@@ -40,6 +40,7 @@
 #define BLITZ_SYSTEM_EXT      ".bzs"
 #define BLITZ_LOCK_SLOTS      16
 #define BLITZ_MAX_INDEX       1
+#define BLITZ_MAX_META_LEN    128
 #define BLITZ_MAX_ROW_STACK   2048
 #define BLITZ_MAX_KEY_LEN     1024 
 
@@ -202,7 +203,9 @@ public:
 
   /* BTREE INDEX READ RELATED */
   char *first_key(int *key_len);
+  char *final_key(int *key_len);
   char *next_key(int *key_len);
+  char *prev_key(int *key_key);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
@@ -281,8 +284,8 @@ public:
   int index_init(uint32_t key_num, bool sorted);
   int index_first(unsigned char *buf);
   int index_next(unsigned char *buf);
-  //int index_prev(unsigned char *buf);
-  //int index_last(unsigned char *buf);
+  int index_prev(unsigned char *buf);
+  int index_last(unsigned char *buf);
   int index_read(unsigned char *buf, const unsigned char *key,
                  uint32_t key_len, enum drizzled::ha_rkey_function find_flag);
   int index_read_idx(unsigned char *buf, uint32_t key_num,
@@ -365,7 +368,10 @@ public:
   uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LEN; }
 
   uint32_t index_flags(enum drizzled::ha_key_alg) const {
-    return (HA_ONLY_WHOLE_INDEX | HA_KEYREAD_ONLY);
+    return (HA_READ_NEXT |
+            HA_READ_PREV |
+            HA_READ_ORDER |
+            HA_KEYREAD_ONLY);
   }
 };
 
