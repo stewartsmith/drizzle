@@ -72,14 +72,9 @@ static std::set<std::string> set_of_table_definition_ext;
 StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg)
     : Plugin(name_arg, "StorageEngine"),
-      enabled(true),
       flags(flags_arg),
-      slot(0)
+      slot(total_ha++)
 {
-  if (enabled)
-  {
-    slot= total_ha++;
-  }
   pthread_mutex_init(&proto_cache_mutex, NULL);
 }
 
@@ -269,7 +264,7 @@ public:
   */
   inline result_type operator() (argument_type engine)
   {
-    if (engine->is_enabled() && (*session->getEngineData(engine)))
+    if (*session->getEngineData(engine))
       engine->close_connection(session);
   }
 };
@@ -301,8 +296,7 @@ bool StorageEngine::flushLogs(StorageEngine *engine)
   }
   else
   {
-    if ((!engine->is_enabled()) ||
-        (engine->flush_logs()))
+    if (engine->flush_logs())
       return true;
   }
   return false;
@@ -594,13 +588,6 @@ int StorageEngine::createTable(Session& session,
     }
   }
 
-  if (! share.storage_engine->is_enabled())
-  {
-    error= HA_ERR_UNSUPPORTED;
-    goto err2;
-  }
-
-
   {
     char name_buff[FN_REFLEN];
     const char *table_name_arg;
@@ -631,7 +618,6 @@ err:
 
 Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
 {
-  assert(enabled);
   return create(share, alloc);
 }
 

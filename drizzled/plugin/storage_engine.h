@@ -141,8 +141,6 @@ public:
   typedef uint64_t Table_flags;
 
 private:
-  bool enabled;
-
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
 
   virtual void setTransactionReadWrite(Session& session);
@@ -227,12 +225,6 @@ public:
   inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
-
-  bool is_enabled() const
-  {
-    return enabled;
-  }
-
   bool is_user_selectable() const
   {
     return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
@@ -245,10 +237,6 @@ public:
 
   // @todo match check_flag interface
   virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
-
-
-  void enable() { enabled= true; }
-  void disable() { enabled= false; }
 
   /*
     StorageEngine methods:
@@ -265,7 +253,6 @@ public:
   virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
-  virtual int start_consistent_snapshot(Session *) { return 0; }
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
   {
