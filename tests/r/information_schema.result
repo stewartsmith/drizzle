@@ -1,20 +1,4 @@
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
-select count(*) from data_dictionary.schemas where schema_name > 'm';
-count(*)
-#
-select schema_name from data_dictionary.schemas;
-schema_name
-information_schema
-mysql
-test
-show databases like 't%';
-Database (t%)
-test
-show databases;
-Database
-information_schema
-mysql
-test
 create database mysqltest;
 create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
 create table test.t2(a int);
@@ -53,12 +37,6 @@ a	int	YES		NULL
 b	varchar(30)	YES	MUL	NULL	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
-select * from data_dictionary.CHARACTER_SETS
-where CHARACTER_SET_NAME like 'latin1%';
-CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-select * from data_dictionary.COLLATIONS
-where COLLATION_NAME like 'latin1%';
-CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
 select * from information_schema.old_table_names;
 ERROR 42S02: Unknown table 'old_table_names' in information_schema
 select column_type from information_schema.old_columns
@@ -399,11 +377,6 @@ CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CON
 SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID();
 info
 SELECT info FROM data_dictionary.processlist WHERE id = CONNECTION_ID()
-show processlist;
-ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
-#	#	#	test	Query	#	#	show processlist
-#	#	#	test	Sleep	#	#	show processlist
-#	#	#	mysqltest	Sleep	#	#	show processlist
 SELECT info, command, db
 FROM data_dictionary.processlist
 WHERE id = CONNECTION_ID();
@@ -411,39 +384,6 @@ info	command	db
 SELECT info, command, db
 FROM data_dictionary.processlist
 WHERE id = CONNECTION_ID()	Query	test
-SELECT *
-FROM data_dictionary.character_sets
-ORDER BY character_set_name;
-CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-binary	binary	UTF-8 Unicode	1
-utf8	utf8_general_ci	UTF-8 Unicode	4
-SELECT *
-FROM data_dictionary.collations
-ORDER BY collation_name;
-CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-binary	binary	binary	63	TRUE	TRUE	1
-utf8_general_ci	utf8_bin	utf8	46	FALSE	TRUE	1
-utf8_general_ci	utf8_czech_ci	utf8	234	FALSE	TRUE	8
-utf8_general_ci	utf8_danish_ci	utf8	235	FALSE	TRUE	8
-utf8_general_ci	utf8_esperanto_ci	utf8	241	FALSE	TRUE	8
-utf8_general_ci	utf8_estonian_ci	utf8	230	FALSE	TRUE	8
-utf8_general_ci	utf8_general_ci	utf8	45	TRUE	TRUE	1
-utf8_general_ci	utf8_hungarian_ci	utf8	242	FALSE	TRUE	8
-utf8_general_ci	utf8_icelandic_ci	utf8	225	FALSE	TRUE	8
-utf8_general_ci	utf8_latvian_ci	utf8	226	FALSE	TRUE	8
-utf8_general_ci	utf8_lithuanian_ci	utf8	236	FALSE	TRUE	8
-utf8_general_ci	utf8_persian_ci	utf8	240	FALSE	TRUE	8
-utf8_general_ci	utf8_polish_ci	utf8	229	FALSE	TRUE	8
-utf8_general_ci	utf8_romanian_ci	utf8	227	FALSE	TRUE	8
-utf8_general_ci	utf8_roman_ci	utf8	239	FALSE	TRUE	8
-utf8_general_ci	utf8_sinhala_ci	utf8	243	FALSE	TRUE	8
-utf8_general_ci	utf8_slovak_ci	utf8	237	FALSE	TRUE	8
-utf8_general_ci	utf8_slovenian_ci	utf8	228	FALSE	TRUE	8
-utf8_general_ci	utf8_spanish2_ci	utf8	238	FALSE	TRUE	8
-utf8_general_ci	utf8_spanish_ci	utf8	231	FALSE	TRUE	8
-utf8_general_ci	utf8_swedish_ci	utf8	232	FALSE	TRUE	8
-utf8_general_ci	utf8_turkish_ci	utf8	233	FALSE	TRUE	8
-utf8_general_ci	utf8_unicode_ci	utf8	224	FALSE	TRUE	8
 SELECT table_name, column_name
 FROM data_dictionary.columns
 WHERE table_name IN
@@ -569,63 +509,6 @@ CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	UNIQUE_CONSTRAINT_CATALOG	U
 SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
 count(schema_name)
 #
-SHOW STATUS;
-Variable_name	Value
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
-#	#
 SELECT *
 FROM data_dictionary.session_variables
 ORDER BY variable_name;
@@ -1007,6 +890,3 @@ FROM data_dictionary.tables
 WHERE table_schema="data_dictionary"
 ORDER BY table_name;
 table_schema	table_name
-SELECT count(*) FROM data_dictionary.plugins;
-count(*)
-#
