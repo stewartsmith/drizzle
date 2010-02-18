@@ -156,7 +156,7 @@ bool TransactionLogEntriesTool::Generator::populate()
 
   push(entry.getOffset());
   push(entry.getTypeAsString());
-  push(entry.getLengthInBytes());
+  push(static_cast<uint64_t>(entry.getLengthInBytes()));
 
   it++;
 
