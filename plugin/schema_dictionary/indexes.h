@@ -67,4 +67,4 @@ public:
   }
 };
 
-#endif // PLUGIN_SCHEMA_DICTIONARY_INDEXES_H
+#endif /* PLUGIN_SCHEMA_DICTIONARY_INDEXES_H */
