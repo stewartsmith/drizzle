@@ -129,71 +129,71 @@ static sys_var_chain vars = { NULL, NULL };
 
 static sys_var_session_uint64_t
 sys_auto_increment_increment(&vars, "auto_increment_increment",
-                             &SV::auto_increment_increment);
+                             &system_variables::auto_increment_increment);
 static sys_var_session_uint64_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
-                          &SV::auto_increment_offset);
+                          &system_variables::auto_increment_offset);
 
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
-                                                          &SV::bulk_insert_buff_size);
+                                                          &system_variables::bulk_insert_buff_size);
 static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
-                                                    &SV::completion_type,
+                                                    &system_variables::completion_type,
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_server(&vars, "collation_server", &SV::collation_server, &default_charset_info);
+sys_collation_server(&vars, "collation_server", &system_variables::collation_server, &default_charset_info);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
 
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
-                                                     &SV::join_buff_size);
+                                                     &system_variables::join_buff_size);
 static sys_var_session_uint32_t	sys_max_allowed_packet(&vars, "max_allowed_packet",
-                                                       &SV::max_allowed_packet);
+                                                       &system_variables::max_allowed_packet);
 static sys_var_uint64_t_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
                                                &max_connect_errors);
 static sys_var_session_uint64_t	sys_max_error_count(&vars, "max_error_count",
-                                                  &SV::max_error_count);
+                                                  &system_variables::max_error_count);
 static sys_var_session_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_size",
-                                                        &SV::max_heap_table_size);
+                                                        &system_variables::max_heap_table_size);
 static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
-                                              &SV::pseudo_thread_id,
+                                              &system_variables::pseudo_thread_id,
                                               0, check_pseudo_thread_id);
 static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
-                                                  &SV::max_join_size,
+                                                  &system_variables::max_join_size,
                                                   fix_max_join_size);
 static sys_var_session_uint64_t	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
-                                                      &SV::max_seeks_for_key);
+                                                      &system_variables::max_seeks_for_key);
 static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
-                                                               &SV::max_length_for_sort_data);
+                                                               &system_variables::max_length_for_sort_data);
 static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
-                                                    &SV::max_sort_length);
+                                                    &system_variables::max_sort_length);
 static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
-                                                           &SV::min_examined_row_limit);
+                                                           &system_variables::min_examined_row_limit);
 
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
-                                                      &SV::optimizer_prune_level);
+                                                      &system_variables::optimizer_prune_level);
 static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",
-                                                           &SV::optimizer_search_depth);
+                                                           &system_variables::optimizer_search_depth);
 
 static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_size",
-                                                      &SV::preload_buff_size);
+                                                      &system_variables::preload_buff_size);
 static sys_var_session_uint32_t sys_read_buff_size(&vars, "read_buffer_size",
-                                                   &SV::read_buff_size);
+                                                   &system_variables::read_buff_size);
 static sys_var_session_uint32_t	sys_read_rnd_buff_size(&vars, "read_rnd_buffer_size",
-                                                       &SV::read_rnd_buff_size);
+                                                       &system_variables::read_rnd_buff_size);
 static sys_var_session_uint32_t	sys_div_precincrement(&vars, "div_precision_increment",
-                                                      &SV::div_precincrement);
+                                                      &system_variables::div_precincrement);
 
 static sys_var_session_size_t	sys_range_alloc_block_size(&vars, "range_alloc_block_size",
-                                                           &SV::range_alloc_block_size);
+                                                           &system_variables::range_alloc_block_size);
 static sys_var_session_uint32_t	sys_query_alloc_block_size(&vars, "query_alloc_block_size",
-                                                           &SV::query_alloc_block_size,
+                                                           &system_variables::query_alloc_block_size,
                                                            false, fix_session_mem_root);
 static sys_var_session_uint32_t	sys_query_prealloc_size(&vars, "query_prealloc_size",
-                                                        &SV::query_prealloc_size,
+                                                        &system_variables::query_prealloc_size,
                                                         false, fix_session_mem_root);
 static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_tmpdir);
 
@@ -203,10 +203,10 @@ static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
                                            fix_server_id);
 
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
-                                                &SV::sortbuff_size);
+                                                &system_variables::sortbuff_size);
 
 static sys_var_session_storage_engine sys_storage_engine(&vars, "storage_engine",
-				       &SV::storage_engine);
+				       &system_variables::storage_engine);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
                                              system_time_zone);
 static sys_var_size_t_ptr	sys_table_def_size(&vars, "table_definition_cache",
@@ -216,12 +216,12 @@ static sys_var_uint64_t_ptr	sys_table_cache_size(&vars, "table_open_cache",
 static sys_var_uint64_t_ptr	sys_table_lock_wait_timeout(&vars, "table_lock_wait_timeout",
                                                     &table_lock_wait_timeout);
 static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
-                                             &SV::tx_isolation,
+                                             &system_variables::tx_isolation,
                                              &tx_isolation_typelib,
                                              fix_tx_isolation,
                                              check_tx_isolation);
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
-					   &SV::tmp_table_size);
+					   &system_variables::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &internal::timed_mutexes);
 static sys_var_const_str  sys_version(&vars, "version", version().c_str());
 
@@ -261,7 +261,7 @@ static sys_var_session_bit	sys_unique_checks(&vars, "unique_checks", 0,
 /* Local state variables */
 
 static sys_var_session_ha_rows	sys_select_limit(&vars, "sql_select_limit",
-						 &SV::select_limit);
+						 &system_variables::select_limit);
 static sys_var_timestamp sys_timestamp(&vars, "timestamp");
 static sys_var_last_insert_id
 sys_last_insert_id(&vars, "last_insert_id");
@@ -295,7 +295,7 @@ static sys_var_readonly sys_warning_count(&vars, "warning_count",
                                           get_warning_count);
 
 sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
-                                                  &SV::group_concat_max_len);
+                                                  &system_variables::group_concat_max_len);
 
 sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 
