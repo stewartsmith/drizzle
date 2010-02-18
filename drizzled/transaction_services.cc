@@ -339,6 +339,23 @@ namespace drizzled
   is always committed at the end of all statements.
 */
 
+void TransactionServices::registerResourceForStatement(Session *session,
+                                                       plugin::TransactionalStorageEngine *engine)
+{
+  TransactionContext *trans= &session->transaction.stmt;
+  ResourceContext *resource_context;
+
+  resource_context= session->getResourceContext(engine, 0);
+
+  if (resource_context->isStarted())
+    return; /* already registered, return */
+
+  resource_context->setResource(engine);
+  trans->registerResource(resource_context);
+
+  trans->no_2pc|= not engine->hasTwoPhaseCommit();
+}
+
 /**
   Register a storage engine for a transaction.
 
@@ -353,20 +370,14 @@ namespace drizzled
     times per transaction.
 
 */
-void TransactionServices::trans_register_ha(Session *session, bool all, plugin::TransactionalStorageEngine *engine)
+void TransactionServices::trans_register_ha(Session *session, plugin::TransactionalStorageEngine *engine)
 {
-  TransactionContext *trans;
+  TransactionContext *trans= &session->transaction.all;
   ResourceContext *resource_context;
 
-  if (all)
-  {
-    trans= &session->transaction.all;
-    session->server_status|= SERVER_STATUS_IN_TRANS;
-  }
-  else
-    trans= &session->transaction.stmt;
+  session->server_status|= SERVER_STATUS_IN_TRANS;
 
-  resource_context= session->getResourceContext(engine, all ? 1 : 0);
+  resource_context= session->getResourceContext(engine, 1);
 
   if (resource_context->isStarted())
     return; /* already registered, return */

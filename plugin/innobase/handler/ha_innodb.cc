@@ -1454,24 +1454,6 @@ ha_innobase::update_session()
 }
 
 /*********************************************************************//**
-Registers that InnoDB takes part in an SQL statement, so that MySQL knows to
-roll back the statement if the statement results in an error. This MUST be
-called for every SQL statement that may be rolled back by MySQL. Calling this
-several times to register the same statement is allowed, too. */
-static inline
-void
-innobase_register_stmt(
-/*===================*/
-        plugin::TransactionalStorageEngine*	engine,	/*!< in: Innobase hton */
-	Session*	session)	/*!< in: MySQL thd (connection) object */
-{
-	assert(engine == innodb_engine_ptr);
-	/* Register the statement */
-  TransactionServices &transaction_services= TransactionServices::singleton();
-	transaction_services.trans_register_ha(session, FALSE, engine);
-}
-
-/*********************************************************************//**
 Registers an InnoDB transaction in MySQL, so that the MySQL XA code knows
 to call the InnoDB prepare and commit, or rollback for the transaction. This
 MUST be called for every transaction for which the user may call commit or
@@ -1485,16 +1467,10 @@ innobase_register_trx_and_stmt(
         plugin::TransactionalStorageEngine *engine, /*!< in: Innobase StorageEngine */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
-	/* NOTE that actually innobase_register_stmt() registers also
-	the transaction in the AUTOCOMMIT=1 mode. */
-
-	innobase_register_stmt(engine, session);
-
 	if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-
 		/* No autocommit mode, register for a transaction */
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.trans_register_ha(session, TRUE, engine);
+    transaction_services.trans_register_ha(session, engine);
 	}
 }
 
@@ -2118,7 +2094,7 @@ InnobaseEngine::doCommit(
 
 	1. ::external_lock(),
 	4. InnobaseEngine::setSavepoint(),
-	6. InnobaseEngine::start_consistent_snapshot(),
+	6. InnobaseEngine::doStartConsistentSnapshot(),
 
 	and it is only set to 0 in a commit or a rollback. If it is 0 we know
 	there cannot be resources to be freed and we could return immediately.
@@ -8024,25 +8000,22 @@ innobase_get_at_most_n_mbchars(
 	return(char_length);
 }
 
-/*******************************************************************//**
-This function is called before each SQL statement is started.
-*/
 void
 InnobaseEngine::doStartStatement(
-/*================*/
-	Session*	session)/*!< in: handle to the Drizzle session */
+	Session *session) /*!< in: handle to the Drizzle session */
 {
-	trx_t*		trx= check_trx_exists(session);
-  (void) trx;
-
-  innobase_register_stmt(innodb_engine_ptr, session);
+  /* 
+   * Create the InnoDB transaction structure
+   * for the session
+   */
+	(void) check_trx_exists(session);
 }
 
 void
 InnobaseEngine::doEndStatement(
-  Session* session)
+  Session *session)
 {
-  trx_t*		trx= check_trx_exists(session);
+  trx_t *trx= check_trx_exists(session);
 
   /* Release a possible FIFO ticket and search latch. Since we
   may reserve the kernel mutex, we have to release the search

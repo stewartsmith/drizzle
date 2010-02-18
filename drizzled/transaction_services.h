@@ -71,8 +71,28 @@ public:
   int ha_release_savepoint(Session *session, NamedSavepoint &sv);
   bool mysql_xa_recover(Session *session);
 
+  /**
+   * Marks a storage engine as participating in a statement
+   * transaction.
+   *
+   * @note
+   * 
+   * This method is idempotent
+   *
+   * @todo
+   *
+   * This method should not be called more than once per resource
+   * per statement, and therefore should not need to be idempotent.
+   * Put in assert()s to test this.
+   *
+   * @param[in] Session pointer
+   * @param[in] Resource which will be participating
+   */
+  void registerResourceForStatement(Session *session,
+                                    plugin::TransactionalStorageEngine *engine);
+
   /* these are called by storage engines */
-  void trans_register_ha(Session *session, bool all, plugin::TransactionalStorageEngine *engine);
+  void trans_register_ha(Session *session, plugin::TransactionalStorageEngine *engine);
 };
 
 } /* namespace drizzled */

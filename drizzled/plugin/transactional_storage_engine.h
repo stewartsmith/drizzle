@@ -21,6 +21,7 @@
 #define DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
 
 #include "drizzled/plugin/storage_engine.h"
+#include "drizzled/transaction_services.h"
 
 namespace drizzled
 {
@@ -61,6 +62,13 @@ public:
                              bool two_phase_commit= false);
 
   virtual ~TransactionalStorageEngine();
+
+  void startStatement(Session *session)
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.registerResourceForStatement(session, this);
+    doStartStatement(session);
+  }
 
   int commit(Session *session, bool normal_transaction)
   {
@@ -110,6 +118,25 @@ public:
 
 private:
   void setTransactionReadWrite(Session& session);
+
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL statement.
+   */
+  virtual void doStartStatement(Session *session)
+  {
+    (void) session;
+  }
+
+  /*
+   * Indicates to a storage engine the end of
+   * the current SQL statement in the supplied
+   * Session.
+   */
+  virtual void doEndStatement(Session *session)
+  {
+    (void) session;
+  }
   /**
    * Implementing classes should override these to provide savepoint
    * functionality.
