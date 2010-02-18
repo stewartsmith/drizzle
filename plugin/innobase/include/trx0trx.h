@@ -560,10 +560,6 @@ struct trx_struct{
 	ulint		mysql_process_no;/* since in Linux, 'top' reports
 					process id's and not thread id's, we
 					store the process number too */
-	/*------------------------------*/
-	ulint		n_mysql_tables_in_use; /* number of Innobase tables
-					used in the processing of the current
-					SQL statement in MySQL */
 	ulint		mysql_n_tables_locked;
 					/* how many tables the current SQL
 					statement uses, except those

@@ -4414,13 +4414,16 @@ of the InnoDB data associated with this table handle instance.
 
   A) if the user has not explicitly set any MySQL table level locks:
 
-  1) MySQL calls ::external_lock to set an 'intention' table level lock on
-the table of the handle instance. There we set
-prebuilt->sql_stat_start = TRUE. The flag sql_stat_start should be set
-true if we are taking this table handle instance to use in a new SQL
-statement issued by the user. We also increment trx->n_mysql_tables_in_use.
+  1) Drizzle calls StorageEngine::doStartStatement(), indicating to
+     InnoDB that a new SQL statement has begun.
 
-  2) If prebuilt->sql_stat_start == TRUE we 'pre-compile' the MySQL search
+  2a) For each InnoDB-managed table in the SELECT, Drizzle calls ::external_lock
+     to set an 'intention' table level lock on the table of the Cursor instance.
+     There we set prebuilt->sql_stat_start = TRUE. The flag sql_stat_start should 
+     be set true if we are taking this table handle instance to use in a new SQL
+     statement issued by the user.
+
+  2b) If prebuilt->sql_stat_start == TRUE we 'pre-compile' the MySQL search
 instructions to prebuilt->template of the table handle instance in
 ::index_read. The template is used to save CPU time in large joins.
 
@@ -4432,13 +4435,19 @@ lock on the table.
   4) We do the SELECT. MySQL may repeatedly call ::index_read for the
 same table handle instance, if it is a join.
 
-  5) When the SELECT ends, MySQL removes its intention table level locks
-in ::external_lock. When trx->n_mysql_tables_in_use drops to zero,
- (a) we execute a COMMIT there if the autocommit is on,
+5) When the SELECT ends, the Drizzle kernel calls doEndStatement()
+
+ (a) we execute a COMMIT there if the autocommit is on. The Drizzle interpreter 
+     does NOT execute autocommit for pure read transactions, though it should.
+     That is why we must execute the COMMIT in ::doEndStatement().
  (b) we also release possible 'SQL statement level resources' InnoDB may
-have for this SQL statement. The MySQL interpreter does NOT execute
-autocommit for pure read transactions, though it should. That is why the
-table Cursor in that case has to execute the COMMIT in ::external_lock.
+     have for this SQL statement.
+
+  @todo
+
+  Remove need for InnoDB to call autocommit for read-only trx
+
+  @todo Check the below is still valid (I don't think it is...)
 
   B) If the user has explicitly set MySQL table level locks, then MySQL
 does NOT call ::external_lock at the start of the statement. To determine
@@ -7050,10 +7059,7 @@ innobase_map_isolation_level(
 /******************************************************************//**
 As MySQL will execute an external lock for every new table it uses when it
 starts to process an SQL statement.  We can use this function to store the pointer to
-the Session in the handle. We will also use this function to communicate
-to InnoDB that a new SQL statement has started and that we must store a
-savepoint to our transaction handle, so that we are able to roll back
-the SQL statement in case of an error.
+the Session in the handle.
 @return	0 */
 UNIV_INTERN
 int
@@ -7062,12 +7068,9 @@ ha_innobase::external_lock(
 	Session*	session,	/*!< in: handle to the user thread */
 	int	lock_type)	/*!< in: lock type */
 {
-	trx_t*		trx;
-
-
 	update_session(session);
 
-	trx = prebuilt->trx;
+  trx_t *trx= prebuilt->trx;
 
 	prebuilt->sql_stat_start = TRUE;
 	prebuilt->hint_need_to_fetch_extra_cols = 0;
@@ -7084,16 +7087,6 @@ ha_innobase::external_lock(
 
 	if (lock_type != F_UNLCK) {
 		/* MySQL is setting a new table lock */
-
-		trx->detailed_error[0] = '\0';
-
-		/* Set the MySQL flag to mark that there is an active
-		transaction */
-		if (trx->active_trans == 0) {
-
-			innobase_register_trx_and_stmt(innodb_engine_ptr, session);
-			trx->active_trans = 1;
-		}
 
 		if (trx->isolation_level == TRX_ISO_SERIALIZABLE
 			&& prebuilt->select_lock_type == LOCK_NONE
@@ -7127,31 +7120,14 @@ ha_innobase::external_lock(
 			trx->mysql_n_tables_locked++;
 		}
 
-		trx->n_mysql_tables_in_use++;
 		prebuilt->mysql_has_locked = TRUE;
 
 		return(0);
 	}
 
 	/* MySQL is releasing a table lock */
-
-	trx->n_mysql_tables_in_use--;
 	prebuilt->mysql_has_locked = FALSE;
-
-	/* Release a possible FIFO ticket and search latch. Since we
-	may reserve the kernel mutex, we have to release the search
-	system latch first to obey the latching order. */
-
-	innobase_release_stat_resources(trx);
-
-	/* If the MySQL lock count drops to zero we know that the current SQL
-	statement has ended */
-
-	if (trx->n_mysql_tables_in_use == 0) {
-
-		trx->mysql_n_tables_locked = 0;
-		prebuilt->used_in_HANDLER = FALSE;
-	}
+	trx->mysql_n_tables_locked= 0;
 
 	return(0);
 }
@@ -7505,28 +7481,6 @@ ha_innobase::store_lock(
 	understand this caused a serious memory corruption bug in 5.1.11. */
 
 	trx = check_trx_exists(session);
-
-	/* NOTE: MySQL can call this function with lock 'type' TL_IGNORE!
-	Be careful to ignore TL_IGNORE if we are going to do something with
-	only 'real' locks! */
-
-	/* If no MySQL table is in use, we need to set the isolation level
-	of the transaction. */
-
-	if (lock_type != TL_IGNORE
-	    && trx->n_mysql_tables_in_use == 0) {
-		trx->isolation_level = innobase_map_isolation_level(
-			(enum_tx_isolation) session_tx_isolation(session));
-
-		if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
-		    && trx->global_read_view) {
-
-			/* At low transaction isolation levels we let
-			each consistent read set its own snapshot */
-
-			read_view_close_for_mysql(trx);
-		}
-	}
 
 	assert(EQ_CURRENT_SESSION(session));
 	const uint32_t sql_command = session_sql_command(session);
@@ -7999,7 +7953,12 @@ innobase_get_at_most_n_mbchars(
 
 	return(char_length);
 }
-
+/**
+ * We will also use this function to communicate
+ * to InnoDB that a new SQL statement has started and that we must store a
+ * savepoint to our transaction handle, so that we are able to roll back
+ * the SQL statement in case of an error.
+ */
 void
 InnobaseEngine::doStartStatement(
 	Session *session) /*!< in: handle to the Drizzle session */
@@ -8008,7 +7967,24 @@ InnobaseEngine::doStartStatement(
    * Create the InnoDB transaction structure
    * for the session
    */
-	(void) check_trx_exists(session);
+	trx_t *trx= check_trx_exists(session);
+
+  /* "reset" the error message for the transaction */
+  trx->detailed_error[0]= '\0';
+
+	/* Set the isolation level of the transaction. */
+  trx->isolation_level= innobase_map_isolation_level((enum_tx_isolation) session_tx_isolation(session));
+
+  /* 
+   * Set the Drizzle flag to mark that there is an active
+   * transaction.
+   *
+   * @todo this should go away
+   */
+  if (trx->active_trans == 0) {
+    innobase_register_trx_and_stmt(innodb_engine_ptr, session);
+    trx->active_trans= 1;
+  }
 }
 
 void
@@ -8040,6 +8016,8 @@ InnobaseEngine::doEndStatement(
       read_view_close_for_mysql(trx);
     }
   }
+
+  trx->active_trans= 0;
 }
 
 /*******************************************************************//**
