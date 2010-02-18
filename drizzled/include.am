@@ -423,7 +423,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/utf8/unchecked.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
-			      drizzled/xid.h
+			      drizzled/xid.h \
+			      plugin/innobase/handler/status_function.h
 
 DRIZZLED_LDADD= \
 		drizzled/internal/libinternal.la \
