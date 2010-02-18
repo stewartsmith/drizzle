@@ -68,7 +68,7 @@ int FunctionCursor::rnd_init(bool)
 int FunctionCursor::rnd_next(unsigned char *)
 {
   bool more_rows;
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
   /* Fix bug in the debug logic for field */
   for (Field **field=table->field ; *field ; field++)
@@ -125,7 +125,7 @@ int FunctionCursor::rnd_end()
 
 int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
   memcpy(buf, row_cache[position_id], table->s->reclength);

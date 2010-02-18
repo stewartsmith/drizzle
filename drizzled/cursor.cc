@@ -158,7 +158,7 @@ bool Cursor::has_transactions()
   return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
-void Cursor::ha_statistic_increment(ulong SSV::*offset) const
+void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
 {
   status_var_increment(table->in_use->status_var.*offset);
 }
@@ -265,7 +265,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
   register int error;
 
-  ha_statistic_increment(&SSV::ha_read_first_count);
+  ha_statistic_increment(&system_status_var::ha_read_first_count);
 
   /*
     If there is very few deleted rows in the table, find the first row by
