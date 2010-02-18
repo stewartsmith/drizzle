@@ -1231,33 +1231,9 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
                              plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   memset(lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
   switch (lex->sql_command) {
-  case SQLCOM_SHOW_DATABASES:
-    if (wild)
-    {
-      lookup_field_values->db_value.str= (char*) wild;
-      lookup_field_values->db_value.length= strlen(wild);
-      lookup_field_values->wild_db_value= 1;
-    }
-    return 0;
-  case SQLCOM_SHOW_TABLES:
-  case SQLCOM_SHOW_TABLE_STATUS:
-    lookup_field_values->db_value.str= lex->select_lex.db;
-    lookup_field_values->db_value.length=strlen(lex->select_lex.db);
-    if (wild)
-    {
-      lookup_field_values->table_value.str= (char*)wild;
-      lookup_field_values->table_value.length= strlen(wild);
-      lookup_field_values->wild_table_value= 1;
-    }
-    return 0;
-  default:
-    /*
-      The "default" is for queries over I_S.
-      All previous cases handle SHOW commands.
-    */
+    default:
     return calc_lookup_values_from_cond(session, cond, tables, lookup_field_values, schema_table);
   }
 }
