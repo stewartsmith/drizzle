@@ -1739,6 +1739,7 @@ innobase_init(
 	char		*default_path;
 	uint		format_id;
 
+        (void)innodb_status_variables;
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
 
@@ -7346,18 +7347,6 @@ ha_innobase::external_lock(
 }
 
 /************************************************************************//**
-Here we export InnoDB status variables to MySQL. */
-static
-void
-innodb_export_status(void)
-/*======================*/
-{
-	if (innodb_inited) {
-		srv_export_innodb_status();
-	}
-}
-
-/************************************************************************//**
 Implements the SHOW INNODB STATUS command. Sends the output of the InnoDB
 Monitor to the client. */
 static
@@ -8727,23 +8716,6 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(drizzle_show_var *var, char *)
-{
-  innodb_export_status();
-  var->type= SHOW_ARRAY;
-  var->value= (char *) &innodb_status_variables;
-  return 0;
-}
-
-static st_show_var_func_container
-show_innodb_vars_cont = { &show_innodb_vars };
-
-static drizzle_show_var innodb_status_variables_export[]= {
-  {"Innodb",                   (char*) &show_innodb_vars_cont, SHOW_FUNC},
-  {NULL, NULL, SHOW_LONG}
-};
-
-
 /* plugin options */
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -9066,7 +9038,7 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   innobase_deinit, /* Plugin Deinit */
-  innodb_status_variables_export,/* status variables             */
+  NULL,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

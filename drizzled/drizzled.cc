@@ -1051,7 +1051,6 @@ static drizzle_show_var status_vars[]= {
   {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},
-  {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
   {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(system_status_var, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_tables",       (char*) offsetof(system_status_var, created_tmp_tables), SHOW_LONG_STATUS},
@@ -1152,6 +1151,9 @@ static int init_common_variables(const char *conf_file_name, int argc,
     status variables that is shown by SHOW STATUS.
     Later, in plugin_init, new entries could be added to that list.
   */
+  if (add_com_status_vars(com_status_vars))
+    return 1; // an error was already reported
+
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
 

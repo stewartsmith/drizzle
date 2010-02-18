@@ -103,15 +103,8 @@ bool StateTool::Generator::populate()
       variables++;
       continue;
     }
-    else if (var->type != SHOW_ARRAY)
-    {
-      fill(variables->name, var->value, var->type);
-    }
-    else
-    {
-      variables++;
-      continue;
-    }
+
+    fill(variables->name, var->value, var->type);
 
     variables++;
 

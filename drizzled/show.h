@@ -92,6 +92,7 @@ bool mysqld_show_column_types(Session *session);
 void calc_sum_of_all_status(struct system_status_var *to);
 
 int add_status_vars(drizzle_show_var *list);
+int add_com_status_vars(drizzle_show_var *list);
 void remove_status_vars(drizzle_show_var *list);
 void init_status_vars();
 void free_status_vars();
