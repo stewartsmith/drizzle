@@ -127,7 +127,11 @@ extern "C" {
 #include "i_s.h"
 #include "handler0vars.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
+
+#include "plugin/innobase/handler/status_function.h"
 
 using namespace std;
 using namespace drizzled;
@@ -162,6 +166,7 @@ undefined.  Map it to NULL. */
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 static plugin::StorageEngine* innodb_engine_ptr= NULL;
+static plugin::TableFunction* status_table_function_ptr= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -610,6 +615,54 @@ static drizzle_show_var innodb_status_variables[]= {
   (char*) &export_vars.innodb_rows_updated,		  SHOW_LONG},
   {NULL, NULL, SHOW_LONG}
 };
+
+InnodbStatusTool::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator::Generator(fields)
+{ 
+  srv_export_innodb_status();
+  status_var_ptr= innodb_status_variables;
+}
+
+bool InnodbStatusTool::Generator::populate()
+{
+  if (status_var_ptr->name)
+  {
+    std::ostringstream oss;
+    string return_value;
+    const char *value= status_var_ptr->value;
+
+    /* VARIABLE_NAME */
+    push(status_var_ptr->name);
+
+    switch (status_var_ptr->type)
+    {
+    case SHOW_LONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_LONGLONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_BOOL:
+      return_value= *(bool*) value ? "ON" : "OFF";
+      break;
+    default:
+      assert(0);
+    }
+
+    /* VARIABLE_VALUE */
+    if (return_value.length())
+      push(return_value);
+    else 
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
+}
 
 /* General functions */
 
@@ -1739,7 +1792,6 @@ innobase_init(
 	char		*default_path;
 	uint		format_id;
 
-        (void)innodb_status_variables;
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
 
@@ -2020,7 +2072,11 @@ innobase_change_buffering_inited_ok:
 		i_s_cmpmem_reset_init())
 		goto error;
 
+        status_table_function_ptr= new InnodbStatusTool;
+
 	registry.add(innodb_engine_ptr);
+
+	registry.add(status_table_function_ptr);
 
 	registry.add(innodb_trx_schema_table);
 	registry.add(innodb_locks_schema_table);
@@ -2047,6 +2103,10 @@ innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
+
+	registry.remove(status_table_function_ptr);
+ 	delete status_table_function_ptr;
+
 	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
