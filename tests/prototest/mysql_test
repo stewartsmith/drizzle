@@ -1,0 +1,249 @@
+#!/usr/bin/env python
+#
+# Drizzle Client & Protocol Library
+# 
+# Copyright (C) 2008 Eric Day (eday@oddments.org)
+# All rights reserved.
+# 
+# Use and distribution licensed under the BSD license.  See
+# the COPYING file in this directory for full text.
+#
+'''
+Drizzle and MySQL Protocol Test Suite
+
+This tool requires for anonymous authentication to be open on the
+MySQL server.
+'''
+
+import optparse
+import socket
+import unittest
+from prototest import mysql
+
+parser = optparse.OptionParser(add_help_option=False)
+
+parser.add_option("--help", action="help", help="Print out help details")
+parser.add_option("-h", "--host", dest="host", default="localhost",
+                  help="Host or IP to test", metavar="HOST")
+parser.add_option("-p", "--port", dest="port", default=3306,
+                  help="Port to test", metavar="PORT")
+
+BAD_HANDSHAKE = 1043
+DB_ACCESS_DENIED = 1044
+ACCESS_DENIED = 1045
+WRONG_DB_NAME = 1102
+PACKET_TOO_LARGE = 1153
+PACKETS_OUT_OF_ORDER = 1156
+
+(options, args) = parser.parse_args()
+
+class TestHandshake(unittest.TestCase):
+  def setUp(self):
+    self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.s.connect((options.host, int(options.port)))
+
+  def tearDown(self):
+    self.s.close()
+
+  def reconnect(self):
+    self.tearDown()
+    self.setUp()
+
+  def testNullClientHandshake(self):
+    self.verifyServerHandshake()
+    self.s.send(mysql.Packet().pack())
+    (packet, data) = self.verifyPacket(1)
+    result = mysql.Result(data, version_40=True)
+    self.assertEqual(result.field_count, 255)
+    self.assertEqual(result.error_code, PACKETS_OUT_OF_ORDER)
+
+  def testEmptyRangeClientHandshake(self):
+    for x in range(0, 1024) + range(1024, 1024*1024, 997):
+      self.verifyServerHandshake()
+      self.s.send(mysql.Packet(size=x, sequence=1).pack())
+
+      if x > 0:
+        self.s.send('\x00' * x)
+
+      (packet, data) = self.verifyPacket(2)
+
+      if x < 6:
+        result = mysql.Result(data, version_40=True)
+        self.assertEqual(result.field_count, 255)
+        self.assertEqual(result.error_code, BAD_HANDSHAKE)
+      else:
+        result = mysql.Result(data, version_40=True)
+        if result.field_count == 0:
+          self.assertEqual(result.affected_rows, 0)
+          self.assertEqual(result.insert_id, 0)
+          self.assertEqual(result.status, 0)
+        else:
+          self.assertEqual(result.field_count, 255)
+          self.assertEqual(result.error_code, PACKET_TOO_LARGE)
+
+      self.reconnect()
+
+  def testMaxRangeClientHandshake(self):
+    for x in range(0, 1024) + range(1024, 1024*1024, 997):
+      self.verifyServerHandshake()
+      self.s.send(mysql.Packet(size=x, sequence=1).pack())
+
+      if x > 0:
+        self.s.send('\xff' * x)
+
+      (packet, data) = self.verifyPacket(2)
+
+      result = mysql.Result(data, version_40=True)
+      self.assertEqual(result.field_count, 255)
+      if result.error_code != BAD_HANDSHAKE:
+        self.assertEqual(result.error_code, PACKET_TOO_LARGE)
+
+      self.reconnect()
+
+  def testUserOverrun(self):
+    for x in range(0, 1024) + range(1024, 1024*1024, 997):
+      server_handshake = self.verifyServerHandshake()
+      client_handshake = mysql.ClientHandshake(capabilities=server_handshake.capabilities.value())
+
+      self.s.send(mysql.Packet(size=32+x, sequence=1).pack())
+      self.s.send(client_handshake.pack()[:32])
+      if x > 0:
+        self.s.send('\xff' * x)
+
+      (packet, data) = self.verifyPacket(2)
+      result = mysql.Result(data, version_40=True)
+      if result.error_code != BAD_HANDSHAKE:
+        self.assertEqual(result.error_code, PACKET_TOO_LARGE)
+
+      self.reconnect()
+
+  def testScrambleOverrun(self):
+    for x in range(0, 256):
+      server_handshake = self.verifyServerHandshake()
+      client_handshake = mysql.ClientHandshake(capabilities=server_handshake.capabilities.value())
+
+      self.s.send(mysql.Packet(size=34+x, sequence=1).pack())
+      self.s.send(client_handshake.pack()[:33])
+      self.s.send(chr(x))
+      if x > 0:
+        self.s.send('\xff' * x)
+
+      (packet, data) = self.verifyPacket(2)
+      result = mysql.Result(data)
+      if result.field_count == 0:
+        self.assertEqual(result.affected_rows, 0)
+        self.assertEqual(result.insert_id, 0)
+        self.assertEqual(result.warning_count, 0)
+      elif result.error_code != ACCESS_DENIED:
+        self.assertEqual(result.field_count, 255)
+        self.assertEqual(result.error_code, BAD_HANDSHAKE)
+
+      self.reconnect()
+
+  def testDBOverrun(self):
+    for x in range(0, 256):
+      server_handshake = self.verifyServerHandshake()
+      client_handshake = mysql.ClientHandshake(capabilities=server_handshake.capabilities.value())
+
+      self.s.send(mysql.Packet(size=34+x, sequence=1).pack())
+      self.s.send(client_handshake.pack()[:34])
+      if x > 0:
+        self.s.send('\xff' * x)
+
+      (packet, data) = self.verifyPacket(2)
+      result = mysql.Result(data)
+      if result.field_count == 0:
+        self.assertEqual(result.affected_rows, 0)
+        self.assertEqual(result.insert_id, 0)
+        self.assertEqual(result.warning_count, 0)
+      elif result.error_code != DB_ACCESS_DENIED:
+        self.assertEqual(result.field_count, 255)
+        self.assertEqual(result.error_code, WRONG_DB_NAME)
+
+      self.reconnect()
+
+  def testSimple(self):
+    server_handshake = self.verifyServerHandshake()
+
+    client_handshake = mysql.ClientHandshake(capabilities=server_handshake.capabilities.value())
+    client_handshake.capabilities.compress = False
+    data = client_handshake.pack()
+    self.s.send(mysql.Packet(size=len(data), sequence=1).pack())
+    self.s.send(data)
+
+    (packet, data) = self.verifyPacket(2)
+    result = mysql.Result(data)
+    self.assertEqual(result.field_count, 0)
+    self.assertEqual(result.affected_rows, 0)
+    self.assertEqual(result.insert_id, 0)
+    self.assertEqual(result.warning_count, 0)
+
+  def verifyPacket(self, sequence):
+    data = self.s.recv(4)
+    self.assertEqual(len(data), 4)
+
+    packet = mysql.Packet(data)
+    self.assertTrue(packet.size > 0)
+    self.assertEqual(packet.sequence, sequence)
+
+    data = self.s.recv(packet.size)
+    self.assertEqual(len(data), packet.size)
+
+    return (packet, data)
+    
+  def verifyServerHandshake(self):
+    (packet, data) = self.verifyPacket(0)
+
+    server_handshake = mysql.ServerHandshake(data)
+    self.assertEqual(server_handshake.protocol_version, 10)
+    self.assertEqual(server_handshake.null1, 0)
+    self.assertEqual(server_handshake.status.value(), 2)
+    self.assertEqual(server_handshake.unused, tuple([0] * 13))
+    self.assertEqual(server_handshake.null2, 0)
+    return server_handshake
+
+class TestCommand(unittest.TestCase):
+  def setUp(self):
+    # Read server handshake
+    self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.s.connect((options.host, int(options.port)))
+    data = self.s.recv(4)
+    packet = mysql.Packet(data)
+    data = self.s.recv(packet.size)
+    server_handshake = mysql.ServerHandshake(data)
+
+    # Send client handshake
+    client_handshake = mysql.ClientHandshake(capabilities=server_handshake.capabilities.value())
+    client_handshake.capabilities.compress = False
+    data = client_handshake.pack()
+    self.s.send(mysql.Packet(size=len(data), sequence=1).pack())
+    self.s.send(data)
+
+    # Read server response
+    data = self.s.recv(4)
+    packet = mysql.Packet(data)
+    data = self.s.recv(packet.size)
+    result = mysql.Result(data)
+    self.assertEqual(result.field_count, 0)
+
+  def tearDown(self):
+    self.s.close()
+
+  def testSimple(self):
+    data = mysql.QueryCommand(query='SELECT 1+1').pack()
+    self.s.send(mysql.Packet(size=len(data), sequence=0).pack())
+    self.s.send(data)
+    data = self.s.recv(1024)
+    #print list(data)
+
+    #self.s.send(mysql.Packet().pack())
+    #data = self.s.recv(1024)
+    #print list(data)
+
+    #self.s.send(mysql.Packet(sequence=1).pack())
+    #data = self.s.recv(1024)
+    #print list(data)
+
+if __name__ == '__main__':
+  suite = unittest.TestLoader().loadTestsFromModule(__import__('__main__'))
+  unittest.TextTestRunner(verbosity=2).run(suite)
