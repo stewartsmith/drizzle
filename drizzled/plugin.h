@@ -99,7 +99,6 @@ struct drizzle_show_var {
 };
 
 typedef enum enum_mysql_show_type SHOW_TYPE;
-typedef drizzle_show_var SHOW_VAR;
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024

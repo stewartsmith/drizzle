@@ -914,8 +914,7 @@ struct sys_var_with_base
 
 int set_var_init();
 void set_var_free();
-int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count);
-SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted);
+drizzle_show_var* enumerate_sys_vars(Session *session, bool sorted);
 void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
 int mysql_add_sys_var_chain(sys_var *chain, struct my_option *long_options);

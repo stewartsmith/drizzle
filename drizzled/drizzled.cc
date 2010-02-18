@@ -952,7 +952,7 @@ static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 static const char *load_default_groups[]= {
 DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
-static int show_starttime(SHOW_VAR *var, char *buff)
+static int show_starttime(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -960,7 +960,7 @@ static int show_starttime(SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_flushstatustime(SHOW_VAR *var, char *buff)
+static int show_flushstatustime(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -968,7 +968,7 @@ static int show_flushstatustime(SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_open_tables(SHOW_VAR *var, char *buff)
+static int show_open_tables(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -976,7 +976,7 @@ static int show_open_tables(SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_table_definitions(SHOW_VAR *var, char *buff)
+static int show_table_definitions(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -996,7 +996,7 @@ show_flushstatustime_cont= { &show_flushstatustime };
 /*
   Variables shown by SHOW STATUS in alphabetical order
 */
-static SHOW_VAR com_status_vars[]= {
+static drizzle_show_var com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
@@ -1046,7 +1046,7 @@ static SHOW_VAR com_status_vars[]= {
   {NULL, NULL, SHOW_LONGLONG}
 };
 
-static SHOW_VAR status_vars[]= {
+static drizzle_show_var status_vars[]= {
   {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
   {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},

@@ -835,18 +835,18 @@ void mysqld_list_processes(Session *session, const char *user)
   Status functions
 *****************************************************************************/
 
-static vector<SHOW_VAR *> all_status_vars;
+static vector<drizzle_show_var *> all_status_vars;
 static bool status_vars_inited= 0;
 static int show_var_cmp(const void *var1, const void *var2)
 {
-  return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
+  return strcmp(((drizzle_show_var*)var1)->name, ((drizzle_show_var*)var2)->name);
 }
 
 class show_var_cmp_functor
 {
   public:
   show_var_cmp_functor() { }
-  inline bool operator()(const SHOW_VAR *var1, const SHOW_VAR *var2) const
+  inline bool operator()(const drizzle_show_var *var1, const drizzle_show_var *var2) const
   {
     int val= strcmp(var1->name, var2->name);
     return (val < 0);
@@ -857,36 +857,36 @@ class show_var_remove_if
 {
   public:
   show_var_remove_if() { }
-  inline bool operator()(const SHOW_VAR *curr) const
+  inline bool operator()(const drizzle_show_var *curr) const
   {
     return (curr->type == SHOW_UNDEF);
   }
 };
 
-SHOW_VAR *getFrontOfStatusVars()
+drizzle_show_var *getFrontOfStatusVars()
 {
   return all_status_vars.front();
 }
 
-SHOW_VAR *getCommandStatusVars()
+drizzle_show_var *getCommandStatusVars()
 {
-  SHOW_VAR *tmp= all_status_vars.front();
+  drizzle_show_var *tmp= all_status_vars.front();
 
   for (; tmp->name; tmp++)
   {
     if (tmp->type == SHOW_ARRAY)
-      return (SHOW_VAR *) tmp->value;
+      return (drizzle_show_var *) tmp->value;
   }
 
   return NULL;
 }
 
 /*
-  Adds an array of SHOW_VAR entries to the output of SHOW STATUS
+  Adds an array of drizzle_show_var entries to the output of SHOW STATUS
 
   SYNOPSIS
-    add_status_vars(SHOW_VAR *list)
-    list - an array of SHOW_VAR entries to add to all_status_vars
+    add_status_vars(drizzle_show_var *list)
+    list - an array of drizzle_show_var entries to add to all_status_vars
            the last entry must be {0,0,SHOW_UNDEF}
 
   NOTE
@@ -898,7 +898,7 @@ SHOW_VAR *getCommandStatusVars()
     init_status_vars(), it assumes "startup mode" - neither concurrent access
     to the array nor SHOW STATUS are possible (thus it skips locks and qsort)
 */
-int add_status_vars(SHOW_VAR *list)
+int add_status_vars(drizzle_show_var *list)
 {
   int res= 0;
   if (status_vars_inited)
@@ -930,7 +930,7 @@ void init_status_vars()
 
 void reset_status_vars()
 {
-  vector<SHOW_VAR *>::iterator p= all_status_vars.begin();
+  vector<drizzle_show_var *>::iterator p= all_status_vars.begin();
   while (p != all_status_vars.end())
   {
     /* Note that SHOW_LONG_NOFLUSH variables are not reset */
@@ -955,11 +955,11 @@ void free_status_vars()
 }
 
 /*
-  Removes an array of SHOW_VAR entries from the output of SHOW STATUS
+  Removes an array of drizzle_show_var entries from the output of SHOW STATUS
 
   SYNOPSIS
-    remove_status_vars(SHOW_VAR *list)
-    list - an array of SHOW_VAR entries to remove to all_status_vars
+    remove_status_vars(drizzle_show_var *list)
+    list - an array of drizzle_show_var entries to remove to all_status_vars
            the last entry must be {0,0,SHOW_UNDEF}
 
   NOTE
@@ -968,12 +968,12 @@ void free_status_vars()
     initialization in the mysqld startup.
 */
 
-void remove_status_vars(SHOW_VAR *list)
+void remove_status_vars(drizzle_show_var *list)
 {
   if (status_vars_inited)
   {
     pthread_mutex_lock(&LOCK_status);
-    SHOW_VAR *all= all_status_vars.front();
+    drizzle_show_var *all= all_status_vars.front();
     int a= 0, b= all_status_vars.size(), c= (a+b)/2;
 
     for (; list->name; list++)
@@ -1000,7 +1000,7 @@ void remove_status_vars(SHOW_VAR *list)
   }
   else
   {
-    SHOW_VAR *all= all_status_vars.front();
+    drizzle_show_var *all= all_status_vars.front();
     uint32_t i;
     for (; list->name; list++)
     {
