@@ -127,7 +127,11 @@ extern "C" {
 #include "i_s.h"
 #include "handler0vars.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
+
+#include "plugin/innobase/handler/status_function.h"
 
 using namespace std;
 using namespace drizzled;
@@ -162,6 +166,7 @@ undefined.  Map it to NULL. */
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 static plugin::StorageEngine* innodb_engine_ptr= NULL;
+static plugin::TableFunction* status_table_function_ptr= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -610,6 +615,54 @@ static drizzle_show_var innodb_status_variables[]= {
   (char*) &export_vars.innodb_rows_updated,		  SHOW_LONG},
   {NULL, NULL, SHOW_LONG}
 };
+
+InnodbStatusTool::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator::Generator(fields)
+{ 
+  srv_export_innodb_status();
+  status_var_ptr= innodb_status_variables;
+}
+
+bool InnodbStatusTool::Generator::populate()
+{
+  if (status_var_ptr->name)
+  {
+    std::ostringstream oss;
+    string return_value;
+    const char *value= status_var_ptr->value;
+
+    /* VARIABLE_NAME */
+    push(status_var_ptr->name);
+
+    switch (status_var_ptr->type)
+    {
+    case SHOW_LONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_LONGLONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_BOOL:
+      return_value= *(bool*) value ? "ON" : "OFF";
+      break;
+    default:
+      assert(0);
+    }
+
+    /* VARIABLE_VALUE */
+    if (return_value.length())
+      push(return_value);
+    else 
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
+}
 
 /* General functions */
 
@@ -2019,7 +2072,11 @@ innobase_change_buffering_inited_ok:
 		i_s_cmpmem_reset_init())
 		goto error;
 
+        status_table_function_ptr= new InnodbStatusTool;
+
 	registry.add(innodb_engine_ptr);
+
+	registry.add(status_table_function_ptr);
 
 	registry.add(innodb_trx_schema_table);
 	registry.add(innodb_locks_schema_table);
@@ -2046,6 +2103,10 @@ innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
+
+	registry.remove(status_table_function_ptr);
+ 	delete status_table_function_ptr;
+
 	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
@@ -7346,18 +7407,6 @@ ha_innobase::external_lock(
 }
 
 /************************************************************************//**
-Here we export InnoDB status variables to MySQL. */
-static
-void
-innodb_export_status(void)
-/*======================*/
-{
-	if (innodb_inited) {
-		srv_export_innodb_status();
-	}
-}
-
-/************************************************************************//**
 Implements the SHOW INNODB STATUS command. Sends the output of the InnoDB
 Monitor to the client. */
 static
@@ -8727,23 +8776,6 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(drizzle_show_var *var, char *)
-{
-  innodb_export_status();
-  var->type= SHOW_ARRAY;
-  var->value= (char *) &innodb_status_variables;
-  return 0;
-}
-
-static st_show_var_func_container
-show_innodb_vars_cont = { &show_innodb_vars };
-
-static drizzle_show_var innodb_status_variables_export[]= {
-  {"Innodb",                   (char*) &show_innodb_vars_cont, SHOW_FUNC},
-  {NULL, NULL, SHOW_LONG}
-};
-
-
 /* plugin options */
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -9066,7 +9098,7 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   innobase_deinit, /* Plugin Deinit */
-  innodb_status_variables_export,/* status variables             */
+  NULL,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

@@ -42,7 +42,6 @@ class sys_var;
 class set_var;
 class sys_var_pluginvar; /* opaque */
 class Time_zone;
-typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib;
@@ -445,9 +444,9 @@ class sys_var_session_uint32_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  uint32_t SV::*offset;
+  uint32_t system_variables::*offset;
   sys_var_session_uint32_t(sys_var_chain *chain, const char *name_arg,
-                           uint32_t SV::*offset_arg,
+                           uint32_t system_variables::*offset_arg,
                            sys_check_func c_func= NULL,
                            sys_after_update_func au_func= NULL)
     :sys_var_session(name_arg, au_func), check_func(c_func),
@@ -465,13 +464,13 @@ public:
 class sys_var_session_ha_rows :public sys_var_session
 {
 public:
-  ha_rows SV::*offset;
+  ha_rows system_variables::*offset;
   sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg,
-                      ha_rows SV::*offset_arg)
+                      ha_rows system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   sys_var_session_ha_rows(sys_var_chain *chain, const char *name_arg,
-                      ha_rows SV::*offset_arg,
+                      ha_rows system_variables::*offset_arg,
 		      sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
   { chain_sys_var(chain); }
@@ -487,11 +486,11 @@ class sys_var_session_uint64_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  uint64_t SV::*offset;
+  uint64_t system_variables::*offset;
   bool only_global;
   sys_var_session_uint64_t(sys_var_chain *chain, 
                            const char *name_arg,
-                           uint64_t SV::*offset_arg,
+                           uint64_t system_variables::*offset_arg,
                            sys_after_update_func au_func= NULL,
                            sys_check_func c_func= NULL)
     :sys_var_session(name_arg, au_func),
@@ -500,7 +499,7 @@ public:
   { chain_sys_var(chain); }
   sys_var_session_uint64_t(sys_var_chain *chain,
                            const char *name_arg,
-                           uint64_t SV::*offset_arg,
+                           uint64_t system_variables::*offset_arg,
                            sys_after_update_func func,
                            bool only_global_arg,
                            sys_check_func cfunc= NULL)
@@ -529,10 +528,10 @@ class sys_var_session_size_t :public sys_var_session
 {
   sys_check_func check_func;
 public:
-  size_t SV::*offset;
+  size_t system_variables::*offset;
   bool only_global;
   sys_var_session_size_t(sys_var_chain *chain, const char *name_arg,
-                         size_t SV::*offset_arg,
+                         size_t system_variables::*offset_arg,
                          sys_after_update_func au_func= NULL,
                          sys_check_func c_func= NULL)
     :sys_var_session(name_arg, au_func),
@@ -541,7 +540,7 @@ public:
   { chain_sys_var(chain); }
   sys_var_session_size_t(sys_var_chain *chain,
                          const char *name_arg,
-                         size_t SV::*offset_arg,
+                         size_t system_variables::*offset_arg,
                          sys_after_update_func func,
                          bool only_global_arg,
                          sys_check_func cfunc= NULL)
@@ -570,11 +569,11 @@ public:
 class sys_var_session_bool :public sys_var_session
 {
 public:
-  bool SV::*offset;
-  sys_var_session_bool(sys_var_chain *chain, const char *name_arg, bool SV::*offset_arg)
+  bool system_variables::*offset;
+  sys_var_session_bool(sys_var_chain *chain, const char *name_arg, bool system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  sys_var_session_bool(sys_var_chain *chain, const char *name_arg, bool SV::*offset_arg,
+  sys_var_session_bool(sys_var_chain *chain, const char *name_arg, bool system_variables::*offset_arg,
 		   sys_after_update_func func)
     :sys_var_session(name_arg,func), offset(offset_arg)
   { chain_sys_var(chain); }
@@ -595,12 +594,12 @@ public:
 class sys_var_session_enum :public sys_var_session
 {
 protected:
-  uint32_t SV::*offset;
+  uint32_t system_variables::*offset;
   TYPELIB *enum_names;
   sys_check_func check_func;
 public:
   sys_var_session_enum(sys_var_chain *chain, const char *name_arg,
-                   uint32_t SV::*offset_arg, TYPELIB *typelib,
+                   uint32_t system_variables::*offset_arg, TYPELIB *typelib,
                    sys_after_update_func func= NULL,
                    sys_check_func check_f= NULL)
     :sys_var_session(name_arg, func), offset(offset_arg),
@@ -626,10 +625,10 @@ public:
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  plugin::StorageEngine *SV::*offset;
+  plugin::StorageEngine *system_variables::*offset;
 public:
   sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
-                                 plugin::StorageEngine *SV::*offset_arg)
+                                 plugin::StorageEngine *system_variables::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -718,11 +717,11 @@ public:
 
 class sys_var_collation_sv :public sys_var_collation
 {
-  const CHARSET_INFO *SV::*offset;
+  const CHARSET_INFO *system_variables::*offset;
   const CHARSET_INFO **global_default;
 public:
   sys_var_collation_sv(sys_var_chain *chain, const char *name_arg,
-                       const CHARSET_INFO *SV::*offset_arg,
+                       const CHARSET_INFO *system_variables::*offset_arg,
                        const CHARSET_INFO **global_default_arg)
     :sys_var_collation(name_arg),
     offset(offset_arg), global_default(global_default_arg)
@@ -791,10 +790,10 @@ public:
 
 class sys_var_microseconds :public sys_var_session
 {
-  uint64_t SV::*offset;
+  uint64_t system_variables::*offset;
 public:
   sys_var_microseconds(sys_var_chain *chain, const char *name_arg,
-                       uint64_t SV::*offset_arg):
+                       uint64_t system_variables::*offset_arg):
     sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *, set_var *) {return 0;}

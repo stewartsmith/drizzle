@@ -103,15 +103,8 @@ bool StateTool::Generator::populate()
       variables++;
       continue;
     }
-    else if (var->type != SHOW_ARRAY)
-    {
-      fill(variables->name, var->value, var->type);
-    }
-    else
-    {
-      variables++;
-      continue;
-    }
+
+    fill(variables->name, var->value, var->type);
 
     variables++;
 
@@ -179,7 +172,6 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
     oss << (int64_t) *(ha_rows*) value;
     return_value= oss.str();
     break;
-    return_value= oss.str();
   case SHOW_BOOL:
   case SHOW_MY_BOOL:
     return_value= *(bool*) value ? "ON" : "OFF";
