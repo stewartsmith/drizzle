@@ -135,7 +135,7 @@ void CollationsTool::Generator::fill()
   push(tmp_cl->csname);
 
   /* COLLATION_ID */
-  push(tmp_cl->number);
+  push(static_cast<int64_t>(tmp_cl->number));
 
   /* IS_DEFAULT */
   push((bool)(tmp_cl->state & MY_CS_PRIMARY));
@@ -144,5 +144,5 @@ void CollationsTool::Generator::fill()
   push((bool)(tmp_cl->state & MY_CS_COMPILED));
 
   /* SORTLEN */
-  push(tmp_cl->strxfrm_multiply);
+  push(static_cast<int64_t>(tmp_cl->strxfrm_multiply));
 }

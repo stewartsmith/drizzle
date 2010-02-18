@@ -107,5 +107,5 @@ void CharacterSetsTool::Generator::fill()
   push(tmp_cs->comment);
 
   /* MAXLEN */
-  push(tmp_cs->mbmaxlen);
+  push(static_cast<int64_t>(tmp_cs->mbmaxlen));
 }

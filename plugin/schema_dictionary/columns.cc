@@ -116,7 +116,7 @@ void ColumnsTool::Generator::fill()
   push(column.name());
 
   /* ORDINAL_POSITION */
-  push(column_iterator);
+  push(static_cast<int64_t>(column_iterator));
 
   /* COLUMN_DEFAULT */
   push(column.options().default_value());
