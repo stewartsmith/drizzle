@@ -3895,7 +3895,7 @@ ha_innobase::write_row(
 		ut_error;
 	}
 
-	ha_statistic_increment(&SSV::ha_write_count);
+	ha_statistic_increment(&system_status_var::ha_write_count);
 
 	sql_command = session_sql_command(user_session);
 
@@ -4268,7 +4268,7 @@ ha_innobase::update_row(
 
 	ut_a(prebuilt->trx == trx);
 
-	ha_statistic_increment(&SSV::ha_update_count);
+	ha_statistic_increment(&system_status_var::ha_update_count);
 
 	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
 		table->timestamp_field->set_time();
@@ -4373,7 +4373,7 @@ ha_innobase::delete_row(
 
 	ut_a(prebuilt->trx == trx);
 
-	ha_statistic_increment(&SSV::ha_delete_count);
+	ha_statistic_increment(&system_status_var::ha_delete_count);
 
 	if (!prebuilt->upd_node) {
 		row_get_prebuilt_update_vector(prebuilt);
@@ -4627,7 +4627,7 @@ ha_innobase::index_read(
 
 	ut_a(prebuilt->trx == session_to_trx(user_session));
 
-	ha_statistic_increment(&SSV::ha_read_key_count);
+	ha_statistic_increment(&system_status_var::ha_read_key_count);
 
 	index = prebuilt->index;
 
@@ -4742,7 +4742,7 @@ ha_innobase::innobase_get_index(
 	KEY*		key = 0;
 	dict_index_t*	index = 0;
 
-	ha_statistic_increment(&SSV::ha_read_key_count);
+	ha_statistic_increment(&system_status_var::ha_read_key_count);
 
 	ut_ad(user_session == ha_session());
 	ut_a(prebuilt->trx == session_to_trx(user_session));
@@ -4907,7 +4907,7 @@ ha_innobase::index_next(
 	unsigned char*	buf)	/*!< in/out: buffer for next row in MySQL
 				format */
 {
-	ha_statistic_increment(&SSV::ha_read_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_next_count);
 
 	return(general_fetch(buf, ROW_SEL_NEXT, 0));
 }
@@ -4923,7 +4923,7 @@ ha_innobase::index_next_same(
 	const unsigned char*	,	/*!< in: key value */
 	uint		)	/*!< in: key value length */
 {
-	ha_statistic_increment(&SSV::ha_read_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_next_count);
 
 	return(general_fetch(buf, ROW_SEL_NEXT, last_match_mode));
 }
@@ -4938,7 +4938,7 @@ ha_innobase::index_prev(
 /*====================*/
 	unsigned char*	buf)	/*!< in/out: buffer for previous row in MySQL format */
 {
-	ha_statistic_increment(&SSV::ha_read_prev_count);
+	ha_statistic_increment(&system_status_var::ha_read_prev_count);
 
 	return(general_fetch(buf, ROW_SEL_PREV, 0));
 }
@@ -4955,7 +4955,7 @@ ha_innobase::index_first(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_first_count);
+	ha_statistic_increment(&system_status_var::ha_read_first_count);
 
 	error = index_read(buf, NULL, 0, HA_READ_AFTER_KEY);
 
@@ -4980,7 +4980,7 @@ ha_innobase::index_last(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_last_count);
+	ha_statistic_increment(&system_status_var::ha_read_last_count);
 
 	error = index_read(buf, NULL, 0, HA_READ_BEFORE_KEY);
 
@@ -5049,7 +5049,7 @@ ha_innobase::rnd_next(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
 	if (start_of_scan) {
 		error = index_first(buf);
@@ -5082,7 +5082,7 @@ ha_innobase::rnd_pos(
 	int		error;
 	uint		keynr	= active_index;
 
-	ha_statistic_increment(&SSV::ha_read_rnd_count);
+	ha_statistic_increment(&system_status_var::ha_read_rnd_count);
 
 	ut_a(prebuilt->trx == session_to_trx(ha_session()));
 

@@ -177,8 +177,6 @@ struct system_variables
   bool log_warnings;
 
   uint32_t optimizer_search_depth;
-  /* A bitmap for switching optimizations on/off */
-  uint32_t optimizer_switch;
   uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;

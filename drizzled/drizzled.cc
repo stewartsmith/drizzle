@@ -1195,8 +1195,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  global_system_variables.optimizer_switch= 0;
-
   if (not (character_set_filesystem=
         get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
