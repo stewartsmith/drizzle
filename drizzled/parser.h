@@ -100,7 +100,6 @@
 #include <drizzled/statement/show_create.h>
 #include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_errors.h>
-#include <drizzled/statement/show_processlist.h>
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/start_transaction.h>

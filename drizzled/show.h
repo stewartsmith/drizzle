@@ -54,12 +54,7 @@ namespace plugin
 class Table;
 typedef class Item COND;
 
-class NormalisedDatabaseName;
-
-
-typedef struct system_status_var STATUS_VAR;
-
-extern STATUS_VAR global_status_var;
+extern struct system_status_var global_status_var;
 
 typedef struct st_lookup_field_values
 {
@@ -88,18 +83,13 @@ bool make_schema_select(Session *session,  Select_Lex *sel,
                         const std::string& schema_table_name);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
-bool mysqld_show_logs(Session *session);
 void mysqld_list_fields(Session *session,TableList *table, const char *wild);
 int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
 bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
 bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists);
 
-int mysqld_show_status(Session *session);
-int mysqld_show_variables(Session *session,const char *wild);
-bool mysqld_show_storage_engines(Session *session);
 bool mysqld_show_column_types(Session *session);
-void mysqld_list_processes(Session *session,const char *user);
-void calc_sum_of_all_status(STATUS_VAR *to);
+void calc_sum_of_all_status(struct system_status_var *to);
 
 int add_status_vars(drizzle_show_var *list);
 void remove_status_vars(drizzle_show_var *list);

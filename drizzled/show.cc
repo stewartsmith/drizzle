@@ -737,100 +737,6 @@ public:
   {}
 };
 
-void mysqld_list_processes(Session *session, const char *user)
-{
-  Item *field;
-  List<Item> field_list;
-  vector<thread_info> thread_infos;
-
-  field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_empty_string("User",16));
-  field_list.push_back(new Item_empty_string("Host",LIST_PROCESS_HOST_LEN));
-  field_list.push_back(field=new Item_empty_string("db",NAME_CHAR_LEN));
-  field->maybe_null= true;
-  field_list.push_back(new Item_empty_string("Command",16));
-  field_list.push_back(new Item_return_int("Time",7, DRIZZLE_TYPE_LONG));
-  field_list.push_back(field=new Item_empty_string("State",30));
-  field->maybe_null= true;
-  field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
-  field->maybe_null= true;
-  if (session->client->sendFields(&field_list))
-    return;
-
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-  if (!session->killed)
-  {
-    Session *tmp;
-    for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
-    {
-      tmp= *it;
-      const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
-      internal::st_my_thread_var *mysys_var;
-      if (tmp->client->isConnected() && (not user || (not tmp_sctx->getUser().compare(user))))
-      {
-
-        if ((mysys_var= tmp->mysys_var))
-          pthread_mutex_lock(&mysys_var->mutex);
-
-        const string tmp_proc_info((tmp->killed == Session::KILL_CONNECTION) ? "Killed" : command_name[tmp->command].str);
-
-        const string tmp_state_info(tmp->client->isWriting()
-                                     ? "Writing to net"
-                                     : tmp->client->isReading()
-                                       ? (tmp->command == COM_SLEEP
-                                            ? ""
-                                            : "Reading from net")
-                                       : tmp->get_proc_info()
-                                         ? tmp->get_proc_info()
-                                         : (tmp->mysys_var && tmp->mysys_var->current_cond)
-                                           ? "Waiting on cond"
-                                           : "");
-        if (mysys_var)
-          pthread_mutex_unlock(&mysys_var->mutex);
-
-        const string tmp_query((tmp->process_list_info[0]) ? tmp->process_list_info : "");
-        thread_infos.push_back(thread_info(tmp->thread_id,
-                                           tmp->start_time,
-                                           tmp->command,
-                                           tmp_sctx->getUser().empty()
-                                             ? string("unauthenticated user")
-                                             : tmp_sctx->getUser(),
-                                           tmp_sctx->getIp(),
-                                           tmp->db,
-                                           tmp_proc_info,
-                                           tmp_state_info,
-                                           tmp_query));
-      }
-    }
-  }
-  pthread_mutex_unlock(&LOCK_thread_count);
-  time_t now= time(NULL);
-  for(vector<thread_info>::iterator iter= thread_infos.begin();
-      iter != thread_infos.end();
-      ++iter)
-  {
-    session->client->store((uint64_t) (*iter).thread_id);
-    session->client->store((*iter).user);
-    session->client->store((*iter).host);
-    session->client->store((*iter).db);
-    session->client->store((*iter).proc_info);
-
-    if ((*iter).start_time)
-      session->client->store((uint32_t) (now - (*iter).start_time));
-    else
-      session->client->store();
-
-    session->client->store((*iter).state_info);
-    session->client->store((*iter).query);
-
-    if (session->client->flush())
-      break;
-  }
-  session->my_eof();
-
-  return;
-}
-
 /*****************************************************************************
   Status functions
 *****************************************************************************/
@@ -1021,7 +927,7 @@ void remove_status_vars(drizzle_show_var *list)
 
 /* collect status for all running threads */
 
-void calc_sum_of_all_status(STATUS_VAR *to)
+void calc_sum_of_all_status(system_status_var *to)
 {
   /* Ensure that thread id not killed during loop */
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
