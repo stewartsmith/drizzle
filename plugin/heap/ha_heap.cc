@@ -938,7 +938,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   heap_init,
   heap_deinit,
-  NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

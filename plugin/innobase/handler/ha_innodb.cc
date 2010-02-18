@@ -9098,7 +9098,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   innobase_deinit, /* Plugin Deinit */
-  NULL,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

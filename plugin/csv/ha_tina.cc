@@ -1438,7 +1438,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
   tina_done_func, /* Plugin Deinit */
-  NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

@@ -1722,7 +1722,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
   myisam_deinit, /* Plugin Deinit */
-  NULL,                       /* status variables                */
   sys_variables,           /* system variables */
   NULL                        /* config options                  */
 }
