@@ -81,12 +81,10 @@ utf8_general_ci	utf8_spanish_ci	utf8	231	FALSE	TRUE	8
 utf8_general_ci	utf8_swedish_ci	utf8	232	FALSE	TRUE	8
 utf8_general_ci	utf8_turkish_ci	utf8	233	FALSE	TRUE	8
 utf8_general_ci	utf8_unicode_ci	utf8	224	FALSE	TRUE	8
-CREATE SCHEMA drizzleslap;
 select * from data_dictionary.CHARACTER_SETS
 where CHARACTER_SET_NAME like 'latin1%';
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
 select * from data_dictionary.COLLATIONS
 where COLLATION_NAME like 'latin1%';
 CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
