@@ -25,12 +25,6 @@ FROM data_dictionary.collations
 ORDER BY collation_name;
 
 
-# Slap tests for concurrency
-CREATE SCHEMA drizzleslap;
-
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.character_sets" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.collations" --delimiter=";"
-
 # Test for data_dictionary.CHARACTER_SETS &
 select * from data_dictionary.CHARACTER_SETS
 where CHARACTER_SET_NAME like 'latin1%';
@@ -42,5 +36,4 @@ select * from data_dictionary.COLLATIONS
 where COLLATION_NAME like 'latin1%';
 
 
-DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;
