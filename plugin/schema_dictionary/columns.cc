@@ -122,7 +122,7 @@ void ColumnsTool::Generator::fill()
   push(column.constraints().is_nullable());
 
   /* DATATYPE */
-  push(column.type());
+  pushType(column.type());
 
  /* "CHARACTER_MAXIMUM_LENGTH" */
   push(static_cast<int64_t>(column.string_options().length()));

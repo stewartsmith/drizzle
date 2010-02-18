@@ -4208,16 +4208,6 @@ ulonglong_num:
         | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
-dec_num_error:
-          dec_num
-          { my_parse_error(ER(ER_ONLY_INTEGERS_ALLOWED)); }
-        ;
-
-dec_num:
-          DECIMAL_NUM
-        | FLOAT_NUM
-        ;
-
 select_var_list_init:
           {
             LEX *lex=Lex;
@@ -4656,7 +4646,7 @@ show_param:
              if (Lex->wild)
              {
                column_name.append(" (");
-               column_name.append(Lex->wild->c_str());
+               column_name.append(Lex->wild->ptr());
                column_name.append(")");
              }
 
@@ -4709,7 +4699,7 @@ show_param:
              if (Lex->wild)
              {
                column_name.append(" (");
-               column_name.append(Lex->wild->c_str());
+               column_name.append(Lex->wild->ptr());
                column_name.append(")");
              }
 

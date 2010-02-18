@@ -48,4 +48,4 @@ public:
   }
 };
 
-#endif // PLUGIN_STATUS_DICTIONARY_STATUS_H
+#endif /* PLUGIN_STATUS_DICTIONARY_STATUS_H */
