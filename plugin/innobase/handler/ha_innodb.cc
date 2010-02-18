@@ -617,7 +617,7 @@ static drizzle_show_var innodb_status_variables[]= {
 };
 
 InnodbStatusTool::Generator::Generator(drizzled::Field **fields) :
-  plugin::TableFunction::Generator::Generator(fields)
+  plugin::TableFunction::Generator(fields)
 { 
   srv_export_innodb_status();
   status_var_ptr= innodb_status_variables;
