@@ -517,7 +517,7 @@ innobase_commit_low(
 /*================*/
 	trx_t*	trx);	/*!< in: transaction handle */
 
-static SHOW_VAR innodb_status_variables[]= {
+static drizzle_show_var innodb_status_variables[]= {
   {"buffer_pool_pages_data",
   (char*) &export_vars.innodb_buffer_pool_pages_data,	  SHOW_LONG},
   {"buffer_pool_pages_dirty",
@@ -8727,7 +8727,7 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(SHOW_VAR *var, char *)
+static int show_innodb_vars(drizzle_show_var *var, char *)
 {
   innodb_export_status();
   var->type= SHOW_ARRAY;
@@ -8738,7 +8738,7 @@ static int show_innodb_vars(SHOW_VAR *var, char *)
 static st_show_var_func_container
 show_innodb_vars_cont = { &show_innodb_vars };
 
-static SHOW_VAR innodb_status_variables_export[]= {
+static drizzle_show_var innodb_status_variables_export[]= {
   {"Innodb",                   (char*) &show_innodb_vars_cont, SHOW_FUNC},
   {NULL, NULL, SHOW_LONG}
 };

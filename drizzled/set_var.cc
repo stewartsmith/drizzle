@@ -309,8 +309,8 @@ static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
   TODO: remove this list completely
 */
 
-#define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(SHOW_VAR))
-static SHOW_VAR fixed_vars[]= {
+#define FIXED_VARS_SIZE (sizeof(fixed_vars) / sizeof(drizzle_show_var))
+static drizzle_show_var fixed_vars[]= {
   {"back_log",                (char*) &back_log,                SHOW_INT},
   {"language",                language,                         SHOW_CHAR},
   {"pid_file",                (char*) pidfile_name,             SHOW_CHAR},
@@ -1564,20 +1564,20 @@ int mysql_del_sys_var_chain(sys_var *first)
     sorted      If TRUE, the system variables should be sorted
 
   RETURN VALUES
-    pointer     Array of SHOW_VAR elements for display
+    pointer     Array of drizzle_show_var elements for display
     NULL        FAILURE
 */
 
-SHOW_VAR* enumerate_sys_vars(Session *session, bool)
+drizzle_show_var* enumerate_sys_vars(Session *session, bool)
 {
   int fixed_count= fixed_show_vars.elements;
-  int size= sizeof(SHOW_VAR) * (system_variable_map.size() + fixed_count + 1);
-  SHOW_VAR *result= (SHOW_VAR*) session->alloc(size);
+  int size= sizeof(drizzle_show_var) * (system_variable_map.size() + fixed_count + 1);
+  drizzle_show_var *result= (drizzle_show_var*) session->alloc(size);
 
   if (result)
   {
-    SHOW_VAR *show= result + fixed_count;
-    memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
+    drizzle_show_var *show= result + fixed_count;
+    memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(drizzle_show_var));
 
     SystemVariableMap::const_iterator iter= system_variable_map.begin();
     while (iter != system_variable_map.end())
@@ -1591,7 +1591,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     }
 
     /* make last element empty */
-    memset(show, 0, sizeof(SHOW_VAR));
+    memset(show, 0, sizeof(drizzle_show_var));
   }
   return result;
 }
@@ -1614,7 +1614,7 @@ int set_var_init()
 
   for (sys_var *var= vars.first; var; var= var->getNext(), count++) {};
 
-  if (my_init_dynamic_array(&fixed_show_vars, sizeof(SHOW_VAR),
+  if (my_init_dynamic_array(&fixed_show_vars, sizeof(drizzle_show_var),
                             FIXED_VARS_SIZE + 64, 64))
     goto error;
 
@@ -1636,27 +1636,6 @@ error:
 void set_var_free()
 {
   delete_dynamic(&fixed_show_vars);
-}
-
-
-/*
-  Add elements to the dynamic list of read-only system variables.
-
-  SYNOPSIS
-    mysql_append_static_vars()
-    show_vars	Pointer to start of array
-    count       Number of elements
-
-  RETURN VALUES
-    0           SUCCESS
-    otherwise   FAILURE
-*/
-int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count)
-{
-  for (; count > 0; count--, show_vars++)
-    if (insert_dynamic(&fixed_show_vars, (unsigned char*) show_vars))
-      return 1;
-  return 0;
 }
 
 

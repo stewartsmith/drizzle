@@ -286,7 +286,7 @@ typedef struct system_status_var
     sense to add to the /global/ status variable counter.
   */
   double last_query_cost;
-} STATUS_VAR;
+} system_status_var;
 
 /*
   This is used for 'SHOW STATUS'. It must be updated to the last ulong
@@ -1552,10 +1552,10 @@ static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TAB
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
 /* Functions in sql_class.cc */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
+void add_to_status(system_status_var *to_var, system_status_var *from_var);
 
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var);
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var);
 
 } /* namespace drizzled */
 

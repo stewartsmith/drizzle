@@ -26,7 +26,7 @@ using namespace drizzled;
 
 
 CollationsTool::CollationsTool() :
-  plugin::TableFunction("DATA_DICTIONARY", "COLLATIONS")
+  CharacterSetsTool("COLLATIONS")
 {
   add_field("CHARACTER_SET_NAME");
   add_field("COLLATION_NAME");
@@ -38,62 +38,111 @@ CollationsTool::CollationsTool() :
 }
 
 CollationsTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  CharacterSetsTool::Generator(arg),
+  is_collation_primed(false)
 {
-  cs= all_charsets;
-  cl= all_charsets;
+}
+
+
+bool CollationsTool::Generator::end()
+{
+  return collation_iter == all_charsets+255;
+}
+
+
+bool CollationsTool::Generator::check()
+{
+  const CHARSET_INFO *tmp_cs= character_set();
+  const CHARSET_INFO *tmp_cl= collation();
+
+  if (not tmp_cl || 
+      not (tmp_cl->state & MY_CS_AVAILABLE) ||
+      not my_charset_same(tmp_cs, tmp_cl))
+    return true;
+
+  return false;
+}
+
+bool CollationsTool::Generator::nextCollationCore()
+{
+  if (isPrimed())
+  {
+    collation_iter++;
+  }
+  else
+  {
+    if (not isCharacterSetPrimed())
+     return false;
+
+    collation_iter= all_charsets;
+    prime();
+  }
+
+  if (end())
+    return false;
+
+  if (check())
+      return false;
+
+  return true;
+}
+
+
+bool CollationsTool::Generator::next()
+{
+  while (not nextCollationCore())
+  {
+
+    if (isPrimed() && not end())
+      continue;
+
+    if (not nextCharacterSet())
+      return false;
+
+    prime(false);
+  }
+
+  return true;
 }
 
 bool CollationsTool::Generator::populate()
 {
-  for (; cs < all_charsets+255 ; cs++)
-  {
-    const CHARSET_INFO *tmp_cs= cs[0];
+  if (not next())
+    return false;
 
-    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
-        (tmp_cs->state & MY_CS_HIDDEN) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
-      continue;
+  fill();
 
-    for (; cl < all_charsets+255 ;cl ++)
-    {
-      const CHARSET_INFO *tmp_cl= cl[0];
+  return true;
+}
 
-      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs, tmp_cl))
-        continue;
+void CollationsTool::Generator::fill()
+{
+  const CHARSET_INFO *tmp_cs= character_set();
+  const CHARSET_INFO *tmp_cl= collation_iter[0];
 
-      {
-        /* CHARACTER_SET_NAME */
-        push(tmp_cs->name);
+  assert(tmp_cs);
+  assert(tmp_cl);
 
-        /* "COLLATION_NAME" */
-        push(tmp_cl->name);
+  assert(tmp_cs->name);
+  /* CHARACTER_SET_NAME */
+  push(tmp_cs->name);
 
-        /* "DESCRIPTION" */
-        push(tmp_cl->csname);
+  /* "COLLATION_NAME" */
+  assert(tmp_cl->name);
+  push(tmp_cl->name);
 
-        /* COLLATION_ID */
-        push((int64_t) tmp_cl->number);
-         
-        /* IS_DEFAULT */
-        push((bool)(tmp_cl->state & MY_CS_PRIMARY));
+  /* "DESCRIPTION" */
+  push(tmp_cl->csname);
 
-        /* IS_COMPILED */
-        push((bool)(tmp_cl->state & MY_CS_COMPILED));
+  /* COLLATION_ID */
+  push((int64_t) tmp_cl->number);
 
-        /* SORTLEN */
-        push((int64_t) tmp_cl->strxfrm_multiply);
+  /* IS_DEFAULT */
+  push((bool)(tmp_cl->state & MY_CS_PRIMARY));
 
-        cl++;
+  /* IS_COMPILED */
+  push((bool)(tmp_cl->state & MY_CS_COMPILED));
 
-        return true;
-      }
-      cs++;
-    }
-
-    cl= all_charsets;
-  }
-
-  return false;
+  /* SORTLEN */
+  push((int64_t) tmp_cl->strxfrm_multiply);
 }

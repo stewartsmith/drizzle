@@ -34,38 +34,78 @@ CharacterSetsTool::CharacterSetsTool() :
 }
 
 CharacterSetsTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  is_char_primed(false)
 {
-  cs= all_charsets;
+}
+
+bool CharacterSetsTool::Generator::checkCharacterSet()
+{
+  if (character_set() && (character_set()->state & MY_CS_PRIMARY) &&
+      (character_set()->state & MY_CS_AVAILABLE) && not (character_set()->state & MY_CS_HIDDEN))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool CharacterSetsTool::Generator::nextCharacterSetCore()
+{
+  if (is_char_primed)
+  {
+    character_set_iter++;
+  }
+  else
+  {
+    character_set_iter= all_charsets;
+    is_char_primed= true;
+  }
+
+  if (character_set_iter == all_charsets+255)
+    return false;
+
+  if (checkCharacterSet())
+      return false;
+
+  return true;
+}
+
+bool CharacterSetsTool::Generator::nextCharacterSet()
+{
+  while (not nextCharacterSetCore())
+  {
+    if (character_set_iter == all_charsets+255)
+      return false;
+  }
+
+  return true;
 }
 
 bool CharacterSetsTool::Generator::populate()
 {
-  for (; cs < all_charsets+255 ; cs++)
+  if (nextCharacterSet())
   {
-    const CHARSET_INFO * const tmp_cs= cs[0];
-
-    if (tmp_cs && (tmp_cs->state & MY_CS_PRIMARY) &&
-        (tmp_cs->state & MY_CS_AVAILABLE) &&
-        ! (tmp_cs->state & MY_CS_HIDDEN))
-    {
-      /* CHARACTER_SET_NAME */
-      push(tmp_cs->csname);
-
-      /* DEFAULT_COLLATE_NAME */
-      push(tmp_cs->name);
-
-      /* DESCRIPTION */
-      push(tmp_cs->comment);
-
-      /* MAXLEN */
-      push((int64_t) tmp_cs->mbmaxlen);
-
-      cs++;
-
-      return true;
-    }
+    fill();
+    return true;
   }
 
   return false;
+}
+
+void CharacterSetsTool::Generator::fill()
+{
+  const CHARSET_INFO * const tmp_cs= character_set_iter[0];
+
+  /* CHARACTER_SET_NAME */
+  push(tmp_cs->csname);
+
+  /* DEFAULT_COLLATE_NAME */
+  push(tmp_cs->name);
+
+  /* DESCRIPTION */
+  push(tmp_cs->comment);
+
+  /* MAXLEN */
+  push((int64_t) tmp_cs->mbmaxlen);
 }

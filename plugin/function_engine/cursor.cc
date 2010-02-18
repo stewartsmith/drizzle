@@ -96,7 +96,8 @@ void FunctionCursor::position(const unsigned char *record)
 {
   unsigned char *copy;
 
-  copy= (unsigned char *)malloc(table->s->reclength);
+  copy= (unsigned char *)calloc(table->s->reclength, sizeof(unsigned char));
+  assert(copy);
   memcpy(copy, record, table->s->reclength);
   row_cache.push_back(copy);
   internal::my_store_ptr(ref, ref_length, record_id);

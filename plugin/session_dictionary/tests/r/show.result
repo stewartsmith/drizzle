@@ -1,0 +1,6 @@
+CREATE SCHEMA data_dictionary;
+use data_dictionary;
+show processlist;
+ID	USER	HOST	DB	COMMAND	TIME	STATE	INFO
+#	#	#	data_dictionary	Query	#	#	show processlist
+drop schema data_dictionary;

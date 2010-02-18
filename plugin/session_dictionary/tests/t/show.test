@@ -1,0 +1,12 @@
+# Drizzle's session dictionary
+
+CREATE SCHEMA data_dictionary;
+use data_dictionary;
+
+#
+# test that SHOW PROCESSLIST works correctly
+#
+--replace_column 1 # 2 # 3 # 6 # 7 #
+show processlist;
+
+drop schema data_dictionary;
