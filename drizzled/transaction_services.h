@@ -30,7 +30,7 @@ namespace drizzled
 /* some forward declarations needed */
 namespace plugin
 {
-  class StorageEngine;
+  class TransactionalStorageEngine;
 }
 
 class Session;
@@ -72,7 +72,7 @@ public:
   bool mysql_xa_recover(Session *session);
 
   /* these are called by storage engines */
-  void trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine);
+  void trans_register_ha(Session *session, bool all, plugin::TransactionalStorageEngine *engine);
 };
 
 } /* namespace drizzled */
