@@ -152,8 +152,6 @@ extern const char *my_progname;		/* program-name (printed in errors) */
 extern uint32_t my_file_limit;
 
 /* statistics */
-extern uint32_t	my_file_opened,my_stream_opened, my_tmp_file_created;
-extern uint32_t    my_file_total_opened;
 extern uint	mysys_usage_id;
 extern bool	my_init_done;
 

@@ -737,116 +737,23 @@ public:
   {}
 };
 
-void mysqld_list_processes(Session *session, const char *user)
-{
-  Item *field;
-  List<Item> field_list;
-  vector<thread_info> thread_infos;
-
-  field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_empty_string("User",16));
-  field_list.push_back(new Item_empty_string("Host",LIST_PROCESS_HOST_LEN));
-  field_list.push_back(field=new Item_empty_string("db",NAME_CHAR_LEN));
-  field->maybe_null= true;
-  field_list.push_back(new Item_empty_string("Command",16));
-  field_list.push_back(new Item_return_int("Time",7, DRIZZLE_TYPE_LONG));
-  field_list.push_back(field=new Item_empty_string("State",30));
-  field->maybe_null= true;
-  field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
-  field->maybe_null= true;
-  if (session->client->sendFields(&field_list))
-    return;
-
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-  if (!session->killed)
-  {
-    Session *tmp;
-    for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it)
-    {
-      tmp= *it;
-      const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
-      internal::st_my_thread_var *mysys_var;
-      if (tmp->client->isConnected() && (not user || (not tmp_sctx->getUser().compare(user))))
-      {
-
-        if ((mysys_var= tmp->mysys_var))
-          pthread_mutex_lock(&mysys_var->mutex);
-
-        const string tmp_proc_info((tmp->killed == Session::KILL_CONNECTION) ? "Killed" : command_name[tmp->command].str);
-
-        const string tmp_state_info(tmp->client->isWriting()
-                                     ? "Writing to net"
-                                     : tmp->client->isReading()
-                                       ? (tmp->command == COM_SLEEP
-                                            ? ""
-                                            : "Reading from net")
-                                       : tmp->get_proc_info()
-                                         ? tmp->get_proc_info()
-                                         : (tmp->mysys_var && tmp->mysys_var->current_cond)
-                                           ? "Waiting on cond"
-                                           : "");
-        if (mysys_var)
-          pthread_mutex_unlock(&mysys_var->mutex);
-
-        const string tmp_query((tmp->process_list_info[0]) ? tmp->process_list_info : "");
-        thread_infos.push_back(thread_info(tmp->thread_id,
-                                           tmp->start_time,
-                                           tmp->command,
-                                           tmp_sctx->getUser().empty()
-                                             ? string("unauthenticated user")
-                                             : tmp_sctx->getUser(),
-                                           tmp_sctx->getIp(),
-                                           tmp->db,
-                                           tmp_proc_info,
-                                           tmp_state_info,
-                                           tmp_query));
-      }
-    }
-  }
-  pthread_mutex_unlock(&LOCK_thread_count);
-  time_t now= time(NULL);
-  for(vector<thread_info>::iterator iter= thread_infos.begin();
-      iter != thread_infos.end();
-      ++iter)
-  {
-    session->client->store((uint64_t) (*iter).thread_id);
-    session->client->store((*iter).user);
-    session->client->store((*iter).host);
-    session->client->store((*iter).db);
-    session->client->store((*iter).proc_info);
-
-    if ((*iter).start_time)
-      session->client->store((uint32_t) (now - (*iter).start_time));
-    else
-      session->client->store();
-
-    session->client->store((*iter).state_info);
-    session->client->store((*iter).query);
-
-    if (session->client->flush())
-      break;
-  }
-  session->my_eof();
-
-  return;
-}
-
 /*****************************************************************************
   Status functions
 *****************************************************************************/
 
-static vector<SHOW_VAR *> all_status_vars;
+static vector<drizzle_show_var *> all_status_vars;
+static vector<drizzle_show_var *> com_status_vars;
 static bool status_vars_inited= 0;
 static int show_var_cmp(const void *var1, const void *var2)
 {
-  return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
+  return strcmp(((drizzle_show_var*)var1)->name, ((drizzle_show_var*)var2)->name);
 }
 
 class show_var_cmp_functor
 {
   public:
   show_var_cmp_functor() { }
-  inline bool operator()(const SHOW_VAR *var1, const SHOW_VAR *var2) const
+  inline bool operator()(const drizzle_show_var *var1, const drizzle_show_var *var2) const
   {
     int val= strcmp(var1->name, var2->name);
     return (val < 0);
@@ -857,36 +764,28 @@ class show_var_remove_if
 {
   public:
   show_var_remove_if() { }
-  inline bool operator()(const SHOW_VAR *curr) const
+  inline bool operator()(const drizzle_show_var *curr) const
   {
     return (curr->type == SHOW_UNDEF);
   }
 };
 
-SHOW_VAR *getFrontOfStatusVars()
+drizzle_show_var *getFrontOfStatusVars()
 {
   return all_status_vars.front();
 }
 
-SHOW_VAR *getCommandStatusVars()
+drizzle_show_var *getCommandStatusVars()
 {
-  SHOW_VAR *tmp= all_status_vars.front();
-
-  for (; tmp->name; tmp++)
-  {
-    if (tmp->type == SHOW_ARRAY)
-      return (SHOW_VAR *) tmp->value;
-  }
-
-  return NULL;
+  return com_status_vars.front();
 }
 
 /*
-  Adds an array of SHOW_VAR entries to the output of SHOW STATUS
+  Adds an array of drizzle_show_var entries to the output of SHOW STATUS
 
   SYNOPSIS
-    add_status_vars(SHOW_VAR *list)
-    list - an array of SHOW_VAR entries to add to all_status_vars
+    add_status_vars(drizzle_show_var *list)
+    list - an array of drizzle_show_var entries to add to all_status_vars
            the last entry must be {0,0,SHOW_UNDEF}
 
   NOTE
@@ -898,7 +797,7 @@ SHOW_VAR *getCommandStatusVars()
     init_status_vars(), it assumes "startup mode" - neither concurrent access
     to the array nor SHOW STATUS are possible (thus it skips locks and qsort)
 */
-int add_status_vars(SHOW_VAR *list)
+int add_status_vars(drizzle_show_var *list)
 {
   int res= 0;
   if (status_vars_inited)
@@ -910,6 +809,19 @@ int add_status_vars(SHOW_VAR *list)
          show_var_cmp_functor());
   if (status_vars_inited)
     pthread_mutex_unlock(&LOCK_status);
+  return res;
+}
+
+int add_com_status_vars(drizzle_show_var *list)
+{
+  int res= 0;
+
+  while (list->name)
+    com_status_vars.insert(com_status_vars.begin(), list++);
+  if (status_vars_inited)
+    sort(com_status_vars.begin(), com_status_vars.end(),
+         show_var_cmp_functor());
+
   return res;
 }
 
@@ -926,12 +838,25 @@ void init_status_vars()
   status_vars_inited= 1;
   sort(all_status_vars.begin(), all_status_vars.end(),
        show_var_cmp_functor());
+  sort(com_status_vars.begin(), com_status_vars.end(),
+       show_var_cmp_functor());
 }
 
 void reset_status_vars()
 {
-  vector<SHOW_VAR *>::iterator p= all_status_vars.begin();
+  vector<drizzle_show_var *>::iterator p;
+
+  p= all_status_vars.begin();
   while (p != all_status_vars.end())
+  {
+    /* Note that SHOW_LONG_NOFLUSH variables are not reset */
+    if ((*p)->type == SHOW_LONG)
+      (*p)->value= 0;
+    ++p;
+  }
+
+  p= com_status_vars.begin();
+  while (p != com_status_vars.end())
   {
     /* Note that SHOW_LONG_NOFLUSH variables are not reset */
     if ((*p)->type == SHOW_LONG)
@@ -952,14 +877,15 @@ void reset_status_vars()
 void free_status_vars()
 {
   all_status_vars.clear();
+  com_status_vars.clear();
 }
 
 /*
-  Removes an array of SHOW_VAR entries from the output of SHOW STATUS
+  Removes an array of drizzle_show_var entries from the output of SHOW STATUS
 
   SYNOPSIS
-    remove_status_vars(SHOW_VAR *list)
-    list - an array of SHOW_VAR entries to remove to all_status_vars
+    remove_status_vars(drizzle_show_var *list)
+    list - an array of drizzle_show_var entries to remove to all_status_vars
            the last entry must be {0,0,SHOW_UNDEF}
 
   NOTE
@@ -968,12 +894,12 @@ void free_status_vars()
     initialization in the mysqld startup.
 */
 
-void remove_status_vars(SHOW_VAR *list)
+void remove_status_vars(drizzle_show_var *list)
 {
   if (status_vars_inited)
   {
     pthread_mutex_lock(&LOCK_status);
-    SHOW_VAR *all= all_status_vars.front();
+    drizzle_show_var *all= all_status_vars.front();
     int a= 0, b= all_status_vars.size(), c= (a+b)/2;
 
     for (; list->name; list++)
@@ -1000,7 +926,7 @@ void remove_status_vars(SHOW_VAR *list)
   }
   else
   {
-    SHOW_VAR *all= all_status_vars.front();
+    drizzle_show_var *all= all_status_vars.front();
     uint32_t i;
     for (; list->name; list++)
     {
@@ -1021,7 +947,7 @@ void remove_status_vars(SHOW_VAR *list)
 
 /* collect status for all running threads */
 
-void calc_sum_of_all_status(STATUS_VAR *to)
+void calc_sum_of_all_status(system_status_var *to)
 {
   /* Ensure that thread id not killed during loop */
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
@@ -1305,33 +1231,9 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
                              plugin::InfoSchemaTable *schema_table)
 {
   LEX *lex= session->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   memset(lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
   switch (lex->sql_command) {
-  case SQLCOM_SHOW_DATABASES:
-    if (wild)
-    {
-      lookup_field_values->db_value.str= (char*) wild;
-      lookup_field_values->db_value.length= strlen(wild);
-      lookup_field_values->wild_db_value= 1;
-    }
-    return 0;
-  case SQLCOM_SHOW_TABLES:
-  case SQLCOM_SHOW_TABLE_STATUS:
-    lookup_field_values->db_value.str= lex->select_lex.db;
-    lookup_field_values->db_value.length=strlen(lex->select_lex.db);
-    if (wild)
-    {
-      lookup_field_values->table_value.str= (char*)wild;
-      lookup_field_values->table_value.length= strlen(wild);
-      lookup_field_values->wild_table_value= 1;
-    }
-    return 0;
-  default:
-    /*
-      The "default" is for queries over I_S.
-      All previous cases handle SHOW commands.
-    */
+    default:
     return calc_lookup_values_from_cond(session, cond, tables, lookup_field_values, schema_table);
   }
 }

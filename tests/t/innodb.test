@@ -1028,18 +1028,28 @@ drop table t1;
 ## Not deterministic.
 # Test for testable InnoDB status variables. This test
 # uses previous ones(pages_created, rows_deleted, ...).
-#show status like "Innodb_buffer_pool_pages_total";
-#show status like "Innodb_page_size";
-#show status like "Innodb_rows_deleted";
-#show status like "Innodb_rows_inserted";
-#show status like "Innodb_rows_updated";
+--replace_column 2 #
+show status like "Innodb_buffer_pool_pages_total";
+--replace_column 2 #
+show status like "Innodb_page_size";
+--replace_column 2 #
+show status like "Innodb_rows_deleted";
+--replace_column 2 #
+show status like "Innodb_rows_inserted";
+--replace_column 2 #
+show status like "Innodb_rows_updated";
 
 ## Test for row locks InnoDB status variables.
-#show status like "Innodb_row_lock_waits";
-#show status like "Innodb_row_lock_current_waits";
-#show status like "Innodb_row_lock_time";
-#show status like "Innodb_row_lock_time_max";
-#show status like "Innodb_row_lock_time_avg";
+--replace_column 2 #
+show status like "Innodb_row_lock_waits";
+--replace_column 2 #
+show status like "Innodb_row_lock_current_waits";
+--replace_column 2 #
+show status like "Innodb_row_lock_time";
+--replace_column 2 #
+show status like "Innodb_row_lock_time_max";
+--replace_column 2 #
+show status like "Innodb_row_lock_time_avg";
 
 # Test for innodb_sync_spin_loops variable
 show variables like "innodb_sync_spin_loops";

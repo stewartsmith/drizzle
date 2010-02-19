@@ -197,7 +197,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
-			      drizzled/ha_trx_info.h \
 			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
 			      drizzled/hash.h \
@@ -313,6 +312,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/transaction_applier.h \
 			      drizzled/plugin/transaction_reader.h \
 			      drizzled/plugin/transaction_replicator.h \
+			      drizzled/plugin/transactional_storage_engine.h \
+			      drizzled/plugin/xa_storage_engine.h \
 			      drizzled/plugin/version.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/probes.h \
@@ -320,6 +321,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
+			      drizzled/resource_context.h \
 			      drizzled/security_context.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
@@ -387,8 +389,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/show_create.h \
 			      drizzled/statement/show_create_schema.h \
 			      drizzled/statement/show_errors.h \
-			      drizzled/statement/show_processlist.h \
-			      drizzled/statement/show_status.h \
 			      drizzled/statement/show_warnings.h \
 			      drizzled/statement/start_transaction.h \
 			      drizzled/statement/truncate.h \
@@ -413,6 +413,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/time_functions.h \
 			      drizzled/tmp_table_param.h \
 			      drizzled/transaction_services.h \
+			      drizzled/transaction_context.h \
 			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
@@ -424,7 +425,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/utf8/unchecked.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
-			      drizzled/xid.h
+			      drizzled/xid.h \
+			      plugin/innobase/handler/status_function.h
 
 lib_LTLIBRARIES+= drizzled/libdrizzled.la
 drizzled_libdrizzled_la_LIBADD= \
@@ -457,7 +459,6 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/cursor.cc \
 				 drizzled/decimal.cc \
 				 drizzled/diagnostics_area.cc \
-				 drizzled/drizzled.cc \
 				 drizzled/dtcollation.cc \
 				 drizzled/errmsg_print.cc \
 				 drizzled/field.cc \
@@ -586,7 +587,6 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/function/units.cc \
 				 drizzled/function/user_var_as_out_param.cc \
 				 drizzled/ha_commands.cc \
-				 drizzled/ha_trx_info.cc \
 				 drizzled/hybrid_type_traits.cc \
 				 drizzled/hybrid_type_traits_decimal.cc \
 				 drizzled/hybrid_type_traits_integer.cc \
@@ -667,9 +667,12 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/plugin/table_function.cc \
 				 drizzled/plugin/transaction_applier.cc \
 				 drizzled/plugin/transaction_replicator.cc \
+				 drizzled/plugin/transactional_storage_engine.cc \
+				 drizzled/plugin/xa_storage_engine.cc \
 				 drizzled/query_id.cc \
 				 drizzled/records.cc \
 				 drizzled/replication_services.cc \
+				 drizzled/resource_context.cc \
 				 drizzled/session.cc \
 				 drizzled/session_list.cc \
 				 drizzled/set_var.cc \
@@ -726,8 +729,6 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/statement/show_create.cc \
 				 drizzled/statement/show_create_schema.cc \
 				 drizzled/statement/show_errors.cc \
-				 drizzled/statement/show_processlist.cc \
-				 drizzled/statement/show_status.cc \
 				 drizzled/statement/show_warnings.cc \
 				 drizzled/statement/start_transaction.cc \
 				 drizzled/statement/truncate.cc \

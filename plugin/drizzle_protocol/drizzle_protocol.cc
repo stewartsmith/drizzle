@@ -875,7 +875,6 @@ DRIZZLE_DECLARE_PLUGIN
   ::drizzled::PLUGIN_LICENSE_GPL,
   plugin::drizzle_protocol::init,             /* Plugin Init */
   plugin::drizzle_protocol::deinit,           /* Plugin Deinit */
-  NULL,             /* status variables */
   plugin::drizzle_protocol::sys_variables,    /* system variables */
   NULL              /* config options */
 }
