@@ -226,26 +226,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -258,6 +238,7 @@ COLUMNS	CREATE TABLE `columns` (
   `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
   `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_TYPE` varchar(64) NOT NULL DEFAULT '',
   `ORDINAL_POSITION` bigint NOT NULL DEFAULT '0',
   `COLUMN_DEFAULT` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_DEFAULT_IS_NULL` varchar(5) NOT NULL DEFAULT '',

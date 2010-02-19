@@ -28,7 +28,6 @@
 #include "drizzled/show.h"
 
 #include "helper_methods.h"
-#include "columns.h"
 #include "key_column_usage.h"
 #include "referential_constraints.h"
 #include "table_constraints.h"
@@ -47,7 +46,6 @@ using namespace std;
  */
 static int infoSchemaInit(drizzled::plugin::Registry& registry)
 {
-  registry.add(ColumnsIS::getTable());
   registry.add(ReferentialConstraintsIS::getTable());
   registry.add(TableConstraintsIS::getTable());
   registry.add(KeyColumnUsageIS::getTable());
@@ -66,9 +64,6 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
  */
 static int infoSchemaDone(drizzled::plugin::Registry& registry)
 {
-  registry.remove(ColumnsIS::getTable());
-  ColumnsIS::cleanup();
-
   registry.remove(KeyColumnUsageIS::getTable());
   KeyColumnUsageIS::cleanup();
 

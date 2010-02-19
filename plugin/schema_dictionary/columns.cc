@@ -33,6 +33,7 @@ ColumnsTool::ColumnsTool() :
   add_field("TABLE_NAME");
 
   add_field("COLUMN_NAME");
+  add_field("COLUMN_TYPE");
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
   add_field("COLUMN_DEFAULT");
   add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN);
@@ -121,6 +122,9 @@ void ColumnsTool::Generator::fill()
 
   /* COLUMN_NAME */
   push(column.name());
+
+  /* COLUMN_TYPE */
+  pushType(column.type());
 
   /* ORDINAL_POSITION */
   push(static_cast<int64_t>(column_iterator));

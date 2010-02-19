@@ -26,12 +26,12 @@ show tables like 't%';
 --replace_column 8 # 12 # 13 #
 #show table status;
 show columns from t3 like "a%";
-select * from information_schema.old_COLUMNS where table_name="t1"
+select * from data_dictionary.columns where table_name="t1"
 and column_name= "a";
 
 connect (user3,localhost,mysqltest_2,,);
 connection user3;
-select table_name, column_name, privileges from information_schema.old_columns 
+select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 show columns from mysqltest.t1;
 connect (user4,localhost,mysqltest_3,,mysqltest);
@@ -50,7 +50,7 @@ select * from information_schema.old_table_names;
 #
 # Bug#2719 information_schema: errors in "columns"
 #
-select column_type from information_schema.old_columns
+select column_type from data_dictionary.columns
 where table_schema="information_schema" and table_name="COLUMNS" and
 (column_name="character_set_name" or column_name="collation_name");
 
@@ -120,13 +120,13 @@ show create database information_schema;
 create table t1(f1 LONGBLOB, f2 LONGTEXT);
 select column_name,data_type,CHARACTER_OCTET_LENGTH,
        CHARACTER_MAXIMUM_LENGTH
-from information_schema.old_columns
+from data_dictionary.columns
 where table_name='t1';
 drop table t1;
 create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
                 f5 BIGINT, f6 int, f7 int);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
-from information_schema.old_columns
+from data_dictionary.columns
 where table_name='t1';
 drop table t1;
 
@@ -135,7 +135,7 @@ drop table t1;
 #
 create table t1 (a int not null, b int);
 use information_schema;
-select column_name, column_default from information_schema.old_columns
+select column_name, column_default from data_dictionary.columns
   where table_schema='test' and table_name='t1';
 use test;
 show columns from t1;
@@ -177,14 +177,14 @@ drop table t1;
 #
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
-from information_schema.old_columns where table_name='t1';
+from data_dictionary.columns where table_name='t1';
 drop table t1;
 
 ##
 ## Bug#15307 GROUP_CONCAT() with ORDER BY returns empty set on information_schema
 ##
 select column_type, group_concat(table_schema, '.', table_name), count(*) as num
-from information_schema.old_columns where
+from data_dictionary.columns where
 table_schema='information_schema' and
 (column_type = 'varchar(7)' or column_type = 'varchar(20)'
  or column_type = 'varchar(27)')
@@ -195,7 +195,7 @@ group by column_type order by column_type, num;
 #
 create table t1(f1 char(1) not null, f2 char(9) not null);
 select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
-information_schema.old_columns where table_schema='test' and table_name = 't1';
+data_dictionary.columns where table_schema='test' and table_name = 't1';
 drop table t1;
 
 #
@@ -215,13 +215,13 @@ drop table t1,t2;
 SELECT t.table_name, c1.column_name
   FROM data_dictionary.tables t
        INNER JOIN
-       information_schema.old_columns c1
+       data_dictionary.columns c1
        ON t.table_schema = c1.table_schema AND
           t.table_name = c1.table_name
   WHERE t.table_schema = 'information_schema' AND
         c1.ordinal_position =
         ( SELECT COALESCE(MIN(c2.ordinal_position),1)
-            FROM information_schema.old_columns c2
+            FROM data_dictionary.columns c2
             WHERE c2.table_schema = t.table_schema AND
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
@@ -232,13 +232,13 @@ SELECT t.table_name, c1.column_name
 SELECT t.table_name, c1.column_name
   FROM data_dictionary.tables t
        INNER JOIN
-       information_schema.old_columns c1
+       data_dictionary.columns c1
        ON t.table_schema = c1.table_schema AND
           t.table_name = c1.table_name
   WHERE t.table_schema = 'information_schema' AND
         c1.ordinal_position =
         ( SELECT COALESCE(MIN(c2.ordinal_position),1)
-            FROM information_schema.old_columns c2
+            FROM data_dictionary.columns c2
             WHERE c2.table_schema = 'information_schema' AND
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
@@ -264,7 +264,7 @@ create table t2 (f1 int, f2 int);
 
 #select table_name from data_dictionary.tables
 #where table_schema = 'test' and table_name not in
-#(select table_name from information_schema.old_columns
+#(select table_name from data_dictionary.columns
 # where table_schema = 'test' and column_name = 'f3')
 #ORDER BY table_name;
 
@@ -281,7 +281,7 @@ select 1 as f1 from data_dictionary.tables  where "CHARACTER_SETS"=
 select t.table_name, group_concat(t.table_schema, '.', t.table_name),
        count(*) as num1
 from data_dictionary.tables t
-inner join information_schema.old_columns c1
+inner join data_dictionary.columns c1
 on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
 where t.table_schema = 'information_schema' AND
       t.table_name not like 'falcon%' AND
@@ -289,7 +289,7 @@ where t.table_schema = 'information_schema' AND
         (select isnull(c2.column_type) -
          isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
          count(*) as num
-         from information_schema.old_columns c2 where
+         from data_dictionary.columns c2 where
          c2.table_schema='information_schema' and
          (c2.column_type = 'varchar(7)' or c2.column_type = 'varchar(20)')
           group by c2.column_type order by num limit 1)
@@ -316,7 +316,7 @@ create table t1 (
   f7 datetime not null,
   f8 datetime default '2006-01-01'
 );
-#select column_default from information_schema.old_columns where table_name= 't1' ORDER BY column_default;
+#select column_default from data_dictionary.columns where table_name= 't1' ORDER BY column_default;
 show columns from t1;
 drop table t1;
 

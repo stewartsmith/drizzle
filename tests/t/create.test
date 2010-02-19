@@ -1193,7 +1193,7 @@ select * from имя_таблицы_в_кодировке_утф8_длиной_�
 select TABLE_NAME from data_dictionary.tables where
 table_schema='test';
 
-select COLUMN_NAME from information_schema.old_columns where
+select COLUMN_NAME from data_dictionary.columns where
 table_schema='test';
 
 select INDEX_NAME from data_dictionary.indexes where

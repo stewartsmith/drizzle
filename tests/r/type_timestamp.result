@@ -442,7 +442,7 @@ Field	Type	Null	Default	Default is NULL	On Update
 id	INTEGER	FALSE		FALSE	
 username	VARCHAR	FALSE		FALSE	
 posted_on	TIMESTAMP	FALSE	NOW()	FALSE	
-select is_nullable from INFORMATION_SCHEMA.OLD_COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
+select is_nullable from data_dictionary.columns where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
 is_nullable
-NO
+FALSE
 drop table t1;
