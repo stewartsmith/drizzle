@@ -690,26 +690,33 @@ public:
   }
 };
 
-void StorageEngine::getSchemaNames(set<string>& set_of_names)
+void StorageEngine::doGetSchemaNames(std::set<std::string>& )
 {
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+}
 
-  CachedDirectory::Entries files= directory.getEntries();
+class AddSchemaNames : 
+  public unary_function<StorageEngine *, void>
+{
+  set<string>& set_of_names;
 
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
+public:
+
+  AddSchemaNames(set<string>& of_names) :
+    set_of_names(of_names)
   {
-    CachedDirectory::Entry *entry= *fileIter;
-    set_of_names.insert(entry->filename);
   }
 
-  set_of_names.insert("information_schema"); // special cases suck
+  result_type operator() (argument_type engine)
+  {
+    engine->doGetSchemaNames(set_of_names);
+  }
+};
 
+void StorageEngine::getSchemaNames(set<string>& set_of_names)
+{
   // Add hook here for engines to register schema.
-#if 0
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
-#endif
+           AddSchemaNames(set_of_names));
 }
 
 /*

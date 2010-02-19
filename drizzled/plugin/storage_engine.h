@@ -294,7 +294,6 @@ protected:
   virtual int doRenameTable(Session* session,
                             const char *from, const char *to);
 
-
 public:
 
   int renameTable(Session *session, const char *from, const char *to) 
@@ -341,6 +340,10 @@ public:
   // @note All schema methods defined here
   static void getSchemaNames(std::set<std::string>& set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
+  // @note make private/protected
+  virtual void doGetSchemaNames(std::set<std::string>& set_of_names);
+
+
  
 
   static inline const std::string &resolveName(const StorageEngine *engine)
