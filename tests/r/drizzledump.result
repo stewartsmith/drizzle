@@ -12,7 +12,7 @@ INSERT INTO t1 VALUES (1), (2);
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a" Type="int" Null="YES" Key="MUL" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="FALSE" On Update="" />
 		<key Table="t1" Non_unique="1" Key_name="a" Seq_in_index="1" Column_name="a" Collation="A" Cardinality="2" Null="YES" Index_type="BTREE" Comment="" Index_Comment="" />
 	</table_structure>
 	<table_data name="t1">
@@ -46,7 +46,7 @@ INSERT INTO t1 VALUES ("1\""), ("\"2");
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a&quot;b&quot;" Type="varchar(2)" Null="YES" Key="" Extra="" />
+		<field Field="a&quot;b&quot;" Type="VARCHAR" Null="TRUE" Default="" Default is NULL="FALSE" On Update="" />
 	</table_structure>
 	<table_data name="t1">
 	<row>
@@ -947,10 +947,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="FALSE" On Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="FALSE" On Update="" />
 	</table_structure>
 </database>
 </drizzledump>
@@ -958,10 +958,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="FALSE" On Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="FALSE" On Update="" />
 	</table_structure>
 </database>
 </drizzledump>

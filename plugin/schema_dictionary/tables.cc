@@ -133,7 +133,14 @@ bool TablesTool::Generator::nextTable()
 
 bool TablesTool::Generator::checkTableName()
 {
-  return isWild(table_name());
+  if (isWild(table_name()))
+    return true;
+
+  cerr << "Trying to match " << table_predicate << " with "  << table_name() << "\n";
+  if (not table_predicate.empty() && table_predicate.compare(table_name()))
+    return true;
+
+  return false;
 }
 
 bool TablesTool::Generator::populate()

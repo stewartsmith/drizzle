@@ -20,8 +20,7 @@ t2
 t3
 t5
 show columns from t3 like "a%";
-Field	Type	Null	Key	Default	Extra
-a	int	YES	MUL	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
 select * from information_schema.old_COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
@@ -32,9 +31,9 @@ table_name	column_name	privileges
 t1	a	
 t1	b	
 show columns from mysqltest.t1;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
-b	varchar(30)	YES	MUL	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		FALSE	
+b	VARCHAR	TRUE		FALSE	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
 select * from information_schema.old_table_names;
@@ -127,9 +126,9 @@ a	NULL
 b	NULL
 use test;
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO		NULL	
-b	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	INTEGER	TRUE		FALSE	
 drop table t1;
 alter database information_schema;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
@@ -154,17 +153,6 @@ select 1 from (select 1 from test.t1) a;
 1
 1
 use test;
-drop table t1;
-create temporary table t1(f1 int, index(f1));
-show columns from t1;
-Field	Type	Null	Key	Default	Extra
-f1	int	YES	MUL	NULL	
-describe t1;
-Field	Type	Null	Key	Default	Extra
-f1	int	YES	MUL	NULL	
-show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	f1	1	f1	A	0	NULL	NULL	YES	BTREE		
 drop table t1;
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
@@ -303,20 +291,16 @@ f7 datetime not null,
 f8 datetime default '2006-01-01'
 );
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-f1	varchar(50)	YES		NULL	
-f2	varchar(50)	NO		NULL	
-f3	varchar(50)	YES			
-f4	varchar(50)	YES		NULL	
-f5	bigint	NO		NULL	
-f6	bigint	NO		10	
-f7	datetime	NO		NULL	
-f8	datetime	YES		2006-01-01 00:00:00	
+Field	Type	Null	Default	Default is NULL	On Update
+f1	VARCHAR	TRUE		FALSE	
+f2	VARCHAR	FALSE		FALSE	
+f3	VARCHAR	TRUE		FALSE	
+f4	VARCHAR	TRUE		FALSE	
+f5	BIGINT	FALSE		FALSE	
+f6	BIGINT	FALSE	10	FALSE	
+f7	DATETIME	FALSE	10	FALSE	
+f8	DATETIME	TRUE	2006-01-01	FALSE	
 drop table t1;
-show fields from information_schema.old_table_names;
-ERROR 42S02: Unknown table 'old_table_names' in information_schema
-show keys from information_schema.old_table_names;
-ERROR 42S02: Unknown table 'old_table_names' in information_schema
 SET max_heap_table_size = DEFAULT;
 USE test;
 End of 5.0 tests.
@@ -328,9 +312,9 @@ SELECT TABLE_COLLATION FROM data_dictionary.tables
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 TABLE_COLLATION
 select * from data_dictionary.columns where table_schema = NULL;
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
 select * from `data_dictionary`.`columns` where `TABLE_NAME` = NULL;
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
 select * from `information_schema`.`OLD_KEY_COLUMN_USAGE` where `TABLE_SCHEMA` = NULL;
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	POSITION_IN_UNIQUE_CONSTRAINT	REFERENCED_TABLE_SCHEMA	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
 select * from `information_schema`.`OLD_KEY_COLUMN_USAGE` where `TABLE_NAME` = NULL;

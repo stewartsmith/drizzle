@@ -158,11 +158,11 @@ t1	CREATE TABLE `t1` (
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
 ) ENGINE=DEFAULT COMMENT='it''s a table'
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-name	varchar(20)	YES		O'Brien	
-c	int	NO		NULL	
-c-b	int	YES		NULL	
-space 2	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+name	VARCHAR	TRUE	O'Brien	FALSE	
+c	INTEGER	FALSE	O'Brien	FALSE	
+c-b	INTEGER	TRUE	O'Brien	FALSE	
+space 2	INTEGER	TRUE	O'Brien	FALSE	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
@@ -207,21 +207,21 @@ t1	CREATE TEMPORARY TABLE `t1` (
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	decimal(9,2)	YES		NULL	
-b	decimal(9,0)	YES		NULL	
-e	double(9,2)	YES		NULL	
-f	double(5,0)	YES		NULL	
-h	double(3,2)	YES		NULL	
-i	double(3,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	DECIMAL	TRUE		FALSE	
+b	DECIMAL	TRUE		FALSE	
+e	DOUBLE	TRUE		FALSE	
+f	DOUBLE	TRUE		FALSE	
+h	DOUBLE	TRUE		FALSE	
+i	DOUBLE	TRUE		FALSE	
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	decimal(9,2)	YES		NULL	
-b	decimal(9,0)	YES		NULL	
-e	double(9,2)	YES		NULL	
-f	double(5,0)	YES		NULL	
-h	double(3,2)	YES		NULL	
-i	double(3,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	DECIMAL	TRUE		FALSE	
+b	DECIMAL	TRUE		FALSE	
+e	DOUBLE	TRUE		FALSE	
+f	DOUBLE	TRUE		FALSE	
+h	DOUBLE	TRUE		FALSE	
+i	DOUBLE	TRUE		FALSE	
 drop table t1;
 create temporary table t1 (
 type_int int,
@@ -265,23 +265,23 @@ drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-max(a)	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+max(a)	INTEGER	TRUE		FALSE	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-c	decimal(10,0)	YES		NULL	
-d	double	YES		NULL	
-f	double	YES		NULL	
-r	double	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+c	DECIMAL	TRUE		FALSE	
+d	DOUBLE	TRUE		FALSE	
+f	DOUBLE	TRUE		FALSE	
+r	DOUBLE	TRUE		FALSE	
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-c	decimal(3,3)	YES		NULL	
-d	double(3,3)	YES		NULL	
-f	double(3,3)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+c	DECIMAL	TRUE		FALSE	
+d	DOUBLE	TRUE		FALSE	
+f	DOUBLE	TRUE		FALSE	
 drop table t1;
 CREATE TABLE ```ab``cd``` (i INT);
 SHOW CREATE TABLE ```ab``cd```;
@@ -486,11 +486,9 @@ create table `mysqlttest\1`.`a\b` (a int);
 show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
 show fields from `mysqlttest\1`.`a\b`;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
 show columns from `a\b` from `mysqlttest\1`;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
 show keys from `mysqlttest\1`.`a\b`;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 drop table `mysqlttest\1`.`a\b`;

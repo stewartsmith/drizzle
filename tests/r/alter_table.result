@@ -51,10 +51,10 @@ PRIMARY KEY (GROUP_ID,LANG_ID),
 KEY NAME (NAME));
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
 show COLUMNS FROM t1;
-Field	Type	Null	Key	Default	Extra
-GROUP_ID	int	NO	PRI	0	
-LANG_ID	int	NO	PRI	0	
-NAME	varchar(80)	NO	MUL	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+GROUP_ID	INTEGER	FALSE	0	FALSE	
+LANG_ID	INTEGER	FALSE	0	FALSE	
+NAME	VARCHAR	FALSE	0	FALSE	
 DROP TABLE t1;
 create table t1 (n int);
 insert into t1 values(9),(3),(12),(10);
@@ -175,9 +175,9 @@ create table t1 (i int not null auto_increment primary key);
 alter table t1 rename t2;
 alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-i	int	NO	PRI	NULL	auto_increment
-c	varchar(10)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+i	INTEGER	FALSE	0	FALSE	
+c	VARCHAR	TRUE	0	FALSE	
 drop table t1;
 create table t1 (a int, b int);
 set autocommit=0;

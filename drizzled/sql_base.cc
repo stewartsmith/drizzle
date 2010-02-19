@@ -4145,9 +4145,9 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     return false;
 
   /*
-TODO: in the case when we skipped all columns because there was a
-qualified '*', and all columns were coalesced, we have to give a more
-meaningful message than ER_BAD_TABLE_ERROR.
+    @TODO in the case when we skipped all columns because there was a
+    qualified '*', and all columns were coalesced, we have to give a more
+    meaningful message than ER_BAD_TABLE_ERROR.
   */
   if (!table_name)
     my_message(ER_NO_TABLES_USED, ER(ER_NO_TABLES_USED), MYF(0));

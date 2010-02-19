@@ -172,16 +172,6 @@ select 1 from (select 1 from test.t1) a;
 use test;
 drop table t1;
 
-# Bug #14387 SHOW COLUMNS doesn't work on temporary tables
-# Bug #15224 SHOW INDEX from temporary table doesn't work
-# Bug #12770 DESC cannot display the info. about temporary table
-#
-create temporary table t1(f1 int, index(f1));
-show columns from t1;
-describe t1;
-show indexes from t1;
-drop table t1;
-
 #
 # Bug#14271 I_S: columns has no size for (var)binary columns
 #
@@ -329,14 +319,6 @@ create table t1 (
 #select column_default from information_schema.old_columns where table_name= 't1' ORDER BY column_default;
 show columns from t1;
 drop table t1;
-
-#
-# Bug#30079 A check for "hidden" I_S tables is flawed
-#
---error 1109
-show fields from information_schema.old_table_names;
---error 1109
-show keys from information_schema.old_table_names;
 
 SET max_heap_table_size = DEFAULT;
 USE test;
