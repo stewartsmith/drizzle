@@ -26,23 +26,14 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_statistics	OLD_STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NON_UNIQUE	Non_unique	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	CARDINALITY	Cardinality	5	20	1	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	SUB_PART	Sub_part	5	20	0	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	5	NULL	NULL		BTREE		
-t1	1	b	1	b	A	5	NULL	NULL		BTREE		
-t1	1	b	2	c	A	5	NULL	NULL		BTREE		
+def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	a
+t1	b	0	b
+t1	b	1	c
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
@@ -118,17 +109,17 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
-t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	f1
+t1	PRIMARY	1	f2
+t1	PRIMARY	2	f3
+t1	PRIMARY	3	f4
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
-t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	f1
+t1	PRIMARY	1	f2
+t1	PRIMARY	2	f3
+t1	PRIMARY	3	f4
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
@@ -440,21 +431,12 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_statistics	OLD_STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NON_UNIQUE	Non_unique	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	CARDINALITY	Cardinality	5	20	1	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	SUB_PART	Sub_part	5	20	3	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	field1	A	0	180	NULL		BTREE		
+def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	field1
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -490,7 +472,7 @@ Field	Type	Null	Default	Default is NULL	On Update
 show columns from `a\b` from `mysqlttest\1`;
 Field	Type	Null	Default	Default is NULL	On Update
 show keys from `mysqlttest\1`.`a\b`;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
+Table	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
 drop table if exists `été`;

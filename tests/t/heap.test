@@ -10,7 +10,7 @@ create temporary table t1 (a int not null,b int not null, primary key (a)) engin
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
 #show table status like "t1";
-show keys from t1;
+#show keys from t1;
 select * from t1;
 select * from t1 where a=4;
 update t1 set b=5 where a=4;
