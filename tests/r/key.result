@@ -301,9 +301,9 @@ i2 INT NOT NULL,
 UNIQUE i1idx (i1),
 UNIQUE i2idx (i2));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-i1	int	NO	PRI	NULL	
-i2	int	NO	UNI	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+i1	INTEGER	FALSE		FALSE	
+i2	INTEGER	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -357,28 +357,28 @@ t1	CREATE TABLE `t1` (
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null unique);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	varchar(20)	NO	UNI	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
 drop table t1;
 create table t1 (a int not null primary key, b int not null unique);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	int	NO	UNI	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	INTEGER	FALSE		FALSE	
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null, unique (b(10)));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	varchar(20)	NO	UNI	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null, c varchar(20) not null, unique(b(10),c(10)));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	varchar(20)	NO	MUL	NULL	
-c	varchar(20)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 drop table t1;
 create table t1 (
 c1 int,
@@ -493,10 +493,10 @@ create table t1(a int not null, key aa(a),
 b char(10) not null, unique key bb(b(1)), 
 c char(4) not null, unique key cc(c));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	MUL	NULL	
-b	varchar(10)	NO	UNI	NULL	
-c	varchar(4)	NO	PRI	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -512,16 +512,16 @@ create table t1(a int not null, key aa(a),
 b char(10) not null, unique key bb(b(1)),
 c char(4) not null);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	MUL	NULL	
-b	varchar(10)	NO	UNI	NULL	
-c	varchar(4)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 alter table t1 add unique key cc(c);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	MUL	NULL	
-b	varchar(10)	NO	UNI	NULL	
-c	varchar(4)	NO	PRI	NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (

@@ -687,7 +687,7 @@ drop table t1;
 #
 
 eval create $temp table t1 (t int not null default 1, key (t)) engine=$engine_type;
-desc t1;
+#desc t1;
 drop table t1;
 
 #
