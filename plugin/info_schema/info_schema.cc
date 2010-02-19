@@ -95,7 +95,6 @@ DRIZZLE_DECLARE_PLUGIN
   infoSchemaInit,
   infoSchemaDone,
   NULL,
-  NULL,
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

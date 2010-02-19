@@ -123,7 +123,6 @@ void CollationsTool::Generator::fill()
   assert(tmp_cs);
   assert(tmp_cl);
 
-  fprintf(stderr, "CHAR %s\n", tmp_cs->name);
   assert(tmp_cs->name);
   /* CHARACTER_SET_NAME */
   push(tmp_cs->name);
@@ -136,7 +135,7 @@ void CollationsTool::Generator::fill()
   push(tmp_cl->csname);
 
   /* COLLATION_ID */
-  push((int64_t) tmp_cl->number);
+  push(static_cast<int64_t>(tmp_cl->number));
 
   /* IS_DEFAULT */
   push((bool)(tmp_cl->state & MY_CS_PRIMARY));
@@ -145,5 +144,5 @@ void CollationsTool::Generator::fill()
   push((bool)(tmp_cl->state & MY_CS_COMPILED));
 
   /* SORTLEN */
-  push((int64_t) tmp_cl->strxfrm_multiply);
+  push(static_cast<int64_t>(tmp_cl->strxfrm_multiply));
 }

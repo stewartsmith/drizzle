@@ -44,7 +44,7 @@ public:
     drizzled::system_status_var status;
     drizzled::system_status_var *status_ptr;
 
-    void fill(const char *name, char *value, drizzled::SHOW_TYPE show_type);
+    void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type);
 
     drizzled::system_status_var *getStatus()
     {

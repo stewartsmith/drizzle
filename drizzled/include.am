@@ -388,8 +388,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/show_create.h \
 			      drizzled/statement/show_create_schema.h \
 			      drizzled/statement/show_errors.h \
-			      drizzled/statement/show_processlist.h \
-			      drizzled/statement/show_status.h \
 			      drizzled/statement/show_warnings.h \
 			      drizzled/statement/start_transaction.h \
 			      drizzled/statement/truncate.h \
@@ -425,7 +423,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/utf8/unchecked.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
-			      drizzled/xid.h
+			      drizzled/xid.h \
+			      plugin/innobase/handler/status_function.h
 
 DRIZZLED_LDADD= \
 		drizzled/internal/libinternal.la \
@@ -730,8 +729,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/statement/show_create.cc \
 			   drizzled/statement/show_create_schema.cc \
 			   drizzled/statement/show_errors.cc \
-			   drizzled/statement/show_processlist.cc \
-			   drizzled/statement/show_status.cc \
 			   drizzled/statement/show_warnings.cc \
 			   drizzled/statement/start_transaction.cc \
 			   drizzled/statement/truncate.cc \

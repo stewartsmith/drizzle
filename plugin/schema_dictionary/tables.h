@@ -150,52 +150,52 @@ public:
       push(getTableProto().engine().name());
 
       /* Version */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Row_format */
       pushRow(getTableProto().options().row_type());
 
       /* Rows */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Avg_row_length */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Data_length */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Max_data_length */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Index_length */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Data_free */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Auto_increment */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Create_time */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Update_time */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Check_time */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Collation */
       push(getTableProto().options().collation());
 
       /* Checksum */
-      push(0);
+      push(static_cast<int64_t>(0));
 
       /* Create_options */
       push("");
 
       /* Comment */
-      push(getTableProto().options().comment());
+      push("");
     }
 
   public:

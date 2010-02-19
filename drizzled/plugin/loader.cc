@@ -287,11 +287,6 @@ static void delete_module(plugin::Registry &registry, plugin::Module *module)
 
   if (module->isInited)
   {
-    if (manifest.status_vars)
-    {
-      remove_status_vars(manifest.status_vars);
-    }
-
     if (manifest.deinit)
       manifest.deinit(registry);
   }
@@ -325,11 +320,6 @@ static void reap_plugins(plugin::Registry &registry)
 
 static void plugin_initialize_vars(plugin::Module *module)
 {
-  if (module->getManifest().status_vars)
-  {
-    add_status_vars(module->getManifest().status_vars); // add_status_vars makes a copy
-  }
-
   /*
     set the plugin attribute of plugin's sys vars so they are pointing
     to the active plugin

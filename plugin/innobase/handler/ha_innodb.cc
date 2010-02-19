@@ -127,7 +127,11 @@ extern "C" {
 #include "i_s.h"
 #include "handler0vars.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
+
+#include "plugin/innobase/handler/status_function.h"
 
 using namespace std;
 using namespace drizzled;
@@ -162,6 +166,7 @@ undefined.  Map it to NULL. */
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 static plugin::StorageEngine* innodb_engine_ptr= NULL;
+static plugin::TableFunction* status_table_function_ptr= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -517,7 +522,7 @@ innobase_commit_low(
 /*================*/
 	trx_t*	trx);	/*!< in: transaction handle */
 
-static SHOW_VAR innodb_status_variables[]= {
+static drizzle_show_var innodb_status_variables[]= {
   {"buffer_pool_pages_data",
   (char*) &export_vars.innodb_buffer_pool_pages_data,	  SHOW_LONG},
   {"buffer_pool_pages_dirty",
@@ -610,6 +615,54 @@ static SHOW_VAR innodb_status_variables[]= {
   (char*) &export_vars.innodb_rows_updated,		  SHOW_LONG},
   {NULL, NULL, SHOW_LONG}
 };
+
+InnodbStatusTool::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator(fields)
+{ 
+  srv_export_innodb_status();
+  status_var_ptr= innodb_status_variables;
+}
+
+bool InnodbStatusTool::Generator::populate()
+{
+  if (status_var_ptr->name)
+  {
+    std::ostringstream oss;
+    string return_value;
+    const char *value= status_var_ptr->value;
+
+    /* VARIABLE_NAME */
+    push(status_var_ptr->name);
+
+    switch (status_var_ptr->type)
+    {
+    case SHOW_LONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_LONGLONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_BOOL:
+      return_value= *(bool*) value ? "ON" : "OFF";
+      break;
+    default:
+      assert(0);
+    }
+
+    /* VARIABLE_VALUE */
+    if (return_value.length())
+      push(return_value);
+    else 
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
+}
 
 /* General functions */
 
@@ -2019,7 +2072,11 @@ innobase_change_buffering_inited_ok:
 		i_s_cmpmem_reset_init())
 		goto error;
 
+        status_table_function_ptr= new InnodbStatusTool;
+
 	registry.add(innodb_engine_ptr);
+
+	registry.add(status_table_function_ptr);
 
 	registry.add(innodb_trx_schema_table);
 	registry.add(innodb_locks_schema_table);
@@ -2046,6 +2103,10 @@ innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
+
+	registry.remove(status_table_function_ptr);
+ 	delete status_table_function_ptr;
+
 	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
@@ -3834,7 +3895,7 @@ ha_innobase::write_row(
 		ut_error;
 	}
 
-	ha_statistic_increment(&SSV::ha_write_count);
+	ha_statistic_increment(&system_status_var::ha_write_count);
 
 	sql_command = session_sql_command(user_session);
 
@@ -4207,7 +4268,7 @@ ha_innobase::update_row(
 
 	ut_a(prebuilt->trx == trx);
 
-	ha_statistic_increment(&SSV::ha_update_count);
+	ha_statistic_increment(&system_status_var::ha_update_count);
 
 	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
 		table->timestamp_field->set_time();
@@ -4312,7 +4373,7 @@ ha_innobase::delete_row(
 
 	ut_a(prebuilt->trx == trx);
 
-	ha_statistic_increment(&SSV::ha_delete_count);
+	ha_statistic_increment(&system_status_var::ha_delete_count);
 
 	if (!prebuilt->upd_node) {
 		row_get_prebuilt_update_vector(prebuilt);
@@ -4566,7 +4627,7 @@ ha_innobase::index_read(
 
 	ut_a(prebuilt->trx == session_to_trx(user_session));
 
-	ha_statistic_increment(&SSV::ha_read_key_count);
+	ha_statistic_increment(&system_status_var::ha_read_key_count);
 
 	index = prebuilt->index;
 
@@ -4681,7 +4742,7 @@ ha_innobase::innobase_get_index(
 	KEY*		key = 0;
 	dict_index_t*	index = 0;
 
-	ha_statistic_increment(&SSV::ha_read_key_count);
+	ha_statistic_increment(&system_status_var::ha_read_key_count);
 
 	ut_ad(user_session == ha_session());
 	ut_a(prebuilt->trx == session_to_trx(user_session));
@@ -4846,7 +4907,7 @@ ha_innobase::index_next(
 	unsigned char*	buf)	/*!< in/out: buffer for next row in MySQL
 				format */
 {
-	ha_statistic_increment(&SSV::ha_read_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_next_count);
 
 	return(general_fetch(buf, ROW_SEL_NEXT, 0));
 }
@@ -4862,7 +4923,7 @@ ha_innobase::index_next_same(
 	const unsigned char*	,	/*!< in: key value */
 	uint		)	/*!< in: key value length */
 {
-	ha_statistic_increment(&SSV::ha_read_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_next_count);
 
 	return(general_fetch(buf, ROW_SEL_NEXT, last_match_mode));
 }
@@ -4877,7 +4938,7 @@ ha_innobase::index_prev(
 /*====================*/
 	unsigned char*	buf)	/*!< in/out: buffer for previous row in MySQL format */
 {
-	ha_statistic_increment(&SSV::ha_read_prev_count);
+	ha_statistic_increment(&system_status_var::ha_read_prev_count);
 
 	return(general_fetch(buf, ROW_SEL_PREV, 0));
 }
@@ -4894,7 +4955,7 @@ ha_innobase::index_first(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_first_count);
+	ha_statistic_increment(&system_status_var::ha_read_first_count);
 
 	error = index_read(buf, NULL, 0, HA_READ_AFTER_KEY);
 
@@ -4919,7 +4980,7 @@ ha_innobase::index_last(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_last_count);
+	ha_statistic_increment(&system_status_var::ha_read_last_count);
 
 	error = index_read(buf, NULL, 0, HA_READ_BEFORE_KEY);
 
@@ -4988,7 +5049,7 @@ ha_innobase::rnd_next(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
 	if (start_of_scan) {
 		error = index_first(buf);
@@ -5021,7 +5082,7 @@ ha_innobase::rnd_pos(
 	int		error;
 	uint		keynr	= active_index;
 
-	ha_statistic_increment(&SSV::ha_read_rnd_count);
+	ha_statistic_increment(&system_status_var::ha_read_rnd_count);
 
 	ut_a(prebuilt->trx == session_to_trx(ha_session()));
 
@@ -7346,18 +7407,6 @@ ha_innobase::external_lock(
 }
 
 /************************************************************************//**
-Here we export InnoDB status variables to MySQL. */
-static
-void
-innodb_export_status(void)
-/*======================*/
-{
-	if (innodb_inited) {
-		srv_export_innodb_status();
-	}
-}
-
-/************************************************************************//**
 Implements the SHOW INNODB STATUS command. Sends the output of the InnoDB
 Monitor to the client. */
 static
@@ -8727,23 +8776,6 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(SHOW_VAR *var, char *)
-{
-  innodb_export_status();
-  var->type= SHOW_ARRAY;
-  var->value= (char *) &innodb_status_variables;
-  return 0;
-}
-
-static st_show_var_func_container
-show_innodb_vars_cont = { &show_innodb_vars };
-
-static SHOW_VAR innodb_status_variables_export[]= {
-  {"Innodb",                   (char*) &show_innodb_vars_cont, SHOW_FUNC},
-  {NULL, NULL, SHOW_LONG}
-};
-
-
 /* plugin options */
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -9066,7 +9098,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   innobase_deinit, /* Plugin Deinit */
-  innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

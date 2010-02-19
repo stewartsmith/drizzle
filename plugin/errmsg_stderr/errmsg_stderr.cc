@@ -85,7 +85,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
   errmsg_stderr_plugin_deinit,
-  NULL, /* status variables */
   NULL, /* system variables */
   NULL
 }
