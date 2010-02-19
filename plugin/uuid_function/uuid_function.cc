@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,19 +18,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_UUID_H
-#define DRIZZLED_FUNCTION_STR_UUID_H
-
+#include "config.h"
+#include <drizzled/plugin/function.h>
+#include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
-
-namespace drizzled
-{
+#include <uuid/uuid.h>
 
 #define UUID_LENGTH (8+1+4+1+4+1+4+1+12)
-class Item_func_uuid: public Item_str_func
+
+using namespace drizzled;
+
+class UuidFunction: public Item_str_func
 {
 public:
-  Item_func_uuid(): Item_str_func() {}
+  UuidFunction(): Item_str_func() {}
   void fix_length_and_dec() {
     collation.set(system_charset_info);
     /*
@@ -43,6 +45,50 @@ public:
   String *val_str(String *);
 };
 
-} /* namespace drizzled */
+String *UuidFunction::val_str(String *str)
+{
+  uuid_t uu;
+  char *uuid_string;
 
-#endif /* DRIZZLED_FUNCTION_STR_UUID_H */
+  /* 36 characters for uuid string +1 for NULL */
+  str->realloc(UUID_LENGTH+1);
+  str->length(UUID_LENGTH);
+  str->set_charset(system_charset_info);
+  uuid_string= (char *) str->ptr();
+  uuid_generate_time(uu);
+  uuid_unparse(uu, uuid_string);
+
+  return str;
+}
+
+plugin::Create_function<UuidFunction> *uuid_function= NULL;
+
+static int initialize(drizzled::plugin::Registry &registry)
+{
+  uuid_function= new plugin::Create_function<UuidFunction>("uuid");
+  registry.add(uuid_function);
+  return 0;
+}
+
+static int finalize(drizzled::plugin::Registry &registry)
+{
+   registry.remove(uuid_function);
+   delete uuid_function;
+   return 0;
+}
+
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "uuid",
+  "1.0",
+  "Stewart Smith",
+  "UUID() function using libuuid",
+  PLUGIN_LICENSE_GPL,
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
+  NULL,   /* status variables */
+  NULL,   /* system variables */
+  NULL    /* config options */
+}
+DRIZZLE_DECLARE_PLUGIN_END;

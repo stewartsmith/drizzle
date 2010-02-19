@@ -37,7 +37,6 @@
 #include <drizzled/function/str/repeat.h>
 #include <drizzled/function/str/str_conv.h>
 #include <drizzled/function/str/trim.h>
-#include <drizzled/function/str/uuid.h>
 
 #include <drizzled/function/time/date_format.h>
 #include <drizzled/function/time/dayname.h>
@@ -1348,21 +1347,6 @@ protected:
 };
 
 
-class Create_func_uuid : public Create_func_arg0
-{
-public:
-  using Create_func_arg0::create;
-
-  virtual Item *create(Session *session);
-
-  static Create_func_uuid s_singleton;
-
-protected:
-  Create_func_uuid() {}
-  virtual ~Create_func_uuid() {}
-};
-
-
 class Create_func_weekday : public Create_func_arg1
 {
 public:
@@ -2584,15 +2568,6 @@ Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
 }
 
 
-Create_func_uuid Create_func_uuid::s_singleton;
-
-Item*
-Create_func_uuid::create(Session *session)
-{
-  return new (session->mem_root) Item_func_uuid();
-}
-
-
 Create_func_weekday Create_func_weekday::s_singleton;
 
 Item*
@@ -2695,7 +2670,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("UCASE") }, BUILDER(Create_func_ucase)},
   { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
   { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
-  { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},
   { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
 
   { {0, 0}, NULL}
