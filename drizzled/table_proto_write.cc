@@ -247,11 +247,18 @@ int fill_table_proto(message::Table *table_proto,
       field_options->set_update_value("NOW()");
     }
 
-    if(field_arg->def)
+    if (field_arg->def == NULL  && attribute->constraints().is_nullable())
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
 
+      field_options->set_default_null(true);
+    }
+    if(field_arg->def)
+    {
+      message::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+ 
       if(field_arg->def->is_null())
       {
 	field_options->set_default_null(true);
