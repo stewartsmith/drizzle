@@ -38,6 +38,9 @@ select c from t1 where a = 4;
 select c from t1 where a > 5;
 select * from t1;
 select * from t1 where a = 1 or b = 1;
+select substring(c, 1, 3) from t1;
+select substring(c, 1, 2) from t1;
+select substring(c, 1, 1) from t1;
 
 # Test(4): Update Rows
 update t1 set c = "first half" where a <= 4;
@@ -137,4 +140,62 @@ insert into t1 values (5, NULL), (6, NULL), (7, NULL), (8, NULL);
 insert into t1 values (NULL, 1);
 
 select * from t1;
+select * from t1 where a is null;
+select * from t1 where b is null;
 drop table t1;
+
+# Test (11): DATE type
+create table t1 (name varchar(64), dob date) engine = blitzdb;
+insert into t1 values ('Bernstein', '1971-10-29');
+insert into t1 values ('Codd', '1923-08-23');
+insert into t1 values ('Lovelace', '1815-12-10');
+insert into t1 values ('Tower', '1949-06-17');
+insert into t1 values ('Turing', '1912-06-23');
+insert into t1 values ('Thompson', '1943-02-04');
+select * from t1;
+select name from t1 order by dob;
+select name from t1 order by dob desc;
+drop table t1;
+
+# Test(12): Boundary Check
+create table t1 (a int) engine = blitzdb;
+--error 1264
+insert into t1 values(2147483649);
+--error 1264
+insert into t1 values(-2147483649);
+insert into t1 values(2147483647);
+select * from t1;
+drop table t1;
+
+# ASCII boundary 
+create table t1 (a varchar(32)) engine = blitzdb; 
+insert into t1 select repeat('x', 4);
+insert into t1 select repeat('x', 6);
+insert into t1 select repeat('x', 8);
+insert into t1 select repeat('x', 16);
+insert into t1 select repeat('x', 32);
+--error 1406
+insert into t1 select repeat('x', 33);
+select * from t1;
+
+create table t2 (a varchar(16383)) engine = blitzdb; # Theoretical Max
+insert into t2 select repeat('x', 16383);
+--error 1406
+insert into t2 select repeat('x', 16384);
+select count(*) from t2;
+drop table t1, t2;
+
+# Multibyte
+create table t1 (a varchar(32)) engine = blitzdb; 
+insert into t1 select repeat('あ', 8);
+insert into t1 select repeat('あ', 32);
+--error 1406
+insert into t1 select repeat('あ', 33);
+select * from t1;
+
+create table t2 (a varchar(16383)) engine = blitzdb;
+insert into t2 select repeat('値', 16383);
+--error 1406
+insert into t2 select repeat('値', 16384);
+select count(*) from t2;
+drop table t1, t2;
