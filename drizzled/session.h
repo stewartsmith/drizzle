@@ -25,7 +25,7 @@
 
 #include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
-#include <drizzled/ha_trx_info.h>
+#include "drizzled/resource_context.h"
 #include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
@@ -34,6 +34,7 @@
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
+#include "drizzled/transaction_context.h"
 
 #include <netdb.h>
 #include <map>
@@ -320,7 +321,7 @@ struct Ha_data
     this should not be used.
     @sa trans_register_ha()
   */
-  Ha_trx_info ha_info[2];
+  drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
 };
@@ -539,20 +540,15 @@ private:
   query_id_t warn_query_id;
 public:
   void **getEngineData(const plugin::StorageEngine *engine);
-  Ha_trx_info *getEngineInfo(const plugin::StorageEngine *engine,
-                             size_t index= 0);
+  ResourceContext *getResourceContext(const plugin::StorageEngine *engine,
+                                      size_t index= 0);
 
   struct st_transactions {
-    std::deque<drizzled::NamedSavepoint> savepoints;
-    Session_TRANS all;			// Trans since BEGIN WORK
-    Session_TRANS stmt;			// Trans for current statement
+    std::deque<NamedSavepoint> savepoints;
+    TransactionContext all; ///< Trans since BEGIN WORK
+    TransactionContext stmt; ///< Trans for current statement
     XID_STATE xid_state;
 
-    /*
-       Tables changed in transaction (that must be invalidated in query cache).
-       List contain only transactional tables, that not invalidated in query
-       cache (instead of full list of changed in transaction tables).
-    */
     void cleanup()
     {
       savepoints.clear();
@@ -564,6 +560,7 @@ public:
       xid_state()
     { }
   } transaction;
+
   Field *dup_field;
   sigset_t signals;
 
