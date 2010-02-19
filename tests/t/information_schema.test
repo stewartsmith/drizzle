@@ -3,7 +3,10 @@
 
 --disable_warnings
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
+DROP SCHEMA IF EXISTS data_dictionary;
 --enable_warnings
+
+CREATE SCHEMA data_dictionary;
 
 
 # Test for data_dictionary.tables &
@@ -20,7 +23,7 @@ insert into t5 values (10);
 select table_name from data_dictionary.tables
 where table_schema = "mysqltest" and table_name like "t%";
 
-select * from information_schema.old_STATISTICS where TABLE_SCHEMA = "mysqltest";
+select * from data_dictionary.indexes where TABLE_SCHEMA = "mysqltest";
 
 show tables like 't%';
 --replace_column 8 # 12 # 13 #
@@ -42,16 +45,10 @@ drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
 
 #
-# Bug#7213: information_schema: redundant non-standard TABLE_NAMES table
-#
---error 1109
-select * from information_schema.old_table_names;
-
-#
 # Bug#2719 information_schema: errors in "columns"
 #
 select column_type from data_dictionary.columns
-where table_schema="information_schema" and table_name="COLUMNS" and
+where table_schema="data_dictionary" and table_name="COLUMNS" and
 (column_name="character_set_name" or column_name="collation_name");
 
 #
@@ -59,7 +56,7 @@ where table_schema="information_schema" and table_name="COLUMNS" and
 #
 --replace_column 1 #
 select count(*) from data_dictionary.tables where 
-table_schema="information_schema" and table_name="COLUMNS";
+table_schema="data_dictionary" and table_name="COLUMNS";
 
 --replace_column 1 #
 select count(*) from data_dictionary.tables
@@ -109,11 +106,6 @@ table_name NOT LIKE 'falcon%'
 GROUP BY TABLE_SCHEMA ORDER BY table_schema;
 
 #
-# Bug #9434 SHOW CREATE DATABASE information_schema;
-#
-show create database information_schema;
-
-#
 # Bug #11057 information_schema: columns table has some questionable contents
 # Bug #12301 information_schema: NUMERIC_SCALE must be 0 for integer columns
 #
@@ -134,31 +126,12 @@ drop table t1;
 # Bug#12518 COLUMN_DEFAULT has wrong value if NOT NULL is set
 #
 create table t1 (a int not null, b int);
-use information_schema;
 select column_name, column_default from data_dictionary.columns
   where table_schema='test' and table_name='t1';
 use test;
 show columns from t1;
 drop table t1;
 
-#
-# Bug #9846 Inappropriate error displayed while dropping table from 'INFORMATION_SCHEMA'
-#
---error ER_PARSE_ERROR
-alter database information_schema;
---error ER_DBACCESS_DENIED_ERROR
-drop database information_schema;
-use information_schema;
---error 1109
-drop table old_tables;
---error 1109
-alter table old_tables;
-#
-# Bug #9683 INFORMATION_SCH: Creation of temporary table allowed in Information_schema DB
-#
-use information_schema;
---error 1044
-create temporary table OLD_TABLE_CONSTRAINTS(f1 char(10));
 #
 #
 # Bug#14089 FROM list subquery always fails when information_schema is current database
@@ -167,7 +140,7 @@ use test;
 create table t1(id int);
 insert into t1(id) values (1);
 select 1 from (select 1 from test.t1) a;
-use information_schema;
+use data_dictionary;
 select 1 from (select 1 from test.t1) a;
 use test;
 drop table t1;
@@ -185,7 +158,7 @@ drop table t1;
 ##
 select column_type, group_concat(table_schema, '.', table_name), count(*) as num
 from data_dictionary.columns where
-table_schema='information_schema' and
+table_schema='data_dictionary' and
 (column_type = 'varchar(7)' or column_type = 'varchar(20)'
  or column_type = 'varchar(27)')
 group by column_type order by column_type, num;
@@ -218,7 +191,7 @@ SELECT t.table_name, c1.column_name
        data_dictionary.columns c1
        ON t.table_schema = c1.table_schema AND
           t.table_name = c1.table_name
-  WHERE t.table_schema = 'information_schema' AND
+  WHERE t.table_schema = 'data_dictionary' AND
         c1.ordinal_position =
         ( SELECT COALESCE(MIN(c2.ordinal_position),1)
             FROM data_dictionary.columns c2
@@ -235,11 +208,11 @@ SELECT t.table_name, c1.column_name
        data_dictionary.columns c1
        ON t.table_schema = c1.table_schema AND
           t.table_name = c1.table_name
-  WHERE t.table_schema = 'information_schema' AND
+  WHERE t.table_schema = 'data_dictionary' AND
         c1.ordinal_position =
         ( SELECT COALESCE(MIN(c2.ordinal_position),1)
             FROM data_dictionary.columns c2
-            WHERE c2.table_schema = 'information_schema' AND
+            WHERE c2.table_schema = 'data_dictionary' AND
                   c2.table_name = t.table_name AND
                   c2.column_name LIKE '%SCHEMA%'
         )
@@ -283,14 +256,14 @@ select t.table_name, group_concat(t.table_schema, '.', t.table_name),
 from data_dictionary.tables t
 inner join data_dictionary.columns c1
 on t.table_schema = c1.table_schema AND t.table_name = c1.table_name
-where t.table_schema = 'information_schema' AND
+where t.table_schema = 'data_dictionary' AND
       t.table_name not like 'falcon%' AND
         c1.ordinal_position =
         (select isnull(c2.column_type) -
          isnull(group_concat(c2.table_schema, '.', c2.table_name)) +
          count(*) as num
          from data_dictionary.columns c2 where
-         c2.table_schema='information_schema' and
+         c2.table_schema='data_dictionary' and
          (c2.column_type = 'varchar(7)' or c2.column_type = 'varchar(20)')
           group by c2.column_type order by num limit 1)
 group by t.table_name order by num1, t.table_name;
@@ -329,30 +302,13 @@ USE test;
 # Bug#30795 Query on data_dictionary.schemas, wrong result
 #
 SELECT SCHEMA_NAME FROM data_dictionary.schemas
-WHERE SCHEMA_NAME ='information_schema';
+WHERE SCHEMA_NAME ='data_dictionary';
                                                                                                  
 #
 # Bug#31381 Error in retrieving Data from INFORMATION_SCHEMA
 #
 SELECT TABLE_COLLATION FROM data_dictionary.tables
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
-
-#
-# Bug#31633 Information schema = NULL queries crash the server
-#
-select * from data_dictionary.columns where table_schema = NULL;
-select * from `data_dictionary`.`columns` where `TABLE_NAME` = NULL;
-select * from `information_schema`.`OLD_KEY_COLUMN_USAGE` where `TABLE_SCHEMA` = NULL;
-select * from `information_schema`.`OLD_KEY_COLUMN_USAGE` where `TABLE_NAME` = NULL;
-select * from `information_schema`.`OLD_REFERENTIAL_CONSTRAINTS` where `CONSTRAINT_SCHEMA` = NULL;
-select * from `information_schema`.`OLD_REFERENTIAL_CONSTRAINTS` where `TABLE_NAME` = NULL;
-select * from data_dictionary.schemas where schema_name = NULL;
-select * from `information_schema`.`OLD_STATISTICS` where `TABLE_SCHEMA` = NULL;
-select * from `information_schema`.`OLD_STATISTICS` where `TABLE_NAME` = NULL;
-select * from data_dictionary.tables where table_schema = NULL;
-select * from data_dictionary.tables where table_name = NULL;
-select * from `information_schema`.`OLD_TABLE_CONSTRAINTS` where `TABLE_SCHEMA` = NULL;
-select * from `information_schema`.`OLD_TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL;
 
 --echo #
 --echo # Test that the query is visible to self and others.
@@ -368,43 +324,12 @@ FROM data_dictionary.processlist
 WHERE id = CONNECTION_ID();
 
 #
-# perform a query on COLUMNS
-#
-#SELECT table_name, column_name
-#FROM data_dictionary.columns
-#WHERE table_name IN
-#(SELECT table_name FROM data_dictionary.tables )
-#ORDER BY table_name;
-
-#
-# perform a query on KEY_COLUMN_USAGE
-#
-SELECT *
-FROM information_schema.old_key_column_usage;
-
-#
-# perform a query on REFERENTIAL_CONSTRAINTS
-#
-SELECT * 
-FROM information_schema.old_referential_constraints;
-
-#
-# query the SCHEMATA table
-#
-#--replace_column 1 #
-#SELECT count(schema_name) FROM data_dictionary.schemas ORDER BY schema_name;
-#
-
-#
-# query TABLE_CONSTRAINTS table
-#
-SELECT *
-FROM information_schema.old_table_constraints;
-
-#
 # query TABLES
 #
 #SELECT table_schema, table_name
 #FROM data_dictionary.tables
 #WHERE table_schema="data_dictionary"
 #ORDER BY table_name;
+
+
+DROP SCHEMA data_dictionary;

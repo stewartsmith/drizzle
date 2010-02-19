@@ -22,7 +22,7 @@ t4
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
-mysqltest	t1	a	INTEGER	0	0	TRUE	#	TRUE	INTEGER	0	#	#	0	utf8_general_ci	
+mysqltest	t1	a	INTEGER	0		TRUE	#	TRUE	INTEGER	0	#	#	0		
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name
@@ -55,8 +55,6 @@ table_schema	table_name	column_name
 select table_name, column_name, DATA_TYPE from data_dictionary.columns
 where DATA_TYPE = 'datetime';
 table_name	column_name	DATA_TYPE
-INNODB_TRX	trx_started	DATETIME
-INNODB_TRX	trx_wait_started	DATETIME
 SELECT COUNT(*) FROM DATA_DICTIONARY.TABLES A
 WHERE NOT EXISTS 
 (SELECT * FROM DATA_DICTIONARY.COLUMNS B
@@ -120,8 +118,8 @@ use data_dictionary;
 select column_name, column_default from columns
 where table_schema='test' and table_name='t1';
 column_name	column_default
-a	0
-b	0
+a	
+b	
 use test;
 drop table t1;
 alter database data_dictionary;
@@ -268,11 +266,11 @@ f8 datetime default '2006-01-01'
 );
 select column_default from data_dictionary.columns where table_name= 't1';
 column_default
-0
-0
-0
-0
-0
+
+
+
+
+
 10
 10
 2006-01-01
