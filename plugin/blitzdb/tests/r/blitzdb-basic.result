@@ -139,3 +139,102 @@ added column
 added column
 added column
 drop table t1;
+create table t1 (name varchar(32), point int) engine = blitzdb;
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+select * from t1;
+name	point
+aaa	10
+bbb	20
+ccc	30
+aaa	10
+bbb	20
+ccc	30
+aaa	10
+bbb	20
+ccc	30
+select name, sum(point) from t1 group by name;
+name	sum(point)
+aaa	30
+bbb	60
+ccc	90
+drop table t1;
+create table t1 (string varchar(255)) engine = blitzdb;
+insert into t1 values('accompany'), ('balcony'), ('bunny'), ('company');
+insert into t1 values('accompanied'), ('amazed'), ('busted'), ('decreased');
+insert into t1 values('achiever'), ('blender'), ('ether'), ('launcher');
+insert into t1 values('ampersand'), ('compound'), ('comprehend'), ('wand');
+select * from t1 where string like '%ny';
+string
+accompany
+balcony
+bunny
+company
+select * from t1 where string like '%ed';
+string
+accompanied
+amazed
+busted
+decreased
+select * from t1 where string like '%er';
+string
+achiever
+blender
+ether
+launcher
+select * from t1 where string like '%nd';
+string
+ampersand
+compound
+comprehend
+wand
+select * from t1 where string like 'a%';
+string
+accompany
+accompanied
+amazed
+achiever
+ampersand
+select * from t1 where string like 'ac%';
+string
+accompany
+accompanied
+achiever
+select * from t1 where string like 'acc%';
+string
+accompany
+accompanied
+select * from t1 where string like '____';
+string
+wand
+select * from t1 where string like '_____';
+string
+bunny
+ether
+select * from t1 where string like '___________';
+string
+accompanied
+drop table t1;
+create table t1 (a int not null, b int) engine = blitzdb;
+insert into t1 values (1, NULL), (2, NULL), (3, NULL), (4, NULL);
+insert into t1 values (5, NULL), (6, NULL), (7, NULL), (8, NULL);
+insert into t1 values (NULL, 1);
+ERROR 23000: Column 'a' cannot be null
+select * from t1;
+a	b
+1	NULL
+2	NULL
+3	NULL
+4	NULL
+5	NULL
+6	NULL
+7	NULL
+8	NULL
+drop table t1;

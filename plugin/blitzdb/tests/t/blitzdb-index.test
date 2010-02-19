@@ -5,6 +5,7 @@ drop table if exists t1, t2;
 --enable_warnings
 
 create table t1 (id int primary key, a int, b int) engine = blitzdb;
+select * from t1;
 insert into t1 values (1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4);
 insert into t1 values (5, 5, 5), (6, 6, 6), (7, 7, 7), (8, 8, 8);
 
@@ -205,6 +206,32 @@ select * from t1;
 # reverse scan
 explain select * from t1 order by a desc;
 select * from t1 order by a desc;
+
+delete from t1;
+
+# test ranges by index
+insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10); 
+insert into t1 values (11),(12),(13),(14),(15),(16),(17),(18),(19),(20);
+insert into t1 values (21),(22),(23),(24),(25),(26),(27),(28),(29),(30);
+insert into t1 values (31),(32),(33),(34),(35),(36),(37),(38),(39),(40);
+insert into t1 values (41),(42),(43),(44),(45),(46),(47),(48),(49),(50);
+
+explain select * from t1 where a > 20 and a < 30;
+select * from t1 where a > 20 and a < 38;
+
+# contradiction test
+explain select * from t1 where a > 20 and a < 30;
+select * from t1 where a > 20 and a < 20;
+
+# test aggregate functions
+explain select max(a) from t1;
+select max(a) from t1;
+explain select max(a) from t1;
+select min(a) from t1;
+explain select sum(a) from t1;
+select sum(a) from t1;
+explain select * from t1 where a in (10, 20, 30, 40, 50);
+select * from t1 where a in (10, 20, 30, 40, 50);
 
 drop table t1;
 

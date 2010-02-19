@@ -1,4 +1,4 @@
-# Basic Test Routine for BlitzDB
+# Basic Test Routine for unindexed BlitzDB Tables
 
 --disable_warnings
 drop table if exists t1, t2;
@@ -89,5 +89,52 @@ update t1 set c = "added column" where a = 4;
 select * from t1;
 alter table t1 drop a;
 alter table t1 drop b;
+select * from t1;
+drop table t1;
+
+# Test(8): Basic GROUP BY syntax.
+create table t1 (name varchar(32), point int) engine = blitzdb;
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+insert into t1 values ('aaa', 10);
+insert into t1 values ('bbb', 20);
+insert into t1 values ('ccc', 30);
+select * from t1;
+select name, sum(point) from t1 group by name;
+drop table t1;
+
+# Test(9): Pattern Matching with LIKE syntax.
+create table t1 (string varchar(255)) engine = blitzdb;
+insert into t1 values('accompany'), ('balcony'), ('bunny'), ('company');
+insert into t1 values('accompanied'), ('amazed'), ('busted'), ('decreased');
+insert into t1 values('achiever'), ('blender'), ('ether'), ('launcher');
+insert into t1 values('ampersand'), ('compound'), ('comprehend'), ('wand');
+
+select * from t1 where string like '%ny';
+select * from t1 where string like '%ed';
+select * from t1 where string like '%er';
+select * from t1 where string like '%nd';
+
+select * from t1 where string like 'a%';
+select * from t1 where string like 'ac%';
+select * from t1 where string like 'acc%';
+
+select * from t1 where string like '____';
+select * from t1 where string like '_____';
+select * from t1 where string like '___________';
+drop table t1;
+
+# Test (10): NULL values
+create table t1 (a int not null, b int) engine = blitzdb;
+insert into t1 values (1, NULL), (2, NULL), (3, NULL), (4, NULL);
+insert into t1 values (5, NULL), (6, NULL), (7, NULL), (8, NULL);
+
+--error 1048 # NOT NULL Violation
+insert into t1 values (NULL, 1);
+
 select * from t1;
 drop table t1;

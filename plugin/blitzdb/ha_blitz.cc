@@ -426,7 +426,7 @@ int ha_blitz::index_first(unsigned char *buf) {
   bt_key = share->btrees[active_index].first_key(&bt_klen);
 
   if (bt_key == NULL)
-    return HA_ERR_KEY_NOT_FOUND;
+    return HA_ERR_END_OF_FILE;
 
   prefix_len = btree_key_length(bt_key, active_index);
   dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
@@ -455,7 +455,7 @@ int ha_blitz::index_next(unsigned char *buf) {
   bt_key = share->btrees[active_index].next_key(&bt_klen);
 
   if (bt_key == NULL)
-    return HA_ERR_KEY_NOT_FOUND;
+    return HA_ERR_END_OF_FILE;
   
   prefix_len = btree_key_length(bt_key, active_index);
   dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
@@ -520,6 +520,7 @@ int ha_blitz::index_last(unsigned char *buf) {
 
   if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
     free(bt_key);
+    errkey_id = active_index;
     return HA_ERR_KEY_NOT_FOUND;
   }
 
@@ -559,8 +560,10 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
   /* If the key is NULL, we are required to return the first row
      in the index. We have no choice but to consult the B+Tree here. */
   if (key == NULL) {
-    if ((pk = share->btrees[key_num].first_key(&pk_len)) == NULL)
+    if ((pk = share->btrees[key_num].first_key(&pk_len)) == NULL) {
+      errkey_id = key_num;
       return HA_ERR_END_OF_FILE;
+    }
 
     /* TODO: Parse the fetched key then access the row from the
              data dictionary. */
@@ -576,8 +579,10 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
     }
   }
 
-  if (fetched_row == NULL)
+  if (fetched_row == NULL) {
+    errkey_id = key_num;
     return HA_ERR_KEY_NOT_FOUND;
+  }
 
   /* Found the row. Unpack it to Drizzle's buffer. */
   unpack_row(buf, fetched_row, row_len);
