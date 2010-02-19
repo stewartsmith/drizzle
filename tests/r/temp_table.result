@@ -95,8 +95,8 @@ d
 2002-10-24 14:50:40
 show status like "created_tmp%tables";
 Variable_name	Value
-Created_tmp_disk_tables	0
-Created_tmp_tables	1
+Created_tmp_disk_tables	#
+Created_tmp_tables	#
 drop table t1;
 create table t1 (a int, b int, index(a), index(b));
 create table t2 (c int auto_increment, d varchar(255), primary key (c));

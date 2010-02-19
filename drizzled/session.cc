@@ -432,10 +432,10 @@ Session::~Session()
     If this assumption will change, then we have to explictely add
     the other variables after the while loop
 */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
+void add_to_status(system_status_var *to_var, system_status_var *from_var)
 {
   ulong *end= (ulong*) ((unsigned char*) to_var +
-                        offsetof(STATUS_VAR, last_system_status_var) +
+                        offsetof(system_status_var, last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
 
@@ -455,10 +455,10 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
   NOTE
     This function assumes that all variables are long/ulong.
 */
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var)
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var)
 {
-  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(STATUS_VAR,
+  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(system_status_var,
 						  last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
