@@ -1103,8 +1103,8 @@ select f2,a1 from (select a1, CAST('2004-12-31' AS DATE) f2 from t1) a
 order by f2, a1;
 show columns from t2;
 Field	Type	Null	Default	Default is NULL	On Update
-f2	DATE	TRUE		FALSE	
-a1	INTEGER	TRUE		FALSE	
+f2	DATE	TRUE		TRUE	
+a1	INTEGER	TRUE		TRUE	
 drop table t1, t2;
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int ,f3 date);
@@ -1129,7 +1129,7 @@ order by t1.f1, t3.f1, t2.f3
 order by sdate;
 show columns from t4;
 Field	Type	Null	Default	Default is NULL	On Update
-sdate	DATE	TRUE		FALSE	
+sdate	DATE	TRUE		TRUE	
 drop table t1, t2, t3, t4;
 create table t1 (a int not null, b char (10) not null);
 insert into t1 values(1,'a'),(2,'b'),(3,'c'),(3,'c');

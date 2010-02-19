@@ -152,8 +152,8 @@ show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
 name	VARCHAR	TRUE	O'Brien	FALSE	
 c	INTEGER	FALSE	O'Brien	FALSE	
-c-b	INTEGER	TRUE	O'Brien	FALSE	
-space 2	INTEGER	TRUE	O'Brien	FALSE	
+c-b	INTEGER	TRUE	O'Brien	TRUE	
+space 2	INTEGER	TRUE	O'Brien	TRUE	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
@@ -199,20 +199,20 @@ drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
-a	DECIMAL	TRUE		FALSE	
-b	DECIMAL	TRUE		FALSE	
-e	DOUBLE	TRUE		FALSE	
-f	DOUBLE	TRUE		FALSE	
-h	DOUBLE	TRUE		FALSE	
-i	DOUBLE	TRUE		FALSE	
+a	DECIMAL	TRUE		TRUE	
+b	DECIMAL	TRUE		TRUE	
+e	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+h	DOUBLE	TRUE		TRUE	
+i	DOUBLE	TRUE		TRUE	
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
-a	DECIMAL	TRUE		FALSE	
-b	DECIMAL	TRUE		FALSE	
-e	DOUBLE	TRUE		FALSE	
-f	DOUBLE	TRUE		FALSE	
-h	DOUBLE	TRUE		FALSE	
-i	DOUBLE	TRUE		FALSE	
+a	DECIMAL	TRUE		TRUE	
+b	DECIMAL	TRUE		TRUE	
+e	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+h	DOUBLE	TRUE		TRUE	
+i	DOUBLE	TRUE		TRUE	
 drop table t1;
 create temporary table t1 (
 type_int int,
@@ -257,22 +257,22 @@ create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
 Field	Type	Null	Default	Default is NULL	On Update
-max(a)	INTEGER	TRUE		FALSE	
+max(a)	INTEGER	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
-c	DECIMAL	TRUE		FALSE	
-d	DOUBLE	TRUE		FALSE	
-f	DOUBLE	TRUE		FALSE	
-r	DOUBLE	TRUE		FALSE	
+c	DECIMAL	TRUE		TRUE	
+d	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+r	DOUBLE	TRUE		TRUE	
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
-c	DECIMAL	TRUE		FALSE	
-d	DOUBLE	TRUE		FALSE	
-f	DOUBLE	TRUE		FALSE	
+c	DECIMAL	TRUE		TRUE	
+d	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
 drop table t1;
 CREATE TABLE ```ab``cd``` (i INT);
 SHOW CREATE TABLE ```ab``cd```;

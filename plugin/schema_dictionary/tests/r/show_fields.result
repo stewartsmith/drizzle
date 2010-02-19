@@ -11,7 +11,7 @@ a	CREATE TABLE `a` (
 create table b ( b int);
 show fields from b;
 Field	Type	Null	Default	Default is NULL	On Update
-b	INTEGER	TRUE		FALSE	
+b	INTEGER	TRUE		TRUE	
 show create table b;
 Table	Create Table
 b	CREATE TABLE `b` (
@@ -38,7 +38,7 @@ d	CREATE TABLE `d` (
 create table e ( b int DEFAULT NULL);
 show fields from e;
 Field	Type	Null	Default	Default is NULL	On Update
-b	INTEGER	TRUE		FALSE	
+b	INTEGER	TRUE		TRUE	
 show create table e;
 Table	Create Table
 e	CREATE TABLE `e` (

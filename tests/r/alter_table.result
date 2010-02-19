@@ -177,7 +177,7 @@ alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
 i	INTEGER	FALSE	0	FALSE	
-c	VARCHAR	TRUE	0	FALSE	
+c	VARCHAR	TRUE	0	TRUE	
 drop table t1;
 create table t1 (a int, b int);
 set autocommit=0;

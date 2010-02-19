@@ -47,17 +47,17 @@ medium	INTEGER	FALSE	0	FALSE
 long_int	INTEGER	FALSE	0	FALSE	
 longlong	BIGINT	FALSE	0	FALSE	
 real_float	DOUBLE	FALSE	0.0	FALSE	
-real_double	DOUBLE	TRUE	0.0	FALSE	
+real_double	DOUBLE	TRUE	0.0	TRUE	
 utiny	INTEGER	FALSE	0	FALSE	
 ushort	INTEGER	FALSE	00000	FALSE	
 umedium	INTEGER	FALSE	0	FALSE	
 ulong	INTEGER	FALSE	0	FALSE	
 ulonglong	BIGINT	FALSE	0	FALSE	
-time_stamp	TIMESTAMP	TRUE	0	FALSE	
-date_field	DATE	TRUE	0	FALSE	
-date_time	DATETIME	TRUE	0	FALSE	
-blob_col	BLOB	TRUE	0	FALSE	
-tinyblob_col	BLOB	TRUE	0	FALSE	
+time_stamp	TIMESTAMP	TRUE	0	TRUE	
+date_field	DATE	TRUE	0	TRUE	
+date_time	DATETIME	TRUE	0	TRUE	
+blob_col	BLOB	TRUE	0	TRUE	
+tinyblob_col	BLOB	TRUE	0	TRUE	
 mediumblob_col	BLOB	FALSE	0	FALSE	
 longblob_col	BLOB	FALSE	0	FALSE	
 options	ENUM	FALSE	0	FALSE	
@@ -138,17 +138,17 @@ medium	INTEGER	FALSE	0	FALSE
 long_int	INTEGER	FALSE	0	FALSE	
 longlong	BIGINT	FALSE	0	FALSE	
 real_float	DOUBLE	FALSE	0	FALSE	
-real_double	DOUBLE	TRUE	0	FALSE	
+real_double	DOUBLE	TRUE	0	TRUE	
 utiny	INTEGER	FALSE	0	FALSE	
 ushort	INTEGER	FALSE	0	FALSE	
 umedium	INTEGER	FALSE	0	FALSE	
 ulong	INTEGER	FALSE	0	FALSE	
 ulonglong	BIGINT	FALSE	0	FALSE	
-time_stamp	TIMESTAMP	TRUE	0	FALSE	
-date_field	DATE	TRUE	0	FALSE	
-date_time	DATETIME	TRUE	0	FALSE	
-blob_col	BLOB	TRUE	0	FALSE	
-tinyblob_col	BLOB	TRUE	0	FALSE	
+time_stamp	TIMESTAMP	TRUE	0	TRUE	
+date_field	DATE	TRUE	0	TRUE	
+date_time	DATETIME	TRUE	0	TRUE	
+blob_col	BLOB	TRUE	0	TRUE	
+tinyblob_col	BLOB	TRUE	0	TRUE	
 mediumblob_col	BLOB	FALSE	0	FALSE	
 longblob_col	BLOB	FALSE	0	FALSE	
 options	ENUM	FALSE	0	FALSE	
@@ -163,17 +163,17 @@ medium	INTEGER	FALSE	0	FALSE
 long_int	INTEGER	FALSE	0	FALSE	
 longlong	BIGINT	FALSE	0	FALSE	
 real_float	DOUBLE	FALSE	0	FALSE	
-real_double	DOUBLE	TRUE	0	FALSE	
+real_double	DOUBLE	TRUE	0	TRUE	
 utiny	INTEGER	FALSE	0	FALSE	
 ushort	INTEGER	FALSE	0	FALSE	
 umedium	INTEGER	FALSE	0	FALSE	
 ulong	INTEGER	FALSE	0	FALSE	
 ulonglong	BIGINT	FALSE	0	FALSE	
-time_stamp	TIMESTAMP	TRUE	0	FALSE	
-date_field	DATE	TRUE	0	FALSE	
-date_time	DATETIME	TRUE	0	FALSE	
-blob_col	BLOB	TRUE	0	FALSE	
-tinyblob_col	BLOB	TRUE	0	FALSE	
+time_stamp	TIMESTAMP	TRUE	0	TRUE	
+date_field	DATE	TRUE	0	TRUE	
+date_time	DATETIME	TRUE	0	TRUE	
+blob_col	BLOB	TRUE	0	TRUE	
+tinyblob_col	BLOB	TRUE	0	TRUE	
 mediumblob_col	BLOB	FALSE	0	FALSE	
 longblob_col	BLOB	FALSE	0	FALSE	
 options	ENUM	FALSE	0	FALSE	
@@ -189,12 +189,12 @@ Field	Type	Null	Default	Default is NULL	On Update
 auto	BIGINT	FALSE		FALSE	
 t1	INTEGER	FALSE		FALSE	
 t2	VARCHAR	FALSE		FALSE	
-t3	VARCHAR	TRUE		FALSE	
-t4	VARCHAR	TRUE		FALSE	
-t5	BLOB	TRUE		FALSE	
-t6	BLOB	TRUE		FALSE	
+t3	VARCHAR	TRUE		TRUE	
+t4	VARCHAR	TRUE		TRUE	
+t5	BLOB	TRUE		TRUE	
+t6	BLOB	TRUE		TRUE	
 t7	VARCHAR	FALSE		FALSE	
-t8	VARCHAR	TRUE		FALSE	
+t8	VARCHAR	TRUE		TRUE	
 select t1,t2,length(t3),length(t4),length(t5),length(t6),t7,t8 from t2;
 t1	t2	length(t3)	length(t4)	length(t5)	length(t6)	t7	t8
 1	a	256	256	4096	4096		
@@ -209,8 +209,8 @@ ERROR 42S21: Duplicate column name 'c'
 create table t3 select t1.c AS c1, t2.c AS c2,1 as "const" from t1, t2;
 show columns from t3;
 Field	Type	Null	Default	Default is NULL	On Update
-c1	INTEGER	TRUE		FALSE	
-c2	INTEGER	TRUE		FALSE	
+c1	INTEGER	TRUE		TRUE	
+c2	INTEGER	TRUE		TRUE	
 const	INTEGER	FALSE		FALSE	
 drop table t1,t2,t3;
 create table t1 ( myfield INT NOT NULL, UNIQUE INDEX (myfield), unique (myfield), index(myfield));

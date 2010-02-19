@@ -32,8 +32,8 @@ t1	a
 t1	b	
 show columns from mysqltest.t1;
 Field	Type	Null	Default	Default is NULL	On Update
-a	INTEGER	TRUE		FALSE	
-b	VARCHAR	TRUE		FALSE	
+a	INTEGER	TRUE		TRUE	
+b	VARCHAR	TRUE		TRUE	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
 select * from information_schema.old_table_names;
@@ -128,7 +128,7 @@ use test;
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
 a	INTEGER	FALSE		FALSE	
-b	INTEGER	TRUE		FALSE	
+b	INTEGER	TRUE		TRUE	
 drop table t1;
 alter database information_schema;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
@@ -292,10 +292,10 @@ f8 datetime default '2006-01-01'
 );
 show columns from t1;
 Field	Type	Null	Default	Default is NULL	On Update
-f1	VARCHAR	TRUE		FALSE	
+f1	VARCHAR	TRUE		TRUE	
 f2	VARCHAR	FALSE		FALSE	
 f3	VARCHAR	TRUE		FALSE	
-f4	VARCHAR	TRUE		FALSE	
+f4	VARCHAR	TRUE		TRUE	
 f5	BIGINT	FALSE		FALSE	
 f6	BIGINT	FALSE	10	FALSE	
 f7	DATETIME	FALSE	10	FALSE	
