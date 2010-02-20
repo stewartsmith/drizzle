@@ -47,6 +47,7 @@
 #include "drizzled/xid.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/db.h"
 
@@ -750,6 +751,34 @@ bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message:
   }
 
   return false;
+}
+
+
+const CHARSET_INFO *StorageEngine::getSchemaCollation(const std::string &schema_name)
+{
+  message::Schema schmema_proto;
+  bool found;
+
+  found= StorageEngine::getSchemaDefinition(schema_name, schmema_proto);
+
+  if (found && schmema_proto.has_collation())
+  {
+    const string buffer= schmema_proto.collation();
+    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
+
+    if (not cs)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"), schema_name.c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+
+      return default_charset_info;
+    }
+
+    return cs;
+  }
+
+  return default_charset_info;
 }
 
 void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)

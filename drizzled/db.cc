@@ -38,6 +38,7 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
@@ -61,45 +62,6 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
                                  const string &db, const char *path,
                                  TableList **dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
-
-/**
-  Return default database collation.
-
-  @param session     Thread context.
-  @param db_name Database name.
-
-  @return CHARSET_INFO object. The operation always return valid character
-    set, even if the database does not exist.
-*/
-
-const CHARSET_INFO *get_default_db_collation(const char *db_name)
-{
-  message::Schema db;
-
-  get_database_metadata(db_name, db);
-
-  /* If for some reason the db.opt file lacks a collation,
-     we just return the default */
-
-  if (db.has_collation())
-  {
-    const string buffer= db.collation();
-    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
-
-    if (!cs)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"),db_name);
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-
-      return default_charset_info;
-    }
-
-    return cs;
-  }
-
-  return default_charset_info;
-}
 
 /* path is path to database, not schema file */
 static int write_schema_file(const char *path, const message::Schema &db)
@@ -907,7 +869,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     }
   }
 
-  db_default_cl= get_default_db_collation(new_db_file_name.str);
+  db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
   free(new_db_file_name.str);
