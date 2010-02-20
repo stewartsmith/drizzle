@@ -27,6 +27,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include "analysis_table.h"
 #include "sysvar_holder.h"
 

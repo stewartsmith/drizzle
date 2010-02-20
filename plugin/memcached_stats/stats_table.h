@@ -31,8 +31,6 @@
 #ifndef PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
 #define PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
 
-#include "config.h"
-
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/field.h"
 
