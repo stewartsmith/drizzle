@@ -340,11 +340,18 @@ public:
   // @note All schema methods defined here
   static void getSchemaNames(std::set<std::string>& set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
+
   // @note make private/protected
-  virtual void doGetSchemaNames(std::set<std::string>& set_of_names);
+  virtual void doGetSchemaNames(std::set<std::string>& set_of_names)
+  { (void)set_of_names; }
 
+  virtual bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto)
+  { 
+    (void)schema_name;
+    (void)proto; 
 
- 
+    return false; 
+  }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

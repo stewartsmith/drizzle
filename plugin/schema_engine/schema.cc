@@ -20,7 +20,8 @@
 
 #include "config.h"
 
-#include <plugin/schema_engine/schema.h>
+#include "plugin/schema_engine/schema.h"
+#include "drizzled/db.h"
 
 #include <string>
 
@@ -50,4 +51,9 @@ void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
   }
 
   set_of_names.insert("information_schema"); // special cases suck
+}
+
+bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Schema &proto)
+{
+  return not get_database_metadata(schema_name.c_str(), proto);
 }

@@ -60,6 +60,7 @@ public:
   }
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);
+  bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto);
 
   const char **bas_ext() const 
   {

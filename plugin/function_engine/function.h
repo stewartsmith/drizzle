@@ -79,6 +79,32 @@ public:
                            const char *table_name,
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
+
+  void doGetSchemaNames(std::set<std::string>& set_of_names)
+  {
+    set_of_names.insert("information_schema"); // special cases suck
+  }
+
+  bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto)
+  {
+    if (not schema_name.compare("information_schema"))
+    {
+      proto.set_name("information_schema");
+      proto.set_collation("utf8_general_ci");
+
+      return true;
+    }
+
+    if (not schema_name.compare("data_dictionary"))
+    {
+      proto.set_name("data_dictionary");
+      proto.set_collation("utf8_general_ci");
+
+      return true;
+    }
+
+    return false;
+  }
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */
