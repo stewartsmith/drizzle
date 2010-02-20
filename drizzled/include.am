@@ -297,7 +297,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/client.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/function.h \
-			      drizzled/plugin/info_schema_table.h \
 			      drizzled/plugin/library.h \
 			      drizzled/plugin/listen.h \
 			      drizzled/plugin/listen_tcp.h \
@@ -657,7 +656,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/client.cc \
 			   drizzled/plugin/error_message.cc \
 			   drizzled/plugin/function.cc \
-			   drizzled/plugin/info_schema_table.cc \
 			   drizzled/plugin/library.cc \
 			   drizzled/plugin/listen.cc \
 			   drizzled/plugin/listen_tcp.cc \

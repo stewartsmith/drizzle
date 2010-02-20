@@ -81,7 +81,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/storage_engine.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/named_savepoint.h"
@@ -2063,6 +2062,7 @@ innobase_change_buffering_inited_ok:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
+#if 0
 	if (innodb_locks_init() ||
 		innodb_trx_init() ||
 		innodb_lock_waits_init() ||
@@ -2071,6 +2071,7 @@ innobase_change_buffering_inited_ok:
 		i_s_cmpmem_init() ||
 		i_s_cmpmem_reset_init())
 		goto error;
+#endif
 
         status_table_function_ptr= new InnodbStatusTool;
 
@@ -2078,6 +2079,7 @@ innobase_change_buffering_inited_ok:
 
 	registry.add(status_table_function_ptr);
 
+#if 0
 	registry.add(innodb_trx_schema_table);
 	registry.add(innodb_locks_schema_table);
 	registry.add(innodb_lock_waits_schema_table);	
@@ -2085,6 +2087,7 @@ innobase_change_buffering_inited_ok:
 	registry.add(innodb_cmp_reset_schema_table);
 	registry.add(innodb_cmpmem_schema_table);
 	registry.add(innodb_cmpmem_reset_schema_table);
+#endif
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2102,7 +2105,9 @@ int
 innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
+#if 0
 	i_s_common_deinit(registry);
+#endif
 
 	registry.remove(status_table_function_ptr);
  	delete status_table_function_ptr;

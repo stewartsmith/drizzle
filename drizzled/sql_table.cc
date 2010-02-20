@@ -43,7 +43,6 @@
 
 
 #include "drizzled/statement/alter_table.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
 

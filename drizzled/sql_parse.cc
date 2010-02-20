@@ -26,7 +26,6 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/db.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
@@ -44,7 +43,6 @@
 #include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
@@ -379,40 +377,6 @@ int prepare_new_schema_table(Session *session, LEX *lex,
   Select_Lex *select_lex= lex->current_select;
   assert(select_lex);
   if (_schema_select(session, select_lex, schema_table_name))
-  {
-    return(1);
-  }
-  TableList *table_list= (TableList*) select_lex->table_list.first;
-  assert(table_list);
-  table_list->schema_select_lex= schema_select_lex;
-
-  return 0;
-}
-
-int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         const string& schema_table_name)
-{
-  Select_Lex *schema_select_lex= NULL;
-
-  if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
-           schema_table_name.compare("OLD_STATISTICS") == 0)
-  {
-    assert(table_ident);
-    TableList **query_tables_last= lex->query_tables_last;
-    schema_select_lex= new Select_Lex();
-    /* 'parent_lex' is used in init_query() so it must be before it. */
-    schema_select_lex->parent_lex= lex;
-    schema_select_lex->init_query();
-    if (! schema_select_lex->add_table_to_list(session, table_ident, 0, 0, TL_READ))
-    {
-      return (1);
-    }
-    lex->query_tables_last= query_tables_last;
-  }
-
-  Select_Lex *select_lex= lex->current_select;
-  assert(select_lex);
-  if (make_schema_select(session, select_lex, schema_table_name))
   {
     return(1);
   }
@@ -1005,24 +969,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
-  if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
-                                      INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(ptr->table_name);
-    if (!schema_table ||
-        (schema_table->isHidden() &&
-         ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
-          /*
-            this check is used for show columns|keys from I_S hidden table
-          */
-          lex->sql_command == SQLCOM_SHOW_FIELDS ||
-          lex->sql_command == SQLCOM_SHOW_KEYS)))
-    {
-      my_error(ER_UNKNOWN_TABLE, MYF(0),
-               ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
-      return NULL;
-    }
-  }
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
@@ -1678,11 +1624,6 @@ bool insert_precheck(Session *session, TableList *)
 
 bool create_table_precheck(TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getDBName(), "information_schema") == 0)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
   if (strcmp(identifier.getDBName(), DRIZZLE_DATA_DICTIONARY) == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DRIZZLE_DATA_DICTIONARY);

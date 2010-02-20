@@ -23,7 +23,6 @@
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
 #include <drizzled/statement/drop_table.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include "drizzled/sql_table.h"
 
 namespace drizzled
@@ -57,21 +56,6 @@ namespace drizzled
 static bool mysql_rm_table(Session *session, TableList *tables, bool if_exists, bool drop_temporary)
 {
   bool error, need_start_waiting= false;
-
-  /**
-   * @todo this is a result of retaining the behavior that was here before. This should be removed
-   * and the correct error handling should be done in doDropTable for the I_S engine. There is an
-   * issue here with dropping tables with the same name as an I_S table. How do we know if we are
-   * attemping to drop an I_S table or a regular table with the same name as an I_S table? For now,
-   * we simply check if the current database is information_schema
-   */
-  plugin::InfoSchemaTable *sch_table= plugin::InfoSchemaTable::getTable(tables->table_name);
-  if (sch_table &&
-      session->db.compare(INFORMATION_SCHEMA_NAME) == 0)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
 
   /* mark for close and remove all cached entries */
 
