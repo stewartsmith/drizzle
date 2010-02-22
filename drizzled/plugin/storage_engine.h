@@ -31,6 +31,8 @@
 #include "drizzled/table_identifier.h"
 #include "drizzled/cached_directory.h"
 
+#include "drizzled/hash.h"
+
 #include <bitset>
 #include <string>
 #include <vector>
@@ -41,7 +43,6 @@ namespace drizzled
 
 class TableList;
 class Session;
-class XID;
 class Cursor;
 typedef struct st_hash HASH;
 
@@ -119,6 +120,9 @@ class NamedSavepoint;
 namespace plugin
 {
 
+typedef hash_map<std::string, StorageEngine *> EngineMap;
+typedef std::vector<StorageEngine *> EngineVector;
+
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
@@ -130,8 +134,6 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
   usually StorageEngine instance is defined statically in ha_xxx.cc as
 
   static StorageEngine { ... } xxx_engine;
-
-  savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
 */
 class StorageEngine : public Plugin
 {
@@ -139,16 +141,11 @@ public:
   typedef uint64_t Table_flags;
 
 private:
-
-  /*
-    Name used for storage engine.
-  */
-  const bool two_phase_commit;
   bool enabled;
 
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
 
-  void setTransactionReadWrite(Session& session);
+  virtual void setTransactionReadWrite(Session& session);
 
 protected:
   std::string table_definition_ext;
@@ -183,21 +180,10 @@ protected:
   ProtoCache proto_cache;
   pthread_mutex_t proto_cache_mutex;
 
-  /**
-   * Implementing classes should override these to provide savepoint
-   * functionality.
-   */
-  virtual int savepoint_set_hook(Session *, NamedSavepoint &) { return 0; }
-
-  virtual int savepoint_rollback_hook(Session *, NamedSavepoint &) { return 0; }
-
-  virtual int savepoint_release_hook(Session *, NamedSavepoint &) { return 0; }
-
 public:
 
   StorageEngine(const std::string name_arg,
-                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                bool support_2pc= false);
+                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~StorageEngine();
 
@@ -241,11 +227,6 @@ public:
   inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
-  bool has_2pc()
-  {
-    return two_phase_commit;
-  }
-
 
   bool is_enabled() const
   {
@@ -281,50 +262,6 @@ public:
   {
     return 0;
   }
-  /*
-    'all' is true if it's a real commit, that makes persistent changes
-    'all' is false if it's not in fact a commit but an end of the
-    statement that is part of the transaction.
-    NOTE 'all' is also false in auto-commit mode where 'end of statement'
-    and 'real commit' mean the same event.
-  */
-  virtual int  commit(Session *, bool)
-  {
-    return 0;
-  }
-
-  virtual int  rollback(Session *, bool)
-  {
-    return 0;
-  }
-
-  /*
-    The void * points to an uninitialized storage area of requested size
-    (see savepoint_offset description)
-  */
-  int savepoint_set(Session *session, NamedSavepoint &sp)
-  {
-    return savepoint_set_hook(session, sp);
-  }
-
-  /*
-    The void * points to a storage area, that was earlier passed
-    to the savepoint_set call
-  */
-  int savepoint_rollback(Session *session, NamedSavepoint &sp)
-  {
-     return savepoint_rollback_hook(session, sp);
-  }
-
-  int savepoint_release(Session *session, NamedSavepoint &sp)
-  {
-    return savepoint_release_hook(session, sp);
-  }
-
-  virtual int  prepare(Session *, bool) { return 0; }
-  virtual int  recover(XID *, uint32_t) { return 0; }
-  virtual int  commit_by_xid(XID *) { return 0; }
-  virtual int  rollback_by_xid(XID *) { return 0; }
   virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
@@ -334,8 +271,6 @@ public:
   {
     return false;
   }
-
-  virtual int release_temporary_latches(Session *) { return false; }
 
   /**
     If frm_error() is called then we will use this to find out what file
@@ -397,11 +332,7 @@ public:
                                            std::string find_str);
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
-  static int commitOrRollbackByXID(XID *xid, bool commit);
-  static int releaseTemporaryLatches(Session *session);
   static bool flushLogs(plugin::StorageEngine *db_type);
-  static int recover(HASH *commit_list);
-  static int startConsistentSnapshot(Session *session);
   static int dropTable(Session& session,
                        TableIdentifier &identifier,
                        bool generate_warning);

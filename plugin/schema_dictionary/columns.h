@@ -54,4 +54,4 @@ public:
   }
 };
 
-#endif // PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H
+#endif /* PLUGIN_SCHEMA_DICTIONARY_COLUMNS_H */

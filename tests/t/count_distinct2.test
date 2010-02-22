@@ -63,6 +63,7 @@ enable_query_log;
 
 flush status;
 select count(distinct n) from t1;
+--replace_column 2 #
 show status like 'Created_tmp_disk_tables';
 drop table t1;
 
@@ -80,6 +81,7 @@ commit;
 enable_query_log;
 flush status;
 select count(distinct s) from t1;
+--replace_column 2 #
 show status like 'Created_tmp_disk_tables';
 drop table t1;
 

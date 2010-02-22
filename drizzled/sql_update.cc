@@ -511,7 +511,7 @@ int mysql_update(Session *session, TableList *table_list,
   table->cursor->try_semi_consistent_read(0);
 
   if (!transactional_table && updated > 0)
-    session->transaction.stmt.modified_non_trans_table= true;
+    session->transaction.stmt.markModifiedNonTransData();
 
   end_read_record(&info);
   delete select;
@@ -527,12 +527,12 @@ int mysql_update(Session *session, TableList *table_list,
     Sometimes we want to binlog even if we updated no rows, in case user used
     it to be sure master and slave are in same state.
   */
-  if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
+  if ((error < 0) || session->transaction.stmt.hasModifiedNonTransData())
   {
-    if (session->transaction.stmt.modified_non_trans_table)
-      session->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.hasModifiedNonTransData())
+      session->transaction.all.markModifiedNonTransData();
   }
-  assert(transactional_table || !updated || session->transaction.stmt.modified_non_trans_table);
+  assert(transactional_table || !updated || session->transaction.stmt.hasModifiedNonTransData());
   free_underlaid_joins(session, select_lex);
 
   /* If LAST_INSERT_ID(X) was used, report X */

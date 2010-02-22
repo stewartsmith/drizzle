@@ -77,7 +77,7 @@ int InformationCursor::rnd_init(bool)
 
 int InformationCursor::rnd_next(unsigned char *buf)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   plugin::InfoSchemaTable *sch_table= share->getInfoSchemaTable();
 
   if (iter != sch_table->getRows().end() &&
@@ -116,7 +116,7 @@ void InformationCursor::position(const unsigned char *record)
 
 int InformationCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   /* get the checksum */
   uint32_t cs;
   memcpy(&cs, pos, sizeof(uint32_t));
