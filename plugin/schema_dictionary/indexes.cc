@@ -111,7 +111,7 @@ void IndexesTool::Generator::fill()
   push(index.options().null_part_key());
 
   /* KEY_LENGTH */
-  push(index.key_length());
+  push(static_cast<uint64_t>(index.key_length()));
 
   /* INDEX_TYPE */
   {

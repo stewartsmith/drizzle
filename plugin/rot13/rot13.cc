@@ -100,4 +100,4 @@ static int deinit(Registry &registry)
 
 } /* namespace rot13 */
 
-DRIZZLE_PLUGIN(rot13::init, rot13::deinit, NULL, NULL);
+DRIZZLE_PLUGIN(rot13::init, rot13::deinit, NULL);

@@ -937,7 +937,7 @@ int ha_tina::write_row(unsigned char * buf)
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&SSV::ha_write_count);
+  ha_statistic_increment(&system_status_var::ha_write_count);
 
   size= encode_quote(buf);
 
@@ -995,7 +995,7 @@ int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
   int size;
   int rc= -1;
 
-  ha_statistic_increment(&SSV::ha_update_count);
+  ha_statistic_increment(&system_status_var::ha_update_count);
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
@@ -1037,7 +1037,7 @@ err:
 */
 int ha_tina::delete_row(const unsigned char *)
 {
-  ha_statistic_increment(&SSV::ha_delete_count);
+  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (chain_append())
     return(-1);
@@ -1145,7 +1145,7 @@ int ha_tina::rnd_next(unsigned char *buf)
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
   current_position= next_position;
 
@@ -1183,7 +1183,7 @@ void ha_tina::position(const unsigned char *)
 
 int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   current_position= (off_t)internal::my_get_ptr(pos,ref_length);
   return(find_current_row(buf));
 }
@@ -1438,7 +1438,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
   tina_done_func, /* Plugin Deinit */
-  NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

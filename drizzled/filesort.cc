@@ -40,6 +40,7 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/internal/my_sys.h"
 #include "plugin/myisam/myisam.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 
 using namespace std;
 
@@ -153,7 +154,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
    Release InnoDB's adaptive hash index latch (if holding) before
    running a sort.
   */
-  plugin::StorageEngine::releaseTemporaryLatches(session);
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   /*
     Don't use table->sort in filesort as it is also used by
