@@ -70,7 +70,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   hello_world_plugin_init, /* Plugin Init */
   hello_world_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
