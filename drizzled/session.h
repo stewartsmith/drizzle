@@ -25,7 +25,7 @@
 
 #include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
-#include <drizzled/ha_trx_info.h>
+#include "drizzled/resource_context.h"
 #include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
@@ -34,6 +34,7 @@
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
+#include "drizzled/transaction_context.h"
 
 #include <netdb.h>
 #include <map>
@@ -177,8 +178,6 @@ struct system_variables
   bool log_warnings;
 
   uint32_t optimizer_search_depth;
-  /* A bitmap for switching optimizations on/off */
-  uint32_t optimizer_switch;
   uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
@@ -286,7 +285,7 @@ typedef struct system_status_var
     sense to add to the /global/ status variable counter.
   */
   double last_query_cost;
-} STATUS_VAR;
+} system_status_var;
 
 /*
   This is used for 'SHOW STATUS'. It must be updated to the last ulong
@@ -322,7 +321,7 @@ struct Ha_data
     this should not be used.
     @sa trans_register_ha()
   */
-  Ha_trx_info ha_info[2];
+  drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
 };
@@ -541,20 +540,15 @@ private:
   query_id_t warn_query_id;
 public:
   void **getEngineData(const plugin::StorageEngine *engine);
-  Ha_trx_info *getEngineInfo(const plugin::StorageEngine *engine,
-                             size_t index= 0);
+  ResourceContext *getResourceContext(const plugin::StorageEngine *engine,
+                                      size_t index= 0);
 
   struct st_transactions {
-    std::deque<drizzled::NamedSavepoint> savepoints;
-    Session_TRANS all;			// Trans since BEGIN WORK
-    Session_TRANS stmt;			// Trans for current statement
+    std::deque<NamedSavepoint> savepoints;
+    TransactionContext all; ///< Trans since BEGIN WORK
+    TransactionContext stmt; ///< Trans for current statement
     XID_STATE xid_state;
 
-    /*
-       Tables changed in transaction (that must be invalidated in query cache).
-       List contain only transactional tables, that not invalidated in query
-       cache (instead of full list of changed in transaction tables).
-    */
     void cleanup()
     {
       savepoints.clear();
@@ -566,6 +560,7 @@ public:
       xid_state()
     { }
   } transaction;
+
   Field *dup_field;
   sigset_t signals;
 
@@ -1552,10 +1547,10 @@ static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TAB
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
 /* Functions in sql_class.cc */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
+void add_to_status(system_status_var *to_var, system_status_var *from_var);
 
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var);
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var);
 
 } /* namespace drizzled */
 

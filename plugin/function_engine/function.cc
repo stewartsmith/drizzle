@@ -112,7 +112,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
   finalize,     /* Plugin Deinit */
-  NULL,               /* status variables */
   NULL,               /* system variables */
   NULL                /* config options   */
 }
