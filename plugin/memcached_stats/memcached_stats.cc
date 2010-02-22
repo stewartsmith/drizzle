@@ -275,7 +275,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   deinit, /* Plugin Deinit    */
-  NULL,   /* status variables */
   system_variables, /* system variables */
   NULL    /* config options   */
 }

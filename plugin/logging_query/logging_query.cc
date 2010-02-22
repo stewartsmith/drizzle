@@ -425,7 +425,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
   logging_query_plugin_deinit,
-  NULL,   /* status variables */
   logging_query_system_variables,
   NULL
 }

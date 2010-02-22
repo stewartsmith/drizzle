@@ -443,7 +443,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   blackhole_init,     /* Plugin Init */
   blackhole_fini,     /* Plugin Deinit */
-  NULL,               /* status variables */
   NULL,               /* system variables */
   NULL                /* config options   */
 }
