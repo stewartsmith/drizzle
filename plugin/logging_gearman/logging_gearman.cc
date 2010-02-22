@@ -350,7 +350,6 @@ DRIZZLE_DECLARE_PLUGIN
     PLUGIN_LICENSE_GPL,
     logging_gearman_plugin_init,
     logging_gearman_plugin_deinit,
-    NULL,   /* status variables */
     logging_gearman_system_variables,
     NULL
 }

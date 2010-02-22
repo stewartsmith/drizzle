@@ -66,7 +66,7 @@ namespace plugin { class StorageEngine; }
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
-#define DRIZZLE_PLUGIN(init,deinit,status,system) \
+#define DRIZZLE_PLUGIN(init,deinit,system) \
   DRIZZLE_DECLARE_PLUGIN \
   { \
     DRIZZLE_VERSION_ID, \
@@ -75,7 +75,7 @@ namespace plugin { class StorageEngine; }
     STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
-    init, deinit, status, system, NULL \
+    init, deinit, system, NULL \
   } 
 
 
@@ -86,7 +86,7 @@ enum enum_mysql_show_type
 {
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_ARRAY, SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
+  SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
   SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
   SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
   SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
@@ -99,7 +99,6 @@ struct drizzle_show_var {
 };
 
 typedef enum enum_mysql_show_type SHOW_TYPE;
-typedef drizzle_show_var SHOW_VAR;
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024

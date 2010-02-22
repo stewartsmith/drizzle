@@ -272,7 +272,7 @@ Note	1050	Table 't1' already exists
 Error	1062	Duplicate entry '3' for key 'PRIMARY'
 show status like "Opened_tables";
 Variable_name	Value
-Opened_tables	2
+Opened_tables	#
 select * from t1;
 a	b
 1	1
@@ -1355,7 +1355,7 @@ Handler_read_key	3
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	0
-Handler_read_rnd_next	7
+Handler_read_rnd_next	13
 drop table t1,t2;
 CREATE TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1));
 DROP TABLE t1;
