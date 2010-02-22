@@ -26,10 +26,14 @@
 using namespace std;
 using namespace drizzled;
 
-static const string GPL("GPL");
-static const string LGPL("LGPL");
-static const string BSD("BSD");
-static const string PROPRIETARY("PROPRIETARY");
+/* 
+ * Suffix _STRING was added because sys/param.h on OSX defines a BSD symbol
+ * to the version of BSD being run. FAIL
+ */
+static const string GPL_STRING("GPL");
+static const string LGPL_STRING("LGPL");
+static const string BSD_STRING("BSD");
+static const string PROPRIETARY_STRING("PROPRIETARY");
 
 ModulesTool::ModulesTool() :
   plugin::TableFunction("DATA_DICTIONARY", "MODULES")
@@ -81,16 +85,16 @@ bool ModulesTool::Generator::populate()
     /* MODULE_LICENSE */
     switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      push(GPL);
+      push(GPL_STRING);
       break;
     case PLUGIN_LICENSE_BSD:
-      push(BSD);
+      push(BSD_STRING);
       break;
     case PLUGIN_LICENSE_LGPL:
-      push(LGPL);
+      push(LGPL_STRING);
       break;
     default:
-      push(PROPRIETARY);
+      push(PROPRIETARY_STRING);
       break;
     }
   }

@@ -86,10 +86,12 @@ insert into t3 select * from t4;
 explain select distinct t1.a from t1,t3 where t1.a=t3.a;
 #flush status;
 select distinct t1.a from t1,t3 where t1.a=t3.a;
-#show status like 'Handler%';
-#flush status;
+--replace_column 2 #
+show status like 'Handler%';
+flush status;
 select distinct 1 from t1,t3 where t1.a=t3.a;
-#show status like 'Handler%';
+--replace_column 2 #
+show status like 'Handler%';
 
 explain SELECT distinct t1.a from t1;
 explain SELECT distinct t1.a from t1 order by a desc;

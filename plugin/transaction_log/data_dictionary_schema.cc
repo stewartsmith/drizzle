@@ -59,6 +59,7 @@
  * );
  */
 
+#include "config.h"
 
 #include "data_dictionary_schema.h"
 #include "transaction_log_index.h"
@@ -155,7 +156,7 @@ bool TransactionLogEntriesTool::Generator::populate()
 
   push(entry.getOffset());
   push(entry.getTypeAsString());
-  push(entry.getLengthInBytes());
+  push(static_cast<uint64_t>(entry.getLengthInBytes()));
 
   it++;
 
@@ -198,11 +199,11 @@ bool TransactionLogTransactionsTool::Generator::populate()
 
   push(entry.getOffset());
   push(entry.getTransactionId());
-  push(entry.getServerId());
+  push(static_cast<uint64_t>(entry.getServerId()));
   push(entry.getStartTimestamp());
   push(entry.getEndTimestamp());
-  push(entry.getNumStatements());
-  push(entry.getChecksum());
+  push(static_cast<uint64_t>(entry.getNumStatements()));
+  push(static_cast<uint64_t>(entry.getChecksum()));
 
   it++;
 

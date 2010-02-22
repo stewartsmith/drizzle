@@ -104,10 +104,10 @@ void IndexPartsTool::Generator::fill()
   push(getTableProto().field(index_part.fieldnr()).name());
 
   /* COLUMN_NUMBER */
-  push(index_part.fieldnr());
+  push(static_cast<int64_t>(index_part.fieldnr()));
 
   /* COMPARE_LENGTH */
-  push(index_part.compare_length());
+  push(static_cast<int64_t>(index_part.compare_length()));
 
   /* IS_ORDER_REVERSE */
   push(index_part.in_reverse_order());

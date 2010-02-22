@@ -25,8 +25,6 @@
 #ifndef PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_SCHEMA_H
 #define PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_SCHEMA_H
 
-#include "config.h"
-
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/field.h"
 
@@ -100,4 +98,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_H */
+#endif /* PLUGIN_TRANSACTION_LOG_DATA_DICTIONARY_SCHEMA_H */
