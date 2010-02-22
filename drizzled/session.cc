@@ -39,6 +39,7 @@
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -148,10 +149,10 @@ void **Session::getEngineData(const plugin::StorageEngine *engine)
   return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
 }
 
-Ha_trx_info *Session::getEngineInfo(const plugin::StorageEngine *engine,
-                                    size_t index)
+ResourceContext *Session::getResourceContext(const plugin::StorageEngine *engine,
+                                             size_t index)
 {
-  return &ha_data[engine->getSlot()].ha_info[index];
+  return &ha_data[engine->getSlot()].resource_context[index];
 }
 
 extern "C"
@@ -256,7 +257,6 @@ Session::Session(plugin::Client *client_arg)
   else
     options &= ~OPTION_BIG_SELECTS;
 
-  transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
   open_options=ha_open_options;
   update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
@@ -432,10 +432,10 @@ Session::~Session()
     If this assumption will change, then we have to explictely add
     the other variables after the while loop
 */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
+void add_to_status(system_status_var *to_var, system_status_var *from_var)
 {
   ulong *end= (ulong*) ((unsigned char*) to_var +
-                        offsetof(STATUS_VAR, last_system_status_var) +
+                        offsetof(system_status_var, last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
 
@@ -455,10 +455,10 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
   NOTE
     This function assumes that all variables are long/ulong.
 */
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var)
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var)
 {
-  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(STATUS_VAR,
+  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(system_status_var,
 						  last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
@@ -790,7 +790,6 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       if (transaction_services.ha_commit_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
-      transaction.all.modified_non_trans_table= false;
       break;
     case COMMIT_RELEASE:
       do_release= 1; /* fall through */
@@ -808,7 +807,6 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       if (transaction_services.ha_rollback_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
-      transaction.all.modified_non_trans_table= false;
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
         result= startTransaction();
       break;
@@ -843,7 +841,6 @@ bool Session::endActiveTransaction()
       result= false;
   }
   options&= ~(OPTION_BEGIN);
-  transaction.all.modified_non_trans_table= false;
   return result;
 }
 
@@ -862,9 +859,7 @@ bool Session::startTransaction(start_transaction_option_t opt)
 
     if (opt == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
     {
-      // TODO make this a loop for all engines, not just this one (Inno only
-      // right now)
-      if (plugin::StorageEngine::startConsistentSnapshot(this))
+      if (plugin::TransactionalStorageEngine::startConsistentSnapshot(this))
       {
         result= false;
       }
@@ -1695,7 +1690,7 @@ char **session_query(Session *session)
 
 int session_non_transactional_update(const Session *session)
 {
-  return(session->transaction.all.modified_non_trans_table);
+  return(session->transaction.all.hasModifiedNonTransData());
 }
 
 void session_mark_transaction_to_rollback(Session *session, bool all)
@@ -1773,15 +1768,6 @@ void Session::reset_for_next_command()
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
-  /*
-    If in autocommit mode and not in a transaction, reset
-    OPTION_STATUS_NO_TRANS_UPDATE to not get warnings
-    in ha_rollback_trans() about some tables couldn't be rolled back.
-  */
-  if (!(options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
-  {
-    transaction.all.modified_non_trans_table= false;
-  }
 
   clear_error();
   main_da.reset_diagnostics_area();

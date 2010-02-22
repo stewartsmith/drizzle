@@ -183,7 +183,13 @@ public:
     name=0;
 #endif
   }
-  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs);
+
+  void set_name(const std::string &arg)
+  {
+    set_name(arg.c_str(), arg.length(), system_charset_info);
+  }
+
+  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs= system_charset_info);
   /**
    * Renames item (used for views, cleanup() return original name).
    *

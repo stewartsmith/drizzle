@@ -26,16 +26,36 @@ class CharacterSetsTool : public drizzled::plugin::TableFunction
 public:
 
   CharacterSetsTool();
+
+  CharacterSetsTool(const char *table_arg) :
+    drizzled::plugin::TableFunction("data_dictionary", table_arg)
+  { }
+
   ~CharacterSetsTool() {}
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::CHARSET_INFO **cs;
+    drizzled::CHARSET_INFO **character_set_iter;
+    bool is_char_primed;
+    bool nextCharacterSetCore();
 
   public:
     Generator(drizzled::Field **arg);
 
     bool populate();
+    bool nextCharacterSet();
+    bool checkCharacterSet();
+    virtual void fill();
+
+    drizzled::CHARSET_INFO const * character_set()
+    {
+      return character_set_iter[0];
+    }
+
+    bool isCharacterSetPrimed()
+    {
+      return is_char_primed;
+    }
 
   };
 

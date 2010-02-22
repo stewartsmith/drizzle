@@ -80,7 +80,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
   gearman_udf_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
