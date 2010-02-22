@@ -89,9 +89,6 @@ static void print_field(const message::Table::Field &field)
   case message::Table::Field::DATE:
     cout << " DATE ";
     break;
-  case message::Table::Field::TIME:
-    cout << " TIME ";
-    break;
   case message::Table::Field::TIMESTAMP:
     cout << " TIMESTAMP ";
     break;

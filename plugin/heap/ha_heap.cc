@@ -334,7 +334,7 @@ void ha_heap::update_key_stats()
 int ha_heap::write_row(unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&SSV::ha_write_count);
+  ha_statistic_increment(&system_status_var::ha_write_count);
   if (table->next_number_field && buf == table->record[0])
   {
     if ((res= update_auto_increment()))
@@ -356,7 +356,7 @@ int ha_heap::write_row(unsigned char * buf)
 int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
-  ha_statistic_increment(&SSV::ha_update_count);
+  ha_statistic_increment(&system_status_var::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
   res= heap_update(file,old_data,new_data);
@@ -375,7 +375,7 @@ int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data
 int ha_heap::delete_row(const unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&SSV::ha_delete_count);
+  ha_statistic_increment(&system_status_var::ha_delete_count);
   res= heap_delete(file,buf);
   if (!res && table->s->tmp_table == NO_TMP_TABLE &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
@@ -394,7 +394,7 @@ int ha_heap::index_read_map(unsigned char *buf, const unsigned char *key,
                             enum ha_rkey_function find_flag)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error = heap_rkey(file,buf,active_index, key, keypart_map, find_flag);
   table->status = error ? STATUS_NOT_FOUND : 0;
   return error;
@@ -404,7 +404,7 @@ int ha_heap::index_read_last_map(unsigned char *buf, const unsigned char *key,
                                  key_part_map keypart_map)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error= heap_rkey(file, buf, active_index, key, keypart_map,
 		       HA_READ_PREFIX_LAST);
   table->status= error ? STATUS_NOT_FOUND : 0;
@@ -415,7 +415,7 @@ int ha_heap::index_read_idx_map(unsigned char *buf, uint32_t index, const unsign
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
 {
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error = heap_rkey(file, buf, index, key, keypart_map, find_flag);
   table->status = error ? STATUS_NOT_FOUND : 0;
   return error;
@@ -424,7 +424,7 @@ int ha_heap::index_read_idx_map(unsigned char *buf, uint32_t index, const unsign
 int ha_heap::index_next(unsigned char * buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_next_count);
   int error=heap_rnext(file,buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -433,7 +433,7 @@ int ha_heap::index_next(unsigned char * buf)
 int ha_heap::index_prev(unsigned char * buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_prev_count);
+  ha_statistic_increment(&system_status_var::ha_read_prev_count);
   int error=heap_rprev(file,buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -442,7 +442,7 @@ int ha_heap::index_prev(unsigned char * buf)
 int ha_heap::index_first(unsigned char * buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_first_count);
+  ha_statistic_increment(&system_status_var::ha_read_first_count);
   int error=heap_rfirst(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -451,7 +451,7 @@ int ha_heap::index_first(unsigned char * buf)
 int ha_heap::index_last(unsigned char * buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_last_count);
+  ha_statistic_increment(&system_status_var::ha_read_last_count);
   int error=heap_rlast(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -464,7 +464,7 @@ int ha_heap::rnd_init(bool scan)
 
 int ha_heap::rnd_next(unsigned char *buf)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   int error=heap_scan(file, buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -474,7 +474,7 @@ int ha_heap::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   int error;
   HEAP_PTR heap_position;
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   memcpy(&heap_position, pos, sizeof(HEAP_PTR));
   error=heap_rrnd(file, buf, heap_position);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -938,7 +938,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   heap_init,
   heap_deinit,
-  NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

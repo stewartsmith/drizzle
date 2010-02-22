@@ -25,6 +25,4 @@ PLUGINS	CREATE TABLE `plugins` (
   `IS_ACTIVE` varchar(5) NOT NULL DEFAULT '',
   `MODULE_NAME` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
-CREATE SCHEMA drizzleslap;
-DROP SCHEMA drizzleslap;
 DROP SCHEMA data_dictionary;

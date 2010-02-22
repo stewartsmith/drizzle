@@ -46,6 +46,17 @@ static const string REDUNDANT("REDUNDANT");
 static const string COMPACT("COMPACT");
 static const string PAGE("PAGE");
 
+static const string VARCHAR("VARCHAR");
+static const string DOUBLE("DOUBLE");
+static const string BLOB("BLOB");
+static const string ENUM("ENUM");
+static const string INTEGER("INTEGER");
+static const string BIGINT("BIGINT");
+static const string DECIMAL("DECIMAL");
+static const string DATE("DATE");
+static const string TIMESTAMP("TIMESTAMP");
+static const string DATETIME("DATETIME");
+
 
 TablesTool::TablesTool() :
   SchemasTool("TABLES")
@@ -160,6 +171,44 @@ void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
     break;
   case message::Table::TableOptions::ROW_TYPE_PAGE:
     push(PAGE);
+    break;
+  }
+}
+
+void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
+{
+  switch (type)
+  {
+  default:
+  case message::Table::Field::VARCHAR:
+    push(VARCHAR);
+    break;
+  case message::Table::Field::DOUBLE:
+    push(DOUBLE);
+    break;
+  case message::Table::Field::BLOB:
+    push(BLOB);
+    break;
+  case message::Table::Field::ENUM:
+    push(ENUM);
+    break;
+  case message::Table::Field::INTEGER:
+    push(INTEGER);
+    break;
+  case message::Table::Field::BIGINT:
+    push(BIGINT);
+    break;
+  case message::Table::Field::DECIMAL:
+    push(DECIMAL);
+    break;
+  case message::Table::Field::DATE:
+    push(DATE);
+    break;
+  case message::Table::Field::TIMESTAMP:
+    push(TIMESTAMP);
+    break;
+  case message::Table::Field::DATETIME:
+    push(DATETIME);
     break;
   }
 }
