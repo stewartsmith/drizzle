@@ -696,7 +696,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   embedded_innodb_init,     /* Plugin Init */
   embedded_innodb_fini,     /* Plugin Deinit */
-  NULL,               /* status variables */
   innobase_system_variables, /* system variables */
   NULL                /* config options   */
 }
