@@ -287,7 +287,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   logging_syslog_plugin_init,
   logging_syslog_plugin_deinit,
-  NULL,   /* status variables */
   logging_syslog_system_variables,
   NULL
 }

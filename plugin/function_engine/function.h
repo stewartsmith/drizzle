@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_FUNCTION_H
-#define PLUGIN_DATA_ENGINE_FUNCTION_H
+#ifndef PLUGIN_FUNCTION_ENGINE_FUNCTION_H
+#define PLUGIN_FUNCTION_ENGINE_FUNCTION_H
 
 #include <assert.h>
 #include <drizzled/session.h>
@@ -81,4 +81,4 @@ public:
                            drizzled::message::Table *table_proto);
 };
 
-#endif /* PLUGIN_DATA_ENGINE_FUNCTION_H */
+#endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */
