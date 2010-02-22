@@ -1,0 +1,13 @@
+# Drizzle's session dictionary
+
+CREATE SCHEMA data_dictionary;
+use data_dictionary;
+
+#
+# test that SHOW PROCESSLIST works correctly
+#
+--disable_result_log
+show processlist;
+--enable_result_log
+
+drop schema data_dictionary;

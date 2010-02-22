@@ -1,0 +1,6 @@
+CREATE SCHEMA data_dictionary;
+use data_dictionary;
+SELECT count(*) FROM data_dictionary.plugins;
+count(*)
+#
+DROP SCHEMA data_dictionary;

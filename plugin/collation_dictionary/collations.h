@@ -21,21 +21,42 @@
 #ifndef PLUGIN_COLLATION_DICTIONARY_COLLATIONS_H
 #define PLUGIN_COLLATION_DICTIONARY_COLLATIONS_H
 
-class CollationsTool : public drizzled::plugin::TableFunction
+class CollationsTool : public CharacterSetsTool
 {
 public:
 
   CollationsTool();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public CharacterSetsTool::Generator 
   {
-    drizzled::CHARSET_INFO **cs;
-    drizzled::CHARSET_INFO **cl;
+    drizzled::CHARSET_INFO **collation_iter;
+    bool is_collation_primed;
+
+    bool nextCollationCore();
+    inline bool end();
+
+    void prime(bool arg= true)
+    {
+      is_collation_primed= arg;
+    }
 
   public:
     Generator(drizzled::Field **arg);
 
     bool populate();
+    bool next();
+    bool check();
+    virtual void fill();
+
+    drizzled::CHARSET_INFO const * collation()
+    {
+      return collation_iter[0];
+    }
+
+    bool isPrimed()
+    {
+      return is_collation_primed;
+    }
 
   };
 
