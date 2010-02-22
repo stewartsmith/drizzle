@@ -1879,7 +1879,6 @@ bool LEX::only_view_structure()
 {
   switch (sql_command) {
   case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_TABLES:
   case SQLCOM_SHOW_FIELDS:
     return true;
   default:
@@ -1902,7 +1901,6 @@ bool LEX::need_correct_ident()
   switch(sql_command)
   {
   case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_TABLES:
     return true;
   default:
     return false;

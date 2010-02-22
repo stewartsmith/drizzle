@@ -88,7 +88,7 @@ extern KEY_CREATE_INFO default_key_create_info;
 /* Forward declaration for condition pushdown to storage engine */
 typedef class Item COND;
 
-typedef struct system_status_var SSV;
+typedef struct system_status_var system_status_var;
 
 class COST_VECT;
 
@@ -549,13 +549,13 @@ public:
 
 protected:
   /* Service methods for use by storage engines. */
-  void ha_statistic_increment(ulong SSV::*offset) const;
+  void ha_statistic_increment(ulong system_status_var::*offset) const;
   void **ha_data(Session *) const;
   Session *ha_session(void) const;
 
 private:
   /* Private helpers */
-  inline void mark_trx_read_write();
+  inline void setTransactionReadWrite();
 private:
   /*
     Low-level primitives for storage engines.  These should be

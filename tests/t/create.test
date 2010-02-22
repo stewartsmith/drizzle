@@ -242,6 +242,7 @@ create table if not exists t1 select 3 as 'a',4 as 'b';
 --error ER_DUP_ENTRY
 create table if not exists t1 select 3 as 'a',3 as 'b';
 show warnings;
+--replace_column 2 #
 show status like "Opened_tables";
 select * from t1;
 drop table t1;
