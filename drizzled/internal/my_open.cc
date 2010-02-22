@@ -85,7 +85,6 @@ int my_close(int fd, myf MyFlags)
     if (MyFlags & (MY_FAE | MY_WME))
       my_error(EE_BADCLOSE, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
   }
-  my_file_opened--;
 
   return(err);
 } /* my_close */
@@ -112,9 +111,6 @@ int my_register_filename(int fd, const char *FileName, uint32_t error_message_nu
 {
   if ((int) fd >= 0)
   {
-    my_file_opened++;
-    my_file_total_opened++;
-
     return fd;
   }
   else

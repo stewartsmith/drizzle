@@ -115,7 +115,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
-  NULL, /* status variables */
   default_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }

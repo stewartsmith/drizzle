@@ -93,8 +93,6 @@ int create_temp_file(char *to, const char *dir, const char *prefix,
     (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
     errno=tmp;
   }
-  if (file >= 0)
-    my_tmp_file_created++;
 
   return(file);
 }

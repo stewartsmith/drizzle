@@ -358,7 +358,6 @@ DRIZZLE_DECLARE_PLUGIN
   memcachedInit,
   memcachedDone,
   NULL,
-  NULL,
   NULL
 }
 DRIZZLE_DECLARE_PLUGIN_END;

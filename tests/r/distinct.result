@@ -195,9 +195,42 @@ select distinct t1.a from t1,t3 where t1.a=t3.a;
 a
 1
 2
+show status like 'Handler%';
+Variable_name	Value
+Handler_commit	#
+Handler_delete	#
+Handler_prepare	#
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
+Handler_rollback	#
+Handler_savepoint	#
+Handler_savepoint_rollback	#
+Handler_update	#
+Handler_write	#
+flush status;
 select distinct 1 from t1,t3 where t1.a=t3.a;
 1
 1
+show status like 'Handler%';
+Variable_name	Value
+Handler_commit	#
+Handler_delete	#
+Handler_prepare	#
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
+Handler_rollback	#
+Handler_savepoint	#
+Handler_savepoint_rollback	#
+Handler_update	#
+Handler_write	#
 explain SELECT distinct t1.a from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	4	Using index
