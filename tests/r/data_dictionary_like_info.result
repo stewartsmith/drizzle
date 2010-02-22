@@ -21,8 +21,8 @@ t1
 t4
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
-mysqltest	t1	a	0	0	TRUE	4	#	0	0	0	#	#
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
+mysqltest	t1	a	0	0	TRUE	INTEGER	#	0	0	0	#	#		
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name
@@ -40,7 +40,7 @@ select DATA_TYPE from data_dictionary.columns
 where table_schema="data_dictionary" and table_name="COLUMNS" and
 (column_name="character_set_name" or column_name="collation_name");
 DATA_TYPE
-1
+VARCHAR
 select TABLE_TYPE from data_dictionary.tables where 
 table_schema="data_dictionary" and table_name="COLUMNS";
 TABLE_TYPE
@@ -55,6 +55,8 @@ table_schema	table_name	column_name
 select table_name, column_name, DATA_TYPE from data_dictionary.columns
 where DATA_TYPE = 'datetime';
 table_name	column_name	DATA_TYPE
+INNODB_TRX	trx_started	DATETIME
+INNODB_TRX	trx_wait_started	DATETIME
 SELECT COUNT(*) FROM DATA_DICTIONARY.TABLES A
 WHERE NOT EXISTS 
 (SELECT * FROM DATA_DICTIONARY.COLUMNS B
@@ -96,8 +98,8 @@ CHARACTER_MAXIMUM_LENGTH
 from data_dictionary.columns
 where table_name='t1';
 column_name	DATA_TYPE	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
-f1	2	0	0
-f2	2	0	0
+f1	BLOB	0	0
+f2	BLOB	0	0
 drop table t1;
 create table t1(f1 int, f2 int, f3 BIGINT, f4 int,
 f5 BIGINT, f6 int, f7 int);
@@ -156,6 +158,9 @@ table_schema='data_dictionary' and
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
 DATA_TYPE	group_concat(table_schema, '.', table_name)	num
+VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INNODB_STATUS,	105
+Warnings:
+Warning	1260	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);
 select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
 data_dictionary.columns where table_schema='test' and table_name = 't1';
@@ -283,9 +288,9 @@ SELECT TABLE_COLLATION FROM DATA_DICTIONARY.TABLES
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 TABLE_COLLATION
 select * from data_dictionary.columns where table_schema = NULL;
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
 select * from `data_dictionary`.`COLUMNS` where `TABLE_NAME` = NULL;
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
 select * from `data_dictionary`.`INDEXES` where `TABLE_SCHEMA` = NULL;
 TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_LENGTH	INDEX_TYPE	INDEX_COMMENT
 select * from `data_dictionary`.`INDEXES` where `TABLE_NAME` = NULL;

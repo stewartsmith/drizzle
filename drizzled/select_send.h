@@ -22,6 +22,7 @@
 #define DRIZZLED_SELECT_SEND_H
 
 #include <drizzled/plugin/client.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
 
 namespace drizzled
 {
@@ -42,7 +43,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    plugin::StorageEngine::releaseTemporaryLatches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
     if (session->lock)
@@ -95,7 +96,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    plugin::StorageEngine::releaseTemporaryLatches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     List_iterator_fast<Item> li(items);
     char buff[MAX_FIELD_WIDTH];
