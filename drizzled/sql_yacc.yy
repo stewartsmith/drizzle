@@ -1022,13 +1022,13 @@ create:
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    message::Table *proto= &statement->create_table_proto;
+	    message::Table &proto= statement->create_table_proto;
 	   
-	    proto->set_name($5->table.str);
+	    proto.set_name($5->table.str);
 	    if($2)
-	      proto->set_type(message::Table::TEMPORARY);
+	      proto.set_type(message::Table::TEMPORARY);
 	    else
-	      proto->set_type(message::Table::STANDARD);
+	      proto.set_type(message::Table::STANDARD);
           }
           create2
           {
