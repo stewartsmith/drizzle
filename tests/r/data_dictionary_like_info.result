@@ -7,6 +7,15 @@ count(*)
 select count(*) from data_dictionary.schemas;
 count(*)
 #
+show databases like 't%';
+Database (t%)
+test
+show databases;
+Database
+data_dictionary
+information_schema
+mysql
+test
 create database mysqltest;
 create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
 create table test.t2(a int);
@@ -19,15 +28,31 @@ where table_schema = "mysqltest" and table_name like "t%";
 table_name
 t1
 t4
+show tables like 't%';
+Tables_in_test (t%)
+t2
+t3
+t5
+show table status;
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t2	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+t3	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+t5	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+show columns from t3 like "a%";
+Field	Type	Null	Default	Default is NULL	On Update
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
-mysqltest	t1	a	0	0	TRUE	INTEGER	#	0	0	0	#	#		
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
+mysqltest	t1	a	INTEGER	0		TRUE		TRUE	INTEGER	0	0	0	0		
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name
 t1	a
 t1	b
+show columns from mysqltest.t1;
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
+b	VARCHAR	TRUE		TRUE	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
 select * from data_dictionary.CHARACTER_SETS
@@ -55,8 +80,6 @@ table_schema	table_name	column_name
 select table_name, column_name, DATA_TYPE from data_dictionary.columns
 where DATA_TYPE = 'datetime';
 table_name	column_name	DATA_TYPE
-INNODB_TRX	trx_started	DATETIME
-INNODB_TRX	trx_wait_started	DATETIME
 SELECT COUNT(*) FROM DATA_DICTIONARY.TABLES A
 WHERE NOT EXISTS 
 (SELECT * FROM DATA_DICTIONARY.COLUMNS B
@@ -120,9 +143,13 @@ use data_dictionary;
 select column_name, column_default from columns
 where table_schema='test' and table_name='t1';
 column_name	column_default
-a	0
-b	0
+a	
+b	
 use test;
+show columns from t1;
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	INTEGER	TRUE		TRUE	
 drop table t1;
 alter database data_dictionary;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
@@ -143,6 +170,15 @@ select 1 from (select 1 from test.t1) a;
 use test;
 drop table t1;
 create temporary table t1(f1 int, index(f1));
+show columns from t1;
+Field	Type	Null	Default	Default is NULL	On Update
+f1	INTEGER	TRUE		TRUE	
+describe t1;
+Field	Type	Null	Default	Default is NULL	On Update
+f1	INTEGER	TRUE		TRUE	
+show indexes from t1;
+Table	Key_name	Seq_in_index	Column_name
+t1	f1	0	f1
 drop table t1;
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
@@ -158,7 +194,7 @@ table_schema='data_dictionary' and
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
 DATA_TYPE	group_concat(table_schema, '.', table_name)	num
-VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INNODB_STATUS,	105
+VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_d	106
 Warnings:
 Warning	1260	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);
@@ -268,14 +304,24 @@ f8 datetime default '2006-01-01'
 );
 select column_default from data_dictionary.columns where table_name= 't1';
 column_default
-0
-0
-0
-0
-0
+
+
+
+
+
 10
 10
 2006-01-01
+show columns from t1;
+Field	Type	Null	Default	Default is NULL	On Update
+f1	VARCHAR	TRUE		TRUE	
+f2	VARCHAR	FALSE		FALSE	
+f3	VARCHAR	TRUE		FALSE	
+f4	VARCHAR	TRUE		TRUE	
+f5	BIGINT	FALSE		FALSE	
+f6	BIGINT	FALSE	10	FALSE	
+f7	DATETIME	FALSE	10	FALSE	
+f8	DATETIME	TRUE	2006-01-01	FALSE	
 drop table t1;
 SET max_heap_table_size = DEFAULT;
 USE test;
@@ -288,9 +334,9 @@ SELECT TABLE_COLLATION FROM DATA_DICTIONARY.TABLES
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 TABLE_COLLATION
 select * from data_dictionary.columns where table_schema = NULL;
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
 select * from `data_dictionary`.`COLUMNS` where `TABLE_NAME` = NULL;
-TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_KEY	EXTRA	COLUMN_COMMENT
+TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
 select * from `data_dictionary`.`INDEXES` where `TABLE_SCHEMA` = NULL;
 TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_LENGTH	INDEX_TYPE	INDEX_COMMENT
 select * from `data_dictionary`.`INDEXES` where `TABLE_NAME` = NULL;

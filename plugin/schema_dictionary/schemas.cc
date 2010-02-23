@@ -43,7 +43,13 @@ SchemasTool::Generator::Generator(Field **arg) :
 */
 bool SchemasTool::Generator::checkSchema()
 {
-  return isWild(schema_name());
+  if (isWild(schema_name()))
+    return true;
+
+  if (not schema_predicate.empty() && schema_predicate.compare(schema_name()))
+    return true;
+
+  return false;
 }
 
 bool SchemasTool::Generator::nextSchemaCore()

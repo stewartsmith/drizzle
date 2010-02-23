@@ -1403,6 +1403,14 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  void doGetTableNames(CachedDirectory &directory,
+                       const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+  int doGetTableDefinition(const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           message::Table *table_proto);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);

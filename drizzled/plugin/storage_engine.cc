@@ -373,27 +373,45 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
 }
 
 /**
+  Utility method which hides some of the details of getTableDefinition()
+*/
+bool plugin::StorageEngine::doesTableExist(Session& session,
+                                           TableIdentifier &identifier,
+                                           bool include_temporary_tables)
+{
+  return (plugin::StorageEngine::getTableDefinition(session, identifier, NULL, include_temporary_tables) == EEXIST);
+}
+
+/**
   Call this function in order to give the Cursor the possiblity
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
 int StorageEngine::getTableDefinition(Session& session,
                                               TableIdentifier &identifier,
-                                              message::Table *table_proto)
+                                              message::Table *table_proto,
+                                              bool include_temporary_tables)
 {
   return getTableDefinition(session,
                             identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            table_proto);
+                            table_proto, include_temporary_tables);
 }
 
 int StorageEngine::getTableDefinition(Session& session,
                                               const char* path,
-                                              const char *,
-                                              const char *,
+                                              const char *schema_name,
+                                              const char *table_name,
                                               const bool,
-                                              message::Table *table_proto)
+                                              message::Table *table_proto,
+                                              bool include_temporary_tables)
 {
   int err= ENOENT;
+
+  if (include_temporary_tables)
+  {
+    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_proto) == EEXIST)
+      return EEXIST;
+  }
 
   vector<StorageEngine *>::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
@@ -756,6 +774,11 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            AddTableName(directory, db, set_of_names));
+
+  Session *session= current_session;
+
+  session->doGetTableNames(directory, db, set_of_names);
+
 }
 
 /* This will later be converted to TableIdentifiers */

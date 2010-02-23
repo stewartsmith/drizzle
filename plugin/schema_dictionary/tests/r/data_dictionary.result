@@ -137,114 +137,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -257,8 +149,11 @@ COLUMNS	CREATE TABLE `columns` (
   `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
   `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_TYPE` varchar(64) NOT NULL DEFAULT '',
   `ORDINAL_POSITION` bigint NOT NULL DEFAULT '0',
   `COLUMN_DEFAULT` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_DEFAULT_IS_NULL` varchar(5) NOT NULL DEFAULT '',
+  `COLUMN_DEFAULT_UPDATE` varchar(64) NOT NULL DEFAULT '',
   `IS_NULLABLE` varchar(5) NOT NULL DEFAULT '',
   `DATA_TYPE` varchar(64) NOT NULL DEFAULT '',
   `CHARACTER_MAXIMUM_LENGTH` bigint NOT NULL DEFAULT '0',
@@ -266,8 +161,6 @@ COLUMNS	CREATE TABLE `columns` (
   `NUMERIC_PRECISION` bigint NOT NULL DEFAULT '0',
   `NUMERIC_SCALE` bigint NOT NULL DEFAULT '0',
   `COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
-  `COLUMN_KEY` varchar(5) NOT NULL DEFAULT '',
-  `EXTRA` varchar(20) NOT NULL DEFAULT '',
   `COLUMN_COMMENT` varchar(1024) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table INDEXES ;
@@ -291,6 +184,7 @@ INDEX_PARTS	CREATE TABLE `index_parts` (
   `INDEX_NAME` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_NAME` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_NUMBER` bigint NOT NULL DEFAULT '0',
+  `SEQUENCE_IN_INDEX` bigint NOT NULL DEFAULT '0',
   `COMPARE_LENGTH` bigint NOT NULL DEFAULT '0',
   `IS_ORDER_REVERSE` varchar(5) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine

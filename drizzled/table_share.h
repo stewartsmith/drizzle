@@ -214,6 +214,11 @@ private:
 public:
 
   /* This is only used in one location currently */
+  inline message::Table * getTableProto()
+  {
+    return table_proto;
+  }
+
   inline void setTableProto(message::Table *arg)
   {
     assert(table_proto == NULL);

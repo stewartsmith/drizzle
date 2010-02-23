@@ -38,7 +38,6 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
@@ -218,13 +217,6 @@ bool mysql_create_db(Session *session, const char *db, message::Schema *schema_m
   int error_erno;
   bool error= false;
 
-  /* do not create 'information_schema' db */
-  if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
-    return(-1);
-  }
-
   schema_message->set_name(db);
 
   /*
@@ -376,12 +368,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   char	path[FN_REFLEN+16];
   uint32_t length;
   TableList *dropped_tables= NULL;
-
-  if (db && (strcmp(db, "information_schema") == 0))
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
 
   /*
     Do not drop database if another thread is holding read lock.
@@ -822,17 +808,6 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   assert(new_db_name);
   assert(new_db_name->length);
 
-  if (my_strcasecmp(system_charset_info, new_db_name->str,
-                    INFORMATION_SCHEMA_NAME.c_str()) == 0)
-  {
-    /* Switch the current database to INFORMATION_SCHEMA. */
-    /* const_cast<> is safe here: mysql_change_db_impl does a copy */
-    LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
-                          INFORMATION_SCHEMA_NAME.length() };
-    mysql_change_db_impl(session, &is_name);
-
-    return false;
-  }
   /*
     Now we need to make a copy because check_db_name requires a
     non-constant argument. Actually, it takes database file name.

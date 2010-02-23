@@ -107,35 +107,35 @@ drop table t1,t2;
 create table t1(x varchar(50) );
 create table t2 select x from t1 where 1=2;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-x	varchar(50)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+x	VARCHAR	TRUE		TRUE	
 describe t2;
-Field	Type	Null	Key	Default	Extra
-x	varchar(50)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+x	VARCHAR	TRUE		TRUE	
 drop table t2;
 create table t2 select now() as a , curdate() as c , 1+1 as d , 1.0 + 1 as e , 33333333333333333 + 3 as f;
 describe t2;
-Field	Type	Null	Key	Default	Extra
-a	datetime	YES		NULL	
-c	date	NO		NULL	
-d	int	NO		NULL	
-e	decimal(3,1)	NO		NULL	
-f	bigint	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	DATETIME	TRUE		TRUE	
+c	DATE	FALSE		FALSE	
+d	INTEGER	FALSE		FALSE	
+e	DECIMAL	FALSE		FALSE	
+f	BIGINT	FALSE		FALSE	
 drop table t2;
 create table t2 select CAST("2001-12-29" AS DATE) as d, CAST("2001-12-29  20:45:11" AS DATETIME) as dt;
 describe t2;
-Field	Type	Null	Key	Default	Extra
-d	date	YES		NULL	
-dt	datetime	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+d	DATE	TRUE		TRUE	
+dt	DATETIME	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (a int);
 create table t2 (a int) select * from t1;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
 describe t2;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
 drop table if exists t2;
 create table t2 (a int, a float) select * from t1;
 ERROR 42S21: Duplicate column name 'a'
@@ -353,6 +353,7 @@ t2	CREATE TABLE `t2` (
 select * from t2;
 id	name
 create table t3 like t1;
+ERROR 42S01: Table 't3' already exists
 create table t3 like mysqltest.t3;
 ERROR 42S01: Table 't3' already exists
 create table non_existing_database.t1 like t1;
@@ -362,7 +363,6 @@ ERROR 42S02: Table 'test.non_existing_table' doesn't exist
 create temporary table t3 like t1;
 ERROR 42S01: Table 't3' already exists
 drop table t1, t2, t3;
-drop table t3;
 drop database mysqltest;
 SET SESSION storage_engine="MEMORY";
 SELECT @@storage_engine;
@@ -418,14 +418,14 @@ ifnull(f,cast('2000-01-01'              as datetime)) as f,
 ifnull(h,cast('yet another binary data' as binary))   as h
 from t1;
 explain t2;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
-b	bigint	NO		NULL	
-c	bigint	NO		NULL	
-d	date	YES		NULL	
-e	varchar(1)	YES		NULL	
-f	datetime	YES		NULL	
-h	blob	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
+b	BIGINT	FALSE		FALSE	
+c	BIGINT	FALSE		FALSE	
+d	DATE	TRUE		TRUE	
+e	VARCHAR	TRUE		TRUE	
+f	DATETIME	TRUE		TRUE	
+h	BLOB	TRUE		TRUE	
 select * from t2;
 a	b	c	d	e	f	h
 1	-7	7	2000-01-01	b	2000-01-01 00:00:00	yet another binary data
@@ -453,29 +453,29 @@ drop table t1,t2;
 create table t1(str varchar(10) default 'def',strnull varchar(10),intg int default '10',rel double default '3.14');
 insert into t1 values ('','',0,0.0);
 describe t1;
-Field	Type	Null	Key	Default	Extra
-str	varchar(10)	YES		def	
-strnull	varchar(10)	YES		NULL	
-intg	int	YES		10	
-rel	double	YES		3.14	
+Field	Type	Null	Default	Default is NULL	On Update
+str	VARCHAR	TRUE	def	FALSE	
+strnull	VARCHAR	TRUE	def	TRUE	
+intg	INTEGER	TRUE	10	FALSE	
+rel	DOUBLE	TRUE	3.14	FALSE	
 create table t2 select default(str) as str, default(strnull) as strnull, default(intg) as intg, default(rel) as rel from t1;
 describe t2;
-Field	Type	Null	Key	Default	Extra
-str	varchar(10)	YES		NULL	
-strnull	varchar(10)	YES		NULL	
-intg	int	YES		NULL	
-rel	double	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+str	VARCHAR	TRUE		TRUE	
+strnull	VARCHAR	TRUE		TRUE	
+intg	INTEGER	TRUE		TRUE	
+rel	DOUBLE	TRUE		TRUE	
 drop table t1, t2;
 create table t1(name varchar(10), age int default -1);
 describe t1;
-Field	Type	Null	Key	Default	Extra
-name	varchar(10)	YES		NULL	
-age	int	YES		-1	
+Field	Type	Null	Default	Default is NULL	On Update
+name	VARCHAR	TRUE		TRUE	
+age	INTEGER	TRUE	-1	FALSE	
 create table t2(name varchar(10), age int default - 1);
 describe t2;
-Field	Type	Null	Key	Default	Extra
-name	varchar(10)	YES		NULL	
-age	int	YES		-1	
+Field	Type	Null	Default	Default is NULL	On Update
+name	VARCHAR	TRUE		TRUE	
+age	INTEGER	TRUE	-1	FALSE	
 drop table t1, t2;
 create table t1(cenum enum('a'));
 create table t2(cenum enum('a','a'));
@@ -522,8 +522,8 @@ drop table t1,t2;
 CREATE TABLE t1 (f1 VARCHAR(255));
 CREATE TABLE t2 AS SELECT LEFT(f1,171) AS f2 FROM t1 UNION SELECT LEFT(f1,171) AS f2 FROM t1;
 DESC t2;
-Field	Type	Null	Key	Default	Extra
-f2	varchar(171)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+f2	VARCHAR	TRUE		TRUE	
 DROP TABLE t1,t2;
 CREATE TABLE t12913 (f1 ENUM ('a','b')) AS SELECT 'a' AS f1;
 SELECT * FROM t12913;
@@ -1362,14 +1362,8 @@ DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(33), KEY (c1) USING BTREE);
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	c1	1	c1	NULL	0	NULL	NULL	YES	HASH		
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	c1	1	c1	A	NULL	NULL	NULL	YES	BTREE		
 DROP TABLE t1;
 End of 5.0 tests
 CREATE TABLE t1 (a int, b int);
@@ -1425,7 +1419,7 @@ select TABLE_NAME from data_dictionary.tables where
 table_schema='test';
 TABLE_NAME
 имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
-select COLUMN_NAME from information_schema.old_columns where
+select COLUMN_NAME from data_dictionary.columns where
 table_schema='test';
 COLUMN_NAME
 имя_поля_в_кодировке_утф8_длиной_больше_чем_45

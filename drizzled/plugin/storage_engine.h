@@ -319,13 +319,18 @@ public:
 
   static int getTableDefinition(Session& session,
                                 TableIdentifier &identifier,
-                                message::Table *table_proto= NULL);
+                                message::Table *table_proto= NULL,
+                                bool include_temporary_tables= true);
   static int getTableDefinition(Session& session,
                                 const char* path,
                                 const char *db,
                                 const char *table_name,
                                 const bool is_tmp,
-                                message::Table *table_proto= NULL);
+                                message::Table *table_proto= NULL,
+                                bool include_temporary_tables= true);
+  static bool doesTableExist(Session& session,
+                             TableIdentifier &identifier,
+                             bool include_temporary_tables= true);
 
   static plugin::StorageEngine *findByName(std::string find_str);
   static plugin::StorageEngine *findByName(Session& session,
