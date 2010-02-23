@@ -114,22 +114,15 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
 
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
-  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-
-  ib_err_t err= ib_cursor_open_table(name+2, transaction, &cursor);
+  ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
   assert (err==DB_SUCCESS);
-
-  tuple= ib_clust_read_tuple_create(cursor);
 
   return(0);
 }
 
 int EmbeddedInnoDBCursor::close(void)
 {
-  ib_tuple_delete(tuple);
   ib_cursor_close(cursor);
-  ib_trx_commit(transaction);
-
   return 0;
 }
 
@@ -528,6 +521,14 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   ib_err_t err;
   int colnr= 0;
 
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  tuple= ib_clust_read_tuple_create(cursor);
+
+  ib_cursor_attach_trx(cursor, transaction);
+
+  ib_cursor_first(cursor);
+
   for (Field **field=table->field ; *field ; field++, colnr++)
   {
     err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
@@ -538,12 +539,21 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   assert (err==DB_SUCCESS);
 
   ib_tuple_clear(tuple);
+  ib_tuple_delete(tuple);
+  ib_cursor_reset(cursor);
+  ib_trx_commit(transaction);
 
   return 0;
 }
 
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  ib_cursor_attach_trx(cursor, transaction);
+
+  tuple= ib_clust_read_tuple_create(cursor);
+
   ib_cursor_first(cursor);
 
   return(0);
@@ -576,6 +586,9 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
 
 int EmbeddedInnoDBCursor::rnd_end()
 {
+  ib_tuple_delete(tuple);
+  ib_cursor_reset(cursor);
+  ib_trx_commit(transaction);
   return 0;
 }
 
@@ -595,7 +608,8 @@ void EmbeddedInnoDBCursor::position(const unsigned char *)
 
 int EmbeddedInnoDBCursor::info(uint32_t flag)
 {
-  memset(&stats, 0, sizeof(stats));
+  stats.records= 100;
+
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
