@@ -316,6 +316,7 @@ create table t2 like t3;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select * from t2;
+--error 1050
 create table t3 like t1;
 --error 1050
 create table t3 like mysqltest.t3;
@@ -326,7 +327,6 @@ create table t3 like non_existing_table;
 --error 1050
 create temporary table t3 like t1;
 drop table t1, t2, t3;
-drop table t3;
 drop database mysqltest;
 
 #
