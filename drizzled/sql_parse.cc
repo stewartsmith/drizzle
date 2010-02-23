@@ -45,6 +45,7 @@
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
@@ -215,6 +216,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
+    plugin::QueryRewriter::rewriteQuery(session->query);
     mysql_parse(session, session->query.c_str(), session->query.length());
 
     break;
