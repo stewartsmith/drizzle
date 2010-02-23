@@ -661,6 +661,45 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
+void Session::doGetTableNames(CachedDirectory &,
+                              const std::string& db_name,
+                              std::set<std::string>& set_of_names)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (not db_name.compare(table->s->db.str))
+    {
+      set_of_names.insert(table->s->table_name.str);
+    }
+  }
+}
+
+int Session::doGetTableDefinition(const char *,
+                                  const char *db_arg,
+                                  const char *table_name_arg,
+                                  const bool ,
+                                  message::Table *table_proto)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (table->s->tmp_table == TEMP_TABLE)
+    {
+      if (not strcmp(db_arg, table->s->db.str))
+      {
+        if (not strcmp(table_name_arg, table->s->table_name.str))
+        {
+          if (table_proto)
+            table_proto->CopyFrom(*(table->s->getTableProto()));
+
+          return EEXIST;
+        }
+      }
+    }
+  }
+
+  return ENOENT;
+}
+
 Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 {
   char	key[MAX_DBKEY_LENGTH];

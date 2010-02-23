@@ -991,6 +991,11 @@ void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            AddTableName(directory, db, set_of_names));
+
+  Session *session= current_session;
+
+  session->doGetTableNames(directory, db, set_of_names);
+
 }
 
 /* This will later be converted to TableIdentifiers */

@@ -1929,6 +1929,7 @@ Tables_in_test
 t1
 t2
 t3
+t4
 show tables from test like "s%";
 Tables_in_test (s%)
 show tables from test like "t?";
