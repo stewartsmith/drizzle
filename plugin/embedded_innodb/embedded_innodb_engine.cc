@@ -257,6 +257,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
 
     for (int partnr= 0; partnr < index->index_part_size(); partnr++)
     {
+      /* TODO: Index prefix lengths */
       const message::Table::Index::IndexPart part= index->index_part(partnr);
       ib_index_schema_add_col(innodb_index, table_message.field(part.fieldnr()).name().c_str(), 0);
     }
