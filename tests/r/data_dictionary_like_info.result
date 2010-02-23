@@ -7,6 +7,15 @@ count(*)
 select count(*) from data_dictionary.schemas;
 count(*)
 #
+show databases like 't%';
+Database (t%)
+test
+show databases;
+Database
+data_dictionary
+information_schema
+mysql
+test
 create database mysqltest;
 create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
 create table test.t2(a int);
@@ -19,15 +28,31 @@ where table_schema = "mysqltest" and table_name like "t%";
 table_name
 t1
 t4
+show tables like 't%';
+Tables_in_test (t%)
+t2
+t3
+t5
+show table status;
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t2	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+t3	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+t5	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+show columns from t3 like "a%";
+Field	Type	Null	Default	Default is NULL	On Update
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
-mysqltest	t1	a	INTEGER	0		TRUE	#	TRUE	INTEGER	0	#	#	0		
+mysqltest	t1	a	INTEGER	0		TRUE		TRUE	INTEGER	0	0	0	0		
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name
 t1	a
 t1	b
+show columns from mysqltest.t1;
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
+b	VARCHAR	TRUE		TRUE	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
 select * from data_dictionary.CHARACTER_SETS
@@ -121,6 +146,10 @@ column_name	column_default
 a	
 b	
 use test;
+show columns from t1;
+Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	FALSE		FALSE	
+b	INTEGER	TRUE		TRUE	
 drop table t1;
 alter database data_dictionary;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
@@ -141,6 +170,15 @@ select 1 from (select 1 from test.t1) a;
 use test;
 drop table t1;
 create temporary table t1(f1 int, index(f1));
+show columns from t1;
+Field	Type	Null	Default	Default is NULL	On Update
+f1	INTEGER	TRUE		TRUE	
+describe t1;
+Field	Type	Null	Default	Default is NULL	On Update
+f1	INTEGER	TRUE		TRUE	
+show indexes from t1;
+Table	Key_name	Seq_in_index	Column_name
+t1	f1	0	f1
 drop table t1;
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
@@ -274,6 +312,16 @@ column_default
 10
 10
 2006-01-01
+show columns from t1;
+Field	Type	Null	Default	Default is NULL	On Update
+f1	VARCHAR	TRUE		TRUE	
+f2	VARCHAR	FALSE		FALSE	
+f3	VARCHAR	TRUE		FALSE	
+f4	VARCHAR	TRUE		TRUE	
+f5	BIGINT	FALSE		FALSE	
+f6	BIGINT	FALSE	10	FALSE	
+f7	DATETIME	FALSE	10	FALSE	
+f8	DATETIME	TRUE	2006-01-01	FALSE	
 drop table t1;
 SET max_heap_table_size = DEFAULT;
 USE test;

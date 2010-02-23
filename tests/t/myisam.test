@@ -63,9 +63,9 @@ drop table t1;
 create TEMPORARY table t1 (a int not null auto_increment, b int not null, primary key (a), index(b)) ENGINE=MYISAM;
 insert into t1 (b) values (1),(2),(2),(2),(2);
 alter table t1 engine=MYISAM;
-#show index from t1;
+show index from t1;
 alter table t1 engine=MyISAM;
-#show index from t1;
+show index from t1;
 drop table t1;
 
 #
@@ -345,7 +345,7 @@ INSERT into t1 values (0, null, 0), (0, null, 1), (0, null, 2), (0, null,3), (1,
 create table t2 (a int not null, b int, c int, key(b), key(c), key(a));
 INSERT into t2 values (1,1,1), (2,2,2);
 alter table t1 ENGINE=MYISAM;
-#show index from t1;
+show index from t1;
 explain select * from t1,t2 where t1.a=t2.a;
 explain select * from t1,t2 force index(a) where t1.a=t2.a;
 explain select * from t1 force index(a),t2 force index(a) where t1.a=t2.a;

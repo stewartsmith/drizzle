@@ -49,6 +49,9 @@ LANG_ID int DEFAULT '0' NOT NULL,
 NAME varchar(80) DEFAULT '' NOT NULL,
 PRIMARY KEY (GROUP_ID,LANG_ID),
 KEY NAME (NAME));
+show table status like "t1";
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	InnoDB	0	DEFAULT	0	0	0	0	0	0	0	0	0	0	utf8_general_ci	0		
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
 show COLUMNS FROM t1;
 Field	Type	Null	Default	Default is NULL	On Update

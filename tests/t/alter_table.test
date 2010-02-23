@@ -39,7 +39,7 @@ LANG_ID int DEFAULT '0' NOT NULL,
 NAME varchar(80) DEFAULT '' NOT NULL,
 PRIMARY KEY (GROUP_ID,LANG_ID),
 KEY NAME (NAME));
-#show table status like "t1";
+show table status like "t1";
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
 --replace_column 8 #
 show COLUMNS FROM t1;
