@@ -201,7 +201,6 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
 
   (void)session;
   (void)table_obj;
-  (void)table_message;
 
   innodb_err= ib_table_schema_create(path+2, &innodb_table_schema, IB_TBL_COMPACT, 0);
 
@@ -237,14 +236,32 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     if (field_err != 0)
       return field_err;
   }
-/*
-  ib_table_schema_add_col(innodb_table_schema, "c1", IB_VARCHAR, IB_COL_NONE, 0, 32);
 
-  ib_table_schema_add_index(innodb_table_schema, "PRIMARY_KEY", &innodb_pkey);
-  ib_index_schema_add_col(innodb_pkey, "c1", 0);
+  for (int indexnr= 0; indexnr < table_message.indexes_size() ; indexnr++)
+  {
+    message::Table::Index *index = table_message.mutable_indexes(indexnr);
 
-  ib_index_schema_set_clustered(innodb_pkey);
-*/
+    ib_idx_sch_t innodb_index;
+
+    ib_table_schema_add_index(innodb_table_schema, index->name().c_str(),
+                              &innodb_index);
+
+    if (index->is_primary())
+      ib_index_schema_set_clustered(innodb_index);
+
+    if (index->is_unique())
+      ib_index_schema_set_unique(innodb_index);
+
+    if (index->type() == message::Table::Index::UNKNOWN_INDEX)
+      index->set_type(message::Table::Index::BTREE);
+
+    for (int partnr= 0; partnr < index->index_part_size(); partnr++)
+    {
+      const message::Table::Index::IndexPart part= index->index_part(partnr);
+      ib_index_schema_add_col(innodb_index, table_message.field(part.fieldnr()).name().c_str(), 0);
+    }
+  }
+
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   ib_schema_lock_exclusive(innodb_schema_transaction);
 
