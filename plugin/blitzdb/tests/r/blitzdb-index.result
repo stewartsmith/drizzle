@@ -537,3 +537,16 @@ d
 e
 delete from t1;
 drop table t1;
+create table t1 (a int, unique index(a)) engine = blitzdb;
+insert into t1 values (1), (2);
+insert into t1 values (1);
+ERROR 23000: Duplicate entry '1' for key 'a'
+insert into t1 values (2);
+ERROR 23000: Duplicate entry '2' for key 'a'
+insert into t1 values (3);
+insert into t1 values (4);
+drop table t1;
+create table t1 (a int, index(a)) engine = blitzdb;
+insert into t1 values (1), (2), (3), (4);
+insert into t1 values (1), (2), (3), (4);
+drop table t1;

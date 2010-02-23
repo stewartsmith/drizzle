@@ -522,14 +522,7 @@ int ha_blitz::index_last(unsigned char *buf) {
 
 int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
                          uint32_t key_len, enum ha_rkey_function find_flag) {
-
-  /* In the future we will not need this condition because all access
-     to the index will be done through index_read_idx(). For now we need
-     it because we're only concerned with making PK work. */
-  if (active_index == table->s->primary_key)
-    return index_read_idx(buf, active_index, key, key_len, find_flag);
-
-  return HA_ERR_UNSUPPORTED;
+  return index_read_idx(buf, active_index, key, key_len, find_flag);
 }
 
 /* This is where the read related index logic lives. It is used by both
@@ -640,13 +633,9 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
     /* TODO: optimize this. */
     rv = share->btrees[curr_key].write_unique(temp_pkbuf, pk_len,
                                               temp_pkbuf, pk_len);
-
     if (rv == HA_ERR_FOUND_DUPP_KEY) {
-      this->errkey_id = curr_key;
-
-      if (share->nkeys > 0)
-        share->blitz_lock.slotted_unlock(lock_id);
-
+      errkey_id = curr_key;
+      share->blitz_lock.slotted_unlock(lock_id);
       return rv;
     }
     curr_key = 1;
@@ -656,7 +645,25 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
      If writing to a certain index fails, we delete the entries in
      the reverse order that we wrote to the tree. */
   while (curr_key < share->nkeys) {
-    /* TODO: write to tree(s) and check for error. */
+    size_t klen = make_index_key(key_buffer, curr_key, drizzle_row);
+
+    if (share->btrees[curr_key].unique) {
+      rv = share->btrees[curr_key].write_unique(key_buffer, klen,
+                                                temp_pkbuf, pk_len);
+      if (rv == HA_ERR_FOUND_DUPP_KEY) {
+        errkey_id = curr_key;
+        share->blitz_lock.slotted_unlock(lock_id);
+        return rv;
+      }
+    } else {
+      rv = share->btrees[curr_key].write(key_buffer, klen,
+                                         temp_pkbuf, pk_len);
+      if (rv != 0) {
+        errkey_id = curr_key;
+        share->blitz_lock.slotted_unlock(lock_id);
+        return rv;
+      }
+    }
     curr_key++;
   }
 
@@ -666,9 +673,6 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   if (share->nkeys > 0)
     share->blitz_lock.slotted_unlock(lock_id);
 
-  /* TODO: Check rv for error. If writing to the dictionary had failed,
-           we must delete all index entries for this row. What we need
-           to do is: rewind_index(const int key_num_to_rewind_from). */
   return rv;
 }
 

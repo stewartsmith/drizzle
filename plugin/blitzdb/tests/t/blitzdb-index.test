@@ -280,3 +280,22 @@ insert into t1 values ('c'), ('a'), ('e'), ('b'), ('d');
 select * from t1;
 delete from t1;
 drop table t1;
+
+# Test UNIQUE index insertion 
+create table t1 (a int, unique index(a)) engine = blitzdb;
+insert into t1 values (1), (2);
+
+--error 1062
+insert into t1 values (1);
+--error 1062
+insert into t1 values (2);
+
+insert into t1 values (3);
+insert into t1 values (4);
+drop table t1;
+
+# Test INDEX insertion
+create table t1 (a int, index(a)) engine = blitzdb;
+insert into t1 values (1), (2), (3), (4);
+insert into t1 values (1), (2), (3), (4);
+drop table t1;

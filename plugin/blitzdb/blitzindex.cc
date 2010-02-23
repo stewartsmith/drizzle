@@ -108,7 +108,7 @@ void BlitzTree::destroy_cursor(void) {
 
 int BlitzTree::write(const char *key, const size_t klen,
                      const char *val, const size_t vlen) {
-  return (tcbdbput(btree, key, klen, val, vlen)) ? 0 : 1;
+  return (tcbdbput(btree, key, klen, val, vlen)) ? 0 : -1;
 }
 
 int BlitzTree::write_unique(const char *key, const size_t klen,
@@ -157,9 +157,15 @@ char *BlitzTree::final_key(int *key_len) {
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
+/* It's possible that the cursor had been unxplicitly moved
+   forward. If so, we obtain the key at the current position
+   and return that. This can happen in delete_key(). */
 char *BlitzTree::next_key(int *key_len) {
-  if (!tcbdbcurnext(bt_cursor))
-    return NULL;
+  if (!cursor_moved) {
+    if (!tcbdbcurnext(bt_cursor))
+      return NULL;
+  } else
+    cursor_moved = false;
 
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
@@ -171,8 +177,16 @@ char *BlitzTree::prev_key(int *key_len) {
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
+int BlitzTree::delete_key(void) {
+  if (!tcbdbcurout(bt_cursor))
+    return -1;
+
+  cursor_moved = true;
+  return  0;
+}
+
 int BlitzTree::delete_all(void) {
-  return (tcbdbvanish(btree)) ? 0 : 1;
+  return (tcbdbvanish(btree)) ? 0 : -1;
 }
 
 uint64_t BlitzTree::records(void) {

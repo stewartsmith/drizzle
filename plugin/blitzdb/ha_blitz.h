@@ -175,14 +175,15 @@ private:
 
 public:
   BlitzTree() : bt_cursor(NULL), keybuf_len(BLITZ_MAX_KEY_LEN), length(0),
-                nparts(0), type(0), unique(false) {}
+                nparts(0), type(0), cursor_moved(false), unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
   BlitzKeyPart *parts; /* Array of Key Part(s) */
   int length;          /* Length of the entire key */
   int nparts;          /* Number of parts in this key */
-  int type;
+  int type;            /* Type of the key */
+  bool cursor_moved;   /* Cursor was unexplicitly moved forward */
   bool unique;         /* Whether this key is unique */
 
   /* BTREE INDEX CREATION RELATED */
@@ -199,6 +200,7 @@ public:
             const size_t vlen);
   int write_unique(const char *key, const size_t klen, const char *val,
                    const size_t vlen);
+  int delete_key(void);
   int delete_all(void);
 
   /* BTREE INDEX READ RELATED */
@@ -334,6 +336,7 @@ public:
   BlitzEngine(const string &name_arg)
     : drizzled::plugin::StorageEngine(name_arg,
                                       drizzled::HTON_FILE_BASED |
+                                      drizzled::HTON_NULL_IN_KEY |
                                       drizzled::HTON_STATS_RECORDS_IS_EXACT |
                                       drizzled::HTON_SKIP_STORE_LOCK) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
