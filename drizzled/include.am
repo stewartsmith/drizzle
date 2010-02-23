@@ -141,11 +141,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/concat.h \
 			      drizzled/function/str/conv.h \
 			      drizzled/function/str/conv_charset.h \
-			      drizzled/function/str/database.h \
 			      drizzled/function/str/elt.h \
 			      drizzled/function/str/export_set.h \
 			      drizzled/function/str/format.h \
-			      drizzled/function/str/hex.h \
 			      drizzled/function/str/insert.h \
 			      drizzled/function/str/left.h \
 			      drizzled/function/str/load_file.h \
@@ -154,15 +152,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/quote.h \
 			      drizzled/function/str/repeat.h \
 			      drizzled/function/str/replace.h \
-			      drizzled/function/str/reverse.h \
 			      drizzled/function/str/right.h \
 			      drizzled/function/str/set_collation.h \
 			      drizzled/function/str/str_conv.h \
 			      drizzled/function/str/strfunc.h \
-			      drizzled/function/str/substr.h \
 			      drizzled/function/str/trim.h \
 			      drizzled/function/str/user.h \
-			      drizzled/function/str/uuid.h \
 			      drizzled/function/time/curdate.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
@@ -540,11 +535,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/concat.cc \
 			   drizzled/function/str/conv.cc \
 			   drizzled/function/str/conv_charset.cc \
-			   drizzled/function/str/database.cc \
 			   drizzled/function/str/elt.cc \
 			   drizzled/function/str/export_set.cc \
 			   drizzled/function/str/format.cc \
-			   drizzled/function/str/hex.cc \
 			   drizzled/function/str/insert.cc \
 			   drizzled/function/str/left.cc \
 			   drizzled/function/str/load_file.cc \
@@ -553,15 +546,12 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/quote.cc \
 			   drizzled/function/str/repeat.cc \
 			   drizzled/function/str/replace.cc \
-			   drizzled/function/str/reverse.cc \
 			   drizzled/function/str/right.cc \
 			   drizzled/function/str/set_collation.cc \
 			   drizzled/function/str/str_conv.cc \
 			   drizzled/function/str/strfunc.cc \
-			   drizzled/function/str/substr.cc \
 			   drizzled/function/str/trim.cc \
 			   drizzled/function/str/user.cc \
-			   drizzled/function/str/uuid.cc \
 			   drizzled/function/time/curdate.cc \
 			   drizzled/function/time/date.cc \
 			   drizzled/function/time/date_add_interval.cc \

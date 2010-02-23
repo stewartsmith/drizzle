@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2010 Stewart Smith
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,16 +20,42 @@
 
 #include "config.h"
 
-#include <drizzled/function/str/substr.h>
-
+#include <drizzled/plugin/function.h>
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
-namespace drizzled
+#include <drizzled/function/str/strfunc.h>
+
+class SubstrFunction :public Item_str_func
 {
+  String tmp_value;
+public:
+  SubstrFunction() :Item_str_func() {}
 
-String *Item_func_substr::val_str(String *str)
+  String *val_str(String *);
+  void fix_length_and_dec();
+  const char *func_name() const { return "substr"; }
+
+  bool check_argument_count(int n) { return n == 2 || n == 3; }
+};
+
+
+class SubstrIndexFunction :public Item_str_func
+{
+  String tmp_value;
+public:
+  SubstrIndexFunction() :Item_str_func() {}
+
+  String *val_str(String *);
+  void fix_length_and_dec();
+  const char *func_name() const { return "substring_index"; }
+
+  bool check_argument_count(int n) { return n == 3; }
+};
+
+String *SubstrFunction::val_str(String *str)
 {
   assert(fixed == 1);
   String *res  = args[0]->val_str(str);
@@ -74,7 +101,7 @@ String *Item_func_substr::val_str(String *str)
   return &tmp_value;
 }
 
-void Item_func_substr::fix_length_and_dec()
+void SubstrFunction::fix_length_and_dec()
 {
   max_length=args[0]->max_length;
 
@@ -99,7 +126,7 @@ void Item_func_substr::fix_length_and_dec()
 }
 
 
-void Item_func_substr_index::fix_length_and_dec()
+void SubstrIndexFunction::fix_length_and_dec()
 {
   max_length= args[0]->max_length;
 
@@ -108,7 +135,7 @@ void Item_func_substr_index::fix_length_and_dec()
 }
 
 
-String *Item_func_substr_index::val_str(String *str)
+String *SubstrIndexFunction::val_str(String *str)
 {
   assert(fixed == 1);
   String *res= args[0]->val_str(str);
@@ -228,4 +255,38 @@ String *Item_func_substr_index::val_str(String *str)
   return (&tmp_value);
 }
 
-} /* namespace drizzled */
+plugin::Create_function<SubstrFunction> *substr_function= NULL;
+plugin::Create_function<SubstrIndexFunction> *substr_index_function= NULL;
+
+static int initialize(drizzled::plugin::Registry &registry)
+{
+  substr_function= new plugin::Create_function<SubstrFunction>("substr");
+  substr_index_function= new plugin::Create_function<SubstrIndexFunction>("substring_index");
+  registry.add(substr_function);
+  registry.add(substr_index_function);
+  return 0;
+}
+
+static int finalize(drizzled::plugin::Registry &registry)
+{
+   registry.remove(substr_function);
+   registry.remove(substr_index_function);
+   delete substr_function;
+   delete substr_index_function;
+   return 0;
+}
+
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "substr_functions",
+  "1.0",
+  "Stewart Smith",
+  "SUBSTR and SUBSTR",
+  PLUGIN_LICENSE_GPL,
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
+  NULL,   /* system variables */
+  NULL    /* config options */
+}
+DRIZZLE_DECLARE_PLUGIN_END;
