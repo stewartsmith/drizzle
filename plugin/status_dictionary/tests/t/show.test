@@ -5,10 +5,12 @@ use data_dictionary;
 
 # Test show commands.
 
---replace_column 1 # 2 #
+--disable_result_log
 SHOW STATUS;
+--enable_result_log
 
---replace_column 1 # 2 #
+--disable_result_log
 SHOW VARIABLES;
+--enable_result_log
 
 DROP SCHEMA data_dictionary;

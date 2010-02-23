@@ -47,6 +47,7 @@
 #include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
@@ -840,7 +841,7 @@ extern "C" void handle_segfault(int sig)
     fprintf(stderr, _("Trying to get some variables.\n"
                       "Some pointers may be invalid and cause the "
                       "dump to abort...\n"));
-    safe_print_str("session->query", session->query, 1024);
+    safe_print_str("session->query", session->query.c_str(), 1024);
     fprintf(stderr, "session->thread_id=%"PRIu32"\n", (uint32_t) session->thread_id);
     fprintf(stderr, "session->killed=%s\n", kreason);
   }
@@ -1378,7 +1379,7 @@ static int init_server_components(plugin::Registry &plugins)
     }
   }
 
-  if (plugin::StorageEngine::recover(0))
+  if (plugin::XaStorageEngine::recoverAllXids(0))
   {
     unireg_abort(1);
   }

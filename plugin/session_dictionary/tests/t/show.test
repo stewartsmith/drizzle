@@ -6,7 +6,8 @@ use data_dictionary;
 #
 # test that SHOW PROCESSLIST works correctly
 #
---replace_column 1 # 2 # 3 # 6 # 7 #
+--disable_result_log
 show processlist;
+--enable_result_log
 
 drop schema data_dictionary;

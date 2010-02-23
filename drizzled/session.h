@@ -25,7 +25,7 @@
 
 #include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
-#include <drizzled/ha_trx_info.h>
+#include "drizzled/resource_context.h"
 #include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
@@ -34,6 +34,7 @@
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
+#include "drizzled/transaction_context.h"
 
 #include <netdb.h>
 #include <map>
@@ -320,7 +321,7 @@ struct Ha_data
     this should not be used.
     @sa trans_register_ha()
   */
-  Ha_trx_info ha_info[2];
+  drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
 };
@@ -405,30 +406,8 @@ public:
    */
   uint32_t id;
   LEX *lex; /**< parse tree descriptor */
-  /**
-    Points to the query associated with this statement. It's const, but
-    we need to declare it char * because all table handlers are written
-    in C and need to point to it.
-
-    Note that (A) if we set query = NULL, we must at the same time set
-    query_length = 0, and protect the whole operation with the
-    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
-    non-NULL value if its previous value is NULL. We do not need to protect
-    operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that session->query cannot change at the moment, one should print
-    session->query like this:
-      (1) reserve the LOCK_thread_count mutex;
-      (2) check if session->query is NULL;
-      (3) if not NULL, then print at most session->query_length characters from
-      it. We will see the query_length field as either 0, or the right value
-      for it.
-    Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way.
-    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
-    STATUS.
-  */
-  char *query;
-  uint32_t query_length; /**< current query length */
+  /** query associated with this statement */
+  std::string query;
 
   /**
     Name of the current (default) database.
@@ -539,20 +518,15 @@ private:
   query_id_t warn_query_id;
 public:
   void **getEngineData(const plugin::StorageEngine *engine);
-  Ha_trx_info *getEngineInfo(const plugin::StorageEngine *engine,
-                             size_t index= 0);
+  ResourceContext *getResourceContext(const plugin::StorageEngine *engine,
+                                      size_t index= 0);
 
   struct st_transactions {
-    std::deque<drizzled::NamedSavepoint> savepoints;
-    Session_TRANS all;			// Trans since BEGIN WORK
-    Session_TRANS stmt;			// Trans for current statement
+    std::deque<NamedSavepoint> savepoints;
+    TransactionContext all; ///< Trans since BEGIN WORK
+    TransactionContext stmt; ///< Trans for current statement
     XID_STATE xid_state;
 
-    /*
-       Tables changed in transaction (that must be invalidated in query cache).
-       List contain only transactional tables, that not invalidated in query
-       cache (instead of full list of changed in transaction tables).
-    */
     void cleanup()
     {
       savepoints.clear();
@@ -564,6 +538,7 @@ public:
       xid_state()
     { }
   } transaction;
+
   Field *dup_field;
   sigset_t signals;
 
@@ -798,7 +773,7 @@ public:
   }
 
   /** Returns the current query text */
-  inline const char *getQueryString()  const
+  inline const std::string &getQueryString()  const
   {
     return query;
   }
@@ -806,8 +781,8 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    if (query != NULL)
-      return strlen(query);
+    if (! query.empty())
+      return query.length();
     else
       return 0;
   }

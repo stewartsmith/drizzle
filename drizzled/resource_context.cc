@@ -17,36 +17,50 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_SUBSTR_H
-#define DRIZZLED_FUNCTION_STR_SUBSTR_H
+#include "config.h"
+#include "drizzled/resource_context.h"
 
-#include <drizzled/function/str/strfunc.h>
+#include <cassert>
+
+using namespace std;
 
 namespace drizzled
 {
 
-class Item_func_substr :public Item_str_func
+/** Clear, prepare for reuse. */
+void ResourceContext::reset()
 {
-  String tmp_value;
-public:
-  Item_func_substr(Item *a,Item *b) :Item_str_func(a,b) {}
-  Item_func_substr(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "substr"; }
-};
+  resource= NULL;
+  modified_data= false;
+}
 
-
-class Item_func_substr_index :public Item_str_func
+void ResourceContext::markModifiedData()
 {
-  String tmp_value;
-public:
-  Item_func_substr_index(Item *a,Item *b,Item *c) :Item_str_func(a,b,c) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "substring_index"; }
-};
+  assert(isStarted());
+  modified_data= true;
+}
+
+bool ResourceContext::hasModifiedData() const
+{
+  assert(isStarted());
+  return modified_data;
+}
+
+bool ResourceContext::isStarted() const
+{
+  return resource != NULL;
+}
+
+void ResourceContext::coalesceWith(const ResourceContext *stmt_ctx)
+{
+  /*
+    Must be called only after the transaction has been started.
+    Can be called many times, e.g. when we have many
+    read-write statements in a transaction.
+  */
+  assert(isStarted());
+  if (stmt_ctx->hasModifiedData())
+    markModifiedData();
+}
 
 } /* namespace drizzled */
-
-#endif /* DRIZZLED_FUNCTION_STR_SUBSTR_H */

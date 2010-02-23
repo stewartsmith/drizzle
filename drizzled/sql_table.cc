@@ -341,10 +341,10 @@ size_t build_tmptable_filename(char *buff, size_t bufflen)
 */
 
 void write_bin_log(Session *session,
-                   char const *query, size_t query_length)
+                   char const *query)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.rawStatement(session, query, query_length);
+  replication_services.rawStatement(session, query);
 }
 
 
@@ -368,7 +368,7 @@ void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_n
 
   built_query.append(table_name);
   built_query.append("`");
-  replication_services.rawStatement(session, built_query.c_str(), built_query.length());
+  replication_services.rawStatement(session, built_query);
 }
 
 /*
@@ -1708,7 +1708,7 @@ bool mysql_create_table_no_lock(Session *session,
     Otherwise, the statement shall be binlogged.
    */
   if (not internal_tmp_table && not lex_identified_temp_table)
-    write_bin_log(session, session->query, session->query_length);
+    write_bin_log(session, session->query.c_str());
   error= false;
 unlock_and_end:
   pthread_mutex_unlock(&LOCK_open);
@@ -2433,10 +2433,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         int result= store_create_info(table, &query, is_if_not_exists);
 
         assert(result == 0); // store_create_info() always return 0
-        write_bin_log(session, query.ptr(), query.length());
+        write_bin_log(session, query.ptr());
       }
       else                                      // Case 1
-        write_bin_log(session, session->query, session->query_length);
+        write_bin_log(session, session->query.c_str());
     }
   }
 

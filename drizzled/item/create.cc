@@ -31,15 +31,12 @@
 #include <drizzled/function/str/elt.h>
 #include <drizzled/function/str/export_set.h>
 #include <drizzled/function/str/format.h>
-#include <drizzled/function/str/hex.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/function/str/make_set.h>
 #include <drizzled/function/str/pad.h>
 #include <drizzled/function/str/repeat.h>
 #include <drizzled/function/str/str_conv.h>
-#include <drizzled/function/str/substr.h>
 #include <drizzled/function/str/trim.h>
-#include <drizzled/function/str/uuid.h>
 
 #include <drizzled/function/time/date_format.h>
 #include <drizzled/function/time/dayname.h>
@@ -708,21 +705,6 @@ protected:
 };
 
 
-class Create_func_hex : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_hex s_singleton;
-
-protected:
-  Create_func_hex() {}
-  virtual ~Create_func_hex() {}
-};
-
-
 class Create_func_ifnull : public Create_func_arg2
 {
 public:
@@ -1277,21 +1259,6 @@ protected:
 };
 
 
-class Create_func_substr_index : public Create_func_arg3
-{
-public:
-  using Create_func_arg3::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2, Item *arg3);
-
-  static Create_func_substr_index s_singleton;
-
-protected:
-  Create_func_substr_index() {}
-  virtual ~Create_func_substr_index() {}
-};
-
-
 class Create_func_tan : public Create_func_arg1
 {
 public:
@@ -1367,21 +1334,6 @@ protected:
 };
 
 
-class Create_func_unhex : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_unhex s_singleton;
-
-protected:
-  Create_func_unhex() {}
-  virtual ~Create_func_unhex() {}
-};
-
-
 class Create_func_unix_timestamp : public Create_native_func
 {
 public:
@@ -1392,21 +1344,6 @@ public:
 protected:
   Create_func_unix_timestamp() {}
   virtual ~Create_func_unix_timestamp() {}
-};
-
-
-class Create_func_uuid : public Create_func_arg0
-{
-public:
-  using Create_func_arg0::create;
-
-  virtual Item *create(Session *session);
-
-  static Create_func_uuid s_singleton;
-
-protected:
-  Create_func_uuid() {}
-  virtual ~Create_func_uuid() {}
 };
 
 
@@ -2041,16 +1978,6 @@ Create_func_greatest::create_native(Session *session, LEX_STRING name,
   return new (session->mem_root) Item_func_max(*item_list);
 }
 
-
-Create_func_hex Create_func_hex::s_singleton;
-
-Item*
-Create_func_hex::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_hex(arg1);
-}
-
-
 Create_func_ifnull Create_func_ifnull::s_singleton;
 
 Item*
@@ -2572,14 +2499,6 @@ Create_func_strcmp::create(Session *session, Item *arg1, Item *arg2)
 }
 
 
-Create_func_substr_index Create_func_substr_index::s_singleton;
-
-Item*
-Create_func_substr_index::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (session->mem_root) Item_func_substr_index(arg1, arg2, arg3);
-}
-
 Create_func_tan Create_func_tan::s_singleton;
 
 Item*
@@ -2614,16 +2533,6 @@ Create_func_ucase::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_ucase(arg1);
 }
 
-
-Create_func_unhex Create_func_unhex::s_singleton;
-
-Item*
-Create_func_unhex::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_unhex(arg1);
-}
-
-
 Create_func_unix_timestamp Create_func_unix_timestamp::s_singleton;
 
 Item*
@@ -2656,15 +2565,6 @@ Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
   }
 
   return func;
-}
-
-
-Create_func_uuid Create_func_uuid::s_singleton;
-
-Item*
-Create_func_uuid::create(Session *session)
-{
-  return new (session->mem_root) Item_func_uuid();
 }
 
 
@@ -2725,7 +2625,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("FROM_DAYS") }, BUILDER(Create_func_from_days)},
   { { C_STRING_WITH_LEN("FROM_UNIXTIME") }, BUILDER(Create_func_from_unixtime)},
   { { C_STRING_WITH_LEN("GREATEST") }, BUILDER(Create_func_greatest)},
-  { { C_STRING_WITH_LEN("HEX") }, BUILDER(Create_func_hex)},
   { { C_STRING_WITH_LEN("IFNULL") }, BUILDER(Create_func_ifnull)},
   { { C_STRING_WITH_LEN("INSTR") }, BUILDER(Create_func_instr)},
   { { C_STRING_WITH_LEN("ISNULL") }, BUILDER(Create_func_isnull)},
@@ -2765,15 +2664,12 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
   { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
-  { { C_STRING_WITH_LEN("SUBSTRING_INDEX") }, BUILDER(Create_func_substr_index)},
   { { C_STRING_WITH_LEN("TAN") }, BUILDER(Create_func_tan)},
   { { C_STRING_WITH_LEN("TIME_FORMAT") }, BUILDER(Create_func_time_format)},
   { { C_STRING_WITH_LEN("TO_DAYS") }, BUILDER(Create_func_to_days)},
   { { C_STRING_WITH_LEN("UCASE") }, BUILDER(Create_func_ucase)},
-  { { C_STRING_WITH_LEN("UNHEX") }, BUILDER(Create_func_unhex)},
   { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
   { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
-  { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},
   { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
 
   { {0, 0}, NULL}

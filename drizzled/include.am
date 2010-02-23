@@ -141,11 +141,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/concat.h \
 			      drizzled/function/str/conv.h \
 			      drizzled/function/str/conv_charset.h \
-			      drizzled/function/str/database.h \
 			      drizzled/function/str/elt.h \
 			      drizzled/function/str/export_set.h \
 			      drizzled/function/str/format.h \
-			      drizzled/function/str/hex.h \
 			      drizzled/function/str/insert.h \
 			      drizzled/function/str/left.h \
 			      drizzled/function/str/load_file.h \
@@ -154,15 +152,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/quote.h \
 			      drizzled/function/str/repeat.h \
 			      drizzled/function/str/replace.h \
-			      drizzled/function/str/reverse.h \
 			      drizzled/function/str/right.h \
 			      drizzled/function/str/set_collation.h \
 			      drizzled/function/str/str_conv.h \
 			      drizzled/function/str/strfunc.h \
-			      drizzled/function/str/substr.h \
 			      drizzled/function/str/trim.h \
 			      drizzled/function/str/user.h \
-			      drizzled/function/str/uuid.h \
 			      drizzled/function/time/curdate.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
@@ -198,7 +193,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
-			      drizzled/ha_trx_info.h \
 			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
 			      drizzled/hash.h \
@@ -313,6 +307,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/transaction_applier.h \
 			      drizzled/plugin/transaction_reader.h \
 			      drizzled/plugin/transaction_replicator.h \
+			      drizzled/plugin/transactional_storage_engine.h \
+			      drizzled/plugin/xa_storage_engine.h \
 			      drizzled/plugin/version.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/probes.h \
@@ -320,6 +316,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
+			      drizzled/resource_context.h \
 			      drizzled/security_context.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
@@ -411,6 +408,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/time_functions.h \
 			      drizzled/tmp_table_param.h \
 			      drizzled/transaction_services.h \
+			      drizzled/transaction_context.h \
 			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
@@ -536,11 +534,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/concat.cc \
 			   drizzled/function/str/conv.cc \
 			   drizzled/function/str/conv_charset.cc \
-			   drizzled/function/str/database.cc \
 			   drizzled/function/str/elt.cc \
 			   drizzled/function/str/export_set.cc \
 			   drizzled/function/str/format.cc \
-			   drizzled/function/str/hex.cc \
 			   drizzled/function/str/insert.cc \
 			   drizzled/function/str/left.cc \
 			   drizzled/function/str/load_file.cc \
@@ -549,15 +545,12 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/quote.cc \
 			   drizzled/function/str/repeat.cc \
 			   drizzled/function/str/replace.cc \
-			   drizzled/function/str/reverse.cc \
 			   drizzled/function/str/right.cc \
 			   drizzled/function/str/set_collation.cc \
 			   drizzled/function/str/str_conv.cc \
 			   drizzled/function/str/strfunc.cc \
-			   drizzled/function/str/substr.cc \
 			   drizzled/function/str/trim.cc \
 			   drizzled/function/str/user.cc \
-			   drizzled/function/str/uuid.cc \
 			   drizzled/function/time/curdate.cc \
 			   drizzled/function/time/date.cc \
 			   drizzled/function/time/date_add_interval.cc \
@@ -589,7 +582,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/units.cc \
 			   drizzled/function/user_var_as_out_param.cc \
 			   drizzled/ha_commands.cc \
-			   drizzled/ha_trx_info.cc \
 			   drizzled/hybrid_type_traits.cc \
 			   drizzled/hybrid_type_traits_decimal.cc \
 			   drizzled/hybrid_type_traits_integer.cc \
@@ -669,9 +661,12 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/table_function.cc \
 			   drizzled/plugin/transaction_applier.cc \
 			   drizzled/plugin/transaction_replicator.cc \
+			   drizzled/plugin/transactional_storage_engine.cc \
+			   drizzled/plugin/xa_storage_engine.cc \
 			   drizzled/query_id.cc \
 			   drizzled/records.cc \
 			   drizzled/replication_services.cc \
+			   drizzled/resource_context.cc \
 			   drizzled/session.cc \
 			   drizzled/session_list.cc \
 			   drizzled/set_var.cc \

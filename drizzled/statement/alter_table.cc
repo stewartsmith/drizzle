@@ -356,7 +356,7 @@ static bool mysql_prepare_alter_table(Session *session,
       */
       if (alter_info->build_method == HA_BUILD_ONLINE)
       {
-        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->query);
+        my_error(ER_NOT_SUPPORTED_YET, MYF(0), session->query.c_str());
         goto err;
       }
       alter_info->build_method= HA_BUILD_OFFLINE;
@@ -574,7 +574,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     error=1;
   if (error)
     goto err;
-  write_bin_log(session, session->query, session->query_length);
+  write_bin_log(session, session->query.c_str());
 
 err:
   (void) transaction_services.ha_autocommit_or_rollback(session, error);
@@ -950,7 +950,7 @@ bool alter_table(Session *session,
 
     if (error == 0)
     {
-      write_bin_log(session, session->query, session->query_length);
+      write_bin_log(session, session->query.c_str());
       session->my_ok();
     }
     else if (error > 0)
@@ -1151,7 +1151,7 @@ bool alter_table(Session *session,
 
   session->set_proc_info("end");
 
-  write_bin_log(session, session->query, session->query_length);
+  write_bin_log(session, session->query.c_str());
   table_list->table= NULL;
 
 end_temporary:

@@ -28,6 +28,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
+#include "drizzled/plugin/transactional_storage_engine.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -3304,7 +3305,7 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time
-  plugin::StorageEngine::releaseTemporaryLatches(session);
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   if (cursor)
   {
@@ -3348,7 +3349,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   }
 
   // Release latches since this can take a long time
-  plugin::StorageEngine::releaseTemporaryLatches(session);
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   new_table= *table;
   share= *table->s;

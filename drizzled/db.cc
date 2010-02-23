@@ -280,7 +280,7 @@ bool mysql_create_db(Session *session, const char *db, message::Schema *schema_m
   else if (error_erno)
     error= true;
 
-  replication_services.rawStatement(session, session->query, session->query_length);
+  replication_services.rawStatement(session, session->query);
   session->my_ok(result);
 
 exit:
@@ -334,7 +334,7 @@ bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_me
     goto exit;
   }
 
-  replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
+  replication_services.rawStatement(session, session->getQueryString());
   session->my_ok(result);
 
   pthread_mutex_unlock(&LOCK_create_db);
@@ -427,16 +427,10 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   }
   if (deleted >= 0)
   {
-    const char *query;
-    uint32_t query_length;
-
-    assert(session->query);
-
-    query= session->query;
-    query_length= session->query_length;
+    assert(! session->query.empty());
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
+    replication_services.rawStatement(session, session->getQueryString());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -464,7 +458,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
-        replication_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
+        replication_services.rawStatement(session, query);
         query_pos= query_data_start;
       }
 
@@ -477,7 +471,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_create_db */
-      replication_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
+      replication_services.rawStatement(session, query);
     }
   }
 

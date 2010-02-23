@@ -115,7 +115,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 {
   bool res;
   register Select_Lex *select_lex= &lex->select_lex;
-  DRIZZLE_SELECT_START(session->query);
+  DRIZZLE_SELECT_START(session->query.c_str());
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
