@@ -241,20 +241,19 @@ private:
   bool thread_locked;        /* Whether the thread is locked */
   uint32_t sql_command_type; /* Type of SQL command to process */
 
-  /* KEY GENERATION SPECIFIC VARIABLES */
-  char *key_buffer;          /* Buffer for key generation */
-  size_t key_buffer_len;     /* Key Buffer size */
-  size_t generated_key_len;  /* Length of the generated key */
+  /* RECORDED KEY IN TABLE OR INDEX READ */
+  char *held_key;            /* Points to held_key_buf or an allocated key */
+  char *held_key_buf;        /* Buffer used to copy an unallocated key */
+  int held_key_len;          /* Length of the key being held */
 
-  /* TABLE SCANNER SPECIFIC VARIABLES */
+  /* TABLE SCANNER VARIABLES */
   char *current_key;         /* Current key in table scan */
   const char *current_row;   /* Current row in table scan */
   int current_key_len;       /* Length of the current key */
   int current_row_len;       /* Length of the current row */
-  char *updateable_key;      /* Used in table scan */
-  int updateable_key_len;    /* Length of updateable key */
 
-  /* ROW PROCESSING SPECIFIC VARIABLES */
+  /* ROW PROCESSING VARIABLES */
+  char *key_buffer;                               /* Key generation buffer */
   unsigned char pack_buffer[BLITZ_MAX_ROW_STACK]; /* Pack Buffer */
   unsigned char *secondary_row_buffer;            /* For big rows */
   size_t secondary_row_buffer_size;               /* Reserved buffer size */
@@ -318,6 +317,7 @@ public:
   size_t btree_key_length(const char *key, const int key_num);
   char *native_to_blitz_key(const unsigned char *native_key,
                             const int key_num, int *return_key_length);
+  void keep_track_of_key(const char *key, const int klen);
 
   /* ROW RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
