@@ -1,7 +1,5 @@
 # Drizzle's data dictionary.
 
-CREATE SCHEMA data_dictionary;
-
 use data_dictionary;
 
 show create table CHARACTER_SETS ;
@@ -34,6 +32,3 @@ where CHARACTER_SET_NAME like 'latin1%';
 --replace_column 5 #
 select * from data_dictionary.COLLATIONS
 where COLLATION_NAME like 'latin1%';
-
-
-DROP SCHEMA data_dictionary;

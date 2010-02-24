@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 SELECT count(*) FROM columns;
 count(*)
@@ -271,4 +270,3 @@ select * from data_dictionary.LOCAL_TABLE_NAMES;
 TABLE_NAME
 a
 DROP SCHEMA A;
-DROP SCHEMA data_dictionary;
