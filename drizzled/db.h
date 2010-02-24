@@ -30,7 +30,7 @@ namespace drizzled {
 namespace message { class Schema; }
 
 bool mysql_create_db(Session *session, message::Schema &schema_message, bool is_if_not_exists);
-bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_message);
+bool mysql_alter_db(Session *session, const message::Schema &schema_message);
 bool mysql_rm_db(Session *session, char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
 

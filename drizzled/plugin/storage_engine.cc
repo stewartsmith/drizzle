@@ -834,6 +834,35 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
   return true;
 }
 
+class AlterSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  const drizzled::message::Schema &schema_message;
+
+public:
+
+  AlterSchema(const drizzled::message::Schema &arg) :
+    schema_message(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    (void)engine->doAlterSchema(schema_message);
+  }
+};
+
+bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
+{
+  // Add hook here for engines to register schema.
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           AlterSchema(schema_message));
+
+  return true;
+}
+
+
 void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 {
   char tmp_path[FN_REFLEN];

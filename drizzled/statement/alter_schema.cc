@@ -49,9 +49,11 @@ bool statement::AlterSchema::execute()
     return true;
   }
 
-  bool res= mysql_alter_db(session, db->str, &schema_message);
+  schema_message.set_name(db->str);
 
-  return res;
+  bool res= mysql_alter_db(session, &schema_message);
+
+  return not res;
 }
 
 } /* namespace drizzled */

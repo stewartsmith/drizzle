@@ -63,6 +63,8 @@ public:
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
 
+  bool doAlterSchema(const drizzled::message::Schema &schema_message);
+
   const char **bas_ext() const 
   {
     return schema_exts;

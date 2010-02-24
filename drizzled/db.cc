@@ -177,13 +177,9 @@ bool mysql_create_db(Session *session, message::Schema &schema_message, bool is_
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_message)
+bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  long result=1;
-  int error= 0;
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -197,34 +193,24 @@ bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_me
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((error=wait_if_global_read_lock(session,0,1)))
-    goto exit;
-
-  assert(schema_message);
-
-  schema_message->set_name(db);
+  if ((wait_if_global_read_lock(session, 0, 1)))
+    return false;
 
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
+  bool success= plugin::StorageEngine::alterSchema(schema_message);
 
-  error= write_schema_file(path, *schema_message);
-  if (error && error != EEXIST)
+  if (success)
   {
-    /* TODO: find some witty way of getting back an error message */
-    pthread_mutex_unlock(&LOCK_create_db);
-    goto exit;
+    replication_services.rawStatement(session, session->getQueryString());
+    session->my_ok(1);
   }
-
-  replication_services.rawStatement(session, session->getQueryString());
-  session->my_ok(result);
 
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit:
-  return error ? true : false;
+
+  return success;
 }
 
 

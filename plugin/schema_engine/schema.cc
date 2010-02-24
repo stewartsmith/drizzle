@@ -109,3 +109,20 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
   return true;
 }
+
+bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
+{
+  char	 path[FN_REFLEN+16];
+  uint32_t path_len;
+  int error_erno;
+  path_len= drizzled::build_table_filename(path, sizeof(path), schema_message.name().c_str(), "", false);
+  path[path_len-1]= 0;                    // remove last '/' from path
+
+  error_erno= write_schema_file(path, schema_message);
+  if (error_erno && error_erno != EEXIST)
+  {
+    return false;
+  }
+
+  return true;
+}

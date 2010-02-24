@@ -348,6 +348,7 @@ public:
   static bool doesSchemaExist(const std::string &schema_name);
   static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
   static bool createSchema(const drizzled::message::Schema &schema_message);
+  static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
   virtual void doGetSchemaNames(std::set<std::string>& set_of_names)
@@ -362,6 +363,9 @@ public:
   }
 
   virtual bool doCreateSchema(const drizzled::message::Schema &schema_message)
+  { (void)schema_message; return false; }
+
+  virtual bool doAlterSchema(const drizzled::message::Schema &schema_message)
   { (void)schema_message; return false; }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
