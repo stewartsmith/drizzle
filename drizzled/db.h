@@ -33,8 +33,6 @@ bool mysql_create_db(Session *session, const char *db, message::Schema *schema_m
 bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_message);
 bool mysql_rm_db(Session *session, char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
-
-bool check_db_dir_existence(const char *db_name);
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_DB_H */

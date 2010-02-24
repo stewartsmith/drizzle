@@ -749,7 +749,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     return true;
   }
 
-  if (check_db_dir_existence(new_db_file_name.str))
+  if (not plugin::StorageEngine::doesSchemaExist(new_db_file_name.str))
   {
     if (force_switch)
     {
@@ -788,34 +788,6 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   free(new_db_file_name.str);
 
   return false;
-}
-
-/*
-  Check if there is directory for the database name.
-
-  SYNOPSIS
-    check_db_dir_existence()
-    db_name   database name
-
-  RETURN VALUES
-    false   There is directory for the specified database name.
-    true    The directory does not exist.
-*/
-
-bool check_db_dir_existence(const char *db_name)
-{
-  char db_dir_path[FN_REFLEN];
-  uint32_t db_dir_path_len;
-
-  db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", false);
-
-  if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
-    db_dir_path[db_dir_path_len - 1]= 0;
-
-  /* Check access. */
-
-  return access(db_dir_path, F_OK);
 }
 
 /**
