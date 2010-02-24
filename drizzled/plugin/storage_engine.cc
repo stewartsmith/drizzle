@@ -814,7 +814,11 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 
-  if (db.compare("information_schema"))
+  if (not db.compare("information_schema"))
+  { }
+  else if (not db.compare("data_dictionary"))
+  { }
+  else
   {
     if (directory.fail())
     {

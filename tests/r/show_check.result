@@ -87,6 +87,7 @@ show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database	8	256	18	N	1	0	45
 Database
+data_dictionary
 information_schema
 mysql
 test

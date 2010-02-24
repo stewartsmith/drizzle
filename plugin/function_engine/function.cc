@@ -80,6 +80,27 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
 void Function::doGetSchemaNames(std::set<std::string>& set_of_names)
 {
   set_of_names.insert("information_schema"); // special cases suck
+  set_of_names.insert("data_dictionary"); // special cases suck
+}
+
+bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Schema &schema_message)
+{
+  if (not schema_name.compare("information_schema"))
+  {
+    schema_message.set_name("information_schema");
+    schema_message.set_collation("utf8_general_ci");
+  }
+  else if (not schema_name.compare("data_dictionary"))
+  {
+    schema_message.set_name("data_dictionary");
+    schema_message.set_collation("utf8_general_ci");
+  }
+  else
+  {
+    return false;
+  }
+
+  return true;
 }
 
 
