@@ -33,21 +33,21 @@ namespace drizzled
 
 bool statement::CreateSchema::execute()
 {
-  if (! session->endActiveTransaction())
+  if (not session->endActiveTransaction())
   {
     return true;
   }
-  char *alias= session->strmake(session->lex->name.str,
-                                session->lex->name.length);
-  if (! alias ||
-      check_db_name(&session->lex->name))
+
+  if (check_db_name(&session->lex->name))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;
   }
 
-  bool res= mysql_create_db(session, session->lex->name.str, &schema_message, is_if_not_exists);
-  return res;
+  schema_message.set_name(session->lex->name.str);
+
+  bool res= mysql_create_db(session, schema_message, is_if_not_exists);
+  return not res;
 }
 
 } /* namespace drizzled */

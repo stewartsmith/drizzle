@@ -62,7 +62,7 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 /* path is path to database, not schema file */
-static int write_schema_file(const char *path, const message::Schema &db)
+int write_schema_file(const char *path, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
@@ -116,14 +116,10 @@ static int write_schema_file(const char *path, const message::Schema &db)
 
 */
 
-bool mysql_create_db(Session *session, const char *db, message::Schema *schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, message::Schema &schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  long result= 1;
-  int error_erno;
   bool error= false;
-
-  schema_message->set_name(db);
 
   /*
     Do not create database if another thread is holding read lock.
@@ -139,60 +135,42 @@ bool mysql_create_db(Session *session, const char *db, message::Schema *schema_m
   */
   if (wait_if_global_read_lock(session, 0, 1))
   {
-    error= true;
-    goto exit2;
+    return false;
   }
 
+  // @todo push this lock down into the engine
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* check directory */
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // remove last '/' from path
-
-  if (mkdir(path, 0777) == -1)
+  // Check to see if it exists already.
+  if (plugin::StorageEngine::doesSchemaExist(schema_message.name()))
   {
-    if (errno == EEXIST)
+    if (not is_if_not_exists)
     {
-      if (! is_if_not_exists)
-      {
-	my_error(ER_DB_CREATE_EXISTS, MYF(0), path);
-	error= true;
-	goto exit;
-      }
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
-                          path);
-      session->my_ok();
-      error= false;
-      goto exit;
-    }
-
-    my_error(ER_CANT_CREATE_DB, MYF(0), path, errno);
-    error= true;
-    goto exit;
-  }
-
-  error_erno= write_schema_file(path, *schema_message);
-  if (error_erno && error_erno != EEXIST)
-  {
-    if (rmdir(path) >= 0)
-    {
+      my_error(ER_DB_CREATE_EXISTS, MYF(0), schema_message.name().c_str());
       error= true;
-      goto exit;
+    }
+    else
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                          ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
+                          schema_message.name().c_str());
+      session->my_ok();
     }
   }
-  else if (error_erno)
+  else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
+  {
+    my_error(ER_CANT_CREATE_DB, MYF(0), schema_message.name().c_str(), errno);
     error= true;
+  }
+  else // Created !
+  {
+    replication_services.rawStatement(session, session->query);
+    session->my_ok(1);
+  }
 
-  replication_services.rawStatement(session, session->query);
-  session->my_ok(result);
-
-exit:
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit2:
+
   return error;
 }
 

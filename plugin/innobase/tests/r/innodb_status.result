@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 select count(*) from data_dictionary.INNODB_STATUS ;
 count(*)
@@ -9,4 +8,3 @@ INNODB_STATUS	CREATE TABLE `innodb_status` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
-DROP SCHEMA data_dictionary;

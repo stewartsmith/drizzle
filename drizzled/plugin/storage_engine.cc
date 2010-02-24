@@ -806,6 +806,34 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(const std::string &schema_
   return default_charset_info;
 }
 
+class CreateSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  const drizzled::message::Schema &schema_message;
+
+public:
+
+  CreateSchema(const drizzled::message::Schema &arg) :
+    schema_message(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    (void)engine->doCreateSchema(schema_message);
+  }
+};
+
+bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
+{
+  // Add hook here for engines to register schema.
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           CreateSchema(schema_message));
+
+  return true;
+}
+
 void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 {
   char tmp_path[FN_REFLEN];
