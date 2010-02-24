@@ -538,6 +538,7 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
   ib_err_t err;
   int colnr= 0;
+  int ret= 0;
 
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
@@ -554,14 +555,16 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
-  assert (err==DB_SUCCESS);
+
+  if (err == DB_DUPLICATE_KEY)
+    ret= HA_ERR_FOUND_DUPP_KEY;
 
   ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
   ib_cursor_reset(cursor);
   ib_trx_commit(transaction);
 
-  return 0;
+  return ret;
 }
 
 int EmbeddedInnoDBCursor::rnd_init(bool)
