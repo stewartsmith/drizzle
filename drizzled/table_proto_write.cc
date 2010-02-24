@@ -549,7 +549,6 @@ int rea_create_table(Session *session,
 
   int err= 0;
 
-  std::cerr << " Got into here! \n";
   plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
                                                                    table_proto->engine().name());
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
@@ -562,8 +561,6 @@ int rea_create_table(Session *session,
     else
       my_error(ER_CANT_CREATE_TABLE, MYF(0), identifier.getTableName(), err);
 
-    std::cerr << "Error in basic proto write \n";
-
     goto err_handler;
   }
 
@@ -571,11 +568,9 @@ int rea_create_table(Session *session,
                                          identifier,
                                          false, *table_proto))
   {
-    std::cerr << "Error in createTable() \n";
     goto err_handler;
   }
 
-  std::cerr << "Success should have happened \n";
   return 0;
 
 err_handler:
