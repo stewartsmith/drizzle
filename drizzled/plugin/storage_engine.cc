@@ -771,6 +771,13 @@ bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message:
   return false;
 }
 
+bool StorageEngine::doesSchemaExist(const std::string &schema_name)
+{
+  message::Schema proto;
+
+  return StorageEngine::getSchemaDefinition(schema_name, proto);
+}
+
 
 const CHARSET_INFO *StorageEngine::getSchemaCollation(const std::string &schema_name)
 {

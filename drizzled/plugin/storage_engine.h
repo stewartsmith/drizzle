@@ -345,6 +345,7 @@ public:
   // @note All schema methods defined here
   static void getSchemaNames(std::set<std::string>& set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
+  static bool doesSchemaExist(const std::string &schema_name);
   static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
 
   // @note make private/protected

@@ -4748,10 +4748,9 @@ show_param:
 
               if ($2)
               {
-                message::Schema schema_message;
                 column_name.append($2);
                 lex->select_lex.db= $2;
-                if (not plugin::StorageEngine::getSchemaDefinition($2, schema_message))
+                if (not plugin::StorageEngine::doesSchemaExist($2))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
@@ -4801,10 +4800,9 @@ show_param:
 
              if ($3)
              {
-               message::Schema schema_message;
                lex->select_lex.db= $3;
 
-               if (not plugin::StorageEngine::getSchemaDefinition($3, schema_message))
+               if (not plugin::StorageEngine::doesSchemaExist($3))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }
