@@ -202,8 +202,8 @@ static bool store_db_create_info(const char *dbname, String *buffer, bool if_not
   }
   else
   {
-    int r= get_database_metadata(dbname, schema);
-    if (r < 0)
+    bool found= plugin::StorageEngine::getSchemaDefinition(dbname, schema);
+    if (not found)
       return true;
   }
 

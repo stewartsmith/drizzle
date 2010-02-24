@@ -23,6 +23,8 @@
 
 #define DRIZZLE_DATA_DICTIONARY "data_dictionary"
 
+#define MY_DB_OPT_FILE "db.opt"
+
 namespace drizzled {
 
 namespace message { class Schema; }
@@ -33,7 +35,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
 
 bool check_db_dir_existence(const char *db_name);
-int get_database_metadata(const std::string &dbname, message::Schema &db);
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_DB_H */

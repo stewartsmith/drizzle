@@ -45,7 +45,6 @@
 
 #include "drizzled/internal/my_sys.h"
 
-#define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
 using namespace std;
@@ -94,61 +93,6 @@ static int write_schema_file(const char *path, const message::Schema &db)
   close(fd);
 
   return 0;
-}
-
-int get_database_metadata(const std::string &dbname, message::Schema &schema_message)
-{
-  int rc= 0;
-  char db_opt_path[FN_REFLEN];
-  size_t length;
-
-  /*
-    Pass an empty file name, and the database options file name as extension
-    to avoid table name to file name encoding.
-  */
-  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
-                               dbname.c_str(), "", false);
-  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
-
-  int fd= open(db_opt_path, O_RDONLY);
-
-  if (fd == -1 && errno != ENOENT)
-    rc= errno;
-
-  /**
-    @note If parsing fails, either someone has done a "mkdir" or has deleted their opt file.
-    So what do we do? We muddle through the adventure by generating 
-    one with a name in it, and the charset set to the default.
-  */
-  if (fd == -1 || not schema_message.ParseFromFileDescriptor(fd))
-  {
-    struct stat directory_stat_buffer;
-
-    /* Remove the opt file name and see if we can just open up the directory. */
-    db_opt_path[length]= 0;
-    if (lstat(db_opt_path, &directory_stat_buffer))
-    {
-      rc= errno;
-    }
-    else if (not S_ISDIR(directory_stat_buffer.st_mode))
-    {
-      rc= -1;
-    }
-    else
-    {
-      schema_message.set_name(dbname);
-      rc= 0;
-    }
-
-#if 0 //@todo fill this in with something totally acceptable
-    schema_message.set_collation("utf8_general_ci"); 
-#endif
-  }
-
-  if (fd != -1)
-    close(fd);
-
-  return rc;
 }
 
 /*

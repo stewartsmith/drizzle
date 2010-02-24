@@ -33,7 +33,6 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
-
 public:
   Schema();
 

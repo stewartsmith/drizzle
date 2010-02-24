@@ -22,7 +22,10 @@
 
 #include "plugin/schema_engine/schema.h"
 #include "drizzled/db.h"
+#include "drizzled/sql_table.h"
 
+#include <iostream>
+#include <fstream>
 #include <string>
 
 using namespace std;
@@ -53,7 +56,33 @@ void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
   set_of_names.insert("information_schema"); // special cases suck
 }
 
-bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Schema &proto)
+bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Schema &schema_message)
 {
-  return not get_database_metadata(schema_name.c_str(), proto);
+  char db_opt_path[FN_REFLEN];
+  size_t length;
+
+  /*
+    Pass an empty file name, and the database options file name as extension
+    to avoid table name to file name encoding.
+  */
+  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
+                               schema_name.c_str(), "", false);
+  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
+
+  fstream input(db_opt_path, ios::in | ios::binary);
+
+  /**
+    @note If parsing fails, either someone has done a "mkdir" or has deleted their opt file.
+    So what do we do? We muddle through the adventure by generating 
+    one with a name in it, and the charset set to the default.
+  */
+  if (input.good())
+  {
+    if (schema_message.ParseFromIstream(&input))
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
