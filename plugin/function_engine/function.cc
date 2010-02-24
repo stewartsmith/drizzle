@@ -77,6 +77,11 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
   drizzled::plugin::TableFunction::getNames(db, set_of_names);
 }
 
+void Function::doGetSchemaNames(std::set<std::string>& set_of_names)
+{
+  set_of_names.insert("information_schema"); // special cases suck
+}
+
 
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
 

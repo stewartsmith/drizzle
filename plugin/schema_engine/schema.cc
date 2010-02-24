@@ -52,8 +52,6 @@ void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
     CachedDirectory::Entry *entry= *fileIter;
     set_of_names.insert(entry->filename);
   }
-
-  set_of_names.insert("information_schema"); // special cases suck
 }
 
 bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Schema &schema_message)

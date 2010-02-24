@@ -80,10 +80,7 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetSchemaNames(std::set<std::string>& set_of_names)
-  {
-    set_of_names.insert("information_schema"); // special cases suck
-  }
+  void doGetSchemaNames(std::set<std::string>& set_of_names);
 
   bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto)
   {
