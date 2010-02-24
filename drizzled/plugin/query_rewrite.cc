@@ -33,10 +33,13 @@ using namespace std;
 namespace drizzled
 {
 
+namespace plugin
+{
+
 vector<plugin::QueryRewriter *> all_rewriters;
 
 
-bool plugin::QueryRewriter::addPlugin(plugin::QueryRewriter *in_rewriter)
+bool QueryRewriter::addPlugin(QueryRewriter *in_rewriter)
 {
   if (in_rewriter != NULL)
   {
@@ -46,7 +49,7 @@ bool plugin::QueryRewriter::addPlugin(plugin::QueryRewriter *in_rewriter)
 }
 
 
-void plugin::QueryRewriter::removePlugin(plugin::QueryRewriter *in_rewriter)
+void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
 {
   if (in_rewriter != NULL)
   {
@@ -61,14 +64,13 @@ void plugin::QueryRewriter::removePlugin(plugin::QueryRewriter *in_rewriter)
  * This is the QueryRewriter::rewrite entry point.
  * This gets called from within the Drizzle kernel.
  */
-void plugin::QueryRewriter::rewriteQuery(std::string &to_rewrite)
+void QueryRewriter::rewriteQuery(string &to_rewrite)
 {
-  for (vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
-       iter != all_rewriters.end();
-       ++iter)
-  {
-    (*iter)->rewrite(to_rewrite);
-  }
+  for_each(all_rewriters.begin(),
+           all_rewriters.end(),
+           bind2nd(mem_fun(&QueryRewriter::rewrite), to_rewrite));
 }
+
+} /* namespace plugin */
 
 } /* namespace drizzled */
