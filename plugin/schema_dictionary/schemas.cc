@@ -71,6 +71,12 @@ bool SchemasTool::Generator::nextSchemaCore()
   schema.Clear();
   is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
 
+  if (not is_schema_parsed)
+  {
+    cerr << "Failure to parse " << *schema_iterator << "\n";
+    return false;
+  }
+
   if (checkSchema())
       return false;
 

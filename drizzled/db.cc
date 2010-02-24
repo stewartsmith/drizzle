@@ -38,13 +38,13 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
+#include "drizzled/plugin/storage_engine.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 
 #include "drizzled/internal/my_sys.h"
 
-#define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
 using namespace std;
@@ -60,45 +60,6 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
                                  const string &db, const char *path,
                                  TableList **dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
-
-/**
-  Return default database collation.
-
-  @param session     Thread context.
-  @param db_name Database name.
-
-  @return CHARSET_INFO object. The operation always return valid character
-    set, even if the database does not exist.
-*/
-
-const CHARSET_INFO *get_default_db_collation(const char *db_name)
-{
-  message::Schema db;
-
-  get_database_metadata(db_name, db);
-
-  /* If for some reason the db.opt file lacks a collation,
-     we just return the default */
-
-  if (db.has_collation())
-  {
-    const string buffer= db.collation();
-    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
-
-    if (!cs)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"),db_name);
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-
-      return default_charset_info;
-    }
-
-    return cs;
-  }
-
-  return default_charset_info;
-}
 
 /* path is path to database, not schema file */
 static int write_schema_file(const char *path, const message::Schema &db)
@@ -132,61 +93,6 @@ static int write_schema_file(const char *path, const message::Schema &db)
   close(fd);
 
   return 0;
-}
-
-int get_database_metadata(const std::string &dbname, message::Schema &schema_message)
-{
-  int rc= 0;
-  char db_opt_path[FN_REFLEN];
-  size_t length;
-
-  /*
-    Pass an empty file name, and the database options file name as extension
-    to avoid table name to file name encoding.
-  */
-  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
-                               dbname.c_str(), "", false);
-  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
-
-  int fd= open(db_opt_path, O_RDONLY);
-
-  if (fd == -1 && errno != ENOENT)
-    rc= errno;
-
-  /**
-    @note If parsing fails, either someone has done a "mkdir" or has deleted their opt file.
-    So what do we do? We muddle through the adventure by generating 
-    one with a name in it, and the charset set to the default.
-  */
-  if (fd == -1 || not schema_message.ParseFromFileDescriptor(fd))
-  {
-    struct stat directory_stat_buffer;
-
-    /* Remove the opt file name and see if we can just open up the directory. */
-    db_opt_path[length]= 0;
-    if (lstat(db_opt_path, &directory_stat_buffer))
-    {
-      rc= errno;
-    }
-    else if (not S_ISDIR(directory_stat_buffer.st_mode))
-    {
-      rc= -1;
-    }
-    else
-    {
-      schema_message.set_name(dbname);
-      rc= 0;
-    }
-
-#if 0 //@todo fill this in with something totally acceptable
-    schema_message.set_collation("utf8_general_ci"); 
-#endif
-  }
-
-  if (fd != -1)
-    close(fd);
-
-  return rc;
 }
 
 /*
@@ -843,7 +749,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     return true;
   }
 
-  if (check_db_dir_existence(new_db_file_name.str))
+  if (not plugin::StorageEngine::doesSchemaExist(new_db_file_name.str))
   {
     if (force_switch)
     {
@@ -876,40 +782,12 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     }
   }
 
-  db_default_cl= get_default_db_collation(new_db_file_name.str);
+  db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
   free(new_db_file_name.str);
 
   return false;
-}
-
-/*
-  Check if there is directory for the database name.
-
-  SYNOPSIS
-    check_db_dir_existence()
-    db_name   database name
-
-  RETURN VALUES
-    false   There is directory for the specified database name.
-    true    The directory does not exist.
-*/
-
-bool check_db_dir_existence(const char *db_name)
-{
-  char db_dir_path[FN_REFLEN];
-  uint32_t db_dir_path_len;
-
-  db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", false);
-
-  if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
-    db_dir_path[db_dir_path_len - 1]= 0;
-
-  /* Check access. */
-
-  return access(db_dir_path, F_OK);
 }
 
 /**

@@ -5,6 +5,7 @@ Database	Create Database
 foo	CREATE DATABASE `foo`
 show schemas;
 Database
+data_dictionary
 foo
 information_schema
 mysql
