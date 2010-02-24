@@ -47,6 +47,7 @@
 #include "drizzled/xid.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/db.h"
 
@@ -708,47 +709,94 @@ public:
   }
 };
 
-void StorageEngine::getSchemaNames(set<string>& set_of_names)
+class AddSchemaNames : 
+  public unary_function<StorageEngine *, void>
 {
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+  set<string>& set_of_names;
 
-  CachedDirectory::Entries files= directory.getEntries();
+public:
 
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
+  AddSchemaNames(set<string>& of_names) :
+    set_of_names(of_names)
   {
-    CachedDirectory::Entry *entry= *fileIter;
-    set_of_names.insert(entry->filename);
   }
 
-  set_of_names.insert("information_schema"); // special cases suck
+  result_type operator() (argument_type engine)
+  {
+    engine->doGetSchemaNames(set_of_names);
+  }
+};
 
+void StorageEngine::getSchemaNames(set<string>& set_of_names)
+{
   // Add hook here for engines to register schema.
-#if 0
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
-#endif
+           AddSchemaNames(set_of_names));
 }
+
+class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
+{
+  const std::string &schema_name;
+  message::Schema &schema_proto;
+
+public:
+  StorageEngineGetSchemaDefinition(const std::string &schema_name_arg,
+                                  message::Schema &schema_proto_arg) :
+    schema_name(schema_name_arg),
+    schema_proto(schema_proto_arg) 
+  { }
+
+  result_type operator() (argument_type engine)
+  {
+    return engine->doGetSchemaDefinition(schema_name, schema_proto);
+  }
+};
 
 /*
   Return value is "if parsed"
 */
 bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
-  int ret;
+  proto.Clear();
 
-  if (schema_name.compare("information_schema") == 0)
+  vector<StorageEngine *>::iterator iter=
+    find_if(vector_of_engines.begin(), vector_of_engines.end(),
+            StorageEngineGetSchemaDefinition(schema_name, proto));
+
+  if (iter != vector_of_engines.end())
   {
-    proto.set_name("information_schema");
-    proto.set_collation("utf8_general_ci");
-    ret= 0;
-  }
-  else
-  {
-    ret= get_database_metadata(schema_name.c_str(), proto);
+    return true;
   }
 
-  return ret == 0 ? true : false;
+  return false;
+}
+
+
+const CHARSET_INFO *StorageEngine::getSchemaCollation(const std::string &schema_name)
+{
+  message::Schema schmema_proto;
+  bool found;
+
+  found= StorageEngine::getSchemaDefinition(schema_name, schmema_proto);
+
+  if (found && schmema_proto.has_collation())
+  {
+    const string buffer= schmema_proto.collation();
+    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
+
+    if (not cs)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"), schema_name.c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+
+      return default_charset_info;
+    }
+
+    return cs;
+  }
+
+  return default_charset_info;
 }
 
 void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
