@@ -542,7 +542,7 @@ Warnings:
 Note	1007	Can't create database 'mysqltest'; database exists
 show create database mysqltest;
 Database	Create Database
-mysqltest	CREATE DATABASE `mysqltest`
+mysqltest	CREATE DATABASE `mysqltest` COLLATE = utf8_general_ci
 drop database mysqltest;
 use test;
 create table t1 (a int);

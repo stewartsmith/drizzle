@@ -118,6 +118,9 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
   path_len= drizzled::build_table_filename(path, sizeof(path), schema_message.name().c_str(), "", false);
   path[path_len-1]= 0;                    // remove last '/' from path
 
+  if (access(path, F_OK))
+    return false;
+
   error_erno= write_schema_file(path, schema_message);
   if (error_erno && error_erno != EEXIST)
   {
@@ -146,7 +149,6 @@ int Schema::write_schema_file(const char *path, const message::Schema &db)
 
   if (fd == -1)
     return errno;
-
 
   if (not db.SerializeToFileDescriptor(fd))
   {

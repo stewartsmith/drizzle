@@ -45,6 +45,10 @@ bool statement::CreateSchema::execute()
   }
 
   schema_message.set_name(session->lex->name.str);
+  if (not schema_message.has_collation())
+  {
+    schema_message.set_collation(default_charset_info->name);
+  }
 
   bool res= mysql_create_db(session, schema_message, is_if_not_exists);
   return not res;

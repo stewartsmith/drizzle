@@ -837,11 +837,13 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
 class AlterSchema : 
   public unary_function<StorageEngine *, void>
 {
+  uint64_t &success_count;
   const drizzled::message::Schema &schema_message;
 
 public:
 
-  AlterSchema(const drizzled::message::Schema &arg) :
+  AlterSchema(const drizzled::message::Schema &arg, uint64_t &count_arg) :
+    success_count(count_arg),
     schema_message(arg)
   {
   }
@@ -849,17 +851,21 @@ public:
   result_type operator() (argument_type engine)
   {
     // @todo eomeday check that at least one engine said "true"
-    (void)engine->doAlterSchema(schema_message);
+    bool success= engine->doAlterSchema(schema_message);
+
+    if (success)
+      success_count++;
   }
 };
 
 bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 {
-  // Add hook here for engines to register schema.
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AlterSchema(schema_message));
+  uint64_t success_count= 0;
 
-  return true;
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           AlterSchema(schema_message, success_count));
+
+  return success_count ? true : false;
 }
 
 

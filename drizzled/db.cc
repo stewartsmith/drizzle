@@ -82,7 +82,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 */
 
-bool mysql_create_db(Session *session, message::Schema &schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const message::Schema &schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   bool error= false;
@@ -103,6 +103,9 @@ bool mysql_create_db(Session *session, message::Schema &schema_message, bool is_
   {
     return false;
   }
+
+  assert(schema_message.has_name());
+  assert(schema_message.has_collation());
 
   // @todo push this lock down into the engine
   pthread_mutex_lock(&LOCK_create_db);
@@ -164,6 +167,12 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 
   pthread_mutex_lock(&LOCK_create_db);
 
+  if (not plugin::StorageEngine::doesSchemaExist(schema_message.name()))
+  {
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
+    return false;
+  }
+
   /* Change options if current database is being altered. */
   bool success= plugin::StorageEngine::alterSchema(schema_message);
 
@@ -171,6 +180,10 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
   {
     replication_services.rawStatement(session, session->getQueryString());
     session->my_ok(1);
+  }
+  else
+  {
+    my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
   }
 
   pthread_mutex_unlock(&LOCK_create_db);
