@@ -270,6 +270,7 @@ public:
     addAlias("INNOBASE");
   }
 private:
+  virtual int doStartTransaction(Session *session, start_transaction_option_t options);
   virtual void doStartStatement(Session *session);
   virtual void doEndStatement(Session *session);
 public:
@@ -348,18 +349,6 @@ public:
   			the database name: for example, in 'mysql/data/test'
   			the database name is 'test' */
 
-  /*********************************************************************
-  Creates an InnoDB transaction struct for the session if it does not yet have one.
-  Starts a new InnoDB transaction if a transaction is not yet started. And
-  assigns a new snapshot for a consistent read if the transaction does not yet
-  have one. */
-  virtual
-  int
-  doStartConsistentSnapshot(
-  /*====================================*/
-  			/* out: 0 */
-  	Session*	session);	/* in: MySQL thread handle of the user for whom
-  			the transaction should be committed */
   /********************************************************************
   Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
   the logs, and the name of this function should be innobase_checkpoint. */
@@ -1506,27 +1495,6 @@ ha_innobase::update_session()
 	update_session(session);
 }
 
-/*********************************************************************//**
-Registers an InnoDB transaction in MySQL, so that the MySQL XA code knows
-to call the InnoDB prepare and commit, or rollback for the transaction. This
-MUST be called for every transaction for which the user may call commit or
-rollback. Calling this several times to register the same transaction is
-allowed, too.
-This function also registers the current SQL statement. */
-static inline
-void
-innobase_register_trx_and_stmt(
-/*===========================*/
-        plugin::TransactionalStorageEngine *engine, /*!< in: Innobase StorageEngine */
-	Session*	session)	/*!< in: MySQL thd (connection) object */
-{
-	if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-		/* No autocommit mode, register for a transaction */
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.trans_register_ha(session, engine);
-	}
-}
-
 /*****************************************************************//**
 Convert an SQL identifier to the MySQL system_charset_info (UTF-8)
 and quote it if needed.
@@ -2089,41 +2057,35 @@ assigns a new snapshot for a consistent read if the transaction does not yet
 have one.
 @return	0 */
 int
-InnobaseEngine::doStartConsistentSnapshot(
+InnobaseEngine::doStartTransaction(
 /*====================================*/
-	Session*	session)	/*!< in: MySQL thread handle of the user for whom
-			the transaction should be committed */
+	Session*	session,	/*!< in: MySQL thread handle of the user for whom
+			                         the transaction should be committed */
+  start_transaction_option_t options)
 {
-	trx_t*	trx;
-
 	assert(this == innodb_engine_ptr);
 
 	/* Create a new trx struct for session, if it does not yet have one */
-
-	trx = check_trx_exists(session);
+	trx_t *trx = check_trx_exists(session);
 
 	/* This is just to play safe: release a possible FIFO ticket and
 	search latch. Since we will reserve the kernel mutex, we have to
 	release the search system latch first to obey the latching order. */
-
 	innobase_release_stat_resources(trx);
 
 	/* If the transaction is not started yet, start it */
-
 	trx_start_if_not_started(trx);
 
 	/* Assign a read view if the transaction does not have it yet */
+  if (options == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+	  trx_assign_read_view(trx);
 
-	trx_assign_read_view(trx);
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-
+	/* Set the Drizzle flag to mark that there is an active transaction */
 	if (trx->active_trans == 0) {
-		innobase_register_trx_and_stmt(this, current_session);
-		trx->active_trans = 1;
+		trx->active_trans= 1;
 	}
 
-	return(0);
+	return 0;
 }
 
 /*****************************************************************//**
@@ -2153,9 +2115,10 @@ InnobaseEngine::doCommit(
 
 	/* The flag trx->active_trans is set to 1 in
 
-	1. ::external_lock(),
-	4. InnobaseEngine::setSavepoint(),
-	6. InnobaseEngine::doStartConsistentSnapshot(),
+	1. ::external_lock()
+  2  InnobaseEngine::doStartStatement()
+	3. InnobaseEngine::setSavepoint()
+	4. InnobaseEngine::doStartTransaction()
 
 	and it is only set to 0 in a commit or a rollback. If it is 0 we know
 	there cannot be resources to be freed and we could return immediately.
@@ -8031,7 +7994,6 @@ InnobaseEngine::doStartStatement(
    * @todo this should go away
    */
   if (trx->active_trans == 0) {
-    innobase_register_trx_and_stmt(innodb_engine_ptr, session);
     trx->active_trans= 1;
   }
 }
@@ -8053,6 +8015,7 @@ InnobaseEngine::doEndStatement(
     if (trx->active_trans != 0)
     {
       commit(session, TRUE);
+      trx->active_trans= 0;
     }
   }
   else
@@ -8065,8 +8028,6 @@ InnobaseEngine::doEndStatement(
       read_view_close_for_mysql(trx);
     }
   }
-
-  trx->active_trans= 0;
 }
 
 /*******************************************************************//**

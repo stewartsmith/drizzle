@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (c) Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -245,39 +246,80 @@ namespace drizzled
   session->transaction.all list is cleared.
 
   When a connection is closed, the current normal transaction, if
-  any, is rolled back.
+  any is currently active, is rolled back.
 
   Roles and responsibilities
   --------------------------
 
-  The server has no way to know that an engine participates in
-  the statement and a transaction has been started
-  in it unless the engine says so. Thus, in order to be
-  a part of a transaction, the engine must "register" itself.
-  This is done by invoking trans_register_ha() server call.
-  Normally the engine registers itself whenever Cursor::external_lock()
-  is called. trans_register_ha() can be invoked many times: if
-  an engine is already registered, the call does nothing.
-  In case autocommit is not set, the engine must register itself
-  twice -- both in the statement list and in the normal transaction
-  list.
-  In which list to register is a parameter of trans_register_ha().
+  Beginning of SQL Statement (and Statement Transaction)
+  ------------------------------------------------------
 
-  Note, that although the registration interface in itself is
-  fairly clear, the current usage practice often leads to undesired
-  effects. E.g. since a call to trans_register_ha() in most engines
-  is embedded into implementation of Cursor::external_lock(), some
-  DDL statements start a transaction (at least from the server
-  point of view) even though they are not expected to. E.g.
-  CREATE TABLE does not start a transaction, since
-  Cursor::external_lock() is never called during CREATE TABLE. But
-  CREATE TABLE ... SELECT does, since Cursor::external_lock() is
-  called for the table that is being selected from. This has no
-  practical effects currently, but must be kept in mind
-  nevertheless.
+  At the start of each SQL statement, for each storage engine
+  <strong>that is involved in the SQL statement</strong>, the kernel 
+  calls the engine's plugin::StoragEngine::startStatement() method.  If the
+  engine needs to track some data for the statement, it should use
+  this method invocation to initialize this data.  This is the
+  beginning of what is called the "statement transaction".
 
-  Once an engine is registered, the server will do the rest
-  of the work.
+  <strong>For transaction storage engines (those storage engines
+  that inherit from plugin::TransactionalStorageEngine)</strong>, the
+  kernel automatically determines if the start of the SQL statement 
+  transaction should <em>also</em> begin the normal SQL transaction.
+  This occurs when the connection is in NOT in autocommit mode. If
+  the kernel detects this, then the kernel automatically starts the
+  normal transaction w/ plugin::TransactionalStorageEngine::startTransaction()
+  method and then calls plugin::StorageEngine::startStatement()
+  afterwards.
+
+  Beginning of an SQL "Normal" Transaction
+  ----------------------------------------
+
+  As noted above, a "normal SQL transaction" may be started when
+  an SQL statement is started in a connection and the connection is
+  NOT in AUTOCOMMIT mode.  This is automatically done by the kernel.
+
+  In addition, when a user executes a START TRANSACTION or
+  BEGIN WORK statement in a connection, the kernel explicitly
+  calls each transactional storage engine's startTransaction() method.
+
+  Ending of an SQL Statement (and Statement Transaction)
+  ------------------------------------------------------
+
+  At the end of each SQL statement, for each of the aforementioned
+  involved storage engines, the kernel calls the engine's
+  plugin::StorageEngine::endStatement() method.  If the engine
+  has initialized or modified some internal data about the
+  statement transaction, it should use this method to reset or destroy
+  this data appropriately.
+
+  Ending of an SQL "Normal" Transaction
+  -------------------------------------
+  
+  The end of a normal transaction is either a ROLLBACK or a COMMIT, 
+  depending on the success or failure of the statement transaction(s) 
+  it encloses.
+  
+  The end of a "normal transaction" occurs when any of the following
+  occurs:
+
+  1) If a statement transaction has completed and AUTOCOMMIT is ON,
+     then the normal transaction which encloses the statement
+     transaction ends
+  2) If a COMMIT or ROLLBACK statement occurs on the connection
+  3) Just before a DDL operation occurs, the kernel will implicitly
+     commit the active normal transaction
+  
+  Transactions and Non-transactional Storage Engines
+  --------------------------------------------------
+  
+  For non-transactional engines, this call can be safely ignored, and
+  the kernel tracks whether a non-transactional engine has changed
+  any data state, and warns the user appropriately if a transaction
+  (statement or normal) is rolled back after such non-transactional
+  data changes have been made.
+
+  XA Two-phase Commit Protocol
+  ----------------------------
 
   During statement execution, whenever any of data-modifying
   PSEA API methods is used, e.g. Cursor::write_row() or
@@ -305,47 +347,49 @@ namespace drizzled
   Additional notes on DDL and the normal transaction.
   ---------------------------------------------------
 
-  DDLs and operations with non-transactional engines
-  do not "register" in session->transaction lists, and thus do not
-  modify the transaction state. Besides, each DDL in
-  MySQL is prefixed with an implicit normal transaction commit
-  (a call to Session::endActiveTransaction()), and thus leaves nothing
-  to modify.
-  However, as it has been pointed out with CREATE TABLE .. SELECT,
-  some DDL statements can start a *new* transaction.
+  CREATE TABLE .. SELECT can start a *new* normal transaction
+  because of the fact that SELECTs on a transactional storage
+  engine participate in the normal SQL transaction (due to
+  isolation level issues and consistent read views).
 
   Behaviour of the server in this case is currently badly
   defined.
+
   DDL statements use a form of "semantic" logging
   to maintain atomicity: if CREATE TABLE .. SELECT failed,
   the newly created table is deleted.
+
   In addition, some DDL statements issue interim transaction
-  commits: e.g. ALTER Table issues a commit after data is copied
+  commits: e.g. ALTER TABLE issues a COMMIT after data is copied
   from the original table to the internal temporary table. Other
   statements, e.g. CREATE TABLE ... SELECT do not always commit
   after itself.
-  And finally there is a group of DDL statements such as
-  RENAME/DROP Table that doesn't start a new transaction
-  and doesn't commit.
 
-  This diversity makes it hard to say what will happen if
-  by chance a stored function is invoked during a DDL --
-  whether any modifications it makes will be committed or not
-  is not clear. Fortunately, SQL grammar of few DDLs allows
-  invocation of a stored function.
+  And finally there is a group of DDL statements such as
+  RENAME/DROP TABLE that doesn't start a new transaction
+  and doesn't commit.
 
   A consistent behaviour is perhaps to always commit the normal
   transaction after all DDLs, just like the statement transaction
   is always committed at the end of all statements.
 */
-
 void TransactionServices::registerResourceForStatement(Session *session,
                                                        plugin::TransactionalStorageEngine *engine)
 {
-  TransactionContext *trans= &session->transaction.stmt;
-  ResourceContext *resource_context;
+  if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    /* 
+     * Now we automatically register this resource manager for the
+     * normal transaction.  This is fine because a statement
+     * transaction registration should always enlist the resource
+     * in the normal transaction which contains the statement
+     * transaction.
+     */
+    registerResourceForTransaction(session, engine);
+  }
 
-  resource_context= session->getResourceContext(engine, 0);
+  TransactionContext *trans= &session->transaction.stmt;
+  ResourceContext *resource_context= session->getResourceContext(engine, 0);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
@@ -356,38 +400,28 @@ void TransactionServices::registerResourceForStatement(Session *session,
   trans->no_2pc|= not engine->hasTwoPhaseCommit();
 }
 
-/**
-  Register a storage engine for a transaction.
-
-  Every storage engine MUST call this function when it starts
-  a transaction or a statement (that is it must be called both for the
-  "beginning of transaction" and "beginning of statement").
-  Only storage engines registered for the transaction/statement
-  will know when to commit/rollback it.
-
-  @note
-    trans_register_ha is idempotent - storage engine may register many
-    times per transaction.
-
-*/
-void TransactionServices::trans_register_ha(Session *session, plugin::TransactionalStorageEngine *engine)
+void TransactionServices::registerResourceForTransaction(Session *session,
+                                                         plugin::TransactionalStorageEngine *engine)
 {
   TransactionContext *trans= &session->transaction.all;
-  ResourceContext *resource_context;
-
-  session->server_status|= SERVER_STATUS_IN_TRANS;
-
-  resource_context= session->getResourceContext(engine, 1);
+  ResourceContext *resource_context= session->getResourceContext(engine, 1);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
+
+  session->server_status|= SERVER_STATUS_IN_TRANS;
 
   resource_context->setResource(engine);
   trans->registerResource(resource_context);
 
   trans->no_2pc|= not engine->hasTwoPhaseCommit();
+
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
+
+  /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
+  if (! session->getResourceContext(engine, 0)->isStarted())
+    registerResourceForStatement(session, engine);
 }
 
 /**
@@ -555,6 +589,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
     {
       int err;
       ResourceContext *resource_context= *it;
+
       plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
       if ((err= engine->commit(session, normal_transaction)))
       {
@@ -564,7 +599,6 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
       status_var_increment(session->status_var.ha_commit_count);
       resource_context->reset(); /* keep it conveniently zero-filled */
     }
-    trans->reset();
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
@@ -575,6 +609,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
       session->transaction.cleanup();
     }
   }
+  trans->reset();
   if (error == 0)
   {
     if (is_real_trans)
@@ -613,16 +648,16 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
     {
       int err;
       ResourceContext *resource_context= *it;
+
       plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
       if ((err= engine->rollback(session, normal_transaction)))
-      { // cannot happen
+      {
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
         error=1;
       }
       status_var_increment(session->status_var.ha_rollback_count);
       resource_context->reset(); /* keep it conveniently zero-filled */
     }
-    trans->reset();
     
     /* 
      * We need to signal the ROLLBACK to ReplicationServices here
@@ -646,14 +681,8 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
     session->transaction_rollback_request= false;
 
   /*
-    If a non-transactional table was updated, warn; don't warn if this is a
-    slave thread (because when a slave thread executes a ROLLBACK, it has
-    been read from the binary log, so it's 100% sure and normal to produce
-    error ER_WARNING_NOT_COMPLETE_ROLLBACK. If we sent the warning to the
-    slave SQL thread, it would not stop the thread but just be printed in
-    the error log; but we don't want users to wonder why they have this
-    message in the error log, so we don't send it.
-  */
+   * If a non-transactional table was updated, warn the user
+   */
   if (is_real_trans &&
       session->transaction.all.hasModifiedNonTransData() &&
       session->killed != Session::KILL_CONNECTION)
@@ -662,6 +691,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
   }
+  trans->reset();
   return error;
 }
 
