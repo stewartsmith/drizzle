@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes
  *
  *  Authors:
  *
- *    Jay Pipes <joinfu@sun.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -191,6 +192,16 @@ message::transformStatementToSql(const message::Statement &source,
       error= message::transformTruncateTableStatementToSql(source.truncate_table_statement(),
                                                            &destination,
                                                            sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
+  case message::Statement::CREATE_SCHEMA:
+    {
+      assert(source.has_create_schema_statement());
+      string destination;
+      error= message::transformCreateSchemaStatementToSql(source.create_schema_statement(),
+                                                          &destination,
+                                                          sql_variant);
       sql_strings.push_back(destination);
     }
     break;
@@ -487,8 +498,6 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
   }
-  if (num_key_fields > 1)
-    destination->push_back(')');
 
   return error;
 }
@@ -643,6 +652,31 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
       destination->push_back(')');
   }
   return error;
+}
+
+enum message::TransformSqlError
+message::transformCreateSchemaStatementToSql(const message::CreateSchemaStatement &statement,
+                                             std::string *destination,
+                                             enum message::TransformSqlVariant sql_variant)
+{
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  const message::Schema &schema= statement.schema();
+
+  destination->append("CREATE SCHEMA ", 14);
+  destination->push_back(quoted_identifier);
+  destination->append(schema.name());
+  destination->push_back(quoted_identifier);
+
+  if (schema.has_collation())
+  {
+    destination->append(" COLLATE ", 9);
+    destination->append(schema.collation());
+  }
+
+  return NONE;
 }
 
 enum message::TransformSqlError

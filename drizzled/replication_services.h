@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  Authors:
  *
- *    Jay Pipes <joinfu@sun.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +30,6 @@
 #include "drizzled/message/transaction.pb.h"
 
 #include <vector>
-
 
 namespace drizzled
 {
@@ -323,7 +323,16 @@ public:
    */
   void deleteRecord(Session *in_session, Table *in_table);
   /**
-   * Creates a TruncateTable Statement GPB message and add it
+   * Creates a CreateSchema Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] message::Schema message describing new schema
+   */
+  void createSchema(Session *in_session, const message::Schema &schema);
+  /**
+   * Creates a TruncateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
    * out to the replicator streams.
    *

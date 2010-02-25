@@ -133,7 +133,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, bo
   }
   else // Created !
   {
-    replication_services.rawStatement(session, session->query);
+    replication_services.createSchema(session, schema_message);
     session->my_ok(1);
   }
 

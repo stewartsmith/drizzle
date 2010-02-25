@@ -260,6 +260,12 @@ public:
     max_rows= arg;
   }
 
+  /**
+   * Returns true if the supplied Field object
+   * is part of the table's primary key.
+   */
+  bool fieldInPrimaryKey(Field *field) const;
+
   plugin::StorageEngine *storage_engine;			/* storage engine plugin */
   inline plugin::StorageEngine *db_type() const	/* table_type for handler */
   {
