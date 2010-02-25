@@ -356,28 +356,6 @@ public:
   }
 };
 
-static int drizzle_read_table_proto(const char* path, message::Table* table)
-{
-  int fd= open(path, O_RDONLY);
-
-  if (fd == -1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (table->ParseFromZeroCopyStream(input) == false)
-  {
-    delete input;
-    close(fd);
-    return -1;
-  }
-
-  delete input;
-  close(fd);
-  return 0;
-}
-
 /**
   Utility method which hides some of the details of getTableDefinition()
 */
@@ -425,25 +403,7 @@ int StorageEngine::getTableDefinition(Session& session,
 
   if (iter == vector_of_engines.end())
   {
-    string proto_path(path);
-    string file_ext(".dfe");
-    proto_path.append(file_ext);
-
-    int error= access(proto_path.c_str(), F_OK);
-
-    if (error == 0)
-      err= EEXIST;
-    else
-      err= errno;
-
-    if (table_proto)
-    {
-      int read_proto_err= drizzle_read_table_proto(proto_path.c_str(),
-                                                   table_proto);
-
-      if (read_proto_err)
-        err= read_proto_err;
-    }
+    return ENOENT;
   }
 
   return err;

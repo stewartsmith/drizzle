@@ -24,8 +24,12 @@
 #include "drizzled/db.h"
 #include "drizzled/sql_table.h"
 
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include <iostream>
 #include <fstream>
@@ -36,6 +40,29 @@ using namespace drizzled;
 
 #define MY_DB_OPT_FILE "db.opt"
 
+int Schema::readTableProto(const std::string &path, message::Table &table)
+{
+  int fd= open(path.c_str(), O_RDONLY);
+
+  if (fd == -1)
+    return errno;
+
+  google::protobuf::io::ZeroCopyInputStream* input=
+    new google::protobuf::io::FileInputStream(fd);
+
+  if (table.ParseFromZeroCopyStream(input) == false)
+  {
+    delete input;
+    close(fd);
+    return -1;
+  }
+
+  delete input;
+  close(fd);
+  return 0;
+}
+
+
 Schema::Schema():
   drizzled::plugin::StorageEngine("schema",
                                   HTON_ALTER_NOT_SUPPORTED |
@@ -44,6 +71,36 @@ Schema::Schema():
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {
+}
+
+int Schema::doGetTableDefinition(Session &,
+                                 const char *path,
+                                 const char *,
+                                 const char *,
+                                 const bool,
+                                 message::Table *table_proto)
+{
+  int err;
+  string proto_path(path);
+  proto_path.append(".dfe");
+
+  int error= access(proto_path.c_str(), F_OK);
+
+  if (error == 0)
+    err= EEXIST;
+  else
+    err= errno;
+
+  if (table_proto)
+  {
+    int read_proto_err= readTableProto(proto_path,
+                                       *table_proto);
+
+    if (read_proto_err)
+      err= read_proto_err;
+  }
+
+  return err;
 }
 
 void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
@@ -106,7 +163,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   if (mkdir(path, 0777) == -1)
     return false;
 
-  error_erno= write_schema_file(path, schema_message);
+  error_erno= writeSchemaFile(path, schema_message);
   if (error_erno && error_erno != EEXIST)
   {
     rmdir(path);
@@ -160,7 +217,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
   if (access(path, F_OK))
     return false;
 
-  error_erno= write_schema_file(path, schema_message);
+  error_erno= writeSchemaFile(path, schema_message);
   if (error_erno && error_erno != EEXIST)
   {
     return false;
@@ -174,7 +231,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   @note we do the rename to make it crash safe.
 */
-int Schema::write_schema_file(const char *path, const message::Schema &db)
+int Schema::writeSchemaFile(const char *path, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
