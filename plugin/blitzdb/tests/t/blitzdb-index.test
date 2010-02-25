@@ -180,6 +180,7 @@ update t1 set id = 2.0 where id = 2.4;
 
 update t1 set id = 1.0 where id = 2.0;
 update t1 set id = 1.1 where id = 2.1;
+--sorted_result
 select * from t1;
 drop table t1;
 
