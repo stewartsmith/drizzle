@@ -1,5 +1,3 @@
-PANDORA_HAVE_LIBUUID
-AS_IF([test "x$ac_cv_header_uuid_uuid_h" = "xno"],
-      AC_MSG_WARN([libuuid not found: not building uuid_function plugin.]))
+PANDORA_REQUIRE_LIBUUID
 
 PANDORA_ADD_PLUGIN_DEP_LIB([${LTLIBUUID}])
