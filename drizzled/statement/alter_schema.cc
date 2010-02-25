@@ -51,7 +51,7 @@ bool statement::AlterSchema::execute()
 
   schema_message.set_name(db->str);
 
-  bool res= mysql_alter_db(session, &schema_message);
+  bool res= mysql_alter_db(session, schema_message);
 
   return not res;
 }

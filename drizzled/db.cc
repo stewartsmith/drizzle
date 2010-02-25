@@ -61,40 +61,6 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
                                  TableList **dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
-/* path is path to database, not schema file */
-int write_schema_file(const char *path, const message::Schema &db)
-{
-  char schema_file_tmp[FN_REFLEN];
-  string schema_file(path);
-
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
-
-  schema_file.append(1, FN_LIBCHAR);
-  schema_file.append(MY_DB_OPT_FILE);
-
-  int fd= mkstemp(schema_file_tmp);
-
-  if (fd==-1)
-    return errno;
-
-
-  if (!db.SerializeToFileDescriptor(fd))
-  {
-    close(fd);
-    unlink(schema_file_tmp);
-    return -1;
-  }
-
-  if (rename(schema_file_tmp, schema_file.c_str()) == -1)
-  {
-    close(fd);
-    return errno;
-  }
-  close(fd);
-
-  return 0;
-}
-
 /*
   Create a database
 

@@ -126,3 +126,41 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   return true;
 }
+
+/**
+  path is path to database, not schema file 
+
+  @note we do the rename to make it crash safe.
+*/
+int Schema::write_schema_file(const char *path, const message::Schema &db)
+{
+  char schema_file_tmp[FN_REFLEN];
+  string schema_file(path);
+
+  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
+
+  schema_file.append(1, FN_LIBCHAR);
+  schema_file.append(MY_DB_OPT_FILE);
+
+  int fd= mkstemp(schema_file_tmp);
+
+  if (fd == -1)
+    return errno;
+
+
+  if (not db.SerializeToFileDescriptor(fd))
+  {
+    close(fd);
+    unlink(schema_file_tmp);
+    return -1;
+  }
+
+  if (rename(schema_file_tmp, schema_file.c_str()) == -1)
+  {
+    close(fd);
+    return errno;
+  }
+  close(fd);
+
+  return 0;
+}

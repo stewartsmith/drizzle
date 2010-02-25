@@ -34,8 +34,6 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message);
 bool mysql_rm_db(Session *session, char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
 
-int write_schema_file(const char *path, const message::Schema &db);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_DB_H */
