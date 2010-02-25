@@ -64,6 +64,7 @@ namespace plugin
 {
 
 static EngineVector vector_of_engines;
+static EngineVector vector_of_schema_engines;
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
@@ -185,6 +186,9 @@ bool StorageEngine::addPlugin(StorageEngine *engine)
     set_of_table_definition_ext.insert(engine->getTableDefinitionFileExtension());
   }
 
+  if (engine->check_flag(HTON_BIT_SCHEMA_DICTIONARY))
+    vector_of_schema_engines.push_back(engine);
+
   return false;
 }
 
@@ -193,6 +197,7 @@ void StorageEngine::removePlugin(StorageEngine *)
   if (shutdown_has_begun == false)
   {
     vector_of_engines.clear();
+    vector_of_schema_engines.clear();
 
     shutdown_has_begun= true;
   }
@@ -414,7 +419,7 @@ int StorageEngine::getTableDefinition(Session& session,
       return EEXIST;
   }
 
-  vector<StorageEngine *>::iterator iter=
+  EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
             StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_proto, &err));
 
@@ -730,7 +735,7 @@ public:
 void StorageEngine::getSchemaNames(set<string>& set_of_names)
 {
   // Add hook here for engines to register schema.
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
            AddSchemaNames(set_of_names));
 }
 
@@ -759,11 +764,11 @@ bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message:
 {
   proto.Clear();
 
-  vector<StorageEngine *>::iterator iter=
-    find_if(vector_of_engines.begin(), vector_of_engines.end(),
+  EngineVector::iterator iter=
+    find_if(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
             StorageEngineGetSchemaDefinition(schema_name, proto));
 
-  if (iter != vector_of_engines.end())
+  if (iter != vector_of_schema_engines.end())
   {
     return true;
   }
@@ -828,7 +833,7 @@ public:
 bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
 {
   // Add hook here for engines to register schema.
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
            CreateSchema(schema_message));
 
   return true;
@@ -862,7 +867,7 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 {
   uint64_t success_count= 0;
 
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
            AlterSchema(schema_message, success_count));
 
   return success_count ? true : false;
@@ -981,7 +986,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
   */
   set<string> all_exts= set_of_table_definition_ext;
 
-  for (vector<StorageEngine *>::iterator iter= vector_of_engines.begin();
+  for (EngineVector::iterator iter= vector_of_engines.begin();
        iter != vector_of_engines.end() ; iter++)
   {
     for (const char **ext= (*iter)->bas_ext(); *ext ; ext++)
