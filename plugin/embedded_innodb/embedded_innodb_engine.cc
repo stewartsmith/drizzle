@@ -626,14 +626,39 @@ void EmbeddedInnoDBCursor::position(const unsigned char *)
   return;
 }
 
+double EmbeddedInnoDBCursor::scan_time()
+{
+  return 0.1;
+}
 
 int EmbeddedInnoDBCursor::info(uint32_t flag)
 {
-  stats.records= 100;
+  stats.records= 2;
 
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
+}
+
+int EmbeddedInnoDBCursor::index_init(uint32_t keynr, bool)
+{
+  active_index= keynr;
+
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  ib_cursor_attach_trx(cursor, transaction);
+
+
+  if (active_index == 0)
+  {
+    tuple= ib_clust_read_tuple_create(cursor);
+  }
+  else
+  {
+    /* Open 2ndary index */
+  }
+
+  return 0;
 }
 
 
@@ -657,11 +682,20 @@ int EmbeddedInnoDBCursor::index_read_last_map(unsigned char *, const unsigned ch
 }
 
 
-int EmbeddedInnoDBCursor::index_next(unsigned char *)
+int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
 {
+  if (active_index == 0)
+    return rnd_next(buf);
+
   return(HA_ERR_END_OF_FILE);
 }
 
+int EmbeddedInnoDBCursor::index_end()
+{
+  active_index= MAX_KEY;
+
+  return rnd_end();
+}
 
 int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 {
@@ -669,8 +703,13 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 }
 
 
-int EmbeddedInnoDBCursor::index_first(unsigned char *)
+int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
 {
+  ib_cursor_first(cursor);
+
+  if (active_index == 0)
+    return rnd_next(buf);
+
   return(HA_ERR_END_OF_FILE);
 }
 
