@@ -839,6 +839,40 @@ bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message
   return true;
 }
 
+class DropSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  const string &schema_name;
+
+public:
+
+  DropSchema(const string &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    schema_name(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    bool success= engine->doDropSchema(schema_name);
+
+    if (success)
+      success_count++;
+  }
+};
+
+bool StorageEngine::dropSchema(const string &schema_name)
+{
+  uint64_t counter= 0;
+  // Add hook here for engines to register schema.
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           DropSchema(schema_name, counter));
+
+  return counter ? true : false;
+}
+
 class AlterSchema : 
   public unary_function<StorageEngine *, void>
 {

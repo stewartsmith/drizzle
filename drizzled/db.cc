@@ -52,7 +52,7 @@ using namespace std;
 namespace drizzled
 {
 
-const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD", ".opt"};
+const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD"};
 static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
 
 
@@ -239,8 +239,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
   length= build_table_filename(path, sizeof(path),
                                db, "", false);
-  strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
-  unlink(path);
   path[length]= '\0';				// Remove file name
 
   /* See if the directory exists */
@@ -578,9 +576,9 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
   if (dropped_tables)
     *dropped_tables= tot_list;
 
-  if (rmdir(org_path))
+  if (not plugin::StorageEngine::dropSchema(db))
   {
-    my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, errno);
+    my_error(ER_DROP_SCHEMA, MYF(0), db.c_str());
     return -1;
   }
 

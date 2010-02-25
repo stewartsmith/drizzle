@@ -23,8 +23,6 @@
 
 #define DRIZZLE_DATA_DICTIONARY "data_dictionary"
 
-#define MY_DB_OPT_FILE "db.opt"
-
 namespace drizzled {
 
 namespace message { class Schema; }

@@ -34,6 +34,8 @@
 using namespace std;
 using namespace drizzled;
 
+#define MY_DB_OPT_FILE "db.opt"
+
 Schema::Schema():
   drizzled::plugin::StorageEngine("schema",
                                   HTON_ALTER_NOT_SUPPORTED |
@@ -85,6 +87,10 @@ bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Sche
       return true;
     }
   }
+  else
+  {
+    perror(db_opt_path);
+  }
 
   return false;
 }
@@ -107,6 +113,38 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
     return false;
   }
+
+  return true;
+}
+
+bool Schema::doDropSchema(const std::string &schema_name)
+{
+  char	 path[FN_REFLEN+16];
+  uint32_t path_len;
+  message::Schema schema_message;
+
+  path_len= drizzled::build_table_filename(path, sizeof(path), schema_name.c_str(), "", false);
+  path[path_len-1]= 0;                    // remove last '/' from path
+
+  string schema_file(path);
+  schema_file.append(1, FN_LIBCHAR);
+  schema_file.append(MY_DB_OPT_FILE);
+
+  if (not doGetSchemaDefinition(schema_name, schema_message))
+    return false;
+
+  // No db.opt file, no love from us.
+  if (access(schema_file.c_str(), F_OK))
+  {
+    perror(schema_file.c_str());
+    return false;
+  }
+
+  if (unlink(schema_file.c_str()))
+    perror(schema_file.c_str());
+
+  if (rmdir(path))
+    perror(path);
 
   return true;
 }

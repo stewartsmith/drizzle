@@ -67,6 +67,8 @@ public:
 
   bool doAlterSchema(const drizzled::message::Schema &schema_message);
 
+  bool doDropSchema(const std::string &schema_name);
+
   const char **bas_ext() const 
   {
     return schema_exts;
