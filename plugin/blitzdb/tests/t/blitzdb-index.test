@@ -295,6 +295,19 @@ insert into t1 values (3);
 insert into t1 values (4);
 drop table t1;
 
+create table t1 (a varchar(32), unique index(a)) engine = blitzdb;
+insert into t1 values ('a'), ('b'), ('c');
+
+--error 1062
+insert into t1 values ('a');
+--error 1062
+insert into t1 values ('b');
+--error 1062
+insert into t1 values ('c');
+
+insert into t1 values ('d'), ('e'), ('f');
+drop table t1;
+
 # Test INDEX insertion
 create table t1 (a int, index(a)) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4);

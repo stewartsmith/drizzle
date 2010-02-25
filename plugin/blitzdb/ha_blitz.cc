@@ -805,8 +805,6 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
   /* Loop through key part(s) and pack them as we go. */
   for (; key_part != key_part_end; key_part++) {
     if (key_part->null_bit) {
-      /* This means that the current key part is NULL. We therefore
-         pack 0 to it and move on to the next key part. */
       if (row[key_part->null_offset] & key_part->null_bit) {
         *pos++ = 0;
         continue;

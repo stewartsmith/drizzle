@@ -546,6 +546,16 @@ ERROR 23000: Duplicate entry '2' for key 'a'
 insert into t1 values (3);
 insert into t1 values (4);
 drop table t1;
+create table t1 (a varchar(32), unique index(a)) engine = blitzdb;
+insert into t1 values ('a'), ('b'), ('c');
+insert into t1 values ('a');
+ERROR 23000: Duplicate entry 'a' for key 'a'
+insert into t1 values ('b');
+ERROR 23000: Duplicate entry 'b' for key 'a'
+insert into t1 values ('c');
+ERROR 23000: Duplicate entry 'c' for key 'a'
+insert into t1 values ('d'), ('e'), ('f');
+drop table t1;
 create table t1 (a int, index(a)) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4);
 insert into t1 values (1), (2), (3), (4);

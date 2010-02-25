@@ -113,6 +113,19 @@ int blitz_keycmp_cb(const char *a, int,
   for (int i = 0; i < tree->nparts; i++) {
     curr_part = &tree->parts[i];
 
+    if (curr_part->null_bitmask) {
+      if (*a_pos != *b_pos)
+        return ((int)*a_pos - (int)*b_pos);
+
+      a_pos++;
+      b_pos++;
+
+      if (!*a_pos) {
+        curr_part++;
+        continue;
+      }
+    }
+
     switch ((enum ha_base_keytype)curr_part->type) {
     case HA_KEYTYPE_LONG_INT: {
       int32_t a_int_val = sint4korr(a_pos);
