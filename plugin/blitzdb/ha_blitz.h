@@ -43,10 +43,8 @@
 #define BLITZ_MAX_ROW_STACK   2048
 #define BLITZ_MAX_KEY_LEN     1024 
 
-using namespace std;
-
-const string BLITZ_TABLE_PROTO_KEY = "table_definition";
-const string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
+const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
+const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
 /* Callback function for TC's B+Tree key comparison. */
 extern int blitz_keycmp_cb(const char *a, int alen,
@@ -332,7 +330,7 @@ public:
 
 class BlitzEngine : public drizzled::plugin::StorageEngine {
 public:
-  BlitzEngine(const string &name_arg)
+  BlitzEngine(const std::string &name_arg)
     : drizzled::plugin::StorageEngine(name_arg,
                                       drizzled::HTON_FILE_BASED |
                                       drizzled::HTON_NULL_IN_KEY |
@@ -355,15 +353,15 @@ public:
 
   int doRenameTable(drizzled::Session *session, const char *from, const char *to);
 
-  int doDropTable(drizzled::Session&, const string table_name); 
+  int doDropTable(drizzled::Session&, const std::string table_name); 
 
   int doGetTableDefinition(drizzled::Session& session,
                            const char *path, const char *db,
                            const char *table_name, const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, string&,
-                       set<string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, std::string&,
+                       std::set<std::string>& set_of_names);
 
   uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
   uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }

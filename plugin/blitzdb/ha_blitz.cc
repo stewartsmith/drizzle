@@ -21,6 +21,7 @@
 #include "ha_blitz.h"
 #include <sys/stat.h>
 
+using namespace std;
 using namespace drizzled;
 
 static int free_share(BlitzShare *share);
