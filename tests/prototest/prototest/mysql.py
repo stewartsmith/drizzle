@@ -145,11 +145,13 @@ class TestPacket(unittest.TestCase):
     packet = Packet()
     self.assertEqual(packet.size, 0)
     self.assertEqual(packet.sequence, 0)
+    packet.__str__()
 
   def testKeywordInit(self):
     packet = Packet(size=1234, sequence=5)
     self.assertEqual(packet.size, 1234)
     self.assertEqual(packet.sequence, 5)
+    packet.__str__()
 
   def testUnpackInit(self):
     packet = Packet(struct.pack('4B', 210, 4, 0, 5))
@@ -251,6 +253,7 @@ class TestServerHandshake(unittest.TestCase):
   def testDefaultInit(self):
     handshake = ServerHandshake()
     self.verifyDefault(handshake)
+    handshake.__str__()
 
   def testKeywordInit(self):
     handshake = ServerHandshake(protocol_version=11,
@@ -264,6 +267,7 @@ class TestServerHandshake(unittest.TestCase):
                                 unused=tuple([6] * 13),
                                 null2=2)
     self.verifyCustom(handshake)
+    handshake.__str__()
 
   def testUnpackInit(self):
     data = struct.pack('B', 11)
@@ -372,6 +376,7 @@ class TestClientHandshake(unittest.TestCase):
   def testDefaultInit(self):
     handshake = ClientHandshake()
     self.verifyDefault(handshake)
+    handshake.__str__()
 
   def testKeywordInit(self):
     handshake = ClientHandshake(capabilities=65279,
@@ -383,6 +388,7 @@ class TestClientHandshake(unittest.TestCase):
                                 scramble=tuple([5] * 20),
                                 db='db')
     self.verifyCustom(handshake)
+    handshake.__str__()
 
   def testUnpackInit(self):
     data = struct.pack('<IIB', 65279, 64508, 253)
@@ -429,59 +435,54 @@ class Result(object):
       self.affected_rows = affected_rows
       self.insert_id = insert_id
       self.status = status
-      self.warning_count = warning_count
       self.message = message
       self.version_40 = version_40
+      if version_40 == False:
+        self.warning_count = warning_count
     else:
-      if version_40 is True:
-        self.field_count = ord(packed[0])
-        if self.field_count == 0:
-          self.affected_rows = ord(packed[1])
-          self.insert_id = ord(packed[2])
+      self.version_40 = version_40
+      self.field_count = ord(packed[0])
+      if self.field_count == 0:
+        self.affected_rows = ord(packed[1])
+        self.insert_id = ord(packed[2])
+        if version_40 is True:
           if len(packed) == 3:
             self.status = 0
+            self.message = ''
           else:
-            data = struct.unpack('<H', packed[2:])
+            data = struct.unpack('<H', packed[3:5])
             self.status = data[0]
-        elif self.field_count == 255:
-          data = struct.unpack('<H', packed[1:3])
-          self.error_code = data[0]
-          self.message = packed[3:]
+            self.message = packed[5:]
         else:
-          self.affected_rows = ord(packed[1])
-          self.insert_id = ord(packed[2])
           data = struct.unpack('<HH', packed[3:7])
           self.status = data[0]
           self.warning_count = data[1]
           self.message = packed[7:]
-      else:
-        self.field_count = ord(packed[0])
-        if self.field_count == 255:
-          data = struct.unpack('<H', packed[1:3])
-          self.error_code = data[0]
+      elif self.field_count == 254:
+        if version_40 is False:
+          data = struct.unpack('<HH', packed[1:])
+          self.warning_count = data[0]
+          self.status = data[1]
+      elif self.field_count == 255:
+        data = struct.unpack('<H', packed[1:3])
+        self.error_code = data[0]
+        if version_40 is True:
+          self.message = packed[3:]
+        else:
           self.sqlstate_marker = packed[3]
           self.sqlstate = packed[4:9]
           self.message = packed[9:]
-        else:
-          self.affected_rows = ord(packed[1])
-          self.insert_id = ord(packed[2])
-          data = struct.unpack('<HH', packed[3:7])
-          self.status = data[0]
-          self.warning_count = data[1]
-          self.message = packed[7:]
-
-      self.version_40 = version_40
+      else:
+        self.affected_rows = ord(packed[1])
+        self.insert_id = ord(packed[2])
+        data = struct.unpack('<HH', packed[3:7])
+        self.status = data[0]
+        self.warning_count = data[1]
+        self.message = packed[7:]
 
   def __str__(self):
     if self.version_40 is True:
-      if self.field_count == 255:
-        return '''Result
-  field_count = %s
-  error_code = %s
-  message = %s
-  version_40 = %s
-''' % (self.field_count, self.error_code, self.message, self.version_40)
-      else:
+      if self.field_count == 0:
         return '''Result
   field_count = %s
   affected_rows = %s
@@ -490,18 +491,19 @@ class Result(object):
   version_40 = %s
 ''' % (self.field_count, self.affected_rows, self.insert_id, self.status,
        self.version_40)
-    else:
-      if self.field_count == 255:
+      elif self.field_count == 254:
+        return '''Result
+  field_count = %s
+''' % self.field_count
+      elif self.field_count == 255:
         return '''Result
   field_count = %s
   error_code = %s
-  sqlstate_marker = %s
-  sqlstate = %s
   message = %s
   version_40 = %s
-''' % (self.field_count, self.error_code, self.sqlstate_marker, sqlstate,
-       self.message, self.version_40)
-      else:
+''' % (self.field_count, self.error_code, self.message, self.version_40)
+    else:
+      if self.field_count == 0:
         return '''Result
   field_count = %s
   affected_rows = %s
@@ -512,8 +514,112 @@ class Result(object):
   version_40 = %s
 ''' % (self.field_count, self.affected_rows, self.insert_id, self.status,
        self.warning_count, self.message, self.version_40)
+      elif self.field_count == 254:
+        return '''Result
+  field_count = %s
+  warning_count = %s
+  status = %s
+''' % (self.field_count, self.warning_count, self.status)
+      elif self.field_count == 255:
+        return '''Result
+  field_count = %s
+  error_code = %s
+  sqlstate_marker = %s
+  sqlstate = %s
+  message = %s
+  version_40 = %s
+''' % (self.field_count, self.error_code, self.sqlstate_marker, self.sqlstate,
+       self.message, self.version_40)
 
-# TODO testResult
+class TestResult(unittest.TestCase):
+
+  def testDefaultInit(self):
+    result = Result()
+    self.assertEqual(result.field_count, 0)
+    self.assertEqual(result.affected_rows, 0)
+    self.assertEqual(result.insert_id, 0)
+    self.assertEqual(result.status, 0)
+    self.assertEqual(result.warning_count, 0)
+    self.assertEqual(result.message, '')
+    self.assertEqual(result.version_40, False)
+    result.__str__()
+
+  def testDefaultInit40(self):
+    result = Result(version_40=True)
+    self.assertEqual(result.field_count, 0)
+    self.assertEqual(result.affected_rows, 0)
+    self.assertEqual(result.insert_id, 0)
+    self.assertEqual(result.status, 0)
+    self.assertEqual(result.message, '')
+    self.assertEqual(result.version_40, True)
+    result.__str__()
+
+  def testKeywordInit(self):
+    result = Result(field_count=0, affected_rows=3, insert_id=5, status=2,
+                    warning_count=7, message='test', version_40=False)
+    self.assertEqual(result.field_count, 0)
+    self.assertEqual(result.affected_rows, 3)
+    self.assertEqual(result.insert_id, 5)
+    self.assertEqual(result.status, 2)
+    self.assertEqual(result.warning_count, 7)
+    self.assertEqual(result.message, 'test')
+    self.assertEqual(result.version_40, False)
+
+  def testUnpackInitOK(self):
+    data = struct.pack('BBB', 0, 3, 5)
+    data += struct.pack('<HH', 2, 7)
+    data += 'test'
+
+    result = Result(data)
+    self.assertEqual(result.field_count, 0)
+    self.assertEqual(result.affected_rows, 3)
+    self.assertEqual(result.insert_id, 5)
+    self.assertEqual(result.status, 2)
+    self.assertEqual(result.warning_count, 7)
+    self.assertEqual(result.message, 'test')
+    self.assertEqual(result.version_40, False)
+    result.__str__()
+
+  def testUnpackInitOK40(self):
+    data = struct.pack('BBB', 0, 3, 5)
+    data += struct.pack('<H', 2)
+    data += 'test'
+
+    result = Result(data, version_40=True)
+    self.assertEqual(result.field_count, 0)
+    self.assertEqual(result.affected_rows, 3)
+    self.assertEqual(result.insert_id, 5)
+    self.assertEqual(result.status, 2)
+    self.assertEqual(result.message, 'test')
+    self.assertEqual(result.version_40, True)
+    result.__str__()
+
+  def testUnpackInitError(self):
+    data = chr(255)
+    data += struct.pack('<H', 1234)
+    data += '#ABCDE'
+    data += 'test'
+
+    result = Result(data)
+    self.assertEqual(result.field_count, 255)
+    self.assertEqual(result.error_code, 1234)
+    self.assertEqual(result.sqlstate_marker, '#')
+    self.assertEqual(result.sqlstate, 'ABCDE')
+    self.assertEqual(result.message, 'test')
+    self.assertEqual(result.version_40, False)
+    result.__str__()
+
+  def testUnpackInitError40(self):
+    data = chr(255)
+    data += struct.pack('<H', 1234)
+    data += 'test'
+
+    result = Result(data, version_40=True)
+    self.assertEqual(result.field_count, 255)
+    self.assertEqual(result.error_code, 1234)
+    self.assertEqual(result.message, 'test')
+    self.assertEqual(result.version_40, True)
+    result.__str__()
 
 class Command(object):
   '''This class represents a command packet sent from the client.'''
