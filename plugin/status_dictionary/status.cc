@@ -38,7 +38,7 @@ StateTool::StateTool(const char *arg, bool global) :
   option_type(global ? OPT_GLOBAL : OPT_SESSION)
 {
   add_field("VARIABLE_NAME");
-  add_field("VARIABLE_VALUE", 16300);
+  add_field("VARIABLE_VALUE", 1024);
 }
 
 StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
@@ -103,15 +103,8 @@ bool StateTool::Generator::populate()
       variables++;
       continue;
     }
-    else if (var->type != SHOW_ARRAY)
-    {
-      fill(variables->name, var->value, var->type);
-    }
-    else
-    {
-      variables++;
-      continue;
-    }
+
+    fill(variables->name, var->value, var->type);
 
     variables++;
 
@@ -122,13 +115,15 @@ bool StateTool::Generator::populate()
 }
 
 
-void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_type)
+extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
+void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE show_type)
 {
-  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
-  char * const buff= (char *) &buff_data;
   Session *session= current_session;
-  const char *pos, *end;                  // We assign a lot of const's
   struct system_status_var *status_var;
+  std::ostringstream oss;
+
+
+  std::string return_value;
 
   /* Scope represents if the status should be session or global */
   status_var= getStatus();
@@ -142,7 +137,6 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
                                                  &null_lex_str);
   }
 
-  pos= end= buff;
   /*
     note that value may be == buff. All SHOW_xxx code below
     should still work in this case
@@ -152,62 +146,64 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_DOUBLE:
-    /* 6 is the default precision for '%f' in sprintf() */
-    end= buff + internal::my_fcvt(*(double *) value, 6, buff, NULL);
+    oss.precision(6);
+    oss << *(double *) value;
+    return_value= oss.str();
     break;
   case SHOW_LONG_STATUS:
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_LONG:
-    end= internal::int10_to_str(*(long*) value, buff, 10);
+    oss << *(int64_t*) value;
+    return_value= oss.str();
     break;
   case SHOW_LONGLONG_STATUS:
     value= ((char *) status_var + (uint64_t) value);
     /* fall through */
   case SHOW_LONGLONG:
-    end= internal::int64_t10_to_str(*(int64_t*) value, buff, 10);
+    oss << *(int64_t*) value;
+    return_value= oss.str();
     break;
   case SHOW_SIZE:
-    {
-      stringstream ss (stringstream::in);
-      ss << *(size_t*) value;
-
-      string str= ss.str();
-      strncpy(buff, str.c_str(), str.length());
-      end= buff+ str.length();
-    }
+    oss << *(size_t*) value;
+    return_value= oss.str();
     break;
   case SHOW_HA_ROWS:
-    end= internal::int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
+    oss << (int64_t) *(ha_rows*) value;
+    return_value= oss.str();
     break;
   case SHOW_BOOL:
-    end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
-    break;
   case SHOW_MY_BOOL:
-    end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
+    return_value= *(bool*) value ? "ON" : "OFF";
     break;
   case SHOW_INT:
   case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-    end= internal::int10_to_str((long) *(uint32_t*) value, buff, 10);
+    oss << (long) *(uint32_t*) value;
+    return_value= oss.str();
     break;
   case SHOW_CHAR:
     {
-      if (!(pos= value))
-        pos= "";
-      end= strchr(pos, '\0');
+      if (value)
+        return_value= value;
       break;
     }
   case SHOW_CHAR_PTR:
     {
-      if (!(pos= *(char**) value))
-        pos= "";
-      end= strchr(pos, '\0');
+      if (*(char**) value)
+        return_value= *(char**) value;
+
       break;
     }
   case SHOW_KEY_CACHE_LONG:
+    value= (char*) dflt_key_cache + (unsigned long)value;
+    oss << *(long*) value;
+    return_value= oss.str();
+    break;
   case SHOW_KEY_CACHE_LONGLONG:
-    pos= "not supported";
-    end= pos + sizeof("not supported");
+    value= (char*) dflt_key_cache + (unsigned long)value;
+    oss << *(int64_t*) value;
+    return_value= oss.str();
+    break;
   case SHOW_UNDEF:
     break;                                        // Return empty string
   case SHOW_SYS:                                  // Cannot happen
@@ -217,8 +213,8 @@ void StateTool::Generator::fill(const char *name, char *value, SHOW_TYPE show_ty
   }
   pthread_mutex_unlock(&LOCK_global_system_variables);
   push(name);
-  if (end - pos)
-    push(pos, (uint32_t) (end - pos));
+  if (return_value.length())
+    push(return_value);
   else 
-    push();
+    push(" ");
 }

@@ -21,15 +21,12 @@
 #include <drizzled/function/locate.h>
 #include <drizzled/function/str/char.h>
 #include <drizzled/function/str/collation.h>
-#include <drizzled/function/str/database.h>
 #include <drizzled/function/str/insert.h>
 #include <drizzled/function/str/left.h>
 #include <drizzled/function/str/repeat.h>
 #include <drizzled/function/str/replace.h>
-#include <drizzled/function/str/reverse.h>
 #include <drizzled/function/str/right.h>
 #include <drizzled/function/str/set_collation.h>
-#include <drizzled/function/str/substr.h>
 #include <drizzled/function/str/trim.h>
 #include <drizzled/function/str/user.h>
 
@@ -100,8 +97,6 @@
 #include <drizzled/statement/show_create.h>
 #include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_errors.h>
-#include <drizzled/statement/show_processlist.h>
-#include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/start_transaction.h>
 #include <drizzled/statement/truncate.h>

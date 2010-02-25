@@ -24,7 +24,7 @@
 #ifndef DRIZZLED_NAMED_SAVEPOINT_H
 #define DRIZZLED_NAMED_SAVEPOINT_H
 
-class Ha_trx_info;
+#include "drizzled/transaction_context.h" /* for TransactionContext::ResourceContexts */
 
 namespace drizzled
 {
@@ -40,12 +40,24 @@ public:
    * Constructor
    */
   NamedSavepoint(const char *in_name, size_t in_name_length) :
-    ha_list(NULL),
-    name(in_name, in_name_length)
+    name(in_name, in_name_length),
+    resource_contexts()
   {}
   ~NamedSavepoint()
   {}
-  Ha_trx_info *ha_list;
+
+  void setResourceContexts(TransactionContext::ResourceContexts &new_contexts)
+  {
+    resource_contexts.assign(new_contexts.begin(), new_contexts.end());
+  }
+  const TransactionContext::ResourceContexts &getResourceContexts() const
+  {
+    return resource_contexts;
+  }
+  TransactionContext::ResourceContexts &getResourceContexts()
+  {
+    return resource_contexts;
+  }
   const std::string &getName() const
   {
     return name;
@@ -57,10 +69,24 @@ public:
   NamedSavepoint(const NamedSavepoint &other)
   {
     name.assign(other.getName());
-    ha_list= other.ha_list;
+    const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
+    resource_contexts.assign(other_resource_contexts.begin(),
+                             other_resource_contexts.end());
+  }
+  NamedSavepoint &operator=(const NamedSavepoint &other)
+  {
+    if (this == &other)
+      return *this;
+
+    name.assign(other.getName());
+    const TransactionContext::ResourceContexts &other_resource_contexts= other.getResourceContexts();
+    resource_contexts.assign(other_resource_contexts.begin(),
+                             other_resource_contexts.end());
+    return *this;
   }
 private:
   std::string name;
+  TransactionContext::ResourceContexts resource_contexts;
   NamedSavepoint();
 };
 
