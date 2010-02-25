@@ -44,6 +44,8 @@ using namespace std;
 using namespace google;
 using namespace drizzled;
 
+int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
+
 #define EMBEDDED_INNODB_EXT ".EID"
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
@@ -580,8 +582,7 @@ int EmbeddedInnoDBCursor::rnd_init(bool)
   return(0);
 }
 
-
-int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
+int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
 {
   ib_err_t err;
 
@@ -600,9 +601,19 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
 
   ib_tuple_clear(tuple);
 
+  return 0;
+}
+
+int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
+{
+  ib_err_t err;
+  int ret;
+
+  ret= read_row_from_innodb(cursor, tuple, table);
+
   err= ib_cursor_next(cursor);
 
-  return 0;
+  return ret;
 }
 
 int EmbeddedInnoDBCursor::rnd_end()
@@ -682,12 +693,18 @@ int EmbeddedInnoDBCursor::index_read_last_map(unsigned char *, const unsigned ch
 }
 
 
-int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
+int EmbeddedInnoDBCursor::index_next(unsigned char *)
 {
-  if (active_index == 0)
-    return rnd_next(buf);
+  int ret= HA_ERR_END_OF_FILE;
+  ib_err_t err;
 
-  return(HA_ERR_END_OF_FILE);
+  if (active_index == 0)
+  {
+    ret= read_row_from_innodb(cursor, tuple, table);
+    err= ib_cursor_next(cursor);
+  }
+
+  return ret;
 }
 
 int EmbeddedInnoDBCursor::index_end()
@@ -703,14 +720,20 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 }
 
 
-int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
+int EmbeddedInnoDBCursor::index_first(unsigned char *)
 {
+  int ret= HA_ERR_END_OF_FILE;
+  ib_err_t err;
+
   ib_cursor_first(cursor);
 
   if (active_index == 0)
-    return rnd_next(buf);
+  {
+    ret= read_row_from_innodb(cursor, tuple, table);
+    err= ib_cursor_next(cursor);
+  }
 
-  return(HA_ERR_END_OF_FILE);
+  return ret;
 }
 
 
