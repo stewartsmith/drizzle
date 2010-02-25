@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef STORAGE_BLITZ_HA_BLITZ_H
-#define STORAGE_BLITZ_HA_BLITZ_H
+#ifndef PLUGIN_BLITZDB_HA_BLITZ_H
+#define PLUGIN_BLITZDB_HA_BLITZ_H
 
 #include "config.h"
 #include "drizzled/session.h"
@@ -378,4 +378,4 @@ public:
   }
 };
 
-#endif /* STORAGE_BLITZ_HA_BLITZ_H */
+#endif /* PLUGIN_BLITZDB_HA_BLITZ_H */
