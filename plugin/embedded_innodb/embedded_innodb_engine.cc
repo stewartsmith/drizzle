@@ -716,7 +716,16 @@ int EmbeddedInnoDBCursor::index_end()
 
 int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 {
-  return(HA_ERR_END_OF_FILE);
+  int ret= HA_ERR_END_OF_FILE;
+  ib_err_t err;
+
+  if (active_index == 0)
+  {
+    ret= read_row_from_innodb(cursor, tuple, table);
+    err= ib_cursor_prev(cursor);
+  }
+
+  return ret;
 }
 
 
@@ -739,7 +748,18 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *)
 
 int EmbeddedInnoDBCursor::index_last(unsigned char *)
 {
-  return(HA_ERR_END_OF_FILE);
+  int ret= HA_ERR_END_OF_FILE;
+  ib_err_t err;
+
+  ib_cursor_last(cursor);
+
+  if (active_index == 0)
+  {
+    ret= read_row_from_innodb(cursor, tuple, table);
+    err= ib_cursor_prev(cursor);
+  }
+
+  return ret;
 }
 
 static int create_table_proto_table()
