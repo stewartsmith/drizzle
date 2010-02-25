@@ -66,9 +66,12 @@ void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
  */
 void QueryRewriter::rewriteQuery(string &to_rewrite)
 {
-  for_each(all_rewriters.begin(),
-           all_rewriters.end(),
-           bind2nd(mem_fun(&QueryRewriter::rewrite), to_rewrite));
+  for (vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
+       iter != all_rewriters.end();
+       ++iter)
+  {
+    (*iter)->rewrite(to_rewrite);
+  }
 }
 
 } /* namespace plugin */
