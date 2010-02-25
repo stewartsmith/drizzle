@@ -143,11 +143,28 @@ public:
   typedef uint64_t Table_flags;
 
 private:
-  bool enabled;
-
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
 
   virtual void setTransactionReadWrite(Session& session);
+
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL statement.
+   */
+  virtual void doStartStatement(Session *session)
+  {
+    (void) session;
+  }
+
+  /*
+   * Indicates to a storage engine the end of
+   * the current SQL statement in the supplied
+   * Session.
+   */
+  virtual void doEndStatement(Session *session)
+  {
+    (void) session;
+  }
 
 protected:
   std::string table_definition_ext;
@@ -229,12 +246,6 @@ public:
   inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
-
-  bool is_enabled() const
-  {
-    return enabled;
-  }
-
   bool is_user_selectable() const
   {
     return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
@@ -247,10 +258,14 @@ public:
 
   // @todo match check_flag interface
   virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
-
-
-  void enable() { enabled= true; }
-  void disable() { enabled= false; }
+  virtual void startStatement(Session *session)
+  {
+    doStartStatement(session);
+  }
+  virtual void endStatement(Session *session)
+  {
+    doEndStatement(session);
+  }
 
   /*
     StorageEngine methods:
@@ -267,7 +282,6 @@ public:
   virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
-  virtual int start_consistent_snapshot(Session *) { return 0; }
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
   {

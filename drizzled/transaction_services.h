@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (c) Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,8 +72,52 @@ public:
   int ha_release_savepoint(Session *session, NamedSavepoint &sv);
   bool mysql_xa_recover(Session *session);
 
-  /* these are called by storage engines */
-  void trans_register_ha(Session *session, bool all, plugin::TransactionalStorageEngine *engine);
+  /**
+   * Marks a storage engine as participating in a statement
+   * transaction.
+   *
+   * @note
+   * 
+   * This method is idempotent
+   *
+   * @todo
+   *
+   * This method should not be called more than once per resource
+   * per statement, and therefore should not need to be idempotent.
+   * Put in assert()s to test this.
+   *
+   * @param[in] Session pointer
+   * @param[in] Resource which will be participating
+   */
+  void registerResourceForStatement(Session *session,
+                                    plugin::TransactionalStorageEngine *engine);
+
+  /**
+   * Registers a resource manager in the "normal" transaction.
+   *
+   * @note
+   *
+   * This method is idempotent and must be idempotent
+   * because it can be called both by the above 
+   * TransactionServices::registerResourceForStatement(),
+   * which occurs at the beginning of each SQL statement,
+   * and also manually when a BEGIN WORK/START TRANSACTION
+   * statement is executed. If the latter case (BEGIN WORK)
+   * is called, then subsequent contained statement transactions
+   * will call this method as well.
+   *
+   * @note
+   *
+   * This method checks to see if the supplied resource
+   * is also registered in the statement transaction, and
+   * if not, registers the resource in the statement
+   * transaction.  This happens ONLY when the user has
+   * called BEGIN WORK/START TRANSACTION, which is the only
+   * time when this method is called except from the
+   * TransactionServices::registerResourceForStatement method.
+   */
+  void registerResourceForTransaction(Session *session,
+                                      plugin::TransactionalStorageEngine *engine);
 };
 
 } /* namespace drizzled */
