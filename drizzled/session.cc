@@ -671,7 +671,6 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
@@ -695,7 +694,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
-    if (mysql_change_db(this, &db_str, false))
+    if (mysql_change_db(this, in_db, false))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;

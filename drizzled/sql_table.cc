@@ -43,7 +43,6 @@
 
 
 #include "drizzled/statement/alter_table.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
 
@@ -86,7 +85,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     apply it to the table.
   */
   if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= get_default_db_collation(db);
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(db);
 }
 
 /*
@@ -1613,10 +1612,10 @@ bool mysql_create_table_no_lock(Session *session,
   }
 
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
-  if (!internal_tmp_table && ! lex_identified_temp_table)
+  if (not internal_tmp_table && not lex_identified_temp_table)
   {
-    if (plugin::StorageEngine::getTableDefinition(*session,
-                                                  identifier)==EEXIST)
+    if (plugin::StorageEngine::doesTableExist(*session,
+                                              identifier, false)==EEXIST)
     {
       if (is_if_not_exists)
       {
@@ -1627,7 +1626,9 @@ bool mysql_create_table_no_lock(Session *session,
         create_info->table_existed= 1;		// Mark that table existed
       }
       else 
+      {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
+      }
 
       goto unlock_and_end;
     }
@@ -1655,30 +1656,24 @@ bool mysql_create_table_no_lock(Session *session,
     one else is attempting to discover the table. Since
     it's not on disk as a frm cursor, no one could be using it!
   */
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
-    int retcode= plugin::StorageEngine::getTableDefinition(*session, identifier);
+    bool exists= plugin::StorageEngine::doesTableExist(*session, identifier, false);
 
-    switch (retcode)
+    if (exists)
     {
-      case ENOENT:
-        /* Normal case, no table exists. we can go and create it */
-        break;
-      case EEXIST:
-        if (is_if_not_exists)
-        {
-          error= false;
-          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                              ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                              identifier.getTableName());
-          create_info->table_existed= 1;		// Mark that table existed
-          goto unlock_and_end;
-        }
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
+      if (is_if_not_exists)
+      {
+        error= false;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                            identifier.getTableName());
+        create_info->table_existed= 1;		// Mark that table existed
         goto unlock_and_end;
-      default:
-        my_error(retcode, MYF(0), identifier.getTableName());
-        goto unlock_and_end;
+      }
+
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
+      goto unlock_and_end;
     }
   }
 
@@ -1691,12 +1686,14 @@ bool mysql_create_table_no_lock(Session *session,
 		       table_proto,
                        create_info, alter_info->create_list,
                        key_count, key_info_buffer))
+  {
     goto unlock_and_end;
+  }
 
   if (lex_identified_temp_table)
   {
     /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(identifier)))
+    if (not (session->open_temporary_table(identifier)))
     {
       (void) session->rm_temporary_table(create_info->db_type, identifier);
       goto unlock_and_end;
@@ -1710,7 +1707,7 @@ bool mysql_create_table_no_lock(Session *session,
     - The binary log is not open.
     Otherwise, the statement shall be binlogged.
    */
-  if (!internal_tmp_table && ! lex_identified_temp_table)
+  if (not internal_tmp_table && not lex_identified_temp_table)
     write_bin_log(session, session->query.c_str());
   error= false;
 unlock_and_end:
@@ -1719,6 +1716,7 @@ unlock_and_end:
 err:
   session->set_proc_info("After create");
   delete cursor;
+
   return(error);
 }
 
