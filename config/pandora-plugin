@@ -27,7 +27,7 @@ plugin_ini_fname='plugin.ini'
 plugin_list=[]
 plugin_am_file=None
 plugin_ac_file=None
-plugin_prefix='lib'
+plugin_prefix=''
 plugin_suffix='_plugin'
 extra_cflags=''
 extra_cppflags=''
@@ -149,7 +149,7 @@ EXTRA_DIST = plugin.ini
       plugin_file.write("EXTRA_DIST += %(testsuitedir)s\n" % plugin)
   plugin_file.write("""
 pkgplugin_LTLIBRARIES=%(pname)s.la
-%(pname)s_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
+%(pname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
 %(pname)s_la_LIBADD=%(libs)s
 %(pname)s_la_DEPENDENCIES=%(libs)s
 %(pname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
@@ -387,7 +387,7 @@ def read_plugin_ini(plugin_dir):
     plugin['cppflags']+= extra_cppflags
     plugin['cxxflags']+= extra_cxxflags
 
-    plugin['pname']= "%s%s%s" % (plugin_prefix, plugin['name'], plugin_suffix)
+    plugin['pname']= "lib%s%s%s" % (plugin_prefix, plugin['name'], plugin_suffix)
     plugin['root_plugin_dir']= root_plugin_dir
     plugin['plugin_prefix']= plugin_prefix
     plugin['plugin_suffix']= plugin_suffix
@@ -439,7 +439,7 @@ endif
 EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
   pkgplugin_LTLIBRARIES+=%(root_plugin_dir)s/%(pname)s.la
-  %(root_plugin_dir)s_%(pname)s_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
+  %(root_plugin_dir)s_%(pname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
   %(root_plugin_dir)s_%(pname)s_la_LIBADD=%(libs)s
   %(root_plugin_dir)s_%(pname)s_la_DEPENDENCIES=%(libs)s
   %(root_plugin_dir)s_%(pname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
