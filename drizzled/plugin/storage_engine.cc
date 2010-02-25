@@ -97,8 +97,8 @@ void StorageEngine::setTransactionReadWrite(Session& session)
 }
 
 int StorageEngine::doRenameTable(Session *,
-                                         const char *from,
-                                         const char *to)
+                                 const char *from,
+                                 const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -301,8 +301,8 @@ bool StorageEngine::flushLogs(StorageEngine *engine)
   if (engine == NULL)
   {
     if (find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            mem_fun(&StorageEngine::flush_logs))
-          != vector_of_engines.begin())
+                mem_fun(&StorageEngine::flush_logs))
+        != vector_of_engines.begin())
       return true;
   }
   else
@@ -444,8 +444,8 @@ handle_error(uint32_t ,
    returns ENOENT if the file doesn't exists.
 */
 int StorageEngine::dropTable(Session& session,
-                                     TableIdentifier &identifier,
-                                     bool generate_warning)
+                             TableIdentifier &identifier,
+                             bool generate_warning)
 {
   int error= 0;
   int error_proto;
@@ -453,8 +453,8 @@ int StorageEngine::dropTable(Session& session,
   StorageEngine* engine;
 
   error_proto= StorageEngine::getTableDefinition(session,
-                                                         identifier,
-                                                         &src_proto);
+                                                 identifier,
+                                                 &src_proto);
 
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {

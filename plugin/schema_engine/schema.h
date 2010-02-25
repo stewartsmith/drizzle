@@ -24,6 +24,9 @@
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
+#include <drizzled/hash.h>
+
+#include <pthread.h>
 
 extern const drizzled::CHARSET_INFO *default_charset_info;
 
@@ -33,14 +36,22 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
-  int writeSchemaFile(const char *path, const drizzled::message::Schema &db);
-  int readTableProto(const std::string &path, drizzled::message::Table &table);
+  bool writeSchemaFile(const char *path, const drizzled::message::Schema &db);
+  int readTableFile(const std::string &path, drizzled::message::Table &table);
+  bool readSchemaFile(const std::string &path, drizzled::message::Schema &schema);
+
+  void prime();
+
+  typedef drizzled::hash_map<std::string, drizzled::message::Schema> SchemaCache;
+  SchemaCache schema_cache;
+  bool schema_cache_filled;
+
+  pthread_rwlock_t schema_lock;
 
 public:
   Schema();
 
-  ~Schema()
-  { }
+  ~Schema();
 
   int doCreateTable(drizzled::Session *,
                     const char *,
