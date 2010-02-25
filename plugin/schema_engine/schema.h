@@ -77,6 +77,10 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       std::string &db_name,
+                       std::set<std::string> &set_of_names);
+
   const char **bas_ext() const 
   {
     return schema_exts;

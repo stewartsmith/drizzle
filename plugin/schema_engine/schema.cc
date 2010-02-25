@@ -23,6 +23,10 @@
 #include "plugin/schema_engine/schema.h"
 #include "drizzled/db.h"
 #include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/cursor.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -39,6 +43,7 @@ using namespace std;
 using namespace drizzled;
 
 #define MY_DB_OPT_FILE "db.opt"
+#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
 
 int Schema::readTableProto(const std::string &path, message::Table &table)
 {
@@ -71,6 +76,7 @@ Schema::Schema():
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {
+    table_definition_ext= DEFAULT_FILE_EXTENSION;
 }
 
 int Schema::doGetTableDefinition(Session &,
@@ -82,7 +88,7 @@ int Schema::doGetTableDefinition(Session &,
 {
   int err;
   string proto_path(path);
-  proto_path.append(".dfe");
+  proto_path.append(DEFAULT_FILE_EXTENSION);
 
   int error= access(proto_path.c_str(), F_OK);
 
@@ -101,6 +107,36 @@ int Schema::doGetTableDefinition(Session &,
   }
 
   return err;
+}
+
+void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+{
+  CachedDirectory::Entries entries= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
+    { }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names.insert(uname);
+    }
+  }
 }
 
 void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
