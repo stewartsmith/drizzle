@@ -1,5 +1,5 @@
 # Populate log with some records...
---source ../plugin/transaction_log/tests/t/create_schema.inc
+--source ../plugin/transaction_log/tests/t/schema.inc
 
 # Read in the transaction.log.
 

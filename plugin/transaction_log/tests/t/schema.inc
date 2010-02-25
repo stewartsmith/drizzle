@@ -1,5 +1,6 @@
 # 
-# Test CREATE SCHEMA and replication
+# Test CREATE SCHEMA, DROP SCHEMA, ALTER SCHEMA
+# and the replication stream
 #
 
 --disable_warnings

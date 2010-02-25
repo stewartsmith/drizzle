@@ -332,6 +332,15 @@ public:
    */
   void createSchema(Session *in_session, const message::Schema &schema);
   /**
+   * Creates a DropSchema Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] message::Schema message describing new schema
+   */
+  void dropSchema(Session *in_session, const std::string &schema_name);
+  /**
    * Creates a TruncateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
    * out to the replicator streams.

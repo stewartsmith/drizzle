@@ -205,6 +205,16 @@ message::transformStatementToSql(const message::Statement &source,
       sql_strings.push_back(destination);
     }
     break;
+  case message::Statement::DROP_SCHEMA:
+    {
+      assert(source.has_drop_schema_statement());
+      string destination;
+      error= message::transformDropSchemaStatementToSql(source.drop_schema_statement(),
+                                                          &destination,
+                                                          sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
   case message::Statement::SET_VARIABLE:
     {
       assert(source.has_set_variable_statement());
@@ -655,8 +665,25 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
 }
 
 enum message::TransformSqlError
+message::transformDropSchemaStatementToSql(const message::DropSchemaStatement &statement,
+                                           string *destination,
+                                           enum message::TransformSqlVariant sql_variant)
+{
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  destination->append("DROP SCHEMA ", 12);
+  destination->push_back(quoted_identifier);
+  destination->append(statement.schema_name());
+  destination->push_back(quoted_identifier);
+
+  return NONE;
+}
+
+enum message::TransformSqlError
 message::transformCreateSchemaStatementToSql(const message::CreateSchemaStatement &statement,
-                                             std::string *destination,
+                                             string *destination,
                                              enum message::TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';

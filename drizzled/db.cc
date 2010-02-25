@@ -277,7 +277,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
     assert(! session->query.empty());
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rawStatement(session, session->getQueryString());
+    replication_services.dropSchema(session, string(db));
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);

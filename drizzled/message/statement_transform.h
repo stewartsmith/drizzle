@@ -54,6 +54,7 @@ class DeleteData;
 class DeleteRecord;
 class TruncateTableStatement;
 class CreateSchemaStatement;
+class DropSchemaStatement;
 class SetVariableStatement;
 
 /** A Variation of SQL to be output during transformation */
@@ -301,6 +302,24 @@ enum TransformSqlError
 transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
                                     std::string *destination,
                                     enum TransformSqlVariant sql_variant= DRIZZLE);
+/**
+ * This function looks at a supplied CreateSchemaStatement
+ * and constructs a correctly-formatted SQL
+ * statement to the supplied destination string.
+ *
+ * @param CreateSchemaStatement message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformDropSchemaStatementToSql(const DropSchemaStatement &statement,
+                                  std::string *destination,
+                                  enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * This function looks at a supplied SetVariableStatement
