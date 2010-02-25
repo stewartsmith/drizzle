@@ -309,7 +309,7 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
     return HA_ERR_END_OF_FILE;
   }
 
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
   /* Unpack and copy the current row to Drizzle's result buffer. */
   unpack_row(drizzle_buf, current_row, current_row_len);
@@ -583,7 +583,7 @@ int ha_blitz::index_end(void) {
 int ha_blitz::write_row(unsigned char *drizzle_row) {
   int rv;
   
-  ha_statistic_increment(&SSV::ha_write_count);
+  ha_statistic_increment(&system_status_var::ha_write_count);
 
   /* Prepare Auto Increment field if one exists. This logic is borrowed
      from Archive until we hack on multiple index support. */
@@ -682,7 +682,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
   unsigned char *row_buf = get_pack_buffer(row_len);
   int rv = 0;
 
-  ha_statistic_increment(&SSV::ha_update_count);
+  ha_statistic_increment(&system_status_var::ha_update_count);
 
   if (thread_locked) {
     /* This is a really simple case where an UPDATE statement is
@@ -734,7 +734,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
 int ha_blitz::delete_row(const unsigned char *) {
   bool rv = false;
 
-  ha_statistic_increment(&SSV::ha_delete_count);
+  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (thread_locked)
     rv = share->dict.delete_row(held_key, held_key_len);
@@ -1129,4 +1129,4 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
-DRIZZLE_PLUGIN(blitz_init, blitz_deinit, NULL, NULL);
+DRIZZLE_PLUGIN(blitz_init, blitz_deinit, NULL);
