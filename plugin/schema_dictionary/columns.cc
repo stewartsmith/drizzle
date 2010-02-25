@@ -43,6 +43,9 @@ ColumnsTool::ColumnsTool() :
   add_field("NUMERIC_SCALE", plugin::TableFunction::NUMBER);
 
   add_field("COLLATION_NAME");
+
+  add_field("COLUMN_KEY", plugin::TableFunction::BOOLEAN);
+  add_field("EXTRA", 20);
   add_field("COLUMN_COMMENT", 1024);
 }
 
@@ -113,7 +116,7 @@ void ColumnsTool::Generator::fill()
   push(column.name());
 
   /* ORDINAL_POSITION */
-  push(column_iterator);
+  push(static_cast<int64_t>(column_iterator));
 
   /* COLUMN_DEFAULT */
   push(column.options().default_value());
@@ -122,7 +125,7 @@ void ColumnsTool::Generator::fill()
   push(column.constraints().is_nullable());
 
   /* DATATYPE */
-  push(column.type());
+  pushType(column.type());
 
  /* "CHARACTER_MAXIMUM_LENGTH" */
   push(static_cast<int64_t>(column.string_options().length()));
@@ -138,6 +141,12 @@ void ColumnsTool::Generator::fill()
 
  /* "COLLATION_NAME" */
   push(column.string_options().collation());
+
+ /* "COLUMN_KEY" */
+  push(false);
+
+ /* "EXTRA" */
+  push();
 
  /* "COLUMN_COMMENT" */
   push(column.comment());

@@ -84,7 +84,6 @@ Lex_input_stream::Lex_input_stream(Session *session,
   m_body_utf8(NULL),
   m_cpp_utf8_processed_ptr(NULL),
   next_state(MY_LEX_START),
-  found_semicolon(NULL),
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
@@ -1879,7 +1878,6 @@ bool LEX::only_view_structure()
 {
   switch (sql_command) {
   case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_TABLES:
   case SQLCOM_SHOW_FIELDS:
     return true;
   default:
@@ -1902,7 +1900,6 @@ bool LEX::need_correct_ident()
   switch(sql_command)
   {
   case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_TABLES:
     return true;
   default:
     return false;

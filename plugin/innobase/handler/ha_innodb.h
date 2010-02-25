@@ -28,6 +28,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
 
 using namespace drizzled;
 /** InnoDB table share */
@@ -102,6 +103,19 @@ class ha_innobase: public Cursor
 	UNIV_INTERN ha_innobase(plugin::StorageEngine &engine,
                                 TableShare &table_arg);
 	UNIV_INTERN ~ha_innobase();
+  /**
+   * Returns the plugin::TransactionStorageEngine pointer
+   * of the cursor's underlying engine.
+   *
+   * @todo
+   *
+   * Have a TransactionalCursor subclass...
+   */
+  UNIV_INTERN plugin::TransactionalStorageEngine *getTransactionalEngine()
+  {
+    return static_cast<plugin::TransactionalStorageEngine *>(engine);
+  }
+
 	/*
 	  Get the row type from the storage engine.  If this method returns
 	  ROW_TYPE_NOT_USED, the information in HA_CREATE_INFO should be used.
@@ -188,7 +202,6 @@ public:
 
 
 extern "C" {
-char **session_query(Session *session);
 
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
