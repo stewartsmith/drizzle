@@ -81,6 +81,7 @@ enum engine_flag_bits {
   HTON_BIT_NO_PREFIX_CHAR_KEYS,
   HTON_BIT_HAS_CHECKSUM,
   HTON_BIT_SKIP_STORE_LOCK,
+  HTON_BIT_SCHEMA_DICTIONARY,
   HTON_BIT_SIZE
 };
 
@@ -112,6 +113,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_DELETE(1 <
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_NO_PREFIX_CHAR_KEYS);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT_SCHEMA_DICTIONARY);
 
 
 class Table;
@@ -347,6 +349,9 @@ public:
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
   static bool doesSchemaExist(const std::string &schema_name);
   static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
+  static bool createSchema(const drizzled::message::Schema &schema_message);
+  static bool dropSchema(const std::string &schema_name);
+  static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
   virtual void doGetSchemaNames(std::set<std::string>& set_of_names)
@@ -359,6 +364,15 @@ public:
 
     return false; 
   }
+
+  virtual bool doCreateSchema(const drizzled::message::Schema &schema_message)
+  { (void)schema_message; return false; }
+
+  virtual bool doAlterSchema(const drizzled::message::Schema &schema_message)
+  { (void)schema_message; return false; }
+
+  virtual bool doDropSchema(const std::string &schema_name)
+  { (void)schema_name; return false; }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

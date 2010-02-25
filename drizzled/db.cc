@@ -52,7 +52,7 @@ using namespace std;
 namespace drizzled
 {
 
-const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD", ".opt"};
+const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD"};
 static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
 
 
@@ -60,40 +60,6 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
                                  const string &db, const char *path,
                                  TableList **dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
-
-/* path is path to database, not schema file */
-static int write_schema_file(const char *path, const message::Schema &db)
-{
-  char schema_file_tmp[FN_REFLEN];
-  string schema_file(path);
-
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
-
-  schema_file.append(1, FN_LIBCHAR);
-  schema_file.append(MY_DB_OPT_FILE);
-
-  int fd= mkstemp(schema_file_tmp);
-
-  if (fd==-1)
-    return errno;
-
-
-  if (!db.SerializeToFileDescriptor(fd))
-  {
-    close(fd);
-    unlink(schema_file_tmp);
-    return -1;
-  }
-
-  if (rename(schema_file_tmp, schema_file.c_str()) == -1)
-  {
-    close(fd);
-    return errno;
-  }
-  close(fd);
-
-  return 0;
-}
 
 /*
   Create a database
@@ -116,14 +82,10 @@ static int write_schema_file(const char *path, const message::Schema &db)
 
 */
 
-bool mysql_create_db(Session *session, const char *db, message::Schema *schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const message::Schema &schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  long result= 1;
-  int error_erno;
   bool error= false;
-
-  schema_message->set_name(db);
 
   /*
     Do not create database if another thread is holding read lock.
@@ -139,73 +101,54 @@ bool mysql_create_db(Session *session, const char *db, message::Schema *schema_m
   */
   if (wait_if_global_read_lock(session, 0, 1))
   {
-    error= true;
-    goto exit2;
+    return false;
   }
 
+  assert(schema_message.has_name());
+  assert(schema_message.has_collation());
+
+  // @todo push this lock down into the engine
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* check directory */
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // remove last '/' from path
-
-  if (mkdir(path, 0777) == -1)
+  // Check to see if it exists already.
+  if (plugin::StorageEngine::doesSchemaExist(schema_message.name()))
   {
-    if (errno == EEXIST)
+    if (not is_if_not_exists)
     {
-      if (! is_if_not_exists)
-      {
-	my_error(ER_DB_CREATE_EXISTS, MYF(0), path);
-	error= true;
-	goto exit;
-      }
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
-                          path);
-      session->my_ok();
-      error= false;
-      goto exit;
-    }
-
-    my_error(ER_CANT_CREATE_DB, MYF(0), path, errno);
-    error= true;
-    goto exit;
-  }
-
-  error_erno= write_schema_file(path, *schema_message);
-  if (error_erno && error_erno != EEXIST)
-  {
-    if (rmdir(path) >= 0)
-    {
+      my_error(ER_DB_CREATE_EXISTS, MYF(0), schema_message.name().c_str());
       error= true;
-      goto exit;
+    }
+    else
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                          ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
+                          schema_message.name().c_str());
+      session->my_ok();
     }
   }
-  else if (error_erno)
+  else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
+  {
+    my_error(ER_CANT_CREATE_DB, MYF(0), schema_message.name().c_str(), errno);
     error= true;
+  }
+  else // Created !
+  {
+    replication_services.rawStatement(session, session->query);
+    session->my_ok(1);
+  }
 
-  replication_services.rawStatement(session, session->query);
-  session->my_ok(result);
-
-exit:
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit2:
+
   return error;
 }
 
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_message)
+bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  long result=1;
-  int error= 0;
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -219,34 +162,34 @@ bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_me
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((error=wait_if_global_read_lock(session,0,1)))
-    goto exit;
-
-  assert(schema_message);
-
-  schema_message->set_name(db);
+  if ((wait_if_global_read_lock(session, 0, 1)))
+    return false;
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
-
-  error= write_schema_file(path, *schema_message);
-  if (error && error != EEXIST)
+  if (not plugin::StorageEngine::doesSchemaExist(schema_message.name()))
   {
-    /* TODO: find some witty way of getting back an error message */
-    pthread_mutex_unlock(&LOCK_create_db);
-    goto exit;
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
+    return false;
   }
 
-  replication_services.rawStatement(session, session->getQueryString());
-  session->my_ok(result);
+  /* Change options if current database is being altered. */
+  bool success= plugin::StorageEngine::alterSchema(schema_message);
+
+  if (success)
+  {
+    replication_services.rawStatement(session, session->getQueryString());
+    session->my_ok(1);
+  }
+  else
+  {
+    my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
+  }
 
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit:
-  return error ? true : false;
+
+  return success;
 }
 
 
@@ -296,8 +239,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
   length= build_table_filename(path, sizeof(path),
                                db, "", false);
-  strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
-  unlink(path);
   path[length]= '\0';				// Remove file name
 
   /* See if the directory exists */
@@ -388,7 +329,7 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (! session->db.empty() && session->db.compare(db) == 0)
+  if (not session->db.empty() && session->db.compare(db) == 0)
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
@@ -635,9 +576,9 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
   if (dropped_tables)
     *dropped_tables= tot_list;
 
-  if (rmdir(org_path))
+  if (not plugin::StorageEngine::dropSchema(db))
   {
-    my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, errno);
+    my_error(ER_DROP_SCHEMA, MYF(0), db.c_str());
     return -1;
   }
 
@@ -706,13 +647,12 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const std::string &new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  assert(new_db_name);
-  assert(new_db_name->length);
+  assert(not new_db_name.empty());
 
   /*
     Now we need to make a copy because check_db_name requires a
@@ -721,12 +661,12 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     TODO: fix check_db_name().
   */
 
-  new_db_file_name.length= new_db_name->length;
-  new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
+  new_db_file_name.length= new_db_name.length();
+  new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
   if (new_db_file_name.str == NULL)
     return true;                             /* the error is set */
-  memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
-  new_db_file_name.str[new_db_name->length]= 0;
+  memcpy(new_db_file_name.str, new_db_name.c_str(), new_db_name.length());
+  new_db_file_name.str[new_db_name.length()]= 0;
 
 
   /*

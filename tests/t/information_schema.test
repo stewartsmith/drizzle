@@ -6,9 +6,6 @@ DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
 DROP SCHEMA IF EXISTS data_dictionary;
 --enable_warnings
 
-CREATE SCHEMA data_dictionary;
-
-
 # Test for data_dictionary.tables &
 # show tables
 
@@ -330,6 +327,3 @@ WHERE id = CONNECTION_ID();
 #FROM data_dictionary.tables
 #WHERE table_schema="data_dictionary"
 #ORDER BY table_name;
-
-
-DROP SCHEMA data_dictionary;

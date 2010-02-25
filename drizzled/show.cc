@@ -191,48 +191,37 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
   @returns true if errors are detected, false otherwise.
 */
 
-static bool store_db_create_info(const char *dbname, String *buffer, bool if_not_exists)
+static bool store_db_create_info(const char *dbname, string &buffer, bool if_not_exists)
 {
   message::Schema schema;
 
-  if (not my_strcasecmp(system_charset_info, dbname,
-                             "data_dictionary"))
-  {
-    dbname= "data_dictionary";
-  }
-  else
-  {
-    bool found= plugin::StorageEngine::getSchemaDefinition(dbname, schema);
-    if (not found)
-      return true;
-  }
+  bool found= plugin::StorageEngine::getSchemaDefinition(dbname, schema);
+  if (not found)
+    return false;
 
-  buffer->length(0);
-  buffer->free();
-  buffer->set_charset(system_charset_info);
-  buffer->append(STRING_WITH_LEN("CREATE DATABASE "));
+  buffer.append("CREATE DATABASE ");
 
   if (if_not_exists)
-    buffer->append(STRING_WITH_LEN("IF NOT EXISTS "));
+    buffer.append("IF NOT EXISTS ");
 
-  buffer->append_identifier(dbname, strlen(dbname));
+  buffer.append("`");
+  buffer.append(schema.name());
+  buffer.append("`");
 
-  if (schema.has_collation() && strcmp(schema.collation().c_str(),
-                                       default_charset_info->name))
+  if (schema.has_collation())
   {
-    buffer->append(" COLLATE = ");
-    buffer->append(schema.collation().c_str());
+    buffer.append(" COLLATE = ");
+    buffer.append(schema.collation());
   }
 
-  return false;
+  return true;
 }
 
-bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
+bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exists)
 {
-  char buff[2048];
-  String buffer(buff, sizeof(buff), system_charset_info);
+  string buffer;
 
-  if (store_db_create_info(dbname, &buffer, if_not_exists))
+  if (not store_db_create_info(dbname, buffer, if_not_exists))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
@@ -250,11 +239,13 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
     return true;
 
   session->client->store(dbname, strlen(dbname));
-  session->client->store(buffer.ptr(), buffer.length());
+  session->client->store(buffer);
 
   if (session->client->flush())
     return true;
+
   session->my_eof();
+
   return false;
 }
 

@@ -33,6 +33,8 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
+  int write_schema_file(const char *path, const drizzled::message::Schema &db);
+
 public:
   Schema();
 
@@ -60,6 +62,12 @@ public:
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);
   bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto);
+
+  bool doCreateSchema(const drizzled::message::Schema &schema_message);
+
+  bool doAlterSchema(const drizzled::message::Schema &schema_message);
+
+  bool doDropSchema(const std::string &schema_name);
 
   const char **bas_ext() const 
   {
