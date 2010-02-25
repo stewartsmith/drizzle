@@ -106,27 +106,22 @@ void BlitzTree::destroy_cursor(void) {
   bt_cursor = NULL;
 }
 
-int BlitzTree::write(const char *key, const size_t klen,
-                     const char *val, const size_t vlen) {
-  return (tcbdbput(btree, key, klen, val, vlen)) ? 0 : -1;
-}
-
-int BlitzTree::write_unique(const char *key, const size_t klen,
-                            const char *val, const size_t vlen) {
-  int rv = 0;
+char *BlitzTree::prepare_key(const char *key, const size_t klen,
+                             const char *val, const size_t vlen,
+                             size_t *total_klen) {
   size_t total = klen + sizeof(uint16_t) + vlen;
 
   if (total > keybuf_len) {
     if ((keybuf = (char *)realloc(keybuf, total)) == NULL) {
       errno = HA_ERR_OUT_OF_MEM;
-      return errno;
+      return NULL;
     }
     keybuf_len = total;
   }
 
-  /* Serialize a key for storing in the B+Tree. We merge the key
-     and value so that we only use the internal nodes of the B+Tree.
-     This is to avoid reading leaf nodes and thus reduce total IO. */
+  /* Merge the key and value so that we only use the internal
+     nodes of the B+Tree. This is to avoid reading leaf nodes
+     and thus reduce total IO. */
   char *pos = keybuf;
   memcpy(pos, key, klen);
   pos += klen;
@@ -134,13 +129,37 @@ int BlitzTree::write_unique(const char *key, const size_t klen,
   pos += sizeof(uint16_t);
   memcpy(pos, val, vlen);
 
-  if (!tcbdbputkeep(btree, keybuf, total, "", 0)) {
+  *total_klen = total;
+  return keybuf;
+}
+
+int BlitzTree::write(const char *key, const size_t klen,
+                     const char *val, const size_t vlen) {
+  char *bt_key;
+  size_t total;
+
+  if ((bt_key = prepare_key(key, klen, val, vlen, &total)) == NULL)
+    return HA_ERR_OUT_OF_MEM;
+
+  return (tcbdbputdup(btree, bt_key, total, "", 0)) ? 0 : -1;
+}
+
+int BlitzTree::write_unique(const char *key, const size_t klen,
+                            const char *val, const size_t vlen) {
+  char *bt_key;
+  size_t total;
+
+  if ((bt_key = prepare_key(key, klen, val, vlen, &total)) == NULL)
+    return HA_ERR_OUT_OF_MEM;
+
+  if (!tcbdbputkeep(btree, bt_key, total, "", 0)) {
     if (tcbdbecode(btree) == TCEKEEP) {
       errno = HA_ERR_FOUND_DUPP_KEY;
-      rv = HA_ERR_FOUND_DUPP_KEY;
+      return HA_ERR_FOUND_DUPP_KEY;
     }
   }
-  return rv;
+
+  return 0;
 }
 
 char *BlitzTree::first_key(int *key_len) {

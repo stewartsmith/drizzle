@@ -195,6 +195,11 @@ public:
   int create_cursor(void);
   void destroy_cursor(void);
 
+  /* KEY HANDLING */
+  char *prepare_key(const char *key, const size_t klen,
+                    const char *val, const size_t vlen,
+                    size_t *total_klen);
+
   /* BTREE INDEX WRITE RELATED */
   int write(const char *key, const size_t klen, const char *val,
             const size_t vlen);

@@ -117,10 +117,9 @@ int blitz_keycmp_cb(const char *a, int,
       if (*a_pos != *b_pos)
         return ((int)*a_pos - (int)*b_pos);
 
-      a_pos++;
       b_pos++;
 
-      if (!*a_pos) {
+      if (!*a_pos++) {
         curr_part++;
         continue;
       }

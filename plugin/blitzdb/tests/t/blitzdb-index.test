@@ -305,11 +305,20 @@ insert into t1 values ('b');
 --error 1062
 insert into t1 values ('c');
 
-insert into t1 values ('d'), ('e'), ('f');
+insert into t1 values ('f'), ('e'), ('d');
+--sorted_result
+select * from t1;
 drop table t1;
 
-# Test INDEX insertion
+# Test INDEX insertion and NULL values
 create table t1 (a int, index(a)) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4);
 insert into t1 values (1), (2), (3), (4);
+
+--sorted_result
+select * from t1;
+
+insert into t1 values (NULL), (NULL);
+insert into t1 values (NULL), (NULL);
+select * from t1;
 drop table t1;

@@ -554,9 +554,43 @@ insert into t1 values ('b');
 ERROR 23000: Duplicate entry 'b' for key 'a'
 insert into t1 values ('c');
 ERROR 23000: Duplicate entry 'c' for key 'a'
-insert into t1 values ('d'), ('e'), ('f');
+insert into t1 values ('f'), ('e'), ('d');
+select * from t1;
+a
+a
+b
+c
+d
+e
+f
 drop table t1;
 create table t1 (a int, index(a)) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4);
 insert into t1 values (1), (2), (3), (4);
+select * from t1;
+a
+1
+1
+2
+2
+3
+3
+4
+4
+insert into t1 values (NULL), (NULL);
+insert into t1 values (NULL), (NULL);
+select * from t1;
+a
+NULL
+NULL
+NULL
+NULL
+1
+1
+2
+2
+3
+3
+4
+4
 drop table t1;

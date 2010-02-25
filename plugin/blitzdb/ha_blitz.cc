@@ -641,9 +641,7 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
     curr_key = 1;
   }
 
-  /* Loop over the keys and write them to it's exclusive tree.
-     If writing to a certain index fails, we delete the entries in
-     the reverse order that we wrote to the tree. */
+  /* Loop over the keys and write them to it's exclusive tree. */
   while (curr_key < share->nkeys) {
     size_t klen = make_index_key(key_buffer, curr_key, drizzle_row);
 
@@ -667,7 +665,7 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
     curr_key++;
   }
 
-  /* Write the 'real' row to the Data Dictionary. */
+  /* Write the row to the Data Dictionary. */
   rv = share->dict.write_row(temp_pkbuf, pk_len, row_buf, row_len);
 
   if (share->nkeys > 0)
@@ -822,13 +820,6 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
 
 size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
   KEY *key_info = &table->key_info[key_num];
-
-  /* TODO: For better efficiency, workout whether the key
-           itself is fixed length or not rather than looking
-           at the table. */
-  if (share->fixed_length_table)
-    return key_info->key_length;
-
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *key_part_end = key_part + key_info->key_parts;
   char *pos = (char *)key;
@@ -836,8 +827,12 @@ size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
   size_t rv = 0;
 
   for (; key_part != key_part_end; key_part++) {
-    if (key_part->null_bit)
+    if (key_part->null_bit) {
       rv++;
+      if (*key == 0)
+        continue;
+    }
+
     if (key_part->type == HA_KEYTYPE_VARTEXT1) {
       len = *(uint8_t *)pos;
       rv += len + sizeof(uint8_t);
