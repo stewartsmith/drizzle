@@ -47,6 +47,7 @@
 #include "drizzled/xid.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/db.h"
 
@@ -63,6 +64,7 @@ namespace plugin
 {
 
 static EngineVector vector_of_engines;
+static EngineVector vector_of_schema_engines;
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
@@ -184,6 +186,9 @@ bool StorageEngine::addPlugin(StorageEngine *engine)
     set_of_table_definition_ext.insert(engine->getTableDefinitionFileExtension());
   }
 
+  if (engine->check_flag(HTON_BIT_SCHEMA_DICTIONARY))
+    vector_of_schema_engines.push_back(engine);
+
   return false;
 }
 
@@ -192,6 +197,7 @@ void StorageEngine::removePlugin(StorageEngine *)
   if (shutdown_has_begun == false)
   {
     vector_of_engines.clear();
+    vector_of_schema_engines.clear();
 
     shutdown_has_begun= true;
   }
@@ -373,29 +379,47 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
 }
 
 /**
+  Utility method which hides some of the details of getTableDefinition()
+*/
+bool plugin::StorageEngine::doesTableExist(Session& session,
+                                           TableIdentifier &identifier,
+                                           bool include_temporary_tables)
+{
+  return (plugin::StorageEngine::getTableDefinition(session, identifier, NULL, include_temporary_tables) == EEXIST);
+}
+
+/**
   Call this function in order to give the Cursor the possiblity
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
 int StorageEngine::getTableDefinition(Session& session,
                                               TableIdentifier &identifier,
-                                              message::Table *table_proto)
+                                              message::Table *table_proto,
+                                              bool include_temporary_tables)
 {
   return getTableDefinition(session,
                             identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            table_proto);
+                            table_proto, include_temporary_tables);
 }
 
 int StorageEngine::getTableDefinition(Session& session,
                                               const char* path,
-                                              const char *,
-                                              const char *,
+                                              const char *schema_name,
+                                              const char *table_name,
                                               const bool,
-                                              message::Table *table_proto)
+                                              message::Table *table_proto,
+                                              bool include_temporary_tables)
 {
   int err= ENOENT;
 
-  vector<StorageEngine *>::iterator iter=
+  if (include_temporary_tables)
+  {
+    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_proto) == EEXIST)
+      return EEXIST;
+  }
+
+  EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
             StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_proto, &err));
 
@@ -690,48 +714,199 @@ public:
   }
 };
 
-void StorageEngine::getSchemaNames(set<string>& set_of_names)
+class AddSchemaNames : 
+  public unary_function<StorageEngine *, void>
 {
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+  set<string>& set_of_names;
 
-  CachedDirectory::Entries files= directory.getEntries();
+public:
 
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
+  AddSchemaNames(set<string>& of_names) :
+    set_of_names(of_names)
   {
-    CachedDirectory::Entry *entry= *fileIter;
-    set_of_names.insert(entry->filename);
   }
 
-  set_of_names.insert("information_schema"); // special cases suck
+  result_type operator() (argument_type engine)
+  {
+    engine->doGetSchemaNames(set_of_names);
+  }
+};
 
+void StorageEngine::getSchemaNames(set<string>& set_of_names)
+{
   // Add hook here for engines to register schema.
-#if 0
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
-#endif
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           AddSchemaNames(set_of_names));
 }
+
+class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
+{
+  const std::string &schema_name;
+  message::Schema &schema_proto;
+
+public:
+  StorageEngineGetSchemaDefinition(const std::string &schema_name_arg,
+                                  message::Schema &schema_proto_arg) :
+    schema_name(schema_name_arg),
+    schema_proto(schema_proto_arg) 
+  { }
+
+  result_type operator() (argument_type engine)
+  {
+    return engine->doGetSchemaDefinition(schema_name, schema_proto);
+  }
+};
 
 /*
   Return value is "if parsed"
 */
 bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
-  int ret;
+  proto.Clear();
 
-  if (schema_name.compare("information_schema") == 0)
+  EngineVector::iterator iter=
+    find_if(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+            StorageEngineGetSchemaDefinition(schema_name, proto));
+
+  if (iter != vector_of_schema_engines.end())
   {
-    proto.set_name("information_schema");
-    proto.set_collation("utf8_general_ci");
-    ret= 0;
-  }
-  else
-  {
-    ret= get_database_metadata(schema_name.c_str(), proto);
+    return true;
   }
 
-  return ret == 0 ? true : false;
+  return false;
 }
+
+bool StorageEngine::doesSchemaExist(const std::string &schema_name)
+{
+  message::Schema proto;
+
+  return StorageEngine::getSchemaDefinition(schema_name, proto);
+}
+
+
+const CHARSET_INFO *StorageEngine::getSchemaCollation(const std::string &schema_name)
+{
+  message::Schema schmema_proto;
+  bool found;
+
+  found= StorageEngine::getSchemaDefinition(schema_name, schmema_proto);
+
+  if (found && schmema_proto.has_collation())
+  {
+    const string buffer= schmema_proto.collation();
+    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
+
+    if (not cs)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"), schema_name.c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+
+      return default_charset_info;
+    }
+
+    return cs;
+  }
+
+  return default_charset_info;
+}
+
+class CreateSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  const drizzled::message::Schema &schema_message;
+
+public:
+
+  CreateSchema(const drizzled::message::Schema &arg) :
+    schema_message(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    (void)engine->doCreateSchema(schema_message);
+  }
+};
+
+bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
+{
+  // Add hook here for engines to register schema.
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           CreateSchema(schema_message));
+
+  return true;
+}
+
+class DropSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  const string &schema_name;
+
+public:
+
+  DropSchema(const string &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    schema_name(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    bool success= engine->doDropSchema(schema_name);
+
+    if (success)
+      success_count++;
+  }
+};
+
+bool StorageEngine::dropSchema(const string &schema_name)
+{
+  uint64_t counter= 0;
+  // Add hook here for engines to register schema.
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           DropSchema(schema_name, counter));
+
+  return counter ? true : false;
+}
+
+class AlterSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  const drizzled::message::Schema &schema_message;
+
+public:
+
+  AlterSchema(const drizzled::message::Schema &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    schema_message(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    bool success= engine->doAlterSchema(schema_message);
+
+    if (success)
+      success_count++;
+  }
+};
+
+bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
+{
+  uint64_t success_count= 0;
+
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           AlterSchema(schema_message, success_count));
+
+  return success_count ? true : false;
+}
+
 
 void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 {
@@ -741,7 +916,11 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 
-  if (db.compare("information_schema"))
+  if (not db.compare("information_schema"))
+  { }
+  else if (not db.compare("data_dictionary"))
+  { }
+  else
   {
     if (directory.fail())
     {
@@ -756,6 +935,11 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            AddTableName(directory, db, set_of_names));
+
+  Session *session= current_session;
+
+  session->doGetTableNames(directory, db, set_of_names);
+
 }
 
 /* This will later be converted to TableIdentifiers */
@@ -836,7 +1020,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
   */
   set<string> all_exts= set_of_table_definition_ext;
 
-  for (vector<StorageEngine *>::iterator iter= vector_of_engines.begin();
+  for (EngineVector::iterator iter= vector_of_engines.begin();
        iter != vector_of_engines.end() ; iter++)
   {
     for (const char **ext= (*iter)->bas_ext(); *ext ; ext++)
