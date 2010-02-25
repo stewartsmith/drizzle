@@ -331,7 +331,7 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (! session->db.empty() && session->db.compare(db) == 0)
+  if (not session->db.empty() && session->db.compare(db) == 0)
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
@@ -649,13 +649,12 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const std::string &new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  assert(new_db_name);
-  assert(new_db_name->length);
+  assert(not new_db_name.empty());
 
   /*
     Now we need to make a copy because check_db_name requires a
@@ -664,12 +663,12 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     TODO: fix check_db_name().
   */
 
-  new_db_file_name.length= new_db_name->length;
-  new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
+  new_db_file_name.length= new_db_name.length();
+  new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
   if (new_db_file_name.str == NULL)
     return true;                             /* the error is set */
-  memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
-  new_db_file_name.str[new_db_name->length]= 0;
+  memcpy(new_db_file_name.str, new_db_name.c_str(), new_db_name.length());
+  new_db_file_name.str[new_db_name.length()]= 0;
 
 
   /*

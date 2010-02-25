@@ -195,11 +195,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    tmp.str= packet;
-    tmp.length= packet_length;
-    if (!mysql_change_db(session, &tmp, false))
+    string tmp(packet, packet_length);
+
+    if (not mysql_change_db(session, tmp, false))
     {
       session->my_ok();
     }

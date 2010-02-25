@@ -32,7 +32,7 @@ namespace message { class Schema; }
 bool mysql_create_db(Session *session, const message::Schema &schema_message, bool is_if_not_exists);
 bool mysql_alter_db(Session *session, const message::Schema &schema_message);
 bool mysql_rm_db(Session *session, char *db, bool if_exists);
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
+bool mysql_change_db(Session *session, const std::string &new_db_name, bool force_switch);
 
 } /* namespace drizzled */
 
