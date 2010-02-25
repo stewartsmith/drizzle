@@ -107,7 +107,7 @@ bool ProcesslistTool::Generator::populate()
   }
 
   /* DRIZZLE_TIME */
-  push((uint32_t)(tmp->start_time ?  now - tmp->start_time : 0));
+  push(static_cast<uint64_t>(tmp->start_time ?  now - tmp->start_time : 0));
 
   /* STATE */
   val= (char*) (tmp->client->isWriting() ?

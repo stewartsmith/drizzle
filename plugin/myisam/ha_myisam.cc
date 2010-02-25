@@ -633,7 +633,7 @@ int ha_myisam::close(void)
 
 int ha_myisam::write_row(unsigned char *buf)
 {
-  ha_statistic_increment(&SSV::ha_write_count);
+  ha_statistic_increment(&system_status_var::ha_write_count);
 
   /*
     If we have an auto_increment column and we are writing a changed row
@@ -1024,7 +1024,7 @@ int ha_myisam::end_bulk_insert()
 
 int ha_myisam::update_row(const unsigned char *old_data, unsigned char *new_data)
 {
-  ha_statistic_increment(&SSV::ha_update_count);
+  ha_statistic_increment(&system_status_var::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
   return mi_update(file,old_data,new_data);
@@ -1032,7 +1032,7 @@ int ha_myisam::update_row(const unsigned char *old_data, unsigned char *new_data
 
 int ha_myisam::delete_row(const unsigned char *buf)
 {
-  ha_statistic_increment(&SSV::ha_delete_count);
+  ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);
 }
 
@@ -1057,7 +1057,7 @@ int ha_myisam::index_read_map(unsigned char *buf, const unsigned char *key,
                               enum ha_rkey_function find_flag)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error=mi_rkey(file, buf, active_index, key, keypart_map, find_flag);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1067,7 +1067,7 @@ int ha_myisam::index_read_idx_map(unsigned char *buf, uint32_t index, const unsi
                                   key_part_map keypart_map,
                                   enum ha_rkey_function find_flag)
 {
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error=mi_rkey(file, buf, index, key, keypart_map, find_flag);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1077,7 +1077,7 @@ int ha_myisam::index_read_last_map(unsigned char *buf, const unsigned char *key,
                                    key_part_map keypart_map)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_key_count);
+  ha_statistic_increment(&system_status_var::ha_read_key_count);
   int error=mi_rkey(file, buf, active_index, key, keypart_map,
                     HA_READ_PREFIX_LAST);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -1087,7 +1087,7 @@ int ha_myisam::index_read_last_map(unsigned char *buf, const unsigned char *key,
 int ha_myisam::index_next(unsigned char *buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_next_count);
   int error=mi_rnext(file,buf,active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1096,7 +1096,7 @@ int ha_myisam::index_next(unsigned char *buf)
 int ha_myisam::index_prev(unsigned char *buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_prev_count);
+  ha_statistic_increment(&system_status_var::ha_read_prev_count);
   int error=mi_rprev(file,buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1105,7 +1105,7 @@ int ha_myisam::index_prev(unsigned char *buf)
 int ha_myisam::index_first(unsigned char *buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_first_count);
+  ha_statistic_increment(&system_status_var::ha_read_first_count);
   int error=mi_rfirst(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1114,7 +1114,7 @@ int ha_myisam::index_first(unsigned char *buf)
 int ha_myisam::index_last(unsigned char *buf)
 {
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_last_count);
+  ha_statistic_increment(&system_status_var::ha_read_last_count);
   int error=mi_rlast(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1126,7 +1126,7 @@ int ha_myisam::index_next_same(unsigned char *buf,
 {
   int error;
   assert(inited==INDEX);
-  ha_statistic_increment(&SSV::ha_read_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_next_count);
   do
   {
     error= mi_rnext_same(file,buf);
@@ -1170,7 +1170,7 @@ int ha_myisam::rnd_init(bool scan)
 
 int ha_myisam::rnd_next(unsigned char *buf)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   int error=mi_scan(file, buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1183,7 +1183,7 @@ int ha_myisam::restart_rnd_next(unsigned char *buf, unsigned char *pos)
 
 int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   int error=mi_rrnd(file, buf, internal::my_get_ptr(pos,ref_length));
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
@@ -1722,7 +1722,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
   myisam_deinit, /* Plugin Deinit */
-  NULL,                       /* status variables                */
   sys_variables,           /* system variables */
   NULL                        /* config options                  */
 }
