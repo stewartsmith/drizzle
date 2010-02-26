@@ -1,5 +1,6 @@
 show databases;
 Database
+data_dictionary
 information_schema
 mysql
 test
