@@ -1776,6 +1776,9 @@ ha_innobase::init_table_handle_for_HANDLER(void)
 	reset_template(prebuilt);
 }
 
+static CmpTool *cmp_tool;
+
+
 /*********************************************************************//**
 Opens an InnoDB database.
 @return	0 on success, error code on failure */
@@ -2079,10 +2082,14 @@ innobase_change_buffering_inited_ok:
 
 	registry.add(status_table_function_ptr);
 
+        cmp_tool= new(std::nothrow)CmpTool;
+        registry.add(cmp_tool);
+
+
 #if 0
 	registry.add(innodb_trx_schema_table);
 	registry.add(innodb_locks_schema_table);
-	registry.add(innodb_lock_waits_schema_table);	
+	registry.add(innodb_lock_waits_schema_table);
 	registry.add(innodb_cmp_schema_table);
 	registry.add(innodb_cmp_reset_schema_table);
 	registry.add(innodb_cmpmem_schema_table);
