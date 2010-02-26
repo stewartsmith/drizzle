@@ -799,9 +799,135 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
 }
 
 enum TransformSqlError
+transformTableOptionsToSql(const Table::TableOptions &options,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
+{
+  if (sql_variant == ANSI)
+    return NONE; /* ANSI does not support table options... */
+
+  stringstream ss;
+
+  if (options.has_comment())
+  {
+    destination.append(" COMMENT = '", 12);
+    destination.append(options.comment());
+    destination.append("'\n", 2);
+  }
+
+  if (options.has_collation())
+  {
+    destination.append(" COLLATE = '", 12);
+    destination.append(options.collation());
+    destination.append("'\n", 2);
+  }
+
+  if (options.has_auto_increment())
+  {
+    ss << options.auto_increment();
+    destination.append(" AUTOINCREMENT_OFFSET = ", 24);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+  
+  if (options.has_row_type())
+  {
+    ss << options.row_type();
+    destination.append(" ROW_TYPE = ", 12);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_data_file_name())
+  {
+    destination.append(" DATA_FILE_NAME = '", 19);
+    destination.append(options.data_file_name());
+    destination.append("'\n", 2);
+  }
+
+  if (options.has_index_file_name())
+  {
+    destination.append(" INDEX_FILE_NAME = '", 20);
+    destination.append(options.index_file_name());
+    destination.append("'\n", 2);
+  }
+
+  if (options.has_max_rows())
+  {
+    ss << options.max_rows();
+    destination.append(" MAX_ROWS = ", 12);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_min_rows())
+  {
+    ss << options.min_rows();
+    destination.append(" MIN_ROWS = ", 12);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_auto_increment_value())
+  {
+    ss << options.auto_increment_value();
+    destination.append(" AUTO_INCREMENT = ", 18);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_avg_row_length())
+  {
+    ss << options.avg_row_length();
+    destination.append(" AVG_ROW_LENGTH = ", 18);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_key_block_size())
+  {
+    ss << options.key_block_size();
+    destination.append(" KEY_BLOCK_SIZE = ", 18);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_block_size())
+  {
+    ss << options.block_size();
+    destination.append(" BLOCK_SIZE = ", 14);
+    destination.append(ss.str());
+    destination.push_back('\n');
+    ss.clear();
+  }
+
+  if (options.has_pack_keys() &&
+      options.pack_keys())
+    destination.append(" PACK_KEYS = TRUE\n", 18);
+  if (options.has_pack_record() &&
+      options.pack_record())
+    destination.append(" PACK_RECORD = TRUE\n", 20);
+  if (options.has_checksum() &&
+      options.checksum())
+    destination.append(" CHECKSUM = TRUE\n", 17);
+  if (options.has_page_checksum() &&
+      options.page_checksum())
+    destination.append(" PAGE_CHECKSUM = TRUE\n", 22);
+
+  return NONE;
+}
+
+enum TransformSqlError
 transformIndexMetadataToSql(const Table::Index &index,
                             const Table &table,
-                            std::string &destination,
+                            string &destination,
                             enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
@@ -847,7 +973,7 @@ transformIndexMetadataToSql(const Table::Index &index,
 
 enum TransformSqlError
 transformFieldMetadataToSql(const Table::Field &field,
-                            std::string &destination,
+                            string &destination,
                             enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';

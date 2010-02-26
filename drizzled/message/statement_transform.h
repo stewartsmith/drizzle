@@ -364,6 +364,28 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
 
 /**
  * Appends to the supplied string an SQL expression
+ * representing the table's optional attributes.
+ *
+ * @note
+ *
+ * This function will eventually be a much simpler
+ * listing of key/value pairs.
+ *
+ * @param[in]   TableOptions message
+ * @param[out]  String to append to
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformTableOptionsToSql(const Table::TableOptions &table_options,
+                           std::string &destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * Appends to the supplied string an SQL expression
  * representing the index's attributes.  The built string
  * corresponds to the SQL in a CREATE INDEX statement.
  *
