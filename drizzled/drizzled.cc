@@ -1032,8 +1032,6 @@ static drizzle_show_var com_status_vars[]= {
   {"show_create_db",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_errors",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_fields",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
-  {"show_keys",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
   {"show_warnings",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
   {"truncate",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
