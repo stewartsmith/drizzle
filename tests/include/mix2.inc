@@ -113,7 +113,7 @@ select level,id from t1 where level=1;
 select level,id,parent_id from t1 where level=1;
 eval alter table t1 engine=$engine_type;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 #
@@ -152,7 +152,7 @@ create index skr on t1 (a);
 insert into t1 values (3,""), (4,"testing");
 analyze table t1;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 
@@ -339,7 +339,7 @@ drop table t1;
 eval create $temp table t1 (a int not null, b int not null,c int not null,
 key(a),primary key(a,b), unique(c),key(a),unique(b)) ENGINE = $engine_type;
 --replace_column 7 #
-show index from t1;
+#show index from t1;
 drop table t1;
 
 #
@@ -518,7 +518,7 @@ insert into t1 values("hello",1),("world",2);
 select * from t1 order by b desc;
 eval alter table t1 ENGINE=$engine_type;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 #
@@ -687,7 +687,7 @@ drop table t1;
 #
 
 eval create $temp table t1 (t int not null default 1, key (t)) engine=$engine_type;
-desc t1;
+#desc t1;
 drop table t1;
 
 #

@@ -1,6 +1,4 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 SELECT 1;
 1
 1
-DROP SCHEMA data_dictionary;
