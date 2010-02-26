@@ -799,6 +799,90 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
 }
 
 enum TransformSqlError
+transformCreateTableStatementToSql(const CreateTableStatement &statement,
+                                   string &destination,
+                                   enum TransformSqlVariant sql_variant)
+{
+  return transformTableDefinitionToSql(statement.table(), destination, sql_variant);
+}
+
+enum TransformSqlError
+transformTableDefinitionToSql(const Table &table,
+                              string &destination,
+                              enum TransformSqlVariant sql_variant)
+{
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  destination.append("CREATE ", 7);
+
+  if (table.type() == Table::TEMPORARY)
+    destination.append("TEMPORARY ", 10);
+  
+  destination.append("TABLE ", 6);
+  destination.push_back(quoted_identifier);
+  destination.append(table.name());
+  destination.push_back(quoted_identifier);
+  destination.append("(\n", 2);
+
+  enum TransformSqlError result= NONE;
+  size_t num_fields= table.field_size();
+  for (size_t x= 0; x < num_fields; ++x)
+  {
+    const Table::Field &field= table.field(x);
+
+    if (x != 0)
+      destination.append(",\n", 2);
+
+    result= transformFieldDefinitionToSql(field, destination, sql_variant);
+    
+    if (result != NONE)
+      return result;
+  }
+
+  size_t num_indexes= table.indexes_size();
+  for (size_t x= 0; x < num_indexes; ++x)
+  {
+    const message::Table::Index &index= table.indexes(x);
+
+    if (x != 0)
+      destination.append(",\n", 2);
+
+    result= transformIndexDefinitionToSql(index, table, destination, sql_variant);
+    
+    if (result != NONE)
+      return result;
+  }
+  destination.append("\n)\n", 2);
+
+  /* Add ENGINE = " clause */
+  if (table.has_engine())
+  {
+    const Table::StorageEngine &engine= table.engine();
+    destination.append("ENGINE = ", 9);
+    destination.append(engine.name());
+    destination.push_back('\n');
+
+    size_t num_engine_options= engine.option_size();
+    for (size_t x= 0; x < num_engine_options; ++x)
+    {
+      const Table::StorageEngine::EngineOption &option= engine.option(x);
+      destination.push_back('\t');
+      destination.append(option.option_name());
+      destination.append(" = ", 3);
+      destination.append(option.option_value());
+      destination.push_back('\n');
+    }
+  }
+
+  if (table.has_options())
+    (void) transformTableOptionsToSql(table.options(), destination, sql_variant);
+
+  return NONE;
+}
+
+enum TransformSqlError
 transformTableOptionsToSql(const Table::TableOptions &options,
                            string &destination,
                            enum TransformSqlVariant sql_variant)
@@ -925,10 +1009,10 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 }
 
 enum TransformSqlError
-transformIndexMetadataToSql(const Table::Index &index,
-                            const Table &table,
-                            string &destination,
-                            enum TransformSqlVariant sql_variant)
+transformIndexDefinitionToSql(const Table::Index &index,
+                              const Table &table,
+                              string &destination,
+                              enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -972,9 +1056,9 @@ transformIndexMetadataToSql(const Table::Index &index,
 }
 
 enum TransformSqlError
-transformFieldMetadataToSql(const Table::Field &field,
-                            string &destination,
-                            enum TransformSqlVariant sql_variant)
+transformFieldDefinitionToSql(const Table::Field &field,
+                              string &destination,
+                              enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)

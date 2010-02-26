@@ -54,6 +54,7 @@ class DeleteHeader;
 class DeleteData;
 class DeleteRecord;
 class DropTableStatement;
+class CreateTableStatement;
 class TruncateTableStatement;
 class CreateSchemaStatement;
 class DropSchemaStatement;
@@ -363,6 +364,33 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
                                    enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
+ * Appends to supplied string an SQL expression
+ * containing the supplied CreateTableStatement's
+ * appropriate CREATE TABLE SQL statement.
+ */
+enum TransformSqlError
+transformCreateTableStatementToSql(const CreateTableStatement &statement,
+                                   std::string &destination,
+                                   enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * Appends to the supplied string an SQL expression
+ * representing the table for a CREATE TABLE expression.
+ *
+ * @param[in]   Table message
+ * @param[out]  String to append to
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformTableDefinitionToSql(const Table &table,
+                              std::string &destination,
+                              enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
  * Appends to the supplied string an SQL expression
  * representing the table's optional attributes.
  *
@@ -399,10 +427,10 @@ transformTableOptionsToSql(const Table::TableOptions &table_options,
  *  Error code (see enum TransformSqlError definition) if failure
  */
 enum TransformSqlError
-transformIndexMetadataToSql(const Table::Index &index,
-                            const Table &table,
-                            std::string &destination,
-                            enum TransformSqlVariant sql_variant= DRIZZLE);
+transformIndexDefinitionToSql(const Table::Index &index,
+                              const Table &table,
+                              std::string &destination,
+                              enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * Appends to the supplied string an SQL expression
@@ -418,9 +446,9 @@ transformIndexMetadataToSql(const Table::Index &index,
  *  Error code (see enum TransformSqlError definition) if failure
  */
 enum TransformSqlError
-transformFieldMetadataToSql(const Table::Field &field,
-                            std::string &destination,
-                            enum TransformSqlVariant sql_variant= DRIZZLE);
+transformFieldDefinitionToSql(const Table::Field &field,
+                              std::string &destination,
+                              enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * Returns true if the supplied message::Table::Field::FieldType
