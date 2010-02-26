@@ -1,5 +1,3 @@
-CREATE SCHEMA data_dictionary;
-
 # Slap tests for concurrency
 CREATE SCHEMA drizzleslap;
 
@@ -7,4 +5,3 @@ CREATE SCHEMA drizzleslap;
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.modules" --delimiter=";"
 
 DROP SCHEMA drizzleslap;
-DROP SCHEMA data_dictionary;

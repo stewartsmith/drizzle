@@ -26,23 +26,14 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_statistics	OLD_STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NON_UNIQUE	Non_unique	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	CARDINALITY	Cardinality	5	20	1	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	SUB_PART	Sub_part	5	20	0	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	5	NULL	NULL		BTREE		
-t1	1	b	1	b	A	5	NULL	NULL		BTREE		
-t1	1	b	2	c	A	5	NULL	NULL		BTREE		
+def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	a
+t1	b	0	b
+t1	b	1	c
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
@@ -96,6 +87,7 @@ show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database	8	256	18	N	1	0	45
 Database
+data_dictionary
 information_schema
 mysql
 test
@@ -118,17 +110,17 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
-t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	f1
+t1	PRIMARY	1	f2
+t1	PRIMARY	2	f3
+t1	PRIMARY	3	f4
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
-t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	f1
+t1	PRIMARY	1	f2
+t1	PRIMARY	2	f3
+t1	PRIMARY	3	f4
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
@@ -158,11 +150,11 @@ t1	CREATE TABLE `t1` (
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
 ) ENGINE=DEFAULT COMMENT='it''s a table'
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-name	varchar(20)	YES		O'Brien	
-c	int	NO		NULL	
-c-b	int	YES		NULL	
-space 2	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+name	VARCHAR	TRUE	O'Brien	FALSE	
+c	INTEGER	FALSE	O'Brien	FALSE	
+c-b	INTEGER	TRUE	O'Brien	TRUE	
+space 2	INTEGER	TRUE	O'Brien	TRUE	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
@@ -207,21 +199,21 @@ t1	CREATE TEMPORARY TABLE `t1` (
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	decimal(9,2)	YES		NULL	
-b	decimal(9,0)	YES		NULL	
-e	double(9,2)	YES		NULL	
-f	double(5,0)	YES		NULL	
-h	double(3,2)	YES		NULL	
-i	double(3,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	DECIMAL	TRUE		TRUE	
+b	DECIMAL	TRUE		TRUE	
+e	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+h	DOUBLE	TRUE		TRUE	
+i	DOUBLE	TRUE		TRUE	
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	decimal(9,2)	YES		NULL	
-b	decimal(9,0)	YES		NULL	
-e	double(9,2)	YES		NULL	
-f	double(5,0)	YES		NULL	
-h	double(3,2)	YES		NULL	
-i	double(3,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	DECIMAL	TRUE		TRUE	
+b	DECIMAL	TRUE		TRUE	
+e	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+h	DOUBLE	TRUE		TRUE	
+i	DOUBLE	TRUE		TRUE	
 drop table t1;
 create temporary table t1 (
 type_int int,
@@ -265,23 +257,23 @@ drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-max(a)	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+max(a)	INTEGER	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-c	decimal(10,0)	YES		NULL	
-d	double	YES		NULL	
-f	double	YES		NULL	
-r	double	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+c	DECIMAL	TRUE		TRUE	
+d	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+r	DOUBLE	TRUE		TRUE	
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-c	decimal(3,3)	YES		NULL	
-d	double(3,3)	YES		NULL	
-f	double(3,3)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+c	DECIMAL	TRUE		TRUE	
+d	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
 drop table t1;
 CREATE TABLE ```ab``cd``` (i INT);
 SHOW CREATE TABLE ```ab``cd```;
@@ -333,36 +325,57 @@ insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	#	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	#	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	#	0	0	0	0	utf8_general_ci	0		
 truncate table t1;
 truncate table t2;
 truncate table t3;
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	0	0	0	0	0	utf8_general_ci	0		
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	#	#	#	#	#	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	0	DEFAULT	0	#	#	#	#	#	0	0	0	0	utf8_general_ci	0		
+t3	MEMORY	0	DEFAULT	0	#	#	#	#	#	0	0	0	0	utf8_general_ci	0		
 drop table t1, t2, t3;
 CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
@@ -440,21 +453,12 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	old_statistics	OLD_STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NON_UNIQUE	Non_unique	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	CARDINALITY	Cardinality	5	20	1	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	SUB_PART	Sub_part	5	20	3	Y	32768	0	63
-def	information_schema	old_statistics	OLD_STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def	information_schema	old_statistics	OLD_STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	field1	A	0	180	NULL		BTREE		
+def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
+Table	Key_name	Seq_in_index	Column_name
+t1	PRIMARY	0	field1
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -486,13 +490,11 @@ create table `mysqlttest\1`.`a\b` (a int);
 show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
 show fields from `mysqlttest\1`.`a\b`;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
 show columns from `a\b` from `mysqlttest\1`;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
 show keys from `mysqlttest\1`.`a\b`;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
+Table	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
 drop table if exists `été`;
