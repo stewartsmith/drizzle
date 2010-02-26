@@ -528,7 +528,7 @@ int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
 /* This is where the read related index logic lives. It is used by both
    BlitzDB and the Database Kernel (specifically, by the optimizer). */
 int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
-                             const unsigned char *key, uint32_t ,
+                             const unsigned char *key, uint32_t,
                              enum ha_rkey_function /*find_flag*/) {
   char *pk;
   char *fetched_row = NULL;
@@ -546,13 +546,25 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
              data dictionary. */
     free(pk);
   } else {
+    pk = native_to_blitz_key(key, key_num, &pk_len);
+
     /* BlitzDB's PK optimization allows direct access to
        the Data Dictionary. */
     if (key_num == table->s->primary_key) {
-      pk = native_to_blitz_key(key, key_num, &pk_len);
       fetched_row = share->dict.get_row((const char *)pk, pk_len, &row_len);
     } else {
-      return HA_ERR_UNSUPPORTED;
+      int bt_klen, dict_klen, prefix_len;
+      char *bt_key, *dict_key;
+
+      bt_key = share->btrees[key_num].find_key((char*)pk, pk_len, &bt_klen);
+
+      if (bt_key == NULL)
+        return HA_ERR_END_OF_FILE;
+
+      prefix_len = btree_key_length(bt_key, key_num);
+      dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
+
+      fetched_row = share->dict.get_row(dict_key, dict_klen, &row_len);
     }
   }
 
@@ -873,10 +885,11 @@ char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
 
   for (; key_part != key_part_end; key_part++) {
     if (key_part->null_bit) {
-      if (!(*keybuf_pos++ = (*key_pos == 0))) {
-        keybuf_pos += key_part->store_length;
+      key_size++;
+
+      /* This key is NULL */
+      if (!(*keybuf_pos++ = (*key_pos++ == 0)))
         continue;
-      }
     }
 
     /* This is a temporary workaround for a bug in Drizzle's VARCHAR

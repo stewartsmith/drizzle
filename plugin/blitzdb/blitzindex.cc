@@ -196,6 +196,13 @@ char *BlitzTree::prev_key(int *key_len) {
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
+char *BlitzTree::find_key(const char *key, const int klen, int *rv_len) {
+  if (!tcbdbcurjump(bt_cursor, (void *)key, klen))
+    return NULL;
+
+  return (char *)tcbdbcurkey(bt_cursor, rv_len);
+}
+
 int BlitzTree::delete_key(void) {
   if (!tcbdbcurout(bt_cursor))
     return -1;

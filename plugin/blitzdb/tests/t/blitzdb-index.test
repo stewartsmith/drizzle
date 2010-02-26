@@ -291,8 +291,16 @@ insert into t1 values (1);
 --error 1062
 insert into t1 values (2);
 
+insert into t1 values (NULL);
 insert into t1 values (3);
 insert into t1 values (4);
+
+select * from t1;
+select * from t1 where a = 1;
+select * from t1 where a = 2;
+select * from t1 where a = 3;
+select * from t1 where a = 4;
+select * from t1 where a is NULL;
 drop table t1;
 
 create table t1 (a varchar(32), unique index(a)) engine = blitzdb;
@@ -308,6 +316,13 @@ insert into t1 values ('c');
 insert into t1 values ('f'), ('e'), ('d');
 --sorted_result
 select * from t1;
+explain select * from t1 where a = 'a';
+select * from t1 where a = 'a';
+select * from t1 where a = 'b';
+select * from t1 where a = 'c';
+select * from t1 where a = 'd';
+select * from t1 where a = 'e';
+select * from t1 where a = 'f';
 drop table t1;
 
 # Test INDEX insertion and NULL values
@@ -320,5 +335,16 @@ select * from t1;
 
 insert into t1 values (NULL), (NULL);
 insert into t1 values (NULL), (NULL);
+
 select * from t1;
+select count(*) from t1 where a is NULL;
+select * from t1 where a is NULL;
+select * from t1 where a is not NULL;
+
+# indexed needle in a haystack query
+explain select * from t1 where a = 1;
+select * from t1 where a = 1;
+select * from t1 where a = 2;
+select * from t1 where a = 3;
+select * from t1 where a = 4;
 drop table t1;

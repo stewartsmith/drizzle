@@ -213,6 +213,7 @@ public:
   char *final_key(int *key_len);
   char *next_key(int *key_len);
   char *prev_key(int *key_key);
+  char *find_key(const char *key, const int klen, int *rv_len);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
