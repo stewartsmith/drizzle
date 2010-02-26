@@ -45,7 +45,7 @@ bool statement::Insert::execute()
     return true;
   }
 
-  DRIZZLE_INSERT_START(session->query);
+  DRIZZLE_INSERT_START(session->query.c_str());
 
   bool res= mysql_insert(session,
                          all_tables,

@@ -1,4 +1,1 @@
-CREATE SCHEMA data_dictionary;
-use data_dictionary;
 show processlist;
-drop schema data_dictionary;
