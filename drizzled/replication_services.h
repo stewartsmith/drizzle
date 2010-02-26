@@ -342,9 +342,8 @@ public:
    *
    * @param Pointer to the Session which issued the statement
    * @param Query string
-   * @param Length of the query string
    */
-  void rawStatement(Session *in_session, const char *in_query, size_t in_query_len);
+  void rawStatement(Session *in_session, const std::string &query);
   /**
    * Returns the timestamp of the last Transaction which was sent to 
    * an applier.

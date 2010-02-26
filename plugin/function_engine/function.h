@@ -79,6 +79,10 @@ public:
                            const char *table_name,
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
+
+  void doGetSchemaNames(std::set<std::string>& set_of_names);
+
+  bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &schema_message);
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

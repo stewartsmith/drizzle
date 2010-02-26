@@ -40,6 +40,7 @@ public:
     drizzled::message::Table table_proto;
     std::set<std::string> table_names;
     std::set<std::string>::iterator table_iterator;
+    std::string table_predicate;
     bool is_tables_primed;
 
     virtual void fill();
@@ -64,6 +65,11 @@ public:
     bool isTablesPrimed()
     {
       return is_tables_primed;
+    }
+
+    void setTablePredicate(const std::string &arg)
+    {
+      table_predicate= arg;
     }
 
     bool populate();
