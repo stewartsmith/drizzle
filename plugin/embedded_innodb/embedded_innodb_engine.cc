@@ -584,7 +584,22 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
   for (Field **field=table->field ; *field ; field++, colnr++)
   {
-    err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
+    if ((**field).type() == DRIZZLE_TYPE_VARCHAR)
+    {
+      /* To get around the length bytes (1 or 2) at (**field).ptr
+         we can use Field_varstring::val_str to a String
+         to get a pointer to the real string without copying it.
+      */
+      String str;
+      (**field).setReadSet();
+      (**field).val_str(&str);
+      err= ib_col_set_value(tuple, colnr, str.ptr(), str.length());
+    }
+    else
+    {
+      err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
+    }
+
     assert (err==DB_SUCCESS);
   }
 
@@ -628,8 +643,27 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
 
   for (Field **field=table->field ; *field ; field++, colnr++)
   {
-    ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
-    (**field).set_notnull();
+    if (! (**field).isReadSet())
+      continue;
+
+    (**field).setWriteSet();
+
+    uint32_t length= ib_col_get_len(tuple, colnr);
+    if (length == IB_SQL_NULL)
+      (**field).set_null();
+    else
+      (**field).set_notnull();
+
+    if ((**field).type() == DRIZZLE_TYPE_VARCHAR)
+    {
+      (*field)->store((const char*)ib_col_get_value(tuple, colnr),
+                      length,
+                      &my_charset_bin);
+    }
+    else
+    {
+      ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
+    }
   }
 
   ib_tuple_clear(tuple);

@@ -12,9 +12,9 @@ Tables_in_data_dictionary (innodb%)
 innodb_table_proto
 use test;
 create table t1 (a int primary key);
-select count(table_name) from data_dictionary.innodb_table_proto;
-count(table_name)
-1
+select table_name from data_dictionary.innodb_table_proto;
+table_name
+test/t1
 drop table t1;
 select count(table_name) from data_dictionary.innodb_table_proto;
 count(table_name)
