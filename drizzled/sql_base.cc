@@ -661,6 +661,45 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
+void Session::doGetTableNames(CachedDirectory &,
+                              const std::string& db_name,
+                              std::set<std::string>& set_of_names)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (not db_name.compare(table->s->db.str))
+    {
+      set_of_names.insert(table->s->table_name.str);
+    }
+  }
+}
+
+int Session::doGetTableDefinition(const char *,
+                                  const char *db_arg,
+                                  const char *table_name_arg,
+                                  const bool ,
+                                  message::Table *table_proto)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (table->s->tmp_table == TEMP_TABLE)
+    {
+      if (not strcmp(db_arg, table->s->db.str))
+      {
+        if (not strcmp(table_name_arg, table->s->table_name.str))
+        {
+          if (table_proto)
+            table_proto->CopyFrom(*(table->s->getTableProto()));
+
+          return EEXIST;
+        }
+      }
+    }
+  }
+
+  return ENOENT;
+}
+
 Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 {
   char	key[MAX_DBKEY_LENGTH];
@@ -4145,9 +4184,9 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     return false;
 
   /*
-TODO: in the case when we skipped all columns because there was a
-qualified '*', and all columns were coalesced, we have to give a more
-meaningful message than ER_BAD_TABLE_ERROR.
+    @TODO in the case when we skipped all columns because there was a
+    qualified '*', and all columns were coalesced, we have to give a more
+    meaningful message than ER_BAD_TABLE_ERROR.
   */
   if (!table_name)
     my_message(ER_NO_TABLES_USED, ER(ER_NO_TABLES_USED), MYF(0));

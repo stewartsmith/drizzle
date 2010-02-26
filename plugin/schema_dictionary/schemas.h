@@ -40,6 +40,7 @@ public:
     drizzled::message::Schema schema;
     std::set<std::string> schema_names;
     std::set<std::string>::const_iterator schema_iterator;
+    std::string schema_predicate;
     bool is_schema_primed;
     bool is_schema_parsed;
 
@@ -53,6 +54,11 @@ public:
     {
       assert(is_schema_primed);
       return is_schema_parsed ? schema.name() : (*schema_iterator);
+    }
+
+    void setSchemaPredicate(const std::string &arg)
+    {
+      schema_predicate= arg;
     }
 
     bool populate();
