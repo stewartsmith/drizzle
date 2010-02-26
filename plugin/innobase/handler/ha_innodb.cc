@@ -123,7 +123,7 @@ extern "C" {
 }
 
 #include "ha_innodb.h"
-#include "i_s.h"
+#include "data_dictionary.h"
 #include "handler0vars.h"
 
 #include <iostream>
