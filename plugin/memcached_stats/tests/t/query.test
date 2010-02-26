@@ -6,8 +6,12 @@
 --exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh stop
 --exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh start
 
+--disable_warnings
+create schema if not exists data_dictionary;
+--enable_warnings
+
 --error 1105
-select * from information_schema.memcached_stats;
+select * from data_dictionary.memcached_stats;
 
 #
 # Look at the current value of the memcached related system variable
@@ -32,7 +36,7 @@ where variable_name = 'memcached_stats_servers';
 
 --replace_column 2 # 3 # 4 # 5 # 6 # 7 # 8 # 9 # 13 # 14 # 15 # 21 # 22 # 23 # 24 # 25 #
 select * 
-from information_schema.memcached_stats;
+from data_dictionary.memcached_stats;
 
 #
 # Once the ability to created an embedded server has been added to
