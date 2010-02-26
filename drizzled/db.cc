@@ -58,7 +58,7 @@ static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/siz
 
 static long mysql_rm_known_files(Session *session,
                                  const string &db, const char *path,
-                                 set<string> &dropped_tables);
+                                 plugin::TableNameList &dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 /*
@@ -216,7 +216,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   int error= false;
   char	path[FN_REFLEN+16];
   uint32_t length;
-  set<string> dropped_tables;
+  plugin::TableNameList dropped_tables;
   message::Schema schema_proto;
 
   /*
@@ -298,7 +298,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     db_len= schema_name.length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    for (set<string>::iterator it= dropped_tables.begin();
+    for (plugin::TableNameList::iterator it= dropped_tables.begin();
          it != dropped_tables.end();
          it++)
     {
@@ -490,88 +490,46 @@ err_with_placeholders:
 static long mysql_rm_known_files(Session *session,
                                  const string &db,
 				 const char *org_path,
-                                 set<string> &dropped_tables)
+                                 plugin::TableNameList &dropped_tables)
 {
   CachedDirectory dirp(org_path);
   if (dirp.fail())
     return 0;
 
   long deleted= 0;
-  char filePath[FN_REFLEN];
   TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
 
   plugin::StorageEngine::getTableNames(db, dropped_tables);
 
-  for (CachedDirectory::Entries::const_iterator iter= dirp.getEntries().begin();
-       iter != dirp.getEntries().end() && !session->killed;
-       ++iter)
+  for (plugin::TableNameList::iterator it= dropped_tables.begin();
+       it != dropped_tables.end();
+       it++)
   {
-    string filename((*iter)->filename);
+    size_t db_len= db.size();
 
-    /* skiping . and .. */
-    if (filename[0] == '.' && (!filename[1] ||
-       (filename[1] == '.' &&  !filename[2])))
-      continue;
+    /* Drop the table nicely */
+    TableList *table_list=(TableList*)
+      session->calloc(sizeof(*table_list) +
+                      db_len + 1 +
+                      (*it).length() + 1);
 
-    string extension("");
-    size_t ext_pos= filename.rfind('.');
-    if (ext_pos != string::npos)
-    {
-      extension= filename.substr(ext_pos);
-    }
-    if (deletable_extentions.find(extension) == deletable_extentions.end())
-    {
-      /*
-        ass ass ass.
+    if (not table_list)
+      return -1;
 
-        strange checking for magic extensions that are then deleted if
-        not reg_ext (i.e. .frm).
-
-        and (previously) we'd err out on drop database if files not matching
-        engine ha_known_exts() or deletable_extensions were present.
-
-        presumably this was to avoid deleting other user data... except if that
-        data happened to be in files ending in .BAK, .opt or .TMD. *fun*
-       */
-      continue;
-    }
-    /* just for safety we use files_charset_info */
-    if (!my_strcasecmp(files_charset_info, extension.c_str(), ".dfe"))
-    {
-      size_t db_len= db.size();
-
-      /* Drop the table nicely */
-      filename.erase(ext_pos);
-      TableList *table_list=(TableList*)
-                             session->calloc(sizeof(*table_list) +
-                                             db_len + 1 +
-                                             filename.size() + 1);
-
-      if (!table_list)
-        return -1;
-      table_list->db= (char*) (table_list+1);
-      table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
-      filename_to_tablename(filename.c_str(), table_list->table_name,
-                            filename.size() + 1);
-      table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-      table_list->internal_tmp_table= (strncmp(filename.c_str(),
-                                               TMP_FILE_PREFIX,
-                                               strlen(TMP_FILE_PREFIX)) == 0);
-      /* Link into list */
-      (*tot_list_next)= table_list;
-      tot_list_next= &table_list->next_local;
-      deleted++;
-    }
-    else
-    {
-      sprintf(filePath, "%s/%s", org_path, filename.c_str());
-      if (internal::my_delete_with_symlink(filePath,MYF(MY_WME)))
-      {
-	return -1;
-      }
-    }
+    table_list->db= (char*) (table_list+1);
+    table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
+    filename_to_tablename((*it).c_str(), table_list->table_name,
+                          (*it).size() + 1);
+    table_list->alias= table_list->table_name;  // If lower_case_table_names=2
+    table_list->internal_tmp_table= (strncmp((*it).c_str(),
+                                             TMP_FILE_PREFIX,
+                                             strlen(TMP_FILE_PREFIX)) == 0);
+    /* Link into list */
+    (*tot_list_next)= table_list;
+    tot_list_next= &table_list->next_local;
+    deleted++;
   }
   if (session->killed)
     return -1;

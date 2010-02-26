@@ -125,6 +125,9 @@ namespace plugin
 typedef hash_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
+typedef std::set<std::string> TableNameList;
+typedef std::set<std::string> SchemaNameList;
+
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
@@ -308,7 +311,7 @@ public:
   // TODO: move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
-                               std::set<std::string>& set_of_names);
+                               TableNameList &set_of_names);
   virtual int doDropTable(Session& session,
                           const std::string table_path)= 0;
 
@@ -342,10 +345,10 @@ public:
   static int dropTable(Session& session,
                        TableIdentifier &identifier,
                        bool generate_warning);
-  static void getTableNames(const std::string& db_name, std::set<std::string> &set_of_names);
+  static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
 
   // @note All schema methods defined here
-  static void getSchemaNames(std::set<std::string>& set_of_names);
+  static void getSchemaNames(SchemaNameList &set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
   static bool doesSchemaExist(const std::string &schema_name);
   static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
@@ -354,7 +357,7 @@ public:
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
-  virtual void doGetSchemaNames(std::set<std::string>& set_of_names)
+  virtual void doGetSchemaNames(SchemaNameList &set_of_names)
   { (void)set_of_names; }
 
   virtual bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto)
