@@ -71,27 +71,23 @@ int Schema::doGetTableDefinition(Session &,
                                  const bool,
                                  message::Table *table_proto)
 {
-  int err;
   string proto_path(path);
   proto_path.append(DEFAULT_FILE_EXTENSION);
 
-  int error= access(proto_path.c_str(), F_OK);
-
-  if (error == 0)
-    err= EEXIST;
-  else
-    err= errno;
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return errno;
+  }
 
   if (table_proto)
   {
-    int read_proto_err= readTableFile(proto_path,
-                                      *table_proto);
+    if (readTableFile(proto_path, *table_proto))
+      return EEXIST;
 
-    if (read_proto_err)
-      err= read_proto_err;
+    return -1;
   }
 
-  return err;
+  return EEXIST;
 }
 
 void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
@@ -349,27 +345,23 @@ bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
 }
 
 
-int Schema::readTableFile(const std::string &path, message::Table &table)
+bool Schema::readTableFile(const std::string &path, message::Table &table_message)
 {
-  int fd= open(path.c_str(), O_RDONLY);
+  fstream input(path, ios::in | ios::binary);
 
-  if (fd == -1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (table.ParseFromZeroCopyStream(input) == false)
+  if (input.good())
   {
-    delete input;
-    close(fd);
-    return -1;
+    if (table_message.ParseFromIstream(&input))
+    {
+      return true;
+    }
+  }
+  else
+  {
+    perror(path.c_str());
   }
 
-  delete input;
-  close(fd);
-
-  return 0;
+  return false;
 }
 
 

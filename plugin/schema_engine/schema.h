@@ -37,7 +37,7 @@ static const char *schema_exts[] = {
 class Schema : public drizzled::plugin::StorageEngine
 {
   bool writeSchemaFile(const char *path, const drizzled::message::Schema &db);
-  int readTableFile(const std::string &path, drizzled::message::Table &table);
+  bool readTableFile(const std::string &path, drizzled::message::Table &table_message);
   bool readSchemaFile(const std::string &path, drizzled::message::Schema &schema);
 
   void prime();
