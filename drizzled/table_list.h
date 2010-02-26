@@ -38,7 +38,6 @@ class Table;
 
 namespace plugin
 {
-  class InfoSchemaTable;
   class StorageEngine;
 }
 
