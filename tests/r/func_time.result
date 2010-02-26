@@ -634,9 +634,9 @@ last_day('2001-02-12')
 create table t1 select last_day('2000-02-05') as a,
 from_days(to_days("960101")) as b;
 describe t1;
-Field	Type	Null	Key	Default	Extra
-a	date	NO		NULL	
-b	date	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	DATE	FALSE		FALSE	
+b	DATE	TRUE		TRUE	
 select * from t1;
 a	b
 2000-02-29	1996-01-01

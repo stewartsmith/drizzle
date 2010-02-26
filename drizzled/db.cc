@@ -38,14 +38,13 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
-#include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/storage_engine.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 
 #include "drizzled/internal/my_sys.h"
 
-#define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
 using namespace std;
@@ -53,7 +52,7 @@ using namespace std;
 namespace drizzled
 {
 
-const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD", ".opt"};
+const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD"};
 static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
 
 
@@ -61,134 +60,6 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
                                  const string &db, const char *path,
                                  TableList **dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
-
-/**
-  Return default database collation.
-
-  @param session     Thread context.
-  @param db_name Database name.
-
-  @return CHARSET_INFO object. The operation always return valid character
-    set, even if the database does not exist.
-*/
-
-const CHARSET_INFO *get_default_db_collation(const char *db_name)
-{
-  message::Schema db;
-
-  get_database_metadata(db_name, db);
-
-  /* If for some reason the db.opt file lacks a collation,
-     we just return the default */
-
-  if (db.has_collation())
-  {
-    const string buffer= db.collation();
-    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
-
-    if (!cs)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"),db_name);
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-
-      return default_charset_info;
-    }
-
-    return cs;
-  }
-
-  return default_charset_info;
-}
-
-/* path is path to database, not schema file */
-static int write_schema_file(const char *path, const message::Schema &db)
-{
-  char schema_file_tmp[FN_REFLEN];
-  string schema_file(path);
-
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
-
-  schema_file.append(1, FN_LIBCHAR);
-  schema_file.append(MY_DB_OPT_FILE);
-
-  int fd= mkstemp(schema_file_tmp);
-
-  if (fd==-1)
-    return errno;
-
-
-  if (!db.SerializeToFileDescriptor(fd))
-  {
-    close(fd);
-    unlink(schema_file_tmp);
-    return -1;
-  }
-
-  if (rename(schema_file_tmp, schema_file.c_str()) == -1)
-  {
-    close(fd);
-    return errno;
-  }
-  close(fd);
-
-  return 0;
-}
-
-int get_database_metadata(const std::string &dbname, message::Schema &schema_message)
-{
-  int rc= 0;
-  char db_opt_path[FN_REFLEN];
-  size_t length;
-
-  /*
-    Pass an empty file name, and the database options file name as extension
-    to avoid table name to file name encoding.
-  */
-  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
-                               dbname.c_str(), "", false);
-  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
-
-  int fd= open(db_opt_path, O_RDONLY);
-
-  if (fd == -1 && errno != ENOENT)
-    rc= errno;
-
-  /**
-    @note If parsing fails, either someone has done a "mkdir" or has deleted their opt file.
-    So what do we do? We muddle through the adventure by generating 
-    one with a name in it, and the charset set to the default.
-  */
-  if (fd == -1 || not schema_message.ParseFromFileDescriptor(fd))
-  {
-    struct stat directory_stat_buffer;
-
-    /* Remove the opt file name and see if we can just open up the directory. */
-    db_opt_path[length]= 0;
-    if (lstat(db_opt_path, &directory_stat_buffer))
-    {
-      rc= errno;
-    }
-    else if (not S_ISDIR(directory_stat_buffer.st_mode))
-    {
-      rc= -1;
-    }
-    else
-    {
-      schema_message.set_name(dbname);
-      rc= 0;
-    }
-
-#if 0 //@todo fill this in with something totally acceptable
-    schema_message.set_collation("utf8_general_ci"); 
-#endif
-  }
-
-  if (fd != -1)
-    close(fd);
-
-  return rc;
-}
 
 /*
   Create a database
@@ -211,21 +82,10 @@ int get_database_metadata(const std::string &dbname, message::Schema &schema_mes
 
 */
 
-bool mysql_create_db(Session *session, const char *db, message::Schema *schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const message::Schema &schema_message, bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  long result= 1;
-  int error_erno;
   bool error= false;
-
-  /* do not create 'information_schema' db */
-  if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
-    return(-1);
-  }
-
-  schema_message->set_name(db);
 
   /*
     Do not create database if another thread is holding read lock.
@@ -241,73 +101,54 @@ bool mysql_create_db(Session *session, const char *db, message::Schema *schema_m
   */
   if (wait_if_global_read_lock(session, 0, 1))
   {
-    error= true;
-    goto exit2;
+    return false;
   }
 
+  assert(schema_message.has_name());
+  assert(schema_message.has_collation());
+
+  // @todo push this lock down into the engine
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* check directory */
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // remove last '/' from path
-
-  if (mkdir(path, 0777) == -1)
+  // Check to see if it exists already.
+  if (plugin::StorageEngine::doesSchemaExist(schema_message.name()))
   {
-    if (errno == EEXIST)
+    if (not is_if_not_exists)
     {
-      if (! is_if_not_exists)
-      {
-	my_error(ER_DB_CREATE_EXISTS, MYF(0), path);
-	error= true;
-	goto exit;
-      }
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
-                          path);
-      session->my_ok();
-      error= false;
-      goto exit;
-    }
-
-    my_error(ER_CANT_CREATE_DB, MYF(0), path, errno);
-    error= true;
-    goto exit;
-  }
-
-  error_erno= write_schema_file(path, *schema_message);
-  if (error_erno && error_erno != EEXIST)
-  {
-    if (rmdir(path) >= 0)
-    {
+      my_error(ER_DB_CREATE_EXISTS, MYF(0), schema_message.name().c_str());
       error= true;
-      goto exit;
+    }
+    else
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                          ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
+                          schema_message.name().c_str());
+      session->my_ok();
     }
   }
-  else if (error_erno)
+  else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
+  {
+    my_error(ER_CANT_CREATE_DB, MYF(0), schema_message.name().c_str(), errno);
     error= true;
+  }
+  else // Created !
+  {
+    replication_services.rawStatement(session, session->query);
+    session->my_ok(1);
+  }
 
-  replication_services.rawStatement(session, session->query, session->query_length);
-  session->my_ok(result);
-
-exit:
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit2:
+
   return error;
 }
 
 
 /* db-name is already validated when we come here */
 
-bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_message)
+bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  long result=1;
-  int error= 0;
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -321,34 +162,34 @@ bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_me
     has the global read lock and refuses the operation with
     ER_CANT_UPDATE_WITH_READLOCK if applicable.
   */
-  if ((error=wait_if_global_read_lock(session,0,1)))
-    goto exit;
-
-  assert(schema_message);
-
-  schema_message->set_name(db);
+  if ((wait_if_global_read_lock(session, 0, 1)))
+    return false;
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", false);
-  path[path_len-1]= 0;                    // Remove last '/' from path
-
-  error= write_schema_file(path, *schema_message);
-  if (error && error != EEXIST)
+  if (not plugin::StorageEngine::doesSchemaExist(schema_message.name()))
   {
-    /* TODO: find some witty way of getting back an error message */
-    pthread_mutex_unlock(&LOCK_create_db);
-    goto exit;
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
+    return false;
   }
 
-  replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
-  session->my_ok(result);
+  /* Change options if current database is being altered. */
+  bool success= plugin::StorageEngine::alterSchema(schema_message);
+
+  if (success)
+  {
+    replication_services.rawStatement(session, session->getQueryString());
+    session->my_ok(1);
+  }
+  else
+  {
+    my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
+  }
 
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
-exit:
-  return error ? true : false;
+
+  return success;
 }
 
 
@@ -377,12 +218,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   uint32_t length;
   TableList *dropped_tables= NULL;
 
-  if (db && (strcmp(db, "information_schema") == 0))
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
-
   /*
     Do not drop database if another thread is holding read lock.
     Wait for global read lock before acquiring LOCK_create_db.
@@ -404,8 +239,6 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
   length= build_table_filename(path, sizeof(path),
                                db, "", false);
-  strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
-  unlink(path);
   path[length]= '\0';				// Remove file name
 
   /* See if the directory exists */
@@ -441,16 +274,10 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   }
   if (deleted >= 0)
   {
-    const char *query;
-    uint32_t query_length;
-
-    assert(session->query);
-
-    query= session->query;
-    query_length= session->query_length;
+    assert(! session->query.empty());
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
+    replication_services.rawStatement(session, session->getQueryString());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -478,7 +305,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
-        replication_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
+        replication_services.rawStatement(session, query);
         query_pos= query_data_start;
       }
 
@@ -491,7 +318,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_create_db */
-      replication_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
+      replication_services.rawStatement(session, query);
     }
   }
 
@@ -502,7 +329,7 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (! session->db.empty() && session->db.compare(db) == 0)
+  if (not session->db.empty() && session->db.compare(db) == 0)
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
@@ -749,9 +576,9 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
   if (dropped_tables)
     *dropped_tables= tot_list;
 
-  if (rmdir(org_path))
+  if (not plugin::StorageEngine::dropSchema(db))
   {
-    my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, errno);
+    my_error(ER_DROP_SCHEMA, MYF(0), db.c_str());
     return -1;
   }
 
@@ -820,25 +647,13 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const std::string &new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  assert(new_db_name);
-  assert(new_db_name->length);
+  assert(not new_db_name.empty());
 
-  if (my_strcasecmp(system_charset_info, new_db_name->str,
-                    INFORMATION_SCHEMA_NAME.c_str()) == 0)
-  {
-    /* Switch the current database to INFORMATION_SCHEMA. */
-    /* const_cast<> is safe here: mysql_change_db_impl does a copy */
-    LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
-                          INFORMATION_SCHEMA_NAME.length() };
-    mysql_change_db_impl(session, &is_name);
-
-    return false;
-  }
   /*
     Now we need to make a copy because check_db_name requires a
     non-constant argument. Actually, it takes database file name.
@@ -846,12 +661,12 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     TODO: fix check_db_name().
   */
 
-  new_db_file_name.length= new_db_name->length;
-  new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
+  new_db_file_name.length= new_db_name.length();
+  new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
   if (new_db_file_name.str == NULL)
     return true;                             /* the error is set */
-  memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
-  new_db_file_name.str[new_db_name->length]= 0;
+  memcpy(new_db_file_name.str, new_db_name.c_str(), new_db_name.length());
+  new_db_file_name.str[new_db_name.length()]= 0;
 
 
   /*
@@ -874,7 +689,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     return true;
   }
 
-  if (check_db_dir_existence(new_db_file_name.str))
+  if (not plugin::StorageEngine::doesSchemaExist(new_db_file_name.str))
   {
     if (force_switch)
     {
@@ -907,40 +722,12 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     }
   }
 
-  db_default_cl= get_default_db_collation(new_db_file_name.str);
+  db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
   free(new_db_file_name.str);
 
   return false;
-}
-
-/*
-  Check if there is directory for the database name.
-
-  SYNOPSIS
-    check_db_dir_existence()
-    db_name   database name
-
-  RETURN VALUES
-    false   There is directory for the specified database name.
-    true    The directory does not exist.
-*/
-
-bool check_db_dir_existence(const char *db_name)
-{
-  char db_dir_path[FN_REFLEN];
-  uint32_t db_dir_path_len;
-
-  db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", false);
-
-  if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
-    db_dir_path[db_dir_path_len - 1]= 0;
-
-  /* Check access. */
-
-  return access(db_dir_path, F_OK);
 }
 
 /**
