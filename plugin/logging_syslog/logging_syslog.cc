@@ -145,7 +145,7 @@ public:
   
     const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
-    const char *qys= (session->getQueryString()) ? session->getQueryString() : "";
+    const char *qys= (! session->getQueryString().empty()) ? session->getQueryString().c_str() : "";
     int qyl= 0;
     if (qys)
       qyl= session->getQueryLength();

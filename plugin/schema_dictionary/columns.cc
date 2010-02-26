@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "plugin/schema_dictionary/dictionary.h"
+#include "drizzled/statement/select.h"
 
 using namespace std;
 using namespace drizzled;
@@ -32,8 +33,11 @@ ColumnsTool::ColumnsTool() :
   add_field("TABLE_NAME");
 
   add_field("COLUMN_NAME");
+  add_field("COLUMN_TYPE");
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
   add_field("COLUMN_DEFAULT");
+  add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN);
+  add_field("COLUMN_DEFAULT_UPDATE");
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
   add_field("DATA_TYPE");
 
@@ -44,8 +48,6 @@ ColumnsTool::ColumnsTool() :
 
   add_field("COLLATION_NAME");
 
-  add_field("COLUMN_KEY", plugin::TableFunction::BOOLEAN);
-  add_field("EXTRA", 20);
   add_field("COLUMN_COMMENT", 1024);
 }
 
@@ -55,6 +57,11 @@ ColumnsTool::Generator::Generator(Field **arg) :
   column_iterator(0),
   is_columns_primed(false)
 {
+  Session *session= current_session;
+  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+
+  setSchemaPredicate(select->getShowSchema());
+  setTablePredicate(select->getShowTable());
 }
 
 
@@ -96,6 +103,7 @@ bool ColumnsTool::Generator::nextColumn()
 
 bool ColumnsTool::Generator::populate()
 {
+
   if (not nextColumn())
     return false;
 
@@ -115,11 +123,20 @@ void ColumnsTool::Generator::fill()
   /* COLUMN_NAME */
   push(column.name());
 
+  /* COLUMN_TYPE */
+  pushType(column.type());
+
   /* ORDINAL_POSITION */
   push(static_cast<int64_t>(column_iterator));
 
   /* COLUMN_DEFAULT */
   push(column.options().default_value());
+
+  /* COLUMN_DEFAULT_IS_NULL */
+  push(column.options().default_null());
+
+  /* COLUMN_DEFAULT_UPDATE */
+  push(column.options().update_value());
 
   /* IS_NULLABLE */
   push(column.constraints().is_nullable());
@@ -141,12 +158,6 @@ void ColumnsTool::Generator::fill()
 
  /* "COLLATION_NAME" */
   push(column.string_options().collation());
-
- /* "COLUMN_KEY" */
-  push(false);
-
- /* "EXTRA" */
-  push();
 
  /* "COLUMN_COMMENT" */
   push(column.comment());
