@@ -4457,14 +4457,14 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void remove_db_from_cache(const char *db)
+void remove_db_from_cache(const std::string schema_name)
 {
   safe_mutex_assert_owner(&LOCK_open);
 
   for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
   {
     Table *table=(Table*) hash_element(&open_cache,idx);
-    if (not strcmp(table->s->db.str, db))
+    if (not strcmp(table->s->db.str, schema_name.c_str()))
     {
       table->s->version= 0L;			/* Free when thread is ready */
       if (not table->in_use)

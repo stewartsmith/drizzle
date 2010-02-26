@@ -82,7 +82,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 */
 
-bool mysql_create_db(Session *session, const message::Schema &schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   bool error= false;
@@ -210,7 +210,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session, char *db, bool if_exists)
+bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if_exists)
 {
   long deleted=0;
   int error= false;
@@ -240,11 +240,11 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
 
   length= build_table_filename(path, sizeof(path),
-                               db, "", false);
+                               schema_name.c_str(), "", false);
   path[length]= '\0';				// Remove file name
 
   /* See if the schema exists */
-  if (not plugin::StorageEngine::doesSchemaExist(db))
+  if (not plugin::StorageEngine::doesSchemaExist(schema_name))
   {
     if (if_exists)
     {
@@ -262,12 +262,12 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   else
   {
     pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
-    remove_db_from_cache(db);
+    remove_db_from_cache(schema_name);
     pthread_mutex_unlock(&LOCK_open);
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, db,
+    deleted= mysql_rm_known_files(session, schema_name,
                                   path, &dropped_tables);
     if (deleted >= 0)
     {
@@ -296,7 +296,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
       goto exit; /* not much else we can do */
     query_pos= query_data_start= strcpy(query,"drop table ")+11;
     query_end= query + MAX_DROP_TABLE_Q_LEN;
-    db_len= strlen(db);
+    db_len= schema_name.length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
@@ -332,7 +332,7 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (not session->db.empty() && session->db.compare(db) == 0)
+  if (not session->db.empty() && session->db.compare(schema_name) == 0)
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
@@ -653,7 +653,7 @@ static long mysql_rm_known_files(Session *session,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const std::string &new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const std::string &new_db_name)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
@@ -689,43 +689,19 @@ bool mysql_change_db(Session *session, const std::string &new_db_name, bool forc
     my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
     free(new_db_file_name.str);
 
-    if (force_switch)
-      mysql_change_db_impl(session, NULL);
-
     return true;
   }
 
   if (not plugin::StorageEngine::doesSchemaExist(new_db_file_name.str))
   {
-    if (force_switch)
-    {
-      /* Throw a warning and free new_db_file_name. */
+    /* Report an error and free new_db_file_name. */
 
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
-                          new_db_file_name.str);
+    my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
+    free(new_db_file_name.str);
 
-      free(new_db_file_name.str);
+    /* The operation failed. */
 
-      /* Change db to NULL. */
-
-      mysql_change_db_impl(session, NULL);
-
-      /* The operation succeed. */
-
-      return false;
-    }
-    else
-    {
-      /* Report an error and free new_db_file_name. */
-
-      my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-      free(new_db_file_name.str);
-
-      /* The operation failed. */
-
-      return true;
-    }
+    return true;
   }
 
   db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);

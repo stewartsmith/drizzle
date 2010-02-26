@@ -196,7 +196,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
     string tmp(packet, packet_length);
 
-    if (not mysql_change_db(session, tmp, false))
+    if (not mysql_change_db(session, tmp))
     {
       session->my_ok();
     }
