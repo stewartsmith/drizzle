@@ -42,6 +42,8 @@ namespace drizzled
 namespace message
 {
 /* some forward declarations */
+class Table;
+class Table::Field;
 class Statement;
 class InsertHeader;
 class InsertData;
@@ -52,6 +54,7 @@ class UpdateRecord;
 class DeleteHeader;
 class DeleteData;
 class DeleteRecord;
+class DropTableStatement;
 class TruncateTableStatement;
 class CreateSchemaStatement;
 class DropSchemaStatement;
@@ -119,7 +122,7 @@ transformStatementToSql(const Statement &source,
 enum TransformSqlError
 transformInsertStatementToSql(const InsertHeader &header,
                               const InsertData &data,
-                              std::string *destination,
+                              std::string &destination,
                               enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -140,7 +143,7 @@ transformInsertStatementToSql(const InsertHeader &header,
 enum TransformSqlError
 transformInsertRecordToSql(const InsertHeader &header,
                            const InsertRecord &record,
-                           std::string *destination,
+                           std::string &destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -158,7 +161,7 @@ transformInsertRecordToSql(const InsertHeader &header,
  */
 enum TransformSqlError
 transformInsertHeaderToSql(const InsertHeader &header,
-                           std::string *destination,
+                           std::string &destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -176,7 +179,7 @@ transformInsertHeaderToSql(const InsertHeader &header,
  */
 enum TransformSqlError
 transformUpdateHeaderToSql(const UpdateHeader &header,
-                           std::string *destination,
+                           std::string &destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -197,7 +200,7 @@ transformUpdateHeaderToSql(const UpdateHeader &header,
 enum TransformSqlError
 transformUpdateRecordToSql(const UpdateHeader &header,
                            const UpdateRecord &record,
-                           std::string *destination,
+                           std::string &destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -223,7 +226,7 @@ transformUpdateRecordToSql(const UpdateHeader &header,
 enum TransformSqlError
 transformDeleteStatementToSql(const DeleteHeader &header,
                               const DeleteData &data,
-                              std::string *destination,
+                              std::string &destination,
                               enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -244,7 +247,7 @@ transformDeleteStatementToSql(const DeleteHeader &header,
 enum TransformSqlError
 transformDeleteRecordToSql(const DeleteHeader &header,
                            const DeleteRecord &record,
-                           std::string *destination,
+                           std::string &destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -262,8 +265,27 @@ transformDeleteRecordToSql(const DeleteHeader &header,
  */
 enum TransformSqlError
 transformDeleteHeaderToSql(const DeleteHeader &header,
-                           std::string *destination,
+                           std::string &destination,
                            enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * This function looks at a supplied DropTableStatement
+ * and constructs a correctly-formatted SQL
+ * statement to the supplied destination string.
+ *
+ * @param DropTableStatement message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformDropTableStatementToSql(const DropTableStatement &statement,
+                                  std::string &destination,
+                                  enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * This function looks at a supplied TruncateTableStatement
@@ -281,7 +303,7 @@ transformDeleteHeaderToSql(const DeleteHeader &header,
  */
 enum TransformSqlError
 transformTruncateTableStatementToSql(const TruncateTableStatement &statement,
-                                     std::string *destination,
+                                     std::string &destination,
                                      enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -300,14 +322,15 @@ transformTruncateTableStatementToSql(const TruncateTableStatement &statement,
  */
 enum TransformSqlError
 transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
-                                    std::string *destination,
+                                    std::string &destination,
                                     enum TransformSqlVariant sql_variant= DRIZZLE);
+
 /**
- * This function looks at a supplied CreateSchemaStatement
+ * This function looks at a supplied DropSchemaStatement
  * and constructs a correctly-formatted SQL
  * statement to the supplied destination string.
  *
- * @param CreateSchemaStatement message to transform
+ * @param DropSchemaStatement message to transform
  * @param Destination string to append SQL to
  * @param Variation of SQL to generate
  *
@@ -318,7 +341,7 @@ transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
  */
 enum TransformSqlError
 transformDropSchemaStatementToSql(const DropSchemaStatement &statement,
-                                  std::string *destination,
+                                  std::string &destination,
                                   enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -337,9 +360,26 @@ transformDropSchemaStatementToSql(const DropSchemaStatement &statement,
  */
 enum TransformSqlError
 transformSetVariableStatementToSql(const SetVariableStatement &statement,
-                                   std::string *destination,
+                                   std::string &destination,
                                    enum TransformSqlVariant sql_variant= DRIZZLE);
 
+/**
+ * Appends to the supplied string an SQL expression
+ * representing the field's attributes.  The built string
+ * corresponds to the SQL in a CREATE TABLE statement.
+ *
+ * @param[in]   Field message
+ * @param[out]  String to append to
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformFieldMetadataToSql(const Table::Field &field,
+                            std::string &destination,
+                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * Returns true if the supplied message::Table::Field::FieldType

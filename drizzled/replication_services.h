@@ -341,6 +341,20 @@ public:
    */
   void dropSchema(Session *in_session, const std::string &schema_name);
   /**
+   * Creates a DropTable Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] The schema of the table being dropped
+   * @param[in] The table name of the table being dropped
+   * @param[in] Did the user specify an IF EXISTS clause?
+   */
+  void dropTable(Session *in_session,
+                     const std::string &schema_name,
+                     const std::string &table_name,
+                     bool if_exists);
+  /**
    * Creates a TruncateTable Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing
    * out to the replicator streams.

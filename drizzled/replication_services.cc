@@ -783,6 +783,41 @@ void ReplicationServices::dropSchema(Session *in_session, const string &schema_n
   cleanupTransaction(transaction, in_session);
 }
 
+void ReplicationServices::dropTable(Session *in_session,
+                                    const string &schema_name,
+                                    const string &table_name,
+                                    bool if_exists)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::DROP_TABLE, in_session);
+
+  /* 
+   * Construct the specialized DropTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::DropTableStatement *drop_table_statement= statement->mutable_drop_table_statement();
+
+  drop_table_statement->set_if_exists_clause(if_exists);
+
+  message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+}
+
 void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
 {
   if (! is_active)

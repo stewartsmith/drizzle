@@ -498,7 +498,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
-	error= 0;
+        error= 0;
         session->clear_error();
       }
 
@@ -510,7 +510,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
 
     if (error == 0 || (if_exists && foreign_key_error == false))
-        write_bin_log_drop_table(session, if_exists, db, table->table_name);
+    {
+      ReplicationServices &replication_services= ReplicationServices::singleton();
+      replication_services.dropTable(session, string(db), string(table->table_name), if_exists);
+    }
 
     if (error)
     {
