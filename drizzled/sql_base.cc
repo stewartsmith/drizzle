@@ -4464,10 +4464,10 @@ void remove_db_from_cache(const char *db)
   for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
   {
     Table *table=(Table*) hash_element(&open_cache,idx);
-    if (!strcmp(table->s->db.str, db))
+    if (not strcmp(table->s->db.str, db))
     {
       table->s->version= 0L;			/* Free when thread is ready */
-      if (!table->in_use)
+      if (not table->in_use)
         relink_unused(table);
     }
   }
