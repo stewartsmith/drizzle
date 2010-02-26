@@ -49,9 +49,9 @@ namespace message
 
 enum TransformSqlError
 transformStatementToSql(const Statement &source,
-                                 vector<string> &sql_strings,
-                                 enum TransformSqlVariant sql_variant,
-                                 bool already_in_transaction)
+                        vector<string> &sql_strings,
+                        enum TransformSqlVariant sql_variant,
+                        bool already_in_transaction)
 {
   TransformSqlError error= NONE;
 
@@ -794,6 +794,53 @@ transformSetVariableStatementToSql(const SetVariableStatement &statement,
 
   if (should_quote_field_value)
     destination.push_back('\'');
+
+  return NONE;
+}
+
+enum TransformSqlError
+transformIndexMetadataToSql(const Table::Index &index,
+                            const Table &table,
+                            std::string &destination,
+                            enum TransformSqlVariant sql_variant)
+{
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  if (index.is_primary())
+    destination.append("PRIMARY ", 8);
+  else if (index.is_unique())
+    destination.append("UNIQUE ", 7);
+
+  destination.append("KEY ", 4);
+  destination.push_back(quoted_identifier);
+  destination.append(index.name());
+  destination.push_back(quoted_identifier);
+  destination.append(" (", 2);
+  
+  size_t num_parts= index.index_part_size();
+  for (size_t x= 0; x < num_parts; ++x)
+  {
+    const Table::Index::IndexPart &part= index.index_part(x);
+
+    if (x != 0)
+      destination.push_back(',');
+    
+    destination.push_back(quoted_identifier);
+    destination.append(table.field(part.fieldnr()).name());
+    destination.push_back(quoted_identifier);
+
+    if (part.has_compare_length())
+    {
+      stringstream ss;
+      destination.push_back('(');
+      ss << part.compare_length();
+      destination.append(ss.str());
+      destination.push_back(')');
+    }
+  }
+  destination.push_back(')');
 
   return NONE;
 }

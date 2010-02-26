@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes <jayjpipes@gmail.com>
  *
  *  Authors:
  *
- *    Jay Pipes <joinfu@sun.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -360,6 +361,26 @@ enum TransformSqlError
 transformSetVariableStatementToSql(const SetVariableStatement &statement,
                                    std::string &destination,
                                    enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * Appends to the supplied string an SQL expression
+ * representing the index's attributes.  The built string
+ * corresponds to the SQL in a CREATE INDEX statement.
+ *
+ * @param[in]   Index message
+ * @param[in]   Table containing this index (used to get field names...)
+ * @param[out]  String to append to
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformIndexMetadataToSql(const Table::Index &index,
+                            const Table &table,
+                            std::string &destination,
+                            enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * Appends to the supplied string an SQL expression
