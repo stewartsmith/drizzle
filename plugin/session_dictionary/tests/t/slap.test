@@ -1,13 +1,11 @@
 #Interface to processlist.
-
-CREATE SCHEMA data_dictionary;
 #
 # Slap tests for concurrency
+# 
+
 CREATE SCHEMA drizzleslap;
 
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.ID FROM data_dictionary.processlist as a, data_dictionary.processlist as b ORDER BY ID" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.processlist" --delimiter=";"
 
 DROP SCHEMA drizzleslap;
-
-DROP SCHEMA data_dictionary;

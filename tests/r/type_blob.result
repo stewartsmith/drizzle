@@ -1,19 +1,19 @@
 drop table if exists t1,t2,t3,t4,t5,t6,t7;
 CREATE TABLE t1 (a blob, b text, c blob, d text, e text);
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	blob	YES		NULL	
-b	text	YES		NULL	
-c	blob	YES		NULL	
-d	text	YES		NULL	
-e	text	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	BLOB	TRUE		TRUE	
+b	BLOB	TRUE		TRUE	
+c	BLOB	TRUE		TRUE	
+d	BLOB	TRUE		TRUE	
+e	BLOB	TRUE		TRUE	
 CREATE TABLE t2 (a varchar(255), b blob, c blob);
 CREATE TABLE t4 (c varchar(16383) not null);
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-a	varchar(255)	YES		NULL	
-b	blob	YES		NULL	
-c	blob	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+a	VARCHAR	TRUE		TRUE	
+b	BLOB	TRUE		TRUE	
+c	BLOB	TRUE		TRUE	
 create table t3 (a int, b int);
 show create TABLE t3;
 Table	Create Table

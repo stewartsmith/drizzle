@@ -1,6 +1,5 @@
 drop table if exists t1,t2;
 drop schema if exists data_dictionary;
-create schema data_dictionary;
 set @my_myisam_key_cache_size           =@@global.myisam_key_cache_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
@@ -591,4 +590,3 @@ show global variables where variable_name='table_definition_cache' or Variable_n
 Variable_name	Value
 table_definition_cache	#
 table_lock_wait_timeout	#
-drop schema data_dictionary;
