@@ -347,7 +347,7 @@ bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
 
 bool Schema::readTableFile(const std::string &path, message::Table &table_message)
 {
-  fstream input(path, ios::in | ios::binary);
+  fstream input(path.c_str(), ios::in | ios::binary);
 
   if (input.good())
   {
