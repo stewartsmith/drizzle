@@ -614,15 +614,19 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
 
     uint32_t length= ib_col_get_len(tuple, colnr);
     if (length == IB_SQL_NULL)
-    {
       (**field).set_null();
-    }
     else
+      (**field).set_notnull();
+
+    if ((**field).type() == DRIZZLE_TYPE_VARCHAR)
     {
       (*field)->store((const char*)ib_col_get_value(tuple, colnr),
                       length,
                       &my_charset_bin);
-      (**field).set_notnull();
+    }
+    else
+    {
+      ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
     }
   }
 
