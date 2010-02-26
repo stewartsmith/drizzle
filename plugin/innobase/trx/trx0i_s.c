@@ -437,14 +437,14 @@ fill_trx_row(
 		row->trx_mysql_thread_id = 0;
 	}
 
-	if (trx->mysql_query_str != NULL && *trx->mysql_query_str != NULL) {
+	if (trx->mysql_query_str != NULL) {
 
-		if (strlen(*trx->mysql_query_str)
+		if (strlen(trx->mysql_query_str)
 		    > TRX_I_S_TRX_QUERY_MAX_LEN) {
 
 			char	query[TRX_I_S_TRX_QUERY_MAX_LEN + 1];
 
-			memcpy(query, *trx->mysql_query_str,
+			memcpy(query, trx->mysql_query_str,
 			       TRX_I_S_TRX_QUERY_MAX_LEN);
 			query[TRX_I_S_TRX_QUERY_MAX_LEN] = '\0';
 
@@ -455,7 +455,7 @@ fill_trx_row(
 		} else {
 
 			row->trx_query = ha_storage_put_str_memlim(
-				cache->storage, *trx->mysql_query_str,
+				cache->storage, trx->mysql_query_str,
 				MAX_ALLOWED_FOR_STORAGE(cache));
 		}
 

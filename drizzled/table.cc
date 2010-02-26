@@ -28,7 +28,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
@@ -83,14 +82,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);
-
-  if ((db->length == INFORMATION_SCHEMA_NAME.length()) &&
-      (my_strcasecmp(system_charset_info,
-                    INFORMATION_SCHEMA_NAME.c_str(),
-                    db->str) == 0))
-  {
-    return TABLE_CATEGORY_INFORMATION;
-  }
 
   return TABLE_CATEGORY_USER;
 }

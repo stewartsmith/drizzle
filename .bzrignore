@@ -302,3 +302,5 @@ xid.gcno
 ylwrap
 drizzle-2010.01.1315.tar.gz
 *.reject
+config/pandora_vc_revinfo
+drizzled/message/schema_writer

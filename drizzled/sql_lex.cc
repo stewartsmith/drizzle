@@ -84,7 +84,6 @@ Lex_input_stream::Lex_input_stream(Session *session,
   m_body_utf8(NULL),
   m_cpp_utf8_processed_ptr(NULL),
   next_state(MY_LEX_START),
-  found_semicolon(NULL),
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
