@@ -58,7 +58,7 @@ static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/siz
 
 static long mysql_rm_known_files(Session *session,
                                  const string &db, const char *path,
-                                 TableList **dropped_tables);
+                                 set<string> &dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 /*
@@ -216,7 +216,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   int error= false;
   char	path[FN_REFLEN+16];
   uint32_t length;
-  TableList *dropped_tables= NULL;
+  set<string> dropped_tables;
   message::Schema schema_proto;
 
   /*
@@ -268,7 +268,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
     error= -1;
     deleted= mysql_rm_known_files(session, schema_name,
-                                  path, &dropped_tables);
+                                  path, dropped_tables);
     if (deleted >= 0)
     {
       plugin::StorageEngine::dropDatabase(path);
@@ -289,7 +289,6 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   else
   {
     char *query, *query_pos, *query_end, *query_data_start;
-    TableList *tbl;
     uint32_t db_len;
 
     if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
@@ -299,12 +298,14 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     db_len= schema_name.length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
+    for (set<string>::iterator it= dropped_tables.begin();
+         it != dropped_tables.end();
+         it++)
     {
       uint32_t tbl_name_len;
 
       /* 3 for the quotes and the comma*/
-      tbl_name_len= strlen(tbl->table_name) + 3;
+      tbl_name_len= (*it).length() + 3;
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
@@ -313,7 +314,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
       }
 
       *query_pos++ = '`';
-      query_pos= strcpy(query_pos,tbl->table_name) + (tbl_name_len-3);
+      query_pos= strcpy(query_pos, (*it).c_str()) + (tbl_name_len-3);
       *query_pos++ = '`';
       *query_pos++ = ',';
     }
@@ -489,7 +490,7 @@ err_with_placeholders:
 static long mysql_rm_known_files(Session *session,
                                  const string &db,
 				 const char *org_path,
-                                 TableList **dropped_tables)
+                                 set<string> &dropped_tables)
 {
   CachedDirectory dirp(org_path);
   if (dirp.fail())
@@ -500,6 +501,8 @@ static long mysql_rm_known_files(Session *session,
   TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
+
+  plugin::StorageEngine::getTableNames(db, dropped_tables);
 
   for (CachedDirectory::Entries::const_iterator iter= dirp.getEntries().begin();
        iter != dirp.getEntries().end() && !session->killed;
@@ -578,9 +581,6 @@ static long mysql_rm_known_files(Session *session,
     if (rm_table_part2(session, tot_list))
       return -1;
   }
-
-  if (dropped_tables)
-    *dropped_tables= tot_list;
 
   if (not plugin::StorageEngine::dropSchema(db))
   {
