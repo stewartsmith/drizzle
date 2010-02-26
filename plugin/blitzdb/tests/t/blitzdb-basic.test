@@ -155,6 +155,9 @@ insert into t1 values ('Thompson', '1943-02-04');
 select * from t1;
 select name from t1 order by dob;
 select name from t1 order by dob desc;
+select name from t1 where dob < '1900-01-01';
+select name from t1 where dob > '1950-01-01';
+select name from t1 where dob = '1943-02-04';
 drop table t1;
 
 # Test(12): Boundary Check

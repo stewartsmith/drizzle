@@ -311,6 +311,15 @@ Thompson
 Codd
 Turing
 Lovelace
+select name from t1 where dob < '1900-01-01';
+name
+Lovelace
+select name from t1 where dob > '1950-01-01';
+name
+Bernstein
+select name from t1 where dob = '1943-02-04';
+name
+Thompson
 drop table t1;
 create table t1 (a int) engine = blitzdb;
 insert into t1 values(2147483649);
