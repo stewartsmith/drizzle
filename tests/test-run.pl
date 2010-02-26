@@ -1777,7 +1777,10 @@ sub setup_vardir() {
   foreach my $data_dir (@data_dir_lst)
   {
     mkpath("$data_dir/mysql");
+    system($glob_basedir . "/drizzled/message/schema_writer mysql $data_dir/mysql/db.opt");
+
     mkpath("$data_dir/test");
+    system($glob_basedir . "/drizzled/message/schema_writer test $data_dir/test/db.opt");
   }
 
   # Make a link std_data_ln in var/ that points to std_data
