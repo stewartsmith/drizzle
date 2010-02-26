@@ -1,10 +1,7 @@
 # Innodb Status table.
 
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 
 select count(*) from data_dictionary.INNODB_STATUS ;
 
 show create table INNODB_STATUS;
-
-DROP SCHEMA data_dictionary;

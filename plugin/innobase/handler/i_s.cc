@@ -31,13 +31,13 @@ Created July 18, 2007 Vasil Dimov
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/time_functions.h>
 #include "drizzled/global_charset_info.h"
 
 
 #include "i_s.h"
 
+#if 0
 
 extern "C" {
 #include "trx0i_s.h"
@@ -1128,3 +1128,5 @@ i_s_common_deinit(
 
 	return(0);
 }
+
+#endif

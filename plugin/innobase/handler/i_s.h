@@ -26,6 +26,7 @@ Created July 18, 2007 Vasil Dimov
 #ifndef i_s_h
 #define i_s_h
 
+#if 0
 #include "drizzled/plugin/info_schema_table.h"
 
 class TrxISMethods : public drizzled::plugin::InfoSchemaMethods
@@ -93,5 +94,6 @@ extern drizzled::plugin::InfoSchemaTable *innodb_cmp_schema_table;
 extern drizzled::plugin::InfoSchemaTable *innodb_cmp_reset_schema_table;
 extern drizzled::plugin::InfoSchemaTable *innodb_cmpmem_schema_table;
 extern drizzled::plugin::InfoSchemaTable *innodb_cmpmem_reset_schema_table;
+#endif
 
 #endif /* i_s_h */
