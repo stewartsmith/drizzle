@@ -69,7 +69,7 @@ bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
 void write_bin_log(Session *session,
-                   char const *query, size_t query_length);
+                   char const *query);
 
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
