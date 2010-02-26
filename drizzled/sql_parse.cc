@@ -127,8 +127,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
-  sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;

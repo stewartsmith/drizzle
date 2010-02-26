@@ -56,7 +56,7 @@ const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD"};
 static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
 
 
-static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
+static long mysql_rm_known_files(Session *session,
                                  const string &db, const char *path,
                                  TableList **dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
@@ -217,6 +217,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   char	path[FN_REFLEN+16];
   uint32_t length;
   TableList *dropped_tables= NULL;
+  message::Schema schema_proto;
 
   /*
     Do not drop database if another thread is holding read lock.
@@ -237,24 +238,26 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
   pthread_mutex_lock(&LOCK_create_db);
 
+
   length= build_table_filename(path, sizeof(path),
                                db, "", false);
   path[length]= '\0';				// Remove file name
 
-  /* See if the directory exists */
-  CachedDirectory dirp(path);
-  if (dirp.fail())
+  /* See if the schema exists */
+  if (not plugin::StorageEngine::doesSchemaExist(db))
   {
-    if (!if_exists)
+    if (if_exists)
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
+                          path);
+    }
+    else
     {
       error= -1;
       my_error(ER_DB_DROP_EXISTS, MYF(0), path);
       goto exit;
     }
-    else
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                          path);
   }
   else
   {
@@ -264,7 +267,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, dirp, db,
+    deleted= mysql_rm_known_files(session, db,
                                   path, &dropped_tables);
     if (deleted >= 0)
     {
@@ -333,6 +336,7 @@ exit:
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
+
   return error;
 }
 
@@ -482,12 +486,14 @@ err_with_placeholders:
   session MUST be set when calling this function!
 */
 
-static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
+static long mysql_rm_known_files(Session *session,
                                  const string &db,
 				 const char *org_path,
                                  TableList **dropped_tables)
 {
-
+  CachedDirectory dirp(org_path);
+  if (dirp.fail())
+    return 0;
 
   long deleted= 0;
   char filePath[FN_REFLEN];

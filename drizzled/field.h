@@ -189,12 +189,6 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*, String *)=0;
-  /**
-   * Interpret field value as an integer but return the result as a string.
-   *
-   * This is used for printing bit_fields as numbers while debugging.
-   */
-  String *val_int_as_str(String *val_buffer, bool unsigned_flag);
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -262,35 +256,6 @@ public:
    * table, which is located on disk).
    */
   virtual uint32_t pack_length_in_rec() const;
-  /**
-    Check to see if field size is compatible with destination.
-
-    This method is used in row-based replication to verify that the slave's
-    field size is less than or equal to the master's field size. The
-    encoded field metadata (from the master or source) is decoded and compared
-    to the size of this field (the slave or destination).
-
-    @param   field_metadata   Encoded size in field metadata
-
-    @retval 0 if this field's size is < the source field's size
-    @retval 1 if this field's size is >= the source field's size
-  */
-  virtual int compatible_field_size(uint32_t field_metadata);
-  virtual uint32_t pack_length_from_metadata(uint32_t field_metadata);
-
-  /*
-    This method is used to return the size of the data in a row-based
-    replication row record. The default implementation of returning 0 is
-    designed to allow fields that do not use metadata to return true (1)
-    from compatible_field_size() which uses this function in the comparison.
-    The default value for field metadata for fields that do not have
-    metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
-
-    Note: While most classes that override this method return pack_length(),
-    the classes Field_varstring, and Field_blob return
-    field_length + 1, field_length, and pack_length_no_ptr() respectfully.
-  */
-  virtual uint32_t row_pack_length();
 
   /**
    * Return the "real size" of the data in memory.
