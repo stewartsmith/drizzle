@@ -2,7 +2,8 @@ show create table data_dictionary.innodb_table_proto;
 Table	Create Table
 innodb_table_proto	CREATE TABLE `innodb_table_proto` (
   `table_name` varbinary(1024) DEFAULT NULL,
-  `proto` text
+  `proto` text,
+  PRIMARY KEY (`table_name`) USING BTREE
 ) ENGINE=InnoDB
 select * from data_dictionary.innodb_table_proto;
 table_name	proto

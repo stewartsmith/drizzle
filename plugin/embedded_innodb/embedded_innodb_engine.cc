@@ -524,7 +524,6 @@ rollback:
     field->set_name("proto");
     field->set_type(message::Table::Field::BLOB);
 
-/*
     message::Table::Index *index= table_message->add_indexes();
     index->set_name("PRIMARY");
     index->set_is_primary(true);
@@ -534,7 +533,7 @@ rollback:
     message::Table::Index::IndexPart *part= index->add_index_part();
     part->set_fieldnr(0);
     part->set_compare_length(IB_MAX_TABLE_NAME_LEN);
-*/
+
     return 0;
   }
 
