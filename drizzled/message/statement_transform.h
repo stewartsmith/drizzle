@@ -42,8 +42,6 @@ namespace drizzled
 namespace message
 {
 /* some forward declarations */
-class Table;
-class Table::Field;
 class Statement;
 class InsertHeader;
 class InsertData;

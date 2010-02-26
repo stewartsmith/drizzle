@@ -37,23 +37,27 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 
 namespace drizzled
 {
 
-enum message::TransformSqlError
-message::transformStatementToSql(const message::Statement &source,
+namespace message
+{
+
+enum TransformSqlError
+transformStatementToSql(const Statement &source,
                                  vector<string> &sql_strings,
-                                 enum message::TransformSqlVariant sql_variant,
+                                 enum TransformSqlVariant sql_variant,
                                  bool already_in_transaction)
 {
-  message::TransformSqlError error= NONE;
+  TransformSqlError error= NONE;
 
   switch (source.type())
   {
-  case message::Statement::INSERT:
+  case Statement::INSERT:
     {
       if (! source.has_insert_header())
       {
@@ -66,8 +70,8 @@ message::transformStatementToSql(const message::Statement &source,
         return error;
       }
 
-      const message::InsertHeader &insert_header= source.insert_header();
-      const message::InsertData &insert_data= source.insert_data();
+      const InsertHeader &insert_header= source.insert_header();
+      const InsertData &insert_data= source.insert_data();
       size_t num_keys= insert_data.record_size();
       size_t x;
 
@@ -80,7 +84,7 @@ message::transformStatementToSql(const message::Statement &source,
 
         error= transformInsertRecordToSql(insert_header,
                                           insert_data.record(x),
-                                          &destination,
+                                          destination,
                                           sql_variant);
         if (error != NONE)
           break;
@@ -97,7 +101,7 @@ message::transformStatementToSql(const message::Statement &source,
       }
     }
     break;
-  case message::Statement::UPDATE:
+  case Statement::UPDATE:
     {
       if (! source.has_update_header())
       {
@@ -110,8 +114,8 @@ message::transformStatementToSql(const message::Statement &source,
         return error;
       }
 
-      const message::UpdateHeader &update_header= source.update_header();
-      const message::UpdateData &update_data= source.update_data();
+      const UpdateHeader &update_header= source.update_header();
+      const UpdateData &update_data= source.update_data();
       size_t num_keys= update_data.record_size();
       size_t x;
 
@@ -124,7 +128,7 @@ message::transformStatementToSql(const message::Statement &source,
 
         error= transformUpdateRecordToSql(update_header,
                                           update_data.record(x),
-                                          &destination,
+                                          destination,
                                           sql_variant);
         if (error != NONE)
           break;
@@ -141,7 +145,7 @@ message::transformStatementToSql(const message::Statement &source,
       }
     }
     break;
-  case message::Statement::DELETE:
+  case Statement::DELETE:
     {
       if (! source.has_delete_header())
       {
@@ -154,8 +158,8 @@ message::transformStatementToSql(const message::Statement &source,
         return error;
       }
 
-      const message::DeleteHeader &delete_header= source.delete_header();
-      const message::DeleteData &delete_data= source.delete_data();
+      const DeleteHeader &delete_header= source.delete_header();
+      const DeleteData &delete_data= source.delete_data();
       size_t num_keys= delete_data.record_size();
       size_t x;
 
@@ -168,7 +172,7 @@ message::transformStatementToSql(const message::Statement &source,
 
         error= transformDeleteRecordToSql(delete_header,
                                           delete_data.record(x),
-                                          &destination,
+                                          destination,
                                           sql_variant);
         if (error != NONE)
           break;
@@ -185,57 +189,57 @@ message::transformStatementToSql(const message::Statement &source,
       }
     }
     break;
-  case message::Statement::TRUNCATE_TABLE:
+  case Statement::TRUNCATE_TABLE:
     {
       assert(source.has_truncate_table_statement());
       string destination;
-      error= message::transformTruncateTableStatementToSql(source.truncate_table_statement(),
-                                                           &destination,
-                                                           sql_variant);
+      error= transformTruncateTableStatementToSql(source.truncate_table_statement(),
+                                                  destination,
+                                                  sql_variant);
       sql_strings.push_back(destination);
     }
     break;
-  case message::Statement::CREATE_SCHEMA:
+  case Statement::CREATE_SCHEMA:
     {
       assert(source.has_create_schema_statement());
       string destination;
-      error= message::transformCreateSchemaStatementToSql(source.create_schema_statement(),
-                                                          &destination,
-                                                          sql_variant);
+      error= transformCreateSchemaStatementToSql(source.create_schema_statement(),
+                                                 destination,
+                                                 sql_variant);
       sql_strings.push_back(destination);
     }
     break;
-  case message::Statement::DROP_SCHEMA:
+  case Statement::DROP_SCHEMA:
     {
       assert(source.has_drop_schema_statement());
       string destination;
-      error= message::transformDropSchemaStatementToSql(source.drop_schema_statement(),
-                                                        &destination,
-                                                        sql_variant);
+      error= transformDropSchemaStatementToSql(source.drop_schema_statement(),
+                                               destination,
+                                               sql_variant);
       sql_strings.push_back(destination);
     }
     break;
-  case message::Statement::DROP_TABLE:
+  case Statement::DROP_TABLE:
     {
       assert(source.has_drop_table_statement());
       string destination;
-      error= message::transformDropTableStatementToSql(source.drop_table_statement(),
-                                                       &destination,
-                                                       sql_variant);
+      error= transformDropTableStatementToSql(source.drop_table_statement(),
+                                              destination,
+                                              sql_variant);
       sql_strings.push_back(destination);
     }
     break;
-  case message::Statement::SET_VARIABLE:
+  case Statement::SET_VARIABLE:
     {
       assert(source.has_set_variable_statement());
       string destination;
-      error= message::transformSetVariableStatementToSql(source.set_variable_statement(),
-                                                       &destination,
-                                                       sql_variant);
+      error= transformSetVariableStatementToSql(source.set_variable_statement(),
+                                                destination,
+                                                sql_variant);
       sql_strings.push_back(destination);
     }
     break;
-  case message::Statement::RAW_SQL:
+  case Statement::RAW_SQL:
   default:
     sql_strings.push_back(source.sql());
     break;
@@ -243,10 +247,10 @@ message::transformStatementToSql(const message::Statement &source,
   return error;
 }
 
-enum message::TransformSqlError
-message::transformInsertHeaderToSql(const message::InsertHeader &header,
-                                    string &destination,
-                                    enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformInsertHeaderToSql(const InsertHeader &header,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -268,7 +272,7 @@ message::transformInsertHeaderToSql(const message::InsertHeader &header,
 
   for (x= 0; x < num_fields; ++x)
   {
-    const message::FieldMetadata &field_metadata= header.field_metadata(x);
+    const FieldMetadata &field_metadata= header.field_metadata(x);
     if (x != 0)
       destination.push_back(',');
     
@@ -280,15 +284,15 @@ message::transformInsertHeaderToSql(const message::InsertHeader &header,
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformInsertRecordToSql(const message::InsertHeader &header,
-                                    const message::InsertRecord &record,
-                                    string &destination,
-                                    enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformInsertRecordToSql(const InsertHeader &header,
+                           const InsertRecord &record,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
 {
-  enum message::TransformSqlError error= transformInsertHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
+  enum TransformSqlError error= transformInsertHeaderToSql(header,
+                                                           destination,
+                                                           sql_variant);
 
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -306,14 +310,14 @@ message::transformInsertRecordToSql(const message::InsertHeader &header,
     if (x != 0)
       destination.push_back(',');
 
-    const message::FieldMetadata &field_metadata= header.field_metadata(x);
+    const FieldMetadata &field_metadata= header.field_metadata(x);
 
-    should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
+    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
 
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == message::Table::Field::BLOB)
+    if (field_metadata.type() == Table::Field::BLOB)
     {
       /* 
         * We do this here because BLOB data is returned
@@ -337,15 +341,15 @@ message::transformInsertRecordToSql(const message::InsertHeader &header,
   return error;
 }
 
-enum message::TransformSqlError
-message::transformInsertStatementToSql(const message::InsertHeader &header,
-                                       const message::InsertData &data,
-                                       string &destination,
-                                       enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformInsertStatementToSql(const InsertHeader &header,
+                              const InsertData &data,
+                              string &destination,
+                              enum TransformSqlVariant sql_variant)
 {
-  enum message::TransformSqlError error= transformInsertHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
+  enum TransformSqlError error= transformInsertHeaderToSql(header,
+                                                           destination,
+                                                           sql_variant);
 
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -369,14 +373,14 @@ message::transformInsertStatementToSql(const message::InsertHeader &header,
       if (y != 0)
         destination.push_back(',');
 
-      const message::FieldMetadata &field_metadata= header.field_metadata(y);
+      const FieldMetadata &field_metadata= header.field_metadata(y);
       
-      should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
 
       if (should_quote_field_value)
         destination.push_back('\'');
 
-      if (field_metadata.type() == message::Table::Field::BLOB)
+      if (field_metadata.type() == Table::Field::BLOB)
       {
         /* 
          * We do this here because BLOB data is returned
@@ -401,10 +405,10 @@ message::transformInsertStatementToSql(const message::InsertHeader &header,
   return error;
 }
 
-enum message::TransformSqlError
-message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
-                                    string &destination,
-                                    enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformUpdateHeaderToSql(const UpdateHeader &header,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -423,15 +427,15 @@ message::transformUpdateHeaderToSql(const message::UpdateHeader &header,
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformUpdateRecordToSql(const message::UpdateHeader &header,
-                                    const message::UpdateRecord &record,
-                                    string &destination,
-                                    enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformUpdateRecordToSql(const UpdateHeader &header,
+                           const UpdateRecord &record,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
 {
-  enum message::TransformSqlError error= transformUpdateHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
+  enum TransformSqlError error= transformUpdateHeaderToSql(header,
+                                                           destination,
+                                                           sql_variant);
 
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -444,7 +448,7 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
 
   for (x= 0; x < num_set_fields; ++x)
   {
-    const message::FieldMetadata &field_metadata= header.set_field_metadata(x);
+    const FieldMetadata &field_metadata= header.set_field_metadata(x);
     if (x != 0)
       destination.push_back(',');
     
@@ -453,12 +457,12 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
     destination.push_back(quoted_identifier);
     destination.push_back('=');
 
-    should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
+    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
 
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == message::Table::Field::BLOB)
+    if (field_metadata.type() == Table::Field::BLOB)
     {
       /* 
        * We do this here because BLOB data is returned
@@ -483,7 +487,7 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
   destination.append(" WHERE ", 7);
   for (x= 0; x < num_key_fields; ++x) 
   {
-    const message::FieldMetadata &field_metadata= header.key_field_metadata(x);
+    const FieldMetadata &field_metadata= header.key_field_metadata(x);
     
     if (x != 0)
       destination.append(" AND ", 5); /* Always AND condition with a multi-column PK */
@@ -494,12 +498,12 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
 
     destination.push_back('=');
 
-    should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
+    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
 
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == message::Table::Field::BLOB)
+    if (field_metadata.type() == Table::Field::BLOB)
     {
       /* 
        * We do this here because BLOB data is returned
@@ -522,10 +526,10 @@ message::transformUpdateRecordToSql(const message::UpdateHeader &header,
   return error;
 }
 
-enum message::TransformSqlError
-message::transformDeleteHeaderToSql(const message::DeleteHeader &header,
-                                    string &destination,
-                                    enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformDeleteHeaderToSql(const DeleteHeader &header,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -543,15 +547,15 @@ message::transformDeleteHeaderToSql(const message::DeleteHeader &header,
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformDeleteRecordToSql(const message::DeleteHeader &header,
-                                    const message::DeleteRecord &record,
-                                    string &destination,
-                                    enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformDeleteRecordToSql(const DeleteHeader &header,
+                           const DeleteRecord &record,
+                           string &destination,
+                           enum TransformSqlVariant sql_variant)
 {
-  enum message::TransformSqlError error= transformDeleteHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
+  enum TransformSqlError error= transformDeleteHeaderToSql(header,
+                                                           destination,
+                                                           sql_variant);
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
     quoted_identifier= '"';
@@ -564,7 +568,7 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
   destination.append(" WHERE ", 7);
   for (x= 0; x < num_key_fields; ++x) 
   {
-    const message::FieldMetadata &field_metadata= header.key_field_metadata(x);
+    const FieldMetadata &field_metadata= header.key_field_metadata(x);
     
     if (x != 0)
       destination.append(" AND ", 5); /* Always AND condition with a multi-column PK */
@@ -575,12 +579,12 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
 
     destination.push_back('=');
 
-    should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
+    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
 
     if (should_quote_field_value)
       destination.push_back('\'');
 
-    if (field_metadata.type() == message::Table::Field::BLOB)
+    if (field_metadata.type() == Table::Field::BLOB)
     {
       /* 
        * We do this here because BLOB data is returned
@@ -603,15 +607,15 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
   return error;
 }
 
-enum message::TransformSqlError
-message::transformDeleteStatementToSql(const message::DeleteHeader &header,
-                                       const message::DeleteData &data,
-                                       string &destination,
-                                       enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformDeleteStatementToSql(const DeleteHeader &header,
+                              const DeleteData &data,
+                              string &destination,
+                              enum TransformSqlVariant sql_variant)
 {
-  enum message::TransformSqlError error= transformDeleteHeaderToSql(header,
-                                                                    destination,
-                                                                    sql_variant);
+  enum TransformSqlError error= transformDeleteHeaderToSql(header,
+                                                           destination,
+                                                           sql_variant);
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
     quoted_identifier= '"';
@@ -633,7 +637,7 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
 
     for (y= 0; y < num_key_fields; ++y) 
     {
-      const message::FieldMetadata &field_metadata= header.key_field_metadata(y);
+      const FieldMetadata &field_metadata= header.key_field_metadata(y);
       
       if (y != 0)
         destination.append(" AND ", 5); /* Always AND condition with a multi-column PK */
@@ -644,12 +648,12 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
 
       destination.push_back('=');
 
-      should_quote_field_value= message::shouldQuoteFieldValue(field_metadata.type());
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
 
       if (should_quote_field_value)
         destination.push_back('\'');
 
-      if (field_metadata.type() == message::Table::Field::BLOB)
+      if (field_metadata.type() == Table::Field::BLOB)
       {
         /* 
          * We do this here because BLOB data is returned
@@ -674,10 +678,10 @@ message::transformDeleteStatementToSql(const message::DeleteHeader &header,
   return error;
 }
 
-enum message::TransformSqlError
-message::transformDropSchemaStatementToSql(const message::DropSchemaStatement &statement,
-                                           string &destination,
-                                           enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformDropSchemaStatementToSql(const DropSchemaStatement &statement,
+                                  string &destination,
+                                  enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -691,16 +695,16 @@ message::transformDropSchemaStatementToSql(const message::DropSchemaStatement &s
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformCreateSchemaStatementToSql(const message::CreateSchemaStatement &statement,
-                                             string &destination,
-                                             enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformCreateSchemaStatementToSql(const CreateSchemaStatement &statement,
+                                    string &destination,
+                                    enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  const message::Schema &schema= statement.schema();
+  const Schema &schema= statement.schema();
 
   destination.append("CREATE SCHEMA ", 14);
   destination.push_back(quoted_identifier);
@@ -716,16 +720,16 @@ message::transformCreateSchemaStatementToSql(const message::CreateSchemaStatemen
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformDropTableStatementToSql(const message::DropTableStatement &statement,
-                                           string &destination,
-                                           enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformDropTableStatementToSql(const DropTableStatement &statement,
+                                 string &destination,
+                                 enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  const message::TableMetadata &table_metadata= statement.table_metadata();
+  const TableMetadata &table_metadata= statement.table_metadata();
 
   destination.append("DROP TABLE ", 11);
 
@@ -747,16 +751,16 @@ message::transformDropTableStatementToSql(const message::DropTableStatement &sta
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformTruncateTableStatementToSql(const message::TruncateTableStatement &statement,
-                                              string &destination,
-                                              enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformTruncateTableStatementToSql(const TruncateTableStatement &statement,
+                                     string &destination,
+                                     enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  const message::TableMetadata &table_metadata= statement.table_metadata();
+  const TableMetadata &table_metadata= statement.table_metadata();
 
   destination.append("TRUNCATE TABLE ", 15);
   destination.push_back(quoted_identifier);
@@ -770,14 +774,14 @@ message::transformTruncateTableStatementToSql(const message::TruncateTableStatem
   return NONE;
 }
 
-enum message::TransformSqlError
-message::transformSetVariableStatementToSql(const message::SetVariableStatement &statement,
-                                            string &destination,
-                                            enum message::TransformSqlVariant sql_variant)
+enum TransformSqlError
+transformSetVariableStatementToSql(const SetVariableStatement &statement,
+                                   string &destination,
+                                   enum TransformSqlVariant sql_variant)
 {
   (void) sql_variant;
-  const message::FieldMetadata &variable_metadata= statement.variable_metadata();
-  bool should_quote_field_value= message::shouldQuoteFieldValue(variable_metadata.type());
+  const FieldMetadata &variable_metadata= statement.variable_metadata();
+  bool should_quote_field_value= shouldQuoteFieldValue(variable_metadata.type());
 
   destination.append("SET GLOBAL ", 11); /* Only global variables are replicated */
   destination.append(variable_metadata.name());
@@ -797,7 +801,7 @@ message::transformSetVariableStatementToSql(const message::SetVariableStatement 
 enum TransformSqlError
 transformFieldMetadataToSql(const Table::Field &field,
                             std::string &destination,
-                            enum TransformSqlVariant sql_variant= DRIZZLE)
+                            enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -809,13 +813,12 @@ transformFieldMetadataToSql(const Table::Field &field,
 
   Table::Field::FieldType field_type= field.type();
 
-
   switch (field_type)
   {
     case Table::Field::DOUBLE:
     destination.append(" DOUBLE ", 8);
     break;
-  case message::Table::Field::VARCHAR:
+  case Table::Field::VARCHAR:
     {
       destination.append(" VARCHAR(", 9);
       stringstream ss;
@@ -828,13 +831,13 @@ transformFieldMetadataToSql(const Table::Field &field,
     if (field.string_options().has_collation_id())
     {
       destination.append("COLLATION=", 10);
-      destination.append(field.string_options().collation_id());
-      detination.push_back(' ');
+      destination.append(field.string_options().collation());
+      destination.push_back(' ');
     }
     break;
   case Table::Field::ENUM:
     {
-      size_t num_field_values= field.set_options.field_value_size();
+      size_t num_field_values= field.set_options().field_value_size();
       destination.append(" ENUM(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
@@ -843,126 +846,155 @@ transformFieldMetadataToSql(const Table::Field &field,
         if (x != 0)
           destination.push_back(',');
 
-        destination.push_back(''');
+        destination.push_back('\'');
         destination.append(type);
-        destination.push_back(''');
+        destination.push_back('\'');
       }
       destination.push_back(')');
       destination.push_back(' ');
       break;
     }
-  case message::Table::Field::INTEGER:
+  case Table::Field::INTEGER:
     destination.append(" INT ", 5);
     break;
-  case message::Table::Field::BIGINT:
+  case Table::Field::BIGINT:
     destination.append(" BIGINT ", 8);
     break;
-  case message::Table::Field::DECIMAL:
-    cout << " DECIMAL(" << field.numeric_options().precision() << "," << field.numeric_options().scale() << ") ";
+  case Table::Field::DECIMAL:
+    {
+      destination.append(" DECIMAL(", 9);
+      stringstream ss;
+      ss << field.numeric_options().precision() << ",";
+      ss << field.numeric_options().scale() << ") ";
+      destination.append(ss.str());
+    }
     break;
-  case message::Table::Field::DATE:
-    cout << " DATE ";
+  case Table::Field::DATE:
+    destination.append(" DATE ", 6);
     break;
-  case message::Table::Field::TIMESTAMP:
-    cout << " TIMESTAMP ";
+  case Table::Field::TIMESTAMP:
+    destination.append(" TIMESTAMP ",  11);
     break;
-  case message::Table::Field::DATETIME:
-    cout << " DATETIME ";
+  case Table::Field::DATETIME:
+    destination.append(" DATETIME ",  10);
     break;
   }
 
-  if (field.type() == message::Table::Field::INTEGER
-      || field.type() == message::Table::Field::BIGINT)
+  if (field.type() == Table::Field::INTEGER || 
+      field.type() == Table::Field::BIGINT)
   {
-    if (field.has_constraints()
-        && field.constraints().has_is_unsigned())
-      if (field.constraints().is_unsigned())
-        cout << " UNSIGNED";
+    if (field.has_constraints() &&
+        field.constraints().has_is_unsigned() &&
+        field.constraints().is_unsigned())
+    {
+      destination.append(" UNSIGNED", 9);
+    }
 
     if (field.has_numeric_options() &&
-      field.numeric_options().is_autoincrement())
-      cout << " AUTOINCREMENT ";
-  }
-
-  if (!( field.has_constraints()
-	 && field.constraints().is_nullable()))
-    cout << " NOT NULL ";
-
-  if (field.type() == message::Table::Field::BLOB
-      || field.type() == message::Table::Field::VARCHAR)
-  {
-    if (field.string_options().has_collation())
-      cout << " COLLATE " << field.string_options().collation();
-  }
-
-  if (field.options().has_default_value())
-    cout << " DEFAULT `" << field.options().default_value() << "` " ;
-
-  if (field.options().has_default_bin_value())
-  {
-    string v= field.options().default_bin_value();
-    cout << " DEFAULT 0x";
-    for(unsigned int i=0; i< v.length(); i++)
+        field.numeric_options().is_autoincrement())
     {
-      printf("%.2x", *(v.c_str()+i));
+      destination.append(" AUTOINCREMENT ", 15);
     }
   }
 
-  if (field.type() == message::Table::Field::TIMESTAMP)
-    if (field.timestamp_options().has_auto_updates()
-      && field.timestamp_options().auto_updates())
-      cout << " ON UPDATE CURRENT_TIMESTAMP";
+
+  if (! (field.has_constraints() &&
+         field.constraints().is_nullable()))
+  {
+    destination.append(" NOT NULL ", 10);
+  }
+
+  if (field.type() == Table::Field::BLOB ||
+      field.type() == Table::Field::VARCHAR)
+  {
+    if (field.string_options().has_collation())
+    {
+      destination.append(" COLLATE ", 9);
+      destination.append(field.string_options().collation());
+    }
+  }
+
+  if (field.options().has_default_value())
+  {
+    destination.append(" DEFAULT ", 9);
+    destination.push_back(quoted_identifier);
+    destination.append(field.options().default_value());
+    destination.push_back(quoted_identifier);
+    destination.push_back(' ');
+  }
+
+  if (field.options().has_default_bin_value())
+  {
+    const string &v= field.options().default_bin_value();
+    destination.append(" DEFAULT 0x", 11);
+    for (size_t x= 0; x < v.length(); x++)
+    {
+      printf("%.2x", *(v.c_str() + x));
+    }
+  }
+
+  if (field.type() == Table::Field::TIMESTAMP)
+    if (field.timestamp_options().has_auto_updates() &&
+        field.timestamp_options().auto_updates())
+      destination.append(" ON UPDATE CURRENT_TIMESTAMP", 28);
 
   if (field.has_comment())
-    cout << " COMMENT `" << field.comment() << "` ";
+  {
+    destination.append(" COMMENT ", 9);
+    destination.push_back(quoted_identifier);
+    destination.append(field.comment());
+    destination.push_back(quoted_identifier);
+    destination.push_back(' ');
+  }
   return NONE;
 }
 
-bool message::shouldQuoteFieldValue(message::Table::Field::FieldType in_type)
+bool shouldQuoteFieldValue(Table::Field::FieldType in_type)
 {
   switch (in_type)
   {
-  case message::Table::Field::DOUBLE:
-  case message::Table::Field::DECIMAL:
-  case message::Table::Field::INTEGER:
-  case message::Table::Field::BIGINT:
-  case message::Table::Field::ENUM:
+  case Table::Field::DOUBLE:
+  case Table::Field::DECIMAL:
+  case Table::Field::INTEGER:
+  case Table::Field::BIGINT:
+  case Table::Field::ENUM:
     return false;
   default:
     return true;
   } 
 }
 
-drizzled::message::Table::Field::FieldType message::internalFieldTypeToFieldProtoType(enum enum_field_types type)
+Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types type)
 {
   switch (type) {
   case DRIZZLE_TYPE_LONG:
-    return message::Table::Field::INTEGER;
+    return Table::Field::INTEGER;
   case DRIZZLE_TYPE_DOUBLE:
-    return message::Table::Field::DOUBLE;
+    return Table::Field::DOUBLE;
   case DRIZZLE_TYPE_NULL:
     assert(false); /* Not a user definable type */
-    return message::Table::Field::INTEGER; /* unreachable */
+    return Table::Field::INTEGER; /* unreachable */
   case DRIZZLE_TYPE_TIMESTAMP:
-    return message::Table::Field::TIMESTAMP;
+    return Table::Field::TIMESTAMP;
   case DRIZZLE_TYPE_LONGLONG:
-    return message::Table::Field::BIGINT;
+    return Table::Field::BIGINT;
   case DRIZZLE_TYPE_DATETIME:
-    return message::Table::Field::DATETIME;
+    return Table::Field::DATETIME;
   case DRIZZLE_TYPE_DATE:
-    return message::Table::Field::DATE;
+    return Table::Field::DATE;
   case DRIZZLE_TYPE_VARCHAR:
-    return message::Table::Field::VARCHAR;
+    return Table::Field::VARCHAR;
   case DRIZZLE_TYPE_DECIMAL:
-    return message::Table::Field::DECIMAL;
+    return Table::Field::DECIMAL;
   case DRIZZLE_TYPE_ENUM:
-    return message::Table::Field::ENUM;
+    return Table::Field::ENUM;
   case DRIZZLE_TYPE_BLOB:
-    return message::Table::Field::BLOB;
+    return Table::Field::BLOB;
   }
 
   assert(false);
-  return message::Table::Field::INTEGER; /* unreachable */
+  return Table::Field::INTEGER; /* unreachable */
 }
 
+} /* namespace message */
 } /* namespace drizzled */
