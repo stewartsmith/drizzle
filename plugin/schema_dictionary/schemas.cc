@@ -43,7 +43,13 @@ SchemasTool::Generator::Generator(Field **arg) :
 */
 bool SchemasTool::Generator::checkSchema()
 {
-  return isWild(schema_name());
+  if (isWild(schema_name()))
+    return true;
+
+  if (not schema_predicate.empty() && schema_predicate.compare(schema_name()))
+    return true;
+
+  return false;
 }
 
 bool SchemasTool::Generator::nextSchemaCore()
@@ -64,6 +70,12 @@ bool SchemasTool::Generator::nextSchemaCore()
 
   schema.Clear();
   is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
+
+  if (not is_schema_parsed)
+  {
+    cerr << "Failure to parse " << *schema_iterator << "\n";
+    return false;
+  }
 
   if (checkSchema())
       return false;
