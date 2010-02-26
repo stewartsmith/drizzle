@@ -240,17 +240,17 @@ CREATE TABLE t1 (a DECIMAL (1, 0) , b DECIMAL (1, 0) );
 INSERT INTO t1 (a, b) VALUES (0, 0);
 CREATE TABLE t2 SELECT IFNULL(a, b) FROM t1;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-IFNULL(a, b)	decimal(1,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+IFNULL(a, b)	DECIMAL	TRUE		TRUE	
 DROP TABLE t2;
 CREATE TABLE t2 SELECT IFNULL(a, NULL) FROM t1;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-IFNULL(a, NULL)	decimal(1,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+IFNULL(a, NULL)	DECIMAL	TRUE		TRUE	
 DROP TABLE t2;
 CREATE TABLE t2 SELECT IFNULL(NULL, b) FROM t1;
 DESCRIBE t2;
-Field	Type	Null	Key	Default	Extra
-IFNULL(NULL, b)	decimal(1,0)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+IFNULL(NULL, b)	DECIMAL	TRUE		TRUE	
 DROP TABLE t1, t2;
 # End of 5.0 tests

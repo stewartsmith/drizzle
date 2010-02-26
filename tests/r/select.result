@@ -1929,28 +1929,24 @@ Tables_in_test
 t1
 t2
 t3
+t4
 show tables from test like "s%";
 Tables_in_test (s%)
 show tables from test like "t?";
 Tables_in_test (t?)
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-auto	int	NO	PRI	NULL	auto_increment
-fld1	int	NO	UNI	0	
-companynr	int	NO		0	
-fld3	varchar(30)	NO	MUL		
-fld4	varchar(35)	NO			
-fld5	varchar(35)	NO			
-fld6	varchar(4)	NO			
+Field	Type	Null	Default	Default is NULL	On Update
+auto	INTEGER	FALSE		FALSE	
+fld1	INTEGER	FALSE	0	FALSE	
+companynr	INTEGER	FALSE	0	FALSE	
+fld3	VARCHAR	FALSE	0	FALSE	
+fld4	VARCHAR	FALSE	0	FALSE	
+fld5	VARCHAR	FALSE	0	FALSE	
+fld6	VARCHAR	FALSE	0	FALSE	
 show columns from t2 from test like 'f%';
-Field	Type	Null	Key	Default	Extra
-fld1	int	NO	UNI	0	
-fld3	varchar(30)	NO	MUL		
-fld4	varchar(35)	NO			
-fld5	varchar(35)	NO			
-fld6	varchar(4)	NO			
+Field	Type	Null	Default	Default is NULL	On Update
 show columns from t2 from test like 's%';
-Field	Type	Null	Key	Default	Extra
+Field	Type	Null	Default	Default is NULL	On Update
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
 id bigint NOT NULL auto_increment,

@@ -501,7 +501,7 @@ insert t2 select * from t1;
 checksum table t1, t2, t3;
 checksum table t1, t2, t3;
 checksum table t1, t2, t3;
-#show table status;
+show table status;
 drop table t1,t2;
 
 #@TODO Figure out what the heck the below is testing.
