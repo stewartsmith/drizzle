@@ -48,7 +48,7 @@ bool statement::CreateIndex::execute()
   }
 
   create_info.row_type= ROW_TYPE_NOT_USED;
-  create_info.default_table_charset= get_default_db_collation(session->db.c_str());
+  create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(session->db.c_str());
 
   bool res= alter_table(session, 
                         first_table->db, 

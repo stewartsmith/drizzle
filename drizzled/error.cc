@@ -1420,7 +1420,13 @@ N_("Received an invalid enum value '%s'."),
 /* ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE */
 N_("Tables which are replicated require a primary key."),
 /* ER_CORRUPT_TABLE_DEFINITION */
-N_("Corrupt or invalid table definition: %s")
+N_("Corrupt or invalid table definition: %s"),
+/* ER_SCHEMA_DOES_NOT_EXIST */
+N_("Schema does not exist: %s"),
+/* ER_ALTER_SCHEMA */
+N_("Error altering schema: %s"),
+/* ER_DROP_SCHEMA*/
+N_("Error droppping Schema : %s")
 };
 
 const char * error_message(unsigned int code)

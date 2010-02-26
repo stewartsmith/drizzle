@@ -2,9 +2,10 @@ drop database if exists mysqltest1;
 create schema foo;
 show create schema foo;
 Database	Create Database
-foo	CREATE DATABASE `foo`
+foo	CREATE DATABASE `foo` COLLATE = utf8_general_ci
 show schemas;
 Database
+data_dictionary
 foo
 information_schema
 mysql
