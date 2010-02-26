@@ -471,6 +471,7 @@ static int read_table_proto_from_innodb(const char* table_name, drizzled::messag
 
   ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
   search_tuple= ib_clust_search_tuple_create(cursor);
+  read_tuple= ib_clust_read_tuple_create(cursor);
 
   ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
 
@@ -480,7 +481,6 @@ static int read_table_proto_from_innodb(const char* table_name, drizzled::messag
   if (err == DB_RECORD_NOT_FOUND || res != 0)
     goto rollback;
 
-  read_tuple= ib_clust_read_tuple_create(cursor);
   err= ib_cursor_read_row(cursor, read_tuple);
   if (err == DB_RECORD_NOT_FOUND || res != 0)
     goto rollback;
@@ -499,10 +499,40 @@ static int read_table_proto_from_innodb(const char* table_name, drizzled::messag
   return 0;
 
 rollback:
+  ib_tuple_delete(search_tuple);
+  ib_tuple_delete(read_tuple);
   ib_cursor_close(cursor);
   ib_schema_unlock(transaction);
   ib_trx_rollback(transaction);
-  ib_tuple_delete(read_tuple);
+
+  if (strcmp(table_name, "data_dictionary/innodb_table_proto") == 0)
+  {
+    message::Table::StorageEngine *engine= table_message->mutable_engine();
+    engine->set_name("InnoDB");
+    table_message->set_name("innodb_table_proto");
+    table_message->set_type(message::Table::STANDARD);
+
+    message::Table::Field *field= table_message->add_field();
+    field->set_name("table_name");
+    field->set_type(message::Table::Field::VARCHAR);
+    message::Table::Field::StringFieldOptions *stropt= field->mutable_string_options();
+    stropt->set_length(IB_MAX_TABLE_NAME_LEN);
+
+    field= table_message->add_field();
+    field->set_name("proto");
+    field->set_type(message::Table::Field::BLOB);
+
+    message::Table::Index *index= table_message->add_indexes();
+    index->set_name("PRIMARY");
+    index->set_is_primary(true);
+    index->set_is_unique(true);
+    index->set_type(message::Table::Index::BTREE);
+    index->set_key_length(IB_MAX_TABLE_NAME_LEN);
+    message::Table::Index::IndexPart *part= index->add_index_part();
+    part->set_fieldnr(0);
+    part->set_compare_length(IB_MAX_TABLE_NAME_LEN);
+    return 0;
+  }
 
   return -1;
 }
