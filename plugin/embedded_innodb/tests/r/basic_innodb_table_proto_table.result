@@ -1,9 +1,8 @@
 show create table data_dictionary.innodb_table_proto;
 Table	Create Table
 innodb_table_proto	CREATE TABLE `innodb_table_proto` (
-  `table_name` varchar(1024) DEFAULT NULL,
-  `proto` text,
-  PRIMARY KEY (`table_name`(256)) USING BTREE
+  `table_name` varbinary(1024) DEFAULT NULL,
+  `proto` text
 ) ENGINE=InnoDB
 select * from data_dictionary.innodb_table_proto;
 table_name	proto
@@ -12,3 +11,11 @@ show tables like 'innodb%';
 Tables_in_data_dictionary (innodb%)
 innodb_table_proto
 use test;
+create table t1 (a int primary key);
+select count(table_name) from data_dictionary.innodb_table_proto;
+count(table_name)
+1
+drop table t1;
+select count(table_name) from data_dictionary.innodb_table_proto;
+count(table_name)
+0
