@@ -54,6 +54,7 @@ using namespace std;
 namespace drizzled
 {
 
+extern plugin::StorageEngine *myisam_engine;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
@@ -1009,9 +1010,11 @@ int mysql_prepare_create_table(Session *session,
 	}
       }
     }
-    /* Don't pack rows in old tables if the user has requested this */
-    if ((sql_field->flags & BLOB_FLAG) ||
-	(sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED))
+
+    /** @todo Get rid of this MyISAM-specific crap. */
+    if (create_info->db_type == myisam_engine &&
+        ((sql_field->flags & BLOB_FLAG) ||
+         (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED)))
       (*db_options)|= HA_OPTION_PACK_RECORD;
     it2.rewind();
   }
@@ -1703,15 +1706,11 @@ bool mysql_create_table_no_lock(Session *session,
     }
   }
 
-  /*
-    Don't write statement if:
-    - It is an internal temporary table,
-    - Row-based logging is used and it we are creating a temporary table, or
-    - The binary log is not open.
-    Otherwise, the statement shall be binlogged.
-   */
   if (not internal_tmp_table && not lex_identified_temp_table)
-    write_bin_log(session, session->query.c_str());
+  {
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    replication_services.createTable(session, *table_proto);
+  }
   error= false;
 unlock_and_end:
   pthread_mutex_unlock(&LOCK_open);

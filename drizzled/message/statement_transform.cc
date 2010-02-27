@@ -189,6 +189,16 @@ transformStatementToSql(const Statement &source,
       }
     }
     break;
+  case Statement::CREATE_TABLE:
+    {
+      assert(source.has_create_table_statement());
+      string destination;
+      error= transformCreateTableStatementToSql(source.create_table_statement(),
+                                                destination,
+                                                sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
   case Statement::TRUNCATE_TABLE:
     {
       assert(source.has_truncate_table_statement());
@@ -196,6 +206,16 @@ transformStatementToSql(const Statement &source,
       error= transformTruncateTableStatementToSql(source.truncate_table_statement(),
                                                   destination,
                                                   sql_variant);
+      sql_strings.push_back(destination);
+    }
+    break;
+  case Statement::DROP_TABLE:
+    {
+      assert(source.has_drop_table_statement());
+      string destination;
+      error= transformDropTableStatementToSql(source.drop_table_statement(),
+                                              destination,
+                                              sql_variant);
       sql_strings.push_back(destination);
     }
     break;
@@ -216,16 +236,6 @@ transformStatementToSql(const Statement &source,
       error= transformDropSchemaStatementToSql(source.drop_schema_statement(),
                                                destination,
                                                sql_variant);
-      sql_strings.push_back(destination);
-    }
-    break;
-  case Statement::DROP_TABLE:
-    {
-      assert(source.has_drop_table_statement());
-      string destination;
-      error= transformDropTableStatementToSql(source.drop_table_statement(),
-                                              destination,
-                                              sql_variant);
       sql_strings.push_back(destination);
     }
     break;
@@ -824,7 +834,7 @@ transformTableDefinitionToSql(const Table &table,
   destination.push_back(quoted_identifier);
   destination.append(table.name());
   destination.push_back(quoted_identifier);
-  destination.append("(\n", 2);
+  destination.append(" (\n", 3);
 
   enum TransformSqlError result= NONE;
   size_t num_fields= table.field_size();
@@ -842,6 +852,10 @@ transformTableDefinitionToSql(const Table &table,
   }
 
   size_t num_indexes= table.indexes_size();
+  
+  if (num_indexes > 0)
+    destination.append(",\n", 2);
+
   for (size_t x= 0; x < num_indexes; ++x)
   {
     const message::Table::Index &index= table.indexes(x);
@@ -854,21 +868,20 @@ transformTableDefinitionToSql(const Table &table,
     if (result != NONE)
       return result;
   }
-  destination.append("\n)\n", 2);
+  destination.append("\n)", 2);
 
   /* Add ENGINE = " clause */
   if (table.has_engine())
   {
     const Table::StorageEngine &engine= table.engine();
-    destination.append("ENGINE = ", 9);
+    destination.append("\nENGINE = ", 10);
     destination.append(engine.name());
-    destination.push_back('\n');
 
     size_t num_engine_options= engine.option_size();
     for (size_t x= 0; x < num_engine_options; ++x)
     {
       const Table::StorageEngine::EngineOption &option= engine.option(x);
-      destination.push_back('\t');
+      destination.push_back('\n');
       destination.append(option.option_name());
       destination.append(" = ", 3);
       destination.append(option.option_value());
@@ -894,116 +907,107 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_comment())
   {
-    destination.append(" COMMENT = '", 12);
+    destination.append("\nCOMMENT = '", 12);
     destination.append(options.comment());
-    destination.append("'\n", 2);
+    destination.push_back('\'');
   }
 
   if (options.has_collation())
   {
-    destination.append(" COLLATE = '", 12);
+    destination.append("\nCOLLATE = ", 11);
     destination.append(options.collation());
-    destination.append("'\n", 2);
   }
 
   if (options.has_auto_increment())
   {
     ss << options.auto_increment();
-    destination.append(" AUTOINCREMENT_OFFSET = ", 24);
+    destination.append("\nAUTOINCREMENT_OFFSET = ", 24);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
   
   if (options.has_row_type())
   {
     ss << options.row_type();
-    destination.append(" ROW_TYPE = ", 12);
+    destination.append("\nROW_TYPE = ", 12);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_data_file_name())
   {
-    destination.append(" DATA_FILE_NAME = '", 19);
+    destination.append("\nDATA_FILE_NAME = '", 19);
     destination.append(options.data_file_name());
-    destination.append("'\n", 2);
+    destination.push_back('\'');
   }
 
   if (options.has_index_file_name())
   {
-    destination.append(" INDEX_FILE_NAME = '", 20);
+    destination.append("\nINDEX_FILE_NAME = '", 20);
     destination.append(options.index_file_name());
-    destination.append("'\n", 2);
+    destination.push_back('\'');
   }
 
   if (options.has_max_rows())
   {
     ss << options.max_rows();
-    destination.append(" MAX_ROWS = ", 12);
+    destination.append("\nMAX_ROWS = ", 12);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_min_rows())
   {
     ss << options.min_rows();
-    destination.append(" MIN_ROWS = ", 12);
+    destination.append("\nMIN_ROWS = ", 12);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_auto_increment_value())
   {
     ss << options.auto_increment_value();
-    destination.append(" AUTO_INCREMENT = ", 18);
+    destination.append("\nAUTO_INCREMENT = ", 18);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_avg_row_length())
   {
     ss << options.avg_row_length();
-    destination.append(" AVG_ROW_LENGTH = ", 18);
+    destination.append("\nAVG_ROW_LENGTH = ", 18);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_key_block_size())
   {
     ss << options.key_block_size();
-    destination.append(" KEY_BLOCK_SIZE = ", 18);
+    destination.append("\nKEY_BLOCK_SIZE = ", 18);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_block_size())
   {
     ss << options.block_size();
-    destination.append(" BLOCK_SIZE = ", 14);
+    destination.append("\nBLOCK_SIZE = ", 14);
     destination.append(ss.str());
-    destination.push_back('\n');
     ss.clear();
   }
 
   if (options.has_pack_keys() &&
       options.pack_keys())
-    destination.append(" PACK_KEYS = TRUE\n", 18);
+    destination.append("\nPACK_KEYS = TRUE", 17);
   if (options.has_pack_record() &&
       options.pack_record())
-    destination.append(" PACK_RECORD = TRUE\n", 20);
+    destination.append("\nPACK_RECORD = TRUE", 19);
   if (options.has_checksum() &&
       options.checksum())
-    destination.append(" CHECKSUM = TRUE\n", 17);
+    destination.append("\nCHECKSUM = TRUE", 16);
   if (options.has_page_checksum() &&
       options.page_checksum())
-    destination.append(" PAGE_CHECKSUM = TRUE\n", 22);
+    destination.append("\nPAGE_CHECKSUM = TRUE", 21);
 
   return NONE;
 }
@@ -1033,21 +1037,31 @@ transformIndexDefinitionToSql(const Table::Index &index,
   for (size_t x= 0; x < num_parts; ++x)
   {
     const Table::Index::IndexPart &part= index.index_part(x);
+    const Table::Field &field= table.field(part.fieldnr());
 
     if (x != 0)
       destination.push_back(',');
     
     destination.push_back(quoted_identifier);
-    destination.append(table.field(part.fieldnr()).name());
+    destination.append(field.name());
     destination.push_back(quoted_identifier);
 
-    if (part.has_compare_length())
+    /* 
+     * If the index part's field type is VARCHAR or TEXT
+     * then check for a prefix length
+     */
+    if (field.type() == Table::Field::VARCHAR ||
+        field.type() == Table::Field::BLOB)
     {
-      stringstream ss;
-      destination.push_back('(');
-      ss << part.compare_length();
-      destination.append(ss.str());
-      destination.push_back(')');
+      if (part.has_compare_length() &&
+          part.compare_length() != field.string_options().length())
+      {
+        stringstream ss;
+        destination.push_back('(');
+        ss << part.compare_length();
+        destination.append(ss.str());
+        destination.push_back(')');
+      }
     }
   }
   destination.push_back(')');
@@ -1073,7 +1087,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   switch (field_type)
   {
     case Table::Field::DOUBLE:
-    destination.append(" DOUBLE ", 8);
+    destination.append(" DOUBLE", 7);
     break;
   case Table::Field::VARCHAR:
     {
@@ -1084,13 +1098,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
     break;
   case Table::Field::BLOB:
-    destination.append(" BLOB ", 6);
-    if (field.string_options().has_collation_id())
-    {
-      destination.append("COLLATION=", 10);
-      destination.append(field.string_options().collation());
-      destination.push_back(' ');
-    }
+    destination.append(" BLOB", 5);
     break;
   case Table::Field::ENUM:
     {
@@ -1108,32 +1116,31 @@ transformFieldDefinitionToSql(const Table::Field &field,
         destination.push_back('\'');
       }
       destination.push_back(')');
-      destination.push_back(' ');
       break;
     }
   case Table::Field::INTEGER:
-    destination.append(" INT ", 5);
+    destination.append(" INT", 4);
     break;
   case Table::Field::BIGINT:
-    destination.append(" BIGINT ", 8);
+    destination.append(" BIGINT", 7);
     break;
   case Table::Field::DECIMAL:
     {
       destination.append(" DECIMAL(", 9);
       stringstream ss;
       ss << field.numeric_options().precision() << ",";
-      ss << field.numeric_options().scale() << ") ";
+      ss << field.numeric_options().scale() << ")";
       destination.append(ss.str());
     }
     break;
   case Table::Field::DATE:
-    destination.append(" DATE ", 6);
+    destination.append(" DATE", 5);
     break;
   case Table::Field::TIMESTAMP:
-    destination.append(" TIMESTAMP ",  11);
+    destination.append(" TIMESTAMP",  10);
     break;
   case Table::Field::DATETIME:
-    destination.append(" DATETIME ",  10);
+    destination.append(" DATETIME",  9);
     break;
   }
 
@@ -1146,19 +1153,25 @@ transformFieldDefinitionToSql(const Table::Field &field,
     {
       destination.append(" UNSIGNED", 9);
     }
-
-    if (field.has_numeric_options() &&
-        field.numeric_options().is_autoincrement())
-    {
-      destination.append(" AUTOINCREMENT ", 15);
-    }
   }
 
 
   if (! (field.has_constraints() &&
          field.constraints().is_nullable()))
   {
-    destination.append(" NOT NULL ", 10);
+    destination.append(" NOT", 4);
+  }
+  destination.append(" NULL", 5);
+
+  if (field.type() == Table::Field::INTEGER || 
+      field.type() == Table::Field::BIGINT)
+  {
+    /* AUTO_INCREMENT must be after NOT NULL */
+    if (field.has_numeric_options() &&
+        field.numeric_options().is_autoincrement())
+    {
+      destination.append(" AUTO_INCREMENT", 15);
+    }
   }
 
   if (field.type() == Table::Field::BLOB ||
@@ -1177,7 +1190,6 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.push_back(quoted_identifier);
     destination.append(field.options().default_value());
     destination.push_back(quoted_identifier);
-    destination.push_back(' ');
   }
 
   if (field.options().has_default_bin_value())
@@ -1201,7 +1213,6 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.push_back(quoted_identifier);
     destination.append(field.comment());
     destination.push_back(quoted_identifier);
-    destination.push_back(' ');
   }
   return NONE;
 }

@@ -727,6 +727,35 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
   }
 }
 
+void ReplicationServices::createTable(Session *in_session,
+                                      const message::Table &table)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::CREATE_TABLE, in_session);
+
+  /* 
+   * Construct the specialized CreateTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::CreateTableStatement *create_table_statement= statement->mutable_create_table_statement();
+  message::Table *new_table_message= create_table_statement->mutable_table();
+  *new_table_message= table;
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+
+}
+
 void ReplicationServices::createSchema(Session *in_session,
                                        const message::Schema &schema)
 {
