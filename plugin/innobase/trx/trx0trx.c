@@ -123,7 +123,6 @@ trx_create(
 	trx->active_trans = 0;
 	trx->duplicates = 0;
 
-	trx->n_mysql_tables_in_use = 0;
 	trx->mysql_n_tables_locked = 0;
 
 	trx->mysql_log_file_name = NULL;
@@ -271,15 +270,12 @@ trx_free(
 		srv_conc_force_exit_innodb(trx);
 	}
 
-	if (trx->n_mysql_tables_in_use != 0
-	    || trx->mysql_n_tables_locked != 0) {
+	if (trx->mysql_n_tables_locked != 0) {
 
 		ut_print_timestamp(stderr);
 		fprintf(stderr,
 			"  InnoDB: Error: MySQL is freeing a thd\n"
-			"InnoDB: though trx->n_mysql_tables_in_use is %lu\n"
 			"InnoDB: and trx->mysql_n_tables_locked is %lu.\n",
-			(ulong)trx->n_mysql_tables_in_use,
 			(ulong)trx->mysql_n_tables_locked);
 
 		trx_print(stderr, trx, 600);
@@ -1697,9 +1693,8 @@ trx_print(
 
 	putc('\n', f);
 
-	if (trx->n_mysql_tables_in_use > 0 || trx->mysql_n_tables_locked > 0) {
-		fprintf(f, "mysql tables in use %lu, locked %lu\n",
-			(ulong) trx->n_mysql_tables_in_use,
+	if (trx->mysql_n_tables_locked > 0) {
+		fprintf(f, "mysql tables in locked %lu\n",
 			(ulong) trx->mysql_n_tables_locked);
 	}
 
