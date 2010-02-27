@@ -1358,25 +1358,11 @@ static int init_server_components(plugin::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!engine->is_enabled())
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
-                    default_storage_engine_str);
-      unireg_abort(1);
-      //assert(global_system_variables.storage_engine);
-    }
-    else
-    {
-      /*
-        Need to unlock as global_system_variables.storage_engine
-        was acquired during plugin_init()
-      */
-      global_system_variables.storage_engine= engine;
-    }
+    global_system_variables.storage_engine= engine;
   }
 
   if (plugin::XaStorageEngine::recoverAllXids(0))
