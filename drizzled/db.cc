@@ -52,10 +52,6 @@ using namespace std;
 namespace drizzled
 {
 
-const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD"};
-static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
-
-
 static long mysql_rm_known_files(Session *session,
                                  const string &db, const char *path,
                                  plugin::TableNameList &dropped_tables);
@@ -272,7 +268,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     if (deleted >= 0)
     {
       plugin::StorageEngine::dropDatabase(path);
-      error = 0;
+      error= 0;
     }
   }
   if (deleted >= 0)
