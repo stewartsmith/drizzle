@@ -92,7 +92,6 @@ public:
     is_natural_join(false),
     is_join_columns_complete(false),
     straight(false),
-    updating(false), 
     force_index(false),
     ignore_leaves(false),
     create(false),
@@ -168,7 +167,6 @@ public:
   bool is_join_columns_complete;
 
   bool straight; ///< optimize with prev table
-  bool updating; ///< for replicate-do/ignore table
   bool force_index; ///< prefer index over table scan
   bool ignore_leaves; ///< preload only non-leaf nodes
 

@@ -925,7 +925,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->updating=    test(table_options & TL_OPTION_UPDATING);
   ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
@@ -1198,16 +1197,12 @@ TableList *Select_Lex::convert_right_join()
 
 void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
-  bool for_update= lock_type >= TL_READ_NO_INSERT;
-
   for (TableList *tables= (TableList*) table_list.first;
        tables;
        tables= tables->next_local)
   {
     tables->lock_type= lock_type;
-    tables->updating=  for_update;
   }
-  return;
 }
 
 
