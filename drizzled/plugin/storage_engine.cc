@@ -616,7 +616,7 @@ class AddTableName :
 {
   string db;
   CachedDirectory& directory;
-  set<string>& set_of_names;
+  TableNameList &set_of_names;
 
 public:
 
@@ -636,7 +636,7 @@ public:
 class AddSchemaNames : 
   public unary_function<StorageEngine *, void>
 {
-  set<string>& set_of_names;
+  SchemaNameList &set_of_names;
 
 public:
 
@@ -651,7 +651,7 @@ public:
   }
 };
 
-void StorageEngine::getSchemaNames(set<string>& set_of_names)
+void StorageEngine::getSchemaNames(SchemaNameList &set_of_names)
 {
   // Add hook here for engines to register schema.
   for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
@@ -827,17 +827,17 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 }
 
 
-void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
+void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_of_names)
 {
   char tmp_path[FN_REFLEN];
 
-  build_table_filename(tmp_path, sizeof(tmp_path), db.c_str(), "", false);
+  build_table_filename(tmp_path, sizeof(tmp_path), schema_name.c_str(), "", false);
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 
-  if (not db.compare("information_schema"))
+  if (not schema_name.compare("information_schema"))
   { }
-  else if (not db.compare("data_dictionary"))
+  else if (not schema_name.compare("data_dictionary"))
   { }
   else
   {
@@ -845,7 +845,7 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
     {
       errno= directory.getError();
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_name.c_str());
       else
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;
@@ -853,11 +853,11 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
   }
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
+           AddTableName(directory, schema_name, set_of_names));
 
   Session *session= current_session;
 
-  session->doGetTableNames(directory, db, set_of_names);
+  session->doGetTableNames(directory, schema_name, set_of_names);
 
 }
 
@@ -865,7 +865,7 @@ void StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  set<string>& set_of_names;
+  TableNameList &set_of_names;
 
 public:
 
@@ -877,7 +877,7 @@ public:
   result_type operator() (argument_type engine)
   {
 
-    for (set<string>::iterator iter= set_of_names.begin();
+    for (TableNameList::iterator iter= set_of_names.begin();
          iter != set_of_names.end();
          iter++)
     {

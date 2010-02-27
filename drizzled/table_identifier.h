@@ -37,6 +37,7 @@
 #include <string.h>
 
 #include <ostream>
+#include <set>
 
 namespace drizzled {
 
@@ -129,6 +130,8 @@ public:
   }
 
 };
+
+typedef std::set <TableIdentifier> TableIdentifierList;
 
 } /* namespace drizzled */
 
