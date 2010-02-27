@@ -209,7 +209,7 @@ noinst_HEADERS+=	plugin/innobase/include/btr0btr.h \
 			plugin/innobase/handler/ha_innodb.h \
 			plugin/innobase/include/handler0alter.h \
 			plugin/innobase/handler/handler0vars.h \
-			plugin/innobase/handler/i_s.h
+			plugin/innobase/handler/data_dictionary.h
 
 noinst_LTLIBRARIES+=	plugin/innobase/libinnobase.la plugin/innobase/libpars.la
 plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE

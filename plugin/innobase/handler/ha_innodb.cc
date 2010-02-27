@@ -1777,7 +1777,10 @@ ha_innobase::init_table_handle_for_HANDLER(void)
 }
 
 static CmpTool *cmp_tool;
-
+static CmpTool *cmp_reset_tool;
+static CmpmemTool *cmp_mem_tool;
+static CmpmemTool *cmp_mem_reset_tool;
+static InnodbTrxTool *innodb_trx_tool;
 
 /*********************************************************************//**
 Opens an InnoDB database.
@@ -2082,9 +2085,20 @@ innobase_change_buffering_inited_ok:
 
 	registry.add(status_table_function_ptr);
 
-        cmp_tool= new(std::nothrow)CmpTool;
+        cmp_tool= new(std::nothrow)CmpTool(false);
         registry.add(cmp_tool);
 
+        cmp_reset_tool= new(std::nothrow)CmpTool(true);
+        registry.add(cmp_reset_tool);
+
+        cmp_mem_tool= new(std::nothrow)CmpmemTool(false);
+        registry.add(cmp_mem_tool);
+
+        cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
+        registry.add(cmp_mem_reset_tool);
+
+        innodb_trx_tool= new(std::nothrow)InnodbTrxTool;
+        registry.add(innodb_trx_tool);
 
 #if 0
 	registry.add(innodb_trx_schema_table);

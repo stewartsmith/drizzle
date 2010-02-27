@@ -33,22 +33,77 @@ class CmpTool : public drizzled::plugin::TableFunction
 {
 public:
 
-  CmpTool();
+  CmpTool(bool reset);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, bool outer_reset);
+                        
+    bool populate();
+  private:
+    uint32_t record_number;
+    bool inner_reset;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_reset);
+  }
+private:
+  bool outer_reset; 
+};
+
+class CmpmemTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  CmpmemTool(bool reset);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, bool outer_reset);
+
+    ~Generator();
+
+    bool populate();
+  private:
+    uint32_t record_number;
+    bool inner_reset;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_reset);
+  }
+private:
+  bool outer_reset;
+};
+
+class InnodbTrxTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  InnodbTrxTool();
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
   public:
     Generator(drizzled::Field **arg);
-                        
+
+    ~Generator();
+
     bool populate();
   private:
-    uint32_t record_number;    
+    uint32_t record_number;
+    uint32_t number_rows;
   };
 
   Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg);
-  }                     
+  }
 };
 
 #endif /* PLUGIN_INNOBASE_HANDLER_DATA_DICTIONARY_H */
