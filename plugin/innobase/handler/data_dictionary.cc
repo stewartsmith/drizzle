@@ -35,7 +35,7 @@ extern "C" {
 using namespace drizzled;
 
 /*
- * Fill the dynamic table data_dictionary.innodb_cmp
+ * Fill the dynamic table data_dictionary.INNODB_CMP and INNODB_CMP_RESET
  *
  */
 CmpTool::CmpTool(bool in_reset) :
@@ -51,10 +51,10 @@ CmpTool::CmpTool(bool in_reset) :
 }
 
 CmpTool::Generator::Generator(Field **arg, bool in_reset) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  record_number(0),
+  inner_reset(in_reset)
 {
-  record_number= 0;
-  inner_reset= in_reset;
 }
 
 bool CmpTool::Generator::populate()
@@ -95,7 +95,7 @@ bool CmpTool::Generator::populate()
  *
  */
 CmpmemTool::CmpmemTool(bool in_reset) :
-  plugin::TableFunction("DATA_DICTIONARY", in_reset ? "INNODB_CMPMEM" : "INNODB_CMPMEM_RESET"),
+  plugin::TableFunction("DATA_DICTIONARY", in_reset ? "INNODB_CMPMEM_RESET" : "INNODB_CMPMEM"),
   outer_reset(in_reset)
 {
   add_field("PAGE_SIZE", plugin::TableFunction::NUMBER);
@@ -106,10 +106,10 @@ CmpmemTool::CmpmemTool(bool in_reset) :
 }
 
 CmpmemTool::Generator::Generator(Field **arg, bool in_reset) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  record_number(0),
+  inner_reset(in_reset)
 {
-  record_number= 0;
-  inner_reset= in_reset;
   buf_pool_mutex_enter();
 }
 
@@ -148,7 +148,7 @@ bool CmpmemTool::Generator::populate()
 }
 
 /*
- * Fill the dynamic table data_dictionary.innodb_trx
+ * Fill the dynamic table data_dictionary.INNODB_TRX INNODB_LOCKS INNODB_LOCK_WAITS
  *
  */
 InnodbTrxTool::InnodbTrxTool(const char* in_table_name) :

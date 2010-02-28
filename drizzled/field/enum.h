@@ -99,10 +99,6 @@ public:
   {
     return (field_metadata & 0x00ff);
   }
-  uint32_t row_pack_length()
-  { 
-    return pack_length();
-  }
   virtual bool zero_pack() const
   {
     return false;
