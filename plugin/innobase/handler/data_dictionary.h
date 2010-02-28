@@ -16,13 +16,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/**************************************************//**
-@file handler/i_s.h
-InnoDB INFORMATION SCHEMA tables interface to MySQL.
-
-Created July 18, 2007 Vasil Dimov
-*******************************************************/
-
 #ifndef PLUGIN_INNOBASE_HANDLER_DATA_DICTIONARY_H
 #define PLUGIN_INNOBASE_HANDLER_DATA_DICTIONARY_H 
 
@@ -85,25 +78,33 @@ class InnodbTrxTool : public drizzled::plugin::TableFunction
 {
 public:
 
-  InnodbTrxTool();
+  InnodbTrxTool(const char* in_table_name);
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
   public:
-    Generator(drizzled::Field **arg);
+    Generator(drizzled::Field **arg, const char* in_table_name);
 
     ~Generator();
 
     bool populate();
   private:
+    void populateINNODB_TRX();
+    void populateINNODB_LOCKS();
+    void populateINNODB_LOCK_WAITS();
+
+  private:
     uint32_t record_number;
     uint32_t number_rows;
+    const char* table_name;
   };
 
   Generator *generator(drizzled::Field **arg)
   {
-    return new Generator(arg);
+    return new Generator(arg, table_name);
   }
+private:
+  const char* table_name;
 };
 
 #endif /* PLUGIN_INNOBASE_HANDLER_DATA_DICTIONARY_H */

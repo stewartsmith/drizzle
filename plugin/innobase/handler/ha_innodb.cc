@@ -1781,6 +1781,8 @@ static CmpTool *cmp_reset_tool;
 static CmpmemTool *cmp_mem_tool;
 static CmpmemTool *cmp_mem_reset_tool;
 static InnodbTrxTool *innodb_trx_tool;
+static InnodbTrxTool *innodb_locks_tool;
+static InnodbTrxTool *innodb_lock_waits_tool;
 
 /*********************************************************************//**
 Opens an InnoDB database.
@@ -2068,17 +2070,6 @@ innobase_change_buffering_inited_ok:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
-#if 0
-	if (innodb_locks_init() ||
-		innodb_trx_init() ||
-		innodb_lock_waits_init() ||
-		i_s_cmp_init() ||
-		i_s_cmp_reset_init() ||
-		i_s_cmpmem_init() ||
-		i_s_cmpmem_reset_init())
-		goto error;
-#endif
-
         status_table_function_ptr= new InnodbStatusTool;
 
 	registry.add(innodb_engine_ptr);
@@ -2097,18 +2088,14 @@ innobase_change_buffering_inited_ok:
         cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
         registry.add(cmp_mem_reset_tool);
 
-        innodb_trx_tool= new(std::nothrow)InnodbTrxTool;
+        innodb_trx_tool= new(std::nothrow)InnodbTrxTool("INNODB_TRX");
         registry.add(innodb_trx_tool);
 
-#if 0
-	registry.add(innodb_trx_schema_table);
-	registry.add(innodb_locks_schema_table);
-	registry.add(innodb_lock_waits_schema_table);
-	registry.add(innodb_cmp_schema_table);
-	registry.add(innodb_cmp_reset_schema_table);
-	registry.add(innodb_cmpmem_schema_table);
-	registry.add(innodb_cmpmem_reset_schema_table);
-#endif
+        innodb_locks_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCKS");
+        registry.add(innodb_locks_tool);
+
+        innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
+        registry.add(innodb_lock_waits_tool);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
