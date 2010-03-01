@@ -328,7 +328,7 @@ TinaShare *ha_tina::get_share(const char *table_name)
       meta-file in the end.
     */
     if ((share->meta_file= internal::my_open(meta_file_name,
-                                   O_RDWR|O_CREAT, MYF(0))) == -1)
+                                             O_RDWR|O_CREAT, MYF(0))) == -1)
       share->crashed= true;
 
     /*
