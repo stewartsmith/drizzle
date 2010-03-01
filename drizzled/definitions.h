@@ -302,7 +302,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
   set for unordered (e.g. HASH) indexes.
 */
 #define HA_KEY_SCAN_NOT_ROR     128
-#define HA_DO_INDEX_COND_PUSHDOWN  256 /* Supports Index Condition Pushdown */
 
 /* operations for disable/enable indexes */
 #define HA_KEY_SWITCH_NONUNIQ      0
