@@ -432,7 +432,6 @@ typedef int myf;
 
 #define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
 
-#define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
 
 
