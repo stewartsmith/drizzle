@@ -118,7 +118,6 @@ namespace drizzled
 #define BIN_LOG_HEADER_SIZE    4
 
 #define COLUMN_FORMAT_MASK 7
-#define COLUMN_FORMAT_SHIFT 3
 
 /* Below are #defines that used to be in mysql_priv.h */
 /***************************************************************************
