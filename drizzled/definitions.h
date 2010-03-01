@@ -140,8 +140,6 @@ namespace drizzled
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
 
-#define TEMP_POOL_SIZE          128
-
 #define QUERY_ALLOC_BLOCK_SIZE		8192
 #define QUERY_ALLOC_PREALLOC_SIZE   	8192
 #define TRANS_ALLOC_BLOCK_SIZE		4096
