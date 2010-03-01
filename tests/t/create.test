@@ -1170,40 +1170,40 @@ SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ##
 ## Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
 ##
-#
-#create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
-#use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
-#select database();
-#use test;
-#
-#select SCHEMA_NAME from data_dictionary.schemas
-#where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
-#
-#drop database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
-#create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
-#(
-#  имя_поля_в_кодировке_утф8_длиной_больше_чем_45 int,
-#  index имя_индекса_в_кодировке_утф8_длиной_больше_чем_48 (имя_поля_в_кодировке_утф8_длиной_больше_чем_45)
-#);
-#
-#
-## database, table, field, key
-#select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-#
-#select TABLE_NAME from data_dictionary.tables where
-#table_schema='test';
-#
-#select COLUMN_NAME from data_dictionary.columns where
-#table_schema='test';
-#
-#select INDEX_NAME from data_dictionary.indexes where
-#table_schema='test';
-#
-#--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
-#show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-#
-#drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
-#
+
+create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
+use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
+select database();
+use test;
+
+select SCHEMA_NAME from data_dictionary.schemas
+where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
+
+drop database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
+create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
+(
+  имя_поля_в_кодировке_утф8_длиной_больше_чем_45 int,
+  index имя_индекса_в_кодировке_утф8_длиной_больше_чем_48 (имя_поля_в_кодировке_утф8_длиной_больше_чем_45)
+);
+
+
+# database, table, field, key
+select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
+
+select TABLE_NAME from data_dictionary.tables where
+table_schema='test';
+
+select COLUMN_NAME from data_dictionary.columns where
+table_schema='test';
+
+select INDEX_NAME from data_dictionary.indexes where
+table_schema='test';
+
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
+
+drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
+
 #
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA

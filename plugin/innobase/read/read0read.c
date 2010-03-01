@@ -422,11 +422,6 @@ read_cursor_view_create_for_mysql(
 	curview = (cursor_view_t*) mem_heap_alloc(heap, sizeof(cursor_view_t));
 	curview->heap = heap;
 
-	/* Drop cursor tables from consideration when evaluating the need of
-	auto-commit */
-	curview->n_mysql_tables_in_use = cr_trx->n_mysql_tables_in_use;
-	cr_trx->n_mysql_tables_in_use = 0;
-
 	mutex_enter(&kernel_mutex);
 
 	curview->read_view = read_view_create_low(
@@ -503,7 +498,6 @@ read_cursor_view_close_for_mysql(
 
 	/* Add cursor's tables to the global count of active tables that
 	belong to this transaction */
-	trx->n_mysql_tables_in_use += curview->n_mysql_tables_in_use;
 
 	mutex_enter(&kernel_mutex);
 
