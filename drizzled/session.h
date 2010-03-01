@@ -312,15 +312,23 @@ struct Ha_data
   */
   void *ha_ptr;
   /**
-    0: Life time: one statement within a transaction. If @@autocommit is
-    on, also represents the entire transaction.
-    @sa trans_register_ha()
-
-    1: Life time: one transaction within a connection.
-    If the storage engine does not participate in a transaction,
-    this should not be used.
-    @sa trans_register_ha()
-  */
+   * Resource contexts for both the "statement" and "normal"
+   * transactions.
+   *
+   * Resource context at index 0:
+   *
+   * Life time: one statement within a transaction. If @@autocommit is
+   * on, also represents the entire transaction.
+   *
+   * Resource context at index 1:
+   *
+   * Life time: one transaction within a connection. 
+   *
+   * @note
+   *
+   * If the storage engine does not participate in a transaction, 
+   * there will not be a resource context.
+   */
   drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
@@ -1403,6 +1411,14 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  void doGetTableNames(CachedDirectory &directory,
+                       const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+  int doGetTableDefinition(const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           message::Table *table_proto);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);

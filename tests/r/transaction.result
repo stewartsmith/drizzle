@@ -1,0 +1,43 @@
+DROP TABLE IF EXISTS t1_trx, t1_non_trx;
+SET AUTOCOMMIT= 0;
+CREATE TABLE t1_trx (
+k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=InnoDB;
+CREATE TEMPORARY TABLE t1_non_trx (
+k VARCHAR(10) NOT NULL
+, v VARCHAR(10) NOT NULL
+, PRIMARY KEY (k)
+) ENGINE=MyISAM;
+START TRANSACTION;
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+INSERT INTO t1_non_trx VALUES ('key1','value1');
+INSERT INTO t1_non_trx VALUES ('key2','value2');
+ROLLBACK;
+Warnings:
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
+Expected warning about non-trx data changes not being rolled back
+SELECT * FROM t1_trx;
+k	v
+SELECT * FROM t1_non_trx;
+k	v
+key1	value1
+key2	value2
+START TRANSACTION;
+INSERT INTO t1_trx VALUES ('key1','value1');
+INSERT INTO t1_trx VALUES ('key2','value2');
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+k	v
+key1	value1
+key2	value2
+ROLLBACK;
+SELECT t1_trx.k, t1_trx.v
+FROM t1_trx
+INNER JOIN t1_non_trx ON t1_trx.k = t1_non_trx.k;
+k	v
+DROP TABLE t1_trx;
+DROP TABLE t1_non_trx;

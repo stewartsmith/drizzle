@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 SELECT count(*) FROM plugins;
 count(*)
@@ -25,4 +24,3 @@ PLUGINS	CREATE TABLE `plugins` (
   `IS_ACTIVE` varchar(5) NOT NULL DEFAULT '',
   `MODULE_NAME` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
-DROP SCHEMA data_dictionary;

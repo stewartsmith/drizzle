@@ -151,6 +151,7 @@ our $exe_perror;
 our $lib_udf_example;
 our $lib_example_plugin;
 our $exe_libtool;
+our $exe_schemawriter;
 
 our $opt_bench= 0;
 our $opt_small_bench= 0;
@@ -1257,6 +1258,11 @@ sub executable_setup () {
      }
   }
 
+# Look for schema_writer
+  {
+    $exe_schemawriter= mtr_exe_exists("$glob_basedir/drizzled/message/schema_writer");
+  }
+
 # Look for drizzletest executable
   {
     $exe_drizzletest= mtr_exe_exists("$path_client_bindir/drizzletest");
@@ -1777,7 +1783,10 @@ sub setup_vardir() {
   foreach my $data_dir (@data_dir_lst)
   {
     mkpath("$data_dir/mysql");
+    system("$exe_schemawriter mysql $data_dir/mysql/db.opt");
+
     mkpath("$data_dir/test");
+    system("$exe_schemawriter test $data_dir/test/db.opt");
   }
 
   # Make a link std_data_ln in var/ that points to std_data

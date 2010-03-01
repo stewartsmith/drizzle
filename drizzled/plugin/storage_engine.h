@@ -81,6 +81,7 @@ enum engine_flag_bits {
   HTON_BIT_NO_PREFIX_CHAR_KEYS,
   HTON_BIT_HAS_CHECKSUM,
   HTON_BIT_SKIP_STORE_LOCK,
+  HTON_BIT_SCHEMA_DICTIONARY,
   HTON_BIT_SIZE
 };
 
@@ -112,6 +113,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_DELETE(1 <
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_NO_PREFIX_CHAR_KEYS);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT_SCHEMA_DICTIONARY);
 
 
 class Table;
@@ -122,6 +124,9 @@ namespace plugin
 
 typedef hash_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
+
+typedef std::set<std::string> TableNameList;
+typedef std::set<std::string> SchemaNameList;
 
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
@@ -141,11 +146,28 @@ public:
   typedef uint64_t Table_flags;
 
 private:
-  bool enabled;
-
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
 
   virtual void setTransactionReadWrite(Session& session);
+
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL statement.
+   */
+  virtual void doStartStatement(Session *session)
+  {
+    (void) session;
+  }
+
+  /*
+   * Indicates to a storage engine the end of
+   * the current SQL statement in the supplied
+   * Session.
+   */
+  virtual void doEndStatement(Session *session)
+  {
+    (void) session;
+  }
 
 protected:
   std::string table_definition_ext;
@@ -227,12 +249,6 @@ public:
   inline uint32_t getSlot (void) const { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
 
-
-  bool is_enabled() const
-  {
-    return enabled;
-  }
-
   bool is_user_selectable() const
   {
     return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
@@ -245,10 +261,14 @@ public:
 
   // @todo match check_flag interface
   virtual uint32_t index_flags(enum  ha_key_alg) const { return 0; }
-
-
-  void enable() { enabled= true; }
-  void disable() { enabled= false; }
+  virtual void startStatement(Session *session)
+  {
+    doStartStatement(session);
+  }
+  virtual void endStatement(Session *session)
+  {
+    doEndStatement(session);
+  }
 
   /*
     StorageEngine methods:
@@ -265,7 +285,6 @@ public:
   virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
-  virtual int start_consistent_snapshot(Session *) { return 0; }
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
   {
@@ -294,7 +313,6 @@ protected:
   virtual int doRenameTable(Session* session,
                             const char *from, const char *to);
 
-
 public:
 
   int renameTable(Session *session, const char *from, const char *to) 
@@ -307,7 +325,7 @@ public:
   // TODO: move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
-                               std::set<std::string>& set_of_names);
+                               TableNameList &set_of_names);
   virtual int doDropTable(Session& session,
                           const std::string table_path)= 0;
 
@@ -319,13 +337,18 @@ public:
 
   static int getTableDefinition(Session& session,
                                 TableIdentifier &identifier,
-                                message::Table *table_proto= NULL);
+                                message::Table *table_proto= NULL,
+                                bool include_temporary_tables= true);
   static int getTableDefinition(Session& session,
                                 const char* path,
                                 const char *db,
                                 const char *table_name,
                                 const bool is_tmp,
-                                message::Table *table_proto= NULL);
+                                message::Table *table_proto= NULL,
+                                bool include_temporary_tables= true);
+  static bool doesTableExist(Session& session,
+                             TableIdentifier &identifier,
+                             bool include_temporary_tables= true);
 
   static plugin::StorageEngine *findByName(std::string find_str);
   static plugin::StorageEngine *findByName(Session& session,
@@ -336,12 +359,37 @@ public:
   static int dropTable(Session& session,
                        TableIdentifier &identifier,
                        bool generate_warning);
-  static void getTableNames(const std::string& db_name, std::set<std::string> &set_of_names);
+  static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
 
   // @note All schema methods defined here
-  static void getSchemaNames(std::set<std::string>& set_of_names);
+  static void getSchemaNames(SchemaNameList &set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
- 
+  static bool doesSchemaExist(const std::string &schema_name);
+  static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
+  static bool createSchema(const drizzled::message::Schema &schema_message);
+  static bool dropSchema(const std::string &schema_name);
+  static bool alterSchema(const drizzled::message::Schema &schema_message);
+
+  // @note make private/protected
+  virtual void doGetSchemaNames(SchemaNameList &set_of_names)
+  { (void)set_of_names; }
+
+  virtual bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto)
+  { 
+    (void)schema_name;
+    (void)proto; 
+
+    return false; 
+  }
+
+  virtual bool doCreateSchema(const drizzled::message::Schema &schema_message)
+  { (void)schema_message; return false; }
+
+  virtual bool doAlterSchema(const drizzled::message::Schema &schema_message)
+  { (void)schema_message; return false; }
+
+  virtual bool doDropSchema(const std::string &schema_name)
+  { (void)schema_name; return false; }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {

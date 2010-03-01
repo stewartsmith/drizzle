@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/plugin/storage_engine.h>
 #include <drizzled/db.h>
 
 #include <string>
@@ -34,11 +35,20 @@ namespace drizzled
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
+  message::Schema old_definition;
 
   if (check_db_name(db))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
     return false;
+  }
+
+  schema_message.set_name(db->str);
+
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_message.name(), old_definition))
+  {
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
+    return true;
   }
 
   if (session->inTransaction())
@@ -49,9 +59,14 @@ bool statement::AlterSchema::execute()
     return true;
   }
 
-  bool res= mysql_alter_db(session, db->str, &schema_message);
+  if (not schema_message.has_collation())
+  {
+    schema_message.set_collation(schema_message.collation());
+  }
 
-  return res;
+  bool res= mysql_alter_db(session, schema_message);
+
+  return not res;
 }
 
 } /* namespace drizzled */

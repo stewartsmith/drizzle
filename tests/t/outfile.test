@@ -5,12 +5,6 @@ eval set @tmpdir="../tmp";
 enable_query_log;
 -- source include/have_outfile.inc
 
---disable_warnings
-DROP SCHEMA IF EXISTS data_dictionary;
---enable_warnings
-
-CREATE SCHEMA data_dictionary;
-
 #
 # test of into outfile|dumpfile
 #
@@ -101,5 +95,3 @@ create table t1(a int);
 --error 1290
 eval select * into outfile "$DRIZZLE_TEST_DIR/outfile-test1" from t1;
 drop table t1;
-
-DROP SCHEMA data_dictionary;
