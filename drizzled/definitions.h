@@ -240,10 +240,6 @@ enum test_flag_bit
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
 
-/* sql_show.cc:show_log_files() */
-#define SHOW_LOG_STATUS_FREE "FREE"
-#define SHOW_LOG_STATUS_INUSE "IN USE"
-
 /* Options to add_table_to_list() */
 #define TL_OPTION_UPDATING	1
 #define TL_OPTION_FORCE_INDEX	2
