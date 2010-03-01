@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -92,12 +93,35 @@ int TransactionalStorageEngine::releaseTemporaryLatches(Session *session)
   return 0;
 }
 
-int TransactionalStorageEngine::startConsistentSnapshot(Session *session)
+struct StartTransactionFunc :public unary_function<TransactionalStorageEngine *, int>
 {
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
-           bind2nd(mem_fun(&TransactionalStorageEngine::doStartConsistentSnapshot),
-                   session));
-  return 0;
+  Session *session;
+  start_transaction_option_t options;
+  StartTransactionFunc(Session *in_session, start_transaction_option_t in_options) :
+    session(in_session),
+    options(in_options)
+  {}
+  result_type operator()(argument_type engine) const
+  {
+    return engine->startTransaction(session, options);
+  }
+};
+
+int TransactionalStorageEngine::notifyStartTransaction(Session *session, start_transaction_option_t options)
+{
+  if (vector_of_transactional_engines.empty())
+    return 0;
+  else
+  {
+    StartTransactionFunc functor(session, options);
+    vector<int> results;
+    results.reserve(vector_of_transactional_engines.size());
+    transform(vector_of_transactional_engines.begin(),
+              vector_of_transactional_engines.end(),
+              results.begin(),
+              functor);
+    return *max_element(results.begin(), results.end());
+  }
 }
 
 bool TransactionalStorageEngine::addPlugin(TransactionalStorageEngine *engine)
