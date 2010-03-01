@@ -338,12 +338,11 @@ public:
 
   /*********************************************************************
   Removes all tables in the named database inside InnoDB. */
-  virtual
-  void
-  drop_database(
+  bool
+  doDropSchema(
   /*===================*/
   			/* out: error number */
-  	char*	path);	/* in: database path; inside InnoDB the name
+  	const std::string	&schema_name);	/* in: database path; inside InnoDB the name
   			of the last directory in the path is used as
   			the database name: for example, in 'mysql/data/test'
   			the database name is 'test' */
@@ -5969,19 +5968,18 @@ InnobaseEngine::doDropTable(
 
 /*****************************************************************//**
 Removes all tables in the named database inside InnoDB. */
-void
-InnobaseEngine::drop_database(
+bool
+InnobaseEngine::doDropSchema(
 /*===================*/
-	char*	path)	/*!< in: database path; inside InnoDB the name
+                             const std::string &schema_name)
+		/*!< in: database path; inside InnoDB the name
 			of the last directory in the path is used as
 			the database name: for example, in 'mysql/data/test'
 			the database name is 'test' */
 {
-	ulint	len		= 0;
 	trx_t*	trx;
-	char*	ptr;
 	int	error;
-	char*	namebuf;
+	string schema_path(schema_name);
 	Session*	session		= current_session;
 
 	/* Get the transaction associated with the current session, or create one
@@ -6000,32 +5998,9 @@ InnobaseEngine::drop_database(
 		trx_search_latch_release_if_reserved(parent_trx);
 	}
 
-	ptr = strchr(path, '\0') - 2;
-
-	while (ptr >= path && *ptr != '\\' && *ptr != '/') {
-		ptr--;
-		len++;
-	}
-
-	ptr++;
-	namebuf = (char*) malloc((uint) len + 2);
-
-	memcpy(namebuf, ptr, len);
-	namebuf[len] = '/';
-	namebuf[len + 1] = '\0';
-#ifdef	__WIN__
-	innobase_casedn_str(namebuf);
-#endif
-#if defined __WIN__ && !defined MYSQL_SERVER
-	/* In the Windows plugin, thd = current_thd is always NULL */
-	trx = trx_allocate_for_mysql();
-	trx->mysql_thd = NULL;
-	trx->mysql_query_str = NULL;
-#else
+        schema_path.append("/");
 	trx = innobase_trx_allocate(session);
-#endif
-	error = row_drop_database_for_mysql(namebuf, trx);
-	free(namebuf);
+	error = row_drop_database_for_mysql(schema_path.c_str(), trx);
 
 	/* Flush the log to reduce probability that the .frm files and
 	the InnoDB data dictionary get out-of-sync if the user runs
@@ -6040,6 +6015,8 @@ InnobaseEngine::drop_database(
 
 	innobase_commit_low(trx);
 	trx_free_for_mysql(trx);
+
+        return false; // We are just a listener since we lack control over DDL, so we give no positive acknowledgement. 
 }
 /*********************************************************************//**
 Renames an InnoDB table.

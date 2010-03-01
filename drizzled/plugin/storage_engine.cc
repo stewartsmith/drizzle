@@ -285,12 +285,6 @@ void StorageEngine::closeConnection(Session* session)
            StorageEngineCloseConnection(session));
 }
 
-void StorageEngine::dropDatabase(char* path)
-{
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           bind2nd(mem_fun(&StorageEngine::drop_database),path));
-}
-
 bool StorageEngine::flushLogs(StorageEngine *engine)
 {
   if (engine == NULL)
@@ -774,7 +768,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    // @todo eomeday check that at least one engine said "true"
+    // @todo someday check that at least one engine said "true"
     bool success= engine->doDropSchema(schema_name);
 
     if (success)
