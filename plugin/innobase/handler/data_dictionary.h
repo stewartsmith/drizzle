@@ -91,9 +91,9 @@ public:
 
     bool populate();
   private:
-    void populateINNODB_TRX();
-    void populateINNODB_LOCKS();
-    void populateINNODB_LOCK_WAITS();
+    void populate_innodb_trx();
+    void populate_innodb_locks();
+    void populate_innodb_lock_waits();
 
   private:
     uint32_t record_number;

@@ -224,15 +224,15 @@ bool InnodbTrxTool::Generator::populate()
 
   if (innobase_strcasecmp(table_name, "INNODB_TRX") == 0)
   {
-    populateINNODB_TRX();
+    populate_innodb_trx();
   }
   else if (innobase_strcasecmp(table_name, "INNODB_LOCKS") == 0)
   {
-    populateINNODB_LOCKS();
+    populate_innodb_locks();
   }
   else if (innobase_strcasecmp(table_name, "INNODB_LOCK_WAITS") == 0)
   {
-    populateINNODB_LOCK_WAITS();
+    populate_innodb_lock_waits();
   }
   else 
   {
@@ -243,7 +243,7 @@ bool InnodbTrxTool::Generator::populate()
   return true;
 }
 
-void InnodbTrxTool::Generator::populateINNODB_LOCKS()
+void InnodbTrxTool::Generator::populate_innodb_locks()
 {
 
   char lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
@@ -304,7 +304,7 @@ void InnodbTrxTool::Generator::populateINNODB_LOCKS()
    push(row->lock_data);
 }
 
-void InnodbTrxTool::Generator::populateINNODB_TRX()
+void InnodbTrxTool::Generator::populate_innodb_trx()
 {
     char lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
     i_s_trx_row_t* row;
@@ -334,7 +334,7 @@ void InnodbTrxTool::Generator::populateINNODB_TRX()
     push(row->trx_query);
 }
 
-void InnodbTrxTool::Generator::populateINNODB_LOCK_WAITS()
+void InnodbTrxTool::Generator::populate_innodb_lock_waits()
 {
   char requested_lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
   char blocking_lock_id[TRX_I_S_LOCK_ID_MAX_LEN + 1];
