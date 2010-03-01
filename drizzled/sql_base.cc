@@ -161,87 +161,6 @@ void close_handle_and_leave_table_as_lock(Table *table)
 }
 
 
-
-/*
-  Create a list for all open tables matching SQL expression
-
-  SYNOPSIS
-  list_open_tables()
-  wild		SQL like expression
-
-  NOTES
-  One gets only a list of tables for which one has any kind of privilege.
-  db and table names are allocated in result struct, so one doesn't need
-  a lock on LOCK_open when traversing the return list.
-
-  RETURN VALUES
-  true	Error 
-*/
-
-bool list_open_tables(const char *db, 
-                      const char *wild, 
-                      bool(*func)(Table *table, 
-                                  open_table_list_st& open_list,
-                                  plugin::InfoSchemaTable *schema_table), 
-                      Table *display,
-                      plugin::InfoSchemaTable *schema_table)
-{
-  vector<open_table_list_st> open_list;
-  vector<open_table_list_st>::iterator it;
-  open_table_list_st table;
-
-  /* What we really need is an optimization for knowing unique tables */
-  if (db && wild)
-    open_list.reserve(sizeof(open_table_list_st) * (open_cache.records % 2));
-  else
-    open_list.reserve(sizeof(open_table_list_st) * open_cache.records);
-
-  pthread_mutex_lock(&LOCK_open); /* List all open tables */
-
-  for (uint32_t idx= 0; idx < open_cache.records; idx++)
-  {
-    bool found= false;
-    Table *entry=(Table*) hash_element(&open_cache,idx);
-
-    if (db && my_strcasecmp(system_charset_info, db, entry->s->db.str))
-      continue;
-    if (wild && internal::wild_compare(entry->s->table_name.str, wild, 0))
-      continue;
-
-    for (it= open_list.begin(); it < open_list.end(); it++)
-    {
-      if (!(*it).table.compare(entry->s->table_name.str) &&
-          !(*it).db.compare(entry->s->db.str))
-      {
-        if (entry->in_use)
-          (*it).in_use++;
-        if (entry->locked_by_name)
-          (*it).locked++;
-
-        found= true;
-
-        break;
-      }
-    }
-
-    if (found)
-      continue;
-
-    table.db= entry->s->db.str;
-    table.table= entry->s->table_name.str;
-    open_list.push_back(table);
-  }
-  pthread_mutex_unlock(&LOCK_open);
-
-  for (it= open_list.begin(); it < open_list.end(); it++)
-  {
-    if (func(display, *it, schema_table))
-      return true;
-  }
-
-  return false;
-}
-
 /*****************************************************************************
  *	 Functions to free open table cache
  ****************************************************************************/
@@ -4457,17 +4376,17 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void remove_db_from_cache(const char *db)
+void remove_db_from_cache(const std::string schema_name)
 {
   safe_mutex_assert_owner(&LOCK_open);
 
   for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
   {
     Table *table=(Table*) hash_element(&open_cache,idx);
-    if (!strcmp(table->s->db.str, db))
+    if (not strcmp(table->s->db.str, schema_name.c_str()))
     {
       table->s->version= 0L;			/* Free when thread is ready */
-      if (!table->in_use)
+      if (not table->in_use)
         relink_unused(table);
     }
   }
