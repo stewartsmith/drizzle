@@ -153,7 +153,6 @@ namespace drizzled
 */
 #define MIN_FILE_LENGTH_TO_USE_ROW_CACHE (10L*1024*1024)
 #define MIN_ROWS_TO_USE_TABLE_CACHE	 100
-#define MIN_ROWS_TO_USE_BULK_INSERT	 100
 
 /**
   The following is used to decide if MySQL should use table scanning
