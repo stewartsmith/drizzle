@@ -138,8 +138,6 @@ void Schema::prime()
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_message.name(), schema_message));
 
-      cerr << "Caching " << schema_message.name() << "\n";
-
       if (ret.second == false)
       {
         abort(); // If this has happened, something really bad is going down.

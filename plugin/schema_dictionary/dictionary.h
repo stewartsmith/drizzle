@@ -25,6 +25,7 @@
 
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/plugin/storage_engine.h"
+#include "drizzled/statement/select.h"
 
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
@@ -37,5 +38,6 @@
 #include "plugin/schema_dictionary/index_parts.h"
 #include "plugin/schema_dictionary/referential_constraints.h"
 #include "plugin/schema_dictionary/table_constraints.h"
+#include "plugin/schema_dictionary/show_indexes.h"
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

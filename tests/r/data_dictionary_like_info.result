@@ -176,8 +176,8 @@ describe t1;
 Field	Type	Null	Default	Default is NULL	On Update
 f1	INTEGER	TRUE		TRUE	
 show indexes from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	f1	0	f1
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	FALSE	f1	1	f1
 drop table t1;
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
@@ -193,7 +193,7 @@ table_schema='data_dictionary' and
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
 DATA_TYPE	group_concat(table_schema, '.', table_name)	num
-VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_d	106
+VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_dictionary.INDEX_PARTS,data_d	110
 Warnings:
 Warning	1260	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);

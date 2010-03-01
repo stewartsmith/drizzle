@@ -26,14 +26,15 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	a
-t1	b	0	b
-t1	b	1	c
+def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	5	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	1	N	1	0	45
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
+t1	FALSE	b	1	b
+t1	FALSE	b	2	c
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
@@ -110,17 +111,17 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	f1
-t1	PRIMARY	1	f2
-t1	PRIMARY	2	f3
-t1	PRIMARY	3	f4
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	f1
+t1	TRUE	PRIMARY	2	f2
+t1	TRUE	PRIMARY	3	f3
+t1	TRUE	PRIMARY	4	f4
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	f1
-t1	PRIMARY	1	f2
-t1	PRIMARY	2	f3
-t1	PRIMARY	3	f4
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	f1
+t1	TRUE	PRIMARY	2	f2
+t1	TRUE	PRIMARY	3	f3
+t1	TRUE	PRIMARY	4	f4
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
@@ -453,12 +454,13 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	field1
+def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	4	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	6	N	1	0	45
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	field1
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -497,7 +499,7 @@ show columns from `a\b` from `mysqlttest\1`;
 Field	Type	Null	Default	Default is NULL	On Update
 a	INTEGER	TRUE		TRUE	
 show keys from `mysqlttest\1`.`a\b`;
-Table	Key_name	Seq_in_index	Column_name
+Table	Unique	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
 drop table if exists `été`;

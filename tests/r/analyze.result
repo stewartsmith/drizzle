@@ -41,8 +41,8 @@ analyze table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	a	0	a
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	FALSE	a	1	a
 drop table t1;
 End of 4.1 tests
 End of 5.0 tests

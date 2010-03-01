@@ -360,9 +360,9 @@ bool plugin::StorageEngine::doesTableExist(Session& session,
   or any dropped tables that need to be removed from disk
 */
 int StorageEngine::getTableDefinition(Session& session,
-                                              TableIdentifier &identifier,
-                                              message::Table *table_proto,
-                                              bool include_temporary_tables)
+                                      TableIdentifier &identifier,
+                                      message::Table *table_proto,
+                                      bool include_temporary_tables)
 {
   return getTableDefinition(session,
                             identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
