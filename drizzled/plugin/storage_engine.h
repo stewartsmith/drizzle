@@ -356,8 +356,7 @@ public:
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int dropTable(Session& session,
-                       TableIdentifier &identifier,
-                       bool generate_warning);
+                       TableIdentifier &identifier);
   static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
 
   // @note All schema methods defined here

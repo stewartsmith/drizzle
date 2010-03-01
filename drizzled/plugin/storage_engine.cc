@@ -432,8 +432,7 @@ handle_error(uint32_t ,
    returns ENOENT if the file doesn't exists.
 */
 int StorageEngine::dropTable(Session& session,
-                             TableIdentifier &identifier,
-                             bool generate_warning)
+                             TableIdentifier &identifier)
 {
   int error= 0;
   int error_proto;
@@ -476,37 +475,6 @@ int StorageEngine::dropTable(Session& session,
 
   if (error_proto && error == 0)
     return 0;
-
-  if (((error_proto != EEXIST && error_proto != ENOENT)
-      && !engine && generate_warning)
-      | ( error && !engine && generate_warning))
-  {
-    my_error(ER_GET_ERRNO, MYF(0), error_proto);
-    return error_proto;
-  }
-
-  if (error && generate_warning)
-  {
-    /*
-      Because engine->print_error() use my_error() to generate the error message
-      we use an internal error Cursor to intercept it and store the text
-      in a temporary buffer. Later the message will be presented to user
-      as a warning.
-    */
-    Ha_delete_table_error_handler ha_delete_table_error_handler;
-
-    session.push_internal_handler(&ha_delete_table_error_handler);
-    engine->print_error(error, 0);
-
-    session.pop_internal_handler();
-
-    /*
-      XXX: should we convert *all* errors to warnings here?
-      What if the error is fatal?
-    */
-    push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
-                 ha_delete_table_error_handler.buff);
-  }
 
   return error;
 }

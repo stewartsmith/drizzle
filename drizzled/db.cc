@@ -421,9 +421,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
     else
     {
-      error= plugin::StorageEngine::dropTable(*session,
-                                              identifier,
-                                              false);
+      error= plugin::StorageEngine::dropTable(*session, identifier);
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
       {

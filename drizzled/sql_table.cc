@@ -245,9 +245,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     else
     {
-      error= plugin::StorageEngine::dropTable(*session,
-                                              identifier,
-                                              true);
+      error= plugin::StorageEngine::dropTable(*session, identifier);
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
@@ -317,7 +315,7 @@ err_with_placeholders:
 bool quick_rm_table(Session& session,
                     TableIdentifier &identifier)
 {
-  return (plugin::StorageEngine::dropTable(session, identifier, false));
+  return (plugin::StorageEngine::dropTable(session, identifier));
 }
 
 /*
