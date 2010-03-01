@@ -196,7 +196,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   for (table= tables; table; table= table->next_local)
   {
     char *db=table->db;
-    plugin::StorageEngine *table_type;
 
     error= session->drop_temporary_table(table);
 
@@ -212,7 +211,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       error= 0;
     }
 
-    table_type= table->db_type;
     if (drop_temporary == false)
     {
       Table *locked_table;
@@ -235,10 +233,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
 
-    if (drop_temporary ||
-        ((table_type == NULL
-          && (plugin::StorageEngine::getTableDefinition(*session,
-                                                        identifier) != EEXIST))))
+    if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
