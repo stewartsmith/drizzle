@@ -268,14 +268,6 @@ enum test_flag_bit
 
 #define STRING_BUFFER_USUAL_SIZE 80
 
-/*
-  Some defines for exit codes for ::is_equal class functions.
-*/
-#define IS_EQUAL_NO 0
-#define IS_EQUAL_YES 1
-#define IS_EQUAL_PACK_LENGTH 2
-
-
 typedef void *range_seq_t;
 
 enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
