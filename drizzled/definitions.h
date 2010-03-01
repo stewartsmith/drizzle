@@ -83,7 +83,6 @@ namespace drizzled
 
 #define DEFAULT_ERROR_COUNT	64
 #define EXTRA_RECORDS	10			/* Extra records in sort */
-#define SCROLL_EXTRA	5			/* Extra scroll-rows. */
 #define NAMES_SEP_CHAR	'\377'			/* Char to sep. names */
 
 #define READ_RECORD_BUFFER	(uint32_t) (IO_SIZE*8) /* Pointer_buffer_size */
