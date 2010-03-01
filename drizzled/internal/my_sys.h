@@ -102,7 +102,6 @@ namespace internal
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
 #define ME_HIGHBYTE	8	/* Shift for colours */
-#define ME_NOCUR	1	/* Don't use curses message */
 #define ME_OLDWIN	2	/* Use old window */
 #define ME_BELL		4	/* Ring bell then printing message */
 #define ME_HOLDTANG	8	/* Don't delete last keys */
