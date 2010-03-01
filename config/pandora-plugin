@@ -223,7 +223,11 @@ AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@defaul
 AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],[
     with_%(name)s_plugin="$withval"
-    requested_%(name)s_plugin="yes"
+    AS_IF([test "x$with_%(name)s_plugin" = "xyes"],[
+      requested_%(name)s_plugin="yes"
+    ],[
+      requested_%(name)s_plugin="no"
+    ])
   ],[
     with_%(name)s_plugin="%(enabled)s"
     requested_%(name)s_plugin="no"
