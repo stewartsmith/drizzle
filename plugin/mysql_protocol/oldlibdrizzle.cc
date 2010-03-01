@@ -690,7 +690,11 @@ bool ClientMySQLProtocol::checkConnection(void)
     return false; /* The error is set by alloc(). */
 
   client_capabilities= uint2korr(net.read_pos);
-
+  if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+    return false;
+  }
 
   client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
   session->max_client_packet_length= uint4korr(net.read_pos + 4);

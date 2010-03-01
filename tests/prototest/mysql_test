@@ -31,6 +31,7 @@ parser.add_option("-p", "--port", dest="port", default=3306,
 BAD_HANDSHAKE = 1043
 DB_ACCESS_DENIED = 1044
 ACCESS_DENIED = 1045
+BAD_DB = 1049
 WRONG_DB_NAME = 1102
 PACKET_TOO_LARGE = 1153
 PACKETS_OUT_OF_ORDER = 1156
@@ -62,12 +63,15 @@ class TestHandshake(unittest.TestCase):
       self.verifyServerHandshake()
       self.s.send(mysql.Packet(size=x, sequence=1).pack())
 
-      if x > 0:
-        self.s.send('\x00' * x)
+      # Send the MySQL 4.1 protocol flag if possible.
+      if x == 1:
+        self.s.send('\x00')
+      elif x > 1:
+        self.s.send('\x00\x02' + '\x00' * (x - 2))
 
       (packet, data) = self.verifyPacket(2)
 
-      if x < 6:
+      if x < 33:
         result = mysql.Result(data, version_40=True)
         self.assertEqual(result.field_count, 255)
         self.assertEqual(result.error_code, BAD_HANDSHAKE)
@@ -76,7 +80,6 @@ class TestHandshake(unittest.TestCase):
         if result.field_count == 0:
           self.assertEqual(result.affected_rows, 0)
           self.assertEqual(result.insert_id, 0)
-          self.assertEqual(result.status, 0)
         else:
           self.assertEqual(result.field_count, 255)
           self.assertEqual(result.error_code, PACKET_TOO_LARGE)
@@ -148,7 +151,7 @@ class TestHandshake(unittest.TestCase):
       self.s.send(mysql.Packet(size=34+x, sequence=1).pack())
       self.s.send(client_handshake.pack()[:34])
       if x > 0:
-        self.s.send('\xff' * x)
+        self.s.send('X' * x)
 
       (packet, data) = self.verifyPacket(2)
       result = mysql.Result(data)
@@ -156,9 +159,13 @@ class TestHandshake(unittest.TestCase):
         self.assertEqual(result.affected_rows, 0)
         self.assertEqual(result.insert_id, 0)
         self.assertEqual(result.warning_count, 0)
-      elif result.error_code != DB_ACCESS_DENIED:
+      else:
         self.assertEqual(result.field_count, 255)
-        self.assertEqual(result.error_code, WRONG_DB_NAME)
+        if x > 64:
+          self.assertEqual(result.error_code, WRONG_DB_NAME)
+        else:
+          self.assertTrue(result.error_code == DB_ACCESS_DENIED or
+                          result.error_code == BAD_DB)
 
       self.reconnect()
 
