@@ -42,7 +42,6 @@ namespace drizzled
 
 #define ER(X) ::drizzled::error_message((X))
 
-#define LIBLEN FN_REFLEN-FN_LEN			/* Max l{ngd p} dev */
 /* extra 4+4 bytes for slave tmp tables */
 #define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
 #define MAX_ALIAS_NAME 256
