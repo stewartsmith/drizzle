@@ -290,8 +290,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_INVALID         -5
 #define HA_ADMIN_REJECT          -6
 
-#define HA_NOT_DELETE_WITH_CACHE (1 << 18)
-
 /* bits in index_flags(index_number) for what you can do with index */
 #define HA_READ_NEXT            1       /* TODO really use this flag */
 #define HA_READ_PREV            2       /* supports ::index_prev */
