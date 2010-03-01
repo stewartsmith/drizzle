@@ -1,0 +1,5 @@
+use data_dictionary;
+
+select * from INNODB_CMP_RESET;
+
+show create table INNODB_CMP_RESET;

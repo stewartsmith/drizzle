@@ -120,7 +120,7 @@ CmpmemTool::Generator::~Generator()
 
 bool CmpmemTool::Generator::populate()
 {
-  if (record_number == BUF_BUDDY_SIZES)
+  if (record_number > BUF_BUDDY_SIZES)
   {
     return false;
   }
