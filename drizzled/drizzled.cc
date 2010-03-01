@@ -1032,8 +1032,6 @@ static drizzle_show_var com_status_vars[]= {
   {"show_create_db",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_errors",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_fields",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
-  {"show_keys",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
   {"show_warnings",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
   {"truncate",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
@@ -1358,25 +1356,11 @@ static int init_server_components(plugin::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!engine->is_enabled())
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
-                    default_storage_engine_str);
-      unireg_abort(1);
-      //assert(global_system_variables.storage_engine);
-    }
-    else
-    {
-      /*
-        Need to unlock as global_system_variables.storage_engine
-        was acquired during plugin_init()
-      */
-      global_system_variables.storage_engine= engine;
-    }
+    global_system_variables.storage_engine= engine;
   }
 
   if (plugin::XaStorageEngine::recoverAllXids(0))

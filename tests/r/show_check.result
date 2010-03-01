@@ -489,10 +489,13 @@ create database `mysqlttest\1`;
 create table `mysqlttest\1`.`a\b` (a int);
 show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
+a\b
 show fields from `mysqlttest\1`.`a\b`;
 Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
 show columns from `a\b` from `mysqlttest\1`;
 Field	Type	Null	Default	Default is NULL	On Update
+a	INTEGER	TRUE		TRUE	
 show keys from `mysqlttest\1`.`a\b`;
 Table	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
