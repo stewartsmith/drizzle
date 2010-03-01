@@ -358,9 +358,6 @@ enum start_transaction_option_t
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
-#define MAXGTRIDSIZE 64
-#define MAXBQUALSIZE 64
-
 /*
   The below two are not used (and not handled) in this milestone of this WL
   entry because there seems to be no use for them at this stage of
