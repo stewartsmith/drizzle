@@ -67,7 +67,7 @@ public:
     return NULL;
   }
 
-  int doDropTable(drizzled::Session&, const std::string) 
+  int doDropTable(drizzled::Session&, const std::string&) 
   { 
     return EPERM; 
   }

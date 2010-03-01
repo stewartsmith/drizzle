@@ -125,7 +125,7 @@ int StorageEngine::doRenameTable(Session *,
     !0  Error
 */
 int StorageEngine::doDropTable(Session&,
-                                       const string table_path)
+                               const string &table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
