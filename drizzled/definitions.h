@@ -559,10 +559,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 
 #define MY_FILEPOS_ERROR  -1
 
-/* Defines for time function */
-#define SCALE_SEC  100
-#define SCALE_USEC  10000
-
 #define DRIZZLE_SERVER
 
 /* Length of decimal number represented by INT32. */
