@@ -224,9 +224,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
 
-#define my_b_get_buffer_start(info) (info)->request_pos
-
-
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
 					  *(info)->current_pos)
 
