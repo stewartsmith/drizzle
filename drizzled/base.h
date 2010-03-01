@@ -410,7 +410,6 @@ typedef unsigned long key_part_map;
 #define SEARCH_NULL_ARE_NOT_EQUAL 65536	/* NULL in keys are not equal */
 
 	/* bits in opt_flag */
-#define QUICK_USED	1
 #define READ_CACHE_USED	2
 #define READ_CHECK_USED 4
 #define KEY_READ_USED	8
