@@ -205,10 +205,11 @@ noinst_HEADERS+=	plugin/innobase/include/btr0btr.h \
 			plugin/innobase/include/ut0list.ic \
 			plugin/innobase/include/ut0wqueue.h \
 			plugin/innobase/include/ha_prototypes.h \
+			plugin/innobase/include/handler0alter.h \
 			plugin/innobase/mem/mem0dbg.c \
 			plugin/innobase/handler/ha_innodb.h \
-			plugin/innobase/include/handler0alter.h \
 			plugin/innobase/handler/handler0vars.h \
+			plugin/innobase/handler/status_function.h \
 			plugin/innobase/handler/i_s.h
 
 noinst_LTLIBRARIES+=	plugin/innobase/libinnobase.la plugin/innobase/libpars.la
