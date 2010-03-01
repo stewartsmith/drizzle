@@ -406,7 +406,6 @@ typedef unsigned long key_part_map;
 #define MBR_WITHIN      2048
 #define MBR_DISJOINT    4096
 #define MBR_EQUAL       8192
-#define MBR_DATA        16384
 #define SEARCH_NULL_ARE_EQUAL 32768	/* NULL in keys are equal */
 #define SEARCH_NULL_ARE_NOT_EQUAL 65536	/* NULL in keys are not equal */
 
