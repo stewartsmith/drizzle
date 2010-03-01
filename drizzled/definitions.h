@@ -90,8 +90,6 @@ namespace drizzled
 #define DEFAULT_ERROR_COUNT	64
 #define EXTRA_RECORDS	10			/* Extra records in sort */
 #define SCROLL_EXTRA	5			/* Extra scroll-rows. */
-#define FIELD_NAME_USED ((uint32_t) 32768)		/* Bit set if fieldname used */
-#define FIELD_NR_MASK	16383			/* To get fieldnumber */
 #define NAMES_SEP_CHAR	'\377'			/* Char to sep. names */
 
 #define READ_RECORD_BUFFER	(uint32_t) (IO_SIZE*8) /* Pointer_buffer_size */
