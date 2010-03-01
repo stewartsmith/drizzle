@@ -201,8 +201,6 @@ enum ha_base_keytype {
   HA_KEYTYPE_VARBINARY2=18		/* Key is sorted as unsigned chars */
 };
 
-#define HA_MAX_KEYTYPE	31		/* Must be log2-1 */
-
 	/* These flags kan be OR:ed to key-flag */
 
 #define HA_NOSAME		 1	/* Set if not dupplicated records */
