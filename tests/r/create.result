@@ -1397,6 +1397,43 @@ USE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 ERROR 42000: Incorrect database name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
+use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
+select database();
+database()
+имя_базы_в_кодировке_утф8_длиной_больше_чем_45
+use test;
+select SCHEMA_NAME from data_dictionary.schemas
+where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
+SCHEMA_NAME
+имя_базы_в_кодировке_утф8_длиной_больше_чем_45
+drop database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
+create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
+(
+имя_поля_в_кодировке_утф8_длиной_больше_чем_45 int,
+index имя_индекса_в_кодировке_утф8_длиной_больше_чем_48 (имя_поля_в_кодировке_утф8_длиной_больше_чем_45)
+);
+select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
+имя_поля_в_кодировке_утф8_длиной_больше_чем_45
+select TABLE_NAME from data_dictionary.tables where
+table_schema='test';
+TABLE_NAME
+имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48
+select COLUMN_NAME from data_dictionary.columns where
+table_schema='test';
+COLUMN_NAME
+имя_поля_в_кодировке_утф8_длиной_больше_чем_45
+select INDEX_NAME from data_dictionary.indexes where
+table_schema='test';
+INDEX_NAME
+имя_индекса_в_кодировке_утф8_длиной_больше_чем_48
+show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
+Table	Create Table
+имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48	CREATE TABLE `имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48` (
+  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` int DEFAULT NULL,
+  KEY `имя_индекса_в_кодировке_утф8_длиной_больше_чем_48` (`имя_поля_в_кодировке_утф8_длиной_больше_чем_45`)
+) ENGINE=DEFAULT
+drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 create table t1 like data_dictionary.processlist;
 ERROR HY000: Can't create table 'test.t1' (errno: 1)
 create table t1 like data_dictionary.processlist engine=innodb;
