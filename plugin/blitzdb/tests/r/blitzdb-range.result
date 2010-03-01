@@ -139,7 +139,109 @@ insert into t1 values ('2003-07-10'), ('2003-07-11'), ('2003-07-12');
 insert into t1 values ('2003-08-13'), ('2003-08-14'), ('2003-08-15');
 insert into t1 values ('2004-07-10'), ('2004-07-11'), ('2004-07-12');
 insert into t1 values ('2004-08-13'), ('2004-08-14'), ('2004-08-15');
+explain select * from t1 where a < '2002-01-01';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	a	a	4	NULL	30	Using where; Using index
+select * from t1 where a < '2002-01-01';
+a
+2000-07-10
+2000-07-11
+2000-07-12
+2000-08-13
+2000-08-14
+2000-08-15
+2001-07-10
+2001-07-11
+2001-07-12
+2001-08-13
+2001-08-14
+2001-08-15
+explain select * from t1 where a between '2002-01-01' and '2002-12-31';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	a	a	4	NULL	30	Using where; Using index
+select * from t1 where a between '2002-01-01' and '2002-12-31';
+a
+2002-07-10
+2002-07-11
+2002-07-12
+2002-08-13
+2002-08-14
+2002-08-15
+explain select * from t1 where a > '2000-01-01' and a < '2004-12-31';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	a	a	4	NULL	30	Using where; Using index
+select * from t1 where a > '2000-01-01' and a < '2004-12-31';
+a
+2000-07-10
+2000-07-11
+2000-07-12
+2000-08-13
+2000-08-14
+2000-08-15
+2001-07-10
+2001-07-11
+2001-07-12
+2001-08-13
+2001-08-14
+2001-08-15
+2002-07-10
+2002-07-11
+2002-07-12
+2002-08-13
+2002-08-14
+2002-08-15
+2003-07-10
+2003-07-11
+2003-07-12
+2003-08-13
+2003-08-14
+2003-08-15
+2004-07-10
+2004-07-11
+2004-07-12
+2004-08-13
+2004-08-14
+2004-08-15
+select count(*) from t1 where a > '2000-01-01' and a < '2004-12-31';
+count(*)
+30
+select * from t1 where a > '2022-01-01';
+a
+select * from t1 where a < '2000-01-01';
+a
 select count(*) from t1;
 count(*)
 30
+select * from t1;
+a
+2000-07-10
+2000-07-11
+2000-07-12
+2000-08-13
+2000-08-14
+2000-08-15
+2001-07-10
+2001-07-11
+2001-07-12
+2001-08-13
+2001-08-14
+2001-08-15
+2002-07-10
+2002-07-11
+2002-07-12
+2002-08-13
+2002-08-14
+2002-08-15
+2003-07-10
+2003-07-11
+2003-07-12
+2003-08-13
+2003-08-14
+2003-08-15
+2004-07-10
+2004-07-11
+2004-07-12
+2004-08-13
+2004-08-14
+2004-08-15
 drop table t1;

@@ -76,7 +76,7 @@ insert into t1 values ();
 select count(*) from t1;
 drop table t1;
 
-# Test VARCHAR field as a Primary Key
+# Test VARCHAR field as a PRIMARY KEY
 create table t1 (id varchar(64) primary key, country varchar(64)) engine = blitzdb;
 insert into t1 values ('amsterdam', 'netherlands');
 insert into t1 values ('budapest', 'hungary');
@@ -104,7 +104,7 @@ select count (*) from t1;
 select * from t1;
 drop table t1;
 
-# Test HA_KEYTYPE_VARTEXT1 as a Primary Key
+# Test HA_KEYTYPE_VARTEXT1 as a PRIMARY KEY
 create table t1 (a varchar(10) primary key, b int) engine = blitzdb;
 insert into t1 values ('aaa', 1), ('bbb', 2), ('ccc', 3), ('ddd', 4);
 insert into t1 values ('eee', 5), ('fff', 6), ('ggg', 7), ('hhh', 8);
@@ -124,7 +124,21 @@ select * from t1 where a = 'fff';
 select * from t1 where a = 'zzz';
 drop table t1;
 
-# Test UPDATE on a VARCHAR key
+# Test DATE type as a PRIMARY KEY
+create table t1 (a date primary key, b int, c varchar(32)) engine = blitzdb;
+insert into t1 values ('1984-09-22', 22, 'twenty two');
+insert into t1 values ('1984-09-23', 23, 'twenty three');
+insert into t1 values ('1984-09-24', 24, 'twenty four');
+insert into t1 values ('1984-09-25', 23, 'twenty five');
+select * from t1;
+explain select * from t1 where a = '1984-09-22';
+select * from t1 where a = '1984-09-22';
+select * from t1 where a = '1984-09-23';
+select * from t1 where a = '1984-09-24';
+select * from t1 where a = '1984-09-25';
+drop table t1;
+
+# Test UPDATE on a VARCHAR as a PRIMARY KEY
 create table t1 (id varchar(255) primary key, num int) engine = blitzdb;
 insert into t1 values ('a', 1);
 insert into t1 values ('b', 2);

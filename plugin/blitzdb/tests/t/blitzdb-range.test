@@ -55,5 +55,24 @@ insert into t1 values ('2003-08-13'), ('2003-08-14'), ('2003-08-15');
 insert into t1 values ('2004-07-10'), ('2004-07-11'), ('2004-07-12');
 insert into t1 values ('2004-08-13'), ('2004-08-14'), ('2004-08-15');
 
+# lower range
+explain select * from t1 where a < '2002-01-01';
+select * from t1 where a < '2002-01-01';
+
+# partial range
+explain select * from t1 where a between '2002-01-01' and '2002-12-31';
+select * from t1 where a between '2002-01-01' and '2002-12-31';
+
+# full range
+explain select * from t1 where a > '2000-01-01' and a < '2004-12-31';
+select * from t1 where a > '2000-01-01' and a < '2004-12-31';
+select count(*) from t1 where a > '2000-01-01' and a < '2004-12-31';
+
+# out of bounds
+select * from t1 where a > '2022-01-01';
+select * from t1 where a < '2000-01-01';
+
+# basic
 select count(*) from t1;
+select * from t1;
 drop table t1;
