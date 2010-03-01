@@ -24,6 +24,9 @@
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
+#include <drizzled/hash.h>
+
+#include <pthread.h>
 
 extern const drizzled::CHARSET_INFO *default_charset_info;
 
@@ -33,13 +36,22 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
-  int write_schema_file(const char *path, const drizzled::message::Schema &db);
+  bool writeSchemaFile(const char *path, const drizzled::message::Schema &db);
+  bool readTableFile(const std::string &path, drizzled::message::Table &table_message);
+  bool readSchemaFile(const std::string &path, drizzled::message::Schema &schema);
+
+  void prime();
+
+  typedef drizzled::hash_map<std::string, drizzled::message::Schema> SchemaCache;
+  SchemaCache schema_cache;
+  bool schema_cache_filled;
+
+  pthread_rwlock_t schema_lock;
 
 public:
   Schema();
 
-  ~Schema()
-  { }
+  ~Schema();
 
   int doCreateTable(drizzled::Session *,
                     const char *,
@@ -68,6 +80,17 @@ public:
   bool doAlterSchema(const drizzled::message::Schema &schema_message);
 
   bool doDropSchema(const std::string &schema_name);
+
+  int doGetTableDefinition(drizzled::Session& session,
+                           const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
+
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       std::string &db_name,
+                       std::set<std::string> &set_of_names);
 
   const char **bas_ext() const 
   {

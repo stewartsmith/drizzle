@@ -1876,13 +1876,10 @@ LEX::LEX()
 */
 bool LEX::only_view_structure()
 {
-  switch (sql_command) {
-  case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_FIELDS:
+  if (sql_command == SQLCOM_SHOW_CREATE)
     return true;
-  default:
-    return false;
-  }
+
+  return false;
 }
 
 /*
@@ -1897,13 +1894,10 @@ bool LEX::only_view_structure()
 */
 bool LEX::need_correct_ident()
 {
-  switch(sql_command)
-  {
-  case SQLCOM_SHOW_CREATE:
+  if (sql_command== SQLCOM_SHOW_CREATE)
     return true;
-  default:
-    return false;
-  }
+
+  return false;
 }
 
 /**
