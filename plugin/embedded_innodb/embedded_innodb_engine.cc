@@ -367,12 +367,25 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
+static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
+static char* innodb_data_file_path= NULL;
+
+static int64_t innodb_log_file_size;
+static int64_t innodb_log_files_in_group;
+
 static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 {
   int err;
 
   ib_init();
   /* call ib_cfg_*() */
+
+  if (innodb_data_file_path == NULL)
+    innodb_data_file_path= default_innodb_data_file_path;
+
+  ib_cfg_set_text("data_file_path", innodb_data_file_path);
+  ib_cfg_set_int("log_file_size", innodb_log_file_size);
+  ib_cfg_set_int("log_files_in_group", innodb_log_files_in_group);
 
   err= ib_startup("barracuda");
 
@@ -412,12 +425,22 @@ static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static char* innodb_data_file_path= NULL;
-
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "Placeholder to be compatible with InnoDB plugin.",
+  "Path to individual files and their sizes.",
   NULL, NULL, NULL);
+
+static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innodb_log_file_size,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Size of each log file in a log group.",
+  NULL, NULL, 5*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
+
+static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.",
+  NULL, NULL, 2, 2, 100, 0);
+
+
 static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Placeholder: to be compatible with InnoDB plugin.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
@@ -425,6 +448,8 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
+  DRIZZLE_SYSVAR(log_file_size),
+  DRIZZLE_SYSVAR(log_files_in_group),
   NULL
 };
 
