@@ -510,7 +510,6 @@ static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 
 /* Some defines of functions for portability */
 
-#undef remove    /* Crashes MySQL on SCO 5.0.0 */
 #ifndef uint64_t2double
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #endif
