@@ -423,7 +423,6 @@ typedef unsigned long key_part_map;
 #define HA_STATE_DELETED	8
 #define HA_STATE_NEXT_FOUND	16	/* Next found record (record before) */
 #define HA_STATE_PREV_FOUND	32	/* Prev found record (record after) */
-#define HA_STATE_NO_KEY		64	/* Last read didn't find record */
 #define HA_STATE_KEY_CHANGED	128
 #define HA_STATE_WRITE_AT_END	256	/* set in _ps_find_writepos */
 #define HA_STATE_BUFF_SAVED	512	/* If current keybuff is info->buff */
