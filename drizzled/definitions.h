@@ -402,10 +402,6 @@ enum start_transaction_option_t
 typedef int myf;
 #define MYF(v)		(static_cast<drizzled::myf>(v))
 
-#define MY_I_S_MAYBE_NULL 1
-#define MY_I_S_UNSIGNED   2
-
-
 /*
    "Declared Type Collation"
    A combination of collation and its derivation.
