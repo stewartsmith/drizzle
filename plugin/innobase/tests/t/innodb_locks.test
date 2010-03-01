@@ -1,0 +1,5 @@
+use data_dictionary;
+
+select * from INNODB_LOCKS;
+
+show create table INNODB_LOCKS;

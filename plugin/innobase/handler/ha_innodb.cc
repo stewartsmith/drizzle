@@ -123,7 +123,7 @@ extern "C" {
 }
 
 #include "ha_innodb.h"
-#include "i_s.h"
+#include "data_dictionary.h"
 #include "handler0vars.h"
 
 #include <iostream>
@@ -166,6 +166,13 @@ undefined.  Map it to NULL. */
 
 static plugin::XaStorageEngine* innodb_engine_ptr= NULL;
 static plugin::TableFunction* status_table_function_ptr= NULL;
+static plugin::TableFunction* cmp_tool= NULL;
+static plugin::TableFunction* cmp_reset_tool= NULL;
+static plugin::TableFunction* cmp_mem_tool= NULL;
+static plugin::TableFunction* cmp_mem_reset_tool= NULL;
+static plugin::TableFunction* innodb_trx_tool= NULL;
+static plugin::TableFunction* innodb_locks_tool= NULL;
+static plugin::TableFunction* innodb_lock_waits_tool= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -1946,32 +1953,32 @@ innobase_change_buffering_inited_ok:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
-#if 0
-	if (innodb_locks_init() ||
-		innodb_trx_init() ||
-		innodb_lock_waits_init() ||
-		i_s_cmp_init() ||
-		i_s_cmp_reset_init() ||
-		i_s_cmpmem_init() ||
-		i_s_cmpmem_reset_init())
-		goto error;
-#endif
-
         status_table_function_ptr= new InnodbStatusTool;
 
 	registry.add(innodb_engine_ptr);
 
 	registry.add(status_table_function_ptr);
 
-#if 0
-	registry.add(innodb_trx_schema_table);
-	registry.add(innodb_locks_schema_table);
-	registry.add(innodb_lock_waits_schema_table);	
-	registry.add(innodb_cmp_schema_table);
-	registry.add(innodb_cmp_reset_schema_table);
-	registry.add(innodb_cmpmem_schema_table);
-	registry.add(innodb_cmpmem_reset_schema_table);
-#endif
+	cmp_tool= new(std::nothrow)CmpTool(false);
+	registry.add(cmp_tool);
+
+	cmp_reset_tool= new(std::nothrow)CmpTool(true);
+	registry.add(cmp_reset_tool);
+
+	cmp_mem_tool= new(std::nothrow)CmpmemTool(false);
+	registry.add(cmp_mem_tool);
+
+	cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
+	registry.add(cmp_mem_reset_tool);
+
+	innodb_trx_tool= new(std::nothrow)InnodbTrxTool("INNODB_TRX");
+	registry.add(innodb_trx_tool);
+
+	innodb_locks_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCKS");
+	registry.add(innodb_locks_tool);
+
+	innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
+	registry.add(innodb_lock_waits_tool);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -1989,12 +1996,30 @@ int
 innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
-#if 0
-	i_s_common_deinit(registry);
-#endif
 
 	registry.remove(status_table_function_ptr);
  	delete status_table_function_ptr;
+
+	registry.remove(cmp_tool);
+	delete cmp_tool;
+
+	registry.remove(cmp_reset_tool);
+	delete cmp_reset_tool;
+
+ 	registry.remove(cmp_mem_tool);
+	delete cmp_mem_tool;
+
+	registry.remove(cmp_mem_reset_tool);
+	delete cmp_mem_reset_tool;
+
+	registry.remove(innodb_trx_tool);
+	delete innodb_trx_tool;
+
+ 	registry.remove(innodb_locks_tool);
+	delete innodb_locks_tool;
+
+	registry.remove(innodb_lock_waits_tool);
+	delete innodb_lock_waits_tool;
 
 	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
