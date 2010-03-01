@@ -45,22 +45,10 @@ struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
 
-namespace plugin
-{
-  class InfoSchemaTable;
-}
-
-
 class Table;
 typedef class Item COND;
 
 extern struct system_status_var global_status_var;
-
-typedef struct st_lookup_field_values
-{
-  LEX_STRING db_value, table_value;
-  bool wild_db_value, wild_table_value;
-} LOOKUP_FIELD_VALUES;
 
 drizzle_show_var *getFrontOfStatusVars();
 drizzle_show_var *getCommandStatusVars();
