@@ -83,6 +83,13 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_sys.h"
 
+#include <set>
+#include <vector>
+#include <algorithm>
+#include <functional>
+
+using namespace std;
+
 namespace drizzled
 {
 
@@ -172,6 +179,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
+  vector<plugin::StorageEngine *> involved_engines;
   int rc;
 
   *need_reopen= false;
@@ -202,8 +210,38 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
 	goto retry;
       }
     }
+    
+    session->set_proc_info("Notify start statement");
+    /*
+     * Here, we advise all storage engines involved in the
+     * statement that we are starting a new statement
+     */
+    if (sql_lock->table_count)
+    {
+      size_t num_tables= sql_lock->table_count;
+      plugin::StorageEngine *engine;
+      set<size_t> involved_slots;
+      for (size_t x= 1; x <= num_tables; x++, tables++)
+      {
+        engine= (*tables)->cursor->engine;
+        if (involved_slots.count(engine->getSlot()) > 0)
+          continue; /* already added to involved engines */
+        involved_engines.push_back(engine);
+        involved_slots.insert(engine->getSlot());
+      }
 
-    session->set_proc_info("System lock");
+      for_each(involved_engines.begin(),
+               involved_engines.end(),
+               bind2nd(mem_fun(&plugin::StorageEngine::startStatement), session));
+    }
+
+    session->set_proc_info("External lock");
+    /*
+     * Here, the call to lock_external() informs the
+     * all engines for all tables used in this statement
+     * of the type of lock that Drizzle intends to take on a 
+     * specific table.
+     */
     if (sql_lock->table_count && lock_external(session, sql_lock->table,
                                                sql_lock->table_count))
     {
@@ -263,6 +301,14 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
       type for other tables preserved.
     */
     reset_lock_data_and_free(&sql_lock);
+
+    /*
+     * Notify all involved engines that the
+     * SQL statement has ended
+     */
+    for_each(involved_engines.begin(),
+             involved_engines.end(),
+             bind2nd(mem_fun(&plugin::StorageEngine::endStatement), session));
 retry:
     if (flags & DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN)
     {
@@ -282,7 +328,6 @@ retry:
       sql_lock= NULL;
     }
   }
-
   session->set_time_after_lock();
   return (sql_lock);
 }
@@ -482,7 +527,6 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
   }
   return result;
 }
-
 
 /** Unlock a set of external. */
 
