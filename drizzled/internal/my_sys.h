@@ -108,9 +108,6 @@ namespace internal
 #define ME_WAITTANG	32	/* Wait for a user action  */
 #define ME_NOREFRESH	64	/* Dont refresh screen */
 #define ME_NOINPUT	128	/* Dont use the input libary */
-#define ME_COLOUR1	((1 << ME_HIGHBYTE))	/* Possibly error-colours */
-#define ME_COLOUR2	((2 << ME_HIGHBYTE))
-#define ME_COLOUR3	((3 << ME_HIGHBYTE))
 
 	/* Bits in last argument to fn_format */
 #define MY_REPLACE_DIR		1	/* replace dir in name with 'dir' */
