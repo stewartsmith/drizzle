@@ -93,7 +93,6 @@ namespace drizzled
 #define FIELD_NAME_USED ((uint32_t) 32768)		/* Bit set if fieldname used */
 #define FIELD_NR_MASK	16383			/* To get fieldnumber */
 #define FERR		-1			/* Error from my_functions */
-#define CREATE_MODE	0			/* Default mode on new files */
 #define NAMES_SEP_CHAR	'\377'			/* Char to sep. names */
 
 #define READ_RECORD_BUFFER	(uint32_t) (IO_SIZE*8) /* Pointer_buffer_size */
