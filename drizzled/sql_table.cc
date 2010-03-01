@@ -2012,11 +2012,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
       goto err;
-    if (! name_lock)
+    if (not name_lock)
       goto table_exists;
 
-    if (plugin::StorageEngine::getTableDefinition(*session,
-                                                  destination_identifier) == EEXIST)
+    if (plugin::StorageEngine::doesTableExist(*session, destination_identifier))
       goto table_exists;
   }
 
