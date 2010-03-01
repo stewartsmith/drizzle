@@ -267,7 +267,6 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
                                   path, dropped_tables);
     if (deleted >= 0)
     {
-      plugin::StorageEngine::dropDatabase(path);
       error= 0;
     }
   }

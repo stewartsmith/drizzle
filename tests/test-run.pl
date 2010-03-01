@@ -1260,7 +1260,8 @@ sub executable_setup () {
 
 # Look for schema_writer
   {
-    $exe_schemawriter= mtr_exe_exists("$glob_basedir/drizzled/message/schema_writer");
+    $exe_schemawriter= mtr_exe_exists("$glob_basedir/drizzled/message/schema_writer",
+                                      "$glob_builddir/drizzled/message/schema_writer");
   }
 
 # Look for drizzletest executable

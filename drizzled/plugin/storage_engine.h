@@ -284,7 +284,6 @@ public:
   }
   virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
-  virtual void drop_database(char*) { }
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
   {
