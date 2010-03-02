@@ -530,51 +530,44 @@ int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
 int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
                              const unsigned char *key, uint32_t,
                              enum ha_rkey_function /*find_flag*/) {
-  char *pk;
-  char *fetched_row = NULL;
-  int pk_len, row_len;
 
-  /* If the key is NULL, we are required to return the first row
-     in the index. We have no choice but to consult the B+Tree here. */
-  if (key == NULL) {
-    if ((pk = share->btrees[key_num].first_key(&pk_len)) == NULL) {
-      errkey_id = key_num;
-      return HA_ERR_END_OF_FILE;
-    }
+  /* If the provided key is NULL, we are required to return the first
+     row in the active_index. */
+  if (key == NULL)
+    return this->index_first(buf);
 
-    /* TODO: Parse the fetched key then access the row from the
-             data dictionary. */
-    free(pk);
-  } else {
-    pk = native_to_blitz_key(key, key_num, &pk_len);
+  /* Otherwise we search for it. Prepare the key to look up the tree. */
+  int packed_klen;
+  char *packed_key = native_to_blitz_key(key, key_num, &packed_klen);
 
-    /* BlitzDB's PK optimization allows direct access to
-       the Data Dictionary. */
-    if (key_num == table->s->primary_key) {
-      fetched_row = share->dict.get_row((const char *)pk, pk_len, &row_len);
-    } else {
-      int bt_klen, dict_klen, prefix_len;
-      char *bt_key, *dict_key;
-
-      bt_key = share->btrees[key_num].find_key((char*)pk, pk_len, &bt_klen);
-
-      if (bt_key == NULL)
-        return HA_ERR_END_OF_FILE;
-
-      prefix_len = btree_key_length(bt_key, key_num);
-      dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
-
-      fetched_row = share->dict.get_row(dict_key, dict_klen, &row_len);
-    }
+  /* Lookup the tree and get the master key. */
+  int unique_klen;
+  char *unique_key = share->btrees[key_num].find_key((char *)packed_key,
+                                                     packed_klen,
+                                                     &unique_klen);
+  if (unique_key == NULL) {
+    errkey_id = key_num;
+    return HA_ERR_KEY_NOT_FOUND;
   }
+
+  /* Got the master key. Prepare it to lookup the data dictionary. */
+  int dict_klen;
+  int skip_len = btree_key_length(unique_key, key_num);
+  char *dict_key = skip_btree_key(unique_key, skip_len, &dict_klen);
+
+  /* Fetch the packed row from the data dictionary. */
+  int row_len;
+  char *fetched_row = share->dict.get_row(dict_key, dict_klen, &row_len);
 
   if (fetched_row == NULL) {
     errkey_id = key_num;
     return HA_ERR_KEY_NOT_FOUND;
   }
 
+  /* Unpack it into Drizzle's return buffer and keep track of the
+     master key for future use (before index_end() is called). */
   unpack_row(buf, fetched_row, row_len);
-  keep_track_of_key(pk, pk_len);
+  keep_track_of_key(unique_key, unique_klen);
 
   free(fetched_row);
   return 0;
@@ -742,14 +735,29 @@ int ha_blitz::update_row(const unsigned char *old_row,
 }
 
 int ha_blitz::delete_row(const unsigned char *) {
-  bool rv = false;
+  int rv;
+  uint32_t lock_id = 0;
 
   ha_statistic_increment(&system_status_var::ha_delete_count);
 
-  if (thread_locked)
-    rv = share->dict.delete_row(held_key, held_key_len);
+  char *dict_key = held_key;
+  int dict_klen = held_key_len;
 
-  return (rv) ? 0 : -1;
+  if (share->nkeys > 0) {
+    lock_id = share->blitz_lock.slot_id(held_key, held_key_len);
+    share->blitz_lock.slotted_lock(lock_id);
+
+    /* Skip to the data dictionary key. */
+    int skip_len = btree_key_length(dict_key, active_index);
+    dict_key = skip_btree_key(dict_key, skip_len, &dict_klen);
+  }
+
+  rv = share->dict.delete_row(dict_key, dict_klen);
+
+  if (share->nkeys > 0)
+    share->blitz_lock.slotted_unlock(lock_id);
+
+  return rv;
 }
 
 void ha_blitz::get_auto_increment(uint64_t, uint64_t,

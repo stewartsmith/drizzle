@@ -226,8 +226,8 @@ int BlitzData::write_unique_row(const char *key, const size_t klen,
   return rv;
 }
 
-bool BlitzData::delete_row(const char *key, const size_t klen) {
-  return tchdbout(data_table, key, klen);
+int BlitzData::delete_row(const char *key, const size_t klen) {
+  return (tchdbout(data_table, key, klen)) ? 0 : -1;
 }
 
 bool BlitzData::delete_all_rows() {

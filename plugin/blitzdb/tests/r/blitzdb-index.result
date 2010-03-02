@@ -209,12 +209,6 @@ ccc	3
 ddd	4
 eee	5
 fff	6
-update t1 set a = 'zzz' where a = 'fff';
-select * from t1 where a = 'fff';
-a	b
-select * from t1 where a = 'zzz';
-a	b
-zzz	6
 drop table t1;
 create table t1 (a date primary key, b int, c varchar(32)) engine = blitzdb;
 insert into t1 values ('1984-09-22', 22, 'twenty two');
@@ -242,85 +236,6 @@ a	b	c
 select * from t1 where a = '1984-09-25';
 a	b	c
 1984-09-25	23	twenty five
-drop table t1;
-create table t1 (id varchar(255) primary key, num int) engine = blitzdb;
-insert into t1 values ('a', 1);
-insert into t1 values ('b', 2);
-insert into t1 values ('c', 3);
-insert into t1 values ('d', 4);
-insert into t1 values ('e', 5);
-select * from t1;
-id	num
-a	1
-b	2
-c	3
-d	4
-e	5
-update t1 set id = 'b' where id = 'a';
-ERROR 23000: Duplicate entry 'b' for key 'PRIMARY'
-update t1 set id = 'c' where id = 'b';
-ERROR 23000: Duplicate entry 'c' for key 'PRIMARY'
-update t1 set id = 'd' where id = 'c';
-ERROR 23000: Duplicate entry 'd' for key 'PRIMARY'
-update t1 set id = 'e' where id = 'd';
-ERROR 23000: Duplicate entry 'e' for key 'PRIMARY'
-update t1 set id = 'f' where id = 'a';
-update t1 set id = 'g' where id = 'b';
-update t1 set id = 'h' where id = 'c';
-update t1 set id = 'i' where id = 'd';
-update t1 set id = 'j' where id = 'e';
-select * from t1;
-id	num
-f	1
-g	2
-h	3
-i	4
-j	5
-drop table t1;
-create table t1 (id double primary key, textual varchar(128)) engine = blitzdb;
-insert into t1 values (1.0, 'one-zero');
-insert into t1 values (1.1, 'one-one');
-insert into t1 values (1.2, 'one-two');
-insert into t1 values (1.3, 'one-three');
-insert into t1 values (1.4, 'one-four');
-select * from t1;
-id	textual
-1	one-zero
-1.1	one-one
-1.2	one-two
-1.3	one-three
-1.4	one-four
-update t1 set id = 1.1 where id = 1.0;
-ERROR 23000: Duplicate entry '1.1' for key 'PRIMARY'
-update t1 set id = 1.2 where id = 1.0;
-ERROR 23000: Duplicate entry '1.2' for key 'PRIMARY'
-update t1 set id = 1.3 where id = 1.0;
-ERROR 23000: Duplicate entry '1.3' for key 'PRIMARY'
-update t1 set id = 1.4 where id = 1.0;
-ERROR 23000: Duplicate entry '1.4' for key 'PRIMARY'
-update t1 set id = 2.0 where id = 1.0;
-update t1 set id = 2.1 where id = 1.1;
-update t1 set id = 2.2 where id = 1.2;
-update t1 set id = 2.3 where id = 1.3;
-update t1 set id = 2.4 where id = 1.4;
-select * from t1;
-id	textual
-2	one-zero
-2.1	one-one
-2.2	one-two
-2.3	one-three
-2.4	one-four
-update t1 set id = 2.0 where id = 2.4;
-ERROR 23000: Duplicate entry '2' for key 'PRIMARY'
-update t1 set id = 1.0 where id = 2.0;
-update t1 set id = 1.1 where id = 2.1;
-select * from t1;
-id	textual
-1	one-zero
-1.1	one-one
-2.2	one-two
-2.3	one-three
-2.4	one-four
 drop table t1;
 create table t1 (a int primary key) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4), (5), (6);
