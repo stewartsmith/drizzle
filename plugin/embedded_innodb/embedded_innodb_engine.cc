@@ -572,7 +572,7 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
   ib_cursor_first(cursor);
 
-  for (Field **field=table->field ; *field ; field++, colnr++)
+  for (Field **field= table->field; *field; field++, colnr++)
   {
     if ((**field).type() == DRIZZLE_TYPE_VARCHAR)
     {
