@@ -232,7 +232,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : STANDARD_TABLE);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -1993,7 +1993,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ? TEMP_TABLE : NO_TMP_TABLE);
+  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ? TEMP_TABLE : STANDARD_TABLE);
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2108,7 +2108,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else if (err)
   {
-    TableIdentifier identifier(db, table_name, NO_TMP_TABLE);
+    TableIdentifier identifier(db, table_name, STANDARD_TABLE);
     quick_rm_table(*session, identifier);
 
     goto err;

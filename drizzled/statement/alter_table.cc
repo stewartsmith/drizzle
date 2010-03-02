@@ -765,7 +765,7 @@ bool alter_table(Session *session,
     }
     else
     {
-      if (table->s->tmp_table != NO_TMP_TABLE)
+      if (table->s->tmp_table != STANDARD_TABLE)
       {
         if (session->find_temporary_table(new_db, lower_case_table_name))
         {
@@ -807,7 +807,7 @@ bool alter_table(Session *session,
     create_info->db_type= old_db_type;
   }
 
-  if (table->s->tmp_table != NO_TMP_TABLE)
+  if (table->s->tmp_table != STANDARD_TABLE)
   {
     create_proto->set_type(message::Table::TEMPORARY);
   }
@@ -1031,7 +1031,7 @@ bool alter_table(Session *session,
   /* We must not ignore bad input! */
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
 
-  if (table->s->tmp_table != NO_TMP_TABLE)
+  if (table->s->tmp_table != STANDARD_TABLE)
   {
     /* We changed a temporary table */
     if (error)
@@ -1124,7 +1124,7 @@ bool alter_table(Session *session,
       /* Try to get everything back. */
       error= 1;
 
-      TableIdentifier alias_identifier(new_db, new_alias, NO_TMP_TABLE);
+      TableIdentifier alias_identifier(new_db, new_alias, STANDARD_TABLE);
       quick_rm_table(*session, alias_identifier);
 
       TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);

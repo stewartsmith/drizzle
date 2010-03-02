@@ -410,7 +410,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       }
     }
 
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : STANDARD_TABLE);
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
