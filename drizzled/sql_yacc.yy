@@ -5262,14 +5262,26 @@ flush_options:
 
 flush_option:
           table_or_tables
-          { Lex->type|= REFRESH_TABLES; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTables(true);
+          }
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
-          { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTablesWithReadLock(true);
+          }
         | LOGS_SYM
-          { Lex->type|= REFRESH_LOG; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushLog(true);
+          }
         | STATUS_SYM
-          { Lex->type|= REFRESH_STATUS; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushStatus(true);
+          }
         ;
 
 opt_table_list:

@@ -135,14 +135,6 @@
 #define COLUMN_FORMAT_FLAGS 25          /* Column format: bit 25, 26 and 27 */
 #define COLUMN_FORMAT_MASK 7
 
-#define REFRESH_LOG		2	/* Start on new log file */
-#define REFRESH_TABLES		4	/* close all tables */
-#define REFRESH_STATUS		16	/* Flush status variables */
-
-/* The following can't be set with mysql_refresh() */
-#define REFRESH_READ_LOCK	16384	/* Lock tables for read */
-#define REFRESH_FAST		32768	/* Intern flag */
-
 #define SERVER_STATUS_IN_TRANS     1	/* Transaction has started */
 #define SERVER_STATUS_AUTOCOMMIT   2	/* Server in auto_commit mode */
 #define SERVER_MORE_RESULTS_EXISTS 8    /* Multi query - next query exists */
