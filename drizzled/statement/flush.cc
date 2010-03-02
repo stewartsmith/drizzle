@@ -65,9 +65,9 @@ bool statement::Flush::reloadCache()
     Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too
     (see sql_yacc.yy)
   */
-  if (flush_tables_with_read_lock)
+  if (flush_tables || flush_tables_with_read_lock)
   {
-    if (session)
+    if (session && flush_tables_with_read_lock)
     {
       if (lock_global_read_lock(session))
       {
