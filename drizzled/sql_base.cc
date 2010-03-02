@@ -51,6 +51,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/authorization.h"
 
 using namespace std;
 
@@ -2028,6 +2029,20 @@ restart:
       continue;
     }
     (*counter)++;
+
+    /*
+     * Is the user authorized to see this table? Do this before we check
+     * to see if it exists so that an unauthorized user cannot phish for
+     * table/schema information via error messages
+     */
+    if (not plugin::Authorization::isAuthorized(getSecurityContext(),
+                                                string(tables->db),
+                                                string(tables->table_name)))
+    {
+      result= -1;                               // Fatal error
+      break;
+    }
+
 
     /*
       Not a placeholder: must be a base table or a view, and the table is
