@@ -74,12 +74,10 @@
    key checks in some cases */
 #define OPTION_RELAXED_UNIQUE_CHECKS    (UINT64_C(1) << 27) // THD, user, binlog
 #define SELECT_NO_UNLOCK                (UINT64_C(1) << 28) // SELECT, intern
-#define OPTION_SCHEMA_TABLE             (UINT64_C(1) << 29) // SELECT, intern
 /** Flag set if setup_tables already done */
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
-#define OPTION_PROFILING                (UINT64_C(1) << 33)
 
 /*
   Dont report errors for individual rows,
