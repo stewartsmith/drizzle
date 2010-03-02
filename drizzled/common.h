@@ -95,13 +95,6 @@
 #define SQLSTATE_LENGTH 5
 
 /*
-  Maximum length of comments
-*/
-#define TABLE_COMMENT_MAXLEN 2048
-#define COLUMN_COMMENT_MAXLEN 1024
-#define INDEX_COMMENT_MAXLEN 1024
-
-/*
   USER_HOST_BUFF_SIZE -- length of string buffer, that is enough to contain
   username and hostname parts of the user identifier with trailing zero in
   MySQL standard format:
