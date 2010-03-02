@@ -117,7 +117,7 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
   ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
-  assert (err==DB_SUCCESS);
+  assert (err == DB_SUCCESS);
 
   return(0);
 }
@@ -590,11 +590,11 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
       err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
     }
 
-    assert (err==DB_SUCCESS);
+    assert (err == DB_SUCCESS);
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
-  assert (err==DB_SUCCESS);
+  assert (err == DB_SUCCESS);
 
   ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
