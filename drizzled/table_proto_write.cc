@@ -309,7 +309,7 @@ int fill_table_proto(message::Table *table_proto,
   switch(create_info->row_type)
   {
   case ROW_TYPE_DEFAULT:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DEFAULT);
+    /* No use setting a default row type... just adds redundant info to message */
     break;
   case ROW_TYPE_FIXED:
     table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
@@ -333,8 +333,8 @@ int fill_table_proto(message::Table *table_proto,
     abort();
   }
 
-  table_options->set_pack_record(create_info->table_options
-				 & HA_OPTION_PACK_RECORD);
+  if (create_info->table_options & HA_OPTION_PACK_RECORD)
+    table_options->set_pack_record(true);
 
   if (table_options->has_comment())
   {
@@ -447,7 +447,10 @@ int fill_table_proto(message::Table *table_proto,
 
       idx->set_comment(key_info[i].comment.str);
     }
-    if(key_info[i].flags & ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
+    if (key_info[i].flags & 
+        ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | 
+          HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | 
+          HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
       abort(); // Invalid (unknown) index flag.
 
     for(unsigned int j=0; j< key_info[i].key_parts; j++)

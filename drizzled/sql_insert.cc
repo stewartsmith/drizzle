@@ -1615,31 +1615,16 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
-    For row-based replication, the CREATE-SELECT statement is written
-    in two pieces: the first one contain the CREATE TABLE statement
-    necessary to create the table and the second part contain the rows
-    that should go into the table.
-
-    For non-temporary tables, the start of the CREATE-SELECT
-    implicitly commits the previous transaction, and all events
-    forming the statement will be stored the transaction cache. At end
-    of the statement, the entire statement is committed as a
-    transaction, and all events are written to the binary log.
-
-    On the master, the table is locked for the duration of the
-    statement, but since the CREATE part is replicated as a simple
-    statement, there is no way to lock the table for accesses on the
-    slave.  Hence, we have to hold on to the CREATE part of the
-    statement until the statement has finished.
+    For replication, the CREATE-SELECT statement is written
+    in two pieces: the first transaction messsage contains 
+    the CREATE TABLE statement as a CreateTableStatement message
+    necessary to create the table.
+    
+    The second transaction message contains all the InsertStatement
+    and associated InsertRecords that should go into the table.
    */
 
   unit= u;
-
-  /*
-    Start a statement transaction before the create if we are using
-    row-based replication for the statement.  If we are creating a
-    temporary table, we need to start a statement transaction.
-  */
 
   if (!(table= create_table_from_items(session, create_info, create_table,
 				       table_proto,

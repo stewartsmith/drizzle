@@ -54,6 +54,7 @@ using namespace std;
 namespace drizzled
 {
 
+extern plugin::StorageEngine *myisam_engine;
 extern pid_t current_pid;
 
 bool is_primary_key(KEY *key_info)
@@ -249,7 +250,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
-	error= 0;
+        error= 0;
         session->clear_error();
       }
 
@@ -261,7 +262,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
 
     if (error == 0 || (if_exists && foreign_key_error == false))
-        write_bin_log_drop_table(session, if_exists, db, table->table_name);
+    {
+      ReplicationServices &replication_services= ReplicationServices::singleton();
+      replication_services.dropTable(session, string(db), string(table->table_name), if_exists);
+    }
 
     if (error)
     {
@@ -757,9 +761,11 @@ int mysql_prepare_create_table(Session *session,
 	}
       }
     }
-    /* Don't pack rows in old tables if the user has requested this */
-    if ((sql_field->flags & BLOB_FLAG) ||
-	(sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED))
+
+    /** @todo Get rid of this MyISAM-specific crap. */
+    if (create_info->db_type == myisam_engine &&
+        ((sql_field->flags & BLOB_FLAG) ||
+         (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED)))
       (*db_options)|= HA_OPTION_PACK_RECORD;
     it2.rewind();
   }
@@ -1451,15 +1457,11 @@ bool mysql_create_table_no_lock(Session *session,
     }
   }
 
-  /*
-    Don't write statement if:
-    - It is an internal temporary table,
-    - Row-based logging is used and it we are creating a temporary table, or
-    - The binary log is not open.
-    Otherwise, the statement shall be binlogged.
-   */
   if (not internal_tmp_table && not lex_identified_temp_table)
-    write_bin_log(session, session->query.c_str());
+  {
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    replication_services.createTable(session, *table_proto);
+  }
   error= false;
 unlock_and_end:
   pthread_mutex_unlock(&LOCK_open);

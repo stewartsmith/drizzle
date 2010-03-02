@@ -129,7 +129,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   }
   else // Created !
   {
-    replication_services.rawStatement(session, session->query);
+    replication_services.createSchema(session, schema_message);
     session->my_ok(1);
   }
 
@@ -275,7 +275,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     assert(! session->query.empty());
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rawStatement(session, session->getQueryString());
+    replication_services.dropSchema(session, schema_name);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
