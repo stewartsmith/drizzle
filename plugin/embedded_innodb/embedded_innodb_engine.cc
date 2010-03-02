@@ -154,35 +154,38 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
-static int store_table_message(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
+static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
 {
   ib_crsr_t cursor;
   ib_tpl_t message_tuple;
   ib_err_t err;
+  string serialized_message;
 
   err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
-  assert (err==DB_SUCCESS);
+  if (err != DB_SUCCESS)
+    return err;
 
   message_tuple= ib_clust_read_tuple_create(cursor);
 
   err= ib_col_set_value(message_tuple, 0, table_name, strlen(table_name));
-  assert (err==DB_SUCCESS);
+  if (err != DB_SUCCESS)
+    goto cleanup;
 
-  string serialized_message;
   table_message.SerializeToString(&serialized_message);
 
   err= ib_col_set_value(message_tuple, 1, serialized_message.c_str(),
                         serialized_message.length());
-  assert (err==DB_SUCCESS);
+  if (err != DB_SUCCESS)
+    goto cleanup;
 
   err= ib_cursor_insert_row(cursor, message_tuple);
-  assert (err==DB_SUCCESS);
 
+cleanup:
   ib_tuple_delete(message_tuple);
 
   ib_cursor_close(cursor);
 
-  return 0;
+  return err;
 }
 
 int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
@@ -262,9 +265,13 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     return HA_ERR_GENERIC;
   }
 
-  store_table_message(innodb_schema_transaction, path+2, table_message);
+  innodb_err= store_table_message(innodb_schema_transaction, path+2,
+                                  table_message);
 
-  innodb_err= ib_trx_commit(innodb_schema_transaction);
+  if (innodb_err == DB_SUCCESS)
+    innodb_err= ib_trx_commit(innodb_schema_transaction);
+  else
+    innodb_err= ib_trx_rollback(innodb_schema_transaction);
 
   ib_table_schema_delete(innodb_table_schema);
 
