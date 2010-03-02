@@ -30,6 +30,7 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     time_t now;
+    std::vector<drizzled::Session*> session_list;
     std::vector<drizzled::Session*>::iterator it;
 
   public:
