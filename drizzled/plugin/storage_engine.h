@@ -321,12 +321,12 @@ public:
     return doRenameTable(session, from, to);
   }
 
-  // TODO: move these to protected
+  // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
   virtual int doDropTable(Session& session,
-                          const std::string table_path)= 0;
+                          const std::string &table_path)= 0;
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
@@ -356,8 +356,7 @@ public:
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int dropTable(Session& session,
-                       TableIdentifier &identifier,
-                       bool generate_warning);
+                       TableIdentifier &identifier);
   static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
 
   // @note All schema methods defined here

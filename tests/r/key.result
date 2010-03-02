@@ -143,12 +143,12 @@ a	2
 drop table t1;
 create table t1 (a int not null unique, b int unique, c int, d int not null primary key, key(c), e int not null unique);
 show keys from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	d
-t1	a	0	a
-t1	e	0	e
-t1	b	0	b
-t1	c	0	c
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	d
+t1	TRUE	a	1	a
+t1	TRUE	e	1	e
+t1	TRUE	b	1	b
+t1	FALSE	c	1	c
 drop table t1;
 CREATE TABLE t1 (c VARCHAR(10) NOT NULL,i INT PRIMARY KEY NOT NULL AUTO_INCREMENT, UNIQUE (c,i));
 INSERT INTO t1 (c) VALUES (NULL),(NULL);

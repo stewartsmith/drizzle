@@ -28,6 +28,8 @@
 #include "drizzled/charset_info.h"
 #include "drizzled/cursor.h"
 
+#include "drizzled/internal/my_sys.h"
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -137,8 +139,6 @@ void Schema::prime()
     {
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_message.name(), schema_message));
-
-      cerr << "Caching " << schema_message.name() << "\n";
 
       if (ret.second == false)
       {
@@ -268,6 +268,15 @@ bool Schema::doDropSchema(const std::string &schema_name)
   }
 
   return true;
+}
+
+int Schema::doDropTable(Session&, const string &table_path)
+{
+  string path(table_path);
+
+  path.append(DEFAULT_FILE_EXTENSION);
+
+  return internal::my_delete(path.c_str(), MYF(0));
 }
 
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)

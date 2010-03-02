@@ -1935,7 +1935,7 @@ Tables_in_test (s%)
 show tables from test like "t?";
 Tables_in_test (t?)
 show columns from t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE		FALSE	
 fld1	INTEGER	FALSE	0	FALSE	
 companynr	INTEGER	FALSE	0	FALSE	
@@ -1944,9 +1944,23 @@ fld4	VARCHAR	FALSE	0	FALSE
 fld5	VARCHAR	FALSE	0	FALSE	
 fld6	VARCHAR	FALSE	0	FALSE	
 show columns from t2 from test like 'f%';
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
+auto	INTEGER	FALSE		FALSE	
+fld1	INTEGER	FALSE	0	FALSE	
+companynr	INTEGER	FALSE	0	FALSE	
+fld3	VARCHAR	FALSE	0	FALSE	
+fld4	VARCHAR	FALSE	0	FALSE	
+fld5	VARCHAR	FALSE	0	FALSE	
+fld6	VARCHAR	FALSE	0	FALSE	
 show columns from t2 from test like 's%';
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
+auto	INTEGER	FALSE		FALSE	
+fld1	INTEGER	FALSE	0	FALSE	
+companynr	INTEGER	FALSE	0	FALSE	
+fld3	VARCHAR	FALSE	0	FALSE	
+fld4	VARCHAR	FALSE	0	FALSE	
+fld5	VARCHAR	FALSE	0	FALSE	
+fld6	VARCHAR	FALSE	0	FALSE	
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
 id bigint NOT NULL auto_increment,

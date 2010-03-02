@@ -29,10 +29,12 @@ static IndexesTool *indexes;
 static ReferentialConstraintsTool *referential_constraints;
 static SchemasTool *schemas;
 static SchemaNames *schema_names;
+static ShowColumns *show_columns;
+static ShowIndexes *show_indexes;
 static TableConstraintsTool *table_constraints;
 static TablesTool *tables;
-static TableNames *local_tables;
-static TableStatus *table_status;
+static ShowTables *local_tables;
+static ShowTableStatus *table_status;
 
 
 static int init(drizzled::plugin::Registry &registry)
@@ -42,10 +44,12 @@ static int init(drizzled::plugin::Registry &registry)
   indexes= new(std::nothrow)IndexesTool;
   referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
   schemas= new(std::nothrow)SchemasTool;
-  local_tables= new(std::nothrow)TableNames;
+  local_tables= new(std::nothrow)ShowTables;
   schema_names= new(std::nothrow)SchemaNames;
+  show_indexes= new(std::nothrow)ShowIndexes;
+  show_columns= new(std::nothrow)ShowColumns;
   table_constraints= new(std::nothrow)TableConstraintsTool;
-  table_status= new(std::nothrow)TableStatus;
+  table_status= new(std::nothrow)ShowTableStatus;
   tables= new(std::nothrow)TablesTool;
 
   registry.add(columns);
@@ -55,6 +59,8 @@ static int init(drizzled::plugin::Registry &registry)
   registry.add(referential_constraints);
   registry.add(schema_names);
   registry.add(schemas);
+  registry.add(show_indexes);
+  registry.add(show_columns);
   registry.add(table_constraints);
   registry.add(table_status);
   registry.add(tables);
@@ -71,6 +77,8 @@ static int finalize(drizzled::plugin::Registry &registry)
   registry.remove(referential_constraints);
   registry.remove(schema_names);
   registry.remove(schemas);
+  registry.remove(show_indexes);
+  registry.remove(show_columns);
   registry.remove(table_constraints);
   registry.remove(table_status);
   registry.remove(tables);
@@ -81,6 +89,8 @@ static int finalize(drizzled::plugin::Registry &registry)
   delete referential_constraints;
   delete schema_names;
   delete schemas;
+  delete show_columns;
+  delete show_indexes;
   delete table_constraints;
   delete table_status;
   delete tables;
