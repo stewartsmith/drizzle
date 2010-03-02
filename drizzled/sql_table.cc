@@ -1970,7 +1970,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
                              bool is_engine_set)
 {
   Table *name_lock= 0;
-  char src_path[FN_REFLEN];
   char *db= table->db;
   char *table_name= table->table_name;
   int  err;
@@ -1991,9 +1990,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   */
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
-
-  strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
-
 
   TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ? TEMP_TABLE : NO_TMP_TABLE);
 
@@ -2036,11 +2032,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     int protoerr= EEXIST;
 
+    TableIdentifier identifier(src_table->table->s->db.str,
+                               src_table->table->s->table_name.str, src_table->table->s->tmp_table);
     protoerr= plugin::StorageEngine::getTableDefinition(*session,
-                                                        src_path,
-                                                        db,
-                                                        table_name,
-                                                        false,
+                                                        identifier,
                                                         &src_proto);
 
     message::Table new_proto(src_proto);
