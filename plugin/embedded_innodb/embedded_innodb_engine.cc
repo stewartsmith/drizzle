@@ -617,6 +617,13 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   return ret;
 }
 
+int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
+{
+  ib_cursor_prev(cursor);
+  ib_cursor_delete_row(cursor);
+  return 0;
+}
+
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
