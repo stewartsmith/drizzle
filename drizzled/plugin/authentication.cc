@@ -20,9 +20,10 @@
 
 #include "config.h"
 #include "drizzled/plugin/authentication.h"
-#include "drizzled/errmsg_print.h"
+#include "drizzled/error.h"
 #include "drizzled/plugin/registry.h"
 #include "drizzled/gettext.h"
+#include "drizzled/security_context.h"
 
 #include <vector>
 
@@ -51,21 +52,21 @@ void plugin::Authentication::removePlugin(plugin::Authentication *auth)
 
 class AuthenticateBy : public unary_function<plugin::Authentication *, bool>
 {
-  Session *session;
-  const char *password;
+  const SecurityContext &sctx;
+  const string &password;
 public:
-  AuthenticateBy(Session *session_arg, const char *password_arg) :
+  AuthenticateBy(const SecurityContext &sctx_arg, const string &password_arg) :
     unary_function<plugin::Authentication *, bool>(),
-    session(session_arg), password(password_arg) {}
+    sctx(sctx_arg), password(password_arg) {}
 
   inline result_type operator()(argument_type auth)
   {
-    return auth->authenticate(session, password);
+    return auth->authenticate(sctx, password);
   }
 };
 
-bool plugin::Authentication::isAuthenticated(Session *session,
-                                             const char *password)
+bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
+                                             const string &password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (all_authentication.size() == 0)
@@ -74,12 +75,21 @@ bool plugin::Authentication::isAuthenticated(Session *session,
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Authentication *>::iterator iter=
     find_if(all_authentication.begin(), all_authentication.end(),
-            AuthenticateBy(session, password));
+            AuthenticateBy(sctx, password));
+
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
    */
-  return iter != all_authentication.end();
+  if (iter != all_authentication.end())
+  {
+    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
+             sctx.getUser().c_str(),
+             sctx.getIp().c_str(),
+             password.empty() ? ER(ER_NO) : ER(ER_YES));
+    return true;
+  }
+  return false;
 }
 
 } /* namespace drizzled */
