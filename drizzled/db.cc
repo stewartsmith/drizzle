@@ -39,6 +39,7 @@
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/plugin/storage_engine.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
@@ -605,7 +606,6 @@ static long mysql_rm_known_files(Session *session,
 bool mysql_change_db(Session *session, const std::string &new_db_name)
 {
   LEX_STRING new_db_file_name;
-  const CHARSET_INFO *db_default_cl;
 
   assert(not new_db_name.empty());
 
@@ -652,8 +652,6 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
 
     return true;
   }
-
-  db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
   free(new_db_file_name.str);
