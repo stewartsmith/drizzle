@@ -163,25 +163,7 @@
 #define SERVER_MORE_RESULTS_EXISTS 8    /* Multi query - next query exists */
 #define SERVER_QUERY_NO_GOOD_INDEX_USED 16
 #define SERVER_QUERY_NO_INDEX_USED      32
-/*
-  The server was able to fulfill the clients request and opened a
-  read-only non-scrollable cursor for a query. This flag comes
-  in reply to COM_STMT_EXECUTE and COM_STMT_FETCH commands.
-*/
-#define SERVER_STATUS_CURSOR_EXISTS 64
-/*
-  This flag is sent when a read-only cursor is exhausted, in reply to
-  COM_STMT_FETCH command.
-*/
-#define SERVER_STATUS_LAST_ROW_SENT 128
 #define SERVER_STATUS_DB_DROPPED        256 /* A database was dropped */
-#define SERVER_STATUS_NO_BACKSLASH_ESCAPES 512
-/*
-  Tell clients that this query was logged to the slow query log.
-  Not yet set in the server, but interface is defined for applications
-  to use.  See WorkLog 4098.
-*/
-#define SERVER_QUERY_WAS_SLOW           1024
 
 #define DRIZZLE_ERRMSG_SIZE	512
 
