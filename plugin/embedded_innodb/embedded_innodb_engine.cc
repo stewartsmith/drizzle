@@ -316,7 +316,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
-  if(delete_table_message_from_innodb(innodb_schema_transaction, table_name.c_str()+2) != DB_SUCCESS)
+  if (delete_table_message_from_innodb(innodb_schema_transaction, table_name.c_str()+2) != DB_SUCCESS)
   {
     ib_trx_rollback(innodb_schema_transaction);
     return HA_ERR_GENERIC;
