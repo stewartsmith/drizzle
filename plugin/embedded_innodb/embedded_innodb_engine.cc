@@ -121,7 +121,7 @@ int EmbeddedInnoDBCursor::close(void)
 }
 
 static int create_table_add_field(ib_tbl_sch_t schema,
-                                  message::Table::Field field,
+                                  const message::Table::Field &field,
                                   ib_err_t *err)
 {
   ib_col_attr_t column_attr= IB_COL_NONE;
