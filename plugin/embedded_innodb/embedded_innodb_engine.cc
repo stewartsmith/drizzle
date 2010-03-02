@@ -46,6 +46,8 @@ using namespace drizzled;
 
 #define EMBEDDED_INNODB_EXT ".EID"
 
+const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
+
 static const char *EmbeddedInnoDBCursor_exts[] = {
   NULL
 };
@@ -158,34 +160,38 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
-static int store_table_proto(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
+static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name, drizzled::message::Table& table_message)
 {
   ib_crsr_t cursor;
-  ib_tpl_t proto_tuple;
+  ib_tpl_t message_tuple;
   ib_err_t err;
+  string serialized_message;
 
-  err= ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
-  assert (err==DB_SUCCESS);
+  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  if (err != DB_SUCCESS)
+    return err;
 
-  proto_tuple= ib_clust_read_tuple_create(cursor);
+  message_tuple= ib_clust_read_tuple_create(cursor);
 
-  err= ib_col_set_value(proto_tuple, 0, table_name, strlen(table_name));
-  assert (err==DB_SUCCESS);
+  err= ib_col_set_value(message_tuple, 0, table_name, strlen(table_name));
+  if (err != DB_SUCCESS)
+    goto cleanup;
 
-  string serialized_proto;
-  table_message.SerializeToString(&serialized_proto);
+  table_message.SerializeToString(&serialized_message);
 
-  err= ib_col_set_value(proto_tuple, 1, serialized_proto.c_str(), serialized_proto.length());
-  assert (err==DB_SUCCESS);
+  err= ib_col_set_value(message_tuple, 1, serialized_message.c_str(),
+                        serialized_message.length());
+  if (err != DB_SUCCESS)
+    goto cleanup;
 
-  err= ib_cursor_insert_row(cursor, proto_tuple);
-  assert (err==DB_SUCCESS);
+  err= ib_cursor_insert_row(cursor, message_tuple);
 
-  ib_tuple_delete(proto_tuple);
+cleanup:
+  ib_tuple_delete(message_tuple);
 
   ib_cursor_close(cursor);
 
-  return 0;
+  return err;
 }
 
 int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
@@ -283,9 +289,13 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     return HA_ERR_GENERIC;
   }
 
-  store_table_proto(innodb_schema_transaction, path+2, table_message);
+  innodb_err= store_table_message(innodb_schema_transaction, path+2,
+                                  table_message);
 
-  innodb_err= ib_trx_commit(innodb_schema_transaction);
+  if (innodb_err == DB_SUCCESS)
+    innodb_err= ib_trx_commit(innodb_schema_transaction);
+  else
+    innodb_err= ib_trx_rollback(innodb_schema_transaction);
 
   ib_table_schema_delete(innodb_table_schema);
 
@@ -301,14 +311,14 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
   return 0;
 }
 
-static int delete_table_proto_from_innodb(ib_trx_t transaction, const char* table_name)
+static int delete_table_message_from_innodb(ib_trx_t transaction, const char* table_name)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
   int res;
   ib_err_t err;
 
-  ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
+  ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   search_tuple= ib_clust_search_tuple_create(cursor);
 
   ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
@@ -337,7 +347,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
-  if(delete_table_proto_from_innodb(innodb_schema_transaction, table_name.c_str()+2) != DB_SUCCESS)
+  if (delete_table_message_from_innodb(innodb_schema_transaction, table_name.c_str()+2) != DB_SUCCESS)
   {
     ib_trx_rollback(innodb_schema_transaction);
     return HA_ERR_GENERIC;
@@ -451,14 +461,14 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   ib_trx_commit(transaction);
 }
 
-static int read_table_proto_from_innodb(const char* table_name, drizzled::message::Table *table_message)
+static int read_table_message_from_innodb(const char* table_name, drizzled::message::Table *table_message)
 {
   ib_trx_t transaction;
   ib_tpl_t search_tuple;
   ib_tpl_t read_tuple;
   ib_crsr_t cursor;
-  const char *proto;
-  ib_ulint_t proto_len;
+  const char *message;
+  ib_ulint_t message_len;
   ib_col_meta_t col_meta;
   int res;
   ib_err_t err;
@@ -466,7 +476,7 @@ static int read_table_proto_from_innodb(const char* table_name, drizzled::messag
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   ib_schema_lock_exclusive(transaction);
 
-  ib_cursor_open_table("data_dictionary/innodb_table_proto", transaction, &cursor);
+  ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   search_tuple= ib_clust_search_tuple_create(cursor);
   read_tuple= ib_clust_read_tuple_create(cursor);
 
@@ -482,10 +492,10 @@ static int read_table_proto_from_innodb(const char* table_name, drizzled::messag
   if (err == DB_RECORD_NOT_FOUND || res != 0)
     goto rollback;
 
-  proto= (const char*)ib_col_get_value(read_tuple, 1);
-  proto_len= ib_col_get_meta(read_tuple, 1, &col_meta);
+  message= (const char*)ib_col_get_value(read_tuple, 1);
+  message_len= ib_col_get_meta(read_tuple, 1, &col_meta);
 
-  if (table_message->ParseFromArray(proto, proto_len) == false)
+  if (table_message->ParseFromArray(message, message_len) == false)
     goto rollback;
 
   ib_tuple_delete(search_tuple);
@@ -502,11 +512,11 @@ rollback:
   ib_schema_unlock(transaction);
   ib_trx_rollback(transaction);
 
-  if (strcmp(table_name, "data_dictionary/innodb_table_proto") == 0)
+  if (strcmp(table_name, INNODB_TABLE_DEFINITIONS_TABLE) == 0)
   {
     message::Table::StorageEngine *engine= table_message->mutable_engine();
     engine->set_name("InnoDB");
-    table_message->set_name("innodb_table_proto");
+    table_message->set_name("innodb_table_message");
     table_message->set_type(message::Table::STANDARD);
 
     message::Table::Field *field= table_message->add_field();
@@ -518,7 +528,7 @@ rollback:
     stropt->set_collation_id(my_charset_bin.number);
 
     field= table_message->add_field();
-    field->set_name("proto");
+    field->set_name("message");
     field->set_type(message::Table::Field::BLOB);
 
 /*
@@ -553,7 +563,7 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
 
   if (table)
   {
-    read_table_proto_from_innodb(path+2, table);
+    read_table_message_from_innodb(path+2, table);
   }
 
   return EEXIST;
@@ -744,7 +754,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
   return(HA_ERR_END_OF_FILE);
 }
 
-static int create_table_proto_table()
+static int create_table_message_table()
 {
   ib_tbl_sch_t schema;
   ib_idx_sch_t index_schema;
@@ -753,11 +763,11 @@ static int create_table_proto_table()
 
   ib_database_create("data_dictionary");
 
-  ib_table_schema_create("data_dictionary/innodb_table_proto", &schema,
+  ib_table_schema_create(INNODB_TABLE_DEFINITIONS_TABLE, &schema,
                          IB_TBL_COMPACT, 0);
   ib_table_schema_add_col(schema, "table_name", IB_VARCHAR, IB_COL_NONE, 0,
                           IB_MAX_TABLE_NAME_LEN);
-  ib_table_schema_add_col(schema, "proto", IB_BLOB, IB_COL_NONE, 0, 0);
+  ib_table_schema_add_col(schema, "message", IB_BLOB, IB_COL_NONE, 0, 0);
 
   ib_table_schema_add_index(schema, "PRIMARY_KEY", &index_schema);
   ib_index_schema_add_col(index_schema, "table_name", 0);
@@ -805,7 +815,7 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
     return -1;
   }
 
-  create_table_proto_table();
+  create_table_message_table();
 
   embedded_innodb_engine= new EmbeddedInnoDBEngine("InnoDB");
   registry.add(embedded_innodb_engine);
