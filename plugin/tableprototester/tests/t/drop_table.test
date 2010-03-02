@@ -1,2 +1,2 @@
---error 1051
+#--error 1051
 DROP TABLE t1;

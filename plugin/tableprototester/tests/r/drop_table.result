@@ -1,2 +1,1 @@
 DROP TABLE t1;
-ERROR 42S02: Unknown table 't1'

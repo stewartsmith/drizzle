@@ -427,6 +427,33 @@ handle_error(uint32_t ,
   return true;
 }
 
+class DropTable : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  TableIdentifier &identifier;
+  Session &session;
+
+public:
+
+  DropTable(Session &session_arg, TableIdentifier &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    identifier(arg),
+    session(session_arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo someday check that at least one engine said "true"
+    std::string path(identifier.getPath());
+    bool success= engine->doDropTable(session, path);
+
+    if (success)
+      success_count++;
+  }
+};
+
 
 /**
    returns ENOENT if the file doesn't exists.
@@ -454,21 +481,18 @@ int StorageEngine::dropTable(Session& session,
 
   if (engine)
   {
+    std::string path(identifier.getPath());
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier.getPath());
-  }
+    error= engine->doDropTable(session, path);
 
-  if (error != ENOENT)
-  {
-    if (error == 0)
+    if (not error)
     {
-      if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+      if (not engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
       {
-        deleteDefinitionFromPath(identifier);
-      }
-      else
-      {
-        error= deleteDefinitionFromPath(identifier);
+        uint64_t counter;
+
+        for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+                 DropTable(session, identifier, counter));
       }
     }
   }
