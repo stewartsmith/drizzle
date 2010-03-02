@@ -200,15 +200,6 @@
 
 #define packet_error (~(uint32_t) 0)
 
-
-/* Shutdown/kill enums and constants */
-
-/* Bits for THD::killable. */
-#define DRIZZLE_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
-#define DRIZZLE_SHUTDOWN_KILLABLE_TRANS      (unsigned char)(1 << 1)
-#define DRIZZLE_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
-#define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
-
 #if defined(__cplusplus)
 
 namespace drizzled
