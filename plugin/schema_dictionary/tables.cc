@@ -57,7 +57,6 @@ static const string DATE("DATE");
 static const string TIMESTAMP("TIMESTAMP");
 static const string DATETIME("DATETIME");
 
-
 TablesTool::TablesTool() :
   SchemasTool("TABLES")
 {

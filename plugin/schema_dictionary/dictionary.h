@@ -39,5 +39,6 @@
 #include "plugin/schema_dictionary/referential_constraints.h"
 #include "plugin/schema_dictionary/table_constraints.h"
 #include "plugin/schema_dictionary/show_indexes.h"
+#include "plugin/schema_dictionary/show_columns.h"
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

@@ -151,7 +151,7 @@ t1	CREATE TABLE `t1` (
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
 ) ENGINE=DEFAULT COMMENT='it''s a table'
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	TRUE	O'Brien	FALSE	
 c	INTEGER	FALSE	O'Brien	FALSE	
 c-b	INTEGER	TRUE	O'Brien	TRUE	
@@ -200,7 +200,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	DECIMAL	TRUE		TRUE	
 b	DECIMAL	TRUE		TRUE	
 e	DOUBLE	TRUE		TRUE	
@@ -208,7 +208,7 @@ f	DOUBLE	TRUE		TRUE
 h	DOUBLE	TRUE		TRUE	
 i	DOUBLE	TRUE		TRUE	
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	DECIMAL	TRUE		TRUE	
 b	DECIMAL	TRUE		TRUE	
 e	DOUBLE	TRUE		TRUE	
@@ -258,12 +258,12 @@ drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 max(a)	INTEGER	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 c	DECIMAL	TRUE		TRUE	
 d	DOUBLE	TRUE		TRUE	
 f	DOUBLE	TRUE		TRUE	
@@ -271,7 +271,7 @@ r	DOUBLE	TRUE		TRUE
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 c	DECIMAL	TRUE		TRUE	
 d	DOUBLE	TRUE		TRUE	
 f	DOUBLE	TRUE		TRUE	
@@ -493,10 +493,10 @@ show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
 a\b
 show fields from `mysqlttest\1`.`a\b`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 show columns from `a\b` from `mysqlttest\1`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 show keys from `mysqlttest\1`.`a\b`;
 Table	Unique	Key_name	Seq_in_index	Column_name

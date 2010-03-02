@@ -54,7 +54,7 @@ Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	I
 t1	InnoDB	0	DEFAULT	0	0	0	0	0	0	0	0	0	0	utf8_general_ci	0		
 ALTER TABLE t1 CHANGE NAME NAME CHAR(80) not null;
 show COLUMNS FROM t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 GROUP_ID	INTEGER	FALSE	0	FALSE	
 LANG_ID	INTEGER	FALSE	0	FALSE	
 NAME	VARCHAR	FALSE	0	FALSE	
@@ -178,7 +178,7 @@ create table t1 (i int not null auto_increment primary key);
 alter table t1 rename t2;
 alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 i	INTEGER	FALSE	0	FALSE	
 c	VARCHAR	TRUE	0	TRUE	
 drop table t1;
