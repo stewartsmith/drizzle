@@ -69,7 +69,7 @@ bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
                                              const string &password)
 {
   /* If we never loaded any auth plugins, just return true */
-  if (all_authentication.size() == 0)
+  if (all_authentication.empty())
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
