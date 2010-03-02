@@ -41,6 +41,12 @@
 
 namespace drizzled {
 
+uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+bool tablename_to_filename(const char *from, char *to, size_t to_length);
+size_t build_tmptable_filename(char *buff, size_t bufflen);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+
+
 class TableIdentifier
 {
 private:

@@ -393,7 +393,7 @@ public:
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session& session, const string table_path);
+  UNIV_INTERN int doDropTable(Session& session, const string &table_path);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -5937,7 +5937,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session& session,
-	const string table_path)	/* in: table name */
+	const string &table_path)	/* in: table name */
 {
 	int	error;
 	trx_t*	parent_trx;
