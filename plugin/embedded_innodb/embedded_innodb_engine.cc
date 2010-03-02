@@ -44,6 +44,8 @@ using namespace drizzled;
 
 #define EMBEDDED_INNODB_EXT ".EID"
 
+#define INNODB_TABLE_DEFINITIONS_TABLE "data_dictionary/innodb_table_definitions"
+
 static const char *EmbeddedInnoDBCursor_exts[] = {
   NULL
 };
@@ -158,7 +160,7 @@ static int store_table_message(ib_trx_t transaction, const char* table_name, dri
   ib_tpl_t message_tuple;
   ib_err_t err;
 
-  err= ib_cursor_open_table("data_dictionary/innodb_table_definitions", transaction, &cursor);
+  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   assert (err==DB_SUCCESS);
 
   message_tuple= ib_clust_read_tuple_create(cursor);
@@ -285,7 +287,7 @@ static int delete_table_message_from_innodb(ib_trx_t transaction, const char* ta
   int res;
   ib_err_t err;
 
-  ib_cursor_open_table("data_dictionary/innodb_table_definitions", transaction, &cursor);
+  ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   search_tuple= ib_clust_search_tuple_create(cursor);
 
   ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
@@ -443,7 +445,7 @@ static int read_table_message_from_innodb(const char* table_name, drizzled::mess
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   ib_schema_lock_exclusive(transaction);
 
-  ib_cursor_open_table("data_dictionary/innodb_table_definitions", transaction, &cursor);
+  ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   search_tuple= ib_clust_search_tuple_create(cursor);
   read_tuple= ib_clust_read_tuple_create(cursor);
 
@@ -479,7 +481,7 @@ rollback:
   ib_schema_unlock(transaction);
   ib_trx_rollback(transaction);
 
-  if (strcmp(table_name, "data_dictionary/innodb_table_definitions") == 0)
+  if (strcmp(table_name, INNODB_TABLE_DEFINITIONS_TABLE) == 0)
   {
     message::Table::StorageEngine *engine= table_message->mutable_engine();
     engine->set_name("InnoDB");
@@ -629,7 +631,7 @@ static int create_table_message_table()
 
   ib_database_create("data_dictionary");
 
-  ib_table_schema_create("data_dictionary/innodb_table_definitions", &schema,
+  ib_table_schema_create(INNODB_TABLE_DEFINITIONS_TABLE, &schema,
                          IB_TBL_COMPACT, 0);
   ib_table_schema_add_col(schema, "table_name", IB_VARCHAR, IB_COL_NONE, 0,
                           IB_MAX_TABLE_NAME_LEN);
