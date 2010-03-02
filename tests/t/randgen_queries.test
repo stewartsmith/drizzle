@@ -49,16 +49,17 @@ set AUTOCOMMIT=OFF;
 #
 select table_schema, 
        table_name, 
-       CASE WHEN table_type = 'STANDARD' THEN 'table' 
-            WHEN table_type = 'VIEW' THEN 'view' 
-            WHEN table_type = 'FUNCTION' then 'view' 
-       ELSE 'misc' END, 
-       column_name
-      # CASE WHEN column_key = 'PRI' THEN 'primary' 
+       'STANDARD',
+#       CASE WHEN table_type = 'STANDARD' THEN 'table' 
+#            WHEN table_type = 'VIEW' THEN 'view' 
+#            WHEN table_type = 'FUNCTION' then 'view' 
+#       ELSE 'misc' END, 
+       column_name,
+       CASE WHEN IS_PRIMARY = 'TRUE' THEN 'primary' 
       #      WHEN column_key = 'MUL' THEN 'indexed' 
       #      WHEN column_key = 'UNI' THEN 'indexed' 
-      # ELSE 'ordinary' END 
-FROM data_dictionary.tables INNER JOIN data_dictionary.columns USING(table_schema, table_name);
+       ELSE 'indexed' END 
+FROM data_dictionary.index_parts;
 
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
                         (SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
