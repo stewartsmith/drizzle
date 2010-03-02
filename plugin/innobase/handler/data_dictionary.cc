@@ -298,9 +298,9 @@ void InnodbTrxTool::Generator::populate_innodb_locks()
      push("");
    }   
  
-   push(row->lock_space);
-   push(row->lock_page); 
-   push(row->lock_rec);
+   push(static_cast<uint64_t>(row->lock_space));
+   push(static_cast<uint64_t>(row->lock_page)); 
+   push(static_cast<uint64_t>(row->lock_rec));
    push(row->lock_data);
 }
 
@@ -316,12 +316,12 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
 
     push(trx_id);
     push(row->trx_state);
-    push(row->trx_started);
+    push(static_cast<uint64_t>(row->trx_started));
 
     if (row->trx_wait_started != 0)
     {
       push(trx_i_s_create_lock_id(row->requested_lock_row, lock_id, sizeof(lock_id)));
-      push(row->trx_wait_started);
+      push(static_cast<uint64_t>(row->trx_wait_started));
     }
     else
     {
@@ -330,7 +330,7 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     }
 
     push(static_cast<int64_t>(row->trx_weight));
-    push(row->trx_mysql_thread_id);
+    push(static_cast<uint64_t>(row->trx_mysql_thread_id));
     push(row->trx_query);
 }
 
