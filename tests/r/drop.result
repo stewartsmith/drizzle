@@ -46,6 +46,7 @@ unlock tables;
 create database mysqltest;
 show databases;
 Database
+data_dictionary
 information_schema
 mysql
 mysqltest
@@ -57,6 +58,7 @@ unlock tables;
 drop database mysqltest;
 show databases;
 Database
+data_dictionary
 information_schema
 mysql
 test
@@ -79,6 +81,8 @@ create table mysql_test.`#sql-347f_7` (f1 int);
 create table mysql_test.`#sql-347f_8` (f1 int);
 drop table mysql_test.`#sql-347f_8`;
 drop database mysql_test;
+Warnings:
+Note	1051	Unknown table '#sql-347f_7'
 create database mysqltestbug26703;
 use mysqltestbug26703;
 create table `#mysql50#abc``def` ( id int );

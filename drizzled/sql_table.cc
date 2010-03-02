@@ -43,7 +43,6 @@
 
 
 #include "drizzled/statement/alter_table.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
 
@@ -86,7 +85,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     apply it to the table.
   */
   if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= get_default_db_collation(db);
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(db);
 }
 
 /*
@@ -342,10 +341,10 @@ size_t build_tmptable_filename(char *buff, size_t bufflen)
 */
 
 void write_bin_log(Session *session,
-                   char const *query, size_t query_length)
+                   char const *query)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.rawStatement(session, query, query_length);
+  replication_services.rawStatement(session, query);
 }
 
 
@@ -369,7 +368,7 @@ void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_n
 
   built_query.append(table_name);
   built_query.append("`");
-  replication_services.rawStatement(session, built_query.c_str(), built_query.length());
+  replication_services.rawStatement(session, built_query);
 }
 
 /*
@@ -1613,10 +1612,10 @@ bool mysql_create_table_no_lock(Session *session,
   }
 
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
-  if (!internal_tmp_table && ! lex_identified_temp_table)
+  if (not internal_tmp_table && not lex_identified_temp_table)
   {
-    if (plugin::StorageEngine::getTableDefinition(*session,
-                                                  identifier)==EEXIST)
+    if (plugin::StorageEngine::doesTableExist(*session,
+                                              identifier, false)==EEXIST)
     {
       if (is_if_not_exists)
       {
@@ -1627,7 +1626,9 @@ bool mysql_create_table_no_lock(Session *session,
         create_info->table_existed= 1;		// Mark that table existed
       }
       else 
+      {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
+      }
 
       goto unlock_and_end;
     }
@@ -1655,30 +1656,24 @@ bool mysql_create_table_no_lock(Session *session,
     one else is attempting to discover the table. Since
     it's not on disk as a frm cursor, no one could be using it!
   */
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
-    int retcode= plugin::StorageEngine::getTableDefinition(*session, identifier);
+    bool exists= plugin::StorageEngine::doesTableExist(*session, identifier, false);
 
-    switch (retcode)
+    if (exists)
     {
-      case ENOENT:
-        /* Normal case, no table exists. we can go and create it */
-        break;
-      case EEXIST:
-        if (is_if_not_exists)
-        {
-          error= false;
-          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                              ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                              identifier.getTableName());
-          create_info->table_existed= 1;		// Mark that table existed
-          goto unlock_and_end;
-        }
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
+      if (is_if_not_exists)
+      {
+        error= false;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                            identifier.getTableName());
+        create_info->table_existed= 1;		// Mark that table existed
         goto unlock_and_end;
-      default:
-        my_error(retcode, MYF(0), identifier.getTableName());
-        goto unlock_and_end;
+      }
+
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
+      goto unlock_and_end;
     }
   }
 
@@ -1691,12 +1686,14 @@ bool mysql_create_table_no_lock(Session *session,
 		       table_proto,
                        create_info, alter_info->create_list,
                        key_count, key_info_buffer))
+  {
     goto unlock_and_end;
+  }
 
   if (lex_identified_temp_table)
   {
     /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(identifier)))
+    if (not (session->open_temporary_table(identifier)))
     {
       (void) session->rm_temporary_table(create_info->db_type, identifier);
       goto unlock_and_end;
@@ -1710,8 +1707,8 @@ bool mysql_create_table_no_lock(Session *session,
     - The binary log is not open.
     Otherwise, the statement shall be binlogged.
    */
-  if (!internal_tmp_table && ! lex_identified_temp_table)
-    write_bin_log(session, session->query, session->query_length);
+  if (not internal_tmp_table && not lex_identified_temp_table)
+    write_bin_log(session, session->query.c_str());
   error= false;
 unlock_and_end:
   pthread_mutex_unlock(&LOCK_open);
@@ -1719,6 +1716,7 @@ unlock_and_end:
 err:
   session->set_proc_info("After create");
   delete cursor;
+
   return(error);
 }
 
@@ -2288,26 +2286,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     int protoerr= EEXIST;
 
-    /*
-     * If an engine was not specified and we are reading from an I_S table, then we need to toss an
-     * error. This should go away soon.
-     * @todo make this go away!
-     */
-    if (! is_engine_set)
-    {
-      string tab_name(src_path);
-      string i_s_prefix("./information_schema/");
-      if (tab_name.compare(0, i_s_prefix.length(), i_s_prefix) == 0)
-      {
-        pthread_mutex_unlock(&LOCK_open);
-        my_error(ER_ILLEGAL_HA_CREATE_OPTION,
-                 MYF(0),
-                 "INFORMATION_ENGINE",
-                 "TEMPORARY");
-        goto err;
-      }
-    }
-
     protoerr= plugin::StorageEngine::getTableDefinition(*session,
                                                         src_path,
                                                         db,
@@ -2435,10 +2413,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         int result= store_create_info(table, &query, is_if_not_exists);
 
         assert(result == 0); // store_create_info() always return 0
-        write_bin_log(session, query.ptr(), query.length());
+        write_bin_log(session, query.ptr());
       }
       else                                      // Case 1
-        write_bin_log(session, session->query, session->query_length);
+        write_bin_log(session, session->query.c_str());
     }
   }
 

@@ -200,7 +200,6 @@ public:
 
 
 extern "C" {
-char **session_query(Session *session);
 
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
