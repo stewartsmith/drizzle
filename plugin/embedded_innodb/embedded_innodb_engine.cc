@@ -44,7 +44,7 @@ using namespace drizzled;
 
 #define EMBEDDED_INNODB_EXT ".EID"
 
-#define INNODB_TABLE_DEFINITIONS_TABLE "data_dictionary/innodb_table_definitions"
+const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
   NULL
