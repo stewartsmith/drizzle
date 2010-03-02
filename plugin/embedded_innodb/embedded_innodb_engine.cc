@@ -621,6 +621,7 @@ int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
 {
   ib_cursor_prev(cursor);
   ib_cursor_delete_row(cursor);
+  ib_cursor_next(cursor);
   return 0;
 }
 
