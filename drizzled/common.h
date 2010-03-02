@@ -118,8 +118,6 @@
 */
 #define USER_HOST_BUFF_SIZE HOSTNAME_LENGTH + USERNAME_LENGTH + 2
 
-#define LOCAL_HOST	"localhost"
-
 /*
   You should add new commands to the end of this list, otherwise old
   servers won't be able to handle them as 'unsupported'.
