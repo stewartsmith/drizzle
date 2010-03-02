@@ -65,24 +65,24 @@ def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Name	Name	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Engine	Engine	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Version	Version	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Row_format	Row_format	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Rows	Rows	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Avg_row_length	Avg_row_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Data_length	Data_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Max_data_length	Max_data_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Index_length	Index_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Data_free	Data_free	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Auto_increment	Auto_increment	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Create_time	Create_time	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Update_time	Update_time	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Check_time	Check_time	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Collation	Collation	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Checksum	Checksum	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Create_options	Create_options	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Comment	Comment	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Name	Name	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Engine	Engine	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Version	Version	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Row_format	Row_format	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Rows	Rows	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Avg_row_length	Avg_row_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Data_length	Data_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Max_data_length	Max_data_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Index_length	Index_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Data_free	Data_free	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Auto_increment	Auto_increment	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Create_time	Create_time	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Update_time	Update_time	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Check_time	Check_time	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Collation	Collation	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Checksum	Checksum	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Create_options	Create_options	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Comment	Comment	8	256	0	N	1	0	45
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr

@@ -260,7 +260,7 @@ void TablesTool::Generator::fill()
   push(table_proto.options().comment());
 }
 
-bool TableNames::Generator::checkSchema()
+bool ShowTables::Generator::checkSchema()
 {
   Session *session= current_session;
 

@@ -4774,7 +4774,7 @@ show_param:
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "LOCAL_TABLE_NAMES"))
+               if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4808,7 +4808,7 @@ show_param:
                }
              }
 
-             if (prepare_new_schema_table(session, lex, "LOCAL_TABLE_STATUS"))
+             if (prepare_new_schema_table(session, lex, "SHOW_TABLE_STATUS"))
                DRIZZLE_YYABORT;
 
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->

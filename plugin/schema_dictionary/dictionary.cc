@@ -33,8 +33,8 @@ static ShowColumns *show_columns;
 static ShowIndexes *show_indexes;
 static TableConstraintsTool *table_constraints;
 static TablesTool *tables;
-static TableNames *local_tables;
-static TableStatus *table_status;
+static ShowTables *local_tables;
+static ShowTableStatus *table_status;
 
 
 static int init(drizzled::plugin::Registry &registry)
@@ -44,12 +44,12 @@ static int init(drizzled::plugin::Registry &registry)
   indexes= new(std::nothrow)IndexesTool;
   referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
   schemas= new(std::nothrow)SchemasTool;
-  local_tables= new(std::nothrow)TableNames;
+  local_tables= new(std::nothrow)ShowTables;
   schema_names= new(std::nothrow)SchemaNames;
   show_indexes= new(std::nothrow)ShowIndexes;
   show_columns= new(std::nothrow)ShowColumns;
   table_constraints= new(std::nothrow)TableConstraintsTool;
-  table_status= new(std::nothrow)TableStatus;
+  table_status= new(std::nothrow)ShowTableStatus;
   tables= new(std::nothrow)TablesTool;
 
   registry.add(columns);
