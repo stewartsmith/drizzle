@@ -119,7 +119,7 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
   ib_err_t err= ib_cursor_open_table(name+2, transaction, &cursor);
-  assert (err==DB_SUCCESS);
+  assert (err == DB_SUCCESS);
 
   tuple= ib_clust_read_tuple_create(cursor);
 
@@ -585,11 +585,11 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
       err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
     }
 
-    assert (err==DB_SUCCESS);
+    assert (err == DB_SUCCESS);
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
-  assert (err==DB_SUCCESS);
+  assert (err == DB_SUCCESS);
 
   ib_tuple_clear(tuple);
 
