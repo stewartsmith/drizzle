@@ -489,7 +489,7 @@ int StorageEngine::dropTable(Session& session,
     {
       if (not engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
       {
-        uint64_t counter;
+        uint64_t counter; // @todo We need to refactor to check that.
 
         for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
                  DropTable(session, identifier, counter));
@@ -871,7 +871,7 @@ public:
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.
-      if (! error)
+      if (not error)
         set_of_names.erase(iter);
     }
   }

@@ -321,7 +321,7 @@ public:
     return doRenameTable(session, from, to);
   }
 
-  // TODO: move these to protected
+  // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
