@@ -837,7 +837,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
         key_part_size= next_field_pos;
       }
 
-      if (field->flags & (ENUM_FLAG | SET_FLAG))
+      if (field->flags & ENUM_FLAG)
         seg->charset= &my_charset_bin;
       else
         seg->charset= field->charset();

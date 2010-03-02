@@ -791,7 +791,7 @@ bool alter_table(Session *session,
 
         TableIdentifier identifier(new_db, new_name_buff);
 
-        if (plugin::StorageEngine::getTableDefinition(*session, identifier) == EEXIST)
+        if (plugin::StorageEngine::doesTableExist(*session, identifier))
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
