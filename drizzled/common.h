@@ -207,10 +207,6 @@ enum enum_field_types { DRIZZLE_TYPE_LONG,
                         DRIZZLE_TYPE_MAX=DRIZZLE_TYPE_BLOB
 };
 
-
-enum Item_result {STRING_RESULT=0, REAL_RESULT, INT_RESULT, ROW_RESULT,
-                  DECIMAL_RESULT};
-
 } /* namespace drizzled */
 
 #endif /* defined(__cplusplus) */

@@ -203,6 +203,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/index_hint.h \
 			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
+			      drizzled/item_result.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
 			      drizzled/item/blob.h \
