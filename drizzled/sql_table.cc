@@ -1950,6 +1950,93 @@ err:
   return(true);
 }
 
+  /*
+    Create a new table by copying from source table
+
+    Altough exclusive name-lock on target table protects us from concurrent
+    DML and DDL operations on it we still want to wrap .FRM creation and call
+    to plugin::StorageEngine::createTable() in critical section protected by
+    LOCK_open in order to provide minimal atomicity against operations which
+    disregard name-locks, like I_S implementation, for example. This is a
+    temporary and should not be copied. Instead we should fix our code to
+    always honor name-locks.
+
+    Also some engines (e.g. NDB cluster) require that LOCK_open should be held
+    during the call to plugin::StorageEngine::createTable().
+    See bug #28614 for more info.
+  */
+static bool create_table_wrapper(Session &session, message::Table& create_table_proto,
+                                 TableIdentifier &destination_identifier,
+                                 TableIdentifier &src_table,
+                                 bool lex_identified_temp_table, bool is_engine_set)
+{
+  int  err;
+  int protoerr= EEXIST;
+  message::Table new_proto;
+  message::Table src_proto;
+
+  protoerr= plugin::StorageEngine::getTableDefinition(session,
+                                                      src_table,
+                                                      &src_proto);
+  new_proto.CopyFrom(src_proto);
+
+  if (lex_identified_temp_table)
+  {
+    new_proto.set_type(message::Table::TEMPORARY);
+  }
+  else
+  {
+    new_proto.set_type(message::Table::STANDARD);
+  }
+
+  if (is_engine_set)
+  {
+    message::Table::StorageEngine *protoengine;
+
+    protoengine= new_proto.mutable_engine();
+    protoengine->set_name(create_table_proto.engine().name());
+  }
+
+  if (protoerr == EEXIST)
+  {
+    plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
+                                                                     new_proto.engine().name());
+
+    if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    {
+      string dst_proto_path(destination_identifier.getPath());
+      dst_proto_path.append(".dfe");
+
+      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
+    }
+    else
+    {
+      protoerr= 0;
+    }
+  }
+
+  if (protoerr)
+  {
+    if (errno == ENOENT)
+      my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName());
+    else
+      my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), errno);
+
+    return false;
+  }
+
+  /*
+    As mysql_truncate don't work on a new table at this stage of
+    creation, instead create the table directly (for both normal
+    and temporary tables).
+  */
+  err= plugin::StorageEngine::createTable(session,
+                                          destination_identifier,
+                                          true, new_proto);
+
+  return err ? false : true;
+}
+
 /*
   Create a table identical to the specified table
 
@@ -1974,12 +2061,11 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   Table *name_lock= 0;
   char *db= table->db;
   char *table_name= table->table_name;
-  int  err;
   bool res= true;
   uint32_t not_used;
-  message::Table src_proto;
   bool lex_identified_temp_table=
     (create_table_proto.type() == message::Table::TEMPORARY);
+  bool was_created;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -1993,7 +2079,13 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier destination_identifier(db, table_name, lex_identified_temp_table ? TEMP_TABLE : STANDARD_TABLE);
+  TableIdentifier destination_identifier(db, table_name,
+                                         lex_identified_temp_table ? TEMP_TABLE : STANDARD_TABLE);
+
+  TableIdentifier src_identifier(src_table->table->s->db.str,
+                                 src_table->table->s->table_name.str, src_table->table->s->tmp_table);
+
+
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2008,6 +2100,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   {
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
       goto err;
+
     if (not name_lock)
       goto table_exists;
 
@@ -2015,98 +2108,20 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
   }
 
-  /*
-    Create a new table by copying from source table
-
-    Altough exclusive name-lock on target table protects us from concurrent
-    DML and DDL operations on it we still want to wrap .FRM creation and call
-    to plugin::StorageEngine::createTable() in critical section protected by
-    LOCK_open in order to provide minimal atomicity against operations which
-    disregard name-locks, like I_S implementation, for example. This is a
-    temporary and should not be copied. Instead we should fix our code to
-    always honor name-locks.
-
-    Also some engines (e.g. NDB cluster) require that LOCK_open should be held
-    during the call to plugin::StorageEngine::createTable().
-    See bug #28614 for more info.
-  */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-  {
-    int protoerr= EEXIST;
-
-    TableIdentifier identifier(src_table->table->s->db.str,
-                               src_table->table->s->table_name.str, src_table->table->s->tmp_table);
-    protoerr= plugin::StorageEngine::getTableDefinition(*session,
-                                                        identifier,
-                                                        &src_proto);
-
-    message::Table new_proto(src_proto);
-
-    if (lex_identified_temp_table)
-    {
-      new_proto.set_type(message::Table::TEMPORARY);
-    }
-    else
-    {
-      new_proto.set_type(message::Table::STANDARD);
-    }
-
-    if (is_engine_set)
-    {
-      message::Table::StorageEngine *protoengine;
-
-      protoengine= new_proto.mutable_engine();
-      protoengine->set_name(create_table_proto.engine().name());
-    }
-
-    if (protoerr == EEXIST)
-    {
-      plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
-                                                                       new_proto.engine().name());
-
-      if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-      {
-        string dst_proto_path(destination_identifier.getPath());
-        dst_proto_path.append(".dfe");
-
-        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
-      }
-      else
-      {
-        protoerr= 0;
-      }
-    }
-
-    if (protoerr)
-    {
-      if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR,MYF(0),db);
-      else
-        my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), errno);
-      pthread_mutex_unlock(&LOCK_open);
-      goto err;
-    }
-
-    /*
-      As mysql_truncate don't work on a new table at this stage of
-      creation, instead create the table directly (for both normal
-      and temporary tables).
-    */
-    err= plugin::StorageEngine::createTable(*session,
-                                            destination_identifier,
-                                            true, new_proto);
-  }
+  was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                    src_identifier, lex_identified_temp_table, is_engine_set);
   pthread_mutex_unlock(&LOCK_open);
 
   if (lex_identified_temp_table)
   {
-    if (err || !session->open_temporary_table(destination_identifier))
+    if (not was_created || !session->open_temporary_table(destination_identifier))
     {
       (void) session->rm_temporary_table(engine_arg, destination_identifier);
       goto err;
     }
   }
-  else if (err)
+  else if (not was_created)
   {
     TableIdentifier identifier(db, table_name, STANDARD_TABLE);
     quick_rm_table(*session, identifier);
@@ -2181,7 +2196,9 @@ table_exists:
     res= false;
   }
   else
+  {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
+  }
 
 err:
   if (name_lock)
