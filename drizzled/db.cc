@@ -52,13 +52,9 @@ using namespace std;
 namespace drizzled
 {
 
-const string del_exts[]= {".dfe", ".blk", ".arz", ".BAK", ".TMD"};
-static set<string> deletable_extentions(del_exts, &del_exts[sizeof(del_exts)/sizeof(del_exts[0])]);
-
-
-static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
+static long mysql_rm_known_files(Session *session,
                                  const string &db, const char *path,
-                                 TableList **dropped_tables);
+                                 plugin::TableNameList &dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 /*
@@ -82,7 +78,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 */
 
-bool mysql_create_db(Session *session, const message::Schema &schema_message, bool is_if_not_exists)
+bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   bool error= false;
@@ -210,13 +206,14 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session, char *db, bool if_exists)
+bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if_exists)
 {
   long deleted=0;
   int error= false;
   char	path[FN_REFLEN+16];
   uint32_t length;
-  TableList *dropped_tables= NULL;
+  plugin::TableNameList dropped_tables;
+  message::Schema schema_proto;
 
   /*
     Do not drop database if another thread is holding read lock.
@@ -237,39 +234,40 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
 
   pthread_mutex_lock(&LOCK_create_db);
 
+
   length= build_table_filename(path, sizeof(path),
-                               db, "", false);
+                               schema_name.c_str(), "", false);
   path[length]= '\0';				// Remove file name
 
-  /* See if the directory exists */
-  CachedDirectory dirp(path);
-  if (dirp.fail())
+  /* See if the schema exists */
+  if (not plugin::StorageEngine::doesSchemaExist(schema_name))
   {
-    if (!if_exists)
+    if (if_exists)
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
+                          path);
+    }
+    else
     {
       error= -1;
       my_error(ER_DB_DROP_EXISTS, MYF(0), path);
       goto exit;
     }
-    else
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                          path);
   }
   else
   {
     pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
-    remove_db_from_cache(db);
+    remove_db_from_cache(schema_name);
     pthread_mutex_unlock(&LOCK_open);
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, dirp, db,
-                                  path, &dropped_tables);
+    deleted= mysql_rm_known_files(session, schema_name,
+                                  path, dropped_tables);
     if (deleted >= 0)
     {
-      plugin::StorageEngine::dropDatabase(path);
-      error = 0;
+      error= 0;
     }
   }
   if (deleted >= 0)
@@ -286,22 +284,23 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
   else
   {
     char *query, *query_pos, *query_end, *query_data_start;
-    TableList *tbl;
     uint32_t db_len;
 
     if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
     query_pos= query_data_start= strcpy(query,"drop table ")+11;
     query_end= query + MAX_DROP_TABLE_Q_LEN;
-    db_len= strlen(db);
+    db_len= schema_name.length();
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
+    for (plugin::TableNameList::iterator it= dropped_tables.begin();
+         it != dropped_tables.end();
+         it++)
     {
       uint32_t tbl_name_len;
 
       /* 3 for the quotes and the comma*/
-      tbl_name_len= strlen(tbl->table_name) + 3;
+      tbl_name_len= (*it).length() + 3;
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
@@ -310,7 +309,7 @@ bool mysql_rm_db(Session *session, char *db, bool if_exists)
       }
 
       *query_pos++ = '`';
-      query_pos= strcpy(query_pos,tbl->table_name) + (tbl_name_len-3);
+      query_pos= strcpy(query_pos, (*it).c_str()) + (tbl_name_len-3);
       *query_pos++ = '`';
       *query_pos++ = ',';
     }
@@ -329,10 +328,11 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (not session->db.empty() && session->db.compare(db) == 0)
+  if (not session->db.empty() && session->db.compare(schema_name) == 0)
     mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
+
   return error;
 }
 
@@ -482,87 +482,49 @@ err_with_placeholders:
   session MUST be set when calling this function!
 */
 
-static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
+static long mysql_rm_known_files(Session *session,
                                  const string &db,
 				 const char *org_path,
-                                 TableList **dropped_tables)
+                                 plugin::TableNameList &dropped_tables)
 {
-
+  CachedDirectory dirp(org_path);
+  if (dirp.fail())
+    return 0;
 
   long deleted= 0;
-  char filePath[FN_REFLEN];
   TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
 
-  for (CachedDirectory::Entries::const_iterator iter= dirp.getEntries().begin();
-       iter != dirp.getEntries().end() && !session->killed;
-       ++iter)
+  plugin::StorageEngine::getTableNames(db, dropped_tables);
+
+  for (plugin::TableNameList::iterator it= dropped_tables.begin();
+       it != dropped_tables.end();
+       it++)
   {
-    string filename((*iter)->filename);
+    size_t db_len= db.size();
 
-    /* skiping . and .. */
-    if (filename[0] == '.' && (!filename[1] ||
-       (filename[1] == '.' &&  !filename[2])))
-      continue;
+    /* Drop the table nicely */
+    TableList *table_list=(TableList*)
+      session->calloc(sizeof(*table_list) +
+                      db_len + 1 +
+                      (*it).length() + 1);
 
-    string extension("");
-    size_t ext_pos= filename.rfind('.');
-    if (ext_pos != string::npos)
-    {
-      extension= filename.substr(ext_pos);
-    }
-    if (deletable_extentions.find(extension) == deletable_extentions.end())
-    {
-      /*
-        ass ass ass.
+    if (not table_list)
+      return -1;
 
-        strange checking for magic extensions that are then deleted if
-        not reg_ext (i.e. .frm).
-
-        and (previously) we'd err out on drop database if files not matching
-        engine ha_known_exts() or deletable_extensions were present.
-
-        presumably this was to avoid deleting other user data... except if that
-        data happened to be in files ending in .BAK, .opt or .TMD. *fun*
-       */
-      continue;
-    }
-    /* just for safety we use files_charset_info */
-    if (!my_strcasecmp(files_charset_info, extension.c_str(), ".dfe"))
-    {
-      size_t db_len= db.size();
-
-      /* Drop the table nicely */
-      filename.erase(ext_pos);
-      TableList *table_list=(TableList*)
-                             session->calloc(sizeof(*table_list) +
-                                             db_len + 1 +
-                                             filename.size() + 1);
-
-      if (!table_list)
-        return -1;
-      table_list->db= (char*) (table_list+1);
-      table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
-      filename_to_tablename(filename.c_str(), table_list->table_name,
-                            filename.size() + 1);
-      table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-      table_list->internal_tmp_table= (strncmp(filename.c_str(),
-                                               TMP_FILE_PREFIX,
-                                               strlen(TMP_FILE_PREFIX)) == 0);
-      /* Link into list */
-      (*tot_list_next)= table_list;
-      tot_list_next= &table_list->next_local;
-      deleted++;
-    }
-    else
-    {
-      sprintf(filePath, "%s/%s", org_path, filename.c_str());
-      if (internal::my_delete_with_symlink(filePath,MYF(MY_WME)))
-      {
-	return -1;
-      }
-    }
+    table_list->db= (char*) (table_list+1);
+    table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
+    filename_to_tablename((*it).c_str(), table_list->table_name,
+                          (*it).size() + 1);
+    table_list->alias= table_list->table_name;  // If lower_case_table_names=2
+    table_list->internal_tmp_table= (strncmp((*it).c_str(),
+                                             TMP_FILE_PREFIX,
+                                             strlen(TMP_FILE_PREFIX)) == 0);
+    /* Link into list */
+    (*tot_list_next)= table_list;
+    tot_list_next= &table_list->next_local;
+    deleted++;
   }
   if (session->killed)
     return -1;
@@ -572,9 +534,6 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     if (rm_table_part2(session, tot_list))
       return -1;
   }
-
-  if (dropped_tables)
-    *dropped_tables= tot_list;
 
   if (not plugin::StorageEngine::dropSchema(db))
   {
@@ -647,7 +606,7 @@ static long mysql_rm_known_files(Session *session, CachedDirectory &dirp,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const std::string &new_db_name, bool force_switch)
+bool mysql_change_db(Session *session, const std::string &new_db_name)
 {
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
@@ -683,43 +642,19 @@ bool mysql_change_db(Session *session, const std::string &new_db_name, bool forc
     my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
     free(new_db_file_name.str);
 
-    if (force_switch)
-      mysql_change_db_impl(session, NULL);
-
     return true;
   }
 
   if (not plugin::StorageEngine::doesSchemaExist(new_db_file_name.str))
   {
-    if (force_switch)
-    {
-      /* Throw a warning and free new_db_file_name. */
+    /* Report an error and free new_db_file_name. */
 
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
-                          new_db_file_name.str);
+    my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
+    free(new_db_file_name.str);
 
-      free(new_db_file_name.str);
+    /* The operation failed. */
 
-      /* Change db to NULL. */
-
-      mysql_change_db_impl(session, NULL);
-
-      /* The operation succeed. */
-
-      return false;
-    }
-    else
-    {
-      /* Report an error and free new_db_file_name. */
-
-      my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-      free(new_db_file_name.str);
-
-      /* The operation failed. */
-
-      return true;
-    }
+    return true;
   }
 
   db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);

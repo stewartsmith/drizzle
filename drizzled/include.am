@@ -300,6 +300,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/null_client.h \
 			      drizzled/plugin/plugin.h \
 			      drizzled/plugin/query_cache.h \
+		              drizzled/plugin/query_rewrite.h \
 			      drizzled/plugin/registry.h \
 			      drizzled/plugin/scheduler.h \
 			      drizzled/plugin/storage_engine.h \
@@ -420,8 +421,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/utf8/unchecked.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
-			      drizzled/xid.h \
-			      plugin/innobase/handler/status_function.h
+			      drizzled/xid.h
 
 DRIZZLED_LDADD= \
 		drizzled/internal/libinternal.la \
@@ -655,6 +655,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/logging.cc \
 			   drizzled/plugin/plugin.cc \
 			   drizzled/plugin/query_cache.cc \
+			   drizzled/plugin/query_rewrite.cc \
 			   drizzled/plugin/registry.cc \
 			   drizzled/plugin/scheduler.cc \
 			   drizzled/plugin/storage_engine.cc \

@@ -158,6 +158,7 @@
 #define FIELD_IS_RENAMED (1<< 21)       /* Intern: Field is being renamed */
 #define FIELD_STORAGE_FLAGS 22          /* Storage type: bit 22, 23 and 24 */
 #define COLUMN_FORMAT_FLAGS 25          /* Column format: bit 25, 26 and 27 */
+#define COLUMN_FORMAT_MASK 7
 
 #define REFRESH_LOG		2	/* Start on new log file */
 #define REFRESH_TABLES		4	/* close all tables */

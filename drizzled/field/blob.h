@@ -132,7 +132,6 @@ public:
   */
   uint32_t pack_length_no_ptr() const
   { return (uint32_t) (packlength); }
-  uint32_t row_pack_length() { return pack_length_no_ptr(); }
   uint32_t sort_length() const;
   virtual uint32_t max_data_length() const
   {
