@@ -101,7 +101,7 @@ public:
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -1330,7 +1330,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session&, const string table_path)
+int MyisamEngine::doDropTable(Session&, const string &table_path)
 {
   ProtoCache::iterator iter;
 

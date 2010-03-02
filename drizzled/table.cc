@@ -1264,14 +1264,14 @@ int open_table_def(Session& session, TableShare *share)
 
   if (error != EEXIST)
   {
-    if (error>0)
+    if (error > 0)
     {
       errno= error;
       error= 1;
     }
     else
     {
-      if (!table.IsInitialized())
+      if (not table.IsInitialized())
       {
 	error= 4;
       }
@@ -1283,7 +1283,7 @@ int open_table_def(Session& session, TableShare *share)
 
   share->table_category= get_table_category(& share->db);
 
-  if (!error)
+  if (not error)
     session.status_var.opened_shares++;
 
 err_not_open:

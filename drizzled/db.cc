@@ -412,9 +412,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
 
-    if ((table_type == NULL
-          && (plugin::StorageEngine::getTableDefinition(*session,
-                                                        identifier) != EEXIST)))
+    if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
       // Table was not found on disk and table can't be created from engine
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -423,9 +421,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
     else
     {
-      error= plugin::StorageEngine::dropTable(*session,
-                                              identifier,
-                                              false);
+      error= plugin::StorageEngine::dropTable(*session, identifier);
 
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE))
       {

@@ -20,15 +20,7 @@
 
 #include "config.h"
 #include "plugin/schema_dictionary/dictionary.h"
-
-namespace drizzled
-{
-extern size_t build_table_filename(char *buff,
-                                   size_t bufflen,
-                                   const char *db,
-                                   const char *table_name,
-                                   bool is_tmp);
-}
+#include "drizzled/table_identifier.h"
 
 using namespace std;
 using namespace drizzled;

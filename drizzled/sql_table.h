@@ -112,11 +112,6 @@ int mysql_prepare_create_table(Session *session,
                                int select_field_count);
 
 
-/* Conversion functions */
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                            const char *table_name, bool is_tmp);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_TABLE_H */
