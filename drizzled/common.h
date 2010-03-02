@@ -55,7 +55,6 @@
 #define SELECT_NO_JOIN_CACHE    (UINT64_C(1) << 7)     // intern
 #define OPTION_BIG_TABLES       (UINT64_C(1) << 8)     // THD, user
 #define OPTION_BIG_SELECTS      (UINT64_C(1) << 9)     // THD, user
-#define OPTION_LOG_OFF          (UINT64_C(1) << 10)    // THD, user
 #define TMP_TABLE_ALL_COLUMNS   (UINT64_C(1) << 12)    // SELECT, intern
 #define OPTION_WARNINGS         (UINT64_C(1) << 13)    // THD, user
 #define OPTION_AUTO_IS_NULL     (UINT64_C(1) << 14)    // THD, user, binlog
@@ -78,12 +77,6 @@
 #define OPTION_SETUP_TABLES_DONE        (UINT64_C(1) << 30) // intern
 /** If not set then the thread will ignore all warnings with level notes. */
 #define OPTION_SQL_NOTES                (UINT64_C(1) << 31) // THD, user
-
-/*
-  Dont report errors for individual rows,
-  But just report error on commit (or read ofcourse)
-*/
-#define OPTION_ALLOW_BATCH              (UINT64_C(1) << 33) // THD, intern (slave)
 
 /**
   Maximum length of time zone name that we support
