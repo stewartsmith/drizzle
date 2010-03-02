@@ -739,26 +739,31 @@ int EmbeddedInnoDBCursor::index_init(uint32_t keynr, bool)
   return 0;
 }
 
-
-int EmbeddedInnoDBCursor::index_read_map(unsigned char *, const unsigned char *,
-                                 key_part_map, enum ha_rkey_function)
+int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
+                                     const unsigned char *key_ptr,
+                                     uint32_t key_len,
+                                     drizzled::ha_rkey_function find_flag)
 {
-  return(HA_ERR_END_OF_FILE);
+  ib_tpl_t search_tuple;
+  int res;
+  ib_err_t err;
+  int ret;
+  (void)buf;
+  (void)find_flag;
+
+  search_tuple= ib_clust_search_tuple_create(cursor);
+
+  ib_col_set_value(search_tuple, 0, key_ptr, key_len);
+
+  err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  if (err == DB_RECORD_NOT_FOUND || res != 0)
+    return HA_ERR_END_OF_FILE;
+
+  ret= read_row_from_innodb(cursor, tuple, table);
+  err= ib_cursor_next(cursor);
+
+  return 0;
 }
-
-
-int EmbeddedInnoDBCursor::index_read_idx_map(unsigned char *, uint32_t, const unsigned char *,
-                                     key_part_map, enum ha_rkey_function)
-{
-  return(HA_ERR_END_OF_FILE);
-}
-
-
-int EmbeddedInnoDBCursor::index_read_last_map(unsigned char *, const unsigned char *, key_part_map)
-{
-  return(HA_ERR_END_OF_FILE);
-}
-
 
 int EmbeddedInnoDBCursor::index_next(unsigned char *)
 {
