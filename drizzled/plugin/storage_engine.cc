@@ -47,6 +47,7 @@
 #include "drizzled/xid.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/charset.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/db.h"
@@ -642,6 +643,9 @@ void StorageEngine::getSchemaNames(SchemaNameList &set_of_names)
   // Add hook here for engines to register schema.
   for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
            AddSchemaNames(set_of_names));
+
+  plugin::Authorization::pruneSchemaNames(current_session->getSecurityContext(),
+                                          set_of_names);
 }
 
 class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
