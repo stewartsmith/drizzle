@@ -1,0 +1,293 @@
+drop table if exists t1;
+show variables like 'version';
+Variable_name	Value
+version	####.##.####
+select version();
+version()
+####.##.####
+select database();
+database()
+test
+CREATE TABLE `t1` (
+`col_bigint` bigint,
+`col_text` text,
+`col_char` char (1),
+`col_enum` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+`col_int` int,
+`col_char_not_null` char (1) not null,
+`col_int_not_null_key` int not null,
+`col_text_not_null` text not null,
+`col_enum_not_null_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_int_key` int,
+`col_char_key` char (1),
+`col_enum_not_null` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') not null,
+`col_text_not_null_key` text not null,
+pk integer auto_increment,
+`col_bigint_key` bigint,
+`col_int_not_null` int not null,
+`col_bigint_not_null` bigint not null,
+`col_bigint_not_null_key` bigint not null,
+`col_char_not_null_key` char (1) not null,
+`col_text_key` text,
+`col_enum_key` enum ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'),
+/*Indices*/
+key (`col_int_not_null_key` ),
+key (`col_enum_not_null_key` ),
+key (`col_int_key` ),
+key (`col_char_key` ),
+key (`col_text_not_null_key`  (255)),
+primary key (pk),
+key (`col_bigint_key` ),
+key (`col_bigint_not_null_key` ),
+key (`col_char_not_null_key` ),
+key (`col_text_key`  (255)),
+key (`col_enum_key` )) ENGINE=innodb;
+Warnings:
+Warning	1071	Specified key was too long; max key length is 767 bytes
+Warning	1071	Specified key was too long; max key length is 767 bytes
+set AUTOCOMMIT=OFF;
+select table_schema, 
+table_name, 
+CASE WHEN table_type = 'STANDARD' THEN 'table' 
+WHEN table_type = 'VIEW' THEN 'view' 
+WHEN table_type = 'FUNCTION' then 'view' 
+ELSE 'misc' END, 
+column_name
+# CASE WHEN column_key = 'PRI' THEN 'primary' 
+#      WHEN column_key = 'MUL' THEN 'indexed' 
+#      WHEN column_key = 'UNI' THEN 'indexed' 
+# ELSE 'ordinary' END 
+FROM data_dictionary.tables INNER JOIN data_dictionary.columns USING(table_schema, table_name);
+table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table' 
+WHEN table_type = 'VIEW' THEN 'view' 
+WHEN table_type = 'FUNCTION' then 'view' 
+ELSE 'misc' END	column_name
+data_dictionary	CHARACTER_SETS	view	CHARACTER_SET_NAME
+data_dictionary	CHARACTER_SETS	view	DEFAULT_COLLATE_NAME
+data_dictionary	CHARACTER_SETS	view	DESCRIPTION
+data_dictionary	CHARACTER_SETS	view	MAXLEN
+data_dictionary	COLLATIONS	view	CHARACTER_SET_NAME
+data_dictionary	COLLATIONS	view	COLLATION_NAME
+data_dictionary	COLLATIONS	view	DESCRIPTION
+data_dictionary	COLLATIONS	view	ID
+data_dictionary	COLLATIONS	view	IS_DEFAULT
+data_dictionary	COLLATIONS	view	IS_COMPILED
+data_dictionary	COLLATIONS	view	SORTLEN
+data_dictionary	COLUMNS	view	TABLE_SCHEMA
+data_dictionary	COLUMNS	view	TABLE_NAME
+data_dictionary	COLUMNS	view	COLUMN_NAME
+data_dictionary	COLUMNS	view	COLUMN_TYPE
+data_dictionary	COLUMNS	view	ORDINAL_POSITION
+data_dictionary	COLUMNS	view	COLUMN_DEFAULT
+data_dictionary	COLUMNS	view	COLUMN_DEFAULT_IS_NULL
+data_dictionary	COLUMNS	view	COLUMN_DEFAULT_UPDATE
+data_dictionary	COLUMNS	view	IS_NULLABLE
+data_dictionary	COLUMNS	view	DATA_TYPE
+data_dictionary	COLUMNS	view	CHARACTER_MAXIMUM_LENGTH
+data_dictionary	COLUMNS	view	CHARACTER_OCTET_LENGTH
+data_dictionary	COLUMNS	view	NUMERIC_PRECISION
+data_dictionary	COLUMNS	view	NUMERIC_SCALE
+data_dictionary	COLUMNS	view	COLLATION_NAME
+data_dictionary	COLUMNS	view	COLUMN_COMMENT
+data_dictionary	GLOBAL_STATEMENTS	view	VARIABLE_NAME
+data_dictionary	GLOBAL_STATEMENTS	view	VARIABLE_VALUE
+data_dictionary	GLOBAL_STATUS	view	VARIABLE_NAME
+data_dictionary	GLOBAL_STATUS	view	VARIABLE_VALUE
+data_dictionary	GLOBAL_VARIABLES	view	VARIABLE_NAME
+data_dictionary	GLOBAL_VARIABLES	view	VARIABLE_VALUE
+data_dictionary	INDEXES	view	TABLE_SCHEMA
+data_dictionary	INDEXES	view	TABLE_NAME
+data_dictionary	INDEXES	view	INDEX_NAME
+data_dictionary	INDEXES	view	IS_PRIMARY
+data_dictionary	INDEXES	view	IS_UNIQUE
+data_dictionary	INDEXES	view	IS_NULLABLE
+data_dictionary	INDEXES	view	KEY_LENGTH
+data_dictionary	INDEXES	view	INDEX_TYPE
+data_dictionary	INDEXES	view	INDEX_COMMENT
+data_dictionary	INDEX_PARTS	view	TABLE_SCHEMA
+data_dictionary	INDEX_PARTS	view	TABLE_NAME
+data_dictionary	INDEX_PARTS	view	INDEX_NAME
+data_dictionary	INDEX_PARTS	view	COLUMN_NAME
+data_dictionary	INDEX_PARTS	view	COLUMN_NUMBER
+data_dictionary	INDEX_PARTS	view	SEQUENCE_IN_INDEX
+data_dictionary	INDEX_PARTS	view	COMPARE_LENGTH
+data_dictionary	INDEX_PARTS	view	IS_ORDER_REVERSE
+data_dictionary	INNODB_CMP	view	PAGE_SIZE
+data_dictionary	INNODB_CMP	view	COMPRESS_OPS
+data_dictionary	INNODB_CMP	view	COMPRESS_OPS_OK
+data_dictionary	INNODB_CMP	view	COMPRESS_TIME
+data_dictionary	INNODB_CMP	view	UNCOMPRESS_OPS
+data_dictionary	INNODB_CMP	view	UNCOMPRESS_TIME
+data_dictionary	INNODB_CMPMEM	view	PAGE_SIZE
+data_dictionary	INNODB_CMPMEM	view	PAGES_USED
+data_dictionary	INNODB_CMPMEM	view	PAGES_FREE
+data_dictionary	INNODB_CMPMEM	view	RELOCATION_OPS
+data_dictionary	INNODB_CMPMEM	view	RELOCATION_TIME
+data_dictionary	INNODB_CMPMEM_RESET	view	PAGE_SIZE
+data_dictionary	INNODB_CMPMEM_RESET	view	PAGES_USED
+data_dictionary	INNODB_CMPMEM_RESET	view	PAGES_FREE
+data_dictionary	INNODB_CMPMEM_RESET	view	RELOCATION_OPS
+data_dictionary	INNODB_CMPMEM_RESET	view	RELOCATION_TIME
+data_dictionary	INNODB_CMP_RESET	view	PAGE_SIZE
+data_dictionary	INNODB_CMP_RESET	view	COMPRESS_OPS
+data_dictionary	INNODB_CMP_RESET	view	COMPRESS_OPS_OK
+data_dictionary	INNODB_CMP_RESET	view	COMPRESS_TIME
+data_dictionary	INNODB_CMP_RESET	view	UNCOMPRESS_OPS
+data_dictionary	INNODB_CMP_RESET	view	UNCOMPRESS_TIME
+data_dictionary	INNODB_LOCKS	view	LOCK_ID
+data_dictionary	INNODB_LOCKS	view	LOCK_TRX_ID
+data_dictionary	INNODB_LOCKS	view	LOCK_MODE
+data_dictionary	INNODB_LOCKS	view	LOCK_TYPE
+data_dictionary	INNODB_LOCKS	view	LOCK_TABLE
+data_dictionary	INNODB_LOCKS	view	LOCK_INDEX
+data_dictionary	INNODB_LOCKS	view	LOCK_SPACE
+data_dictionary	INNODB_LOCKS	view	LOCK_PAGE
+data_dictionary	INNODB_LOCKS	view	LOCK_REC
+data_dictionary	INNODB_LOCKS	view	LOCK_DATA
+data_dictionary	INNODB_LOCK_WAITS	view	REQUESTING_TRX_ID
+data_dictionary	INNODB_LOCK_WAITS	view	REQUESTED_LOCK_ID
+data_dictionary	INNODB_LOCK_WAITS	view	BLOCKING_TRX_ID
+data_dictionary	INNODB_LOCK_WAITS	view	BLOCKING_LOCK_ID
+data_dictionary	INNODB_STATUS	view	VARIABLE_NAME
+data_dictionary	INNODB_STATUS	view	VARIABLE_VALUE
+data_dictionary	INNODB_TRX	view	TRX_ID
+data_dictionary	INNODB_TRX	view	TRX_STATE
+data_dictionary	INNODB_TRX	view	TRX_STARTED
+data_dictionary	INNODB_TRX	view	TRX_REQUESTED_LOCK_ID
+data_dictionary	INNODB_TRX	view	TRX_WAIT_STARTED
+data_dictionary	INNODB_TRX	view	TRX_WEIGHT
+data_dictionary	INNODB_TRX	view	TRX_DRIZZLE_THREAD_ID
+data_dictionary	INNODB_TRX	view	TRX_QUERY
+data_dictionary	MODULES	view	MODULE_NAME
+data_dictionary	MODULES	view	MODULE_VERSION
+data_dictionary	MODULES	view	MODULE_AUTHOR
+data_dictionary	MODULES	view	IS_BUILTIN
+data_dictionary	MODULES	view	MODULE_LIBRARY
+data_dictionary	MODULES	view	MODULE_DESCRIPTION
+data_dictionary	MODULES	view	MODULE_LICENSE
+data_dictionary	PLUGINS	view	PLUGIN_NAME
+data_dictionary	PLUGINS	view	PLUGIN_TYPE
+data_dictionary	PLUGINS	view	IS_ACTIVE
+data_dictionary	PLUGINS	view	MODULE_NAME
+data_dictionary	PROCESSLIST	view	ID
+data_dictionary	PROCESSLIST	view	USER
+data_dictionary	PROCESSLIST	view	HOST
+data_dictionary	PROCESSLIST	view	DB
+data_dictionary	PROCESSLIST	view	COMMAND
+data_dictionary	PROCESSLIST	view	TIME
+data_dictionary	PROCESSLIST	view	STATE
+data_dictionary	PROCESSLIST	view	INFO
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	CONSTRAINT_SCHEMA
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	CONSTRAINT_NAME
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	UNIQUE_CONSTRAINT_SCHEMA
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	UNIQUE_CONSTRAINT_NAME
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	MATCH_OPTION
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	UPDATE_RULE
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	DELETE_RULE
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	TABLE_NAME
+data_dictionary	REFERENTIAL_CONSTRAINTS	view	REFERENCED_TABLE_NAME
+data_dictionary	SCHEMAS	view	SCHEMA_NAME
+data_dictionary	SCHEMAS	view	DEFAULT_COLLATION_NAME
+data_dictionary	SCHEMA_NAMES	view	SCHEMA_NAME
+data_dictionary	SESSION_STATEMENTS	view	VARIABLE_NAME
+data_dictionary	SESSION_STATEMENTS	view	VARIABLE_VALUE
+data_dictionary	SESSION_STATUS	view	VARIABLE_NAME
+data_dictionary	SESSION_STATUS	view	VARIABLE_VALUE
+data_dictionary	SESSION_VARIABLES	view	VARIABLE_NAME
+data_dictionary	SESSION_VARIABLES	view	VARIABLE_VALUE
+data_dictionary	SHOW_COLUMNS	view	Field
+data_dictionary	SHOW_COLUMNS	view	Type
+data_dictionary	SHOW_COLUMNS	view	Null
+data_dictionary	SHOW_COLUMNS	view	Default
+data_dictionary	SHOW_COLUMNS	view	Default_is_NULL
+data_dictionary	SHOW_COLUMNS	view	On_Update
+data_dictionary	SHOW_INDEXES	view	Table
+data_dictionary	SHOW_INDEXES	view	Unique
+data_dictionary	SHOW_INDEXES	view	Key_name
+data_dictionary	SHOW_INDEXES	view	Seq_in_index
+data_dictionary	SHOW_INDEXES	view	Column_name
+data_dictionary	SHOW_TABLES	view	TABLE_NAME
+data_dictionary	SHOW_TABLE_STATUS	view	Name
+data_dictionary	SHOW_TABLE_STATUS	view	Engine
+data_dictionary	SHOW_TABLE_STATUS	view	Version
+data_dictionary	SHOW_TABLE_STATUS	view	Row_format
+data_dictionary	SHOW_TABLE_STATUS	view	Rows
+data_dictionary	SHOW_TABLE_STATUS	view	Avg_row_length
+data_dictionary	SHOW_TABLE_STATUS	view	Data_length
+data_dictionary	SHOW_TABLE_STATUS	view	Max_data_length
+data_dictionary	SHOW_TABLE_STATUS	view	Index_length
+data_dictionary	SHOW_TABLE_STATUS	view	Data_free
+data_dictionary	SHOW_TABLE_STATUS	view	Auto_increment
+data_dictionary	SHOW_TABLE_STATUS	view	Create_time
+data_dictionary	SHOW_TABLE_STATUS	view	Update_time
+data_dictionary	SHOW_TABLE_STATUS	view	Check_time
+data_dictionary	SHOW_TABLE_STATUS	view	Collation
+data_dictionary	SHOW_TABLE_STATUS	view	Checksum
+data_dictionary	SHOW_TABLE_STATUS	view	Create_options
+data_dictionary	SHOW_TABLE_STATUS	view	Comment
+data_dictionary	TABLES	view	TABLE_SCHEMA
+data_dictionary	TABLES	view	TABLE_NAME
+data_dictionary	TABLES	view	TABLE_TYPE
+data_dictionary	TABLES	view	ENGINE
+data_dictionary	TABLES	view	ROW_FORMAT
+data_dictionary	TABLES	view	TABLE_COLLATION
+data_dictionary	TABLES	view	TABLE_COMMENT
+data_dictionary	TABLE_CONSTRAINTS	view	CONSTRAINT_SCHEMA
+data_dictionary	TABLE_CONSTRAINTS	view	CONSTRAINT_NAME
+data_dictionary	TABLE_CONSTRAINTS	view	TABLE_SCHEMA
+data_dictionary	TABLE_CONSTRAINTS	view	TABLE_NAME
+data_dictionary	TABLE_CONSTRAINTS	view	CONSTRAINT_TYPE
+test	t1	table	col_bigint
+test	t1	table	col_text
+test	t1	table	col_char
+test	t1	table	col_enum
+test	t1	table	col_int
+test	t1	table	col_char_not_null
+test	t1	table	col_int_not_null_key
+test	t1	table	col_text_not_null
+test	t1	table	col_enum_not_null_key
+test	t1	table	col_int_key
+test	t1	table	col_char_key
+test	t1	table	col_enum_not_null
+test	t1	table	col_text_not_null_key
+test	t1	table	pk
+test	t1	table	col_bigint_key
+test	t1	table	col_int_not_null
+test	t1	table	col_bigint_not_null
+test	t1	table	col_bigint_not_null_key
+test	t1	table	col_char_not_null_key
+test	t1	table	col_text_key
+test	t1	table	col_enum_key
+select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
+(SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
+COUNT(*) AS count FROM t1;
+average1	average2	count
+NULL	NULL	0
+select collation_name,character_set_name FROM data_dictionary.collations;
+collation_name	character_set_name
+utf8_general_ci	utf8_general_ci
+utf8_bin	utf8_general_ci
+utf8_unicode_ci	utf8_general_ci
+utf8_icelandic_ci	utf8_general_ci
+utf8_latvian_ci	utf8_general_ci
+utf8_romanian_ci	utf8_general_ci
+utf8_slovenian_ci	utf8_general_ci
+utf8_polish_ci	utf8_general_ci
+utf8_estonian_ci	utf8_general_ci
+utf8_spanish_ci	utf8_general_ci
+utf8_swedish_ci	utf8_general_ci
+utf8_turkish_ci	utf8_general_ci
+utf8_czech_ci	utf8_general_ci
+utf8_danish_ci	utf8_general_ci
+utf8_lithuanian_ci	utf8_general_ci
+utf8_slovak_ci	utf8_general_ci
+utf8_spanish2_ci	utf8_general_ci
+utf8_roman_ci	utf8_general_ci
+utf8_persian_ci	utf8_general_ci
+utf8_esperanto_ci	utf8_general_ci
+utf8_hungarian_ci	utf8_general_ci
+utf8_sinhala_ci	utf8_general_ci
+binary	binary
+select COUNT(*) from data_dictionary.tables;
+COUNT(*)
+32
