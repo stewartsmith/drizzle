@@ -1,0 +1,16 @@
+create table t1 (a int, b int not null, c int null, d int not null);
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int DEFAULT NULL,
+  `b` int NOT NULL,
+  `c` int DEFAULT NULL,
+  `d` int NOT NULL
+) ENGINE=InnoDB
+insert into t1 values (0,0, 0, 0);
+insert into t1 values (NULL, NULL, NULL, NULL);
+ERROR 23000: Column 'b' cannot be null
+insert into t1 values (NULL, 1, NULL, 1);
+insert into t1 values (1,2,3,NULL);
+ERROR 23000: Column 'd' cannot be null
+drop table t1;
