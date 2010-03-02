@@ -145,7 +145,6 @@
 #define SET_FLAG	2048		/* field is a set */
 #define NO_DEFAULT_VALUE_FLAG 4096	/* Field doesn't have default value */
 #define ON_UPDATE_NOW_FLAG 8192         /* Field is set to NOW on UPDATE */
-#define NUM_FLAG	32768		/* Field is num (for clients) */
 #define PART_KEY_FLAG	16384		/* Intern; Part of some key */
 #define GROUP_FLAG	32768		/* Intern: Group field */
 #define UNIQUE_FLAG	65536		/* Intern: Used by sql_yacc */
