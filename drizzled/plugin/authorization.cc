@@ -124,7 +124,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
-  if (authorization_plugins.size() == 0)
+  if (authorization_plugins.empty())
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
@@ -158,7 +158,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
-  if (authorization_plugins.size() == 0)
+  if (authorization_plugins.empty())
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
@@ -193,7 +193,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
   const SecurityContext &session_ctx= session->getSecurityContext();
 
   /* If we never loaded any authorization plugins, just return true */
-  if (authorization_plugins.size() == 0)
+  if (authorization_plugins.empty())
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
@@ -226,7 +226,7 @@ void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
   set<string> pruned_set_of_names;
 
   /* If we never loaded any authorization plugins, just return true */
-  if (authorization_plugins.size() == 0)
+  if (authorization_plugins.empty())
     return;
 
   /**
