@@ -93,6 +93,7 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
  *   BIGINT    (interpreted as LONGLONG)
  *   TIMESTAMP (interpreted as ULONG_INT)
  *   DATETIME  (interpreted as ULONGLONG)
+ *   DATE      (interpreted as UINT_24)
  *   DOUBLE    (interpreted as DOUBLE)
  *   VARCHAR   (VARTEXT1 or VARTEXT2)
  *
@@ -106,7 +107,9 @@ int blitz_keycmp_cb(const char *a, int,
   BlitzTree *tree = (BlitzTree *)opaque;
   BlitzKeyPart *curr_part;
 
-  int next_part_offset = 0;
+  int a_next_offset = 0;
+  int b_next_offset = 0;
+
   char *a_pos = (char *)a;
   char *b_pos = (char *)b;
 
@@ -135,7 +138,7 @@ int blitz_keycmp_cb(const char *a, int,
       else if (a_int_val > b_int_val)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = b_next_offset = curr_part->length;
       break; 
     }
     case HA_KEYTYPE_ULONG_INT: {
@@ -147,7 +150,7 @@ int blitz_keycmp_cb(const char *a, int,
       else if (a_int_val > b_int_val)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = b_next_offset = curr_part->length;
       break;
     }
     case HA_KEYTYPE_LONGLONG: {
@@ -159,7 +162,7 @@ int blitz_keycmp_cb(const char *a, int,
       else if (a_int_val > b_int_val)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = b_next_offset = curr_part->length;
       break;
     }
     case HA_KEYTYPE_ULONGLONG: {
@@ -171,7 +174,7 @@ int blitz_keycmp_cb(const char *a, int,
       else if (a_int_val > b_int_val)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = b_next_offset = curr_part->length;
       break;
     }
     case HA_KEYTYPE_UINT24: {
@@ -183,7 +186,7 @@ int blitz_keycmp_cb(const char *a, int,
       else if (a_int_val > b_int_val)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = b_next_offset = curr_part->length;
       break;
     }
     case HA_KEYTYPE_DOUBLE: {
@@ -196,7 +199,7 @@ int blitz_keycmp_cb(const char *a, int,
       else if (a_double_val > b_double_val)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = b_next_offset = curr_part->length;
       break;
     }
     case HA_KEYTYPE_VARTEXT1: {
@@ -216,7 +219,8 @@ int blitz_keycmp_cb(const char *a, int,
       else if (key_changed > 0)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = a_varchar_len;
+      b_next_offset = b_varchar_len;
       break;
     }
     case HA_KEYTYPE_VARTEXT2: {
@@ -236,18 +240,40 @@ int blitz_keycmp_cb(const char *a, int,
       else if (key_changed > 0)
         return 1;
 
-      next_part_offset = curr_part->length;
+      a_next_offset = a_varchar_len;
+      b_next_offset = b_varchar_len;
       break; 
     }
     default:
       break;
     }
 
-    a_pos += next_part_offset;
-    b_pos += next_part_offset;
+    a_pos += a_next_offset;
+    b_pos += b_next_offset;
     curr_part++;
   }
 
-  /* Getting here means that the keys are identical */
-  return 0;
+  /* Getting here means that the keys are identical. However,
+     unless this is a unique index, don't return 0 just yet.     
+     Our final job here is to check whether the PK part of the
+     keys are identical or not. If so, it's safe to conclude
+     that the keys are identical. */
+  if (tree->unique)
+    return 0;
+
+  uint16_t a_pk_len = uint2korr(a_pos);
+  uint16_t b_pk_len = uint2korr(b_pos);
+  int rv = 0;
+
+  a_pos += sizeof(a_pk_len);
+  b_pos += sizeof(b_pk_len);
+
+  if (a_pk_len == b_pk_len)
+    rv = memcmp(a_pos, b_pos, a_pk_len);
+  else if (a_pk_len < b_pk_len)
+    rv = -1;
+  else
+    rv = 1;
+
+  return rv;
 }
