@@ -28,6 +28,7 @@ namespace drizzled
 class Session;
 
 std::vector<Session *> &getSessionList();
+std::vector<Session *> getFilteredSessionList();
 
 }
 

@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "drizzled/session_list.h"
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
+#include "drizzled/plugin/authorization.h"
 
 class Session;
 
@@ -35,6 +38,22 @@ vector<Session*> session_list;
 vector<Session*> &getSessionList()
 {
   return session_list;
+}
+
+vector<Session *> getFilteredSessionList()
+{
+  vector<Session *> filtered_list;
+  for (vector<Session *>::iterator iter= session_list.begin();
+       iter != session_list.end();
+       ++iter)
+  {
+    if (plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                            *iter, false))
+    {
+      filtered_list.push_back(*iter);
+    }
+  }
+  return filtered_list;
 }
 
 } /* namespace drizzled */

@@ -605,9 +605,16 @@ static long mysql_rm_known_files(Session *session,
 
 bool mysql_change_db(Session *session, const std::string &new_db_name)
 {
-  LEX_STRING new_db_file_name;
 
   assert(not new_db_name.empty());
+
+  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(),
+                                              new_db_name))
+  {
+    /* Error message is set in isAuthorized */
+    return true;
+  }
+
 
   /*
     Now we need to make a copy because check_db_name requires a
@@ -616,6 +623,7 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
     TODO: fix check_db_name().
   */
 
+  LEX_STRING new_db_file_name;
   new_db_file_name.length= new_db_name.length();
   new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
   if (new_db_file_name.str == NULL)

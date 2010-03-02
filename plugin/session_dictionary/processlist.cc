@@ -54,7 +54,8 @@ ProcesslistTool::Generator::Generator(Field **arg) :
   now= time(NULL);
 
   pthread_mutex_lock(&LOCK_thread_count);
-  it= getSessionList().begin();
+  session_list= getFilteredSessionList();
+  it= session_list.begin();
 }
 
 ProcesslistTool::Generator::~Generator()
@@ -65,12 +66,11 @@ ProcesslistTool::Generator::~Generator()
 bool ProcesslistTool::Generator::populate()
 {
   const char *val;
-  Session* tmp;
 
-  if (it == getSessionList().end())
+  if (it == session_list.end())
     return false;
 
-  tmp= *it;
+  Session *tmp= *it;
   const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
 
   /* ID */
