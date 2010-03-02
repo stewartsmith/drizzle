@@ -54,12 +54,12 @@ table_name,
 #            WHEN table_type = 'FUNCTION' then 'view' 
 #       ELSE 'misc' END, 
 column_name,
-CASE WHEN IS_PRIMARY = 'TRUE' THEN 'primary' 
+CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
 #      WHEN column_key = 'MUL' THEN 'indexed' 
 #      WHEN column_key = 'UNI' THEN 'indexed' 
 ELSE 'indexed' END 
 FROM data_dictionary.index_parts;
-table_schema	table_name	STANDARD	column_name	CASE WHEN IS_PRIMARY = 'TRUE' THEN 'primary' 
+table_schema	table_name	STANDARD	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
 #      WHEN column_key = 'MUL' THEN 'indexed' 
 #      WHEN column_key = 'UNI' THEN 'indexed' 
 ELSE 'indexed' END 

@@ -55,7 +55,7 @@ select table_schema,
 #            WHEN table_type = 'FUNCTION' then 'view' 
 #       ELSE 'misc' END, 
        column_name,
-       CASE WHEN IS_PRIMARY = 'TRUE' THEN 'primary' 
+       CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
       #      WHEN column_key = 'MUL' THEN 'indexed' 
       #      WHEN column_key = 'UNI' THEN 'indexed' 
        ELSE 'indexed' END 

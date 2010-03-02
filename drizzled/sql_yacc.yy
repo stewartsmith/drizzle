@@ -4841,7 +4841,7 @@ show_param:
 
              {
                drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
-               if (plugin::StorageEngine::getTableDefinition(*session, identifier) != EEXIST)
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
                {
                    my_error(ER_NO_SUCH_TABLE, MYF(0),
                             select->getShowSchema().c_str(), 
@@ -4883,7 +4883,7 @@ show_param:
 
              {
                drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
-               if (plugin::StorageEngine::getTableDefinition(*session, identifier) != EEXIST)
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
                {
                    my_error(ER_NO_SUCH_TABLE, MYF(0),
                             select->getShowSchema().c_str(), 
@@ -5102,7 +5102,7 @@ describe:
 
              {
                drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $2->table.str);
-               if (plugin::StorageEngine::getTableDefinition(*session, identifier) != EEXIST)
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
                {
                    my_error(ER_NO_SUCH_TABLE, MYF(0),
                             select->getShowSchema().c_str(), 

@@ -39,10 +39,10 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_DEFAULT_UPDATE");
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
   add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN);
-  add_field("IS_PRIMARY", plugin::TableFunction::BOOLEAN);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
   add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
   add_field("IS_MULTI", plugin::TableFunction::BOOLEAN);
-  add_field("IS_MULTI_FIRST", plugin::TableFunction::BOOLEAN);
+  add_field("IS_FIRST_IN_MULTI", plugin::TableFunction::BOOLEAN);
   add_field("INDEXES_FOUND_IN", plugin::TableFunction::NUMBER);
   add_field("DATA_TYPE");
 
@@ -146,7 +146,7 @@ void ColumnsTool::Generator::fill()
   /* IS_NULLABLE */
   push(column.constraints().is_nullable());
 
-  /* IS_INDEXED, IS_PRIMARY, IS_UNIQUE, IS_MULTI, IS_MULTI_FIRST, INDEXES_FOUND_IN */
+  /* IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
   bool is_indexed= false;
   bool is_primary= false;
   bool is_unique= false;
@@ -184,7 +184,7 @@ void ColumnsTool::Generator::fill()
       }
     }
   }
-  /* ...IS_INDEXED, IS_PRIMARY, IS_UNIQUE, IS_MULTI, IS_MULTI_FIRST, INDEXES_FOUND_IN */
+  /* ...IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
   push(is_indexed);
   push(is_primary);
   push(is_unique);

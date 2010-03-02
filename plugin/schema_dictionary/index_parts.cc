@@ -36,7 +36,7 @@ IndexPartsTool::IndexPartsTool() :
   add_field("SEQUENCE_IN_INDEX", plugin::TableFunction::NUMBER);
   add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER);
   add_field("IS_ORDER_REVERSE", plugin::TableFunction::BOOLEAN);
-  add_field("IS_PRIMARY", plugin::TableFunction::BOOLEAN);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
   add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
 }
@@ -125,7 +125,7 @@ void IndexPartsTool::Generator::fill()
   /* IS_ORDER_REVERSE */
   push(index_part.in_reverse_order());
 
-  /* IS_PRIMARY */
+  /* IS_USED_IN_PRIMARY */
   push(getIndex().is_primary());
 
   /* IS_UNIQUE */
