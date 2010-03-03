@@ -20,15 +20,7 @@
 
 #include "config.h"
 #include "plugin/schema_dictionary/dictionary.h"
-
-namespace drizzled
-{
-extern size_t build_table_filename(char *buff,
-                                   size_t bufflen,
-                                   const char *db,
-                                   const char *table_name,
-                                   bool is_tmp);
-}
+#include "drizzled/table_identifier.h"
 
 using namespace std;
 using namespace drizzled;
@@ -56,7 +48,6 @@ static const string DECIMAL("DECIMAL");
 static const string DATE("DATE");
 static const string TIMESTAMP("TIMESTAMP");
 static const string DATETIME("DATETIME");
-
 
 TablesTool::TablesTool() :
   SchemasTool("TABLES")
@@ -133,7 +124,13 @@ bool TablesTool::Generator::nextTable()
 
 bool TablesTool::Generator::checkTableName()
 {
-  return isWild(table_name());
+  if (isWild(table_name()))
+    return true;
+
+  if (not table_predicate.empty() && table_predicate.compare(table_name()))
+    return true;
+
+  return false;
 }
 
 bool TablesTool::Generator::populate()
@@ -255,7 +252,7 @@ void TablesTool::Generator::fill()
   push(table_proto.options().comment());
 }
 
-bool TableNames::Generator::checkSchema()
+bool ShowTables::Generator::checkSchema()
 {
   Session *session= current_session;
 

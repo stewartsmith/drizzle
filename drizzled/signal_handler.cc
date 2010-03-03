@@ -90,17 +90,17 @@ void drizzled_handle_segfault(int sig)
   curr_time= time(NULL);
   if(curr_time == (time_t)-1)
   {
-    fprintf(stderr, "Fetal: time() call failed\n");
+    fprintf(stderr, _("Fatal: time() call failed\n"));
     exit(1);
   }
 
   localtime_r(&curr_time, &tm);
   
-  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
+  fprintf(stderr,_("%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
           "This could be because you hit a bug. It is also possible that "
           "this binary\n or one of the libraries it was linked against is "
           "corrupt, improperly built,\n or misconfigured. This error can "
-          "also be caused by malfunctioning hardware.\n",
+          "also be caused by malfunctioning hardware.\n"),
           tm.tm_year % 100, tm.tm_mon+1, tm.tm_mday,
           tm.tm_hour, tm.tm_min, tm.tm_sec,
           sig);

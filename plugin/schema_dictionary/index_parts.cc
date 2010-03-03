@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "plugin/schema_dictionary/dictionary.h"
+#include "drizzled/statement/select.h"
 
 using namespace std;
 using namespace drizzled;
@@ -32,8 +33,12 @@ IndexPartsTool::IndexPartsTool() :
   add_field("INDEX_NAME");
   add_field("COLUMN_NAME");
   add_field("COLUMN_NUMBER", plugin::TableFunction::NUMBER);
+  add_field("SEQUENCE_IN_INDEX", plugin::TableFunction::NUMBER);
   add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER);
   add_field("IS_ORDER_REVERSE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
+  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
 }
 
 IndexPartsTool::Generator::Generator(Field **arg) :
@@ -41,6 +46,11 @@ IndexPartsTool::Generator::Generator(Field **arg) :
   index_part_iterator(0),
   is_index_part_primed(false)
 {
+  Session *session= current_session;
+  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+
+  setSchemaPredicate(select->getShowSchema());
+  setTablePredicate(select->getShowTable());
 }
 
 
@@ -106,9 +116,21 @@ void IndexPartsTool::Generator::fill()
   /* COLUMN_NUMBER */
   push(static_cast<int64_t>(index_part.fieldnr()));
 
+  /* SEQUENCE_IN_INDEX  */
+  push(static_cast<int64_t>(index_part_iterator));
+
   /* COMPARE_LENGTH */
   push(static_cast<int64_t>(index_part.compare_length()));
 
   /* IS_ORDER_REVERSE */
   push(index_part.in_reverse_order());
+
+  /* IS_USED_IN_PRIMARY */
+  push(getIndex().is_primary());
+
+  /* IS_UNIQUE */
+  push(getIndex().is_unique());
+
+  /* IS_NULLABLE */
+  push(getIndex().options().null_part_key());
 }

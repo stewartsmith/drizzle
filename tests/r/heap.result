@@ -2,9 +2,12 @@ drop table if exists t1,t2,t3;
 create temporary table t1 (a int not null,b int not null, primary key (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
+show table status like "t1";
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	0	DEFAULT	0	0	0	0	0	0	0	0	0	0	utf8_general_ci	0		
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	NULL	3	NULL	NULL		HASH		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -32,6 +35,9 @@ drop table t1;
 create temporary table t1 (a int not null,b int not null, primary key (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 alter table t1 modify a int not null auto_increment, engine=innodb, comment="new innodb table";
+show table status like "t1";
+Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	InnoDB	0	DEFAULT	0	0	0	0	0	0	0	0	0	0	utf8_general_ci	0		
 select * from t1;
 a	b
 1	1
@@ -694,6 +700,8 @@ create temporary table t1 (c char(10)) engine=memory;
 create temporary table t2 (c varchar(10)) engine=memory;
 show table status like 't_';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+t1	MEMORY	#	DEFAULT	0	0	0	#	0	0	0	0	0	0	utf8_general_ci	0		
+t2	MEMORY	#	DEFAULT	0	0	0	#	0	0	0	0	0	0	utf8_general_ci	0		
 drop table t1, t2;
 CREATE TEMPORARY TABLE t1(a VARCHAR(1), b VARCHAR(2), c VARCHAR(256),
 KEY(a), KEY(b), KEY(c)) ENGINE=MEMORY;

@@ -160,87 +160,6 @@ void close_handle_and_leave_table_as_lock(Table *table)
 }
 
 
-
-/*
-  Create a list for all open tables matching SQL expression
-
-  SYNOPSIS
-  list_open_tables()
-  wild		SQL like expression
-
-  NOTES
-  One gets only a list of tables for which one has any kind of privilege.
-  db and table names are allocated in result struct, so one doesn't need
-  a lock on LOCK_open when traversing the return list.
-
-  RETURN VALUES
-  true	Error 
-*/
-
-bool list_open_tables(const char *db, 
-                      const char *wild, 
-                      bool(*func)(Table *table, 
-                                  open_table_list_st& open_list,
-                                  plugin::InfoSchemaTable *schema_table), 
-                      Table *display,
-                      plugin::InfoSchemaTable *schema_table)
-{
-  vector<open_table_list_st> open_list;
-  vector<open_table_list_st>::iterator it;
-  open_table_list_st table;
-
-  /* What we really need is an optimization for knowing unique tables */
-  if (db && wild)
-    open_list.reserve(sizeof(open_table_list_st) * (open_cache.records % 2));
-  else
-    open_list.reserve(sizeof(open_table_list_st) * open_cache.records);
-
-  pthread_mutex_lock(&LOCK_open); /* List all open tables */
-
-  for (uint32_t idx= 0; idx < open_cache.records; idx++)
-  {
-    bool found= false;
-    Table *entry=(Table*) hash_element(&open_cache,idx);
-
-    if (db && my_strcasecmp(system_charset_info, db, entry->s->db.str))
-      continue;
-    if (wild && internal::wild_compare(entry->s->table_name.str, wild, 0))
-      continue;
-
-    for (it= open_list.begin(); it < open_list.end(); it++)
-    {
-      if (!(*it).table.compare(entry->s->table_name.str) &&
-          !(*it).db.compare(entry->s->db.str))
-      {
-        if (entry->in_use)
-          (*it).in_use++;
-        if (entry->locked_by_name)
-          (*it).locked++;
-
-        found= true;
-
-        break;
-      }
-    }
-
-    if (found)
-      continue;
-
-    table.db= entry->s->db.str;
-    table.table= entry->s->table_name.str;
-    open_list.push_back(table);
-  }
-  pthread_mutex_unlock(&LOCK_open);
-
-  for (it= open_list.begin(); it < open_list.end(); it++)
-  {
-    if (func(display, *it, schema_table))
-      return true;
-  }
-
-  return false;
-}
-
 /*****************************************************************************
  *	 Functions to free open table cache
  ****************************************************************************/
@@ -565,7 +484,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->s->tmp_table == NO_TMP_TABLE) &&
+    if ((table->table == 0 || table->table->s->tmp_table == STANDARD_TABLE) &&
         strcmp(table->db, db_name) == 0 &&
         strcmp(table->table_name, table_name) == 0)
       break;
@@ -629,7 +548,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->s->tmp_table != NO_TMP_TABLE)
+    if (table->table && table->table->s->tmp_table != STANDARD_TABLE)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -659,6 +578,45 @@ TableList* unique_table(TableList *table, TableList *table_list,
   return(res);
 }
 
+
+void Session::doGetTableNames(CachedDirectory &,
+                              const std::string& db_name,
+                              std::set<std::string>& set_of_names)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (not db_name.compare(table->s->db.str))
+    {
+      set_of_names.insert(table->s->table_name.str);
+    }
+  }
+}
+
+int Session::doGetTableDefinition(const char *,
+                                  const char *db_arg,
+                                  const char *table_name_arg,
+                                  const bool ,
+                                  message::Table *table_proto)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (table->s->tmp_table == TEMP_TABLE)
+    {
+      if (not strcmp(db_arg, table->s->db.str))
+      {
+        if (not strcmp(table_name_arg, table->s->table_name.str))
+        {
+          if (table_proto)
+            table_proto->CopyFrom(*(table->s->getTableProto()));
+
+          return EEXIST;
+        }
+      }
+    }
+  }
+
+  return ENOENT;
+}
 
 Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 {
@@ -828,7 +786,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    TableIdentifier identifier(db_name, table_name, NO_TMP_TABLE);
+    TableIdentifier identifier(db_name, table_name, STANDARD_TABLE);
     quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -1324,9 +1282,9 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, NO_TMP_TABLE);
+      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, STANDARD_TABLE);
 
-      if (plugin::StorageEngine::getTableDefinition(*this, lock_table_identifier) != EEXIST)
+      if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -1378,7 +1336,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->s->ref_count > 0 || table->s->tmp_table != NO_TMP_TABLE);
+  assert(table->s->ref_count > 0 || table->s->tmp_table != STANDARD_TABLE);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -2109,7 +2067,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->s->tmp_table == NO_TMP_TABLE)
+      else if (tables->table->s->tmp_table == STANDARD_TABLE)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }
@@ -4144,9 +4102,9 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     return false;
 
   /*
-TODO: in the case when we skipped all columns because there was a
-qualified '*', and all columns were coalesced, we have to give a more
-meaningful message than ER_BAD_TABLE_ERROR.
+    @TODO in the case when we skipped all columns because there was a
+    qualified '*', and all columns were coalesced, we have to give a more
+    meaningful message than ER_BAD_TABLE_ERROR.
   */
   if (!table_name)
     my_message(ER_NO_TABLES_USED, ER(ER_NO_TABLES_USED), MYF(0));
@@ -4417,17 +4375,17 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void remove_db_from_cache(const char *db)
+void remove_db_from_cache(const std::string schema_name)
 {
   safe_mutex_assert_owner(&LOCK_open);
 
   for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
   {
     Table *table=(Table*) hash_element(&open_cache,idx);
-    if (!strcmp(table->s->db.str, db))
+    if (not strcmp(table->s->db.str, schema_name.c_str()))
     {
       table->s->version= 0L;			/* Free when thread is ready */
-      if (!table->in_use)
+      if (not table->in_use)
         relink_unused(table);
     }
   }

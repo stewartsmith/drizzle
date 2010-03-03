@@ -316,6 +316,7 @@ create table t2 like t3;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select * from t2;
+--error 1050
 create table t3 like t1;
 --error 1050
 create table t3 like mysqltest.t3;
@@ -326,7 +327,6 @@ create table t3 like non_existing_table;
 --error 1050
 create temporary table t3 like t1;
 drop table t1, t2, t3;
-drop table t3;
 drop database mysqltest;
 
 #
@@ -1097,11 +1097,11 @@ DROP TABLE t1;
 # precedence
 
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
+#SHOW INDEX FROM t1;
 DROP TABLE t1;
 
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
+#SHOW INDEX FROM t1;
 DROP TABLE t1;
 
 
@@ -1167,9 +1167,9 @@ USE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --error 1102
 SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-#
-# Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
-#
+##
+## Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
+##
 
 create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
@@ -1193,7 +1193,7 @@ select * from имя_таблицы_в_кодировке_утф8_длиной_�
 select TABLE_NAME from data_dictionary.tables where
 table_schema='test';
 
-select COLUMN_NAME from information_schema.old_columns where
+select COLUMN_NAME from data_dictionary.columns where
 table_schema='test';
 
 select INDEX_NAME from data_dictionary.indexes where
@@ -1204,7 +1204,7 @@ show create table имя_таблицы_в_кодировке_утф8_длино
 
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
-
+#
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA
 #

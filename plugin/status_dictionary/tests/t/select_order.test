@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 
 # Just to see output
@@ -19,5 +18,3 @@ SELECT 1;
 #SELECT VARIABLE_VALUE
 #FROM data_dictionary.session_variables
 #ORDER BY variable_name;
-
-DROP SCHEMA data_dictionary;

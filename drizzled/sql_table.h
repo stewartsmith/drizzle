@@ -69,7 +69,7 @@ bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
 void write_bin_log(Session *session,
-                   char const *query, size_t query_length);
+                   char const *query);
 
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
@@ -111,11 +111,6 @@ int mysql_prepare_create_table(Session *session,
                                uint32_t *key_count,
                                int select_field_count);
 
-
-/* Conversion functions */
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                            const char *table_name, bool is_tmp);
 
 } /* namespace drizzled */
 

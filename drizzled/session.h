@@ -312,15 +312,23 @@ struct Ha_data
   */
   void *ha_ptr;
   /**
-    0: Life time: one statement within a transaction. If @@autocommit is
-    on, also represents the entire transaction.
-    @sa trans_register_ha()
-
-    1: Life time: one transaction within a connection.
-    If the storage engine does not participate in a transaction,
-    this should not be used.
-    @sa trans_register_ha()
-  */
+   * Resource contexts for both the "statement" and "normal"
+   * transactions.
+   *
+   * Resource context at index 0:
+   *
+   * Life time: one statement within a transaction. If @@autocommit is
+   * on, also represents the entire transaction.
+   *
+   * Resource context at index 1:
+   *
+   * Life time: one transaction within a connection. 
+   *
+   * @note
+   *
+   * If the storage engine does not participate in a transaction, 
+   * there will not be a resource context.
+   */
   drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
@@ -406,30 +414,8 @@ public:
    */
   uint32_t id;
   LEX *lex; /**< parse tree descriptor */
-  /**
-    Points to the query associated with this statement. It's const, but
-    we need to declare it char * because all table handlers are written
-    in C and need to point to it.
-
-    Note that (A) if we set query = NULL, we must at the same time set
-    query_length = 0, and protect the whole operation with the
-    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
-    non-NULL value if its previous value is NULL. We do not need to protect
-    operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that session->query cannot change at the moment, one should print
-    session->query like this:
-      (1) reserve the LOCK_thread_count mutex;
-      (2) check if session->query is NULL;
-      (3) if not NULL, then print at most session->query_length characters from
-      it. We will see the query_length field as either 0, or the right value
-      for it.
-    Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way.
-    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
-    STATUS.
-  */
-  char *query;
-  uint32_t query_length; /**< current query length */
+  /** query associated with this statement */
+  std::string query;
 
   /**
     Name of the current (default) database.
@@ -795,7 +781,7 @@ public:
   }
 
   /** Returns the current query text */
-  inline const char *getQueryString()  const
+  inline const std::string &getQueryString()  const
   {
     return query;
   }
@@ -803,8 +789,8 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    if (query != NULL)
-      return strlen(query);
+    if (! query.empty())
+      return query.length();
     else
       return 0;
   }
@@ -1425,6 +1411,14 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  void doGetTableNames(CachedDirectory &directory,
+                       const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+  int doGetTableDefinition(const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           message::Table *table_proto);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);

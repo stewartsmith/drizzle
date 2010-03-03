@@ -406,16 +406,6 @@ uint32_t Field::pack_length_in_rec() const
   return pack_length();
 }
 
-uint32_t Field::pack_length_from_metadata(uint32_t field_metadata)
-{
-  return field_metadata;
-}
-
-uint32_t Field::row_pack_length()
-{
-  return 0;
-}
-
 uint32_t Field::data_length()
 {
   return pack_length();
@@ -596,22 +586,6 @@ void Field::init(Table *table_arg)
   table_name= &table_arg->alias;
 }
 
-String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
-{
-  const CHARSET_INFO * const cs= &my_charset_bin;
-  uint32_t length;
-  int64_t value= val_int();
-
-  if (val_buffer->alloc(MY_INT64_NUM_DECIMAL_DIGITS))
-    return 0;
-  length= (uint32_t) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
-                                                MY_INT64_NUM_DECIMAL_DIGITS,
-                                                unsigned_val ? 10 : -10,
-                                                value);
-  val_buffer->length(length);
-  return val_buffer;
-}
-
 /// This is used as a table name when the table structure is not set up
 Field::Field(unsigned char *ptr_arg,
              uint32_t length_arg,
@@ -665,13 +639,6 @@ void Field::copy_from_tmp(int row_offset)
                                 (null_ptr[row_offset] &
                                  (unsigned char) null_bit));
   }
-}
-
-int Field::compatible_field_size(uint32_t field_metadata)
-{
-  uint32_t const source_size= pack_length_from_metadata(field_metadata);
-  uint32_t const destination_size= row_pack_length();
-  return (source_size <= destination_size);
 }
 
 int Field::store(const char *to, 
@@ -854,7 +821,7 @@ Field *Field::new_field(memory::Root *root, Table *new_table, bool)
   tmp->part_of_key.reset();
   tmp->part_of_sortkey.reset();
   tmp->unireg_check= Field::NONE;
-  tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG | BINARY_FLAG | ENUM_FLAG | SET_FLAG);
+  tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG | BINARY_FLAG | ENUM_FLAG);
   tmp->reset_fields();
   return tmp;
 }

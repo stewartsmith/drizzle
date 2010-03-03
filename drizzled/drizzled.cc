@@ -706,7 +706,6 @@ extern "C" void abort_thread(int )
 #endif
 
 
-
 #ifndef SA_RESETHAND
 #define SA_RESETHAND 0
 #endif
@@ -801,8 +800,6 @@ static drizzle_show_var com_status_vars[]= {
   {"show_create_db",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_errors",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_fields",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
-  {"show_keys",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
   {"show_warnings",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
   {"truncate",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
@@ -890,7 +887,7 @@ int init_common_variables(const char *conf_file_name, int argc,
     strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
             sizeof(system_time_zone)-1);
 
- }
+  }
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -902,8 +899,8 @@ int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-      errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
-                      glob_hostname);
+    errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
+                  glob_hostname);
     strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
   }
   else
@@ -966,14 +963,14 @@ int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.collation_server=	 default_charset_info;
 
   if (not (character_set_filesystem=
-        get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+           get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -1127,25 +1124,11 @@ int init_server_components(plugin::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
-    if (!engine->is_enabled())
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Default storage engine (%s) is not available"),
-                    default_storage_engine_str);
-      unireg_abort(1);
-      //assert(global_system_variables.storage_engine);
-    }
-    else
-    {
-      /*
-        Need to unlock as global_system_variables.storage_engine
-        was acquired during plugin_init()
-      */
-      global_system_variables.storage_engine= engine;
-    }
+    global_system_variables.storage_engine= engine;
   }
 
   if (plugin::XaStorageEngine::recoverAllXids(0))
@@ -1548,7 +1531,7 @@ struct my_option my_long_options[] =
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
-   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
+   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, TABLE_OPEN_CACHE_MIN, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
    N_("Timeout in seconds to wait for a table level lock before returning an "
       "error. Used only if the connection has active cursors."),
