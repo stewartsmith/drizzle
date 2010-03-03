@@ -587,14 +587,16 @@ int StorageEngine::createTable(Session& session,
   }
 
 err2:
-  table.closefrm(false);
-
   if (error)
   {
-    char name_buff[FN_REFLEN];
-    sprintf(name_buff,"%s.%s", identifier.getDBName(), identifier.getTableName());
-    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
+    if (share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+      plugin::StorageEngine::deleteDefinitionFromPath(identifier);
+
+    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
   }
+
+  table.closefrm(false);
+
 err:
   share.free_table_share();
   return(error != 0);

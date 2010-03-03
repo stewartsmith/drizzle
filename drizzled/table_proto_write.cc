@@ -545,42 +545,15 @@ int rea_create_table(Session *session,
 		      keys, key_info))
     return 1;
 
-  string new_path(identifier.getPath());
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-
-  int err= 0;
-
-  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
-                                                                   table_proto.engine().name());
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    err= drizzle_write_proto_file(new_path, table_proto);
-
-  if (err != 0)
-  {
-    if (err == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0), identifier.getDBName());
-    else
-      my_error(ER_CANT_CREATE_TABLE, MYF(0), identifier.getTableName(), err);
-
-    goto err_handler;
-  }
-
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
                                          false, table_proto))
   {
-    goto err_handler;
+    return 1;
   }
 
   return 0;
 
-err_handler:
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    plugin::StorageEngine::deleteDefinitionFromPath(identifier);
-
-  return 1;
 } /* rea_create_table */
 
 } /* namespace drizzled */
