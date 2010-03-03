@@ -71,13 +71,13 @@ bool ProcesslistTool::Generator::populate()
     return false;
 
   Session *tmp= *it;
-  const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
-
-  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                              tmp))
+  if (not tmp->isViewable())
   {
+    ++it;
     return true;
   }
+
+  const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
 
 
   /* ID */
