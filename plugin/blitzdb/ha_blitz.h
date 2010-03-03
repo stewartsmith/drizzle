@@ -192,8 +192,6 @@ public:
   int drop(const char *path, const int key_num);
   int rename(const char *from, const char *to, const int key_num);
   int close(void);
-  int create_cursor(void);
-  void destroy_cursor(void);
 
   /* KEY HANDLING */
   char *prepare_key(const char *key, const size_t klen,

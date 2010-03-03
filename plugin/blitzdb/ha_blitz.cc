@@ -404,10 +404,6 @@ int ha_blitz::index_init(uint32_t key_num, bool) {
   active_index = key_num;
   sql_command_type = session_sql_command(current_session);
 
-  /* Means that the index file is empty. */
-  if (share->btrees[key_num].create_cursor() != 0)
-    return HA_ERR_OUT_OF_MEM;
-
   /* This is unlikely to happen but just for assurance, re-obtain
      the lock if this thread already has a certain lock. This makes
      sure that this thread will get the most appropriate lock for
@@ -561,6 +557,7 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 
   if (fetched_row == NULL) {
     errkey_id = key_num;
+    free(unique_key);
     return HA_ERR_KEY_NOT_FOUND;
   }
 
@@ -569,6 +566,7 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
   unpack_row(buf, fetched_row, row_len);
   keep_track_of_key(unique_key, unique_klen);
 
+  free(unique_key);
   free(fetched_row);
   return 0;
 }
@@ -576,8 +574,6 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 int ha_blitz::index_end(void) {
   held_key = NULL;
   held_key_len = 0;
-
-  share->btrees[active_index].destroy_cursor();
 
   if (thread_locked)
     critical_section_exit();

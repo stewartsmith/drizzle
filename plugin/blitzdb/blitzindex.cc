@@ -34,13 +34,23 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
     return HA_ERR_OUT_OF_MEM;
   }
 
+  if ((bt_cursor = tcbdbcurnew(btree)) == NULL) {
+    tcbdbdel(btree);
+    free(keybuf);
+    return HA_ERR_OUT_OF_MEM;
+  }
+
   if (!tcbdbsetmutex(btree)) {
     tcbdbdel(btree);
+    free(keybuf);
+    tcbdbcurdel(bt_cursor);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
   if (!tcbdbsetcmpfunc(btree, blitz_keycmp_cb, this)) {
     tcbdbdel(btree);
+    free(keybuf);
+    tcbdbcurdel(bt_cursor);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
@@ -48,6 +58,8 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
 
   if (!tcbdbopen(btree, buf, mode)) {
     tcbdbdel(btree);
+    free(keybuf);
+    tcbdbcurdel(bt_cursor);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
@@ -91,19 +103,12 @@ int BlitzTree::close(void) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
+  tcbdbcurdel(bt_cursor);
+  bt_cursor = NULL;
+
   free(keybuf);
   tcbdbdel(btree);
   return 0;
-}
-
-int BlitzTree::create_cursor(void) {
-  bt_cursor = tcbdbcurnew(btree);
-  return (bt_cursor != NULL) ? 0 : HA_ERR_OUT_OF_MEM;
-}
-
-void BlitzTree::destroy_cursor(void) {
-  tcbdbcurdel(bt_cursor);
-  bt_cursor = NULL;
 }
 
 char *BlitzTree::prepare_key(const char *key, const size_t klen,
