@@ -1413,9 +1413,7 @@ kill_one_thread(Session *session, ulong id, bool only_kill_query)
   if (tmp)
   {
 
-    if (plugin::Authorization::isAuthorized(session->getSecurityContext(),
-                                            tmp,
-                                            false))
+    if (tmp->isViewable())
     {
       tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
       error= 0;
