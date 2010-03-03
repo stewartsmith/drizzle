@@ -1950,6 +1950,61 @@ err:
   return(true);
 }
 
+/*
+  We have to write the query before we unlock the named table.
+
+  Since temporary tables are not replicated under row-based
+  replication, CREATE TABLE ... LIKE ... needs special
+  treatement.  We have four cases to consider, according to the
+  following decision table:
+
+  ==== ========= ========= ==============================
+  Case    Target    Source Write to binary log
+  ==== ========= ========= ==============================
+  1       normal    normal Original statement
+  2       normal temporary Generated statement
+  3    temporary    normal Nothing
+  4    temporary temporary Nothing
+  ==== ========= ========= ==============================
+*/
+static bool replicateCreateTableLike(Session *session, TableList *table, Table *name_lock,
+                                     bool is_src_table_tmp, bool is_if_not_exists)
+{
+  if (is_src_table_tmp)
+  {
+    char buf[2048];
+    String query(buf, sizeof(buf), system_charset_info);
+    query.length(0);  // Have to zero it since constructor doesn't
+
+
+    /*
+      Here we open the destination table, on which we already have
+      name-lock. This is needed for store_create_info() to work.
+      The table will be closed by unlink_open_table() at the end
+      of this function.
+    */
+    table->table= name_lock;
+    pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
+    if (session->reopen_name_locked_table(table, false))
+    {
+      pthread_mutex_unlock(&LOCK_open);
+      return false;
+    }
+    pthread_mutex_unlock(&LOCK_open);
+
+    int result= store_create_info(table, &query, is_if_not_exists);
+
+    assert(result == 0); // store_create_info() always return 0
+    write_bin_log(session, query.ptr());
+  }
+  else                                      // Case 1
+  {
+    write_bin_log(session, session->query.c_str());
+  }
+
+  return true;
+}
+
   /*
     Create a new table by copying from source table
 
@@ -1970,7 +2025,6 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
                                  TableIdentifier &src_table,
                                  bool lex_identified_temp_table, bool is_engine_set)
 {
-  int  err;
   int protoerr= EEXIST;
   message::Table new_proto;
   message::Table src_proto;
@@ -2030,9 +2084,9 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
     creation, instead create the table directly (for both normal
     and temporary tables).
   */
-  err= plugin::StorageEngine::createTable(session,
-                                          destination_identifier,
-                                          true, new_proto);
+  int err= plugin::StorageEngine::createTable(session,
+                                              destination_identifier,
+                                              true, new_proto);
 
   return err ? false : true;
 }
@@ -2091,122 +2145,99 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
   */
+  bool table_exists= false;
   if (lex_identified_temp_table)
   {
     if (session->find_temporary_table(db, table_name))
-      goto table_exists;
+    {
+      table_exists= true;
+    }
   }
   else
   {
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
-      goto err;
+    {
+      if (name_lock)
+      {
+        pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
+        session->unlink_open_table(name_lock);
+        pthread_mutex_unlock(&LOCK_open);
+      }
+
+      return res;
+    }
 
     if (not name_lock)
-      goto table_exists;
-
-    if (plugin::StorageEngine::doesTableExist(*session, destination_identifier))
-      goto table_exists;
-  }
-
-  pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-  was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                    src_identifier, lex_identified_temp_table, is_engine_set);
-  pthread_mutex_unlock(&LOCK_open);
-
-  if (lex_identified_temp_table)
-  {
-    if (not was_created || !session->open_temporary_table(destination_identifier))
     {
-      (void) session->rm_temporary_table(engine_arg, destination_identifier);
-      goto err;
+      table_exists= true;
+    }
+    else if (plugin::StorageEngine::doesTableExist(*session, destination_identifier))
+    {
+      table_exists= true;
     }
   }
-  else if (not was_created)
+
+  if (table_exists)
   {
-    TableIdentifier identifier(db, table_name, STANDARD_TABLE);
-    quick_rm_table(*session, identifier);
-
-    goto err;
-  }
-
-  /*
-    We have to write the query before we unlock the tables.
-  */
-  {
-    /*
-       Since temporary tables are not replicated under row-based
-       replication, CREATE TABLE ... LIKE ... needs special
-       treatement.  We have four cases to consider, according to the
-       following decision table:
-
-           ==== ========= ========= ==============================
-           Case    Target    Source Write to binary log
-           ==== ========= ========= ==============================
-           1       normal    normal Original statement
-           2       normal temporary Generated statement
-           3    temporary    normal Nothing
-           4    temporary temporary Nothing
-           ==== ========= ========= ==============================
-    */
-    if (! lex_identified_temp_table)
+    if (is_if_not_exists)
     {
-      if (src_table->table->s->tmp_table)               // Case 2
+      char warn_buff[DRIZZLE_ERRMSG_SIZE];
+      snprintf(warn_buff, sizeof(warn_buff),
+               ER(ER_TABLE_EXISTS_ERROR), table_name);
+      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                   ER_TABLE_EXISTS_ERROR,warn_buff);
+      res= false;
+    }
+    else
+    {
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
+    }
+  }
+  else // Otherwise we create the table
+  {
+    pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+    was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                      src_identifier, lex_identified_temp_table, is_engine_set);
+    pthread_mutex_unlock(&LOCK_open);
+
+    // So we blew the creation of the table, and we scramble to clean up
+    // anything that might have been created (read... it is a hack)
+    if (not was_created)
+    {
+      if (lex_identified_temp_table)
       {
-        char buf[2048];
-        String query(buf, sizeof(buf), system_charset_info);
-        query.length(0);  // Have to zero it since constructor doesn't
-
-
-        /*
-          Here we open the destination table, on which we already have
-          name-lock. This is needed for store_create_info() to work.
-          The table will be closed by unlink_open_table() at the end
-          of this function.
-        */
-        table->table= name_lock;
-        pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
-        if (session->reopen_name_locked_table(table, false))
-        {
-          pthread_mutex_unlock(&LOCK_open);
-          goto err;
-        }
-        pthread_mutex_unlock(&LOCK_open);
-
-        int result= store_create_info(table, &query, is_if_not_exists);
-
-        assert(result == 0); // store_create_info() always return 0
-        write_bin_log(session, query.ptr());
+        (void) session->rm_temporary_table(engine_arg, destination_identifier);
       }
-      else                                      // Case 1
-        write_bin_log(session, session->query.c_str());
+      else
+      {
+        TableIdentifier identifier(db, table_name, STANDARD_TABLE);
+        quick_rm_table(*session, identifier);
+      }
+    } 
+    else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
+    {
+      // We created, but we can't open... also, a hack.
+      (void) session->rm_temporary_table(engine_arg, destination_identifier);
+    }
+    else
+    {
+      if (not lex_identified_temp_table)
+      {
+        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
+        (void)rc;
+      }
+
+      res= false;
     }
   }
 
-  res= false;
-  goto err;
-
-table_exists:
-  if (is_if_not_exists)
-  {
-    char warn_buff[DRIZZLE_ERRMSG_SIZE];
-    snprintf(warn_buff, sizeof(warn_buff),
-             ER(ER_TABLE_EXISTS_ERROR), table_name);
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-		 ER_TABLE_EXISTS_ERROR,warn_buff);
-    res= false;
-  }
-  else
-  {
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
-  }
-
-err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
     session->unlink_open_table(name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
+
   return(res);
 }
 
