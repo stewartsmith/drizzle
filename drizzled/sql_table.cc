@@ -1481,7 +1481,7 @@ err:
 bool mysql_create_table(Session *session,
                         TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
-			message::Table *table_proto,
+			message::Table &table_proto,
                         AlterInfo *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count,
@@ -1490,9 +1490,9 @@ bool mysql_create_table(Session *session,
   Table *name_lock= NULL;
   bool result;
   bool lex_identified_temp_table=
-    (table_proto->type() == message::Table::TEMPORARY);
+    (table_proto.type() == message::Table::TEMPORARY);
 
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
     if (session->lock_table_name_if_not_cached(identifier.getDBName(),
                                                identifier.getTableName(),
@@ -1523,7 +1523,7 @@ bool mysql_create_table(Session *session,
   result= mysql_create_table_no_lock(session,
                                      identifier,
                                      create_info,
-                                     *table_proto,
+                                     table_proto,
                                      alter_info,
                                      internal_tmp_table,
                                      select_field_count,

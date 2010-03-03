@@ -71,7 +71,7 @@ static int create_temporary_table(Session *session,
                                   Table *table,
                                   TableIdentifier &identifier,
                                   HA_CREATE_INFO *create_info,
-                                  message::Table *create_proto,
+                                  message::Table &create_proto,
                                   AlterInfo *alter_info);
 
 static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name);
@@ -116,7 +116,7 @@ bool statement::AlterTable::execute()
                         select_lex->db, 
                         session->lex->name.str,
                         &create_info,
-                        &create_table_proto,
+                        create_table_proto,
                         first_table,
                         &alter_info,
                         select_lex->order_list.elements,
@@ -678,7 +678,7 @@ bool alter_table(Session *session,
                  char *new_db,
                  char *new_name,
                  HA_CREATE_INFO *create_info,
-                 message::Table *create_proto,
+                 message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
                  uint32_t order_num,
@@ -808,11 +808,11 @@ bool alter_table(Session *session,
 
   if (table->s->tmp_table != STANDARD_TABLE)
   {
-    create_proto->set_type(message::Table::TEMPORARY);
+    create_proto.set_type(message::Table::TEMPORARY);
   }
   else
   {
-    create_proto->set_type(message::Table::STANDARD);
+    create_proto.set_type(message::Table::STANDARD);
   }
 
   new_db_type= create_info->db_type;
@@ -832,7 +832,7 @@ bool alter_table(Session *session,
   if (create_info->row_type == ROW_TYPE_NOT_USED)
   {
     message::Table::TableOptions *table_options;
-    table_options= create_proto->mutable_options();
+    table_options= create_proto.mutable_options();
 
     create_info->row_type= table->s->row_type;
     table_options->set_row_type((message::Table_TableOptions_RowType)table->s->row_type);
@@ -968,7 +968,7 @@ bool alter_table(Session *session,
   /* We have to do full alter table. */
   new_db_type= create_info->db_type;
 
-  if (mysql_prepare_alter_table(session, table, create_info, create_proto,
+  if (mysql_prepare_alter_table(session, table, create_info, &create_proto,
                                 alter_info))
       goto err;
 
@@ -990,7 +990,7 @@ bool alter_table(Session *session,
     */
     TableIdentifier new_table_temp(new_db,
                                    tmp_name,
-                                   create_proto->type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
+                                   create_proto.type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
                                    TEMP_TABLE);
 
     error= create_temporary_table(session, table, new_table_temp, create_info, create_proto, alter_info);
@@ -1426,7 +1426,7 @@ create_temporary_table(Session *session,
                        Table *table,
                        TableIdentifier &identifier,
                        HA_CREATE_INFO *create_info,
-                       message::Table *create_proto,
+                       message::Table &create_proto,
                        AlterInfo *alter_info)
 {
   int error;
@@ -1439,10 +1439,10 @@ create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
-  create_proto->set_name(identifier.getTableName());
+  create_proto.set_name(identifier.getTableName());
 
   message::Table::StorageEngine *protoengine;
-  protoengine= create_proto->mutable_engine();
+  protoengine= create_proto.mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
   error= mysql_create_table(session,
