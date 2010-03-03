@@ -185,7 +185,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       table->db_type= share->db_type();
   }
 
-  if (!drop_temporary && lock_table_names_exclusively(session, tables))
+  if (not drop_temporary && lock_table_names_exclusively(session, tables))
   {
     pthread_mutex_unlock(&LOCK_open);
     return 1;

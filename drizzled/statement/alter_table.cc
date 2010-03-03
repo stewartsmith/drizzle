@@ -704,7 +704,6 @@ bool alter_table(Session *session,
 
   session->set_proc_info("init");
 
-  cerr << "Charset for table " << table_alias_charset->name << "\n";
   /*
     Assign variables table_name, new_name, db, new_db, path
     to simplify further comparisons: we want to see if it's a RENAME

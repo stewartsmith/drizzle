@@ -410,7 +410,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       }
     }
 
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : STANDARD_TABLE);
+    TableIdentifier identifier(db, table->table_name);
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -454,7 +454,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   error= 0;
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
     else
