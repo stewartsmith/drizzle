@@ -529,16 +529,16 @@ int prepare_create_field(CreateField *sql_field,
   return 0;
 }
 
-int mysql_prepare_create_table(Session *session,
-                               HA_CREATE_INFO *create_info,
-                               message::Table *create_proto,
-                               AlterInfo *alter_info,
-                               bool tmp_table,
-                               uint32_t *db_options,
-                               Cursor *cursor,
-                               KEY **key_info_buffer,
-                               uint32_t *key_count,
-                               int select_field_count)
+static int mysql_prepare_create_table(Session *session,
+                                      HA_CREATE_INFO *create_info,
+                                      message::Table &create_proto,
+                                      AlterInfo *alter_info,
+                                      bool tmp_table,
+                                      uint32_t *db_options,
+                                      Cursor *cursor,
+                                      KEY **key_info_buffer,
+                                      uint32_t *key_count,
+                                      int select_field_count)
 {
   const char	*key_name;
   CreateField	*sql_field,*dup_field;
@@ -950,7 +950,7 @@ int mysql_prepare_create_table(Session *session,
     */
     key_info->block_size= (key->key_create_info.block_size ?
                            key->key_create_info.block_size :
-                           create_proto->options().key_block_size());
+                           create_proto.options().key_block_size());
 
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
@@ -1010,8 +1010,8 @@ int mysql_prepare_create_table(Session *session,
       }
       cols2.rewind();
 
-      if (create_proto->field_size() > 0)
-        protofield= create_proto->mutable_field(proto_field_nr - 1);
+      if (create_proto.field_size() > 0)
+        protofield= create_proto.mutable_field(proto_field_nr - 1);
 
       {
         column->length*= sql_field->charset->mbmaxlen;
@@ -1344,7 +1344,7 @@ bool mysql_create_table_no_lock(Session *session,
   set_table_default_charset(create_info, identifier.getDBName());
 
   /* Check if table exists */
-  if (mysql_prepare_create_table(session, create_info, &table_proto, alter_info,
+  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, cursor,
                                  &key_info_buffer, &key_count,
