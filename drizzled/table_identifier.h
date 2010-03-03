@@ -60,7 +60,7 @@ private:
 public:
   TableIdentifier( const char *db_arg,
                    const char *table_name_arg,
-                   tmp_table_type tmp_arg= NO_TMP_TABLE) :
+                   tmp_table_type tmp_arg= STANDARD_TABLE) :
     path_inited(false),
     type(tmp_arg),
     db(db_arg),
@@ -69,7 +69,7 @@ public:
 
   bool isTmp() const
   {
-    return type == NO_TMP_TABLE ? false  : true;
+    return type == STANDARD_TABLE ? false  : true;
   }
 
   const char *getPath();
@@ -100,7 +100,7 @@ public:
     output << ", ";
 
     switch (identifier.type) {
-    case NO_TMP_TABLE:
+    case STANDARD_TABLE:
       type_str= "standard";
       break;
     case INTERNAL_TMP_TABLE:

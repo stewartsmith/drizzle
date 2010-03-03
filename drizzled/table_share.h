@@ -58,7 +58,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(NO_TMP_TABLE),
+    tmp_table(STANDARD_TABLE),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -119,7 +119,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(NO_TMP_TABLE),
+    tmp_table(STANDARD_TABLE),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -259,6 +259,12 @@ public:
   {
     max_rows= arg;
   }
+
+  /**
+   * Returns true if the supplied Field object
+   * is part of the table's primary key.
+   */
+  bool fieldInPrimaryKey(Field *field) const;
 
   plugin::StorageEngine *storage_engine;			/* storage engine plugin */
   inline plugin::StorageEngine *db_type() const	/* table_type for handler */
@@ -449,7 +455,7 @@ public:
       If someone is waiting for this to be deleted, inform it about this.
       Don't do a delete until we know that no one is refering to this anymore.
     */
-    if (tmp_table == NO_TMP_TABLE)
+    if (tmp_table == STANDARD_TABLE)
     {
       /* share->mutex is locked in release_table_share() */
       while (waiting_on_cond)
