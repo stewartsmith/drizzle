@@ -34,6 +34,7 @@ extra_cppflags=''
 extra_cxxflags=''
 root_plugin_dir='plugin'
 pkgplugindir='$(libdir)/drizzle'
+default_install='True'
 
 class ChangeProtectedFile(object):
 
@@ -327,6 +328,11 @@ def expand_plugin_ini(plugin, plugin_dir):
       plugin['has_build_conditional']=False
       plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
 
+    if plugin['install']:
+      plugin['library_type']= 'pkgplugin';
+    else:
+      plugin['library_type']= 'noinst';
+
 def find_testsuite(plugin_dir):
   for testdir in ['drizzle-tests','tests']:
     if os.path.isdir(os.path.join(plugin_dir,testdir)):
@@ -351,7 +357,8 @@ def read_plugin_ini(plugin_dir):
                           name=os.path.basename(plugin_dir),
                           load_by_default="False",
                           disabled="False",
-                          static="False")
+                          static="False",
+                          install=default_install)
     parser=ConfigParser.ConfigParser(defaults= plugin_defaults)
     parser.read(plugin_file)
     plugin=dict(parser.items('plugin'))
@@ -376,6 +383,8 @@ def read_plugin_ini(plugin_dir):
       plugin['enabled']="yes"
     if plugin.has_key('static'):
       plugin['static']= parser.getboolean('plugin','static')
+    if plugin.has_key('install'):
+      plugin['install']= parser.getboolean('plugin','install')
     if plugin.has_key('testsuite'):
       if plugin['testsuite'] == 'disable':
         plugin['testsuite']= False
@@ -442,7 +451,7 @@ endif
 %(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
-  pkgplugin_LTLIBRARIES+=%(root_plugin_dir)s/%(pname)s.la
+  %(library_type)s_LTLIBRARIES+=%(root_plugin_dir)s/%(pname)s.la
   %(root_plugin_dir)s_%(pname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
   %(root_plugin_dir)s_%(pname)s_la_LIBADD=%(libs)s
   %(root_plugin_dir)s_%(pname)s_la_DEPENDENCIES=%(libs)s
