@@ -423,8 +423,8 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
   pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
-  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
-  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
+  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s drizzled/libdrizzled.la
+  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s drizzled/libdrizzled.la
   plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
   plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
