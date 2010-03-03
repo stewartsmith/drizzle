@@ -1285,7 +1285,7 @@ c2: open t1; -- blocks
     {
       TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, NO_TMP_TABLE);
 
-      if (plugin::StorageEngine::getTableDefinition(*this, lock_table_identifier) != EEXIST)
+      if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.

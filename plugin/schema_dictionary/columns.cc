@@ -20,7 +20,6 @@
 
 #include "config.h"
 #include "plugin/schema_dictionary/dictionary.h"
-#include "drizzled/statement/select.h"
 
 using namespace std;
 using namespace drizzled;

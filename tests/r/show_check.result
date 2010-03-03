@@ -26,14 +26,15 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	a
-t1	b	0	b
-t1	b	1	c
+def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	5	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	1	N	1	0	45
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
+t1	FALSE	b	1	b
+t1	FALSE	b	2	c
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
@@ -64,24 +65,24 @@ def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Name	Name	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Engine	Engine	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Version	Version	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Row_format	Row_format	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Rows	Rows	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Avg_row_length	Avg_row_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Data_length	Data_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Max_data_length	Max_data_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Index_length	Index_length	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Data_free	Data_free	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Auto_increment	Auto_increment	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Create_time	Create_time	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Update_time	Update_time	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Check_time	Check_time	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Collation	Collation	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Checksum	Checksum	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Create_options	Create_options	8	256	0	N	1	0	45
-def	data_dictionary	local_table_status	LOCAL_TABLE_STATUS	Comment	Comment	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Name	Name	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Engine	Engine	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Version	Version	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Row_format	Row_format	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Rows	Rows	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Avg_row_length	Avg_row_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Data_length	Data_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Max_data_length	Max_data_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Index_length	Index_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Data_free	Data_free	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Auto_increment	Auto_increment	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Create_time	Create_time	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Update_time	Update_time	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Check_time	Check_time	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Collation	Collation	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Checksum	Checksum	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Create_options	Create_options	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Comment	Comment	8	256	0	N	1	0	45
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
@@ -110,17 +111,17 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	f1
-t1	PRIMARY	1	f2
-t1	PRIMARY	2	f3
-t1	PRIMARY	3	f4
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	f1
+t1	TRUE	PRIMARY	2	f2
+t1	TRUE	PRIMARY	3	f3
+t1	TRUE	PRIMARY	4	f4
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	f1
-t1	PRIMARY	1	f2
-t1	PRIMARY	2	f3
-t1	PRIMARY	3	f4
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	f1
+t1	TRUE	PRIMARY	2	f2
+t1	TRUE	PRIMARY	3	f3
+t1	TRUE	PRIMARY	4	f4
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
@@ -150,7 +151,7 @@ t1	CREATE TABLE `t1` (
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
 ) ENGINE=DEFAULT COMMENT='it''s a table'
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	TRUE	O'Brien	FALSE	
 c	INTEGER	FALSE	O'Brien	FALSE	
 c-b	INTEGER	TRUE	O'Brien	TRUE	
@@ -199,7 +200,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	DECIMAL	TRUE		TRUE	
 b	DECIMAL	TRUE		TRUE	
 e	DOUBLE	TRUE		TRUE	
@@ -207,7 +208,7 @@ f	DOUBLE	TRUE		TRUE
 h	DOUBLE	TRUE		TRUE	
 i	DOUBLE	TRUE		TRUE	
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	DECIMAL	TRUE		TRUE	
 b	DECIMAL	TRUE		TRUE	
 e	DOUBLE	TRUE		TRUE	
@@ -257,12 +258,12 @@ drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 max(a)	INTEGER	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 c	DECIMAL	TRUE		TRUE	
 d	DOUBLE	TRUE		TRUE	
 f	DOUBLE	TRUE		TRUE	
@@ -270,7 +271,7 @@ r	DOUBLE	TRUE		TRUE
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 c	DECIMAL	TRUE		TRUE	
 d	DOUBLE	TRUE		TRUE	
 f	DOUBLE	TRUE		TRUE	
@@ -453,12 +454,13 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	index_parts	INDEX_PARTS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def	data_dictionary	index_parts	INDEX_PARTS	SEQUENCE_IN_INDEX	Seq_in_index	5	20	1	N	32769	0	63
-def	data_dictionary	index_parts	INDEX_PARTS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	field1
+def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	4	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	6	N	1	0	45
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	field1
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -491,13 +493,13 @@ show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
 a\b
 show fields from `mysqlttest\1`.`a\b`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 show columns from `a\b` from `mysqlttest\1`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 show keys from `mysqlttest\1`.`a\b`;
-Table	Key_name	Seq_in_index	Column_name
+Table	Unique	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
 drop table if exists `été`;

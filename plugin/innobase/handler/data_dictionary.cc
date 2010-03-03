@@ -74,10 +74,10 @@ bool CmpTool::Generator::populate()
      clear it.  We could introduce mutex protection, but it
      could cause a measureable performance hit in
      page0zip.c. */
-  push(zip_stat->compressed);
-  push(zip_stat->compressed_ok);
+  push(static_cast<uint64_t>(zip_stat->compressed));
+  push(static_cast<uint64_t>(zip_stat->compressed_ok));
   push(zip_stat->compressed_usec / 1000000);
-  push(zip_stat->decompressed);
+  push(static_cast<uint64_t>(zip_stat->decompressed));
   push(zip_stat->decompressed_usec / 1000000);
 
   if (inner_reset)
@@ -128,9 +128,9 @@ bool CmpmemTool::Generator::populate()
   buf_buddy_stat_t* buddy_stat = &buf_buddy_stat[record_number];
 
   push(static_cast<uint64_t>(BUF_BUDDY_LOW << record_number));
-  push(buddy_stat->used);
-  push(UNIV_LIKELY(record_number < BUF_BUDDY_SIZES) 
-                   ? UT_LIST_GET_LEN(buf_pool->zip_free[record_number]) : 0);
+  push(static_cast<uint64_t>(buddy_stat->used));
+  uint64_t pages_free= (UNIV_LIKELY(record_number < BUF_BUDDY_SIZES) ? UT_LIST_GET_LEN(buf_pool->zip_free[record_number]) : 0);
+  push(pages_free);
 
   push(buddy_stat->relocated);
   push(buddy_stat->relocated_usec / 1000000);
@@ -298,9 +298,9 @@ void InnodbTrxTool::Generator::populate_innodb_locks()
      push("");
    }   
  
-   push(row->lock_space);
-   push(row->lock_page); 
-   push(row->lock_rec);
+   push(static_cast<uint64_t>(row->lock_space));
+   push(static_cast<uint64_t>(row->lock_page)); 
+   push(static_cast<uint64_t>(row->lock_rec));
    push(row->lock_data);
 }
 
@@ -316,12 +316,12 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
 
     push(trx_id);
     push(row->trx_state);
-    push(row->trx_started);
+    push(static_cast<uint64_t>(row->trx_started));
 
     if (row->trx_wait_started != 0)
     {
       push(trx_i_s_create_lock_id(row->requested_lock_row, lock_id, sizeof(lock_id)));
-      push(row->trx_wait_started);
+      push(static_cast<uint64_t>(row->trx_wait_started));
     }
     else
     {
@@ -330,7 +330,7 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
     }
 
     push(static_cast<int64_t>(row->trx_weight));
-    push(row->trx_mysql_thread_id);
+    push(static_cast<uint64_t>(row->trx_mysql_thread_id));
     push(row->trx_query);
 }
 

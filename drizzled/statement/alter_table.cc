@@ -783,15 +783,15 @@ bool alter_table(Session *session,
         if (session->lock_table_name_if_not_cached(new_db, new_name, &name_lock))
           return true;
 
-        if (! name_lock)
+        if (not name_lock)
         {
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
           return true;
         }
 
-        build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
+        TableIdentifier identifier(new_db, new_name_buff);
 
-        if (plugin::StorageEngine::getTableDefinition(*session, new_name_buff, new_db, new_name_buff, false) == EEXIST)
+        if (plugin::StorageEngine::getTableDefinition(*session, identifier) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
