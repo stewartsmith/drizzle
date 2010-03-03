@@ -485,7 +485,8 @@ public:
   bool isViewable() const
   {
     return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                               this);
+                                               this,
+                                               false);
   }
 
   /**
