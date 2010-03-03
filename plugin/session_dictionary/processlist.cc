@@ -67,16 +67,20 @@ bool ProcesslistTool::Generator::populate()
 {
   const char *val;
 
+
+  while (it != getSessionList().end())
+  {
+    if ((*it)->isViewable())
+    {
+      break;
+    }
+    ++it;
+  }
+
   if (it == getSessionList().end())
     return false;
 
   Session *tmp= *it;
-  if (not tmp->isViewable())
-  {
-    ++it;
-    return true;
-  }
-
   const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
 
 

@@ -1394,7 +1394,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 */
 
 static unsigned int
-kill_one_thread(Session *session, ulong id, bool only_kill_query)
+kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
