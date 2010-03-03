@@ -516,23 +516,15 @@ int StorageEngine::dropTable(Session& session,
 int StorageEngine::createTable(Session& session,
                                TableIdentifier &identifier,
                                bool update_create_info,
-                               message::Table& table_message, bool proto_used)
+                               message::Table& table_message)
 {
   int error= 1;
   Table table;
   TableShare share(identifier.getDBName(), 0, identifier.getTableName(), identifier.getPath());
   message::Table tmp_proto;
 
-  if (proto_used)
-  {
-    if (parse_table_proto(session, table_message, &share))
-      goto err;
-  }
-  else
-  {
-    if (open_table_def(session, &share))
-      goto err;
-  }
+  if (parse_table_proto(session, table_message, &share))
+    goto err;
 
   if (open_table_from_share(&session, &share, "", 0, 0,
                             &table))
@@ -542,20 +534,17 @@ int StorageEngine::createTable(Session& session,
     table.updateCreateInfo(&table_message);
 
   /* Check for legal operations against the Engine using the proto (if used) */
-  if (proto_used)
+  if (table_message.type() == message::Table::TEMPORARY &&
+      share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
   {
-    if (table_message.type() == message::Table::TEMPORARY &&
-        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
-    else if (table_message.type() != message::Table::TEMPORARY &&
-             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
+    error= HA_ERR_UNSUPPORTED;
+    goto err2;
+  }
+  else if (table_message.type() != message::Table::TEMPORARY &&
+           share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
+  {
+    error= HA_ERR_UNSUPPORTED;
+    goto err2;
   }
 
   {
@@ -564,7 +553,7 @@ int StorageEngine::createTable(Session& session,
 
     table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
 
-    if (share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
       string dst_proto_path(table_name_arg);
       dst_proto_path.append(".dfe");
@@ -589,7 +578,7 @@ int StorageEngine::createTable(Session& session,
 err2:
   if (error)
   {
-    if (share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
       plugin::StorageEngine::deleteDefinitionFromPath(identifier);
 
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
