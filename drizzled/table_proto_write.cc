@@ -39,16 +39,16 @@ using namespace std;
 
 namespace drizzled {
 
-int fill_table_proto(message::Table *table_proto,
-                     const char *table_name,
-                     List<CreateField> &create_fields,
-                     HA_CREATE_INFO *create_info,
-                     uint32_t keys,
-                     KEY *key_info)
+static int fill_table_proto(message::Table &table_proto,
+                            const char *table_name,
+                            List<CreateField> &create_fields,
+                            HA_CREATE_INFO *create_info,
+                            uint32_t keys,
+                            KEY *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
-  message::Table::TableOptions *table_options= table_proto->mutable_options();
+  message::Table::TableOptions *table_options= table_proto.mutable_options();
 
   if (create_fields.elements > MAX_FIELDS)
   {
@@ -56,13 +56,13 @@ int fill_table_proto(message::Table *table_proto,
     return(1);
   }
 
-  assert(strcmp(table_proto->engine().name().c_str(),
+  assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
 
-  assert(strcmp(table_proto->name().c_str(),table_name)==0);
+  assert(strcmp(table_proto.name().c_str(),table_name)==0);
 
   int field_number= 0;
-  bool use_existing_fields= table_proto->field_size() > 0;
+  bool use_existing_fields= table_proto.field_size() > 0;
   while ((field_arg= it++))
   {
     message::Table::Field *attribute;
@@ -72,11 +72,11 @@ int fill_table_proto(message::Table *table_proto,
        filled out Field messages */
 
     if (use_existing_fields)
-      attribute= table_proto->mutable_field(field_number++);
+      attribute= table_proto.mutable_field(field_number++);
     else
     {
       /* Other code paths still have to fill out the proto */
-      attribute= table_proto->add_field();
+      attribute= table_proto.add_field();
 
       if(field_arg->flags & NOT_NULL_FLAG)
       {
@@ -304,7 +304,7 @@ int fill_table_proto(message::Table *table_proto,
 
   }
 
-  assert(! use_existing_fields || (field_number == table_proto->field_size()));
+  assert(! use_existing_fields || (field_number == table_proto.field_size()));
 
   switch(create_info->row_type)
   {
@@ -364,11 +364,11 @@ int fill_table_proto(message::Table *table_proto,
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
-  for (unsigned int i= 0; i < keys; i++)
+  for (uint32_t i= 0; i < keys; i++)
   {
     message::Table::Index *idx;
 
-    idx= table_proto->add_indexes();
+    idx= table_proto.add_indexes();
 
     assert(test(key_info[i].flags & HA_USES_COMMENT) ==
            (key_info[i].comment.length > 0));
@@ -493,7 +493,7 @@ int delete_table_proto_file(const char *file_name)
 }
 
 int drizzle_write_proto_file(const std::string file_name,
-                             message::Table *table_proto)
+                             message::Table &table_proto)
 {
   int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
 
@@ -503,7 +503,7 @@ int drizzle_write_proto_file(const std::string file_name,
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (table_proto->SerializeToZeroCopyStream(output) == false)
+  if (table_proto.SerializeToZeroCopyStream(output) == false)
   {
     delete output;
     close(fd);
@@ -536,7 +536,7 @@ int drizzle_write_proto_file(const std::string file_name,
 
 int rea_create_table(Session *session,
                      TableIdentifier &identifier,
-		     message::Table *table_proto,
+		     message::Table &table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_fields,
                      uint32_t keys, KEY *key_info)
@@ -553,7 +553,7 @@ int rea_create_table(Session *session,
   int err= 0;
 
   plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
-                                                                   table_proto->engine().name());
+                                                                   table_proto.engine().name());
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
     err= drizzle_write_proto_file(new_path, table_proto);
 
@@ -569,7 +569,7 @@ int rea_create_table(Session *session,
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
-                                         false, *table_proto))
+                                         false, table_proto))
   {
     goto err_handler;
   }

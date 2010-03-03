@@ -309,7 +309,7 @@ class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,boo
   const char *db;
   const char *table_name;
   const bool is_tmp;
-  message::Table *table_proto;
+  message::Table *table_message;
   int *err;
 
 public:
@@ -318,14 +318,14 @@ public:
                                   const char *db_arg,
                                   const char *table_name_arg,
                                   const bool is_tmp_arg,
-                                  message::Table *table_proto_arg,
+                                  message::Table *table_message_arg,
                                   int *err_arg) :
     session(session_arg), 
     path(path_arg), 
     db(db_arg),
     table_name(table_name_arg),
     is_tmp(is_tmp_arg),
-    table_proto(table_proto_arg), 
+    table_message(table_message_arg), 
     err(err_arg) {}
 
   result_type operator() (argument_type engine)
@@ -335,7 +335,7 @@ public:
                                           db,
                                           table_name,
                                           is_tmp,
-                                          table_proto);
+                                          table_message);
 
     if (ret != ENOENT)
       *err= ret;
@@ -361,12 +361,12 @@ bool plugin::StorageEngine::doesTableExist(Session& session,
 */
 int StorageEngine::getTableDefinition(Session& session,
                                       TableIdentifier &identifier,
-                                      message::Table *table_proto,
+                                      message::Table *table_message,
                                       bool include_temporary_tables)
 {
   return getTableDefinition(session,
                             identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            table_proto, include_temporary_tables);
+                            table_message, include_temporary_tables);
 }
 
 int StorageEngine::getTableDefinition(Session& session,
@@ -374,20 +374,20 @@ int StorageEngine::getTableDefinition(Session& session,
                                               const char *schema_name,
                                               const char *table_name,
                                               const bool,
-                                              message::Table *table_proto,
+                                              message::Table *table_message,
                                               bool include_temporary_tables)
 {
   int err= ENOENT;
 
   if (include_temporary_tables)
   {
-    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_proto) == EEXIST)
+    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_message) == EEXIST)
       return EEXIST;
   }
 
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_proto, &err));
+            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_message, &err));
 
   if (iter == vector_of_engines.end())
   {
@@ -514,9 +514,9 @@ int StorageEngine::dropTable(Session& session,
    @todo refactor to remove goto
 */
 int StorageEngine::createTable(Session& session,
-                                       TableIdentifier &identifier,
-                                       bool update_create_info,
-                                       message::Table& table_proto, bool proto_used)
+                               TableIdentifier &identifier,
+                               bool update_create_info,
+                               message::Table& table_message, bool proto_used)
 {
   int error= 1;
   Table table;
@@ -525,7 +525,7 @@ int StorageEngine::createTable(Session& session,
 
   if (proto_used)
   {
-    if (parse_table_proto(session, table_proto, &share))
+    if (parse_table_proto(session, table_message, &share))
       goto err;
   }
   else
@@ -539,18 +539,18 @@ int StorageEngine::createTable(Session& session,
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(&table_proto);
+    table.updateCreateInfo(&table_message);
 
   /* Check for legal operations against the Engine using the proto (if used) */
   if (proto_used)
   {
-    if (table_proto.type() == message::Table::TEMPORARY &&
+    if (table_message.type() == message::Table::TEMPORARY &&
         share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
     {
       error= HA_ERR_UNSUPPORTED;
       goto err2;
     }
-    else if (table_proto.type() != message::Table::TEMPORARY &&
+    else if (table_message.type() != message::Table::TEMPORARY &&
              share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
     {
       error= HA_ERR_UNSUPPORTED;
@@ -569,7 +569,7 @@ int StorageEngine::createTable(Session& session,
     error= share.storage_engine->doCreateTable(&session,
                                                table_name_arg,
                                                table,
-                                               table_proto);
+                                               table_message);
   }
 
 err2:
@@ -1230,7 +1230,7 @@ int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifi
   return internal::my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
 }
 
-int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_proto)
+int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_message)
 {
   string file_name(identifier.getPath());
 
@@ -1244,7 +1244,7 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (table_proto.SerializeToZeroCopyStream(output) == false)
+  if (table_message.SerializeToZeroCopyStream(output) == false)
   {
     delete output;
     close(fd);

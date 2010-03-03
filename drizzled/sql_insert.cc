@@ -1541,7 +1541,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     if (!mysql_create_table_no_lock(session,
                                     identifier,
                                     create_info,
-				    table_proto,
+				    *table_proto,
 				    alter_info,
                                     false,
                                     select_field_count,

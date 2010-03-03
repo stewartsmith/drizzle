@@ -1310,7 +1310,7 @@ static bool prepare_blob_field(Session *,
 bool mysql_create_table_no_lock(Session *session,
                                 TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
-				message::Table *table_proto,
+				message::Table &table_proto,
                                 AlterInfo *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count,
@@ -1322,7 +1322,7 @@ bool mysql_create_table_no_lock(Session *session,
   bool		error= true;
   TableShare share;
   bool lex_identified_temp_table=
-    (table_proto->type() == message::Table::TEMPORARY);
+    (table_proto.type() == message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
   if (!alter_info->create_list.elements)
@@ -1331,7 +1331,7 @@ bool mysql_create_table_no_lock(Session *session,
                MYF(0));
     return true;
   }
-  assert(strcmp(identifier.getTableName(), table_proto->name().c_str())==0);
+  assert(strcmp(identifier.getTableName(), table_proto.name().c_str())==0);
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -1344,7 +1344,7 @@ bool mysql_create_table_no_lock(Session *session,
   set_table_default_charset(create_info, identifier.getDBName());
 
   /* Check if table exists */
-  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
+  if (mysql_prepare_create_table(session, create_info, &table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, cursor,
                                  &key_info_buffer, &key_count,
@@ -1460,7 +1460,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (not internal_tmp_table && not lex_identified_temp_table)
   {
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.createTable(session, *table_proto);
+    replication_services.createTable(session, table_proto);
   }
   error= false;
 unlock_and_end:
@@ -1523,7 +1523,7 @@ bool mysql_create_table(Session *session,
   result= mysql_create_table_no_lock(session,
                                      identifier,
                                      create_info,
-                                     table_proto,
+                                     *table_proto,
                                      alter_info,
                                      internal_tmp_table,
                                      select_field_count,
@@ -2061,7 +2061,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
       string dst_proto_path(destination_identifier.getPath());
       dst_proto_path.append(".dfe");
 
-      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
+      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), new_proto);
     }
     else
     {
