@@ -31,23 +31,12 @@ namespace drizzled {
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
-int drizzle_write_proto_file(const std::string file_name,
-                             message::Table &table_proto);
-
 int parse_table_proto(Session& session,
                       message::Table &table,
                       TableShare *share);
 
-#if 0
-int fill_table_proto(message::Table *table_proto,
-                     const char *table_name,
-                     List<CreateField> &create_fields,
-                     HA_CREATE_INFO *create_info,
-                     uint32_t keys,
-                     KEY *key_info);
-#endif
-
 int rename_table_proto_file(const char *from, const char* to);
+
 int delete_table_proto_file(const char *file_name);
 
 int rea_create_table(Session *session,

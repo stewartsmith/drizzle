@@ -492,29 +492,6 @@ int delete_table_proto_file(const char *file_name)
   return internal::my_delete(new_path.c_str(), MYF(0));
 }
 
-int drizzle_write_proto_file(const std::string file_name,
-                             message::Table &table_proto)
-{
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
-
-  if (fd == -1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyOutputStream* output=
-    new google::protobuf::io::FileOutputStream(fd);
-
-  if (table_proto.SerializeToZeroCopyStream(output) == false)
-  {
-    delete output;
-    close(fd);
-    return errno;
-  }
-
-  delete output;
-  close(fd);
-  return 0;
-}
-
 /*
   Create a table definition proto file and the tables
 

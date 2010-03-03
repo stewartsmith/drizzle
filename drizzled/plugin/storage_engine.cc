@@ -555,10 +555,7 @@ int StorageEngine::createTable(Session& session,
 
     if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
-      string dst_proto_path(table_name_arg);
-      dst_proto_path.append(".dfe");
-
-      int protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), table_message);
+      int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
 
       if (protoerr)
       {
