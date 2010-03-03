@@ -564,6 +564,20 @@ int StorageEngine::createTable(Session& session,
 
     table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
 
+    if (share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    {
+      string dst_proto_path(table_name_arg);
+      dst_proto_path.append(".dfe");
+
+      int protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), table_message);
+
+      if (protoerr)
+      {
+        error= protoerr;
+        goto err2;
+      }
+    }
+
     share.storage_engine->setTransactionReadWrite(session);
 
     error= share.storage_engine->doCreateTable(&session,

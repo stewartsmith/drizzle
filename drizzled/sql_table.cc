@@ -2051,25 +2051,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
     protoengine->set_name(create_table_proto.engine().name());
   }
 
-  if (protoerr == EEXIST)
-  {
-    plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
-                                                                     new_proto.engine().name());
-
-    if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    {
-      string dst_proto_path(destination_identifier.getPath());
-      dst_proto_path.append(".dfe");
-
-      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), new_proto);
-    }
-    else
-    {
-      protoerr= 0;
-    }
-  }
-
-  if (protoerr)
+  if (protoerr && protoerr != EEXIST)
   {
     if (errno == ENOENT)
       my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName());
