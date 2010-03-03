@@ -544,7 +544,7 @@ struct trx_struct{
 	/*------------------------------*/
 	void*		mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
-	char**		mysql_query_str;/* pointer to the field in mysqld_thd
+	const char*	mysql_query_str;/* pointer to the field in mysqld_thd
 					which contains the pointer to the
 					current SQL query string */
 	const char*	mysql_log_file_name;
@@ -560,10 +560,6 @@ struct trx_struct{
 	ulint		mysql_process_no;/* since in Linux, 'top' reports
 					process id's and not thread id's, we
 					store the process number too */
-	/*------------------------------*/
-	ulint		n_mysql_tables_in_use; /* number of Innobase tables
-					used in the processing of the current
-					SQL statement in MySQL */
 	ulint		mysql_n_tables_locked;
 					/* how many tables the current SQL
 					statement uses, except those

@@ -45,67 +45,33 @@ struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
 
-namespace plugin
-{
-  class InfoSchemaTable;
-}
-
-
 class Table;
 typedef class Item COND;
 
-class NormalisedDatabaseName;
+extern struct system_status_var global_status_var;
 
-
-typedef struct system_status_var STATUS_VAR;
-
-extern STATUS_VAR global_status_var;
-
-typedef struct st_lookup_field_values
-{
-  LEX_STRING db_value, table_value;
-  bool wild_db_value, wild_table_value;
-} LOOKUP_FIELD_VALUES;
-
-bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
-                                  LOOKUP_FIELD_VALUES *lookup_field_vals,
-                                  plugin::InfoSchemaTable *schema_table);
-bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
-                             LOOKUP_FIELD_VALUES *lookup_field_values,
-                             plugin::InfoSchemaTable *schema_table);
-int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
-                 LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
-SHOW_VAR *getFrontOfStatusVars();
-SHOW_VAR *getCommandStatusVars();
+drizzle_show_var *getFrontOfStatusVars();
+drizzle_show_var *getCommandStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
-int get_quote_char_for_identifier();
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
 
-bool make_schema_select(Session *session,  Select_Lex *sel,
-                        const std::string& schema_table_name);
-
-bool mysqld_show_open_tables(Session *session,const char *wild);
-bool mysqld_show_logs(Session *session);
-void mysqld_list_fields(Session *session,TableList *table, const char *wild);
-int mysqld_dump_create_info(Session *session, TableList *table_list, int fd);
 bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
-bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists);
+bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exists);
 
-int mysqld_show_status(Session *session);
-int mysqld_show_variables(Session *session,const char *wild);
-bool mysqld_show_storage_engines(Session *session);
 bool mysqld_show_column_types(Session *session);
-void mysqld_list_processes(Session *session,const char *user);
-void calc_sum_of_all_status(STATUS_VAR *to);
+void calc_sum_of_all_status(struct system_status_var *to);
 
-int add_status_vars(SHOW_VAR *list);
-void remove_status_vars(SHOW_VAR *list);
+int add_status_vars(drizzle_show_var *list);
+int add_com_status_vars(drizzle_show_var *list);
+void remove_status_vars(drizzle_show_var *list);
 void init_status_vars();
 void free_status_vars();
 void reset_status_vars();
+
+int get_quote_char_for_identifier();
 
 } /* namespace drizzled */
 

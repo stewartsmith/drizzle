@@ -88,7 +88,7 @@ extern KEY_CREATE_INFO default_key_create_info;
 /* Forward declaration for condition pushdown to storage engine */
 typedef class Item COND;
 
-typedef struct system_status_var SSV;
+typedef struct system_status_var system_status_var;
 
 class COST_VECT;
 
@@ -443,8 +443,6 @@ public:
   */
   virtual void try_semi_consistent_read(bool) {}
   virtual void unlock_row(void) {}
-  virtual int start_stmt(Session *, thr_lock_type)
-  {return 0;}
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
@@ -549,13 +547,13 @@ public:
 
 protected:
   /* Service methods for use by storage engines. */
-  void ha_statistic_increment(ulong SSV::*offset) const;
+  void ha_statistic_increment(ulong system_status_var::*offset) const;
   void **ha_data(Session *) const;
   Session *ha_session(void) const;
 
 private:
   /* Private helpers */
-  inline void mark_trx_read_write();
+  inline void setTransactionReadWrite();
 private:
   /*
     Low-level primitives for storage engines.  These should be
@@ -682,10 +680,6 @@ extern uint32_t total_ha, total_ha_2pc;
 int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
-
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-bool tablename_to_filename(const char *from, char *to, size_t to_length);
-
 
 /*
   Storage engine has to assume the transaction will end up with 2pc if

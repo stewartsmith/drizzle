@@ -241,8 +241,8 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 CREATE TABLE table_25930_a ( blah INT );
 CREATE TABLE table_25930_b SELECT "blah" - 1 FROM table_25930_a;
 desc table_25930_b;
-Field	Type	Null	Key	Default	Extra
-"blah" - 1	double	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+"blah" - 1	DOUBLE	FALSE		FALSE	
 DROP TABLE table_25930_a;
 DROP TABLE table_25930_b;
 select pi(3.14);

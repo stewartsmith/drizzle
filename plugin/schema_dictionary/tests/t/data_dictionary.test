@@ -1,7 +1,5 @@
 # Drizzle's data dictionary.
 
-CREATE SCHEMA data_dictionary;
-
 use data_dictionary;
 
 --replace_column 1 #
@@ -30,29 +28,11 @@ SELECT count(*) FROM TABLE_CONSTRAINTS;
 show create table COLUMNS ;
 show create table INDEXES ;
 show create table INDEX_PARTS ;
-show create table LOCAL_TABLE_NAMES;
 show create table REFERENTIAL_CONSTRAINTS ;
 show create table SCHEMAS ;
 show create table SCHEMA_NAMES;
 show create table TABLES ;
 show create table TABLE_CONSTRAINTS ;
-
-# Test the behavior of LOCAL_TABLE_NAMES
-select * from LOCAL_TABLE_NAMES;
-
-
-# Slap tests for concurrency
-CREATE SCHEMA drizzleslap;
-
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.columns" --delimiter=";"
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.index_parts" --delimiter=";"
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.indexes" --delimiter=";"
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.referential_constraints" --delimiter=";"
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.schemas" --delimiter=";"
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.table_constraints" --delimiter=";"
-#--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.tables" --delimiter=";"
-
-DROP SCHEMA drizzleslap;
 
 # Test that the data dictionary is not leaking its tables to other schema
 CREATE SCHEMA A;
@@ -60,8 +40,4 @@ use A;
 create table A (a int);
 SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
 
-# Test the behavior of LOCAL_TABLE_NAMES
-select * from data_dictionary.LOCAL_TABLE_NAMES;
-
 DROP SCHEMA A;
-DROP SCHEMA data_dictionary;

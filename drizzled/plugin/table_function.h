@@ -106,9 +106,7 @@ public:
     }
 
     void push(uint64_t arg);
-    void push(uint32_t arg);
     void push(int64_t arg);
-    void push(int32_t arg);
     void push(const char *arg, uint32_t length= 0);
     void push(const std::string& arg);
     void push(bool arg);
@@ -127,8 +125,8 @@ public:
     if (local_schema.length() == 0)
     {
       local_schema= identifier.getSchemaName();
-      transform(local_schema.begin(), local_schema.end(),
-                local_schema.begin(), ::tolower);
+      std::transform(local_schema.begin(), local_schema.end(),
+                     local_schema.begin(), ::tolower);
     }
 
     return local_schema;
@@ -139,8 +137,8 @@ public:
     if (local_path.length() == 0)
     {
       local_path= identifier.getPath();
-      transform(local_path.begin(), local_path.end(),
-                local_path.begin(), ::tolower);
+      std::transform(local_path.begin(), local_path.end(),
+                     local_path.begin(), ::tolower);
     }
 
     return local_path;

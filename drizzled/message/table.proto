@@ -84,7 +84,6 @@ message Table {
       BIGINT = 5;
       DECIMAL = 6;
       DATE = 7;
-      TIME = 8;
       TIMESTAMP = 9;
       DATETIME = 10;
     }
@@ -158,7 +157,7 @@ message Table {
 
     message IndexPart {
       required uint32 fieldnr = 1;
-      optional int32 compare_length = 2;
+      optional uint32 compare_length = 2;
       optional bool in_reverse_order = 3 [default = false];
 
       optional uint32 key_type = 101; /* THIS MUST DIE. Along with pack_flag*/

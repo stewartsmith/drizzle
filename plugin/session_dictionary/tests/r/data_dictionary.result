@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 show create table PROCESSLIST ;
 Table	Create Table
@@ -24,6 +23,3 @@ ID
 SELECT a.ID FROM processlist as a, data_dictionary.processlist as b;
 ID
 #
-CREATE SCHEMA drizzleslap;
-DROP SCHEMA drizzleslap;
-DROP SCHEMA data_dictionary;

@@ -257,7 +257,7 @@ public:
                // dont need to quote the db name, always CSV safe
                (int)session->db.length(), dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->getQueryString(),
+               quotify((const unsigned char *)session->getQueryString().c_str(),
                        session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
@@ -350,7 +350,6 @@ DRIZZLE_DECLARE_PLUGIN
     PLUGIN_LICENSE_GPL,
     logging_gearman_plugin_init,
     logging_gearman_plugin_deinit,
-    NULL,   /* status variables */
     logging_gearman_system_variables,
     NULL
 }

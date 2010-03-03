@@ -75,7 +75,7 @@ bool statement::RollbackToSavepoint::execute()
       /* Found the named savepoint we want to rollback to */
       (void) transaction_services.ha_rollback_to_savepoint(session, first_savepoint);
 
-      if (session->transaction.all.modified_non_trans_table)
+      if (session->transaction.all.hasModifiedNonTransData())
       {
         push_warning(session, 
                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -126,7 +126,7 @@ bool statement::RollbackToSavepoint::execute()
   }
   if (found)
   {
-    if (session->transaction.all.modified_non_trans_table)
+    if (session->transaction.all.hasModifiedNonTransData())
     {
       push_warning(session, 
                    DRIZZLE_ERROR::WARN_LEVEL_WARN,

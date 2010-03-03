@@ -26,7 +26,6 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/db.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
@@ -44,7 +43,7 @@
 #include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
@@ -65,8 +64,7 @@ namespace drizzled
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 static bool parse_sql(Session *session, Lex_input_stream *lip);
-void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** found_semicolon);
+void mysql_parse(Session *session, const char *inBuf, uint32_t length);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -130,21 +128,11 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
-  sql_command_flags[SQLCOM_SHOW_STATUS]=      CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_DATABASES]=   CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
 
-   sql_command_flags[SQLCOM_SHOW_TABLES]=       (CF_STATUS_COMMAND |
-                                               CF_SHOW_TABLE_COMMAND);
-  sql_command_flags[SQLCOM_SHOW_TABLE_STATUS]= (CF_STATUS_COMMAND |
-                                                CF_SHOW_TABLE_COMMAND);
   /*
     The following admin table operations are allowed
     on log tables.
@@ -206,11 +194,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    tmp.str= packet;
-    tmp.length= packet_length;
-    if (!mysql_change_db(session, &tmp, false))
+    string tmp(packet, packet_length);
+
+    if (not mysql_change_db(session, tmp))
     {
       session->my_ok();
     }
@@ -220,12 +207,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
-    DRIZZLE_QUERY_START(session->query,
+    DRIZZLE_QUERY_START(session->query.c_str(),
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-    const char* end_of_stmt= NULL;
 
-    mysql_parse(session, session->query, session->query_length, &end_of_stmt);
+    plugin::QueryRewriter::rewriteQuery(session->query);
+    mysql_parse(session, session->query.c_str(), session->query.length());
 
     break;
   }
@@ -316,8 +303,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->set_proc_info("cleaning up");
   session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query= 0;
-  session->query_length= 0;
+  session->query.clear();
 
   session->set_proc_info(NULL);
   free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
@@ -397,40 +383,6 @@ int prepare_new_schema_table(Session *session, LEX *lex,
   return 0;
 }
 
-int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         const string& schema_table_name)
-{
-  Select_Lex *schema_select_lex= NULL;
-
-  if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
-           schema_table_name.compare("OLD_STATISTICS") == 0)
-  {
-    assert(table_ident);
-    TableList **query_tables_last= lex->query_tables_last;
-    schema_select_lex= new Select_Lex();
-    /* 'parent_lex' is used in init_query() so it must be before it. */
-    schema_select_lex->parent_lex= lex;
-    schema_select_lex->init_query();
-    if (! schema_select_lex->add_table_to_list(session, table_ident, 0, 0, TL_READ))
-    {
-      return (1);
-    }
-    lex->query_tables_last= query_tables_last;
-  }
-
-  Select_Lex *select_lex= lex->current_select;
-  assert(select_lex);
-  if (make_schema_select(session, select_lex, schema_table_name))
-  {
-    return(1);
-  }
-  TableList *table_list= (TableList*) select_lex->table_list.first;
-  assert(table_list);
-  table_list->schema_select_lex= schema_select_lex;
-
-  return 0;
-}
-
 /**
   Execute command saved in session and lex->sql_command.
 
@@ -471,10 +423,10 @@ mysql_execute_command(Session *session)
   /* list of all tables in query */
   TableList *all_tables;
   /* A peek into the query string */
-  size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
-                        PROCESS_LIST_WIDTH : session->query_length;
+  size_t proc_info_len= session->query.length() > PROCESS_LIST_WIDTH ?
+                        PROCESS_LIST_WIDTH : session->query.length();
 
-  memcpy(session->process_list_info, session->query, proc_info_len);
+  memcpy(session->process_list_info, session->query.c_str(), proc_info_len);
   session->process_list_info[proc_info_len]= '\0';
 
   /*
@@ -514,7 +466,7 @@ mysql_execute_command(Session *session)
 
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
-  assert(session->transaction.stmt.modified_non_trans_table == false);
+  assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
@@ -750,76 +702,42 @@ void create_select_for_variable(const char *var_name)
   @param       session     Current thread
   @param       inBuf   Begining of the query text
   @param       length  Length of the query text
-  @param[out]  found_semicolon For multi queries, position of the character of
-                               the next query in the query text.
 */
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** found_semicolon)
+void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
-  /*
-    Warning.
-    The purpose of query_cache_send_result_to_client() is to lookup the
-    query in the query cache first, to avoid parsing and executing it.
-    So, the natural implementation would be to:
-    - first, call query_cache_send_result_to_client,
-    - second, if caching failed, initialise the lexical and syntactic parser.
-    The problem is that the query cache depends on a clean initialization
-    of (among others) lex->safe_to_cache_query and session->server_status,
-    which are reset respectively in
-    - lex_start()
-    - mysql_reset_session_for_next_command()
-    So, initializing the lexical analyser *before* using the query cache
-    is required for the cache to work properly.
-    FIXME: cleanup the dependencies in the code to simplify this.
-  */
   lex_start(session);
   session->reset_for_next_command();
 
+  LEX *lex= session->lex;
+
+  Lex_input_stream lip(session, inBuf, length);
+
+  bool err= parse_sql(session, &lip);
+
+  if (!err)
   {
-    LEX *lex= session->lex;
-
-    Lex_input_stream lip(session, inBuf, length);
-
-    bool err= parse_sql(session, &lip);
-    *found_semicolon= lip.found_semicolon;
-
-    if (!err)
     {
+      if (! session->is_error())
       {
-	if (! session->is_error())
-	{
-          /*
-            Binlog logs a string starting from session->query and having length
-            session->query_length; so we set session->query_length correctly (to not
-            log several statements in one event, when we executed only first).
-            We set it to not see the ';' (otherwise it would get into binlog
-            and Query_log_event::print() would give ';;' output).
-            This also helps display only the current query in SHOW
-            PROCESSLIST.
-            Note that we don't need LOCK_thread_count to modify query_length.
-          */
-          if (*found_semicolon &&
-              (session->query_length= (ulong)(*found_semicolon - session->query)))
-            session->query_length--;
-          DRIZZLE_QUERY_EXEC_START(session->query,
-                                   session->thread_id,
-                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-          /* Actually execute the query */
-          mysql_execute_command(session);
-          DRIZZLE_QUERY_EXEC_DONE(0);
-	}
+        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+                                 session->thread_id,
+                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+        /* Actually execute the query */
+        mysql_execute_command(session);
+        DRIZZLE_QUERY_EXEC_DONE(0);
       }
     }
-    else
-    {
-      assert(session->is_error());
-    }
-    lex->unit.cleanup();
-    session->set_proc_info("freeing items");
-    session->end_statement();
-    session->cleanup_after_query();
   }
+  else
+  {
+    assert(session->is_error());
+  }
+
+  lex->unit.cleanup();
+  session->set_proc_info("freeing items");
+  session->end_statement();
+  session->cleanup_after_query();
 
   return;
 }
@@ -1009,28 +927,9 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->updating=    test(table_options & TL_OPTION_UPDATING);
   ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
-  if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
-                                      INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(ptr->table_name);
-    if (!schema_table ||
-        (schema_table->isHidden() &&
-         ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
-          /*
-            this check is used for show columns|keys from I_S hidden table
-          */
-          lex->sql_command == SQLCOM_SHOW_FIELDS ||
-          lex->sql_command == SQLCOM_SHOW_KEYS)))
-    {
-      my_error(ER_UNKNOWN_TABLE, MYF(0),
-               ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
-      return NULL;
-    }
-  }
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
@@ -1300,16 +1199,12 @@ TableList *Select_Lex::convert_right_join()
 
 void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
-  bool for_update= lock_type >= TL_READ_NO_INSERT;
-
   for (TableList *tables= (TableList*) table_list.first;
        tables;
        tables= tables->next_local)
   {
     tables->lock_type= lock_type;
-    tables->updating=  for_update;
   }
-  return;
 }
 
 
@@ -1686,11 +1581,6 @@ bool insert_precheck(Session *session, TableList *)
 
 bool create_table_precheck(TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getDBName(), "information_schema") == 0)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
   if (strcmp(identifier.getDBName(), DRIZZLE_DATA_DICTIONARY) == 0)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DRIZZLE_DATA_DICTIONARY);
@@ -1826,7 +1716,7 @@ static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
-  DRIZZLE_QUERY_PARSE_START(session->query);
+  DRIZZLE_QUERY_PARSE_START(session->query.c_str());
 
   /* Set Lex_input_stream. */
 

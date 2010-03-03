@@ -20,15 +20,7 @@
 
 #include "config.h"
 #include "plugin/schema_dictionary/dictionary.h"
-
-namespace drizzled
-{
-extern size_t build_table_filename(char *buff,
-                                   size_t bufflen,
-                                   const char *db,
-                                   const char *table_name,
-                                   bool is_tmp);
-}
+#include "drizzled/table_identifier.h"
 
 using namespace std;
 using namespace drizzled;
@@ -46,6 +38,16 @@ static const string REDUNDANT("REDUNDANT");
 static const string COMPACT("COMPACT");
 static const string PAGE("PAGE");
 
+static const string VARCHAR("VARCHAR");
+static const string DOUBLE("DOUBLE");
+static const string BLOB("BLOB");
+static const string ENUM("ENUM");
+static const string INTEGER("INTEGER");
+static const string BIGINT("BIGINT");
+static const string DECIMAL("DECIMAL");
+static const string DATE("DATE");
+static const string TIMESTAMP("TIMESTAMP");
+static const string DATETIME("DATETIME");
 
 TablesTool::TablesTool() :
   SchemasTool("TABLES")
@@ -122,7 +124,13 @@ bool TablesTool::Generator::nextTable()
 
 bool TablesTool::Generator::checkTableName()
 {
-  return isWild(table_name());
+  if (isWild(table_name()))
+    return true;
+
+  if (not table_predicate.empty() && table_predicate.compare(table_name()))
+    return true;
+
+  return false;
 }
 
 bool TablesTool::Generator::populate()
@@ -160,6 +168,44 @@ void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
     break;
   case message::Table::TableOptions::ROW_TYPE_PAGE:
     push(PAGE);
+    break;
+  }
+}
+
+void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
+{
+  switch (type)
+  {
+  default:
+  case message::Table::Field::VARCHAR:
+    push(VARCHAR);
+    break;
+  case message::Table::Field::DOUBLE:
+    push(DOUBLE);
+    break;
+  case message::Table::Field::BLOB:
+    push(BLOB);
+    break;
+  case message::Table::Field::ENUM:
+    push(ENUM);
+    break;
+  case message::Table::Field::INTEGER:
+    push(INTEGER);
+    break;
+  case message::Table::Field::BIGINT:
+    push(BIGINT);
+    break;
+  case message::Table::Field::DECIMAL:
+    push(DECIMAL);
+    break;
+  case message::Table::Field::DATE:
+    push(DATE);
+    break;
+  case message::Table::Field::TIMESTAMP:
+    push(TIMESTAMP);
+    break;
+  case message::Table::Field::DATETIME:
+    push(DATETIME);
     break;
   }
 }
@@ -206,7 +252,7 @@ void TablesTool::Generator::fill()
   push(table_proto.options().comment());
 }
 
-bool TableNames::Generator::checkSchema()
+bool ShowTables::Generator::checkSchema()
 {
   Session *session= current_session;
 

@@ -29,6 +29,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 
 namespace drizzled
 {
@@ -381,7 +382,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
 
     // Release latches in case bulk insert takes a long time
-    plugin::StorageEngine::releaseTemporaryLatches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     error=write_record(session, table ,&info);
     if (error)
@@ -413,12 +414,12 @@ bool mysql_insert(Session *session,TableList *table_list,
     transactional_table= table->cursor->has_transactions();
 
     changed= (info.copied || info.deleted || info.updated);
-    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table)
+    if ((changed && error <= 0) || session->transaction.stmt.hasModifiedNonTransData())
     {
-      if (session->transaction.stmt.modified_non_trans_table)
-	session->transaction.all.modified_non_trans_table= true;
+      if (session->transaction.stmt.hasModifiedNonTransData())
+	session->transaction.all.markModifiedNonTransData();
     }
-    assert(transactional_table || !changed || session->transaction.stmt.modified_non_trans_table);
+    assert(transactional_table || !changed || session->transaction.stmt.hasModifiedNonTransData());
 
   }
   session->set_proc_info("end");
@@ -696,7 +697,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
     then both on update triggers will work instead. Similarly both on
     delete triggers will be invoked if we will delete conflicting records.
 
-    Sets session->transaction.stmt.modified_non_trans_table to true if table which is updated didn't have
+    Sets session->transaction.stmt.modified_non_trans_data to true if table which is updated didn't have
     transactions.
 
   RETURN VALUE
@@ -895,7 +896,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             goto err;
           info->deleted++;
           if (!table->cursor->has_transactions())
-            session->transaction.stmt.modified_non_trans_table= true;
+            session->transaction.stmt.markModifiedNonTransData();
           /* Let us attempt do write_row() once more */
         }
       }
@@ -926,7 +927,7 @@ gok_or_after_err:
   if (key)
     free(key);
   if (!table->cursor->has_transactions())
-    session->transaction.stmt.modified_non_trans_table= true;
+    session->transaction.stmt.markModifiedNonTransData();
   return(0);
 
 err:
@@ -1253,7 +1254,7 @@ bool select_insert::send_data(List<Item> &values)
     return(1);
 
   // Release latches in case bulk insert takes a long time
-  plugin::StorageEngine::releaseTemporaryLatches(session);
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
 
@@ -1326,11 +1327,11 @@ bool select_insert::send_eof()
       We must invalidate the table in the query cache before binlog writing
       and ha_autocommit_or_rollback.
     */
-    if (session->transaction.stmt.modified_non_trans_table)
-      session->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.hasModifiedNonTransData())
+      session->transaction.all.markModifiedNonTransData();
   }
   assert(trans_table || !changed ||
-              session->transaction.stmt.modified_non_trans_table);
+              session->transaction.stmt.hasModifiedNonTransData());
 
   table->cursor->ha_release_auto_increment();
 
@@ -1392,7 +1393,7 @@ void select_insert::abort() {
     changed= (info.copied || info.deleted || info.updated);
     transactional_table= table->cursor->has_transactions();
     assert(transactional_table || !changed ||
-		session->transaction.stmt.modified_non_trans_table);
+		session->transaction.stmt.hasModifiedNonTransData());
     table->cursor->ha_release_auto_increment();
   }
 
@@ -1526,7 +1527,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   TableIdentifier identifier(create_table->db,
                              create_table->table_name,
                              lex_identified_temp_table ?  TEMP_TABLE :
-                             NO_TMP_TABLE);
+                             STANDARD_TABLE);
 
 
   /*
@@ -1614,31 +1615,16 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
-    For row-based replication, the CREATE-SELECT statement is written
-    in two pieces: the first one contain the CREATE TABLE statement
-    necessary to create the table and the second part contain the rows
-    that should go into the table.
-
-    For non-temporary tables, the start of the CREATE-SELECT
-    implicitly commits the previous transaction, and all events
-    forming the statement will be stored the transaction cache. At end
-    of the statement, the entire statement is committed as a
-    transaction, and all events are written to the binary log.
-
-    On the master, the table is locked for the duration of the
-    statement, but since the CREATE part is replicated as a simple
-    statement, there is no way to lock the table for accesses on the
-    slave.  Hence, we have to hold on to the CREATE part of the
-    statement until the statement has finished.
+    For replication, the CREATE-SELECT statement is written
+    in two pieces: the first transaction messsage contains 
+    the CREATE TABLE statement as a CreateTableStatement message
+    necessary to create the table.
+    
+    The second transaction message contains all the InsertStatement
+    and associated InsertRecords that should go into the table.
    */
 
   unit= u;
-
-  /*
-    Start a statement transaction before the create if we are using
-    row-based replication for the statement.  If we are creating a
-    temporary table, we need to start a statement transaction.
-  */
 
   if (!(table= create_table_from_items(session, create_info, create_table,
 				       table_proto,
@@ -1701,8 +1687,6 @@ void select_create::store_values(List<Item> &values)
 
 void select_create::send_error(uint32_t errcode,const char *err)
 {
-
-
   /*
     This will execute any rollbacks that are necessary before writing
     the transcation cache.
@@ -1754,8 +1738,6 @@ bool select_create::send_eof()
 
 void select_create::abort()
 {
-
-
   /*
     In select_insert::abort() we roll back the statement, including
     truncating the transaction cache of the binary log. To do this, we
@@ -1772,8 +1754,6 @@ void select_create::abort()
     log state.
   */
   select_insert::abort();
-  session->transaction.stmt.modified_non_trans_table= false;
-
 
   if (m_plock)
   {

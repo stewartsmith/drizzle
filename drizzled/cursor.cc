@@ -158,7 +158,7 @@ bool Cursor::has_transactions()
   return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
-void Cursor::ha_statistic_increment(ulong SSV::*offset) const
+void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
 {
   status_var_increment(table->in_use->status_var.*offset);
 }
@@ -265,7 +265,7 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
   register int error;
 
-  ha_statistic_increment(&SSV::ha_read_first_count);
+  ha_statistic_increment(&system_status_var::ha_read_first_count);
 
   /*
     If there is very few deleted rows in the table, find the first row by
@@ -696,9 +696,9 @@ int Cursor::ha_check(Session *, HA_CHECK_OPT *)
 
 inline
 void
-Cursor::mark_trx_read_write()
+Cursor::setTransactionReadWrite()
 {
-  Ha_trx_info *ha_info= ha_session()->getEngineInfo(engine);
+  ResourceContext *resource_context= ha_session()->getResourceContext(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -707,9 +707,9 @@ Cursor::mark_trx_read_write()
     Unfortunately here we can't know know for sure if the engine
     has registered the transaction or not, so we must check.
   */
-  if (ha_info->is_started())
+  if (resource_context->isStarted())
   {
-      ha_info->set_trx_read_write();
+    resource_context->markModifiedData();
   }
 }
 
@@ -727,7 +727,7 @@ Cursor::mark_trx_read_write()
 int
 Cursor::ha_delete_all_rows()
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   int result= delete_all_rows();
 
@@ -757,7 +757,7 @@ Cursor::ha_delete_all_rows()
 int
 Cursor::ha_reset_auto_increment(uint64_t value)
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   return reset_auto_increment(value);
 }
@@ -772,7 +772,7 @@ Cursor::ha_reset_auto_increment(uint64_t value)
 int
 Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   return analyze(session);
 }
@@ -786,7 +786,7 @@ Cursor::ha_analyze(Session* session, HA_CHECK_OPT*)
 int
 Cursor::ha_disable_indexes(uint32_t mode)
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   return disable_indexes(mode);
 }
@@ -801,7 +801,7 @@ Cursor::ha_disable_indexes(uint32_t mode)
 int
 Cursor::ha_enable_indexes(uint32_t mode)
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   return enable_indexes(mode);
 }
@@ -816,7 +816,7 @@ Cursor::ha_enable_indexes(uint32_t mode)
 int
 Cursor::ha_discard_or_import_tablespace(bool discard)
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   return discard_or_import_tablespace(discard);
 }
@@ -830,7 +830,7 @@ Cursor::ha_discard_or_import_tablespace(bool discard)
 void
 Cursor::closeMarkForDelete(const char *name)
 {
-  mark_trx_read_write();
+  setTransactionReadWrite();
 
   return drop_table(name);
 }
@@ -1353,6 +1353,18 @@ static bool log_row_for_replication(Table* table,
 
   switch (session->lex->sql_command)
   {
+  case SQLCOM_CREATE_TABLE:
+    /*
+     * We are in a CREATE TABLE ... SELECT statement
+     * and the kernel has already created the table
+     * and put a CreateTableStatement in the active
+     * Transaction message.  Here, we add a new InsertRecord
+     * to a new Transaction message (because the above
+     * CREATE TABLE will commit the transaction containing
+     * it).
+     */
+    result= replication_services.insertRecord(session, table);
+    break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
     /*
@@ -1513,7 +1525,7 @@ int Cursor::ha_write_row(unsigned char *buf)
     table->timestamp_field->set_time();
 
   DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
-  mark_trx_read_write();
+  setTransactionReadWrite();
   error= write_row(buf);
   DRIZZLE_INSERT_ROW_DONE(error);
 
@@ -1540,7 +1552,7 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
   assert(new_data == table->record[0]);
 
   DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
-  mark_trx_read_write();
+  setTransactionReadWrite();
   error= update_row(old_data, new_data);
   DRIZZLE_UPDATE_ROW_DONE(error);
 
@@ -1560,7 +1572,7 @@ int Cursor::ha_delete_row(const unsigned char *buf)
   int error;
 
   DRIZZLE_DELETE_ROW_START(table_share->db.str, table_share->table_name.str);
-  mark_trx_read_write();
+  setTransactionReadWrite();
   error= delete_row(buf);
   DRIZZLE_DELETE_ROW_DONE(error);
 

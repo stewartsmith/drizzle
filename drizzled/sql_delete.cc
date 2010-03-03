@@ -299,15 +299,15 @@ cleanup:
   transactional_table= table->cursor->has_transactions();
 
   if (!transactional_table && deleted > 0)
-    session->transaction.stmt.modified_non_trans_table= true;
+    session->transaction.stmt.markModifiedNonTransData();
 
   /* See similar binlogging code in sql_update.cc, for comments */
-  if ((error < 0) || session->transaction.stmt.modified_non_trans_table)
+  if ((error < 0) || session->transaction.stmt.hasModifiedNonTransData())
   {
-    if (session->transaction.stmt.modified_non_trans_table)
-      session->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.hasModifiedNonTransData())
+      session->transaction.all.markModifiedNonTransData();
   }
-  assert(transactional_table || !deleted || session->transaction.stmt.modified_non_trans_table);
+  assert(transactional_table || !deleted || session->transaction.stmt.hasModifiedNonTransData());
   free_underlaid_joins(session, select_lex);
 
   DRIZZLE_DELETE_DONE((error >= 0 || session->is_error()), deleted);

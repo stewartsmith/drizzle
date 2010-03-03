@@ -30,7 +30,7 @@ IndexesTool::IndexesTool() :
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
   add_field("INDEX_NAME");
-  add_field("IS_PRIMARY", plugin::TableFunction::BOOLEAN);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
   add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
   add_field("KEY_LENGTH", plugin::TableFunction::NUMBER);
@@ -101,7 +101,7 @@ void IndexesTool::Generator::fill()
   /* INDEX_NAME */
   push(index.name());
 
-  /* IS_PRIMARY */
+  /* IS_USED_IN_PRIMARY */
   push(index.is_primary());
 
   /* IS_UNIQUE */
@@ -111,7 +111,7 @@ void IndexesTool::Generator::fill()
   push(index.options().null_part_key());
 
   /* KEY_LENGTH */
-  push(index.key_length());
+  push(static_cast<uint64_t>(index.key_length()));
 
   /* INDEX_TYPE */
   {
