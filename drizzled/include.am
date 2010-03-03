@@ -459,6 +459,7 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/cursor.cc \
 				 drizzled/decimal.cc \
 				 drizzled/diagnostics_area.cc \
+				 drizzled/drizzled.cc \
 				 drizzled/dtcollation.cc \
 				 drizzled/errmsg_print.cc \
 				 drizzled/field.cc \
