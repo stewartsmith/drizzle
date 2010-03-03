@@ -73,9 +73,9 @@ bool statement::CreateTable::execute()
 
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
-    if (! session->endActiveTransaction())
+    if (not session->endActiveTransaction())
     {
       return true;
     }
@@ -219,7 +219,7 @@ bool statement::CreateTable::execute()
                               0,
                               is_if_not_exists);
     }
-    if (! res)
+    if (not res)
     {
       session->my_ok();
     }

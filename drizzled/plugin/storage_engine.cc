@@ -1258,5 +1258,38 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   return 0;
 }
 
+class CanCreateTable: public unary_function<StorageEngine *, bool>
+{
+  const TableIdentifier &identifier;
+
+public:
+  CanCreateTable(const TableIdentifier &identifier_arg) :
+    identifier(identifier_arg)
+  { }
+
+  result_type operator() (argument_type engine)
+  {
+    return not engine->doCanCreateTable(identifier);
+  }
+};
+
+
+/**
+  @note on success table can be created.
+*/
+bool StorageEngine::canCreateTable(drizzled::TableIdentifier &identifier)
+{
+  EngineVector::iterator iter=
+    find_if(vector_of_engines.begin(), vector_of_engines.end(),
+            CanCreateTable(identifier));
+
+  if (iter == vector_of_engines.end())
+  {
+    return true;
+  }
+
+  return false;
+}
+
 } /* namespace plugin */
 } /* namespace drizzled */

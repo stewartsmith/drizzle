@@ -1325,7 +1325,7 @@ bool mysql_create_table_no_lock(Session *session,
     (table_proto.type() == message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
-  if (!alter_info->create_list.elements)
+  if (not alter_info->create_list.elements)
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
