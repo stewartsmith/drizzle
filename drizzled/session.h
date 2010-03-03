@@ -48,6 +48,8 @@
 #include <drizzled/internal_error_handler.h>
 #include <drizzled/diagnostics_area.h>
 
+#include <drizzled/plugin/authorization.h>
+
 #define MIN_HANDSHAKE_SIZE      6
 
 namespace drizzled
@@ -475,6 +477,15 @@ public:
   SecurityContext& getSecurityContext()
   {
     return security_ctx;
+  }
+
+  /**
+   * Is this session viewable by the current user?
+   */
+  bool isViewable() const
+  {
+    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                               this);
   }
 
   /**

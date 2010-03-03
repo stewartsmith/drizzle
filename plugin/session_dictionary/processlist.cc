@@ -28,6 +28,7 @@
 #include "drizzled/session.h"
 #include "drizzled/session_list.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/internal/my_sys.h"
 
 #include <set>
@@ -54,8 +55,7 @@ ProcesslistTool::Generator::Generator(Field **arg) :
   now= time(NULL);
 
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list= getFilteredSessionList();
-  it= session_list.begin();
+  it= getSessionList().begin();
 }
 
 ProcesslistTool::Generator::~Generator()
@@ -67,11 +67,22 @@ bool ProcesslistTool::Generator::populate()
 {
   const char *val;
 
-  if (it == session_list.end())
+
+  while (it != getSessionList().end())
+  {
+    if ((*it)->isViewable())
+    {
+      break;
+    }
+    ++it;
+  }
+
+  if (it == getSessionList().end())
     return false;
 
   Session *tmp= *it;
   const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
+
 
   /* ID */
   push((int64_t) tmp->thread_id);
