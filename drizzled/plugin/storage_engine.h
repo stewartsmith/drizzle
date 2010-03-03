@@ -30,6 +30,7 @@
 #include "drizzled/sql_string.h"
 #include "drizzled/table_identifier.h"
 #include "drizzled/cached_directory.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
 
 #include "drizzled/hash.h"
 
@@ -140,7 +141,8 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
   static StorageEngine { ... } xxx_engine;
 */
-class StorageEngine : public Plugin
+class StorageEngine : public Plugin,
+                      public MonitoredInTransaction
 {
 public:
   typedef uint64_t Table_flags;
@@ -427,6 +429,24 @@ public:
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+
+public:
+  /* 
+   * The below are simple virtual overrides for the plugin::MonitoredInTransaction
+   * interface.
+   */
+  virtual bool participatesInSqlTransaction() const
+  {
+    return false; /* plugin::StorageEngine is non-transactional in terms of SQL */
+  }
+  virtual bool participatesInXaTransaction() const
+  {
+    return false; /* plugin::StorageEngine is non-transactional in terms of XA */
+  }
+  virtual bool alwaysRegisterForXaTransaction() const
+  {
+    return false;
+  }
 };
 
 } /* namespace plugin */

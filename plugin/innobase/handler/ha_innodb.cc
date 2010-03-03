@@ -294,6 +294,14 @@ public:
                                      drizzled::NamedSavepoint &savepoint);
   virtual int doReleaseSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
+  virtual int doXaCommit(Session* session, bool all)
+  {
+    return doCommit(session, all); /* XA commit just does a SQL COMMIT */
+  }
+  virtual int doXaRollback(Session *session, bool all)
+  {
+    return doRollback(session, all); /* XA rollback just does a SQL ROLLBACK */
+  }
   virtual int doCommit(Session* session, bool all);
   virtual int doRollback(Session* session, bool all);
 
@@ -301,7 +309,7 @@ public:
   This function is used to prepare X/Open XA distributed transaction   */
   virtual
   int
-  doPrepare(
+  doXaPrepare(
   /*================*/
   			/* out: 0 or error number */
   	Session*	session,	/* in: handle to the MySQL thread of the user
@@ -312,7 +320,7 @@ public:
   This function is used to recover X/Open XA distributed transactions   */
   virtual
   int
-  doRecover(
+  doXaRecover(
   /*================*/
   				/* out: number of prepared transactions
   				stored in xid_list */
@@ -323,7 +331,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  doCommitXid(
+  doXaCommitXid(
   /*===================*/
   			/* out: 0 or error number */
   	::drizzled::XID*	xid);	/* in: X/Open XA transaction identification */
@@ -332,7 +340,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  doRollbackXid(
+  doXaRollbackXid(
   /*=====================*/
   			/* out: 0 or error number */
   	::drizzled::XID	*xid);	/* in: X/Open XA transaction identification */
@@ -8041,7 +8049,7 @@ InnobaseEngine::doEndStatement(
 This function is used to prepare an X/Open XA distributed transaction.
 @return	0 or error number */
 int
-InnobaseEngine::doPrepare(
+InnobaseEngine::doXaPrepare(
 /*================*/
 	Session*	session,/*!< in: handle to the MySQL thread of
 				the user whose XA transaction should
@@ -8140,7 +8148,7 @@ InnobaseEngine::doPrepare(
 This function is used to recover X/Open XA distributed transactions.
 @return	number of prepared transactions stored in xid_list */
 int
-InnobaseEngine::doRecover(
+InnobaseEngine::doXaRecover(
 /*================*/
 	::drizzled::XID*	xid_list,/*!< in/out: prepared transactions */
 	size_t len)	/*!< in: number of slots in xid_list */
@@ -8160,7 +8168,7 @@ This function is used to commit one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::doCommitXid(
+InnobaseEngine::doXaCommitXid(
 /*===================*/
 	::drizzled::XID*	xid)	/*!< in: X/Open XA transaction identification */
 {
@@ -8184,7 +8192,7 @@ This function is used to rollback one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::doRollbackXid(
+InnobaseEngine::doXaRollbackXid(
 /*=====================*/
 	::drizzled::XID*		xid)	/*!< in: X/Open XA transaction
 				identification */

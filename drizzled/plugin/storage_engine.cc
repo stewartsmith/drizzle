@@ -72,10 +72,10 @@ const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
 static std::set<std::string> set_of_table_definition_ext;
 
 StorageEngine::StorageEngine(const string name_arg,
-                                     const bitset<HTON_BIT_SIZE> &flags_arg)
+                             const bitset<HTON_BIT_SIZE> &flags_arg)
     : Plugin(name_arg, "StorageEngine"),
-      flags(flags_arg),
-      slot(total_ha++)
+      MonitoredInTransaction(), /* This gives the storage engine a "slot" or ID */
+      flags(flags_arg)
 {
   pthread_mutex_init(&proto_cache_mutex, NULL);
 }
