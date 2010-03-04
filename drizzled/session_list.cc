@@ -33,7 +33,7 @@ using namespace std;
 namespace drizzled
 {
 
-vector<Session*> session_list;
+SessionList session_list;
 
 vector<Session*> &getSessionList()
 {

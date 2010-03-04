@@ -25,8 +25,6 @@
 #include <netdb.h>
 
 #include "drizzled/pthread_globals.h"
-#include "drizzled/session.h"
-#include "drizzled/session_list.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/internal/my_sys.h"
