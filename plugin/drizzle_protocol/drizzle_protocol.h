@@ -25,6 +25,9 @@
 
 #include "net_serv.h"
 
+namespace drizzle_protocol
+{
+
 class ListenDrizzleProtocol: public drizzled::plugin::ListenTcp
 {
 private:
@@ -86,5 +89,7 @@ public:
   virtual bool haveMoreData(void);
   virtual bool wasAborted(void);
 };
+
+} /* namespace drizzle_protocol */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_OLDLIBDRIZZLE_H */
