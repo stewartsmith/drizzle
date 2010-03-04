@@ -68,7 +68,6 @@ static bool mysql_prepare_alter_table(Session *session,
                                       AlterInfo *alter_info);
 
 static int create_temporary_table(Session *session,
-                                  Table *table,
                                   TableIdentifier &identifier,
                                   HA_CREATE_INFO *create_info,
                                   message::Table &create_proto,
@@ -993,7 +992,7 @@ bool alter_table(Session *session,
                                    create_proto.type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
                                    TEMP_TABLE);
 
-    error= create_temporary_table(session, table, new_table_temp, create_info, create_proto, alter_info);
+    error= create_temporary_table(session, new_table_temp, create_info, create_proto, alter_info);
 
     if (error != 0)
       goto err;
@@ -1423,17 +1422,12 @@ copy_data_between_tables(Table *from, Table *to,
 
 static int
 create_temporary_table(Session *session,
-                       Table *table,
                        TableIdentifier &identifier,
                        HA_CREATE_INFO *create_info,
                        message::Table &create_proto,
                        AlterInfo *alter_info)
 {
   int error;
-  plugin::StorageEngine *old_db_type, *new_db_type;
-
-  old_db_type= table->s->db_type();
-  new_db_type= create_info->db_type;
 
   /*
     Create a table with a temporary name.
@@ -1443,7 +1437,7 @@ create_temporary_table(Session *session,
 
   message::Table::StorageEngine *protoengine;
   protoengine= create_proto.mutable_engine();
-  protoengine->set_name(new_db_type->getName());
+  protoengine->set_name(create_info->db_type->getName());
 
   error= mysql_create_table(session,
                             identifier,

@@ -1338,11 +1338,11 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam->resetTable(session, share, db_stat);
 
 
-  if (!(outparam->alias= strdup(alias)))
+  if (not (outparam->alias= strdup(alias)))
     goto err;
 
   /* Allocate Cursor */
-  if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
+  if (not (outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
     goto err;
 
   error= 4;
@@ -3355,7 +3355,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   share= *table->s;
   new_table.s= &share;
   new_table.s->storage_engine= myisam_engine;
-  if (!(new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
+  if (not (new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
     return true;				// End of memory
 
   save_proc_info=session->get_proc_info();
