@@ -1581,9 +1581,9 @@ bool insert_precheck(Session *session, TableList *)
 
 bool create_table_precheck(TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getDBName(), DRIZZLE_DATA_DICTIONARY) == 0)
+  if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DRIZZLE_DATA_DICTIONARY);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName());
     return true;
   }
 

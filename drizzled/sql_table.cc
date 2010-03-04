@@ -529,16 +529,16 @@ int prepare_create_field(CreateField *sql_field,
   return 0;
 }
 
-int mysql_prepare_create_table(Session *session,
-                               HA_CREATE_INFO *create_info,
-                               message::Table *create_proto,
-                               AlterInfo *alter_info,
-                               bool tmp_table,
-                               uint32_t *db_options,
-                               Cursor *cursor,
-                               KEY **key_info_buffer,
-                               uint32_t *key_count,
-                               int select_field_count)
+static int mysql_prepare_create_table(Session *session,
+                                      HA_CREATE_INFO *create_info,
+                                      message::Table &create_proto,
+                                      AlterInfo *alter_info,
+                                      bool tmp_table,
+                                      uint32_t *db_options,
+                                      Cursor *cursor,
+                                      KEY **key_info_buffer,
+                                      uint32_t *key_count,
+                                      int select_field_count)
 {
   const char	*key_name;
   CreateField	*sql_field,*dup_field;
@@ -950,7 +950,7 @@ int mysql_prepare_create_table(Session *session,
     */
     key_info->block_size= (key->key_create_info.block_size ?
                            key->key_create_info.block_size :
-                           create_proto->options().key_block_size());
+                           create_proto.options().key_block_size());
 
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
@@ -1010,8 +1010,8 @@ int mysql_prepare_create_table(Session *session,
       }
       cols2.rewind();
 
-      if (create_proto->field_size() > 0)
-        protofield= create_proto->mutable_field(proto_field_nr - 1);
+      if (create_proto.field_size() > 0)
+        protofield= create_proto.mutable_field(proto_field_nr - 1);
 
       {
         column->length*= sql_field->charset->mbmaxlen;
@@ -1310,7 +1310,7 @@ static bool prepare_blob_field(Session *,
 bool mysql_create_table_no_lock(Session *session,
                                 TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
-				message::Table *table_proto,
+				message::Table &table_proto,
                                 AlterInfo *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count,
@@ -1322,16 +1322,16 @@ bool mysql_create_table_no_lock(Session *session,
   bool		error= true;
   TableShare share;
   bool lex_identified_temp_table=
-    (table_proto->type() == message::Table::TEMPORARY);
+    (table_proto.type() == message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
-  if (!alter_info->create_list.elements)
+  if (not alter_info->create_list.elements)
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
     return true;
   }
-  assert(strcmp(identifier.getTableName(), table_proto->name().c_str())==0);
+  assert(strcmp(identifier.getTableName(), table_proto.name().c_str())==0);
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -1452,7 +1452,7 @@ bool mysql_create_table_no_lock(Session *session,
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(create_info->db_type, identifier);
+      (void) session->rm_temporary_table(identifier);
       goto unlock_and_end;
     }
   }
@@ -1460,7 +1460,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (not internal_tmp_table && not lex_identified_temp_table)
   {
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.createTable(session, *table_proto);
+    replication_services.createTable(session, table_proto);
   }
   error= false;
 unlock_and_end:
@@ -1481,7 +1481,7 @@ err:
 bool mysql_create_table(Session *session,
                         TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
-			message::Table *table_proto,
+			message::Table &table_proto,
                         AlterInfo *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count,
@@ -1490,9 +1490,9 @@ bool mysql_create_table(Session *session,
   Table *name_lock= NULL;
   bool result;
   bool lex_identified_temp_table=
-    (table_proto->type() == message::Table::TEMPORARY);
+    (table_proto.type() == message::Table::TEMPORARY);
 
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
     if (session->lock_table_name_if_not_cached(identifier.getDBName(),
                                                identifier.getTableName(),
@@ -2051,25 +2051,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
     protoengine->set_name(create_table_proto.engine().name());
   }
 
-  if (protoerr == EEXIST)
-  {
-    plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
-                                                                     new_proto.engine().name());
-
-    if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    {
-      string dst_proto_path(destination_identifier.getPath());
-      dst_proto_path.append(".dfe");
-
-      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
-    }
-    else
-    {
-      protoerr= 0;
-    }
-  }
-
-  if (protoerr)
+  if (protoerr && protoerr != EEXIST)
   {
     if (errno == ENOENT)
       my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName());
@@ -2108,7 +2090,6 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              message::Table& create_table_proto,
-                             plugin::StorageEngine *engine_arg,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
@@ -2206,7 +2187,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     {
       if (lex_identified_temp_table)
       {
-        (void) session->rm_temporary_table(engine_arg, destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier);
       }
       else
       {
@@ -2217,7 +2198,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
     {
       // We created, but we can't open... also, a hack.
-      (void) session->rm_temporary_table(engine_arg, destination_identifier);
+      (void) session->rm_temporary_table(destination_identifier);
     }
     else
     {

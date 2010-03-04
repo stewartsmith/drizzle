@@ -359,6 +359,11 @@ public:
                        TableIdentifier &identifier);
   static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
 
+  // Check to see if any SE objects to creation.
+  static bool canCreateTable(drizzled::TableIdentifier &identifier);
+  virtual bool doCanCreateTable(const drizzled::TableIdentifier &identifier)
+  { (void)identifier;  return true; }
+
   // @note All schema methods defined here
   static void getSchemaNames(SchemaNameList &set_of_names);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
@@ -397,8 +402,7 @@ public:
   static int createTable(Session& session,
                          TableIdentifier &identifier,
                          bool update_create_info,
-                         message::Table& table_proto,
-                         bool used= true);
+                         message::Table& table_proto);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
