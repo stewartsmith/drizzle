@@ -196,7 +196,6 @@ bool statement::CreateTable::execute()
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
-                                   create_info.db_type, 
                                    is_if_not_exists,
                                    is_engine_set);
     }

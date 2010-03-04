@@ -733,7 +733,6 @@ bool mysql_create_table_no_lock(Session *session,
 bool mysql_create_like_table(Session* session,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
-                             plugin::StorageEngine*,
                              bool is_if_not_exists,
                              bool is_engine_set);
 

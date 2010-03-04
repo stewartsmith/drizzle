@@ -2090,7 +2090,6 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              message::Table& create_table_proto,
-                             plugin::StorageEngine *,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
