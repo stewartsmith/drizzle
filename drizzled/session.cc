@@ -2040,10 +2040,8 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+bool Session::rm_temporary_table(TableIdentifier &identifier)
 {
-  assert(base);
-
   if (not plugin::StorageEngine::dropTable(*this, identifier))
   {
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

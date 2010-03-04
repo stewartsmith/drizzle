@@ -1452,7 +1452,7 @@ bool mysql_create_table_no_lock(Session *session,
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
     {
-      (void) session->rm_temporary_table(create_info->db_type, identifier);
+      (void) session->rm_temporary_table(identifier);
       goto unlock_and_end;
     }
   }
@@ -2090,7 +2090,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
                              message::Table& create_table_proto,
-                             plugin::StorageEngine *engine_arg,
+                             plugin::StorageEngine *,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
@@ -2188,7 +2188,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     {
       if (lex_identified_temp_table)
       {
-        (void) session->rm_temporary_table(engine_arg, destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier);
       }
       else
       {
@@ -2199,7 +2199,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
     {
       // We created, but we can't open... also, a hack.
-      (void) session->rm_temporary_table(engine_arg, destination_identifier);
+      (void) session->rm_temporary_table(destination_identifier);
     }
     else
     {
