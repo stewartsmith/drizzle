@@ -44,6 +44,7 @@
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/query_rewrite.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
@@ -1396,7 +1397,7 @@ static unsigned int
 kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
-  uint32_t error=ER_NO_SUCH_THREAD;
+  uint32_t error= ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   
   for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
@@ -1411,8 +1412,13 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   pthread_mutex_unlock(&LOCK_thread_count);
   if (tmp)
   {
-    tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    error=0;
+
+    if (tmp->isViewable())
+    {
+      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+      error= 0;
+    }
+
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
   return(error);

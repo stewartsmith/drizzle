@@ -29,6 +29,7 @@
 #include <drizzled/gettext.h>
 
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/authorization.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -1942,6 +1943,12 @@ bool check_db_name(LEX_STRING *org_name)
 {
   char *name= org_name->str;
   uint32_t name_length= org_name->length;
+
+  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                              string(name, name_length)))
+  {
+    return 1;
+  }
 
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;

@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "drizzled/session_list.h"
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
+#include "drizzled/plugin/authorization.h"
 
 class Session;
 
