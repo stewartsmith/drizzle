@@ -2042,20 +2042,17 @@ bool Session::openTables(TableList *tables, uint32_t flags)
 
 bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
 {
-  bool error= false;
-
   assert(base);
 
-  if (plugin::StorageEngine::deleteDefinitionFromPath(identifier))
-    error= true;
-
-  if (base->doDropTable(*this, identifier.getPath()))
+  if (not plugin::StorageEngine::dropTable(*this, identifier))
   {
-    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getPath(), errno);
+
+    return true;
   }
-  return error;
+
+  return false;
 }
 
 bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
