@@ -38,6 +38,7 @@ select * from t1 where a in (10, 20, 30, 40, 50, 60);
 # Impossible Cases
 select * from t1 where a > 60;
 select * from t1 where a < 0;
+select * from t1 where a > 20 and a < 20;
 select * from t1 where a is NULL;
 drop table t1;
 

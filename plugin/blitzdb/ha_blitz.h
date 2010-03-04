@@ -203,7 +203,8 @@ public:
             const size_t vlen);
   int write_unique(const char *key, const size_t klen, const char *val,
                    const size_t vlen);
-  int delete_key(void);
+  int delete_key(const char *key, const int klen);
+  int delete_cursor_pos(void);
   int delete_all(void);
 
   /* BTREE INDEX READ RELATED */

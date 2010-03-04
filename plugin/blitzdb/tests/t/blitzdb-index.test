@@ -4,12 +4,15 @@
 drop table if exists t1, t2;
 --enable_warnings
 
+# +------------------+
+# | PRIMARY KEY: INT |
+# +------------------+ 
 create table t1 (id int primary key, a int, b int) engine = blitzdb;
 select * from t1;
 insert into t1 values (1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4);
 insert into t1 values (5, 5, 5), (6, 6, 6), (7, 7, 7), (8, 8, 8);
 
-# Test Duplicate Primary Key Insertions
+# duplicates 
 --error 1062
 insert into t1 values (1, 0, 0);
 --error 1062
@@ -19,12 +22,12 @@ insert into t1 values (3, 0, 0);
 --error 1062
 insert into t1 values (4, 0, 0);
 
-# Test Needle in a Haystack query
+# needle in a haystack 
 select * from t1 where id = 2;
 select * from t1 where id = 4;
 select * from t1 where id = 6;
 
-# Test Primary Key based Deletion and check that COUNT is working
+# deletion
 select count (*) from t1;
 delete from t1 where id = 5;
 select count (*) from t1;
@@ -42,7 +45,9 @@ delete from t1;
 select count (*) from t1;
 drop table t1;
 
-# Test Auto Increment on PK
+# +--------------------------------------+
+# | PRIMARY KEY: INT with Auto Increment |
+# +--------------------------------------+
 create table t1 (id int primary key auto_increment, num int) engine = blitzdb;
 insert into t1 (num) values (1);
 select * from t1;
@@ -61,7 +66,7 @@ select count(num) from t1;
 select * from t1;
 drop table t1;
 
-# Test COUNT on a single auto column table
+# COUNT on a single auto column table
 create table t1 (id int primary key auto_increment) engine = blitzdb;
 insert into t1 values ();
 insert into t1 values ();
@@ -76,7 +81,9 @@ insert into t1 values ();
 select count(*) from t1;
 drop table t1;
 
-# Test VARCHAR field as a PRIMARY KEY
+# +----------------------+
+# | PRIMARY KEY: VARCHAR |
+# +----------------------+
 create table t1 (id varchar(64) primary key, country varchar(64)) engine = blitzdb;
 insert into t1 values ('amsterdam', 'netherlands');
 insert into t1 values ('budapest', 'hungary');
@@ -124,7 +131,9 @@ select * from t1;
 #select * from t1 where a = 'zzz';
 drop table t1;
 
-# Test DATE type as a PRIMARY KEY
+# +------------------+
+# |PRIMARY KEY: DATE |
+# +------------------+
 create table t1 (a date primary key, b int, c varchar(32)) engine = blitzdb;
 insert into t1 values ('1984-09-22', 22, 'twenty two');
 insert into t1 values ('1984-09-23', 23, 'twenty three');
@@ -216,37 +225,20 @@ insert into t1 values (6), (1), (5), (3), (2), (4);
 
 # forward scan
 explain select * from t1;
+--sorted_result
 select * from t1;
 
 # reverse scan
 explain select * from t1 order by a desc;
 select * from t1 order by a desc;
 
-delete from t1;
-
-# test ranges by index
-insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10); 
-insert into t1 values (11),(12),(13),(14),(15),(16),(17),(18),(19),(20);
-insert into t1 values (21),(22),(23),(24),(25),(26),(27),(28),(29),(30);
-insert into t1 values (31),(32),(33),(34),(35),(36),(37),(38),(39),(40);
-insert into t1 values (41),(42),(43),(44),(45),(46),(47),(48),(49),(50);
-
-explain select * from t1 where a > 20 and a < 30;
-select * from t1 where a > 20 and a < 38;
-
-# contradiction test
-explain select * from t1 where a > 20 and a < 30;
-select * from t1 where a > 20 and a < 20;
-
 # test aggregate functions
 explain select max(a) from t1;
 select max(a) from t1;
-explain select max(a) from t1;
+explain select min(a) from t1;
 select min(a) from t1;
 explain select sum(a) from t1;
 select sum(a) from t1;
-explain select * from t1 where a in (10, 20, 30, 40, 50);
-select * from t1 where a in (10, 20, 30, 40, 50);
 
 drop table t1;
 
@@ -337,6 +329,16 @@ select * from t1 where a = 'c';
 select * from t1 where a = 'd';
 select * from t1 where a = 'e';
 select * from t1 where a = 'f';
+
+# deletion test
+delete from t1 where a = 'a';
+delete from t1 where a = 'b';
+select * from t1;
+delete from t1 where a = 'c';
+delete from t1 where a = 'd';
+delete from t1 where a = 'e';
+delete from t1 where a = 'f';
+select * from t1;
 drop table t1;
 
 # Test INDEX insertion and NULL values
@@ -361,4 +363,18 @@ select * from t1 where a = 1;
 select * from t1 where a = 2;
 select * from t1 where a = 3;
 select * from t1 where a = 4;
+
+# index based deletion
+delete from t1 where a = 3;
+select * from t1 where a = 3;
+delete from t1 where a = 1;
+select * from t1 where a = 1;
+select * from t1;
+delete from t1 where a is NULL;
+select * from t1 where a is NULL;
+delete from t1 where a = 2;
+select * from t1 where a = 2;
+delete from t1 where a = 4;
+select * from t1 where a = 4;
+select count(*) from t1;
 drop table t1;

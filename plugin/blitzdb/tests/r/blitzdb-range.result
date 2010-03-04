@@ -125,6 +125,8 @@ select * from t1 where a > 60;
 a
 select * from t1 where a < 0;
 a
+select * from t1 where a > 20 and a < 20;
+a
 select * from t1 where a is NULL;
 a
 drop table t1;

@@ -730,7 +730,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
   return rv;
 }
 
-int ha_blitz::delete_row(const unsigned char *) {
+int ha_blitz::delete_row(const unsigned char *row_to_delete) {
   int rv;
   uint32_t lock_id = 0;
 
@@ -743,9 +743,42 @@ int ha_blitz::delete_row(const unsigned char *) {
     lock_id = share->blitz_lock.slot_id(held_key, held_key_len);
     share->blitz_lock.slotted_lock(lock_id);
 
+    /* Loop over the indexes and delete all relevant entries for
+       this row. We do this by reproducing the key in BlitzDB's
+       unique key format. The procedure is simple.
+
+       (1): Compute the key value for this index from the row then
+            pack it into key_buffer (not unique at this point).
+
+       (2): Append the suffix of the held_key to the key generated
+            in step 1. The key is then guaranteed to be unique. */
+    for (uint32_t i = 0; i < share->nkeys; i++) {
+      /* In this case, we don't need to search for the key because
+         TC's cursor is already pointing at the key that we want
+         to delete. We wouldn't be here otherwise. */
+      if (i == active_index) {
+        share->btrees[i].delete_cursor_pos();
+        continue;
+      }
+
+      int klen = make_index_key(key_buffer, i, row_to_delete);
+      int skip_len = btree_key_length(held_key, active_index);
+      uint16_t suffix_len = uint2korr(held_key + skip_len);
+
+      /* Append the suffix to the key */
+      memcpy(key_buffer + klen, held_key + skip_len,
+             sizeof(suffix_len) + suffix_len);
+
+      /* Update the key length to cover the generated key. */
+      klen = klen + sizeof(suffix_len) + suffix_len;
+
+      if (share->btrees[i].delete_key(key_buffer, klen) != 0)
+        return HA_ERR_KEY_NOT_FOUND;
+    }
+
     /* Skip to the data dictionary key. */
-    int skip_len = btree_key_length(dict_key, active_index);
-    dict_key = skip_btree_key(dict_key, skip_len, &dict_klen);
+    int dict_key_offset = btree_key_length(dict_key, active_index);
+    dict_key = skip_btree_key(dict_key, dict_key_offset, &dict_klen);
   }
 
   rv = share->dict.delete_row(dict_key, dict_klen);

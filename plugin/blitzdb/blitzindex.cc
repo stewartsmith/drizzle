@@ -205,15 +205,32 @@ char *BlitzTree::find_key(const char *key, const int klen, int *rv_len) {
   if (!tcbdbcurjump(bt_cursor, (void *)key, klen))
     return NULL;
 
-  return (char *)tcbdbcurkey(bt_cursor, rv_len);
+  char *rv = (char *)tcbdbcurkey(bt_cursor, rv_len);
+
+  /* A cursor based lookup on a B+Tree doesn't guarantee that the
+     returned key is identical. This is because it would return the
+     next logical key if one exists. Therefore we must check the
+     lowerbound of the returned key for it's validity. */
+  int cmp_len = (*rv_len < klen) ? *rv_len : klen;
+
+  if (memcmp(rv, key, cmp_len) != 0) {
+    free(rv);
+    rv = NULL;
+  }
+
+  return rv;
 }
 
-int BlitzTree::delete_key(void) {
+int BlitzTree::delete_key(const char *key, const int klen) {
+  return (tcbdbout(btree, key, klen)) ? 0 : -1;
+}
+
+int BlitzTree::delete_cursor_pos(void) {
   if (!tcbdbcurout(bt_cursor))
     return -1;
 
   cursor_moved = true;
-  return  0;
+  return 0;
 }
 
 int BlitzTree::delete_all(void) {
