@@ -535,7 +535,6 @@ static int mysql_prepare_create_table(Session *session,
                                       AlterInfo *alter_info,
                                       bool tmp_table,
                                       uint32_t *db_options,
-                                      Cursor *cursor,
                                       KEY **key_info_buffer,
                                       uint32_t *key_count,
                                       int select_field_count)
@@ -553,9 +552,11 @@ static int mysql_prepare_create_table(Session *session,
   List_iterator<CreateField> it2(alter_info->create_list);
   uint32_t total_uneven_bit_length= 0;
 
+  plugin::StorageEngine *engine= plugin::StorageEngine::findByName(create_proto.engine().name());
+
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
-  max_key_length= cursor->getEngine()->max_key_length();
+  max_key_length= engine->max_key_length();
 
   for (field_no=0; (sql_field=it++) ; field_no++)
   {
@@ -763,7 +764,7 @@ static int mysql_prepare_create_table(Session *session,
     }
 
     /** @todo Get rid of this MyISAM-specific crap. */
-    if (create_info->db_type == myisam_engine &&
+    if (not create_proto.engine().name().compare("MyISAM") &&
         ((sql_field->flags & BLOB_FLAG) ||
          (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED)))
       (*db_options)|= HA_OPTION_PACK_RECORD;
@@ -798,14 +799,14 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
   if (auto_increment &&
-      (cursor->getEngine()->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
+      (engine->check_flag(HTON_BIT_NO_AUTO_INCREMENT)))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
     return(true);
   }
 
-  if (blob_columns && (cursor->getEngine()->check_flag(HTON_BIT_NO_BLOBS)))
+  if (blob_columns && (engine->check_flag(HTON_BIT_NO_BLOBS)))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
@@ -846,7 +847,7 @@ static int mysql_prepare_create_table(Session *session,
       continue;
     }
     (*key_count)++;
-    tmp=cursor->getEngine()->max_key_parts();
+    tmp= engine->max_key_parts();
     if (key->columns.elements > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
@@ -895,7 +896,7 @@ static int mysql_prepare_create_table(Session *session,
       return(true);
     }
   }
-  tmp=cursor->getEngine()->max_keys();
+  tmp= engine->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
@@ -1018,7 +1019,7 @@ static int mysql_prepare_create_table(Session *session,
 
         if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
         {
-          if (! (cursor->getEngine()->check_flag(HTON_BIT_CAN_INDEX_BLOBS)))
+          if (! (engine->check_flag(HTON_BIT_CAN_INDEX_BLOBS)))
           {
             my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
             return true;
@@ -1048,7 +1049,7 @@ static int mysql_prepare_create_table(Session *session,
           else
           {
             key_info->flags|= HA_NULL_PART_KEY;
-            if (! (cursor->getEngine()->check_flag(HTON_BIT_NULL_IN_KEY)))
+            if (! (engine->check_flag(HTON_BIT_NULL_IN_KEY)))
             {
               my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
               return true;
@@ -1057,7 +1058,7 @@ static int mysql_prepare_create_table(Session *session,
         }
         if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
         {
-          if (column_nr == 0 || (cursor->getEngine()->check_flag(HTON_BIT_AUTO_PART_KEY)))
+          if (column_nr == 0 || (engine->check_flag(HTON_BIT_AUTO_PART_KEY)))
             auto_increment--;			// Field is used
         }
       }
@@ -1072,9 +1073,9 @@ static int mysql_prepare_create_table(Session *session,
 	if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
 	{
 	  if ((length=column->length) > max_key_length ||
-	      length > cursor->getEngine()->max_key_part_length())
+	      length > engine->max_key_part_length())
 	  {
-	    length= min(max_key_length, cursor->getEngine()->max_key_part_length());
+	    length= min(max_key_length, engine->max_key_part_length());
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
@@ -1099,7 +1100,7 @@ static int mysql_prepare_create_table(Session *session,
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
 	  return(true);
 	}
-	else if (! (cursor->getEngine()->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
+	else if (! (engine->check_flag(HTON_BIT_NO_PREFIX_CHAR_KEYS)))
         {
 	  length=column->length;
         }
@@ -1109,9 +1110,9 @@ static int mysql_prepare_create_table(Session *session,
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
 	  return(true);
       }
-      if (length > cursor->getEngine()->max_key_part_length())
+      if (length > engine->max_key_part_length())
       {
-        length= cursor->getEngine()->max_key_part_length();
+        length= engine->max_key_part_length();
 	if (key->type == Key::MULTIPLE)
 	{
 	  /* not a critical problem */
@@ -1191,7 +1192,7 @@ static int mysql_prepare_create_table(Session *session,
     key_info++;
   }
   if (!unique_key && !primary_key &&
-      (cursor->getEngine()->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
+      (engine->check_flag(HTON_BIT_REQUIRE_PRIMARY_KEY)))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
     return(true);
@@ -1318,7 +1319,6 @@ bool mysql_create_table_no_lock(Session *session,
 {
   uint		db_options, key_count;
   KEY		*key_info_buffer;
-  Cursor	*cursor;
   bool		error= true;
   TableShare share;
   bool lex_identified_temp_table=
@@ -1333,20 +1333,16 @@ bool mysql_create_table_no_lock(Session *session,
   }
   assert(strcmp(identifier.getTableName(), table_proto.name().c_str())==0);
   db_options= create_info->table_options;
+
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
-  if (!(cursor= create_info->db_type->getCursor(share, session->mem_root)))
-  {
-    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Cursor));
-    return true;
-  }
 
   set_table_default_charset(create_info, identifier.getDBName());
 
   /* Check if table exists */
   if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
-                                 &db_options, cursor,
+                                 &db_options,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
     goto err;
@@ -1468,7 +1464,6 @@ unlock_and_end:
 
 err:
   session->set_proc_info("After create");
-  delete cursor;
 
   return(error);
 }
