@@ -1472,7 +1472,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
 
-  if (!(lex_identified_temp_table) &&
+  if (not (lex_identified_temp_table) &&
       create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
@@ -1495,9 +1495,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
-  tmp_table.s->db_low_byte_first=
-        test(create_info->db_type == myisam_engine ||
-             create_info->db_type == heap_engine);
+
+  if (not table_proto.engine().name().compare("MyISAM"))
+    tmp_table.s->db_low_byte_first= true;
+  else if (not table_proto.engine().name().compare("MEMORY"))
+    tmp_table.s->db_low_byte_first= true;
+
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
 

@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "drizzled/session_list.h"
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
+#include "drizzled/plugin/authorization.h"
 
 class Session;
 
@@ -30,7 +33,7 @@ using namespace std;
 namespace drizzled
 {
 
-vector<Session*> session_list;
+SessionList session_list;
 
 vector<Session*> &getSessionList()
 {
