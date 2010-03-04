@@ -692,8 +692,6 @@ bool alter_table(Session *session,
   int error= 0;
   char tmp_name[80];
   char old_name[32];
-  char new_name_buff[FN_REFLEN];
-  char new_alias_buff[FN_REFLEN];
   char *table_name;
   char *db;
   const char *new_alias;
@@ -703,8 +701,6 @@ bool alter_table(Session *session,
   plugin::StorageEngine *new_db_type;
   plugin::StorageEngine *save_old_db_type;
   bitset<32> tmp;
-
-  new_name_buff[0]= '\0';
 
   session->set_proc_info("init");
 
@@ -724,11 +720,6 @@ bool alter_table(Session *session,
     return mysql_discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
   }
 
-  ostringstream oss;
-  oss << drizzle_data_home << "/" << db << "/" << table_name;
-
-  (void) internal::unpack_filename(new_name_buff, oss.str().c_str());
-
   /*
     If this is just a rename of a view, short cut to the
     following scenario: 1) lock LOCK_open 2) do a RENAME
@@ -743,7 +734,7 @@ bool alter_table(Session *session,
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= session->openTableLock(table_list, TL_WRITE_ALLOW_READ)))
+  if (not (table= session->openTableLock(table_list, TL_WRITE_ALLOW_READ)))
     return true;
   
   table->use_all_columns();
@@ -751,16 +742,19 @@ bool alter_table(Session *session,
   /* Check that we are not trying to rename to an existing table */
   if (new_name)
   {
-    strcpy(new_name_buff, new_name);
+    char new_alias_buff[FN_REFLEN];
+    char lower_case_table_name[FN_REFLEN];
+
+    strcpy(lower_case_table_name, new_name);
     strcpy(new_alias_buff, new_name);
     new_alias= new_alias_buff;
 
-    my_casedn_str(files_charset_info, new_name_buff);
+    my_casedn_str(files_charset_info, lower_case_table_name);
     new_alias= new_name; // Create lower case table name
     my_casedn_str(files_charset_info, new_name);
 
     if (new_db == db &&
-        ! my_strcasecmp(table_alias_charset, new_name_buff, table_name))
+        not my_strcasecmp(table_alias_charset, lower_case_table_name, table_name))
     {
       /*
         Source and destination table names are equal: make later check
@@ -770,11 +764,11 @@ bool alter_table(Session *session,
     }
     else
     {
-      if (table->s->tmp_table != NO_TMP_TABLE)
+      if (table->s->tmp_table != STANDARD_TABLE)
       {
-        if (session->find_temporary_table(new_db, new_name_buff))
+        if (session->find_temporary_table(new_db, lower_case_table_name))
         {
-          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name_buff);
+          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), lower_case_table_name);
           return true;
         }
       }
@@ -789,9 +783,9 @@ bool alter_table(Session *session,
           return true;
         }
 
-        TableIdentifier identifier(new_db, new_name_buff);
+        TableIdentifier identifier(new_db, lower_case_table_name);
 
-        if (plugin::StorageEngine::getTableDefinition(*session, identifier) == EEXIST)
+        if (plugin::StorageEngine::doesTableExist(*session, identifier))
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -807,12 +801,12 @@ bool alter_table(Session *session,
   }
 
   old_db_type= table->s->db_type();
-  if (! create_info->db_type)
+  if (not create_info->db_type)
   {
     create_info->db_type= old_db_type;
   }
 
-  if (table->s->tmp_table != NO_TMP_TABLE)
+  if (table->s->tmp_table != STANDARD_TABLE)
   {
     create_proto->set_type(message::Table::TEMPORARY);
   }
@@ -823,8 +817,12 @@ bool alter_table(Session *session,
 
   new_db_type= create_info->db_type;
 
+  /**
+    @todo Have a check on the table definition for FK in the future 
+    to remove the need for the cursor. (aka can_switch_engines())
+  */
   if (new_db_type != old_db_type &&
-      !table->cursor->can_switch_engines())
+      not table->cursor->can_switch_engines())
   {
     assert(0);
     my_error(ER_ROW_IS_REFERENCED, MYF(0));
@@ -1032,7 +1030,7 @@ bool alter_table(Session *session,
   /* We must not ignore bad input! */
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
 
-  if (table->s->tmp_table != NO_TMP_TABLE)
+  if (table->s->tmp_table != STANDARD_TABLE)
   {
     /* We changed a temporary table */
     if (error)
@@ -1125,7 +1123,7 @@ bool alter_table(Session *session,
       /* Try to get everything back. */
       error= 1;
 
-      TableIdentifier alias_identifier(new_db, new_alias, NO_TMP_TABLE);
+      TableIdentifier alias_identifier(new_db, new_alias, STANDARD_TABLE);
       quick_rm_table(*session, alias_identifier);
 
       TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);

@@ -1153,7 +1153,7 @@ DROP TABLE t1;
 create table t1(a char(10) not null, unique key aa(a(1)),
 b char(4) not null, unique key bb(b(4))) engine=innodb;
 desc t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	VARCHAR	FALSE		FALSE	
 b	VARCHAR	FALSE		FALSE	
 show create table t1;

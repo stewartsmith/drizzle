@@ -129,7 +129,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   }
   else // Created !
   {
-    replication_services.rawStatement(session, session->query);
+    replication_services.createSchema(session, schema_message);
     session->my_ok(1);
   }
 
@@ -275,7 +275,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     assert(! session->query.empty());
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rawStatement(session, session->getQueryString());
+    replication_services.dropSchema(session, schema_name);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -410,7 +410,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       }
     }
 
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
+    TableIdentifier identifier(db, table->table_name);
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -454,7 +454,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   error= 0;
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
     else

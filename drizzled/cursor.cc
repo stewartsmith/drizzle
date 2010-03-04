@@ -1353,6 +1353,18 @@ static bool log_row_for_replication(Table* table,
 
   switch (session->lex->sql_command)
   {
+  case SQLCOM_CREATE_TABLE:
+    /*
+     * We are in a CREATE TABLE ... SELECT statement
+     * and the kernel has already created the table
+     * and put a CreateTableStatement in the active
+     * Transaction message.  Here, we add a new InsertRecord
+     * to a new Transaction message (because the above
+     * CREATE TABLE will commit the transaction containing
+     * it).
+     */
+    result= replication_services.insertRecord(session, table);
+    break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
     /*

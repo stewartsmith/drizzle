@@ -208,22 +208,22 @@ create table t1 select  105213674794682365.00 + 0.0 x;
 show warnings;
 Level	Code	Message
 desc  t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 x	DECIMAL	FALSE		FALSE	
 drop table t1;
 create table t1 select 0.0 x;
 desc t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 x	DECIMAL	FALSE		FALSE	
 create table t2 select 105213674794682365.00 y;
 desc t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 y	DECIMAL	FALSE		FALSE	
 create table t3 select x+y a from t1,t2;
 show warnings;
 Level	Code	Message
 desc t3;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	DECIMAL	FALSE		FALSE	
 drop table t1,t2,t3;
 select 1e-308, 1.00000001e-300, 100000000e-300;

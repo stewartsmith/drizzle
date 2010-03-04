@@ -1120,7 +1120,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
             sizeof(system_time_zone)-1);
 
- }
+  }
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -1132,8 +1132,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-      errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
-                      glob_hostname);
+    errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
+                  glob_hostname);
     strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
   }
   else
@@ -1196,14 +1196,14 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.collation_server=	 default_charset_info;
 
   if (not (character_set_filesystem=
-        get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+           get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;

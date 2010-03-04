@@ -368,11 +368,11 @@ select -(-9223372036854775808), -(-(-9223372036854775808));
 9223372036854775808	-9223372036854775808
 create table t1 select -9223372036854775808 bi;
 describe t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 bi	BIGINT	FALSE		FALSE	
 drop table t1;
 create table t1 select -9223372036854775809 bi;
 describe t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 bi	DECIMAL	FALSE		FALSE	
 drop table t1;

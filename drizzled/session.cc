@@ -39,6 +39,7 @@
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
+#include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
@@ -412,6 +413,7 @@ Session::~Session()
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
 
+  plugin::Logging::postEndDo(this);
 
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);

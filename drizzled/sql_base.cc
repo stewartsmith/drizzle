@@ -485,7 +485,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->s->tmp_table == NO_TMP_TABLE) &&
+    if ((table->table == 0 || table->table->s->tmp_table == STANDARD_TABLE) &&
         strcmp(table->db, db_name) == 0 &&
         strcmp(table->table_name, table_name) == 0)
       break;
@@ -549,7 +549,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->s->tmp_table != NO_TMP_TABLE)
+    if (table->table && table->table->s->tmp_table != STANDARD_TABLE)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -787,7 +787,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    TableIdentifier identifier(db_name, table_name, NO_TMP_TABLE);
+    TableIdentifier identifier(db_name, table_name, STANDARD_TABLE);
     quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -1283,7 +1283,7 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, NO_TMP_TABLE);
+      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, STANDARD_TABLE);
 
       if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
       {
@@ -1337,7 +1337,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->s->ref_count > 0 || table->s->tmp_table != NO_TMP_TABLE);
+  assert(table->s->ref_count > 0 || table->s->tmp_table != STANDARD_TABLE);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -2068,7 +2068,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->s->tmp_table == NO_TMP_TABLE)
+      else if (tables->table->s->tmp_table == STANDARD_TABLE)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }

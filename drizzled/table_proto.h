@@ -22,6 +22,14 @@
 #define DRIZZLED_TABLE_PROTO_H
 
 namespace drizzled {
+/*
+  Maximum length of comments.
+
+  These are historical limits that no longer need to apply.
+*/
+#define TABLE_COMMENT_MAXLEN 2048
+#define COLUMN_COMMENT_MAXLEN 1024
+#define INDEX_COMMENT_MAXLEN 1024
 
 int drizzle_write_proto_file(const std::string file_name,
                              message::Table *table_proto);
