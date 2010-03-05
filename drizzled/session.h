@@ -75,7 +75,6 @@ class user_var_entry;
 class CopyField;
 class Table_ident;
 
-
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
@@ -525,7 +524,7 @@ public:
 
 private:
   /* container for handler's private per-connection data */
-  Ha_data ha_data[MAX_HA];
+  std::vector<Ha_data> ha_data;
   /*
     Id of current query. Statement can be reused to execute several queries
     query_id is global in context of the whole MySQL server.
@@ -537,8 +536,8 @@ private:
   query_id_t query_id;
   query_id_t warn_query_id;
 public:
-  void **getEngineData(const plugin::StorageEngine *engine);
-  ResourceContext *getResourceContext(const plugin::StorageEngine *engine,
+  void **getEngineData(const plugin::MonitoredInTransaction *monitored);
+  ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                       size_t index= 0);
 
   struct st_transactions {

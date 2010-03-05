@@ -673,22 +673,10 @@ private:
 };
 
 extern const char *ha_row_type[];
-extern const char *binlog_format_names[];
-extern uint32_t total_ha, total_ha_2pc;
 
 /* basic stuff */
 int ha_init_errors(void);
-int ha_init(void);
 int ha_end(void);
-
-/*
-  Storage engine has to assume the transaction will end up with 2pc if
-   - there is more than one 2pc-capable storage engine available
-   - in the current transaction 2pc was not disabled yet
-*/
-#define trans_need_2pc(session, all)                   ((total_ha_2pc > 1) && \
-        !((all ? &session->transaction.all : &session->transaction.stmt)->no_2pc))
-
 
 SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                    SORT_FIELD *sortorder);

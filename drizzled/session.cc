@@ -145,15 +145,15 @@ const char *get_session_proc_info(Session *session)
   return session->get_proc_info();
 }
 
-void **Session::getEngineData(const plugin::StorageEngine *engine)
+void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
-  return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
+  return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
 }
 
-ResourceContext *Session::getResourceContext(const plugin::StorageEngine *engine,
+ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                              size_t index)
 {
-  return &ha_data[engine->getSlot()].resource_context[index];
+  return &ha_data[monitored->getId()].resource_context[index];
 }
 
 extern "C"
@@ -185,6 +185,7 @@ Session::Session(plugin::Client *client_arg)
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
   user_time(0),
+  ha_data(plugin::num_trx_monitored_objects),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
@@ -231,7 +232,6 @@ Session::Session(plugin::Client *client_arg)
   file_id = 0;
   query_id= 0;
   warn_query_id= 0;
-  memset(ha_data, 0, sizeof(ha_data));
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
