@@ -162,7 +162,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int extra(enum ha_extra_function operation);
         UNIV_INTERN int reset();
 	UNIV_INTERN int external_lock(Session *session, int lock_type);
-	UNIV_INTERN int start_stmt(Session *session, thr_lock_type lock_type);
 	void position(unsigned char *record);
 	UNIV_INTERN ha_rows records_in_range(uint inx, key_range *min_key, key_range
 								*max_key);
@@ -178,7 +177,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN void free_foreign_key_create_info(char* str);
 	UNIV_INTERN THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
 					enum thr_lock_type lock_type);
-	UNIV_INTERN void init_table_handle_for_HANDLER();
         UNIV_INTERN virtual void get_auto_increment(uint64_t offset, 
                                                     uint64_t increment,
                                                     uint64_t nb_desired_values,
@@ -202,7 +200,6 @@ public:
 
 
 extern "C" {
-char **session_query(Session *session);
 
 /** Get the file name of the MySQL binlog.
  * @return the name of the binlog file
@@ -229,13 +226,6 @@ int session_slave_thread(const Session *session);
   @retval 1 the user thread is running a non-transactional update
 */
 int session_non_transactional_update(const Session *session);
-
-/**
-  Get the user thread's binary logging format
-  @param session  user thread
-  @return Value to be used as index into the binlog_format_names array
-*/
-int session_binlog_format(const Session *session);
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.

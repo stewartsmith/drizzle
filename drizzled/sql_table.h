@@ -69,54 +69,12 @@ bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
 void write_bin_log(Session *session,
-                   char const *query, size_t query_length);
+                   char const *query);
 
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
 bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
-/*
-  Preparation for table creation
-
-  SYNOPSIS
-    mysql_prepare_create_table()
-      session                       Thread object.
-      create_info               Create information (like MAX_ROWS).
-      alter_info                List of columns and indexes to create
-      tmp_table                 If a temporary table is to be created.
-      db_options          INOUT Table options (like HA_OPTION_PACK_RECORD).
-      file                      The Cursor for the new table.
-      key_info_buffer     OUT   An array of KEY structs for the indexes.
-      key_count           OUT   The number of elements in the array.
-      select_field_count        The number of fields coming from a select table.
-
-  DESCRIPTION
-    Prepares the table and key structures for table creation.
-
-  NOTES
-    sets create_info->varchar if the table has a varchar
-
-  RETURN VALUES
-    false    OK
-    true     error
-*/
-int mysql_prepare_create_table(Session *session,
-                               HA_CREATE_INFO *create_info,
-                               message::Table *create_proto,
-                               AlterInfo *alter_info,
-                               bool tmp_table,
-                               uint32_t *db_options,
-                               Cursor *file,
-                               KEY **key_info_buffer,
-                               uint32_t *key_count,
-                               int select_field_count);
-
-
-/* Conversion functions */
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                            const char *table_name, bool is_tmp);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_TABLE_H */

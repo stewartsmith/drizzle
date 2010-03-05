@@ -3750,7 +3750,7 @@ dict_foreign_parse_drop_constraints(
 
 	*constraints_to_drop = mem_heap_alloc(heap, 1000 * sizeof(char*));
 
-	str = dict_strip_comments(*(trx->mysql_query_str));
+	str = dict_strip_comments((trx->mysql_query_str));
 	ptr = str;
 
 	ut_ad(mutex_own(&(dict_sys->mutex)));

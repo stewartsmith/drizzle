@@ -1,4 +1,2 @@
-CREATE SCHEMA data_dictionary;
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
-DROP SCHEMA data_dictionary;

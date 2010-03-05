@@ -141,11 +141,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/concat.h \
 			      drizzled/function/str/conv.h \
 			      drizzled/function/str/conv_charset.h \
-			      drizzled/function/str/database.h \
 			      drizzled/function/str/elt.h \
 			      drizzled/function/str/export_set.h \
 			      drizzled/function/str/format.h \
-			      drizzled/function/str/hex.h \
 			      drizzled/function/str/insert.h \
 			      drizzled/function/str/left.h \
 			      drizzled/function/str/load_file.h \
@@ -154,15 +152,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/quote.h \
 			      drizzled/function/str/repeat.h \
 			      drizzled/function/str/replace.h \
-			      drizzled/function/str/reverse.h \
 			      drizzled/function/str/right.h \
 			      drizzled/function/str/set_collation.h \
 			      drizzled/function/str/str_conv.h \
 			      drizzled/function/str/strfunc.h \
-			      drizzled/function/str/substr.h \
 			      drizzled/function/str/trim.h \
 			      drizzled/function/str/user.h \
-			      drizzled/function/str/uuid.h \
 			      drizzled/function/time/curdate.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
@@ -208,6 +203,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/index_hint.h \
 			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
+			      drizzled/item_result.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
 			      drizzled/item/blob.h \
@@ -293,19 +289,21 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/parser.h \
 			      drizzled/plugin.h \
 			      drizzled/plugin/authentication.h \
+			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/client.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/function.h \
-			      drizzled/plugin/info_schema_table.h \
 			      drizzled/plugin/library.h \
 			      drizzled/plugin/listen.h \
 			      drizzled/plugin/listen_tcp.h \
 			      drizzled/plugin/logging.h \
 			      drizzled/plugin/manifest.h \
 			      drizzled/plugin/module.h \
+			      drizzled/plugin/monitored_in_transaction.h \
 			      drizzled/plugin/null_client.h \
 			      drizzled/plugin/plugin.h \
 			      drizzled/plugin/query_cache.h \
+		              drizzled/plugin/query_rewrite.h \
 			      drizzled/plugin/registry.h \
 			      drizzled/plugin/scheduler.h \
 			      drizzled/plugin/storage_engine.h \
@@ -315,6 +313,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/transaction_replicator.h \
 			      drizzled/plugin/transactional_storage_engine.h \
 			      drizzled/plugin/xa_storage_engine.h \
+			      drizzled/plugin/xa_resource_manager.h \
 			      drizzled/plugin/version.h \
 			      drizzled/pthread_globals.h \
 			      drizzled/probes.h \
@@ -426,8 +425,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/utf8/unchecked.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
-			      drizzled/xid.h \
-			      plugin/innobase/handler/status_function.h
+			      drizzled/xid.h
 
 DRIZZLED_LDADD= \
 		drizzled/internal/libinternal.la \
@@ -540,11 +538,9 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/concat.cc \
 			   drizzled/function/str/conv.cc \
 			   drizzled/function/str/conv_charset.cc \
-			   drizzled/function/str/database.cc \
 			   drizzled/function/str/elt.cc \
 			   drizzled/function/str/export_set.cc \
 			   drizzled/function/str/format.cc \
-			   drizzled/function/str/hex.cc \
 			   drizzled/function/str/insert.cc \
 			   drizzled/function/str/left.cc \
 			   drizzled/function/str/load_file.cc \
@@ -553,15 +549,12 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/function/str/quote.cc \
 			   drizzled/function/str/repeat.cc \
 			   drizzled/function/str/replace.cc \
-			   drizzled/function/str/reverse.cc \
 			   drizzled/function/str/right.cc \
 			   drizzled/function/str/set_collation.cc \
 			   drizzled/function/str/str_conv.cc \
 			   drizzled/function/str/strfunc.cc \
-			   drizzled/function/str/substr.cc \
 			   drizzled/function/str/trim.cc \
 			   drizzled/function/str/user.cc \
-			   drizzled/function/str/uuid.cc \
 			   drizzled/function/time/curdate.cc \
 			   drizzled/function/time/date.cc \
 			   drizzled/function/time/date_add_interval.cc \
@@ -656,17 +649,19 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/optimizer/sel_arg.cc \
 			   drizzled/optimizer/sum.cc \
 			   drizzled/plugin/authentication.cc \
+			   drizzled/plugin/authorization.cc \
 			   drizzled/plugin/client.cc \
 			   drizzled/plugin/error_message.cc \
 			   drizzled/plugin/function.cc \
-			   drizzled/plugin/info_schema_table.cc \
 			   drizzled/plugin/library.cc \
 			   drizzled/plugin/listen.cc \
 			   drizzled/plugin/listen_tcp.cc \
 			   drizzled/plugin/loader.cc \
 			   drizzled/plugin/logging.cc \
+			   drizzled/plugin/monitored_in_transaction.cc \
 			   drizzled/plugin/plugin.cc \
 			   drizzled/plugin/query_cache.cc \
+			   drizzled/plugin/query_rewrite.cc \
 			   drizzled/plugin/registry.cc \
 			   drizzled/plugin/scheduler.cc \
 			   drizzled/plugin/storage_engine.cc \
@@ -675,6 +670,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/plugin/transaction_replicator.cc \
 			   drizzled/plugin/transactional_storage_engine.cc \
 			   drizzled/plugin/xa_storage_engine.cc \
+			   drizzled/plugin/xa_resource_manager.cc \
 			   drizzled/query_id.cc \
 			   drizzled/records.cc \
 			   drizzled/replication_services.cc \

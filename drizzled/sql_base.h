@@ -29,7 +29,6 @@ class Name_resolution_context;
 
 void table_cache_free(void);
 bool table_cache_init(void);
-void assign_new_table_id(TableShare *share);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
 
@@ -129,7 +128,7 @@ TableList *find_table_in_list(TableList *table,
                                const char *table_name);
 TableList *unique_table(TableList *table, TableList *table_list,
                         bool check_alias= false);
-void remove_db_from_cache(const char *db);
+void remove_db_from_cache(const std::string schema_name);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000
@@ -143,14 +142,6 @@ void mem_alloc_error(size_t size);
 
 bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors= false);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors= false);
-bool list_open_tables(const char *db,
-                      const char *wild,
-                      bool(*func)(Table *table,
-                                  open_table_list_st& open_list,
-                                  plugin::InfoSchemaTable *schema_table),
-                      Table *display,
-                      plugin::InfoSchemaTable *schema_table);
-
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,
                                              const char *table_name)

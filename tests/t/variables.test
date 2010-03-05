@@ -6,8 +6,6 @@ drop table if exists t1,t2;
 drop schema if exists data_dictionary;
 --enable_warnings
 
-create schema data_dictionary;
-
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
 #
@@ -536,5 +534,3 @@ set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 #
 --replace_column 2 #
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
-
-drop schema data_dictionary;

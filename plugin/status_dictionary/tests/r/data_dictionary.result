@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 show create table GLOBAL_STATUS ;
 Table	Create Table
@@ -56,4 +55,3 @@ count(*)
 #
 CREATE SCHEMA drizzleslap;
 DROP SCHEMA drizzleslap;
-DROP SCHEMA data_dictionary;

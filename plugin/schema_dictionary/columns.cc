@@ -32,9 +32,18 @@ ColumnsTool::ColumnsTool() :
   add_field("TABLE_NAME");
 
   add_field("COLUMN_NAME");
+  add_field("COLUMN_TYPE");
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
   add_field("COLUMN_DEFAULT");
+  add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN);
+  add_field("COLUMN_DEFAULT_UPDATE");
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
+  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
+  add_field("IS_MULTI", plugin::TableFunction::BOOLEAN);
+  add_field("IS_FIRST_IN_MULTI", plugin::TableFunction::BOOLEAN);
+  add_field("INDEXES_FOUND_IN", plugin::TableFunction::NUMBER);
   add_field("DATA_TYPE");
 
   add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER);
@@ -44,8 +53,6 @@ ColumnsTool::ColumnsTool() :
 
   add_field("COLLATION_NAME");
 
-  add_field("COLUMN_KEY", plugin::TableFunction::BOOLEAN);
-  add_field("EXTRA", 20);
   add_field("COLUMN_COMMENT", 1024);
 }
 
@@ -55,6 +62,11 @@ ColumnsTool::Generator::Generator(Field **arg) :
   column_iterator(0),
   is_columns_primed(false)
 {
+  Session *session= current_session;
+  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+
+  setSchemaPredicate(select->getShowSchema());
+  setTablePredicate(select->getShowTable());
 }
 
 
@@ -96,6 +108,7 @@ bool ColumnsTool::Generator::nextColumn()
 
 bool ColumnsTool::Generator::populate()
 {
+
   if (not nextColumn())
     return false;
 
@@ -115,14 +128,69 @@ void ColumnsTool::Generator::fill()
   /* COLUMN_NAME */
   push(column.name());
 
+  /* COLUMN_TYPE */
+  pushType(column.type());
+
   /* ORDINAL_POSITION */
   push(static_cast<int64_t>(column_iterator));
 
   /* COLUMN_DEFAULT */
   push(column.options().default_value());
 
+  /* COLUMN_DEFAULT_IS_NULL */
+  push(column.options().default_null());
+
+  /* COLUMN_DEFAULT_UPDATE */
+  push(column.options().update_value());
+
   /* IS_NULLABLE */
   push(column.constraints().is_nullable());
+
+  /* IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
+  bool is_indexed= false;
+  bool is_primary= false;
+  bool is_unique= false;
+  bool is_multi= false;
+  bool is_multi_first= false;
+  int64_t indexes_found_in= 0;
+  for (int32_t x= 0; x < getTableProto().indexes_size() ; x++)
+  {
+    drizzled::message::Table::Index index=
+      getTableProto().indexes(x);
+
+    for (int32_t y= 0; y < index.index_part_size() ; y++)
+    {
+      drizzled::message::Table::Index::IndexPart index_part=
+        index.index_part(y);
+
+      if (static_cast<int32_t>(index_part.fieldnr()) == column_iterator)
+      {
+        indexes_found_in++;
+        is_indexed= true;
+
+        if (index.is_primary())
+          is_primary= true;
+
+        if (index.is_unique())
+          is_unique= true;
+
+        if (index.index_part_size() > 1)
+        {
+          is_multi= true;
+
+          if (y == 0)
+            is_multi_first= true;
+        }
+      }
+    }
+  }
+  /* ...IS_INDEXED, IS_USED_IN_PRIMARY, IS_UNIQUE, IS_MULTI, IS_FIRST_IN_MULTI, INDEXES_FOUND_IN */
+  push(is_indexed);
+  push(is_primary);
+  push(is_unique);
+  push(is_multi);
+  push(is_multi_first);
+  push(indexes_found_in);
 
   /* DATATYPE */
   pushType(column.type());
@@ -141,12 +209,6 @@ void ColumnsTool::Generator::fill()
 
  /* "COLLATION_NAME" */
   push(column.string_options().collation());
-
- /* "COLUMN_KEY" */
-  push(false);
-
- /* "EXTRA" */
-  push();
 
  /* "COLUMN_COMMENT" */
   push(column.comment());

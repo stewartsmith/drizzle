@@ -52,13 +52,13 @@ bool statement::DropIndex::execute()
   memset(&create_info, 0, sizeof(create_info));
   create_info.db_type= 0;
   create_info.row_type= ROW_TYPE_NOT_USED;
-  create_info.default_table_charset= get_default_db_collation(session->db.c_str());
+  create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(session->db.c_str());
 
   bool res= alter_table(session, 
                         first_table->db, 
                         first_table->table_name,
                         &create_info, 
-                        &create_table_proto, 
+                        create_table_proto, 
                         first_table,
                         &alter_info,
                         0, (order_st*) 0, 0);
