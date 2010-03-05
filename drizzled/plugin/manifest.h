@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_MANIFEST_H
 #define DRIZZLED_PLUGIN_MANIFEST_H
 
-#include <drizzled/plugin/registry.h>
+#include "drizzled/plugin/context.h"
 
 namespace drizzled
 {
@@ -41,7 +41,7 @@ enum plugin_license_type {
 namespace plugin
 {
 
-typedef int (*initialize_func_t)(Registry &);
+typedef int (*initialize_func_t)(Context &);
 
 /**
  * Plugin Manfiest

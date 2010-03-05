@@ -26,6 +26,7 @@
 #include <drizzled/plugin/module.h>
 #include "drizzled/plugin/version.h"
 #include "drizzled/definitions.h"
+#include "drizzled/plugin/context.h"
 
 
 namespace drizzled

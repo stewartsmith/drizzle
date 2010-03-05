@@ -44,12 +44,9 @@ private:
   std::map<std::string, Module *> module_map;
   std::map<std::string, const Plugin *> plugin_registry;
 
-  Module *current_module;
-
   Registry()
    : module_map(),
-     plugin_registry(),
-     current_module(NULL)
+     plugin_registry()
   { }
 
   Registry(const Registry&);
@@ -69,15 +66,6 @@ public:
 
   void add(Module *module);
 
-  void setCurrentModule(Module *module)
-  {
-    current_module= module;
-  }
-
-  void clearCurrentModule()
-  {
-    current_module= NULL;
-  }
 
   std::vector<Module *> getList(bool active);
 
@@ -98,7 +86,6 @@ public:
   template<class T>
   void add(T *plugin)
   {
-    plugin->setModule(current_module);
     bool failed= false;
     std::string plugin_name(plugin->getName());
     std::transform(plugin_name.begin(), plugin_name.end(),

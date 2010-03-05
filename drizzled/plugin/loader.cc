@@ -285,10 +285,11 @@ static void delete_module(plugin::Registry &registry, plugin::Module *module)
 {
   plugin::Manifest manifest= module->getManifest();
 
+  plugin::Context loading_context(registry, module);
   if (module->isInited)
   {
     if (manifest.deinit)
-      manifest.deinit(registry);
+      manifest.deinit(loading_context);
   }
 
   /* Free allocated strings before deleting the plugin. */
@@ -343,10 +344,10 @@ static bool plugin_initialize(plugin::Registry &registry,
 {
   assert(module->isInited == false);
 
-  registry.setCurrentModule(module);
+  plugin::Context loading_context(registry, module);
   if (module->getManifest().init)
   {
-    if (module->getManifest().init(registry))
+    if (module->getManifest().init(loading_context))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Plugin '%s' init function returned error.\n"),
@@ -354,7 +355,6 @@ static bool plugin_initialize(plugin::Registry &registry,
       return true;
     }
   }
-  registry.clearCurrentModule();
   module->isInited= true;
 
 
