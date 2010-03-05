@@ -43,5 +43,6 @@
 // Show tables needs to be first.
 #include "plugin/schema_dictionary/show_tables.h"
 #include "plugin/schema_dictionary/show_table_status.h"
+#include "plugin/schema_dictionary/show_temporary_tables.h"
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */
