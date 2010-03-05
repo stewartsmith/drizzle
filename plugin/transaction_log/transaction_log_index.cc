@@ -42,7 +42,6 @@ TransactionLogIndex *transaction_log_index= NULL; /* The singleton transaction l
 
 TransactionLogIndex::TransactionLogIndex(TransactionLog &in_log) :
   log(in_log),
-  log_file(-1),
   index_file(-1),
   index_file_path(),
   has_error(false),
