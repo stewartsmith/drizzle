@@ -47,24 +47,30 @@ memcached_server_fn callbacks[1];
     AC_DEFINE([HAVE_MEMCACHED_SERVER_FN],[1],[If we have the new memcached_server_fn typedef])
   ])
 
-  AC_CACHE_CHECK([if libmemcached is recent enough],
-    [pandora_cv_recent_libmemcached],[
-    pandora_need_libmemcached_version=`echo "$1" | perl -nle '/(\d+)\.(\d+)/; printf "%d%0.3d000", $[]1, $[]2 ;'`
-    AS_IF([test "x${pandora_need_libmemcached_version}" = "x0000000"],[
-      pandora_cv_recent_libmemcached=yes
-    ],[
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+  AS_IF([test "x$1" != "x"],[
+    AC_CACHE_CHECK([if libmemcached is recent enough],
+      [pandora_cv_recent_libmemcached],[
+      pandora_need_libmemcached_version=`echo "$1" | perl -nle '/(\d+)\.(\d+)/; printf "%d%0.3d000", $[]1, $[]2 ;'`
+      AS_IF([test "x${pandora_need_libmemcached_version}" = "x0000000"],[
+        pandora_cv_recent_libmemcached=yes
+      ],[
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <libmemcached/configure.h>
 
 #if !defined(LIBMEMCACHED_VERSION_HEX) || LIBMEMCACHED_VERSION_HEX < 0x]]${pandora_need_libmemcached_version}[[
 # error libmemcached too old!
 #endif
-        ]],[[]])
-      ],[
-        pandora_cv_recent_libmemcached=yes
-      ],[
-        pandora_cv_recent_libmemcached=no
+          ]],[[]])
+        ],[
+          pandora_cv_recent_libmemcached=yes
+        ],[
+          pandora_cv_recent_libmemcached=no
+        ])
       ])
+    ])
+    AS_IF([test "x${pandora_cv_recent_libmemcached}" = "xno"],[
+      ac_cv_libmemcached=no
+      ac_cv_libmemcachedprotocol=no
     ])
   ])
       
