@@ -50,6 +50,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
