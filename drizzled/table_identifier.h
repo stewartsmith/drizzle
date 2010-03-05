@@ -56,6 +56,7 @@ private:
   char path[FN_REFLEN];
   const char *db;
   const char *table_name;
+  std::string sql_path;
 
 public:
   TableIdentifier( const char *db_arg,
@@ -64,12 +65,21 @@ public:
     path_inited(false),
     type(tmp_arg),
     db(db_arg),
-    table_name(table_name_arg)
-  { }
+    table_name(table_name_arg),
+    sql_path(db)
+  { 
+    sql_path.append(".");
+    sql_path.append(table_name);
+  }
 
   bool isTmp() const
   {
     return type == STANDARD_TABLE ? false  : true;
+  }
+
+  const std::string &getSQLPath()
+  {
+    return sql_path;
   }
 
   const char *getPath();

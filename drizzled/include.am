@@ -289,6 +289,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/parser.h \
 			      drizzled/plugin.h \
 			      drizzled/plugin/authentication.h \
+			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/client.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/function.h \
@@ -648,6 +649,7 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/optimizer/sel_arg.cc \
 			   drizzled/optimizer/sum.cc \
 			   drizzled/plugin/authentication.cc \
+			   drizzled/plugin/authorization.cc \
 			   drizzled/plugin/client.cc \
 			   drizzled/plugin/error_message.cc \
 			   drizzled/plugin/function.cc \
