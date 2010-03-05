@@ -59,6 +59,13 @@ Schema::Schema():
   table_definition_ext= DEFAULT_FILE_EXTENSION;
   pthread_rwlock_init(&schema_lock, NULL);
   prime();
+#if 0
+  message::Schema schema_message;
+
+  schema_message.set_name("temporary_tables");
+
+  doCreateSchema(schema_message);
+#endif
 }
 
 Schema::~Schema()
@@ -408,3 +415,15 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
 
   return false;
 }
+
+bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
+{
+  if (not strcasecmp(identifier.getSchemaName(), "temporary_tables"))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+

@@ -48,6 +48,8 @@
 #include <drizzled/internal_error_handler.h>
 #include <drizzled/diagnostics_area.h>
 
+#include <drizzled/plugin/authorization.h>
+
 #define MIN_HANDSHAKE_SIZE      6
 
 namespace drizzled
@@ -474,6 +476,16 @@ public:
   SecurityContext& getSecurityContext()
   {
     return security_ctx;
+  }
+
+  /**
+   * Is this session viewable by the current user?
+   */
+  bool isViewable() const
+  {
+    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                               this,
+                                               false);
   }
 
   /**
@@ -1429,7 +1441,7 @@ public:
 
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
-  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
+  bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);
 

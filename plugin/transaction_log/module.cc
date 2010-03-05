@@ -213,8 +213,13 @@ static void set_truncate_debug(Session *,
    * which should simply return the result from the set statement. 
    */
   if (transaction_log)
+  {
     if (*(bool *)save != false)
+    {
       transaction_log->truncate();
+      transaction_log_index->clear();
+    }
+  }
 }
 
 static DRIZZLE_SYSVAR_BOOL(enable,

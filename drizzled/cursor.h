@@ -704,7 +704,7 @@ int prepare_create_field(CreateField *sql_field,
 bool mysql_create_table(Session *session,
                         TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
-                        message::Table *table_proto,
+                        message::Table &table_proto,
                         AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
@@ -712,15 +712,15 @@ bool mysql_create_table(Session *session,
 bool mysql_create_table_no_lock(Session *session,
                                 TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
-                                message::Table *table_proto,
+                                message::Table &table_proto,
                                 AlterInfo *alter_info,
                                 bool tmp_table,
                                 uint32_t select_field_count,
                                 bool is_if_not_exists);
 
-bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
-                             message::Table& create_table_proto,
-                             plugin::StorageEngine*,
+bool mysql_create_like_table(Session* session,
+                             TableList* table, TableList* src_table,
+                             message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set);
 

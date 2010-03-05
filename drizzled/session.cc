@@ -673,23 +673,20 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  bool is_authenticated;
-
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), getSecurityContext().getIp().c_str());
     return false;
   }
 
-  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
+  const string passwd_str(passwd, passwd_len);
+  bool is_authenticated=
+    plugin::Authentication::isAuthenticated(getSecurityContext(),
+                                            passwd_str);
 
   if (is_authenticated != true)
   {
-    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             getSecurityContext().getUser().c_str(),
-             getSecurityContext().getIp().c_str(),
-             passwd_len ? ER(ER_YES) : ER(ER_NO));
-
+    /* isAuthenticated has pushed the error message */
     return false;
   }
 
@@ -2040,22 +2037,17 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+bool Session::rm_temporary_table(TableIdentifier &identifier)
 {
-  bool error= false;
-
-  assert(base);
-
-  if (plugin::StorageEngine::deleteDefinitionFromPath(identifier))
-    error= true;
-
-  if (base->doDropTable(*this, identifier.getPath()))
+  if (not plugin::StorageEngine::dropTable(*this, identifier))
   {
-    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getPath(), errno);
+
+    return true;
   }
-  return error;
+
+  return false;
 }
 
 bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
