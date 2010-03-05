@@ -208,7 +208,7 @@ dnl This plugin is staticly built, which means we cannot live without and it is 
 dnl possible to disable it. Once it is disableable, we will make it non-static.
 with_%(name)s_plugin=yes
 pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
-pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(pname)s_plugin.la"
+pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(pname)s.la"
 PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
 
 """ % plugin)
