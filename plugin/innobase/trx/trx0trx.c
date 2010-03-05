@@ -120,7 +120,6 @@ trx_create(
 
 	trx->mysql_thd = NULL;
 	trx->mysql_query_str = NULL;
-	trx->active_trans = 0;
 	trx->duplicates = 0;
 
 	trx->mysql_n_tables_locked = 0;
