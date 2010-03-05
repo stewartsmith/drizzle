@@ -258,18 +258,18 @@ int TableProtoTesterCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *tableprototester_engine= NULL;
 
-static int tableprototester_init(drizzled::plugin::Registry &registry)
+static int tableprototester_init(drizzled::plugin::Context &context)
 {
 
   tableprototester_engine= new TableProtoTesterEngine("TABLEPROTOTESTER");
-  registry.add(tableprototester_engine);
+  context.add(tableprototester_engine);
 
   return 0;
 }
 
-static int tableprototester_fini(drizzled::plugin::Registry &registry)
+static int tableprototester_fini(drizzled::plugin::Context &context)
 {
-  registry.remove(tableprototester_engine);
+  context.remove(tableprototester_engine);
   delete tableprototester_engine;
 
   return 0;

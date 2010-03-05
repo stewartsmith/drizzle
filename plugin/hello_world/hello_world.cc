@@ -43,18 +43,18 @@ public:
 
 plugin::Create_function<Item_func_hello_world> *hello_world_udf= NULL;
 
-static int hello_world_plugin_init(drizzled::plugin::Registry &registry)
+static int hello_world_plugin_init(drizzled::plugin::Context &context)
 {
   hello_world_udf=
     new plugin::Create_function<Item_func_hello_world>("hello_world");
-  registry.add(hello_world_udf);
+  context.add(hello_world_udf);
 
   return 0;
 }
 
-static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
+static int hello_world_plugin_deinit(drizzled::plugin::Context &context)
 {
-  registry.remove(hello_world_udf);
+  context.remove(hello_world_udf);
   delete hello_world_udf;
   return 0;
 }

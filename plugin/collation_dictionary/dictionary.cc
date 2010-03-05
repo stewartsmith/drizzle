@@ -26,21 +26,21 @@ using namespace drizzled;
 static CharacterSetsTool *character_sets;
 static CollationsTool *collations;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   character_sets= new(std::nothrow)CharacterSetsTool;
   collations= new(std::nothrow)CollationsTool;
 
-  registry.add(character_sets);
-  registry.add(collations);
+  context.add(character_sets);
+  context.add(collations);
   
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-  registry.remove(character_sets);
-  registry.remove(collations);
+  context.remove(character_sets);
+  context.remove(collations);
   delete character_sets;
   delete collations;
 

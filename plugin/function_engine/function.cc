@@ -122,7 +122,7 @@ bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   function_plugin= new(std::nothrow) Function("FunctionEngine");
 
@@ -131,14 +131,14 @@ static int init(drizzled::plugin::Registry &registry)
     return 1;
   }
 
-  registry.add(function_plugin);
+  context.add(function_plugin);
 
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-  registry.remove(function_plugin);
+  context.remove(function_plugin);
   delete function_plugin;
 
   return 0;

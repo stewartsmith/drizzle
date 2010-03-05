@@ -80,20 +80,20 @@ public:
 };
 
 using plugin::Create_function;
-using plugin::Registry;
+using plugin::Context;
 typedef Create_function<Function> PluginFunction;
 PluginFunction *rot13_func= NULL;
 
-static int init(Registry &registry)
+static int init(Context &context)
 {
   rot13_func= new PluginFunction(rot13::name);
-  registry.add(rot13_func);
+  context.add(rot13_func);
   return 0;
 }
 
-static int deinit(Registry &registry)
+static int deinit(Context &context)
 {
-  registry.remove(rot13_func);
+  context.remove(rot13_func);
   delete rot13_func;
   return 0;
 }

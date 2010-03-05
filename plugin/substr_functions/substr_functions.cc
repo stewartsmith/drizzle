@@ -258,19 +258,19 @@ String *SubstrIndexFunction::val_str(String *str)
 plugin::Create_function<SubstrFunction> *substr_function= NULL;
 plugin::Create_function<SubstrIndexFunction> *substr_index_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   substr_function= new plugin::Create_function<SubstrFunction>("substr");
   substr_index_function= new plugin::Create_function<SubstrIndexFunction>("substring_index");
-  registry.add(substr_function);
-  registry.add(substr_index_function);
+  context.add(substr_function);
+  context.add(substr_index_function);
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-   registry.remove(substr_function);
-   registry.remove(substr_index_function);
+   context.remove(substr_function);
+   context.remove(substr_index_function);
    delete substr_function;
    delete substr_index_function;
    return 0;

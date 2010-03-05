@@ -87,17 +87,17 @@ MultiThreadScheduler::~MultiThreadScheduler()
 }
 
   
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   scheduler= new MultiThreadScheduler("multi_thread");
-  registry.add(scheduler);
+  context.add(scheduler);
 
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(drizzled::plugin::Context &context)
 {
-  registry.remove(scheduler);
+  context.remove(scheduler);
   delete scheduler;
 
   return 0;

@@ -68,16 +68,16 @@ int64_t AsciiFunction::val_int()
 
 plugin::Create_function<AsciiFunction> *asciiudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   asciiudf= new plugin::Create_function<AsciiFunction>("ascii");
-  registry.add(asciiudf);
+  context.add(asciiudf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
+static int finalize(plugin::Context &context)
 {
-  registry.remove(asciiudf);
+  context.remove(asciiudf);
   delete asciiudf;
   return 0;
 }

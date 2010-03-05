@@ -33,11 +33,11 @@ bool archive_aio_state(void)
   return archive_use_aio;
 }
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
 
   archive_engine= new ArchiveEngine();
-  registry.add(archive_engine);
+  context.add(archive_engine);
 
   return false;
 }
@@ -55,9 +55,9 @@ static int init(drizzled::plugin::Registry &registry)
 
 extern pthread_mutex_t archive_mutex;
 
-static int done(drizzled::plugin::Registry &registry)
+static int done(drizzled::plugin::Context &context)
 {
-  registry.remove(archive_engine);
+  context.remove(archive_engine);
   delete archive_engine;
 
   pthread_mutex_destroy(&archive_mutex);

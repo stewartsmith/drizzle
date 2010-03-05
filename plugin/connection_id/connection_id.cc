@@ -68,17 +68,17 @@ public:
 
 plugin::Create_function<ConnectionIdFunction> *connection_idudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   connection_idudf=
     new plugin::Create_function<ConnectionIdFunction>("connection_id");
-  registry.add(connection_idudf);
+  context.add(connection_idudf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
+static int finalize(plugin::Context &context)
 {
-   registry.remove(connection_idudf);
+   context.remove(connection_idudf);
    delete connection_idudf;
    return 0;
 }

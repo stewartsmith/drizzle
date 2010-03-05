@@ -290,17 +290,17 @@ public:
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(plugin::Registry &registry)
+static int logging_gearman_plugin_init(plugin::Context &context)
 {
   handler= new LoggingGearman();
-  registry.add(handler);
+  context.add(handler);
 
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(plugin::Registry &registry)
+static int logging_gearman_plugin_deinit(plugin::Context &context)
 {
-  registry.remove(handler);
+  context.remove(handler);
   delete handler;
 
   return 0;

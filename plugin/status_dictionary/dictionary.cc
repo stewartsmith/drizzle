@@ -31,7 +31,7 @@ static VariablesTool *global_variables;
 static VariablesTool *session_variables;
 
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   global_statements= new(std::nothrow)StatementsTool(true);
   global_status= new(std::nothrow)StatusTool(true);
@@ -40,24 +40,24 @@ static int init(drizzled::plugin::Registry &registry)
   global_variables= new(std::nothrow)VariablesTool(true);
   session_variables= new(std::nothrow)VariablesTool(false);
 
-  registry.add(global_statements);
-  registry.add(global_status);
-  registry.add(global_variables);
-  registry.add(session_statements);
-  registry.add(session_status);
-  registry.add(session_variables);
+  context.add(global_statements);
+  context.add(global_status);
+  context.add(global_variables);
+  context.add(session_statements);
+  context.add(session_status);
+  context.add(session_variables);
   
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-  registry.remove(global_statements);
-  registry.remove(global_status);
-  registry.remove(global_variables);
-  registry.remove(session_statements);
-  registry.remove(session_status);
-  registry.remove(session_variables);
+  context.remove(global_statements);
+  context.remove(global_status);
+  context.remove(global_variables);
+  context.remove(session_statements);
+  context.remove(session_status);
+  context.remove(session_variables);
 
   delete global_statements;
   delete global_status;

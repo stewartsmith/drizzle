@@ -63,16 +63,16 @@ public:
 
 Authz *authz= NULL;
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   authz= new Authz();
-  registry.add(authz);
+  context.add(authz);
   return 0;
 }
 
-static int deinit(plugin::Registry &registry)
+static int deinit(plugin::Context &context)
 {
-  registry.remove(authz);
+  context.remove(authz);
   delete authz;
   return 0;
 }

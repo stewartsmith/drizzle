@@ -1498,11 +1498,11 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(plugin::Registry &registry)
+static int myisam_init(plugin::Context &context)
 {
   int error;
   engine= new MyisamEngine(engine_name);
-  registry.add(engine);
+  context.add(engine);
 
   pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
 
@@ -1519,9 +1519,9 @@ static int myisam_init(plugin::Registry &registry)
   return 0;
 }
 
-static int myisam_deinit(plugin::Registry &registry)
+static int myisam_deinit(plugin::Context &context)
 {
-  registry.remove(engine);
+  context.remove(engine);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);

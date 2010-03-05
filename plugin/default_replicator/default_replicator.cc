@@ -33,7 +33,6 @@
  */
 
 #include "config.h"
-#include <drizzled/plugin/registry.h>
 #include <drizzled/plugin.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/transaction_applier.h>
@@ -74,18 +73,18 @@ void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, messag
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   default_replicator= new DefaultReplicator("default_replicator");
-  registry.add(default_replicator);
+  context.add(default_replicator);
   return 0;
 }
 
-static int deinit(plugin::Registry &registry)
+static int deinit(plugin::Context &context)
 {
   if (default_replicator)
   {
-    registry.remove(default_replicator);
+    context.remove(default_replicator);
     delete default_replicator;
   }
   return 0;

@@ -26,21 +26,21 @@ using namespace drizzled;
 static ModulesTool *modules;
 static PluginsTool *plugins;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   modules= new(std::nothrow)ModulesTool;
   plugins= new(std::nothrow)PluginsTool;
 
-  registry.add(modules);
-  registry.add(plugins);
+  context.add(modules);
+  context.add(plugins);
   
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-  registry.remove(modules);
-  registry.remove(plugins);
+  context.remove(modules);
+  context.remove(plugins);
   delete modules;
   delete plugins;
 

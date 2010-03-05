@@ -24,16 +24,16 @@ using namespace drizzled;
 static SingleThreadScheduler *scheduler= NULL;
 
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   scheduler= new SingleThreadScheduler("single_thread");
-  registry.add(scheduler);
+  context.add(scheduler);
   return 0;
 }
 
-static int deinit(plugin::Registry &registry)
+static int deinit(plugin::Context &context)
 {
-  registry.remove(scheduler);
+  context.remove(scheduler);
   delete scheduler;
 
   return 0;

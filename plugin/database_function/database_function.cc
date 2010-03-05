@@ -55,16 +55,16 @@ String *DatabaseFunction::val_str(String *str)
 
 plugin::Create_function<DatabaseFunction> *database_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   database_function= new plugin::Create_function<DatabaseFunction>("database");
-  registry.add(database_function);
+  context.add(database_function);
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-   registry.remove(database_function);
+   context.remove(database_function);
    delete database_function;
    return 0;
 }

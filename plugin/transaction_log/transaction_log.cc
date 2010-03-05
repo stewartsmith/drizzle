@@ -406,7 +406,7 @@ const std::string &TransactionLog::getErrorMessage() const
 
 TransactionLog *transaction_log= NULL; /* The singleton transaction log */
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)
@@ -431,25 +431,25 @@ static int init(drizzled::plugin::Registry &registry)
         return 1;
       }
     }
-    registry.add(transaction_log);
+    context.add(transaction_log);
 
     /* Setup DATA_DICTIONARY views */
 
     transaction_log_tool= new(std::nothrow)TransactionLogTool;
-    registry.add(transaction_log_tool);
+    context.add(transaction_log_tool);
     transaction_log_entries_tool= new(std::nothrow)TransactionLogEntriesTool;
-    registry.add(transaction_log_entries_tool);
+    context.add(transaction_log_entries_tool);
     transaction_log_transactions_tool= new(std::nothrow)TransactionLogTransactionsTool;
-    registry.add(transaction_log_transactions_tool);
+    context.add(transaction_log_transactions_tool);
 
     /* Setup the module's UDFs */
     print_transaction_message_func_factory=
       new plugin::Create_function<PrintTransactionMessageFunction>("print_transaction_message");
-    registry.add(print_transaction_message_func_factory);
+    context.add(print_transaction_message_func_factory);
 
     hexdump_transaction_message_func_factory=
       new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
-    registry.add(hexdump_transaction_message_func_factory);
+    context.add(hexdump_transaction_message_func_factory);
 
     /* Create and initialize the transaction log index */
     transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
@@ -480,27 +480,27 @@ static int init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(drizzled::plugin::Context &context)
 {
   /* Cleanup the transaction log itself */
   if (transaction_log)
   {
-    registry.remove(transaction_log);
+    context.remove(transaction_log);
     delete transaction_log;
     delete transaction_log_index;
 
     /* Cleanup the DATA_DICTIONARY views */
-    registry.remove(transaction_log_tool);
+    context.remove(transaction_log_tool);
     delete transaction_log_tool;
-    registry.remove(transaction_log_entries_tool);
+    context.remove(transaction_log_entries_tool);
     delete transaction_log_entries_tool;
-    registry.remove(transaction_log_transactions_tool);
+    context.remove(transaction_log_transactions_tool);
     delete transaction_log_transactions_tool;
 
     /* Cleanup module UDFs */
-    registry.remove(print_transaction_message_func_factory);
+    context.remove(print_transaction_message_func_factory);
     delete print_transaction_message_func_factory;
-    registry.remove(hexdump_transaction_message_func_factory);
+    context.remove(hexdump_transaction_message_func_factory);
     delete hexdump_transaction_message_func_factory;
   }
 

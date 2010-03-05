@@ -119,7 +119,7 @@ public:
 
 Auth_http* auth= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   /* 
    * Per libcurl manual, in multi-threaded applications, curl_global_init() should
@@ -130,16 +130,16 @@ static int initialize(drizzled::plugin::Registry &registry)
     return 1;
 
   auth= new Auth_http("auth_http");
-  registry.add(auth);
+  context.add(auth);
 
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
   if (auth)
   {
-    registry.remove(auth);
+    context.remove(auth);
     delete auth;
 
     curl_global_cleanup();

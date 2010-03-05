@@ -21,7 +21,6 @@
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin.h>
-#include <drizzled/plugin/registry.h>
 
 #include <stdio.h>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */
@@ -56,20 +55,20 @@ public:
 };
 
 static Error_message_stderr *handler= NULL;
-static int errmsg_stderr_plugin_init(plugin::Registry &registry)
+static int errmsg_stderr_plugin_init(plugin::Context &context)
 {
   handler= new Error_message_stderr();
-  registry.add(handler);
+  context.add(handler);
 
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(plugin::Registry &registry)
+static int errmsg_stderr_plugin_deinit(plugin::Context &context)
 {
 
   if (handler)
   {
-    registry.remove(handler);
+    context.remove(handler);
     delete handler;
   }
   return 0;

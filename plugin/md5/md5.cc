@@ -94,16 +94,16 @@ String *Md5Function::val_str(String *str)
 
 plugin::Create_function<Md5Function> *md5udf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   md5udf= new plugin::Create_function<Md5Function>("md5");
-  registry.add(md5udf);
+  context.add(md5udf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
+static int finalize(plugin::Context &context)
 {
-  registry.remove(md5udf);
+  context.remove(md5udf);
   delete md5udf;
   return 0;
 }

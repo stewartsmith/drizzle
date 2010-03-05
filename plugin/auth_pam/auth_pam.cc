@@ -134,19 +134,19 @@ public:
 
 static Auth_pam *auth= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   auth= new Auth_pam("auth_pam");
-  registry.add(auth);
+  context.add(auth);
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
 
   if (auth)
   {
-    registry.remove(auth);
+    context.remove(auth);
     delete auth;
   }
 

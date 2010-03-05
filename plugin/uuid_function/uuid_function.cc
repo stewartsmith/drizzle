@@ -63,16 +63,16 @@ String *UuidFunction::val_str(String *str)
 
 plugin::Create_function<UuidFunction> *uuid_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   uuid_function= new plugin::Create_function<UuidFunction>("uuid");
-  registry.add(uuid_function);
+  context.add(uuid_function);
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-   registry.remove(uuid_function);
+   context.remove(uuid_function);
    delete uuid_function;
    return 0;
 }

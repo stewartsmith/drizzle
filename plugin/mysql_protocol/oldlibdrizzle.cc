@@ -796,16 +796,16 @@ void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
 
 static ListenMySQLProtocol *listen_obj= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
-  registry.add(listen_obj); 
+  context.add(listen_obj); 
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(drizzled::plugin::Context &context)
 {
-  registry.remove(listen_obj);
+  context.remove(listen_obj);
   delete listen_obj;
   return 0;
 }

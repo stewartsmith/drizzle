@@ -118,16 +118,16 @@ void BenchmarkFunction::print(String *str, enum_query_type query_type)
 
 plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
-  registry.add(benchmarkudf);
+  context.add(benchmarkudf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
+static int finalize(plugin::Context &context)
 {
-   registry.remove(benchmarkudf);
+   context.remove(benchmarkudf);
    delete benchmarkudf;
    return 0;
 }

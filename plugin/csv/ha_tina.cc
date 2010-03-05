@@ -241,19 +241,19 @@ int Tina::doGetTableDefinition(Session&,
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Registry &registry)
+static int tina_init_func(drizzled::plugin::Context &context)
 {
 
   tina_engine= new Tina("CSV");
-  registry.add(tina_engine);
+  context.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-static int tina_done_func(drizzled::plugin::Registry &registry)
+static int tina_done_func(drizzled::plugin::Context &context)
 {
-  registry.remove(tina_engine);
+  context.remove(tina_engine);
   delete tina_engine;
 
   pthread_mutex_destroy(&tina_mutex);

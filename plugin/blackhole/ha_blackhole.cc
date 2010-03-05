@@ -412,20 +412,20 @@ BlackholeShare::~BlackholeShare()
 
 static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(drizzled::plugin::Registry &registry)
+static int blackhole_init(drizzled::plugin::Context &context)
 {
 
   blackhole_engine= new BlackholeEngine("BLACKHOLE");
-  registry.add(blackhole_engine);
+  context.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
 
   return 0;
 }
 
-static int blackhole_fini(drizzled::plugin::Registry &registry)
+static int blackhole_fini(drizzled::plugin::Context &context)
 {
-  registry.remove(blackhole_engine);
+  context.remove(blackhole_engine);
   delete blackhole_engine;
 
   pthread_mutex_destroy(&blackhole_mutex);

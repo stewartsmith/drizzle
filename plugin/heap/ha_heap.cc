@@ -151,17 +151,17 @@ int HeapEngine::doDropTable(Session&, const string &table_path)
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(plugin::Registry &registry)
+static int heap_init(plugin::Context &context)
 {
   heap_storage_engine= new HeapEngine(engine_name);
-  registry.add(heap_storage_engine);
+  context.add(heap_storage_engine);
   pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-static int heap_deinit(plugin::Registry &registry)
+static int heap_deinit(plugin::Context &context)
 {
-  registry.remove(heap_storage_engine);
+  context.remove(heap_storage_engine);
   delete heap_storage_engine;
 
   int ret= hp_panic(HA_PANIC_CLOSE);

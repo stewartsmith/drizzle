@@ -60,7 +60,7 @@ static char *sysvar_memcached_servers= NULL;
  * @param[in] registry the drizzled::plugin::Registry singleton
  * @return false on success; true on failure.
  */
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
@@ -68,10 +68,10 @@ static int init(plugin::Registry &registry)
 
   /* we are good to go */
   stats_table_tool= new(std::nothrow)StatsTableTool; 
-  registry.add(stats_table_tool);
+  context.add(stats_table_tool);
 
   analysis_table_tool= new(std::nothrow)AnalysisTableTool;
-  registry.add(analysis_table_tool);
+  context.add(analysis_table_tool);
 
   return 0;
 }
@@ -82,11 +82,11 @@ static int init(plugin::Registry &registry)
  * @param[in] registry the drizzled::plugin::Registry singleton
  * @return false on success; true on failure
  */
-static int deinit(plugin::Registry &registry)
+static int deinit(plugin::Context &context)
 {
-  registry.remove(stats_table_tool);
+  context.remove(stats_table_tool);
   delete stats_table_tool;
-  registry.remove(analysis_table_tool);
+  context.remove(analysis_table_tool);
   delete analysis_table_tool;
   return 0;
 }

@@ -200,7 +200,7 @@ pthread_handler_t signal_hand(void *)
 }
 
 
-static int init(drizzled::plugin::Registry&)
+static int init(drizzled::plugin::Context&)
 {
   int error;
   pthread_attr_t thr_attr;
@@ -245,7 +245,7 @@ static int init(drizzled::plugin::Registry&)
   This is mainly needed when running with purify, but it's still nice to
   know that all child threads have died when drizzled exits.
 */
-static int deinit(drizzled::plugin::Registry&)
+static int deinit(drizzled::plugin::Context&)
 {
   uint32_t i;
   /*

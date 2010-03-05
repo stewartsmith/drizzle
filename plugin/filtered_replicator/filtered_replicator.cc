@@ -41,7 +41,6 @@
 #include <drizzled/plugin/transaction_applier.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/plugin.h>
-#include <drizzled/plugin/registry.h>
 
 #include "filtered_replicator.h"
 
@@ -507,7 +506,7 @@ void FilteredReplicator::setTableFilter(const string &input)
 
 static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicator */
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   if (sysvar_filtered_replicator_enabled)
   {
@@ -519,16 +518,16 @@ static int init(plugin::Registry &registry)
     {
       return 1;
     }
-    registry.add(filtered_replicator);
+    context.add(filtered_replicator);
   }
   return 0;
 }
 
-static int deinit(plugin::Registry &registry)
+static int deinit(plugin::Context &context)
 {
   if (filtered_replicator)
   {
-    registry.remove(filtered_replicator);
+    context.remove(filtered_replicator);
     delete filtered_replicator;
   }
   return 0;

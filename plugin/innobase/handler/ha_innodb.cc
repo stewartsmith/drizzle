@@ -516,7 +516,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(plugin::Registry &registry);
+innobase_deinit(plugin::Context &context);
 
 /*****************************************************************//**
 Commits a transaction in an InnoDB database. */
@@ -1681,7 +1681,7 @@ static
 int
 innobase_init(
 /*==========*/
-	plugin::Registry	&registry)	/*!< in: Drizzle Plugin Registry */
+	plugin::Context	&context)	/*!< in: Drizzle Plugin Context */
 {
 	static char	current_dir[3];		/*!< Set if using current lib */
 	int		err;
@@ -1962,30 +1962,30 @@ innobase_change_buffering_inited_ok:
 
         status_table_function_ptr= new InnodbStatusTool;
 
-	registry.add(innodb_engine_ptr);
+	context.add(innodb_engine_ptr);
 
-	registry.add(status_table_function_ptr);
+	context.add(status_table_function_ptr);
 
 	cmp_tool= new(std::nothrow)CmpTool(false);
-	registry.add(cmp_tool);
+	context.add(cmp_tool);
 
 	cmp_reset_tool= new(std::nothrow)CmpTool(true);
-	registry.add(cmp_reset_tool);
+	context.add(cmp_reset_tool);
 
 	cmp_mem_tool= new(std::nothrow)CmpmemTool(false);
-	registry.add(cmp_mem_tool);
+	context.add(cmp_mem_tool);
 
 	cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
-	registry.add(cmp_mem_reset_tool);
+	context.add(cmp_mem_reset_tool);
 
 	innodb_trx_tool= new(std::nothrow)InnodbTrxTool("INNODB_TRX");
-	registry.add(innodb_trx_tool);
+	context.add(innodb_trx_tool);
 
 	innodb_locks_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCKS");
-	registry.add(innodb_locks_tool);
+	context.add(innodb_locks_tool);
 
 	innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
-	registry.add(innodb_lock_waits_tool);
+	context.add(innodb_lock_waits_tool);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2000,35 +2000,35 @@ Closes an InnoDB database.
 @return	TRUE if error */
 static
 int
-innobase_deinit(plugin::Registry &registry)
+innobase_deinit(plugin::Context &context)
 {
 	int	err= 0;
 
-	registry.remove(status_table_function_ptr);
+	context.remove(status_table_function_ptr);
  	delete status_table_function_ptr;
 
-	registry.remove(cmp_tool);
+	context.remove(cmp_tool);
 	delete cmp_tool;
 
-	registry.remove(cmp_reset_tool);
+	context.remove(cmp_reset_tool);
 	delete cmp_reset_tool;
 
- 	registry.remove(cmp_mem_tool);
+ 	context.remove(cmp_mem_tool);
 	delete cmp_mem_tool;
 
-	registry.remove(cmp_mem_reset_tool);
+	context.remove(cmp_mem_reset_tool);
 	delete cmp_mem_reset_tool;
 
-	registry.remove(innodb_trx_tool);
+	context.remove(innodb_trx_tool);
 	delete innodb_trx_tool;
 
- 	registry.remove(innodb_locks_tool);
+ 	context.remove(innodb_locks_tool);
 	delete innodb_locks_tool;
 
-	registry.remove(innodb_lock_waits_tool);
+	context.remove(innodb_lock_waits_tool);
 	delete innodb_lock_waits_tool;
 
-	registry.remove(innodb_engine_ptr);
+	context.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
 	if (innodb_inited) {

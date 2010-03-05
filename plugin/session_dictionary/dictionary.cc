@@ -25,17 +25,17 @@ using namespace drizzled;
 
 static ProcesslistTool *processlist;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   processlist= new(std::nothrow)ProcesslistTool;
-  registry.add(processlist);
+  context.add(processlist);
   
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(drizzled::plugin::Context &context)
 {
-  registry.remove(processlist);
+  context.remove(processlist);
   delete processlist;
 
   return 0;
