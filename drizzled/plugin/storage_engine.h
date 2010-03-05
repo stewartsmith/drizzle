@@ -236,21 +236,6 @@ protected:
 public:
   virtual void print_error(int error, myf errflag, Table& table);
 
-  /*
-    each storage engine has it's own memory area (actually a pointer)
-    in the session, for storing per-connection information.
-    It is accessed as
-
-      session->ha_data[xxx_engine.slot]
-
-   slot number is initialized by MySQL after xxx_init() is called.
-  */
-  uint32_t slot;
-
-  inline uint32_t getSlot (void) { return slot; }
-  inline uint32_t getSlot (void) const { return slot; }
-  inline void setSlot (uint32_t value) { slot= value; }
-
   bool is_user_selectable() const
   {
     return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
@@ -273,13 +258,8 @@ public:
   }
 
   /*
-    StorageEngine methods:
-
-    close_connection is only called if
-    session->ha_data[xxx_engine.slot] is non-zero, so even if you don't need
-    this storage area - set it to something, so that MySQL would know
-    this storage engine was accessed in this connection
-  */
+   * Called during Session::cleanup() for all engines
+   */
   virtual int close_connection(Session  *)
   {
     return 0;

@@ -50,7 +50,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ***********************************************************************/
 
 /* TODO list for the InnoDB Cursor in 5.0:
-  - Remove the flag trx->active_trans and look at trx->conc_state
   - fix savepoint functions to use savepoint storage area
   - Find out what kind of problems the OS X case-insensitivity causes to
     table and database names; should we 'normalize' the names like we do
@@ -2117,11 +2116,6 @@ InnobaseEngine::doStartTransaction(
   if (options == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
 	  trx_assign_read_view(trx);
 
-	/* Set the Drizzle flag to mark that there is an active transaction */
-	if (trx->active_trans == 0) {
-		trx->active_trans= 1;
-	}
-
 	return 0;
 }
 
@@ -2150,24 +2144,6 @@ InnobaseEngine::doCommit(
 		trx_search_latch_release_if_reserved(trx);
 	}
 
-	/* The flag trx->active_trans is set to 1 in
-
-	1. ::external_lock()
-  2  InnobaseEngine::doStartStatement()
-	3. InnobaseEngine::setSavepoint()
-	4. InnobaseEngine::doStartTransaction()
-
-	and it is only set to 0 in a commit or a rollback. If it is 0 we know
-	there cannot be resources to be freed and we could return immediately.
-	For the time being, we play safe and do the cleanup though there should
-	be nothing to clean up. */
-
-	if (trx->active_trans == 0
-		&& trx->conc_state != TRX_NOT_STARTED) {
-
-		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
-			" trx->conc_state != TRX_NOT_STARTED");
-	}
 	if (all
 		|| (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
 
@@ -2214,14 +2190,13 @@ retry:
 			pthread_mutex_unlock(&commit_cond_m);
 		}
 
-		if (trx->active_trans == 2) {
+		if (trx->conc_state == TRX_PREPARED) {
 
 			pthread_mutex_unlock(&prepare_commit_mutex);
 		}
 
 		/* Now do a write + flush of logs. */
 		trx_commit_complete_for_mysql(trx);
-		trx->active_trans = 0;
 
 	} else {
 		/* We just mark the SQL statement ended and do not do a
@@ -2288,7 +2263,6 @@ InnobaseEngine::doRollback(
 		|| !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 
 		error = trx_rollback_for_mysql(trx);
-		trx->active_trans = 0;
 	} else {
 		error = trx_rollback_last_sql_stat_for_mysql(trx);
 	}
@@ -2408,7 +2382,7 @@ InnobaseEngine::doSetSavepoint(
 	innobase_release_stat_resources(trx);
 
 	/* cannot happen outside of transaction */
-	assert(trx->active_trans);
+	assert(trx->conc_state != TRX_NOT_STARTED);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 	error = (int) trx_savepoint_for_mysql(trx, named_savepoint.getName().c_str(), (ib_int64_t)0);
@@ -2432,22 +2406,21 @@ InnobaseEngine::close_connection(
 
 	ut_a(trx);
 
-	if (trx->active_trans == 0
-		&& trx->conc_state != TRX_NOT_STARTED) {
+  assert(session->killed != Session::NOT_KILLED ||
+         trx->conc_state == TRX_NOT_STARTED);
 
-		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
-			" trx->conc_state != TRX_NOT_STARTED");
-	}
-
-
-	if (trx->conc_state != TRX_NOT_STARTED &&
-		global_system_variables.log_warnings) {
-		errmsg_printf(ERRMSG_LVL_WARN, 
-			"MySQL is closing a connection that has an active "
-			"InnoDB transaction.  %lu row modifications will "
-			"roll back.",
-			(ulong) trx->undo_no.low);
-	}
+  /* Warn if rolling back some things... */
+	if (session->killed != Session::NOT_KILLED &&
+      trx->conc_state != TRX_NOT_STARTED &&
+      trx->undo_no.low > 0 &&
+      global_system_variables.log_warnings)
+  {
+      errmsg_printf(ERRMSG_LVL_WARN, 
+      "Drizzle is closing a connection during a KILL operation\n"
+      "that has an active InnoDB transaction.  %lu row modifications will "
+      "roll back.\n",
+      (ulong) trx->undo_no.low);
+  }
 
 	innobase_rollback_trx(trx);
 
@@ -3855,8 +3828,6 @@ no_commit:
 
 			/* Altering to InnoDB format */
 			getTransactionalEngine()->commit(user_session, 1);
-			/* Note that this transaction is still active. */
-			prebuilt->trx->active_trans = 1;
 			/* We will need an IX lock on the destination table. */
 			prebuilt->sql_stat_start = TRUE;
 		} else {
@@ -3871,8 +3842,6 @@ no_commit:
 			/* Commit the transaction.  This will release the table
 			locks, so they have to be acquired again. */
 			getTransactionalEngine()->commit(user_session, 1);
-			/* Note that this transaction is still active. */
-			prebuilt->trx->active_trans = 1;
 			/* Re-acquire the table lock on the source table. */
 			row_lock_table_for_mysql(prebuilt, src_table, mode);
 			/* We will need an IX lock on the destination table. */
@@ -8001,16 +7970,6 @@ InnobaseEngine::doStartStatement(
 
 	/* Set the isolation level of the transaction. */
   trx->isolation_level= innobase_map_isolation_level((enum_tx_isolation) session_tx_isolation(session));
-
-  /* 
-   * Set the Drizzle flag to mark that there is an active
-   * transaction.
-   *
-   * @todo this should go away
-   */
-  if (trx->active_trans == 0) {
-    trx->active_trans= 1;
-  }
 }
 
 void
@@ -8027,10 +7986,9 @@ InnobaseEngine::doEndStatement(
 
   if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    if (trx->active_trans != 0)
+    if (trx->conc_state != TRX_NOT_STARTED)
     {
       commit(session, TRUE);
-      trx->active_trans= 0;
     }
   }
   else
@@ -8079,20 +8037,13 @@ InnobaseEngine::doXaPrepare(
 
 	innobase_release_stat_resources(trx);
 
-	if (trx->active_trans == 0 && trx->conc_state != TRX_NOT_STARTED) {
-
-	  errmsg_printf(ERRMSG_LVL_ERROR,
-			"trx->active_trans == 0, but trx->conc_state != "
-			"TRX_NOT_STARTED");
-	}
-
 	if (all
 		|| (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
 
 		/* We were instructed to prepare the whole transaction, or
 		this is an SQL statement end and autocommit is on */
 
-		ut_ad(trx->active_trans);
+		ut_ad(trx->conc_state != TRX_NOT_STARTED);
 
 		error = (int) trx_prepare_for_mysql(trx);
 	} else {
@@ -8139,7 +8090,7 @@ InnobaseEngine::doXaPrepare(
 		to block for undefined period of time.
 		*/
 		pthread_mutex_lock(&prepare_commit_mutex);
-		trx->active_trans = 2;
+		trx->conc_state = TRX_PREPARED;
 	}
 	return(error);
 }
