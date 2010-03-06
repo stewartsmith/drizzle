@@ -45,14 +45,16 @@ plugin::Registry::~Registry()
   }
   plugin_registry.clear();
 
-  map<string, plugin::Module *>::iterator module_iter= module_map.begin();
+  /*
+    @TODO When we delete modules here, we segfault on a bad string. Why?
+    map<string, plugin::Module *>::iterator module_iter= module_map.begin();
   while (module_iter != module_map.end())
   {
     delete (*module_iter).second;
     ++module_iter;
   }
   module_map.clear();
-
+  */
   map<string, plugin::Library *>::iterator library_iter= library_map.begin();
   while (library_iter != library_map.end())
   {
