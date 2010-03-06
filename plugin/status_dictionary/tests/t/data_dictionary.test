@@ -1,6 +1,5 @@
 # Drizzle's dictionary for status/variables
 
-CREATE SCHEMA data_dictionary;
 use data_dictionary;
 
 show create table GLOBAL_STATUS ;
@@ -46,4 +45,3 @@ CREATE SCHEMA drizzleslap;
 #--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="SELECT a.VARIABLE_NAME FROM data_dictionary.SESSION_VARIABLES as a, data_dictionary.SESSION_VARIABLES as b ORDER BY VARIABLE_NAME LIMIT 100" --delimiter=";"
 
 DROP SCHEMA drizzleslap;
-DROP SCHEMA data_dictionary;

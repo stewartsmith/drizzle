@@ -26,7 +26,6 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/db.h>
-#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
@@ -44,8 +43,8 @@
 #include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/plugin/query_rewrite.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
@@ -130,8 +129,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
-  sql_command_flags[SQLCOM_SHOW_FIELDS]=      CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_KEYS]=        CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
@@ -198,11 +195,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    tmp.str= packet;
-    tmp.length= packet_length;
-    if (!mysql_change_db(session, &tmp, false))
+    string tmp(packet, packet_length);
+
+    if (not mysql_change_db(session, tmp))
     {
       session->my_ok();
     }
@@ -378,40 +374,6 @@ int prepare_new_schema_table(Session *session, LEX *lex,
   Select_Lex *select_lex= lex->current_select;
   assert(select_lex);
   if (_schema_select(session, select_lex, schema_table_name))
-  {
-    return(1);
-  }
-  TableList *table_list= (TableList*) select_lex->table_list.first;
-  assert(table_list);
-  table_list->schema_select_lex= schema_select_lex;
-
-  return 0;
-}
-
-int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         const string& schema_table_name)
-{
-  Select_Lex *schema_select_lex= NULL;
-
-  if (schema_table_name.compare("OLD_COLUMNS") == 0 ||
-           schema_table_name.compare("OLD_STATISTICS") == 0)
-  {
-    assert(table_ident);
-    TableList **query_tables_last= lex->query_tables_last;
-    schema_select_lex= new Select_Lex();
-    /* 'parent_lex' is used in init_query() so it must be before it. */
-    schema_select_lex->parent_lex= lex;
-    schema_select_lex->init_query();
-    if (! schema_select_lex->add_table_to_list(session, table_ident, 0, 0, TL_READ))
-    {
-      return (1);
-    }
-    lex->query_tables_last= query_tables_last;
-  }
-
-  Select_Lex *select_lex= lex->current_select;
-  assert(select_lex);
-  if (make_schema_select(session, select_lex, schema_table_name))
   {
     return(1);
   }
@@ -966,28 +928,9 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->updating=    test(table_options & TL_OPTION_UPDATING);
   ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
   ptr->derived=	    table->sel;
-  if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
-                                      INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(ptr->table_name);
-    if (!schema_table ||
-        (schema_table->isHidden() &&
-         ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
-          /*
-            this check is used for show columns|keys from I_S hidden table
-          */
-          lex->sql_command == SQLCOM_SHOW_FIELDS ||
-          lex->sql_command == SQLCOM_SHOW_KEYS)))
-    {
-      my_error(ER_UNKNOWN_TABLE, MYF(0),
-               ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
-      return NULL;
-    }
-  }
   ptr->select_lex=  lex->current_select;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
@@ -1257,16 +1200,12 @@ TableList *Select_Lex::convert_right_join()
 
 void Select_Lex::set_lock_for_tables(thr_lock_type lock_type)
 {
-  bool for_update= lock_type >= TL_READ_NO_INSERT;
-
   for (TableList *tables= (TableList*) table_list.first;
        tables;
        tables= tables->next_local)
   {
     tables->lock_type= lock_type;
-    tables->updating=  for_update;
   }
-  return;
 }
 
 
@@ -1458,10 +1397,10 @@ static unsigned int
 kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
-  uint32_t error=ER_NO_SUCH_THREAD;
+  uint32_t error= ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   
-  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+  for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     if ((*it)->thread_id == id)
     {
@@ -1473,8 +1412,13 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   pthread_mutex_unlock(&LOCK_thread_count);
   if (tmp)
   {
-    tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    error=0;
+
+    if (tmp->isViewable())
+    {
+      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+      error= 0;
+    }
+
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
   return(error);
@@ -1643,14 +1587,9 @@ bool insert_precheck(Session *session, TableList *)
 
 bool create_table_precheck(TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getDBName(), "information_schema") == 0)
+  if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return true;
-  }
-  if (strcmp(identifier.getDBName(), DRIZZLE_DATA_DICTIONARY) == 0)
-  {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DRIZZLE_DATA_DICTIONARY);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName());
     return true;
   }
 

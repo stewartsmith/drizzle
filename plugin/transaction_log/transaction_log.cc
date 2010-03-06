@@ -369,6 +369,9 @@ void TransactionLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
+  /* Clear the transaction log index data */
+  transaction_log_index->clear();
+
   if (orig_is_enabled)
     enable();
 }

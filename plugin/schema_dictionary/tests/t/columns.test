@@ -1,6 +1,5 @@
 # Drizzle's data dictionary, column specific test.
 
-CREATE SCHEMA data_dictionary;
 CREATE SCHEMA test_columns;
 
 use test_columns;
@@ -20,4 +19,3 @@ CREATE TABLE types (
 SELECT DATA_TYPE  FROM data_dictionary.columns WHERE TABLE_SCHEMA="test_columns" GROUP BY DATA_TYPE;
 
 DROP SCHEMA test_columns;
-DROP SCHEMA data_dictionary;

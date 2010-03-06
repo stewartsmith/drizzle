@@ -1,4 +1,3 @@
-CREATE SCHEMA data_dictionary;
 CREATE SCHEMA test_columns;
 use test_columns;
 CREATE TABLE types (
@@ -26,4 +25,3 @@ INTEGER
 TIMESTAMP
 VARCHAR
 DROP SCHEMA test_columns;
-DROP SCHEMA data_dictionary;

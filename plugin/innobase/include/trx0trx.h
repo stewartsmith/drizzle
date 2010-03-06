@@ -511,9 +511,6 @@ struct trx_struct{
 					in trx_commit_complete_for_mysql() */
 	unsigned	dict_operation:2;/**< @see enum trx_dict_op */
 	unsigned	duplicates:2;	/*!< TRX_DUP_IGNORE | TRX_DUP_REPLACE */
-	unsigned	active_trans:2;	/*!< 1 - if a transaction in MySQL
-					is active. 2 - if prepare_commit_mutex
-					was taken */
 	unsigned	has_search_latch:1;
 					/* TRUE if this trx has latched the
 					search system latch in S-mode */
@@ -560,10 +557,6 @@ struct trx_struct{
 	ulint		mysql_process_no;/* since in Linux, 'top' reports
 					process id's and not thread id's, we
 					store the process number too */
-	/*------------------------------*/
-	ulint		n_mysql_tables_in_use; /* number of Innobase tables
-					used in the processing of the current
-					SQL statement in MySQL */
 	ulint		mysql_n_tables_locked;
 					/* how many tables the current SQL
 					statement uses, except those

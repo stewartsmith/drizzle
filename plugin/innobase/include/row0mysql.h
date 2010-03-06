@@ -596,13 +596,6 @@ struct row_prebuilt_struct {
 					to read just columns defined in
 					the index (i.e., no read of the
 					clustered index record necessary) */
-	unsigned	used_in_HANDLER:1;/*!< TRUE if we have been using this
-					handle in a MySQL HANDLER low level
-					index cursor command: then we must
-					store the pcur position even in a
-					unique search from a clustered index,
-					because HANDLER allows NEXT and PREV
-					in such a situation */
 	unsigned	template_type:2;/*!< ROW_MYSQL_WHOLE_ROW,
 					ROW_MYSQL_REC_FIELDS,
 					ROW_MYSQL_DUMMY_TEMPLATE, or

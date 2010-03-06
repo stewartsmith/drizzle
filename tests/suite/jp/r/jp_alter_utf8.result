@@ -27,11 +27,11 @@ NULL	ｱｱｱｱｱ	NULL	NULL
 NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
-Field	Type	Null	Key	Default	Extra
-ｶｶ	varchar(1)	YES	MUL	NULL	
-ｷｷｷ	varchar(6)	NO	PRI	NULL	
-ｸｸｸ	varchar(1)	YES	UNI	NULL	
-ｹｹｹ	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ｶｶ	VARCHAR	TRUE		TRUE	
+ｷｷｷ	VARCHAR	FALSE		FALSE	
+ｸｸｸ	VARCHAR	TRUE		TRUE	
+ｹｹｹ	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TABLE `ｱｱｱ` (
@@ -55,8 +55,8 @@ SELECT * FROM `ｱｱｱ`;
 ｲｲｲｲｲ
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
-Field	Type	Null	Key	Default	Extra
-ｷｷｷ	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ｷｷｷ	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TABLE `ｱｱｱ` (
@@ -76,11 +76,11 @@ NULL	あああああ	NULL	NULL
 NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
-Field	Type	Null	Key	Default	Extra
-かか	varchar(1)	YES	MUL	NULL	
-ききき	varchar(6)	NO	PRI	NULL	
-くくく	varchar(1)	YES	UNI	NULL	
-けけけ	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+かか	VARCHAR	TRUE		TRUE	
+ききき	VARCHAR	FALSE		FALSE	
+くくく	VARCHAR	TRUE		TRUE	
+けけけ	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TABLE `あああ` (
@@ -104,8 +104,8 @@ SELECT * FROM `あああ`;
 いいいいい
 ううううう
 DESC `あああ`;
-Field	Type	Null	Key	Default	Extra
-ききき	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ききき	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TABLE `あああ` (
@@ -125,11 +125,11 @@ NULL	丂丂丂丂丂	NULL	NULL
 NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
-Field	Type	Null	Key	Default	Extra
-丄丄	varchar(1)	YES	MUL	NULL	
-丂丂丂	varchar(6)	NO	PRI	NULL	
-丅丅丅	varchar(1)	YES	UNI	NULL	
-乚乚乚	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+丄丄	VARCHAR	TRUE		TRUE	
+丂丂丂	VARCHAR	FALSE		FALSE	
+丅丅丅	VARCHAR	TRUE		TRUE	
+乚乚乚	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TABLE `龖龖龖` (
@@ -153,8 +153,8 @@ SELECT * FROM `龖龖龖`;
 丄丄丄丄丄
 丅丅丅丅丅
 DESC `龖龖龖`;
-Field	Type	Null	Key	Default	Extra
-丂丂丂	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+丂丂丂	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TABLE `龖龖龖` (
@@ -189,11 +189,11 @@ NULL	ｱｱｱｱｱ	NULL	NULL
 NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
-Field	Type	Null	Key	Default	Extra
-ｶｶ	varchar(1)	YES	MUL	NULL	
-ｷｷｷ	varchar(6)	NO	PRI	NULL	
-ｸｸｸ	varchar(1)	YES	UNI	NULL	
-ｹｹｹ	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ｶｶ	VARCHAR	TRUE		TRUE	
+ｷｷｷ	VARCHAR	FALSE		FALSE	
+ｸｸｸ	VARCHAR	TRUE		TRUE	
+ｹｹｹ	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -217,8 +217,8 @@ SELECT * FROM `ｱｱｱ`;
 ｲｲｲｲｲ
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
-Field	Type	Null	Key	Default	Extra
-ｷｷｷ	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ｷｷｷ	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -238,11 +238,11 @@ NULL	あああああ	NULL	NULL
 NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
-Field	Type	Null	Key	Default	Extra
-かか	varchar(1)	YES	MUL	NULL	
-ききき	varchar(6)	NO	PRI	NULL	
-くくく	varchar(1)	YES	UNI	NULL	
-けけけ	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+かか	VARCHAR	TRUE		TRUE	
+ききき	VARCHAR	FALSE		FALSE	
+くくく	VARCHAR	TRUE		TRUE	
+けけけ	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -266,8 +266,8 @@ SELECT * FROM `あああ`;
 いいいいい
 ううううう
 DESC `あああ`;
-Field	Type	Null	Key	Default	Extra
-ききき	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ききき	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -287,11 +287,11 @@ NULL	丂丂丂丂丂	NULL	NULL
 NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
-Field	Type	Null	Key	Default	Extra
-丄丄	varchar(1)	YES	MUL	NULL	
-丂丂丂	varchar(6)	NO	PRI	NULL	
-丅丅丅	varchar(1)	YES	UNI	NULL	
-乚乚乚	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+丄丄	VARCHAR	TRUE		TRUE	
+丂丂丂	VARCHAR	FALSE		FALSE	
+丅丅丅	VARCHAR	TRUE		TRUE	
+乚乚乚	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
@@ -315,8 +315,8 @@ SELECT * FROM `龖龖龖`;
 丄丄丄丄丄
 丅丅丅丅丅
 DESC `龖龖龖`;
-Field	Type	Null	Key	Default	Extra
-丂丂丂	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+丂丂丂	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
@@ -351,11 +351,11 @@ NULL	ｱｱｱｱｱ	NULL	NULL
 NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
-Field	Type	Null	Key	Default	Extra
-ｶｶ	varchar(1)	YES	MUL	NULL	
-ｷｷｷ	varchar(6)	NO	PRI	NULL	
-ｸｸｸ	varchar(1)	YES	UNI	NULL	
-ｹｹｹ	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ｶｶ	VARCHAR	TRUE		TRUE	
+ｷｷｷ	VARCHAR	FALSE		FALSE	
+ｸｸｸ	VARCHAR	TRUE		TRUE	
+ｹｹｹ	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -379,8 +379,8 @@ SELECT * FROM `ｱｱｱ`;
 ｲｲｲｲｲ
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
-Field	Type	Null	Key	Default	Extra
-ｷｷｷ	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ｷｷｷ	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -400,11 +400,11 @@ NULL	あああああ	NULL	NULL
 NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
-Field	Type	Null	Key	Default	Extra
-かか	varchar(1)	YES	MUL	NULL	
-ききき	varchar(6)	NO	PRI	NULL	
-くくく	varchar(1)	YES	UNI	NULL	
-けけけ	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+かか	VARCHAR	TRUE		TRUE	
+ききき	VARCHAR	FALSE		FALSE	
+くくく	VARCHAR	TRUE		TRUE	
+けけけ	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -428,8 +428,8 @@ SELECT * FROM `あああ`;
 いいいいい
 ううううう
 DESC `あああ`;
-Field	Type	Null	Key	Default	Extra
-ききき	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+ききき	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -449,11 +449,11 @@ NULL	丂丂丂丂丂	NULL	NULL
 NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
-Field	Type	Null	Key	Default	Extra
-丄丄	varchar(1)	YES	MUL	NULL	
-丂丂丂	varchar(6)	NO	PRI	NULL	
-丅丅丅	varchar(1)	YES	UNI	NULL	
-乚乚乚	varchar(1)	YES		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+丄丄	VARCHAR	TRUE		TRUE	
+丂丂丂	VARCHAR	FALSE		FALSE	
+丅丅丅	VARCHAR	TRUE		TRUE	
+乚乚乚	VARCHAR	TRUE		TRUE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
@@ -477,8 +477,8 @@ SELECT * FROM `龖龖龖`;
 丄丄丄丄丄
 丅丅丅丅丅
 DESC `龖龖龖`;
-Field	Type	Null	Key	Default	Extra
-丂丂丂	varchar(6)	NO		NULL	
+Field	Type	Null	Default	Default is NULL	On Update
+丂丂丂	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (

@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (c) 2009-2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +21,9 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
 #define DRIZZLED_PLUGIN_TRANSACTIONAL_STORAGE_ENGINE_H
 
+#include "drizzled/definitions.h" /* for start_transaction_option_t */
 #include "drizzled/plugin/storage_engine.h"
+#include "drizzled/transaction_services.h"
 
 namespace drizzled
 {
@@ -57,17 +60,30 @@ class TransactionalStorageEngine :public StorageEngine
 {
 public:
   TransactionalStorageEngine(const std::string name_arg,
-                             const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                             bool two_phase_commit= false);
+                             const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~TransactionalStorageEngine();
 
-  int commit(Session *session, bool normal_transaction)
+  virtual int startTransaction(Session *session, start_transaction_option_t options)
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.registerResourceForTransaction(session, this, this);
+    return doStartTransaction(session, options);
+  }
+
+  virtual void startStatement(Session *session)
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.registerResourceForStatement(session, this, this);
+    doStartStatement(session);
+  }
+
+  virtual int commit(Session *session, bool normal_transaction)
   {
     return doCommit(session, normal_transaction);
   }
 
-  int rollback(Session *session, bool normal_transaction)
+  virtual int rollback(Session *session, bool normal_transaction)
   {
     return doRollback(session, normal_transaction);
   }
@@ -87,22 +103,32 @@ public:
     return doReleaseSavepoint(session, sp);
   }
 
-  bool hasTwoPhaseCommit()
+  /* 
+   * The below are simple virtual overrides for the plugin::MonitoredInTransaction
+   * interface.
+   */
+  virtual bool participatesInSqlTransaction() const
   {
-    return two_phase_commit;
+    return true; /* We DO participate in the SQL transaction */
+  }
+  virtual bool participatesInXaTransaction() const
+  {
+    return false; /* We DON'T participate in the XA transaction */
+  }
+  virtual bool alwaysRegisterForXaTransaction() const
+  {
+    return false;
   }
 
   /** 
    * The below static class methods wrap the interaction
    * of the vector of transactional storage engines.
-   *
-   * @todo kill these. they belong in TransactionServices.
    */
+  static int notifyStartTransaction(Session *session, start_transaction_option_t options);
   /**
    * @todo Kill this one entirely.  It's implementation, not interface...
    */
   static int releaseTemporaryLatches(Session *session);
-  static int startConsistentSnapshot(Session *session);
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::TransactionalStorageEngine *engine);
@@ -110,6 +136,49 @@ public:
 
 private:
   void setTransactionReadWrite(Session& session);
+
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL transaction.  This is called ONLY in the following
+   * scenarios:
+   *
+   * 1) An explicit BEGIN WORK/START TRANSACTION is called
+   * 2) After an explicit COMMIT AND CHAIN is called
+   * 3) After an explicit ROLLBACK AND RELEASE is called
+   * 4) When in AUTOCOMMIT mode and directly before a new
+   *    SQL statement is started.
+   *
+   * Engines should typically use the doStartStatement()
+   * and doEndStatement() methods to manage transaction state,
+   * since the kernel ALWAYS notifies engines at the start
+   * and end of statement transactions and at the end of the
+   * normal transaction by calling doCommit() or doRollback().
+   */
+  virtual int doStartTransaction(Session *session, start_transaction_option_t options)
+  {
+    (void) session;
+    (void) options;
+    return 0;
+  }
+
+  /*
+   * Indicates to a storage engine the start of a
+   * new SQL statement.
+   */
+  virtual void doStartStatement(Session *session)
+  {
+    (void) session;
+  }
+
+  /*
+   * Indicates to a storage engine the end of
+   * the current SQL statement in the supplied
+   * Session.
+   */
+  virtual void doEndStatement(Session *session)
+  {
+    (void) session;
+  }
   /**
    * Implementing classes should override these to provide savepoint
    * functionality.
@@ -155,7 +224,6 @@ private:
     (void) session;
     return 0;
   }
-  const bool two_phase_commit;
 };
 
 } /* namespace plugin */

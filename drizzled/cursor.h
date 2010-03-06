@@ -443,8 +443,6 @@ public:
   */
   virtual void try_semi_consistent_read(bool) {}
   virtual void unlock_row(void) {}
-  virtual int start_stmt(Session *, thr_lock_type)
-  {return 0;}
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
@@ -675,26 +673,10 @@ private:
 };
 
 extern const char *ha_row_type[];
-extern const char *binlog_format_names[];
-extern uint32_t total_ha, total_ha_2pc;
 
 /* basic stuff */
 int ha_init_errors(void);
-int ha_init(void);
 int ha_end(void);
-
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-bool tablename_to_filename(const char *from, char *to, size_t to_length);
-
-
-/*
-  Storage engine has to assume the transaction will end up with 2pc if
-   - there is more than one 2pc-capable storage engine available
-   - in the current transaction 2pc was not disabled yet
-*/
-#define trans_need_2pc(session, all)                   ((total_ha_2pc > 1) && \
-        !((all ? &session->transaction.all : &session->transaction.stmt)->no_2pc))
-
 
 SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                    SORT_FIELD *sortorder);
@@ -722,7 +704,7 @@ int prepare_create_field(CreateField *sql_field,
 bool mysql_create_table(Session *session,
                         TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
-                        message::Table *table_proto,
+                        message::Table &table_proto,
                         AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count,
                         bool is_if_not_exists);
@@ -730,15 +712,15 @@ bool mysql_create_table(Session *session,
 bool mysql_create_table_no_lock(Session *session,
                                 TableIdentifier &identifier,
                                 HA_CREATE_INFO *create_info,
-                                message::Table *table_proto,
+                                message::Table &table_proto,
                                 AlterInfo *alter_info,
                                 bool tmp_table,
                                 uint32_t select_field_count,
                                 bool is_if_not_exists);
 
-bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
-                             message::Table& create_table_proto,
-                             plugin::StorageEngine*,
+bool mysql_create_like_table(Session* session,
+                             TableList* table, TableList* src_table,
+                             message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set);
 

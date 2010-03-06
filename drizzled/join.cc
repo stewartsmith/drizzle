@@ -337,6 +337,12 @@ int JOIN::prepare(Item ***rref_pointer_array,
   if (error)
     goto err;
 
+  /* 
+   * The below will create the new table for
+   * CREATE TABLE ... SELECT
+   *
+   * @see create_table_from_items() in drizzled/sql_insert.cc
+   */
   if (result && result->prepare(fields_list, unit_arg))
     goto err;
 
