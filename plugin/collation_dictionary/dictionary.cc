@@ -37,16 +37,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-  context.remove(character_sets);
-  context.remove(collations);
-  delete character_sets;
-  delete collations;
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -56,7 +46,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for schema, table, column, indexes, etc",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

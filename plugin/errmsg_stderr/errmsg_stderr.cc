@@ -63,17 +63,6 @@ static int errmsg_stderr_plugin_init(plugin::Context &context)
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(plugin::Context &context)
-{
-
-  if (handler)
-  {
-    context.remove(handler);
-    delete handler;
-  }
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -83,7 +72,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Error Messages to stderr"),
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
-  errmsg_stderr_plugin_deinit,
   NULL, /* system variables */
   NULL
 }

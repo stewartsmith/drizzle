@@ -174,15 +174,6 @@ static int initialize(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-   context.remove(hex_function);
-   context.remove(unhex_function);
-   delete hex_function;
-   delete unhex_function;
-   return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -192,7 +183,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Convert a string to HEX() or from UNHEX()",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

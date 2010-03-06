@@ -80,6 +80,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/xa_storage_engine.h"
+#include "drizzled/plugin/daemon.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/named_savepoint.h"
@@ -511,12 +512,6 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
-
-/***********************************************************************
-Closes an InnoDB database. */
-static
-int
-innobase_deinit(plugin::Context &context);
 
 /*****************************************************************//**
 Commits a transaction in an InnoDB database. */
@@ -1674,6 +1669,42 @@ reset_template(
 	prebuilt->read_just_key = 0;
 }
 
+class InnodbCleanup :
+  public plugin::Daemon
+{
+  InnodbCleanup(const InnodbCleanup &);
+  InnodbCleanup& operator=(const InnodbCleanup &);
+
+public:
+  InnodbCleanup()
+    : plugin::Daemon("InnoDB Cleanup Daemon")
+  { }
+
+  virtual ~InnodbCleanup()
+  {
+    int	err= 0;
+    if (innodb_inited) {
+
+      srv_fast_shutdown = (ulint) innobase_fast_shutdown;
+      innodb_inited = 0;
+      hash_table_free(innobase_open_tables);
+      innobase_open_tables = NULL;
+      if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
+        err = 1;
+      }
+      srv_free_paths_and_sizes();
+      if (internal_innobase_data_file_path)
+        free(internal_innobase_data_file_path);
+      pthread_mutex_destroy(&innobase_share_mutex);
+      pthread_mutex_destroy(&prepare_commit_mutex);
+      pthread_mutex_destroy(&commit_threads_m);
+      pthread_mutex_destroy(&commit_cond_m);
+      pthread_cond_destroy(&commit_cond);
+    }
+
+  }
+};
+
 /*********************************************************************//**
 Opens an InnoDB database.
 @return	0 on success, error code on failure */
@@ -1690,6 +1721,7 @@ innobase_init(
 	uint		format_id;
 
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
+        InnodbCleanup *cleanup= new InnodbCleanup;
 
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
@@ -1962,6 +1994,9 @@ innobase_change_buffering_inited_ok:
 
         status_table_function_ptr= new InnodbStatusTool;
 
+        /* Register dummy plugin to do InnoDB cleanup functions */
+        context.add(cleanup);
+
 	context.add(innodb_engine_ptr);
 
 	context.add(status_table_function_ptr);
@@ -1995,63 +2030,6 @@ error:
 	return(TRUE);
 }
 
-/*******************************************************************//**
-Closes an InnoDB database.
-@return	TRUE if error */
-static
-int
-innobase_deinit(plugin::Context &context)
-{
-	int	err= 0;
-
-	context.remove(status_table_function_ptr);
- 	delete status_table_function_ptr;
-
-	context.remove(cmp_tool);
-	delete cmp_tool;
-
-	context.remove(cmp_reset_tool);
-	delete cmp_reset_tool;
-
- 	context.remove(cmp_mem_tool);
-	delete cmp_mem_tool;
-
-	context.remove(cmp_mem_reset_tool);
-	delete cmp_mem_reset_tool;
-
-	context.remove(innodb_trx_tool);
-	delete innodb_trx_tool;
-
- 	context.remove(innodb_locks_tool);
-	delete innodb_locks_tool;
-
-	context.remove(innodb_lock_waits_tool);
-	delete innodb_lock_waits_tool;
-
-	context.remove(innodb_engine_ptr);
- 	delete innodb_engine_ptr;
-
-	if (innodb_inited) {
-
-		srv_fast_shutdown = (ulint) innobase_fast_shutdown;
-		innodb_inited = 0;
-		hash_table_free(innobase_open_tables);
-		innobase_open_tables = NULL;
-		if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
-			err = 1;
-		}
-		srv_free_paths_and_sizes();
-		if (internal_innobase_data_file_path)
-		  free(internal_innobase_data_file_path);
-		pthread_mutex_destroy(&innobase_share_mutex);
-		pthread_mutex_destroy(&prepare_commit_mutex);
-		pthread_mutex_destroy(&commit_threads_m);
-		pthread_mutex_destroy(&commit_cond_m);
-		pthread_cond_destroy(&commit_cond);
-	}
-
-	return(err);
-}
 
 /****************************************************************//**
 Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
@@ -8848,7 +8826,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
-  innobase_deinit, /* Plugin Deinit */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

@@ -42,7 +42,7 @@ class Registry
 private:
   std::map<std::string, Library *> library_map;
   std::map<std::string, Module *> module_map;
-  std::map<std::string, const Plugin *> plugin_registry;
+  std::map<std::string, Plugin *> plugin_registry;
 
   Registry()
    : module_map(),
@@ -69,7 +69,7 @@ public:
 
   std::vector<Module *> getList(bool active);
 
-  const std::map<std::string, const Plugin *> &getPluginsMap() const
+  const std::map<std::string, Plugin *> &getPluginsMap() const
   {
     return plugin_registry;
   }
@@ -106,7 +106,7 @@ public:
                     plugin->getName().c_str());
       unireg_abort(1);
     }
-    plugin_registry.insert(std::pair<std::string, const Plugin *>(plugin_name, plugin));
+    plugin_registry.insert(std::pair<std::string, Plugin *>(plugin_name, plugin));
   }
 
   template<class T>

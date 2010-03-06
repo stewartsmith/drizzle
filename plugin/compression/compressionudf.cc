@@ -41,17 +41,6 @@ static int compressionudf_plugin_init(plugin::Context &context)
   return 0;
 }
 
-static int compressionudf_plugin_deinit(plugin::Context &context)
-{
-  context.remove(compressudf);
-  context.remove(uncompressudf);
-  context.remove(uncompressed_lengthudf);
-  delete compressudf;
-  delete uncompressudf;
-  delete uncompressed_lengthudf;
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -61,7 +50,6 @@ DRIZZLE_DECLARE_PLUGIN
   "UDFs for compression functions",
   PLUGIN_LICENSE_GPL,
   compressionudf_plugin_init, /* Plugin Init */
-  compressionudf_plugin_deinit, /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

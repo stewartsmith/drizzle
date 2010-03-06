@@ -311,13 +311,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int deinit(drizzled::plugin::Context &context)
-{
-  context.remove(listen_obj);
-  delete listen_obj;
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Enable the console."), NULL, NULL, false);
 
@@ -339,7 +332,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Console Client",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init */
-  deinit, /* Plugin Deinit */
   vars,   /* system variables */
   NULL    /* config options */
 }

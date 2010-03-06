@@ -817,13 +817,6 @@ static int init(plugin::Context &context)
   return 0;
 }
 
-static int deinit(plugin::Context &context)
-{
-  context.remove(listen_obj);
-  delete listen_obj;
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_UINT(port, port, PLUGIN_VAR_RQCMDARG,
                            N_("Port number to use for connection or 0 for "
                               "default to, in order of "
@@ -865,7 +858,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Drizzle Protocol Module",
   PLUGIN_LICENSE_GPL,
   init,             /* Plugin Init */
-  deinit,           /* Plugin Deinit */
   sys_variables,    /* system variables */
   NULL              /* config options */
 }

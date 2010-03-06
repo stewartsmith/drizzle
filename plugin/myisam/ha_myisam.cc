@@ -34,6 +34,7 @@
 #include "drizzled/table.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/plugin/daemon.h"
 
 #include <string>
 #include <sstream>
@@ -1496,6 +1497,25 @@ uint32_t ha_myisam::checksum() const
   return (uint)file->state->checksum;
 }
 
+class MyIsamCleanup :
+  public drizzled::plugin::Daemon
+{
+  MyIsamCleanup(const MyIsamCleanup &);
+  MyIsamCleanup& operator=(const MyIsamCleanup &);
+public:
+  MyIsamCleanup()
+    : drizzled::plugin::Daemon("MyISAM Cleanup Daemon")
+  { }
+
+  ~MyIsamCleanup()
+  {
+    pthread_mutex_destroy(&THR_LOCK_myisam);
+    end_key_cache(dflt_key_cache, 1);		// Can never fail
+
+    mi_panic(HA_PANIC_CLOSE);
+  }
+};
+
 static MyisamEngine *engine= NULL;
 
 static int myisam_init(plugin::Context &context)
@@ -1519,16 +1539,6 @@ static int myisam_init(plugin::Context &context)
   return 0;
 }
 
-static int myisam_deinit(plugin::Context &context)
-{
-  context.remove(engine);
-  delete engine;
-
-  pthread_mutex_destroy(&THR_LOCK_myisam);
-  end_key_cache(dflt_key_cache, 1);		// Can never fail
-
-  return mi_panic(HA_PANIC_CLOSE);
-}
 
 static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
 {
@@ -1721,7 +1731,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
-  myisam_deinit, /* Plugin Deinit */
   sys_variables,           /* system variables */
   NULL                        /* config options                  */
 }

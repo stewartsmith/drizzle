@@ -103,15 +103,4 @@ static int plugin_init(plugin::Context &context)
   return 0;
 }
 
-static int plugin_deinit(plugin::Context &context)
-{
-
-  if (handler)
-  {
-    context.remove(handler);
-    delete handler;
-  }
-  return 0;
-}
-
-DRIZZLE_PLUGIN(plugin_init, plugin_deinit, NULL);
+DRIZZLE_PLUGIN(plugin_init, NULL);

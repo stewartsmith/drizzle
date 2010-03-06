@@ -70,6 +70,7 @@ public:
   ~Auth_http()
   {
     curl_easy_cleanup(curl_handle);
+    curl_global_cleanup();
   }
 
   virtual bool authenticate(const SecurityContext &sctx, const string &password)
@@ -135,19 +136,6 @@ static int initialize(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-  if (auth)
-  {
-    context.remove(auth);
-    delete auth;
-
-    curl_global_cleanup();
-  }
-
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_auth_http_enable,
@@ -183,7 +171,6 @@ DRIZZLE_DECLARE_PLUGIN
   "HTTP based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize, /* Plugin Deinit */
   auth_http_system_variables,
   NULL    /* config options */
 }

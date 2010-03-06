@@ -334,14 +334,6 @@ static int logging_query_plugin_init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int logging_query_plugin_deinit(drizzled::plugin::Context &context)
-{
-  context.remove(handler);
-  delete handler;
-
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_logging_query_enable,
@@ -424,7 +416,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Log queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
-  logging_query_plugin_deinit,
   logging_query_system_variables,
   NULL
 }

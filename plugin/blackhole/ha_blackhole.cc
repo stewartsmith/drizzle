@@ -38,6 +38,9 @@ using namespace drizzled;
 
 #define BLACKHOLE_EXT ".blk"
 
+static pthread_mutex_t blackhole_mutex;
+
+
 static const char *ha_blackhole_exts[] = {
   NULL
 };
@@ -58,6 +61,11 @@ public:
     blackhole_open_tables()
   {
     table_definition_ext= BLACKHOLE_EXT;
+  }
+
+  virtual ~BlackholeEngine()
+  {
+    pthread_mutex_destroy(&blackhole_mutex);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -157,10 +165,6 @@ void BlackholeEngine::deleteOpenTable(const string &table_name)
   blackhole_open_tables.erase(table_name);
 }
 
-
-/* Static declarations for shared structures */
-
-static pthread_mutex_t blackhole_mutex;
 
 
 /*****************************************************************************
@@ -423,15 +427,6 @@ static int blackhole_init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int blackhole_fini(drizzled::plugin::Context &context)
-{
-  context.remove(blackhole_engine);
-  delete blackhole_engine;
-
-  pthread_mutex_destroy(&blackhole_mutex);
-
-  return 0;
-}
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -442,7 +437,6 @@ DRIZZLE_DECLARE_PLUGIN
   "/dev/null storage engine (anything you write to it disappears)",
   PLUGIN_LICENSE_GPL,
   blackhole_init,     /* Plugin Init */
-  blackhole_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

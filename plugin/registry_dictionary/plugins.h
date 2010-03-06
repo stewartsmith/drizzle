@@ -29,8 +29,8 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator it;
-    std::map<std::string, const drizzled::plugin::Plugin *>::const_iterator end;
+    std::map<std::string, drizzled::plugin::Plugin *>::const_iterator it;
+    std::map<std::string, drizzled::plugin::Plugin *>::const_iterator end;
 
   public:
     Generator(drizzled::Field **arg);

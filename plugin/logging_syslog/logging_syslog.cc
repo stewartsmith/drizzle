@@ -186,14 +186,6 @@ static int logging_syslog_plugin_init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int logging_syslog_plugin_deinit(drizzled::plugin::Context &context)
-{
-  context.remove(handler);
-  delete handler;
-
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_logging_syslog_enable,
@@ -286,7 +278,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Log to syslog"),
   PLUGIN_LICENSE_GPL,
   logging_syslog_plugin_init,
-  logging_syslog_plugin_deinit,
   logging_syslog_system_variables,
   NULL
 }

@@ -523,16 +523,6 @@ static int init(plugin::Context &context)
   return 0;
 }
 
-static int deinit(plugin::Context &context)
-{
-  if (filtered_replicator)
-  {
-    context.remove(filtered_replicator);
-    delete filtered_replicator;
-  }
-  return 0;
-}
-
 static int check_filtered_schemas(Session *, 
                                   drizzle_sys_var *,
                                   void *,
@@ -653,7 +643,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Filtered Replicator"),
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   filtered_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }

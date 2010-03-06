@@ -76,13 +76,6 @@ static int initialize(plugin::Context &context)
   return 0;
 }
 
-static int finalize(plugin::Context &context)
-{
-   context.remove(connection_idudf);
-   delete connection_idudf;
-   return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -92,7 +85,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Return the current connection_id",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

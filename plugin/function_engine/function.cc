@@ -136,14 +136,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-  context.remove(function_plugin);
-  delete function_plugin;
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -153,7 +145,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

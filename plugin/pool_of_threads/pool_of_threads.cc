@@ -36,7 +36,6 @@ static PoolOfThreadsScheduler *scheduler= NULL;
 static volatile bool kill_pool_threads= false;
 
 static volatile uint32_t created_threads= 0;
-static int deinit(drizzled::plugin::Context &context);
 
 static struct event session_add_event;
 static struct event session_kill_event;
@@ -647,18 +646,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-/**
- * @brief
- *  Waits until all pool threads have been deleted for clean shutdown
- */
-static int deinit(drizzled::plugin::Context &context)
-{
-  context.remove(scheduler);
-  delete scheduler;
-
-  return 0;
-}
-
 /*
  The defaults here were picked based on what I see (aka Brian). They should
  be vetted across a larger audience.
@@ -682,7 +669,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Pool of Threads Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   sys_variables,   /* system variables */
   NULL    /* config options */
 }

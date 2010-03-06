@@ -136,13 +136,4 @@ static int sleep_plugin_init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int sleep_plugin_deinit(drizzled::plugin::Context &context)
-{
-  context.remove(sleep_udf);
-  delete sleep_udf;
-
-  return 0;
-}
-
-
-DRIZZLE_PLUGIN(sleep_plugin_init, sleep_plugin_deinit, NULL);
+DRIZZLE_PLUGIN(sleep_plugin_init, NULL);

@@ -42,29 +42,6 @@ static int init(drizzled::plugin::Context &context)
   return false;
 }
 
-/*
-  Release the archive Cursor.
-
-  SYNOPSIS
-    archive_db_done()
-    void
-
-  RETURN
-    false       OK
-*/
-
-extern pthread_mutex_t archive_mutex;
-
-static int done(drizzled::plugin::Context &context)
-{
-  context.remove(archive_engine);
-  delete archive_engine;
-
-  pthread_mutex_destroy(&archive_mutex);
-
-  return 0;
-}
-
 
 static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
   PLUGIN_VAR_NOCMDOPT,
@@ -85,7 +62,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Archive storage engine",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  done, /* Plugin Deinit */
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */
 }

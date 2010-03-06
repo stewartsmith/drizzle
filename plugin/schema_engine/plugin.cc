@@ -43,14 +43,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-  context.remove(schema_plugin);
-  delete schema_plugin;
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -60,7 +52,6 @@ DRIZZLE_DECLARE_PLUGIN
   "This implements the default file based Schema engine.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

@@ -281,17 +281,8 @@ static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
 }
 
 
-static void delete_module(plugin::Registry &registry, plugin::Module *module)
+static void delete_module(plugin::Module *module)
 {
-  plugin::Manifest manifest= module->getManifest();
-
-  plugin::Context loading_context(registry, module);
-  if (module->isInited)
-  {
-    if (manifest.deinit)
-      manifest.deinit(loading_context);
-  }
-
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(module->system_vars);
   module->isInited= false;
@@ -304,17 +295,16 @@ static void delete_module(plugin::Registry &registry, plugin::Module *module)
 
 static void reap_plugins(plugin::Registry &registry)
 {
-  plugin::Module *module;
-
   std::map<std::string, plugin::Module *>::const_iterator modules=
     registry.getModulesMap().begin();
-    
+
   while (modules != registry.getModulesMap().end())
   {
-    module= (*modules).second;
-    delete_module(registry, module);
+    plugin::Module *module= (*modules).second;
+    delete_module(module);
     ++modules;
   }
+
   drizzle_del_plugin_sysvar();
 }
 
@@ -487,7 +477,7 @@ bool plugin_init(plugin::Registry &registry,
       plugin_initialize_vars(module);
 
       if (plugin_initialize(registry, module))
-        delete_module(registry, module);
+        delete_module(module);
     }
   }
 

@@ -112,13 +112,6 @@ static int initialize(plugin::Context &context)
   return 0;
 }
 
-static int finalize(plugin::Context &context)
-{
-  context.remove(show_schema_proto_func);
-  delete show_schema_proto_func;
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -128,7 +121,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Shows text representation of schema definition proto",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

@@ -51,25 +51,6 @@ static int gearman_udf_plugin_init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int gearman_udf_plugin_deinit(drizzled::plugin::Context &context)
-{
-  context.remove(gman_do_low_background);
-  context.remove(gman_do_high_background);
-  context.remove(gman_do_background);
-  context.remove(gman_do_low);
-  context.remove(gman_do_high);
-  context.remove(gman_do);
-  context.remove(gman_servers_set);
-  delete gman_do_low_background;
-  delete gman_do_high_background;
-  delete gman_do_background;
-  delete gman_do_low;
-  delete gman_do_high;
-  delete gman_do;
-  delete gman_servers_set;
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -79,7 +60,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Gearman Client UDFs",
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
-  gearman_udf_plugin_deinit, /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

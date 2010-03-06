@@ -141,18 +141,6 @@ static int initialize(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-
-  if (auth)
-  {
-    context.remove(auth);
-    delete auth;
-  }
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -162,7 +150,6 @@ DRIZZLE_DECLARE_PLUGIN
   "PAM based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize, /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

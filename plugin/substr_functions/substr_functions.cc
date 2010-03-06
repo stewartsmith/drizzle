@@ -267,15 +267,6 @@ static int initialize(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-   context.remove(substr_function);
-   context.remove(substr_index_function);
-   delete substr_function;
-   delete substr_index_function;
-   return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -285,7 +276,6 @@ DRIZZLE_DECLARE_PLUGIN
   "SUBSTR and SUBSTR",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

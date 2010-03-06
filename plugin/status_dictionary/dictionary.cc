@@ -50,25 +50,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-  context.remove(global_statements);
-  context.remove(global_status);
-  context.remove(global_variables);
-  context.remove(session_statements);
-  context.remove(session_status);
-  context.remove(session_variables);
-
-  delete global_statements;
-  delete global_status;
-  delete global_variables;
-  delete session_statements;
-  delete session_status;
-  delete session_variables;
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -78,7 +59,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Dictionary for status, statement, and variable information.",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

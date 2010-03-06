@@ -60,11 +60,4 @@ static int initialize(plugin::Context &context)
   return 0;
 }
 
-static int finalize(plugin::Context &context)
-{
-   context.remove(versionudf);
-   delete versionudf;
-   return 0;
-}
-
-DRIZZLE_PLUGIN(initialize, finalize, NULL);
+DRIZZLE_PLUGIN(initialize, NULL);

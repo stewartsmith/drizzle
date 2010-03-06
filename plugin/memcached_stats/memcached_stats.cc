@@ -76,21 +76,6 @@ static int init(plugin::Context &context)
   return 0;
 }
 
-/**
- * Clean up the memcached stats plugin.
- *
- * @param[in] registry the drizzled::plugin::Registry singleton
- * @return false on success; true on failure
- */
-static int deinit(plugin::Context &context)
-{
-  context.remove(stats_table_tool);
-  delete stats_table_tool;
-  context.remove(analysis_table_tool);
-  delete analysis_table_tool;
-  return 0;
-}
-
 static int check_memc_servers(Session *,
                               drizzle_sys_var *,
                               void *save,
@@ -147,7 +132,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  deinit, /* Plugin Deinit    */
   system_variables, /* system variables */
   NULL    /* config options   */
 }

@@ -480,33 +480,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int deinit(drizzled::plugin::Context &context)
-{
-  /* Cleanup the transaction log itself */
-  if (transaction_log)
-  {
-    context.remove(transaction_log);
-    delete transaction_log;
-    delete transaction_log_index;
-
-    /* Cleanup the DATA_DICTIONARY views */
-    context.remove(transaction_log_tool);
-    delete transaction_log_tool;
-    context.remove(transaction_log_entries_tool);
-    delete transaction_log_entries_tool;
-    context.remove(transaction_log_transactions_tool);
-    delete transaction_log_transactions_tool;
-
-    /* Cleanup module UDFs */
-    context.remove(print_transaction_message_func_factory);
-    delete print_transaction_message_func_factory;
-    context.remove(hexdump_transaction_message_func_factory);
-    delete hexdump_transaction_message_func_factory;
-  }
-
-  return 0;
-}
-
 static void set_truncate_debug(Session *,
                                drizzle_sys_var *, 
                                void *, 
@@ -575,4 +548,4 @@ static drizzle_sys_var* sys_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, deinit, sys_variables);
+DRIZZLE_PLUGIN(init, sys_variables);

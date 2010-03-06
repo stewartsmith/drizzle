@@ -101,13 +101,6 @@ static int initialize(plugin::Context &context)
   return 0;
 }
 
-static int finalize(plugin::Context &context)
-{
-  context.remove(md5udf);
-  delete md5udf;
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -117,7 +110,6 @@ DRIZZLE_DECLARE_PLUGIN
   "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

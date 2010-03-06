@@ -91,13 +91,6 @@ static int init(Context &context)
   return 0;
 }
 
-static int deinit(Context &context)
-{
-  context.remove(rot13_func);
-  delete rot13_func;
-  return 0;
-}
-
 } /* namespace rot13 */
 
-DRIZZLE_PLUGIN(rot13::init, rot13::deinit, NULL);
+DRIZZLE_PLUGIN(rot13::init, NULL);

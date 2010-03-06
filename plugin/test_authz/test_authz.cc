@@ -70,13 +70,6 @@ static int init(plugin::Context &context)
   return 0;
 }
 
-static int deinit(plugin::Context &context)
-{
-  context.remove(authz);
-  delete authz;
-  return 0;
-}
-
 } /* namespace authz */
 
-DRIZZLE_PLUGIN(authz::init, authz::deinit, NULL);
+DRIZZLE_PLUGIN(authz::init, NULL);

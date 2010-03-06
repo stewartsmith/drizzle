@@ -20,6 +20,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
+#include "drizzled/plugin/daemon.h"
 
 #include "heap.h"
 #include "ha_heap.h"
@@ -149,28 +150,36 @@ int HeapEngine::doDropTable(Session&, const string &table_path)
   return heap_delete_table(table_path.c_str());
 }
 
+class HeapCleanup :
+  public drizzled::plugin::Daemon
+{
+  HeapCleanup(const HeapCleanup &);
+  HeapCleanup& operator=(const HeapCleanup &);
+public:
+  HeapCleanup()
+    : drizzled::plugin::Daemon("HEAP Cleanup Daemon")
+  {
+    pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
+  }
+
+  ~HeapCleanup()
+  {
+    hp_panic(HA_PANIC_CLOSE);
+
+    pthread_mutex_destroy(&THR_LOCK_heap);
+  }
+};
+
 static HeapEngine *heap_storage_engine= NULL;
 
 static int heap_init(plugin::Context &context)
 {
   heap_storage_engine= new HeapEngine(engine_name);
   context.add(heap_storage_engine);
-  pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
+  HeapCleanup *cleanup_daemon= new HeapCleanup;
+  context.add(cleanup_daemon);
   return 0;
 }
-
-static int heap_deinit(plugin::Context &context)
-{
-  context.remove(heap_storage_engine);
-  delete heap_storage_engine;
-
-  int ret= hp_panic(HA_PANIC_CLOSE);
-
-  pthread_mutex_destroy(&THR_LOCK_heap);
-
-  return ret;
-}
-
 
 
 /*****************************************************************************
@@ -937,7 +946,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  heap_deinit,
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

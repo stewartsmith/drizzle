@@ -95,14 +95,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int deinit(drizzled::plugin::Context &context)
-{
-  context.remove(scheduler);
-  delete scheduler;
-
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
                            PLUGIN_VAR_RQCMDARG,
                            N_("Maximum number of user threads available."),
@@ -122,7 +114,6 @@ DRIZZLE_DECLARE_PLUGIN
   "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   sys_variables,   /* system variables */
   NULL    /* config options */
 }

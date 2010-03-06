@@ -267,14 +267,6 @@ static int tableprototester_init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int tableprototester_fini(drizzled::plugin::Context &context)
-{
-  context.remove(tableprototester_engine);
-  delete tableprototester_engine;
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -284,7 +276,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Used to test rest of server with various table proto messages",
   PLUGIN_LICENSE_GPL,
   tableprototester_init,     /* Plugin Init */
-  tableprototester_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

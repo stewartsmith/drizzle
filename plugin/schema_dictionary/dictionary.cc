@@ -68,36 +68,6 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int finalize(drizzled::plugin::Context &context)
-{
-  context.remove(columns);
-  context.remove(index_parts);
-  context.remove(indexes);
-  context.remove(local_tables);
-  context.remove(referential_constraints);
-  context.remove(schema_names);
-  context.remove(schemas);
-  context.remove(show_indexes);
-  context.remove(show_columns);
-  context.remove(table_constraints);
-  context.remove(table_status);
-  context.remove(tables);
-  delete columns;
-  delete index_parts;
-  delete indexes;
-  delete local_tables;
-  delete referential_constraints;
-  delete schema_names;
-  delete schemas;
-  delete show_columns;
-  delete show_indexes;
-  delete table_constraints;
-  delete table_status;
-  delete tables;
-
-  return 0;
-}
-
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -107,7 +77,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for schema, table, column, indexes, etc",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

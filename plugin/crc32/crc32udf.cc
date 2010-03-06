@@ -78,11 +78,4 @@ static int initialize(plugin::Context &context)
   return 0;
 }
 
-static int finalize(plugin::Context &context)  
-{
-  context.remove(crc32udf);
-  delete crc32udf;
-  return 0;
-}
-
-DRIZZLE_PLUGIN(initialize, finalize, NULL);
+DRIZZLE_PLUGIN(initialize, NULL);

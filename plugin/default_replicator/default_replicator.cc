@@ -80,16 +80,6 @@ static int init(plugin::Context &context)
   return 0;
 }
 
-static int deinit(plugin::Context &context)
-{
-  if (default_replicator)
-  {
-    context.remove(default_replicator);
-    delete default_replicator;
-  }
-  return 0;
-}
-
 static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_default_replicator_enable,
@@ -113,7 +103,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Default Replicator"),
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   default_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }
