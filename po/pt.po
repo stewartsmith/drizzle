@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-01-16 12:12+0000\n"
-"Last-Translator: Jonadabe <Unknown>\n"
+"PO-Revision-Date: 2010-03-05 17:51+0000\n"
+"Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-01-17 04:45+0000\n"
+"X-Launchpad-Export-Date: 2010-03-06 05:10+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -5849,7 +5849,7 @@ msgstr ""
 
 #: plugin/console/console.cc:346
 msgid "Enable the console."
-msgstr ""
+msgstr "Activar a consola"
 
 #: plugin/console/console.cc:349
 msgid "Turn on extra debugging."
@@ -5857,11 +5857,11 @@ msgstr ""
 
 #: plugin/default_replicator/default_replicator.cc:97
 msgid "Enable default replicator"
-msgstr ""
+msgstr "Activar replicador predefinido"
 
 #: plugin/default_replicator/default_replicator.cc:112
 msgid "Default Replicator"
-msgstr ""
+msgstr "Replicador predefinido"
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:78
 msgid "Error Messages to stderr"
@@ -5869,7 +5869,7 @@ msgstr ""
 
 #: plugin/filtered_replicator/filtered_replicator.cc:486
 msgid "Enable filtered replicator"
-msgstr ""
+msgstr "Activar replicador com filtragem"
 
 #: plugin/filtered_replicator/filtered_replicator.cc:493
 msgid "List of schemas to filter"
@@ -5903,7 +5903,7 @@ msgstr "Erro de gearman_client_add_server(): %s"
 
 #: plugin/logging_gearman/logging_gearman.cc:310
 msgid "Enable logging to a gearman server"
-msgstr ""
+msgstr "Activar opção de guardar log para um servidor de gearman"
 
 #: plugin/logging_gearman/logging_gearman.cc:319
 msgid "Hostname for logging to a Gearman server"
@@ -5924,11 +5924,11 @@ msgstr "Erro de open() fn=%s er=%s\n"
 
 #: plugin/logging_query/logging_query.cc:344
 msgid "Enable logging to CSV file"
-msgstr ""
+msgstr "Activar opção de guardar log para um ficheiro CSV"
 
 #: plugin/logging_query/logging_query.cc:353
 msgid "File to log to"
-msgstr ""
+msgstr "Ficheiro de log"
 
 #: plugin/logging_query/logging_query.cc:362
 msgid "PCRE to match the query against"
@@ -5937,21 +5937,23 @@ msgstr ""
 #: plugin/logging_query/logging_query.cc:371
 #: plugin/logging_syslog/logging_syslog.cc:231
 msgid "Threshold for logging slow queries, in microseconds"
-msgstr ""
+msgstr "Limite para guardar log de queries lentas, em microsegundos"
 
 #: plugin/logging_query/logging_query.cc:383
 #: plugin/logging_syslog/logging_syslog.cc:243
 msgid "Threshold for logging big queries, for rows returned"
 msgstr ""
+"Limite para guardar log de queries grandes, em número de linhas devolvidas"
 
 #: plugin/logging_query/logging_query.cc:395
 #: plugin/logging_syslog/logging_syslog.cc:255
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
+"Limite para guardar log de queries grandes, em número de linhas examinadas"
 
 #: plugin/logging_query/logging_query.cc:418
 msgid "Log queries to a CSV file"
-msgstr ""
+msgstr "Guardar log de queries para um ficheiro CSV"
 
 #: plugin/logging_syslog/logging_syslog.cc:84
 #, c-format
@@ -5967,7 +5969,7 @@ msgstr ""
 
 #: plugin/logging_syslog/logging_syslog.cc:195
 msgid "Enable logging to syslog"
-msgstr ""
+msgstr "Activar opção de guardar log para o syslog"
 
 #: plugin/logging_syslog/logging_syslog.cc:204
 msgid "Syslog Ident"
@@ -5983,7 +5985,7 @@ msgstr "Prioridade Syslog"
 
 #: plugin/logging_syslog/logging_syslog.cc:279
 msgid "Log to syslog"
-msgstr ""
+msgstr "Guardar log para syslog"
 
 #: plugin/multi_thread/multi_thread.cc:171
 msgid "Maximum number of user threads available."
@@ -6176,7 +6178,7 @@ msgstr "Não existe nenhum ponto de salvaguarda com esse nome"
 
 #: plugin/myisam/my_handler_errors.cc:103
 msgid "Non unique key block size"
-msgstr ""
+msgstr "Tamanho do bloco de chaves não-únicas"
 
 #: plugin/myisam/my_handler_errors.cc:105
 msgid "The table does not exist in engine"
