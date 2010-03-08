@@ -1,0 +1,24 @@
+create schema a;
+use a;
+create temporary table a (A int) ENGINE=MEMORY;
+insert into a VALUES (1), (2), (3);
+select * from data_dictionary.show_temporary_Tables;
+
+create schema b;
+use b;
+create temporary table a (A int);
+create temporary table b (A int);
+
+insert into a SELECT * FROM a.a;
+insert into b SELECT * FROM a.a;
+
+SELECT * FROM a;
+SELECT * FROM b;
+
+select * from data_dictionary.show_temporary_Tables;
+
+drop schema a;
+select * from data_dictionary.show_temporary_Tables;
+
+drop schema b;
+select * from data_dictionary.show_temporary_Tables;

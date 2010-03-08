@@ -24,13 +24,7 @@
 class ShowTemporaryTables : public drizzled::plugin::TableFunction
 {
 public:
-  ShowTemporaryTables() :
-    drizzled::plugin::TableFunction("DATA_DICTIONARY", "SHOW_TEMPORARY_TABLES")
-  {
-    add_field("TABLE_SCHEMA");
-    add_field("TABLE_NAME");
-    add_field("ENGINE");
-  }
+  ShowTemporaryTables();
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {

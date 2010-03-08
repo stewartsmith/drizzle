@@ -25,15 +25,21 @@
 using namespace std;
 using namespace drizzled;
 
+ShowTemporaryTables::ShowTemporaryTables() :
+  drizzled::plugin::TableFunction("DATA_DICTIONARY", "SHOW_TEMPORARY_TABLES")
+{
+  add_field("TABLE_SCHEMA");
+  add_field("TABLE_NAME");
+  add_field("RECORDS", plugin::TableFunction::NUMBER);
+  add_field("RECORD_LENGTH", plugin::TableFunction::NUMBER);
+  add_field("ENGINE");
+}
+
 ShowTemporaryTables::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   session= current_session;
   table= session->temporary_tables;
-
-  bool x= table ? true : false;
-
-  std::cerr << "Do we have any tables? " << x << "\n";
 }
 
 bool ShowTemporaryTables::Generator::populate()
@@ -56,6 +62,12 @@ void ShowTemporaryTables::Generator::fill()
   /* TABLE_NAME */
   push(table->s->table_name.str);
 
+  /* RECORDS */
+  push(static_cast<uint64_t>(table->cursor->records()));
+
+  /* RECORD_LENGTH */
+  push(static_cast<uint64_t>(table->getRecordLength()));
+
   /* ENGINE */
-  push("foo");
+  push(table->getEngine()->getName());
 }

@@ -206,6 +206,11 @@ public:
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
 
+  uint32_t getRecordLength()
+  {
+    return reclength;
+  }
+
 private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;
