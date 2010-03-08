@@ -20,8 +20,6 @@
 #ifndef DRIZZLED_PLUGIN_MONITORED_IN_TRANSACTION_H
 #define DRIZZLED_PLUGIN_MONITORED_IN_TRANSACTION_H
 
-#include "config.h"
-
 #include <cstring>
 
 namespace drizzled
