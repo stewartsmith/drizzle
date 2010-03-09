@@ -236,9 +236,15 @@ static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
 static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 {
-  int err;
+  ib_err_t err;
 
-  ib_init();
+  err= ib_init();
+  if (err != DB_SUCCESS)
+  {
+    fprintf(stderr, "Error starting Embedded InnoDB memory subsystem: %d (%s)",
+            err, ib_strerror(err));
+    return -1;
+  }
   /* call ib_cfg_*() */
 
   err= ib_startup("barracuda");
