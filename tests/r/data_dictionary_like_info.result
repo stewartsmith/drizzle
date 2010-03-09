@@ -33,10 +33,8 @@ t2
 t3
 t5
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t2	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
-t3	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
-t5	InnoDB	0	DEFAULT	0	0	0	#	0	0	0	#	#	0	utf8_general_ci	0		
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t5	STANDARD	InnoDB	#	#	#	#	#
 show columns from t3 like "a%";
 Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
@@ -194,7 +192,7 @@ table_schema='data_dictionary' and
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
 DATA_TYPE	group_concat(table_schema, '.', table_name)	num
-VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PART	139
+VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PART	133
 Warnings:
 Warning	1260	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);

@@ -187,6 +187,8 @@ bool Cursor::is_fatal_error(int error, uint32_t flags)
 
 
 ha_rows Cursor::records() { return stats.records; }
+uint64_t Cursor::tableSize() { return stats.index_file_length + stats.data_file_length; }
+uint64_t Cursor::rowSize() { return table->getRecordLength() + table->sizeFields(); }
 
 /**
   Open database-Cursor.

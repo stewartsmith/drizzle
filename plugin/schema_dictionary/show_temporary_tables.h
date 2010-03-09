@@ -18,35 +18,28 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H
-#define PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H
+#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TEMPORARY_TABLES_H
+#define PLUGIN_SCHEMA_DICTIONARY_SHOW_TEMPORARY_TABLES_H
 
-class ShowTableStatus : public  drizzled::plugin::TableFunction
+class ShowTemporaryTables : public drizzled::plugin::TableFunction
 {
 public:
-  ShowTableStatus();
+  ShowTemporaryTables();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator
   {
-    bool is_primed;
+    drizzled::Session *session;
     drizzled::Table *table;
-    std::string schema_predicate;
-    std::vector<drizzled::Table *> table_list;
-    std::vector<drizzled::Table *>::iterator table_list_iterator;
 
     void fill();
 
-    const char *schema_name();
-    bool checkSchemaName();
-
-    bool nextCore();
-    bool next();
+    bool checkSchema();
 
   public:
+    Generator(drizzled::Field **arg);
+
     bool populate();
 
-    Generator(drizzled::Field **arg);
-    ~Generator();
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -55,4 +48,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H */
+#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_TEMPORARY_TABLES_H */
