@@ -270,6 +270,20 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
   ib_err_t innodb_err;
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  innodb_err= ib_schema_lock_exclusive(innodb_schema_transaction);
+  if (innodb_err != DB_SUCCESS)
+  {
+    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_DELETE_FILE,
+                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        innodb_err, ib_strerror(innodb_err));
+
+    assert (rollback_err == DB_SUCCESS);
+
+    return HA_ERR_GENERIC;
+  }
 
   innodb_err= ib_table_drop(innodb_schema_transaction, table_name.c_str()+2);
 
