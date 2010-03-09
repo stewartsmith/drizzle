@@ -365,27 +365,26 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 
   err= ib_init();
   if (err != DB_SUCCESS)
-  {
-    fprintf(stderr, "Error starting Embedded InnoDB memory subsystem: %d (%s)",
-            err, ib_strerror(err));
-    return -1;
-  }
-  /* call ib_cfg_*() */
+    goto innodb_error;
 
   if (innodb_data_file_path == NULL)
     innodb_data_file_path= default_innodb_data_file_path;
 
-  ib_cfg_set_text("data_file_path", innodb_data_file_path);
-  ib_cfg_set_int("log_file_size", innodb_log_file_size);
-  ib_cfg_set_int("log_files_in_group", innodb_log_files_in_group);
+  err= ib_cfg_set_text("data_file_path", innodb_data_file_path);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("log_file_size", innodb_log_file_size);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("log_files_in_group", innodb_log_files_in_group);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
 
   err= ib_startup("barracuda");
-
   if (err != DB_SUCCESS)
-  {
-    fprintf(stderr, "Error starting Embedded InnoDB %d\n", err);
-    return -1;
-  }
+    goto innodb_error;
 
   embedded_innodb_engine= new EmbeddedInnoDBEngine("InnoDB");
   registry.add(embedded_innodb_engine);
@@ -394,6 +393,10 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
   libinnodb_datadict_dump_func_initialize(registry);
 
   return 0;
+innodb_error:
+  fprintf(stderr, _("Error starting Embedded InnoDB %d (%s)\n"),
+          err, ib_strerror(err));
+  return -1;
 }
 
 static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
