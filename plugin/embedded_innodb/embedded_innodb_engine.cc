@@ -335,12 +335,15 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   search_string.append("/");
 
   transaction = ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  ib_schema_lock_exclusive(transaction);
+  ib_err_t innodb_err= ib_schema_lock_exclusive(transaction);
+  assert(innodb_err == DB_SUCCESS); /* FIXME: doGetTableNames needs to be able to return error */
 
-  int err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
-  assert(err == DB_SUCCESS);
 
-  ib_cursor_first(cursor);
+  innodb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
+  assert(innodb_err == DB_SUCCESS); /* FIXME */
+
+  innodb_err= ib_cursor_first(cursor);
+  assert (innodb_err == DB_SUCCESS); /* FIXME */
 
   ib_tpl_t read_tuple;
 
@@ -365,9 +368,9 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
     err = ib_cursor_moveto(cursor, read_tuple, IB_CUR_GE, &res);
   */
 
-  while (err == DB_SUCCESS)
+  while (innodb_err == DB_SUCCESS)
   {
-    err= ib_cursor_read_row(cursor, read_tuple);
+    innodb_err= ib_cursor_read_row(cursor, read_tuple);
 
     const char *table_name;
     int table_name_len;
@@ -386,15 +389,17 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
     }
 
 
-    err= ib_cursor_next(cursor);
+    innodb_err= ib_cursor_next(cursor);
     read_tuple= ib_tuple_clear(read_tuple);
   }
 
   ib_tuple_delete(read_tuple);
 
-  ib_cursor_close(cursor);
+  innodb_err= ib_cursor_close(cursor);
+  assert(innodb_err == DB_SUCCESS); // FIXME
 
-  ib_trx_commit(transaction);
+  innodb_err= ib_trx_commit(transaction);
+  assert(innodb_err == DB_SUCCESS); // FIXME
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
