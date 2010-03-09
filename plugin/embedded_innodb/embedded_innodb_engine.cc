@@ -342,9 +342,6 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   innodb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
   assert(innodb_err == DB_SUCCESS); /* FIXME */
 
-  innodb_err= ib_cursor_first(cursor);
-  assert (innodb_err == DB_SUCCESS); /* FIXME */
-
   ib_tpl_t read_tuple;
   ib_tpl_t search_tuple;
 
