@@ -560,7 +560,10 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
 
   if (ib_cursor_open_table(path+2, NULL, &innodb_cursor) != DB_SUCCESS)
     return ENOENT;
-  ib_cursor_close(innodb_cursor);
+
+  ib_err_t err= ib_cursor_close(innodb_cursor);
+
+  assert (err == DB_SUCCESS);
 
   if (table)
   {
