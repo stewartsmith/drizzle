@@ -211,14 +211,28 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
   ib_index_schema_set_clustered(innodb_pkey);
 */
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  ib_schema_lock_exclusive(innodb_schema_transaction);
+  innodb_err= ib_schema_lock_exclusive(innodb_schema_transaction);
+  if (innodb_err != DB_SUCCESS)
+  {
+    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+    ib_table_schema_delete(innodb_table_schema);
+
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_CREATE_TABLE,
+                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        innodb_err, ib_strerror(innodb_err));
+
+    assert (rollback_err == DB_SUCCESS);
+
+    return HA_ERR_GENERIC;
+  }
 
   innodb_err= ib_table_create(innodb_schema_transaction, innodb_table_schema,
                               &innodb_table_id);
 
   if (innodb_err != DB_SUCCESS)
   {
-    ib_trx_rollback(innodb_schema_transaction);
+    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
     ib_table_schema_delete(innodb_table_schema);
 
     if (innodb_err == DB_TABLE_IS_BEING_USED)
@@ -228,6 +242,8 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
                         path, innodb_err, ib_strerror(innodb_err));
+
+    assert (rollback_err == DB_SUCCESS);
     return HA_ERR_GENERIC;
   }
 
