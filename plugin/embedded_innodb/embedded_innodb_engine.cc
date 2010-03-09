@@ -436,39 +436,30 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   search_string.append("/");
 
   transaction = ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  ib_schema_lock_exclusive(transaction);
+  ib_err_t innodb_err= ib_schema_lock_exclusive(transaction);
+  assert(innodb_err == DB_SUCCESS); /* FIXME: doGetTableNames needs to be able to return error */
 
-  int err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
-  assert(err == DB_SUCCESS);
 
-  ib_cursor_first(cursor);
+  innodb_err= ib_cursor_open_table("SYS_TABLES", transaction, &cursor);
+  assert(innodb_err == DB_SUCCESS); /* FIXME */
 
   ib_tpl_t read_tuple;
+  ib_tpl_t search_tuple;
 
   read_tuple= ib_clust_read_tuple_create(cursor);
-  /*
-    What we really want to do here is not the ib_cursor_first() as above
-    but instead using a search tuple to find the first instance of
-    "database_name/" in SYS_TABLES.NAME.
+  search_tuple= ib_clust_search_tuple_create(cursor);
 
-    There is currently a bug in libinnodb (1.0.3.5325) that means this ends in
-    a failed assert() rather than speeedy bliss.
+  innodb_err= ib_col_set_value(search_tuple, 0, search_string.c_str(),
+                               search_string.length());
+  assert (innodb_err == DB_SUCCESS); // FIXME
 
-    It should be fixed in the next release.
+  int res;
+  innodb_err = ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  // fixme: check error above
 
-    See: http://forums.innodb.com/read.php?8,1090,1094#msg-1094
-
-    we want something like:
-
-    ib_col_set_value(read_tuple, 0,
-    search_string.c_str(), search_string.length());
-
-    err = ib_cursor_moveto(cursor, read_tuple, IB_CUR_GE, &res);
-  */
-
-  while (err == DB_SUCCESS)
+  while (innodb_err == DB_SUCCESS)
   {
-    err= ib_cursor_read_row(cursor, read_tuple);
+    innodb_err= ib_cursor_read_row(cursor, read_tuple);
 
     const char *table_name;
     int table_name_len;
@@ -487,15 +478,18 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
     }
 
 
-    err= ib_cursor_next(cursor);
+    innodb_err= ib_cursor_next(cursor);
     read_tuple= ib_tuple_clear(read_tuple);
   }
 
   ib_tuple_delete(read_tuple);
+  ib_tuple_delete(search_tuple);
 
-  ib_cursor_close(cursor);
+  innodb_err= ib_cursor_close(cursor);
+  assert(innodb_err == DB_SUCCESS); // FIXME
 
-  ib_trx_commit(transaction);
+  innodb_err= ib_trx_commit(transaction);
+  assert(innodb_err == DB_SUCCESS); // FIXME
 }
 
 static int read_table_message_from_innodb(const char* table_name, drizzled::message::Table *table_message)
