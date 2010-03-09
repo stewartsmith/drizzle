@@ -271,7 +271,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
 
-  innodb_err= ib_table_drop(table_name.c_str()+2);
+  innodb_err= ib_table_drop(innodb_schema_transaction, table_name.c_str()+2);
 
   if (innodb_err == DB_TABLE_NOT_FOUND)
   {
