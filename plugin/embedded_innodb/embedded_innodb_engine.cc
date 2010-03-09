@@ -777,9 +777,15 @@ static int64_t innodb_log_files_in_group;
 
 static int embedded_innodb_init(drizzled::plugin::Registry &registry)
 {
-  int err;
+  ib_err_t err;
 
-  ib_init();
+  err= ib_init();
+  if (err != DB_SUCCESS)
+  {
+    fprintf(stderr, "Error starting Embedded InnoDB memory subsystem: %d (%s)",
+            err, ib_strerror(err));
+    return -1;
+  }
   /* call ib_cfg_*() */
 
   if (innodb_data_file_path == NULL)
@@ -818,7 +824,7 @@ static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
   libinnodb_version_func_finalize(registry);
   libinnodb_datadict_dump_func_finalize(registry);
 
-  err= ib_shutdown();
+  err= ib_shutdown(IB_SHUTDOWN_NORMAL);
 
   if (err != DB_SUCCESS)
   {
