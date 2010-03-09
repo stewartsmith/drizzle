@@ -85,6 +85,10 @@ public:
   MyBitmap tmp_set; /* Not sure about this... */
 
   Session *in_use; /**< Pointer to the current session using this object */
+  Session *getSession()
+  {
+    return in_use;
+  }
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
@@ -253,7 +257,7 @@ public:
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  inline TableShare *getShare() { return s; } /* Get rid of this long term */
+  inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
@@ -277,6 +281,12 @@ public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return s->storage_engine;
+  }
+
+  Cursor &getCursor() const	/* table_type for handler */
+  {
+    assert(cursor);
+    return *cursor;
   }
 
   /* For TMP tables, should be pulled out as a class */
@@ -454,6 +464,53 @@ public:
 
     return(cursor->errkey);
   }
+
+  /*
+    This is a short term fix. Long term we will used the TableIdentifier to do the actual comparison.
+  */
+  bool operator<(const Table &right) const
+  {
+    int result= strcmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
+
+    if (result <  0)
+      return true;
+
+    if (result >  0)
+      return false;
+
+    result= strcmp(this->getShare()->getTableName(), right.getShare()->getTableName());
+
+    if (result <  0)
+      return true;
+
+    if (result >  0)
+      return false;
+
+    if (this->getShare()->getTableProto()->type()  < 
+        right.getShare()->getTableProto()->type())
+      return true;
+
+    return false;
+  }
+
+  static bool compare(const Table *a, const Table *b)
+  {
+    return *a < *b;
+  }
+
+  friend std::ostream& operator<<(std::ostream& output, const Table &table)
+  {
+    output << "Table:(";
+    output << table.getShare()->getSchemaName();
+    output << ", ";
+    output <<  table.getShare()->getTableName();
+    output << ", ";
+    output <<  table.getShare()->getTableTypeAsString();
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
+
 };
 
 Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);

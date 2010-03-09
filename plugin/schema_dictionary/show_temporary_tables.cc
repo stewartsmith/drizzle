@@ -63,7 +63,7 @@ void ShowTemporaryTables::Generator::fill()
   push(table->s->table_name.str);
 
   /* RECORDS */
-  push(static_cast<uint64_t>(table->cursor->records()));
+  push(static_cast<uint64_t>(table->getCursor().records()));
 
   /* RECORD_LENGTH */
   push(static_cast<uint64_t>(table->getRecordLength()));

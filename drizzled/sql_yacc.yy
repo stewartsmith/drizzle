@@ -4789,8 +4789,11 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+             statement::Select *select=
                new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -4806,6 +4809,12 @@ show_param:
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }
+
+               select->setShowPredicate($3, "");
+             }
+             else
+             {
+               select->setShowPredicate(session->db, "");
              }
 
              if (prepare_new_schema_table(session, lex, "SHOW_TABLE_STATUS"))
