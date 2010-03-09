@@ -266,7 +266,7 @@ static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
 
   libinnodb_version_func_finalize(registry);
 
-  err= ib_shutdown();
+  err= ib_shutdown(IB_SHUTDOWN_NORMAL);
 
   if (err != DB_SUCCESS)
   {
