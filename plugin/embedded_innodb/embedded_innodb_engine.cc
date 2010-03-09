@@ -346,27 +346,18 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   assert (innodb_err == DB_SUCCESS); /* FIXME */
 
   ib_tpl_t read_tuple;
+  ib_tpl_t search_tuple;
 
   read_tuple= ib_clust_read_tuple_create(cursor);
-  /*
-    What we really want to do here is not the ib_cursor_first() as above
-    but instead using a search tuple to find the first instance of
-    "database_name/" in SYS_TABLES.NAME.
+  search_tuple= ib_clust_search_tuple_create(cursor);
 
-    There is currently a bug in libinnodb (1.0.3.5325) that means this ends in
-    a failed assert() rather than speeedy bliss.
+  innodb_err= ib_col_set_value(search_tuple, 0, search_string.c_str(),
+                               search_string.length());
+  assert (innodb_err == DB_SUCCESS); // FIXME
 
-    It should be fixed in the next release.
-
-    See: http://forums.innodb.com/read.php?8,1090,1094#msg-1094
-
-    we want something like:
-
-    ib_col_set_value(read_tuple, 0,
-    search_string.c_str(), search_string.length());
-
-    err = ib_cursor_moveto(cursor, read_tuple, IB_CUR_GE, &res);
-  */
+  int res;
+  innodb_err = ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  // fixme: check error above
 
   while (innodb_err == DB_SUCCESS)
   {
@@ -394,6 +385,7 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
   }
 
   ib_tuple_delete(read_tuple);
+  ib_tuple_delete(search_tuple);
 
   innodb_err= ib_cursor_close(cursor);
   assert(innodb_err == DB_SUCCESS); // FIXME
