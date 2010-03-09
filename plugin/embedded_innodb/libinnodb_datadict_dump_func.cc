@@ -157,7 +157,9 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
   strncpy(str->ptr(), dict_dump.c_str(), dict_dump.length());
 
   ib_schema_unlock(arg.transaction);
-  ib_trx_rollback(arg.transaction);
+
+  err= ib_trx_rollback(arg.transaction);
+  assert (err == DB_SUCCESS);
 
   return str;
 }
