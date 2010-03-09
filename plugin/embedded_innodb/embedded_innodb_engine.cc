@@ -287,7 +287,9 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
     engine->set_name("innodb");
   }
 
-  ib_cursor_close(innodb_cursor);
+  ib_err_t err= ib_cursor_close(innodb_cursor);
+
+  assert (err == DB_SUCCESS);
 
   return EEXIST;
 }
