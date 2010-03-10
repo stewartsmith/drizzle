@@ -88,8 +88,6 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT([%(name)s],[%(version)s],[%(url)s])
 AC_CONFIG_SRCDIR([%(main_source)s])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42,skip-visibility)
 
