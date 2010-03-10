@@ -734,6 +734,57 @@ int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
   return 0;
 }
 
+int EmbeddedInnoDBCursor::delete_all_rows(void)
+{
+  /* I *think* ib_truncate is non-transactional....
+     so only support TRUNCATE and not DELETE FROM t;
+     (this is what ha_innodb does)
+  */
+  if (session_sql_command(ha_session()) != SQLCOM_TRUNCATE)
+    return HA_ERR_WRONG_COMMAND;
+
+  ib_id_t id;
+  ib_err_t err;
+
+  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  ib_cursor_attach_trx(cursor, transaction);
+
+  err= ib_schema_lock_exclusive(transaction);
+  if (err != DB_SUCCESS)
+  {
+    ib_err_t rollback_err= ib_trx_rollback(transaction);
+
+    push_warning_printf(ha_session(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_DELETE_FILE,
+                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        err, ib_strerror(err));
+
+    assert (rollback_err == DB_SUCCESS);
+
+    return HA_ERR_GENERIC;
+  }
+
+  err= ib_cursor_truncate(&cursor, &id);
+  if (err != DB_SUCCESS)
+    goto err;
+
+  ib_schema_unlock(transaction);
+  /* ib_cursor_truncate commits on success */
+
+  err= ib_cursor_open_table_using_id(id, NULL, &cursor);
+  if (err != DB_SUCCESS)
+    goto err;
+
+  return 0;
+
+err:
+  ib_schema_unlock(transaction);
+  ib_err_t rollback_err= ib_trx_rollback(transaction);
+  assert(rollback_err == DB_SUCCESS);
+  return err;
+}
+
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);

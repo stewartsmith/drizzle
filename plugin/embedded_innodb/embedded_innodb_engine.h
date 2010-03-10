@@ -55,6 +55,7 @@ public:
   int info(uint32_t flag);
   double scan_time();
   int delete_row(const unsigned char *);
+  int delete_all_rows(void);
 
 private:
   ib_trx_t transaction;
