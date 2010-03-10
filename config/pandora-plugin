@@ -302,8 +302,10 @@ def expand_plugin_ini(plugin, plugin_dir):
         if not src.startswith(plugin['rel_path']):
           src= os.path.join(plugin['rel_path'], src)
           new_sources= "%s %s" % (new_sources, src)
-      if new_sources != "":
-        plugin['sources']= new_sources
+    else:
+      new_sources= " ".join(plugin['sources'].split())
+    if new_sources != "":
+      plugin['sources']= new_sources
     plugin['main_source']= plugin['sources'].split()[0]
     
     if plugin_dir != ".":
