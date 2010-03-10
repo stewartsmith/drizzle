@@ -550,17 +550,24 @@ rollback:
     table_message->set_name("innodb_table_message");
     table_message->set_type(message::Table::STANDARD);
 
+    message::Table::TableOptions *options= table_message->mutable_options();
+    options->set_collation_id(my_charset_bin.number);
+    options->set_collation(my_charset_bin.name);
+
     message::Table::Field *field= table_message->add_field();
     field->set_name("table_name");
     field->set_type(message::Table::Field::VARCHAR);
     message::Table::Field::StringFieldOptions *stropt= field->mutable_string_options();
     stropt->set_length(IB_MAX_TABLE_NAME_LEN);
-    stropt->set_collation(my_charset_bin.csname);
     stropt->set_collation_id(my_charset_bin.number);
+    stropt->set_collation(my_charset_bin.name);
 
     field= table_message->add_field();
     field->set_name("message");
     field->set_type(message::Table::Field::BLOB);
+    stropt= field->mutable_string_options();
+    stropt->set_collation_id(my_charset_bin.number);
+    stropt->set_collation(my_charset_bin.name);
 
 /*
     message::Table::Index *index= table_message->add_indexes();
