@@ -719,9 +719,18 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
 int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
 {
-  ib_cursor_prev(cursor);
-  ib_cursor_delete_row(cursor);
-  ib_cursor_next(cursor);
+  ib_err_t err;
+
+  err= ib_cursor_prev(cursor);
+  assert (err == DB_SUCCESS);
+
+  err= ib_cursor_delete_row(cursor);
+  if (err != DB_SUCCESS)
+    return -1; // FIXME
+
+  err= ib_cursor_next(cursor);
+  if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
+    return -1; // FIXME
   return 0;
 }
 
