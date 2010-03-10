@@ -55,9 +55,10 @@ public:
   /**
    * Rewrite a query in the form of a std::string
    *
+   * @param[in] schema the schema the current session is in
    * @param[out] to_rewrite string representing the query to rewrite
    */
-  virtual void rewrite(std::string &to_rewrite)= 0; 
+  virtual void rewrite(const std::string &schema, std::string &to_rewrite)= 0; 
 
   static bool addPlugin(QueryRewriter *in_rewriter);
   static void removePlugin(QueryRewriter *in_rewriter);
@@ -67,9 +68,10 @@ public:
    * and let the enabled ones rewrite they query.
    * TODO: does it make sense to have multiple rewriters?
    *
+   * @param[in] schema the schema the current session is
    * @param[out] to_rewrite string representing the query to rewrite
    */
-  static void rewriteQuery(std::string &to_rewrite);
+  static void rewriteQuery(const std::string &schema, std::string &to_rewrite);
 
 private:
 
