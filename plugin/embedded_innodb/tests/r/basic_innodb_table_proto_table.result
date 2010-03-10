@@ -1,7 +1,7 @@
 show create table data_dictionary.innodb_table_definitions;
 Table	Create Table
 innodb_table_definitions	CREATE TABLE `innodb_table_definitions` (
-  `table_name` varbinary(1024) DEFAULT NULL,
+  `table_name` varbinary(192) DEFAULT NULL,
   `message` text
 ) ENGINE=InnoDB
 select * from data_dictionary.innodb_table_definitions;
