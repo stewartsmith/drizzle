@@ -869,7 +869,8 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
 
   search_tuple= ib_clust_search_tuple_create(cursor);
 
-  ib_col_set_value(search_tuple, 0, key_ptr, key_len);
+  err= ib_col_set_value(search_tuple, 0, key_ptr, key_len);
+  assert(err == DB_SUCCESS);
 
   err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
   if (err == DB_RECORD_NOT_FOUND || res != 0)
