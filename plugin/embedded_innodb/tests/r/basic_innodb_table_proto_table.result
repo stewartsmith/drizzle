@@ -1,9 +1,9 @@
 show create table data_dictionary.innodb_table_definitions;
 Table	Create Table
 innodb_table_definitions	CREATE TABLE `innodb_table_definitions` (
-  `table_name` varchar(1024) DEFAULT NULL,
+  `table_name` varchar(192) DEFAULT NULL,
   `message` text,
-  PRIMARY KEY (`table_name`(256)) USING BTREE
+  PRIMARY KEY (`table_name`(48)) USING BTREE
 ) ENGINE=InnoDB
 select * from data_dictionary.innodb_table_definitions;
 table_name	message

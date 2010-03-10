@@ -196,7 +196,8 @@ static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name
 cleanup:
   ib_tuple_delete(message_tuple);
 
-  ib_cursor_close(cursor);
+  ib_err_t cleanup_err= ib_cursor_close(cursor);
+  assert(cleanup_err == DB_SUCCESS);
 
   return err;
 }
@@ -323,10 +324,15 @@ static int delete_table_message_from_innodb(ib_trx_t transaction, const char* ta
   int res;
   ib_err_t err;
 
-  ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  if (err != DB_SUCCESS)
+    return err;
+
   search_tuple= ib_clust_search_tuple_create(cursor);
 
-  ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
+  err= ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
+  if (err != DB_SUCCESS)
+    goto rollback;
 
 //  ib_cursor_set_match_mode(cursor, IB_EXACT_MATCH);
 
@@ -338,8 +344,8 @@ static int delete_table_message_from_innodb(ib_trx_t transaction, const char* ta
   assert (err == DB_SUCCESS);
 
 rollback:
-  ib_cursor_close(cursor);
-  ib_schema_unlock(transaction);
+  ib_err_t rollback_err= ib_cursor_close(cursor);
+  assert(rollback_err == DB_SUCCESS);
   ib_tuple_delete(search_tuple);
 
   return err;
@@ -368,6 +374,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
 
   if (delete_table_message_from_innodb(innodb_schema_transaction, table_name.c_str()+2) != DB_SUCCESS)
   {
+    ib_schema_unlock(innodb_schema_transaction);
     ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
     assert(rollback_err == DB_SUCCESS);
     return HA_ERR_GENERIC;
@@ -492,15 +499,31 @@ static int read_table_message_from_innodb(const char* table_name, drizzled::mess
   ib_col_meta_t col_meta;
   int res;
   ib_err_t err;
+  ib_err_t rollback_err;
 
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  ib_schema_lock_exclusive(transaction);
+  err= ib_schema_lock_exclusive(transaction);
+  if (err != DB_SUCCESS)
+  {
+    rollback_err= ib_trx_rollback(transaction);
+    assert(rollback_err == DB_SUCCESS);
+    return err;
+  }
 
-  ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  if (err != DB_SUCCESS)
+  {
+    rollback_err= ib_trx_rollback(transaction);
+    assert(rollback_err == DB_SUCCESS);
+    return err;
+  }
+
   search_tuple= ib_clust_search_tuple_create(cursor);
   read_tuple= ib_clust_read_tuple_create(cursor);
 
-  ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
+  err= ib_col_set_value(search_tuple, 0, table_name, strlen(table_name));
+  if (err != DB_SUCCESS)
+    goto rollback;
 
 //  ib_cursor_set_match_mode(cursor, IB_EXACT_MATCH);
 
@@ -520,17 +543,24 @@ static int read_table_message_from_innodb(const char* table_name, drizzled::mess
 
   ib_tuple_delete(search_tuple);
   ib_tuple_delete(read_tuple);
-  ib_cursor_close(cursor);
-  ib_trx_commit(transaction);
+  err= ib_cursor_close(cursor);
+  if (err != DB_SUCCESS)
+    goto rollback_close_err;
+  err= ib_trx_commit(transaction);
+  if (err != DB_SUCCESS)
+    goto rollback_close_err;
 
   return 0;
 
 rollback:
   ib_tuple_delete(search_tuple);
   ib_tuple_delete(read_tuple);
-  ib_cursor_close(cursor);
+  rollback_err= ib_cursor_close(cursor);
+  assert(rollback_err == DB_SUCCESS);
+rollback_close_err:
   ib_schema_unlock(transaction);
-  ib_trx_rollback(transaction);
+  rollback_err= ib_trx_rollback(transaction);
+  assert(rollback_err == DB_SUCCESS);
 
   if (strcmp(table_name, INNODB_TABLE_DEFINITIONS_TABLE) == 0)
   {
@@ -714,29 +744,60 @@ static int create_table_message_table()
   ib_idx_sch_t index_schema;
   ib_trx_t transaction;
   ib_id_t table_id;
+  ib_err_t err;
+  ib_bool_t create_db_err;
 
-  ib_database_create("data_dictionary");
+  create_db_err= ib_database_create("data_dictionary");
+  if (create_db_err != IB_TRUE)
+    return -1;
 
-  ib_table_schema_create(INNODB_TABLE_DEFINITIONS_TABLE, &schema,
-                         IB_TBL_COMPACT, 0);
-  ib_table_schema_add_col(schema, "table_name", IB_VARCHAR, IB_COL_NONE, 0,
-                          IB_MAX_TABLE_NAME_LEN);
-  ib_table_schema_add_col(schema, "message", IB_BLOB, IB_COL_NONE, 0, 0);
+  err= ib_table_schema_create(INNODB_TABLE_DEFINITIONS_TABLE, &schema,
+                              IB_TBL_COMPACT, 0);
+  if (err != DB_SUCCESS)
+    return err;
 
-  ib_table_schema_add_index(schema, "PRIMARY_KEY", &index_schema);
-  ib_index_schema_add_col(index_schema, "table_name", 0);
-  ib_index_schema_set_clustered(index_schema);
+  err= ib_table_schema_add_col(schema, "table_name", IB_VARCHAR, IB_COL_NONE, 0,
+                               IB_MAX_TABLE_NAME_LEN);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  err= ib_table_schema_add_col(schema, "message", IB_BLOB, IB_COL_NONE, 0, 0);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  err= ib_table_schema_add_index(schema, "PRIMARY_KEY", &index_schema);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  err= ib_index_schema_add_col(index_schema, "table_name", 0);
+  if (err != DB_SUCCESS)
+    goto rollback;
+  err= ib_index_schema_set_clustered(index_schema);
+  if (err != DB_SUCCESS)
+    goto rollback;
 
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-  ib_schema_lock_exclusive(transaction);
+  err= ib_schema_lock_exclusive(transaction);
+  if (err != DB_SUCCESS)
+    goto rollback;
 
-  ib_table_create(transaction, schema, &table_id);
+  err= ib_table_create(transaction, schema, &table_id);
+  if (err != DB_SUCCESS)
+    goto rollback;
 
-  ib_trx_commit(transaction);
+  err= ib_trx_commit(transaction);
+  if (err != DB_SUCCESS)
+    goto rollback;
 
   ib_table_schema_delete(schema);
 
   return 0;
+rollback:
+  ib_schema_unlock(transaction);
+  ib_table_schema_delete(schema);
+  ib_err_t rollback_err= ib_trx_rollback(transaction);
+  assert(rollback_err == DB_SUCCESS);
+  return err;
 }
 
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
