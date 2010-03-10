@@ -2,25 +2,25 @@
 
 use data_dictionary;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT count(*) FROM columns;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT count(*) FROM indexes;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT count(*) FROM index_parts;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT SCHEMA_NAME  FROM schemas;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT COLUMN_NAME  FROM columns;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 
---replace_column 1 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 SELECT count(*) FROM TABLE_CONSTRAINTS;
 
 # Make sure we don't change the names of the columns

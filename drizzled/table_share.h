@@ -199,12 +199,27 @@ public:
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 
+  const char *getTableName() const
+  {
+    return table_name.str;
+  }
+
+  const char *getSchemaName() const
+  {
+    return db.str;
+  }
+
   uint32_t   block_size;                   /* create information */
   uint64_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
+
+  uint32_t getRecordLength()
+  {
+    return reclength;
+  }
 
 private:
   /* Max rows is a hint to HEAP during a create tmp table */
@@ -213,8 +228,24 @@ private:
   message::Table *table_proto;
 public:
 
+  const char * getTableTypeAsString() const
+  {
+    switch (table_proto->type())
+    {
+    default:
+    case message::Table::STANDARD:
+      return "STANDARD";
+    case message::Table::TEMPORARY:
+      return "TEMPORARY";
+    case message::Table::INTERNAL:
+      return "INTERNAL";
+    case message::Table::FUNCTION:
+      return "FUNCTION";
+    }
+  }
+
   /* This is only used in one location currently */
-  inline message::Table * getTableProto()
+  inline message::Table *getTableProto() const
   {
     return table_proto;
   }

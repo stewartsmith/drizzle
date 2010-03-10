@@ -673,12 +673,6 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
-  {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), getSecurityContext().getIp().c_str());
-    return false;
-  }
-
   const string passwd_str(passwd, passwd_len);
   bool is_authenticated=
     plugin::Authentication::isAuthenticated(getSecurityContext(),

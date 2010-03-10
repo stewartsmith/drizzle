@@ -29,7 +29,7 @@
 
 #include "pack.h"
 #include "errmsg.h"
-#include "oldlibdrizzle.h"
+#include "drizzle_protocol.h"
 #include "options.h"
 
 #define PROTOCOL_VERSION 10
@@ -39,8 +39,12 @@ namespace drizzled
 extern uint32_t global_thread_id;
 }
 
-using namespace std;
 using namespace drizzled;
+using namespace std;
+
+namespace drizzle_protocol
+{
+
 
 static const uint32_t DRIZZLE_TCP_PORT= 4427;
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
@@ -849,16 +853,6 @@ static drizzle_sys_var* sys_variables[]= {
   NULL
 };
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "drizzle_protocol",
-  "0.1",
-  "Eric Day",
-  "Drizzle Protocol Module",
-  PLUGIN_LICENSE_GPL,
-  init,             /* Plugin Init */
-  sys_variables,    /* system variables */
-  NULL              /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+} /* namespace drizzle_protocol */
+
+DRIZZLE_PLUGIN(drizzle_protocol::init, drizzle_protocol::sys_variables);

@@ -64,13 +64,13 @@ void QueryRewriter::removePlugin(QueryRewriter *in_rewriter)
  * This is the QueryRewriter::rewrite entry point.
  * This gets called from within the Drizzle kernel.
  */
-void QueryRewriter::rewriteQuery(string &to_rewrite)
+void QueryRewriter::rewriteQuery(const string &schema, string &to_rewrite)
 {
   for (vector<plugin::QueryRewriter *>::iterator iter= all_rewriters.begin();
        iter != all_rewriters.end();
        ++iter)
   {
-    (*iter)->rewrite(to_rewrite);
+    (*iter)->rewrite(schema, to_rewrite);
   }
 }
 

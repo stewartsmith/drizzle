@@ -121,7 +121,7 @@ bool TransactionLogTool::Generator::populate()
   push(transaction_log_index->getMaxTransactionId());
   push(transaction_log_index->getMinEndTimestamp());
   push(transaction_log_index->getMaxEndTimestamp()); 
-  push(transaction_log_index->getSizeInBytes());
+  push(static_cast<uint64_t>(transaction_log_index->getSizeInBytes()));
 
   is_done= true;
   return true;

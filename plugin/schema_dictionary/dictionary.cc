@@ -35,6 +35,7 @@ static TableConstraintsTool *table_constraints;
 static TablesTool *tables;
 static ShowTables *local_tables;
 static ShowTableStatus *table_status;
+static ShowTemporaryTables *show_temporary_tables;
 
 
 static int init(drizzled::plugin::Context &context)
@@ -42,12 +43,13 @@ static int init(drizzled::plugin::Context &context)
   columns= new(std::nothrow)ColumnsTool;
   index_parts= new(std::nothrow)IndexPartsTool;
   indexes= new(std::nothrow)IndexesTool;
-  referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
-  schemas= new(std::nothrow)SchemasTool;
   local_tables= new(std::nothrow)ShowTables;
+  referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
   schema_names= new(std::nothrow)SchemaNames;
-  show_indexes= new(std::nothrow)ShowIndexes;
+  schemas= new(std::nothrow)SchemasTool;
   show_columns= new(std::nothrow)ShowColumns;
+  show_indexes= new(std::nothrow)ShowIndexes;
+  show_temporary_tables= new(std::nothrow)ShowTemporaryTables;
   table_constraints= new(std::nothrow)TableConstraintsTool;
   table_status= new(std::nothrow)ShowTableStatus;
   tables= new(std::nothrow)TablesTool;
@@ -59,8 +61,9 @@ static int init(drizzled::plugin::Context &context)
   context.add(referential_constraints);
   context.add(schema_names);
   context.add(schemas);
-  context.add(show_indexes);
   context.add(show_columns);
+  context.add(show_indexes);
+  context.add(show_temporary_tables);
   context.add(table_constraints);
   context.add(table_status);
   context.add(tables);

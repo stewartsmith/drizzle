@@ -131,7 +131,6 @@ private:
   void clearError();
 
   TransactionLog &log; ///< The transaction log instance
-  int log_file; ///< File descriptor for the transaction log file
   int index_file; ///< File descriptor for the transaction log on-disk index file
   const std::string index_file_path; ///< Filename of the on-disk transaction log index
   bool has_error; ///< Index is in error mode?
