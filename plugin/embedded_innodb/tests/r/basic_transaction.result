@@ -1,0 +1,16 @@
+CREATE TABLE t1 (a int);
+START TRANSACTION WITH CONSISTENT SNAPSHOT;
+SELECT count(*) from t1;
+count(*)
+0
+BEGIN;
+INSERT INTO t1 VALUES (1),(1),(1),(1),(1),(1),(1),(1),(1),(1), (1),(1),(1),(1),(1),(1),(1),(1),(1),(1), (1),(1),(1),(1),(1),(1),(1),(1),(1),(1), (1),(1);
+select count(*) from t1;
+count(*)
+0
+INSERT INTO t1 VALUES  (1),(1),(1),(1),(1),(1),(1),(1),(1),(1);
+COMMIT;
+SELECT count(*) from t1;
+count(*)
+42
+DROP TABLE t1;
