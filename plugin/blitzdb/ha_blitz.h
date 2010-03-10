@@ -245,6 +245,7 @@ private:
 
   /* THREAD STATE */
   bool table_scan;           /* Whether a table scan is occuring */
+  bool table_based;          /* Whether the query involves rnd_xxx() */
   bool thread_locked;        /* Whether the thread is locked */
   uint32_t sql_command_type; /* Type of SQL command to process */
 
@@ -342,6 +343,7 @@ public:
     : drizzled::plugin::StorageEngine(name_arg,
                                       drizzled::HTON_FILE_BASED |
                                       drizzled::HTON_NULL_IN_KEY |
+                                      drizzled::HTON_PRIMARY_KEY_IN_READ_INDEX |
                                       drizzled::HTON_STATS_RECORDS_IS_EXACT |
                                       drizzled::HTON_SKIP_STORE_LOCK) {
     table_definition_ext = BLITZ_SYSTEM_EXT;

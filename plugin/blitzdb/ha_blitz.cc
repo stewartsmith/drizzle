@@ -210,6 +210,7 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                    TableShare &table_arg) : Cursor(engine_arg, table_arg),
                                             table_scan(false),
+                                            table_based(false),
                                             thread_locked(false),
                                             held_key(NULL),
                                             held_key_len(0),
@@ -280,6 +281,7 @@ int ha_blitz::rnd_init(bool scan) {
   /* Obtain the most suitable lock for the given statement type */
   sql_command_type = session_sql_command(current_session);
   table_scan = scan;
+  table_based = true;
 
   /* This is unlocked at rnd_end() */
   critical_section_enter();
@@ -341,9 +343,9 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
 }
 
 int ha_blitz::rnd_end() {
-  if (current_key)
+  if (table_scan && current_key)
     free(current_key);
-  if (held_key)
+  if (table_scan && held_key)
     free(held_key);
 
   current_key = NULL;
@@ -351,6 +353,7 @@ int ha_blitz::rnd_end() {
   current_key_len = 0;
   held_key_len = 0;
   table_scan = false;
+  table_based = false;
   
   if (thread_locked)
     critical_section_exit();
@@ -364,7 +367,7 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
   int key_len, row_len;
 
   memcpy(&key_len, pos, sizeof(key_len));
-  key = reinterpret_cast<char *>(pos + sizeof(key_len));
+  key = (char *)(pos + sizeof(key_len));
 
   /* TODO: Find a better error type. */
   if (key == NULL)
@@ -377,13 +380,12 @@ int ha_blitz::rnd_pos(unsigned char *copy_to, unsigned char *pos) {
 
   unpack_row(copy_to, row, row_len);
 
-  /* Let the thread remember the key location on memory if
-     the thread is not doing a table scan. This is because
-     either update_row() or delete_row() might be called
-     after this function. */
+  /* Remember the key location on memory if the thread is not doing
+     a table scan. This is because either update_row() or delete_row()
+     might be called after this function. */
   if (!table_scan) {
-    current_key = key;
-    current_key_len = key_len;
+    held_key = key;
+    held_key_len = key_len;
   }
 
   free(row);
@@ -677,55 +679,90 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
 int ha_blitz::update_row(const unsigned char *old_row,
                          unsigned char *new_row) {
-  size_t row_len = max_row_length();
-  unsigned char *row_buf = get_pack_buffer(row_len);
-  int rv = 0;
+
+  int rv;
+  uint32_t lock_id = 0;
 
   ha_statistic_increment(&system_status_var::ha_update_count);
 
-  if (thread_locked) {
-    /* This is a really simple case where an UPDATE statement is
-       requested to be processed in middle of a table scan. */
-    if (table_scan) {
-      row_len = pack_row(row_buf, new_row);
-      rv = share->dict.write_row(held_key, held_key_len, row_buf, row_len); 
-      return rv;
-    }
+  /* Handle Indexes */
+  if (share->nkeys > 0) {
 
-    /* This is for: 'UPDATE t1 SET id = id+1 ORDER BY id LIMIT 2' */
-    if (current_key) {
-      row_len = pack_row(row_buf, new_row);
-      rv = share->dict.write_row(current_key, current_key_len, row_buf, row_len);
+    /* BlitzDB cannot update an indexed row on table scan. */
+    if (table_scan)
+      return HA_ERR_UNSUPPORTED;
 
-      /* Don't free this pointer because drizzled will free the original */
-      current_key = NULL;
-      current_key_len = 0;
-      return rv;
-    }
-
-    /* Check for Unique Constraint Violations. For now it only checks PK. */
     if ((rv = compare_rows_for_unique_violation(old_row, new_row)) != 0)
       return rv;
 
-    /* Check if the old key is in the database. If it is then delete
-       it before writing the row with a new key. */
-    char *key, *fetched;
-    int klen, fetched_len;
+    lock_id = share->blitz_lock.slot_id(held_key, held_key_len);
+    share->blitz_lock.slotted_lock(lock_id);
 
-    key = key_buffer;
-    klen = make_index_key(key, table->s->primary_key, old_row);
-    fetched = share->dict.get_row(key, klen, &fetched_len);
+    /* Update all relevant index entries. Start by deleting the
+       the existing key then write the new key. Something we should
+       consider in the future is to take a diff of the keys and only
+       update changed keys. */
+    int skip_len = btree_key_length(held_key, active_index);
+    char *key_suffix = held_key + skip_len; 
+    uint16_t suffix_len = uint2korr(key_suffix);
 
-    if (fetched != NULL) {
-      share->dict.delete_row(key, klen);
-      free(fetched);
+    for (uint32_t i = 0; i < share->nkeys; i++) {
+      int klen = make_index_key(key_buffer, i, old_row);
+
+      /* Combine the key data from the row with our unique key. */
+      memcpy(key_buffer + klen, key_suffix,
+             sizeof(suffix_len) + suffix_len);
+
+      /* Update klen to cover the entire key. */
+      klen = klen + sizeof(suffix_len) + suffix_len;
+
+      if (share->btrees[i].delete_key(key_buffer, klen) != 0) {
+        errkey_id = i;
+        share->blitz_lock.slotted_unlock(lock_id);
+        return HA_ERR_KEY_NOT_FOUND;
+      }
+
+      /* Now write the new key. */
+      char *pk = key_suffix + sizeof(uint16_t);
+      klen = make_index_key(key_buffer, i, new_row);
+
+      if (i == table->s->primary_key) {
+        rv = share->btrees[i].write(key_buffer, klen, key_buffer, klen);
+      } else {
+        rv = share->btrees[i].write(key_buffer, klen, pk, suffix_len);
+      }
+
+      if (rv != 0) {
+        errkey_id = i;
+        share->blitz_lock.slotted_unlock(lock_id);
+        return rv;
+      }
     }
-
-    /* It is now safe to write the new row. */
-    row_len = pack_row(row_buf, new_row);
-    klen = make_index_key(key, table->s->primary_key, new_row);
-    rv = share->dict.write_row(key, klen, row_buf, row_len);
   }
+
+  /* Getting this far means that the index has been successfully
+     updated. We now update the Data Dictionary. This implementation
+     is admittedly far from optimial and will be revisited. */
+  size_t row_len = max_row_length();
+  unsigned char *row_buf = get_pack_buffer(row_len);
+  row_len = pack_row(row_buf, new_row);
+
+  /* This is a basic case where we can simply overwrite the key. */
+  if (table_based) {
+    rv = share->dict.write_row(held_key, held_key_len, row_buf, row_len);
+  } else {
+    int klen = make_index_key(key_buffer, table->s->primary_key, old_row);
+
+    /* Delete with the old key. */
+    share->dict.delete_row(key_buffer, klen);
+
+    /* Write with the new key. */
+    klen = make_index_key(key_buffer, table->s->primary_key, new_row);
+    rv = share->dict.write_row(key_buffer, klen, row_buf, row_len);
+  }
+
+  if (share->nkeys > 0)
+    share->blitz_lock.slotted_unlock(lock_id);
 
   return rv;
 }
