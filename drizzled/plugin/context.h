@@ -20,6 +20,21 @@
 #ifndef DRIZZLED_PLUGIN_CONTEXT_H
 #define DRIZZLED_PLUGIN_CONTEXT_H
 
+/**
+ * @file Defines a Plugin Context
+ *
+ * A plugin::Context object is a proxy object containing state information
+ * about the plugin being registered that knows how to perform registration
+ * actions.
+ *
+ * The plugin registration system creates a new plugin::Context for each
+ * plugin::Module during the initializtion phase and passes a reference to
+ * the plugin::Context to the module's init method. This allows the plugin
+ * to call registration methods without having access to larger plugin::Registry
+ * calls. It also provides a filter layer through which calls are made in order
+ * to force things like proper name prefixing and the like.
+ */
+
 #include "drizzled/plugin/registry.h"
 
 namespace drizzled
