@@ -308,12 +308,15 @@ def expand_plugin_ini(plugin, plugin_dir):
       plugin['sources']= new_sources
     plugin['main_source']= plugin['sources'].split()[0]
     
+    new_headers=""
     if plugin_dir != ".":
-      new_headers=""
       for header in plugin['headers'].split():
         if not header.startswith(plugin['rel_path']):
           header= os.path.join(plugin['rel_path'], header)
           new_headers= "%s %s" % (new_headers, header)
+    else:
+      new_headers= " ".join(plugin['headers'].split())
+    if new_headers != "":
       plugin['headers']= new_headers
     
     # Make a yes/no version for autoconf help messages
