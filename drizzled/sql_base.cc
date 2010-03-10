@@ -51,6 +51,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/authorization.h"
 
 using namespace std;
 
@@ -85,6 +86,11 @@ unsigned char *table_cache_key(const unsigned char *record,
   return (unsigned char*) entry->s->table_cache_key.str;
 }
 
+HASH *get_open_cache()
+{
+  return &open_cache;
+}
+
 
 bool table_cache_init(void)
 {
@@ -99,9 +105,9 @@ void table_cache_free(void)
   refresh_version++;				// Force close of open tables
 
   while (unused_tables)
-    hash_delete(&open_cache,(unsigned char*) unused_tables);
+    hash_delete(&open_cache, (unsigned char*) unused_tables);
 
-  if (!open_cache.records)			// Safety first
+  if (not open_cache.records)			// Safety first
     hash_free(&open_cache);
 }
 
@@ -188,7 +194,7 @@ void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
   table->intern_close_table();
-  if (!table->in_use)
+  if (not table->in_use)
   {
     table->next->prev=table->prev;		/* remove from used chain */
     table->prev->next=table->next;
@@ -2028,6 +2034,20 @@ restart:
       continue;
     }
     (*counter)++;
+
+    /*
+     * Is the user authorized to see this table? Do this before we check
+     * to see if it exists so that an unauthorized user cannot phish for
+     * table/schema information via error messages
+     */
+    if (not plugin::Authorization::isAuthorized(getSecurityContext(),
+                                                string(tables->db),
+                                                string(tables->table_name)))
+    {
+      result= -1;                               // Fatal error
+      break;
+    }
+
 
     /*
       Not a placeholder: must be a base table or a view, and the table is

@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_SECURITY_CONTEXT_H
 #define DRIZZLED_SECURITY_CONTEXT_H
 
+#include <string>
+
 namespace drizzled
 {
 

@@ -47,7 +47,8 @@
 #include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/xa_storage_engine.h"
+#include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
@@ -424,7 +425,7 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+  for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
@@ -1329,13 +1330,6 @@ static int init_server_components(plugin::Registry &plugins)
       unireg_abort(1);
   }
 
-  /* We have to initialize the storage engines before CSV logging */
-  if (ha_init())
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't init databases"));
-    unireg_abort(1);
-  }
-
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a
     "memory" engine which will be configurable longterm.
@@ -1363,7 +1357,7 @@ static int init_server_components(plugin::Registry &plugins)
     global_system_variables.storage_engine= engine;
   }
 
-  if (plugin::XaStorageEngine::recoverAllXids(0))
+  if (plugin::XaResourceManager::recoverAllXids(0))
   {
     unireg_abort(1);
   }
@@ -2358,6 +2352,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
+  assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||
       my_tz_init((Session *)0, default_tz_name))
   {

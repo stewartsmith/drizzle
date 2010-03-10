@@ -38,9 +38,9 @@
 #ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_READER_H
 #define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_READER_H
 
-#include "transaction_log.h"
-
 #include <drizzled/plugin/transaction_reader.h>
+
+class TransactionLog;
 
 /**
  * A class which reads Transaction messages from the Transaction log file
