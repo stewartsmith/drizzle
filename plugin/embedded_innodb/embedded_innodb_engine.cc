@@ -213,8 +213,18 @@ int EmbeddedInnoDBEngine::doCommit(Session* session, bool all)
 
 int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
 {
-  (void)session;
-  (void)all;
+  ib_err_t err;
+  ib_trx_t *transaction= get_trx(session);
+
+  if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    err= ib_trx_rollback(*transaction);
+
+    if (err != DB_SUCCESS)
+      return -1;
+
+    *transaction= NULL;
+  }
 
   return 0;
 }
