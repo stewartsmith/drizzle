@@ -282,6 +282,10 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
 
 
 def expand_plugin_ini(plugin, plugin_dir):
+    if plugin['name'] == "**OUT-OF-TREE**":
+      print "Out of tree plugins require the name field to be specified in plugin.ini"
+      sys.exit(1)
+
     if plugin_dir == ".":
       plugin['rel_path']= plugin_dir
       plugin['unconditional']=True
@@ -340,6 +344,11 @@ def find_testsuite(plugin_dir):
   return None
 
 def read_plugin_ini(plugin_dir):
+    if plugin_dir == ".":
+      plugin_name="**OUT-OF-TREE**"
+    else:
+      plugin_name=os.path.basename(plugin_dir)
+
     plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
     plugin_defaults= dict(sources="",
                           headers="",
@@ -352,7 +361,7 @@ def read_plugin_ini(plugin_dir):
                           title="",
                           description="",
                           license="PLUGIN_LICENSE_GPL",
-                          name=os.path.basename(plugin_dir),
+                          name=plugin_name,
                           load_by_default="False",
                           disabled="False",
                           static="False",
