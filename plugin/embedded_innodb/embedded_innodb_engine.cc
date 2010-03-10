@@ -128,11 +128,21 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 
 int EmbeddedInnoDBCursor::close(void)
 {
+  ib_err_t err;
+
   ib_tuple_delete(tuple);
-  ib_cursor_close(cursor);
-  ib_trx_commit(transaction);
+  err= ib_cursor_close(cursor);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  err= ib_trx_commit(transaction);
+  assert(err == DB_SUCCESS);
 
   return 0;
+rollback:
+  ib_err_t rollback_err= ib_trx_rollback(transaction);
+  assert(rollback_err == DB_SUCCESS);
+  return -1; // FIXME
 }
 
 static int create_table_add_field(ib_tbl_sch_t schema,
@@ -664,7 +674,7 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   err= ib_cursor_insert_row(cursor, tuple);
   assert (err == DB_SUCCESS);
 
-  ib_tuple_clear(tuple);
+  tuple= ib_tuple_clear(tuple);
 
   return 0;
 }
