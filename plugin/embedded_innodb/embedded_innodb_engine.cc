@@ -914,7 +914,14 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *)
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
 
-  ib_cursor_first(cursor);
+  err= ib_cursor_first(cursor);
+  if (err != DB_SUCCESS)
+  {
+    if (err == DB_END_OF_INDEX)
+      return HA_ERR_END_OF_FILE;
+    else
+      return -1; // FIXME
+  }
 
   if (active_index == 0)
   {
@@ -931,7 +938,14 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
 
-  ib_cursor_last(cursor);
+  err= ib_cursor_last(cursor);
+  if (err != DB_SUCCESS)
+  {
+    if (err == DB_END_OF_INDEX)
+      return HA_ERR_END_OF_FILE;
+    else
+      return -1; // FIXME
+  }
 
   if (active_index == 0)
   {
