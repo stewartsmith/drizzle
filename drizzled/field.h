@@ -32,6 +32,7 @@
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
 #include "drizzled/charset_info.h"
+#include "drizzled/item_result.h"
 
 #include <string>
 #include <vector>
