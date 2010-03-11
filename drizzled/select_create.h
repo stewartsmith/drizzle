@@ -28,7 +28,7 @@ class select_create: public select_insert {
   TableList *create_table;
   bool is_if_not_exists;
   HA_CREATE_INFO *create_info;
-  message::Table *table_proto;
+  message::Table &table_proto;
   TableList *select_tables;
   AlterInfo *alter_info;
   Field **field;
@@ -40,7 +40,7 @@ public:
   select_create (TableList *table_arg,
                  bool is_if_not_exists_arg,
                  HA_CREATE_INFO *create_info_par,
-                 message::Table *proto,
+                 message::Table &proto,
                  AlterInfo *alter_info_arg,
                  List<Item> &select_fields,enum_duplicates duplic, bool ignore,
                  TableList *select_tables_arg)
