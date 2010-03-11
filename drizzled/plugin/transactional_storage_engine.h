@@ -60,31 +60,30 @@ class TransactionalStorageEngine :public StorageEngine
 {
 public:
   TransactionalStorageEngine(const std::string name_arg,
-                             const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                             bool two_phase_commit= false);
+                             const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS);
 
   virtual ~TransactionalStorageEngine();
 
-  int startTransaction(Session *session, start_transaction_option_t options)
+  virtual int startTransaction(Session *session, start_transaction_option_t options)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForTransaction(session, this);
+    transaction_services.registerResourceForTransaction(session, this, this);
     return doStartTransaction(session, options);
   }
 
-  void startStatement(Session *session)
+  virtual void startStatement(Session *session)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.registerResourceForStatement(session, this);
+    transaction_services.registerResourceForStatement(session, this, this);
     doStartStatement(session);
   }
 
-  int commit(Session *session, bool normal_transaction)
+  virtual int commit(Session *session, bool normal_transaction)
   {
     return doCommit(session, normal_transaction);
   }
 
-  int rollback(Session *session, bool normal_transaction)
+  virtual int rollback(Session *session, bool normal_transaction)
   {
     return doRollback(session, normal_transaction);
   }
@@ -104,9 +103,21 @@ public:
     return doReleaseSavepoint(session, sp);
   }
 
-  bool hasTwoPhaseCommit()
+  /* 
+   * The below are simple virtual overrides for the plugin::MonitoredInTransaction
+   * interface.
+   */
+  virtual bool participatesInSqlTransaction() const
   {
-    return two_phase_commit;
+    return true; /* We DO participate in the SQL transaction */
+  }
+  virtual bool participatesInXaTransaction() const
+  {
+    return false; /* We DON'T participate in the XA transaction */
+  }
+  virtual bool alwaysRegisterForXaTransaction() const
+  {
+    return false;
   }
 
   /** 
@@ -213,7 +224,6 @@ private:
     (void) session;
     return 0;
   }
-  const bool two_phase_commit;
 };
 
 } /* namespace plugin */

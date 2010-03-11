@@ -273,4 +273,31 @@ TableShare *TableShare::getShare(const char *db, const char *table_name)
   }
 }
 
+/**
+ * @todo
+ *
+ * Precache this stuff....
+ */
+bool TableShare::fieldInPrimaryKey(Field *in_field) const
+{
+  assert(table_proto != NULL);
+  
+  size_t num_indexes= table_proto->indexes_size();
+
+  for (size_t x= 0; x < num_indexes; ++x)
+  {
+    const message::Table::Index &index= table_proto->indexes(x);
+    if (index.is_primary())
+    {
+      size_t num_parts= index.index_part_size();
+      for (size_t y= 0; y < num_parts; ++y)
+      {
+        if (index.index_part(y).fieldnr() == in_field->field_index)
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
 } /* namespace drizzled */

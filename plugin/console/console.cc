@@ -17,6 +17,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/session.h>
 
 #include <iostream>
 
@@ -25,6 +26,10 @@ using namespace drizzled;
 
 static bool enabled= false;
 static bool debug_enabled= false;
+static char* user = (char*)"";
+static char* password = (char*)"";
+static char* db = NULL;
+
 
 class ClientConsole: public plugin::Client
 {
@@ -84,7 +89,8 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    return true;
+    session->getSecurityContext().setUser(user);
+    return session->checkUser(password, strlen(password), db);
   }
 
   virtual bool readCommand(char **packet, uint32_t *packet_length)
@@ -323,10 +329,19 @@ static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
 
 static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Turn on extra debugging."), NULL, NULL, false);
+static DRIZZLE_SYSVAR_STR(user, user, PLUGIN_VAR_READONLY,
+                          N_("User to use for auth."), NULL, NULL, NULL);
+static DRIZZLE_SYSVAR_STR(password, password, PLUGIN_VAR_READONLY,
+                          N_("Password to use for auth."), NULL, NULL, NULL);
+static DRIZZLE_SYSVAR_STR(db, db, PLUGIN_VAR_READONLY,
+                          N_("Default database to use."), NULL, NULL, NULL);
 
 static drizzle_sys_var* vars[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(debug),
+  DRIZZLE_SYSVAR(user),
+  DRIZZLE_SYSVAR(password),
+  DRIZZLE_SYSVAR(db),
   NULL
 };
 

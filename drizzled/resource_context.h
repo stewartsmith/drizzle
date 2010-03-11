@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,19 +28,21 @@ namespace drizzled
 
 namespace plugin
 {
-class StorageEngine;
+class MonitoredInTransaction;
+class TransactionalStorageEngine;
+class XaResourceManager;
 }
 
 /**
  * Either statement transaction or normal transaction - related
- * session-specific storage engine data.
+ * session-specific resource manager data state.
  *
- * If a storage engine participates in a statement/transaction,
+ * If a resource manager participates in a statement/transaction,
  * an instance of this class is present in
  * session->transaction.{stmt|all}.resource_contexts.
  *
- * When it's time to commit or rollback, each element of ha_list
- * is used to access resource manager's prepare()/commit()/rollback()
+ * When it's time to commit or rollback, each resource context
+ * is used to access the resource manager's prepare()/commit()/rollback()
  * methods, and also to evaluate if a full two phase commit is
  * necessary.
  * 
@@ -49,7 +52,9 @@ class ResourceContext
 {
 public:
   ResourceContext() :
-    resource(NULL),
+    monitored(NULL),
+    xa_resource_manager(NULL),
+    trx_storage_engine(NULL),
     modified_data(false)
   {}
 
@@ -81,28 +86,68 @@ public:
   void coalesceWith(const ResourceContext *stmt_trx);
 
   /**
-   * Returns the underlying resource manager
+   * Returns the underlying descriptor for the resource
    * this context tracks.
    */
-  drizzled::plugin::StorageEngine *getResource() const
+  plugin::MonitoredInTransaction *getMonitored() const
   {
-    return resource;
+    return monitored;
   }
 
   /**
-   * Sets the underlying resource
+   * Sets the underlying descriptor for the resource
    */
-  void setResource(drizzled::plugin::StorageEngine *in_engine)
+  void setMonitored(plugin::MonitoredInTransaction *in_monitored)
   {
-    resource= in_engine;
+    monitored= in_monitored;
+  }
+
+  /**
+   * Returns the underlying transactional storage engine
+   * this context tracks or NULL if not SQL transactional capable.
+   */
+  plugin::TransactionalStorageEngine *getTransactionalStorageEngine() const
+  {
+    return trx_storage_engine;
+  }
+
+  /**
+   * Sets the underlying transactional storage engine
+   */
+  void setTransactionalStorageEngine(plugin::TransactionalStorageEngine *in_trx_storage_engine)
+  {
+    trx_storage_engine= in_trx_storage_engine;
+  }
+
+  /**
+   * Returns the underlying XA resource manager
+   * this context tracks or NULL if not XA capable.
+   */
+  plugin::XaResourceManager *getXaResourceManager() const
+  {
+    return xa_resource_manager;
+  }
+
+  /**
+   * Sets the underlying xa resource manager
+   */
+  void setXaResourceManager(plugin::XaResourceManager *in_xa_resource_manager)
+  {
+    xa_resource_manager= in_xa_resource_manager;
   }
 private:
   /**
-    Although a given ResourceContext instance is always used
-    for the same resource manager, 'resource' is not-NULL only when the
-    corresponding resource manager is a part of a transaction.
-  */
-  drizzled::plugin::StorageEngine *resource;
+   * A descriptor of the monitored resource
+   */
+  plugin::MonitoredInTransaction *monitored;
+  /**
+   * The XA resource manager or NULL if not XA capable.
+   */
+  plugin::XaResourceManager *xa_resource_manager;
+  /**
+   * The transactional storage engine or NULL if not SQL transaction capable.
+   */
+  plugin::TransactionalStorageEngine *trx_storage_engine;
   /**
    * Whether the underlying resource manager has changed
    * some data state.
