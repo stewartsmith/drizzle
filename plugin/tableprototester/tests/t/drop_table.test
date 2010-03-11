@@ -1,2 +1,2 @@
---error 1030
+#--error 1030
 DROP TABLE t1;

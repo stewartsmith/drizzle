@@ -127,33 +127,6 @@ Table	Create Table
   `Ｃ１` enum('龔','龖','龗') DEFAULT NULL,
   KEY `Ｃ１` (`Ｃ１`)
 ) ENGINE=MEMORY
-DESC `Ｔ１`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('ｱ','ｲ','ｳ')	YES	MUL	NULL	
-DESC `Ｔ２`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('あ','い','う')	YES	MUL	NULL	
-DESC `Ｔ３`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('龔','龖','龗')	YES	MUL	NULL	
-DESC `Ｔ４`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('ｱ','ｲ','ｳ')	YES	MUL	NULL	
-DESC `Ｔ５`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('あ','い','う')	YES	MUL	NULL	
-DESC `Ｔ６`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('龔','龖','龗')	YES	MUL	NULL	
-DESC `Ｔ７`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('ｱ','ｲ','ｳ')	YES	MUL	NULL	
-DESC `Ｔ８`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('あ','い','う')	YES	MUL	NULL	
-DESC `Ｔ９`;
-Field	Type	Null	Key	Default	Extra
-Ｃ１	enum('龔','龖','龗')	YES	MUL	NULL	
 ALTER TABLE `Ｔ１` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
 ALTER TABLE `Ｔ２` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
 ALTER TABLE `Ｔ３` ADD `Ｃ２` CHAR(1) NOT NULL FIRST;
@@ -226,42 +199,6 @@ Table	Create Table
   `Ｃ１` enum('龔','龖','龗') DEFAULT NULL,
   KEY `Ｃ１` (`Ｃ１`)
 ) ENGINE=MEMORY
-DESC `Ｔ１`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('ｱ','ｲ','ｳ')	YES	MUL	NULL	
-DESC `Ｔ２`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('あ','い','う')	YES	MUL	NULL	
-DESC `Ｔ３`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('龔','龖','龗')	YES	MUL	NULL	
-DESC `Ｔ４`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('ｱ','ｲ','ｳ')	YES	MUL	NULL	
-DESC `Ｔ５`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('あ','い','う')	YES	MUL	NULL	
-DESC `Ｔ６`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('龔','龖','龗')	YES	MUL	NULL	
-DESC `Ｔ７`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('ｱ','ｲ','ｳ')	YES	MUL	NULL	
-DESC `Ｔ８`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('あ','い','う')	YES	MUL	NULL	
-DESC `Ｔ９`;
-Field	Type	Null	Key	Default	Extra
-Ｃ２	varchar(1)	NO		NULL	
-Ｃ１	enum('龔','龖','龗')	YES	MUL	NULL	
 DROP TABLE `Ｔ１`;
 DROP TABLE `Ｔ２`;
 DROP TABLE `Ｔ３`;

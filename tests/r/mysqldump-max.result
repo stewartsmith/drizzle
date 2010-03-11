@@ -86,7 +86,7 @@ CREATE TABLE `t2` (
 ) ENGINE=ARCHIVE;
 
 ALTER TABLE `t2` DISABLE KEYS;
-INSERT  DELAYED IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT  IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
@@ -121,7 +121,7 @@ CREATE TABLE `t2` (
 ) ENGINE=ARCHIVE;
 
 ALTER TABLE `t2` DISABLE KEYS;
-INSERT  DELAYED INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
