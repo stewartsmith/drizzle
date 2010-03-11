@@ -75,7 +75,7 @@ public:
                     Table&,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const string &table_name);
 
   BlackholeShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, BlackholeShare *);
@@ -213,7 +213,7 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
 }
 
 
-int BlackholeEngine::doDropTable(Session&, const string path)
+int BlackholeEngine::doDropTable(Session&, const string &path)
 {
   string new_path(path);
 
