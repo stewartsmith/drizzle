@@ -1,0 +1,37 @@
+FLUSH STATUS;
+create schema a;
+use a;
+create temporary table a (a int) engine=memory;
+insert into a values (1), (2), (3);
+select * from data_dictionary.show_temporary_tables;
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+a	a	0	5	MEMORY
+create schema b;
+use b;
+create temporary table a (a int);
+create temporary table b (a int);
+insert into a select * from a.a;
+insert into b select * from a.a;
+select * from a;
+a
+1
+2
+3
+select * from b;
+a
+1
+2
+3
+select * from data_dictionary.show_temporary_tables;
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+b	b	3	5	InnoDB
+b	a	3	5	InnoDB
+a	a	3	5	MEMORY
+drop schema a;
+select * from data_dictionary.show_temporary_tables;
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE
+b	b	3	5	InnoDB
+b	a	3	5	InnoDB
+drop schema b;
+select * from data_dictionary.show_temporary_tables;
+TABLE_SCHEMA	TABLE_NAME	RECORDS	RECORD_LENGTH	ENGINE

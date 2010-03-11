@@ -201,8 +201,6 @@ enum ha_base_keytype {
   HA_KEYTYPE_VARBINARY2=18		/* Key is sorted as unsigned chars */
 };
 
-#define HA_MAX_KEYTYPE	31		/* Must be log2-1 */
-
 	/* These flags kan be OR:ed to key-flag */
 
 #define HA_NOSAME		 1	/* Set if not dupplicated records */
@@ -212,11 +210,6 @@ enum ha_base_keytype {
 #define HA_UNIQUE_CHECK		256	/* Check the key for uniqueness */
 #define HA_NULL_ARE_EQUAL	2048	/* NULL in key are cmp as equal */
 #define HA_GENERATED_KEY	8192	/* Automaticly generated key */
-
-        /* The combination of the above can be used for key type comparison. */
-#define HA_KEYFLAG_MASK (HA_NOSAME | HA_PACK_KEY | HA_AUTO_KEY | \
-                         HA_BINARY_PACK_KEY | HA_UNIQUE_CHECK | \
-                         HA_NULL_ARE_EQUAL | HA_GENERATED_KEY)
 
 #define HA_KEY_HAS_PART_KEY_SEG 65536   /* Key contains partial segments */
 
@@ -413,12 +406,10 @@ typedef unsigned long key_part_map;
 #define MBR_WITHIN      2048
 #define MBR_DISJOINT    4096
 #define MBR_EQUAL       8192
-#define MBR_DATA        16384
 #define SEARCH_NULL_ARE_EQUAL 32768	/* NULL in keys are equal */
 #define SEARCH_NULL_ARE_NOT_EQUAL 65536	/* NULL in keys are not equal */
 
 	/* bits in opt_flag */
-#define QUICK_USED	1
 #define READ_CACHE_USED	2
 #define READ_CHECK_USED 4
 #define KEY_READ_USED	8
@@ -432,10 +423,8 @@ typedef unsigned long key_part_map;
 #define HA_STATE_DELETED	8
 #define HA_STATE_NEXT_FOUND	16	/* Next found record (record before) */
 #define HA_STATE_PREV_FOUND	32	/* Prev found record (record after) */
-#define HA_STATE_NO_KEY		64	/* Last read didn't find record */
 #define HA_STATE_KEY_CHANGED	128
 #define HA_STATE_WRITE_AT_END	256	/* set in _ps_find_writepos */
-#define HA_STATE_BUFF_SAVED	512	/* If current keybuff is info->buff */
 #define HA_STATE_ROW_CHANGED	1024	/* To invalide ROW cache */
 #define HA_STATE_EXTEND_BLOCK	2048
 #define HA_STATE_RNEXT_SAME	4096	/* rnext_same occupied lastkey2 */

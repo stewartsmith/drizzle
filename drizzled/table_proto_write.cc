@@ -39,16 +39,16 @@ using namespace std;
 
 namespace drizzled {
 
-int fill_table_proto(message::Table *table_proto,
-                     const char *table_name,
-                     List<CreateField> &create_fields,
-                     HA_CREATE_INFO *create_info,
-                     uint32_t keys,
-                     KEY *key_info)
+static int fill_table_proto(message::Table &table_proto,
+                            const char *table_name,
+                            List<CreateField> &create_fields,
+                            HA_CREATE_INFO *create_info,
+                            uint32_t keys,
+                            KEY *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
-  message::Table::TableOptions *table_options= table_proto->mutable_options();
+  message::Table::TableOptions *table_options= table_proto.mutable_options();
 
   if (create_fields.elements > MAX_FIELDS)
   {
@@ -56,13 +56,13 @@ int fill_table_proto(message::Table *table_proto,
     return(1);
   }
 
-  assert(strcmp(table_proto->engine().name().c_str(),
+  assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
 
-  assert(strcmp(table_proto->name().c_str(),table_name)==0);
+  assert(strcmp(table_proto.name().c_str(),table_name)==0);
 
   int field_number= 0;
-  bool use_existing_fields= table_proto->field_size() > 0;
+  bool use_existing_fields= table_proto.field_size() > 0;
   while ((field_arg= it++))
   {
     message::Table::Field *attribute;
@@ -72,11 +72,11 @@ int fill_table_proto(message::Table *table_proto,
        filled out Field messages */
 
     if (use_existing_fields)
-      attribute= table_proto->mutable_field(field_number++);
+      attribute= table_proto.mutable_field(field_number++);
     else
     {
       /* Other code paths still have to fill out the proto */
-      attribute= table_proto->add_field();
+      attribute= table_proto.add_field();
 
       if(field_arg->flags & NOT_NULL_FLAG)
       {
@@ -304,12 +304,12 @@ int fill_table_proto(message::Table *table_proto,
 
   }
 
-  assert(! use_existing_fields || (field_number == table_proto->field_size()));
+  assert(! use_existing_fields || (field_number == table_proto.field_size()));
 
   switch(create_info->row_type)
   {
   case ROW_TYPE_DEFAULT:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DEFAULT);
+    /* No use setting a default row type... just adds redundant info to message */
     break;
   case ROW_TYPE_FIXED:
     table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
@@ -333,8 +333,8 @@ int fill_table_proto(message::Table *table_proto,
     abort();
   }
 
-  table_options->set_pack_record(create_info->table_options
-				 & HA_OPTION_PACK_RECORD);
+  if (create_info->table_options & HA_OPTION_PACK_RECORD)
+    table_options->set_pack_record(true);
 
   if (table_options->has_comment())
   {
@@ -364,11 +364,11 @@ int fill_table_proto(message::Table *table_proto,
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
-  for (unsigned int i= 0; i < keys; i++)
+  for (uint32_t i= 0; i < keys; i++)
   {
     message::Table::Index *idx;
 
-    idx= table_proto->add_indexes();
+    idx= table_proto.add_indexes();
 
     assert(test(key_info[i].flags & HA_USES_COMMENT) ==
            (key_info[i].comment.length > 0));
@@ -447,7 +447,10 @@ int fill_table_proto(message::Table *table_proto,
 
       idx->set_comment(key_info[i].comment.str);
     }
-    if(key_info[i].flags & ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
+    if (key_info[i].flags & 
+        ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | 
+          HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | 
+          HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
       abort(); // Invalid (unknown) index flag.
 
     for(unsigned int j=0; j< key_info[i].key_parts; j++)
@@ -489,29 +492,6 @@ int delete_table_proto_file(const char *file_name)
   return internal::my_delete(new_path.c_str(), MYF(0));
 }
 
-int drizzle_write_proto_file(const std::string file_name,
-                             message::Table *table_proto)
-{
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
-
-  if (fd == -1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyOutputStream* output=
-    new google::protobuf::io::FileOutputStream(fd);
-
-  if (table_proto->SerializeToZeroCopyStream(output) == false)
-  {
-    delete output;
-    close(fd);
-    return errno;
-  }
-
-  delete output;
-  close(fd);
-  return 0;
-}
-
 /*
   Create a table definition proto file and the tables
 
@@ -533,7 +513,7 @@ int drizzle_write_proto_file(const std::string file_name,
 
 int rea_create_table(Session *session,
                      TableIdentifier &identifier,
-		     message::Table *table_proto,
+		     message::Table &table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_fields,
                      uint32_t keys, KEY *key_info)
@@ -542,42 +522,15 @@ int rea_create_table(Session *session,
 		      keys, key_info))
     return 1;
 
-  string new_path(identifier.getPath());
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-
-  int err= 0;
-
-  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
-                                                                   table_proto->engine().name());
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    err= drizzle_write_proto_file(new_path, table_proto);
-
-  if (err != 0)
-  {
-    if (err == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0), identifier.getDBName());
-    else
-      my_error(ER_CANT_CREATE_TABLE, MYF(0), identifier.getTableName(), err);
-
-    goto err_handler;
-  }
-
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
-                                         false, *table_proto))
+                                         false, table_proto))
   {
-    goto err_handler;
+    return 1;
   }
 
   return 0;
 
-err_handler:
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    plugin::StorageEngine::deleteDefinitionFromPath(identifier);
-
-  return 1;
 } /* rea_create_table */
 
 } /* namespace drizzled */
