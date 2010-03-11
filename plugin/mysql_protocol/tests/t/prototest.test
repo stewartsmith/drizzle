@@ -1,0 +1,1 @@
+--exec ../plugin/mysql_protocol/prototest/mysql_test -p $MASTER_MYPORT

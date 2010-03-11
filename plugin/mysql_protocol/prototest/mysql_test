@@ -15,6 +15,7 @@ This tool requires anonymous authentication to be open on the MySQL
 server.
 '''
 
+import sys
 import optparse
 import socket
 import unittest
@@ -480,9 +481,31 @@ class TestCommand(unittest.TestCase):
       self.assertTrue(isinstance(result, ErrorResult))
       self.assertEqual(result.error_code, UNKNOWN_COMMAND)
 
+class CustomTestRunner(unittest.TextTestRunner):
+  def run(self, test):
+    result = self._makeResult()
+    test(result)
+    result.printErrors()
+    self.stream.writeln(result.separator2)
+    run = result.testsRun
+    self.stream.writeln("Ran %d test%s" % (run, run != 1 and "s" or ""))
+    self.stream.writeln()
+    if not result.wasSuccessful():
+      self.stream.write("FAILED (")
+      failed, errored = map(len, (result.failures, result.errors))
+      if failed:
+        self.stream.write("failures=%d" % failed)
+      if errored:
+        if failed: self.stream.write(", ")
+        self.stream.write("errors=%d" % errored)
+      self.stream.writeln(")")
+    else:
+      self.stream.writeln("OK")
+    return result
+
 if __name__ == '__main__':
   if options.testcase is None:
     suite = unittest.TestLoader().loadTestsFromModule(__import__('__main__'))
   else:
     suite = unittest.TestLoader().loadTestsFromTestCase(eval(options.testcase))
-  unittest.TextTestRunner(verbosity=2).run(suite)
+  CustomTestRunner(stream=sys.stdout, verbosity=2).run(suite)
