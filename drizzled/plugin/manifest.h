@@ -20,6 +20,12 @@
 #ifndef DRIZZLED_PLUGIN_MANIFEST_H
 #define DRIZZLED_PLUGIN_MANIFEST_H
 
+/**
+ * @file Defines a Plugin Manifest
+ *
+ * A plugin::Manifest is the struct contained in every Plugin Library.
+ */
+
 #include "drizzled/plugin/context.h"
 
 namespace drizzled
