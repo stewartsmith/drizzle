@@ -21,6 +21,7 @@
 #define DRIZZLED_HYBRID_TYPE_TRAITS_H
 
 #include "drizzled/common.h"
+#include "drizzled/item_result.h"
 
 namespace drizzled
 {
