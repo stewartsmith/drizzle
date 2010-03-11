@@ -12,8 +12,8 @@ INSERT INTO t1 VALUES (1), (2);
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="TRUE" On Update="" />
-		<key Table="t1" Key_name="a" Seq_in_index="0" Column_name="a" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<key Table="t1" Unique="FALSE" Key_name="a" Seq_in_index="1" Column_name="a" />
 	</table_structure>
 	<table_data name="t1">
 	<row>
@@ -46,7 +46,7 @@ INSERT INTO t1 VALUES ("1\""), ("\"2");
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a&quot;b&quot;" Type="VARCHAR" Null="TRUE" Default="" Default is NULL="TRUE" On Update="" />
+		<field Field="a&quot;b&quot;" Type="VARCHAR" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 	<table_data name="t1">
 	<row>
@@ -947,10 +947,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="TRUE" On Update="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="TRUE" On Update="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 </database>
 </drizzledump>
@@ -958,10 +958,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="TRUE" On Update="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default is NULL="TRUE" On Update="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 </database>
 </drizzledump>
@@ -1130,6 +1130,7 @@ drop table t1, t2, t3;
 # Bug #21288: mysqldump segmentation fault when using --where
 #
 create table t1 (a int);
+Error: Couldn't read status information for table t1
 drizzledump: Couldn't execute 'SELECT * FROM `t1` WHERE xx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx': You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' at line 1 (1064)
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;

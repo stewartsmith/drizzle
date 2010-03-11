@@ -154,7 +154,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   plugin::StorageEngine *engine= NULL;
   message::Table table_proto;
 
-  TableIdentifier old_identifier(ren_table->db, old_alias, NO_TMP_TABLE);
+  TableIdentifier old_identifier(ren_table->db, old_alias, STANDARD_TABLE);
 
   if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, &table_proto) != EEXIST)
   {
@@ -164,8 +164,8 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   engine= plugin::StorageEngine::findByName(*session, table_proto.engine().name());
 
-  TableIdentifier new_identifier(new_db, new_alias, NO_TMP_TABLE);
-  if (plugin::StorageEngine::getTableDefinition(*session, new_identifier) != ENOENT)
+  TableIdentifier new_identifier(new_db, new_alias, STANDARD_TABLE);
+  if (plugin::StorageEngine::doesTableExist(*session, new_identifier))
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return 1; // This can't be skipped

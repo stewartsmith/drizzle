@@ -821,7 +821,7 @@ Field *Field::new_field(memory::Root *root, Table *new_table, bool)
   tmp->part_of_key.reset();
   tmp->part_of_sortkey.reset();
   tmp->unireg_check= Field::NONE;
-  tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG | BINARY_FLAG | ENUM_FLAG | SET_FLAG);
+  tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG | BINARY_FLAG | ENUM_FLAG);
   tmp->reset_fields();
   return tmp;
 }
