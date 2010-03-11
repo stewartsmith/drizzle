@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-11-30 10:13+0000\n"
-"Last-Translator: Keruskerfuerst <armin_mohring@web.de>\n"
+"PO-Revision-Date: 2010-03-10 18:50+0000\n"
+"Last-Translator: Hartmut Holzgraefe <hartmut@php.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-12-01 04:40+0000\n"
+"X-Launchpad-Export-Date: 2010-03-11 04:37+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1457,6 +1457,7 @@ msgstr ""
 #: drizzled/drizzled.cc:2011
 msgid "Select scheduler to be used (by default multi-thread)."
 msgstr ""
+"Wählt den zu benutzenden Scheduler aus (Vorgabewert ist 'multi-thread')"
 
 #: drizzled/drizzled.cc:2016
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
@@ -1487,6 +1488,8 @@ msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
+"Überschreitet eine interne im Speicher gehaltene Tabelle diese Größe so wird "
+"sie automatisch in eine MyISAM Tabelle im Dateisystem umgewandelt."
 
 #: drizzled/drizzled.cc:2047
 msgid "Allocation block size for transactions to be stored in binary log"
@@ -1596,7 +1599,7 @@ msgstr "Ein Systemtabelleneintrag kann nicht gelesen werden"
 #: drizzled/error.cc:60
 #, c-format
 msgid "Can't get status of '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Status von '%-.200s' kann nicht ermittelt werden (Fehlercode: %d)"
 
 #: drizzled/error.cc:62
 #, c-format
@@ -1742,7 +1745,7 @@ msgstr ""
 
 #: drizzled/error.cc:118
 msgid "Can't get hostname for your address"
-msgstr ""
+msgstr "Der Hostname für Ihre Adresse konnte nicht ermittelt werden"
 
 #: drizzled/error.cc:120
 msgid "Bad handshake"
@@ -1842,7 +1845,7 @@ msgstr "Doppelter Eintrag '%-.192s' für Schlüssel %d"
 #: drizzled/error.cc:160
 #, c-format
 msgid "Incorrect column specifier for column '%-.192s'"
-msgstr ""
+msgstr "Ungültiger Spaltenbezeichner für Spalte '%-.192s'"
 
 #: drizzled/error.cc:162
 #, c-format
@@ -1935,7 +1938,7 @@ msgstr ""
 #: drizzled/error.cc:192
 #, c-format
 msgid "%s: Shutdown complete\n"
-msgstr ""
+msgstr "%s: vollständig heruntergefahren\n"
 
 #: drizzled/error.cc:194
 #, c-format
@@ -1944,7 +1947,7 @@ msgstr ""
 
 #: drizzled/error.cc:196
 msgid "Can't create IP socket"
-msgstr ""
+msgstr "IP Socket kann nicht angelegt werden"
 
 #: drizzled/error.cc:198
 #, c-format
@@ -2142,6 +2145,9 @@ msgid ""
 "Row size too large. The maximum row size for the used table type, not "
 "counting BLOBs, is %ld. You have to change some columns to TEXT or BLOBs"
 msgstr ""
+"Zeilenlänge ist zu groß. Die maximale Zeilenlänge für den genutzten "
+"Tabellentyp beträgt %ld (ohne BLOBs). Sie müssen eine oder mehrere Spalten "
+"in TEXT oder BLOB ändern"
 
 #: drizzled/error.cc:272
 #, c-format
@@ -2201,23 +2207,29 @@ msgid ""
 "Host '%-.64s' is blocked because of many connection errors; unblock with "
 "'drizzleadmin flush-hosts'"
 msgstr ""
+"Host '%-.64s' wurde wegen zu häufiger Verbindungsfehler gesperrt, die Sperre "
+"kann mit 'drizzleadmin flush-hosts' aufgehoben werden"
 
 #: drizzled/error.cc:294
 #, c-format
 msgid "Host '%-.64s' is not allowed to connect to this Drizzle server"
-msgstr ""
+msgstr "Host '%-.64s' hat keine Erlaubnis auf den Drizzle Server zuzugreifen"
 
 #: drizzled/error.cc:296
 msgid ""
 "You are using Drizzle as an anonymous user and anonymous users are not "
 "allowed to change passwords"
 msgstr ""
+"Sie nutzen Drizzle als anonymer Benutzer, als solcher ist es Ihnen nicht "
+"gestattet Kennwörter zu ändern"
 
 #: drizzled/error.cc:298
 msgid ""
 "You must have privileges to update tables in the drizzle database to be able "
 "to change passwords for others"
 msgstr ""
+"Um Kennwörter anderer Benutzer ändern zu können brauchen sie "
+"Updateprivilegien auf Tabellen in der drizzle Datenbank"
 
 #: drizzled/error.cc:300
 msgid "Can't find any matching row in the user table"
@@ -2239,6 +2251,7 @@ msgstr ""
 #, c-format
 msgid "Column count doesn't match value count at row %ld"
 msgstr ""
+"Die Anzahl der Spalten entspricht nicht der Anzahl der Werte in Zeile %ld"
 
 #: drizzled/error.cc:308
 #, c-format
@@ -2412,6 +2425,8 @@ msgid ""
 "All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
 "UNIQUE instead"
 msgstr ""
+"Die Bestandteile eines Primary Key können keine NULL-Werte enthalten, wenn "
+"Sie tatsächlich NULL-Werte benötigen sollten Sie statt dessen UNIQUE benutzen"
 
 #: drizzled/error.cc:378
 msgid "Result consisted of more than one row"
