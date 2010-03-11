@@ -28,6 +28,8 @@
 #include "drizzled/charset_info.h"
 #include "drizzled/cursor.h"
 
+#include "drizzled/internal/my_sys.h"
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -57,6 +59,13 @@ Schema::Schema():
   table_definition_ext= DEFAULT_FILE_EXTENSION;
   pthread_rwlock_init(&schema_lock, NULL);
   prime();
+#if 0
+  message::Schema schema_message;
+
+  schema_message.set_name("temporary_tables");
+
+  doCreateSchema(schema_message);
+#endif
 }
 
 Schema::~Schema()
@@ -137,8 +146,6 @@ void Schema::prime()
     {
       pair<SchemaCache::iterator, bool> ret=
         schema_cache.insert(make_pair(schema_message.name(), schema_message));
-
-      cerr << "Caching " << schema_message.name() << "\n";
 
       if (ret.second == false)
       {
@@ -270,6 +277,15 @@ bool Schema::doDropSchema(const std::string &schema_name)
   return true;
 }
 
+int Schema::doDropTable(Session&, const string &table_path)
+{
+  string path(table_path);
+
+  path.append(DEFAULT_FILE_EXTENSION);
+
+  return internal::my_delete(path.c_str(), MYF(0));
+}
+
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 {
   char	 path[FN_REFLEN+16];
@@ -399,3 +415,15 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
 
   return false;
 }
+
+bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
+{
+  if (not strcasecmp(identifier.getSchemaName(), "temporary_tables"))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+

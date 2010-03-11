@@ -43,6 +43,8 @@
 #include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
+#include "drizzled/plugin/query_rewrite.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
 
@@ -210,6 +212,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
                         session->thread_id,
                         const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
 
+    plugin::QueryRewriter::rewriteQuery(session->db, session->query);
     mysql_parse(session, session->query.c_str(), session->query.length());
 
     break;
@@ -1394,10 +1397,10 @@ static unsigned int
 kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
-  uint32_t error=ER_NO_SUCH_THREAD;
+  uint32_t error= ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   
-  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+  for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     if ((*it)->thread_id == id)
     {
@@ -1409,8 +1412,13 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
   pthread_mutex_unlock(&LOCK_thread_count);
   if (tmp)
   {
-    tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
-    error=0;
+
+    if (tmp->isViewable())
+    {
+      tmp->awake(only_kill_query ? Session::KILL_QUERY : Session::KILL_CONNECTION);
+      error= 0;
+    }
+
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
   return(error);
@@ -1579,9 +1587,9 @@ bool insert_precheck(Session *session, TableList *)
 
 bool create_table_precheck(TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getDBName(), DRIZZLE_DATA_DICTIONARY) == 0)
+  if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", DRIZZLE_DATA_DICTIONARY);
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName());
     return true;
   }
 

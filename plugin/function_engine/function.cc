@@ -104,6 +104,21 @@ bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Sc
   return true;
 }
 
+bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
+{
+  if (not strcasecmp(identifier.getSchemaName(), "information_schema"))
+  {
+    return false;
+  }
+
+  if (not strcasecmp(identifier.getSchemaName(), "data_dictionary"))
+  {
+    return false;
+  }
+
+  return true;
+}
+
 
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
 

@@ -87,7 +87,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       break;
   }
 
-  if (flags & (ENUM_FLAG | SET_FLAG))
+  if (flags & ENUM_FLAG)
     interval= ((Field_enum*) old_field)->typelib;
   else
     interval= 0;

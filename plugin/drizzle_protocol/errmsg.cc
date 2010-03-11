@@ -23,6 +23,9 @@
 #include <drizzled/gettext.h>
 #include "errmsg.h"
 
+namespace drizzle_protocol
+{
+
 static const char *client_errors[]=
 {
   N_("Unknown Drizzle error"),
@@ -112,4 +115,6 @@ const char *
 drizzleclient_get_client_error(unsigned int err_index)
 {
   return _(client_errors[err_index]);
-}
+} 
+
+} /* namespace drizzle_protocol */

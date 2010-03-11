@@ -47,7 +47,8 @@
 #include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
-#include "drizzled/plugin/xa_storage_engine.h"
+#include "drizzled/plugin/xa_resource_manager.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
@@ -424,7 +425,7 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  for( vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+  for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
@@ -1119,7 +1120,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     strncpy(system_time_zone, tzname[tm_tmp.tm_isdst != 0 ? 1 : 0],
             sizeof(system_time_zone)-1);
 
- }
+  }
   /*
     We set SYSTEM time zone as reasonable default and
     also for failure of my_tz_init() and bootstrap mode.
@@ -1131,8 +1132,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strncpy(glob_hostname, STRING_WITH_LEN("localhost"));
-      errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
-                      glob_hostname);
+    errmsg_printf(ERRMSG_LVL_WARN, _("gethostname failed, using '%s' as hostname"),
+                  glob_hostname);
     strncpy(pidfile_name, STRING_WITH_LEN("drizzle"));
   }
   else
@@ -1195,14 +1196,14 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.collation_server=	 default_charset_info;
 
   if (not (character_set_filesystem=
-        get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+           get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
     return 1;
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -1329,13 +1330,6 @@ static int init_server_components(plugin::Registry &plugins)
       unireg_abort(1);
   }
 
-  /* We have to initialize the storage engines before CSV logging */
-  if (ha_init())
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't init databases"));
-    unireg_abort(1);
-  }
-
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a
     "memory" engine which will be configurable longterm.
@@ -1363,7 +1357,7 @@ static int init_server_components(plugin::Registry &plugins)
     global_system_variables.storage_engine= engine;
   }
 
-  if (plugin::XaStorageEngine::recoverAllXids(0))
+  if (plugin::XaResourceManager::recoverAllXids(0))
   {
     unireg_abort(1);
   }
@@ -1763,7 +1757,7 @@ struct my_option my_long_options[] =
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
    N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_UINT64,
-   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
+   REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, TABLE_OPEN_CACHE_MIN, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
    N_("Timeout in seconds to wait for a table level lock before returning an "
       "error. Used only if the connection has active cursors."),
@@ -2358,6 +2352,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
+  assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||
       my_tz_init((Session *)0, default_tz_name))
   {
