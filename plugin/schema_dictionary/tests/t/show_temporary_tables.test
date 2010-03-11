@@ -1,0 +1,26 @@
+FLUSH STATUS;
+
+create schema a;
+use a;
+create temporary table a (a int) engine=memory;
+insert into a values (1), (2), (3);
+select * from data_dictionary.show_temporary_tables;
+
+create schema b;
+use b;
+create temporary table a (a int);
+create temporary table b (a int);
+
+insert into a select * from a.a;
+insert into b select * from a.a;
+
+select * from a;
+select * from b;
+
+select * from data_dictionary.show_temporary_tables;
+
+drop schema a;
+select * from data_dictionary.show_temporary_tables;
+
+drop schema b;
+select * from data_dictionary.show_temporary_tables;

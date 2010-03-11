@@ -149,7 +149,7 @@ public:
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
-  int doDropTable(Session&, const string table_path);
+  int doDropTable(Session&, const string &table_path);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -161,7 +161,7 @@ public:
 };
 
 int Tina::doDropTable(Session&,
-                        const string table_path)
+                        const string &table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted

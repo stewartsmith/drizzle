@@ -115,4 +115,4 @@ static int plugin_deinit(plugin::Registry &registry)
   return 0;
 }
 
-DRIZZLE_PLUGIN(plugin_init, plugin_deinit, NULL, NULL);
+DRIZZLE_PLUGIN(plugin_init, plugin_deinit, NULL);

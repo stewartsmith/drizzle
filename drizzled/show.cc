@@ -863,7 +863,7 @@ void calc_sum_of_all_status(system_status_var *to)
   *to= global_status_var;
 
   /* Add to this status from existing threads */
-  for(vector<Session*>::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
+  for(SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     add_to_status(to, &((*it)->status_var));
   }

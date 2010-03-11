@@ -21,8 +21,6 @@
 #ifndef DRIZZLED_DB_H
 #define DRIZZLED_DB_H
 
-#define DRIZZLE_DATA_DICTIONARY "data_dictionary"
-
 namespace drizzled {
 
 namespace message { class Schema; }
