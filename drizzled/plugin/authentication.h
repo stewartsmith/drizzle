@@ -22,11 +22,14 @@
 #ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
 #define DRIZZLED_PLUGIN_AUTHENTICATION_H
 
+#include <string>
+
+#include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
 
 namespace drizzled
 {
-class Session;
+class SecurityContext;
 
 namespace plugin
 {
@@ -42,11 +45,13 @@ public:
   {}
   virtual ~Authentication() {}
 
-  virtual bool authenticate(Session *, const char *)= 0;
+  virtual bool authenticate(const SecurityContext &sctx,
+                            const std::string &passwd)= 0;
 
   static bool addPlugin(plugin::Authentication *auth);
   static void removePlugin(plugin::Authentication *auth);
-  static bool isAuthenticated(Session *session, const char *password);
+  static bool isAuthenticated(const SecurityContext &sctx,
+                              const std::string &password);
 };
 
 } /* namespace plugin */

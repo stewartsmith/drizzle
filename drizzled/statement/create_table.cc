@@ -73,9 +73,9 @@ bool statement::CreateTable::execute()
 
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! lex_identified_temp_table)
+  if (not lex_identified_temp_table)
   {
-    if (! session->endActiveTransaction())
+    if (not session->endActiveTransaction())
     {
       return true;
     }
@@ -91,7 +91,7 @@ bool statement::CreateTable::execute()
   */
   TableIdentifier new_table_identifier(create_table->db,
                                        create_table->table_name,
-                                       create_table_proto.type() != message::Table::TEMPORARY ? NO_TMP_TABLE : TEMP_TABLE);
+                                       create_table_proto.type() != message::Table::TEMPORARY ? STANDARD_TABLE : TEMP_TABLE);
 
   if (create_table_precheck(new_table_identifier))
   {
@@ -167,7 +167,7 @@ bool statement::CreateTable::execute()
       if ((result= new select_create(create_table,
                                      is_if_not_exists,
                                      &create_info,
-                                     &create_table_proto,
+                                     create_table_proto,
                                      &alter_info,
                                      select_lex->item_list,
                                      session->lex->duplicates,
@@ -196,7 +196,6 @@ bool statement::CreateTable::execute()
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
-                                   create_info.db_type, 
                                    is_if_not_exists,
                                    is_engine_set);
     }
@@ -213,13 +212,13 @@ bool statement::CreateTable::execute()
       res= mysql_create_table(session, 
                               new_table_identifier,
                               &create_info,
-                              &create_table_proto,
+                              create_table_proto,
                               &alter_info, 
                               false, 
                               0,
                               is_if_not_exists);
     }
-    if (! res)
+    if (not res)
     {
       session->my_ok();
     }

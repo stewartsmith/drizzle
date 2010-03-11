@@ -83,7 +83,7 @@ public:
                     Table&,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const string& table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -383,7 +383,8 @@ rollback:
   return err;
 }
 
-int EmbeddedInnoDBEngine::doDropTable(Session& session, const string table_name)
+
+int EmbeddedInnoDBEngine::doDropTable(Session& session, const string& table_name)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t innodb_err;
@@ -1124,7 +1125,7 @@ DRIZZLE_DECLARE_PLUGIN
   "INNODB",
   "1.0",
   "Stewart Smith",
-  "Used to test rest of server with various table proto messages",
+  "Transactional Storage Engine using the Embedded InnoDB Library",
   PLUGIN_LICENSE_GPL,
   embedded_innodb_init,     /* Plugin Init */
   embedded_innodb_fini,     /* Plugin Deinit */
