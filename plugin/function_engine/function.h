@@ -51,7 +51,7 @@ public:
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, const std::string) 
+  int doDropTable(drizzled::Session&, const std::string&) 
   { 
     return EPERM; 
   }
@@ -68,6 +68,9 @@ public:
   {
     return drizzled::plugin::TableFunction::getFunction(path);
   }
+
+  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+
 
   void doGetTableNames(drizzled::CachedDirectory&, 
                        std::string &db, 

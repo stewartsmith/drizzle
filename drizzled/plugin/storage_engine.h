@@ -30,6 +30,7 @@
 #include "drizzled/sql_string.h"
 #include "drizzled/table_identifier.h"
 #include "drizzled/cached_directory.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
 
 #include "drizzled/hash.h"
 
@@ -140,7 +141,8 @@ extern const std::string DEFAULT_DEFINITION_FILE_EXT;
 
   static StorageEngine { ... } xxx_engine;
 */
-class StorageEngine : public Plugin
+class StorageEngine : public Plugin,
+                      public MonitoredInTransaction
 {
 public:
   typedef uint64_t Table_flags;
@@ -234,21 +236,6 @@ protected:
 public:
   virtual void print_error(int error, myf errflag, Table& table);
 
-  /*
-    each storage engine has it's own memory area (actually a pointer)
-    in the session, for storing per-connection information.
-    It is accessed as
-
-      session->ha_data[xxx_engine.slot]
-
-   slot number is initialized by MySQL after xxx_init() is called.
-  */
-  uint32_t slot;
-
-  inline uint32_t getSlot (void) { return slot; }
-  inline uint32_t getSlot (void) const { return slot; }
-  inline void setSlot (uint32_t value) { slot= value; }
-
   bool is_user_selectable() const
   {
     return not flags.test(HTON_BIT_NOT_USER_SELECTABLE);
@@ -271,20 +258,14 @@ public:
   }
 
   /*
-    StorageEngine methods:
-
-    close_connection is only called if
-    session->ha_data[xxx_engine.slot] is non-zero, so even if you don't need
-    this storage area - set it to something, so that MySQL would know
-    this storage engine was accessed in this connection
-  */
+   * Called during Session::cleanup() for all engines
+   */
   virtual int close_connection(Session  *)
   {
     return 0;
   }
   virtual Cursor *create(TableShare &, memory::Root *)= 0;
   /* args: path */
-  virtual void drop_database(char*) { }
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
   {
@@ -322,12 +303,12 @@ public:
     return doRenameTable(session, from, to);
   }
 
-  // TODO: move these to protected
+  // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
   virtual int doDropTable(Session& session,
-                          const std::string table_path)= 0;
+                          const std::string &table_path)= 0;
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
@@ -357,9 +338,13 @@ public:
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int dropTable(Session& session,
-                       TableIdentifier &identifier,
-                       bool generate_warning);
+                       TableIdentifier &identifier);
   static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
+
+  // Check to see if any SE objects to creation.
+  static bool canCreateTable(drizzled::TableIdentifier &identifier);
+  virtual bool doCanCreateTable(const drizzled::TableIdentifier &identifier)
+  { (void)identifier;  return true; }
 
   // @note All schema methods defined here
   static void getSchemaNames(SchemaNameList &set_of_names);
@@ -399,8 +384,7 @@ public:
   static int createTable(Session& session,
                          TableIdentifier &identifier,
                          bool update_create_info,
-                         message::Table& table_proto,
-                         bool used= true);
+                         message::Table& table_proto);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
@@ -429,6 +413,24 @@ public:
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+
+public:
+  /* 
+   * The below are simple virtual overrides for the plugin::MonitoredInTransaction
+   * interface.
+   */
+  virtual bool participatesInSqlTransaction() const
+  {
+    return false; /* plugin::StorageEngine is non-transactional in terms of SQL */
+  }
+  virtual bool participatesInXaTransaction() const
+  {
+    return false; /* plugin::StorageEngine is non-transactional in terms of XA */
+  }
+  virtual bool alwaysRegisterForXaTransaction() const
+  {
+    return false;
+  }
 };
 
 } /* namespace plugin */

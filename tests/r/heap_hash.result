@@ -3,11 +3,11 @@ create temporary table t1 (a int not null,b int not null, primary key using HASH
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
 show table status like "t1";
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MEMORY	0	DEFAULT	0	0	0	0	0	0	0	0	0	0	utf8_general_ci	0		
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	a
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -36,8 +36,8 @@ create temporary table t1 (a int not null,b int not null, primary key using HASH
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 alter table t1 modify a int not null auto_increment, engine=innodb, comment="new innodb table";
 show table status like "t1";
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	InnoDB	0	DEFAULT	0	0	0	0	0	0	0	0	0	0	utf8_general_ci	0		
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	InnoDB	#	#	#	#	#
 select * from t1;
 a	b
 1	1
@@ -326,15 +326,15 @@ explain select * from t1 ignore index (btree_idx) where name='matt';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	heap_idx	heap_idx	82	const	9	Using where
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	id
-t1	heap_idx	0	name
-t1	btree_idx	0	name
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	id
+t1	FALSE	heap_idx	1	name
+t1	FALSE	btree_idx	1	name
 show index from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	id
-t1	heap_idx	0	name
-t1	btree_idx	0	name
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	id
+t1	FALSE	heap_idx	1	name
+t1	FALSE	btree_idx	1	name
 create temporary table t3
 (
 a varchar(20) not null,
@@ -343,13 +343,13 @@ key (a,b)
 ) engine=MEMORY;
 insert into t3 select name, name from t1;
 show index from t3;
-Table	Key_name	Seq_in_index	Column_name
-t3	a	0	a
-t3	a	1	b
+Table	Unique	Key_name	Seq_in_index	Column_name
+t3	FALSE	a	1	a
+t3	FALSE	a	2	b
 show index from t3;
-Table	Key_name	Seq_in_index	Column_name
-t3	a	0	a
-t3	a	1	b
+Table	Unique	Key_name	Seq_in_index	Column_name
+t3	FALSE	a	1	a
+t3	FALSE	a	2	b
 explain select * from t1 ignore key(btree_idx), t3 where t1.name='matt' and t3.a = concat('',t1.name) and t3.b=t1.name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	heap_idx	heap_idx	82	const	9	Using where
