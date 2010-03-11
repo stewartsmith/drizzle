@@ -101,7 +101,7 @@ bool CommandsTool::Generator::populate()
       push(user_commands->getDropCount());
       push(user_commands->getAdminCount());
       record_number++;
-      break;
+      return true;
     }
     else 
     {
@@ -109,5 +109,5 @@ bool CommandsTool::Generator::populate()
     }
   }
 
-  return true;
+  return false;
 }

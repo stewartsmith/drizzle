@@ -147,6 +147,7 @@ bool LoggingStats::post(Session *session)
   pthread_rwlock_wrlock(&LOCK_scoreboard);
   ScoreBoardSlot *score_board_slot;
   int our_slot= -1; 
+  int open_slot= -1;
 
   for (uint32_t j=0; j < scoreboard_size; j++)
   {
@@ -168,7 +169,10 @@ bool LoggingStats::post(Session *session)
     else 
     {
       /* save off the open slot */ 
-      our_slot= j;
+      if (open_slot == -1)
+      {
+        open_slot= j;
+      } 
       continue;
     }
   }
@@ -180,6 +184,15 @@ bool LoggingStats::post(Session *session)
     score_board_slot->setUser(session->getSecurityContext().getUser());
     score_board_slot->setIp(session->getSecurityContext().getIp());
     pthread_rwlock_unlock(&LOCK_scoreboard); 
+  }
+  else if (open_slot != -1)
+  {
+    score_board_slot= &score_board_slots[open_slot];
+    score_board_slot->setInUse(true);
+    score_board_slot->setSessionId(session->getSessionId());
+    score_board_slot->setUser(session->getSecurityContext().getUser());
+    score_board_slot->setIp(session->getSecurityContext().getIp());
+    pthread_rwlock_unlock(&LOCK_scoreboard);
   }
   else 
   {
