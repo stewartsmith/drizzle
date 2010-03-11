@@ -96,7 +96,7 @@ public:
 
   void doGetTableNames(drizzled::CachedDirectory &directory, std::string& , std::set<std::string>& set_of_names);
 
-  int doDropTable(drizzled::Session&, const std::string table_path);
+  int doDropTable(drizzled::Session&, const std::string &table_path);
   ArchiveShare *findOpenTable(const std::string table_name);
   void addOpenTable(const std::string &table_name, ArchiveShare *);
   void deleteOpenTable(const std::string &table_name);

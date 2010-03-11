@@ -27,6 +27,7 @@
 #include <drizzled/sql_list.h>
 #include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
+#include "drizzled/item_result.h"
 
 namespace drizzled
 {
@@ -46,7 +47,6 @@ namespace plugin
 {
 class Client;
 }
-
 
 /**
   Dummy error processor used by default by Name_resolution_context.

@@ -1,0 +1,5 @@
+use data_dictionary;
+
+select * from INNODB_LOCK_WAITS;
+
+show create table INNODB_LOCK_WAITS;

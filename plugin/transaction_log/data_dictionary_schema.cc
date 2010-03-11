@@ -40,6 +40,7 @@
  * , MAX_TRANSACTION_ID BIGINT NOT NULL
  * , MIN_END_TIMESTAMP BIGINT NOT NULL
  * , MAX_END_TIMESTAMP BIGINT NOT NULL
+ * , INDEX_SIZE_IN_BYTES BIGINT NOT NULL
  * );
  *
  * CREATE TABLE DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES (
@@ -90,6 +91,7 @@ TransactionLogTool::TransactionLogTool() :
   add_field("MAX_TRANSACTION_ID", plugin::TableFunction::NUMBER);
   add_field("MIN_END_TIMESTAMP", plugin::TableFunction::NUMBER);
   add_field("MAX_END_TIMESTAMP", plugin::TableFunction::NUMBER);
+  add_field("INDEX_SIZE_IN_BYTES", plugin::TableFunction::NUMBER);
 }
 
 TransactionLogTool::Generator::Generator(Field **arg) :
@@ -119,6 +121,7 @@ bool TransactionLogTool::Generator::populate()
   push(transaction_log_index->getMaxTransactionId());
   push(transaction_log_index->getMinEndTimestamp());
   push(transaction_log_index->getMaxEndTimestamp()); 
+  push(static_cast<uint64_t>(transaction_log_index->getSizeInBytes()));
 
   is_done= true;
   return true;

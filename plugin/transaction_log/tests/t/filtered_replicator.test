@@ -16,7 +16,7 @@ set global filtered_replicator_filteredtables=t2;
 --source ../plugin/transaction_log/tests/t/insert_multi.inc
 --source ../plugin/transaction_log/tests/t/insert_select.inc
 --source ../plugin/transaction_log/tests/t/alter.inc
---source ../plugin/transaction_log/tests/t/database.inc
+--source ../plugin/transaction_log/tests/t/schema.inc
 --source ../plugin/transaction_log/tests/t/rename.inc
 --source ../plugin/transaction_log/tests/t/delete.inc
 --source ../plugin/transaction_log/tests/t/update.inc
