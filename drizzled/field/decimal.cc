@@ -356,35 +356,6 @@ uint32_t Field_decimal::pack_length_from_metadata(uint32_t field_metadata)
 }
 
 
-/**
-  Check to see if field size is compatible with destination.
-
-  This method is used in row-based replication to verify that the slave's
-  field size is less than or equal to the master's field size. The
-  encoded field metadata (from the master or source) is decoded and compared
-  to the size of this field (the slave or destination).
-
-  @param   field_metadata   Encoded size in field metadata
-
-  @retval 0 if this field's size is < the source field's size
-  @retval 1 if this field's size is >= the source field's size
-*/
-int Field_decimal::compatible_field_size(uint32_t field_metadata)
-{
-  int compatible= 0;
-  uint32_t const source_precision= (field_metadata >> 8U) & 0x00ff;
-  uint32_t const source_decimal= field_metadata & 0x00ff;
-  uint32_t const source_size= my_decimal_get_binary_size(source_precision,
-                                                         source_decimal);
-  uint32_t const destination_size= row_pack_length();
-  compatible= (source_size <= destination_size);
-  if (compatible)
-    compatible= (source_precision <= precision) &&
-      (source_decimal <= decimals());
-  return (compatible);
-}
-
-
 uint32_t Field_decimal::is_equal(CreateField *new_field_ptr)
 {
   return ((new_field_ptr->sql_type == real_type()) &&

@@ -149,10 +149,10 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-t1	timestamp	YES		2003-01-01 00:00:00	
-t2	datetime	YES		NULL	
-t3	timestamp	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	
+t2	DATETIME	TRUE	2003-01-01 00:00:00	TRUE	
+t3	TIMESTAMP	TRUE	2003-01-01 00:00:00	TRUE	
 drop table t1;
 create table t1 (t1 timestamp default now(), t2 datetime, t3 timestamp);
 SET TIMESTAMP=1000000002;
@@ -173,10 +173,10 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-t1	timestamp	YES		CURRENT_TIMESTAMP	
-t2	datetime	YES		NULL	
-t3	timestamp	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t1	TIMESTAMP	TRUE	NOW()	TRUE	
+t2	DATETIME	TRUE	NOW()	TRUE	
+t3	TIMESTAMP	TRUE	NOW()	TRUE	
 drop table t1;
 create table t1 (t1 timestamp default '2003-01-01 00:00:00' on update now(), t2 datetime);
 SET TIMESTAMP=1000000004;
@@ -199,9 +199,9 @@ t1	CREATE TABLE `t1` (
   `t2` datetime DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-t1	timestamp	YES		2003-01-01 00:00:00	on update CURRENT_TIMESTAMP
-t2	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	NOW()
+t2	DATETIME	TRUE	2003-01-01 00:00:00	TRUE	NOW()
 drop table t1;
 create table t1 (t1 timestamp default now() on update now(), t2 datetime);
 SET TIMESTAMP=1000000006;
@@ -224,9 +224,9 @@ t1	CREATE TABLE `t1` (
   `t2` datetime DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-t1	timestamp	YES		CURRENT_TIMESTAMP	on update CURRENT_TIMESTAMP
-t2	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
+t2	DATETIME	TRUE	NOW()	TRUE	NOW()
 drop table t1;
 create table t1 (t1 timestamp, t2 datetime, t3 timestamp);
 SET TIMESTAMP=1000000007;
@@ -250,10 +250,10 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-t1	timestamp	YES		NULL	
-t2	datetime	YES		NULL	
-t3	timestamp	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t1	TIMESTAMP	TRUE		TRUE	
+t2	DATETIME	TRUE		TRUE	
+t3	TIMESTAMP	TRUE		TRUE	
 drop table t1;
 create table t1 (t1 timestamp default current_timestamp on update current_timestamp, t2 datetime);
 SET TIMESTAMP=1000000009;
@@ -276,9 +276,9 @@ t1	CREATE TABLE `t1` (
   `t2` datetime DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-t1	timestamp	YES		CURRENT_TIMESTAMP	on update CURRENT_TIMESTAMP
-t2	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
+t2	DATETIME	TRUE	NOW()	TRUE	NOW()
 truncate table t1;
 insert into t1 values ('2004-04-01 00:00:00', '2004-04-01 00:00:00');
 SET TIMESTAMP=1000000012;
@@ -438,11 +438,11 @@ CREATE TABLE t1 (
 PRIMARY KEY (`id`)
 ) AUTO_INCREMENT=1;
 show fields from t1;
-Field	Type	Null	Key	Default	Extra
-id	int	NO	PRI	NULL	auto_increment
-username	varchar(80)	NO			
-posted_on	timestamp	NO		CURRENT_TIMESTAMP	
-select is_nullable from INFORMATION_SCHEMA.OLD_COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
+Field	Type	Null	Default	Default_is_NULL	On_Update
+id	INTEGER	FALSE		FALSE	
+username	VARCHAR	FALSE		FALSE	
+posted_on	TIMESTAMP	FALSE	NOW()	FALSE	
+select is_nullable from data_dictionary.columns where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
 is_nullable
-NO
+FALSE
 drop table t1;

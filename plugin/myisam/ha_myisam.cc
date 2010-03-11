@@ -101,7 +101,7 @@ public:
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -1223,7 +1223,7 @@ int ha_myisam::info(uint32_t flag)
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
     /* Update share */
-    if (share->tmp_table == NO_TMP_TABLE)
+    if (share->tmp_table == STANDARD_TABLE)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->keys);
     /*
@@ -1277,7 +1277,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->tmp_table == NO_TMP_TABLE)
+    if (share->tmp_table == STANDARD_TABLE)
       pthread_mutex_unlock(&share->mutex);
 
    /*
@@ -1330,7 +1330,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session&, const string table_path)
+int MyisamEngine::doDropTable(Session&, const string &table_path)
 {
   ProtoCache::iterator iter;
 

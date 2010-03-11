@@ -61,7 +61,6 @@ int decimal_is_zero(const decimal_t *from);
 void max_decimal(int precision, int frac, decimal_t *to);
 
 #define string2decimal(A,B,C) internal_str2dec((A), (B), (C), 0)
-#define string2decimal_fixed(A,B,C) internal_str2dec((A), (B), (C), 1)
 
 /* set a decimal_t to zero */
 

@@ -363,7 +363,7 @@ public:
 
   int doRenameTable(drizzled::Session *session, const char *from, const char *to);
 
-  int doDropTable(drizzled::Session&, const string table_name); 
+  int doDropTable(drizzled::Session&, const string &table_name); 
 
   int doGetTableDefinition(drizzled::Session& session,
                            const char *path, const char *db,

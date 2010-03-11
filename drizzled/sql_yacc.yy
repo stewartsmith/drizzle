@@ -1037,13 +1037,13 @@ create:
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    message::Table *proto= &statement->create_table_proto;
+	    message::Table &proto= statement->create_table_proto;
 	   
-	    proto->set_name($5->table.str);
+	    proto.set_name($5->table.str);
 	    if($2)
-	      proto->set_type(message::Table::TEMPORARY);
+	      proto.set_type(message::Table::TEMPORARY);
 	    else
-	      proto->set_type(message::Table::STANDARD);
+	      proto.set_type(message::Table::STANDARD);
           }
           create2
           {
@@ -4748,10 +4748,9 @@ show_param:
 
               if ($2)
               {
-                message::Schema schema_message;
                 column_name.append($2);
                 lex->select_lex.db= $2;
-                if (not plugin::StorageEngine::getSchemaDefinition($2, schema_message))
+                if (not plugin::StorageEngine::doesSchemaExist($2))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
@@ -4775,7 +4774,7 @@ show_param:
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "LOCAL_TABLE_NAMES"))
+               if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4790,8 +4789,11 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+             statement::Select *select=
                new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -4801,16 +4803,21 @@ show_param:
 
              if ($3)
              {
-               message::Schema schema_message;
                lex->select_lex.db= $3;
 
-               if (not plugin::StorageEngine::getSchemaDefinition($3, schema_message))
+               if (not plugin::StorageEngine::doesSchemaExist($3))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }
+
+               select->setShowPredicate($3, "");
+             }
+             else
+             {
+               select->setShowPredicate(session->db, "");
              }
 
-             if (prepare_new_schema_table(session, lex, "LOCAL_TABLE_STATUS"))
+             if (prepare_new_schema_table(session, lex, "SHOW_TABLE_STATUS"))
                DRIZZLE_YYABORT;
 
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->
@@ -4821,28 +4828,86 @@ show_param:
            }
         | COLUMNS from_or_in table_ident opt_db show_wild
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if ($4)
-              $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "OLD_COLUMNS"))
-              DRIZZLE_YYABORT;
+             LEX *lex= Lex;
+             Session *session= YYSession;
+             statement::Select *select;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             select= new(std::nothrow) statement::Select(session);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             if ($4)
+              select->setShowPredicate($4, $3->table.str);
+             else if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $3->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_COLUMNS"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
           }
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_KEYS;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if ($4)
-              $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "OLD_STATISTICS"))
-              DRIZZLE_YYABORT;
+             LEX *lex= Lex;
+             Session *session= YYSession;
+             statement::Select *select;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             select= new(std::nothrow) statement::Select(session);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             if ($4)
+              select->setShowPredicate($4, $3->table.str);
+             else if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $3->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "show_indexes"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
@@ -5026,17 +5091,43 @@ show_wild:
 describe:
           describe_command table_ident
           {
+            Session *session= YYSession;
+            statement::Select *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->sql_command= SQLCOM_SELECT;
+            select= new(std::nothrow) statement::Select(session);
+            lex->statement= select;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
-            if (prepare_schema_table(YYSession, lex, $2, "OLD_COLUMNS"))
-              DRIZZLE_YYABORT;
+
+             if ($2->db.str)
+              select->setShowPredicate($2->db.str, $2->table.str);
+             else
+              select->setShowPredicate(session->db, $2->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $2->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $2->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_COLUMNS"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
           }
           opt_describe_column {}
         | describe_command opt_extended_describe
@@ -5093,14 +5184,26 @@ flush_options:
 
 flush_option:
           table_or_tables
-          { Lex->type|= REFRESH_TABLES; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTables(true);
+          }
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
-          { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTablesWithReadLock(true);
+          }
         | LOGS_SYM
-          { Lex->type|= REFRESH_LOG; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushLog(true);
+          }
         | STATUS_SYM
-          { Lex->type|= REFRESH_STATUS; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushStatus(true);
+          }
         ;
 
 opt_table_list:

@@ -90,9 +90,9 @@ update t1 set c = "added column" where a = 2;
 update t1 set c = "added column" where a = 3;
 update t1 set c = "added column" where a = 4;
 select * from t1;
-alter table t1 drop a;
-alter table t1 drop b;
-select * from t1;
+#alter table t1 drop a;
+#alter table t1 drop b;
+#select * from t1;
 drop table t1;
 
 # Test(8): Basic GROUP BY syntax.

@@ -6,8 +6,6 @@ drop table if exists t1,t2;
 drop schema if exists data_dictionary;
 --enable_warnings
 
-create schema data_dictionary;
-
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
 #
@@ -15,7 +13,7 @@ set @my_myisam_key_cache_size           =@@global.myisam_key_cache_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
-set @my_drizzle_protocol_buffer_length =@@global.drizzle_protocol_buffer_length;
+set @my_mysql_protocol_buffer_length =@@global.mysql_protocol_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
 set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
@@ -116,16 +114,16 @@ show global variables like 'myisam_max_sort_file_size';
 --replace_result 9223372036853727232 FILE_SIZE 2146435072 FILE_SIZE
 select * from data_dictionary.global_variables where variable_name like 'myisam_max_sort_file_size';
 
-set global drizzle_protocol_buffer_length=1024;
-show global variables like 'drizzle_protocol_buffer_%';
-select * from data_dictionary.global_variables where variable_name like 'drizzle_protocol_buffer_%';
-show global variables like 'drizzle_protocol_buffer_%';
-select * from data_dictionary.global_variables where variable_name like 'drizzle_protocol_buffer_%';
-set global drizzle_protocol_buffer_length=1;
-show variables like 'drizzle_protocol_buffer_length';
+set global mysql_protocol_buffer_length=1024;
+show global variables like 'mysql_protocol_buffer_%';
+select * from data_dictionary.global_variables where variable_name like 'mysql_protocol_buffer_%';
+show global variables like 'mysql_protocol_buffer_%';
+select * from data_dictionary.global_variables where variable_name like 'mysql_protocol_buffer_%';
+set global mysql_protocol_buffer_length=1;
+show variables like 'mysql_protocol_buffer_length';
 #warning 1292
-set global drizzle_protocol_buffer_length=2000000000;
-show variables like 'drizzle_protocol_buffer_length';
+set global mysql_protocol_buffer_length=2000000000;
+show variables like 'mysql_protocol_buffer_length';
 
 show variables like '%alloc%';
 select * from data_dictionary.session_variables where variable_name like '%alloc%';
@@ -182,7 +180,7 @@ set max_join_size=100;
 set max_sort_length=100;
 set global max_write_lock_count=100;
 set global myisam_sort_buffer_size=100;
-set global drizzle_protocol_buffer_length=100;
+set global mysql_protocol_buffer_length=100;
 set read_buffer_size=100;
 set read_rnd_buffer_size=100;
 set global server_id=100;
@@ -524,7 +522,7 @@ set global max_join_size             =@my_max_join_size;
 set global max_write_lock_count      =default;
 --error 1232
 set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
-set global drizzle_protocol_buffer_length= @my_drizzle_protocol_buffer_length;
+set global mysql_protocol_buffer_length= @my_mysql_protocol_buffer_length;
 set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 --error 1193
@@ -536,5 +534,3 @@ set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 #
 --replace_column 2 #
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
-
-drop schema data_dictionary;

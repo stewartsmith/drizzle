@@ -160,14 +160,6 @@ a	b	c
 2	2	added column
 3	3	added column
 4	4	added column
-alter table t1 drop a;
-alter table t1 drop b;
-select * from t1;
-c
-added column
-added column
-added column
-added column
 drop table t1;
 create table t1 (name varchar(32), point int) engine = blitzdb;
 insert into t1 values ('aaa', 10);

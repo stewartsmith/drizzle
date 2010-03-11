@@ -90,7 +90,7 @@ int BlitzEngine::doRenameTable(Session *, const char *from, const char *to) {
   return (dict.rename_table(from, to)) ? 0 : -1;
 }
 
-int BlitzEngine::doDropTable(Session &, const string path) {
+int BlitzEngine::doDropTable(Session &, const string &path) {
   BlitzData dict;
   BlitzTree btree;
   char buf[FN_REFLEN];
