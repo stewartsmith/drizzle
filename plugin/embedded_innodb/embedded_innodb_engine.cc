@@ -73,7 +73,7 @@ public:
                     Table&,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const string& table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -126,7 +126,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session*, const char *,
 }
 
 
-int EmbeddedInnoDBEngine::doDropTable(Session&, const string)
+int EmbeddedInnoDBEngine::doDropTable(Session&, const string&)
 {
   return EPERM;
 }
