@@ -46,11 +46,6 @@ namespace drizzled
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
-/* number of entries in storage_engines[] */
-uint32_t total_ha= 0;
-/* number of storage engines (from storage_engines[]) that support 2pc */
-uint32_t total_ha_2pc= 0;
-
 const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
@@ -142,14 +137,6 @@ static int ha_finish_errors(void)
     return 1;
   free((unsigned char*) errmsgs);
   return 0;
-}
-
-int ha_init()
-{
-  int error= 0;
-
-  assert(total_ha < MAX_HA);
-  return error;
 }
 
 int ha_end()

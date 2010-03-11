@@ -36,7 +36,6 @@ extern	system_variables*	wdl_global_system_variables;
 extern	char*			wdl_mysql_real_data_home;
 extern	char**			wdl_mysql_data_home;
 extern	char**			wdl_tx_isolation_names;
-extern	char**			wdl_binlog_format_names;
 extern	char*			wdl_reg_ext;
 extern	pthread_mutex_t*	wdl_LOCK_thread_count;
 extern	key_map*		wdl_key_map_full;
@@ -56,7 +55,6 @@ extern	int*			wdl_my_umask;
 #define mysql_real_data_home	(wdl_mysql_real_data_home)
 #define mysql_data_home		(*wdl_mysql_data_home)
 #define tx_isolation_names	(wdl_tx_isolation_names)
-#define binlog_format_names	(wdl_binlog_format_names)
 #define reg_ext			(wdl_reg_ext)
 #define LOCK_thread_count	(*wdl_LOCK_thread_count)
 #define key_map_full		(*wdl_key_map_full)

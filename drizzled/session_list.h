@@ -26,8 +26,8 @@ namespace drizzled
 {
 
 class Session;
-
-std::vector<Session *> &getSessionList();
+typedef std::vector<Session *> SessionList;
+SessionList &getSessionList();
 
 }
 

@@ -898,8 +898,8 @@ checksum table t1, t2, t3, t4, t5, t6, t7;
 Table	Checksum
 test.t1	2948697075
 test.t2	2948697075
-test.t3	2948697075
-test.t4	2948697075
+test.t3	3505595080
+test.t4	3505595080
 test.t5	2948697075
 test.t6	2948697075
 test.t7	NULL
@@ -909,8 +909,8 @@ checksum table t1, t2, t3, t4, t5, t6, t7;
 Table	Checksum
 test.t1	2948697075
 test.t2	2948697075
-test.t3	2948697075
-test.t4	2948697075
+test.t3	3505595080
+test.t4	3505595080
 test.t5	2948697075
 test.t6	2948697075
 test.t7	NULL
@@ -920,8 +920,8 @@ checksum table t1, t2, t3, t4, t5, t6, t7;
 Table	Checksum
 test.t1	2948697075
 test.t2	2948697075
-test.t3	2948697075
-test.t4	2948697075
+test.t3	3505595080
+test.t4	3505595080
 test.t5	2948697075
 test.t6	2948697075
 test.t7	NULL
