@@ -34,6 +34,9 @@
 
 using namespace std;
 
+namespace drizzle_protocol
+{
+
 /*
  * Helper to fill most of the Vio* with defaults.
  */
@@ -120,5 +123,6 @@ void drizzleclient_vio_delete(Vio* vio)
 
 */
 void drizzleclient_vio_end(void)
-{
-}
+{ }
+
+} /* namespace drizzle_protocol */
