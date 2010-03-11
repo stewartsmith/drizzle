@@ -20,20 +20,15 @@
 #ifndef PLUGIN_DRIZZLE_PROTOCOL_PACK_H
 #define PLUGIN_DRIZZLE_PROTOCOL_PACK_H
 
-#include <stdint.h>
+namespace drizzle_protocol
+{
 
 #define NULL_LENGTH UINT32_MAX
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+uint32_t drizzleclient_net_field_length(unsigned char **packet);
+uint64_t drizzleclient_drizzleclient_net_field_length_ll(unsigned char **packet);
+unsigned char *drizzleclient_net_store_length(unsigned char *pkg, uint64_t length);
 
-  uint32_t drizzleclient_net_field_length(unsigned char **packet);
-  uint64_t drizzleclient_drizzleclient_net_field_length_ll(unsigned char **packet);
-  unsigned char *drizzleclient_net_store_length(unsigned char *pkg, uint64_t length);
-
-#ifdef __cplusplus
-}
-#endif
+} /* namespace drizzle_protocol */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_PACK_H */

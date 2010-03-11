@@ -52,7 +52,7 @@ public:
 
 bool alter_table(Session *session, char *new_db, char *new_name,
                  HA_CREATE_INFO *create_info,
-                 message::Table *create_proto,
+                 message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
                  uint32_t order_num, order_st *order, bool ignore);

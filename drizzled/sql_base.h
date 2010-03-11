@@ -29,9 +29,9 @@ class Name_resolution_context;
 
 void table_cache_free(void);
 bool table_cache_init(void);
-void assign_new_table_id(TableShare *share);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
+HASH *get_open_cache();
 
 void kill_drizzle(void);
 

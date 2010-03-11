@@ -1,6 +1,6 @@
 create table a ( a serial);
 show fields from a;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	BIGINT	FALSE		FALSE	
 show create table a;
 Table	Create Table
@@ -10,7 +10,7 @@ a	CREATE TABLE `a` (
 ) ENGINE=InnoDB
 create table b ( b int);
 show fields from b;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 b	INTEGER	TRUE		TRUE	
 show create table b;
 Table	Create Table
@@ -19,7 +19,7 @@ b	CREATE TABLE `b` (
 ) ENGINE=InnoDB
 create table c ( b int NOT NULL);
 show fields from c;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 b	INTEGER	FALSE		FALSE	
 show create table c;
 Table	Create Table
@@ -28,7 +28,7 @@ c	CREATE TABLE `c` (
 ) ENGINE=InnoDB
 create table d ( b int NOT NULL DEFAULT 10);
 show fields from d;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 b	INTEGER	FALSE	10	FALSE	
 show create table d;
 Table	Create Table
@@ -37,7 +37,7 @@ d	CREATE TABLE `d` (
 ) ENGINE=InnoDB
 create table e ( b int DEFAULT NULL);
 show fields from e;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 b	INTEGER	TRUE		TRUE	
 show create table e;
 Table	Create Table

@@ -13,6 +13,7 @@ delete from t1 where a=4;
 insert into t1 values (NULL,5),(NULL,6);
 select * from t1;
 delete from t1 where a=6;
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status like "t1";
 replace t1 values (3,1);
 ALTER TABLE t1 add c int;

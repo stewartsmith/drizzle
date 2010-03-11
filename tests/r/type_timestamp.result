@@ -149,7 +149,7 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	
 t2	DATETIME	TRUE	2003-01-01 00:00:00	TRUE	
 t3	TIMESTAMP	TRUE	2003-01-01 00:00:00	TRUE	
@@ -173,7 +173,7 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	
 t2	DATETIME	TRUE	NOW()	TRUE	
 t3	TIMESTAMP	TRUE	NOW()	TRUE	
@@ -199,7 +199,7 @@ t1	CREATE TABLE `t1` (
   `t2` datetime DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	NOW()
 t2	DATETIME	TRUE	2003-01-01 00:00:00	TRUE	NOW()
 drop table t1;
@@ -224,7 +224,7 @@ t1	CREATE TABLE `t1` (
   `t2` datetime DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
 t2	DATETIME	TRUE	NOW()	TRUE	NOW()
 drop table t1;
@@ -250,7 +250,7 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE		TRUE	
 t2	DATETIME	TRUE		TRUE	
 t3	TIMESTAMP	TRUE		TRUE	
@@ -276,7 +276,7 @@ t1	CREATE TABLE `t1` (
   `t2` datetime DEFAULT NULL
 ) ENGINE=DEFAULT
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
 t2	DATETIME	TRUE	NOW()	TRUE	NOW()
 truncate table t1;
@@ -438,7 +438,7 @@ CREATE TABLE t1 (
 PRIMARY KEY (`id`)
 ) AUTO_INCREMENT=1;
 show fields from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 id	INTEGER	FALSE		FALSE	
 username	VARCHAR	FALSE		FALSE	
 posted_on	TIMESTAMP	FALSE	NOW()	FALSE	

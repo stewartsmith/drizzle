@@ -1,9 +1,5 @@
-#
-# Tests simple CREATE DATABASE and DROP DATABASE statements and the transaction log
-#
-
 # Populate log with some records...
---source ../plugin/transaction_log/tests/t/database.inc
+--source ../plugin/transaction_log/tests/t/schema.inc
 
 # Read in the transaction.log.
 

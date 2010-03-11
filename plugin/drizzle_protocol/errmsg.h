@@ -20,12 +20,12 @@
 #ifndef PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H
 #define PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H
 
+namespace drizzle_protocol
+{
+
 /* Error messages for MySQL clients */
 /* (Error messages for the daemon are in sql/share/errmsg.txt) */
 
-#ifdef  __cplusplus
-extern "C"
-#endif
 const char * drizzleclient_get_client_error(unsigned int err_index);
 
 #define CR_MIN_ERROR    2000  /* For easier client code */
@@ -102,5 +102,7 @@ enum CR_CLIENT_ERRORS {
   /* Add error numbers before CR_ERROR_LAST and change it accordingly. */
   CR_ERROR_LAST    =2065 /*Copy last error nr:*/
 };
+
+} /* namespace drizzle_protocol */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H */
