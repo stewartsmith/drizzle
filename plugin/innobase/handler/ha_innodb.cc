@@ -2323,7 +2323,6 @@ InnobaseEngine::doRollbackToSavepoint(
 
 	innobase_release_stat_resources(trx);
 
-	/* TODO: use provided savepoint data area to store savepoint data */
 	error= (int)trx_rollback_to_savepoint_for_mysql(trx, named_savepoint.getName().c_str(),
                                                         &mysql_binlog_cache_pos);
 	return(convert_error_code_to_mysql(error, 0, NULL));
@@ -2347,7 +2346,6 @@ InnobaseEngine::doReleaseSavepoint(
 
 	trx = check_trx_exists(session);
 
-	/* TODO: use provided savepoint data area to store savepoint data */
 	error = (int) trx_release_savepoint_for_mysql(trx, named_savepoint.getName().c_str());
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
@@ -2384,7 +2382,6 @@ InnobaseEngine::doSetSavepoint(
 	/* cannot happen outside of transaction */
 	assert(trx->conc_state != TRX_NOT_STARTED);
 
-	/* TODO: use provided savepoint data area to store savepoint data */
 	error = (int) trx_savepoint_for_mysql(trx, named_savepoint.getName().c_str(), (ib_int64_t)0);
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
