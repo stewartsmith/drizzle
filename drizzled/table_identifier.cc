@@ -285,7 +285,7 @@ const char *TableIdentifier::getPath()
     size_t path_length= 0;
 
     switch (type) {
-    case NO_TMP_TABLE:
+    case STANDARD_TABLE:
       path_length= build_table_filename(path, sizeof(path),
                                         db, table_name,
                                         false);

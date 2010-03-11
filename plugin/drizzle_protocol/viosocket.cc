@@ -44,6 +44,10 @@
 
 using namespace std;
 
+namespace drizzle_protocol
+{
+
+
 int drizzleclient_vio_errno(Vio *vio)
 {
   (void)vio;
@@ -316,3 +320,5 @@ void drizzleclient_vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
     assert(error == 0);
   }
 }
+
+} /* namespace drizzle_protcol */

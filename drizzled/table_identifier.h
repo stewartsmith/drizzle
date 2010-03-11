@@ -56,20 +56,30 @@ private:
   char path[FN_REFLEN];
   const char *db;
   const char *table_name;
+  std::string sql_path;
 
 public:
   TableIdentifier( const char *db_arg,
                    const char *table_name_arg,
-                   tmp_table_type tmp_arg= NO_TMP_TABLE) :
+                   tmp_table_type tmp_arg= STANDARD_TABLE) :
     path_inited(false),
     type(tmp_arg),
     db(db_arg),
-    table_name(table_name_arg)
-  { }
+    table_name(table_name_arg),
+    sql_path(db)
+  { 
+    sql_path.append(".");
+    sql_path.append(table_name);
+  }
 
   bool isTmp() const
   {
-    return type == NO_TMP_TABLE ? false  : true;
+    return type == STANDARD_TABLE ? false  : true;
+  }
+
+  const std::string &getSQLPath()
+  {
+    return sql_path;
   }
 
   const char *getPath();
@@ -100,7 +110,7 @@ public:
     output << ", ";
 
     switch (identifier.type) {
-    case NO_TMP_TABLE:
+    case STANDARD_TABLE:
       type_str= "standard";
       break;
     case INTERNAL_TMP_TABLE:

@@ -49,6 +49,7 @@
 #include <cerrno>
 
 #include "transaction_log_reader.h"
+#include "transaction_log.h"
 
 #include <drizzled/gettext.h>
 #include <drizzled/message/transaction.pb.h>

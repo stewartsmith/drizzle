@@ -39,6 +39,7 @@
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/plugin/storage_engine.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
@@ -129,7 +130,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   }
   else // Created !
   {
-    replication_services.rawStatement(session, session->query);
+    replication_services.createSchema(session, schema_message);
     session->my_ok(1);
   }
 
@@ -275,7 +276,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     assert(! session->query.empty());
 
     ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rawStatement(session, session->getQueryString());
+    replication_services.dropSchema(session, schema_name);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -410,7 +411,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       }
     }
 
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : NO_TMP_TABLE);
+    TableIdentifier identifier(db, table->table_name);
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -454,7 +455,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   error= 0;
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
     else
@@ -604,10 +605,16 @@ static long mysql_rm_known_files(Session *session,
 
 bool mysql_change_db(Session *session, const std::string &new_db_name)
 {
-  LEX_STRING new_db_file_name;
-  const CHARSET_INFO *db_default_cl;
 
   assert(not new_db_name.empty());
+
+  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(),
+                                              new_db_name))
+  {
+    /* Error message is set in isAuthorized */
+    return true;
+  }
+
 
   /*
     Now we need to make a copy because check_db_name requires a
@@ -616,6 +623,7 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
     TODO: fix check_db_name().
   */
 
+  LEX_STRING new_db_file_name;
   new_db_file_name.length= new_db_name.length();
   new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
   if (new_db_file_name.str == NULL)
@@ -652,8 +660,6 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
 
     return true;
   }
-
-  db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
   free(new_db_file_name.str);

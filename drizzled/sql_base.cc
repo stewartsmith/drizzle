@@ -51,6 +51,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/authorization.h"
 
 using namespace std;
 
@@ -85,6 +86,11 @@ unsigned char *table_cache_key(const unsigned char *record,
   return (unsigned char*) entry->s->table_cache_key.str;
 }
 
+HASH *get_open_cache()
+{
+  return &open_cache;
+}
+
 
 bool table_cache_init(void)
 {
@@ -99,9 +105,9 @@ void table_cache_free(void)
   refresh_version++;				// Force close of open tables
 
   while (unused_tables)
-    hash_delete(&open_cache,(unsigned char*) unused_tables);
+    hash_delete(&open_cache, (unsigned char*) unused_tables);
 
-  if (!open_cache.records)			// Safety first
+  if (not open_cache.records)			// Safety first
     hash_free(&open_cache);
 }
 
@@ -188,7 +194,7 @@ void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
   table->intern_close_table();
-  if (!table->in_use)
+  if (not table->in_use)
   {
     table->next->prev=table->prev;		/* remove from used chain */
     table->prev->next=table->next;
@@ -485,7 +491,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->s->tmp_table == NO_TMP_TABLE) &&
+    if ((table->table == 0 || table->table->s->tmp_table == STANDARD_TABLE) &&
         strcmp(table->db, db_name) == 0 &&
         strcmp(table->table_name, table_name) == 0)
       break;
@@ -549,7 +555,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->s->tmp_table != NO_TMP_TABLE)
+    if (table->table && table->table->s->tmp_table != STANDARD_TABLE)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -787,7 +793,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    TableIdentifier identifier(db_name, table_name, NO_TMP_TABLE);
+    TableIdentifier identifier(db_name, table_name, STANDARD_TABLE);
     quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -1283,7 +1289,7 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, NO_TMP_TABLE);
+      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, STANDARD_TABLE);
 
       if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
       {
@@ -1337,7 +1343,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->s->ref_count > 0 || table->s->tmp_table != NO_TMP_TABLE);
+  assert(table->s->ref_count > 0 || table->s->tmp_table != STANDARD_TABLE);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -2030,6 +2036,20 @@ restart:
     (*counter)++;
 
     /*
+     * Is the user authorized to see this table? Do this before we check
+     * to see if it exists so that an unauthorized user cannot phish for
+     * table/schema information via error messages
+     */
+    if (not plugin::Authorization::isAuthorized(getSecurityContext(),
+                                                string(tables->db),
+                                                string(tables->table_name)))
+    {
+      result= -1;                               // Fatal error
+      break;
+    }
+
+
+    /*
       Not a placeholder: must be a base table or a view, and the table is
       not opened yet. Try to open the table.
     */
@@ -2068,7 +2088,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->s->tmp_table == NO_TMP_TABLE)
+      else if (tables->table->s->tmp_table == STANDARD_TABLE)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }
