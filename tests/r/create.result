@@ -36,7 +36,7 @@ Note	1051	Unknown table 't1'
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 ERROR 42000: Incorrect table definition; there can be only one auto column and it must be defined as a key
 create table not_existing_database.test (a int);
-ERROR 42000: Unknown database 'not_existing_database'
+ERROR HY000: Can't create table 'not_existing_database.test' (errno: 2)
 create table `a/a` (a int);
 show create table `a/a`;
 Table	Create Table
@@ -107,15 +107,15 @@ drop table t1,t2;
 create table t1(x varchar(50) );
 create table t2 select x from t1 where 1=2;
 describe t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 x	VARCHAR	TRUE		TRUE	
 describe t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 x	VARCHAR	TRUE		TRUE	
 drop table t2;
 create table t2 select now() as a , curdate() as c , 1+1 as d , 1.0 + 1 as e , 33333333333333333 + 3 as f;
 describe t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	DATETIME	TRUE		TRUE	
 c	DATE	FALSE		FALSE	
 d	INTEGER	FALSE		FALSE	
@@ -124,17 +124,17 @@ f	BIGINT	FALSE		FALSE
 drop table t2;
 create table t2 select CAST("2001-12-29" AS DATE) as d, CAST("2001-12-29  20:45:11" AS DATETIME) as dt;
 describe t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 d	DATE	TRUE		TRUE	
 dt	DATETIME	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (a int);
 create table t2 (a int) select * from t1;
 describe t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 describe t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 drop table if exists t2;
 create table t2 (a int, a float) select * from t1;
@@ -357,7 +357,7 @@ ERROR 42S01: Table 't3' already exists
 create table t3 like mysqltest.t3;
 ERROR 42S01: Table 't3' already exists
 create table non_existing_database.t1 like t1;
-ERROR 42000: Unknown database 'non_existing_database'
+ERROR HY000: Can't create table 'non_existing_database.t1' (errno: 2)
 create table t3 like non_existing_table;
 ERROR 42S02: Table 'test.non_existing_table' doesn't exist
 create temporary table t3 like t1;
@@ -418,7 +418,7 @@ ifnull(f,cast('2000-01-01'              as datetime)) as f,
 ifnull(h,cast('yet another binary data' as binary))   as h
 from t1;
 explain t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 a	INTEGER	TRUE		TRUE	
 b	BIGINT	FALSE		FALSE	
 c	BIGINT	FALSE		FALSE	
@@ -453,14 +453,14 @@ drop table t1,t2;
 create table t1(str varchar(10) default 'def',strnull varchar(10),intg int default '10',rel double default '3.14');
 insert into t1 values ('','',0,0.0);
 describe t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 str	VARCHAR	TRUE	def	FALSE	
 strnull	VARCHAR	TRUE	def	TRUE	
 intg	INTEGER	TRUE	10	FALSE	
 rel	DOUBLE	TRUE	3.14	FALSE	
 create table t2 select default(str) as str, default(strnull) as strnull, default(intg) as intg, default(rel) as rel from t1;
 describe t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 str	VARCHAR	TRUE		TRUE	
 strnull	VARCHAR	TRUE		TRUE	
 intg	INTEGER	TRUE		TRUE	
@@ -468,12 +468,12 @@ rel	DOUBLE	TRUE		TRUE
 drop table t1, t2;
 create table t1(name varchar(10), age int default -1);
 describe t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	TRUE		TRUE	
 age	INTEGER	TRUE	-1	FALSE	
 create table t2(name varchar(10), age int default - 1);
 describe t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	TRUE		TRUE	
 age	INTEGER	TRUE	-1	FALSE	
 drop table t1, t2;
@@ -522,7 +522,7 @@ drop table t1,t2;
 CREATE TABLE t1 (f1 VARCHAR(255));
 CREATE TABLE t2 AS SELECT LEFT(f1,171) AS f2 FROM t1 UNION SELECT LEFT(f1,171) AS f2 FROM t1;
 DESC t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 f2	VARCHAR	TRUE		TRUE	
 DROP TABLE t1,t2;
 CREATE TABLE t12913 (f1 ENUM ('a','b')) AS SELECT 'a' AS f1;

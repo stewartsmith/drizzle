@@ -57,15 +57,15 @@ SHOW CREATE TABLE `Ｔ７`;
 SHOW CREATE TABLE `Ｔ８`;
 SHOW CREATE TABLE `Ｔ９`;
 
-DESC `Ｔ１`;
-DESC `Ｔ２`;
-DESC `Ｔ３`;
-DESC `Ｔ４`;
-DESC `Ｔ５`;
-DESC `Ｔ６`;
-DESC `Ｔ７`;
-DESC `Ｔ８`;
-DESC `Ｔ９`;
+#DESC `Ｔ１`;
+#DESC `Ｔ２`;
+#DESC `Ｔ３`;
+#DESC `Ｔ４`;
+#DESC `Ｔ５`;
+#DESC `Ｔ６`;
+#DESC `Ｔ７`;
+#DESC `Ｔ８`;
+#DESC `Ｔ９`;
 
 #
 # Test problem with enum values after the colum with  NOT NULL restriction
@@ -91,15 +91,15 @@ SHOW CREATE TABLE `Ｔ７`;
 SHOW CREATE TABLE `Ｔ８`;
 SHOW CREATE TABLE `Ｔ９`;
 
-DESC `Ｔ１`;
-DESC `Ｔ２`;
-DESC `Ｔ３`;
-DESC `Ｔ４`;
-DESC `Ｔ５`;
-DESC `Ｔ６`;
-DESC `Ｔ７`;
-DESC `Ｔ８`;
-DESC `Ｔ９`;
+#DESC `Ｔ１`;
+#DESC `Ｔ２`;
+#DESC `Ｔ３`;
+#DESC `Ｔ４`;
+#DESC `Ｔ５`;
+#DESC `Ｔ６`;
+#DESC `Ｔ７`;
+#DESC `Ｔ８`;
+#DESC `Ｔ９`;
 
 DROP TABLE `Ｔ１`;
 DROP TABLE `Ｔ２`;
