@@ -25,9 +25,8 @@
 #include <netdb.h>
 
 #include "drizzled/pthread_globals.h"
-#include "drizzled/session.h"
-#include "drizzled/session_list.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/internal/my_sys.h"
 
 #include <set>
@@ -65,13 +64,23 @@ ProcesslistTool::Generator::~Generator()
 bool ProcesslistTool::Generator::populate()
 {
   const char *val;
-  Session* tmp;
+
+
+  while (it != getSessionList().end())
+  {
+    if ((*it)->isViewable())
+    {
+      break;
+    }
+    ++it;
+  }
 
   if (it == getSessionList().end())
     return false;
 
-  tmp= *it;
+  Session *tmp= *it;
   const SecurityContext *tmp_sctx= &tmp->getSecurityContext();
+
 
   /* ID */
   push((int64_t) tmp->thread_id);

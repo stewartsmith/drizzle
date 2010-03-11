@@ -63,7 +63,6 @@ system_variables*	wdl_global_system_variables;
 char*			wdl_mysql_real_data_home;
 char**			wdl_mysql_data_home;
 char**			wdl_tx_isolation_names;
-char**			wdl_binlog_format_names;
 char*			wdl_reg_ext;
 pthread_mutex_t*	wdl_LOCK_thread_count;
 key_map*		wdl_key_map_full;
@@ -635,9 +634,6 @@ wdl_get_external_variables(void)
 	GET_SYM2("?tx_isolation_names@@3PAPEBDA",
 		 "?tx_isolation_names@@3PAPBDA",
 		 wdl_tx_isolation_names, char*);
-	GET_SYM2("?binlog_format_names@@3PAPEBDA",
-		 "?binlog_format_names@@3PAPBDA",
-		 wdl_binlog_format_names, char*);
 
 #ifndef DBUG_OFF
 	GET_PROC_ADDR(_db_enter_);

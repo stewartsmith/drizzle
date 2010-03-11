@@ -113,7 +113,7 @@ static struct my_option my_long_options[] =
    "Use LOW_PRIORITY when updating the table.", (char**) &opt_low_priority,
    (char**) &opt_low_priority, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"mysql", 'm', N_("Use MySQL Protocol."),
-   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
    0, 0, 0},
   {"password", 'P',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
