@@ -166,7 +166,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 
 
 int ArchiveEngine::doDropTable(Session&,
-                               const string table_path)
+                               const string &table_path)
 {
   string new_path(table_path);
 

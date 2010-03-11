@@ -224,10 +224,10 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
       for (size_t x= 1; x <= num_tables; x++, tables++)
       {
         engine= (*tables)->cursor->engine;
-        if (involved_slots.count(engine->getSlot()) > 0)
+        if (involved_slots.count(engine->getId()) > 0)
           continue; /* already added to involved engines */
         involved_engines.push_back(engine);
-        involved_slots.insert(engine->getSlot());
+        involved_slots.insert(engine->getId());
       }
 
       for_each(involved_engines.begin(),

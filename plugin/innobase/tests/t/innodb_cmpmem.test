@@ -1,0 +1,5 @@
+use data_dictionary;
+
+select * from INNODB_CMPMEM;
+
+show create table INNODB_CMPMEM;

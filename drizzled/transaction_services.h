@@ -2,7 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@ namespace drizzled
 /* some forward declarations needed */
 namespace plugin
 {
+  class MonitoredInTransaction;
+  class XaResourceManager;
   class TransactionalStorageEngine;
 }
 
@@ -87,10 +89,36 @@ public:
    * Put in assert()s to test this.
    *
    * @param[in] Session pointer
-   * @param[in] Resource which will be participating
+   * @param[in] Descriptor for the resource which will be participating
+   * @param[in] Pointer to the TransactionalStorageEngine resource
    */
   void registerResourceForStatement(Session *session,
+                                    plugin::MonitoredInTransaction *monitored,
                                     plugin::TransactionalStorageEngine *engine);
+
+  /**
+   * Marks an XA storage engine as participating in a statement
+   * transaction.
+   *
+   * @note
+   * 
+   * This method is idempotent
+   *
+   * @todo
+   *
+   * This method should not be called more than once per resource
+   * per statement, and therefore should not need to be idempotent.
+   * Put in assert()s to test this.
+   *
+   * @param[in] Session pointer
+   * @param[in] Descriptor for the resource which will be participating
+   * @param[in] Pointer to the TransactionalStorageEngine resource
+   * @param[in] Pointer to the XaResourceManager resource manager
+   */
+  void registerResourceForStatement(Session *session,
+                                    plugin::MonitoredInTransaction *monitored,
+                                    plugin::TransactionalStorageEngine *engine,
+                                    plugin::XaResourceManager *resource_manager);
 
   /**
    * Registers a resource manager in the "normal" transaction.
@@ -117,7 +145,12 @@ public:
    * TransactionServices::registerResourceForStatement method.
    */
   void registerResourceForTransaction(Session *session,
+                                      plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine);
+  void registerResourceForTransaction(Session *session,
+                                      plugin::MonitoredInTransaction *monitored,
+                                      plugin::TransactionalStorageEngine *engine,
+                                      plugin::XaResourceManager *resource_manager);
 };
 
 } /* namespace drizzled */

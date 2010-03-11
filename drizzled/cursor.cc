@@ -187,6 +187,8 @@ bool Cursor::is_fatal_error(int error, uint32_t flags)
 
 
 ha_rows Cursor::records() { return stats.records; }
+uint64_t Cursor::tableSize() { return stats.index_file_length + stats.data_file_length; }
+uint64_t Cursor::rowSize() { return table->getRecordLength() + table->sizeFields(); }
 
 /**
   Open database-Cursor.
@@ -1353,6 +1355,18 @@ static bool log_row_for_replication(Table* table,
 
   switch (session->lex->sql_command)
   {
+  case SQLCOM_CREATE_TABLE:
+    /*
+     * We are in a CREATE TABLE ... SELECT statement
+     * and the kernel has already created the table
+     * and put a CreateTableStatement in the active
+     * Transaction message.  Here, we add a new InsertRecord
+     * to a new Transaction message (because the above
+     * CREATE TABLE will commit the transaction containing
+     * it).
+     */
+    result= replication_services.insertRecord(session, table);
+    break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
     /*

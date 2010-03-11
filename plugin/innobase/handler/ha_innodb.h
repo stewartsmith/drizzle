@@ -228,13 +228,6 @@ int session_slave_thread(const Session *session);
 int session_non_transactional_update(const Session *session);
 
 /**
-  Get the user thread's binary logging format
-  @param session  user thread
-  @return Value to be used as index into the binlog_format_names array
-*/
-int session_binlog_format(const Session *session);
-
-/**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
   @param  session   Thread handle
   @param  all   TRUE <=> rollback main transaction.
