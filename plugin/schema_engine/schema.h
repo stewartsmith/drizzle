@@ -61,15 +61,14 @@ public:
     return EPERM;
   }
 
+  int doDropTable(drizzled::Session&, const std::string &table_path);
+
+  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+
   drizzled::Cursor *create(drizzled::TableShare &,
                            drizzled::memory::Root *)
   {
     return NULL;
-  }
-
-  int doDropTable(drizzled::Session&, const std::string) 
-  { 
-    return EPERM; 
   }
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);

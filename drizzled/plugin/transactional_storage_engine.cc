@@ -39,10 +39,8 @@ namespace plugin
 static vector<TransactionalStorageEngine *> vector_of_transactional_engines;
 
 TransactionalStorageEngine::TransactionalStorageEngine(const string name_arg,
-                                     const bitset<HTON_BIT_SIZE> &flags_arg,
-                                     bool two_phase_commit_arg)
-    : StorageEngine(name_arg, flags_arg),
-      two_phase_commit(two_phase_commit_arg)
+                                                       const bitset<HTON_BIT_SIZE> &flags_arg)
+    : StorageEngine(name_arg, flags_arg)
 {
 }
 
