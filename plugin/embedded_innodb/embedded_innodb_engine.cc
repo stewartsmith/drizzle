@@ -254,7 +254,7 @@ DRIZZLE_DECLARE_PLUGIN
   "EMBEDDED_INNODB",
   "1.0",
   "Stewart Smith",
-  "Used to test rest of server with various table proto messages",
+  "Transactional Storage Engine using the Embedded InnoDB Library",
   PLUGIN_LICENSE_GPL,
   embedded_innodb_init,     /* Plugin Init */
   embedded_innodb_fini,     /* Plugin Deinit */
