@@ -101,24 +101,17 @@ namespace internal
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
-#define ME_HIGHBYTE	8	/* Shift for colours */
-#define ME_NOCUR	1	/* Don't use curses message */
 #define ME_OLDWIN	2	/* Use old window */
 #define ME_BELL		4	/* Ring bell then printing message */
 #define ME_HOLDTANG	8	/* Don't delete last keys */
-#define ME_WAITTOT	16	/* Wait for errtime secs of for a action */
 #define ME_WAITTANG	32	/* Wait for a user action  */
 #define ME_NOREFRESH	64	/* Dont refresh screen */
 #define ME_NOINPUT	128	/* Dont use the input libary */
-#define ME_COLOUR1	((1 << ME_HIGHBYTE))	/* Possibly error-colours */
-#define ME_COLOUR2	((2 << ME_HIGHBYTE))
-#define ME_COLOUR3	((3 << ME_HIGHBYTE))
 
 	/* Bits in last argument to fn_format */
 #define MY_REPLACE_DIR		1	/* replace dir in name with 'dir' */
 #define MY_REPLACE_EXT		2	/* replace extension with 'ext' */
 #define MY_UNPACK_FILENAME	4	/* Unpack name (~ -> home) */
-#define MY_PACK_FILENAME	8	/* Pack name (home -> ~) */
 #define MY_RESOLVE_SYMLINKS	16	/* Resolve all symbolic links */
 #define MY_RETURN_REAL_PATH	32	/* return full path for file */
 #define MY_SAFE_PATH		64	/* Return NULL if too long path */
@@ -230,9 +223,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
 
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
-
-#define my_b_get_buffer_start(info) (info)->request_pos
-
 
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
 					  *(info)->current_pos)

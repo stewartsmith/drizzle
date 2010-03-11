@@ -30,7 +30,9 @@ namespace drizzled
 /** Clear, prepare for reuse. */
 void ResourceContext::reset()
 {
-  resource= NULL;
+  monitored= NULL;
+  xa_resource_manager= NULL;
+  trx_storage_engine= NULL;
   modified_data= false;
 }
 
@@ -48,7 +50,7 @@ bool ResourceContext::hasModifiedData() const
 
 bool ResourceContext::isStarted() const
 {
-  return resource != NULL;
+  return monitored != NULL;
 }
 
 void ResourceContext::coalesceWith(const ResourceContext *stmt_ctx)
