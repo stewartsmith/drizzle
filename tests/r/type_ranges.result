@@ -38,7 +38,7 @@ KEY (ulonglong,ulong),
 KEY (options,flags)
 );
 show fields from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE		FALSE	
 string	VARCHAR	TRUE	hello	FALSE	
 tiny	INTEGER	FALSE	0	FALSE	
@@ -63,21 +63,21 @@ longblob_col	BLOB	FALSE	0	FALSE
 options	ENUM	FALSE	0	FALSE	
 flags	ENUM	FALSE	one	FALSE	
 show keys from t1;
-Table	Key_name	Seq_in_index	Column_name
-t1	PRIMARY	0	auto
-t1	utiny	0	utiny
-t1	tiny	0	tiny
-t1	short	0	short
-t1	any_name	0	medium
-t1	longlong	0	longlong
-t1	real_float	0	real_float
-t1	ushort	0	ushort
-t1	umedium	0	umedium
-t1	ulong	0	ulong
-t1	ulonglong	0	ulonglong
-t1	ulonglong	1	ulong
-t1	options	0	options
-t1	options	1	flags
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	auto
+t1	FALSE	utiny	1	utiny
+t1	FALSE	tiny	1	tiny
+t1	FALSE	short	1	short
+t1	FALSE	any_name	1	medium
+t1	FALSE	longlong	1	longlong
+t1	FALSE	real_float	1	real_float
+t1	FALSE	ushort	1	ushort
+t1	FALSE	umedium	1	umedium
+t1	FALSE	ulong	1	ulong
+t1	FALSE	ulonglong	1	ulonglong
+t1	FALSE	ulonglong	2	ulong
+t1	FALSE	options	1	options
+t1	FALSE	options	2	flags
 CREATE UNIQUE INDEX test on t1 ( auto ) ;
 CREATE INDEX test2 on t1 ( ulonglong,ulong) ;
 CREATE INDEX test3 on t1 ( medium ) ;
@@ -129,7 +129,7 @@ drop table t2;
 create table t2 select * from t1;
 update t2 set string="changed" where auto=16;
 show columns from t1;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE	0	FALSE	
 string	VARCHAR	TRUE	hello	FALSE	
 tiny	INTEGER	FALSE	0	FALSE	
@@ -154,7 +154,7 @@ longblob_col	BLOB	FALSE	0	FALSE
 options	ENUM	FALSE	0	FALSE	
 flags	ENUM	FALSE	one	FALSE	
 show columns from t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE	0	FALSE	
 string	VARCHAR	TRUE	hello	FALSE	
 tiny	INTEGER	FALSE	0	FALSE	
@@ -185,7 +185,7 @@ auto	auto
 drop table t2;
 create table t2 (primary key (auto)) select auto+1 as auto,1 as t1, 'a' as t2, repeat('a',256) as t3, binary repeat('b',256) as t4, repeat('a',4096) as t5, binary repeat('b',4096) as t6, '' as t7, binary '' as t8 from t1;
 show columns from t2;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	BIGINT	FALSE		FALSE	
 t1	INTEGER	FALSE		FALSE	
 t2	VARCHAR	FALSE		FALSE	
@@ -208,7 +208,7 @@ create table t3 select * from t1, t2;
 ERROR 42S21: Duplicate column name 'c'
 create table t3 select t1.c AS c1, t2.c AS c2,1 as "const" from t1, t2;
 show columns from t3;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 c1	INTEGER	TRUE		TRUE	
 c2	INTEGER	TRUE		TRUE	
 const	INTEGER	FALSE		FALSE	
