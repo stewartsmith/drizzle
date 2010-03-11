@@ -46,11 +46,6 @@ namespace drizzled
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
-/* number of entries in storage_engines[] */
-uint32_t total_ha= 0;
-/* number of storage engines (from storage_engines[]) that support 2pc */
-uint32_t total_ha_2pc= 0;
-
 const char *ha_row_type[] = {
   "", "FIXED", "DYNAMIC", "COMPRESSED", "REDUNDANT", "COMPACT", "PAGE", "?","?","?"
 };
@@ -107,11 +102,18 @@ void ha_init_errors(void)
   add_error_message(HA_ERR_AUTOINC_ERANGE,         ER(ER_WARN_DATA_OUT_OF_RANGE));
 }
 
-int ha_init()
+int ha_end()
 {
   int error= 0;
 
-  assert(total_ha < MAX_HA);
+  /*
+    This should be eventualy based  on the graceful shutdown flag.
+    So if flag is equal to HA_PANIC_CLOSE, the deallocate
+    the errors.
+  */
+  if (ha_finish_errors())
+    error= 1;
+
   return error;
 }
 

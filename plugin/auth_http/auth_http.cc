@@ -18,13 +18,15 @@
  */
 
 #include "config.h"
-#include <drizzled/session.h>
-#include <drizzled/plugin/authentication.h>
-#include <drizzled/gettext.h>
 
 #include <curl/curl.h>
 
 #include <string>
+#include <cassert>
+
+#include "drizzled/security_context.h"
+#include "drizzled/plugin/authentication.h"
+#include "drizzled/gettext.h"
 
 using namespace drizzled;
 using namespace std;
@@ -70,15 +72,14 @@ public:
     curl_easy_cleanup(curl_handle);
   }
 
-  virtual bool authenticate(Session *session, const char *password)
+  virtual bool authenticate(const SecurityContext &sctx, const string &password)
   {
     long http_response_code;
 
     if (sysvar_auth_http_enable == false)
       return true;
 
-    assert(session->security_ctx.user.c_str());
-    assert(password);
+    assert(sctx.getUser().c_str());
 
 
     // set the parameters: url, username, password
@@ -86,12 +87,12 @@ public:
 #if defined(HAVE_CURLOPT_USERNAME)
 
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
-                         session->security_ctx.user.c_str());
-    rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password);
+                         sctx.getUser().c_str());
+    rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password.c_str());
 
 #else
 
-    string userpwd= session->security_ctx.user;
+    string userpwd(sctx.getUser());
     userpwd.append(":");
     userpwd.append(password);
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpwd.c_str());
@@ -183,7 +184,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize, /* Plugin Deinit */
-  NULL,   /* status variables */
   auth_http_system_variables,
   NULL    /* config options */
 }

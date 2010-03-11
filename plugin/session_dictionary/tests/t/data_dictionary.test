@@ -1,0 +1,17 @@
+#Interface to processlist.
+
+use data_dictionary;
+
+show create table PROCESSLIST ;
+
+--replace_column 1 #
+SELECT ID FROM processlist;
+
+--replace_column 1 #
+SELECT ID FROM processlist ORDER BY ID;
+
+--replace_column 1 #
+SELECT a.ID FROM processlist as a, processlist as b ORDER BY ID;
+
+--replace_column 1 #
+SELECT a.ID FROM processlist as a, data_dictionary.processlist as b;

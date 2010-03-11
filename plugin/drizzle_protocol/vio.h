@@ -24,6 +24,9 @@
 #include <sys/socket.h>
 #include <errno.h>
 
+namespace drizzle_protocol
+{
+
 /* Simple vio interface in C;  The functions are implemented in violite.c */
 
 enum enum_vio_type
@@ -132,5 +135,7 @@ struct st_vio
   void	  (*timeout)(Vio*, bool is_sndtimeo, int32_t timeout);
   char                  *read_buffer;   /* buffer for drizzleclient_vio_read_buff */
 };
+
+} /* namespace drizzle_procotol */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_VIO_H */

@@ -27,6 +27,7 @@
 #include <drizzled/sql_list.h>
 #include "drizzled/memory/sql_alloc.h"
 #include <drizzled/table.h>
+#include "drizzled/item_result.h"
 
 namespace drizzled
 {
@@ -46,7 +47,6 @@ namespace plugin
 {
 class Client;
 }
-
 
 /**
   Dummy error processor used by default by Name_resolution_context.
@@ -183,7 +183,13 @@ public:
     name=0;
 #endif
   }
-  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs);
+
+  void set_name(const std::string &arg)
+  {
+    set_name(arg.c_str(), arg.length(), system_charset_info);
+  }
+
+  void set_name(const char *str, uint32_t length, const CHARSET_INFO * const cs= system_charset_info);
   /**
    * Renames item (used for views, cleanup() return original name).
    *

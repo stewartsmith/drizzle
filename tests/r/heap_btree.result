@@ -2,9 +2,12 @@ drop table if exists t1;
 create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	NULL	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -32,6 +35,9 @@ drop table t1;
 create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 alter table t1 modify a int not null auto_increment, engine=innodb, comment="new innodb table";
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	InnoDB	#	#	#	#	#
 select * from t1;
 a	b
 1	1
@@ -301,14 +307,6 @@ a
 1
 DROP TABLE t1;
 End of 4.1 tests
-CREATE TEMPORARY TABLE t1(val INT, KEY USING BTREE(val)) ENGINE=memory;
-INSERT INTO t1 VALUES(0);
-SELECT INDEX_LENGTH FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='t1';
-INDEX_LENGTH
-UPDATE t1 SET val=1;
-SELECT INDEX_LENGTH FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='t1';
-INDEX_LENGTH
-DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (a INT, UNIQUE USING BTREE(a)) ENGINE=MEMORY;
 INSERT INTO t1 VALUES(NULL),(NULL);
 DROP TABLE t1;

@@ -73,7 +73,7 @@ public:
                     Table&,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string table_name);
+  int doDropTable(Session&, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -129,7 +129,7 @@ int TableProtoTesterEngine::doCreateTable(Session*, const char *,
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, const string)
+int TableProtoTesterEngine::doDropTable(Session&, const string&)
 {
   return EPERM;
 }
@@ -285,7 +285,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   tableprototester_init,     /* Plugin Init */
   tableprototester_fini,     /* Plugin Deinit */
-  NULL,               /* status variables */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

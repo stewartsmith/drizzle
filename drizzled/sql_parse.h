@@ -78,8 +78,8 @@ bool check_simple_select();
 void mysql_init_select(LEX *lex);
 bool mysql_new_select(LEX *lex, bool move_down);
 
-int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         const std::string& schema_table_name);
+int prepare_new_schema_table(Session *session, LEX *lex,
+                             const std::string& schema_table_name);
 
 Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,

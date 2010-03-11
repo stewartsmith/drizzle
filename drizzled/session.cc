@@ -39,6 +39,8 @@
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/authentication.h"
+#include "drizzled/plugin/logging.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 #include "drizzled/probes.h"
 #include "drizzled/table_proto.h"
 #include "drizzled/db.h"
@@ -143,15 +145,15 @@ const char *get_session_proc_info(Session *session)
   return session->get_proc_info();
 }
 
-void **Session::getEngineData(const plugin::StorageEngine *engine)
+void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
-  return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
+  return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
 }
 
-Ha_trx_info *Session::getEngineInfo(const plugin::StorageEngine *engine,
-                                    size_t index)
+ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransaction *monitored,
+                                             size_t index)
 {
-  return &ha_data[engine->getSlot()].ha_info[index];
+  return &ha_data[monitored->getId()].resource_context[index];
 }
 
 extern "C"
@@ -177,11 +179,13 @@ Session::Session(plugin::Client *client_arg)
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
+  query(),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
   user_time(0),
+  ha_data(plugin::num_trx_monitored_objects),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
@@ -227,10 +231,7 @@ Session::Session(plugin::Client *client_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
-  query= NULL;
-  query_length= 0;
   warn_query_id= 0;
-  memset(ha_data, 0, sizeof(ha_data));
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
@@ -256,7 +257,6 @@ Session::Session(plugin::Client *client_arg)
   else
     options &= ~OPTION_BIG_SELECTS;
 
-  transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
   open_options=ha_open_options;
   update_lock_default= TL_WRITE;
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
@@ -391,8 +391,8 @@ Session::~Session()
     if (global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),internal::my_progname,
                       thread_id,
-                      (security_ctx.user.c_str() ?
-                       security_ctx.user.c_str() : ""));
+                      (getSecurityContext().getUser().c_str() ?
+                       getSecurityContext().getUser().c_str() : ""));
     disconnect(0, false);
   }
 
@@ -413,6 +413,7 @@ Session::~Session()
   free_root(&main_mem_root, MYF(0));
   pthread_setspecific(THR_Session,  0);
 
+  plugin::Logging::postEndDo(this);
 
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);
@@ -432,10 +433,10 @@ Session::~Session()
     If this assumption will change, then we have to explictely add
     the other variables after the while loop
 */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
+void add_to_status(system_status_var *to_var, system_status_var *from_var)
 {
   ulong *end= (ulong*) ((unsigned char*) to_var +
-                        offsetof(STATUS_VAR, last_system_status_var) +
+                        offsetof(system_status_var, last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
 
@@ -455,10 +456,10 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
   NOTE
     This function assumes that all variables are long/ulong.
 */
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var)
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var)
 {
-  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(STATUS_VAR,
+  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(system_status_var,
 						  last_system_status_var) +
 			sizeof(ulong));
   ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
@@ -672,33 +673,21 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
-  bool is_authenticated;
-
-  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
-  {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), security_ctx.ip.c_str());
-    return false;
-  }
-
-  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
+  const string passwd_str(passwd, passwd_len);
+  bool is_authenticated=
+    plugin::Authentication::isAuthenticated(getSecurityContext(),
+                                            passwd_str);
 
   if (is_authenticated != true)
   {
-    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             security_ctx.user.c_str(),
-             security_ctx.ip.c_str(),
-             passwd_len ? ER(ER_YES) : ER(ER_NO));
-
+    /* isAuthenticated has pushed the error message */
     return false;
   }
-
-  security_ctx.skip_grants();
 
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
-    if (mysql_change_db(this, &db_str, false))
+    if (mysql_change_db(this, in_db))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;
@@ -757,14 +746,7 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
     in_packet_length--;
   }
 
-  /* We must allocate some extra memory for the cached query string */
-  query_length= 0; /* Extra safety: Avoid races */
-  query= (char*) memdup_w_gap((unsigned char*) in_packet, in_packet_length, db.length() + 1);
-  if (! query)
-    return false;
-
-  query[in_packet_length]=0;
-  query_length= in_packet_length;
+  query.assign(in_packet, in_packet + in_packet_length);
 
   return true;
 }
@@ -792,7 +774,6 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       if (transaction_services.ha_commit_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
-      transaction.all.modified_non_trans_table= false;
       break;
     case COMMIT_RELEASE:
       do_release= 1; /* fall through */
@@ -810,7 +791,6 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       if (transaction_services.ha_rollback_trans(this, true))
         result= false;
       options&= ~(OPTION_BEGIN);
-      transaction.all.modified_non_trans_table= false;
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
         result= startTransaction();
       break;
@@ -845,7 +825,6 @@ bool Session::endActiveTransaction()
       result= false;
   }
   options&= ~(OPTION_BEGIN);
-  transaction.all.modified_non_trans_table= false;
   return result;
 }
 
@@ -862,14 +841,9 @@ bool Session::startTransaction(start_transaction_option_t opt)
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
 
-    if (opt == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+    if (plugin::TransactionalStorageEngine::notifyStartTransaction(this, opt))
     {
-      // TODO make this a loop for all engines, not just this one (Inno only
-      // right now)
-      if (plugin::StorageEngine::startConsistentSnapshot(this))
-      {
-        result= false;
-      }
+      result= false;
     }
   }
 
@@ -911,8 +885,15 @@ void Session::cleanup_after_query()
   @return  NULL on failure, or pointer to the LEX_STRING object
 */
 LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
-                                 const char* str, uint32_t length,
-                                 bool allocate_lex_string)
+                                     const std::string &str,
+                                     bool allocate_lex_string)
+{
+  return make_lex_string(lex_str, str.c_str(), str.length(), allocate_lex_string);
+}
+
+LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
+                                     const char* str, uint32_t length,
+                                     bool allocate_lex_string)
 {
   if (allocate_lex_string)
     if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))
@@ -1613,11 +1594,6 @@ void Session::set_status_var_init()
   memset(&status_var, 0, sizeof(status_var));
 }
 
-void Security_context::skip_grants()
-{
-  /* privileges for the user are unknown everything is allowed */
-}
-
 
 /****************************************************************************
   Handling of open and locked tables states.
@@ -1688,14 +1664,9 @@ const struct charset_info_st *session_charset(Session *session)
   return(session->charset());
 }
 
-char **session_query(Session *session)
-{
-  return(&session->query);
-}
-
 int session_non_transactional_update(const Session *session)
 {
-  return(session->transaction.all.modified_non_trans_table);
+  return(session->transaction.all.hasModifiedNonTransData());
 }
 
 void session_mark_transaction_to_rollback(Session *session, bool all)
@@ -1731,13 +1702,13 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   {
     if (! killed && variables.log_warnings > 1)
     {
-      Security_context *sctx= &security_ctx;
+      SecurityContext *sctx= &security_ctx;
 
       errmsg_printf(ERRMSG_LVL_WARN, ER(ER_NEW_ABORTING_CONNECTION)
                   , thread_id
                   , (db.empty() ? "unconnected" : db.c_str())
-                  , sctx->user.empty() == false ? sctx->user.c_str() : "unauthenticated"
-                  , sctx->ip.c_str()
+                  , sctx->getUser().empty() == false ? sctx->getUser().c_str() : "unauthenticated"
+                  , sctx->getIp().c_str()
                   , (main_da.is_error() ? main_da.message() : ER(ER_UNKNOWN_ERROR)));
     }
   }
@@ -1773,15 +1744,6 @@ void Session::reset_for_next_command()
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
-  /*
-    If in autocommit mode and not in a transaction, reset
-    OPTION_STATUS_NO_TRANS_UPDATE to not get warnings
-    in ha_rollback_trans() about some tables couldn't be rolled back.
-  */
-  if (!(options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
-  {
-    transaction.all.modified_non_trans_table= false;
-  }
 
   clear_error();
   main_da.reset_diagnostics_area();
@@ -2069,22 +2031,17 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+bool Session::rm_temporary_table(TableIdentifier &identifier)
 {
-  bool error= false;
-
-  assert(base);
-
-  if (plugin::StorageEngine::deleteDefinitionFromPath(identifier))
-    error= true;
-
-  if (base->doDropTable(*this, identifier.getPath()))
+  if (not plugin::StorageEngine::dropTable(*this, identifier))
   {
-    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getPath(), errno);
+
+    return true;
   }
-  return error;
+
+  return false;
 }
 
 bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)

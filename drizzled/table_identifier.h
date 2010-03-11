@@ -37,8 +37,15 @@
 #include <string.h>
 
 #include <ostream>
+#include <set>
 
 namespace drizzled {
+
+uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+bool tablename_to_filename(const char *from, char *to, size_t to_length);
+size_t build_tmptable_filename(char *buff, size_t bufflen);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+
 
 class TableIdentifier
 {
@@ -49,25 +56,40 @@ private:
   char path[FN_REFLEN];
   const char *db;
   const char *table_name;
+  std::string sql_path;
 
 public:
   TableIdentifier( const char *db_arg,
                    const char *table_name_arg,
-                   tmp_table_type tmp_arg) :
+                   tmp_table_type tmp_arg= STANDARD_TABLE) :
     path_inited(false),
     type(tmp_arg),
     db(db_arg),
-    table_name(table_name_arg)
-  { }
+    table_name(table_name_arg),
+    sql_path(db)
+  { 
+    sql_path.append(".");
+    sql_path.append(table_name);
+  }
 
   bool isTmp() const
   {
-    return type == NO_TMP_TABLE ? false  : true;
+    return type == STANDARD_TABLE ? false  : true;
+  }
+
+  const std::string &getSQLPath()
+  {
+    return sql_path;
   }
 
   const char *getPath();
 
   const char *getDBName() const
+  {
+    return db;
+  }
+
+  const char *getSchemaName() const
   {
     return db;
   }
@@ -88,7 +110,7 @@ public:
     output << ", ";
 
     switch (identifier.type) {
-    case NO_TMP_TABLE:
+    case STANDARD_TABLE:
       type_str= "standard";
       break;
     case INTERNAL_TMP_TABLE:
@@ -124,6 +146,8 @@ public:
   }
 
 };
+
+typedef std::set <TableIdentifier> TableIdentifierList;
 
 } /* namespace drizzled */
 

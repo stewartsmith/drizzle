@@ -16,7 +16,7 @@ SELECT 2147483647E+02,21474836.47E+06;
 create table t1 (f1 float,f2 float);
 # We mask out Privileges column because it differs for embedded server
 --replace_column 8 #
-show full columns from t1;
+show columns from t1;
 insert into t1 values(10,10),(1e+5,1e+5),(1234567890,1234567890),(1e+10,1e+10),(1e+15,1e+15),(1e+20,1e+20),(1e+50,1e+50),(1e+150,1e+150);
 insert into t1 values(-10,-10),(1e-5,1e-5),(1e-10,1e-10),(1e-15,1e-15),(1e-20,1e-20),(1e-50,1e-50),(1e-150,1e-150);
 select * from t1;
@@ -69,7 +69,7 @@ create table t1 (f float, f2 float, f3 float, d double, d2 float, d3 double, de 
 # We mask out Privileges column because it differs for embedded server
 --replace_column 8 #
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
-show full columns from t1;
+show columns from t1;
 drop table t1;
 
 create table t1 (a  decimal(7,3) not null, key (a));

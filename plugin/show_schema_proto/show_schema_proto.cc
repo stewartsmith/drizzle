@@ -81,9 +81,8 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   string proto_as_text("");
   message::Schema proto;
 
-  int err= get_database_metadata(db, &proto);
 
-  if (err != 0)
+  if (not plugin::StorageEngine::getSchemaDefinition(db, proto))
   {
     my_error(ER_BAD_DB_ERROR, MYF(0), db);
     return NULL;
@@ -130,7 +129,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }

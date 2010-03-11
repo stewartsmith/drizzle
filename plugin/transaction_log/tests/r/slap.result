@@ -1,0 +1,22 @@
+SET GLOBAL transaction_log_truncate_debug= true;
+CREATE SCHEMA drizzleslap;
+CREATE TABLE t1
+(
+id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+rand_float FLOAT NOT NULL
+) ENGINE=InnoDB;
+SELECT COUNT(*) FROM test.t1;
+COUNT(*)
+800
+SELECT * FROM data_dictionary.transaction_log;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	X	802	802	X	X	X	X	X
+SELECT COUNT(*) FROM data_dictionary.transaction_log_transactions;
+COUNT(*)
+802
+SELECT COUNT(*) FROM data_dictionary.transaction_log_entries;
+COUNT(*)
+802
+DROP SCHEMA drizzleslap;
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;

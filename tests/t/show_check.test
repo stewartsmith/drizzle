@@ -46,6 +46,7 @@ drop table t1;
 show variables like "server_id%";
 show variables like "SERVER_id%";
 show variables like "this_doesn't_exists%";
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status from test like "this_doesn't_exists%";
 show databases;
 show databases like "test%";
@@ -89,7 +90,7 @@ create table t1 (
   ) comment = 'it\'s a table' ;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
-show full columns from t1;
+show columns from t1;
 drop table t1;
 
 create table t1 (a int not null, unique aa (a));
@@ -111,7 +112,7 @@ drop table t1;
 
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-show full columns from t1;
+show columns from t1;
 drop table t1;
 
 #
@@ -209,37 +210,37 @@ CREATE TEMPORARY TABLE t3 (
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 truncate table t1;
 truncate table t2;
 truncate table t3;
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 
 drop table t1, t2, t3;
@@ -335,13 +336,13 @@ drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
 
 #
-# Bug#25081 SHOW FULL TABLES on table with latin chars in name fails
+# Bug#25081 show TABLES on table with latin chars in name fails
 #
 --disable_warnings
 drop table if exists `été`;
 --enable_warnings
 create table `été` (field1 int);
-show full tables;
+show tables;
 drop table `été`;
 
 #

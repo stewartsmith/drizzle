@@ -25,15 +25,10 @@ namespace drizzled {
 
 namespace message { class Schema; }
 
-bool mysql_create_db(Session *session, const char *db, message::Schema *schema_message, bool is_if_not_exists);
-bool mysql_alter_db(Session *session, const char *db, message::Schema *schema_message);
-bool mysql_rm_db(Session *session, char *db, bool if_exists);
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force_switch);
-
-bool check_db_dir_existence(const char *db_name);
-int get_database_metadata(const char *dbname, message::Schema *db);
-
-const CHARSET_INFO *get_default_db_collation(const char *db_name);
+bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
+bool mysql_alter_db(Session *session, const message::Schema &schema_message);
+bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if_exists);
+bool mysql_change_db(Session *session, const std::string &new_db_name);
 
 } /* namespace drizzled */
 

@@ -50,7 +50,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ***********************************************************************/
 
 /* TODO list for the InnoDB Cursor in 5.0:
-  - Remove the flag trx->active_trans and look at trx->conc_state
   - fix savepoint functions to use savepoint storage area
   - Find out what kind of problems the OS X case-insensitivity causes to
     table and database names; should we 'normalize' the names like we do
@@ -80,8 +79,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/blob.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/timestamp.h"
-#include "drizzled/plugin/storage_engine.h"
-#include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/plugin/xa_storage_engine.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/named_savepoint.h"
@@ -124,10 +122,14 @@ extern "C" {
 }
 
 #include "ha_innodb.h"
-#include "i_s.h"
+#include "data_dictionary.h"
 #include "handler0vars.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
+
+#include "plugin/innobase/handler/status_function.h"
 
 using namespace std;
 using namespace drizzled;
@@ -161,7 +163,15 @@ undefined.  Map it to NULL. */
 # define EQ_CURRENT_SESSION(session) ((session) == current_session)
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
-static plugin::StorageEngine* innodb_engine_ptr= NULL;
+static plugin::XaStorageEngine* innodb_engine_ptr= NULL;
+static plugin::TableFunction* status_table_function_ptr= NULL;
+static plugin::TableFunction* cmp_tool= NULL;
+static plugin::TableFunction* cmp_reset_tool= NULL;
+static plugin::TableFunction* cmp_mem_tool= NULL;
+static plugin::TableFunction* cmp_mem_reset_tool= NULL;
+static plugin::TableFunction* innodb_trx_tool= NULL;
+static plugin::TableFunction* innodb_locks_tool= NULL;
+static plugin::TableFunction* innodb_lock_waits_tool= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -248,11 +258,11 @@ static const char* ha_innobase_exts[] = {
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
-class InnobaseEngine : public plugin::StorageEngine
+class InnobaseEngine : public plugin::XaStorageEngine
 {
 public:
   InnobaseEngine(string name_arg) :
-    plugin::StorageEngine(name_arg,
+    plugin::XaStorageEngine(name_arg,
                           HTON_NULL_IN_KEY |
                           HTON_CAN_INDEX_BLOBS |
                           HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
@@ -264,7 +274,11 @@ public:
     table_definition_ext= plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
-
+private:
+  virtual int doStartTransaction(Session *session, start_transaction_option_t options);
+  virtual void doStartStatement(Session *session);
+  virtual void doEndStatement(Session *session);
+public:
   virtual
   int
   close_connection(
@@ -273,20 +287,28 @@ public:
 	Session*	session);	/* in: handle to the MySQL thread of the user
 			whose resources should be free'd */
 
-  virtual int savepoint_set_hook(Session* session,
+  virtual int doSetSavepoint(Session* session,
                                  drizzled::NamedSavepoint &savepoint);
-  virtual int savepoint_rollback_hook(Session* session,
+  virtual int doRollbackToSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
-  virtual int savepoint_release_hook(Session* session,
+  virtual int doReleaseSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
-  virtual int commit(Session* session, bool all);
-  virtual int rollback(Session* session, bool all);
+  virtual int doXaCommit(Session* session, bool all)
+  {
+    return doCommit(session, all); /* XA commit just does a SQL COMMIT */
+  }
+  virtual int doXaRollback(Session *session, bool all)
+  {
+    return doRollback(session, all); /* XA rollback just does a SQL ROLLBACK */
+  }
+  virtual int doCommit(Session* session, bool all);
+  virtual int doRollback(Session* session, bool all);
 
   /***********************************************************************
   This function is used to prepare X/Open XA distributed transaction   */
   virtual
   int
-  prepare(
+  doXaPrepare(
   /*================*/
   			/* out: 0 or error number */
   	Session*	session,	/* in: handle to the MySQL thread of the user
@@ -297,18 +319,18 @@ public:
   This function is used to recover X/Open XA distributed transactions   */
   virtual
   int
-  recover(
+  doXaRecover(
   /*================*/
   				/* out: number of prepared transactions
   				stored in xid_list */
   	::drizzled::XID*	xid_list,	/* in/out: prepared transactions */
-  	uint	len);		/* in: number of slots in xid_list */
+  	size_t len);		/* in: number of slots in xid_list */
   /***********************************************************************
   This function is used to commit one X/Open XA distributed transaction
   which is in the prepared state */
   virtual
   int
-  commit_by_xid(
+  doXaCommitXid(
   /*===================*/
   			/* out: 0 or error number */
   	::drizzled::XID*	xid);	/* in: X/Open XA transaction identification */
@@ -317,7 +339,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  rollback_by_xid(
+  doXaRollbackXid(
   /*=====================*/
   			/* out: 0 or error number */
   	::drizzled::XID	*xid);	/* in: X/Open XA transaction identification */
@@ -330,28 +352,15 @@ public:
 
   /*********************************************************************
   Removes all tables in the named database inside InnoDB. */
-  virtual
-  void
-  drop_database(
+  bool
+  doDropSchema(
   /*===================*/
   			/* out: error number */
-  	char*	path);	/* in: database path; inside InnoDB the name
+  	const std::string	&schema_name);	/* in: database path; inside InnoDB the name
   			of the last directory in the path is used as
   			the database name: for example, in 'mysql/data/test'
   			the database name is 'test' */
 
-  /*********************************************************************
-  Creates an InnoDB transaction struct for the session if it does not yet have one.
-  Starts a new InnoDB transaction if a transaction is not yet started. And
-  assigns a new snapshot for a consistent read if the transaction does not yet
-  have one. */
-  virtual
-  int
-  start_consistent_snapshot(
-  /*====================================*/
-  			/* out: 0 */
-  	Session*	session);	/* in: MySQL thread handle of the user for whom
-  			the transaction should be committed */
   /********************************************************************
   Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
   the logs, and the name of this function should be innobase_checkpoint. */
@@ -374,7 +383,7 @@ public:
 
   virtual
   int
-  release_temporary_latches(
+  doReleaseTemporaryLatches(
   /*===============================*/
 				/* out: 0 */
 	Session*		session);	/* in: MySQL thread */
@@ -391,7 +400,7 @@ public:
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session& session, const string table_path);
+  UNIV_INTERN int doDropTable(Session& session, const string &table_path);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -517,7 +526,7 @@ innobase_commit_low(
 /*================*/
 	trx_t*	trx);	/*!< in: transaction handle */
 
-static SHOW_VAR innodb_status_variables[]= {
+static drizzle_show_var innodb_status_variables[]= {
   {"buffer_pool_pages_data",
   (char*) &export_vars.innodb_buffer_pool_pages_data,	  SHOW_LONG},
   {"buffer_pool_pages_dirty",
@@ -610,6 +619,54 @@ static SHOW_VAR innodb_status_variables[]= {
   (char*) &export_vars.innodb_rows_updated,		  SHOW_LONG},
   {NULL, NULL, SHOW_LONG}
 };
+
+InnodbStatusTool::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator(fields)
+{ 
+  srv_export_innodb_status();
+  status_var_ptr= innodb_status_variables;
+}
+
+bool InnodbStatusTool::Generator::populate()
+{
+  if (status_var_ptr->name)
+  {
+    std::ostringstream oss;
+    string return_value;
+    const char *value= status_var_ptr->value;
+
+    /* VARIABLE_NAME */
+    push(status_var_ptr->name);
+
+    switch (status_var_ptr->type)
+    {
+    case SHOW_LONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_LONGLONG:
+      oss << *(int64_t*) value;
+      return_value= oss.str();
+      break;
+    case SHOW_BOOL:
+      return_value= *(bool*) value ? "ON" : "OFF";
+      break;
+    default:
+      assert(0);
+    }
+
+    /* VARIABLE_VALUE */
+    if (return_value.length())
+      push(return_value);
+    else 
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
+}
 
 /* General functions */
 
@@ -765,7 +822,7 @@ avoid deadlocks on the adaptive hash S-latch possibly held by session. For more
 documentation, see Cursor.cc.
 @return	0 */
 int
-InnobaseEngine::release_temporary_latches(
+InnobaseEngine::doReleaseTemporaryLatches(
 /*===============================*/
 	Session*		session)	/*!< in: MySQL thread */
 {
@@ -977,11 +1034,11 @@ innobase_mysql_print_thd(
           static_cast<uint64_t>(session_get_thread_id( session)),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
-          session->security_ctx.ip.c_str(),
-          session->security_ctx.user.c_str()
+          session->getSecurityContext().getIp().c_str(),
+          session->getSecurityContext().getUser().c_str()
   );
   fprintf(f,
-          "\n%s", session->getQueryString()
+          "\n%s", session->getQueryString().c_str()
   );
 	putc('\n', f);
 }
@@ -1358,7 +1415,7 @@ innobase_trx_allocate(
 	trx = trx_allocate_for_mysql();
 
 	trx->mysql_thd = session;
-	trx->mysql_query_str = session_query(session);
+	trx->mysql_query_str = session->query.c_str();
 
 	innobase_trx_init(session, trx);
 
@@ -1448,51 +1505,6 @@ ha_innobase::update_session()
 	Session*	session = ha_session();
 	ut_ad(EQ_CURRENT_SESSION(session));
 	update_session(session);
-}
-
-/*********************************************************************//**
-Registers that InnoDB takes part in an SQL statement, so that MySQL knows to
-roll back the statement if the statement results in an error. This MUST be
-called for every SQL statement that may be rolled back by MySQL. Calling this
-several times to register the same statement is allowed, too. */
-static inline
-void
-innobase_register_stmt(
-/*===================*/
-        plugin::StorageEngine*	engine,	/*!< in: Innobase hton */
-	Session*	session)	/*!< in: MySQL thd (connection) object */
-{
-	assert(engine == innodb_engine_ptr);
-	/* Register the statement */
-  TransactionServices &transaction_services= TransactionServices::singleton();
-	transaction_services.trans_register_ha(session, FALSE, engine);
-}
-
-/*********************************************************************//**
-Registers an InnoDB transaction in MySQL, so that the MySQL XA code knows
-to call the InnoDB prepare and commit, or rollback for the transaction. This
-MUST be called for every transaction for which the user may call commit or
-rollback. Calling this several times to register the same transaction is
-allowed, too.
-This function also registers the current SQL statement. */
-static inline
-void
-innobase_register_trx_and_stmt(
-/*===========================*/
-        plugin::StorageEngine *engine, /*!< in: Innobase StorageEngine */
-	Session*	session)	/*!< in: MySQL thd (connection) object */
-{
-	/* NOTE that actually innobase_register_stmt() registers also
-	the transaction in the AUTOCOMMIT=1 mode. */
-
-	innobase_register_stmt(engine, session);
-
-	if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-
-		/* No autocommit mode, register for a transaction */
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.trans_register_ha(session, TRUE, engine);
-	}
 }
 
 /*****************************************************************//**
@@ -1660,68 +1672,6 @@ reset_template(
 {
 	prebuilt->keep_other_fields_on_keyread = 0;
 	prebuilt->read_just_key = 0;
-}
-
-/*****************************************************************//**
-Call this when you have opened a new table handle in HANDLER, before you
-call index_read_idx() etc. Actually, we can let the cursor stay open even
-over a transaction commit! Then you should call this before every operation,
-fetch next etc. This function inits the necessary things even after a
-transaction commit. */
-UNIV_INTERN
-void
-ha_innobase::init_table_handle_for_HANDLER(void)
-/*============================================*/
-{
-	/* If current session does not yet have a trx struct, create one.
-	If the current handle does not yet have a prebuilt struct, create
-	one. Update the trx pointers in the prebuilt struct. Normally
-	this operation is done in external_lock. */
-
-	update_session(ha_session());
-
-	/* Initialize the prebuilt struct much like it would be inited in
-	external_lock */
-
-	innobase_release_stat_resources(prebuilt->trx);
-
-	/* If the transaction is not started yet, start it */
-
-	trx_start_if_not_started(prebuilt->trx);
-
-	/* Assign a read view if the transaction does not have it yet */
-
-	trx_assign_read_view(prebuilt->trx);
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-
-	if (prebuilt->trx->active_trans == 0) {
-
-		innobase_register_trx_and_stmt(engine, user_session);
-
-		prebuilt->trx->active_trans = 1;
-	}
-
-	/* We did the necessary inits in this function, no need to repeat them
-	in row_search_for_mysql */
-
-	prebuilt->sql_stat_start = FALSE;
-
-	/* We let HANDLER always to do the reads as consistent reads, even
-	if the trx isolation level would have been specified as SERIALIZABLE */
-
-	prebuilt->select_lock_type = LOCK_NONE;
-	prebuilt->stored_select_lock_type = LOCK_NONE;
-
-	/* Always fetch all columns in the index record */
-
-	prebuilt->hint_need_to_fetch_extra_cols = ROW_RETRIEVE_ALL_COLS;
-
-	/* We want always to fetch all columns in the whole row? Or do
-	we???? */
-
-	prebuilt->used_in_HANDLER = TRUE;
-	reset_template(prebuilt);
 }
 
 /*********************************************************************//**
@@ -2010,24 +1960,32 @@ innobase_change_buffering_inited_ok:
 	pthread_cond_init(&commit_cond, NULL);
 	innodb_inited= 1;
 
-	if (innodb_locks_init() ||
-		innodb_trx_init() ||
-		innodb_lock_waits_init() ||
-		i_s_cmp_init() ||
-		i_s_cmp_reset_init() ||
-		i_s_cmpmem_init() ||
-		i_s_cmpmem_reset_init())
-		goto error;
+        status_table_function_ptr= new InnodbStatusTool;
 
 	registry.add(innodb_engine_ptr);
 
-	registry.add(innodb_trx_schema_table);
-	registry.add(innodb_locks_schema_table);
-	registry.add(innodb_lock_waits_schema_table);	
-	registry.add(innodb_cmp_schema_table);
-	registry.add(innodb_cmp_reset_schema_table);
-	registry.add(innodb_cmpmem_schema_table);
-	registry.add(innodb_cmpmem_reset_schema_table);
+	registry.add(status_table_function_ptr);
+
+	cmp_tool= new(std::nothrow)CmpTool(false);
+	registry.add(cmp_tool);
+
+	cmp_reset_tool= new(std::nothrow)CmpTool(true);
+	registry.add(cmp_reset_tool);
+
+	cmp_mem_tool= new(std::nothrow)CmpmemTool(false);
+	registry.add(cmp_mem_tool);
+
+	cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
+	registry.add(cmp_mem_reset_tool);
+
+	innodb_trx_tool= new(std::nothrow)InnodbTrxTool("INNODB_TRX");
+	registry.add(innodb_trx_tool);
+
+	innodb_locks_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCKS");
+	registry.add(innodb_locks_tool);
+
+	innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
+	registry.add(innodb_lock_waits_tool);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -2045,7 +2003,31 @@ int
 innobase_deinit(plugin::Registry &registry)
 {
 	int	err= 0;
-	i_s_common_deinit(registry);
+
+	registry.remove(status_table_function_ptr);
+ 	delete status_table_function_ptr;
+
+	registry.remove(cmp_tool);
+	delete cmp_tool;
+
+	registry.remove(cmp_reset_tool);
+	delete cmp_reset_tool;
+
+ 	registry.remove(cmp_mem_tool);
+	delete cmp_mem_tool;
+
+	registry.remove(cmp_mem_reset_tool);
+	delete cmp_mem_reset_tool;
+
+	registry.remove(innodb_trx_tool);
+	delete innodb_trx_tool;
+
+ 	registry.remove(innodb_locks_tool);
+	delete innodb_locks_tool;
+
+	registry.remove(innodb_lock_waits_tool);
+	delete innodb_lock_waits_tool;
+
 	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
@@ -2111,41 +2093,30 @@ assigns a new snapshot for a consistent read if the transaction does not yet
 have one.
 @return	0 */
 int
-InnobaseEngine::start_consistent_snapshot(
+InnobaseEngine::doStartTransaction(
 /*====================================*/
-	Session*	session)	/*!< in: MySQL thread handle of the user for whom
-			the transaction should be committed */
+	Session*	session,	/*!< in: MySQL thread handle of the user for whom
+			                         the transaction should be committed */
+  start_transaction_option_t options)
 {
-	trx_t*	trx;
-
 	assert(this == innodb_engine_ptr);
 
 	/* Create a new trx struct for session, if it does not yet have one */
-
-	trx = check_trx_exists(session);
+	trx_t *trx = check_trx_exists(session);
 
 	/* This is just to play safe: release a possible FIFO ticket and
 	search latch. Since we will reserve the kernel mutex, we have to
 	release the search system latch first to obey the latching order. */
-
 	innobase_release_stat_resources(trx);
 
 	/* If the transaction is not started yet, start it */
-
 	trx_start_if_not_started(trx);
 
 	/* Assign a read view if the transaction does not have it yet */
+  if (options == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+	  trx_assign_read_view(trx);
 
-	trx_assign_read_view(trx);
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-
-	if (trx->active_trans == 0) {
-		innobase_register_trx_and_stmt(this, current_session);
-		trx->active_trans = 1;
-	}
-
-	return(0);
+	return 0;
 }
 
 /*****************************************************************//**
@@ -2153,7 +2124,7 @@ Commits a transaction in an InnoDB database or marks an SQL statement
 ended.
 @return	0 */
 int
-InnobaseEngine::commit(
+InnobaseEngine::doCommit(
 /*============*/
 	Session* 	session,	/*!< in: MySQL thread handle of the user for whom
 			the transaction should be committed */
@@ -2173,26 +2144,6 @@ InnobaseEngine::commit(
 		trx_search_latch_release_if_reserved(trx);
 	}
 
-	/* The flag trx->active_trans is set to 1 in
-
-	1. ::external_lock(),
-	2. ::start_stmt(),
-	3. innobase_query_caching_of_table_permitted(),
-	4. InnobaseEngine::savepoint_set(),
-	5. ::init_table_handle_for_HANDLER(),
-	6. InnobaseEngine::start_consistent_snapshot(),
-
-	and it is only set to 0 in a commit or a rollback. If it is 0 we know
-	there cannot be resources to be freed and we could return immediately.
-	For the time being, we play safe and do the cleanup though there should
-	be nothing to clean up. */
-
-	if (trx->active_trans == 0
-		&& trx->conc_state != TRX_NOT_STARTED) {
-
-		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
-			" trx->conc_state != TRX_NOT_STARTED");
-	}
 	if (all
 		|| (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
 
@@ -2239,14 +2190,13 @@ retry:
 			pthread_mutex_unlock(&commit_cond_m);
 		}
 
-		if (trx->active_trans == 2) {
+		if (trx->conc_state == TRX_PREPARED) {
 
 			pthread_mutex_unlock(&prepare_commit_mutex);
 		}
 
 		/* Now do a write + flush of logs. */
 		trx_commit_complete_for_mysql(trx);
-		trx->active_trans = 0;
 
 	} else {
 		/* We just mark the SQL statement ended and do not do a
@@ -2283,7 +2233,7 @@ retry:
 Rolls back a transaction or the latest SQL statement.
 @return	0 or error number */
 int
-InnobaseEngine::rollback(
+InnobaseEngine::doRollback(
 /*==============*/
 	Session*	session,/*!< in: handle to the MySQL thread of the user
 			whose transaction should be rolled back */
@@ -2313,7 +2263,6 @@ InnobaseEngine::rollback(
 		|| !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 
 		error = trx_rollback_for_mysql(trx);
-		trx->active_trans = 0;
 	} else {
 		error = trx_rollback_last_sql_stat_for_mysql(trx);
 	}
@@ -2354,7 +2303,7 @@ Rolls back a transaction to a savepoint.
 @return 0 if success, HA_ERR_NO_SAVEPOINT if no savepoint with the
 given name */
 int
-InnobaseEngine::savepoint_rollback_hook(
+InnobaseEngine::doRollbackToSavepoint(
 /*===========================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
@@ -2385,7 +2334,7 @@ Release transaction savepoint name.
 @return 0 if success, HA_ERR_NO_SAVEPOINT if no savepoint with the
 given name */
 int
-InnobaseEngine::savepoint_release_hook(
+InnobaseEngine::doReleaseSavepoint(
 /*=======================*/
 	Session*	session,		/*!< in: handle to the MySQL thread of the user
 				whose transaction should be rolled back */
@@ -2408,7 +2357,7 @@ InnobaseEngine::savepoint_release_hook(
 Sets a transaction savepoint.
 @return	always 0, that is, always succeeds */
 int
-InnobaseEngine::savepoint_set_hook(
+InnobaseEngine::doSetSavepoint(
 /*===============*/
 	Session*	session,/*!< in: handle to the MySQL thread */
 	drizzled::NamedSavepoint &named_savepoint)	/*!< in: savepoint data */
@@ -2433,7 +2382,7 @@ InnobaseEngine::savepoint_set_hook(
 	innobase_release_stat_resources(trx);
 
 	/* cannot happen outside of transaction */
-	assert(trx->active_trans);
+	assert(trx->conc_state != TRX_NOT_STARTED);
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 	error = (int) trx_savepoint_for_mysql(trx, named_savepoint.getName().c_str(), (ib_int64_t)0);
@@ -2457,22 +2406,21 @@ InnobaseEngine::close_connection(
 
 	ut_a(trx);
 
-	if (trx->active_trans == 0
-		&& trx->conc_state != TRX_NOT_STARTED) {
+  assert(session->killed != Session::NOT_KILLED ||
+         trx->conc_state == TRX_NOT_STARTED);
 
-		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
-			" trx->conc_state != TRX_NOT_STARTED");
-	}
-
-
-	if (trx->conc_state != TRX_NOT_STARTED &&
-		global_system_variables.log_warnings) {
-		errmsg_printf(ERRMSG_LVL_WARN, 
-			"MySQL is closing a connection that has an active "
-			"InnoDB transaction.  %lu row modifications will "
-			"roll back.",
-			(ulong) trx->undo_no.low);
-	}
+  /* Warn if rolling back some things... */
+	if (session->killed != Session::NOT_KILLED &&
+      trx->conc_state != TRX_NOT_STARTED &&
+      trx->undo_no.low > 0 &&
+      global_system_variables.log_warnings)
+  {
+      errmsg_printf(ERRMSG_LVL_WARN, 
+      "Drizzle is closing a connection during a KILL operation\n"
+      "that has an active InnoDB transaction.  %lu row modifications will "
+      "roll back.\n",
+      (ulong) trx->undo_no.low);
+  }
 
 	innobase_rollback_trx(trx);
 
@@ -2713,7 +2661,7 @@ ha_innobase::open(
 	holding btr_search_latch. This breaks the latching order as
 	we acquire dict_sys->mutex below and leads to a deadlock. */
 	if (session != NULL) {
-		engine->release_temporary_latches(session);
+		getTransactionalEngine()->releaseTemporaryLatches(session);
 	}
 
 	normalize_table_name(norm_name, name);
@@ -2928,7 +2876,7 @@ ha_innobase::close(void)
 
 	session = ha_session();
 	if (session != NULL) {
-		engine->release_temporary_latches(session);
+		getTransactionalEngine()->releaseTemporaryLatches(session);
 	}
 
 	row_prebuilt_free(prebuilt, FALSE);
@@ -3834,7 +3782,7 @@ ha_innobase::write_row(
 		ut_error;
 	}
 
-	ha_statistic_increment(&SSV::ha_write_count);
+	ha_statistic_increment(&system_status_var::ha_write_count);
 
 	sql_command = session_sql_command(user_session);
 
@@ -3879,9 +3827,7 @@ no_commit:
 			no need to re-acquire locks on it. */
 
 			/* Altering to InnoDB format */
-			engine->commit(user_session, 1);
-			/* Note that this transaction is still active. */
-			prebuilt->trx->active_trans = 1;
+			getTransactionalEngine()->commit(user_session, 1);
 			/* We will need an IX lock on the destination table. */
 			prebuilt->sql_stat_start = TRUE;
 		} else {
@@ -3895,9 +3841,7 @@ no_commit:
 
 			/* Commit the transaction.  This will release the table
 			locks, so they have to be acquired again. */
-			engine->commit(user_session, 1);
-			/* Note that this transaction is still active. */
-			prebuilt->trx->active_trans = 1;
+			getTransactionalEngine()->commit(user_session, 1);
 			/* Re-acquire the table lock on the source table. */
 			row_lock_table_for_mysql(prebuilt, src_table, mode);
 			/* We will need an IX lock on the destination table. */
@@ -4207,7 +4151,7 @@ ha_innobase::update_row(
 
 	ut_a(prebuilt->trx == trx);
 
-	ha_statistic_increment(&SSV::ha_update_count);
+	ha_statistic_increment(&system_status_var::ha_update_count);
 
 	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
 		table->timestamp_field->set_time();
@@ -4312,7 +4256,7 @@ ha_innobase::delete_row(
 
 	ut_a(prebuilt->trx == trx);
 
-	ha_statistic_increment(&SSV::ha_delete_count);
+	ha_statistic_increment(&system_status_var::ha_delete_count);
 
 	if (!prebuilt->upd_node) {
 		row_get_prebuilt_update_vector(prebuilt);
@@ -4500,13 +4444,16 @@ of the InnoDB data associated with this table handle instance.
 
   A) if the user has not explicitly set any MySQL table level locks:
 
-  1) MySQL calls ::external_lock to set an 'intention' table level lock on
-the table of the handle instance. There we set
-prebuilt->sql_stat_start = TRUE. The flag sql_stat_start should be set
-true if we are taking this table handle instance to use in a new SQL
-statement issued by the user. We also increment trx->n_mysql_tables_in_use.
+  1) Drizzle calls StorageEngine::doStartStatement(), indicating to
+     InnoDB that a new SQL statement has begun.
 
-  2) If prebuilt->sql_stat_start == TRUE we 'pre-compile' the MySQL search
+  2a) For each InnoDB-managed table in the SELECT, Drizzle calls ::external_lock
+     to set an 'intention' table level lock on the table of the Cursor instance.
+     There we set prebuilt->sql_stat_start = TRUE. The flag sql_stat_start should 
+     be set true if we are taking this table handle instance to use in a new SQL
+     statement issued by the user.
+
+  2b) If prebuilt->sql_stat_start == TRUE we 'pre-compile' the MySQL search
 instructions to prebuilt->template of the table handle instance in
 ::index_read. The template is used to save CPU time in large joins.
 
@@ -4518,13 +4465,19 @@ lock on the table.
   4) We do the SELECT. MySQL may repeatedly call ::index_read for the
 same table handle instance, if it is a join.
 
-  5) When the SELECT ends, MySQL removes its intention table level locks
-in ::external_lock. When trx->n_mysql_tables_in_use drops to zero,
- (a) we execute a COMMIT there if the autocommit is on,
+5) When the SELECT ends, the Drizzle kernel calls doEndStatement()
+
+ (a) we execute a COMMIT there if the autocommit is on. The Drizzle interpreter 
+     does NOT execute autocommit for pure read transactions, though it should.
+     That is why we must execute the COMMIT in ::doEndStatement().
  (b) we also release possible 'SQL statement level resources' InnoDB may
-have for this SQL statement. The MySQL interpreter does NOT execute
-autocommit for pure read transactions, though it should. That is why the
-table Cursor in that case has to execute the COMMIT in ::external_lock.
+     have for this SQL statement.
+
+  @todo
+
+  Remove need for InnoDB to call autocommit for read-only trx
+
+  @todo Check the below is still valid (I don't think it is...)
 
   B) If the user has explicitly set MySQL table level locks, then MySQL
 does NOT call ::external_lock at the start of the statement. To determine
@@ -4566,7 +4519,7 @@ ha_innobase::index_read(
 
 	ut_a(prebuilt->trx == session_to_trx(user_session));
 
-	ha_statistic_increment(&SSV::ha_read_key_count);
+	ha_statistic_increment(&system_status_var::ha_read_key_count);
 
 	index = prebuilt->index;
 
@@ -4681,7 +4634,7 @@ ha_innobase::innobase_get_index(
 	KEY*		key = 0;
 	dict_index_t*	index = 0;
 
-	ha_statistic_increment(&SSV::ha_read_key_count);
+	ha_statistic_increment(&system_status_var::ha_read_key_count);
 
 	ut_ad(user_session == ha_session());
 	ut_a(prebuilt->trx == session_to_trx(user_session));
@@ -4846,7 +4799,7 @@ ha_innobase::index_next(
 	unsigned char*	buf)	/*!< in/out: buffer for next row in MySQL
 				format */
 {
-	ha_statistic_increment(&SSV::ha_read_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_next_count);
 
 	return(general_fetch(buf, ROW_SEL_NEXT, 0));
 }
@@ -4862,7 +4815,7 @@ ha_innobase::index_next_same(
 	const unsigned char*	,	/*!< in: key value */
 	uint		)	/*!< in: key value length */
 {
-	ha_statistic_increment(&SSV::ha_read_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_next_count);
 
 	return(general_fetch(buf, ROW_SEL_NEXT, last_match_mode));
 }
@@ -4877,7 +4830,7 @@ ha_innobase::index_prev(
 /*====================*/
 	unsigned char*	buf)	/*!< in/out: buffer for previous row in MySQL format */
 {
-	ha_statistic_increment(&SSV::ha_read_prev_count);
+	ha_statistic_increment(&system_status_var::ha_read_prev_count);
 
 	return(general_fetch(buf, ROW_SEL_PREV, 0));
 }
@@ -4894,7 +4847,7 @@ ha_innobase::index_first(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_first_count);
+	ha_statistic_increment(&system_status_var::ha_read_first_count);
 
 	error = index_read(buf, NULL, 0, HA_READ_AFTER_KEY);
 
@@ -4919,7 +4872,7 @@ ha_innobase::index_last(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_last_count);
+	ha_statistic_increment(&system_status_var::ha_read_last_count);
 
 	error = index_read(buf, NULL, 0, HA_READ_BEFORE_KEY);
 
@@ -4988,7 +4941,7 @@ ha_innobase::rnd_next(
 {
 	int	error;
 
-	ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+	ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
 	if (start_of_scan) {
 		error = index_first(buf);
@@ -5021,7 +4974,7 @@ ha_innobase::rnd_pos(
 	int		error;
 	uint		keynr	= active_index;
 
-	ha_statistic_increment(&SSV::ha_read_rnd_count);
+	ha_statistic_increment(&system_status_var::ha_read_rnd_count);
 
 	ut_a(prebuilt->trx == session_to_trx(ha_session()));
 
@@ -5803,9 +5756,9 @@ InnobaseEngine::doCreateTable(
 		}
 	}
 
-	if (*trx->mysql_query_str) {
+	if (trx->mysql_query_str) {
 		error = row_table_add_foreign_constraints(trx,
-			*trx->mysql_query_str, norm_name,
+			trx->mysql_query_str, norm_name,
 			lex_identified_temp_table);
 
 		error = convert_error_code_to_mysql(error, iflags, NULL);
@@ -5961,7 +5914,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session& session,
-	const string table_path)	/* in: table name */
+	const string &table_path)	/* in: table name */
 {
 	int	error;
 	trx_t*	parent_trx;
@@ -6017,19 +5970,18 @@ InnobaseEngine::doDropTable(
 
 /*****************************************************************//**
 Removes all tables in the named database inside InnoDB. */
-void
-InnobaseEngine::drop_database(
+bool
+InnobaseEngine::doDropSchema(
 /*===================*/
-	char*	path)	/*!< in: database path; inside InnoDB the name
+                             const std::string &schema_name)
+		/*!< in: database path; inside InnoDB the name
 			of the last directory in the path is used as
 			the database name: for example, in 'mysql/data/test'
 			the database name is 'test' */
 {
-	ulint	len		= 0;
 	trx_t*	trx;
-	char*	ptr;
 	int	error;
-	char*	namebuf;
+	string schema_path(schema_name);
 	Session*	session		= current_session;
 
 	/* Get the transaction associated with the current session, or create one
@@ -6048,32 +6000,9 @@ InnobaseEngine::drop_database(
 		trx_search_latch_release_if_reserved(parent_trx);
 	}
 
-	ptr = strchr(path, '\0') - 2;
-
-	while (ptr >= path && *ptr != '\\' && *ptr != '/') {
-		ptr--;
-		len++;
-	}
-
-	ptr++;
-	namebuf = (char*) malloc((uint) len + 2);
-
-	memcpy(namebuf, ptr, len);
-	namebuf[len] = '/';
-	namebuf[len + 1] = '\0';
-#ifdef	__WIN__
-	innobase_casedn_str(namebuf);
-#endif
-#if defined __WIN__ && !defined MYSQL_SERVER
-	/* In the Windows plugin, thd = current_thd is always NULL */
-	trx = trx_allocate_for_mysql();
-	trx->mysql_thd = NULL;
-	trx->mysql_query_str = NULL;
-#else
+        schema_path.append("/");
 	trx = innobase_trx_allocate(session);
-#endif
-	error = row_drop_database_for_mysql(namebuf, trx);
-	free(namebuf);
+	error = row_drop_database_for_mysql(schema_path.c_str(), trx);
 
 	/* Flush the log to reduce probability that the .frm files and
 	the InnoDB data dictionary get out-of-sync if the user runs
@@ -6088,6 +6017,8 @@ InnobaseEngine::drop_database(
 
 	innobase_commit_low(trx);
 	trx_free_for_mysql(trx);
+
+        return false; // We are just a listener since we lack control over DDL, so we give no positive acknowledgement. 
 }
 /*********************************************************************//**
 Renames an InnoDB table.
@@ -7116,91 +7047,6 @@ ha_innobase::reset()
 }
 
 /******************************************************************//**
-MySQL calls this function at the start of each SQL statement inside LOCK
-TABLES. Inside LOCK TABLES the ::external_lock method does not work to
-mark SQL statement borders. Note also a special case: if a temporary table
-is created inside LOCK TABLES, MySQL has not called external_lock() at all
-on that table.
-MySQL-5.0 also calls this before each statement in an execution of a stored
-procedure. To make the execution more deterministic for binlogging, MySQL-5.0
-locks all tables involved in a stored procedure with full explicit table
-locks (session_in_lock_tables(session) holds in store_lock()) before executing
-the procedure.
-@return	0 or error code */
-UNIV_INTERN
-int
-ha_innobase::start_stmt(
-/*====================*/
-	Session*	session,	/*!< in: handle to the user thread */
-	thr_lock_type	lock_type)
-{
-	trx_t*		trx;
-
-	update_session(session);
-
-	trx = prebuilt->trx;
-
-	/* Here we release the search latch and the InnoDB thread FIFO ticket
-	if they were reserved. They should have been released already at the
-	end of the previous statement, but because inside LOCK TABLES the
-	lock count method does not work to mark the end of a SELECT statement,
-	that may not be the case. We MUST release the search latch before an
-	INSERT, for example. */
-
-	innobase_release_stat_resources(trx);
-
-	/* Reset the AUTOINC statement level counter for multi-row INSERTs. */
-	trx->n_autoinc_rows = 0;
-
-	prebuilt->sql_stat_start = TRUE;
-	prebuilt->hint_need_to_fetch_extra_cols = 0;
-	reset_template(prebuilt);
-
-	if (!prebuilt->mysql_has_locked) {
-		/* This handle is for a temporary table created inside
-		this same LOCK TABLES; since MySQL does NOT call external_lock
-		in this case, we must use x-row locks inside InnoDB to be
-		prepared for an update of a row */
-
-		prebuilt->select_lock_type = LOCK_X;
-	} else {
-		if (trx->isolation_level != TRX_ISO_SERIALIZABLE
-			&& session_sql_command(session) == SQLCOM_SELECT
-			&& lock_type == TL_READ) {
-
-			/* For other than temporary tables, we obtain
-			no lock for consistent read (plain SELECT). */
-
-			prebuilt->select_lock_type = LOCK_NONE;
-		} else {
-			/* Not a consistent read: restore the
-			select_lock_type value. The value of
-			stored_select_lock_type was decided in:
-			1) ::store_lock(),
-			2) ::external_lock(),
-			3) ::init_table_handle_for_HANDLER(), and
-                      */
-
-			prebuilt->select_lock_type =
-				prebuilt->stored_select_lock_type;
-		}
-	}
-
-	trx->detailed_error[0] = '\0';
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-	if (trx->active_trans == 0) {
-
-		innobase_register_trx_and_stmt(engine, session);
-		trx->active_trans = 1;
-	} else {
-		innobase_register_stmt(engine, session);
-	}
-
-	return(0);
-}
-
-/******************************************************************//**
 Maps a MySQL trx isolation level code to the InnoDB isolation level code
 @return	InnoDB isolation level */
 static inline
@@ -7220,12 +7066,8 @@ innobase_map_isolation_level(
 
 /******************************************************************//**
 As MySQL will execute an external lock for every new table it uses when it
-starts to process an SQL statement (an exception is when MySQL calls
-start_stmt for the handle) we can use this function to store the pointer to
-the Session in the handle. We will also use this function to communicate
-to InnoDB that a new SQL statement has started and that we must store a
-savepoint to our transaction handle, so that we are able to roll back
-the SQL statement in case of an error.
+starts to process an SQL statement.  We can use this function to store the pointer to
+the Session in the handle.
 @return	0 */
 UNIV_INTERN
 int
@@ -7234,12 +7076,9 @@ ha_innobase::external_lock(
 	Session*	session,	/*!< in: handle to the user thread */
 	int	lock_type)	/*!< in: lock type */
 {
-	trx_t*		trx;
-
-
 	update_session(session);
 
-	trx = prebuilt->trx;
+  trx_t *trx= prebuilt->trx;
 
 	prebuilt->sql_stat_start = TRUE;
 	prebuilt->hint_need_to_fetch_extra_cols = 0;
@@ -7256,18 +7095,6 @@ ha_innobase::external_lock(
 
 	if (lock_type != F_UNLCK) {
 		/* MySQL is setting a new table lock */
-
-		trx->detailed_error[0] = '\0';
-
-		/* Set the MySQL flag to mark that there is an active
-		transaction */
-		if (trx->active_trans == 0) {
-
-			innobase_register_trx_and_stmt(engine, session);
-			trx->active_trans = 1;
-		} else if (trx->n_mysql_tables_in_use == 0) {
-			innobase_register_stmt(engine, session);
-		}
 
 		if (trx->isolation_level == TRX_ISO_SERIALIZABLE
 			&& prebuilt->select_lock_type == LOCK_NONE
@@ -7301,60 +7128,16 @@ ha_innobase::external_lock(
 			trx->mysql_n_tables_locked++;
 		}
 
-		trx->n_mysql_tables_in_use++;
 		prebuilt->mysql_has_locked = TRUE;
 
 		return(0);
 	}
 
 	/* MySQL is releasing a table lock */
-
-	trx->n_mysql_tables_in_use--;
 	prebuilt->mysql_has_locked = FALSE;
-
-	/* Release a possible FIFO ticket and search latch. Since we
-	may reserve the kernel mutex, we have to release the search
-	system latch first to obey the latching order. */
-
-	innobase_release_stat_resources(trx);
-
-	/* If the MySQL lock count drops to zero we know that the current SQL
-	statement has ended */
-
-	if (trx->n_mysql_tables_in_use == 0) {
-
-		trx->mysql_n_tables_locked = 0;
-		prebuilt->used_in_HANDLER = FALSE;
-
-		if (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-			if (trx->active_trans != 0) {
-				engine->commit(session, TRUE);
-			}
-		} else {
-			if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
-						&& trx->global_read_view) {
-
-				/* At low transaction isolation levels we let
-				each consistent read set its own snapshot */
-
-				read_view_close_for_mysql(trx);
-			}
-		}
-	}
+	trx->mysql_n_tables_locked= 0;
 
 	return(0);
-}
-
-/************************************************************************//**
-Here we export InnoDB status variables to MySQL. */
-static
-void
-innodb_export_status(void)
-/*======================*/
-{
-	if (innodb_inited) {
-		srv_export_innodb_status();
-	}
 }
 
 /************************************************************************//**
@@ -7695,28 +7478,6 @@ ha_innobase::store_lock(
 
 	trx = check_trx_exists(session);
 
-	/* NOTE: MySQL can call this function with lock 'type' TL_IGNORE!
-	Be careful to ignore TL_IGNORE if we are going to do something with
-	only 'real' locks! */
-
-	/* If no MySQL table is in use, we need to set the isolation level
-	of the transaction. */
-
-	if (lock_type != TL_IGNORE
-	    && trx->n_mysql_tables_in_use == 0) {
-		trx->isolation_level = innobase_map_isolation_level(
-			(enum_tx_isolation) session_tx_isolation(session));
-
-		if (trx->isolation_level <= TRX_ISO_READ_COMMITTED
-		    && trx->global_read_view) {
-
-			/* At low transaction isolation levels we let
-			each consistent read set its own snapshot */
-
-			read_view_close_for_mysql(trx);
-		}
-	}
-
 	assert(EQ_CURRENT_SESSION(session));
 	const uint32_t sql_command = session_sql_command(session);
 
@@ -7797,11 +7558,7 @@ ha_innobase::store_lock(
 		TABLESPACE or TRUNCATE TABLE then allow multiple
 		writers. Note that ALTER TABLE uses a TL_WRITE_ALLOW_READ
 		< TL_WRITE_CONCURRENT_INSERT.
-
-		We especially allow multiple writers if MySQL is at the
-		start of a stored procedure call (SQLCOM_CALL) or a
-		stored function call (MySQL does have in_lock_tables
-		TRUE there). */
+		*/
 
 		if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
 		     && lock_type <= TL_WRITE)
@@ -7817,10 +7574,7 @@ ha_innobase::store_lock(
 		would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
 		to t2. Convert the lock to a normal read lock to allow
 		concurrent inserts to t2.
-
-		We especially allow concurrent inserts if MySQL is at the
-		start of a stored procedure call (SQLCOM_CALL)
-		(MySQL does have session_in_lock_tables() TRUE there). */
+    */
 
 		if (lock_type == TL_READ_NO_INSERT) {
 
@@ -8195,12 +7949,65 @@ innobase_get_at_most_n_mbchars(
 
 	return(char_length);
 }
+/**
+ * We will also use this function to communicate
+ * to InnoDB that a new SQL statement has started and that we must store a
+ * savepoint to our transaction handle, so that we are able to roll back
+ * the SQL statement in case of an error.
+ */
+void
+InnobaseEngine::doStartStatement(
+	Session *session) /*!< in: handle to the Drizzle session */
+{
+  /* 
+   * Create the InnoDB transaction structure
+   * for the session
+   */
+	trx_t *trx= check_trx_exists(session);
+
+  /* "reset" the error message for the transaction */
+  trx->detailed_error[0]= '\0';
+
+	/* Set the isolation level of the transaction. */
+  trx->isolation_level= innobase_map_isolation_level((enum_tx_isolation) session_tx_isolation(session));
+}
+
+void
+InnobaseEngine::doEndStatement(
+  Session *session)
+{
+  trx_t *trx= check_trx_exists(session);
+
+  /* Release a possible FIFO ticket and search latch. Since we
+  may reserve the kernel mutex, we have to release the search
+  system latch first to obey the latching order. */
+
+  innobase_release_stat_resources(trx);
+
+  if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    if (trx->conc_state != TRX_NOT_STARTED)
+    {
+      commit(session, TRUE);
+    }
+  }
+  else
+  {
+    if (trx->isolation_level <= TRX_ISO_READ_COMMITTED &&
+        trx->global_read_view)
+    {
+      /* At low transaction isolation levels we let
+      each consistent read set its own snapshot */
+      read_view_close_for_mysql(trx);
+    }
+  }
+}
 
 /*******************************************************************//**
 This function is used to prepare an X/Open XA distributed transaction.
 @return	0 or error number */
 int
-InnobaseEngine::prepare(
+InnobaseEngine::doXaPrepare(
 /*================*/
 	Session*	session,/*!< in: handle to the MySQL thread of
 				the user whose XA transaction should
@@ -8230,20 +8037,13 @@ InnobaseEngine::prepare(
 
 	innobase_release_stat_resources(trx);
 
-	if (trx->active_trans == 0 && trx->conc_state != TRX_NOT_STARTED) {
-
-	  errmsg_printf(ERRMSG_LVL_ERROR,
-			"trx->active_trans == 0, but trx->conc_state != "
-			"TRX_NOT_STARTED");
-	}
-
 	if (all
 		|| (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
 
 		/* We were instructed to prepare the whole transaction, or
 		this is an SQL statement end and autocommit is on */
 
-		ut_ad(trx->active_trans);
+		ut_ad(trx->conc_state != TRX_NOT_STARTED);
 
 		error = (int) trx_prepare_for_mysql(trx);
 	} else {
@@ -8290,7 +8090,7 @@ InnobaseEngine::prepare(
 		to block for undefined period of time.
 		*/
 		pthread_mutex_lock(&prepare_commit_mutex);
-		trx->active_trans = 2;
+		trx->conc_state = TRX_PREPARED;
 	}
 	return(error);
 }
@@ -8299,10 +8099,10 @@ InnobaseEngine::prepare(
 This function is used to recover X/Open XA distributed transactions.
 @return	number of prepared transactions stored in xid_list */
 int
-InnobaseEngine::recover(
+InnobaseEngine::doXaRecover(
 /*================*/
 	::drizzled::XID*	xid_list,/*!< in/out: prepared transactions */
-	uint			len)	/*!< in: number of slots in xid_list */
+	size_t len)	/*!< in: number of slots in xid_list */
 {
 	assert(this == innodb_engine_ptr);
 
@@ -8319,7 +8119,7 @@ This function is used to commit one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::commit_by_xid(
+InnobaseEngine::doXaCommitXid(
 /*===================*/
 	::drizzled::XID*	xid)	/*!< in: X/Open XA transaction identification */
 {
@@ -8343,7 +8143,7 @@ This function is used to rollback one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::rollback_by_xid(
+InnobaseEngine::doXaRollbackXid(
 /*=====================*/
 	::drizzled::XID*		xid)	/*!< in: X/Open XA transaction
 				identification */
@@ -8727,23 +8527,6 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(SHOW_VAR *var, char *)
-{
-  innodb_export_status();
-  var->type= SHOW_ARRAY;
-  var->value= (char *) &innodb_status_variables;
-  return 0;
-}
-
-static st_show_var_func_container
-show_innodb_vars_cont = { &show_innodb_vars };
-
-static SHOW_VAR innodb_status_variables_export[]= {
-  {"Innodb",                   (char*) &show_innodb_vars_cont, SHOW_FUNC},
-  {NULL, NULL, SHOW_LONG}
-};
-
-
 /* plugin options */
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -9066,7 +8849,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   innobase_deinit, /* Plugin Deinit */
-  innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

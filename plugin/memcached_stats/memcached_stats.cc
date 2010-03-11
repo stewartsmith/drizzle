@@ -43,129 +43,16 @@ using namespace std;
 using namespace drizzled;
 
 /*
- * Vectors of columns for I_S tables.
+ * DATA_DICTIONARY tables.
  */
-static vector<const plugin::ColumnInfo *> memcached_stats_columns;
-static vector<const plugin::ColumnInfo *> memcached_analysis_columns;
+static AnalysisTableTool *analysis_table_tool; 
 
-/*
- * Methods for I_S tables.
- */
-static plugin::InfoSchemaMethods *memcached_stats_methods= NULL;
-static plugin::InfoSchemaMethods *memcached_analysis_methods= NULL;
-
-/*
- * I_S tables.
- */
-static plugin::InfoSchemaTable *memcached_stats_table= NULL;
-static plugin::InfoSchemaTable *memcached_analysis_table= NULL;
+static StatsTableTool *stats_table_tool;
 
 /*
  * System variable related variables.
  */
 static char *sysvar_memcached_servers= NULL;
-
-/**
- * Populate the vectors of columns for each I_S table.
- *
- * @return false on success; true on failure.
- */
-static bool initColumns()
-{
-  if (createMemcachedStatsColumns(memcached_stats_columns))
-  {
-    return true;
-  }
-
-  if (createMemcachedAnalysisColumns(memcached_analysis_columns))
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Clear the vectors of columns for each I_S table.
- */
-static void cleanupColumns()
-{
-  clearMemcachedColumns(memcached_stats_columns);
-  clearMemcachedColumns(memcached_analysis_columns);
-}
-
-/**
- * Initialize the methods for each I_S table.
- *
- * @return false on success; true on failure
- */
-static bool initMethods()
-{
-  memcached_stats_methods= new(std::nothrow) 
-    MemcachedStatsISMethods();
-  if (! memcached_stats_methods)
-  {
-    return true;
-  }
-
-  memcached_analysis_methods= new(std::nothrow) 
-    MemcachedAnalysisISMethods();
-  if (! memcached_analysis_methods)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Delete memory allocated for the I_S table methods.
- */
-static void cleanupMethods()
-{
-  delete memcached_stats_methods;
-  delete memcached_analysis_methods;
-}
-
-/**
- * Initialize the I_S tables related to memcached.
- *
- * @return false on success; true on failure
- */
-static bool initMemcachedTables()
-{
-  memcached_stats_table= new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_STATS",
-                                                           memcached_stats_columns,
-                                                           -1, -1, false, false, 0,
-                                                           memcached_stats_methods,
-                                                           "MEMCACHED_STATS");
-  if (! memcached_stats_table)
-  {
-    return true;
-  }
-
-  memcached_analysis_table= 
-    new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_ANALYSIS",
-                                      memcached_analysis_columns,
-                                      -1, -1, false, false, 0,
-                                      memcached_analysis_methods,
-                                      "MEMCACHED_STATS");
-  if (! memcached_analysis_table)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Delete memory allocated for the I_S tables.
- */
-static void cleanupMemcachedTables()
-{
-  delete memcached_stats_table;
-  delete memcached_analysis_table;
-}
 
 /**
  * Initialize the memcached stats plugin.
@@ -175,27 +62,16 @@ static void cleanupMemcachedTables()
  */
 static int init(plugin::Registry &registry)
 {
-  if (initMethods())
-  {
-    return 1;
-  }
-
-  if (initColumns())
-  {
-    return 1;
-  }
-
-  if (initMemcachedTables())
-  {
-    return 1;
-  }
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   sysvar_holder.setServersString(sysvar_memcached_servers);
 
   /* we are good to go */
-  registry.add(memcached_stats_table);
-  registry.add(memcached_analysis_table);
+  stats_table_tool= new(std::nothrow)StatsTableTool; 
+  registry.add(stats_table_tool);
+
+  analysis_table_tool= new(std::nothrow)AnalysisTableTool;
+  registry.add(analysis_table_tool);
 
   return 0;
 }
@@ -208,13 +84,10 @@ static int init(plugin::Registry &registry)
  */
 static int deinit(plugin::Registry &registry)
 {
-  registry.remove(memcached_stats_table);
-  registry.remove(memcached_analysis_table);
-
-  cleanupMethods();
-  cleanupColumns();
-  cleanupMemcachedTables();
-
+  registry.remove(stats_table_tool);
+  delete stats_table_tool;
+  registry.remove(analysis_table_tool);
+  delete analysis_table_tool;
   return 0;
 }
 
@@ -275,7 +148,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   deinit, /* Plugin Deinit    */
-  NULL,   /* status variables */
   system_variables, /* system variables */
   NULL    /* config options   */
 }

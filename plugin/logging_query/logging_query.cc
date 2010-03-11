@@ -276,7 +276,7 @@ public:
     if (re)
     {
       int this_pcre_rc;
-      this_pcre_rc = pcre_exec(re, pe, session->query, session->query_length, 0, 0, NULL, 0);
+      this_pcre_rc = pcre_exec(re, pe, session->query.c_str(), session->query.length(), 0, 0, NULL, 0);
       if (this_pcre_rc < 0)
         return false;
     }
@@ -298,7 +298,7 @@ public:
                // dont need to quote the db name, always CSV safe
                (int)session->db.length(), dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->getQueryString(),
+               quotify((unsigned char *)session->getQueryString().c_str(),
                        session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
@@ -425,7 +425,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
   logging_query_plugin_deinit,
-  NULL,   /* status variables */
   logging_query_system_variables,
   NULL
 }

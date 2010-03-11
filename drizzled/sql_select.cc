@@ -38,7 +38,6 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/probes.h"
 #include "drizzled/show.h"
-#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -116,7 +115,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 {
   bool res;
   register Select_Lex *select_lex= &lex->select_lex;
-  DRIZZLE_SELECT_START(session->query);
+  DRIZZLE_SELECT_START(session->query.c_str());
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
@@ -347,18 +346,18 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
 */
 bool mysql_select(Session *session,
                   Item ***rref_pointer_array,
-	                TableList *tables, 
+                  TableList *tables, 
                   uint32_t wild_num, 
                   List<Item> &fields,
-	                COND *conds, 
+                  COND *conds, 
                   uint32_t og_num,  
                   order_st *order, 
                   order_st *group,
-	                Item *having, 
+                  Item *having, 
                   uint64_t select_options,
-	                select_result *result, 
+                  select_result *result, 
                   Select_Lex_Unit *unit,
-	                Select_Lex *select_lex)
+                  Select_Lex *select_lex)
 {
   bool err;
   bool free_join= 1;

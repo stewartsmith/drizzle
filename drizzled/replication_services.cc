@@ -508,7 +508,7 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
      * We add the "key field metadata" -- i.e. the fields which is
      * the primary key for the table.
      */
-    if (in_table->s->primary_key == current_field->field_index)
+    if (in_table->s->fieldInPrimaryKey(current_field))
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
@@ -602,7 +602,7 @@ void ReplicationServices::updateRecord(Session *in_session,
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->s->primary_key == current_field->field_index)
+    if (in_table->s->fieldInPrimaryKey(current_field))
     {
       /**
        * To say the below is ugly is an understatement. But it works.
@@ -682,7 +682,7 @@ void ReplicationServices::setDeleteHeader(message::Statement &statement,
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->s->primary_key == current_field->field_index)
+    if (in_table->s->fieldInPrimaryKey(current_field))
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
@@ -715,7 +715,7 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->s->primary_key == current_field->field_index)
+    if (in_table->s->fieldInPrimaryKey(current_field))
     {
       string_value= current_field->val_str(string_value);
       record->add_key_value(string_value->c_ptr(), string_value->length());
@@ -725,6 +725,126 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
       string_value->free();
     }
   }
+}
+
+void ReplicationServices::createTable(Session *in_session,
+                                      const message::Table &table)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::CREATE_TABLE, in_session);
+
+  /* 
+   * Construct the specialized CreateTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::CreateTableStatement *create_table_statement= statement->mutable_create_table_statement();
+  message::Table *new_table_message= create_table_statement->mutable_table();
+  *new_table_message= table;
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+
+}
+
+void ReplicationServices::createSchema(Session *in_session,
+                                       const message::Schema &schema)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::CREATE_SCHEMA, in_session);
+
+  /* 
+   * Construct the specialized CreateSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::CreateSchemaStatement *create_schema_statement= statement->mutable_create_schema_statement();
+  message::Schema *new_schema_message= create_schema_statement->mutable_schema();
+  *new_schema_message= schema;
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+
+}
+
+void ReplicationServices::dropSchema(Session *in_session, const string &schema_name)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::DROP_SCHEMA, in_session);
+
+  /* 
+   * Construct the specialized DropSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::DropSchemaStatement *drop_schema_statement= statement->mutable_drop_schema_statement();
+
+  drop_schema_statement->set_schema_name(schema_name);
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+}
+
+void ReplicationServices::dropTable(Session *in_session,
+                                    const string &schema_name,
+                                    const string &table_name,
+                                    bool if_exists)
+{
+  if (! is_active)
+    return;
+  
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::DROP_TABLE, in_session);
+
+  /* 
+   * Construct the specialized DropTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::DropTableStatement *drop_table_statement= statement->mutable_drop_table_statement();
+
+  drop_table_statement->set_if_exists_clause(if_exists);
+
+  message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
 }
 
 void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
@@ -759,7 +879,7 @@ void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
   cleanupTransaction(transaction, in_session);
 }
 
-void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
+void ReplicationServices::rawStatement(Session *in_session, const string &query)
 {
   if (! is_active)
     return;
@@ -768,7 +888,6 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   message::Statement *statement= transaction->add_statement();
 
   initStatement(*statement, message::Statement::RAW_SQL, in_session);
-  string query(in_query, in_query_len);
   statement->set_sql(query);
   finalizeStatement(*statement, in_session);
 

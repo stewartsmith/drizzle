@@ -40,7 +40,7 @@ drop table if exists t1;
 --error 1075
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 
--- error 1049
+-- error 1005
 create table not_existing_database.test (a int);
 create table `a/a` (a int);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -242,6 +242,7 @@ create table if not exists t1 select 3 as 'a',4 as 'b';
 --error ER_DUP_ENTRY
 create table if not exists t1 select 3 as 'a',3 as 'b';
 show warnings;
+--replace_column 2 #
 show status like "Opened_tables";
 select * from t1;
 drop table t1;
@@ -315,17 +316,17 @@ create table t2 like t3;
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t2;
 select * from t2;
+--error 1050
 create table t3 like t1;
 --error 1050
 create table t3 like mysqltest.t3;
---error 1049
+--error 1005
 create table non_existing_database.t1 like t1;
 --error ER_NO_SUCH_TABLE
 create table t3 like non_existing_table;
 --error 1050
 create temporary table t3 like t1;
 drop table t1, t2, t3;
-drop table t3;
 drop database mysqltest;
 
 #
@@ -1096,11 +1097,11 @@ DROP TABLE t1;
 # precedence
 
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
+#SHOW INDEX FROM t1;
 DROP TABLE t1;
 
 CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
-SHOW INDEX FROM t1;
+#SHOW INDEX FROM t1;
 DROP TABLE t1;
 
 
@@ -1166,16 +1167,16 @@ USE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --error 1102
 SHOW CREATE DATABASE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-#
-# Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
-#
+##
+## Bug#21432 Database/Table name limited to 64 bytes, not chars, problems with multi-byte
+##
 
 create database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 use имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
 select database();
 use test;
 
-select SCHEMA_NAME from information_schema.schemata
+select SCHEMA_NAME from data_dictionary.schemas
 where schema_name='имя_базы_в_кодировке_утф8_длиной_больше_чем_45';
 
 drop database имя_базы_в_кодировке_утф8_длиной_больше_чем_45;
@@ -1189,13 +1190,13 @@ create table имя_таблицы_в_кодировке_утф8_длиной_б
 # database, table, field, key
 select * from имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
-select TABLE_NAME from information_schema.tables where
+select TABLE_NAME from data_dictionary.tables where
 table_schema='test';
 
-select COLUMN_NAME from information_schema.columns where
+select COLUMN_NAME from data_dictionary.columns where
 table_schema='test';
 
-select INDEX_NAME from information_schema.statistics where
+select INDEX_NAME from data_dictionary.indexes where
 table_schema='test';
 
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -1203,18 +1204,18 @@ show create table имя_таблицы_в_кодировке_утф8_длино
 
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 
-
+#
 #
 # Bug#25629 CREATE TABLE LIKE does not work with INFORMATION_SCHEMA
 #
---error 1478
-create table t1 like information_schema.processlist;
-create table t1 like information_schema.processlist engine=innodb;
+--error 1005
+create table t1 like data_dictionary.processlist;
+create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 drop table t1;
---error 1478
-create temporary table t1 like information_schema.processlist;
-create temporary table t1 like information_schema.processlist engine=myisam;
+--error 1005
+create temporary table t1 like data_dictionary.processlist;
+create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 drop table t1;
 

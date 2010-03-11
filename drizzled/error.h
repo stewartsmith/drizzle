@@ -33,7 +33,9 @@ namespace drizzled
 #define MY_FILE_ERROR	((size_t) -1)
 #define ME_FATALERROR   1024    /* Fatal statement error */
 
-typedef void (*error_handler_func)(uint32_t my_err, const char *str,myf MyFlags);
+typedef void (*error_handler_func)(uint32_t my_err,
+                                   const char *str,
+                                   myf MyFlags);
 extern error_handler_func error_handler_hook;
 
 // TODO: kill this method. Too much to do with this branch.
