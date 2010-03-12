@@ -17,8 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
 #include "drizzled/function/time/from_days.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"
@@ -26,11 +25,14 @@
 #include <sstream>
 #include <string>
 
+namespace drizzled
+{
+
 /**
  * Interpret the first argument as a Julian Day Number and fill
  * our supplied temporal object.
  */
-bool Item_func_from_days::get_temporal(drizzled::Date &to)
+bool Item_func_from_days::get_temporal(Date &to)
 {
   assert(fixed);
 
@@ -61,3 +63,5 @@ bool Item_func_from_days::get_temporal(drizzled::Date &to)
   }
   return true;
 }
+
+} /* namespace drizzled */

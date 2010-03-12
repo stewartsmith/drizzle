@@ -13,13 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#ifndef PLUGIN_GEARMAN_UDF_GMAN_DO_H
+#define PLUGIN_GEARMAN_UDF_GMAN_DO_H
+
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
 #include <libgearman/gearman.h>
 
-class Item_func_gman_do :public Item_str_func
+class Item_func_gman_do :public drizzled::Item_str_func
 {
 protected:
   typedef enum
@@ -34,7 +36,7 @@ protected:
 private:
   gman_do_options_t options;
   gearman_client_st client;
-  String buffer;
+  drizzled::String buffer;
 
 public:
   Item_func_gman_do():
@@ -46,7 +48,7 @@ public:
   ~Item_func_gman_do();
   void fix_length_and_dec() { max_length=10; }
   virtual const char *func_name() const{ return "gman_do"; }
-  String *val_str(String *);
+  drizzled::String *val_str(drizzled::String *);
   void *realloc(size_t size);
 };
 
@@ -91,3 +93,5 @@ public:
                                          GMAN_DO_OPTIONS_BACKGROUND)) {}
   const char *func_name() const{ return "gman_do_low_background"; }
 };
+
+#endif /* PLUGIN_GEARMAN_UDF_GMAN_DO_H */

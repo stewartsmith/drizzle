@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_JOIN_CACHE_H
 #define DRIZZLED_JOIN_CACHE_H
 
-#include "drizzled/server_includes.h"
+namespace drizzled
+{
 
 class Field_blob;
 typedef JoinTable JoinTable;
@@ -63,12 +64,14 @@ typedef struct st_join_cache
   uint32_t blobs;
   CACHE_FIELD *field;
   CACHE_FIELD **blob_ptr;
-  SQL_SELECT *select;
+  optimizer::SqlSelect *select;
 } JOIN_CACHE;
 
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);
 void reset_cache_read(JOIN_CACHE *cache);
 void reset_cache_write(JOIN_CACHE *cache);
 bool store_record_in_cache(JOIN_CACHE *cache);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_JOIN_CACHE_H */

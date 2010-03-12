@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_ITEM_FIELD_H
 #define DRIZZLED_ITEM_FIELD_H
 
+namespace drizzled
+{
+
 extern Item **not_found_item;
 class COND_EQUAL;
 
@@ -68,7 +71,7 @@ public:
   String *str_result(String* tmp);
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
-  bool send(drizzled::plugin::Protocol *protocol, String *str_arg);
+  bool send(plugin::Client *client, String *str_arg);
   void reset_field(Field *f);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
@@ -99,7 +102,6 @@ public:
   bool set_no_const_sub(unsigned char *arg);
   Item *replace_equal_field(unsigned char *arg);
   uint32_t max_disp_length();
-  Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   int fix_outer_field(Session *session, Field **field, Item **reference);
   virtual Item *update_value_transformer(unsigned char *select_arg);
@@ -109,5 +111,7 @@ public:
   friend class Item_insert_value;
   friend class Select_Lex_Unit;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_FIELD_H */

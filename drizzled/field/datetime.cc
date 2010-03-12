@@ -18,16 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
 
+#include <math.h>
+
 #include <sstream>
 #include <string>
 
+
+namespace drizzled
+{
 
 /****************************************************************************
 ** datetime type
@@ -45,7 +50,7 @@ int Field_datetime::store(const char *from,
    * Try to create a DateTime from the supplied string.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), from);
@@ -90,7 +95,7 @@ int Field_datetime::store(int64_t from, bool)
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   if (! temporal.from_int64_t(from))
   {
     /* Convert the integer to a string using stringstream */
@@ -123,7 +128,7 @@ int Field_datetime::store(int64_t from, bool)
 
 int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_type)
 {
-  drizzled::DateTime temporal;
+  DateTime temporal;
 
   temporal.set_years(ltime->year);
   temporal.set_months(ltime->month);
@@ -181,8 +186,8 @@ int64_t Field_datetime::val_int(void)
 String *Field_datetime::val_str(String *val_buffer,
 				String *)
 {
-  val_buffer->alloc(drizzled::DateTime::MAX_STRING_LENGTH);
-  val_buffer->length(drizzled::DateTime::MAX_STRING_LENGTH);
+  val_buffer->alloc(DateTime::MAX_STRING_LENGTH);
+  val_buffer->length(DateTime::MAX_STRING_LENGTH);
   int64_t tmp;
 
   ASSERT_COLUMN_MARKED_FOR_READ;
@@ -194,7 +199,7 @@ String *Field_datetime::val_str(String *val_buffer,
 #endif
     int64_tget(tmp,ptr);
 
-  drizzled::DateTime dt;
+  DateTime dt;
 
   /* TODO: add an assert that this succeeds
    * currently fails due to bug in allowing
@@ -208,8 +213,8 @@ String *Field_datetime::val_str(String *val_buffer,
 			       */
 
   int rlen;
-  rlen= dt.to_string((char*)val_buffer->ptr(), drizzled::DateTime::MAX_STRING_LENGTH);
-  assert((rlen+1) <  drizzled::DateTime::MAX_STRING_LENGTH);
+  rlen= dt.to_string((char*)val_buffer->ptr(), DateTime::MAX_STRING_LENGTH);
+  assert((rlen+1) <  DateTime::MAX_STRING_LENGTH);
 
   val_buffer->length(rlen);
 
@@ -293,3 +298,4 @@ void Field_datetime::sql_type(String &res) const
   res.set_ascii(STRING_WITH_LEN("datetime"));
 }
 
+} /* namespace drizzled */

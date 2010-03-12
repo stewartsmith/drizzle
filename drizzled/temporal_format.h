@@ -28,8 +28,8 @@
  * Defines the API for matching datetime formats.
  */
 
-#ifndef DRIZZLED_TEMPORAL_FORMAT_MATCH_H
-#define DRIZZLED_TEMPORAL_FORMAT_MATCH_H
+#ifndef DRIZZLED_TEMPORAL_FORMAT_H
+#define DRIZZLED_TEMPORAL_FORMAT_H
 
 #include PCRE_HEADER
 
@@ -49,7 +49,6 @@ protected:
   pcre *_re; /**< The compiled regular expression struct */
   int32_t _error_offset; /**< Any error encountered during compilation or matching */
   const char *_error;
-  int32_t _match_vector[OUT_VECTOR_SIZE]; /**< Stores match substring indexes */
   /* Index of the pattern which is a specific temporal part */
   uint32_t _year_part_index;
   uint32_t _month_part_index;
@@ -131,7 +130,6 @@ public:
   bool matches(const char *data, size_t data_len, Temporal *to);
 };
 
-} /* end namespace drizzled */
 
 /**
  * Initializes the regular expressions used by the datetime
@@ -150,4 +148,6 @@ bool init_temporal_formats();
  */
 void deinit_temporal_formats();
 
-#endif /* DRIZZLED_TEMPORAL_FORMAT_MATCH_H */
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_TEMPORAL_FORMAT_H */

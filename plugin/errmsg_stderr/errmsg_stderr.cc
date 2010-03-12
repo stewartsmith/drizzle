@@ -17,21 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/error_message_handler.h>
+#include "config.h"
+#include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
+#include <drizzled/plugin.h>
+#include <drizzled/plugin/registry.h>
 
 #include <stdio.h>  /* for vsnprintf */
 #include <stdarg.h>  /* for va_list */
 #include <unistd.h>  /* for write(2) */
 
+using namespace drizzled;
+
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN 8192
 
-class Error_message_stderr : public Error_message_handler
+class Error_message_stderr : public plugin::ErrorMessage
 {
 public:
-  Error_message_stderr() : Error_message_handler("Error_message_stderr") {}
+  Error_message_stderr()
+   : plugin::ErrorMessage("Error_message_stderr") {}
   virtual bool errmsg(Session *, int , const char *format, va_list ap)
   {
     char msgbuf[MAX_MSG_LEN];
@@ -51,7 +56,7 @@ public:
 };
 
 static Error_message_stderr *handler= NULL;
-static int errmsg_stderr_plugin_init(drizzled::plugin::Registry &registry)
+static int errmsg_stderr_plugin_init(plugin::Registry &registry)
 {
   handler= new Error_message_stderr();
   registry.add(handler);
@@ -59,7 +64,7 @@ static int errmsg_stderr_plugin_init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
+static int errmsg_stderr_plugin_deinit(plugin::Registry &registry)
 {
 
   if (handler)
@@ -70,8 +75,9 @@ static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(errmsg_stderr)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "errmsg_stderr",
   "0.1",
   "Mark Atwood <mark@fallenpegasus.com>",
@@ -79,8 +85,7 @@ drizzle_declare_plugin(errmsg_stderr)
   PLUGIN_LICENSE_GPL,
   errmsg_stderr_plugin_init,
   errmsg_stderr_plugin_deinit,
-  NULL, /* status variables */
   NULL, /* system variables */
   NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

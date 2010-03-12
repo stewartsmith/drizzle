@@ -17,10 +17,11 @@
   Preload indexes into key cache
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
+#include <stdlib.h>
 #include <drizzled/util/test.h>
 
-
+using namespace drizzled;
 
 /*
   Preload pages of the index file for a table into the key cache
@@ -48,8 +49,8 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   MYISAM_SHARE* share= info->s;
   uint32_t keys= share->state.header.keys;
   MI_KEYDEF *keyinfo= share->keyinfo;
-  my_off_t key_file_length= share->state.state.key_file_length;
-  my_off_t pos= share->base.keystart;
+  internal::my_off_t key_file_length= share->state.state.key_file_length;
+  internal::my_off_t pos= share->base.keystart;
 
   if (!keys || !mi_is_any_key_active(key_map) || key_file_length == pos)
     return(0);
@@ -62,7 +63,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     for (i= 1 ; i < keys ; i++)
     {
       if (keyinfo[i].block_length != block_length)
-        return(my_errno= HA_ERR_NON_UNIQUE_BLOCK_SIZE);
+        return(errno= HA_ERR_NON_UNIQUE_BLOCK_SIZE);
     }
   }
   else
@@ -72,7 +73,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   set_if_bigger(length, block_length);
 
   if (!(buff= (unsigned char *) malloc(length)))
-    return(my_errno= HA_ERR_OUT_OF_MEM);
+    return(errno= HA_ERR_OUT_OF_MEM);
 
   if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))
     goto err;
@@ -80,7 +81,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   do
   {
     /* Read the next block of index file into the preload buffer */
-    if ((my_off_t) length > (key_file_length-pos))
+    if ((internal::my_off_t) length > (key_file_length-pos))
       length= (uint32_t) (key_file_length-pos);
     if (my_pread(share->kfile, (unsigned char*) buff, length, pos, MYF(MY_FAE|MY_FNABP)))
       goto err;
@@ -118,6 +119,6 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
 
 err:
   free((char*) buff);
-  return(my_errno= errno);
+  return(errno= errno);
 }
 

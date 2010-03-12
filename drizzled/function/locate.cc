@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/locate.h>
+
+namespace drizzled
+{
 
 void Item_func_locate::fix_length_and_dec()
 {
@@ -35,7 +38,7 @@ int64_t Item_func_locate::val_int()
   if (!a || !b)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
   /* must be int64_t to avoid truncation */
@@ -83,3 +86,4 @@ void Item_func_locate::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

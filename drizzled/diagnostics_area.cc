@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/diagnostics_area.h"
+
+namespace drizzled
+{
 
 /**
   Clear this diagnostics area.
@@ -170,3 +173,5 @@ void Diagnostics_area::disable_status()
   assert(! is_set());
   m_status= DA_DISABLED;
 }
+
+} /* namespace drizzled */

@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <drizzled/common.h>
 #include <drizzled/error.h>
@@ -22,6 +22,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
@@ -197,17 +198,12 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	    keyinfo->rb_tree.size_of_element++;
 	}
 	switch (keyinfo->seg[j].type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
-	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:
-	case HA_KEYTYPE_USHORT_INT:
 	case HA_KEYTYPE_ULONG_INT:
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:
-	case HA_KEYTYPE_INT24:
 	case HA_KEYTYPE_UINT24:
-	case HA_KEYTYPE_INT8:
 	  keyinfo->seg[j].flag|= HA_SWAP_KEY;
           break;
         case HA_KEYTYPE_VARBINARY1:
@@ -309,7 +305,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	keyseg++;
 
 	init_tree(&keyinfo->rb_tree, 0, 0, sizeof(unsigned char*),
-		  (qsort_cmp2)keys_compare, 1, NULL, NULL);
+		  (qsort_cmp2)keys_compare, true, NULL, NULL);
 	keyinfo->delete_key= hp_rb_delete_key;
 	keyinfo->write_key= hp_rb_write_key;
       }
@@ -410,8 +406,8 @@ static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_reco
   if (records_in_block < 10 && max_records)
     records_in_block= 10;
   if (!records_in_block || records_in_block*recbuffer >
-      (my_default_record_cache_size-sizeof(HP_PTRS)*HP_MAX_LEVELS))
-    records_in_block= (my_default_record_cache_size - sizeof(HP_PTRS) *
+      (internal::my_default_record_cache_size-sizeof(HP_PTRS)*HP_MAX_LEVELS))
+    records_in_block= (internal::my_default_record_cache_size - sizeof(HP_PTRS) *
 		      HP_MAX_LEVELS) / recbuffer + 1;
   block->records_in_block= records_in_block;
   block->recbuffer= recbuffer;
@@ -446,7 +442,7 @@ int heap_delete_table(const char *name)
   }
   else
   {
-    result= my_errno=ENOENT;
+    result= errno=ENOENT;
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
   return(result);

@@ -1,15 +1,16 @@
 #
-# Test of heap tables.
+# Test of MEMORY tables.
 #
 
 --disable_warnings
 drop table if exists t1,t2,t3;
 --enable_warnings
 
-create temporary table t1 (a int not null,b int not null, primary key (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
-#show table status like "t1";
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+show table status like "t1";
 show keys from t1;
 select * from t1;
 select * from t1 where a=4;
@@ -26,14 +27,15 @@ delete from t1 where a > 0;
 select * from t1;
 drop table t1;
 
-create temporary table t1 (a int not null,b int not null, primary key (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 alter table t1 modify a int not null auto_increment, engine=innodb, comment="new innodb table";
-#show table status like "t1";
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+show table status like "t1";
 select * from t1;
 drop table t1;
 
-create temporary table t1 (a int not null) engine=heap;
+create temporary table t1 (a int not null) engine=MEMORY;
 insert into t1 values (869751),(736494),(226312),(802616),(728912);
 select * from t1 where a > 736494;
 alter table t1 add unique uniq_id(a);
@@ -46,7 +48,7 @@ explain select * from t2 where a in (869751,736494,226312,802616);
 drop table t1,t2;
 
 create temporary table t1 (x int not null, y int not null, key x (x), unique y (y))
-engine=heap;
+engine=MEMORY;
 insert into t1 values (1,1),(2,2),(1,3),(2,4),(2,5),(2,6);
 select * from t1 where x=1;
 -- error 1137
@@ -55,19 +57,19 @@ select * from t1,t1 as t2 where t1.x=t2.y;
 explain select * from t1,t1 as t2 where t1.x=t2.y;
 drop table t1;
 
-create temporary table t1 (a int) engine=heap;
+create temporary table t1 (a int) engine=MEMORY;
 insert into t1 values(1);
 select max(a) from t1;
 drop table t1;
 
-CREATE TEMPORARY TABLE t1 ( a int not null default 0, b int not null default 0,  key(a),  key(b)  ) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 ( a int not null default 0, b int not null default 0,  key(a),  key(b)  ) ENGINE=MEMORY;
 insert into t1 values(1,1),(1,2),(2,3),(1,3),(1,4),(1,5),(1,6);
 select * from t1 where a=1; 
 insert into t1 values(1,1),(1,2),(2,3),(1,3),(1,4),(1,5),(1,6);
 select * from t1 where a=1;
 drop table t1;
 
-create temporary table t1 (id int not null, primary key (id)) engine=HEAP;
+create temporary table t1 (id int not null, primary key (id)) engine=MEMORY;
 insert into t1 values(1);
 select max(id) from t1; 
 insert into t1 values(2);
@@ -75,16 +77,16 @@ select max(id) from t1;
 replace into t1 values(1);
 drop table t1;
 
-create temporary table t1 (n int) engine=heap;
+create temporary table t1 (n int) engine=MEMORY;
 drop table t1;
 
-create temporary table t1 (n int) engine=heap;
+create temporary table t1 (n int) engine=MEMORY;
 drop table if exists t1;
 
 # Test of non unique index
 
 CREATE TEMPORARY table t1(f1 int not null,f2 char(20) not 
-null,index(f2)) engine=heap;
+null,index(f2)) engine=MEMORY;
 INSERT into t1 set f1=12,f2="bill";
 INSERT into t1 set f1=13,f2="bill";
 INSERT into t1 set f1=14,f2="bill";
@@ -102,7 +104,7 @@ drop table t1;
 # Test when using part key searches
 #
 
-create temporary table t1 (btn char(10) not null, key(btn)) engine=heap;
+create temporary table t1 (btn char(10) not null, key(btn)) engine=MEMORY;
 insert into t1 values ("hello"),("hello"),("hello"),("hello"),("hello"),("a"),("b"),("c"),("d"),("e"),("f"),("g"),("h"),("i");
 explain select * from t1 where btn like "q%";
 select * from t1 where btn like "q%";
@@ -121,7 +123,7 @@ CREATE TEMPORARY TABLE t1 (
   b int default NULL,
   KEY a (a),
   UNIQUE b (b)
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES (NULL,99),(99,NULL),(1,1),(2,2),(1,3);
 SELECT * FROM t1 WHERE a=NULL;
 explain SELECT * FROM t1 WHERE a IS NULL;
@@ -137,7 +139,7 @@ DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (
   a int default NULL,
   key a (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 INSERT INTO t1 VALUES (10), (10), (10);
 EXPLAIN SELECT * FROM t1 WHERE a=10;
 SELECT * FROM t1 WHERE a=10;
@@ -147,21 +149,21 @@ DROP TABLE t1;
 # Test when deleting all rows
 #
 
-CREATE TEMPORARY TABLE t1 (a int not null, primary key(a)) engine=heap;
+CREATE TEMPORARY TABLE t1 (a int not null, primary key(a)) engine=MEMORY;
 INSERT into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11);
 DELETE from t1 where a < 100;
 SELECT * from t1;
 DROP TABLE t1;
 
 #
-# Bug#4411 Server hangs when trying to SELECT MAX(id) from an empty HEAP table
+# Bug#4411 Server hangs when trying to SELECT MAX(id) from an empty MEMORY table
 #
 CREATE TEMPORARY TABLE `job_titles` (
   `job_title_id` int NOT NULL default '0',
   `job_title` char(18) NOT NULL default '',
   PRIMARY KEY  (`job_title_id`),
   UNIQUE KEY `job_title_id` (`job_title_id`,`job_title`)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 
 SELECT MAX(job_title_id) FROM job_titles;
 
@@ -172,7 +174,7 @@ DROP TABLE job_titles;
 # (Bug #6082)
 #
 
-CREATE TEMPORARY TABLE t1 (a INT NOT NULL, B INT, KEY(B)) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 (a INT NOT NULL, B INT, KEY(B)) ENGINE=MEMORY;
 INSERT INTO t1 VALUES(1,1), (1,NULL);
 SELECT * FROM t1 WHERE B is not null;
 DROP TABLE t1;
@@ -181,7 +183,7 @@ DROP TABLE t1;
 # Bug #6748
 # heap_rfirst() doesn't work (and never did!)
 #
-CREATE TEMPORARY TABLE t1 (pseudo char(35) PRIMARY KEY, date int NOT NULL) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 (pseudo char(35) PRIMARY KEY, date int NOT NULL) ENGINE=MEMORY;
 INSERT INTO t1 VALUES ('massecot',1101106491),('altec',1101106492),('stitch+',1101106304),('Seb Corgan',1101106305),('beerfilou',1101106263),('flaker',1101106529),('joce8',5),('M4vrick',1101106418),('gabay008',1101106525),('Vamp irX',1101106291),('ZoomZip',1101106546),('rip666',1101106502),('CBP ',1101106397),('guezpard',1101106496);
 DELETE FROM t1 WHERE date<1101106546;
 SELECT * FROM t1;
@@ -200,11 +202,11 @@ drop table t1;
 
 #
 # Test varchar
-# We can't use varchar.inc becasue heap doesn't support blob's
+# We can't use varchar.inc becasue MEMORY doesn't support blob's
 #
 
 let $default=`select @@storage_engine`;
-set storage_engine=HEAP;
+set storage_engine=MEMORY;
 
 #
 # Simple basic test that endspace is saved
@@ -375,7 +377,7 @@ drop table t1;
 # Test unique btree keys
 #
 
-create temporary table t1 (a char(10), unique using btree (a)) engine=heap;
+create temporary table t1 (a char(10), unique using btree (a)) engine=MEMORY;
 insert into t1 values ('a');
 --error ER_DUP_ENTRY
 insert into t1 values ('a ');
@@ -417,20 +419,20 @@ eval set storage_engine=$default;
 #
 
 create temporary table t1 (a bigint auto_increment primary key, b int,
-  key (b, a)) engine=heap;
+  key (b, a)) engine=MEMORY;
 insert t1 (b) values (1),(1),(1),(1),(1),(1),(1),(1);
 select * from t1;
 drop table t1;
 
 create temporary table t1 (a int not null, b int not null auto_increment,
-  primary key(a, b), key(b)) engine=heap;
+  primary key(a, b), key(b)) engine=MEMORY;
 insert t1 (a) values (1),(1),(1),(1),(1),(1),(1),(1);
 select * from t1;
 drop table t1;
 
 --error 1075
 create temporary table t1 (a int not null, b int not null auto_increment,
-  primary key(a, b)) engine=heap;
+  primary key(a, b)) engine=MEMORY;
 
 #
 # Bug #10566: Verify that we can create temporary a prefixed key with length > 255
@@ -444,7 +446,7 @@ drop table t1;
 #
 # Bug 12796: Record doesn't show when selecting through index
 #
-CREATE TEMPORARY TABLE t1 (a int, key(a)) engine=heap;
+CREATE TEMPORARY TABLE t1 (a int, key(a)) engine=MEMORY;
 insert into t1 values (0);
 delete from t1;
 select * from t1;
@@ -459,7 +461,7 @@ drop table t1;
 #
 create temporary table t1 (c char(10)) engine=memory;
 create temporary table t2 (c varchar(10)) engine=memory;
---replace_column 3 # 8 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status like 't_';
 drop table t1, t2;
 

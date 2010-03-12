@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Configuration Variables plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,11 +22,15 @@
 #ifndef DRIZZLED_PLUGIN_SCHEDULER_H
 #define DRIZZLED_PLUGIN_SCHEDULER_H
 
+#include "drizzled/plugin/plugin.h"
+
 #include <string>
 #include <vector>
 
 namespace drizzled
 {
+class Session;
+
 namespace plugin
 {
 
@@ -35,10 +38,16 @@ namespace plugin
  * This class should be used by scheduler plugins to implement custom session
  * schedulers.
  */
-class Scheduler
+class Scheduler : public Plugin
 {
+  /* Disable default constructors */
+  Scheduler();
+  Scheduler(const Scheduler &);
+  Scheduler& operator=(const Scheduler &);
 public:
-  Scheduler() {}
+  explicit Scheduler(std::string name_arg)
+    : Plugin(name_arg, "Scheduler")
+  {}
   virtual ~Scheduler() {}
 
   /**
@@ -56,28 +65,15 @@ public:
    * This is called when a scheduler should kill the session immedaitely.
    */
   virtual void killSessionNow(Session *) {}
+
+  static bool addPlugin(plugin::Scheduler *sced);
+  static void removePlugin(plugin::Scheduler *sced);
+  static bool setPlugin(const std::string& name);
+  static Scheduler *getScheduler();
+
 };
 
-class SchedulerFactory
-{
-  std::string name;
-  std::vector<std::string> aliases;
-protected:
-  Scheduler *scheduler;
-public:
-  SchedulerFactory(std::string name_arg): name(name_arg), scheduler(NULL) {}
-  SchedulerFactory(const char *name_arg): name(name_arg), scheduler(NULL) {}
-  virtual ~SchedulerFactory() {}
-  virtual Scheduler *operator()(void)= 0;
-  std::string getName() const {return name;}
-  const std::vector<std::string>& getAliases() const {return aliases;}
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
-};
-
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

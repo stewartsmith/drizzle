@@ -19,11 +19,15 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/num.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
+
+namespace drizzled
+{
 
 /**
   Numeric fields base class constructor.
@@ -215,3 +219,4 @@ uint32_t Field_num::is_equal(CreateField *new_field_ptr)
 }
 
 
+} /* namespace drizzled */

@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 
 #include <client/errname.h>
 
@@ -157,8 +157,8 @@ ErrorCodes::ErrorCodes()
     { "ER_NULL_COLUMN_IN_INDEX",1121 },
     { "ER_CANT_FIND_UDF",1122 },
     { "ER_CANT_INITIALIZE_UDF",1123 },
-    { "ER_UDF_NO_PATHS",1124 },
-    { "ER_UDF_EXISTS",1125 },
+    { "ER_PLUGIN_NO_PATHS",1124 },
+    { "ER_PLUGIN_EXISTS",1125 },
     { "ER_CANT_OPEN_LIBRARY",1126 },
     { "ER_CANT_FIND_DL_ENTRY",1127 },
     { "ER_FUNCTION_NOT_DEFINED",1128 },
@@ -379,7 +379,7 @@ ErrorCodes::ErrorCodes()
     { "ER_FPARSER_ERROR_IN_PARAMETER",1343 },
     { "ER_FPARSER_EOF_IN_UNKNOWN_PARAMETER",1344 },
     { "ER_VIEW_NO_EXPLAIN",1345 },
-    { "ER_FRM_UNKNOWN_TYPE",1346 },
+    { "ER_UNUSED1346",1346 },
     { "ER_WRONG_OBJECT",1347 },
     { "ER_NONUPDATEABLE_COLUMN",1348 },
     { "ER_VIEW_SELECT_DERIVED",1349 },
@@ -615,7 +615,7 @@ ErrorCodes::ErrorCodes()
     { "ER_UNSUPORTED_LOG_ENGINE",1579 },
     { "ER_BAD_LOG_STATEMENT",1580 },
     { "ER_CANT_RENAME_LOG_TABLE",1581 },
-    { "ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT",1582 },
+    { "ER_WRONG_PARAMCOUNT_TO_FUNCTION",1582 },
     { "ER_WRONG_PARAMETERS_TO_NATIVE_FCT",1583 },
     { "ER_WRONG_PARAMETERS_TO_STORED_FCT",1584 },
     { "ER_NATIVE_FCT_NAME_COLLISION",1585 },
@@ -715,6 +715,7 @@ ErrorCodes::ErrorCodes()
     { "ER_WARNING_NON_DEFAULT_VALUE_FOR_VIRTUAL_COLUMN",1679 },
     { "ER_UNSUPPORTED_ACTION_ON_VIRTUAL_COLUMN",1680 },
     { "ER_CONST_EXPR_IN_VCOL",1681 },
+    { "ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE", 1692},
     { 0, 0 }
   };
 

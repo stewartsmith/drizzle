@@ -16,7 +16,7 @@
 
 /* Insert of records */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -26,7 +26,16 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/transaction_services.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
 
+namespace drizzled
+{
+
+extern plugin::StorageEngine *heap_engine;
+extern plugin::StorageEngine *myisam_engine;
 
 /*
   Check if insert fields are correct.
@@ -239,7 +248,10 @@ bool mysql_insert(Session *session,TableList *table_list,
                     values_list.elements > 1);
 
   if (session->openTablesLock(table_list))
+  {
+    DRIZZLE_INSERT_DONE(1, 0);
     return true;
+  }
 
   lock_type= table_list->lock_type;
 
@@ -295,7 +307,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   ctx_state.restore_state(context, table_list);
 
   /*
-    Fill in the given fields and dump it to the table file
+    Fill in the given fields and dump it to the table cursor
   */
   memset(&info, 0, sizeof(info));
   info.ignore= ignore;
@@ -309,22 +321,22 @@ bool mysql_insert(Session *session,TableList *table_list,
     to NULL.
   */
   session->count_cuted_fields= ((values_list.elements == 1 &&
-                             !ignore) ?
-			    CHECK_FIELD_ERROR_FOR_NULL :
-			    CHECK_FIELD_WARN);
+                                 !ignore) ?
+                                CHECK_FIELD_ERROR_FOR_NULL :
+                                CHECK_FIELD_WARN);
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
   error=0;
   session->set_proc_info("update");
   if (duplic == DUP_REPLACE)
-    table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+    table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (duplic == DUP_UPDATE)
-    table->file->extra(HA_EXTRA_INSERT_WITH_UPDATE);
+    table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
   {
     if (duplic != DUP_ERROR || ignore)
-      table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
-    table->file->ha_start_bulk_insert(values_list.elements);
+      table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+    table->cursor->ha_start_bulk_insert(values_list.elements);
   }
 
 
@@ -337,7 +349,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     if (fields.elements || !value_count)
     {
       table->restoreRecordAsDefault();	// Get empty record
-      if (fill_record(session, fields, *values, 0))
+      if (fill_record(session, fields, *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -355,18 +367,9 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
     else
     {
-      if (session->used_tables)			// Column used in values()
-	table->restoreRecordAsDefault();	// Get empty record
-      else
-      {
-        /*
-          Fix delete marker. No need to restore rest of record since it will
-          be overwritten by fill_record() anyway (and fill_record() does not
-          use default values in this case).
-        */
-	table->record[0][0]= table->s->default_values[0];
-      }
-      if (fill_record(session, table->field, *values, 0))
+      table->restoreRecordAsDefault();	// Get empty record
+
+      if (fill_record(session, table->field, *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -379,7 +382,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
 
     // Release latches in case bulk insert takes a long time
-    ha_release_temporary_latches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     error=write_record(session, table ,&info);
     if (error)
@@ -399,24 +402,24 @@ bool mysql_insert(Session *session,TableList *table_list,
       Do not do this release if this is a delayed insert, it would steal
       auto_inc values from the delayed_insert thread as they share Table.
     */
-    table->file->ha_release_auto_increment();
-    if (table->file->ha_end_bulk_insert() && !error)
+    table->cursor->ha_release_auto_increment();
+    if (table->cursor->ha_end_bulk_insert() && !error)
     {
-      table->file->print_error(my_errno,MYF(0));
+      table->print_error(errno,MYF(0));
       error=1;
     }
     if (duplic != DUP_ERROR || ignore)
-      table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+      table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
-    transactional_table= table->file->has_transactions();
+    transactional_table= table->cursor->has_transactions();
 
     changed= (info.copied || info.deleted || info.updated);
-    if ((changed && error <= 0) || session->transaction.stmt.modified_non_trans_table)
+    if ((changed && error <= 0) || session->transaction.stmt.hasModifiedNonTransData())
     {
-      if (session->transaction.stmt.modified_non_trans_table)
-	session->transaction.all.modified_non_trans_table= true;
+      if (session->transaction.stmt.hasModifiedNonTransData())
+	session->transaction.all.markModifiedNonTransData();
     }
-    assert(transactional_table || !changed || session->transaction.stmt.modified_non_trans_table);
+    assert(transactional_table || !changed || session->transaction.stmt.hasModifiedNonTransData());
 
   }
   session->set_proc_info("end");
@@ -440,7 +443,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   table->auto_increment_field_not_null= false;
   if (duplic == DUP_REPLACE)
-    table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
+    table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
 
   if (error)
     goto abort;
@@ -465,17 +468,17 @@ bool mysql_insert(Session *session,TableList *table_list,
                    info.copied + info.deleted + info.touched, id, buff);
   }
   session->abort_on_warning= 0;
-  DRIZZLE_INSERT_END();
-  return(false);
+  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  return false;
 
 abort:
   if (table != NULL)
-    table->file->ha_release_auto_increment();
+    table->cursor->ha_release_auto_increment();
   if (!joins_freed)
     free_underlaid_joins(session, &session->lex->select_lex);
   session->abort_on_warning= 0;
-  DRIZZLE_INSERT_END();
-  return(true);
+  DRIZZLE_INSERT_DONE(1, 0);
+  return true;
 }
 
 
@@ -651,7 +654,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
   if (!select_insert)
   {
     TableList *duplicate;
-    if ((duplicate= unique_table(session, table_list, table_list->next_global, 1)))
+    if ((duplicate= unique_table(table_list, table_list->next_global, true)))
     {
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
 
@@ -694,7 +697,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
     then both on update triggers will work instead. Similarly both on
     delete triggers will be invoked if we will delete conflicting records.
 
-    Sets session->transaction.stmt.modified_non_trans_table to true if table which is updated didn't have
+    Sets session->transaction.stmt.modified_non_trans_data to true if table which is updated didn't have
     transactions.
 
   RETURN VALUE
@@ -708,7 +711,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
   int error;
   char *key=0;
   MyBitmap *save_read_set, *save_write_set;
-  uint64_t prev_insert_id= table->file->next_insert_id;
+  uint64_t prev_insert_id= table->cursor->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
 
@@ -718,7 +721,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
   if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
-    while ((error=table->file->ha_write_row(table->record[0])))
+    while ((error=table->cursor->ha_write_row(table->record[0])))
     {
       uint32_t key_nr;
       /*
@@ -728,14 +731,14 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         the autogenerated value to avoid session->insert_id_for_cur_row to become
         0.
       */
-      if (table->file->insert_id_for_cur_row > 0)
-        insert_id_for_cur_row= table->file->insert_id_for_cur_row;
+      if (table->cursor->insert_id_for_cur_row > 0)
+        insert_id_for_cur_row= table->cursor->insert_id_for_cur_row;
       else
-        table->file->insert_id_for_cur_row= insert_id_for_cur_row;
+        table->cursor->insert_id_for_cur_row= insert_id_for_cur_row;
       bool is_duplicate_key_error;
-      if (table->file->is_fatal_error(error, HA_CHECK_DUP))
+      if (table->cursor->is_fatal_error(error, HA_CHECK_DUP))
 	goto err;
-      is_duplicate_key_error= table->file->is_fatal_error(error, 0);
+      is_duplicate_key_error= table->cursor->is_fatal_error(error, 0);
       if (!is_duplicate_key_error)
       {
         /*
@@ -747,7 +750,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           goto gok_or_after_err; /* Ignoring a not fatal error, return 0 */
         goto err;
       }
-      if ((int) (key_nr = table->file->get_dup_key(error)) < 0)
+      if ((int) (key_nr = table->get_dup_key(error)) < 0)
       {
 	error= HA_ERR_FOUND_DUPP_KEY;         /* Database can't find key */
 	goto err;
@@ -764,16 +767,16 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           key_nr == table->s->next_number_index &&
 	  (insert_id_for_cur_row > 0))
 	goto err;
-      if (table->file->ha_table_flags() & HA_DUPLICATE_POS)
+      if (table->cursor->getEngine()->check_flag(HTON_BIT_DUPLICATE_POS))
       {
-	if (table->file->rnd_pos(table->record[1],table->file->dup_ref))
+	if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
 	  goto err;
       }
       else
       {
-	if (table->file->extra(HA_EXTRA_FLUSH_CACHE)) /* Not needed with NISAM */
+	if (table->cursor->extra(HA_EXTRA_FLUSH_CACHE)) /* Not needed with NISAM */
 	{
-	  error=my_errno;
+	  error=errno;
 	  goto err;
 	}
 
@@ -786,7 +789,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 	  }
 	}
 	key_copy((unsigned char*) key,table->record[0],table->key_info+key_nr,0);
-	if ((error=(table->file->index_read_idx_map(table->record[1],key_nr,
+	if ((error=(table->cursor->index_read_idx_map(table->record[1],key_nr,
                                                     (unsigned char*) key, HA_WHOLE_KEY,
                                                     HA_READ_KEY_EXACT))))
 	  goto err;
@@ -808,21 +811,21 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
                                                  info->ignore))
           goto before_err;
 
-        table->file->restore_auto_increment(prev_insert_id);
+        table->cursor->restore_auto_increment(prev_insert_id);
         if (table->next_number_field)
-          table->file->adjust_next_insert_id_after_explicit_value(
+          table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
-        if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
+        if ((table->cursor->getEngine()->check_flag(HTON_BIT_PARTIAL_COLUMN_READ) &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
-          if ((error=table->file->ha_update_row(table->record[1],
+          if ((error=table->cursor->ha_update_row(table->record[1],
                                                 table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
           {
             if (info->ignore &&
-                !table->file->is_fatal_error(error, HA_CHECK_DUP_KEY))
+                !table->cursor->is_fatal_error(error, HA_CHECK_DUP_KEY))
             {
               goto gok_or_after_err;
             }
@@ -840,12 +843,12 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             Except if LAST_INSERT_ID(#) was in the INSERT query, which is
             handled separately by Session::arg_of_last_insert_id_function.
           */
-          insert_id_for_cur_row= table->file->insert_id_for_cur_row= 0;
+          insert_id_for_cur_row= table->cursor->insert_id_for_cur_row= 0;
           info->copied++;
         }
 
         if (table->next_number_field)
-          table->file->adjust_next_insert_id_after_explicit_value(
+          table->cursor->adjust_next_insert_id_after_explicit_value(
             table->next_number_field->val_int());
         info->touched++;
 
@@ -868,11 +871,11 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           ON UPDATE triggers.
 	*/
 	if (last_uniq_key(table,key_nr) &&
-	    !table->file->referenced_by_foreign_key() &&
+	    !table->cursor->referenced_by_foreign_key() &&
             (table->timestamp_field_type == TIMESTAMP_NO_AUTO_SET ||
              table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
         {
-          if ((error=table->file->ha_update_row(table->record[1],
+          if ((error=table->cursor->ha_update_row(table->record[1],
 					        table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
             goto err;
@@ -880,7 +883,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             info->deleted++;
           else
             error= 0;
-          session->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
+          session->record_first_successful_insert_id_in_cur_stmt(table->cursor->insert_id_for_cur_row);
           /*
             Since we pretend that we have done insert we should call
             its after triggers.
@@ -889,16 +892,16 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         }
         else
         {
-          if ((error=table->file->ha_delete_row(table->record[1])))
+          if ((error=table->cursor->ha_delete_row(table->record[1])))
             goto err;
           info->deleted++;
-          if (!table->file->has_transactions())
-            session->transaction.stmt.modified_non_trans_table= true;
+          if (!table->cursor->has_transactions())
+            session->transaction.stmt.markModifiedNonTransData();
           /* Let us attempt do write_row() once more */
         }
       }
     }
-    session->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
+    session->record_first_successful_insert_id_in_cur_stmt(table->cursor->insert_id_for_cur_row);
     /*
       Restore column maps if they where replaced during an duplicate key
       problem.
@@ -907,24 +910,24 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         table->write_set != save_write_set)
       table->column_bitmaps_set(save_read_set, save_write_set);
   }
-  else if ((error=table->file->ha_write_row(table->record[0])))
+  else if ((error=table->cursor->ha_write_row(table->record[0])))
   {
     if (!info->ignore ||
-        table->file->is_fatal_error(error, HA_CHECK_DUP))
+        table->cursor->is_fatal_error(error, HA_CHECK_DUP))
       goto err;
-    table->file->restore_auto_increment(prev_insert_id);
+    table->cursor->restore_auto_increment(prev_insert_id);
     goto gok_or_after_err;
   }
 
 after_n_copied_inc:
   info->copied++;
-  session->record_first_successful_insert_id_in_cur_stmt(table->file->insert_id_for_cur_row);
+  session->record_first_successful_insert_id_in_cur_stmt(table->cursor->insert_id_for_cur_row);
 
 gok_or_after_err:
   if (key)
     free(key);
-  if (!table->file->has_transactions())
-    session->transaction.stmt.modified_non_trans_table= true;
+  if (!table->cursor->has_transactions())
+    session->transaction.stmt.markModifiedNonTransData();
   return(0);
 
 err:
@@ -932,10 +935,10 @@ err:
   /* current_select is NULL if this is a delayed insert */
   if (session->lex->current_select)
     session->lex->current_select->no_error= 0;        // Give error
-  table->file->print_error(error,MYF(0));
+  table->print_error(error,MYF(0));
 
 before_err:
-  table->file->restore_auto_increment(prev_insert_id);
+  table->cursor->restore_auto_increment(prev_insert_id);
   if (key)
     free(key);
   table->column_bitmaps_set(save_read_set, save_write_set);
@@ -1150,7 +1153,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     Is table which we are changing used somewhere in other parts of
     query
   */
-  if (unique_table(session, table_list, table_list->next_global, 0))
+  if (unique_table(table_list, table_list->next_global))
   {
     /* Using same table for INSERT and SELECT */
     lex->current_select->options|= OPTION_BUFFER_RESULT;
@@ -1167,18 +1170,18 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
       We won't start bulk inserts at all if this statement uses functions or
       should invoke triggers since they may access to the same table too.
     */
-    table->file->ha_start_bulk_insert((ha_rows) 0);
+    table->cursor->ha_start_bulk_insert((ha_rows) 0);
   }
   table->restoreRecordAsDefault();		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
-    table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+    table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   if (info.handle_duplicates == DUP_REPLACE)
-    table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+    table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (info.handle_duplicates == DUP_UPDATE)
-    table->file->extra(HA_EXTRA_INSERT_WITH_UPDATE);
+    table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
   session->abort_on_warning= !info.ignore;
   table->mark_columns_needed_for_insert();
 
@@ -1207,7 +1210,7 @@ int select_insert::prepare2(void)
 {
 
   if (session->lex->current_select->options & OPTION_BUFFER_RESULT)
-    table->file->ha_start_bulk_insert((ha_rows) 0);
+    table->cursor->ha_start_bulk_insert((ha_rows) 0);
   return(0);
 }
 
@@ -1225,7 +1228,7 @@ select_insert::~select_insert()
   {
     table->next_number_field=0;
     table->auto_increment_field_not_null= false;
-    table->file->ha_reset();
+    table->cursor->ha_reset();
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   session->abort_on_warning= 0;
@@ -1251,7 +1254,7 @@ bool select_insert::send_data(List<Item> &values)
     return(1);
 
   // Release latches in case bulk insert takes a long time
-  ha_release_temporary_latches(session);
+  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
 
@@ -1292,9 +1295,9 @@ bool select_insert::send_data(List<Item> &values)
 void select_insert::store_values(List<Item> &values)
 {
   if (fields->elements)
-    fill_record(session, *fields, values, 1);
+    fill_record(session, *fields, values, true);
   else
-    fill_record(session, table->field, values, 1);
+    fill_record(session, table->field, values, true);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
@@ -1310,13 +1313,13 @@ void select_insert::send_error(uint32_t errcode,const char *err)
 bool select_insert::send_eof()
 {
   int error;
-  bool const trans_table= table->file->has_transactions();
+  bool const trans_table= table->cursor->has_transactions();
   uint64_t id;
   bool changed;
 
-  error= table->file->ha_end_bulk_insert();
-  table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
-  table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
+  error= table->cursor->ha_end_bulk_insert();
+  table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+  table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
 
   if ((changed= (info.copied || info.deleted || info.updated)))
   {
@@ -1324,18 +1327,19 @@ bool select_insert::send_eof()
       We must invalidate the table in the query cache before binlog writing
       and ha_autocommit_or_rollback.
     */
-    if (session->transaction.stmt.modified_non_trans_table)
-      session->transaction.all.modified_non_trans_table= true;
+    if (session->transaction.stmt.hasModifiedNonTransData())
+      session->transaction.all.markModifiedNonTransData();
   }
   assert(trans_table || !changed ||
-              session->transaction.stmt.modified_non_trans_table);
+              session->transaction.stmt.hasModifiedNonTransData());
 
-  table->file->ha_release_auto_increment();
+  table->cursor->ha_release_auto_increment();
 
   if (error)
   {
-    table->file->print_error(error,MYF(0));
-    return(1);
+    table->print_error(error,MYF(0));
+    DRIZZLE_INSERT_SELECT_DONE(error, 0);
+    return 1;
   }
   char buff[160];
   if (info.ignore)
@@ -1353,7 +1357,8 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->row_count_func,
                  info.copied + info.deleted + info.touched, id, buff);
-  return(0);
+  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  return 0;
 }
 
 void select_insert::abort() {
@@ -1369,7 +1374,7 @@ void select_insert::abort() {
   {
     bool changed, transactional_table;
 
-    table->file->ha_end_bulk_insert();
+    table->cursor->ha_end_bulk_insert();
 
     /*
       If at least one row has been inserted/modified and will stay in
@@ -1386,10 +1391,15 @@ void select_insert::abort() {
       zero, so no check for that is made.
     */
     changed= (info.copied || info.deleted || info.updated);
-    transactional_table= table->file->has_transactions();
+    transactional_table= table->cursor->has_transactions();
     assert(transactional_table || !changed ||
-		session->transaction.stmt.modified_non_trans_table);
-    table->file->ha_release_auto_increment();
+		session->transaction.stmt.hasModifiedNonTransData());
+    table->cursor->ha_release_auto_increment();
+  }
+
+  if (DRIZZLE_INSERT_SELECT_DONE_ENABLED())
+  {
+    DRIZZLE_INSERT_SELECT_DONE(0, info.copied + info.deleted + info.updated);
   }
 
   return;
@@ -1444,9 +1454,10 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
-				      drizzled::message::Table *table_proto,
-                                      Alter_info *alter_info,
+				      message::Table &table_proto,
+                                      AlterInfo *alter_info,
                                       List<Item> *items,
+                                      bool is_if_not_exists,
                                       DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'CreateField()'
@@ -1459,11 +1470,13 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
+  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
+
+  if (not (lex_identified_temp_table) &&
       create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
-    if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
+    if (is_if_not_exists)
     {
       create_info->table_existed= 1;		// Mark that table existed
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
@@ -1482,9 +1495,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
-  tmp_table.s->db_low_byte_first=
-        test(create_info->db_type == myisam_engine ||
-             create_info->db_type == heap_engine);
+
+  if (not table_proto.engine().name().compare("MyISAM"))
+    tmp_table.s->db_low_byte_first= true;
+  else if (not table_proto.engine().name().compare("MEMORY"))
+    tmp_table.s->db_low_byte_first= true;
+
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
 
@@ -1499,8 +1515,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         field= item->tmp_table_field_from_field_type(&tmp_table, 0);
     else
       field= create_tmp_field(session, &tmp_table, item, item->type(),
-                              (Item ***) 0, &tmp_field, &def_field, 0, 0, 0, 0,
-                              0);
+                              (Item ***) 0, &tmp_field, &def_field, false,
+                              false, false, 0);
     if (!field ||
 	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
@@ -1511,6 +1527,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     alter_info->create_list.push_back(cr_field);
   }
 
+  TableIdentifier identifier(create_table->db,
+                             create_table->table_name,
+                             lex_identified_temp_table ?  TEMP_TABLE :
+                             STANDARD_TABLE);
+
+
   /*
     Create and lock table.
 
@@ -1519,15 +1541,17 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     should not cause deadlocks or races.
   */
   {
-    if (!mysql_create_table_no_lock(session, create_table->db,
-                                    create_table->table_name,
+    if (not mysql_create_table_no_lock(session,
+                                    identifier,
                                     create_info,
 				    table_proto,
-				    alter_info, false,
-                                    select_field_count))
+				    alter_info,
+                                    false,
+                                    select_field_count,
+                                    is_if_not_exists))
     {
       if (create_info->table_existed &&
-          !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
+          !(lex_identified_temp_table))
       {
         /*
           This means that someone created table underneath server
@@ -1538,13 +1562,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         return NULL;
       }
 
-      if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
+      if (not lex_identified_temp_table)
       {
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
         {
-          quick_rm_table(create_info->db_type, create_table->db,
-                         create_table->table_name, false);
+          quick_rm_table(*session, identifier);
         }
         else
           table= create_table->table;
@@ -1552,9 +1575,9 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       }
       else
       {
-        if (!(table= session->openTable(create_table, (bool*) 0,
-                                         DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
-            !create_info->table_existed)
+        if (not (table= session->openTable(create_table, (bool*) 0,
+                                           DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
+            not create_info->table_existed)
         {
           /*
             This shouldn't happen as creation of temporary table should make
@@ -1591,37 +1614,25 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
+  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
+
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
-    For row-based replication, the CREATE-SELECT statement is written
-    in two pieces: the first one contain the CREATE TABLE statement
-    necessary to create the table and the second part contain the rows
-    that should go into the table.
-
-    For non-temporary tables, the start of the CREATE-SELECT
-    implicitly commits the previous transaction, and all events
-    forming the statement will be stored the transaction cache. At end
-    of the statement, the entire statement is committed as a
-    transaction, and all events are written to the binary log.
-
-    On the master, the table is locked for the duration of the
-    statement, but since the CREATE part is replicated as a simple
-    statement, there is no way to lock the table for accesses on the
-    slave.  Hence, we have to hold on to the CREATE part of the
-    statement until the statement has finished.
+    For replication, the CREATE-SELECT statement is written
+    in two pieces: the first transaction messsage contains 
+    the CREATE TABLE statement as a CreateTableStatement message
+    necessary to create the table.
+    
+    The second transaction message contains all the InsertStatement
+    and associated InsertRecords that should go into the table.
    */
 
   unit= u;
 
-  /*
-    Start a statement transaction before the create if we are using
-    row-based replication for the statement.  If we are creating a
-    temporary table, we need to start a statement transaction.
-  */
-
   if (!(table= create_table_from_items(session, create_info, create_table,
 				       table_proto,
                                        alter_info, &values,
+                                       is_if_not_exists,
                                        &extra_lock)))
     return(-1);				// abort() deletes table
 
@@ -1629,7 +1640,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   {
     assert(m_plock == NULL);
 
-    if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
+    if (lex_identified_temp_table)
       m_plock= &m_lock;
     else
       m_plock= &session->extra_lock;
@@ -1657,30 +1668,28 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->restoreRecordAsDefault();      // Get empty record
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
-    table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+    table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   if (info.handle_duplicates == DUP_REPLACE)
-    table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
+    table->cursor->extra(HA_EXTRA_WRITE_CAN_REPLACE);
   if (info.handle_duplicates == DUP_UPDATE)
-    table->file->extra(HA_EXTRA_INSERT_WITH_UPDATE);
-  table->file->ha_start_bulk_insert((ha_rows) 0);
+    table->cursor->extra(HA_EXTRA_INSERT_WITH_UPDATE);
+  table->cursor->ha_start_bulk_insert((ha_rows) 0);
   session->abort_on_warning= !info.ignore;
   if (check_that_all_fields_are_given_values(session, table, table_list))
     return(1);
   table->mark_columns_needed_for_insert();
-  table->file->extra(HA_EXTRA_WRITE_CACHE);
+  table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   return(0);
 }
 
 void select_create::store_values(List<Item> &values)
 {
-  fill_record(session, field, values, 1);
+  fill_record(session, field, values, true);
 }
 
 
 void select_create::send_error(uint32_t errcode,const char *err)
 {
-
-
   /*
     This will execute any rollbacks that are necessary before writing
     the transcation cache.
@@ -1712,12 +1721,13 @@ bool select_create::send_eof()
     */
     if (!table->s->tmp_table)
     {
-      ha_autocommit_or_rollback(session, 0);
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.ha_autocommit_or_rollback(session, 0);
       (void) session->endActiveTransaction();
     }
 
-    table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
-    table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
+    table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+    table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (m_plock)
     {
       mysql_unlock_tables(session, *m_plock);
@@ -1731,8 +1741,6 @@ bool select_create::send_eof()
 
 void select_create::abort()
 {
-
-
   /*
     In select_insert::abort() we roll back the statement, including
     truncating the transaction cache of the binary log. To do this, we
@@ -1749,8 +1757,6 @@ void select_create::abort()
     log state.
   */
   select_insert::abort();
-  session->transaction.stmt.modified_non_trans_table= false;
-
 
   if (m_plock)
   {
@@ -1761,19 +1767,12 @@ void select_create::abort()
 
   if (table)
   {
-    table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
-    table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
+    table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
+    table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (!create_info->table_existed)
       session->drop_open_table(table, create_table->db, create_table->table_name);
     table= NULL;                                    // Safety
   }
 }
 
-
-/*****************************************************************************
-  Instansiate templates
-*****************************************************************************/
-
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List_iterator_fast<List_item>;
-#endif /* HAVE_EXPLICIT_TEMPLATE_INSTANTIATION */
+} /* namespace drizzled */

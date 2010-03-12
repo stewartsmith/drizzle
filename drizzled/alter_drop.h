@@ -17,29 +17,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #ifndef DRIZZLED_ALTER_DROP_H
 #define DRIZZLED_ALTER_DROP_H
 
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
+
+namespace drizzled
+{
+
+namespace memory { class Root; }
 
 class Item;
-typedef struct st_mem_root MEM_ROOT;
 
-class Alter_drop :public Sql_alloc {
+class AlterDrop :public memory::SqlAlloc {
 public:
-  enum drop_type {KEY, COLUMN };
+  enum drop_type
+  {
+    KEY,
+    COLUMN
+  };
   const char *name;
   enum drop_type type;
-  Alter_drop(enum drop_type par_type,const char *par_name)
-    :name(par_name), type(par_type) {}
+  AlterDrop(enum drop_type par_type,
+            const char *par_name) :
+    name(par_name),
+    type(par_type)
+  {}
   /**
     Used to make a clone of this object for ALTER/CREATE TABLE
     @sa comment for Key_part_spec::clone
   */
-  Alter_drop *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Alter_drop(*this); }
+  AlterDrop *clone(memory::Root *mem_root) const
+  {
+    return new (mem_root) AlterDrop(*this);
+  }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ALTER_DROP_H */

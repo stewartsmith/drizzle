@@ -31,7 +31,7 @@
 #  define ATOMIC_TRAITS internal::pthread_traits
 # endif
 
-# if (SIZEOF_SIZE_T >= SIZEOF_LONG_LONG) || (!defined(HAVE_GCC_ATOMIC_BUILTINS) || !defined(__SUNPRO_CC))
+# if (SIZEOF_SIZE_T >= SIZEOF_LONG_LONG) || (!defined(HAVE_GCC_ATOMIC_BUILTINS) || !defined(__SUNPRO_CC)) || defined(__ppc__)
 #  include <pthread.h>
 #  include <drizzled/atomic/pthread_traits.h>
 # endif
@@ -45,6 +45,8 @@ namespace internal {
 template<typename I>            // Primary template
 struct atomic_base {
   volatile I my_value;
+  atomic_base() : my_value(0) {}
+  virtual ~atomic_base() {}
 };
 
 template<typename I, typename D, typename T >
@@ -54,6 +56,7 @@ class atomic_impl: private atomic_base<I>
 public:
   typedef I value_type;
 
+  atomic_impl() : atomic_base<I>(), traits() {}
 
   value_type fetch_and_add( D addend )
   {
@@ -97,33 +100,27 @@ protected:
   }
 
 public:
-  value_type operator+=( D addend )
+  atomic_impl<I,D,T>& operator+=( D addend )
   {
-      return fetch_and_add(addend)+addend;
+    fetch_and_add(addend)+addend;
+    return *this;
   }
 
-  value_type operator-=( D addend )
+  atomic_impl<I,D,T>& operator-=( D addend )
   {
     // Additive inverse of addend computed using binary minus,
     // instead of unary minus, for sake of avoiding compiler warnings.
     return operator+=(D(0)-addend);
   }
 
-  value_type operator++() {
+  value_type increment() {
     return fetch_and_add(1)+1;
   }
 
-  value_type operator--() {
+  value_type decrement() {
     return fetch_and_add(D(-1))-1;
   }
 
-  value_type operator++(int) {
-    return fetch_and_add(1);
-  }
-
-  value_type operator--(int) {
-    return fetch_and_add(D(-1));
-  }
 
 };
 
@@ -136,12 +133,14 @@ template<typename T>
 struct atomic {
 };
 
+/* *INDENT-OFF* */
 #define __DRIZZLE_DECL_ATOMIC(T)                                        \
   template<> struct atomic<T>                                           \
   : internal::atomic_impl<T,T,ATOMIC_TRAITS<T,T> > {                    \
     atomic<T>() : internal::atomic_impl<T,T,ATOMIC_TRAITS<T,T> >() {}   \
-    T operator=( T rhs ) { return store_with_release(rhs); }            \
+    atomic<T>& operator=( T rhs ) { store_with_release(rhs); return *this; } \
   };
+/* *INDENT-ON* */
 
 
 __DRIZZLE_DECL_ATOMIC(long)
@@ -158,7 +157,8 @@ __DRIZZLE_DECL_ATOMIC(bool)
 /* 32-bit platforms don't have a GCC atomic operation for 64-bit types,
  * so we'll use pthread locks to handler 64-bit types on that platforms
  */
-#  if SIZEOF_SIZE_T >= SIZEOF_LONG_LONG
+/* *INDENT-OFF* */
+# if !defined(__ppc__) && (defined(_INT64_TYPE) || defined(_LP64))
 __DRIZZLE_DECL_ATOMIC(long long)
 __DRIZZLE_DECL_ATOMIC(unsigned long long)
 #  else
@@ -172,7 +172,8 @@ __DRIZZLE_DECL_ATOMIC(unsigned long long)
 __DRIZZLE_DECL_ATOMIC64(long long)
 __DRIZZLE_DECL_ATOMIC64(unsigned long long)
 #  endif
+/* *INDENT-ON* */
 
 }
 
-#endif /* DRIZZLED_ATOMIC_H */
+#endif /* DRIZZLED_ATOMICS_H */

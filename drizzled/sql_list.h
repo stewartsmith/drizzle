@@ -21,10 +21,14 @@
 #define DRIZZLED_SQL_LIST_H
 
 
+#include <cstdlib>
+#include <cassert>
 #include <utility>
 #include <algorithm>
-#include <stdlib.h>
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
+
+namespace drizzled
+{
 
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
@@ -84,7 +88,7 @@ typedef struct st_sql_list {
   @note We never call a destructor for instances of this class.
 */
 
-struct list_node :public Sql_alloc
+struct list_node : public memory::SqlAlloc
 {
   list_node *next;
   void *info;
@@ -101,7 +105,7 @@ struct list_node :public Sql_alloc
 
 extern list_node end_of_list;
 
-class base_list :public Sql_alloc
+class base_list :public memory::SqlAlloc
 {
 protected:
   list_node *first,**last;
@@ -120,19 +124,12 @@ public:
     relies on this behaviour. This logic is quite tricky: please do not use
     it in any new code.
   */
-  inline base_list(const base_list &tmp) :Sql_alloc()
+  inline base_list(const base_list &tmp) :memory::SqlAlloc()
   {
     elements= tmp.elements;
     first= tmp.first;
     last= elements ? tmp.last : &first;
   }
-  /**
-    Construct a deep copy of the argument in memory root mem_root.
-    The elements themselves are copied by pointer. If you also
-    need to copy elements by value, you should employ
-    list_copy_and_replace_each_value after creating a copy.
-  */
-  base_list(const base_list &rhs, MEM_ROOT *mem_root);
   inline base_list(bool) { }
   inline bool push_back(void *info)
   {
@@ -144,7 +141,7 @@ public:
     }
     return 1;
   }
-  inline bool push_back(void *info, MEM_ROOT *mem_root)
+  inline bool push_back(void *info, memory::Root *mem_root)
   {
     if (((*last)=new (mem_root) list_node(info, &end_of_list)))
     {
@@ -387,10 +384,10 @@ template <class T> class List :public base_list
 public:
   inline List() :base_list() {}
   inline List(const List<T> &tmp) :base_list(tmp) {}
-  inline List(const List<T> &tmp, MEM_ROOT *mem_root) :
+  inline List(const List<T> &tmp, memory::Root *mem_root) :
     base_list(tmp, mem_root) {}
   inline bool push_back(T *a) { return base_list::push_back(a); }
-  inline bool push_back(T *a, MEM_ROOT *mem_root)
+  inline bool push_back(T *a, memory::Root *mem_root)
   { return base_list::push_back(a, mem_root); }
   inline bool push_front(T *a) { return base_list::push_front(a); }
   inline T* head() {return (T*) base_list::head(); }
@@ -450,144 +447,6 @@ public:
 };
 
 
-/*
-  A simple intrusive list which automaticly removes element from list
-  on delete (for Session element)
-*/
-
-struct ilink
-{
-  struct ilink **prev,*next;
-  static void *operator new(size_t size)
-  {
-    return (void*)malloc((uint32_t)size);
-  }
-  static void operator delete(void* ptr_arg, size_t)
-  {
-     free((unsigned char*)ptr_arg);
-  }
-
-  inline ilink()
-  {
-    prev=0; next=0;
-  }
-  inline void unlink()
-  {
-    /* Extra tests because element doesn't have to be linked */
-    if (prev) *prev= next;
-    if (next) next->prev=prev;
-    prev=0 ; next=0;
-  }
-  virtual ~ilink() { unlink(); }		/*lint -e1740 */
-};
-
-
-/* Needed to be able to have an I_List of char* strings in mysqld.cc. */
-
-class i_string: public ilink
-{
-public:
-  const char* ptr;
-  i_string():ptr(0) { }
-  i_string(const char* s) : ptr(s) {}
-};
-
-/* needed for linked list of two strings for replicate-rewrite-db */
-class i_string_pair: public ilink
-{
-public:
-  const char* key;
-  const char* val;
-  i_string_pair():key(0),val(0) { }
-  i_string_pair(const char* key_arg, const char* val_arg) :
-    key(key_arg),val(val_arg) {}
-};
-
-
-template <class T> class I_List_iterator;
-
-/*
-  WARNING: copy constructor of this class does not create a usable
-  copy, as its members may point at each other.
-*/
-
-class base_ilist
-{
-public:
-  struct ilink *first,last;
-  inline void empty() { first= &last; last.prev= &first; }
-  base_ilist() { empty(); }
-  inline bool is_empty() {  return first == &last; }
-  inline void append(ilink *a)
-  {
-    first->prev= &a->next;
-    a->next=first; a->prev= &first; first=a;
-  }
-  inline void push_back(ilink *a)
-  {
-    *last.prev= a;
-    a->next= &last;
-    a->prev= last.prev;
-    last.prev= &a->next;
-  }
-  inline struct ilink *get()
-  {
-    struct ilink *first_link=first;
-    if (first_link == &last)
-      return 0;
-    first_link->unlink();			// Unlink from list
-    return first_link;
-  }
-  inline struct ilink *head()
-  {
-    return (first != &last) ? first : 0;
-  }
-  friend class base_list_iterator;
-};
-
-
-class base_ilist_iterator
-{
-  base_ilist *list;
-  struct ilink **el,*current;
-public:
-  base_ilist_iterator(base_ilist &list_par) :list(&list_par),
-    el(&list_par.first),current(0) {}
-  void *next(void)
-  {
-    /* This is coded to allow push_back() while iterating */
-    current= *el;
-    if (current == &list->last) return 0;
-    el= &current->next;
-    return current;
-  }
-};
-
-
-template <class T>
-class I_List :private base_ilist
-{
-public:
-  I_List() :base_ilist()	{}
-  inline void empty()		{ base_ilist::empty(); }
-  inline bool is_empty()        { return base_ilist::is_empty(); }
-  inline void append(T* a)	{ base_ilist::append(a); }
-  inline void push_back(T* a)	{ base_ilist::push_back(a); }
-  inline T* get()		{ return (T*) base_ilist::get(); }
-  inline T* head()		{ return (T*) base_ilist::head(); }
-#ifndef _lint
-  friend class I_List_iterator<T>;
-#endif
-};
-
-
-template <class T> class I_List_iterator :public base_ilist_iterator
-{
-public:
-  I_List_iterator(I_List<T> &a) : base_ilist_iterator(a) {}
-  inline T* operator++(int) { return (T*) base_ilist_iterator::next(); }
-};
-
 /**
   Make a deep copy of each list element.
 
@@ -606,7 +465,7 @@ public:
 template <typename T>
 inline
 void
-list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
+list_copy_and_replace_each_value(List<T> &list, memory::Root *mem_root)
 {
   /* Make a deep copy of each element */
   List_iterator<T> it(list);
@@ -615,9 +474,6 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
     it.replace(el->clone(mem_root));
 }
 
-/* sql_list.cc */
-void free_list(I_List <i_string_pair> *list);
-void free_list(I_List <i_string> *list);
+} /* namespace drizzled */
 
-
-#endif // DRIZZLED_SQL_LIST_H
+#endif /* DRIZZLED_SQL_LIST_H */

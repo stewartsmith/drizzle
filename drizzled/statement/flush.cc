@@ -18,13 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
+#include "drizzled/sql_table.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Flush::execute()
 {
@@ -40,7 +42,7 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, false, session->query, session->query_length);
+    write_bin_log(session, session->query.c_str());
     session->my_ok();
   }
 
@@ -50,12 +52,11 @@ bool statement::Flush::execute()
 bool statement::Flush::reloadCache()
 {
   bool result= false;
-  ulong options= session->lex->type;
   TableList *tables= (TableList *) session->lex->select_lex.table_list.first;
 
-  if (options & REFRESH_LOG)
+  if (flush_log)
   {
-    if (ha_flush_logs(NULL))
+    if (plugin::StorageEngine::flushLogs(NULL))
     {
       result= true;
     }
@@ -64,17 +65,16 @@ bool statement::Flush::reloadCache()
     Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too
     (see sql_yacc.yy)
   */
-  if (options & (REFRESH_TABLES | REFRESH_READ_LOCK))
+  if (flush_tables || flush_tables_with_read_lock)
   {
-    if ((options & REFRESH_READ_LOCK) && session)
+    if (session && flush_tables_with_read_lock)
     {
       if (lock_global_read_lock(session))
       {
         return true; /* Killed */
       }
-      result= session->close_cached_tables(tables, 
-                                           (options & REFRESH_FAST) ?  false : true, 
-                                           true);
+      result= session->close_cached_tables(tables, true, true);
+
       if (make_global_read_lock_block_commit(session)) /* Killed */
       {
         /* Don't leave things in a half-locked state */
@@ -84,16 +84,16 @@ bool statement::Flush::reloadCache()
     }
     else
     {
-      result= session->close_cached_tables(tables, 
-                                           (options & REFRESH_FAST) ?  false : true, 
-                                           false);
+      result= session->close_cached_tables(tables, true, false);
     }
   }
 
-  if (session && (options & REFRESH_STATUS))
+  if (session && flush_status)
   {
     session->refresh_status();
   }
 
  return result;
+}
+
 }

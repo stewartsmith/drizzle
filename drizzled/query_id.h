@@ -17,11 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GLOBAL_QUERY_ID_H
-#define DRIZZLED_GLOBAL_QUERY_ID_H
+#ifndef DRIZZLED_QUERY_ID_H
+#define DRIZZLED_QUERY_ID_H
 
 #include <pthread.h>
 #include <drizzled/atomics.h>
+
+namespace drizzled
+{
+
+typedef uint64_t query_id_t;
 
 class Query_id
 {
@@ -39,11 +44,13 @@ public:
   query_id_t next();
 
 private:
-  drizzled::atomic<uint64_t> the_query_id;
+  atomic<uint64_t> the_query_id;
 
   Query_id();
   Query_id(Query_id const&);
   Query_id& operator=(Query_id const&);
 };
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_QUERY_ID_H */

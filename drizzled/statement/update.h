@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,14 @@ class Update : public Statement
 public:
   Update(Session *in_session)
     :
-      Statement(in_session, SQLCOM_UPDATE)
+      Statement(in_session)
   {}
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_UPDATE_H */

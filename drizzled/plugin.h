@@ -22,6 +22,14 @@
 
 #include <drizzled/lex_string.h>
 #include <drizzled/xid.h>
+#include <drizzled/plugin/manifest.h>
+#include <drizzled/plugin/module.h>
+#include "drizzled/plugin/version.h"
+#include "drizzled/definitions.h"
+
+
+namespace drizzled
+{
 
 class Session;
 class Item;
@@ -32,37 +40,44 @@ struct charset_info_st;
 */
 
 
+class sys_var;
+typedef drizzle_lex_string LEX_STRING;
+struct my_option;
+
+extern char *opt_plugin_add;
+extern char *opt_plugin_remove;
+extern char *opt_plugin_load;
+extern char *opt_plugin_dir_ptr;
+extern char opt_plugin_dir[FN_REFLEN];
+
+namespace plugin { class StorageEngine; }
+
 /*
   Macros for beginning and ending plugin declarations. Between
-  drizzle_declare_plugin and drizzle_declare_plugin_end there should
-  be a drizzled::plugin::Manifest for each plugin to be declared.
+  DRIZZLE_DECLARE_PLUGIN and DRIZZLE_DECLARE_PLUGIN_END there should
+  be a plugin::Manifest for each plugin to be declared.
 */
 
 
-#ifndef PANDORA_DYNAMIC_PLUGIN
-#define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-drizzled::plugin::Manifest DECLS[]= {
-#else
-#define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
-#endif
-
-#define drizzle_declare_plugin(NAME) \
-__DRIZZLE_DECLARE_PLUGIN(NAME, \
-                 builtin_ ## NAME ## _plugin)
-
-#define drizzle_declare_plugin_end ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
+#define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
+#define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
+#define DRIZZLE_DECLARE_PLUGIN \
+  ::drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
+#define DRIZZLE_DECLARE_PLUGIN_END
+#define DRIZZLE_PLUGIN(init,deinit,system) \
+  DRIZZLE_DECLARE_PLUGIN \
+  { \
+    DRIZZLE_VERSION_ID, \
+    STRINGIFY_ARG(PANDORA_MODULE_NAME), \
+    STRINGIFY_ARG(PANDORA_MODULE_VERSION), \
+    STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
+    STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
+    PANDORA_MODULE_LICENSE, \
+    init, deinit, system, NULL \
+  } 
 
-/*
-  the following flags are valid for plugin_init()
-*/
-#define PLUGIN_INIT_SKIP_DYNAMIC_LOADING 1
-#define PLUGIN_INIT_SKIP_PLUGIN_TABLE    2
-#define PLUGIN_INIT_SKIP_INITIALIZATION  4
-
-#define INITIAL_LEX_PLUGIN_LIST_SIZE    16
 
 /*
   declarations for SHOW STATUS support in plugins
@@ -71,24 +86,23 @@ enum enum_mysql_show_type
 {
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_ARRAY, SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
-  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE, 
+  SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
+  SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
   SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
   SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
 };
 
-struct st_mysql_show_var {
+struct drizzle_show_var {
   const char *name;
   char *value;
   enum enum_mysql_show_type type;
 };
 
 typedef enum enum_mysql_show_type SHOW_TYPE;
-typedef struct st_mysql_show_var SHOW_VAR;
 
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
-typedef int (*mysql_show_var_func)(struct st_mysql_show_var *, char *);
+typedef int (*mysql_show_var_func)(drizzle_show_var *, char *);
 
 struct st_show_var_func_container {
   mysql_show_var_func func;
@@ -103,8 +117,6 @@ struct st_show_var_func_container {
 #define PLUGIN_VAR_LONG         0x0003
 #define PLUGIN_VAR_LONGLONG     0x0004
 #define PLUGIN_VAR_STR          0x0005
-#define PLUGIN_VAR_ENUM         0x0006
-#define PLUGIN_VAR_SET          0x0007
 #define PLUGIN_VAR_UNSIGNED     0x0080
 #define PLUGIN_VAR_SessionLOCAL     0x0100 /* Variable is per-connection */
 #define PLUGIN_VAR_READONLY     0x0200 /* Server variable is read only */
@@ -115,8 +127,8 @@ struct st_show_var_func_container {
 #define PLUGIN_VAR_OPCMDARG     0x2000 /* Argument optional for cmd line */
 #define PLUGIN_VAR_MEMALLOC     0x8000 /* String needs memory allocated */
 
-struct st_mysql_sys_var;
-struct st_mysql_value;
+struct drizzle_sys_var;
+struct drizzle_value;
 
 /*
   SYNOPSIS
@@ -138,8 +150,8 @@ struct st_mysql_value;
 */
 
 typedef int (*mysql_var_check_func)(Session *session,
-                                    struct st_mysql_sys_var *var,
-                                    void *save, struct st_mysql_value *value);
+                                    drizzle_sys_var *var,
+                                    void *save, drizzle_value *value);
 
 /*
   SYNOPSIS
@@ -156,7 +168,7 @@ typedef int (*mysql_var_check_func)(Session *session,
    For example, strings may require memory to be allocated.
 */
 typedef void (*mysql_var_update_func)(Session *session,
-                                      struct st_mysql_sys_var *var,
+                                      drizzle_sys_var *var,
                                       void *var_ptr, const void *save);
 
 
@@ -177,7 +189,7 @@ typedef void (*mysql_var_update_func)(Session *session,
 
 #define DRIZZLE_SYSVAR_NAME(name) mysql_sysvar_ ## name
 #define DRIZZLE_SYSVAR(name) \
-  ((struct st_mysql_sys_var *)&(DRIZZLE_SYSVAR_NAME(name)))
+  ((drizzle_sys_var *)(&(DRIZZLE_SYSVAR_NAME(name))))
 
 /*
   for global variables, the value pointer is the first
@@ -198,12 +210,6 @@ typedef void (*mysql_var_update_func)(Session *session,
   type *value; type def_val;    \
   type min_val; type max_val;   \
   type blk_sz;                  \
-} DRIZZLE_SYSVAR_NAME(name)
-
-#define DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, type) struct { \
-  DRIZZLE_PLUGIN_VAR_HEADER;      \
-  type *value; type def_val;    \
-  TYPELIB *typelib;             \
 } DRIZZLE_SYSVAR_NAME(name)
 
 #define DECLARE_SessionVAR_FUNC(type) \
@@ -277,16 +283,6 @@ DECLARE_DRIZZLE_SYSVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
-#define DRIZZLE_SYSVAR_ENUM(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, unsigned long) = { \
-  PLUGIN_VAR_ENUM | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, typelib }
-
-#define DRIZZLE_SYSVAR_SET(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SYSVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, &varname, def, typelib }
-
 #define DRIZZLE_SessionVAR_BOOL(name, opt, comment, check, update, def) \
 DECLARE_DRIZZLE_SessionVAR_BASIC(name, char) = { \
   PLUGIN_VAR_BOOL | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
@@ -327,16 +323,6 @@ DECLARE_DRIZZLE_SessionVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_SessionLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
-#define DRIZZLE_SessionVAR_ENUM(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, unsigned long) = { \
-  PLUGIN_VAR_ENUM | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL, typelib }
-
-#define DRIZZLE_SessionVAR_SET(name, opt, comment, check, update, def, typelib) \
-DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
-  PLUGIN_VAR_SET | PLUGIN_VAR_SessionLOCAL | ((opt) & PLUGIN_VAR_MASK), \
-  #name, comment, check, update, -1, def, NULL, typelib }
-
 /* accessor macros */
 
 #define SYSVAR(name) \
@@ -347,32 +333,8 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
   (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
-struct StorageEngine;
-
-
-class Plugin
-{
-private:
-  std::string name;
-  std::string version;
-  std::string author;
-  std::string description;
-
-public:
-  Plugin(std::string in_name, std::string in_version,
-         std::string in_author, std::string in_description)
-    : name(in_name), version(in_version),
-    author(in_author), description(in_description)
-  {}
-
-  virtual ~Plugin() {}
-
-  virtual void add_functions() {}
-
-};
-
 /*************************************************************************
-  st_mysql_value struct for reading values from mysqld.
+  drizzle_value struct for reading values from mysqld.
   Used by server variables framework to parse user-provided values.
   Will be used for arguments when implementing UDFs.
 
@@ -385,12 +347,22 @@ public:
 #define DRIZZLE_VALUE_TYPE_REAL   1
 #define DRIZZLE_VALUE_TYPE_INT    2
 
-struct st_mysql_value
+/*
+  skeleton of a plugin variable - portion of structure common to all.
+*/
+struct drizzle_sys_var
 {
-  int (*value_type)(struct st_mysql_value *);
-  const char *(*val_str)(struct st_mysql_value *, char *buffer, int *length);
-  int (*val_real)(struct st_mysql_value *, double *realbuf);
-  int (*val_int)(struct st_mysql_value *, int64_t *intbuf);
+  DRIZZLE_PLUGIN_VAR_HEADER;
+};
+
+void plugin_opt_set_limits(my_option *options, const drizzle_sys_var *opt);
+
+struct drizzle_value
+{
+  int (*value_type)(drizzle_value *);
+  const char *(*val_str)(drizzle_value *, char *buffer, int *length);
+  int (*val_real)(drizzle_value *, double *realbuf);
+  int (*val_int)(drizzle_value *, int64_t *intbuf);
 };
 
 
@@ -402,20 +374,23 @@ struct st_mysql_value
 extern "C" {
 #endif
 
+extern bool plugin_init(plugin::Registry &registry,
+                        int *argc, char **argv,
+                        bool skip_init);
+extern void plugin_shutdown(plugin::Registry &plugins);
+extern void my_print_help_inc_plugins(my_option *options);
+extern bool plugin_is_ready(const LEX_STRING *name, int type);
+extern void plugin_sessionvar_init(Session *session);
+extern void plugin_sessionvar_cleanup(Session *session);
+extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
+
 int session_in_lock_tables(const Session *session);
 int session_tablespace_op(const Session *session);
 void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const struct StorageEngine *engine);
 int session_tx_isolation(const Session *session);
-/* Increments the row counter, see Session::row_count */
-void session_inc_row_count(Session *session);
-
-LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
-                                    const char *str, unsigned int size,
-                                    int allocate_lex_string);
 
 
 
@@ -429,7 +404,7 @@ LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
 
   @param prefix  prefix for temporary file name
   @retval -1    error
-  @retval >= 0  a file handle that can be passed to dup or my_close
+  @retval >= 0  a file handle that can be passed to dup or internal::my_close
 */
 int mysql_tmpfile(const char *prefix);
 
@@ -459,7 +434,6 @@ int session_killed(const Session *session);
 unsigned long session_get_thread_id(const Session *session);
 
 const charset_info_st *session_charset(Session *session);
-char **session_query(Session *session);
 int session_non_transactional_update(const Session *session);
 void session_mark_transaction_to_rollback(Session *session, bool all);
 
@@ -518,28 +492,7 @@ void mysql_query_cache_invalidate4(Session *session,
 }
 #endif
 
-#ifdef __cplusplus
-/**
-  Provide a handler data getter to simplify coding
-*/
-inline
-void *
-session_get_ha_data(const Session *session, const struct StorageEngine *engine)
-{
-  return *session_ha_data(session, engine);
-}
+} /* namespace drizzled */
 
-/**
-  Provide a handler data setter to simplify coding
-*/
-inline
-void
-session_set_ha_data(const Session *session, const struct StorageEngine *engine,
-                const void *ha_data)
-{
-  *session_ha_data(session, engine)= (void*) ha_data;
-}
-#endif
-
-#endif /* _my_plugin_h */
+#endif /* DRIZZLED_PLUGIN_H */
 

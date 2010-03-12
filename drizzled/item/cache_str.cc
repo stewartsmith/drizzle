@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/cache_str.h>
+
+namespace drizzled
+{
 
 Item_cache_str::Item_cache_str(const Item *item) :
   Item_cache(), value(0),
@@ -90,5 +93,4 @@ int Item_cache_str::save_in_field(Field *field, bool no_conversions)
   return res;
 }
 
-
-
+} /* namespace drizzled */

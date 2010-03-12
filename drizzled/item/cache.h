@@ -20,8 +20,12 @@
 #ifndef DRIZZLED_ITEM_CACHE_H
 #define DRIZZLED_ITEM_CACHE_H
 
-#include <drizzled/item/ident.h>
-#include <drizzled/item/field.h>
+#include "drizzled/item/ident.h"
+#include "drizzled/item/field.h"
+#include "drizzled/item/basic_constant.h"
+
+namespace drizzled
+{
 
 class Item_cache: public Item_basic_constant
 {
@@ -77,6 +81,12 @@ public:
   {
     return this == item;
   }
+  bool basic_const_item() const
+  {
+    return test(example && example->basic_const_item());
+  }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_H */

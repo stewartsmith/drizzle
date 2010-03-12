@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/item/string.h>
+
+namespace drizzled
+{
 
 Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
@@ -172,4 +175,4 @@ int Item_string::save_in_field(Field *field, bool)
 }
 
 
-
+} /* namespace drizzled */

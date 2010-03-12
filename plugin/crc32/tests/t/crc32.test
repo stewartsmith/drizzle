@@ -1,0 +1,33 @@
+# Verify that CRC32() function returns a deterministic result 
+# when successively supplied with the same constant.
+SELECT CRC32("I love testing");
+SELECT CRC32("I love testing");
+
+# 
+# Check that the hash of a constant is identical to the hash
+# of the same constant stored in a table column.
+#
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1
+(
+  some_text VARCHAR(100) NOT NULL
+);
+INSERT INTO t1 VALUES ("I love testing");
+SELECT CRC32("I love testing") = CRC32(some_text) FROM t1;
+
+# Check for error if no parameter provided
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
+SELECT CRC32();
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
+SELECT CRC32('foo','bar','zoo');
+
+# Check that various inputs are processed correctly
+SELECT CRC32('');
+SELECT CRC32(100);
+SELECT CRC32(4294967295);
+SELECT CRC32('a');
+SELECT CRC32('taohuoahusoahusoa haneo uhnteoahu ntoahu saonhu aoeuoa hun');
+
+DROP TABLE t1;

@@ -15,12 +15,14 @@
 
 /* Read and write key blocks */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
+
+using namespace drizzled;
 
 	/* Fetch a key-page in memory */
 
 unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
-			 my_off_t page, int level,
+			 internal::my_off_t page, int level,
                          unsigned char *buff, int return_buffer)
 {
   unsigned char *tmp;
@@ -37,7 +39,7 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
   {
     info->last_keypage=HA_OFFSET_ERROR;
     mi_print_error(info->s, HA_ERR_CRASHED);
-    my_errno=HA_ERR_CRASHED;
+    errno=HA_ERR_CRASHED;
     return(0);
   }
   info->last_keypage=page;
@@ -46,7 +48,7 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
   {
     info->last_keypage = HA_OFFSET_ERROR;
     mi_print_error(info->s, HA_ERR_CRASHED);
-    my_errno = HA_ERR_CRASHED;
+    errno = HA_ERR_CRASHED;
     tmp = 0;
   }
   return(tmp);
@@ -56,7 +58,7 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
 	/* Write a key-page on disk */
 
 int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-		      my_off_t page, int level, unsigned char *buff)
+		      internal::my_off_t page, int level, unsigned char *buff)
 {
   register uint32_t length;
 
@@ -65,7 +67,7 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       page+keyinfo->block_length > info->state->key_file_length ||
       (page & (MI_MIN_KEY_BLOCK_LENGTH-1)))
   {
-    my_errno=EINVAL;
+    errno=EINVAL;
     return((-1));
   }
 #endif
@@ -90,10 +92,10 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
 	/* Remove page from disk */
 
-int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, my_off_t pos,
+int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, internal::my_off_t pos,
                 int level)
 {
-  my_off_t old_link;
+  internal::my_off_t old_link;
   unsigned char buff[8];
 
   old_link= info->s->state.key_del[keyinfo->block_size_index];
@@ -110,9 +112,9 @@ int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, my_off_t pos,
 
 	/* Make new page on disk */
 
-my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level)
+internal::my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level)
 {
-  my_off_t pos;
+  internal::my_off_t pos;
   unsigned char buff[8];
 
   if ((pos= info->s->state.key_del[keyinfo->block_size_index]) ==
@@ -121,7 +123,7 @@ my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level)
     if (info->state->key_file_length >=
 	info->s->base.max_key_file_length - keyinfo->block_length)
     {
-      my_errno=HA_ERR_INDEX_FILE_FULL;
+      errno=HA_ERR_INDEX_FILE_FULL;
       return(HA_OFFSET_ERROR);
     }
     pos=info->state->key_file_length;

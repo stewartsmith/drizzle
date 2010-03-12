@@ -18,10 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_REAL
-#define DRIZZLE_SERVER_FIELD_REAL
+#ifndef DRIZZLED_FIELD_REAL_H
+#define DRIZZLED_FIELD_REAL_H
 
 #include <drizzled/field/num.h>
+
+namespace drizzled
+{
 
 /* base class for float and double and decimal (old one) */
 class Field_real :public Field_num {
@@ -50,4 +53,6 @@ public:
                       uint32_t max_length, bool low_byte_first);
 };
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FIELD_REAL_H */

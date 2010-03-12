@@ -18,33 +18,41 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
+#include <drizzled/db.h>
 
-using namespace drizzled;
+#include <string>
+
+using namespace std;
+
+namespace drizzled
+{
 
 bool statement::CreateSchema::execute()
 {
-  /*
-   * As mysql_create_db() may modify HA_CREATE_INFO structure passed to
-   * it, we need to use a copy of LEX::create_info to make execution
-   * prepared statement- safe.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
-  if (! session->endActiveTransaction())
+  if (not session->endActiveTransaction())
   {
     return true;
   }
-  char *alias= session->strmake(session->lex->name.str,
-                                session->lex->name.length);
-  if (! alias ||
-      check_db_name(&session->lex->name))
+
+  if (check_db_name(&session->lex->name))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
     return false;
   }
-  bool res= mysql_create_db(session, session->lex->name.str, &create_info);
-  return res;
+
+  schema_message.set_name(session->lex->name.str);
+  if (not schema_message.has_collation())
+  {
+    schema_message.set_collation(default_charset_info->name);
+  }
+
+  bool res= mysql_create_db(session, schema_message, is_if_not_exists);
+  return not res;
 }
+
+} /* namespace drizzled */
+

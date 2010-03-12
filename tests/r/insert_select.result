@@ -686,12 +686,12 @@ flush status;
 INSERT INTO t1 SELECT a + 2 FROM t1 LIMIT 1;
 show status like 'Handler_read%';
 Variable_name	Value
-Handler_read_first	1
-Handler_read_key	2
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	1
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 DROP TABLE t1;
 CREATE TABLE t1 (
 f1 int NOT NULL auto_increment PRIMARY KEY,
@@ -788,7 +788,7 @@ DROP TABLE t1,t2;
 create table t1(f1 int);
 insert into t1 values(1),(2),(3);
 create temporary table t2 (key(f1)) engine=myisam select sql_buffer_result f1 from t1;
-check table t2 extended;
+check table t2;
 Table	Op	Msg_type	Msg_text
 test.t2	check	status	OK
 drop table t1,t2;

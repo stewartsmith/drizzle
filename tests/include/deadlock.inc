@@ -37,7 +37,6 @@ set autocommit=0;
 # The following query should hang because con1 is locking the record
 --send
 update t1 set x=2 where id = 0;
---sleep 2
 
 --echo # Switch to connection con1
 connection con1;
@@ -69,7 +68,8 @@ insert into t2 values(0, 10), (1, 20), (2, 30);
 commit;
 set autocommit=0;
 select * from t2;
-update t2 set a=100 where b=(SELECT x from t1 where id = b FOR UPDATE);
+select x from t1 where id=0 FOR UPDATE;
+update t2 set a=100 where b=(SELECT x from t1 where id = b);
 select * from t2;
 select * from t1;
 
@@ -80,7 +80,6 @@ set autocommit=0;
 # The following query should hang because con1 is locking the record
 --send
 update t1 set x=2 where id = 0;
---sleep 2
 
 --echo # Switch to connection con1
 connection con1;
@@ -119,7 +118,6 @@ update t2 set a=2 where b = 0;
 select * from t2;
 --send
 update t1 set x=2 where id = 0;
---sleep 2
 
 --echo # Switch to connection con1
 connection con1;

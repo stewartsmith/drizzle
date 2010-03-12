@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/binary.h>
+
+namespace drizzled
+{
 
 void Item_func_binary::print(String *str, enum_query_type query_type)
 {
@@ -28,3 +31,4 @@ void Item_func_binary::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN(" as binary)"));
 }
 
+} /* namespace drizzled */

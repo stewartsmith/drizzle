@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,14 @@ class EmptyQuery : public Statement
 public:
   EmptyQuery(Session *in_session)
     :
-      Statement(in_session, SQLCOM_EMPTY_QUERY)
+      Statement(in_session)
   {}
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_EMPTY_QUERY_H */

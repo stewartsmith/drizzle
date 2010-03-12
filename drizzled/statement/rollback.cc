@@ -18,19 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/rollback.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Rollback::execute()
 {
-  if (! session->endTransaction(session->lex->tx_release ? ROLLBACK_RELEASE : session->lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
+  if (! session->endTransaction(tx_release ? ROLLBACK_RELEASE : tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
     return true;
   }
   session->my_ok();
   return false;
 }
+
+} /* namespace drizzled */
+

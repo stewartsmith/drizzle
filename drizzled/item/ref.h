@@ -20,6 +20,11 @@
 #ifndef DRIZZLED_ITEM_REF_H
 #define DRIZZLED_ITEM_REF_H
 
+#include "drizzled/item/ident.h"
+
+namespace drizzled
+{
+
 class Item_ref :public Item_ident
 {
 protected:
@@ -57,7 +62,7 @@ public:
   enum Type type() const		{ return REF_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const
   {
-    Item *it= ((Item *) item)->real_item();
+    const Item *it= item->real_item();
     return ref && (*ref)->eq(it, binary_cmp);
   }
   double val_real();
@@ -72,7 +77,7 @@ public:
   String *str_result(String* tmp);
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
-  bool send(drizzled::plugin::Protocol *prot, String *tmp);
+  bool send(plugin::Client *client, String *tmp);
   void make_field(SendField *field);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
@@ -115,8 +120,6 @@ public:
     return (*ref)->result_as_int64_t();
   }
   void cleanup();
-  Item_field *filed_for_view_update()
-    { return (*ref)->filed_for_view_update(); }
   virtual Ref_Type ref_type() { return REF; }
 
   // Row emulation: forwarding of ROW-related calls to ref
@@ -146,7 +149,12 @@ public:
     if (ref && result_type() == ROW_RESULT)
       (*ref)->bring_value();
   }
-
+  bool basic_const_item() const
+  {
+    return (*ref)->basic_const_item();
+  }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_REF_H */

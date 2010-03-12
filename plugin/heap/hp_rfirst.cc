@@ -13,9 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <string.h>
+#include <cassert>
+
+using namespace drizzled;
 
 /* Read first record with the current key */
 
@@ -53,8 +56,8 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
     }
     else
     {
-      my_errno = HA_ERR_END_OF_FILE;
-      return(my_errno);
+      errno = HA_ERR_END_OF_FILE;
+      return(errno);
     }
     return(0);
   }
@@ -62,8 +65,8 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
   {
     if (!(info->s->records))
     {
-      my_errno=HA_ERR_END_OF_FILE;
-      return(my_errno);
+      errno=HA_ERR_END_OF_FILE;
+      return(errno);
     }
     assert(0); /* TODO fix it */
     info->current_record=0;

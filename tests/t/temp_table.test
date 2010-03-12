@@ -18,8 +18,8 @@ select * from t2;
 CREATE TABLE t2 (x int not null, y int not null);
 alter table t2 rename t1;
 select * from t1;
-create TEMPORARY TABLE t2 engine=heap select * from t1;
-create TEMPORARY TABLE IF NOT EXISTS t2 (a int) engine=heap;
+create TEMPORARY TABLE t2 engine=MEMORY select * from t1;
+create TEMPORARY TABLE IF NOT EXISTS t2 (a int) engine=MEMORY;
 
 # This should give errors
 --error 1050
@@ -88,6 +88,7 @@ INSERT INTO t1 VALUES ('2002-10-24 14:50:32'),('2002-10-24 14:50:33'),('2002-10-
 
 flush status;
 select * from t1 group by d;
+--replace_column 2 #
 show status like "created_tmp%tables";
 drop table t1;
 

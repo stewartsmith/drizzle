@@ -16,12 +16,13 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/***********************************************************************
+/*******************************************************************//**
+@file handler/handler0vars.h
 This file contains accessor functions for dynamic plugin on Windows.
 ***********************************************************************/
 
 #if defined __WIN__ && defined MYSQL_DYNAMIC_PLUGIN
-/***********************************************************************
+/*******************************************************************//**
 This is a list of externals that can not be resolved by delay loading.
 They have to be resolved indirectly via their addresses in the .map file.
 All of them are external variables. */
@@ -35,7 +36,6 @@ extern	system_variables*	wdl_global_system_variables;
 extern	char*			wdl_mysql_real_data_home;
 extern	char**			wdl_mysql_data_home;
 extern	char**			wdl_tx_isolation_names;
-extern	char**			wdl_binlog_format_names;
 extern	char*			wdl_reg_ext;
 extern	pthread_mutex_t*	wdl_LOCK_thread_count;
 extern	key_map*		wdl_key_map_full;
@@ -55,7 +55,6 @@ extern	int*			wdl_my_umask;
 #define mysql_real_data_home	(wdl_mysql_real_data_home)
 #define mysql_data_home		(*wdl_mysql_data_home)
 #define tx_isolation_names	(wdl_tx_isolation_names)
-#define binlog_format_names	(wdl_binlog_format_names)
 #define reg_ext			(wdl_reg_ext)
 #define LOCK_thread_count	(*wdl_LOCK_thread_count)
 #define key_map_full		(*wdl_key_map_full)

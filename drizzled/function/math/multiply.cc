@@ -17,13 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/math/multiply.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 double Item_func_mul::real_op()
 {
@@ -77,4 +80,4 @@ void Item_func_mul::result_precision()
   max_length= my_decimal_precision_to_length(precision, decimals,unsigned_flag);
 }
 
-
+} /* namespace drizzled */

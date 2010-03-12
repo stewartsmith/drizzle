@@ -17,8 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/item/cache_real.h>
+
+namespace drizzled
+{
 
 void Item_cache_real::store(Item *item)
 {
@@ -48,4 +52,6 @@ my_decimal *Item_cache_real::val_decimal(my_decimal *decimal_val)
   double2my_decimal(E_DEC_FATAL_ERROR, value, decimal_val);
   return decimal_val;
 }
+
+} /* namespace drizzled */
 

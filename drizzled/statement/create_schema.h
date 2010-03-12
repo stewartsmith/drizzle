@@ -22,11 +22,12 @@
 #define DRIZZLED_STATEMENT_CREATE_SCHEMA_H
 
 #include <drizzled/statement.h>
-
-class Session;
+#include <drizzled/message/schema.pb.h>
 
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,10 +36,14 @@ class CreateSchema : public Statement
 public:
   CreateSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CREATE_DB)
-  {}
+      Statement(in_session),
+      is_if_not_exists(false)
+  {
+  }
 
   bool execute();
+  bool is_if_not_exists;
+  message::Schema schema_message;
 };
 
 } /* end namespace statement */

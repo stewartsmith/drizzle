@@ -15,7 +15,9 @@
 
 	/* Functions to handle fixed-length-records */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
+
+using namespace drizzled;
 
 int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
 {
@@ -23,7 +25,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
   if (info->s->state.dellink != HA_OFFSET_ERROR &&
       !info->append_insert_at_end)
   {
-    my_off_t filepos=info->s->state.dellink;
+    internal::my_off_t filepos=info->s->state.dellink;
     info->rec_cache.seek_not_done=1;		/* We have done a seek */
     if (info->s->file_read(info, &temp[0],info->s->base.rec_reflength,
 		info->s->state.dellink+1,
@@ -42,7 +44,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
     if (info->state->data_file_length > info->s->base.max_data_file_length-
 	info->s->base.pack_reclength)
     {
-      my_errno=HA_ERR_RECORD_FILE_FULL;
+      errno=HA_ERR_RECORD_FILE_FULL;
       return(2);
     }
     if (info->opt_flag & WRITE_CACHE_USED)
@@ -84,7 +86,7 @@ int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
   return 1;
 }
 
-int _mi_update_static_record(MI_INFO *info, my_off_t pos, const unsigned char *record)
+int _mi_update_static_record(MI_INFO *info, internal::my_off_t pos, const unsigned char *record)
 {
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   return (info->s->file_write(info,
@@ -130,7 +132,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *
     if (memcmp(info->rec_buff, old,
 	       (uint) info->s->base.reclength))
     {
-      my_errno=HA_ERR_RECORD_CHANGED;		/* Record have changed */
+      errno=HA_ERR_RECORD_CHANGED;		/* Record have changed */
       return(1);
     }
   }
@@ -139,7 +141,7 @@ int _mi_cmp_static_record(register MI_INFO *info, register const unsigned char *
 
 
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
-			  const unsigned char *record, my_off_t pos)
+			  const unsigned char *record, internal::my_off_t pos)
 {
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   if (info->s->file_read(info, info->rec_buff, info->s->base.reclength,
@@ -155,7 +157,7 @@ int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 	/*	   1 if record is deleted */
 	/*	  MY_FILE_ERROR on read-error or locking-error */
 
-int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
+int _mi_read_static_record(register MI_INFO *info, register internal::my_off_t pos,
 			   register unsigned char *record)
 {
   int error;
@@ -175,7 +177,7 @@ int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
     {
       if (!*record)
       {
-	my_errno=HA_ERR_RECORD_DELETED;
+	errno=HA_ERR_RECORD_DELETED;
 	return(1);				/* Record is deleted */
       }
       info->update|= HA_STATE_AKTIV;		/* Record is read */
@@ -190,7 +192,7 @@ int _mi_read_static_record(register MI_INFO *info, register my_off_t pos,
 
 
 int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
-			       register my_off_t filepos,
+			       register internal::my_off_t filepos,
 			       bool skip_deleted_blocks)
 {
   int locked,error,cache_read;
@@ -202,7 +204,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   if (info->opt_flag & WRITE_CACHE_USED &&
       (info->rec_cache.pos_in_file <= filepos || skip_deleted_blocks) &&
       flush_io_cache(&info->rec_cache))
-    return(my_errno);
+    return(errno);
   if (info->opt_flag & READ_CACHE_USED)
   {						/* Cache in use */
     if (filepos == my_b_tell(&info->rec_cache) &&
@@ -220,7 +222,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
     if (filepos >= info->state->data_file_length)
     {						/* Test if new records */
       if (_mi_readinfo(info,F_RDLCK,0))
-	return(my_errno);
+	return(errno);
       locked=1;
     }
     else
@@ -235,7 +237,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   if (filepos >= info->state->data_file_length)
   {
     fast_mi_writeinfo(info);
-    return(my_errno=HA_ERR_END_OF_FILE);
+    return(errno=HA_ERR_END_OF_FILE);
   }
   info->lastpos= filepos;
   info->nextpos= filepos+share->base.pack_reclength;
@@ -245,9 +247,9 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
     if ((error=_mi_read_static_record(info,filepos,buf)))
     {
       if (error > 0)
-	error=my_errno=HA_ERR_RECORD_DELETED;
+	error=errno=HA_ERR_RECORD_DELETED;
       else
-	error=my_errno;
+	error=errno;
     }
     return(error);
   }
@@ -266,14 +268,14 @@ int _mi_read_rnd_static_record(MI_INFO *info, unsigned char *buf,
   {
     if (!buf[0])
     {						/* Record is removed */
-      return(my_errno=HA_ERR_RECORD_DELETED);
+      return(errno=HA_ERR_RECORD_DELETED);
     }
 						/* Found and may be updated */
     info->update|= HA_STATE_AKTIV | HA_STATE_KEY_CHANGED;
     return(0);
   }
-  /* my_errno should be set if rec_cache.error == -1 */
-  if (info->rec_cache.error != -1 || my_errno == 0)
-    my_errno=HA_ERR_WRONG_IN_RECORD;
-  return(my_errno);			/* Something wrong (EOF?) */
+  /* errno should be set if rec_cache.error == -1 */
+  if (info->rec_cache.error != -1 || errno == 0)
+    errno=HA_ERR_WRONG_IN_RECORD;
+  return(errno);			/* Something wrong (EOF?) */
 }

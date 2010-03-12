@@ -17,10 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/quote.h>
 
+namespace drizzled
+{
 
 #define get_esc_bit(mask, num) (1 & (*((mask) + ((num) >> 3))) >> ((num) & 7))
 
@@ -119,3 +121,5 @@ null:
   null_value= 1;
   return 0;
 }
+
+} /* namespace drizzled */

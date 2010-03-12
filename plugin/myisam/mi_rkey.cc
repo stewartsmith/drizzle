@@ -15,7 +15,9 @@
 
 /* Read record based on a key */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
+
+using namespace drizzled;
 
 	/* Read a record using key */
 	/* Ordinary search_flag is 0 ; Give error if no record with key */
@@ -32,7 +34,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
   int res= 0;
 
   if ((inx = _mi_check_index(info,inx)) < 0)
-    return(my_errno);
+    return(errno);
 
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
   info->last_key_func= search_flag;
@@ -125,7 +127,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
             ha_key_cmp(keyinfo->seg, key_buff, info->lastkey, use_key_length,
                        SEARCH_FIND, not_used))
         {
-          my_errno= HA_ERR_KEY_NOT_FOUND;
+          errno= HA_ERR_KEY_NOT_FOUND;
           info->lastpos= HA_OFFSET_ERROR;
           break;
         }
@@ -135,17 +137,17 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
         info->lastpos= HA_OFFSET_ERROR;
         if (share->concurrent_insert)
           pthread_rwlock_unlock(&share->key_root_lock[inx]);
-        return((my_errno= HA_ERR_KEY_NOT_FOUND));
+        return((errno= HA_ERR_KEY_NOT_FOUND));
       }
       /*
         Error if no row found within the data file. (Bug #29838)
-        Do not overwrite my_errno if already at HA_OFFSET_ERROR.
+        Do not overwrite errno if already at HA_OFFSET_ERROR.
       */
       if (info->lastpos != HA_OFFSET_ERROR &&
           info->lastpos >= info->state->data_file_length)
       {
         info->lastpos= HA_OFFSET_ERROR;
-        my_errno= HA_ERR_KEY_NOT_FOUND;
+        errno= HA_ERR_KEY_NOT_FOUND;
       }
     }
   }
@@ -162,7 +164,7 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
 
   /* Check if we don't want to have record back, only error message */
   if (!buf)
-    return(info->lastpos == HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos == HA_OFFSET_ERROR ? errno : 0);
 
   if (!(*info->read_record)(info,info->lastpos,buf))
   {
@@ -181,5 +183,5 @@ int mi_rkey(MI_INFO *info, unsigned char *buf, int inx, const unsigned char *key
   if (search_flag == HA_READ_AFTER_KEY)
     info->update|=HA_STATE_NEXT_FOUND;		/* Previous gives last row */
 err:
-  return(my_errno);
+  return(errno);
 } /* _mi_rkey */

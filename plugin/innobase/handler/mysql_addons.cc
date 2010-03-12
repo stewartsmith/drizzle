@@ -16,7 +16,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/******************************************************
+/**************************************************//**
+@file handler/mysql_addons.cc
 This file contains functions that need to be added to
 MySQL code but have not been added yet.
 
@@ -35,7 +36,7 @@ Created November 07, 2007 Vasil Dimov
 #define MYSQL_SERVER
 #endif /* MYSQL_SERVER */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include "mysql_addons.h"
 #include "univ.i"

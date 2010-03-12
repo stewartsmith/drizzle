@@ -18,10 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_STR
-#define DRIZZLE_SERVER_FIELD_STR
+#ifndef DRIZZLED_FIELD_STR_H
+#define DRIZZLED_FIELD_STR_H
 
 #include <drizzled/field.h>
+
+namespace drizzled
+{
 
 typedef struct charset_info_st CHARSET_INFO;
 
@@ -33,10 +36,12 @@ protected:
   enum Derivation field_derivation;
   int  report_if_important_data(const char *ptr, const char *end);
 public:
-  Field_str(unsigned char *ptr_arg,uint32_t len_arg,
+  Field_str(unsigned char *ptr_arg,
+            uint32_t len_arg,
             unsigned char *null_ptr_arg,
-            unsigned char null_bit_arg, utype unireg_check_arg,
-            const char *field_name_arg, const CHARSET_INFO * const charset);
+            unsigned char null_bit_arg,
+            const char *field_name_arg,
+            const CHARSET_INFO * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint32_t decimals() const { return NOT_FIXED_DEC; }
 
@@ -58,8 +63,6 @@ public:
   friend class CreateField;
   my_decimal *val_decimal(my_decimal *);
   virtual bool str_needs_quotes() { return true; }
-  bool compare_str_field_flags(CreateField *new_field, uint32_t flags);
-  uint32_t is_equal(CreateField *new_field);
   uint32_t max_data_length() const;
 };
 
@@ -96,4 +99,6 @@ bool check_string_copy_error(Field_str *field,
                              const CHARSET_INFO * const cs);
 
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FIELD_STR_H */

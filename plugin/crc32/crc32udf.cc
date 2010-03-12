@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
-#include <zlib.h>
+#include <drizzled/algorithm/crc32.h>
 
 #include <string>
 
@@ -29,7 +29,6 @@ using namespace drizzled;
 
 class Crc32Function :public Item_int_func
 {
-  String value;
 public:
   int64_t val_int();
   
@@ -57,6 +56,7 @@ public:
 int64_t Crc32Function::val_int()
 {
   assert(fixed == true);
+  String value;
   String *res=args[0]->val_str(&value);
   
   if (res == NULL)
@@ -66,7 +66,7 @@ int64_t Crc32Function::val_int()
   }
 
   null_value= false;
-  return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
+  return static_cast<int64_t>(drizzled::algorithm::crc32(res->ptr(), res->length()));
 }
 
 plugin::Create_function<Crc32Function> *crc32udf= NULL;
@@ -74,28 +74,15 @@ plugin::Create_function<Crc32Function> *crc32udf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   crc32udf= new plugin::Create_function<Crc32Function>("crc32");
-  registry.function.add(crc32udf);
+  registry.add(crc32udf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)  
 {
-  registry.function.remove(crc32udf);
+  registry.remove(crc32udf);
   delete crc32udf;
   return 0;
 }
 
-drizzle_declare_plugin(crc32)
-{
-  "crc32",
-  "1.0",
-  "Stewart Smith",
-  "UDF for computing CRC32",
-  PLUGIN_LICENSE_GPL,
-  initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
-}
-drizzle_declare_plugin_end;
+DRIZZLE_PLUGIN(initialize, finalize, NULL);

@@ -17,13 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/calendar.h"
 #include "drizzled/function/time/extract.h"
+
+namespace drizzled
+{
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.
@@ -67,7 +70,7 @@ void Item_extract::fix_length_and_dec()
   case INTERVAL_HOUR_MICROSECOND: max_length=13; date_value=0; break;
   case INTERVAL_MINUTE_MICROSECOND: max_length=11; date_value=0; break;
   case INTERVAL_SECOND_MICROSECOND: max_length=9; date_value=0; break;
-  case INTERVAL_LAST: assert(0); break; /* purecov: deadcode */
+  case INTERVAL_LAST: assert(0); break;
   }
 }
 
@@ -83,11 +86,11 @@ int64_t Item_extract::val_int()
   }
 
   /* We could have either a datetime or a time.. */
-  drizzled::DateTime datetime_temporal;
-  drizzled::Time time_temporal;
+  DateTime datetime_temporal;
+  Time time_temporal;
 
   /* Abstract pointer type we'll use in the final switch */
-  drizzled::Temporal *temporal;
+  Temporal *temporal;
 
   if (date_value)
   {
@@ -321,7 +324,7 @@ int64_t Item_extract::val_int()
     case INTERVAL_LAST: 
     default:
         assert(0); 
-        return 0;  /* purecov: deadcode */
+        return 0;
   }
 }
 
@@ -341,3 +344,5 @@ bool Item_extract::eq(const Item *item, bool binary_cmp) const
       return 0;
   return 1;
 }
+
+} /* namespace drizzled */

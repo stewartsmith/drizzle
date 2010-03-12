@@ -19,15 +19,19 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/blob.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "plugin/myisam/myisam.h"
 
 #include <string>
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 {
@@ -42,20 +46,25 @@ static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 ** packlength slot and may be from 1-4.
 ****************************************************************************/
 
-Field_blob::Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-		       enum utype unireg_check_arg, const char *field_name_arg,
-                       TableShare *share, uint32_t blob_pack_length,
-		       const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg, blob_pack_length_to_max_length(blob_pack_length),
-                 null_ptr_arg, null_bit_arg, unireg_check_arg, field_name_arg,
-                 cs),
+Field_blob::Field_blob(unsigned char *ptr_arg,
+                       unsigned char *null_ptr_arg,
+                       unsigned char null_bit_arg,
+		                   const char *field_name_arg,
+                       TableShare *share,
+                       uint32_t blob_pack_length,
+                       const CHARSET_INFO * const cs)
+  :Field_str(ptr_arg,
+             blob_pack_length_to_max_length(blob_pack_length),
+             null_ptr_arg,
+             null_bit_arg,
+             field_name_arg,
+             cs),
    packlength(blob_pack_length)
 {
   flags|= BLOB_FLAG;
   share->blob_fields++;
   /* TODO: why do not fill table->s->blob_field array here? */
 }
-
 
 void Field_blob::store_length(unsigned char *i_ptr,
                               uint32_t i_packlength,
@@ -226,17 +235,6 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
   if (value.alloc(new_length))
     goto oom_error;
 
-
-  if (f_is_hex_escape(flags))
-  {
-    copy_length= my_copy_with_hex_escaping(field_charset,
-                                           (char*) value.ptr(), new_length,
-                                            from, length);
-    Field_blob::store_length(copy_length);
-    tmp= value.ptr();
-    memmove(ptr + packlength, &tmp, sizeof(char*));
-    return 0;
-  }
   /*
     "length" is OK as "nchars" argument to well_formed_copy_nchars as this
     is never used to limit the length of the data. The cut of long data
@@ -416,7 +414,7 @@ uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
   if ((uint32_t) length > blob_length)
   {
     /*
-      Must clear this as we do a memcmp in opt_range.cc to detect
+      Must clear this as we do a memcmp in optimizer/range.cc to detect
       identical keys
     */
     memset(buff+HA_KEY_BLOB_LENGTH+blob_length, 0, (length-blob_length));
@@ -447,7 +445,7 @@ uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff, uint32_t l
   if (length > blob_length)
   {
     /*
-      Must clear this as we do a memcmp in opt_range.cc to detect
+      Must clear this as we do a memcmp in optimizer/range.cc to detect
       identical keys
     */
 
@@ -481,22 +479,6 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 {
   return Field_blob::cmp(a+HA_KEY_BLOB_LENGTH, uint2korr(a),
 			 b+HA_KEY_BLOB_LENGTH, uint2korr(b));
-}
-
-/**
-   Save the field metadata for blob fields.
-
-   Saves the pack length in the first byte of the field metadata array
-   at index of *metadata_ptr.
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= pack_length_no_ptr();
-  return 1;
 }
 
 uint32_t Field_blob::sort_length() const
@@ -605,9 +587,9 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
    @return  New pointer into memory based on from + length of the data
 */
 const unsigned char *Field_blob::unpack(unsigned char *,
-                                const unsigned char *from,
-                                uint32_t param_data,
-                                bool low_byte_first)
+                                        const unsigned char *from,
+                                        uint32_t param_data,
+                                        bool low_byte_first)
 {
   uint32_t const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
@@ -644,18 +626,6 @@ Field_blob::pack_key(unsigned char *to, const unsigned char *from, uint32_t max_
 }
 
 
-uint32_t Field_blob::is_equal(CreateField *new_field_ptr)
-{
-  if (compare_str_field_flags(new_field_ptr, flags))
-    return 0;
-  Field_blob *blob_field_ptr= static_cast<Field_blob *>(new_field_ptr->field);
-
-  return (new_field_ptr->sql_type == DRIZZLE_TYPE_BLOB
-          && new_field_ptr->charset == field_charset
-          && blob_field_ptr->max_data_length() == max_data_length());
-}
-
-
 /**
   maximum possible display length for blob.
 
@@ -680,3 +650,5 @@ uint32_t Field_blob::max_display_length()
     return 0;
   }
 }
+
+} /* namespace drizzled */

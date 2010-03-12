@@ -17,12 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/uint.h>
 #include <drizzled/item/num.h>
 #include <drizzled/item/string.h>
 #include <drizzled/item/decimal.h>
+
+namespace drizzled
+{
 
 /**
   @details
@@ -55,3 +58,4 @@ Item_num *Item_uint::neg()
   return item->neg();
 }
 
+} /* namespace drizzled */

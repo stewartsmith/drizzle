@@ -18,14 +18,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/real.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 
+#include <math.h>
+
 #include <limits>
 
 using namespace std;
+
+namespace drizzled
+{
+
+extern const double log_10[309];
 
 /*
   Floating-point numbers
@@ -136,3 +143,5 @@ my_decimal *Field_real::val_decimal(my_decimal *decimal_value)
   double2my_decimal(E_DEC_FATAL_ERROR, val_real(), decimal_value);
   return decimal_value;
 }
+
+} /* namespace drizzled */

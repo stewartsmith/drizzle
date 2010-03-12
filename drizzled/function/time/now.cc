@@ -17,12 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/time/now.h>
 #include <drizzled/session.h>
 
 #include "drizzled/temporal.h"
+
+namespace drizzled
+{
 
 String *Item_func_now::val_str(String *)
 {
@@ -87,7 +90,7 @@ void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
   now_time->second= cached_temporal.seconds();
 }
 
-bool Item_func_now::get_temporal(drizzled::DateTime &to)
+bool Item_func_now::get_temporal(DateTime &to)
 {
   to= cached_temporal;
   return true;
@@ -107,3 +110,4 @@ int Item_func_now::save_in_field(Field *to, bool )
   return to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
 }
 
+} /* namespace drizzled */

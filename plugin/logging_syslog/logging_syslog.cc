@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include "config.h"
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -31,6 +31,14 @@
 #endif
 
 #include <stdarg.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+using namespace drizzled;
 
 static bool sysvar_logging_syslog_enable= false;
 static char* sysvar_logging_syslog_ident= NULL;
@@ -44,7 +52,6 @@ static ulong sysvar_logging_syslog_threshold_big_examined= 0;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)
@@ -59,7 +66,7 @@ static uint64_t get_microtime()
 #endif
 }
 
-class Logging_syslog: public Logging_handler
+class Logging_syslog: public drizzled::plugin::Logging
 {
 
   int syslog_facility;
@@ -67,7 +74,9 @@ class Logging_syslog: public Logging_handler
 
 public:
 
-  Logging_syslog() : Logging_handler("Logging_syslog"), syslog_facility(-1), syslog_priority(-1)
+  Logging_syslog()
+    : drizzled::plugin::Logging("Logging_syslog"),
+      syslog_facility(-1), syslog_priority(-1)
   {
 
     for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
@@ -134,15 +143,12 @@ public:
   
     /* to avoid trying to printf %s something that is potentially NULL */
   
-    const char *dbs= (session->db) ? session->db : "";
-    int dbl= 0;
-    if (dbs)
-      dbl= session->db_length;
+    const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
-    const char *qys= (session->query) ? session->query : "";
+    const char *qys= (! session->getQueryString().empty()) ? session->getQueryString().c_str() : "";
     int qyl= 0;
     if (qys)
-      qyl= session->query_length;
+      qyl= session->getQueryLength();
     
     syslog(syslog_priority,
            "thread_id=%ld query_id=%ld"
@@ -153,8 +159,8 @@ public:
            " rows_sent=%ld rows_examined=%ld"
            " tmp_table=%ld total_warn_count=%ld\n",
            (unsigned long) session->thread_id,
-           (unsigned long) session->query_id,
-           dbl, dbs,
+           (unsigned long) session->getQueryId(),
+           (int)session->db.length(), dbs,
            qyl, qys,
            (int) command_name[session->command].length,
            command_name[session->command].str,
@@ -260,7 +266,7 @@ static DRIZZLE_SYSVAR_ULONG(
   ULONG_MAX, /* max */
   0 /* blksiz */);
 
-static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
+static drizzle_sys_var* logging_syslog_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(ident),
   DRIZZLE_SYSVAR(facility),
@@ -271,8 +277,9 @@ static struct st_mysql_sys_var* logging_syslog_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(logging_syslog)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "logging_syslog",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",
@@ -280,8 +287,7 @@ drizzle_declare_plugin(logging_syslog)
   PLUGIN_LICENSE_GPL,
   logging_syslog_plugin_init,
   logging_syslog_plugin_deinit,
-  NULL,   /* status variables */
   logging_syslog_system_variables,
   NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

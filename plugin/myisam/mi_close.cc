@@ -20,7 +20,10 @@
    to open other files during the time we flush the cache and close this file
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
+#include <cstdlib>
+
+using namespace drizzled;
 
 int mi_close(MI_INFO *info)
 {
@@ -37,7 +40,7 @@ int mi_close(MI_INFO *info)
   if (info->lock_type != F_UNLCK)
   {
     if (mi_lock_database(info,F_UNLCK))
-      error=my_errno;
+      error=errno;
   }
   pthread_mutex_lock(&share->intern_lock);
 
@@ -49,7 +52,7 @@ int mi_close(MI_INFO *info)
   if (info->opt_flag & (READ_CACHE_USED | WRITE_CACHE_USED))
   {
     if (end_io_cache(&info->rec_cache))
-      error=my_errno;
+      error=errno;
     info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   }
   flag= !--share->reopen;
@@ -65,7 +68,7 @@ int mi_close(MI_INFO *info)
 	flush_key_blocks(share->key_cache, share->kfile,
 			 share->temporary ? FLUSH_IGNORE_CHANGED :
 			 FLUSH_RELEASE))
-      error=my_errno;
+      error=errno;
     if (share->kfile >= 0)
     {
       /*
@@ -76,8 +79,8 @@ int mi_close(MI_INFO *info)
       */
       if (share->mode != O_RDONLY && mi_is_crashed(info))
 	mi_state_info_write(share->kfile, &share->state, 1);
-      if (my_close(share->kfile,MYF(0)))
-        error = my_errno;
+      if (internal::my_close(share->kfile,MYF(0)))
+        error = errno;
     }
     if (share->decode_trees)
     {
@@ -99,14 +102,14 @@ int mi_close(MI_INFO *info)
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
 
-  if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
-    error = my_errno;
+  if (info->dfile >= 0 && internal::my_close(info->dfile,MYF(0)))
+    error = errno;
 
   free((unsigned char*) info);
 
   if (error)
   {
-    return(my_errno=error);
+    return(errno=error);
   }
   return(0);
 } /* mi_close */

@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field_iterator.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 #include <drizzled/table.h>
+
+namespace drizzled
+{
 
 const char *Field_iterator_table::name()
 {
@@ -138,13 +141,9 @@ const char *Field_iterator_table_ref::db_name()
 
   /*
     Test that TableList::db is the same as TableShare::db to
-    ensure consistency. An exception are I_S schema tables, which
-    are inconsistent in this respect.
+    ensure consistency. 
   */
-  assert(!strcmp(table_ref->db, table_ref->table->s->db.str) ||
-              (table_ref->schema_table &&
-               table_ref->table->s->db.str[0] == 0));
-
+  assert(!strcmp(table_ref->db, table_ref->table->s->db.str));
   return table_ref->db;
 }
 
@@ -285,3 +284,4 @@ Field_iterator_table_ref::get_natural_column_ref()
   return nj_col;
 }
 
+} /* namespace drizzled */

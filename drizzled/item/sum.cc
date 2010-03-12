@@ -20,7 +20,8 @@
   @brief
   Sum functions (COUNT, MIN...)
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/hybrid_type_traits.h>
@@ -35,11 +36,17 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
+#include "drizzled/internal/m_string.h"
+
 #include <algorithm>
 
 using namespace std;
 
+namespace drizzled
+{
+
 extern my_decimal decimal_zero;
+extern plugin::StorageEngine *heap_engine;
 
 /**
   Prepare an aggregate function item for checking context conditions.
@@ -373,7 +380,7 @@ bool Item_sum::register_sum_func(Session *session, Item **ref)
 Item_sum::Item_sum(List<Item> &list) :arg_count(list.elements),
   forced_const(false)
 {
-  if ((args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
+  if ((args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     uint32_t i=0;
     List_iterator_fast<Item> li(list);
@@ -517,7 +524,7 @@ Field *Item_sum::create_tmp_field(bool ,
                                name, table->s, collation.collation);
     break;
   case DECIMAL_RESULT:
-    field= new Field_new_decimal(max_length, maybe_null, name,
+    field= new Field_decimal(max_length, maybe_null, name,
                                  decimals, unsigned_flag);
     break;
   case ROW_RESULT:
@@ -869,10 +876,6 @@ my_decimal *Item_sum_sum::val_decimal(my_decimal *val)
 
 /***************************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Declarations for auxilary C-callbacks */
 
 static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
@@ -882,15 +885,11 @@ static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 
 
 static int item_sum_distinct_walk(void *element,
-                                  element_count ,
+                                  uint32_t ,
                                   void *item)
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 /* Item_sum_distinct */
 
@@ -980,7 +979,7 @@ void Item_sum_distinct::fix_length_and_dec()
   case DECIMAL_RESULT:
     val.traits= Hybrid_type_traits_decimal::instance();
     if (table_field_type != DRIZZLE_TYPE_LONGLONG)
-      table_field_type= DRIZZLE_TYPE_NEWDECIMAL;
+      table_field_type= DRIZZLE_TYPE_DECIMAL;
     break;
   case ROW_RESULT:
   default:
@@ -1022,8 +1021,7 @@ bool Item_sum_distinct::setup(Session *session)
   assert(args[0]->fixed);
 
   field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
-                               args[0]->decimals, args[0]->maybe_null,
-                               args[0]->unsigned_flag);
+                               args[0]->decimals, args[0]->maybe_null);
 
   if (! (table= create_virtual_tmp_table(session, field_list)))
     return(true);
@@ -1260,8 +1258,8 @@ Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
                                0, name, table->s, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
-    field= new Field_new_decimal(max_length, maybe_null, name,
-                                 decimals, unsigned_flag);
+    field= new Field_decimal(max_length, maybe_null, name,
+                             decimals, unsigned_flag);
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
   if (field)
@@ -2510,23 +2508,13 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
   return 0;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static int count_distinct_walk(void *,
-                               element_count ,
+                               uint32_t ,
                                void *arg)
 {
   (*((uint64_t*)arg))++;
   return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 void Item_sum_count_distinct::cleanup()
 {
@@ -2615,7 +2603,7 @@ bool Item_sum_count_distinct::setup(Session *session)
 				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
     return true;
-  table->file->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
+  table->cursor->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
   table->no_rows=1;
 
   if (table->s->db_type() == heap_engine)
@@ -2707,9 +2695,9 @@ void Item_sum_count_distinct::clear()
   }
   else if (table)
   {
-    table->file->extra(HA_EXTRA_NO_CACHE);
-    table->file->ha_delete_all_rows();
-    table->file->extra(HA_EXTRA_WRITE_CACHE);
+    table->cursor->extra(HA_EXTRA_NO_CACHE);
+    table->cursor->ha_delete_all_rows();
+    table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   }
 }
 
@@ -2736,8 +2724,8 @@ bool Item_sum_count_distinct::add()
     */
     return tree->unique_add(table->record[0] + table->s->null_bytes);
   }
-  if ((error= table->file->ha_write_row(table->record[0])) &&
-      table->file->is_fatal_error(error, HA_CHECK_DUP))
+  if ((error= table->cursor->ha_write_row(table->record[0])) &&
+      table->cursor->is_fatal_error(error, HA_CHECK_DUP))
     return true;
   return false;
 }
@@ -2762,14 +2750,14 @@ int64_t Item_sum_count_distinct::val_int()
     return (int64_t) count;
   }
 
-  error= table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
+  error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
 
   if(error)
   {
-    table->file->print_error(error, MYF(0));
+    table->print_error(error, MYF(0));
   }
 
-  return table->file->stats.records;
+  return table->cursor->stats.records;
 }
 
 /*****************************************************************************
@@ -2832,7 +2820,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
 
 
 /**
-  function of sort for syntax: GROUP_CONCAT(expr,... order_st BY col,... )
+  function of sort for syntax: GROUP_CONCAT(expr,... ORDER BY col,... )
 */
 
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
@@ -2879,7 +2867,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
   Append data from current leaf to item->result.
 */
 
-int dump_leaf_key(unsigned char* key, element_count ,
+int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
@@ -2961,7 +2949,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
                        bool distinct_arg, List<Item> *select_list,
                        SQL_LIST *order_list, String *separator_arg)
   :tmp_table_param(0), warning(0),
-   separator(separator_arg), tree(0), unique_filter(NULL), table(0),
+   separator(separator_arg), tree(NULL), unique_filter(NULL), table(0),
    order(0), context(context_arg),
    arg_count_order(order_list ? order_list->elements : 0),
    arg_count_field(select_list->elements),
@@ -2982,7 +2970,7 @@ Item_func_group_concat(Name_resolution_context *context_arg,
            (for possible order items in temporare tables)
     order - arg_count_order
   */
-  if (!(args= (Item**) sql_alloc(sizeof(Item*) * arg_count +
+  if (!(args= (Item**) memory::sql_alloc(sizeof(Item*) * arg_count +
                                  sizeof(order_st*)*arg_count_order)))
     return;
 
@@ -3249,7 +3237,7 @@ bool Item_func_group_concat::setup(Session *session)
   {
     /*
       Currently we have to force conversion of BLOB values to VARCHAR's
-      if we are to store them in TREE objects used for order_st BY and
+      if we are to store them in TREE objects used for ORDER BY and
       DISTINCT. This leads to truncation if the BLOB's size exceeds
       Field_varstring::MAX_SIZE.
     */
@@ -3261,7 +3249,7 @@ bool Item_func_group_concat::setup(Session *session)
     We have to create a temporary table to get descriptions of fields
     (types, sizes and so on).
 
-    Note that in the table, we first have the order_st BY fields, then the
+    Note that in the table, we first have the ORDER BY fields, then the
     field list.
   */
   if (!(table= create_tmp_table(session, tmp_table_param, all_fields,
@@ -3269,7 +3257,7 @@ bool Item_func_group_concat::setup(Session *session)
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
     return(true);
-  table->file->extra(HA_EXTRA_NO_ROWS);
+  table->cursor->extra(HA_EXTRA_NO_ROWS);
   table->no_rows= 1;
 
   /*
@@ -3284,13 +3272,14 @@ bool Item_func_group_concat::setup(Session *session)
     tree= &tree_base;
     /*
       Create a tree for sorting. The tree is used to sort (according to the
-      syntax of this function). If there is no order_st BY clause, we don't
+      syntax of this function). If there is no ORDER BY clause, we don't
       create this tree.
     */
     init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
-                                   (uint64_t)(session->variables.sortbuff_size/16)), 0,
+                                   (uint64_t)(session->variables.sortbuff_size/16)), 
+              0,
               tree_key_length,
-              group_concat_key_cmp_with_order , 0, NULL, (void*) this);
+              group_concat_key_cmp_with_order , false, NULL, (void*) this);
   }
 
   if (distinct)
@@ -3314,6 +3303,22 @@ void Item_func_group_concat::make_unique()
   tree= 0;
 }
 
+double Item_func_group_concat::val_real()
+{
+  String *res;  res=val_str(&str_value);
+  return res ? internal::my_atof(res->c_ptr()) : 0.0;
+}
+
+int64_t Item_func_group_concat::val_int()
+{
+  String *res;
+  char *end_ptr;
+  int error;
+  if (!(res= val_str(&str_value)))
+    return (int64_t) 0;
+  end_ptr= (char*) res->ptr()+ res->length();
+  return internal::my_strtoll10(res->ptr(), &end_ptr, &error);
+}
 
 String* Item_func_group_concat::val_str(String* )
 {
@@ -3375,3 +3380,5 @@ Item_func_group_concat::~Item_func_group_concat()
   if (!original && unique_filter)
     delete unique_filter;
 }
+
+} /* namespace drizzled */

@@ -17,10 +17,26 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _DRIZZLED_SQL_SORT_H
-#define _DRIZZLED_SQL_SORT_H
+#ifndef DRIZZLED_SQL_SORT_H
+#define DRIZZLED_SQL_SORT_H
+
+#include <unistd.h>
+
+#include "drizzled/base.h"
+#include "drizzled/qsort_cmp.h"
+
+namespace drizzled
+{
+
+namespace internal
+{
+typedef struct st_io_cache IO_CACHE;
+}
 
 typedef struct st_sort_field SORT_FIELD;
+class Field;
+class Table;
+
 
 /* Defines used by filesort and uniques */
 
@@ -52,11 +68,11 @@ typedef struct st_sort_addon_field {  /* Sort addon packed field */
 } SORT_ADDON_FIELD;
 
 typedef struct st_buffpek {		/* Struktur om sorteringsbuffrarna */
-  my_off_t file_pos;			/* Where we are in the sort file */
+  off_t file_pos;			/* Where we are in the sort file */
   unsigned char *base,*key;			/* key pointers */
   ha_rows count;			/* Number of rows in table */
-  ulong mem_count;			/* numbers of keys in memory */
-  ulong max_keys;			/* Max keys in buffert */
+  size_t mem_count;			/* numbers of keys in memory */
+  size_t max_keys;			/* Max keys in buffert */
 } BUFFPEK;
 
 struct BUFFPEK_COMPARE_CONTEXT
@@ -88,12 +104,14 @@ typedef struct st_sort_param {
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
 		    BUFFPEK *buffpek,
-		    uint32_t *maxbuffer, IO_CACHE *t_file);
-uint32_t read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
+		    uint32_t *maxbuffer, internal::IO_CACHE *t_file);
+uint32_t read_to_buffer(internal::IO_CACHE *fromfile,BUFFPEK *buffpek,
 		    uint32_t sort_length);
-int merge_buffers(SORTPARAM *param,IO_CACHE *from_file,
-		  IO_CACHE *to_file, unsigned char *sort_buffer,
+int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
+		  internal::IO_CACHE *to_file, unsigned char *sort_buffer,
 		  BUFFPEK *lastbuff,BUFFPEK *Fb,
 		  BUFFPEK *Tb,int flag);
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SQL_SORT_H */

@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/server_includes.h"
-#include "drizzled/slot/function.h"
+#include "config.h"
+#include "drizzled/plugin/function.h"
 
 #include "gman_servers_set.h"
 #include "gman_do.h"
@@ -41,25 +41,25 @@ static int gearman_udf_plugin_init(drizzled::plugin::Registry &registry)
   gman_do_background= new plugin::Create_function<Item_func_gman_do_background>("gman_do_background");
   gman_do_high_background= new plugin::Create_function<Item_func_gman_do_high_background>("gman_do_high_background");
   gman_do_low_background= new plugin::Create_function<Item_func_gman_do_low_background>("gman_do_low_background");
-  registry.function.add(gman_servers_set);
-  registry.function.add(gman_do);
-  registry.function.add(gman_do_high);
-  registry.function.add(gman_do_low);
-  registry.function.add(gman_do_background);
-  registry.function.add(gman_do_high_background);
-  registry.function.add(gman_do_low_background);
+  registry.add(gman_servers_set);
+  registry.add(gman_do);
+  registry.add(gman_do_high);
+  registry.add(gman_do_low);
+  registry.add(gman_do_background);
+  registry.add(gman_do_high_background);
+  registry.add(gman_do_low_background);
   return 0;
 }
 
 static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.function.remove(gman_do_low_background);
-  registry.function.remove(gman_do_high_background);
-  registry.function.remove(gman_do_background);
-  registry.function.remove(gman_do_low);
-  registry.function.remove(gman_do_high);
-  registry.function.remove(gman_do);
-  registry.function.remove(gman_servers_set);
+  registry.remove(gman_do_low_background);
+  registry.remove(gman_do_high_background);
+  registry.remove(gman_do_background);
+  registry.remove(gman_do_low);
+  registry.remove(gman_do_high);
+  registry.remove(gman_do);
+  registry.remove(gman_servers_set);
   delete gman_do_low_background;
   delete gman_do_high_background;
   delete gman_do_background;
@@ -70,8 +70,9 @@ static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(gearman_udf)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "gearman_udf",
   "0.1",
   "Eric Day",
@@ -79,8 +80,7 @@ drizzle_declare_plugin(gearman_udf)
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
   gearman_udf_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

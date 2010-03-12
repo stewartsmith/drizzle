@@ -24,8 +24,24 @@
  * Common functions for dealing with calendrical calculations
  */
 
-#include "drizzled/global.h"
+#include "config.h"
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+#include <cstdlib>
+
 #include "drizzled/calendar.h"
+
+namespace drizzled
+{
 
 /** Static arrays for number of days in a month and their "day ends" */
 static const uint32_t __leap_days_in_month[12]=       {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -479,3 +495,5 @@ uint32_t months_to_year_month(uint32_t months)
 
   return (years * 100) + (months % 12) + 1;
 }
+
+} /* namespace drizzled */

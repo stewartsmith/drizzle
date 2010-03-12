@@ -1,0 +1,7 @@
+# Innodb Status table.
+
+use data_dictionary;
+
+select count(*) from data_dictionary.INNODB_STATUS ;
+
+show create table INNODB_STATUS;

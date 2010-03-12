@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/cmpfunc.h>
+
+namespace drizzled
+{
 
 Comp_creator *comp_eq_creator(bool invert)
 {
@@ -67,3 +70,5 @@ Comp_creator *comp_ne_creator(bool invert)
     (Comp_creator *)Eq_creator::instance():
     (Comp_creator *)Ne_creator::instance();
 }
+
+} /* namespace drizzled */

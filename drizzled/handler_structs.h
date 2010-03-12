@@ -20,80 +20,46 @@
 #ifndef DRIZZLED_HANDLER_STRUCTS_H
 #define DRIZZLED_HANDLER_STRUCTS_H
 
-#include <stdint.h>
-#include <time.h>
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
 
 #include <drizzled/base.h>
 #include <drizzled/structs.h>
 #include <drizzled/definitions.h>
 #include <drizzled/lex_string.h>
+#include "drizzled/global_charset_info.h"
 
-class Ha_trx_info;
-struct StorageEngine;
+namespace drizzled
+{
+
 struct st_key;
 typedef struct st_key KEY;
-struct st_key_cache;
 typedef struct st_key_cache KEY_CACHE;
 
-struct Session_TRANS
+
+namespace plugin
 {
-  Session_TRANS() {};
-
-  /* true is not all entries in the engines[] support 2pc */
-  bool        no_2pc;
-  /* storage engines that registered in this transaction */
-  Ha_trx_info *ha_list;
-  /*
-    The purpose of this flag is to keep track of non-transactional
-    tables that were modified in scope of:
-    - transaction, when the variable is a member of
-    Session::transaction.all
-    - top-level statement or sub-statement, when the variable is a
-    member of Session::transaction.stmt
-    This member has the following life cycle:
-    * stmt.modified_non_trans_table is used to keep track of
-    modified non-transactional tables of top-level statements. At
-    the end of the previous statement and at the beginning of the session,
-    it is reset to false.  If such functions
-    as mysql_insert, mysql_update, mysql_delete etc modify a
-    non-transactional table, they set this flag to true.  At the
-    end of the statement, the value of stmt.modified_non_trans_table
-    is merged with all.modified_non_trans_table and gets reset.
-    * all.modified_non_trans_table is reset at the end of transaction
-
-    * Since we do not have a dedicated context for execution of a
-    sub-statement, to keep track of non-transactional changes in a
-    sub-statement, we re-use stmt.modified_non_trans_table.
-    At entrance into a sub-statement, a copy of the value of
-    stmt.modified_non_trans_table (containing the changes of the
-    outer statement) is saved on stack. Then
-    stmt.modified_non_trans_table is reset to false and the
-    substatement is executed. Then the new value is merged with the
-    saved value.
-  */
-  bool modified_non_trans_table;
-
-  void reset() { no_2pc= false; modified_non_trans_table= false; }
-};
+class StorageEngine;
+}
 
 typedef struct st_ha_create_information
 {
   const CHARSET_INFO *table_charset, *default_table_charset;
-  LEX_STRING connect_string;
-  const char *data_file_name, *index_file_name;
   const char *alias;
   uint64_t auto_increment_value;
   uint32_t table_options;
   uint32_t used_fields;
-  uint32_t key_block_size;
-  uint32_t block_size;
   enum row_type row_type;
-  StorageEngine *db_type;
-  uint32_t null_bits;                       /* NULL bits at start of record */
-  uint32_t options;                         /* OR of HA_CREATE_ options */
-  uint32_t extra_size;                      /* length of extra data segment */
+  plugin::StorageEngine *db_type;
   bool table_existed;			/* 1 in create if table existed */
-  bool varchar;                         /* 1 if table has a VARCHAR */
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information
@@ -112,7 +78,6 @@ typedef struct st_key_create_information
 {
   enum ha_key_alg algorithm;
   uint32_t block_size;
-  LEX_STRING parser_name;
   LEX_STRING comment;
 } KEY_CREATE_INFO;
 
@@ -120,12 +85,6 @@ typedef struct st_key_create_information
 typedef struct st_ha_check_opt
 {
   st_ha_check_opt() {}                        /* Remove gcc warning */
-  uint32_t flags;       /* myisam layer flags (e.g. for myisamchk) */
-  /* Just rebuild based on the defintion of the table */
-  bool use_frm;
-  /* new key cache when changing key cache */
-  KEY_CACHE *key_cache;
-  void init();
 } HA_CHECK_OPT;
 
 
@@ -174,5 +133,7 @@ typedef struct st_handler_buffer
   unsigned char *buffer_end;     /* End of buffer */
   unsigned char *end_of_used_area;     /* End of area that was used by handler */
 } HANDLER_BUFFER;
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_HANDLER_STRUCTS_H */

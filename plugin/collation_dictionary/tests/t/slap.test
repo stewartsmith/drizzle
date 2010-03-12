@@ -1,0 +1,9 @@
+# Drizzle's data dictionary.
+
+# Slap tests for concurrency
+CREATE SCHEMA drizzleslap;
+
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.character_sets" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from data_dictionary.collations" --delimiter=";"
+
+DROP SCHEMA drizzleslap;

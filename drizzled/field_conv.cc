@@ -24,7 +24,7 @@
     gives much more speed.
 */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -45,6 +45,8 @@
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/varstring.h>
 
+namespace drizzled
+{
 
 static void do_field_eq(CopyField *copy)
 {
@@ -763,7 +765,7 @@ int field_conv(Field *to,Field *from)
     if (to->pack_length() == from->pack_length() &&
         !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) &&
         to->real_type() != DRIZZLE_TYPE_ENUM &&
-        (to->real_type() != DRIZZLE_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
+        (to->real_type() != DRIZZLE_TYPE_DECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
         (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) &&
@@ -821,3 +823,5 @@ int field_conv(Field *to,Field *from)
   else
     return to->store(from->val_int(), test(from->flags & UNSIGNED_FLAG));
 }
+
+} /* namespace drizzled */

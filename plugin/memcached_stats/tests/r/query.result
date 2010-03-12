@@ -1,0 +1,18 @@
+create schema if not exists data_dictionary;
+select * from data_dictionary.memcached_stats;
+ERROR HY000: No value in MEMCACHED_STATS_SERVERS variable.
+select variable_name, variable_value
+from data_dictionary.global_variables
+where variable_name = 'memcached_stats_servers';
+variable_name	variable_value
+memcached_stats_servers	18446744073709551615
+set global memcached_stats_servers = 'localhost:MC_A_PORT';;
+select variable_name, variable_value
+from data_dictionary.global_variables
+where variable_name = 'memcached_stats_servers';
+variable_name	variable_value
+memcached_stats_servers	#
+select * 
+from data_dictionary.memcached_stats;
+NAME	PORT_NUMBER	PROCESS_ID	UPTIME	TIME	VERSION	POINTER_SIZE	RUSAGE_USER	RUSAGE_SYSTEM	CURRENT_ITEMS	TOTAL_ITEMS	BYTES	CURRENT_CONNECTIONS	TOTAL_CONNECTIONS	CONNECTION_STRUCTURES	GETS	SETS	HITS	MISSES	EVICTIONS	BYTES_READ	BYTES_WRITTEN	LIMIT_MAXBYTES	THREADS
+localhost	#	#	#	#	#	#	#	#	0	0	0	#	#	#	0	0	0	0	0	#	#	#	#

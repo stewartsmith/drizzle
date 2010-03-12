@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,14 @@ class Delete : public Statement
 public:
   Delete(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DELETE)
+      Statement(in_session)
   {}
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_DELETE_H */

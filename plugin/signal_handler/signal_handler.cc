@@ -13,19 +13,37 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/unireg.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/cursor.h> /* for refresh_version */
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_pthread.h"
+#include "drizzled/internal/my_sys.h"
+
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
-extern int cleanup_done;
 extern "C" pthread_handler_t signal_hand(void *);
 
-
+namespace drizzled
+{
+extern int cleanup_done;
+extern bool volatile abort_loop;
+extern bool volatile shutdown_in_progress;
+extern char pidfile_name[FN_REFLEN];
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
+extern std::bitset<12> test_flags;
+}
+
+using namespace drizzled;
+
 
 
 /**
@@ -50,13 +68,13 @@ static void kill_server(void *sig_ptr)
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
   if (sig == SIGTERM || sig == 0)
-    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),my_progname);
+    errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
 
   close_connections();
   if (sig != SIGTERM && sig != 0)
-    unireg_abort(1);				/* purecov: inspected */
+    unireg_abort(1);
   else
     unireg_end();
 }
@@ -94,10 +112,10 @@ pthread_handler_t signal_hand(void *)
 {
   sigset_t set;
   int sig;
-  my_thread_init();				// Init new thread
+  internal::my_thread_init();				// Init new thread
   signal_thread_in_use= true;
 
-  if (thd_lib_detected != THD_LIB_LT && 
+  if (internal::thd_lib_detected != THD_LIB_LT && 
       (test_flags.test(TEST_SIGINT)))
   {
     (void) sigemptyset(&set);			// Setup up SIGINT for debug
@@ -152,7 +170,7 @@ pthread_handler_t signal_hand(void *)
       while ((error= sigwait(&set,&sig)) == EINTR) ;
     if (cleanup_done)
     {
-      my_thread_end();
+      internal::my_thread_end();
       signal_thread_in_use= false;
 
       return NULL;
@@ -172,11 +190,11 @@ pthread_handler_t signal_hand(void *)
       if (!abort_loop)
       {
         refresh_version++;
-        ha_flush_logs(NULL);
+        drizzled::plugin::StorageEngine::flushLogs(NULL);
       }
       break;
     default:
-      break;					/* purecov: tested */
+      break;
     }
   }
 }
@@ -232,7 +250,7 @@ static int deinit(drizzled::plugin::Registry&)
   uint32_t i;
   /*
     Wait up to 10 seconds for signal thread to die. We use this mainly to
-    avoid getting warnings that my_thread_end has not been called
+    avoid getting warnings that internal::my_thread_end has not been called
   */
   for (i= 0 ; i < 100 && signal_thread_in_use; i++)
   {
@@ -244,12 +262,13 @@ static int deinit(drizzled::plugin::Registry&)
   return 0;
 }
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(signal_handler)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "signal_handler",
   "0.1",
   "Brian Aker",
@@ -257,8 +276,7 @@ drizzle_declare_plugin(signal_handler)
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   system_variables,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

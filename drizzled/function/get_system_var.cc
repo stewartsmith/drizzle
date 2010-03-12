@@ -17,14 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/error.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/session.h>
 
+namespace drizzled
+{
+
 Item_func_get_system_var::
-Item_func_get_system_var(sys_var *var_arg, enum_var_type var_type_arg,
+Item_func_get_system_var(sys_var *var_arg, sql_var_t var_type_arg,
                        LEX_STRING *component_arg, const char *name_arg,
                        size_t name_len_arg)
   :var(var_arg), var_type(var_type_arg), component(*component_arg)
@@ -52,7 +55,7 @@ Item_func_get_system_var::fix_fields(Session *session, Item **ref)
   return(0);
 }
 
-Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
+Item *get_system_var(Session *session, sql_var_t var_type, LEX_STRING name,
                      LEX_STRING component)
 {
   sys_var *var;
@@ -83,3 +86,5 @@ Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
                                       NULL, 0);
 }
 
+
+} /* namespace drizzled */

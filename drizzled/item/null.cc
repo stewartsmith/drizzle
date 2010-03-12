@@ -17,13 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/plugin/protocol.h>
+#include "config.h"
+
+#include <drizzled/plugin/client.h>
 #include <drizzled/item/null.h>
 #include <drizzled/lex_string.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool Item_null::eq(const Item *item, bool) const
 { return item->type() == type(); }
@@ -108,12 +109,9 @@ int Item_null::save_safe_in_field(Field *field)
   Pack data in buffer for sending.
 */
 
-bool Item_null::send(plugin::Protocol *protocol,
-                     String *)
+bool Item_null::send(plugin::Client *client, String *)
 {
-  return protocol->store();
+  return client->store();
 }
 
-
-
-
+} /* namespace drizzled */

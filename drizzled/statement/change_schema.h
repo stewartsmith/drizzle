@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,14 @@ class ChangeSchema : public Statement
 public:
   ChangeSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CHANGE_DB)
+      Statement(in_session)
   {}
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_CHANGE_SCHEMA_H */

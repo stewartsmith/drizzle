@@ -15,7 +15,9 @@
 
 /* functions on blocks; Keys and records are saved in blocks */
 
-#include "heapdef.h"
+#include "heap_priv.h"
+
+#include <cstdlib>
 
 /*
   Find record according to record-position.

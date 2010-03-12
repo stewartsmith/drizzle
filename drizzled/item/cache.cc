@@ -17,14 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/cache.h>
 #include <drizzled/item/cache_row.h>
 #include <drizzled/item/cache_int.h>
 #include <drizzled/item/cache_real.h>
 #include <drizzled/item/cache_decimal.h>
 #include <drizzled/item/cache_str.h>
+
+namespace drizzled
+{
 
 Item_cache* Item_cache::get_cache(const Item *item)
 {
@@ -62,3 +65,4 @@ bool Item_cache::eq_def(Field *field)
   return cached_field ? cached_field->eq_def (field) : false;
 }
 
+} /* namespace drizzled */

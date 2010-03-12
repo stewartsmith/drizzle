@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
 #include <drizzled/sql_string.h>
 #include <drizzled/sql_list.h>
@@ -35,12 +35,16 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
+
 void Item_func::set_arguments(List<Item> &list)
 {
   allowed_arg_cols= 1;
   arg_count=list.elements;
   args= tmp_arg;                                // If 2 arguments
-  if (arg_count <= 2 || (args=(Item**) sql_alloc(sizeof(Item*)*arg_count)))
+  if (arg_count <= 2 || (args=(Item**) memory::sql_alloc(sizeof(Item*)*arg_count)))
   {
     List_iterator_fast<Item> li(list);
     Item *item;
@@ -139,7 +143,7 @@ Item_func::fix_fields(Session *session, Item **)
         We shouldn't call fix_fields() twice, so check 'fixed' field first
       */
       if ((!(*arg)->fixed && (*arg)->fix_fields(session, arg)))
-        return true;        /* purecov: inspected */
+        return true;
       item= *arg;
 
       if (allowed_arg_cols)
@@ -461,11 +465,13 @@ Field *Item_func::tmp_table_field(Table *table)
   case STRING_RESULT:
     return make_string_field(table);
   case DECIMAL_RESULT:
-    field= new Field_new_decimal(
-                       my_decimal_precision_to_length(decimal_precision(),
-                                                      decimals,
-                                                      unsigned_flag),
-                       maybe_null, name, decimals, unsigned_flag);
+    field= new Field_decimal(my_decimal_precision_to_length(decimal_precision(),
+                                                            decimals,
+                                                            unsigned_flag),
+                             maybe_null,
+                             name,
+                             decimals,
+                             unsigned_flag);
     break;
   case ROW_RESULT:
   default:
@@ -626,3 +632,4 @@ Item *Item_func::get_tmp_table_item(Session *session)
 }
 
 
+} /* namespace drizzled */

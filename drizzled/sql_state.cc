@@ -19,15 +19,17 @@
  */
 
 /* Functions to map drizzle errno to sql_state */
-#include <drizzled/global.h>
+#include "config.h"
 
-#include CSTDINT_H
 #include <algorithm>
 
 #include <drizzled/sql_state.h>
 #include <drizzled/error.h>
 
 using namespace std;
+
+namespace drizzled
+{
 
 typedef struct st_map_errno_to_sqlstate
 {
@@ -240,7 +242,7 @@ errno_sqlstate_map sqlstate_map[]=
   { ER_NON_GROUPING_FIELD_USED              ,"42000", "" },
   { ER_FOREIGN_DUPLICATE_KEY                ,"23000", "S1009" },
   { ER_CANT_CHANGE_TX_ISOLATION             ,"25001", "" },
-  { ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT       ,"42000", "" },
+  { ER_WRONG_PARAMCOUNT_TO_FUNCTION         ,"42000", "" },
   { ER_WRONG_PARAMETERS_TO_NATIVE_FCT       ,"42000", "" },
   { ER_WRONG_PARAMETERS_TO_STORED_FCT       ,"42000", "" },
   { ER_DUP_ENTRY_WITH_KEY_NAME              ,"23000", "S1009" },
@@ -267,3 +269,5 @@ const char *drizzle_errno_to_sqlstate(uint32_t drizzle_errno)
   return "HY000";
 
 }
+
+} /* namespace drizzled */

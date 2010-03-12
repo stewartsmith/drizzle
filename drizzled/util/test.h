@@ -18,10 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_UTIL_TEST
-#define DRIZZLE_SERVER_UTIL_TEST
+#ifndef DRIZZLED_UTIL_TEST_H
+#define DRIZZLED_UTIL_TEST_H
 
 #if defined(__cplusplus)
+
+namespace drizzled
+{
 
 template <class T>
 inline bool test(const T a)
@@ -35,9 +38,11 @@ inline bool test_all_bits(const T a, const U b)
   return ((a & b) == b);
 }
 
+} /* namespace drizzled */
+
 #else
 # define test(a)    ((a) ? 1 : 0)
 # define test_all_bits(a,b) (((a) & (b)) == (b))
 #endif
 
-#endif
+#endif /* DRIZZLED_UTIL_TEST_H */

@@ -14,27 +14,31 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <cstdlib>
+#include "drizzled/internal/my_sys.h"
 #include "transparent_file.h"
+
+using namespace drizzled;
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)
 {
-  buff= (unsigned char *) malloc(buff_size*sizeof(unsigned char));
+  buff= static_cast<unsigned char *>(malloc(buff_size*sizeof(unsigned char)));
 }
 
 Transparent_file::~Transparent_file()
 {
-  free((unsigned char*)buff);
+  free(buff);
 }
 
-void Transparent_file::init_buff(File filedes_arg)
+void Transparent_file::init_buff(int filedes_arg)
 {
   filedes= filedes_arg;
   /* read the beginning of the file */
   lower_bound= 0;
   lseek(filedes, 0, SEEK_SET);
   if (filedes && buff)
-    upper_bound= my_read(filedes, buff, buff_size, MYF(0));
+    upper_bound= internal::my_read(filedes, buff, buff_size, MYF(0));
 }
 
 unsigned char *Transparent_file::ptr()
@@ -60,7 +64,7 @@ off_t Transparent_file::read_next()
      No need to seek here, as the file managed by Transparent_file class
      always points to upper_bound byte
   */
-  if ((bytes_read= my_read(filedes, buff, buff_size, MYF(0))) == MY_FILE_ERROR)
+  if ((bytes_read= internal::my_read(filedes, buff, buff_size, MYF(0))) == MY_FILE_ERROR)
     return (off_t) -1;
 
   /* end of file */
@@ -84,7 +88,7 @@ char Transparent_file::get_value(off_t offset)
 
   lseek(filedes, offset, SEEK_SET);
   /* read appropriate portion of the file */
-  if ((bytes_read= my_read(filedes, buff, buff_size,
+  if ((bytes_read= internal::my_read(filedes, buff, buff_size,
                            MYF(0))) == MY_FILE_ERROR)
     return 0;
 

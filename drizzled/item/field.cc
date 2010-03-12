@@ -17,18 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
+#include <drizzled/join.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
+#include <drizzled/plugin/client.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -111,11 +114,6 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   return 0;
 }
 
-
-Item_field *Item::filed_for_view_update()
-{
-  return 0;
-}
 
 Item_field::Item_field(Field *f)
   :Item_ident(0, NULL, *f->table_name, f->field_name),
@@ -898,9 +896,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
-        /* purecov: begin inspected */
         table->covering_keys&= field->part_of_key;
-        /* purecov: end */
       }
     }
   }
@@ -1182,9 +1178,9 @@ int Item_field::save_in_field(Field *to, bool no_conversions)
 }
 
 
-bool Item_field::send(plugin::Protocol *protocol, String *)
+bool Item_field::send(plugin::Client *client, String *)
 {
-  return protocol->store(result_field);
+  return client->store(result_field);
 }
 
 
@@ -1262,3 +1258,6 @@ void Item_field::print(String *str, enum_query_type query_type)
   }
   Item_ident::print(str, query_type);
 }
+
+
+} /* namespace drizzled */

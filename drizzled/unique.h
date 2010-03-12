@@ -21,6 +21,7 @@
 #ifndef DRIZZLED_UNIQUE_H
 #define DRIZZLED_UNIQUE_H
 
+#include "drizzled/my_tree.h"
 /*
    Unique -- class for unique (removing of duplicates).
    Puts all values to the TREE. If the tree becomes too big,
@@ -29,12 +30,20 @@
    memory simultaneously with iteration, so it should be ~2-3x faster.
  */
 
-class Unique :public Sql_alloc
+namespace drizzled
+{
+
+namespace internal
+{
+typedef struct st_io_cache IO_CACHE;
+}
+
+class Unique : public memory::SqlAlloc
 {
   DYNAMIC_ARRAY file_ptrs;
   ulong max_elements;
   size_t max_in_memory_size;
-  IO_CACHE file;
+  internal::IO_CACHE *file;
   TREE tree;
   unsigned char *record_pointers;
   bool flush();
@@ -67,8 +76,10 @@ public:
   void reset();
   bool walk(tree_walk_action action, void *walk_action_arg);
 
-  friend int unique_write_to_file(unsigned char* key, element_count count, Unique *unique);
-  friend int unique_write_to_ptrs(unsigned char* key, element_count count, Unique *unique);
+  friend int unique_write_to_file(unsigned char* key, uint32_t count, Unique *unique);
+  friend int unique_write_to_ptrs(unsigned char* key, uint32_t count, Unique *unique);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_UNIQUE_H */

@@ -14,10 +14,13 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* Common defines for all clients */
+#ifndef CLIENT_CLIENT_PRIV_H
+#define CLIENT_CLIENT_PRIV_H
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <libdrizzle/drizzle_client.h>
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
+#include "drizzled/internal/my_sys.h"
 
 #include "client/get_password.h"
 
@@ -93,3 +96,5 @@ enum options_client
   OPT_MAX_CLIENT_OPTION,
   OPT_SHOW_PROGRESS_SIZE
 };
+
+#endif /* CLIENT_CLIENT_PRIV_H */

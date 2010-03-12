@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,21 @@ class Load : public Statement
 public:
   Load(Session *in_session)
     :
-      Statement(in_session, SQLCOM_LOAD)
+      Statement(in_session)
   {}
 
   bool execute();
+
+  /*
+    Pointers to part of LOAD DATA statement that should be rewritten
+    during replication ("LOCAL 'filename' REPLACE INTO" part).
+  */
+  const char *fname_start;
+  const char *fname_end;
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_LOAD_H */

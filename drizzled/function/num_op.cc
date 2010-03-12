@@ -17,12 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
-#include CSTDINT_H
 #include <cassert>
 
 #include <drizzled/function/num_op.h>
+
+namespace drizzled
+{
 
 /**
   Check arguments here to determine result's type for a numeric
@@ -57,5 +59,4 @@ void Item_num_op::find_num_type(void)
   return;
 }
 
-
-
+} /* namespace drizzled */

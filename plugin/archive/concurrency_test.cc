@@ -1,8 +1,30 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 /*
   Just a test application for threads.
   */
+
+#include "config.h"
+
 #include "azio.h"
-#include <mysys/my_getopt.h>
+#include "drizzled/my_getopt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -80,7 +102,7 @@ int main(int argc, char *argv[])
 {
 
   unsigned int method;
-  my_init();
+  drizzled::internal::my_init();
 
   MY_INIT(argv[0]);
 
@@ -170,7 +192,7 @@ void scheduler(az_method use_aio)
     if (pthread_create(&mainthread, &attr, timer_thread,
                        (void *)&opt_timer_length) != 0)
     {
-      fprintf(stderr,"%s: Could not create timer thread\n", my_progname);
+      fprintf(stderr,"%s: Could not create timer thread\n", drizzled::internal::my_progname);
       exit(1);
     }
   }

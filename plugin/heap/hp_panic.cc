@@ -13,9 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 using namespace std;
+using namespace drizzled;
 
 	/* if flag == HA_PANIC_CLOSE then all files are removed for more
 	   memory */

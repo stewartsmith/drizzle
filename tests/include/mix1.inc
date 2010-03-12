@@ -857,7 +857,7 @@ CREATE TABLE t1(c INT)
 --echo
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 
 --echo
@@ -869,7 +869,7 @@ ALTER TABLE t1 ROW_FORMAT = REDUNDANT;
 --echo
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 
 --echo
@@ -978,17 +978,14 @@ create table t1(f1 varchar(5) unique, f2 timestamp NOT NULL DEFAULT
 insert into t1(f1) values(1);
 --replace_column 1 #
 select @a:=f2 from t1;
---sleep 5
 update t1 set f1=1;
 --replace_column 1 #
 select @b:=f2 from t1;
 select if(@a=@b,"ok","wrong");
---sleep 5
 insert into t1(f1) values (1) on duplicate key update f1="1";
 --replace_column 1 #
 select @b:=f2 from t1;
 select if(@a=@b,"ok","wrong");
---sleep 5
 insert into t1(f1) select f1 from t1 on duplicate key update f1="1";
 --replace_column 1 #
 select @b:=f2 from t1;

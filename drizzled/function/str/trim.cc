@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/trim.h>
+
+namespace drizzled
+{
 
 String *Item_func_ltrim::val_str(String *str)
 {
@@ -233,3 +236,5 @@ void Item_func_trim::print(String *str, enum_query_type query_type)
   args[0]->print(str, query_type);
   str->append(')');
 }
+
+} /* namespace drizzled */

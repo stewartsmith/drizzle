@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/name_resolution_context.h>
 
 #include <drizzled/name_resolution_context_state.h>
 #include <drizzled/table_list.h>
+
+namespace drizzled
+{
 
 void
 Name_resolution_context_state::save_state(Name_resolution_context *context,
@@ -50,3 +53,5 @@ TableList *Name_resolution_context_state::get_first_name_resolution_table()
 {
   return save_first_name_resolution_table;
 }
+
+} /* namespace drizzled */

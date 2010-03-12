@@ -17,13 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/str/format.h>
 
-#include CSTDINT_H
 #include <limits>
 
 using namespace std;
+
+namespace drizzled
+{
 
 /**
   Change a number to format '3,333,333,333.000'.
@@ -81,7 +83,7 @@ String *Item_func_format::val_str(String *str)
     my_decimal dec_val, rnd_dec, *res;
     res= args[0]->val_decimal(&dec_val);
     if ((null_value=args[0]->null_value))
-      return 0; /* purecov: inspected */
+      return 0;
     my_decimal_round(E_DEC_FATAL_ERROR, res, dec, false, &rnd_dec);
     my_decimal2string(E_DEC_FATAL_ERROR, &rnd_dec, 0, 0, 0, str);
     str_length= str->length();
@@ -92,7 +94,7 @@ String *Item_func_format::val_str(String *str)
   {
     double nr= args[0]->val_real();
     if ((null_value=args[0]->null_value))
-      return 0; /* purecov: inspected */
+      return 0;
     nr= my_double_round(nr, (int64_t) dec, false, false);
     /* Here default_charset() is right as this is not an automatic conversion */
     str->set_real(nr, dec, default_charset());
@@ -137,3 +139,5 @@ void Item_func_format::print(String *str, enum_query_type query_type)
   args[1]->print(str, query_type);
   str->append(')');
 }
+
+} /* namespace drizzled */

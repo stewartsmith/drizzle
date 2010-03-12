@@ -17,14 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/hybrid_type_traits_decimal.h>
-#include <drizzled/hybrid_type.h>
-#include <drizzled/definitions.h>
+#include "config.h"
+#include "drizzled/hybrid_type_traits_decimal.h"
+#include "drizzled/hybrid_type.h"
+#include "drizzled/definitions.h"
+#include "drizzled/item.h"
 
 #include <algorithm>
 
 using namespace std;
+namespace drizzled
+{
 
 /* Hybrid_type_traits_decimal */
 static const Hybrid_type_traits_decimal decimal_traits_instance;
@@ -118,3 +121,5 @@ const Hybrid_type_traits_decimal *Hybrid_type_traits_decimal::instance()
 
 Hybrid_type_traits_decimal::Hybrid_type_traits_decimal()
 {}
+
+} /* namespace drizzled */

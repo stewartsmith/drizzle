@@ -1,7 +1,11 @@
 show databases;
 Database
+data_dictionary
 information_schema
 mysql
 test
+select concat("Starting in ", database());
+concat("Starting in ", database())
+Starting in test
 show tables in mysql;
 Tables_in_mysql

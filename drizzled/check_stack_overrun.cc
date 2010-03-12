@@ -17,17 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <mysys/my_sys.h>
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 #include <drizzled/definitions.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/check_stack_overrun.h>
 
+namespace drizzled
+{
+
 /****************************************************************************
 	Check stack size; Send error if there isn't enough stack to continue
 ****************************************************************************/
-#if STACK_DIRECTION < 0
+#if defined(STACK_DIRECTION) && (STACK_DIRECTION < 0)
 #define used_stack(A,B) (long) (A - B)
 #else
 #define used_stack(A,B) (long) (B - A)
@@ -49,3 +52,5 @@ bool check_stack_overrun(Session *session, long margin, void *)
   }
   return false;
 }
+
+} /* namespace drizzled */

@@ -16,19 +16,16 @@
 /* This file should be included when using heap_database_functions */
 /* Author: Michael Widenius */
 
-#ifndef _heap_h
-#define _heap_h
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#ifndef PLUGIN_HEAP_HEAP_H
+#define PLUGIN_HEAP_HEAP_H
 
 #include <drizzled/base.h>
 #include <drizzled/common.h>
-#include <mysys/my_pthread.h>
-#include <mysys/thr_lock.h>
+#include "drizzled/internal/my_pthread.h"
+#include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 
 	/* defines used by heap-funktions */
 
@@ -117,8 +114,8 @@ typedef struct st_hp_keydef		/* Key definition with open */
     Number of buckets used in hash table. Used only to provide
     #records estimates for heap key scans.
   */
-  ha_rows hash_buckets;
-  TREE rb_tree;
+  drizzled::ha_rows hash_buckets;
+  drizzled::TREE rb_tree;
   int (*write_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
 		   const unsigned char *record, unsigned char *recpos);
   int (*delete_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
@@ -172,7 +169,7 @@ typedef struct st_heap_share
 
 
   char * name;			/* Name of "memory-file" */
-  THR_LOCK lock;
+  drizzled::THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   bool delete_on_close;
   uint32_t auto_key;
@@ -193,12 +190,12 @@ typedef struct st_heap_info
   uint32_t opt_flag,update;
   unsigned char *lastkey;			/* Last used key with rkey */
   unsigned char *recbuf;                         /* Record buffer for rb-tree keys */
-  enum ha_rkey_function last_find_flag;
-  TREE_ELEMENT *parents[MAX_TREE_HEIGHT+1];
-  TREE_ELEMENT **last_pos;
+  enum drizzled::ha_rkey_function last_find_flag;
+  drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
+  drizzled::TREE_ELEMENT **last_pos;
   uint32_t lastkey_len;
   bool implicit_emptied;
-  THR_LOCK_DATA lock;
+  drizzled::THR_LOCK_DATA lock;
 } HP_INFO;
 
 
@@ -236,26 +233,27 @@ extern int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
 extern int heap_delete_table(const char *name);
 extern void heap_drop_table(HP_INFO *info);
-extern int heap_extra(HP_INFO *info,enum ha_extra_function function);
+extern int heap_extra(HP_INFO *info,enum drizzled::ha_extra_function function);
 extern int heap_reset(HP_INFO *info);
 extern int heap_rename(const char *old_name,const char *new_name);
-extern int heap_panic(enum ha_panic_function flag);
+extern int heap_panic(enum drizzled::ha_panic_function flag);
 extern int heap_rsame(HP_INFO *info,unsigned char *record,int inx);
 extern int heap_rnext(HP_INFO *info,unsigned char *record);
 extern int heap_rprev(HP_INFO *info,unsigned char *record);
 extern int heap_rfirst(HP_INFO *info,unsigned char *record,int inx);
 extern int heap_rlast(HP_INFO *info,unsigned char *record,int inx);
 extern void heap_clear(HP_INFO *info);
-extern void heap_clear_keys(HP_INFO *info);
 extern int heap_disable_indexes(HP_INFO *info);
 extern int heap_enable_indexes(HP_INFO *info);
 extern int heap_indexes_are_disabled(HP_INFO *info);
 extern void heap_update_auto_increment(HP_INFO *info, const unsigned char *record);
-ha_rows hp_rb_records_in_range(HP_INFO *info, int inx, key_range *min_key,
-                               key_range *max_key);
-int hp_panic(enum ha_panic_function flag);
+drizzled::ha_rows hp_rb_records_in_range(HP_INFO *info,
+                                         int inx, drizzled::key_range *min_key,
+                                         drizzled::key_range *max_key);
+int hp_panic(enum drizzled::ha_panic_function flag);
 int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
-              key_part_map keypart_map, enum ha_rkey_function find_flag);
+              drizzled::key_part_map keypart_map,
+              enum drizzled::ha_rkey_function find_flag);
 extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
 extern int heap_check_heap(HP_INFO *info, bool print_status);
 extern unsigned char *heap_position(HP_INFO *info);
@@ -266,7 +264,4 @@ extern unsigned char *heap_position(HP_INFO *info);
 
 typedef unsigned char *HEAP_PTR;
 
-#ifdef	__cplusplus
-}
-#endif
-#endif
+#endif /* PLUGIN_HEAP_HEAP_H */

@@ -17,9 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/function/time/timestamp_diff.h>
+#include "config.h"
+
+#include "drizzled/function/time/timestamp_diff.h"
+#include "drizzled/time_functions.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_timestamp_diff::val_int()
 {
@@ -170,3 +174,5 @@ void Item_func_timestamp_diff::print(String *str, enum_query_type query_type)
   }
   str->append(')');
 }
+
+} /* namespace drizzled */

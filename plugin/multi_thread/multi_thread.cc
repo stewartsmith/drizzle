@@ -13,20 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/atomics.h>
-#include <drizzled/gettext.h>
-#include <drizzled/error.h>
-#include <drizzled/plugin/scheduler.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/session.h>
-#include <string>
+#include "config.h"
+#include <plugin/multi_thread/multi_thread.h>
+#include "drizzled/pthread_globals.h"
 
 using namespace std;
 using namespace drizzled;
 
 /* Configuration variables. */
 static uint32_t max_threads;
+
+/* Global's (TBR) */
+static MultiThreadScheduler *scheduler= NULL;
 
 /**
  * Function to be run as a thread for each session.
@@ -36,133 +34,72 @@ namespace
   extern "C" pthread_handler_t session_thread(void *arg);
 }
 
-class MultiThreadScheduler: public plugin::Scheduler
-{
-private:
-  drizzled::atomic<uint32_t> thread_count;
-  pthread_attr_t attr;
-
-public:
-  MultiThreadScheduler(): Scheduler()
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(struct sched_param));
-
-    /* Setup attribute parameter for session threads. */
-    (void) pthread_attr_init(&attr);
-    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
-
-    thread_count= 0;
-  }
-
-  ~MultiThreadScheduler()
-  {
-    (void) pthread_mutex_lock(&LOCK_thread_count);
-    while (thread_count)
-    {
-      pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
-    }
-
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-    (void) pthread_attr_destroy(&attr);
-  }
-
-  virtual bool addSession(Session *session)
-  {
-    if (thread_count >= max_threads)
-      return true;
-
-    thread_count++;
-  
-    if (pthread_create(&session->real_id, &attr, session_thread,
-                       static_cast<void*>(session)))
-    {
-      thread_count--;
-      return true;
-    }
-  
-    return false;
-  }
-  
-  void runSession(Session *session)
-  {
-    if (my_thread_init())
-    {
-      session->disconnect(ER_OUT_OF_RESOURCES, true);
-      statistic_increment(aborted_connects, &LOCK_status);
-      killSessionNow(session);
-    }
-
-    session->thread_stack= (char*) &session;
-    session->run();
-    killSessionNow(session);
-  }
-
-  void killSessionNow(Session *session)
-  {
-    /* Locks LOCK_thread_count and deletes session */
-    unlink_session(session);
-    thread_count--;
-    my_thread_end();
-    pthread_exit(0);
-    /* We should never reach this point. */
-  }
-};
-
 namespace
 {
   extern "C" pthread_handler_t session_thread(void *arg)
   {
     Session *session= static_cast<Session*>(arg);
-    MultiThreadScheduler *scheduler= static_cast<MultiThreadScheduler*>(session->scheduler);
-    scheduler->runSession(session);
+    MultiThreadScheduler *sched= static_cast<MultiThreadScheduler*>(session->scheduler);
+    sched->runSession(session);
     return NULL;
   }
 }
 
-class MultiThreadFactory : public plugin::SchedulerFactory
+
+bool MultiThreadScheduler::addSession(Session *session)
 {
-public:
-  MultiThreadFactory() : SchedulerFactory("multi_thread")
+  if (thread_count >= max_threads)
+    return true;
+
+  thread_count.increment();
+
+  if (pthread_create(&session->real_id, &attr, session_thread,
+                     static_cast<void*>(session)))
   {
-    addAlias("multi-thread");
+    thread_count.decrement();
+    return true;
   }
 
-  ~MultiThreadFactory()
+  return false;
+}
+
+
+void MultiThreadScheduler::killSessionNow(Session *session)
+{
+  /* Locks LOCK_thread_count and deletes session */
+  Session::unlink(session);
+  thread_count.decrement();
+  internal::my_thread_end();
+  pthread_exit(0);
+  /* We should never reach this point. */
+}
+
+MultiThreadScheduler::~MultiThreadScheduler()
+{
+  (void) pthread_mutex_lock(&LOCK_thread_count);
+  while (thread_count)
   {
-    if (scheduler != NULL)
-      delete scheduler;
+    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
   }
 
-  plugin::Scheduler *operator() ()
-  {
-    if (scheduler == NULL)
-      scheduler= new MultiThreadScheduler();
-    return scheduler;
-  }
-};
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  (void) pthread_attr_destroy(&attr);
+}
 
-static MultiThreadFactory *factory= NULL;
-
+  
 static int init(drizzled::plugin::Registry &registry)
 {
-  factory= new MultiThreadFactory();
-  registry.add(factory);
+  scheduler= new MultiThreadScheduler("multi_thread");
+  registry.add(scheduler);
+
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  if (factory)
-  {
-    registry.remove(factory);
-    delete factory;
-  }
+  registry.remove(scheduler);
+  delete scheduler;
+
   return 0;
 }
 
@@ -171,13 +108,14 @@ static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
                            N_("Maximum number of user threads available."),
                            NULL, NULL, 2048, 1, 4096, 0);
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(max_threads),
   NULL
 };
 
-drizzle_declare_plugin(multi_thread)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "multi_thread",
   "0.1",
   "Brian Aker",
@@ -185,8 +123,7 @@ drizzle_declare_plugin(multi_thread)
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
-  system_variables,   /* system variables */
+  sys_variables,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

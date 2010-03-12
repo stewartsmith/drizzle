@@ -1,0 +1,18 @@
+#
+# Make sure our tables are actually present!
+#
+--disable_warnings
+create schema if not exists data_dictionary;
+--enable_warnings
+
+select table_name
+from data_dictionary.tables
+where table_name like 'memcached%' ORDER BY table_name;
+
+#
+# verify the structure of these I_S tables.
+#
+
+desc data_dictionary.memcached_stats;
+
+desc data_dictionary.memcached_analysis;

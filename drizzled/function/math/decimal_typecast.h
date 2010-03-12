@@ -22,6 +22,9 @@
 
 #include <drizzled/function/func.h>
 
+namespace drizzled
+{
+
 class Item_decimal_typecast :public Item_func
 {
   my_decimal decimal_value;
@@ -36,11 +39,12 @@ public:
   int64_t val_int();
   my_decimal *val_decimal(my_decimal*);
   enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DECIMAL; }
   void fix_length_and_dec() {};
   const char *func_name() const { return "decimal_typecast"; }
   virtual void print(String *str, enum_query_type query_type);
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FUNCTION_MATH_DECIMAL_TYPECAST_H */

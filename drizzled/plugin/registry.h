@@ -20,74 +20,119 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include "drizzled/slot/function.h"
-#include "drizzled/slot/listen.h"
-
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
-class StorageEngine;
-class InfoSchemaTable;
-class Logging_handler;
-class Error_message_handler;
-class Authentication;
-class QueryCache;
+#include "drizzled/gettext.h"
+#include "drizzled/unireg.h"
+#include "drizzled/errmsg_print.h"
 
 namespace drizzled
 {
 namespace plugin
 {
-
-class Handle;
-class SchedulerFactory;
-class Replicator;
-class Applier;
+class Module;
+class Plugin;
+class Library;
 
 class Registry
 {
 private:
-  std::map<std::string, Handle *>
-    plugin_map;
+  std::map<std::string, Library *> library_map;
+  std::map<std::string, Module *> module_map;
+  std::map<std::string, const Plugin *> plugin_registry;
 
-  Registry() {}
+  Module *current_module;
+
+  Registry()
+   : module_map(),
+     plugin_registry(),
+     current_module(NULL)
+  { }
+
   Registry(const Registry&);
+  Registry& operator=(const Registry&);
+  ~Registry();
 public:
 
   static plugin::Registry& singleton()
   {
-    static plugin::Registry registry;
-    return registry;
+    static plugin::Registry *registry= new plugin::Registry();
+    return *registry;
   }
 
-  Handle *find(const LEX_STRING *name);
+  static void shutdown();
 
-  void add(Handle *plugin);
+  Module *find(std::string name);
 
-  std::vector<Handle *> get_list(bool active);
+  void add(Module *module);
 
-  void add(StorageEngine *engine);
-  void add(InfoSchemaTable *schema_table);
-  void add(Logging_handler *handler);
-  void add(Error_message_handler *handler);
-  void add(Authentication *auth);
-  void add(QueryCache *qcache);
-  void add(SchedulerFactory *scheduler);
-  void add(Replicator *replicator);
-  void add(Applier *applier);
+  void setCurrentModule(Module *module)
+  {
+    current_module= module;
+  }
 
-  void remove(StorageEngine *engine);
-  void remove(InfoSchemaTable *schema_table);
-  void remove(Logging_handler *handler);
-  void remove(Error_message_handler *handler);
-  void remove(Authentication *auth);
-  void remove(QueryCache *qcache);
-  void remove(SchedulerFactory *scheduler);
-  void remove(Replicator *replicator);
-  void remove(Applier *applier);
+  void clearCurrentModule()
+  {
+    current_module= NULL;
+  }
 
-  ::drizzled::slot::Function function;
-  ::drizzled::slot::Listen listen;
+  std::vector<Module *> getList(bool active);
+
+  const std::map<std::string, const Plugin *> &getPluginsMap() const
+  {
+    return plugin_registry;
+  }
+
+  const std::map<std::string, Module *> &getModulesMap() const
+  {
+    return module_map;
+  }
+
+  Library *addLibrary(const std::string &plugin_name);
+  void removeLibrary(const std::string &plugin_name);
+  Library *findLibrary(const std::string &plugin_name) const;
+
+  template<class T>
+  void add(T *plugin)
+  {
+    plugin->setModule(current_module);
+    bool failed= false;
+    std::string plugin_name(plugin->getName());
+    std::transform(plugin_name.begin(), plugin_name.end(),
+                   plugin_name.begin(), ::tolower);
+    if (plugin_registry.find(plugin_name) != plugin_registry.end())
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Loading plugin %s failed: a plugin by that name already "
+                      "exists.\n"), plugin->getName().c_str());
+      failed= true;
+    }
+    if (T::addPlugin(plugin))
+      failed= true;
+    if (failed)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Fatal error: Failed initializing %s plugin.\n"),
+                    plugin->getName().c_str());
+      unireg_abort(1);
+    }
+    plugin_registry.insert(std::pair<std::string, const Plugin *>(plugin_name, plugin));
+  }
+
+  template<class T>
+  void remove(T *plugin)
+  {
+    std::string plugin_name(plugin->getName());
+    std::transform(plugin_name.begin(), plugin_name.end(),
+                   plugin_name.begin(), ::tolower);
+    T::removePlugin(plugin);
+    plugin_registry.erase(plugin_name);
+  }
+
+
 };
 
 } /* end namespace plugin */

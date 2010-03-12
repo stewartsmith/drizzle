@@ -19,24 +19,36 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/str.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
 
-Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg,
+namespace internal
+{
+extern char _dig_vec_upper[];
+}
+
+Field_str::Field_str(unsigned char *ptr_arg,
+                     uint32_t len_arg,
                      unsigned char *null_ptr_arg,
-                     unsigned char null_bit_arg, utype unireg_check_arg,
+                     unsigned char null_bit_arg,
                      const char *field_name_arg,
                      const CHARSET_INFO * const charset_arg)
-  :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-         unireg_check_arg, field_name_arg)
+  :Field(ptr_arg, len_arg,
+         null_ptr_arg,
+         null_bit_arg,
+         Field::NONE,
+         field_name_arg)
 {
   field_charset= charset_arg;
   if (charset_arg->state & MY_CS_BINSORT)
-    flags|=BINARY_FLAG;
+    flags|= BINARY_FLAG;
   field_derivation= DERIVATION_IMPLICIT;
 }
 
@@ -129,7 +141,7 @@ int Field_str::store(double nr)
 
   ASSERT_COLUMN_MARKED_FOR_WRITE;
 
-  length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
+  length= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {
     if (table->in_use->abort_on_warning)
@@ -138,28 +150,6 @@ int Field_str::store(double nr)
       set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   return store(buff, length, charset());
-}
-
-/* If one of the fields is binary and the other one isn't return 1 else 0 */
-
-bool Field_str::compare_str_field_flags(CreateField *new_field_ptr,
-                                        uint32_t flag_arg)
-{
-  return (((new_field_ptr->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
-          !(flag_arg & (BINCMP_FLAG | BINARY_FLAG))) ||
-         (!(new_field_ptr->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
-          (flag_arg & (BINCMP_FLAG | BINARY_FLAG))));
-}
-
-
-uint32_t Field_str::is_equal(CreateField *new_field_ptr)
-{
-  if (compare_str_field_flags(new_field_ptr, flags))
-    return 0;
-
-  return ((new_field_ptr->sql_type == real_type()) &&
-          new_field_ptr->charset == field_charset &&
-          new_field_ptr->length == max_display_length());
 }
 
 
@@ -200,8 +190,8 @@ bool check_string_copy_error(Field_str *field,
     {
       *t++= '\\';
       *t++= 'x';
-      *t++= _dig_vec_upper[((unsigned char) *pos) >> 4];
-      *t++= _dig_vec_upper[((unsigned char) *pos) & 15];
+      *t++= internal::_dig_vec_upper[((unsigned char) *pos) >> 4];
+      *t++= internal::_dig_vec_upper[((unsigned char) *pos) & 15];
     }
   }
   if (end_orig > end)
@@ -227,3 +217,4 @@ uint32_t Field_str::max_data_length() const
   return field_length + (field_length > 255 ? 2 : 1);
 }
 
+} /* namespace drizzled */

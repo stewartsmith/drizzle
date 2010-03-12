@@ -33,15 +33,14 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifndef __AZIO_H__
-#define __AZIO_H__
+#ifndef PLUGIN_ARCHIVE_AZIO_H
+#define PLUGIN_ARCHIVE_AZIO_H
 
 /* We currently allow this on all platforms */
 #define AZIO_AIO
 
-#include <drizzled/global.h>
 #include <drizzled/common.h>
-#include <mysys/my_sys.h>
+#include "drizzled/internal/my_sys.h"
 
 #include <zlib.h>
 
@@ -243,7 +242,7 @@ typedef struct azio_stream {
   z_stream stream;
   int      z_err;   /* error code for last stream operation */
   int      z_eof;   /* set if end of input file */
-  File     file;   /* .gz file */
+  int     file;   /* .gz file */
   Byte     *inbuf;  /* input buffer */
   Byte     buffer1[AZ_BUFSIZE_READ];  /* input buffer */
   Byte     buffer2[AZ_BUFSIZE_READ];  /* input buffer */
@@ -298,7 +297,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method);
    can be checked to distinguish the two cases (if errno is zero, the
    zlib error is Z_MEM_ERROR).  */
 
-int azdopen(azio_stream *s,File fd, int Flags);
+int azdopen(azio_stream *s,int fd, int Flags);
 /*
      azdopen() associates a azio_stream with the file descriptor fd.  File
    descriptors are obtained from calls like open, dup, creat, pipe or
@@ -310,17 +309,6 @@ int azdopen(azio_stream *s,File fd, int Flags);
      azdopen returns NULL if there was insufficient memory to allocate
    the (de)compression state.
 */
-
-
-unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error);
-/*
-   This function is legacy, do not use.
-
-     Reads the given number of uncompressed bytes from the compressed file.
-   If the input file was not in gzip format, gzread copies the given number
-   of bytes into the buffer.
-     gzread returns the number of uncompressed bytes actually read (0 for
-   end of file, -1 for error). */
 
 extern int azflush(azio_stream *file, int flush);
 /*
@@ -379,4 +367,4 @@ extern int azread_comment (azio_stream *s, char *blob);
 }
 #endif
 
-#endif /* AZIO_H */
+#endif /* PLUGIN_ARCHIVE_AZIO_H */

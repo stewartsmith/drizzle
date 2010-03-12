@@ -68,6 +68,7 @@
 
 #include "drizzled/calendar.h"
 
+#include <cassert>
 #include <ostream>
 
 /* Outside forward declarations */
@@ -471,7 +472,7 @@ class Time: public Temporal
 public:
   Time() :Temporal() {}
   /* Maximum number of seconds in 23:59:59 (24 * 60 * 60) */
-  const static uint32_t MAX_CUMULATIVE_SECONDS= 86400L;
+  static const uint32_t MAX_CUMULATIVE_SECONDS= 86400L;
 
   /**
    * Comparison operator overloads to compare a Time against

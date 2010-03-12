@@ -1,0 +1,2 @@
+#--error 1030
+DROP TABLE t1;

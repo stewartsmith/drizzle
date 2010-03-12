@@ -1,8 +1,8 @@
-/*
- * - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  * Copyright (C) 2006 MySQL AB
+ * Copyright (C) 2009 Sun Microsystems
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,20 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/gettext.h>
-#include <drizzled/error.h>
-#include <drizzled/plugin/scheduler.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/session.h>
-#include "session_scheduler.h"
-#include <string>
-#include <queue>
-#include <set>
-#include <event.h>
+#include "config.h"
+#include <fcntl.h>
+#include <plugin/pool_of_threads/pool_of_threads.h>
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_pthread.h"
 
 using namespace std;
 using namespace drizzled;
+
+/* Global's (TBR) */
+static PoolOfThreadsScheduler *scheduler= NULL;
 
 /**
  * Set this to true to trigger killing of all threads in the pool
@@ -44,37 +41,17 @@ static int deinit(drizzled::plugin::Registry &registry);
 static struct event session_add_event;
 static struct event session_kill_event;
 
-static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-static queue<Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
-
-static pthread_mutex_t LOCK_session_kill;    /* protects sessions_to_be_killed */
-static queue<Session *> sessions_to_be_killed; /* queue of sessions to be killed */
 
 static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
 
-/**
- * LOCK_event_loop protects the non-thread safe libevent calls (event_add
- * and event_del) and sessions_need_processing and sessions_waiting_for_io.
- */
-static pthread_mutex_t LOCK_event_loop;
-static queue<Session *> sessions_need_processing; /* queue of sessions that needs some processing */
-
-/** 
- * Collection of sessions with added events 
- *  
- * This should really be a collection of unordered Sessions. No one is more
- * promising to encounter an io event earlier than another; so no order
- * indeed! We will change this to unordered_set/hash_set when c++0x comes.
- */
-static set<Session *> sessions_waiting_for_io;
 
 static bool libevent_needs_immediate_processing(Session *session);
 static void libevent_connection_close(Session *session);
 void libevent_session_add(Session* session);
 bool libevent_should_close_connection(Session* session);
 extern "C" {
-  pthread_handler_t libevent_thread_proc(void *arg);
+  void *libevent_thread_proc(void *arg);
   void libevent_io_callback(int Fd, short Operation, void *ctx);
   void libevent_add_session_callback(int Fd, short Operation, void *ctx);
   void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
@@ -103,10 +80,10 @@ static bool init_pipe(int pipe_fds[])
 
 
 /**
- * @brief 
- *  This is called when data is ready on the socket.  
+ * @brief
+ *  This is called when data is ready on the socket.
  *
- * @details 
+ * @details
  *  This is only called by the thread that owns LOCK_event_loop.
  *
  *  We add the session that got the data to sessions_need_processing, and
@@ -116,25 +93,37 @@ static bool init_pipe(int pipe_fds[])
  */
 void libevent_io_callback(int, short, void *ctx)
 {
-  safe_mutex_assert_owner(&LOCK_event_loop);
-  Session *session= (Session*)ctx;
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-  assert(scheduler);
-  sessions_waiting_for_io.erase(scheduler->session);
-  sessions_need_processing.push(scheduler->session);
+  Session *session= reinterpret_cast<Session*>(ctx);
+  session_scheduler *sched= static_cast<session_scheduler *>(session->scheduler_arg);
+  assert(sched);
+  PoolOfThreadsScheduler *pot_scheduler= static_cast<PoolOfThreadsScheduler *>(session->scheduler);
+  pot_scheduler->doIO(sched);
 }
 
+void PoolOfThreadsScheduler::doIO(session_scheduler *sched)
+{
+  safe_mutex_assert_owner(&LOCK_event_loop);
+  sessions_waiting_for_io.erase(sched->session);
+  sessions_need_processing.push(sched->session);
+}
 /**
- * @brief 
+ * @brief
  *  This is called when we have a thread we want to be killed.
  *
  * @details
  *  This is only called by the thread that owns LOCK_event_loop.
  */
-void libevent_kill_session_callback(int Fd, short, void*)
+void libevent_kill_session_callback(int Fd, short, void *ctx)
+{
+  PoolOfThreadsScheduler *pot_scheduler=
+    reinterpret_cast<PoolOfThreadsScheduler *>(ctx);
+
+  pot_scheduler->killSession(Fd);
+}
+
+void PoolOfThreadsScheduler::killSession(int Fd)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
-
   /*
    For pending events clearing
   */
@@ -144,18 +133,20 @@ void libevent_kill_session_callback(int Fd, short, void*)
   pthread_mutex_lock(&LOCK_session_kill);
   while (! sessions_to_be_killed.empty())
   {
+
     /*
      Fetch a session from the queue
     */
     Session* session= sessions_to_be_killed.front();
     pthread_mutex_unlock(&LOCK_session_kill);
 
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-    assert(scheduler);
+    session_scheduler *sched= static_cast<session_scheduler *>(session->scheduler_arg);
+    assert(sched);
+
     /*
      Delete from libevent and add to the processing queue.
     */
-    event_del(&scheduler->io_event);
+    event_del(&sched->io_event);
     /*
      Remove from the sessions_waiting_for_io set
     */
@@ -164,7 +155,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
      Push into the sessions_need_processing; the kill action will be
      performed out of the event loop
     */
-    sessions_need_processing.push(scheduler->session);
+    sessions_need_processing.push(sched->session);
 
     pthread_mutex_lock(&LOCK_session_kill);
     /*
@@ -192,13 +183,19 @@ void libevent_kill_session_callback(int Fd, short, void*)
  *  from the libevent event_loop() call whenever the session_add_pipe[1]
  *  pipe has a byte written to it.
  *
- * @details     
+ * @details
  *  This is only called by the thread that owns LOCK_event_loop.
  */
-void libevent_add_session_callback(int Fd, short, void *)
+void libevent_add_session_callback(int Fd, short, void *ctx)
+{
+  PoolOfThreadsScheduler *pot_scheduler=
+    reinterpret_cast<PoolOfThreadsScheduler *>(ctx);
+  pot_scheduler->addSession(Fd);
+}
+
+void PoolOfThreadsScheduler::addSession(int Fd)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
-
   /*
    For pending events clearing
   */
@@ -212,30 +209,31 @@ void libevent_add_session_callback(int Fd, short, void *)
      Pop the first session off the queue 
     */
     Session* session= sessions_need_adding.front();
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-    assert(scheduler);
-
     pthread_mutex_unlock(&LOCK_session_add);
 
-    if (!scheduler->logged_in || libevent_should_close_connection(session))
+    session_scheduler *sched= static_cast<session_scheduler *>(session->scheduler_arg);
+    assert(sched);
+
+
+    if (!sched->logged_in || libevent_should_close_connection(session))
     {
       /*
        Add session to sessions_need_processing queue. If it needs closing
        we'll close it outside of event_loop().
       */
-      sessions_need_processing.push(scheduler->session);
+      sessions_need_processing.push(sched->session);
     }
     else
     {
       /* Add to libevent */
-      if (event_add(&scheduler->io_event, NULL))
+      if (event_add(&sched->io_event, NULL))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("event_add error in libevent_add_session_callback\n"));
         libevent_connection_close(session);
       }
       else
       {
-        sessions_waiting_for_io.insert(scheduler->session);
+        sessions_waiting_for_io.insert(sched->session);
       }
     }
 
@@ -258,238 +256,26 @@ void libevent_add_session_callback(int Fd, short, void *)
   pthread_mutex_unlock(&LOCK_session_add);
 }
 
-
-/**
- * @brief 
- *  Derived class for pool of threads scheduler.
- */
-class PoolOfThreadsScheduler: public plugin::Scheduler
-{
-private:
-  pthread_attr_t attr;
-
-public:
-  PoolOfThreadsScheduler(): Scheduler()
-  {
-    struct sched_param tmp_sched_param;
-
-    memset(&tmp_sched_param, 0, sizeof(struct sched_param));
-    /* Setup attribute parameter for session threads. */
-    (void) pthread_attr_init(&attr);
-    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
-    tmp_sched_param.sched_priority= WAIT_PRIOR;
-    (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
-  }
-
-  ~PoolOfThreadsScheduler()
-  {
-    (void) pthread_mutex_lock(&LOCK_thread_count);
-  
-    kill_pool_threads= true;
-    while (created_threads)
-    {
-      /* 
-       Wake up the event loop 
-      */
-      char c= 0;
-      size_t written= write(session_add_pipe[1], &c, sizeof(c));
-      assert(written == sizeof(c));
-  
-      pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
-    }
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-  
-    event_del(&session_add_event);
-    close(session_add_pipe[0]);
-    close(session_add_pipe[1]);
-    event_del(&session_kill_event);
-    close(session_kill_pipe[0]);
-    close(session_kill_pipe[1]);
-  
-    (void) pthread_mutex_destroy(&LOCK_event_loop);
-    (void) pthread_mutex_destroy(&LOCK_session_add);
-    (void) pthread_mutex_destroy(&LOCK_session_kill);
-    (void) pthread_attr_destroy(&attr);
-  }
-
-  /**
-   * @brief 
-   *  Notify the thread pool about a new connection
-   *
-   * @param[in] the newly connected session 
-   *
-   * @return 
-   *  True if there is an error.
-   */
-  virtual bool addSession(Session *session)
-  {
-    assert(session->scheduler_arg == NULL);
-    session_scheduler *scheduler= new session_scheduler(session);
-  
-    if (scheduler == NULL)
-      return true;
-  
-    session->scheduler_arg= (void *)scheduler;
-  
-    libevent_session_add(session);
-  
-    return false;
-  }
-  
-  
-  /**
-   * @brief
-   *  Signal a waiting connection it's time to die.
-   *
-   * @details 
-   *  This function will signal libevent the Session should be killed.
-   *
-   * @param[in]  session The connection to kill
-   */
-  virtual void killSession(Session *session)
-  {
-    char c= 0;
-    
-    pthread_mutex_lock(&LOCK_session_kill);
-
-    if (sessions_to_be_killed.empty())
-    {
-      /* 
-       Notify libevent with the killing event if this's the first killing
-       notification of the batch
-      */
-      size_t written= write(session_kill_pipe[1], &c, sizeof(c));
-      assert(written == sizeof(c));
-    }
-
-    /*
-     Push into the sessions_to_be_killed queue
-    */
-    sessions_to_be_killed.push(session);
-    pthread_mutex_unlock(&LOCK_session_kill);
-  }
-
-  /**
-   * @brief
-   *  Create all threads for the thread pool
-   *
-   * @details
-   *  After threads are created we wait until all threads has signaled that
-   *  they have started before we return
-   *
-   * @retval 0 Ok
-   * @retval 1 We got an error creating the thread pool. In this case we will abort all created threads.
-   */
-  bool libevent_init(void)
-  {
-    uint32_t x;
-  
-    event_init();
-  
-    pthread_mutex_init(&LOCK_event_loop, NULL);
-    pthread_mutex_init(&LOCK_session_add, NULL);
-    pthread_mutex_init(&LOCK_session_kill, NULL);
-  
-    /* Set up the pipe used to add new sessions to the event pool */
-    if (init_pipe(session_add_pipe))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("init_pipe(session_add_pipe) error in libevent_init\n"));
-      return true;
-    }
-    /* Set up the pipe used to kill sessions in the event queue */
-    if (init_pipe(session_kill_pipe))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("init_pipe(session_kill_pipe) error in libevent_init\n"));
-      close(session_add_pipe[0]);
-      close(session_add_pipe[1]);
-     return true;
-    }
-    event_set(&session_add_event, session_add_pipe[0], EV_READ|EV_PERSIST,
-              libevent_add_session_callback, NULL);
-    event_set(&session_kill_event, session_kill_pipe[0], EV_READ|EV_PERSIST,
-              libevent_kill_session_callback, NULL);
-  
-   if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
-   {
-     errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
-     return true;
-  
-   }
-    /* Set up the thread pool */
-    pthread_mutex_lock(&LOCK_thread_count);
-  
-    for (x= 0; x < size; x++)
-    {
-      pthread_t thread;
-      int error;
-      if ((error= pthread_create(&thread, &attr, libevent_thread_proc, 0)))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
-                        error);
-        pthread_mutex_unlock(&LOCK_thread_count);
-        return true;
-      }
-    }
-  
-    /* Wait until all threads are created */
-    while (created_threads != size)
-      pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    pthread_mutex_unlock(&LOCK_thread_count);
-  
-    return false;
-  }
-}; 
-
-
-/**
- * @brief 
- *  Factory class used to produce a Pool_of_threads_scheduler
- */
-class PoolOfThreadsFactory : public plugin::SchedulerFactory
-{
-public:
-  PoolOfThreadsFactory() : SchedulerFactory("pool_of_threads") {}
-  ~PoolOfThreadsFactory() { if (scheduler != NULL) delete scheduler; }
-  plugin::Scheduler *operator() ()
-  {
-    if (scheduler == NULL)
-    {
-      PoolOfThreadsScheduler *pot= new PoolOfThreadsScheduler();
-      if (pot->libevent_init())
-      {
-        delete pot;
-        return NULL;
-      }
-      scheduler= pot;
-    }
-    return scheduler;
-  }
-};
-
 /**
  * @brief 
  *  Close and delete a connection.
  */
 static void libevent_connection_close(Session *session)
 {
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-  assert(scheduler);
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+  assert(sched);
   session->killed= Session::KILL_CONNECTION;    /* Avoid error messages */
 
-  if (session->protocol->fileDescriptor() >= 0) /* not already closed */
+  if (session->client->getFileDescriptor() >= 0) /* not already closed */
   {
     session->disconnect(0, true);
   }
-  scheduler->thread_detach();
+  sched->thread_detach();
   
-  delete scheduler;
+  delete sched;
   session->scheduler_arg= NULL;
 
-  unlink_session(session);   /* locks LOCK_thread_count and deletes session */
+  Session::unlink(session);   /* locks LOCK_thread_count and deletes session */
 
   return;
 }
@@ -504,7 +290,7 @@ static void libevent_connection_close(Session *session)
  */
 bool libevent_should_close_connection(Session* session)
 {
-  return session->protocol->haveError() ||
+  return session->client->haveError() ||
          session->killed == Session::KILL_CONNECTION;
 }
 
@@ -515,15 +301,22 @@ bool libevent_should_close_connection(Session* session)
  *  These procs only return/terminate on shutdown (kill_pool_threads ==
  *  true).
  */
-pthread_handler_t libevent_thread_proc(void *)
+void *libevent_thread_proc(void *ctx)
 {
-  if (my_thread_init())
+  if (internal::my_thread_init())
   {
-    my_thread_global_end();
-    errmsg_printf(ERRMSG_LVL_ERROR, _("libevent_thread_proc: my_thread_init() failed\n"));
+    internal::my_thread_global_end();
+    errmsg_printf(ERRMSG_LVL_ERROR, _("libevent_thread_proc: internal::my_thread_init() failed\n"));
     exit(1);
   }
 
+  PoolOfThreadsScheduler *pot_scheduler=
+    reinterpret_cast<PoolOfThreadsScheduler *>(ctx);
+  return pot_scheduler->mainLoop();
+}
+
+void *PoolOfThreadsScheduler::mainLoop()
+{
   /*
    Signal libevent_init() when all threads has been created and are ready
    to receive events.
@@ -554,7 +347,7 @@ pthread_handler_t libevent_thread_proc(void *)
     /* pop the first session off the queue */
     session= sessions_need_processing.front();
     sessions_need_processing.pop();
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
+    session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
 
     (void) pthread_mutex_unlock(&LOCK_event_loop);
 
@@ -563,14 +356,14 @@ pthread_handler_t libevent_thread_proc(void *)
     /* set up the session<->thread links. */
     session->thread_stack= (char*) &session;
 
-    if (scheduler->thread_attach())
+    if (sched->thread_attach())
     {
       libevent_connection_close(session);
       continue;
     }
 
     /* is the connection logged in yet? */
-    if (!scheduler->logged_in)
+    if (!sched->logged_in)
     {
       if (session->authenticate())
       {
@@ -581,7 +374,7 @@ pthread_handler_t libevent_thread_proc(void *)
       else
       {
         /* login successful */
-        scheduler->logged_in= true;
+        sched->logged_in= true;
         session->prepareForQueries();
         if (!libevent_needs_immediate_processing(session))
           continue; /* New connection is now waiting for data in libevent*/
@@ -607,7 +400,7 @@ thread_exit:
   created_threads--;
   pthread_cond_broadcast(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-  my_thread_end();
+  internal::my_thread_end();
   pthread_exit(0);
 
   return NULL;                               /* purify: deadcode */
@@ -625,7 +418,7 @@ thread_exit:
  */
 static bool libevent_needs_immediate_processing(Session *session)
 {
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
 
   if (libevent_should_close_connection(session))
   {
@@ -640,10 +433,10 @@ static bool libevent_needs_immediate_processing(Session *session)
    indeed the root of the reason of low performace. Need to be changed
    when nonblocking Protocol is finished.
   */
-  if (session->protocol->haveMoreData())
+  if (session->client->haveMoreData())
     return true;
 
-  scheduler->thread_detach();
+  sched->thread_detach();
   libevent_session_add(session);
 
   return false;
@@ -662,10 +455,16 @@ static bool libevent_needs_immediate_processing(Session *session)
  */
 void libevent_session_add(Session* session)
 {
-  char c= 0;
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-  assert(scheduler);
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+  assert(sched);
+  PoolOfThreadsScheduler *pot_scheduler=
+    static_cast<PoolOfThreadsScheduler *>(session->scheduler);
+  pot_scheduler->sessionAddToQueue(sched);
+}
 
+void PoolOfThreadsScheduler::sessionAddToQueue(session_scheduler *sched)
+{
+  char c= 0;
   pthread_mutex_lock(&LOCK_session_add);
   if (sessions_need_adding.empty())
   {
@@ -674,12 +473,162 @@ void libevent_session_add(Session* session)
     assert(written == sizeof(c));
   }
   /* queue for libevent */
-  sessions_need_adding.push(scheduler->session);
+  sessions_need_adding.push(sched->session);
   pthread_mutex_unlock(&LOCK_session_add);
 }
 
 
-static PoolOfThreadsFactory *factory= NULL;
+PoolOfThreadsScheduler::PoolOfThreadsScheduler(const char *name_arg)
+  : Scheduler(name_arg), sessions_need_adding(), sessions_to_be_killed(),
+    sessions_need_processing(), sessions_waiting_for_io()
+{
+  struct sched_param tmp_sched_param;
+
+  memset(&tmp_sched_param, 0, sizeof(struct sched_param));
+  /* Setup attribute parameter for session threads. */
+  (void) pthread_attr_init(&attr);
+  (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+
+  tmp_sched_param.sched_priority= WAIT_PRIOR;
+  (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
+
+  pthread_mutex_init(&LOCK_session_add, NULL);
+  pthread_mutex_init(&LOCK_session_kill, NULL);
+  pthread_mutex_init(&LOCK_event_loop, NULL);
+
+}
+
+
+PoolOfThreadsScheduler::~PoolOfThreadsScheduler()
+{
+  (void) pthread_mutex_lock(&LOCK_thread_count);
+
+  kill_pool_threads= true;
+  while (created_threads)
+  {
+    /*
+     * Wake up the event loop
+     */
+    char c= 0;
+    size_t written= write(session_add_pipe[1], &c, sizeof(c));
+    assert(written == sizeof(c));
+
+    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+  }
+  (void) pthread_mutex_unlock(&LOCK_thread_count);
+
+  event_del(&session_add_event);
+  close(session_add_pipe[0]);
+  close(session_add_pipe[1]);
+  event_del(&session_kill_event);
+  close(session_kill_pipe[0]);
+  close(session_kill_pipe[1]);
+
+  (void) pthread_mutex_destroy(&LOCK_event_loop);
+  (void) pthread_mutex_destroy(&LOCK_session_add);
+  (void) pthread_mutex_destroy(&LOCK_session_kill);
+  (void) pthread_attr_destroy(&attr);
+}
+
+
+bool PoolOfThreadsScheduler::addSession(Session *session)
+{
+  assert(session->scheduler_arg == NULL);
+  session_scheduler *sched= new session_scheduler(session);
+
+  if (sched == NULL)
+    return true;
+
+  session->scheduler_arg= (void *)sched;
+
+  libevent_session_add(session);
+
+  return false;
+}
+
+
+void PoolOfThreadsScheduler::killSession(Session *session)
+{
+  char c= 0;
+
+  pthread_mutex_lock(&LOCK_session_kill);
+
+  if (sessions_to_be_killed.empty())
+  {
+    /* 
+      Notify libevent with the killing event if this's the first killing
+      notification of the batch
+    */
+    size_t written= write(session_kill_pipe[1], &c, sizeof(c));
+    assert(written == sizeof(c));
+  }
+
+  /*
+    Push into the sessions_to_be_killed queue
+  */
+  sessions_to_be_killed.push(session);
+  pthread_mutex_unlock(&LOCK_session_kill);
+}
+
+
+bool PoolOfThreadsScheduler::libevent_init(void)
+{
+  uint32_t x;
+
+  event_init();
+
+
+  /* Set up the pipe used to add new sessions to the event pool */
+  if (init_pipe(session_add_pipe))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("init_pipe(session_add_pipe) error in libevent_init\n"));
+    return true;
+  }
+  /* Set up the pipe used to kill sessions in the event queue */
+  if (init_pipe(session_kill_pipe))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("init_pipe(session_kill_pipe) error in libevent_init\n"));
+    close(session_add_pipe[0]);
+    close(session_add_pipe[1]);
+    return true;
+  }
+  event_set(&session_add_event, session_add_pipe[0], EV_READ|EV_PERSIST,
+            libevent_add_session_callback, this);
+  event_set(&session_kill_event, session_kill_pipe[0], EV_READ|EV_PERSIST,
+            libevent_kill_session_callback, this);
+
+  if (event_add(&session_add_event, NULL) || event_add(&session_kill_event, NULL))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("session_add_event event_add error in libevent_init\n"));
+    return true;
+
+  }
+  /* Set up the thread pool */
+  pthread_mutex_lock(&LOCK_thread_count);
+
+  for (x= 0; x < size; x++)
+  {
+    pthread_t thread;
+    int error;
+    if ((error= pthread_create(&thread, &attr, libevent_thread_proc, this)))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
+                    error);
+      pthread_mutex_unlock(&LOCK_thread_count);
+      return true;
+    }
+  }
+
+  /* Wait until all threads are created */
+  while (created_threads != size)
+    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
+  pthread_mutex_unlock(&LOCK_thread_count);
+
+  return false;
+}
 
 
 /**
@@ -692,8 +641,8 @@ static int init(drizzled::plugin::Registry &registry)
 {
   assert(size != 0);
 
-  factory= new PoolOfThreadsFactory();
-  registry.add(factory);
+  scheduler= new PoolOfThreadsScheduler("pool_of_threads");
+  registry.add(scheduler);
 
   return 0;
 }
@@ -704,11 +653,9 @@ static int init(drizzled::plugin::Registry &registry)
  */
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  if (factory)
-  {
-    registry.remove(factory);
-    delete factory;
-  }
+  registry.remove(scheduler);
+  delete scheduler;
+
   return 0;
 }
 
@@ -721,13 +668,14 @@ static DRIZZLE_SYSVAR_UINT(size, size,
                            N_("Size of Pool."),
                            NULL, NULL, 8, 1, 1024, 0);
 
-static struct st_mysql_sys_var* system_variables[]= {
+static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(size),
   NULL,
 };
 
-drizzle_declare_plugin(pool_of_threads)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pool_of_threads",
   "0.1",
   "Brian Aker",
@@ -735,8 +683,7 @@ drizzle_declare_plugin(pool_of_threads)
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
-  system_variables,   /* system variables */
+  sys_variables,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

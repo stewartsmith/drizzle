@@ -15,11 +15,12 @@
 
 /* Write a row to a MyISAM table */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
-#include <mystrings/m_string.h>
+#include "drizzled/internal/m_string.h"
 #include <drizzled/util/test.h>
 
+using namespace drizzled;
 
 #define MAX_POINTER_LENGTH 8
 
@@ -27,12 +28,12 @@
 
 static int w_search(MI_INFO *info,MI_KEYDEF *keyinfo,
 		    uint32_t comp_flag, unsigned char *key,
-		    uint32_t key_length, my_off_t pos, unsigned char *father_buff,
-		    unsigned char *father_keypos, my_off_t father_page,
+		    uint32_t key_length, internal::my_off_t pos, unsigned char *father_buff,
+		    unsigned char *father_keypos, internal::my_off_t father_page,
 		    bool insert_last);
 static int _mi_balance_page(MI_INFO *info,MI_KEYDEF *keyinfo,unsigned char *key,
 			    unsigned char *curr_buff,unsigned char *father_buff,
-			    unsigned char *father_keypos,my_off_t father_page);
+			    unsigned char *father_keypos,internal::my_off_t father_page);
 static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
 				unsigned char *key, uint32_t *return_key_length,
 				unsigned char **after_key);
@@ -48,16 +49,16 @@ int mi_write(MI_INFO *info, unsigned char *record)
   MYISAM_SHARE *share=info->s;
   uint32_t i;
   int save_errno;
-  my_off_t filepos;
+  internal::my_off_t filepos;
   unsigned char *buff;
   bool lock_tree= share->concurrent_insert;
 
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    return(my_errno=EACCES);
+    return(errno=EACCES);
   }
   if (_mi_readinfo(info,F_WRLCK,1))
-    return(my_errno);
+    return(errno);
   filepos= ((share->state.dellink != HA_OFFSET_ERROR &&
              !info->append_insert_at_end) ?
 	    share->state.dellink :
@@ -67,12 +68,12 @@ int mi_write(MI_INFO *info, unsigned char *record)
       share->base.records == (ha_rows) 1 &&
       info->state->records == (ha_rows) 1)
   {						/* System file */
-    my_errno=HA_ERR_RECORD_FILE_FULL;
+    errno=HA_ERR_RECORD_FILE_FULL;
     goto err2;
   }
   if (info->state->key_file_length >= share->base.margin_key_file_length)
   {
-    my_errno=HA_ERR_INDEX_FILE_FULL;
+    errno=HA_ERR_INDEX_FILE_FULL;
     goto err2;
   }
   if (_mi_mark_file_changed(info))
@@ -150,9 +151,9 @@ int mi_write(MI_INFO *info, unsigned char *record)
   return(0);
 
 err:
-  save_errno=my_errno;
-  if (my_errno == HA_ERR_FOUND_DUPP_KEY || my_errno == HA_ERR_RECORD_FILE_FULL ||
-      my_errno == HA_ERR_NULL_IN_SPATIAL || my_errno == HA_ERR_OUT_OF_MEM)
+  save_errno=errno;
+  if (errno == HA_ERR_FOUND_DUPP_KEY || errno == HA_ERR_RECORD_FILE_FULL ||
+      errno == HA_ERR_NULL_IN_SPATIAL || errno == HA_ERR_OUT_OF_MEM)
   {
     if (info->bulk_insert)
     {
@@ -190,11 +191,11 @@ err:
     mi_mark_crashed(info);
   }
   info->update= (HA_STATE_CHANGED | HA_STATE_WRITTEN | HA_STATE_ROW_CHANGED);
-  my_errno=save_errno;
+  errno=save_errno;
 err2:
-  save_errno=my_errno;
+  save_errno=errno;
   _mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE);
-  return(my_errno=save_errno);
+  return(errno=save_errno);
 } /* mi_write */
 
 
@@ -223,7 +224,7 @@ int _mi_ck_write_btree(register MI_INFO *info, uint32_t keynr, unsigned char *ke
   uint32_t error;
   uint32_t comp_flag;
   MI_KEYDEF *keyinfo=info->s->keyinfo+keynr;
-  my_off_t  *root=&info->s->state.key_root[keynr];
+  internal::my_off_t  *root=&info->s->state.key_root[keynr];
 
   if (keyinfo->flag & HA_SORT_ALLOWS_SAME)
     comp_flag=SEARCH_BIGGER;			/* Put after same key */
@@ -242,14 +243,14 @@ int _mi_ck_write_btree(register MI_INFO *info, uint32_t keynr, unsigned char *ke
 } /* _mi_ck_write_btree */
 
 int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
-    unsigned char *key, uint32_t key_length, my_off_t *root, uint32_t comp_flag)
+    unsigned char *key, uint32_t key_length, internal::my_off_t *root, uint32_t comp_flag)
 {
   int error;
   /* key_length parameter is used only if comp_flag is SEARCH_FIND */
   if (*root == HA_OFFSET_ERROR ||
       (error=w_search(info, keyinfo, comp_flag, key, key_length,
 		      *root, (unsigned char *) 0, (unsigned char*) 0,
-		      (my_off_t) 0, 1)) > 0)
+		      (internal::my_off_t) 0, 1)) > 0)
     error=_mi_enlarge_root(info,keyinfo,key,root);
   return(error);
 } /* _mi_ck_real_write_btree */
@@ -258,7 +259,7 @@ int _mi_ck_real_write_btree(MI_INFO *info, MI_KEYDEF *keyinfo,
 	/* Make a new root with key as only pointer */
 
 int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *key,
-                     my_off_t *root)
+                     internal::my_off_t *root)
 {
   uint32_t t_length,nod_flag;
   MI_KEY_PARAM s_temp;
@@ -286,16 +287,16 @@ int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, unsigned char *key,
 	*/
 
 static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
-		    uint32_t comp_flag, unsigned char *key, uint32_t key_length, my_off_t page,
+		    uint32_t comp_flag, unsigned char *key, uint32_t key_length, internal::my_off_t page,
 		    unsigned char *father_buff, unsigned char *father_keypos,
-		    my_off_t father_page, bool insert_last)
+		    internal::my_off_t father_page, bool insert_last)
 {
   int error,flag;
   uint32_t nod_flag, search_key_length;
   unsigned char *temp_buff,*keypos;
   unsigned char keybuff[MI_MAX_KEY_BUFF];
   bool was_last_key;
-  my_off_t next_page, dupp_key_pos;
+  internal::my_off_t next_page, dupp_key_pos;
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
   if (!(temp_buff= (unsigned char*) malloc(keyinfo->block_length+
@@ -320,7 +321,7 @@ static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     {
       info->dupp_key_pos= dupp_key_pos;
       free(temp_buff);
-      my_errno=HA_ERR_FOUND_DUPP_KEY;
+      errno=HA_ERR_FOUND_DUPP_KEY;
       return(-1);
     }
   }
@@ -373,7 +374,7 @@ err:
 
 int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 	       unsigned char *key, unsigned char *anc_buff, unsigned char *key_pos, unsigned char *key_buff,
-               unsigned char *father_buff, unsigned char *father_key_pos, my_off_t father_page,
+               unsigned char *father_buff, unsigned char *father_key_pos, internal::my_off_t father_page,
 	       bool insert_last)
 {
   uint32_t a_length,nod_flag;
@@ -395,17 +396,17 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (t_length >= keyinfo->maxlength*2+MAX_POINTER_LENGTH)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(-1);
     }
-    bmove_upp((unsigned char*) endpos+t_length,(unsigned char*) endpos,(uint) (endpos-key_pos));
+    internal::bmove_upp((unsigned char*) endpos+t_length,(unsigned char*) endpos,(uint) (endpos-key_pos));
   }
   else
   {
     if (-t_length >= keyinfo->maxlength*2+MAX_POINTER_LENGTH)
     {
       mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(-1);
     }
     memmove(key_pos, key_pos - t_length, endpos - key_pos + t_length);
@@ -436,7 +437,7 @@ int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 {
   uint32_t length,a_length,key_ref_length,t_length,nod_flag,key_length;
   unsigned char *key_pos,*pos, *after_key= NULL;
-  my_off_t new_pos;
+  internal::my_off_t new_pos;
   MI_KEY_PARAM s_temp;
 
   if (info->s->keyinfo+info->lastinx == keyinfo)
@@ -575,7 +576,7 @@ static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
     if (!(length=(*keyinfo->get_key)(keyinfo,0,&page,key_buff)))
     {
       mi_print_error(keyinfo->share, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       return(0);
     }
   }
@@ -590,14 +591,14 @@ static unsigned char *_mi_find_last_pos(MI_KEYDEF *keyinfo, unsigned char *page,
 
 static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 			    unsigned char *key, unsigned char *curr_buff, unsigned char *father_buff,
-			    unsigned char *father_key_pos, my_off_t father_page)
+			    unsigned char *father_key_pos, internal::my_off_t father_page)
 {
   bool right;
   uint32_t k_length,father_length,father_keylength,nod_flag,curr_keylength,
        right_length,left_length,new_right_length,new_left_length,extra_length,
        length,keys;
   unsigned char *pos,*buff,*extra_buff;
-  my_off_t next_page,new_pos;
+  internal::my_off_t next_page,new_pos;
   unsigned char tmp_part_key[MI_MAX_KEY_BUFF];
 
   k_length=keyinfo->keylength;
@@ -655,7 +656,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
     else
     {						/* Move keys -> buff */
 
-      bmove_upp((unsigned char*) buff+new_right_length,(unsigned char*) buff+right_length,
+      internal::bmove_upp((unsigned char*) buff+new_right_length,(unsigned char*) buff+right_length,
 		right_length-2);
       length=new_right_length-right_length-k_length;
       memcpy(buff+2+length,father_key_pos, k_length);
@@ -688,7 +689,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
   /* Save new parting key */
   memcpy(tmp_part_key, pos-k_length,k_length);
   /* Make place for new keys */
-  bmove_upp((unsigned char*) buff+new_right_length,(unsigned char*) pos-k_length,
+  internal::bmove_upp((unsigned char*) buff+new_right_length,(unsigned char*) pos-k_length,
 	    right_length-extra_length-k_length-2);
   /* Copy keys from left page */
   pos= curr_buff+new_left_length;
@@ -832,7 +833,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
       init_tree(&info->bulk_insert[i],
                 cache_size * key[i].maxlength,
                 cache_size * key[i].maxlength, 0,
-		(qsort_cmp2)keys_compare, 0,
+		(qsort_cmp2)keys_compare, false,
 		(tree_element_free) keys_free, (void *)params++);
     }
     else

@@ -20,8 +20,11 @@
 
 /* This struct includes all reserved words and functions */
 
-#ifndef _lex_symbol_h
-#define _lex_symbol_h
+#ifndef DRIZZLED_LEX_SYMBOL_H
+#define DRIZZLED_LEX_SYMBOL_H
+
+namespace drizzled
+{
 
 typedef struct st_sym_group {
   const char *name;
@@ -45,5 +48,6 @@ extern SYM_GROUP sym_group_common;
 extern SYM_GROUP sym_group_geom;
 extern SYM_GROUP sym_group_rtree;
 
+} /* namespace drizzled */
 
-#endif /* _lex_symbol_h */
+#endif /* DRIZZLED_LEX_SYMBOL_H */

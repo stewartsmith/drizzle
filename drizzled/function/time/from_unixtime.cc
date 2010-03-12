@@ -17,22 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/function/time/from_unixtime.h>
-#include <drizzled/session.h>
+#include "config.h"
 
+#include "drizzled/function/time/from_unixtime.h"
+#include "drizzled/session.h"
 #include "drizzled/temporal.h"
+#include "drizzled/time_functions.h"
 
 #include <sstream>
 #include <string>
+
+namespace drizzled
+{
 
 void Item_func_from_unixtime::fix_length_and_dec()
 {
   session= current_session;
   collation.set(&my_charset_bin);
   decimals= DATETIME_DEC;
-  max_length=drizzled::DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   maybe_null= 1;
 }
 
@@ -78,7 +81,7 @@ bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime, uint32_t)
   if ((null_value= (args[0]->null_value || tmp > TIMESTAMP_MAX_VALUE)))
     return 1;
 
-  drizzled::Timestamp temporal;
+  Timestamp temporal;
   if (! temporal.from_time_t((time_t) tmp))
   {
     null_value= true;
@@ -101,3 +104,5 @@ bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime, uint32_t)
 
   return 0;
 }
+
+} /* namespace drizzled */

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/slot/function.h>
+#include "config.h"
+#include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
@@ -47,21 +47,22 @@ static int hello_world_plugin_init(drizzled::plugin::Registry &registry)
 {
   hello_world_udf=
     new plugin::Create_function<Item_func_hello_world>("hello_world");
-  registry.function.add(hello_world_udf);
+  registry.add(hello_world_udf);
 
   return 0;
 }
 
 static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.function.remove(hello_world_udf);
+  registry.remove(hello_world_udf);
   delete hello_world_udf;
   return 0;
 }
 
 
-drizzle_declare_plugin(hello_world)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "hello_world",
   "1.0",
   "Mark Atwood",
@@ -69,8 +70,7 @@ drizzle_declare_plugin(hello_world)
   PLUGIN_LICENSE_GPL,
   hello_world_plugin_init, /* Plugin Init */
   hello_world_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

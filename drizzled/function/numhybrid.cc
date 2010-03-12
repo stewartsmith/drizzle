@@ -17,8 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/function/numhybrid.h>
+
+namespace drizzled
+{
 
 void Item_func_numhybrid::fix_num_length_and_dec()
 {}
@@ -46,7 +50,7 @@ String *Item_func_numhybrid::val_str(String *str)
   {
     int64_t nr= int_op();
     if (null_value)
-      return 0; /* purecov: inspected */
+      return 0;
     str->set_int(nr, unsigned_flag, &my_charset_bin);
     break;
   }
@@ -54,7 +58,7 @@ String *Item_func_numhybrid::val_str(String *str)
   {
     double nr= real_op();
     if (null_value)
-      return 0; /* purecov: inspected */
+      return 0;
     str->set_real(nr,decimals,&my_charset_bin);
     break;
   }
@@ -173,3 +177,5 @@ my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
   }
   return val;
 }
+
+} /* namespace drizzled */

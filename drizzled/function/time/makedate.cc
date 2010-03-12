@@ -17,9 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/function/time/makedate.h>
+#include "config.h"
+
+#include "drizzled/function/time/makedate.h"
+#include "drizzled/time_functions.h"
+
+namespace drizzled
+{
 
 /**
   MAKEDATE(a,b) is a date function that creates a date value
@@ -103,3 +107,4 @@ err:
   return 0;
 }
 
+} /* namespace drizzled */

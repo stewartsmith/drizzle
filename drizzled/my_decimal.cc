@@ -13,11 +13,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/current_session.h>
+#include "config.h"
 #include <time.h>
-#include <drizzled/error.h>
+#include "drizzled/current_session.h"
+#include "drizzled/error.h"
+#include "drizzled/field.h"
+#include "drizzled/internal/my_sys.h"
 
+namespace drizzled
+{
 
 /**
   report result of decimal operation.
@@ -235,3 +239,5 @@ void my_decimal_trim(uint32_t *precision, uint32_t *scale)
     return;
   }
 }
+
+} /* namespace drizzled */

@@ -15,12 +15,14 @@
 
 /* Calculate a checksum for a row */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
-ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
+using namespace drizzled;
+
+internal::ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
 {
   uint32_t i;
-  ha_checksum crc=0;
+  internal::ha_checksum crc=0;
   MI_COLUMNDEF *rec=info->s->rec;
 
   for (i=info->s->base.fields ; i-- ; buf+=(rec++)->length)
@@ -51,13 +53,13 @@ ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
       pos=buf;
       break;
     }
-    crc=my_checksum(crc, pos ? pos : (unsigned char*) "", length);
+    crc=internal::my_checksum(crc, pos ? pos : (unsigned char*) "", length);
   }
   return crc;
 }
 
 
-ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
+internal::ha_checksum mi_static_checksum(MI_INFO *info, const unsigned char *pos)
 {
-  return my_checksum(0, pos, info->s->base.reclength);
+  return internal::my_checksum(0, pos, info->s->base.reclength);
 }

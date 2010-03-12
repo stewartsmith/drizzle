@@ -23,57 +23,65 @@
  *
  * Defines the implementation of the default replicator.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/transaction_replicator.h
+ * @see drizzled/plugin/transaction_applier.h
  *
  * @details
  *
  * This is a very simple implementation.  All we do is pass along the 
  * event to the supplier.  This is meant as a skeleton replicator only.
- *
- * @todo
- *
- * Want a neat project?  Take this skeleton replicator and make a
- * simple filtered replicator which allows the user to filter out
- * events based on a schema or table name...
  */
 
-#include "default_replicator.h"
-
+#include "config.h"
+#include <drizzled/plugin/registry.h>
+#include <drizzled/plugin.h>
 #include <drizzled/gettext.h>
-#include <drizzled/message/replication.pb.h>
+#include <drizzled/plugin/transaction_applier.h>
+
+#include "default_replicator.h"
 
 #include <vector>
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive()
+bool DefaultReplicator::isEnabled() const
 {
   return sysvar_default_replicator_enable;
 }
 
-void DefaultReplicator::replicate(drizzled::plugin::Applier *in_applier, drizzled::message::Command *to_replicate)
+void DefaultReplicator::enable()
+{
+  sysvar_default_replicator_enable= true;
+}
+
+void DefaultReplicator::disable()
+{
+  sysvar_default_replicator_enable= false;
+}
+
+void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, message::Transaction &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
-   * along the supplied Command.  Yep, told you it was simple...
+   * along the supplied Transaction.  Yep, told you it was simple...
    */
   in_applier->apply(to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(plugin::Registry &registry)
 {
-  default_replicator= new DefaultReplicator();
+  default_replicator= new DefaultReplicator("default_replicator");
   registry.add(default_replicator);
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(plugin::Registry &registry)
 {
   if (default_replicator)
   {
@@ -92,13 +100,14 @@ static DRIZZLE_SYSVAR_BOOL(
   NULL, /* update func */
   false /* default */);
 
-static struct st_mysql_sys_var* default_replicator_system_variables[]= {
+static drizzle_sys_var* default_replicator_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   NULL
 };
 
-drizzle_declare_plugin(default_replicator)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "default_replicator",
   "0.1",
   "Jay Pipes",
@@ -106,8 +115,7 @@ drizzle_declare_plugin(default_replicator)
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
-  NULL, /* status variables */
   default_replicator_system_variables, /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -17,12 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/error.h>
 #include <drizzled/current_session.h>
+#include "drizzled/internal/m_string.h"
 
+namespace drizzled
+{
 
 String *Item_decimal_typecast::val_str(String *str)
 {
@@ -104,15 +106,16 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   args[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" as decimal("));
 
-  end=int10_to_str(precision, len_buf,10);
+  end=internal::int10_to_str(precision, len_buf,10);
   str->append(len_buf, (uint32_t) (end - len_buf));
 
   str->append(',');
 
-  end=int10_to_str(decimals, len_buf,10);
+  end=internal::int10_to_str(decimals, len_buf,10);
   str->append(len_buf, (uint32_t) (end - len_buf));
 
   str->append(')');
   str->append(')');
 }
 
+} /* namespace drizzled */

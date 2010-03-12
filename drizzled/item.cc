@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/show.h"
@@ -29,6 +29,8 @@
 #include "drizzled/function/str/conv_charset.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/util/convert.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/time_functions.h"
 
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
@@ -45,12 +47,16 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/internal/m_string.h"
 
 #include <math.h>
 #include <algorithm>
+#include <float.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 const String my_null_string("NULL", 4, default_charset_info);
 
@@ -107,7 +113,7 @@ String *Item::val_string_from_real(String *str)
 {
   double nr= val_real();
   if (null_value)
-    return NULL; /* purecov: inspected */
+    return NULL;
 
   str->set_real(nr, decimals, &my_charset_bin);
   return str;
@@ -315,6 +321,11 @@ Item::Item(Session *session, Item *item):
   session->free_list= this;
 }
 
+uint32_t Item::float_length(uint32_t decimals_par) const
+{
+  return decimals != NOT_FIXED_DEC ? (DBL_DIG+2+decimals_par) : DBL_DIG+8;
+}
+
 uint32_t Item::decimal_precision() const
 {
   Item_result restype= result_type();
@@ -418,7 +429,7 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
                             str + length - orig_len);
     }
   }
-  name= sql_strmake(str, length);
+  name= memory::sql_strmake(str, length);
 }
 
 bool Item::eq(const Item *item, bool) const
@@ -458,7 +469,7 @@ bool Item::get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate)
     if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1L)
     {
       char buff[22], *end;
-      end= int64_t10_to_str(value, buff, -10);
+      end= internal::int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
                                    NULL);
@@ -603,11 +614,6 @@ bool Item::change_context_processor(unsigned char *)
   return false;
 }
 
-bool Item::reset_query_id_processor(unsigned char *)
-{
-  return false;
-}
-
 bool Item::register_field_in_read_map(unsigned char *)
 {
   return false;
@@ -685,21 +691,6 @@ bool Item::is_expensive()
     is_expensive_cache= walk(&Item::is_expensive_processor, 0,
                              (unsigned char*)0);
   return test(is_expensive_cache);
-}
-
-int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
-{
-  int res;
-  Table *table= field->table;
-  Session *session= table->in_use;
-  enum_check_fields tmp= session->count_cuted_fields;
-  ulong sql_mode= session->variables.sql_mode;
-  session->variables.sql_mode&= ~(MODE_NO_ZERO_DATE);
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
-  res= save_in_field(field, no_conversions);
-  session->count_cuted_fields= tmp;
-  session->variables.sql_mode= sql_mode;
-  return res;
 }
 
 /*
@@ -1047,7 +1038,7 @@ enum_field_types Item::field_type() const
   case INT_RESULT:     
     return DRIZZLE_TYPE_LONGLONG;
   case DECIMAL_RESULT: 
-    return DRIZZLE_TYPE_NEWDECIMAL;
+    return DRIZZLE_TYPE_DECIMAL;
   case REAL_RESULT:    
     return DRIZZLE_TYPE_DOUBLE;
   case ROW_RESULT:
@@ -1151,9 +1142,15 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
   Field *field;
 
   switch (field_type()) {
-  case DRIZZLE_TYPE_NEWDECIMAL:
-    field= new Field_new_decimal((unsigned char*) 0, max_length, null_ptr, 0,
-                                 Field::NONE, name, decimals, 0,
+  case DRIZZLE_TYPE_DECIMAL:
+    field= new Field_decimal((unsigned char*) 0,
+                                 max_length,
+                                 null_ptr,
+                                 0,
+                                 Field::NONE,
+                                 name,
+                                 decimals,
+                                 0,
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
@@ -1169,8 +1166,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
 			    name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
-			  name, &my_charset_bin);
+    field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);
@@ -1265,7 +1261,66 @@ int Item::save_in_field(Field *field, bool no_conversions)
   return error;
 }
 
-bool Item::send(plugin::Protocol *protocol, String *buffer)
+/**
+  Check if an item is a constant one and can be cached.
+
+  @param arg [out] TRUE <=> Cache this item.
+
+  @return TRUE  Go deeper in item tree.
+  @return FALSE Don't go deeper in item tree.
+*/
+
+bool Item::cache_const_expr_analyzer(unsigned char **arg)
+{
+  bool *cache_flag= (bool*)*arg;
+  if (!*cache_flag)
+  {
+    Item *item= real_item();
+    /*
+      Cache constant items unless it's a basic constant, constant field or
+      a subselect (they use their own cache).
+    */
+    if (const_item() &&
+        !(item->basic_const_item() || item->type() == Item::FIELD_ITEM ||
+          item->type() == SUBSELECT_ITEM ||
+           /*
+             Do not cache GET_USER_VAR() function as its const_item() may
+             return TRUE for the current thread but it still may change
+             during the execution.
+           */
+          (item->type() == Item::FUNC_ITEM &&
+           ((Item_func*)item)->functype() == Item_func::GUSERVAR_FUNC)))
+      *cache_flag= true;
+    return true;
+  }
+  return false;
+}
+
+/**
+  Cache item if needed.
+
+  @param arg   TRUE <=> Cache this item.
+
+  @return cache if cache needed.
+  @return this otherwise.
+*/
+
+Item* Item::cache_const_expr_transformer(unsigned char *arg)
+{
+  if (*(bool*)arg)
+  {
+    *((bool*)arg)= false;
+    Item_cache *cache= Item_cache::get_cache(this);
+    if (!cache)
+      return NULL;
+    cache->setup(this);
+    cache->store(this);
+    return cache;
+  }
+  return this;
+}
+
+bool Item::send(plugin::Client *client, String *buffer)
 {
   bool result= false;
   enum_field_types f_type;
@@ -1276,11 +1331,11 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
   {
     String *res;
     if ((res=val_str(buffer)))
-      result= protocol->store(res->ptr(),res->length());
+      result= client->store(res->ptr(),res->length());
     break;
   }
   case DRIZZLE_TYPE_LONG:
@@ -1288,7 +1343,7 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
     int64_t nr;
     nr= val_int();
     if (!null_value)
-      result= protocol->store((int32_t)nr);
+      result= client->store((int32_t)nr);
     break;
   }
   case DRIZZLE_TYPE_LONGLONG:
@@ -1298,9 +1353,9 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
     if (!null_value)
     {
       if (unsigned_flag)
-        result= protocol->store((uint64_t)nr);
+        result= client->store((uint64_t)nr);
       else
-        result= protocol->store((int64_t)nr);
+        result= client->store((int64_t)nr);
     }
     break;
   }
@@ -1308,7 +1363,7 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
   {
     double nr= val_real();
     if (!null_value)
-      result= protocol->store(nr, decimals, buffer);
+      result= client->store(nr, decimals, buffer);
     break;
   }
   case DRIZZLE_TYPE_DATETIME:
@@ -1317,12 +1372,12 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
     DRIZZLE_TIME tm;
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
-      result= protocol->store(&tm);
+      result= client->store(&tm);
     break;
   }
   }
   if (null_value)
-    result= protocol->store();
+    result= client->store();
   return result;
 }
 
@@ -1348,7 +1403,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     return; /* Can't be better */
   Item_result res_type=item_cmp_type(comp_item->result_type(),
 				     item->result_type());
-  char *name=item->name; /* Alloced by sql_alloc */
+  char *name=item->name; /* Alloced by memory::sql_alloc */
 
   switch (res_type) {
   case STRING_RESULT:
@@ -1361,7 +1416,7 @@ void resolve_const_item(Session *session, Item **ref, Item *comp_item)
     else
     {
       uint32_t length= result->length();
-      char *tmp_str= sql_strmake(result->ptr(), length);
+      char *tmp_str= memory::sql_strmake(result->ptr(), length);
       new_item= new Item_string(name, tmp_str, length, result->charset());
     }
     break;
@@ -1580,8 +1635,11 @@ static Field *create_tmp_field_from_item(Session *,
         len-= item->decimals - dec;             // corrected value fits
     }
 
-    new_field= new Field_new_decimal(len, maybe_null, item->name,
-                                     dec, item->unsigned_flag);
+    new_field= new Field_decimal(len,
+                                 maybe_null,
+                                 item->name,
+                                 dec,
+                                 item->unsigned_flag);
     break;
   }
   case ROW_RESULT:
@@ -1606,13 +1664,12 @@ static Field *create_tmp_field_from_item(Session *,
 Field *create_tmp_field(Session *session,
                         Table *table,
                         Item *item,
-                        Item::Type type, 
-                        Item ***copy_func, 
+                        Item::Type type,
+                        Item ***copy_func,
                         Field **from_field,
-                        Field **default_field, 
-                        bool group, 
+                        Field **default_field,
+                        bool group,
                         bool modify_item,
-                        bool, 
                         bool make_copy_field,
                         uint32_t convert_blob_length)
 {
@@ -1703,10 +1760,4 @@ Field *create_tmp_field(Session *session,
   }
 }
 
-#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<Item>;
-template class List_iterator<Item>;
-template class List_iterator_fast<Item>;
-template class List_iterator_fast<Item_field>;
-template class List<List_item>;
-#endif
+} /* namespace drizzled */

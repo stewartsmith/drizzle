@@ -52,7 +52,7 @@ PRIMARY KEY  (`i`)
 drop table t1;
 CREATE TEMPORARY TABLE t1 (
 bool     char(0) default NULL,
-not_null varchar(20) binary NOT NULL default '',
+not_null varchar(20) NOT NULL default '',
 misc     integer not null,
 PRIMARY KEY  (not_null)
 ) ENGINE=MyISAM;

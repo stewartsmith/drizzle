@@ -18,16 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/lock.h>
+#include <drizzled/probes.h>
 #include <drizzled/statement/delete.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Delete::execute()
 {
+  DRIZZLE_DELETE_START(session->query.c_str());
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   Select_Lex *select_lex= &session->lex->select_lex;
@@ -53,3 +56,5 @@ bool statement::Delete::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
+} /* namespace drizzled */

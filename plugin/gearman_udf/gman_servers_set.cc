@@ -13,10 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#include "config.h"
 #include "gman_servers_set.h"
 #include "function_map.h"
 
 using namespace std;
+using namespace drizzled;
 
 String *Item_func_gman_servers_set::val_str(String *str)
 {

@@ -23,32 +23,36 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <plugin/myisam/myisam.h>
-#include <mysys/hash.h>
+#include <string>
+
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
 #include "drizzled/field_iterator.h"
-#include "drizzled/handler.h"
+#include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
+#include "drizzled/atomics.h"
+#include "drizzled/query_id.h"
 
-#include <string>
-
-using namespace std;
+namespace drizzled
+{
 
 class Item;
 class Item_subselect;
 class Select_Lex_Unit;
 class Select_Lex;
 class COND_EQUAL;
-class Security_context;
+class SecurityContext;
 class TableList;
 class Field_timestamp;
 class Field_blob;
 
+extern uint64_t refresh_version;
+
 typedef enum enum_table_category TABLE_CATEGORY;
+typedef struct st_columndef MI_COLUMNDEF;
 
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
@@ -66,7 +70,7 @@ public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
   Field **field; /**< Pointer to fields collection */
 
-  handler *file; /**< Pointer to the storage engine's handler managing this table */
+  Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
   Table *prev;
 
@@ -74,13 +78,17 @@ public:
   MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
-  uint32_t db_stat; /**< information about the file as in handler.h */
+  uint32_t db_stat; /**< information about the cursor as in Cursor.h */
 
   MyBitmap def_read_set; /**< Default read set of columns */
   MyBitmap def_write_set; /**< Default write set of columns */
   MyBitmap tmp_set; /* Not sure about this... */
 
-  Session	*in_use; /**< Pointer to the current session using this object */
+  Session *in_use; /**< Pointer to the current session using this object */
+  Session *getSession()
+  {
+    return in_use;
+  }
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
@@ -101,7 +109,7 @@ public:
   uint32_t status; /* What's in record[0] */
   /* number of select if it is derived table */
   uint32_t derived_select_number;
-  int	current_lock; /**< Type of lock on table */
+  int current_lock; /**< Type of lock on table */
   bool copy_blobs; /**< Should blobs by copied when storing? */
 
   /*
@@ -134,7 +142,7 @@ public:
     - setting version to 0 - this will force other threads to close
       the instance of this table and wait (this is the same approach
       as used for usual name locks).
-    An exclusively name-locked table currently can have no handler
+    An exclusively name-locked table currently can have no Cursor
     object associated with it (db_stat is always 0), but please do
     not rely on that.
   */
@@ -167,16 +175,16 @@ public:
    the same statement. A non-zero query_id is used to control which tables
    in the list of pre-opened and locked tables are actually being used.
   */
-  query_id_t	query_id;
+  query_id_t query_id;
 
-  /*
-    Estimate of number of records that satisfy SARGable part of the table
-    condition, or table->file->records if no SARGable condition could be
-    constructed.
-    This value is used by join optimizer as an estimate of number of records
-    that will pass the table condition (condition that depends on fields of
-    this table and constants)
-  */
+  /**
+   * Estimate of number of records that satisfy SARGable part of the table
+   * condition, or table->cursor->records if no SARGable condition could be
+   * constructed.
+   * This value is used by join optimizer as an estimate of number of records
+   * that will pass the table condition (condition that depends on fields of
+   * this table and constants)
+   */
   ha_rows quick_condition_rows;
 
   /*
@@ -192,7 +200,7 @@ public:
     as example).
   */
   timestamp_auto_set_type timestamp_field_type;
-  table_map	map; /* ID bit of table (1,2,4,8,16...) */
+  table_map map; ///< ID bit of table (1,2,4,8,16...)
 
   RegInfo reginfo; /* field connections */
 
@@ -225,7 +233,7 @@ public:
     For each key that has quick_keys.test(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
-  ha_rows	quick_rows[MAX_KEY];
+  ha_rows quick_rows[MAX_KEY];
 
   /* Bitmaps of key parts that =const for the entire join. */
   key_part_map  const_key_parts[MAX_KEY];
@@ -233,166 +241,23 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
-  MEM_ROOT mem_root;
+  memory::Root mem_root;
   filesort_info_st sort;
 
-  Table() : 
-    s(NULL), 
-    field(NULL),
-    file(NULL),
-    next(NULL),
-    prev(NULL),
-    read_set(NULL),
-    write_set(NULL),
-    tablenr(0),
-    db_stat(0),
-    in_use(NULL),
-    insert_values(NULL),
-    key_info(NULL),
-    next_number_field(NULL),
-    found_next_number_field(NULL),
-    timestamp_field(NULL),
-    pos_in_table_list(NULL),
-    group(NULL),
-    alias(NULL),
-    null_flags(NULL),
-    lock_position(0),
-    lock_data_start(0),
-    lock_count(0),
-    used_fields(0),
-    status(0),
-    derived_select_number(0),
-    current_lock(F_UNLCK),
-    copy_blobs(false),
-    maybe_null(false),
-    null_row(false),
-    force_index(false),
-    distinct(false),
-    const_table(false),
-    no_rows(false),
-    key_read(false),
-    no_keyread(false),
-    open_placeholder(false),
-    locked_by_name(false),
-    no_cache(false),
-    auto_increment_field_not_null(false),
-    alias_name_used(false),
-    query_id(0), 
-    quick_condition_rows(0),
-    timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-    map(0)
-  {
-    record[0]= (unsigned char *) 0;
-    record[1]= (unsigned char *) 0;
-
-    covering_keys.reset();
-
-    quick_keys.reset();
-    merge_keys.reset();
-
-    keys_in_use_for_query.reset();
-    keys_in_use_for_group_by.reset();
-    keys_in_use_for_order_by.reset();
-
-    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
-    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
-
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-    memset(&sort, 0, sizeof(filesort_info_st));
-  }
+  Table();
 
   int report_error(int error);
+  /**
+   * Free information allocated by openfrm
+   *
+   * @param If true if we also want to free table_share
+   */
   int closefrm(bool free_share);
 
-  void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg)
-  {
-    s= share;
-    field= NULL;
-
-    file= NULL;
-    next= NULL;
-    prev= NULL;
-
-    read_set= NULL;
-    write_set= NULL;
-
-    tablenr= 0;
-    db_stat= db_stat_arg;
-
-    in_use= session;
-    record[0]= (unsigned char *) 0;
-    record[1]= (unsigned char *) 0;
-
-    insert_values= NULL;
-    key_info= NULL;
-    next_number_field= NULL;
-    found_next_number_field= NULL;
-    timestamp_field= NULL;
-
-    pos_in_table_list= NULL;
-    group= NULL;
-    alias= NULL;
-    null_flags= NULL;
-     
-    lock_position= 0;
-    lock_data_start= 0;
-    lock_count= 0;
-    used_fields= 0;
-    status= 0;
-    derived_select_number= 0;
-    current_lock= F_UNLCK;
-    copy_blobs= false;
-
-    maybe_null= false;
-
-    null_row= false;
-
-    force_index= false;
-    distinct= false;
-    const_table= false;
-    no_rows= false;
-    key_read= false;
-    no_keyread= false;
-
-    open_placeholder= false;
-    locked_by_name= false;
-    no_cache= false;
-
-    auto_increment_field_not_null= false;
-    alias_name_used= false;
-    
-    query_id= 0;
-    quick_condition_rows= 0;
-     
-    timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
-    map= 0;
-
-    reginfo.reset();
-
-    covering_keys.reset();
-
-    quick_keys.reset();
-    merge_keys.reset();
-
-    keys_in_use_for_query.reset();
-    keys_in_use_for_group_by.reset();
-    keys_in_use_for_order_by.reset();
-
-    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
-    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
-
-    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
-    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
-
-    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-    memset(&sort, 0, sizeof(filesort_info_st));
-  }
+  void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
-  inline TableShare *getShare() { return s; } /* Get rid of this long term */
+  inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
@@ -404,14 +269,28 @@ public:
   inline unsigned char *getDefaultValues() { return s->default_values; }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isCrashed() { return s->crashed; }
   inline bool isNameLock() { return s->name_lock; }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
+  uint32_t index_flags(uint32_t idx) const
+  {
+    return s->storage_engine->index_flags(s->key_info[idx].algorithm);
+  }
+
+  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  {
+    return s->storage_engine;
+  }
+
+  Cursor &getCursor() const	/* table_type for handler */
+  {
+    assert(cursor);
+    return *cursor;
+  }
+
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(HA_CREATE_INFO *create_info,
-                        drizzled::message::Table *table_proto);
+  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
@@ -434,6 +313,22 @@ public:
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
+  /**
+   * Create Item_field for each column in the table.
+   *
+   * @param[out] a pointer to an empty list used to store items
+   *
+   * @details
+   *
+   * Create Item_field object for each column in the table and
+   * initialize it with the corresponding Field. New items are
+   * created in the current Session memory root.
+   *
+   * @retval
+   *  false on success
+   * @retval
+   *  true when out of memory
+   */
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
@@ -451,18 +346,6 @@ public:
     read_set= read_set_arg;
     write_set= write_set_arg;
   }
-  /**
-   * Find field in table, no side effects, only purpose is to check for field
-   * in table object and get reference to the field if found.
-   *
-   * @param Name of field searched for
-   *
-   * @retval
-   *  0 field is not found
-   * @retval
-   *  non-0 pointer to field
-   */
-  Field *find_field_in_table_sef(const char *name);
 
   void restore_column_map(my_bitmap_map *old);
 
@@ -494,6 +377,16 @@ public:
     read_set->setAll();
   }
 
+  inline void clearReadSet(uint32_t index)
+  {
+    read_set->clearBit(index);
+  }
+
+  inline void clearReadSet()
+  {
+    read_set->clearAll();
+  }
+
   inline bool isWriteSet(uint32_t index)
   {
     return write_set->isBitSet(index);
@@ -507,6 +400,16 @@ public:
   inline void setWriteSet()
   {
     write_set->setAll();
+  }
+
+  inline void clearWriteSet(uint32_t index)
+  {
+    write_set->clearBit(index);
+  }
+
+  inline void clearWriteSet()
+  {
+    write_set->clearAll();
   }
 
   /* Is table open or should be treated as such by name-locking? */
@@ -541,6 +444,73 @@ public:
   void free_io_cache();
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
+
+  void print_error(int error, myf errflag)
+  {
+    s->storage_engine->print_error(error, errflag, *this);
+  }
+
+  /**
+    @return
+    key if error because of duplicated keys
+  */
+  uint32_t get_dup_key(int error)
+  {
+    cursor->errkey  = (uint32_t) -1;
+    if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
+        error == HA_ERR_FOUND_DUPP_UNIQUE ||
+        error == HA_ERR_DROP_INDEX_FK)
+      cursor->info(HA_STATUS_ERRKEY | HA_STATUS_NO_LOCK);
+
+    return(cursor->errkey);
+  }
+
+  /*
+    This is a short term fix. Long term we will used the TableIdentifier to do the actual comparison.
+  */
+  bool operator<(const Table &right) const
+  {
+    int result= strcmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
+
+    if (result <  0)
+      return true;
+
+    if (result >  0)
+      return false;
+
+    result= strcmp(this->getShare()->getTableName(), right.getShare()->getTableName());
+
+    if (result <  0)
+      return true;
+
+    if (result >  0)
+      return false;
+
+    if (this->getShare()->getTableProto()->type()  < 
+        right.getShare()->getTableProto()->type())
+      return true;
+
+    return false;
+  }
+
+  static bool compare(const Table *a, const Table *b)
+  {
+    return *a < *b;
+  }
+
+  friend std::ostream& operator<<(std::ostream& output, const Table &table)
+  {
+    output << "Table:(";
+    output << table.getShare()->getSchemaName();
+    output << ", ";
+    output <<  table.getShare()->getTableName();
+    output << ", ";
+    output <<  table.getShare()->getTableTypeAsString();
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
+
 };
 
 Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);
@@ -568,17 +538,10 @@ struct st_lex;
 class select_union;
 class Tmp_Table_Param;
 
-typedef struct st_changed_table_list
-{
-  struct	st_changed_table_list *next;
-  char		*key;
-  uint32_t key_length;
-} CHANGED_TableList;
-
 struct open_table_list_st
 {
-  string	db;
-  string	table;
+  std::string	db;
+  std::string	table;
   uint32_t in_use;
   uint32_t locked;
 
@@ -588,5 +551,51 @@ struct open_table_list_st
   { }
 
 };
+
+TableShare *alloc_table_share(TableList *table_list, char *key,
+                               uint32_t key_length);
+int open_table_def(Session& session, TableShare *share);
+void open_table_error(TableShare *share, int error, int db_errno, int errarg);
+int open_table_from_share(Session *session, TableShare *share, const char *alias,
+                          uint32_t db_stat, uint32_t ha_open_flags,
+                          Table *outparam);
+void free_blobs(Table *table);
+int set_zone(int nr,int min_zone,int max_zone);
+uint32_t convert_period_to_month(uint32_t period);
+uint32_t convert_month_to_period(uint32_t month);
+
+int test_if_number(char *str,int *res,bool allow_wildcards);
+void change_byte(unsigned char *,uint,char,char);
+
+namespace optimizer { class SqlSelect; }
+
+ha_rows filesort(Session *session,
+                 Table *form,
+                 st_sort_field *sortorder,
+                 uint32_t s_length,
+                 optimizer::SqlSelect *select,
+                 ha_rows max_rows,
+                 bool sort_positions,
+                 ha_rows *examined_rows);
+
+void filesort_free_buffers(Table *table, bool full);
+void change_double_for_sort(double nr,unsigned char *to);
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
+                       bool truncate);
+int get_quick_record(optimizer::SqlSelect *select);
+
+void find_date(char *pos,uint32_t *vek,uint32_t flag);
+TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
+TYPELIB *typelib(memory::Root *mem_root, List<String> &strings);
+ulong get_form_pos(int file, unsigned char *head, TYPELIB *save_names);
+ulong next_io_size(ulong pos);
+void append_unescaped(String *res, const char *pos, uint32_t length);
+
+int rename_file_ext(const char * from,const char * to,const char * ext);
+bool check_column_name(const char *name);
+bool check_db_name(LEX_STRING *org_name);
+bool check_table_name(const char *name, uint32_t length);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_H */

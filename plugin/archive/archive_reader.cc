@@ -1,16 +1,40 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (c) 2006 MySQL AB
+ *  Copyright (c) 2009 Sun Microsystems, Inc.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include "config.h"
+
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <mystrings/m_ctype.h>
-#include <mystrings/m_string.h>
-#include <mysys/my_getopt.h>
+#include <fcntl.h>
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/my_getopt.h"
 
 #define SHOW_VERSION "0.1"
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *opt, char *argument);
+using namespace drizzled;
+
+bool get_one_option(int optid, const struct my_option *opt, char *argument);
 
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
@@ -20,7 +44,7 @@ static const char *new_auto_increment;
 uint64_t new_auto_increment_value;
 static const char *load_default_groups[]= { "archive_reader", 0 };
 static char **default_argv;
-int opt_check, opt_force, opt_quiet, opt_backup= 0, opt_extract_frm;
+int opt_check, opt_force, opt_quiet, opt_backup= 0, opt_extract_table_message;
 int opt_autoincrement;
 
 int main(int argc, char *argv[])
@@ -28,7 +52,7 @@ int main(int argc, char *argv[])
   unsigned int ret;
   azio_stream reader_handle;
 
-  my_init();
+  internal::my_init();
   MY_INIT(argv[0]);
   get_options(&argc, &argv);
 
@@ -87,11 +111,12 @@ int main(int argc, char *argv[])
     printf("\tLongest Row %u\n", reader_handle.longest_row);
     printf("\tShortest Row %u\n", reader_handle.shortest_row);
     printf("\tState %s\n", ( reader_handle.dirty ? "dirty" : "clean"));
-    printf("\tFRM stored at %u\n", reader_handle.frm_start_pos);
+    printf("\tTable protobuf message stored at %u\n",
+           reader_handle.frm_start_pos);
     printf("\tComment stored at %u\n", reader_handle.comment_start_pos);
     printf("\tData starts at %u\n", (unsigned int)reader_handle.start);
     if (reader_handle.frm_start_pos)
-      printf("\tFRM length %u\n", reader_handle.frm_length);
+      printf("\tTable proto message length %u\n", reader_handle.frm_length);
     if (reader_handle.comment_start_pos)
     {
       char *comment =
@@ -208,11 +233,11 @@ int main(int argc, char *argv[])
     azclose(&writer_handle);
   }
 
-  if (opt_extract_frm)
+  if (opt_extract_table_message)
   {
-    File frm_file;
+    int frm_file;
     char *ptr;
-    frm_file= my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
+    frm_file= internal::my_open(argv[1], O_CREAT|O_RDWR, MYF(0));
     ptr= (char *)malloc(sizeof(char) * reader_handle.frm_length);
     if (ptr == NULL)
     {
@@ -220,8 +245,8 @@ int main(int argc, char *argv[])
       goto end;
     }
     azread_frm(&reader_handle, ptr);
-    my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
-    my_close(frm_file, MYF(0));
+    internal::my_write(frm_file, (unsigned char*) ptr, reader_handle.frm_length, MYF(0));
+    internal::my_close(frm_file, MYF(0));
     free(ptr);
   }
 
@@ -229,7 +254,7 @@ end:
   printf("\n");
   azclose(&reader_handle);
 
-  my_end(0);
+  internal::my_end();
   return 0;
 }
 
@@ -244,7 +269,7 @@ bool get_one_option(int optid, const struct my_option *opt, char *argument)
     opt_check= 1;
     break;
   case 'e':
-    opt_extract_frm= 1;
+    opt_extract_table_message= 1;
     break;
   case 'f':
     opt_force= 1;
@@ -281,8 +306,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c', "Check table for errors.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"extract-frm", 'e',
-   "Extract the frm file.",
+  {"extract-table-message", 'e',
+   "Extract the table protobuf message.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"force", 'f',
    "Restart with -r if there are any errors in the table.",
@@ -320,20 +345,20 @@ static void usage(void)
        \nand you are welcome to modify and redistribute it under the GPL \
        license\n");
   puts("Read and modify Archive files directly\n");
-  printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", my_progname);
-  print_defaults("drizzle", load_default_groups);
+  printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", internal::my_progname);
+  internal::print_defaults("drizzle", load_default_groups);
   my_print_help(my_long_options);
 }
 
 static void print_version(void)
 {
-  printf("%s  Ver %s, for %s-%s (%s)\n", my_progname, SHOW_VERSION,
+  printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
          HOST_VENDOR, HOST_OS, HOST_CPU);
 }
 
 static void get_options(int *argc, char ***argv)
 {
-  load_defaults("drizzle", load_default_groups, argc, argv);
+  internal::load_defaults("drizzle", load_default_groups, argc, argv);
   default_argv= *argv;
 
   handle_options(argc, argv, my_long_options, get_one_option);

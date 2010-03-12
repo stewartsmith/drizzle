@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/truncate.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Truncate::execute()
 {
@@ -44,6 +45,7 @@ bool statement::Truncate::execute()
     return true;
   }
 
-  bool res= mysql_truncate(session, first_table, 0);
-  return res;
+  return mysql_truncate(*session, first_table);
 }
+
+} /* namespace drizzled */

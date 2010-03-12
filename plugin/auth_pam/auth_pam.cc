@@ -1,16 +1,38 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-  Sections of this where taken/modified from mod_auth_path for Apache
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+/*
+  Sections of this were taken/modified from mod_auth_path for Apache
+  @TODO: License?
 */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin/authentication.h>
+#include "config.h"
+
 #include <security/pam_appl.h>
 #if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
 #endif
+
+#include "drizzled/security_context.h"
+#include "drizzled/plugin/authentication.h"
+
+using namespace drizzled;
 
 typedef struct {
     const char *name;
@@ -79,18 +101,21 @@ int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-class Auth_pam : public Authentication
+class Auth_pam : public drizzled::plugin::Authentication
 {
 public:
-  virtual bool authenticate(Session *session, const char *password)
+  Auth_pam(std::string name_arg)
+    : drizzled::plugin::Authentication(name_arg) {}
+  virtual bool authenticate(const SecurityContext &sctx,
+                            const std::string &password)
   {
     int retval;
     auth_pam_userinfo userinfo= { NULL, NULL };
     struct pam_conv conv_info= { &auth_pam_talker, (void*)&userinfo };
     pam_handle_t *pamh= NULL;
 
-    userinfo.name= session->security_ctx.user.c_str();
-    userinfo.password= password;
+    userinfo.name= sctx.getUser().c_str();
+    userinfo.password= password.c_str();
 
     retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);
 
@@ -107,11 +132,11 @@ public:
 };
 
 
-static Authentication *auth= NULL;
+static Auth_pam *auth= NULL;
 
 static int initialize(drizzled::plugin::Registry &registry)
 {
-  auth= new Auth_pam();
+  auth= new Auth_pam("auth_pam");
   registry.add(auth);
   return 0;
 }
@@ -128,8 +153,9 @@ static int finalize(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(auth_pam)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "pam",
   "0.1",
   "Brian Aker",
@@ -137,8 +163,7 @@ drizzle_declare_plugin(auth_pam)
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

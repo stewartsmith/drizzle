@@ -18,15 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/empty_query.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
-bool drizzled::statement::EmptyQuery::execute()
+bool statement::EmptyQuery::execute()
 {
   session->my_ok();
   return false;
 }
+
+} /* namespace drizzled */

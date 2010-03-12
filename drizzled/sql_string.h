@@ -17,45 +17,46 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_STRING_H
-#define DRIZZLE_SERVER_SQL_STRING_H
+#ifndef DRIZZLED_SQL_STRING_H
+#define DRIZZLED_SQL_STRING_H
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
+#include <drizzled/common.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 #ifndef NOT_FIXED_DEC
 #define NOT_FIXED_DEC			(uint8_t)31
 #endif
 
-#include <drizzled/common.h>
-#include <mysys/iocache.h>
-#include <stdlib.h>
-#include <string.h>
+namespace drizzled
+{
 
 class String;
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+extern String my_empty_string;
+extern const String my_null_string;
+namespace memory { class Root; }
+typedef struct charset_info_st CHARSET_INFO;
 
-  int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
-  int stringcmp(const String *a,const String *b);
-  String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
-  uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
-                                   char *to, uint32_t to_length,
-                                   const CHARSET_INFO * const from_cs,
-                                   const char *from, uint32_t from_length,
-                                   uint32_t nchars,
-                                   const char **well_formed_error_pos,
-                                   const char **cannot_convert_error_pos,
-                                   const char **from_end_pos);
-  size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
-                                   char *dst, size_t dstlen,
-                                   const char *src, size_t srclen);
+std::string String_to_std_string(String const& s);
+String* set_String_from_std_string(String* s, std::string const& cs);
 
-#if defined(__cplusplus)
-}
-#endif
+int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
+int stringcmp(const String *a,const String *b);
+String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
+uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
+                                 char *to, uint32_t to_length,
+                                 const CHARSET_INFO * const from_cs,
+                                 const char *from, uint32_t from_length,
+                                 uint32_t nchars,
+                                 const char **well_formed_error_pos,
+                                 const char **cannot_convert_error_pos,
+                                 const char **from_end_pos);
+
 
 class String
 {
@@ -65,43 +66,18 @@ class String
   const CHARSET_INFO *str_charset;
 
 public:
-  String()
-  {
-    Ptr=0; str_length=Alloced_length=0; alloced=0;
-    str_charset= &my_charset_bin;
-  }
-  String(uint32_t length_arg)
-  {
-    alloced=0; Alloced_length=0; (void) real_alloc(length_arg);
-    str_charset= &my_charset_bin;
-  }
-  String(const char *str, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; str_length=(uint32_t) strlen(str); Alloced_length=0; alloced=0;
-    str_charset=cs;
-  }
-  String(const char *str,uint32_t len, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; str_length=len; Alloced_length=0; alloced=0;
-    str_charset=cs;
-  }
-  String(char *str,uint32_t len, const CHARSET_INFO * const cs)
-  {
-    Ptr=(char*) str; Alloced_length=str_length=len; alloced=0;
-    str_charset=cs;
-  }
-  String(const String &str)
-  {
-    Ptr=str.Ptr ; str_length=str.str_length ;
-    Alloced_length=str.Alloced_length; alloced=0;
-    str_charset=str.str_charset;
-  }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); } 
+  String();
+  String(uint32_t length_arg);
+  String(const char *str, const CHARSET_INFO * const cs);
+  String(const char *str, uint32_t len, const CHARSET_INFO * const cs);
+  String(char *str, uint32_t len, const CHARSET_INFO * const cs);
+  String(const String &str);
+
+  static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* never called */ }
+  { }
+  static void operator delete(void *, memory::Root *)
+  { }
   ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)
@@ -121,7 +97,7 @@ public:
       (void) realloc(str_length);
     else
       Ptr[str_length]= 0;
-    
+
     return Ptr;
   }
   inline char *c_ptr_quick()
@@ -138,13 +114,21 @@ public:
       (void) realloc(str_length);
     return Ptr;
   }
+  inline char *c_str()
+  {
+    if (Ptr && str_length < Alloced_length)
+      Ptr[str_length]=0;
+    else
+      (void) realloc(str_length);
+    return Ptr;
+  }
   void append_identifier(const char *name, uint32_t length);
 
   void set(String &str,uint32_t offset,uint32_t arg_length)
   {
     assert(&str != this);
     free();
-    Ptr=(char*) str.ptr()+offset; str_length=arg_length; alloced=0;
+    Ptr= str.ptr()+offset; str_length=arg_length; alloced=0;
     if (str.Alloced_length)
       Alloced_length=str.Alloced_length-offset;
     else
@@ -154,13 +138,14 @@ public:
   inline void set(char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     free();
-    Ptr=(char*) str; str_length=Alloced_length=arg_length ; alloced=0;
+    Ptr= str; str_length=Alloced_length=arg_length ; alloced=0;
     str_charset=cs;
   }
   inline void set(const char *str,uint32_t arg_length, const CHARSET_INFO * const cs)
   {
     free();
-    Ptr=(char*) str; str_length=arg_length; Alloced_length=0 ; alloced=0;
+    Ptr= const_cast<char*>(str);
+    str_length=arg_length; Alloced_length=0 ; alloced=0;
     str_charset=cs;
   }
   bool set_ascii(const char *str, uint32_t arg_length);
@@ -168,15 +153,15 @@ public:
   {
     if (!alloced)
     {
-      Ptr=(char*) str; str_length=Alloced_length=arg_length;
+      Ptr= str; str_length= Alloced_length= arg_length;
     }
-    str_charset=cs;
+    str_charset= cs;
   }
   bool set_int(int64_t num, bool unsigned_flag, const CHARSET_INFO * const cs);
   bool set(int64_t num, const CHARSET_INFO * const cs)
   { return set_int(num, false, cs); }
   bool set(uint64_t num, const CHARSET_INFO * const cs)
-  { return set_int((int64_t)num, true, cs); }
+  { return set_int(static_cast<int64_t>(num), true, cs); }
   bool set_real(double num,uint32_t decimals, const CHARSET_INFO * const cs);
 
   /*
@@ -230,7 +215,7 @@ public:
     if (arg_length < Alloced_length)
     {
       char *new_ptr;
-      if (!(new_ptr=(char*) ::realloc(Ptr,arg_length)))
+      if (!(new_ptr= reinterpret_cast<char*>(::realloc(Ptr,arg_length))))
       {
 	Alloced_length = 0;
 	real_alloc(arg_length);
@@ -309,35 +294,12 @@ public:
     q_*** methods writes values of parameters itself
     qs_*** methods writes string representation of value
   */
-  void q_append(const char c)
-  {
-    Ptr[str_length++] = c;
-  }
-  void q_append(const uint32_t n)
-  {
-    int4store(Ptr + str_length, n);
-    str_length += 4;
-  }
-  void q_append(double d)
-  {
-    float8store(Ptr + str_length, d);
-    str_length += 8;
-  }
-  void q_append(double *d)
-  {
-    float8store(Ptr + str_length, *d);
-    str_length += 8;
-  }
-  void q_append(const char *data, uint32_t data_len)
-  {
-    memcpy(Ptr + str_length, data, data_len);
-    str_length += data_len;
-  }
-
-  void write_at_position(int position, uint32_t value)
-  {
-    int4store(Ptr + position,value);
-  }
+  void q_append(const char c);
+  void q_append(const uint32_t n);
+  void q_append(double d);
+  void q_append(double *d);
+  void q_append(const char *data, uint32_t data_len);
+  void write_at_position(int position, uint32_t value);
 
   /* Inline (general) functions used by the protocol functions */
 
@@ -374,15 +336,13 @@ public:
   }
 };
 
-static inline bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
-                                           char *end)
-{
-  return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
-}
+bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+                             char *end);
 
-extern "C++" {
-bool operator==(const String &s1, const String &s2);
-bool operator!=(const String &s1, const String &s2);
-}
+} /* namespace drizzled */
 
-#endif /* DRIZZLE_SERVER_SQL_STRING_H */
+bool operator==(const drizzled::String &s1, const drizzled::String &s2);
+bool operator!=(const drizzled::String &s1, const drizzled::String &s2);
+
+
+#endif /* DRIZZLED_SQL_STRING_H */

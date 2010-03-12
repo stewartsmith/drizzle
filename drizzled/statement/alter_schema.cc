@@ -18,22 +18,39 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/plugin/storage_engine.h>
+#include <drizzled/db.h>
 
-using namespace drizzled;
+#include <string>
+
+using namespace std;
+
+namespace drizzled
+{
 
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  HA_CREATE_INFO create_info(session->lex->create_info);
+  message::Schema old_definition;
+
   if (check_db_name(db))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
     return false;
   }
+
+  schema_message.set_name(db->str);
+
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_message.name(), old_definition))
+  {
+    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
+    return true;
+  }
+
   if (session->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, 
@@ -41,6 +58,16 @@ bool statement::AlterSchema::execute()
                MYF(0));
     return true;
   }
-  bool res= mysql_alter_db(session, db->str, &create_info);
-  return res;
+
+  if (not schema_message.has_collation())
+  {
+    schema_message.set_collation(schema_message.collation());
+  }
+
+  bool res= mysql_alter_db(session, schema_message);
+
+  return not res;
 }
+
+} /* namespace drizzled */
+

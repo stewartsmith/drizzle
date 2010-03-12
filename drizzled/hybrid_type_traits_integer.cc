@@ -18,12 +18,14 @@
  */
 
 
-#include <drizzled/server_includes.h>
-#include <drizzled/hybrid_type_traits_integer.h>
-#include <drizzled/hybrid_type.h>
-#include <drizzled/definitions.h>
+#include "config.h"
+#include "drizzled/hybrid_type_traits_integer.h"
+#include "drizzled/hybrid_type.h"
+#include "drizzled/definitions.h"
+#include "drizzled/item.h"
 
-
+namespace drizzled
+{
 
 /* Hybrid_type_traits_integer */
 static const Hybrid_type_traits_integer integer_traits_instance;
@@ -101,3 +103,4 @@ Hybrid_type_traits_integer::Hybrid_type_traits_integer()
 {}
 
 
+} /* namespace drizzled */

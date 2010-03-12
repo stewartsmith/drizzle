@@ -15,22 +15,35 @@
 
 /* open a isam-database */
 
-#include "myisamdef.h"
-#include <mystrings/m_ctype.h>
-#include <mystrings/m_string.h>
-#include <drizzled/util/test.h>
+#include "myisam_priv.h"
 
 #include <string.h>
 #include <algorithm>
 
+#include "drizzled/charset_info.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/util/test.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/charset.h"
+#include "drizzled/memory/multi_malloc.h"
+
+
 using namespace std;
+using namespace drizzled;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def);
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
 {                              \
-  my_errno=HA_ERR_CRASHED;     \
+  errno=HA_ERR_CRASHED;     \
   goto err;                    \
 }
 
@@ -75,7 +88,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   MI_INFO info,*m_info,*old_info;
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
-  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  internal::my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;
 
   kfile= -1;
@@ -84,9 +97,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   head_length=sizeof(share_buff.state.header);
   memset(&info, 0, sizeof(info));
 
-  (void)fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
+  (void)internal::fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
   if (!realpath(org_name,rp_buff))
-    my_load_path(rp_buff,org_name, NULL);
+    internal::my_load_path(rp_buff,org_name, NULL);
   rp_buff[FN_REFLEN-1]= '\0';
   strcpy(name_buff,rp_buff);
   pthread_mutex_lock(&THR_LOCK_myisam);
@@ -99,24 +112,24 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.state.key_del=key_del;
     share_buff.key_cache= dflt_key_cache;
 
-    if ((kfile=my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
+    if ((kfile=internal::my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
       if ((errno != EROFS && errno != EACCES) ||
 	  mode != O_RDONLY ||
-	  (kfile=my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
+	  (kfile=internal::my_open(name_buff,(open_mode=O_RDONLY),MYF(0))) < 0)
 	goto err;
     }
     share->mode=open_mode;
     errpos=1;
-    if (my_read(kfile, share->state.header.file_version, head_length,
+    if (internal::my_read(kfile, share->state.header.file_version, head_length,
 		MYF(MY_NABP)))
     {
-      my_errno= HA_ERR_NOT_A_TABLE;
+      errno= HA_ERR_NOT_A_TABLE;
       goto err;
     }
     if (memcmp(share->state.header.file_version, myisam_file_magic, 4))
     {
-      my_errno=HA_ERR_NOT_A_TABLE;
+      errno=HA_ERR_NOT_A_TABLE;
       goto err;
     }
     share->options= mi_uint2korr(share->state.header.options);
@@ -127,7 +140,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
           HA_OPTION_TMP_TABLE
           ))
     {
-      my_errno=HA_ERR_OLD_FILE;
+      errno=HA_ERR_OLD_FILE;
       goto err;
     }
 
@@ -138,14 +151,14 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     if (!strcmp(name_buff, org_name) || sym_link_size == -1)
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
-    (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
+    (void) internal::fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
 
     info_length=mi_uint2korr(share->state.header.header_length);
     base_pos=mi_uint2korr(share->state.header.base_pos);
     if (!(disk_cache= (unsigned char*) malloc(info_length+128)))
     {
-      my_errno=ENOMEM;
+      errno=ENOMEM;
       goto err;
     }
     end_pos=disk_cache+info_length;
@@ -153,9 +166,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
     lseek(kfile,0,SEEK_SET);
     errpos=3;
-    if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
+    if (internal::my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       goto err;
     }
     len=mi_uint2korr(share->state.header.state_info_length);
@@ -171,12 +184,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     disk_pos= my_n_base_info_read(disk_cache + base_pos, &share->base);
     share->state.state_length=base_pos;
 
-    if (!(open_flags & HA_OPEN_FOR_REPAIR) &&
-	((share->state.changed & STATE_CRASHED) ||
-	 ((open_flags & HA_OPEN_ABORT_IF_CRASHED) &&
-	  (share->state.open_count))))
+    if (share->state.changed & STATE_CRASHED)
     {
-      my_errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
+      errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
 		HA_ERR_CRASHED_ON_REPAIR : HA_ERR_CRASHED_ON_USAGE);
       goto err;
     }
@@ -184,14 +194,14 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* sanity check */
     if (share->base.keystart > 65535 || share->base.rec_reflength > 8)
     {
-      my_errno=HA_ERR_CRASHED;
+      errno=HA_ERR_CRASHED;
       goto err;
     }
 
     if (share->base.max_key_length > MI_MAX_KEY_BUFF || keys > MI_MAX_KEY ||
 	key_parts > MI_MAX_KEY * MI_MAX_KEY_SEG)
     {
-      my_errno=HA_ERR_UNSUPPORTED;
+      errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
 
@@ -210,11 +220,11 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 #endif
     if (share->base.raid_type)
     {
-      my_errno=HA_ERR_UNSUPPORTED;
+      errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-    share->base.max_data_file_length=(my_off_t) max_data_file_length;
-    share->base.max_key_file_length=(my_off_t) max_key_file_length;
+    share->base.max_data_file_length=(internal::my_off_t) max_data_file_length;
+    share->base.max_key_file_length=(internal::my_off_t) max_key_file_length;
 
     if (share->options & HA_OPTION_COMPRESS_RECORD)
       share->base.max_key_length+=2;	/* For safety */
@@ -222,35 +232,33 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* Add space for node pointer */
     share->base.max_key_length+= share->base.key_reflength;
 
-    if (!my_multi_malloc(MY_WME,
-			 &share,sizeof(*share),
-			 &share->state.rec_per_key_part,sizeof(long)*key_parts,
-			 &share->keyinfo,keys*sizeof(MI_KEYDEF),
-			 &share->uniqueinfo,uniques*sizeof(MI_UNIQUEDEF),
-			 &share->keyparts,
-			 (key_parts+unique_key_parts+keys+uniques) *
-			 sizeof(HA_KEYSEG),
-			 &share->rec,
-			 (share->base.fields+1)*sizeof(MI_COLUMNDEF),
-			 &share->blobs,sizeof(MI_BLOB)*share->base.blobs,
-			 &share->unique_file_name,strlen(name_buff)+1,
-			 &share->index_file_name,strlen(index_name)+1,
-			 &share->data_file_name,strlen(data_name)+1,
-			 &share->state.key_root,keys*sizeof(my_off_t),
-			 &share->state.key_del,
-			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
-			 &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
-			 &share->mmap_lock,sizeof(pthread_rwlock_t),
-			 NULL))
+    if (!drizzled::memory::multi_malloc(false,
+           &share,sizeof(*share),
+           &share->state.rec_per_key_part,sizeof(long)*key_parts,
+           &share->keyinfo,keys*sizeof(MI_KEYDEF),
+           &share->uniqueinfo,uniques*sizeof(MI_UNIQUEDEF),
+           &share->keyparts,
+           (key_parts+unique_key_parts+keys+uniques) * sizeof(HA_KEYSEG),
+           &share->rec, (share->base.fields+1)*sizeof(MI_COLUMNDEF),
+           &share->blobs,sizeof(MI_BLOB)*share->base.blobs,
+           &share->unique_file_name,strlen(name_buff)+1,
+           &share->index_file_name,strlen(index_name)+1,
+           &share->data_file_name,strlen(data_name)+1,
+           &share->state.key_root,keys*sizeof(uint64_t),
+           &share->state.key_del,
+           (share->state.header.max_block_size_index*sizeof(uint64_t)),
+           &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
+           &share->mmap_lock,sizeof(pthread_rwlock_t),
+           NULL))
       goto err;
     errpos=4;
     *share=share_buff;
     memcpy(share->state.rec_per_key_part, rec_per_key_part,
            sizeof(long)*key_parts);
     memcpy(share->state.key_root, key_root,
-           sizeof(my_off_t)*keys);
+           sizeof(internal::my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
-           sizeof(my_off_t) * share->state.header.max_block_size_index);
+           sizeof(internal::my_off_t) * share->state.header.max_block_size_index);
     strcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
     strcpy(share->index_file_name,  index_name);
@@ -274,7 +282,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
               ! (share->options & (HA_OPTION_COMPRESS_RECORD |
                                    HA_OPTION_PACK_RECORD)))
           {
-            my_errno= HA_ERR_CRASHED;
+            errno= HA_ERR_CRASHED;
             goto err;
           }
 	  if (pos->type == HA_KEYTYPE_TEXT ||
@@ -285,7 +293,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	      pos->charset=default_charset_info;
 	    else if (!(pos->charset= get_charset(pos->language)))
 	    {
-	      my_errno=HA_ERR_UNKNOWN_CHARSET;
+	      errno=HA_ERR_UNKNOWN_CHARSET;
 	      goto err;
 	    }
 	  }
@@ -317,7 +325,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	      pos->charset=default_charset_info;
 	    else if (!(pos->charset= get_charset(pos->language)))
 	    {
-	      my_errno=HA_ERR_UNKNOWN_CHARSET;
+	      errno=HA_ERR_UNKNOWN_CHARSET;
 	      goto err;
 	    }
 	  }
@@ -349,10 +357,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share->rec[i].type=(int) FIELD_LAST;	/* End marker */
     if (offset > share->base.reclength)
     {
-      /* purecov: begin inspected */
-      my_errno= HA_ERR_CRASHED;
+      errno= HA_ERR_CRASHED;
       goto err;
-      /* purecov: end */
     }
 
     if (! lock_error)
@@ -415,7 +421,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share= old_info->s;
     if (mode == O_RDWR && share->mode == O_RDONLY)
     {
-      my_errno=EACCES;				/* Can't open in write mode */
+      errno=EACCES;				/* Can't open in write mode */
       goto err;
     }
     if (mi_open_datafile(&info, share, old_info->dfile))
@@ -425,16 +431,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   }
 
   /* alloc and set up private structure parts */
-  if (!my_multi_malloc(MY_WME,
-		       &m_info,sizeof(MI_INFO),
-		       &info.blobs,sizeof(MI_BLOB)*share->base.blobs,
-		       &info.buff,(share->base.max_key_block_length*2+
-				   share->base.max_key_length),
-		       &info.lastkey,share->base.max_key_length*3+1,
-		       &info.first_mbr_key, share->base.max_key_length,
-		       &info.filename,strlen(name)+1,
-		       &info.rtree_recursion_state,have_rtree ? 1024 : 0,
-		       NULL))
+  if (!drizzled::memory::multi_malloc(MY_WME,
+         &m_info,sizeof(MI_INFO),
+         &info.blobs,sizeof(MI_BLOB)*share->base.blobs,
+         &info.buff,(share->base.max_key_block_length*2+
+                     share->base.max_key_length),
+         &info.lastkey,share->base.max_key_length*3+1,
+         &info.first_mbr_key, share->base.max_key_length,
+         &info.filename,strlen(name)+1,
+         &info.rtree_recursion_state,have_rtree ? 1024 : 0,
+         NULL))
     goto err;
   errpos=6;
 
@@ -511,7 +517,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 err:
   if (disk_cache != NULL)
     free(disk_cache);
-  save_errno=my_errno ? my_errno : HA_ERR_END_OF_FILE;
+  save_errno=errno ? errno : HA_ERR_END_OF_FILE;
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||
       (save_errno == HA_ERR_CRASHED_ON_REPAIR))
@@ -521,7 +527,7 @@ err:
     free((unsigned char*) m_info);
     /* fall through */
   case 5:
-    my_close(info.dfile,MYF(0));
+    internal::my_close(info.dfile,MYF(0));
     if (old_info)
       break;					/* Don't remove open table */
     /* fall through */
@@ -531,14 +537,14 @@ err:
   case 3:
     /* fall through */
   case 1:
-    my_close(kfile,MYF(0));
+    internal::my_close(kfile,MYF(0));
     /* fall through */
   case 0:
   default:
     break;
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  my_errno=save_errno;
+  errno=save_errno;
   return (NULL);
 } /* mi_open */
 
@@ -581,9 +587,9 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 }
 
 
-uint64_t mi_safe_mul(uint64_t a, uint64_t b)
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
-  uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
+  uint64_t max_val= ~ (uint64_t) 0;		/* internal::my_off_t is unsigned */
 
   if (!a || max_val / a < b)
     return max_val;
@@ -690,7 +696,7 @@ static void setup_key_functions(register MI_KEYDEF *keyinfo)
    Function to save and store the header in the index file (.MYI)
 */
 
-uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
+uint32_t mi_state_info_write(int file, MI_STATE_INFO *state, uint32_t pWrite)
 {
   unsigned char  buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
   unsigned char *ptr=buff;
@@ -748,12 +754,12 @@ uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
   if (pWrite & 1)
     return(my_pwrite(file, buff, (size_t) (ptr-buff), 0L,
 			  MYF(MY_NABP | MY_THREADSAFE)) != 0);
-  return(my_write(file, buff, (size_t) (ptr-buff),
+  return(internal::my_write(file, buff, (size_t) (ptr-buff),
 		       MYF(MY_NABP)) != 0);
 }
 
 
-unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 {
   uint32_t i,keys,key_parts,key_blocks;
   memcpy(&state->header,ptr, sizeof(state->header));
@@ -774,7 +780,7 @@ unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
   state->state.empty	= mi_sizekorr(ptr);	ptr +=8;
   state->state.key_empty= mi_sizekorr(ptr);	ptr +=8;
   state->auto_increment=mi_uint8korr(ptr);	ptr +=8;
-  state->state.checksum=(ha_checksum) mi_uint8korr(ptr);	ptr +=8;
+  state->state.checksum=(internal::ha_checksum) mi_uint8korr(ptr);	ptr +=8;
   state->process= mi_uint4korr(ptr);		ptr +=4;
   state->unique = mi_uint4korr(ptr);		ptr +=4;
   state->status = mi_uint4korr(ptr);		ptr +=4;
@@ -806,7 +812,7 @@ unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 }
 
 
-uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
+uint32_t mi_state_info_read_dsk(int file, MI_STATE_INFO *state, bool pRead)
 {
   unsigned char	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 
@@ -815,7 +821,7 @@ uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
     if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
       return 1;
   }
-  else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+  else if (internal::my_read(file, buff, state->state_length,MYF(MY_NABP)))
     return 1;
   mi_state_info_read(buff, state);
 
@@ -827,7 +833,7 @@ uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 **  store and read of MI_BASE_INFO
 ****************************************************************************/
 
-uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
+uint32_t mi_base_info_write(int file, MI_BASE_INFO *base)
 {
   unsigned char buff[MI_BASE_INFO_SIZE], *ptr=buff;
 
@@ -860,11 +866,11 @@ uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
   mi_int4store(ptr,UINT32_C(0));         		ptr +=4;
 
   memset(ptr, 0, 6);					ptr +=6; /* extra */
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 
-unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
 {
   base->keystart = mi_sizekorr(ptr);			ptr +=8;
   base->max_data_file_length = mi_sizekorr(ptr);	ptr +=8;
@@ -902,7 +908,7 @@ unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
   mi_keydef
 ---------------------------------------------------------------------------*/
 
-uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
+uint32_t mi_keydef_write(int file, MI_KEYDEF *keydef)
 {
   unsigned char buff[MI_KEYDEF_SIZE];
   unsigned char *ptr=buff;
@@ -914,10 +920,10 @@ uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
   mi_int2store(ptr,keydef->keylength);		ptr +=2;
   mi_int2store(ptr,keydef->minlength);		ptr +=2;
   mi_int2store(ptr,keydef->maxlength);		ptr +=2;
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 {
    keydef->keysegs	= (uint) *ptr++;
    keydef->key_alg	= *ptr++;		/* Rtree or Btree */
@@ -937,7 +943,7 @@ unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 **  mi_keyseg
 ***************************************************************************/
 
-int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
+int mi_keyseg_write(int file, const HA_KEYSEG *keyseg)
 {
   unsigned char buff[HA_KEYSEG_SIZE];
   unsigned char *ptr=buff;
@@ -956,11 +962,11 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
   mi_int4store(ptr, pos);
   ptr+=4;
 
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
 
-unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
 {
    keyseg->type		= *ptr++;
    keyseg->language	= *ptr++;
@@ -987,7 +993,7 @@ unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
   mi_uniquedef
 ---------------------------------------------------------------------------*/
 
-uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
+uint32_t mi_uniquedef_write(int file, MI_UNIQUEDEF *def)
 {
   unsigned char buff[MI_UNIQUEDEF_SIZE];
   unsigned char *ptr=buff;
@@ -996,10 +1002,10 @@ uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
   *ptr++=  (unsigned char) def->key;
   *ptr++ = (unsigned char) def->null_are_equal;
 
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 {
    def->keysegs = mi_uint2korr(ptr);
    def->key	= ptr[2];
@@ -1011,7 +1017,7 @@ unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 **  MI_COLUMNDEF
 ***************************************************************************/
 
-uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
+uint32_t mi_recinfo_write(int file, MI_COLUMNDEF *recinfo)
 {
   unsigned char buff[MI_COLUMNDEF_SIZE];
   unsigned char *ptr=buff;
@@ -1020,10 +1026,10 @@ uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
   mi_int2store(ptr,recinfo->length);	ptr +=2;
   *ptr++ = recinfo->null_bit;
   mi_int2store(ptr,recinfo->null_pos);	ptr+= 2;
-  return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
+  return internal::my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;
@@ -1041,10 +1047,10 @@ The argument file_to_dup is here for the future if there would on some OS
 exist a dup()-like call that would give us two different file descriptors.
 *************************************************************************/
 
-int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, File file_to_dup)
+int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, int file_to_dup)
 {
   (void)file_to_dup; 
-  info->dfile=my_open(share->data_file_name, share->mode,
+  info->dfile=internal::my_open(share->data_file_name, share->mode,
                       MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;
 }
@@ -1052,7 +1058,7 @@ int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share, File file_to_dup)
 
 int mi_open_keyfile(MYISAM_SHARE *share)
 {
-  if ((share->kfile=my_open(share->unique_file_name, share->mode,
+  if ((share->kfile=internal::my_open(share->unique_file_name, share->mode,
                             MYF(MY_WME))) < 0)
     return 1;
   return 0;

@@ -21,9 +21,10 @@
 #ifndef DRIZZLED_LEX_COLUMN_H
 #define DRIZZLED_LEX_COLUMN_H
 
+namespace drizzled
+{
 
-
-class Lex_Column : public Sql_alloc
+class Lex_Column : public memory::SqlAlloc
 {
 public:
   String column;
@@ -31,5 +32,6 @@ public:
   Lex_Column (const String& x,const  uint& y ): column (x),rights (y) {}
 };
 
+}
 
 #endif /* DRIZZLED_LEX_COLUMN_H */

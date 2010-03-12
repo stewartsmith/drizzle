@@ -17,25 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESS_H
-#define DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESS_H
+#ifndef PLUGIN_COMPRESSION_UNCOMPRESS_H
+#define PLUGIN_COMPRESSION_UNCOMPRESS_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
-class Item_func_uncompress: public Item_str_func
+class Item_func_uncompress: public drizzled::Item_str_func
 {
-  String buffer;
+  drizzled::String buffer;
 public:
   Item_func_uncompress(): Item_str_func(){}
   virtual ~Item_func_uncompress() {}
   void fix_length_and_dec(){ maybe_null= 1; max_length= MAX_BLOB_WIDTH; }
   bool check_argument_count(int n) { return (n==1); }
   const char *func_name() const{return "uncompress";}
-  String *val_str(String *) ;
+  drizzled::String *val_str(drizzled::String *) ;
 };
 
 
-#endif /* DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESS_H */
+#endif /* PLUGIN_COMPRESSION_UNCOMPRESS_H */

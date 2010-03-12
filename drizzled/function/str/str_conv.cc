@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/str_conv.h>
+
+namespace drizzled
+{
 
 String *Item_str_conv::val_str(String *str)
 {
@@ -27,8 +30,8 @@ String *Item_str_conv::val_str(String *str)
   String *res;
   if (!(res=args[0]->val_str(str)))
   {
-    null_value=1; /* purecov: inspected */
-    return 0; /* purecov: inspected */
+    null_value=1;
+    return 0;
   }
   null_value=0;
   if (multiply == 1)
@@ -69,3 +72,4 @@ void Item_func_ucase::fix_length_and_dec()
   max_length= args[0]->max_length * multiply;
 }
 
+} /* namespace drizzled */

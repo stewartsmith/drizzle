@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/dayofmonth.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_dayofmonth::val_int()
 {
@@ -35,7 +38,7 @@ int64_t Item_func_dayofmonth::val_int()
   }
 
   /* Grab the first argument as a DateTime object */
-  drizzled::DateTime temporal;
+  DateTime temporal;
   Item_result arg0_result_type= args[0]->result_type();
   
   switch (arg0_result_type)
@@ -88,3 +91,5 @@ int64_t Item_func_dayofmonth::val_int()
   }
   return (int64_t) temporal.days();
 }
+
+} /* namespace drizzled */

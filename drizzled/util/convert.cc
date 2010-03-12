@@ -18,7 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include <drizzled/util/convert.h>
+#include <string>
+#include <iomanip>
+#include <sstream>
+
+using namespace std;
+
+namespace drizzled
+{
 
 uint64_t drizzled_string_to_hex(char *to, const char *from, uint64_t from_size)
 {
@@ -35,3 +45,40 @@ uint64_t drizzled_string_to_hex(char *to, const char *from, uint64_t from_size)
 
   return from_size * 2;
 }
+
+void bytesToHexdumpFormat(string &to, const unsigned char *from, size_t from_length)
+{
+  static const char hex_map[]= "0123456789abcdef";
+  unsigned int x, y;
+  ostringstream line_number;
+
+  for (x= 0; x < from_length; x+= 16)
+  {
+    line_number << setfill('0') << setw(6);
+    line_number << x;
+    to.append(line_number.str());
+    to.append(": ", 2);
+
+    for (y= 0; y < 16; y++)
+    {
+      if ((x + y) < from_length)
+      {
+        to.push_back(hex_map[(from[x+y]) >> 4]);
+        to.push_back(hex_map[(from[x+y]) & 0xF]);
+        to.push_back(' ');
+      }
+      else
+        to.append("   ");
+    }
+    to.push_back(' ');
+    for (y= 0; y < 16; y++)
+    {
+      if ((x + y) < from_length)
+        to.push_back(isprint(from[x + y]) ? from[x + y] : '.');
+    }
+    to.push_back('\n');
+    line_number.str("");
+  }
+}
+
+} /* namespace drizzled */

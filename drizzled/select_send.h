@@ -21,6 +21,12 @@
 #ifndef DRIZZLED_SELECT_SEND_H
 #define DRIZZLED_SELECT_SEND_H
 
+#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+
+namespace drizzled
+{
+
 class select_send :public select_result {
   /**
     True if we have sent result set metadata to the client.
@@ -37,7 +43,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    ha_release_temporary_latches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
     if (session->lock)
@@ -53,7 +59,7 @@ public:
   bool send_fields(List<Item> &list)
   {
     bool res;
-    if (! (res= session->protocol->sendFields(&list)))
+    if (! (res= session->client->sendFields(&list)))
       is_result_set_started= 1;
     return res;
   }
@@ -90,19 +96,17 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    ha_release_temporary_latches(session);
+    plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
     List_iterator_fast<Item> li(items);
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 
-    session->protocol->prepareForResend();
     Item *item;
     while ((item=li++))
     {
-      if (item->send(session->protocol, &buffer))
+      if (item->send(session->client, &buffer))
       {
-        session->protocol->free();
         my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
         break;
       }
@@ -110,10 +114,10 @@ public:
     session->sent_row_count++;
     if (session->is_error())
       return true;
-    if (session->protocol->isConnected())
-      return(session->protocol->write());
-    return false;
+    return session->client->flush();
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_SEND_H */

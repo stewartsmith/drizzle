@@ -28,9 +28,11 @@
 #ifndef DRIZZLED_TABLE_REFERENCE_H
 #define DRIZZLED_TABLE_REFERENCE_H
 
-#include <drizzled/global.h>
 #include <drizzled/base.h>
 #include <drizzled/sql_bitmap.h>
+
+namespace drizzled
+{
 
 class StoredKey;
 class Item;
@@ -71,5 +73,7 @@ struct table_reference_st
   */
   bool disable_cache;
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_TABLE_REFERENCE_H */

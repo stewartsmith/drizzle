@@ -21,7 +21,7 @@
   This file defines all compare functions
 */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/temporal.h"
@@ -30,11 +30,17 @@
 #include "drizzled/item/cache_int.h"
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
-
+#include "drizzled/time_functions.h"
+#include "drizzled/internal/my_sys.h"
+#include <math.h>
 #include <algorithm>
 
 using namespace std;
 
+namespace drizzled
+{
+
+extern const double log_10[309];
 
 static Eq_creator eq_creator;
 static Ne_creator ne_creator;
@@ -203,6 +209,7 @@ enum_field_types agg_field_type(Item **items, uint32_t nitems)
     collect_cmp_types()
       items             Array of items to collect types from
       nitems            Number of items in the array
+      skip_nulls        Don't collect types of NULL items if TRUE
 
   DESCRIPTION
     This function collects different result types for comparison of the first
@@ -213,7 +220,7 @@ enum_field_types agg_field_type(Item **items, uint32_t nitems)
     Bitmap of collected types - otherwise
 */
 
-static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
+static uint32_t collect_cmp_types(Item **items, uint32_t nitems, bool skip_nulls= false)
 {
   uint32_t i;
   uint32_t found_types;
@@ -222,6 +229,8 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
   found_types= 0;
   for (i= 1; i < nitems ; i++)
   {
+    if (skip_nulls && items[i]->type() == Item::NULL_ITEM)
+      continue; // Skip NULL constant items
     if ((left_result == ROW_RESULT ||
          items[i]->result_type() == ROW_RESULT) &&
         cmp_row_type(items[0], items[i]))
@@ -229,6 +238,12 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
     found_types|= 1<< (uint32_t)item_cmp_type(left_result,
                                            items[i]->result_type());
   }
+  /*
+   Even if all right-hand items are NULLs and we are skipping them all, we need
+   at least one type bit in the found_type bitmask.
+  */
+  if (skip_nulls && !found_types)
+    found_types= 1 << (uint)left_result;
   return found_types;
 }
 
@@ -804,7 +819,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       String *str_val;
       String tmp;
       /* DateTime used to pick up as many string conversion possibilities as possible. */
-      drizzled::DateTime temporal;
+      DateTime temporal;
 
       str_val= str_arg->val_str(&tmp);
       if (! str_val)
@@ -1047,7 +1062,7 @@ int Arg_comparator::compare_datetime()
   /* Compare values. */
   if (is_nulls_eq)
     return (a_value == b_value);
-  return a_value < b_value ? -1 : (a_value > b_value ? 1 : 0);
+  return (a_value < b_value) ? -1 : ((a_value > b_value) ? 1 : 0);
 }
 
 
@@ -1787,7 +1802,7 @@ void Item_func_interval::fix_length_and_dec()
 
     if (not_null_consts &&
         (intervals=
-          (interval_range*) sql_alloc(sizeof(interval_range) * (rows - 1))))
+          (interval_range*) memory::sql_alloc(sizeof(interval_range) * (rows - 1))))
     {
       if (use_decimal_comparison)
       {
@@ -2088,7 +2103,7 @@ int64_t Item_func_between::val_int()
   {
     int64_t value=args[0]->val_int(), a, b;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a=args[1]->val_int();
     b=args[2]->val_int();
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2109,7 +2124,7 @@ int64_t Item_func_between::val_int()
     my_decimal dec_buf, *dec= args[0]->val_decimal(&dec_buf),
                a_buf, *a_dec, b_buf, *b_dec;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a_dec= args[1]->val_decimal(&a_buf);
     b_dec= args[2]->val_decimal(&b_buf);
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2126,7 +2141,7 @@ int64_t Item_func_between::val_int()
   {
     double value= args[0]->val_real(),a,b;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a= args[1]->val_real();
     b= args[2]->val_real();
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2706,7 +2721,7 @@ void Item_func_case::fix_length_and_dec()
   Item **agg;
   uint32_t nagg;
   uint32_t found_types= 0;
-  if (!(agg= (Item**) sql_alloc(sizeof(Item*)*(ncases+1))))
+  if (!(agg= (Item**) memory::sql_alloc(sizeof(Item*)*(ncases+1))))
     return;
 
   /*
@@ -3049,6 +3064,12 @@ static int cmp_decimal(void *, my_decimal *a, my_decimal *b)
 }
 
 
+void in_vector::sort()
+{
+  internal::my_qsort2(base,used_count,size,compare, (void *) collation);
+}
+
+
 int in_vector::find(Item *item)
 {
   unsigned char *result=get_value(item);
@@ -3080,7 +3101,7 @@ in_string::~in_string()
 {
   if (base)
   {
-    // base was allocated with help of sql_alloc => following is OK
+    // base was allocated with help of memory::sql_alloc => following is OK
     for (uint32_t i=0 ; i < count ; i++)
       ((String*) base)[i].free();
   }
@@ -3202,7 +3223,7 @@ unsigned char *in_double::get_value(Item *item)
 {
   tmp= item->val_real();
   if (item->null_value)
-    return 0;					/* purecov: inspected */
+    return 0;
   return (unsigned char*) &tmp;
 }
 
@@ -3330,7 +3351,7 @@ void cmp_item_row::store_value_by_template(cmp_item *t, Item *item)
     return;
   }
   n= tmpl->n;
-  if ((comparators= (cmp_item **) sql_alloc(sizeof(cmp_item *)*n)))
+  if ((comparators= (cmp_item **) memory::sql_alloc(sizeof(cmp_item *)*n)))
   {
     item->bring_value();
     item->null_value= 0;
@@ -3525,7 +3546,7 @@ void Item_func_in::fix_length_and_dec()
   uint32_t type_cnt= 0, i;
   Item_result cmp_type= STRING_RESULT;
   left_result_type= args[0]->result_type();
-  if (!(found_types= collect_cmp_types(args, arg_count)))
+  if (!(found_types= collect_cmp_types(args, arg_count, true)))
     return;
 
   for (arg= args + 1, arg_end= args + arg_count; arg != arg_end ; arg++)
@@ -3702,9 +3723,11 @@ void Item_func_in::fix_length_and_dec()
       uint32_t j=0;
       for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
       {
-	array->set(j,args[arg_num]);
 	if (!args[arg_num]->null_value)			// Skip NULL values
+        {
+          array->set(j,args[arg_num]);
 	  j++;
+        }
 	else
 	  have_null= 1;
       }
@@ -3883,7 +3906,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if ((!item->fixed &&
 	 item->fix_fields(session, li.ref())) ||
 	(item= *li.ref())->check_cols(1))
-      return true; /* purecov: inspected */
+      return true;
     used_tables_cache|=     item->used_tables();
     if (item->const_item())
       and_tables_cache= (table_map) 0;
@@ -4334,7 +4357,7 @@ int64_t Item_func_like::val_int()
 	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
 		    make_escape_code(cmp.cmp_collation.collation, escape),
-                    wild_one,wild_many) ? 0 : 1;
+                    internal::wild_one,internal::wild_many) ? 0 : 1;
 }
 
 
@@ -4351,9 +4374,9 @@ Item_func::optimize_type Item_func_like::select_optimize() const
     if (!res2)
       return OPTIMIZE_NONE;
 
-    if (*res2->ptr() != wild_many)
+    if (*res2->ptr() != internal::wild_many)
     {
-      if (args[0]->result_type() != STRING_RESULT || *res2->ptr() != wild_one)
+      if (args[0]->result_type() != STRING_RESULT || *res2->ptr() != internal::wild_one)
 	return OPTIMIZE_OP;
     }
   }
@@ -4381,12 +4404,12 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      escape= (char *)sql_alloc(escape_str->length());
+      escape= (char *)memory::sql_alloc(escape_str->length());
       strcpy(escape, escape_str->ptr()); 
     }
     else
     {
-      escape= (char *)sql_alloc(1);
+      escape= (char *)memory::sql_alloc(1);
       strcpy(escape, "\\");
     } 
    
@@ -4409,11 +4432,11 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
       */
 
       if (len > MIN_TURBOBM_PATTERN_LEN + 2 &&
-          *first == wild_many &&
-          *last  == wild_many)
+          *first == internal::wild_many &&
+          *last  == internal::wild_many)
       {
         const char* tmp = first + 1;
-        for (; *tmp != wild_many && *tmp != wild_one; tmp++)
+        for (; *tmp != internal::wild_many && *tmp != internal::wild_one; tmp++)
         {
           if (escape == tmp)
             break;
@@ -5148,3 +5171,4 @@ void Item_equal::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */

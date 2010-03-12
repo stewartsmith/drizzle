@@ -1,17 +1,34 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-*/
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin/authentication.h>
-#include <drizzled/gettext.h>
+#include "config.h"
 
 #include <curl/curl.h>
 
 #include <string>
+#include <cassert>
 
+#include "drizzled/security_context.h"
+#include "drizzled/plugin/authentication.h"
+#include "drizzled/gettext.h"
+
+using namespace drizzled;
 using namespace std;
 
 static bool sysvar_auth_http_enable= false;
@@ -25,12 +42,13 @@ static size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
 }
 
 
-class Auth_http : public Authentication
+class Auth_http : public drizzled::plugin::Authentication
 {
   CURLcode rv;
   CURL *curl_handle;
 public:
-  Auth_http() : Authentication()
+  Auth_http(std::string name_arg)
+    : drizzled::plugin::Authentication(name_arg)
   {
     // we are trusting that plugin initializers are called singlethreaded at startup
     // if something else also calls curl_global_init() in a threadrace while we are here,
@@ -54,15 +72,14 @@ public:
     curl_easy_cleanup(curl_handle);
   }
 
-  virtual bool authenticate(Session *session, const char *password)
+  virtual bool authenticate(const SecurityContext &sctx, const string &password)
   {
     long http_response_code;
 
     if (sysvar_auth_http_enable == false)
       return true;
 
-    assert(session->security_ctx.user.c_str());
-    assert(password);
+    assert(sctx.getUser().c_str());
 
 
     // set the parameters: url, username, password
@@ -70,12 +87,12 @@ public:
 #if defined(HAVE_CURLOPT_USERNAME)
 
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERNAME,
-                         session->security_ctx.user.c_str());
-    rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password);
+                         sctx.getUser().c_str());
+    rv= curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password.c_str());
 
 #else
 
-    string userpwd= session->security_ctx.user;
+    string userpwd(sctx.getUser());
     userpwd.append(":");
     userpwd.append(password);
     rv= curl_easy_setopt(curl_handle, CURLOPT_USERPWD, userpwd.c_str());
@@ -112,7 +129,7 @@ static int initialize(drizzled::plugin::Registry &registry)
   if (curl_global_init(CURL_GLOBAL_NOTHING) != 0)
     return 1;
 
-  auth= new Auth_http();
+  auth= new Auth_http("auth_http");
   registry.add(auth);
 
   return 0;
@@ -150,15 +167,16 @@ static DRIZZLE_SYSVAR_STR(
   NULL, /* update func*/
   "http://localhost/" /* default */);
 
-static struct st_mysql_sys_var* auth_http_system_variables[]= {
+static drizzle_sys_var* auth_http_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(url),
   NULL
 };
 
 
-drizzle_declare_plugin(auth_http)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "auth_http",
   "0.1",
   "Mark Atwood",
@@ -166,8 +184,7 @@ drizzle_declare_plugin(auth_http)
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize, /* Plugin Deinit */
-  NULL,   /* status variables */
   auth_http_system_variables,
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

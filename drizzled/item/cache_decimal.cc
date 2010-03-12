@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/cache_decimal.h>
+
+namespace drizzled
+{
 
 void Item_cache_decimal::store(Item *item)
 {
@@ -60,3 +63,4 @@ my_decimal *Item_cache_decimal::val_decimal(my_decimal *)
 }
 
 
+} /* namespace drizzled */

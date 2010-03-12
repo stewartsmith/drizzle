@@ -13,9 +13,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <string.h>
+
+using namespace drizzled;
 
 	/* Read prev record for key */
 
@@ -27,7 +29,7 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
   HP_KEYDEF *keyinfo;
 
   if (info->lastinx < 0)
-    return(my_errno=HA_ERR_WRONG_INDEX);
+    return(errno=HA_ERR_WRONG_INDEX);
   keyinfo = share->keydef + info->lastinx;
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
   {
@@ -57,7 +59,7 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
     }
     else
     {
-      my_errno = HA_ERR_KEY_NOT_FOUND;
+      errno = HA_ERR_KEY_NOT_FOUND;
     }
   }
   else
@@ -72,15 +74,15 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
     else
     {
       pos=0;					/* Read next after last */
-      my_errno=HA_ERR_KEY_NOT_FOUND;
+      errno=HA_ERR_KEY_NOT_FOUND;
     }
   }
   if (!pos)
   {
     info->update=HA_STATE_PREV_FOUND;		/* For heap_rprev */
-    if (my_errno == HA_ERR_KEY_NOT_FOUND)
-      my_errno=HA_ERR_END_OF_FILE;
-    return(my_errno);
+    if (errno == HA_ERR_KEY_NOT_FOUND)
+      errno=HA_ERR_END_OF_FILE;
+    return(errno);
   }
   hp_extract_record(share, record, pos);
   info->update=HA_STATE_AKTIV | HA_STATE_PREV_FOUND;

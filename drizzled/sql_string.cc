@@ -15,27 +15,99 @@
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
-#include "global.h"
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
+#include "config.h"
+
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/charset.h"
+#include "drizzled/global_charset_info.h"
 
 #include <algorithm>
 
+#include "drizzled/sql_string.h"
+
 using namespace std;
 
-/*
-  The following extern declarations are ok as these are interface functions
-  required by the string function
-*/
+namespace drizzled
+{
 
-extern unsigned char* sql_alloc(unsigned size);
-extern void sql_element_free(void *ptr);
+// Converstion functions to and from std::string.
 
-#include "sql_string.h"
+std::string String_to_std_string(String const& s)
+{
+   return std::string(s.ptr(), s.length());
+}
+
+String* set_String_from_std_string(String* s, std::string const& cs)
+{
+   s->set_ascii(cs.c_str(), cs.length());
+   s->copy();
+   return s;
+}
 
 /*****************************************************************************
 ** String functions
 *****************************************************************************/
+
+String::String()
+  : Ptr(NULL),
+    str_length(0),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(&my_charset_bin)
+{ }
+
+
+String::String(uint32_t length_arg)
+  : Ptr(NULL),
+    str_length(0),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(&my_charset_bin)
+{
+  (void) real_alloc(length_arg);
+}
+
+String::String(const char *str, const CHARSET_INFO * const cs)
+  : Ptr(const_cast<char *>(str)),
+    str_length(static_cast<uint32_t>(strlen(str))),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(cs)
+{ }
+
+
+String::String(const char *str, uint32_t len, const CHARSET_INFO * const cs)
+  : Ptr(const_cast<char *>(str)),
+    str_length(len),
+    Alloced_length(0),
+    alloced(false),
+    str_charset(cs)
+{ }
+
+
+String::String(char *str, uint32_t len, const CHARSET_INFO * const cs)
+  : Ptr(str),
+    str_length(len),
+    Alloced_length(len),
+    alloced(false),
+    str_charset(cs)
+{ }
+
+
+String::String(const String &str)
+  : Ptr(str.Ptr),
+    str_length(str.str_length),
+    Alloced_length(str.Alloced_length),
+    alloced(false),
+    str_charset(str.str_charset)
+{ }
+
+
+void *String::operator new(size_t size, memory::Root *mem_root)
+{
+  return alloc_root(mem_root, static_cast<uint32_t>(size));
+}
 
 String::~String() { free(); }
 
@@ -114,10 +186,12 @@ bool String::set_real(double num,uint32_t decimals, const CHARSET_INFO * const c
   str_charset=cs;
   if (decimals >= NOT_FIXED_DEC)
   {
-    len= my_gcvt(num, MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
+    len= internal::my_gcvt(num,
+                           internal::MY_GCVT_ARG_DOUBLE,
+                           sizeof(buff) - 1, buff, NULL);
     return copy(buff, len, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
-  len= my_fcvt(num, decimals, buff, NULL);
+  len= internal::my_fcvt(num, decimals, buff, NULL);
   return copy(buff, (uint32_t) len, &my_charset_utf8_general_ci, cs,
               &dummy_errors);
 }
@@ -425,8 +499,9 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
       {
 	if (realloc(str_length+(uint32_t) diff))
 	  return true;
-	bmove_upp((unsigned char*) Ptr+str_length+diff, (unsigned char*) Ptr+str_length,
-		  str_length-offset-arg_length);
+	internal::bmove_upp((unsigned char*) Ptr+str_length+diff,
+                            (unsigned char*) Ptr+str_length,
+                            str_length-offset-arg_length);
       }
       if (to_length)
 	memcpy(Ptr+offset,to,to_length);
@@ -512,70 +587,6 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
 /****************************************************************************
   Help functions
 ****************************************************************************/
-
-
-
-/**
-  Copy string with HEX-encoding of "bad" characters.
-
-  @details This functions copies the string pointed by "src"
-  to the string pointed by "dst". Not more than "srclen" bytes
-  are read from "src". Any sequences of bytes representing
-  a not-well-formed substring (according to cs) are hex-encoded,
-  and all well-formed substrings (according to cs) are copied as is.
-  Not more than "dstlen" bytes are written to "dst". The number
-  of bytes written to "dst" is returned.
-
-   @param      cs       character set pointer of the destination string
-   @param[out] dst      destination string
-   @param      dstlen   size of dst
-   @param      src      source string
-   @param      srclen   length of src
-
-   @retval     result length
-*/
-
-size_t
-my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
-                          char *dst, size_t dstlen,
-                          const char *src, size_t srclen)
-{
-  const char *srcend= src + srclen;
-  char *dst0= dst;
-
-  for ( ; src < srcend ; )
-  {
-    size_t chlen;
-    if ((chlen= my_ismbchar(cs, src, srcend)))
-    {
-      if (dstlen < chlen)
-        break; /* purecov: inspected */
-      memcpy(dst, src, chlen);
-      src+= chlen;
-      dst+= chlen;
-      dstlen-= chlen;
-    }
-    else if (*src & 0x80)
-    {
-      if (dstlen < 4)
-        break; /* purecov: inspected */
-      *dst++= '\\';
-      *dst++= 'x';
-      *dst++= _dig_vec_upper[((unsigned char) *src) >> 4];
-      *dst++= _dig_vec_upper[((unsigned char) *src) & 15];
-      src++;
-      dstlen-= 4;
-    }
-    else
-    {
-      if (dstlen < 1)
-        break; /* purecov: inspected */
-      *dst++= *src++;
-      dstlen--;
-    }
-  }
-  return dst - dst0;
-}
 
 /*
   copy a string,
@@ -777,13 +788,45 @@ void String::swap(String &s)
   std::swap(str_charset, s.str_charset);
 }
 
+void String::q_append(const uint32_t n)
+{
+  int4store(Ptr + str_length, n);
+  str_length += 4;
+}
+void String::q_append(double d)
+{
+  float8store(Ptr + str_length, d);
+  str_length += 8;
+}
+void String::q_append(double *d)
+{
+  float8store(Ptr + str_length, *d);
+  str_length += 8;
+}
+void String::q_append(const char *data, uint32_t data_len)
+{
+  memcpy(Ptr + str_length, data, data_len);
+  str_length += data_len;
+}
 
-bool operator==(const String &s1, const String &s2)
+void String::write_at_position(int position, uint32_t value)
+{
+  int4store(Ptr + position,value);
+}
+bool check_if_only_end_space(const CHARSET_INFO * const cs, char *str,
+                             char *end)
+{
+  return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
+}
+
+} /* namespace drizzled */
+
+bool operator==(const drizzled::String &s1, const drizzled::String &s2)
 {
   return stringcmp(&s1,&s2) == 0;
 }
 
-bool operator!=(const String &s1, const String &s2)
+bool operator!=(const drizzled::String &s1, const drizzled::String &s2)
 {
   return !(s1 == s2);
 }

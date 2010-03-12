@@ -24,16 +24,27 @@
 */
 
 /* Basic functions needed by many modules */
-#include <drizzled/server_includes.h>
-#include <assert.h>
+#include "config.h"
 
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
-#include <drizzled/sql_base.h>
+#include <pthread.h>
+
+#include <cassert>
+
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
+#include "drizzled/sql_base.h"
+#include "drizzled/hash.h"
+#include "drizzled/pthread_globals.h"
+#include "drizzled/internal/my_pthread.h"
 
 using namespace std;
 
-static HASH table_def_cache;
+namespace drizzled
+{
+
+extern size_t table_def_size;
+typedef hash_map<string, TableShare *> TableDefCache;
+TableDefCache table_def_cache;
 static pthread_mutex_t LOCK_table_share;
 bool table_def_inited= false;
 
@@ -41,37 +52,17 @@ bool table_def_inited= false;
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
 
-extern "C"
+
+void TableShare::cacheStart(void)
 {
-  unsigned char *table_def_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
-}
-
-unsigned char *table_def_key(const unsigned char *record,
-                             size_t *length,
-                             bool )
-{
-  TableShare *entry=(TableShare*) record;
-  *length= entry->table_cache_key.length;
-  return (unsigned char*) entry->table_cache_key.str;
-}
-
-
-static void table_def_free_entry(TableShare *share)
-{
-  share->free_table_share();
-}
-
-
-bool TableShare::cacheStart(void)
-{
-  table_def_inited= true;
   pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
-
-  return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
-                   0, 0, table_def_key,
-                   (hash_free_key) table_def_free_entry, 0);
+  table_def_inited= true;
+  /* 
+   * This is going to overalloc a bit - as rehash sets the number of
+   * buckets, not the number of elements. BUT, it'll allow us to not need
+   * to rehash later on as the hash_map grows.
+   */
+  table_def_cache.rehash(table_def_size);
 }
 
 
@@ -79,16 +70,18 @@ void TableShare::cacheStop(void)
 {
   if (table_def_inited)
   {
-    table_def_inited= 0;
+    table_def_inited= false;
     pthread_mutex_destroy(&LOCK_table_share);
-    hash_free(&table_def_cache);
   }
 }
 
 
+/**
+ * @TODO: This should return size_t
+ */
 uint32_t cached_table_definitions(void)
 {
-  return table_def_cache.records;
+  return static_cast<uint32_t>(table_def_cache.size());
 }
 
 
@@ -115,7 +108,14 @@ void TableShare::release(TableShare *share)
 
   if (to_be_deleted)
   {
-    hash_delete(&table_def_cache, (unsigned char*) share);
+    const string key_string(share->table_cache_key.str,
+                            share->table_cache_key.length);
+    TableDefCache::iterator iter= table_def_cache.find(key_string);
+    if (iter != table_def_cache.end())
+    {
+      (*iter).second->free_table_share();
+      table_def_cache.erase(iter);
+    }
     return;
   }
   pthread_mutex_unlock(&share->mutex);
@@ -123,21 +123,46 @@ void TableShare::release(TableShare *share)
 
 void TableShare::release(const char *key, uint32_t key_length)
 {
-  TableShare *share;
+  const string key_string(key, key_length);
 
-  if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
-                                        key_length)))
+  TableDefCache::iterator iter= table_def_cache.find(key_string);
+  if (iter != table_def_cache.end())
   {
+    TableShare *share= (*iter).second;
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
-      hash_delete(&table_def_cache, (unsigned char*) share);
+      share->free_table_share();
+      table_def_cache.erase(key_string);
     }
   }
 }
 
 
+static TableShare *foundTableShare(TableShare *share)
+{
+  /*
+    We found an existing table definition. Return it if we didn't get
+    an error when reading the table definition from file.
+  */
+
+  /* We must do a lock to ensure that the structure is initialized */
+  (void) pthread_mutex_lock(&share->mutex);
+  if (share->error)
+  {
+    /* Table definition contained an error */
+    share->open_table_error(share->error, share->open_errno, share->errarg);
+    (void) pthread_mutex_unlock(&share->mutex);
+
+    return NULL;
+  }
+
+  share->ref_count++;
+  (void) pthread_mutex_unlock(&share->mutex);
+
+  return share;
+}
 
 /*
   Get TableShare for a table.
@@ -166,14 +191,18 @@ TableShare *TableShare::getShare(Session *session,
                                  TableList *table_list, char *key,
                                  uint32_t key_length, uint32_t, int *error)
 {
-  TableShare *share;
+  const string key_string(key, key_length);
+  TableShare *share= NULL;
 
   *error= 0;
 
   /* Read table definition from cache */
-  if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
-                                        key_length)))
-    goto found;
+  TableDefCache::iterator iter= table_def_cache.find(key_string);
+  if (iter != table_def_cache.end())
+  {
+    share= (*iter).second;
+    return foundTableShare(share);
+  }
 
   if (!(share= alloc_table_share(table_list, key, key_length)))
   {
@@ -186,42 +215,28 @@ TableShare *TableShare::getShare(Session *session,
   */
   (void) pthread_mutex_lock(&share->mutex);
 
-  if (my_hash_insert(&table_def_cache, (unsigned char*) share))
+  /**
+   * @TODO: we need to eject something if we exceed table_def_size
+   */
+  pair<TableDefCache::iterator, bool> ret=
+    table_def_cache.insert(make_pair(key_string, share));
+  if (ret.second == false)
   {
     share->free_table_share();
-    return NULL;				// return error
+    return NULL;
   }
-  if (open_table_def(session, share))
+  
+  if (open_table_def(*session, share))
   {
     *error= share->error;
-    (void) hash_delete(&table_def_cache, (unsigned char*) share);
+    table_def_cache.erase(key_string);
+    share->free_table_share();
     return NULL;
   }
   share->ref_count++;				// Mark in use
   (void) pthread_mutex_unlock(&share->mutex);
-  return(share);
-
-found:
-  /*
-    We found an existing table definition. Return it if we didn't get
-    an error when reading the table definition from file.
-  */
-
-  /* We must do a lock to ensure that the structure is initialized */
-  (void) pthread_mutex_lock(&share->mutex);
-  if (share->error)
-  {
-    /* Table definition contained an error */
-    share->open_table_error(share->error, share->open_errno, share->errarg);
-    (void) pthread_mutex_unlock(&share->mutex);
-
-    return NULL;
-  }
-
-  share->ref_count++;
-  (void) pthread_mutex_unlock(&share->mutex);
-
   return share;
+
 }
 
 
@@ -246,5 +261,43 @@ TableShare *TableShare::getShare(const char *db, const char *table_name)
 
   key_length= TableShare::createKey(key, db, table_name);
 
-  return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
+  const string key_string(key, key_length);
+  TableDefCache::iterator iter= table_def_cache.find(key_string);
+  if (iter != table_def_cache.end())
+  {
+    return (*iter).second;
+  }
+  else
+  {
+    return NULL;
+  }
 }
+
+/**
+ * @todo
+ *
+ * Precache this stuff....
+ */
+bool TableShare::fieldInPrimaryKey(Field *in_field) const
+{
+  assert(table_proto != NULL);
+  
+  size_t num_indexes= table_proto->indexes_size();
+
+  for (size_t x= 0; x < num_indexes; ++x)
+  {
+    const message::Table::Index &index= table_proto->indexes(x);
+    if (index.is_primary())
+    {
+      size_t num_parts= index.index_part_size();
+      for (size_t y= 0; y < num_parts; ++y)
+      {
+        if (index.index_part(y).fieldnr() == in_field->field_index)
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+} /* namespace drizzled */

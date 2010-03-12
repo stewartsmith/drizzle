@@ -23,10 +23,12 @@
 
 #include <drizzled/statement.h>
 
-class Session;
 
 namespace drizzled
 {
+
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +37,14 @@ class UnlockTables : public Statement
 public:
   UnlockTables(Session *in_session)
     :
-      Statement(in_session, SQLCOM_UNLOCK_TABLES)
+      Statement(in_session)
   {}
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_UNLOCK_TABLES_H */

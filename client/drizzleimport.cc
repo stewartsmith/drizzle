@@ -1,4 +1,5 @@
-/* Copyright (C) 2008 Drizzle Open Source Development Team
+/* Copyright (C) 2000-2006 MySQL AB
+   Copyright (C) 2008-2009 Sun Microsystems, Inc
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,6 +29,7 @@
 
 #include "client_priv.h"
 #include <string>
+#include <sstream>
 
 #include <pthread.h>
 
@@ -35,12 +37,9 @@
 #include <drizzled/gettext.h>
 
 using namespace std;
+using namespace drizzled;
 
-extern "C"
-{
-  bool get_one_option(int optid, const struct my_option *, char *argument);
-  void * worker_thread(void *arg);
-}
+extern "C" void * worker_thread(void *arg);
 
 int exitcode= 0;
 
@@ -57,16 +56,15 @@ static char *add_load_option(char *ptr,const char *object,
 
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
-            ignore_unique= false, opt_compress= false, opt_low_priority= false,
-            tty_password= false;
-static bool debug_info_flag= false, debug_check_flag= false;
-static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
+            ignore_unique= false, opt_low_priority= false,
+            tty_password= false, opt_mysql= false;
+
+static uint32_t opt_use_threads= 0, opt_local_file= 0;
 static char  *opt_password= NULL, *current_user= NULL,
     *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
     *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
     *escaped= NULL, *opt_columns= NULL;
 static uint32_t opt_drizzle_port= 0;
-static char * opt_drizzle_unix_port= 0;
 static int64_t opt_ignore_lines= -1;
 
 static struct my_option my_long_options[] =
@@ -75,17 +73,8 @@ static struct my_option my_long_options[] =
    "Use only these columns to import the data to. Give the column names in a comma separated list. This is same as giving columns to LOAD DATA INFILE.",
    (char**) &opt_columns, (char**) &opt_columns, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
-  {"compress", 'C', "Use compression in server/client protocol.",
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
   {"debug",'#', "Output debug log. Often this is 'd:t:o,filename'.", 0, 0, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delete", 'd', "First delete all rows from table.", (char**) &opt_delete,
    (char**) &opt_delete, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"fields-terminated-by", OPT_FTB,
@@ -123,6 +112,9 @@ static struct my_option my_long_options[] =
   {"low-priority", OPT_LOW_PRIORITY,
    "Use LOW_PRIORITY when updating the table.", (char**) &opt_low_priority,
    (char**) &opt_low_priority, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
+   0, 0, 0},
   {"password", 'P',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
@@ -136,9 +128,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_replace, (char**) &opt_replace, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Be more silent.", (char**) &silent, (char**) &silent, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"use-threads", OPT_USE_THREADS,
    "Load files in parallel. The argument is the number "
    "of threads to use for loading data.",
@@ -158,7 +147,7 @@ static const char *load_default_groups[]= { "drizzleimport","client",0 };
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,my_progname,
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,internal::my_progname,
     IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
@@ -175,13 +164,13 @@ If one uses sockets to connect to the Drizzle server, the server will open and\n
 read the text file directly. In other cases the client will open the text\n\
 file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 
-  printf("\nUsage: %s [OPTIONS] database textfile...",my_progname);
-  print_defaults("drizzle",load_default_groups);
+  printf("\nUsage: %s [OPTIONS] database textfile...",internal::my_progname);
+  internal::print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 }
 
-bool get_one_option(int optid, const struct my_option *, char *argument)
+static bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -254,10 +243,6 @@ static int get_options(int *argc, char ***argv)
 
   if ((ho_error=handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
 
   if (enclosed && opt_enclosed)
   {
@@ -290,11 +275,11 @@ static int write_to_table(char *filename, drizzle_con_st *con)
   drizzle_result_st result;
   drizzle_return_t ret;
 
-  fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
+  internal::fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
   if (!opt_local_file)
     strcpy(hard_path,filename);
   else
-    my_load_path(hard_path, filename, NULL); /* filename includes the path */
+    internal::my_load_path(hard_path, filename, NULL); /* filename includes the path */
 
   if (opt_delete)
   {
@@ -389,7 +374,7 @@ static void lock_table(drizzle_con_st *con, int tablecount, char **raw_tablename
   query.append("LOCK TABLES ");
   for (i=0 ; i < tablecount ; i++)
   {
-    fn_format(tablename, raw_tablename[i], "", "", 1 | 2);
+    internal::fn_format(tablename, raw_tablename[i], "", "", 1 | 2);
     query.append(tablename);
     query.append(" WRITE,");
   }
@@ -417,7 +402,7 @@ static drizzle_con_st *db_connect(char *host, char *database,
   if (!(drizzle= drizzle_create(NULL)))
     return 0;
   if (!(con= drizzle_con_add_tcp(drizzle,NULL,host,opt_drizzle_port,user,passwd,
-                                 database, DRIZZLE_CON_NONE)))
+                                 database, opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE)))
   {
     return 0;
   }
@@ -564,7 +549,7 @@ error:
   counter--;
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
-  my_thread_end();
+  internal::my_thread_end();
 
   return 0;
 }
@@ -576,12 +561,12 @@ int main(int argc, char **argv)
   char **argv_to_free;
   MY_INIT(argv[0]);
 
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
   /* argv is changed in the program */
   argv_to_free= argv;
   if (get_options(&argc, &argv))
   {
-    free_defaults(argv_to_free);
+    internal::free_defaults(argv_to_free);
     return(1);
   }
 
@@ -618,7 +603,7 @@ int main(int argc, char **argv)
         counter--;
         pthread_mutex_unlock(&counter_mutex);
         fprintf(stderr,"%s: Could not create thread\n",
-                my_progname);
+                internal::my_progname);
       }
     }
 
@@ -646,8 +631,8 @@ int main(int argc, char **argv)
     drizzle_return_t ret;
     if (!(con= db_connect(current_host,current_db,current_user,opt_password)))
     {
-      free_defaults(argv_to_free);
-      return(1); /* purecov: deadcode */
+      internal::free_defaults(argv_to_free);
+      return(1);
     }
 
     if (drizzle_query_str(con, &result,
@@ -671,7 +656,7 @@ int main(int argc, char **argv)
     db_disconnect(current_host, con);
   }
   free(opt_password);
-  free_defaults(argv_to_free);
-  my_end(my_end_arg);
+  internal::free_defaults(argv_to_free);
+  internal::my_end();
   return(exitcode);
 }

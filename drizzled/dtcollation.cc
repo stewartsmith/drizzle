@@ -17,16 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/dtcollation.h>
 
 #include <drizzled/definitions.h>
-#include <mysys/my_sys.h>
-#include <mystrings/m_ctype.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/charset_info.h"
 #include <drizzled/error.h>
 #include <drizzled/function/str/conv_charset.h>
 #include <drizzled/session.h>
+#include "drizzled/charset.h"
 
+namespace drizzled
+{
 
 DTCollation::DTCollation()
 {
@@ -333,3 +336,4 @@ void my_coll_agg_error(Item** args, uint32_t count, const char *fname,
     my_error(ER_CANT_AGGREGATE_NCOLLATIONS,MYF(0),fname);
 }
 
+} /* namespace drizzled */

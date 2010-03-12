@@ -18,11 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_VARSTRING
-#define DRIZZLE_SERVER_FIELD_VARSTRING
+#ifndef DRIZZLED_FIELD_VARSTRING_H
+#define DRIZZLED_FIELD_VARSTRING_H
 
 #include <drizzled/field/str.h>
 #include <string>
+
+namespace drizzled
+{
 
 class Field_varstring :public Field_str {
 public:
@@ -41,17 +44,21 @@ public:
   /* Store number of bytes used to store length (1 or 2) */
   uint32_t length_bytes;
   Field_varstring(unsigned char *ptr_arg,
-                  uint32_t len_arg, uint32_t length_bytes_arg,
-                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-                  enum utype unireg_check_arg, const char *field_name_arg,
-                  TableShare *share, const CHARSET_INFO * const cs);
-  Field_varstring(uint32_t len_arg,bool maybe_null_arg,
+                  uint32_t len_arg,
+                  uint32_t length_bytes_arg,
+                  unsigned char *null_ptr_arg,
+                  unsigned char null_bit_arg,
                   const char *field_name_arg,
-                  TableShare *share, const CHARSET_INFO * const cs);
+                  TableShare *share,
+                  const CHARSET_INFO * const cs);
+  Field_varstring(uint32_t len_arg,
+                  bool maybe_null_arg,
+                  const char *field_name_arg,
+                  TableShare *share,
+                  const CHARSET_INFO * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
-  uint32_t row_pack_length() { return field_length; }
   bool zero_pack() const { return 0; }
   int  reset(void) { memset(ptr, 0, field_length+length_bytes); return 0; }
   uint32_t pack_length() const { return (uint32_t) field_length+length_bytes; }
@@ -82,46 +89,32 @@ public:
   uint32_t get_key_image(std::basic_string <unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
-  virtual unsigned char *pack(unsigned char *to, 
+  virtual unsigned char *pack(unsigned char *to,
                               const unsigned char *from,
                               uint32_t max_length,
                               bool low_byte_first);
 
-  unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key_from_key_image(unsigned char* to,
-                                         const unsigned char *from,
-                                         uint32_t max_length,
-                                         bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char* to,
                                       const unsigned char *from,
                                       uint32_t param_data,
                                       bool low_byte_first);
- 
-  const unsigned char *unpack_key(unsigned char* to, const unsigned char *from,
-                          uint32_t max_length, bool low_byte_first);
-  int pack_cmp(const unsigned char *a, const unsigned char *b, uint32_t key_length,
-               bool insert_or_update);
-  int pack_cmp(const unsigned char *b, uint32_t key_length,bool insert_or_update);
+
   int cmp_binary(const unsigned char *a,const unsigned char *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const unsigned char *,const unsigned char*);
   int key_cmp(const unsigned char *str, uint32_t length);
-  uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   uint32_t max_packed_col_length(uint32_t max_length);
-  uint32_t data_length();
   uint32_t used_length();
   uint32_t size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
-  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
-  Field *new_key_field(MEM_ROOT *root, Table *new_table,
+  Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
+  Field *new_key_field(memory::Root *root, Table *new_table,
                        unsigned char *new_ptr, unsigned char *new_null_ptr,
                        uint32_t new_null_bit);
-  uint32_t is_equal(CreateField *new_field);
-  void hash(uint32_t *nr, uint32_t *nr2);
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FIELD_VARSTRING_H */
 

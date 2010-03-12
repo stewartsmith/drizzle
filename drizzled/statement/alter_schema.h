@@ -21,28 +21,28 @@
 #ifndef DRIZZLED_STATEMENT_ALTER_SCHEMA_H
 #define DRIZZLED_STATEMENT_ALTER_SCHEMA_H
 
-#include <drizzled/statement.h>
-
-class Session;
+#include <drizzled/statement/create_schema.h>
 
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
-class AlterSchema : public Statement
+class AlterSchema : public CreateSchema
 {
 public:
   AlterSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ALTER_DB)
-  {}
+      CreateSchema(in_session)
+  { }
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_ALTER_SCHEMA_H */

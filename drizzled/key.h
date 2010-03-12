@@ -21,17 +21,24 @@
 #ifndef DRIZZLED_KEY_H
 #define DRIZZLED_KEY_H
 
+#include <string>
 
-#include <drizzled/sql_alloc.h>
-#include <drizzled/key_part_spec.h>
-#include <drizzled/sql_list.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/handler_structs.h>
+#include "drizzled/memory/sql_alloc.h"
+#include "drizzled/key_part_spec.h"
+#include "drizzled/sql_list.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/sql_string.h"
+#include "drizzled/handler_structs.h"
+
+namespace drizzled
+{
+
+namespace memory { class Root; }
 
 class Item;
-typedef struct st_mem_root MEM_ROOT;
+class MyBitmap;
 
-class Key :public Sql_alloc {
+class Key :public memory::SqlAlloc {
 public:
   enum Keytype { PRIMARY, UNIQUE, MULTIPLE, FOREIGN_KEY};
   enum Keytype type;
@@ -52,26 +59,13 @@ public:
     :type(type_par), key_create_info(*key_info_arg), columns(cols),
     generated(generated_arg)
   {
-    name.str= (char *)name_arg;
+    name.str= const_cast<char *>(name_arg);
     name.length= name_len_arg;
   }
 
-  /**
-   * Construct an (almost) deep copy of this key. Only those
-   * elements that are known to never change are not copied.
-   * If out of memory, a partial copy is returned and an error is set
-   * in Session.
-   */
-  Key(const Key &rhs, MEM_ROOT *mem_root);
   virtual ~Key() {}
   /* Equality comparison of keys (ignoring name) */
   friend bool foreign_key_prefix(Key *a, Key *b);
-  /**
-    Used to make a clone of this object for ALTER/CREATE TABLE
-    @sa comment for Key_part_spec::clone
-  */
-  virtual Key *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Key(*this, mem_root); }
 };
 
 
@@ -103,4 +97,7 @@ void key_unpack(String *to,Table *form,uint32_t index);
 bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields);
 int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
 extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_KEY_H */

@@ -18,23 +18,18 @@
  */
 
 
-#ifndef DRIZZLE_SERVER_DB_H
-#define DRIZZLE_SERVER_DB_H
+#ifndef DRIZZLED_DB_H
+#define DRIZZLED_DB_H
 
-namespace drizzled { namespace message { class Schema; } }
+namespace drizzled {
 
-bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info);
-bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create);
-bool mysql_rm_db(Session *session,char *db, bool if_exists);
-bool mysql_change_db(Session *session, const LEX_STRING *new_db_name,
-                     bool force_switch);
+namespace message { class Schema; }
 
-bool check_db_dir_existence(const char *db_name);
-int get_database_metadata(const char *dbname, drizzled::message::Schema *db);
+bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists);
+bool mysql_alter_db(Session *session, const message::Schema &schema_message);
+bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if_exists);
+bool mysql_change_db(Session *session, const std::string &new_db_name);
 
-const CHARSET_INFO *get_default_db_collation(const char *db_name);
+} /* namespace drizzled */
 
-extern int creating_database; // How many database locks are made
-extern int creating_table;    // How many mysql_create_table() are running
-
-#endif
+#endif /* DRIZZLED_DB_H */

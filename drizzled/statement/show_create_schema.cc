@@ -18,12 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create_schema.h>
+#include <drizzled/db.h>
 
-using namespace drizzled;
+#include <string>
+
+using namespace std;
+
+namespace drizzled
+{
 
 bool statement::ShowCreateSchema::execute()
 {
@@ -33,7 +39,8 @@ bool statement::ShowCreateSchema::execute()
     return false;
   }
   bool res= mysqld_show_create_db(session, session->lex->name.str,
-                                  session->lex->create_info.options &
-                                  HA_LEX_CREATE_IF_NOT_EXISTS);
+                                  is_if_not_exists);
   return res;
 }
+
+} /* namespace drizzled */

@@ -20,7 +20,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#include <drizzled/item.h>
+
+#ifndef DRIZZLED_TEMPORAL_INTERVAL_H
+#define DRIZZLED_TEMPORAL_INTERVAL_H
+
+/* @TODO Replace this include with some forward decls */
+#include "drizzled/item.h"
 
 namespace drizzled 
 {
@@ -171,4 +176,6 @@ private:
 
 };
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_TEMPORAL_INTERVAL_H */

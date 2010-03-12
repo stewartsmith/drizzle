@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/math/int_divide.h>
+
+namespace drizzled
+{
 
 /* Integer division */
 int64_t Item_func_int_div::val_int()
@@ -50,3 +53,4 @@ void Item_func_int_div::fix_length_and_dec()
   unsigned_flag=args[0]->unsigned_flag | args[1]->unsigned_flag;
 }
 
+} /* namespace drizzled */

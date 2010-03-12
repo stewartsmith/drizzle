@@ -1,0 +1,14 @@
+--error 1582
+select sleep();
+--error 1582
+select sleep(10,10);
+select sleep('a');
+show warnings;
+select sleep(0.001);
+select sleep(0.01);
+select sleep(0.02);
+select sleep(0.02);
+select sleep(0.13);
+select sleep(0);
+select sleep(1);
+select sleep(1.5);

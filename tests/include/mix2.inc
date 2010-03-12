@@ -111,9 +111,9 @@ explain select level,id from t1 where level=1;
 explain select level,id,parent_id from t1 where level=1;
 select level,id from t1 where level=1;
 select level,id,parent_id from t1 where level=1;
-optimize table t1;
+eval alter table t1 engine=$engine_type;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 #
@@ -138,7 +138,7 @@ drop table t1;
 
 eval create $temp table t1 (a int) engine=$engine_type;
 insert into t1 values (1), (2);
-optimize table t1;
+eval alter table t1 ENGINE=$engine_type;
 delete from t1 where a = 1;
 select * from t1;
 check table t1;
@@ -152,7 +152,7 @@ create index skr on t1 (a);
 insert into t1 values (3,""), (4,"testing");
 analyze table t1;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 
@@ -339,7 +339,7 @@ drop table t1;
 eval create $temp table t1 (a int not null, b int not null,c int not null,
 key(a),primary key(a,b), unique(c),key(a),unique(b)) ENGINE = $engine_type;
 --replace_column 7 #
-show index from t1;
+#show index from t1;
 drop table t1;
 
 #
@@ -381,9 +381,9 @@ drop table t1,t2;
 
 eval create $temp table t1 (
   id int NOT NULL auto_increment,
-  ggid varchar(32) binary DEFAULT '' NOT NULL,
+  ggid varchar(32) DEFAULT '' NOT NULL,
   email varchar(64) DEFAULT '' NOT NULL,
-  passwd varchar(32) binary DEFAULT '' NOT NULL,
+  passwd varchar(32) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
   UNIQUE ggid (ggid)
 ) ENGINE=$engine_type;
@@ -516,9 +516,9 @@ drop table t1;
 eval create $temp table t1 (a varchar(100) not null, primary key(a), b int not null) engine=$engine_type;
 insert into t1 values("hello",1),("world",2);
 select * from t1 order by b desc;
-optimize table t1;
+eval alter table t1 ENGINE=$engine_type;
 --replace_column 7 #
-show keys from t1;
+#show keys from t1;
 drop table t1;
 
 #
@@ -687,7 +687,7 @@ drop table t1;
 #
 
 eval create $temp table t1 (t int not null default 1, key (t)) engine=$engine_type;
-desc t1;
+#desc t1;
 drop table t1;
 
 #
@@ -991,9 +991,9 @@ insert t3 select * from t1;
 insert t4 select * from t1;
 insert t5 select * from t1;
 insert t6 select * from t1;
-checksum table t1, t2, t3, t4, t5, t6, t7 quick;
 checksum table t1, t2, t3, t4, t5, t6, t7;
-checksum table t1, t2, t3, t4, t5, t6, t7 extended;
+checksum table t1, t2, t3, t4, t5, t6, t7;
+checksum table t1, t2, t3, t4, t5, t6, t7;
 # #show table status;
 drop table t1,t2,t3, t4, t5, t6;
 
@@ -1012,7 +1012,9 @@ drop table t1;
 # Bug#2160: Extra error message for create $temp table LIKE with InnoDB
 #
 eval create $temp table t1 (a int) engine=$engine_type;
+--error 1005
 create table t2 like t1;
+create table t2 like t1 engine=innodb;
 show create table t2;
 drop table t1,t2;
 
@@ -1730,8 +1732,8 @@ eval create $temp table t1 (a varchar(255) character set utf8,
 
 eval create $temp table t1 (s1 varbinary(2),primary key (s1)) engine=$engine_type;
 eval create $temp table t2 (s1 binary(2),primary key (s1)) engine=$engine_type;
-eval create $temp table t3 (s1 varchar(2) binary,primary key (s1)) engine=$engine_type;
-eval create $temp table t4 (s1 char(2) binary,primary key (s1)) engine=$engine_type;
+eval create $temp table t3 (s1 varchar(2),primary key (s1)) engine=$engine_type;
+eval create $temp table t4 (s1 char(2),primary key (s1)) engine=$engine_type;
 
 insert into t1 values (0x41),(0x4120),(0x4100);
 -- error ER_DUP_ENTRY
@@ -1786,8 +1788,8 @@ select hex(s1) from t2;
 
 drop table t2,t1;
 
-eval create $temp table t1 (a int primary key,s1 varchar(2) binary not null unique) engine=$engine_type;
-eval create $temp table t2 (s1 char(2) binary not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
+eval create $temp table t1 (a int primary key,s1 varchar(2) not null unique) engine=$engine_type;
+eval create $temp table t2 (s1 char(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
 
 insert into t1 values(1,0x4100),(2,0x41);
 insert into t2 values(0x41);
@@ -2210,7 +2212,7 @@ eval create $temp table t1 (g geometry not null, spatial gk(g)) engine=$engine_t
 eval create $temp table t1 ( a int ) ENGINE=$engine_type;
 BEGIN;
 INSERT INTO t1 VALUES (1);
-OPTIMIZE TABLE t1;
+eval ALTER TABLE t1 ENGINE=$engine_type;
 DROP TABLE t1;
 
 #######################################################################

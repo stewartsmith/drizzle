@@ -17,26 +17,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/function/str/load_file.h>
 #include <drizzled/error.h>
 #include <drizzled/data_home.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
+
+namespace drizzled
+{
 
 String *Item_load_file::val_str(String *str)
 {
   assert(fixed == 1);
   String *file_name;
-  File file;
+  int file;
   struct stat stat_info;
   char path[FN_REFLEN];
 
   if (!(file_name= args[0]->val_str(str)))
     goto err;
 
-  (void) fn_format(path, file_name->c_ptr(), drizzle_real_data_home, "",
+  (void) internal::fn_format(path, file_name->c_ptr(), drizzle_real_data_home, "",
 		   MY_RELATIVE_PATH | MY_UNPACK_FILENAME);
 
   /* Read only allowed from within dir specified by secure_file_priv */
@@ -62,15 +68,15 @@ String *Item_load_file::val_str(String *str)
   }
   if (tmp_value.alloc((size_t)stat_info.st_size))
     goto err;
-  if ((file = my_open(file_name->c_ptr(), O_RDONLY, MYF(0))) < 0)
+  if ((file = internal::my_open(file_name->c_ptr(), O_RDONLY, MYF(0))) < 0)
     goto err;
-  if (my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
+  if (internal::my_read(file, (unsigned char*) tmp_value.ptr(), (size_t)stat_info.st_size, MYF(MY_NABP)))
   {
-    my_close(file, MYF(0));
+    internal::my_close(file, MYF(0));
     goto err;
   }
   tmp_value.length((size_t)stat_info.st_size);
-  my_close(file, MYF(0));
+  internal::my_close(file, MYF(0));
   null_value = 0;
   return(&tmp_value);
 
@@ -80,3 +86,4 @@ err:
 }
 
 
+} /* namespace drizzled */

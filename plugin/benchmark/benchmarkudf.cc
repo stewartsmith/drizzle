@@ -17,9 +17,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/m_string.h"
 
 using namespace std;
 using namespace drizzled;
@@ -67,7 +68,7 @@ int64_t BenchmarkFunction::val_int()
   {
     if (args[0]->null_value == false)
     {
-      llstr(((int64_t) loop_count), buff);
+      internal::int64_t10_to_str((int64_t)loop_count, buff, -10);
       push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
@@ -120,19 +121,20 @@ plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
-  registry.function.add(benchmarkudf);
+  registry.add(benchmarkudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-   registry.function.remove(benchmarkudf);
+   registry.remove(benchmarkudf);
    delete benchmarkudf;
    return 0;
 }
 
-drizzle_declare_plugin(benchmark)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "benchmark",
   "1.0",
   "Devananda van der Veen",
@@ -140,8 +142,7 @@ drizzle_declare_plugin(benchmark)
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

@@ -20,8 +20,13 @@
 #ifndef DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 #define DRIZZLED_NAME_RESOLUTION_CONTEXT_H
 
+#include "drizzled/item.h"
+
+namespace drizzled
+{
+
 class TableList;
-class Security_context;
+class SecurityContext;
 class Session;
 class Select_Lex;
 
@@ -42,7 +47,7 @@ class Select_Lex;
  * structure before and after INSERT/CREATE and its SELECT to make correct
  * field name resolution.
  */
-class Name_resolution_context: public Sql_alloc
+class Name_resolution_context: public memory::SqlAlloc
 {
 public:
   /**
@@ -100,7 +105,7 @@ public:
    * Security context of this name resolution context. It's used for views
    * and is non-zero only if the view is defined with SQL SECURITY DEFINER.
    */
-  Security_context *security_ctx;
+  SecurityContext *security_ctx;
 
   Name_resolution_context()
     :
@@ -130,5 +135,7 @@ public:
     (*error_processor)(session, error_processor_data);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_NAME_RESOLUTION_CONTEXT_H */

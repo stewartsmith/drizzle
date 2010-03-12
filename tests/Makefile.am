@@ -1,4 +1,4 @@
-# Copyright (C) 2000-2006 MySQL AB
+# Copyright (C) 2009 Sun Microsystems
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -15,105 +15,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-srcdir=			${top_srcdir}/tests
-benchdir_root=		$(prefix)
-testdir =	        $(benchdir_root)/mysql-test
-EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
-GENSCRIPTS =		install_test_db dtr test-run
-PRESCRIPTS =		test-run.pl stress-test.pl
-PLUGIN_TESTS =		$(pandora_plugin_test_list)
-ALL_TESTS =		main,big,$(PLUGIN_TESTS)
-noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
-CLEANFILES = 		$(GENSCRIPTS) mtr
-noinst_PROGRAMS = 	resolve_stack_dump
-resolve_stack_dump_SOURCES = resolve_stack_dump.cc
+.PHONY: test test-all test-drizzle test-valgrind test-junitxml test-big test-big-juinitxml test-plugins
 
-LDADD=			$(top_builddir)/mysys/libmysys.la \
-                        $(top_builddir)/mystrings/libmystrings.la \
-			$(LIBINTL)
-
-TEST_RUN= $(PERL) -I$(top_srcdir)/tests/lib \
-		${top_srcdir}/tests/test-run.pl \
-		--vardir=${top_builddir}/tests/var \
-		--testdir=${top_srcdir}/tests \
-		--mtr-build-thread=$$$$
-
-EXTRA_DIST = \
-	$(EXTRA_SCRIPTS) \
-	suite \
-	${srcdir}/t \
-	${srcdir}/extra/rpl_tests/*.test \
-	${srcdir}/extra/binlog_tests/*.test \
-	${srcdir}/include/*.inc \
-	${srcdir}/include/*.sql \
-	${srcdir}/include/*.test \
-	${srcdir}/r/*.result \
-	${srcdir}/r/*.require \
-	${srcdir}/std_data/Moscow_leap \
-	${srcdir}/std_data/Index.xml \
-	${srcdir}/std_data/*.dat \
-	${srcdir}/std_data/*.000001 \
-	${srcdir}/std_data/des_key_file \
-	${srcdir}/std_data/*.pem \
-	${srcdir}/std_data/*.txt \
-	${srcdir}/std_data/*.frm \
-	${srcdir}/std_data/*.MY* \
-	${srcdir}/std_data/*.cnf \
-	${srcdir}/std_data/parts/part_* \
-	${srcdir}/lib/*.pl \
-	${srcdir}/lib/My/*.pm
-
-check: test-drizzle
-
-# dtr - a shortcut for executing test-run.pl
-dtr:
-	$(RM) -f mtr dtr
-	$(LN_S) ${top_srcdir}/tests/test-run.pl mtr
-	$(LN_S) ${top_srcdir}/tests/test-run.pl dtr
-	$(mkdir_p) ${top_builddir}/tests/var
-
-# test-run - a shortcut for executing test-run.pl
-test-run:
-	$(RM) -f test-run
-	$(LN_S) ${top_srcdir}/tests/test-run.pl test-run
-
-
-.PHONY: test \
-	test-all \
-	test-big \
-	test-drizzle \
-	test-plugins
-
-# Target 'test' will run the regression test suite using the built server.
-#
-# If you are running in a shared environment, users can avoid clashing
-# port numbers by setting individual small numbers 1-100 to the
-# environment variable MTR_BUILD_THREAD. The script "test-run"
-# will then calculate the various port numbers it needs from this,
-# making sure each user use different ports.
-
-test: test-drizzle
-
-# Please keep the list of tests in alphabetical order for ease of
-# maintenance and verification
-
-test-all:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS)
-
-test-drizzle:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS)
-
-test-junitxml:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml
-
-test-big:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big
-
-test-big-junitxml:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml
-
-test-plugins:
-	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS)
-
-distclean-local:
-	rm -rf var
+test test-all test-drizzle test-valgrind test-junitxml test-big test-big-juinitxml test-plugins test-jp:
+	@cd ${top_builddir} && $(MAKE) $(AM_MAKEFLAGS) $@

@@ -17,10 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/function/math/rand.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
+
+static uint32_t sql_rnd()
+{
+  return (uint32_t) (rand() * 0xffffffff); /* make all bits random */
+}
+
 
 void Item_func_rand::seed_random(Item *arg)
 {
@@ -80,3 +88,5 @@ double Item_func_rand::val_real()
   seed2= (seed1 + seed2 + 33) % max_value;
   return (((double) seed1) / max_value_dbl);
 }
+
+} /* namespace drizzled */

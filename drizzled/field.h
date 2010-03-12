@@ -31,9 +31,14 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/item_result.h"
 
 #include <string>
 #include <vector>
+
+namespace drizzled
+{
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
@@ -45,6 +50,8 @@
 #define ASSERT_COLUMN_MARKED_FOR_READ
 #define ASSERT_COLUMN_MARKED_FOR_WRITE
 #endif
+
+typedef struct st_typelib TYPELIB;
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
@@ -66,9 +73,9 @@ inline uint32_t get_enum_pack_length(int elements)
  *
  * @details
  *
- * The value stored in the Field object is stored in the 
+ * The value stored in the Field object is stored in the
  * unsigned char pointer member variable called ptr.  The
- * val_xxx() methods retrieve this raw byte value and 
+ * val_xxx() methods retrieve this raw byte value and
  * convert the byte into the appropriate output (int, decimal, etc).
  *
  * The store_xxx() methods take various input and convert
@@ -77,19 +84,19 @@ inline uint32_t get_enum_pack_length(int elements)
 class Field
 {
   /* Prevent use of these */
-  Field(const Field&); 
+  Field(const Field&);
   void operator=(Field &);
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */
   unsigned char *null_ptr; /**< Byte where null_bit is */
 
   /**
-   * Pointer to the Table object containing this Field 
+   * Pointer to the Table object containing this Field
    *
    * @note You can use table->in_use as replacement for current_session member
    * only inside of val_*() and store() members (e.g. you can't use it in cons)
    */
-  Table *table; 
+  Table *table;
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char **table_name; /**< Pointer to the name of the table. @TODO This is redundant with Table::table_name. */
   const char *field_name; /**< Name of the field */
@@ -102,15 +109,14 @@ public:
   key_map part_of_sortkey;
 
   /*
-    We use three additional unireg types for TIMESTAMP to overcome limitation
-    of current binary format of .frm file. We'd like to be able to support
-    NOW() as default and on update value for such fields but unable to hold
-    this info anywhere except unireg_check field. This issue will be resolved
-    in more clean way with transition to new text based .frm format.
-    See also comment for Field_timestamp::Field_timestamp().
+    We use three additional unireg types for TIMESTAMP for hysterical
+    raisins and limitations in the MySQL FRM file format.
+
+    A good TODO is to clean this up as we can support just about
+    anything in the table proto message now.
   */
   enum utype
-  { 
+  {
     NONE,
     NEXT_NUMBER,
     TIMESTAMP_OLD_FIELD,
@@ -134,11 +140,10 @@ public:
    */
   bool is_created_from_null_item;
 
-  static void *operator new(size_t size) {return sql_alloc(size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
+  static void *operator new(size_t size);
+  static void *operator new(size_t size, memory::Root *mem_root);
   static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
+  { }
 
   Field(unsigned char *ptr_arg,
         uint32_t length_arg,
@@ -148,13 +153,13 @@ public:
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
-  virtual int store(const char *to, 
-                    uint32_t length, 
+  virtual int store(const char *to,
+                    uint32_t length,
                     const CHARSET_INFO * const cs)=0;
   virtual int store(double nr)=0;
   virtual int store(int64_t nr, bool unsigned_val)=0;
   virtual int store_decimal(const my_decimal *d)=0;
-  int store(const char *to, 
+  int store(const char *to,
             uint32_t length,
             const CHARSET_INFO * const cs,
             enum_check_fields check_level);
@@ -168,7 +173,7 @@ public:
   virtual double val_real(void)=0;
   virtual int64_t val_int(void)=0;
   virtual my_decimal *val_decimal(my_decimal *);
-  inline String *val_str(String *str) 
+  inline String *val_str(String *str)
   {
     return val_str(str, str);
   }
@@ -185,12 +190,6 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*, String *)=0;
-  /**
-   * Interpret field value as an integer but return the result as a string.
-   *
-   * This is used for printing bit_fields as numbers while debugging.
-   */
-  String *val_int_as_str(String *val_buffer, bool unsigned_flag);
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -203,7 +202,7 @@ public:
      Check whether a field type can be partially indexed by a key.
 
      This is a static method, rather than a virtual function, because we need
-     to check the type of a non-Field in mysql_alter_table().
+     to check the type of a non-Field in alter_table().
 
      @param type  field type
 
@@ -258,39 +257,9 @@ public:
    * table, which is located on disk).
    */
   virtual uint32_t pack_length_in_rec() const;
-  /**
-    Check to see if field size is compatible with destination.
-
-    This method is used in row-based replication to verify that the slave's
-    field size is less than or equal to the master's field size. The
-    encoded field metadata (from the master or source) is decoded and compared
-    to the size of this field (the slave or destination).
-
-    @param   field_metadata   Encoded size in field metadata
-
-    @retval 0 if this field's size is < the source field's size
-    @retval 1 if this field's size is >= the source field's size
-  */
-  virtual int compatible_field_size(uint32_t field_metadata);
-  virtual uint32_t pack_length_from_metadata(uint32_t field_metadata);
-
-  /*
-    This method is used to return the size of the data in a row-based
-    replication row record. The default implementation of returning 0 is
-    designed to allow fields that do not use metadata to return true (1)
-    from compatible_field_size() which uses this function in the comparison.
-    The default value for field metadata for fields that do not have
-    metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
-
-    Note: While most classes that override this method return pack_length(),
-    the classes Field_varstring, and Field_blob return
-    field_length + 1, field_length, and pack_length_no_ptr() respectfully.
-  */
-  virtual uint32_t row_pack_length();
-  virtual int save_field_metadata(unsigned char *first_byte);
 
   /**
-   * Return the "real size" of the data in memory. 
+   * Return the "real size" of the data in memory.
    * For varstrings, this does _not_ include the length bytes.
    */
   virtual uint32_t data_length();
@@ -340,8 +309,8 @@ public:
   // For new field
   virtual uint32_t size_of() const =0;
 
-  bool is_null(my_ptrdiff_t row_offset= 0);
-  bool is_real_null(my_ptrdiff_t row_offset= 0);
+  bool is_null(ptrdiff_t row_offset= 0);
+  bool is_real_null(ptrdiff_t row_offset= 0);
   bool is_null_in_record(const unsigned char *record);
   bool is_null_in_record_with_offset(ptrdiff_t offset);
   void set_null(ptrdiff_t row_offset= 0);
@@ -359,20 +328,20 @@ public:
    * use field->val_int() for comparison.  Used to optimize clauses like
    * 'a_column BETWEEN date_const AND date_const'.
    */
-  virtual bool can_be_compared_as_int64_t() const 
+  virtual bool can_be_compared_as_int64_t() const
   {
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root, 
+  virtual Field *new_field(memory::Root *root,
                            Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
-                               unsigned char *new_ptr, 
+  virtual Field *new_key_field(memory::Root *root, Table *new_table,
+                               unsigned char *new_ptr,
                                unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
-  Field *clone(MEM_ROOT *mem_root, Table *new_table);
+  Field *clone(memory::Root *mem_root, Table *new_table);
   inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
     ptr= ptr_arg;
@@ -419,7 +388,7 @@ public:
    * characters have maximal possible size (mbmaxlen). In the other words,
    * "length" parameter is a number of characters multiplied by
    * field_charset->mbmaxlen.
-   * 
+   *
    * @retval
    *   Number of copied bytes (excluding padded zero bytes -- see above).
    */
@@ -449,7 +418,7 @@ public:
   {
     unsigned char *old_ptr= ptr;
     int64_t return_value;
-    ptr= (unsigned char*) new_ptr;
+    ptr= const_cast<unsigned char*>(new_ptr);
     return_value= val_int();
     ptr= old_ptr;
     return return_value;
@@ -457,7 +426,7 @@ public:
   inline String *val_str(String *str, const unsigned char *new_ptr)
   {
     unsigned char *old_ptr= ptr;
-    ptr= (unsigned char*) new_ptr;
+    ptr= const_cast<unsigned char*>(new_ptr);
     val_str(str);
     ptr= old_ptr;
     return str;
@@ -550,15 +519,8 @@ public:
 
   virtual unsigned char *pack_key(unsigned char* to,
                                   const unsigned char *from,
-                                  uint32_t max_length, 
+                                  uint32_t max_length,
                                   bool low_byte_first)
-  {
-    return pack(to, from, max_length, low_byte_first);
-  }
-  virtual unsigned char *pack_key_from_key_image(unsigned char* to,
-                                                 const unsigned char *from,
-                                                 uint32_t max_length,
-                                                 bool low_byte_first)
   {
     return pack(to, from, max_length, low_byte_first);
   }
@@ -569,19 +531,10 @@ public:
   {
     return unpack(to, from, max_length, low_byte_first);
   }
-  virtual uint32_t packed_col_length(const unsigned char *to, uint32_t length);
   virtual uint32_t max_packed_col_length(uint32_t max_length)
   {
     return max_length;
   }
-
-  virtual int pack_cmp(const unsigned char *a,
-                       const unsigned char *b,
-                       uint32_t key_length_arg,
-                       bool insert_or_update);
-  virtual int pack_cmp(const unsigned char *b,
-                       uint32_t key_length_arg,
-                       bool insert_or_update);
 
   inline uint32_t offset(unsigned char *record)
   {
@@ -621,7 +574,7 @@ public:
     @retval
       0 otherwise
   */
-  bool set_warning(DRIZZLE_ERROR::enum_warning_level, 
+  bool set_warning(DRIZZLE_ERROR::enum_warning_level,
                    unsigned int code,
                    int cuted_increment);
   /**
@@ -639,11 +592,11 @@ public:
       fields counter if count_cuted_fields ==FIELD_CHECK_IGNORE for current
       thread.
   */
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
                             uint32_t code,
-                            const char *str, 
+                            const char *str,
                             uint32_t str_len,
-                            enum enum_drizzle_timestamp_type ts_type, 
+                            enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
   /**
     Produce warning or note about integer datetime value saved into field.
@@ -659,9 +612,9 @@ public:
       fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
       thread.
   */
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
                             uint32_t code,
-                            int64_t nr, 
+                            int64_t nr,
                             enum enum_drizzle_timestamp_type ts_type,
                             int cuted_increment);
   /**
@@ -677,9 +630,9 @@ public:
       fields counter if count_cuted_fields == FIELD_CHECK_IGNORE for current
       thread.
   */
-  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level,
                             const uint32_t code,
-                            double nr, 
+                            double nr,
                             enum enum_drizzle_timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {
@@ -715,7 +668,7 @@ public:
     @return
       value converted from val
   */
-  int64_t convert_decimal2int64_t(const my_decimal *val, 
+  int64_t convert_decimal2int64_t(const my_decimal *val,
                                   bool unsigned_flag,
                                   int *err);
   /* The max. number of characters */
@@ -751,26 +704,15 @@ public:
   bool isWriteSet();
   void setReadSet(bool arg= true);
   void setWriteSet(bool arg= true);
-
-private:
-
-  /**
-    Retrieve the field metadata for fields.
-
-    This default implementation returns 0 and saves 0 in the metadata_ptr
-    value.
-
-    @param   metadata_ptr   First byte of field metadata
-
-    @returns 0 no bytes written.
-  */
-  virtual int do_save_field_metadata(unsigned char *)
-  {
-    return 0;
-  }
 };
 
+} /* namespace drizzled */
+
+/** @TODO Why is this in the middle of the file???*/
 #include "drizzled/create_field.h"
+
+namespace drizzled
+{
 
 /**
  * A class for sending field information to a client.
@@ -780,7 +722,7 @@ private:
  * Send_field is basically a stripped-down POD class for
  * representing basic information about a field...
  */
-class SendField 
+class SendField
 {
 public:
   const char *db_name;
@@ -799,7 +741,7 @@ public:
 /**
  * A class for quick copying data to fields
  */
-class CopyField :public Sql_alloc
+class CopyField :public memory::SqlAlloc
 {
   /**
     Convenience definition of a copy function returned by
@@ -830,12 +772,13 @@ public:
 };
 
 Field *make_field(TableShare *share,
-                  MEM_ROOT *root,
+                  memory::Root *root,
                   unsigned char *ptr,
                   uint32_t field_length,
+                  bool is_nullable,
                   unsigned char *null_pos,
                   unsigned char null_bit,
-                  uint32_t pack_flag,
+                  uint8_t decimals,
                   enum_field_types field_type,
                   const CHARSET_INFO * cs,
                   Field::utype unireg_check,
@@ -863,5 +806,7 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 bool test_if_important_data(const CHARSET_INFO * const cs,
                             const char *str,
                             const char *strend);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_H */

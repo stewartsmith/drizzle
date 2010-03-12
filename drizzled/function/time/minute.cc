@@ -17,11 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
+
 #include "drizzled/temporal.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/minute.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_minute::val_int()
 {
@@ -49,7 +52,7 @@ int64_t Item_func_minute::val_int()
    *
    * Oh, and Brian Aker MADE me do this. :) --JRP
    */
-  drizzled::Time temporal_time;
+  Time temporal_time;
   
   char time_buff[DRIZZLE_MAX_LENGTH_DATETIME_AS_STRING];
   String tmp_time(time_buff,sizeof(time_buff), &my_charset_utf8_bin);
@@ -61,7 +64,7 @@ int64_t Item_func_minute::val_int()
      * representing a time value, so we grab the first argument 
      * as a DateTime object and try that for a match...
      */
-    drizzled::DateTime temporal_datetime;
+    DateTime temporal_datetime;
     Item_result arg0_result_type= args[0]->result_type();
     
     switch (arg0_result_type)
@@ -117,3 +120,4 @@ int64_t Item_func_minute::val_int()
   return (int64_t) temporal_time.minutes();
 }
 
+} /* namespace drizzled */

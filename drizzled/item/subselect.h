@@ -23,9 +23,13 @@
 /* subselect Item */
 
 
-#include <drizzled/comp_creator.h>
-#include <drizzled/item/ref.h>
-#include <drizzled/item/field.h>
+#include "drizzled/comp_creator.h"
+#include "drizzled/item/ref.h"
+#include "drizzled/item/field.h"
+#include "drizzled/item/bin_string.h"
+
+namespace drizzled
+{
 
 class Select_Lex;
 class Select_Lex_Unit;
@@ -51,7 +55,6 @@ public:
   /* substitution instead of subselect in case of optimization */
   Item *substitution;
   /* unit of subquery */
-public:
   Select_Lex_Unit *unit;
 protected:
   /* engine that perform execution of subselect (single select or union) */
@@ -332,9 +335,18 @@ public:
 
   Item_in_subselect(Item * left_expr, Select_Lex *select_lex);
   Item_in_subselect()
-    :Item_exists_subselect(), left_expr_cache(0), first_execution(true),
-    optimizer(0), abort_on_null(0), pushed_cond_guards(NULL),
-    exec_method(NOT_TRANSFORMED), upper_item(0)
+    :
+      Item_exists_subselect(),
+      left_expr(NULL),
+      left_expr_cache(NULL),
+      first_execution(true),
+      optimizer(NULL),
+      abort_on_null(false),
+      pushed_cond_guards(NULL),
+      sj_convert_priority(0),
+      expr_join_nest(NULL),
+      exec_method(NOT_TRANSFORMED),
+      upper_item(NULL)
   {}
   void cleanup();
   subs_type substype() { return IN_SUBS; }
@@ -393,7 +405,7 @@ public:
 };
 
 
-class subselect_engine: public Sql_alloc
+class subselect_engine: public memory::SqlAlloc
 {
 protected:
   select_result_interceptor *result; /* results storage class */
@@ -409,7 +421,7 @@ public:
                          INDEXSUBQUERY_ENGINE, HASH_SJ_ENGINE};
 
   subselect_engine(Item_subselect *si, select_result_interceptor *res)
-    :session(0)
+    :session(NULL)
   {
     result= res;
     item= si;
@@ -694,5 +706,7 @@ public:
   }
   virtual enum_engine_type engine_type() { return HASH_SJ_ENGINE; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_SUBSELECT_H */

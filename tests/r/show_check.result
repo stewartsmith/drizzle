@@ -7,23 +7,7 @@ insert into t1 values (1,2,2),(2,2,3),(3,2,4),(4,2,4);
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-check table t1 fast;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 fast;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 changed;
+check table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					Table	8	512	7	Y	0	31	45
 def					Op	8	40	5	Y	0	31	45
@@ -32,23 +16,7 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 insert into t1 values (5,5,5);
-check table t1 changed;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 medium;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	5	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-check table t1 extended;
+check table t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def					Table	8	512	7	Y	0	31	45
 def					Op	8	40	5	Y	0	31	45
@@ -58,91 +26,67 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def			STATISTICS	NON_UNIQUE	Non_unique	5	1	1	N	32769	0	63
-def			STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	2	1	N	32769	0	63
-def			STATISTICS	COLUMN_NAME	Column_name	8	256	1	N	1	0	45
-def			STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def			STATISTICS	CARDINALITY	Cardinality	5	21	1	Y	32768	0	63
-def			STATISTICS	SUB_PART	Sub_part	5	3	0	Y	32768	0	63
-def			STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def			STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def			STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def			STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def			STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	5	NULL	NULL		BTREE		
-t1	1	b	1	b	A	5	NULL	NULL		BTREE		
-t1	1	b	2	c	A	5	NULL	NULL		BTREE		
+def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	5	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	1	N	1	0	45
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
+t1	FALSE	b	1	b
+t1	FALSE	b	2	c
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-optimize table t1;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	8	Y	0	31	45
-def					Msg_type	8	40	6	Y	0	31	45
-def					Msg_text	8	1020	2	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine="default";
+alter table t1 engine="default";
 drop table t1;
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
 show variables like "server_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	1	N	1	0	45
 Variable_name	Value
 server_id	1
 show variables like "SERVER_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	1	N	1	0	45
 Variable_name	Value
 server_id	1
 show variables like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	0	Y	0	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
+def	data_dictionary	session_variables	SESSION_VARIABLES	VARIABLE_VALUE	Value	8	4096	0	N	1	0	45
 Variable_name	Value
 show table status from test like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			TABLES	TABLE_NAME	Name	8	256	0	N	1	0	45
-def			TABLES	ENGINE	Engine	8	256	0	Y	0	0	45
-def			TABLES	VERSION	Version	5	21	0	Y	32768	0	63
-def			TABLES	ROW_FORMAT	Row_format	8	40	0	Y	0	0	45
-def			TABLES	TABLE_ROWS	Rows	5	21	0	Y	32768	0	63
-def			TABLES	AVG_ROW_LENGTH	Avg_row_length	5	21	0	Y	32768	0	63
-def			TABLES	DATA_LENGTH	Data_length	5	21	0	Y	32768	0	63
-def			TABLES	MAX_DATA_LENGTH	Max_data_length	5	21	0	Y	32768	0	63
-def			TABLES	INDEX_LENGTH	Index_length	5	21	0	Y	32768	0	63
-def			TABLES	DATA_FREE	Data_free	5	21	0	Y	32768	0	63
-def			TABLES	AUTO_INCREMENT	Auto_increment	5	21	0	Y	32768	0	63
-def			TABLES	CREATE_TIME	Create_time	6	19	0	Y	128	0	63
-def			TABLES	UPDATE_TIME	Update_time	6	19	0	Y	128	0	63
-def			TABLES	CHECK_TIME	Check_time	6	19	0	Y	128	0	63
-def			TABLES	TABLE_COLLATION	Collation	8	256	0	Y	0	0	45
-def			TABLES	CHECKSUM	Checksum	5	21	0	Y	32768	0	63
-def			TABLES	CREATE_OPTIONS	Create_options	8	1020	0	Y	0	0	45
-def			TABLES	TABLE_COMMENT	Comment	8	8192	0	N	1	0	45
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Session	Session	5	20	0	N	32769	0	63
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Schema	Schema	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Name	Name	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Type	Type	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Engine	Engine	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Version	Version	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Rows	Rows	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Avg_row_length	Avg_row_length	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Table_size	Table_size	8	256	0	N	1	0	45
+def	data_dictionary	show_table_status	SHOW_TABLE_STATUS	Auto_increment	Auto_increment	8	256	0	N	1	0	45
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
 show databases;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			SCHEMATA	SCHEMA_NAME	Database	8	256	18	N	1	0	45
+def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database	8	256	18	N	1	0	45
 Database
+data_dictionary
 information_schema
 mysql
 test
 show databases like "test%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			SCHEMATA	SCHEMA_NAME	Database (test%)	8	256	4	N	1	0	45
+def	data_dictionary	schema_names	SCHEMA_NAMES	SCHEMA_NAME	Database (test%)	8	256	4	N	1	0	45
 Database (test%)
 test
 create table t1 (f1 int not null, f2 int not null, f3 int not null, f4 int not null, primary key(f1,f2,f3,f4));
@@ -159,17 +103,17 @@ def					Msg_text	8	1020	2	Y	0	31	45
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
-t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	f1
+t1	TRUE	PRIMARY	2	f2
+t1	TRUE	PRIMARY	3	f3
+t1	TRUE	PRIMARY	4	f4
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
-t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
-t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	f1
+t1	TRUE	PRIMARY	2	f2
+t1	TRUE	PRIMARY	3	f3
+t1	TRUE	PRIMARY	4	f4
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
@@ -198,12 +142,12 @@ t1	CREATE TABLE `t1` (
   `c-b` int DEFAULT NULL COMMENT 'name with a minus',
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
 ) ENGINE=DEFAULT COMMENT='it''s a table'
-show full columns from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-name	varchar(20)	utf8_general_ci	YES		O'Brien			O'Brien as default
-c	int	NULL	NO		NULL			int column
-c-b	int	NULL	YES		NULL			name with a minus
-space 2	int	NULL	YES		NULL			name with a space
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+name	VARCHAR	TRUE	O'Brien	FALSE	
+c	INTEGER	FALSE	O'Brien	FALSE	
+c-b	INTEGER	TRUE	O'Brien	TRUE	
+space 2	INTEGER	TRUE	O'Brien	TRUE	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
@@ -220,15 +164,6 @@ t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
-drop table t1;
-flush tables;
-show open tables;
-Database	Table	In_use	Name_locked
-create table t1(n int);
-insert into t1 values (1);
-show open tables;
-Database	Table	In_use	Name_locked
-test	t1	0	0
 drop table t1;
 create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="test" ENGINE=MYISAM ROW_FORMAT=fixed;
 show create table t1;
@@ -257,21 +192,21 @@ t1	CREATE TEMPORARY TABLE `t1` (
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-a	decimal(9,2)	YES		NULL	
-b	decimal(9,0)	YES		NULL	
-e	double(9,2)	YES		NULL	
-f	double(5,0)	YES		NULL	
-h	double(3,2)	YES		NULL	
-i	double(3,0)	YES		NULL	
-show full columns from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-a	decimal(9,2)	NULL	YES		NULL			
-b	decimal(9,0)	NULL	YES		NULL			
-e	double(9,2)	NULL	YES		NULL			
-f	double(5,0)	NULL	YES		NULL			
-h	double(3,2)	NULL	YES		NULL			
-i	double(3,0)	NULL	YES		NULL			
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	DECIMAL	TRUE		TRUE	
+b	DECIMAL	TRUE		TRUE	
+e	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+h	DOUBLE	TRUE		TRUE	
+i	DOUBLE	TRUE		TRUE	
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	DECIMAL	TRUE		TRUE	
+b	DECIMAL	TRUE		TRUE	
+e	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+h	DOUBLE	TRUE		TRUE	
+i	DOUBLE	TRUE		TRUE	
 drop table t1;
 create temporary table t1 (
 type_int int,
@@ -315,23 +250,23 @@ drop table t1;
 create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-max(a)	int	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+max(a)	INTEGER	TRUE		TRUE	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-c	decimal(10,0)	YES		NULL	
-d	double	YES		NULL	
-f	double	YES		NULL	
-r	double	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+c	DECIMAL	TRUE		TRUE	
+d	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
+r	DOUBLE	TRUE		TRUE	
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
-Field	Type	Null	Key	Default	Extra
-c	decimal(3,3)	YES		NULL	
-d	double(3,3)	YES		NULL	
-f	double(3,3)	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+c	DECIMAL	TRUE		TRUE	
+d	DOUBLE	TRUE		TRUE	
+f	DOUBLE	TRUE		TRUE	
 drop table t1;
 CREATE TABLE ```ab``cd``` (i INT);
 SHOW CREATE TABLE ```ab``cd```;
@@ -367,52 +302,73 @@ select @@max_heap_table_size;
 CREATE TEMPORARY TABLE t1 (
 a int default NULL,
 KEY a USING BTREE (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 CREATE TEMPORARY TABLE t2 (
 b int default NULL,
 index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 CREATE TEMPORARY TABLE t3 (
 a int default NULL,
 b int default NULL,
 KEY a USING BTREE (a),
 index(b)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 truncate table t1;
 truncate table t2;
 truncate table t3;
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
 show table status;
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t3	TEMPORARY	MEMORY	#	#	#	#	#
 drop table t1, t2, t3;
 CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
@@ -490,21 +446,13 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			STATISTICS	TABLE_NAME	Table	8	256	2	N	1	0	45
-def			STATISTICS	NON_UNIQUE	Non_unique	5	1	1	N	32769	0	63
-def			STATISTICS	INDEX_NAME	Key_name	8	256	7	N	1	0	45
-def			STATISTICS	SEQ_IN_INDEX	Seq_in_index	5	2	1	N	32769	0	63
-def			STATISTICS	COLUMN_NAME	Column_name	8	256	6	N	1	0	45
-def			STATISTICS	COLLATION	Collation	8	4	1	Y	0	0	45
-def			STATISTICS	CARDINALITY	Cardinality	5	21	1	Y	32768	0	63
-def			STATISTICS	SUB_PART	Sub_part	5	3	3	Y	32768	0	63
-def			STATISTICS	PACKED	Packed	8	40	0	Y	0	0	45
-def			STATISTICS	NULLABLE	Null	8	12	0	N	1	0	45
-def			STATISTICS	INDEX_TYPE	Index_type	8	64	5	N	1	0	45
-def			STATISTICS	COMMENT	Comment	8	64	0	Y	0	0	45
-def			STATISTICS	INDEX_COMMENT	Index_Comment	8	4096	0	N	1	0	45
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	field1	A	0	180	NULL		BTREE		
+def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	4	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	6	N	1	0	45
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	field1
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -521,44 +469,6 @@ t1	CREATE TABLE `t1` (
   KEY `c2` (`c2`) USING BTREE
 ) ENGINE=DEFAULT
 DROP TABLE t1;
-
-# Bug#12183: SHOW OPEN TABLES behavior doesn't match grammar.
-
-DROP DATABASE IF EXISTS mysqltest1;
-CREATE DATABASE mysqltest1;
-use mysqltest1;
-
-CREATE TABLE t1(a INT);
-CREATE TABLE t2(a INT);
-
-FLUSH TABLES;
-
-SELECT 1 FROM t1;
-1
-SELECT 1 FROM t2;
-1
-
-SHOW OPEN TABLES FROM mysqltest1;
-Database	Table	In_use	Name_locked
-mysqltest1	t1	0	0
-mysqltest1	t2	0	0
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE 'z%';
-Database	Table	In_use	Name_locked
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE 't1%';
-Database	Table	In_use	Name_locked
-mysqltest1	t1	0	0
-
-SHOW OPEN TABLES FROM mysqltest1 LIKE '%1%';
-Database	Table	In_use	Name_locked
-mysqltest1	t1	0	0
-
-FLUSH TABLES;
-
-DROP DATABASE mysqltest1;
-use test;
-
 SHOW TABLES FROM non_existing_database;
 ERROR 42000: Unknown database 'non_existing_database'
 End of 4.1 tests
@@ -575,30 +485,20 @@ show tables from `mysqlttest\1`;
 Tables_in_mysqlttest\1
 a\b
 show fields from `mysqlttest\1`.`a\b`;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	TRUE		TRUE	
 show columns from `a\b` from `mysqlttest\1`;
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	TRUE		TRUE	
 show keys from `mysqlttest\1`.`a\b`;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
+Table	Unique	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
 drop database `mysqlttest\1`;
-show engine foobar status;
-ERROR 42000: Unknown table engine 'foobar'
-show engine foobar logs;
-ERROR 42000: Unknown table engine 'foobar'
-show engine foobar mutex;
-ERROR 42000: Unknown table engine 'foobar'
-show engine mutex status;
-ERROR 42000: Unknown table engine 'mutex'
-show engine csv status;
-Type	Name	Status
 drop table if exists `été`;
 create table `été` (field1 int);
-show full tables;
-Tables_in_test	Table_type
-été	BASE Table
+show tables;
+Tables_in_test
+été
 drop table `été`;
 show columns from `#mysql50#????????`;
 Got one of the listed errors

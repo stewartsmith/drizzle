@@ -17,8 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/function/math/ln.h>
+
+namespace drizzled
+{
 
 /** Gateway to natural LOG function. */
 double Item_func_ln::val_real()
@@ -35,3 +39,4 @@ double Item_func_ln::val_real()
   return log(value);
 }
 
+} /* namespace drizzled */

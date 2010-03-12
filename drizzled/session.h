@@ -23,27 +23,52 @@
 
 /* Classes in mysql */
 
-#include "drizzled/sql_plugin.h"
-#include <drizzled/plugin/protocol.h>
-#include <drizzled/plugin/scheduler.h>
+#include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
-#include <drizzled/ha_trx_info.h>
-#include <mysys/my_alloc.h>
-#include <mysys/my_tree.h>
-#include <drizzled/handler.h>
+#include "drizzled/resource_context.h"
+#include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
-#include <drizzled/authentication.h>
-#include <drizzled/db.h>
 #include <drizzled/xid.h>
+#include "drizzled/query_id.h"
+#include "drizzled/named_savepoint.h"
+#include "drizzled/transaction_context.h"
 
 #include <netdb.h>
+#include <map>
 #include <string>
 #include <bitset>
+#include <deque>
+
+#include <drizzled/security_context.h>
+#include <drizzled/open_tables_state.h>
+
+#include <drizzled/internal_error_handler.h>
+#include <drizzled/diagnostics_area.h>
+
+#include <drizzled/plugin/authorization.h>
 
 #define MIN_HANDSHAKE_SIZE      6
+
+namespace drizzled
+{
+
+namespace plugin
+{
+class Client;
+class Scheduler;
+}
+namespace message
+{
+class Transaction;
+class Statement;
+}
+namespace internal
+{
+struct st_my_thread_var;
+}
 
 class Lex_input_stream;
 class user_var_entry;
@@ -57,6 +82,14 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
+
+/**
+  @brief
+  Local storage for proto that are tmp table. This should be enlarged
+  to hande the entire table-share for a local table. Once Hash is done,
+  we should consider exchanging the map for it.
+*/
+typedef std::map <std::string, message::Table> ProtoCache;
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
@@ -95,7 +128,13 @@ typedef struct drizzled_lock_st
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file */
 #include <drizzled/lex_column.h>
+
+namespace drizzled
+{
 
 class select_result;
 class Time_zone;
@@ -136,13 +175,10 @@ struct system_variables
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
-  uint32_t net_buffer_length;
   bool optimizer_prune_level;
   bool log_warnings;
 
   uint32_t optimizer_search_depth;
-  /* A bitmap for switching optimizations on/off */
-  uint32_t optimizer_switch;
   uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
@@ -157,13 +193,10 @@ struct system_variables
   size_t range_alloc_block_size;
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
-  uint32_t trans_alloc_block_size;
-  uint32_t trans_prealloc_size;
   uint64_t group_concat_max_len;
-  /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
-  StorageEngine *storage_engine;
+  plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
@@ -184,7 +217,12 @@ struct system_variables
 
 extern struct system_variables global_system_variables;
 
-#include "sql_lex.h"
+} /* namespace drizzled */
+
+#include "drizzled/sql_lex.h"
+
+namespace drizzled
+{
 
 /**
  * Per-session local status counters
@@ -248,7 +286,7 @@ typedef struct system_status_var
     sense to add to the /global/ status variable counter.
   */
   double last_query_cost;
-} STATUS_VAR;
+} system_status_var;
 
 /*
   This is used for 'SHOW STATUS'. It must be updated to the last ulong
@@ -260,22 +298,9 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-struct st_savepoint 
-{
-  struct st_savepoint *prev;
-  char *name;
-  uint32_t length;
-  Ha_trx_info *ha_list;
-};
-
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
 
-#include <drizzled/security_context.h>
-#include <drizzled/open_tables_state.h>
-
-#include <drizzled/internal_error_handler.h> 
-#include <drizzled/diagnostics_area.h> 
 
 /**
   Storage engine specific thread local data.
@@ -288,16 +313,24 @@ struct Ha_data
   */
   void *ha_ptr;
   /**
-    0: Life time: one statement within a transaction. If @@autocommit is
-    on, also represents the entire transaction.
-    @sa trans_register_ha()
-
-    1: Life time: one transaction within a connection.
-    If the storage engine does not participate in a transaction,
-    this should not be used.
-    @sa trans_register_ha()
-  */
-  Ha_trx_info ha_info[2];
+   * Resource contexts for both the "statement" and "normal"
+   * transactions.
+   *
+   * Resource context at index 0:
+   *
+   * Life time: one statement within a transaction. If @@autocommit is
+   * on, also represents the entire transaction.
+   *
+   * Resource context at index 1:
+   *
+   * Life time: one transaction within a connection. 
+   *
+   * @note
+   *
+   * If the storage engine does not participate in a transaction, 
+   * there will not be a resource context.
+   */
+  drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
 };
@@ -373,7 +406,7 @@ public:
    * itself to the list on creation (see Item::Item() for details))
    */
   Item *free_list;
-  MEM_ROOT *mem_root; /**< Pointer to current memroot */
+  memory::Root *mem_root; /**< Pointer to current memroot */
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -382,30 +415,8 @@ public:
    */
   uint32_t id;
   LEX *lex; /**< parse tree descriptor */
-  /**
-    Points to the query associated with this statement. It's const, but
-    we need to declare it char * because all table handlers are written
-    in C and need to point to it.
-
-    Note that (A) if we set query = NULL, we must at the same time set
-    query_length = 0, and protect the whole operation with the
-    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
-    non-NULL value if its previous value is NULL. We do not need to protect
-    operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that session->query cannot change at the moment, one should print
-    session->query like this:
-      (1) reserve the LOCK_thread_count mutex;
-      (2) check if session->query is NULL;
-      (3) if not NULL, then print at most session->query_length characters from
-      it. We will see the query_length field as either 0, or the right value
-      for it.
-    Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way.
-    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
-    STATUS.
-  */
-  char *query;
-  uint32_t query_length; /**< current query length */
+  /** query associated with this statement */
+  std::string query;
 
   /**
     Name of the current (default) database.
@@ -419,8 +430,7 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-  char *db;
-  uint32_t db_length; /**< Length of current schema name */
+  std::string db;
 
   /**
     Constant for Session::where initialization in the beginning of every query.
@@ -430,13 +440,11 @@ public:
   */
   static const char * const DEFAULT_WHERE;
 
-  MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  drizzled::plugin::Protocol *protocol; /**< Pointer to protocol object */
-  drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
+  memory::Root warn_root; /**< Allocation area for warnings and errors */
+  plugin::Client *client; /**< Pointer to client object */
+  plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
-  String packet; /**< dynamic buffer for network I/O */
-  String convert_buffer; /**< A buffer for charset conversions */
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   struct system_status_var *initial_status_var; /* used by show status */
@@ -457,19 +465,28 @@ public:
    */
   char *thread_stack;
 
-  /**
-    @note
-    Some members of Session (currently 'Statement::db',
-    'query')  are set and alloced by the slave SQL thread
-    (for the Session of that thread); that thread is (and must remain, for now)
-    the only responsible for freeing these 3 members. If you add members
-    here, and you add code to set them in replication, don't forget to
-    free_them_and_set_them_to_0 in replication properly. For details see
-    the 'err:' label of the handle_slave_sql() in sql/slave.cc.
+private:
+  SecurityContext security_ctx;
+public:
+  const SecurityContext& getSecurityContext() const
+  {
+    return security_ctx;
+  }
 
-    @see handle_slave_sql
-  */
-  Security_context security_ctx;
+  SecurityContext& getSecurityContext()
+  {
+    return security_ctx;
+  }
+
+  /**
+   * Is this session viewable by the current user?
+   */
+  bool isViewable() const
+  {
+    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                               this,
+                                               false);
+  }
 
   /**
     Used in error messages to tell user in what part of MySQL we found an
@@ -484,15 +501,14 @@ public:
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
   uint32_t dbug_sentry; /**< watch for memory corruption */
-  struct st_my_thread_var *mysys_var;
+  internal::st_my_thread_var *mysys_var;
   /**
    * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
    * first byte of the packet in executeStatement()
    */
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* @note the following three members should likely move to Protocol */
-  uint16_t peer_port; /**< The remote (peer) port */
+  /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
@@ -506,39 +522,42 @@ public:
     Both of the following container points in session will be converted to an API.
   */
 
+private:
   /* container for handler's private per-connection data */
-  Ha_data ha_data[MAX_HA];
-
-  /* container for replication data */
-  void *replication_data;
+  std::vector<Ha_data> ha_data;
+  /*
+    Id of current query. Statement can be reused to execute several queries
+    query_id is global in context of the whole MySQL server.
+    ID is automatically generated from an atomic counter.
+    It's used in Cursor code for various purposes: to check which columns
+    from table are necessary for this select, to check if it's necessary to
+    update auto-updatable fields (like auto_increment and timestamp).
+  */
+  query_id_t query_id;
+  query_id_t warn_query_id;
+public:
+  void **getEngineData(const plugin::MonitoredInTransaction *monitored);
+  ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
+                                      size_t index= 0);
 
   struct st_transactions {
-    SAVEPOINT *savepoints;
-    Session_TRANS all;			// Trans since BEGIN WORK
-    Session_TRANS stmt;			// Trans for current statement
-    bool on;                            // see ha_enable_transaction()
+    std::deque<NamedSavepoint> savepoints;
+    TransactionContext all; ///< Trans since BEGIN WORK
+    TransactionContext stmt; ///< Trans for current statement
     XID_STATE xid_state;
 
-    /*
-       Tables changed in transaction (that must be invalidated in query cache).
-       List contain only transactional tables, that not invalidated in query
-       cache (instead of full list of changed in transaction tables).
-    */
-    CHANGED_TableList* changed_tables;
-    MEM_ROOT mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
-      changed_tables= 0;
-      savepoints= 0;
-      free_root(&mem_root,MYF(MY_KEEP_PREALLOC));
+      savepoints.clear();
     }
-    st_transactions()
-    {
-      memset(this, 0, sizeof(*this));
-      xid_state.xid.null();
-      init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-    }
+    st_transactions() :
+      savepoints(),
+      all(),
+      stmt(),
+      xid_state()
+    { }
   } transaction;
+
   Field *dup_field;
   sigset_t signals;
 
@@ -634,21 +653,8 @@ public:
   uint32_t total_warn_count;
   Diagnostics_area main_da;
 
-  /*
-    Id of current query. Statement can be reused to execute several queries
-    query_id is global in context of the whole MySQL server.
-    ID is automatically generated from mutex-protected counter.
-    It's used in handler code for various purposes: to check which columns
-    from table are necessary for this select, to check if it's necessary to
-    update auto-updatable fields (like auto_increment and timestamp).
-  */
-  query_id_t query_id;
-  query_id_t warn_id;
   ulong col_access;
 
-#ifdef ERROR_INJECT_SUPPORT
-  ulong error_inject_value;
-#endif
   /* Statement id is thread-wide. This counter is used to generate ids */
   uint32_t statement_id_counter;
   uint32_t rand_saved_seed1;
@@ -659,7 +665,7 @@ public:
   */
   uint32_t row_count;
   pthread_t real_id; /**< For debugging */
-  my_thread_id thread_id;
+  uint64_t thread_id;
   uint32_t tmp_table;
   uint32_t global_read_lock;
   uint32_t server_status;
@@ -739,6 +745,7 @@ public:
   
   /** Place to store various things */
   void *session_marker;
+
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
   Table *cached_table;
 
@@ -759,13 +766,10 @@ public:
     return proc_info;
   }
 
-  inline void setReplicationData (void *data)
+  /** Sets this Session's current query ID */
+  inline void setQueryId(query_id_t in_query_id)
   {
-    replication_data= data;
-  }
-  inline void *getReplicationData () const
-  {
-    return replication_data;
+    query_id= in_query_id;
   }
 
   /** Returns the current query ID */
@@ -774,8 +778,21 @@ public:
     return query_id;
   }
 
+
+  /** Sets this Session's warning query ID */
+  inline void setWarningQueryId(query_id_t in_query_id)
+  {
+    warn_query_id= in_query_id;
+  }
+
+  /** Returns the Session's warning query ID */
+  inline query_id_t getWarningQueryId()  const
+  {
+    return warn_query_id;
+  }
+
   /** Returns the current query text */
-  inline const char *getQueryString()  const
+  inline const std::string &getQueryString()  const
   {
     return query;
   }
@@ -783,7 +800,16 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    return strlen(query);
+    if (! query.empty())
+      return query.length();
+    else
+      return 0;
+  }
+
+  /** Accessor method returning the session's ID. */
+  inline uint64_t getSessionId()  const
+  {
+    return thread_id;
   }
 
   /** Accessor method returning the server's ID. */
@@ -854,7 +880,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(drizzled::plugin::Protocol *protocol_arg);
+  Session(plugin::Client *client_arg);
   virtual ~Session();
 
   void cleanup(void);
@@ -936,7 +962,7 @@ public:
    */
   bool endTransaction(enum enum_mysql_completiontype completion);
   bool endActiveTransaction();
-  bool startTransaction();
+  bool startTransaction(start_transaction_option_t opt= START_TRANS_NO_OPTIONS);
 
   /**
    * Authenticates users, with error reporting.
@@ -962,30 +988,9 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  inline const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg)
-  {
-    const char* old_msg = get_proc_info();
-    safe_mutex_assert_owner(mutex);
-    mysys_var->current_mutex = mutex;
-    mysys_var->current_cond = cond;
-    this->set_proc_info(msg);
-    return old_msg;
-  }
-  inline void exit_cond(const char* old_msg)
-  {
-    /*
-      Putting the mutex unlock in exit_cond() ensures that
-      mysys_var->current_mutex is always unlocked _before_ mysys_var->mutex is
-      locked (if that would not be the case, you'll get a deadlock if someone
-      does a Session::awake() on you).
-    */
-    pthread_mutex_unlock(mysys_var->current_mutex);
-    pthread_mutex_lock(&mysys_var->mutex);
-    mysys_var->current_mutex = 0;
-    mysys_var->current_cond = 0;
-    this->set_proc_info(old_msg);
-    pthread_mutex_unlock(&mysys_var->mutex);
-  }
+  const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg);
+  void exit_cond(const char* old_msg);
+
   inline time_t query_start() { return start_time; }
   inline void set_time()
   {
@@ -1024,18 +1029,14 @@ public:
   {
     return !lex->only_view_structure();
   }
-  inline void* trans_alloc(unsigned int size)
-  {
-    return alloc_root(&transaction.mem_root,size);
-  }
 
   LEX_STRING *make_lex_string(LEX_STRING *lex_str,
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
+  LEX_STRING *make_lex_string(LEX_STRING *lex_str,
+                              const std::string &str,
+                              bool allocate_lex_string);
 
-  void add_changed_table(Table *table);
-  void add_changed_table(const char *key, long key_length);
-  CHANGED_TableList * changed_table_dup(const char *key, long key_length);
   int send_explain_fields(select_result *result);
   /**
     Clear the current error, if any.
@@ -1128,22 +1129,6 @@ public:
   */
   bool set_db(const char *new_db, size_t new_db_len);
 
-  /**
-    Set the current database; use shallow copy of C-string.
-
-    @param new_db     a pointer to the new database name.
-    @param new_db_len length of the new database name.
-
-    @note This operation just sets {db, db_length}. Switching the current
-    database usually involves other actions, like switching other database
-    attributes including security context. In the future, this operation
-    will be made private and more convenient interface will be provided.
-  */
-  void reset_db(char *new_db, size_t new_db_len)
-  {
-    db= new_db;
-    db_length= new_db_len;
-  }
   /*
     Copy the current database to the argument. Use the current arena to
     allocate memory for a deep copy: current database may be freed after
@@ -1222,7 +1207,50 @@ public:
     return connect_microseconds;
   }
 
+  /**
+   * Returns a pointer to the active Transaction message for this
+   * Session being managed by the ReplicationServices component, or
+   * NULL if no active message.
+   */
+  message::Transaction *getTransactionMessage() const
+  {
+    return transaction_message;
+  }
+
+  /**
+   * Returns a pointer to the active Statement message for this
+   * Session, or NULL if no active message.
+   */
+  message::Statement *getStatementMessage() const
+  {
+    return statement_message;
+  }
+
+  /**
+   * Sets the active transaction message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setTransactionMessage(message::Transaction *in_message)
+  {
+    transaction_message= in_message;
+  }
+
+  /**
+   * Sets the active statement message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setStatementMessage(message::Statement *in_message)
+  {
+    statement_message= in_message;
+  }
 private:
+  /** Pointers to memory managed by the ReplicationServices component */
+  message::Transaction *transaction_message;
+  message::Statement *statement_message;
   /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;
@@ -1244,7 +1272,7 @@ private:
     - for prepared queries, only to allocate runtime data. The parsed
     tree itself is reused between executions and thus is stored elsewhere.
   */
-  MEM_ROOT main_mem_root;
+  memory::Root main_mem_root;
 
   /**
    * Marks all tables in the list which were used by current substatement
@@ -1388,21 +1416,35 @@ public:
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
-  bool lock_table_name_if_not_cached(const char *db, 
+  bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  void doGetTableNames(CachedDirectory &directory,
+                       const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+  int doGetTableDefinition(const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           message::Table *table_proto);
+
   void close_temporary_tables();
-  void close_temporary_table(Table *table, bool free_share, bool delete_table);
-  void close_temporary(Table *table, bool free_share, bool delete_table);
+  void close_temporary_table(Table *table);
+  // The method below just handles the de-allocation of the table. In
+  // a better memory type world, this would not be needed.
+private:
+  void close_temporary(Table *table);
+public:
+
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(StorageEngine *base, char *path);
-  Table *open_temporary_table(const char *path, const char *db,
-                              const char *table_name, bool link_in_list,
-                              open_table_mode open_mode);
-  
+  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(TableIdentifier &identifier);
+  Table *open_temporary_table(TableIdentifier &identifier,
+                              bool link_in_list= true);
+
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
@@ -1411,24 +1453,48 @@ public:
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
+
+
+  /**
+    Return the default storage engine
+
+    @param getDefaultStorageEngine()
+
+    @return
+    pointer to plugin::StorageEngine
+  */
+  plugin::StorageEngine *getDefaultStorageEngine()
+  {
+    if (variables.storage_engine)
+      return variables.storage_engine;
+    return global_system_variables.storage_engine;
+  };
+
+  static void unlink(Session *session);
+
 };
 
 class JOIN;
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file */
 #include <drizzled/select_to_file.h>
 #include <drizzled/select_export.h>
 #include <drizzled/select_dump.h>
 #include <drizzled/select_insert.h>
 #include <drizzled/select_create.h>
-#include <plugin/myisam/myisam.h>
 #include <drizzled/tmp_table_param.h>
 #include <drizzled/select_union.h>
 #include <drizzled/select_subselect.h>
 #include <drizzled/select_singlerow_subselect.h>
 #include <drizzled/select_max_min_finder_subselect.h>
 #include <drizzled/select_exists_subselect.h>
+
+namespace drizzled
+{
 
 /**
  * A structure used to describe sort information
@@ -1454,11 +1520,18 @@ typedef struct st_sort_buffer
   SORT_FIELD *sortorder;
 } SORT_BUFFER;
 
+} /* namespace drizzled */
+
+/** @TODO why is this in the middle of the file */
+
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
 #include <drizzled/my_var.h>
 #include <drizzled/select_dumpvar.h>
+
+namespace drizzled
+{
 
 /* Bits in sql_command_flags */
 
@@ -1479,9 +1552,11 @@ static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TAB
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
 /* Functions in sql_class.cc */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
+void add_to_status(system_status_var *to_var, system_status_var *from_var);
 
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var);
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SESSION_H */

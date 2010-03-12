@@ -15,13 +15,14 @@
 
 /* readline for batch mode */
 
-#include <drizzled/global.h>
-#include <mysys/my_sys.h>
+#include "config.h"
+#include "drizzled/internal/my_sys.h"
 #include "client/linebuffer.h"
 
 #include <vector>
 
 using namespace std;
+using namespace drizzled;
 
 LineBuffer::LineBuffer(uint32_t my_max_size,FILE *my_file)
   :
@@ -44,7 +45,7 @@ char *LineBuffer::readline()
 
   if (file && !eof)
   {
-    if ((read_count= my_read(fileno(file),
+    if ((read_count= internal::my_read(fileno(file),
                              (unsigned char *) (&line[0]),
                              max_size-1,MYF(MY_WME))))
     {

@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/right.h>
+
+namespace drizzled
+{
 
 String *Item_func_right::val_str(String *str)
 {
@@ -29,14 +32,14 @@ String *Item_func_right::val_str(String *str)
   int64_t length= args[1]->val_int();
 
   if ((null_value=(args[0]->null_value || args[1]->null_value)))
-    return 0; /* purecov: inspected */
+    return 0;
 
   /* if "unsigned_flag" is set, we have a *huge* positive number. */
   if ((length <= 0) && (!args[1]->unsigned_flag))
-    return &my_empty_string; /* purecov: inspected */
+    return &my_empty_string;
 
   if (res->length() <= (uint64_t) length)
-    return res; /* purecov: inspected */
+    return res;
 
   uint32_t start=res->numchars();
   if (start <= (uint) length)
@@ -52,3 +55,4 @@ void Item_func_right::fix_length_and_dec()
   left_right_max_length();
 }
 
+} /* namespace drizzled */

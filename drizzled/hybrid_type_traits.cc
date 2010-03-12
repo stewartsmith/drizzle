@@ -17,9 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/hybrid_type_traits.h>
-#include <drizzled/hybrid_type.h>
+#include "config.h"
+#include "drizzled/hybrid_type_traits.h"
+#include "drizzled/hybrid_type.h"
+#include "drizzled/item.h"
+#include <math.h>
+
+namespace drizzled
+{
 
 static const Hybrid_type_traits real_traits_instance;
 
@@ -96,3 +101,5 @@ Hybrid_type_traits::Hybrid_type_traits()
 
 Hybrid_type_traits::~Hybrid_type_traits()
 {}
+
+} /* namespace drizzled */

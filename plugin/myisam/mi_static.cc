@@ -18,7 +18,7 @@
   a shared library
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 std::list<MI_INFO *> myisam_open_list;
 unsigned char	 myisam_file_magic[]=
@@ -26,7 +26,7 @@ unsigned char	 myisam_file_magic[]=
 unsigned char	 myisam_pack_file_magic[]=
 { (unsigned char) 254, (unsigned char) 254,'\010', '\002', };
 char * myisam_log_filename=(char*) "myisam.log";
-File	myisam_log_file= -1;
+int	myisam_log_file= -1;
 uint	myisam_quick_table_bits=9;
 uint32_t myisam_block_size= MI_KEY_BLOCK_LENGTH;		/* Best by test */
 uint32_t myisam_concurrent_insert= 2;

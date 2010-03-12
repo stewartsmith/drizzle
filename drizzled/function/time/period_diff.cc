@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
+
 #include "drizzled/function/time/period_diff.h"
 #include "drizzled/calendar.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_period_diff::val_int()
 {
@@ -29,6 +32,8 @@ int64_t Item_func_period_diff::val_int()
   uint32_t period2= (uint32_t)args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value))
-    return 0; /* purecov: inspected */
+    return 0;
   return (int64_t) (year_month_to_months(period1) -year_month_to_months(period2));
 }
+
+} /* namespace drizzled */

@@ -17,13 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FILESORT_INFO_ST_H
-#define DRIZZLED_FILESORT_INFO_ST_H
+#ifndef DRIZZLED_FILESORT_INFO_H
+#define DRIZZLED_FILESORT_INFO_H
+
+namespace drizzled
+{
 
 /* Information on state of filesort */
 struct filesort_info_st
 {
-  IO_CACHE *io_cache;           /* If sorted through filesort */
+  internal::IO_CACHE *io_cache;           /* If sorted through filesort */
   unsigned char     **sort_keys;        /* Buffer for sorting keys */
   unsigned char     *buffpek;           /* Buffer for buffpek structures */
   uint32_t      buffpek_len;        /* Max number of buffpeks in the buffer */
@@ -35,4 +38,6 @@ struct filesort_info_st
   ha_rows   found_records;      /* How many records in sort */
 };
 
-#endif /* DRIZZLED_FILESORT_INFO_ST_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FILESORT_INFO_H */

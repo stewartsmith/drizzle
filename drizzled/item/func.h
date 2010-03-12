@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SERVER_ITEM_FUNC_H
-#define DRIZZLED_SERVER_ITEM_FUNC_H
+#ifndef DRIZZLED_ITEM_FUNC_H
+#define DRIZZLED_ITEM_FUNC_H
 
 
 /* If you fix the parser to no longer create functions these can be moved to create.cc */
@@ -37,11 +37,19 @@
 
 /* For type casts */
 
+namespace drizzled
+{
+
 enum Cast_target
 {
-  ITEM_CAST_BINARY, ITEM_CAST_SIGNED_INT, ITEM_CAST_UNSIGNED_INT,
-  ITEM_CAST_DATE, ITEM_CAST_TIME, ITEM_CAST_DATETIME, ITEM_CAST_CHAR,
+  ITEM_CAST_BINARY,
+  ITEM_CAST_DATE,
+  ITEM_CAST_TIME,
+  ITEM_CAST_DATETIME,
+  ITEM_CAST_CHAR,
   ITEM_CAST_DECIMAL
 };
 
-#endif /* DRIZZLE_SERVER_ITEM_FUNC_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_ITEM_FUNC_H */

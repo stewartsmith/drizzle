@@ -17,27 +17,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #ifndef DRIZZLED_ALTER_COLUMN_H
 #define DRIZZLED_ALTER_COLUMN_H
 
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
+
+namespace drizzled
+{
+
+namespace memory { class Root; }
 
 class Item;
-typedef struct st_mem_root MEM_ROOT;
 
-class Alter_column :public Sql_alloc {
+class AlterColumn :public memory::SqlAlloc {
 public:
   const char *name;
   Item *def;
-  Alter_column(const char *par_name,Item *literal)
-    :name(par_name), def(literal) {}
+  AlterColumn(const char *par_name,Item *literal) :
+    name(par_name),
+    def(literal)
+  {}
+  
   /**
     Used to make a clone of this object for ALTER/CREATE TABLE
     @sa comment for Key_part_spec::clone
   */
-  Alter_column *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Alter_column(*this); }
+  AlterColumn *clone(memory::Root *mem_root) const
+  {
+    return new (mem_root) AlterColumn(*this);
+  }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ALTER_COLUMN_H */

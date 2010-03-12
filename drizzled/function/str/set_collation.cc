@@ -17,10 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/function/str/set_collation.h>
 #include <drizzled/error.h>
+#include "drizzled/charset.h"
+
+namespace drizzled
+{
+
+static const char *binary_keyword= "BINARY";
 
 String *Item_func_set_collation::val_str(String *str)
 {
@@ -91,5 +96,6 @@ void Item_func_set_collation::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+} /* namespace drizzled */
 
 

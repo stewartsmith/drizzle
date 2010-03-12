@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/user.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 /**
   @todo
@@ -54,8 +57,8 @@ bool Item_func_user::init(const char *user, const char *host)
 bool Item_func_user::fix_fields(Session *session, Item **ref)
 {
   return (Item_str_func::fix_fields(session, ref) ||
-          init(session->security_ctx.user.c_str(),
-               session->security_ctx.ip.c_str()));
+          init(session->getSecurityContext().getUser().c_str(),
+               session->getSecurityContext().getIp().c_str()));
 }
 
 
@@ -64,8 +67,8 @@ bool Item_func_current_user::fix_fields(Session *session, Item **ref)
   if (Item_str_func::fix_fields(session, ref))
     return true;
 
-  Security_context *ctx= &session->security_ctx;
-  return init(ctx->user.c_str(), ctx->ip.c_str());
+  const SecurityContext *ctx= &session->getSecurityContext();
+  return init(ctx->getUser().c_str(), ctx->getIp().c_str());
 }
 
-
+} /* namespace drizzled */

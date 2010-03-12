@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/uint.h>
 #include <drizzled/item/int_with_ref.h>
+
+namespace drizzled
+{
 
 Item *Item_int_with_ref::clone_item()
 {
@@ -34,3 +37,4 @@ Item *Item_int_with_ref::clone_item()
           new Item_int(ref->name, ref->val_int(), ref->max_length));
 }
 
+} /* namespace drizzled */

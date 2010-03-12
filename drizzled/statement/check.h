@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,17 @@ class Check : public Statement
 public:
   Check(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CHECK)
-  {}
+      Statement(in_session)
+  {
+  }
 
   bool execute();
+
+  HA_CHECK_OPT check_opt;			// check/repair options
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_CHECK_H */

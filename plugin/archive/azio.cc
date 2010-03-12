@@ -11,13 +11,19 @@
 
 /* @(#) $Id$ */
 
+#include "config.h"
+
 #include "azio.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
+#include <fcntl.h>
 #include <unistd.h>
+
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cassert>
+
+using namespace drizzled;
 
 static int const az_magic[3] = {0xfe, 0x03, 0x01}; /* az magic header */
 
@@ -37,18 +43,16 @@ static void get_block(azio_stream *s);
 static void do_aio_cleanup(azio_stream *s);
 #endif
 
-extern "C"
-pthread_handler_t run_task(void *p);
+extern "C" pthread_handler_t run_task(void *p);
 
-
-pthread_handler_t run_task(void *p)
+extern "C" pthread_handler_t run_task(void *p)
 {
   int fd;
   char *buffer;
   size_t offset;
   azio_stream *s= (azio_stream *)p;
 
-  my_thread_init();
+  internal::my_thread_init();
 
   while (1)
   {
@@ -73,7 +77,7 @@ pthread_handler_t run_task(void *p)
     pthread_mutex_unlock(&s->container.thresh_mutex);
   }
 
-  my_thread_end();
+  internal::my_thread_end();
 
   return 0;
 }
@@ -159,7 +163,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   int err;
   int level = Z_DEFAULT_COMPRESSION ; /* compression level */
   int strategy = Z_DEFAULT_STRATEGY; /* compression strategy */
-  File fd= -1;
+  int fd= -1;
 
   memset(s, 0, sizeof(azio_stream));
 
@@ -225,7 +229,7 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
   s->stream.avail_out = AZ_BUFSIZE_WRITE;
 
   errno = 0;
-  s->file = fd < 0 ? my_open(path, Flags, MYF(0)) : fd;
+  s->file = fd < 0 ? internal::my_open(path, Flags, MYF(0)) : fd;
 #ifdef AZIO_AIO
   s->container.fd= s->file;
 #endif
@@ -437,7 +441,7 @@ int destroy (azio_stream *s)
     if (s->mode == 'w')
     {
       err = deflateEnd(&(s->stream));
-      my_sync(s->file, MYF(0));
+      internal::my_sync(s->file, MYF(0));
     }
     else if (s->mode == 'r')
       err = inflateEnd(&(s->stream));
@@ -445,7 +449,7 @@ int destroy (azio_stream *s)
 
   do_aio_cleanup(s);
 
-  if (s->file > 0 && my_close(s->file, MYF(0)))
+  if (s->file > 0 && internal::my_close(s->file, MYF(0)))
       err = Z_ERRNO;
 
   s->file= -1;
@@ -459,7 +463,16 @@ int destroy (azio_stream *s)
   Reads the given number of uncompressed bytes from the compressed file.
   azread returns the number of bytes actually read (0 for end of file).
 */
-unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error)
+/*
+   This function is legacy, do not use.
+
+     Reads the given number of uncompressed bytes from the compressed file.
+   If the input file was not in gzip format, gzread copies the given number
+   of bytes into the buffer.
+     gzread returns the number of uncompressed bytes actually read (0 for
+   end of file, -1 for error).
+*/
+static unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error)
 {
   Bytef *start = (Bytef*)buf; /* starting point for crc computation */
   Byte  *next_out; /* == stream.next_out but not forced far (for MSDOS) */
@@ -745,7 +758,7 @@ int ZEXPORT azflush (azio_stream *s,int flush)
     err= do_flush(s, flush);
 
     if (err) return err;
-    my_sync(s->file, MYF(0));
+    internal::my_sync(s->file, MYF(0));
     return  s->z_err == Z_STREAM_END ? Z_OK : s->z_err;
   }
 }
@@ -1063,7 +1076,7 @@ static void get_block(azio_stream *s)
     }
     s->pos+= s->stream.avail_in;
     s->inbuf= (Byte *)s->container.buffer;
-    /* We only aio_read when we know there is more data to be read */
+    /* We only azio_read when we know there is more data to be read */
     if (s->pos >= s->check_point)
     {
       s->aio_inited= 0;

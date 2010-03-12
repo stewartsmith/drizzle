@@ -17,8 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/function/math/real.h>
+
+namespace drizzled
+{
 
 
 String *Item_real_func::val_str(String *str)
@@ -26,7 +30,7 @@ String *Item_real_func::val_str(String *str)
   assert(fixed == 1);
   double nr= val_real();
   if (null_value)
-    return 0; /* purecov: inspected */
+    return 0;
   str->set_real(nr,decimals, &my_charset_bin);
   return str;
 }
@@ -37,7 +41,7 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
   assert(fixed);
   double nr= val_real();
   if (null_value)
-    return 0; /* purecov: inspected */
+    return 0;
   double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
   return decimal_value;
 }
@@ -54,3 +58,4 @@ void Item_real_func::fix_length_and_dec()
   max_length= float_length(decimals);
 }
 
+} /* namespace drizzled */

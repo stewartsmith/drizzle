@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/decimal.h>
+
+namespace drizzled
+{
 
 Item_decimal::Item_decimal(const char *str_arg, uint32_t length,
                            const CHARSET_INFO * const charset)
@@ -142,3 +145,5 @@ int Item_decimal::save_in_field(Field *field, bool)
   return field->store_decimal(&decimal_value);
 }
 
+
+} /* namespace drizzled */

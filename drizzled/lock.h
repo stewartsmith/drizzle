@@ -20,7 +20,10 @@
 #ifndef DRIZZLED_LOCK_H
 #define DRIZZLED_LOCK_H
 
-#include <mysys/definitions.h>
+#include "drizzled/thr_lock.h"
+
+namespace drizzled
+{
 
 class Session;
 class Table;
@@ -41,8 +44,6 @@ void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count);
 void mysql_lock_remove(Session *session, Table *table);
 void mysql_lock_abort(Session *session, Table *table);
 bool mysql_lock_abort_for_thread(Session *session, Table *table);
-TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
-                                      TableList *haystack);
 bool lock_global_read_lock(Session *session);
 void unlock_global_read_lock(Session *session);
 bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
@@ -60,5 +61,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list);
 bool lock_table_names(Session *session, TableList *table_list);
 void unlock_table_names(TableList *table_list, TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_LOCK_H */

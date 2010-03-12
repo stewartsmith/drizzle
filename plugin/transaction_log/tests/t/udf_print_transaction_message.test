@@ -1,0 +1,17 @@
+#
+# Tests the PRINT_TRANSACTION_MESSAGE() UDF which is part of the
+# transaction log module
+#
+
+# Populate log with some records...
+--source ../plugin/transaction_log/tests/t/insert.inc
+
+# Query the INFORMATION_SCHEMA.TRANSACTION_LOG_ENTRIES view
+# and call the PRINT_TRANSACTION_MESSAGE() UDF
+
+SELECT LENGTH(PRINT_TRANSACTION_MESSAGE('transaction.log', ENTRY_OFFSET)) > 0 as checked
+FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES
+LIMIT 1;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc

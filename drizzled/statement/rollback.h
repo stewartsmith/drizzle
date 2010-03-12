@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,20 @@ class Rollback : public Statement
 public:
   Rollback(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ROLLBACK)
+      Statement(in_session)
   {}
 
   bool execute();
+
+  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
+  bool tx_chain;
+
+  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
+  bool tx_release;
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_ROLLBACK_H */

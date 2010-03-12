@@ -1,10 +1,13 @@
 drop table if exists t1;
-create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	NULL	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -23,15 +26,18 @@ a	b
 4	6
 alter table t1 add c int not null, add key using BTREE (c,a);
 drop table t1;
-create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(-2,-2),(-1,-1),(0,0),(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a > -3;
 select * from t1;
 a	b
 drop table t1;
-create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key using BTREE (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 alter table t1 modify a int not null auto_increment, engine=innodb, comment="new innodb table";
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	InnoDB	#	#	#	#	#
 select * from t1;
 a	b
 1	1
@@ -39,7 +45,7 @@ a	b
 3	3
 4	4
 drop table t1;
-create temporary table t1 (a int not null) engine=heap;
+create temporary table t1 (a int not null) engine=MEMORY;
 insert into t1 values (869751),(736494),(226312),(802616),(728912);
 select * from t1 where a > 736494;
 a
@@ -69,7 +75,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	uniq_id	uniq_id	4	NULL	5	Using where; Using index
 drop table t1;
 create temporary table t1 (x int not null, y int not null, key x  using BTREE (x,y), unique y  using BTREE (y))
-engine=heap;
+engine=MEMORY;
 insert into t1 values (1,1),(2,2),(1,3),(2,4),(2,5),(2,6);
 explain select * from t1 where x=1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -83,13 +89,13 @@ ERROR HY000: Can't reopen table: 't1'
 explain select * from t1,t1 as t2 where t1.x=t2.y;
 ERROR HY000: Can't reopen table: 't1'
 drop table t1;
-create temporary table t1 (a int) engine=heap;
+create temporary table t1 (a int) engine=MEMORY;
 insert into t1 values(1);
 select max(a) from t1;
 max(a)
 1
 drop table t1;
-CREATE TEMPORARY TABLE t1 ( a int not null default 0, b int not null default 0,  key  using BTREE (a,b),  key  using BTREE (b)  ) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 ( a int not null default 0, b int not null default 0,  key  using BTREE (a,b),  key  using BTREE (b)  ) ENGINE=MEMORY;
 insert into t1 values(1,1),(1,2),(2,3),(1,3),(1,4),(1,5),(1,6);
 select * from t1 where a=1;
 a	b
@@ -128,7 +134,7 @@ explain select * from tx where b=x;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 x	SIMPLE	tx	ref	b	b	x	const	x	
 drop table t1;
-create temporary table t1 (id int not null, primary key  using BTREE (id)) engine=HEAP;
+create temporary table t1 (id int not null, primary key  using BTREE (id)) engine=MEMORY;
 insert into t1 values(1);
 select max(id) from t1;
 max(id)
@@ -139,12 +145,12 @@ max(id)
 2
 replace into t1 values(1);
 drop table t1;
-create temporary table t1 (n int) engine=heap;
+create temporary table t1 (n int) engine=MEMORY;
 drop table t1;
-create temporary table t1 (n int) engine=heap;
+create temporary table t1 (n int) engine=MEMORY;
 drop table if exists t1;
 CREATE TEMPORARY table t1(f1 int not null,f2 char(20) not 
-null,index(f2)) engine=heap;
+null,index(f2)) engine=MEMORY;
 INSERT into t1 set f1=12,f2="bill";
 INSERT into t1 set f1=13,f2="bill";
 INSERT into t1 set f1=14,f2="bill";
@@ -163,7 +169,7 @@ f1	f2
 12	ted
 12	ted
 drop table t1;
-create temporary table t1 (btn char(10) not null, key using BTREE (btn)) engine=heap;
+create temporary table t1 (btn char(10) not null, key using BTREE (btn)) engine=MEMORY;
 insert into t1 values ("hello"),("hello"),("hello"),("hello"),("hello"),("a"),("b"),("c"),("d"),("e"),("f"),("g"),("h"),("i");
 explain select * from t1 where btn like "i%";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -197,7 +203,7 @@ a int default NULL,
 b int default NULL,
 KEY a using BTREE (a),
 UNIQUE b using BTREE (b)
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES (NULL,99),(99,NULL),(1,1),(2,2),(1,3);
 SELECT * FROM t1 WHERE a=NULL;
 a	b
@@ -218,7 +224,7 @@ a	b
 INSERT INTO t1 VALUES (1,3);
 ERROR 23000: Duplicate entry '3' for key 'b'
 DROP TABLE t1;
-CREATE TEMPORARY TABLE t1 (a int, b int, c int, key using BTREE (a, b, c)) engine=heap;
+CREATE TEMPORARY TABLE t1 (a int, b int, c int, key using BTREE (a, b, c)) engine=MEMORY;
 INSERT INTO t1 VALUES (1, NULL, NULL), (1, 1, NULL), (1, NULL, 1);
 SELECT * FROM t1 WHERE a=1 and b IS NULL;
 a	b	c
@@ -232,13 +238,13 @@ SELECT * FROM t1 WHERE a=1 and b IS NULL and c IS NULL;
 a	b	c
 1	NULL	NULL
 DROP TABLE t1;
-CREATE TEMPORARY TABLE t1 (a int not null, primary key using BTREE (a)) engine=heap;
+CREATE TEMPORARY TABLE t1 (a int not null, primary key using BTREE (a)) engine=MEMORY;
 INSERT into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11);
 DELETE from t1 where a < 100;
 SELECT * from t1;
 a
 DROP TABLE t1;
-create temporary table t1(a int not null, key using btree(a)) engine=heap;
+create temporary table t1(a int not null, key using btree(a)) engine=MEMORY;
 insert into t1 values (2), (2), (2), (1), (1), (3), (3), (3), (3);
 select a from t1 where a > 2 order by a;
 a
@@ -301,14 +307,6 @@ a
 1
 DROP TABLE t1;
 End of 4.1 tests
-CREATE TEMPORARY TABLE t1(val INT, KEY USING BTREE(val)) ENGINE=memory;
-INSERT INTO t1 VALUES(0);
-SELECT INDEX_LENGTH FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='t1';
-INDEX_LENGTH
-UPDATE t1 SET val=1;
-SELECT INDEX_LENGTH FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='t1';
-INDEX_LENGTH
-DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (a INT, UNIQUE USING BTREE(a)) ENGINE=MEMORY;
 INSERT INTO t1 VALUES(NULL),(NULL);
 DROP TABLE t1;

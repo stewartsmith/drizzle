@@ -1,4 +1,4 @@
-/* - mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 MySQL
@@ -18,10 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_NUM
-#define DRIZZLE_SERVER_FIELD_NUM
+#ifndef DRIZZLED_FIELD_NUM_H
+#define DRIZZLED_FIELD_NUM_H
 
-class Field_num :public Field {
+#include "drizzled/field.h"
+
+namespace drizzled
+{
+
+class Field_num :public Field 
+{
 public:
   const uint8_t dec;
   bool decimal_precision;       // Purify cannot handle bit fields & only for decimal type
@@ -46,5 +52,6 @@ public:
                int64_t signed_min, int64_t signed_max);
 };
 
+} /* namespace drizzled */
 
-#endif
+#endif /* DRIZZLED_FIELD_NUM_H */

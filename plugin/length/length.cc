@@ -17,9 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/math/int.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
 using namespace drizzled;
@@ -63,24 +63,29 @@ int64_t LengthFunction::val_int()
 }
 
 plugin::Create_function<LengthFunction> *lengthudf= NULL;
+plugin::Create_function<LengthFunction> *octet_lengthudf= NULL;
 
 static int initialize(drizzled::plugin::Registry &registry)
 {
   lengthudf= new plugin::Create_function<LengthFunction>("length");
-  lengthudf->addAlias("octet_length");
-  registry.function.add(lengthudf);
+  octet_lengthudf= new plugin::Create_function<LengthFunction>("octet_length");
+  registry.add(lengthudf);
+  registry.add(octet_lengthudf);
   return 0;
 }
 
 static int finalize(drizzled::plugin::Registry &registry)
 {
-   registry.function.remove(lengthudf);
+   registry.remove(lengthudf);
+   registry.remove(octet_lengthudf);
    delete lengthudf;
+   delete octet_lengthudf;
    return 0;
 }
 
-drizzle_declare_plugin(length)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "length",
   "1.0",
   "Devananda van der Veen",
@@ -88,8 +93,7 @@ drizzle_declare_plugin(length)
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

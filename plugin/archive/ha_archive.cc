@@ -1,4 +1,5 @@
 /* Copyright (C) 2003 MySQL AB
+   Copyright (C) 2010 Brian Aker
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -14,24 +15,13 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#include "drizzled/server_includes.h"
-#include "drizzled/field.h"
-#include "drizzled/field/blob.h"
-#include "drizzled/field/timestamp.h"
-#include "plugin/myisam/myisam.h"
-#include "drizzled/table.h"
-#include "drizzled/session.h"
-#include <mysys/my_dir.h>
+#include "config.h"
 
-#include "ha_archive.h"
-
-#include <stdio.h>
-#include <string>
-#include <map>
+#include "plugin/archive/archive_engine.h"
 
 using namespace std;
+using namespace drizzled;
 
-static const string engine_name("ARCHIVE");
 
 /*
   First, if you want to understand storage engines you should look at
@@ -104,17 +94,11 @@ static const string engine_name("ARCHIVE");
 /* Variables for archive share methods */
 pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
-std::map<const char *, ArchiveShare *> archive_open_tables;
+/* When the engine starts up set the first version */
+static uint64_t global_version= 1;
 
-static unsigned int global_version;
-
-/* The file extension */
-#define ARZ ".ARZ"               // The data file
-#define ARN ".ARN"               // Files used during an optimize call
-
-
-
-static bool archive_use_aio= false;
+// We use this to find out the state of the archive aio option.
+extern bool archive_aio_state(void);
 
 /*
   Number of rows that will force a bulk insert.
@@ -126,130 +110,87 @@ static bool archive_use_aio= false;
 */
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
-/*
-  We just implement one additional file extension.
-*/
-static const char *ha_archive_exts[] = {
-  ARZ,
-  NULL
-};
-
-class ArchiveTableNameIterator: public TableNameIteratorImplementation
+ArchiveShare *ArchiveEngine::findOpenTable(const string table_name)
 {
-private:
-  MY_DIR *dirp;
-  uint32_t current_entry;
+  ArchiveMap::iterator find_iter=
+    archive_open_tables.find(table_name);
 
-public:
-  ArchiveTableNameIterator(const std::string &database)
-    : TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
-    {};
-
-  ~ArchiveTableNameIterator();
-
-  int next(std::string *name);
-
-};
-
-ArchiveTableNameIterator::~ArchiveTableNameIterator()
-{
-  if (dirp)
-    my_dirend(dirp);
+  if (find_iter != archive_open_tables.end())
+    return (*find_iter).second;
+  else
+    return NULL;
 }
 
-int ArchiveTableNameIterator::next(string *name)
+void ArchiveEngine::addOpenTable(const string &table_name, ArchiveShare *share)
 {
-  char uname[NAME_LEN + 1];
-  FILEINFO *file;
-  char *ext;
-  uint32_t file_name_len;
-  const char *wild= NULL;
+  archive_open_tables[table_name]= share;
+}
 
-  if (dirp == NULL)
+void ArchiveEngine::deleteOpenTable(const string &table_name)
+{
+  archive_open_tables.erase(table_name);
+}
+
+
+void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
+                                    string&, 
+                                    set<string>& set_of_names)
+{
+  drizzled::CachedDirectory::Entries entries= directory.getEntries();
+
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
   {
-    bool dir= false;
-    char path[FN_REFLEN];
+    drizzled::CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
 
-    build_table_filename(path, sizeof(path), db.c_str(), "", false);
-    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
-    if (dirp == NULL)
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
+    {  }
+    else
     {
-      if (my_errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
-      return(ENOENT);
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names.insert(uname);
     }
-    current_entry= -1;
-  }
-
-  while(true)
-  {
-    current_entry++;
-
-    if (current_entry == dirp->number_off_files)
-    {
-      my_dirend(dirp);
-      dirp= NULL;
-      return -1;
-    }
-
-    file= dirp->dir_entry + current_entry;
-
-    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
-
-    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
-
-    uname[file_name_len]= '\0';
-
-    if (wild && wild_compare(uname, wild, 0))
-      continue;
-    if (name)
-      name->assign(uname);
-
-    return 0;
   }
 }
 
-class ArchiveEngine : public StorageEngine
+
+int ArchiveEngine::doDropTable(Session&,
+                               const string &table_path)
 {
-public:
-  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
-                                      HTON_FILE_BASED
-                                    | HTON_HAS_DATA_DICTIONARY
-                                    | HTON_DATA_DIR) {}
+  string new_path(table_path);
 
-  virtual handler *create(TableShare *table,
-                          MEM_ROOT *mem_root)
+  new_path+= ARZ;
+
+  int error= unlink(new_path.c_str());
+
+  if (error != 0)
   {
-    return new (mem_root) ha_archive(this, table);
+    error= errno= errno;
   }
 
-  const char **bas_ext() const {
-    return ha_archive_exts;
-  }
+  return error;
+}
 
-  int createTableImplementation(Session *session, const char *table_name,
-                                Table *table_arg, HA_CREATE_INFO *create_info,
-                                drizzled::message::Table* proto);
-
-  int getTableProtoImplementation(const char* path,
-                                  drizzled::message::Table *table_proto);
-
-  TableNameIteratorImplementation* tableNameIterator(const std::string &database)
-  {
-    return new ArchiveTableNameIterator(database);
-  }
-};
-
-int ArchiveEngine::getTableProtoImplementation(const char* path,
-                                         drizzled::message::Table *table_proto)
+int ArchiveEngine::doGetTableDefinition(Session&,
+                                        const char* path,
+                                        const char *,
+                                        const char *,
+                                        const bool,
+                                        drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
-  int error= 0;
+  int error= ENOENT;
   string proto_path;
 
   proto_path.reserve(FN_REFLEN);
@@ -259,12 +200,14 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
 
   if (stat(proto_path.c_str(),&stat_info))
     return errno;
+  else
+    error= EEXIST;
 
   if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
-    if(azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
+    if (azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
 
     proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
@@ -276,73 +219,26 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
 
     azread_frm(&proto_stream, proto_string);
 
-    if(table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);
     free(proto_string);
   }
 
-  return EEXIST;
-}
-
-static ArchiveEngine *archive_engine= NULL;
-
-/*
-  Initialize the archive handler.
-
-  SYNOPSIS
-    archive_db_init()
-    void *
-
-  RETURN
-    false       OK
-    true        Error
-*/
-
-static int archive_db_init(drizzled::plugin::Registry &registry)
-{
-
-  pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
-  archive_engine= new ArchiveEngine(engine_name);
-  registry.add(archive_engine);
-
-  /* When the engine starts up set the first version */
-  global_version= 1;
-
-  return false;
-}
-
-/*
-  Release the archive handler.
-
-  SYNOPSIS
-    archive_db_done()
-    void
-
-  RETURN
-    false       OK
-*/
-
-static int archive_db_done(drizzled::plugin::Registry &registry)
-{
-  registry.remove(archive_engine);
-  delete archive_engine;
-
-  pthread_mutex_destroy(&archive_mutex);
-
-  return 0;
+  return error;
 }
 
 
-ha_archive::ha_archive(StorageEngine *engine_arg, TableShare *table_arg)
-  :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine &engine_arg,
+                       TableShare &table_arg)
+  :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);
 
   /* The size of the offset value we will use for position() */
-  ref_length= sizeof(my_off_t);
+  ref_length= sizeof(internal::my_off_t);
   archive_reader_open= false;
 }
 
@@ -373,7 +269,7 @@ ArchiveShare::ArchiveShare(const char *name):
 {
   memset(&archive_write, 0, sizeof(azio_stream));     /* Archive file we are working with */
   table_name.append(name);
-  fn_format(data_file_name, table_name.c_str(), "",
+  internal::fn_format(data_file_name, table_name.c_str(), "",
             ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
   /*
     We will use this lock for rows.
@@ -433,18 +329,10 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  uint32_t length;
-  map<const char *, ArchiveShare *> ::iterator find_iter;
-
   pthread_mutex_lock(&archive_mutex);
-  length=(uint) strlen(table_name);
 
-  find_iter= archive_open_tables.find(table_name);
-
-  if (find_iter != archive_open_tables.end())
-    share= (*find_iter).second;
-  else
-    share= NULL;
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+  share= a_engine->findOpenTable(table_name);
 
   if (!share)
   {
@@ -466,10 +354,11 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
       return NULL;
     }
 
-    archive_open_tables[share->table_name.c_str()]= share; 
+    a_engine->addOpenTable(share->table_name, share);
     thr_lock_init(&share->lock);
   }
   share->use_count++;
+
   if (share->crashed)
     *rc= HA_ERR_CRASHED_ON_USAGE;
   pthread_mutex_unlock(&archive_mutex);
@@ -487,7 +376,8 @@ int ha_archive::free_share()
   pthread_mutex_lock(&archive_mutex);
   if (!--share->use_count)
   {
-    archive_open_tables.erase(share->table_name.c_str());
+    ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+    a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
   pthread_mutex_unlock(&archive_mutex);
@@ -515,7 +405,7 @@ int ha_archive::init_archive_writer()
 
 
 /*
-  No locks are required because it is associated with just one handler instance
+  No locks are required because it is associated with just one Cursor instance
 */
 int ha_archive::init_archive_reader()
 {
@@ -528,7 +418,7 @@ int ha_archive::init_archive_reader()
   {
     az_method method;
 
-    switch (archive_use_aio)
+    switch (archive_aio_state())
     {
     case false:
       method= AZ_METHOD_BLOCK;
@@ -557,17 +447,22 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t open_options)
+int ha_archive::open(const char *name, int, uint32_t)
 {
   int rc= 0;
   share= get_share(name, &rc);
 
-  if (rc == HA_ERR_CRASHED_ON_USAGE && !(open_options & HA_OPEN_FOR_REPAIR))
+  /** 
+    We either fix it ourselves, or we just take it offline 
+
+    @todo Create some documentation in the recovery tools shipped with the engine.
+  */
+  if (rc == HA_ERR_CRASHED_ON_USAGE)
   {
-    /* purecov: begin inspected */
     free_share();
-    return(rc);
-    /* purecov: end */
+    rc= repair();
+
+    return 0;
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -587,12 +482,7 @@ int ha_archive::open(const char *name, int, uint32_t open_options)
 
   thr_lock_data_init(&share->lock, &lock, NULL);
 
-  if (rc == HA_ERR_CRASHED_ON_USAGE && open_options & HA_OPEN_FOR_REPAIR)
-  {
-    return(0);
-  }
-  else
-    return(rc);
+  return(rc);
 }
 
 
@@ -641,24 +531,22 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImplementation(Session *session,
-                                             const char *table_name,
-                                             Table *table_arg,
-                                             HA_CREATE_INFO *create_info,
-                                             drizzled::message::Table *proto)
+int ArchiveEngine::doCreateTable(Session *,
+                                 const char *table_name,
+                                 Table& table_arg,
+                                 drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
-  char linkname[FN_REFLEN];
   int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
   uint64_t auto_increment_value;
   string serialized_proto;
 
-  auto_increment_value= create_info->auto_increment_value;
+  auto_increment_value= proto.options().auto_increment_value();
 
-  for (uint32_t key= 0; key < table_arg->sizeKeys(); key++)
+  for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KEY *pos= table_arg->key_info+key;
+    KEY *pos= table_arg.key_info+key;
     KEY_PART_INFO *key_part=     pos->key_part;
     KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
 
@@ -677,21 +565,10 @@ int ArchiveEngine::createTableImplementation(Session *session,
   /*
     We reuse name_buff since it is available.
   */
-  if (create_info->data_file_name && create_info->data_file_name[0] != '#')
-  {
-    fn_format(name_buff, create_info->data_file_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    fn_format(linkname, table_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-  }
-  else
-  {
-    fn_format(name_buff, table_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    linkname[0]= 0;
-  }
+  internal::fn_format(name_buff, table_name, "", ARZ,
+            MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  my_errno= 0;
+  errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
              AZ_METHOD_BLOCK) == 0)
   {
@@ -699,23 +576,19 @@ int ArchiveEngine::createTableImplementation(Session *session,
     goto error2;
   }
 
-  if (linkname[0])
-    if(symlink(name_buff, linkname) != 0)
-      goto error2;
-
-  proto->SerializeToString(&serialized_proto);
+  proto.SerializeToString(&serialized_proto);
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
     goto error2;
 
-  if (proto->options().has_comment())
+  if (proto.options().has_comment())
   {
     int write_length;
 
     write_length= azwrite_comment(&create_stream,
-                                  proto->options().comment().c_str(),
-                                  proto->options().comment().length());
+                                  proto.options().comment().c_str(),
+                                  proto.options().comment().length());
 
     if (write_length < 0)
     {
@@ -740,7 +613,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   return(0);
 
 error2:
-  deleteTable(session, table_name);
+  unlink(name_buff);
+
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);
@@ -797,7 +671,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   unsigned char *ptr;
 
   if (fix_rec_buff(max_row_length(record)))
-    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
   memcpy(record_buffer->buffer, record, table->s->null_bytes);
@@ -832,7 +706,7 @@ int ha_archive::write_row(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&SSV::ha_write_count);
+  ha_statistic_increment(&system_status_var::ha_write_count);
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)
@@ -1066,7 +940,7 @@ int ha_archive::rnd_next(unsigned char *buf)
     return(HA_ERR_END_OF_FILE);
   scan_rows--;
 
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   current_position= aztell(&archive);
   rc= get_row(&archive, buf);
 
@@ -1077,14 +951,14 @@ int ha_archive::rnd_next(unsigned char *buf)
 
 
 /*
-  Thanks to the table flag HA_REC_NOT_IN_SEQ this will be called after
+  Thanks to the table bool is_ordered this will be called after
   each call to ha_archive::rnd_next() if an ordering of the rows is
   needed.
 */
 
 void ha_archive::position(const unsigned char *)
 {
-  my_store_ptr(ref, ref_length, current_position);
+  internal::my_store_ptr(ref, ref_length, current_position);
   return;
 }
 
@@ -1098,8 +972,8 @@ void ha_archive::position(const unsigned char *)
 
 int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-  current_position= (my_off_t)my_get_ptr(pos, ref_length);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
+  current_position= (internal::my_off_t)internal::my_get_ptr(pos, ref_length);
   if (azseek(&archive, (size_t)current_position, SEEK_SET) == (size_t)(-1L))
     return(HA_ERR_CRASHED_ON_USAGE);
   return(get_row(&archive, buf));
@@ -1110,10 +984,9 @@ int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
   rewriting the meta file. Currently it does this by calling optimize with
   the extended flag.
 */
-int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
+int ha_archive::repair()
 {
-  check_opt->flags= T_EXTEND;
-  int rc= optimize(session, check_opt);
+  int rc= optimize();
 
   if (rc)
     return(HA_ERR_CRASHED_ON_REPAIR);
@@ -1126,7 +999,7 @@ int ha_archive::repair(Session* session, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely.
 */
-int ha_archive::optimize(Session *, HA_CHECK_OPT *)
+int ha_archive::optimize()
 {
   int rc= 0;
   azio_stream writer;
@@ -1150,7 +1023,7 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
   azread_frm(&archive, proto_string);
 
   /* Lets create a file to contain the new data */
-  fn_format(writer_filename, share->table_name.c_str(), "", ARN,
+  internal::fn_format(writer_filename, share->table_name.c_str(), "", ARN,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
@@ -1233,7 +1106,7 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
   azclose(&archive);
 
   // make the file we just wrote be our data file
-  rc = my_rename(writer_filename,share->data_file_name,MYF(0));
+  rc = internal::my_rename(writer_filename,share->data_file_name,MYF(0));
 
   free(proto_string);
   return(rc);
@@ -1384,18 +1257,10 @@ int ha_archive::delete_all_rows()
 }
 
 /*
-  We just return state if asked.
-*/
-bool ha_archive::is_crashed() const
-{
-  return(share->crashed);
-}
-
-/*
   Simple scan of the tables to make sure everything is ok.
 */
 
-int ha_archive::check(Session* session, HA_CHECK_OPT *)
+int ha_archive::check(Session* session)
 {
   int rc= 0;
   const char *old_proc_info;
@@ -1441,14 +1306,14 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   archive_record_buffer *r;
   if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
   {
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
   r->length= (int)length;
 
   if (!(r->buffer= (unsigned char*) malloc(r->length)))
   {
     free((char*) r);
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
 
   return(r);
@@ -1460,29 +1325,3 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   free((char*) r);
   return;
 }
-
-static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
-  PLUGIN_VAR_NOCMDOPT,
-  "Whether or not to use asynchronous IO.",
-  NULL, NULL, true);
-
-static struct st_mysql_sys_var* archive_system_variables[]= {
-  DRIZZLE_SYSVAR(aio),
-  NULL
-};
-
-drizzle_declare_plugin(archive)
-{
-  "ARCHIVE",
-  "3.5",
-  "Brian Aker, MySQL AB",
-  "Archive storage engine",
-  PLUGIN_LICENSE_GPL,
-  archive_db_init, /* Plugin Init */
-  archive_db_done, /* Plugin Deinit */
-  NULL,                       /* status variables                */
-  archive_system_variables,   /* system variables                */
-  NULL                        /* config options                  */
-}
-drizzle_declare_plugin_end;
-

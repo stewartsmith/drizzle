@@ -20,6 +20,11 @@
 #ifndef DRIZZLED_ITEM_ROW_H
 #define DRIZZLED_ITEM_ROW_H
 
+#include "drizzled/item.h"
+
+namespace drizzled
+{
+
 class Item_row: public Item
 {
   Item **items;
@@ -88,5 +93,7 @@ public:
   bool null_inside() { return with_null; };
   void bring_value();
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_ROW_H */

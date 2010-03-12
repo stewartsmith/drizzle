@@ -1,0 +1,44 @@
+create schema if not exists data_dictionary;
+select table_name
+from data_dictionary.tables
+where table_name like 'memcached%' ORDER BY table_name;
+table_name
+MEMCACHED_ANALYSIS
+MEMCACHED_STATS
+desc data_dictionary.memcached_stats;
+Field	Type	Null	Key	Default	Extra
+NAME	varchar(64)	NO			
+PORT_NUMBER	bigint	NO		0	
+PROCESS_ID	bigint	NO		0	
+UPTIME	bigint	NO		0	
+TIME	bigint	NO		0	
+VERSION	varchar(64)	NO			
+POINTER_SIZE	bigint	NO		0	
+RUSAGE_USER	bigint	NO		0	
+RUSAGE_SYSTEM	bigint	NO		0	
+CURRENT_ITEMS	bigint	NO		0	
+TOTAL_ITEMS	bigint	NO		0	
+BYTES	bigint	NO		0	
+CURRENT_CONNECTIONS	bigint	NO		0	
+TOTAL_CONNECTIONS	bigint	NO		0	
+CONNECTION_STRUCTURES	bigint	NO		0	
+GETS	bigint	NO		0	
+SETS	bigint	NO		0	
+HITS	bigint	NO		0	
+MISSES	bigint	NO		0	
+EVICTIONS	bigint	NO		0	
+BYTES_READ	bigint	NO		0	
+BYTES_WRITTEN	bigint	NO		0	
+LIMIT_MAXBYTES	bigint	NO		0	
+THREADS	bigint	NO		0	
+desc data_dictionary.memcached_analysis;
+Field	Type	Null	Key	Default	Extra
+SERVERS_ANALYZED	bigint	NO		0	
+AVERAGE_ITEM_SIZE	bigint	NO		0	
+NODE_WITH_MOST_MEM_CONSUMPTION	varchar(64)	NO			
+USED_BYTES	bigint	NO		0	
+NODE_WITH_LEAST_FREE_SPACE	varchar(64)	NO			
+FREE_BYTES	bigint	NO		0	
+NODE_WITH_LONGEST_UPTIME	varchar(64)	NO			
+LONGEST_UPTIME	bigint	NO		0	
+POOL_WIDE_HIT_RATIO	bigint	NO		0	

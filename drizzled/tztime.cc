@@ -18,11 +18,15 @@
  */
 
 
-#include <drizzled/server_includes.h>
-#include <drizzled/tzfile.h>
-#include <drizzled/tztime.h>
-#include <drizzled/gettext.h>
-#include <drizzled/session.h>
+#include "config.h"
+#include "drizzled/tzfile.h"
+#include "drizzled/tztime.h"
+#include "drizzled/gettext.h"
+#include "drizzled/session.h"
+#include "drizzled/time_functions.h"
+
+namespace drizzled
+{
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo
@@ -66,7 +70,7 @@ typedef struct st_time_zone_info
   uint32_t typecnt;  // Number of local time types
   uint32_t charcnt;  // Number of characters used for abbreviations
   uint32_t revcnt;   // Number of transition descr. for TIME->time_t conversion
-  /* The following are dynamical arrays are allocated in MEM_ROOT */
+  /* The following are dynamical arrays are allocated in memory::Root */
   time_t *ats;       // Times of transitions between time types
   unsigned char	*types; // Local time types for transitions
   TRAN_TYPE_INFO *ttis; // Local time types descriptions
@@ -834,7 +838,7 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
 time_t
 Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
-  return ::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
+  return ::drizzled::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
 }
 
 
@@ -850,7 +854,7 @@ Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) cons
 void
 Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
-  ::gmt_sec_to_TIME(tmp, t, tz_info);
+  ::drizzled::gmt_sec_to_TIME(tmp, t, tz_info);
 }
 
 
@@ -1007,11 +1011,9 @@ static Time_zone_utc tz_UTC;
 static Time_zone_system tz_SYSTEM;
 static Time_zone_offset tz_OFFSET0(0);
 
-Time_zone *my_tz_OFFSET0= &tz_OFFSET0;
-Time_zone *my_tz_UTC= &tz_UTC;
 Time_zone *my_tz_SYSTEM= &tz_SYSTEM;
 
-class Tz_names_entry: public Sql_alloc
+class Tz_names_entry: public memory::SqlAlloc
 {
 public:
   String name;
@@ -1067,16 +1069,6 @@ my_tz_init(Session *session, const char *default_tzname)
   return false;
 }
 
-
-/*
-  Free resources used by time zone support infrastructure.
-*/
-
-void my_tz_free()
-{
-}
-
-
 /*
   Get Time_zone object for specified time zone.
 
@@ -1089,3 +1081,5 @@ my_tz_find(Session *,
 {
   return NULL;
 }
+
+} /* namespace drizzled */

@@ -68,20 +68,20 @@ DROP TABLE t1;
 # End of 4.1 tests
 
 #
-# Bug#13202  SELECT * INTO OUTFILE ... FROM information_schema.schemata now fails
+# Bug#13202  SELECT * INTO OUTFILE ... FROM data_dictionary.schemas now fails
 #
 disable_query_log;
 eval SELECT * INTO OUTFILE "../tmp/outfile-test.4"
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
-FROM information_schema.schemata LIMIT 0, 5;
+FROM data_dictionary.schemas LIMIT 0, 5;
 # enable_query_log;
 --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.4
 
-use information_schema;
+use data_dictionary;
 # disable_query_log;
 eval SELECT * INTO OUTFILE "../tmp/outfile-test.4"
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
-FROM schemata LIMIT 0, 5;
+FROM schemas LIMIT 0, 5;
 enable_query_log;
 --remove_file $MYSQLTEST_VARDIR/tmp/outfile-test.4
 use test;

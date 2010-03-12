@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/uint.h>
 #include <drizzled/item/outer_ref.h>
+
+namespace drizzled
+{
 
 /*
   Prepare referenced outer field then call usual Item_direct_ref::fix_fields
@@ -60,4 +63,4 @@ void Item_outer_ref::fix_after_pullout(Select_Lex *new_parent,
 }
 
 
-
+} /* namespace drizzled */

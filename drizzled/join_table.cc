@@ -18,10 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/join_table.h>
 #include <drizzled/field/blob.h>
 
+namespace drizzled
+{
 
 void JoinTable::readCachedRecord()
 {
@@ -68,3 +70,5 @@ void JoinTable::readCachedRecord()
   }
   this->cache.pos=pos;
 }
+
+} /* namespace drizzled */

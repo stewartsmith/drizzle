@@ -21,6 +21,10 @@
 #ifndef DRIZZLED_OPEN_TABLES_STATE_H
 #define DRIZZLED_OPEN_TABLES_STATE_H
 
+#include "drizzled/lock.h"
+
+namespace drizzled
+{
 
 /**
   Class that holds information about tables which were opened and locked
@@ -68,7 +72,7 @@ public:
    */
   DRIZZLE_LOCK *extra_lock;
 
-  ulong	version;
+  uint64_t version;
   uint32_t current_tablenr;
 
   /*
@@ -81,8 +85,9 @@ public:
     which are used as backup storage.
   */
   Open_tables_state() : backups_available(false) { }
+  virtual ~Open_tables_state() {}
 
-  Open_tables_state(ulong version_arg);
+  Open_tables_state(uint64_t version_arg);
 
   void set_open_tables_state(Open_tables_state *state)
   {
@@ -96,5 +101,7 @@ public:
     backups_available= false;
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_OPEN_TABLES_STATE_H */

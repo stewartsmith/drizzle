@@ -23,33 +23,42 @@
   Routines to drop, repair, optimize, analyze, and check a schema table
 
 */
-#ifndef DRIZZLE_SERVER_SQL_TABLE_H
-#define DRIZZLE_SERVER_SQL_TABLE_H
+#ifndef DRIZZLED_SQL_TABLE_H
+#define DRIZZLED_SQL_TABLE_H
+
+#include "drizzled/base.h"
+
+namespace drizzled
+{
 
 class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
 class Table;
+typedef struct st_key KEY;
+typedef struct st_ha_create_information HA_CREATE_INFO;
+class AlterInfo;
+class Cursor;
 
-namespace drizzled { namespace message { class Table; } }
+/* Flags for conversion functions. */
+static const uint32_t FN_FROM_IS_TMP(1 << 0);
+static const uint32_t FN_TO_IS_TMP(1 << 0);
 
-bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
-                    bool drop_temporary);
+namespace message { class Table; }
+class TableIdentifier;
+
 int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
-                         bool drop_temporary, bool log_query);
-bool quick_rm_table(StorageEngine *, const char *db,
-                    const char *table_name, bool is_tmp);
+                         bool drop_temporary);
+void write_bin_log_drop_table(Session *session,
+                              bool if_exists, const char *db_name,
+                              const char *table_name);
+bool quick_rm_table(Session& session,
+                    TableIdentifier &identifier);
 void close_cached_table(Session *session, Table *table);
 
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
-                       TableList *table_list,
-                       Alter_info *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_checksum_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
@@ -59,10 +68,13 @@ bool mysql_analyze_table(Session* session, TableList* table_list,
 bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
-void write_bin_log(Session *session, bool clear_error,
-                   char const *query, size_t query_length);
+void write_bin_log(Session *session,
+                   char const *query);
 
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
+bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
+void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
+} /* namespace drizzled */
 
-#endif /* DRIZZLE_SERVER_SQL_TABLE_H */
+#endif /* DRIZZLED_SQL_TABLE_H */

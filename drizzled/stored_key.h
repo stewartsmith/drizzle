@@ -20,8 +20,11 @@
 #ifndef DRIZZLED_STORED_KEY_H
 #define DRIZZLED_STORED_KEY_H
 
+namespace drizzled
+{
+
 /** class to store an field/item as a key struct */
-class StoredKey :public Sql_alloc
+class StoredKey :public memory::SqlAlloc
 {
 public:
   bool null_key; /**< If true, the value of the key has a null part */
@@ -53,9 +56,14 @@ public:
         Key segments are always packed with a 2 byte length prefix.
         See mi_rkey for details.
       */
-      to_field= new Field_varstring(ptr, length, 2, null, 1,
-                                    Field::NONE, field_arg->field_name,
-                                    field_arg->table->s, field_arg->charset());
+      to_field= new Field_varstring(ptr,
+                                    length,
+                                    2,
+                                    null,
+                                    1,
+                                    field_arg->field_name,
+                                    field_arg->table->s,
+                                    field_arg->charset());
       to_field->init(field_arg->table);
     }
     else
@@ -167,5 +175,7 @@ protected:
     return (err > 2 ?  STORE_KEY_FATAL : (store_key_result) err);
   }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STORED_KEY_H */

@@ -98,7 +98,8 @@ $Devel::Trace::TRACE= 1;
 ##############################################################################
 
 # Misc global variables
-our $mysql_version_id;
+our $drizzle_version_id;
+our $glob_suite_path=             undef;
 our $glob_mysql_test_dir=         undef;
 our $glob_mysql_bench_dir=        undef;
 our $glob_scriptname=             undef;
@@ -119,6 +120,7 @@ our $path_my_basedir;
 our $opt_vardir;                 # A path but set directly on cmd line
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
+our $opt_suitepath;
 our $opt_testdir;
 
 our $opt_subunit;
@@ -127,7 +129,7 @@ our $default_vardir;
 
 our $opt_usage;
 our $opt_suites;
-our $opt_suites_default= "main"; # Default suites to run
+our $opt_suites_default= "main,jp"; # Default suites to run
 our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
@@ -149,6 +151,7 @@ our $exe_perror;
 our $lib_udf_example;
 our $lib_example_plugin;
 our $exe_libtool;
+our $exe_schemawriter;
 
 our $opt_bench= 0;
 our $opt_small_bench= 0;
@@ -206,6 +209,7 @@ our $clusters;
 
 our $opt_master_myport;
 our $opt_slave_myport;
+our $opt_memc_myport;
 our $opt_record;
 my $opt_report_features;
 our $opt_check_testcases;
@@ -241,6 +245,7 @@ my @default_valgrind_args= ("--show-reachable=yes");
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
+my $opt_massif;
 
 our $opt_stress=               "";
 our $opt_stress_suite=     "main";
@@ -267,6 +272,7 @@ my $source_dist= 0;
 
 our $opt_max_save_core= 5;
 my $num_saved_cores= 0;  # Number of core files saved in vardir/log/ so far.
+our $secondary_port_offset= 50;
 
 ######################################################################
 #
@@ -479,6 +485,7 @@ sub command_line_setup () {
              # Specify ports
              'master_port=i'            => \$opt_master_myport,
              'slave_port=i'             => \$opt_slave_myport,
+             'memc_port=i'              => \$opt_memc_myport,
 	     'mtr-build-thread=i'       => \$opt_mtr_build_thread,
 
              # Test case authoring
@@ -534,6 +541,7 @@ sub command_line_setup () {
              'valgrind-option=s'        => \@valgrind_args,
              'valgrind-path=s'          => \$opt_valgrind_path,
 	     'callgrind'                => \$opt_callgrind,
+	     'massif'                   => \$opt_massif,
 
              # Stress testing 
              'stress'                   => \$opt_stress,
@@ -549,7 +557,8 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
-	     'testdir=s'		=> \$opt_testdir,
+             'suitepath=s'              => \$opt_suitepath,
+             'testdir=s'                => \$opt_testdir,
              'benchdir=s'               => \$glob_mysql_bench_dir,
              'mem'                      => \$opt_mem,
 
@@ -612,6 +621,14 @@ sub command_line_setup () {
   }
   $default_vardir= "$glob_mysql_test_dir/var";
 
+  if ( ! $opt_suitepath )
+  {
+    $glob_suite_path= "$glob_mysql_test_dir/../plugin";
+  }
+  else
+  {
+    $glob_suite_path= $opt_suitepath;
+  }
   # In most cases, the base directory we find everything relative to,
   # is the parent directory of the "mysql-test" directory. For source
   # distributions, TAR binary distributions and some other packages.
@@ -853,6 +870,13 @@ sub command_line_setup () {
       unless @valgrind_args;
   }
 
+  if ( $opt_massif )
+  {
+    mtr_report("Valgrind with Massif tool for drizzled(s)");
+    $opt_valgrind= 1;
+    $opt_valgrind_mysqld= 1;
+  }
+
   if ( $opt_valgrind )
   {
     # Set valgrind_options to default unless already defined
@@ -900,78 +924,82 @@ sub command_line_setup () {
 
   $master->[0]=
   {
-   pid           => 0,
-   type          => "master",
-   idx           => 0,
-   path_myddir   => "$opt_vardir/master-data",
-   path_myerr    => "$opt_vardir/log/master.err",
-   path_pid      => "$opt_vardir/run/master.pid",
-   path_sock     => "$sockdir/master.sock",
-   port          =>  $opt_master_myport,
-   start_timeout =>  400, # enough time create innodb tables
-   cluster       =>  0, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "master",
+   idx            => 0,
+   path_myddir    => "$opt_vardir/master-data",
+   path_myerr     => "$opt_vardir/log/master.err",
+   path_pid       => "$opt_vardir/run/master.pid",
+   path_sock      => "$sockdir/master.sock",
+   port           =>  $opt_master_myport,
+   secondary_port =>  $opt_master_myport + $secondary_port_offset,
+   start_timeout  =>  400, # enough time create innodb tables
+   cluster        =>  0, # index in clusters list
+   start_opts     => [],
   };
 
   $master->[1]=
   {
-   pid           => 0,
-   type          => "master",
-   idx           => 1,
-   path_myddir   => "$opt_vardir/master1-data",
-   path_myerr    => "$opt_vardir/log/master1.err",
-   path_pid      => "$opt_vardir/run/master1.pid",
-   path_sock     => "$sockdir/master1.sock",
-   port          => $opt_master_myport + 1,
-   start_timeout => 400, # enough time create innodb tables
-   cluster       =>  0, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "master",
+   idx            => 1,
+   path_myddir    => "$opt_vardir/master1-data",
+   path_myerr     => "$opt_vardir/log/master1.err",
+   path_pid       => "$opt_vardir/run/master1.pid",
+   path_sock      => "$sockdir/master1.sock",
+   port           => $opt_master_myport + 1,
+   secondary_port => $opt_master_myport + 1 + $secondary_port_offset,
+   start_timeout  => 400, # enough time create innodb tables
+   cluster        =>  0, # index in clusters list
+   start_opts     => [],
   };
 
   $slave->[0]=
   {
-   pid           => 0,
-   type          => "slave",
-   idx           => 0,
-   path_myddir   => "$opt_vardir/slave-data",
-   path_myerr    => "$opt_vardir/log/slave.err",
-   path_pid    => "$opt_vardir/run/slave.pid",
-   path_sock   => "$sockdir/slave.sock",
-   port   => $opt_slave_myport,
-   start_timeout => 400,
-
-   cluster       =>  1, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "slave",
+   idx            => 0,
+   path_myddir    => "$opt_vardir/slave-data",
+   path_myerr     => "$opt_vardir/log/slave.err",
+   path_pid       => "$opt_vardir/run/slave.pid",
+   path_sock      => "$sockdir/slave.sock",
+   port           => $opt_slave_myport,
+   secondary_port => $opt_slave_myport + $secondary_port_offset,
+   start_timeout  => 400,
+   cluster        =>  1, # index in clusters list
+   start_opts     => [],
   };
 
   $slave->[1]=
   {
-   pid           => 0,
-   type          => "slave",
-   idx           => 1,
-   path_myddir   => "$opt_vardir/slave1-data",
-   path_myerr    => "$opt_vardir/log/slave1.err",
-   path_pid    => "$opt_vardir/run/slave1.pid",
-   path_sock   => "$sockdir/slave1.sock",
-   port   => $opt_slave_myport + 1,
-   start_timeout => 300,
-   cluster       =>  -1, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "slave",
+   idx            => 1,
+   path_myddir    => "$opt_vardir/slave1-data",
+   path_myerr     => "$opt_vardir/log/slave1.err",
+   path_pid       => "$opt_vardir/run/slave1.pid",
+   path_sock      => "$sockdir/slave1.sock",
+   port           => $opt_slave_myport + 1,
+   secondary_port => $opt_slave_myport + 1 + $secondary_port_offset,
+   start_timeout  => 300,
+   cluster        =>  -1, # index in clusters list
+   start_opts     => [],
   };
 
   $slave->[2]=
   {
-   pid           => 0,
-   type          => "slave",
-   idx           => 2,
-   path_myddir   => "$opt_vardir/slave2-data",
-   path_myerr    => "$opt_vardir/log/slave2.err",
-   path_pid    => "$opt_vardir/run/slave2.pid",
-   path_sock   => "$sockdir/slave2.sock",
-   port   => $opt_slave_myport + 2,
-   start_timeout => 300,
-   cluster       =>  -1, # index in clusters list
-   start_opts    => [],
+   pid            => 0,
+   type           => "slave",
+   idx            => 2,
+   path_myddir    => "$opt_vardir/slave2-data",
+   path_myerr     => "$opt_vardir/log/slave2.err",
+   path_pid       => "$opt_vardir/run/slave2.pid",
+   path_sock      => "$sockdir/slave2.sock",
+   port           => $opt_slave_myport + 2,
+   secondary_port => $opt_slave_myport + 2 + $secondary_port_offset,
+   start_timeout  => 300,
+   cluster        =>  -1, # index in clusters list
+   start_opts     => [],
   };
 
 
@@ -1046,6 +1074,7 @@ sub set_mtr_build_thread_ports($) {
   # A magic value in command_line_setup depends on these equations.
   $opt_master_myport=         $mtr_build_thread + 9000; # and 1
   $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
+  $opt_memc_myport= $opt_master_myport + 10;
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1096,7 +1125,7 @@ sub collect_mysqld_features () {
   foreach my $line (split('\n', $list))
   {
     # First look for version
-    if ( !$mysql_version_id )
+    if ( !$drizzle_version_id )
     {
       # Look for version
       my $exe_name= basename($exe_drizzled);
@@ -1104,9 +1133,9 @@ sub collect_mysqld_features () {
       if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
       {
 	#print "Major: $1 Minor: $2 Build: $3\n";
-	$mysql_version_id= $1*10000 + $2*100 + $3;
-	#print "mysql_version_id: $mysql_version_id\n";
-	mtr_report("MySQL Version $1.$2.$3");
+	$drizzle_version_id= $1*10000 + $2*100 + $3;
+	#print "drizzle_version_id: $drizzle_version_id\n";
+	mtr_report("Drizzle Version $1.$2.$3");
       }
     }
     else
@@ -1147,7 +1176,7 @@ sub collect_mysqld_features () {
     }
   }
   rmtree($tmpdir);
-  mtr_error("Could not find version of MySQL") unless $mysql_version_id;
+  mtr_error("Could not find version of Drizzle") unless $drizzle_version_id;
   mtr_error("Could not find variabes list") unless $found_variable_list_start;
 
 }
@@ -1222,10 +1251,16 @@ sub executable_setup () {
   if (!$opt_extern)
   {
 # Look for SQL scripts directory
-     if ( $mysql_version_id >= 50100 )
+     if ( $drizzle_version_id >= 50100 )
      {
          $exe_drizzleslap= mtr_exe_exists("$path_client_bindir/drizzleslap");
      }
+  }
+
+# Look for schema_writer
+  {
+    $exe_schemawriter= mtr_exe_exists("$glob_basedir/drizzled/message/schema_writer",
+                                      "$glob_builddir/drizzled/message/schema_writer");
   }
 
 # Look for drizzletest executable
@@ -1255,7 +1290,7 @@ sub generate_cmdline_mysqldump ($) {
   my($mysqld) = @_;
   return
     mtr_native_path($exe_drizzledump) .
-      " --no-defaults -uroot --debug-check " .
+      " --no-defaults -uroot " .
       "--port=$mysqld->{'port'} ";
 }
 
@@ -1283,7 +1318,7 @@ sub drizzle_client_test_arguments()
   mtr_add_arg($args, "--user=root");
   mtr_add_arg($args, "--port=$master->[0]->{'port'}");
 
-  if ( $opt_extern || $mysql_version_id >= 50000 )
+  if ( $opt_extern || $drizzle_version_id >= 50000 )
   {
     mtr_add_arg($args, "--vardir=$opt_vardir")
   }
@@ -1398,6 +1433,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT'}=       $slave->[0]->{'port'};
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
+  $ENV{'MC_PORT'}=            $opt_memc_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
@@ -1410,6 +1446,9 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysqldump= generate_cmdline_mysqldump($master->[0]);
   my $cmdline_mysqldumpslave= generate_cmdline_mysqldump($slave->[0]);
+  my $cmdline_mysqldump_secondary= mtr_native_path($exe_drizzledump) .
+       " --no-defaults -uroot " .
+       " --port=$master->[0]->{'secondary_port'} ";
 
   if ( $opt_debug )
   {
@@ -1417,9 +1456,12 @@ sub environment_setup () {
       " --debug=d:t:A,$path_vardir_trace/log/mysqldump-master.trace";
     $cmdline_mysqldumpslave .=
       " --debug=d:t:A,$path_vardir_trace/log/mysqldump-slave.trace";
+    $cmdline_mysqldump_secondary .=
+      " --debug=d:t:A,$path_vardir_trace/log/mysqldump-mysql.trace";
   }
   $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
+  $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_mysqldump_secondary;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlslap
@@ -1430,13 +1472,20 @@ sub environment_setup () {
       mtr_native_path($exe_drizzleslap) .
       " -uroot " .
       "--port=$master->[0]->{'port'} ";
+    my $cmdline_drizzleslap_secondary=
+      mtr_native_path($exe_drizzleslap) .
+      " -uroot " .
+      " --port=$master->[0]->{'secondary_port'} ";
 
     if ( $opt_debug )
    {
       $cmdline_drizzleslap .=
         " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
+      $cmdline_drizzleslap_secondary .=
+        " --debug=d:t:A,$path_vardir_trace/log/drizzleslap.trace";
     }
     $ENV{'DRIZZLE_SLAP'}= $cmdline_drizzleslap;
+    $ENV{'DRIZZLE_SLAP_SECONDARY'}= $cmdline_drizzleslap_secondary;
   }
 
 
@@ -1446,7 +1495,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysqlimport=
     mtr_native_path($exe_drizzleimport) .
-    " -uroot --debug-check " .
+    " -uroot " .
     "--port=$master->[0]->{'port'} ";
 
   if ( $opt_debug )
@@ -1462,10 +1511,15 @@ sub environment_setup () {
   # ----------------------------------------------------
   my $cmdline_mysql=
     mtr_native_path($exe_drizzle) .
-    " --no-defaults --debug-check --host=localhost  --user=root --password= " .
+    " --no-defaults --host=localhost  --user=root --password= " .
     "--port=$master->[0]->{'port'} ";
+  my $cmdline_drizzle_secondary=
+    mtr_native_path($exe_drizzle) .
+    " --no-defaults --host=localhost  --user=root --password= " .
+    " --port=$master->[0]->{'secondary_port'} ";
 
   $ENV{'MYSQL'}= $cmdline_mysql;
+  $ENV{'DRIZZLE_SECONDARY'}= $cmdline_drizzle_secondary;
 
   # ----------------------------------------------------
   # Setup env so childs can execute bug25714
@@ -1539,6 +1593,7 @@ sub environment_setup () {
     print "Using SLAVE_MYPORT          = $ENV{SLAVE_MYPORT}\n";
     print "Using SLAVE_MYPORT1         = $ENV{SLAVE_MYPORT1}\n";
     print "Using SLAVE_MYPORT2         = $ENV{SLAVE_MYPORT2}\n";
+    print "Using MC_PORT               = $ENV{MC_PORT}\n";
   }
 
   # Create an environment variable to make it possible
@@ -1728,7 +1783,10 @@ sub setup_vardir() {
   foreach my $data_dir (@data_dir_lst)
   {
     mkpath("$data_dir/mysql");
+    system("$exe_schemawriter mysql $data_dir/mysql/db.opt");
+
     mkpath("$data_dir/test");
+    system("$exe_schemawriter test $data_dir/test/db.opt");
   }
 
   # Make a link std_data_ln in var/ that points to std_data
@@ -2420,7 +2478,7 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
   }
 
-  if ( $mysql_version_id >= 50036)
+  if ( $drizzle_version_id >= 50036)
   {
     # By default, prevent the started mysqld to access files outside of vardir
     mtr_add_arg($args, "%s--secure-file-priv=%s", $prefix, $opt_vardir);
@@ -2431,7 +2489,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--oldlibdrizzle-connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--mysql-protocol-connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail
@@ -2444,8 +2502,11 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--pid-file=%s", $prefix,
 	      $mysqld->{'path_pid'});
 
-  mtr_add_arg($args, "%s--port=%d", $prefix,
-                $mysqld->{'port'});
+  mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
+              $mysqld->{'port'});
+
+  mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
+              $mysqld->{'secondary_port'});
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});
@@ -2461,10 +2522,6 @@ sub mysqld_arguments ($$$$) {
 
     mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
 
-    if ( $idx > 0 or !$use_innodb)
-    {
-      mtr_add_arg($args, "%s--loose-skip-innodb", $prefix);
-    }
   }
   else
   {
@@ -2497,7 +2554,7 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--key_buffer_size=1M", $prefix);
+  mtr_add_arg($args, "%s--myisam_key_cache_size=1M", $prefix);
   mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
   mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
 
@@ -3200,7 +3257,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     mtr_tofile($dbx_init_file,
-               "stop in mysql_parse\n" .
+               "stop in drizzled::mysql_parse\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
@@ -3256,7 +3313,7 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
-	       "break mysql_parse\n" .
+	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
@@ -3321,7 +3378,7 @@ sub ddd_arguments {
     mtr_tofile($gdb_init_file,
 	       "file $$exe\n" .
 	       "set args $str\n" .
-	       "break mysql_parse\n" .
+	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end");
@@ -3405,10 +3462,13 @@ sub valgrind_arguments {
     mtr_add_arg($args, "--tool=callgrind");
     mtr_add_arg($args, "--base=$opt_vardir/log");
   }
+  elsif ($opt_massif)
+  {
+    mtr_add_arg($args, "--tool=massif");
+  }
   else
   {
     mtr_add_arg($args, "--tool=memcheck"); # From >= 2.1.2 needs this option
-    mtr_add_arg($args, "--alignment=8");
     mtr_add_arg($args, "--leak-check=yes");
     mtr_add_arg($args, "--num-callers=16");
     mtr_add_arg($args, "--suppressions=%s/valgrind.supp", $glob_mysql_test_dir)
@@ -3595,6 +3655,7 @@ Options for coverage, profiling etc
                         can be specified more then once
   valgrind-path=[EXE]   Path to the valgrind executable
   callgrind             Instruct valgrind to use callgrind
+  massif                Instruct valgrind to use massif
 
 Misc options
 

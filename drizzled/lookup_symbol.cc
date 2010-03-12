@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
@@ -27,6 +27,9 @@
 #include "drizzled/lex_symbol.h"
 #include "drizzled/function_hash.h"
 #include "drizzled/symbol_hash.h"
+
+namespace drizzled
+{
 
 const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function)
 {
@@ -43,3 +46,4 @@ const SYMBOL *lookup_symbol(const char *s, unsigned int len, bool function)
   return NULL;
 }
   
+} /* namespace drizzled */

@@ -19,16 +19,23 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include <float.h>
+#include <math.h>
+
+#include <algorithm>
+
 #include <drizzled/field/double.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-
-#include <algorithm>
+#include "drizzled/internal/m_string.h"
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
   double precision floating point numbers
@@ -157,9 +164,9 @@ String *Field_double::val_str(String *val_buffer,
   size_t len;
 
   if (dec >= NOT_FIXED_DEC)
-    len= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, to_length - 1, to, NULL);
+    len= internal::my_gcvt(nr, internal::MY_GCVT_ARG_DOUBLE, to_length - 1, to, NULL);
   else
-    len= my_fcvt(nr, dec, to, NULL);
+    len= internal::my_fcvt(nr, dec, to, NULL);
 
   val_buffer->length((uint32_t) len);
 
@@ -202,23 +209,6 @@ void Field_double::sort_string(unsigned char *to,uint32_t )
 }
 
 
-/**
-   Save the field metadata for double fields.
-
-   Saves the pack length in the first byte of the field metadata array
-   at index of *metadata_ptr.
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_double::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= pack_length();
-  return 1;
-}
-
-
 void Field_double::sql_type(String &res) const
 {
   const CHARSET_INFO * const cs=res.charset();
@@ -233,3 +223,4 @@ void Field_double::sql_type(String &res) const
   }
 }
 
+} /* namespace drizzled */

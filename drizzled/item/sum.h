@@ -17,24 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SUM_H
-#define DRIZZLED_SUM_H
+#ifndef DRIZZLED_ITEM_SUM_H
+#define DRIZZLED_ITEM_SUM_H
 
 /* classes for sum functions */
 
 
-#include <mysys/my_tree.h>
+#include "drizzled/my_tree.h"
 #include <drizzled/hybrid_type.h>
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
-#include <mystrings/m_string.h>
 
-extern "C"
+namespace drizzled
+{
+
 int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
                                        const void* key2);
 
-extern "C"
 int group_concat_key_cmp_with_order(void* arg, const void* key1,
                                     const void* key2);
 
@@ -663,7 +663,7 @@ public:
   enum_field_types field_type() const
   {
     return hybrid_type == DECIMAL_RESULT ?
-      DRIZZLE_TYPE_NEWDECIMAL : DRIZZLE_TYPE_DOUBLE;
+      DRIZZLE_TYPE_DECIMAL : DRIZZLE_TYPE_DOUBLE;
   }
   void fix_length_and_dec() {}
   enum Item_result result_type () const { return hybrid_type; }
@@ -730,7 +730,7 @@ public:
   enum_field_types field_type() const
   {
     return hybrid_type == DECIMAL_RESULT ?
-      DRIZZLE_TYPE_NEWDECIMAL : DRIZZLE_TYPE_DOUBLE;
+      DRIZZLE_TYPE_DECIMAL : DRIZZLE_TYPE_DOUBLE;
   }
   void fix_length_and_dec() {}
   enum Item_result result_type () const { return hybrid_type; }
@@ -1004,7 +1004,7 @@ class Item_func_group_concat : public Item_sum
                                                 const void* key2);
   friend int group_concat_key_cmp_with_order(void* arg, const void* key1,
 					     const void* key2);
-  friend int dump_leaf_key(unsigned char* key, element_count,
+  friend int dump_leaf_key(unsigned char* key, uint32_t,
                            Item_func_group_concat *group_concat_item);
 
 public:
@@ -1033,21 +1033,8 @@ public:
   bool fix_fields(Session *,Item **);
   bool setup(Session *session);
   void make_unique();
-  double val_real()
-  {
-    String *res;  res=val_str(&str_value);
-    return res ? my_atof(res->c_ptr()) : 0.0;
-  }
-  int64_t val_int()
-  {
-    String *res;
-    char *end_ptr;
-    int error;
-    if (!(res= val_str(&str_value)))
-      return (int64_t) 0;
-    end_ptr= (char*) res->ptr()+ res->length();
-    return my_strtoll10(res->ptr(), &end_ptr, &error);
-  }
+  double val_real();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
     return val_decimal_from_string(decimal_value);
@@ -1059,5 +1046,7 @@ public:
   virtual bool change_context_processor(unsigned char *cntx)
     { context= (Name_resolution_context *)cntx; return false; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_SUM_H */

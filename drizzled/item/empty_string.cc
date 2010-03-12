@@ -17,13 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/item/empty_string.h>
+
+namespace drizzled
+{
 
 void Item_empty_string::make_field(SendField *tmp_field)
 { 
   init_make_field(tmp_field, string_field_type());
 }
 
+} /* namespace drizzled */
 

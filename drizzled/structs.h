@@ -23,20 +23,28 @@
 #ifndef DRIZZLED_STRUCTS_H
 #define DRIZZLED_STRUCTS_H
 
-#include <drizzled/base.h>
-#include <mysys/definitions.h>
-#include <drizzled/lex_string.h>
+#include "drizzled/base.h"
+#include "drizzled/definitions.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/thr_lock.h"
+
+namespace drizzled
+{
+
+namespace internal
+{
+typedef struct st_io_cache IO_CACHE;
+}
 
 class Table;
 class Field;
-typedef struct st_io_cache IO_CACHE;
 
 typedef struct st_keyfile_info {	/* used with ha_info() */
   unsigned char ref[MAX_REFLENGTH];		/* Pointer to current row */
   unsigned char dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
   uint32_t ref_length;			/* Length of ref (1-8) */
   uint32_t block_size;			/* index block size */
-  File filenr;				/* (uniq) filenr for table */
+  int filenr;				/* (uniq) filenr for table */
   ha_rows records;			/* Records i datafilen */
   ha_rows deleted;			/* Deleted records */
   uint64_t data_file_length;		/* Length off data file */
@@ -55,8 +63,8 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
 
 typedef struct st_key_part_info {	/* Info about a key part */
   Field *field;
-  uint	offset;				/* offset in record (from 0) */
-  uint	null_offset;			/* Offset to null_bit in record */
+  unsigned int	offset;				/* offset in record (from 0) */
+  unsigned int	null_offset;			/* Offset to null_bit in record */
   /* Length of key part in bytes, excluding NULL flag and length bytes */
   uint16_t length;
   /*
@@ -77,12 +85,12 @@ typedef struct st_key_part_info {	/* Info about a key part */
 
 
 typedef struct st_key {
-  uint	key_length;			/* Tot length of key */
+  unsigned int	key_length;		/* Tot length of key */
   enum  ha_key_alg algorithm;
-  ulong flags;                          /* dupp key and pack flags */
-  uint	key_parts;			/* How many key_parts */
+  unsigned long flags;			/* dupp key and pack flags */
+  unsigned int key_parts;		/* How many key_parts */
   uint32_t  extra_length;
-  uint	usable_key_parts;		/* Should normally be = key_parts */
+  unsigned int usable_key_parts;	/* Should normally be = key_parts */
   uint32_t  block_size;
   KEY_PART_INFO *key_part;
   char	*name;				/* Name of key */
@@ -117,17 +125,17 @@ struct RegInfo {		/* Extra info about reg */
 };
 
 struct st_read_record;				/* For referense later */
-class SQL_SELECT;
 class Session;
-class handler;
+class Cursor;
+namespace optimizer { class SqlSelect; }
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
-  handler *file;
+  Cursor *cursor;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;
-  SQL_SELECT *select;
+  optimizer::SqlSelect *select;
   uint32_t cache_records;
   uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
   uint32_t index;
@@ -135,26 +143,14 @@ typedef struct st_read_record {			/* Parameter to read_record */
   unsigned char *record;
   unsigned char *rec_buf;                /* to read field values  after filesort */
   unsigned char	*cache,*cache_pos,*cache_end,*read_positions;
-  IO_CACHE *io_cache;
+  internal::IO_CACHE *io_cache;
   bool print_error, ignore_not_found_rows;
   JoinTable *do_insideout_scan;
 } READ_RECORD;
 
-extern const char *show_comp_option_name[];
+typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 
-typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
-
-	/* Bits in form->update */
-#define REG_MAKE_DUPP		1	/* Make a copy of record when read */
-#define REG_NEW_RECORD		2	/* Write a new record if not found */
-#define REG_UPDATE		4	/* Uppdate record */
-#define REG_DELETE		8	/* Delete found record */
-#define REG_PROG		16	/* User is updating database */
-#define REG_CLEAR_AFTER_WRITE	32
-#define REG_MAY_BE_UPDATED	64
-#define REG_AUTO_UPDATE		64	/* Used in D-forms for scroll-tables */
-#define REG_OVERWRITE		128
-#define REG_SKIP_DUP		256
+} /* namespace drizzled */
 
 	/* Bits in form->status */
 #define STATUS_NO_RECORD	(1+2)	/* Record isn't usably */

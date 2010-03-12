@@ -2,10 +2,6 @@
 # with right and wrong password, with and without database
 # Unfortunately the check is incomplete as we can't connect without database
 
-# check that CSV engine was compiled in, as the test relies on the presence
-# of the log tables (which are CSV-based). By connect mysql; show tables;
---source include/have_csv.inc
-
 --disable_warnings
 drop table if exists t1,t2;
 --enable_warnings
@@ -73,7 +69,7 @@ create temporary table t2(id integer not null auto_increment primary key);
 set @id := 1;
 delete from t1 where id like @id;
 disconnect con7;
---sleep 5
+--sleep 0.5
 connection default;
 drop table t1;
 

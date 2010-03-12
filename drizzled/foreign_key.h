@@ -21,16 +21,22 @@
 #ifndef DRIZZLED_FOREIGN_KEY_H
 #define DRIZZLED_FOREIGN_KEY_H
 
-#include <drizzled/sql_alloc.h>
-#include <drizzled/key.h>
-#include <drizzled/sql_list.h>
+#include "drizzled/memory/sql_alloc.h"
+#include "drizzled/key.h"
+#include "drizzled/key_part_spec.h"
+#include "drizzled/sql_list.h"
+#include "drizzled/cursor.h" /* for default_key_create_info */
+
+namespace drizzled
+{
 
 class Item;
 class Table_ident;
 
-typedef struct st_mem_root MEM_ROOT;
+namespace memory { class Root; }
 
-class Foreign_key: public Key {
+class Foreign_key: public Key 
+{
 public:
   enum fk_match_opt 
   {
@@ -73,7 +79,7 @@ public:
    * If out of memory, a partial copy is returned and an error is set
    * in Session.
    */
-  Foreign_key(const Foreign_key &rhs, MEM_ROOT *mem_root);
+  Foreign_key(const Foreign_key &rhs, memory::Root *mem_root);
 
 
   /**
@@ -81,7 +87,7 @@ public:
    * 
    * @see comment for Key_part_spec::clone
    */
-  virtual Key *clone(MEM_ROOT *mem_root) const
+  virtual Key *clone(memory::Root *mem_root) const
   {
     return new (mem_root) Foreign_key(*this, mem_root);
   }
@@ -90,5 +96,7 @@ public:
   /* Used to validate foreign key options */
   bool validate(List<CreateField> &table_fields);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FOREIGN_KEY_H */

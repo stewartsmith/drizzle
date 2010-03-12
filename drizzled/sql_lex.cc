@@ -16,8 +16,9 @@
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
+#include "config.h"
 #define DRIZZLE_LEX 1
-#include "drizzled/server_includes.h"
+#include "drizzled/configmake.h"
 #include "drizzled/item/num.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
@@ -29,8 +30,13 @@
 
 using namespace std;
 
-static int lex_one_token(void *arg, void *yysession);
+/* Stay outside of the namespace because otherwise bison goes nuts */
 int DRIZZLElex(void *arg, void *yysession);
+
+namespace drizzled
+{
+
+static int lex_one_token(void *arg, void *yysession);
 
 /**
   save order by and tables in own lists.
@@ -49,14 +55,6 @@ static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
   return(0);
 }
-
-
-
-/*
-  We are using pointer to this variable for distinguishing between assignment
-  to NEW row field (when parsing trigger definition) and structured variable.
-*/
-sys_var *trg_new_row_fake_var= (sys_var*) 0x01;
 
 /**
   LEX_STRING constant for null-string to be used in parser and other places.
@@ -86,7 +84,6 @@ Lex_input_stream::Lex_input_stream(Session *session,
   m_body_utf8(NULL),
   m_cpp_utf8_processed_ptr(NULL),
   next_state(MY_LEX_START),
-  found_semicolon(NULL),
   ignore_space(1),
   in_comment(NO_COMMENT)
 {
@@ -222,7 +219,6 @@ void lex_start(Session *session)
   lex->select_lex.init_query();
   lex->value_list.empty();
   lex->update_list.empty();
-  lex->param_list.empty();
   lex->auxiliary_table_list.empty();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;
@@ -261,7 +257,6 @@ void lex_start(Session *session)
   lex->in_sum_func= NULL;
 
   lex->is_lex_started= true;
-  lex->create_table_proto= NULL;
   lex->statement= NULL;
 }
 
@@ -277,8 +272,6 @@ void lex_end(LEX *lex)
 
   delete lex->result;
 
-  if(lex->create_table_proto)
-    delete lex->create_table_proto;
   lex->result= 0;
 
   if (lex->statement) 
@@ -420,7 +413,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       assert(end >= str);
 
       if (!(start= (char*) lip->m_session->alloc((uint32_t) (end-str)+1)))
-        return (char*) "";		// Sql_alloc has set error flag
+        return (char*) "";		// memory::SqlAlloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
       lip->m_cpp_text_end= lip->get_cpp_ptr() - post_skip;
@@ -583,6 +576,7 @@ static inline uint32_t int_token(const char *str,uint32_t length)
   return ((unsigned char) str[-1] <= (unsigned char) cmp[-1]) ? smaller : bigger;
 }
 
+} /* namespace drizzled */
 /*
   DRIZZLElex remember the following states from the following DRIZZLElex()
 
@@ -592,8 +586,8 @@ static inline uint32_t int_token(const char *str,uint32_t length)
 */
 int DRIZZLElex(void *arg, void *yysession)
 {
-  Session *session= (Session *)yysession;
-  Lex_input_stream *lip= session->m_lip;
+  drizzled::Session *session= (drizzled::Session *)yysession;
+  drizzled::Lex_input_stream *lip= session->m_lip;
   YYSTYPE *yylval=(YYSTYPE*) arg;
   int token;
 
@@ -610,7 +604,7 @@ int DRIZZLElex(void *arg, void *yysession)
     return token;
   }
 
-  token= lex_one_token(arg, yysession);
+  token= drizzled::lex_one_token(arg, yysession);
 
   switch(token) {
   case WITH:
@@ -621,7 +615,7 @@ int DRIZZLElex(void *arg, void *yysession)
       to transform the grammar into a LALR(1) grammar,
       which sql_yacc.yy can process.
     */
-    token= lex_one_token(arg, yysession);
+    token= drizzled::lex_one_token(arg, yysession);
     if (token == ROLLUP_SYM)
     {
       return WITH_ROLLUP_SYM;
@@ -642,6 +636,9 @@ int DRIZZLElex(void *arg, void *yysession)
 
   return token;
 }
+
+namespace drizzled
+{
 
 int lex_one_token(void *arg, void *yysession)
 {
@@ -1265,46 +1262,6 @@ int lex_one_token(void *arg, void *yysession)
   }
 }
 
-/**
-  Construct a copy of this object to be used for mysql_alter_table
-  and mysql_create_table.
-
-  Historically, these two functions modify their Alter_info
-  arguments. This behaviour breaks re-execution of prepared
-  statements and stored procedures and is compensated by always
-  supplying a copy of Alter_info to these functions.
-
-  @return You need to use check the error in Session for out
-  of memory condition after calling this function.
-*/
-Alter_info::Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root)
-  :drop_list(rhs.drop_list, mem_root),
-  alter_list(rhs.alter_list, mem_root),
-  key_list(rhs.key_list, mem_root),
-  create_list(rhs.create_list, mem_root),
-  flags(rhs.flags),
-  keys_onoff(rhs.keys_onoff),
-  tablespace_op(rhs.tablespace_op),
-  no_parts(rhs.no_parts),
-  build_method(rhs.build_method),
-  datetime_field(rhs.datetime_field),
-  error_if_not_empty(rhs.error_if_not_empty)
-{
-  /*
-    Make deep copies of used objects.
-    This is not a fully deep copy - clone() implementations
-    of Alter_drop, Alter_column, Key, foreign_key, Key_part_spec
-    do not copy string constants. At the same length the only
-    reason we make a copy currently is that ALTER/CREATE TABLE
-    code changes input Alter_info definitions, but string
-    constants never change.
-  */
-  list_copy_and_replace_each_value(drop_list, mem_root);
-  list_copy_and_replace_each_value(alter_list, mem_root);
-  list_copy_and_replace_each_value(key_list, mem_root);
-  list_copy_and_replace_each_value(create_list, mem_root);
-}
-
 void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
 {
   /*
@@ -1403,7 +1360,7 @@ void Select_Lex::init_select()
 {
   sj_nests.empty();
   group_list.empty();
-  type= db= 0;
+  db= 0;
   having= 0;
   table_join_options= 0;
   in_sum_expr= with_wild= 0;
@@ -1904,7 +1861,6 @@ LEX::LEX()
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
   reset_query_tables_list(true);
-  create_table_proto= NULL;
   statement= NULL;
 }
 
@@ -1920,14 +1876,10 @@ LEX::LEX()
 */
 bool LEX::only_view_structure()
 {
-  switch (sql_command) {
-  case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_TABLES:
-  case SQLCOM_SHOW_FIELDS:
+  if (sql_command == SQLCOM_SHOW_CREATE)
     return true;
-  default:
-    return false;
-  }
+
+  return false;
 }
 
 /*
@@ -1942,14 +1894,10 @@ bool LEX::only_view_structure()
 */
 bool LEX::need_correct_ident()
 {
-  switch(sql_command)
-  {
-  case SQLCOM_SHOW_CREATE:
-  case SQLCOM_SHOW_TABLES:
+  if (sql_command== SQLCOM_SHOW_CREATE)
     return true;
-  default:
-    return false;
-  }
+
+  return false;
 }
 
 /**
@@ -2224,3 +2172,5 @@ bool Select_Lex::add_index_hint (Session *session, char *str, uint32_t length)
                                             current_index_hint_clause,
                                             str, length));
 }
+
+} /* namespace drizzled */

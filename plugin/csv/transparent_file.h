@@ -13,13 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef PLUGIN_CSV_TRANSPARENT_FILE_H
+#define PLUGIN_CSV_TRANSPARENT_FILE_H
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
 
 class Transparent_file
 {
-  File filedes;
+  int filedes;
   unsigned char *buff;  /* in-memory window to the file or mmaped area */
   /* current window sizes */
   off_t lower_bound;
@@ -31,10 +34,12 @@ public:
   Transparent_file();
   ~Transparent_file();
 
-  void init_buff(File filedes_arg);
+  void init_buff(int filedes_arg);
   unsigned char *ptr();
   off_t start();
   off_t end();
   char get_value (off_t offset);
   off_t read_next();
 };
+
+#endif /* PLUGIN_CSV_TRANSPARENT_FILE_H */

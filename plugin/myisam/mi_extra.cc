@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <drizzled/util/test.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -21,6 +21,7 @@
 #include <string.h>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
@@ -56,7 +57,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 					/* Next/prev gives first/last */
     if (info->opt_flag & READ_CACHE_USED)
     {
-      reinit_io_cache(&info->rec_cache,READ_CACHE,0,
+      reinit_io_cache(&info->rec_cache, internal::READ_CACHE,0,
 		      (bool) (info->lock_type != F_UNLCK),
 		      (bool) test(info->update & HA_STATE_ROW_CHANGED)
 		      );
@@ -69,7 +70,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	(share->options & HA_OPTION_PACK_RECORD))
     {
       error=1;			/* Not possibly if not locked */
-      my_errno=EACCES;
+      errno=EACCES;
       break;
     }
     if (info->s->file_map) /* Don't use cache if mmap */
@@ -84,11 +85,11 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	  (READ_CACHE_USED | WRITE_CACHE_USED | MEMMAP_USED)))
     {
       cache_size= (extra_arg ? *(uint32_t*) extra_arg :
-		   my_default_record_cache_size);
+		   internal::my_default_record_cache_size);
       if (!(init_io_cache(&info->rec_cache,info->dfile,
 			 (uint) min((uint32_t)info->state->data_file_length+1,
 				    cache_size),
-			  READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
+			  internal::READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=READ_CACHE_USED;
@@ -101,7 +102,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_REINIT_CACHE:
     if (info->opt_flag & READ_CACHE_USED)
     {
-      reinit_io_cache(&info->rec_cache,READ_CACHE,info->nextpos,
+      reinit_io_cache(&info->rec_cache,internal::READ_CACHE,info->nextpos,
 		      (bool) (info->lock_type != F_UNLCK),
 		      (bool) test(info->update & HA_STATE_ROW_CHANGED));
       info->update&= ~HA_STATE_ROW_CHANGED;
@@ -117,12 +118,12 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     }
 
     cache_size= (extra_arg ? *(uint32_t*) extra_arg :
-		 my_default_record_cache_size);
+		 internal::my_default_record_cache_size);
     if (!(info->opt_flag &
 	  (READ_CACHE_USED | WRITE_CACHE_USED | OPT_NO_ROWS)) &&
 	!share->state.header.uniques)
       if (!(init_io_cache(&info->rec_cache,info->dfile, cache_size,
-			 WRITE_CACHE,info->state->data_file_length,
+			 internal::WRITE_CACHE,info->state->data_file_length,
 			  (bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
@@ -143,7 +144,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       error=end_io_cache(&info->rec_cache);
       /* Sergei will insert full text index caching here */
     }
-#if defined(HAVE_MMAP) && defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
+#if !defined(TARGET_OS_SOLARIS)
     if (info->opt_flag & MEMMAP_USED)
       madvise((char*) share->file_map, share->state.state.data_file_length,
               MADV_RANDOM);
@@ -253,7 +254,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 			 (function == HA_EXTRA_FORCE_REOPEN ?
 			  FLUSH_RELEASE : FLUSH_IGNORE_CHANGED)))
     {
-      error=my_errno;
+      error=errno;
       share->changed=1;
       mi_print_error(info->s, HA_ERR_CRASHED);
       mi_mark_crashed(info);			/* Fatal error found */
@@ -267,13 +268,13 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     {
       info->was_locked=info->lock_type;
       if (mi_lock_database(info,F_UNLCK))
-	error=my_errno;
+	error=errno;
       info->lock_type = F_UNLCK;
     }
     if (share->kfile >= 0)
       _mi_decrement_open_count(info);
-    if (share->kfile >= 0 && my_close(share->kfile,MYF(0)))
-      error=my_errno;
+    if (share->kfile >= 0 && internal::my_close(share->kfile,MYF(0)))
+      error=errno;
     {
       list<MI_INFO *>::iterator it= myisam_open_list.begin();
       while (it != myisam_open_list.end())
@@ -281,8 +282,8 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	MI_INFO *tmpinfo= *it;
 	if (tmpinfo->s == info->s)
 	{
-	  if (tmpinfo->dfile >= 0 && my_close(tmpinfo->dfile,MYF(0)))
-	    error = my_errno;
+	  if (tmpinfo->dfile >= 0 && internal::my_close(tmpinfo->dfile,MYF(0)))
+	    error = errno;
 	  tmpinfo->dfile= -1;
 	}
         ++it;
@@ -302,10 +303,10 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (share->not_flushed)
     {
       share->not_flushed=0;
-      if (my_sync(share->kfile, MYF(0)))
-	error= my_errno;
-      if (my_sync(info->dfile, MYF(0)))
-	error= my_errno;
+      if (internal::my_sync(share->kfile, MYF(0)))
+	error= errno;
+      if (internal::my_sync(info->dfile, MYF(0)))
+	error= errno;
       if (error)
       {
 	share->changed=1;
@@ -384,7 +385,7 @@ int mi_reset(MI_INFO *info)
   }
   if (share->base.blobs)
     mi_alloc_rec_buff(info, -1, &info->rec_buff);
-#if defined(HAVE_MMAP) && defined(HAVE_MADVISE) && !defined(TARGET_OS_SOLARIS)
+#if !defined(TARGET_OS_SOLARIS)
   if (info->opt_flag & MEMMAP_USED)
     madvise((char*) share->file_map, share->state.state.data_file_length,
             MADV_RANDOM);

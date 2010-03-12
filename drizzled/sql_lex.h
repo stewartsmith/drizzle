@@ -25,22 +25,24 @@
 */
 #include <drizzled/message/table.pb.h>
 
-#include "drizzled/slot/function.h"
+#include "drizzled/plugin/function.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
-#include "drizzled/item/param.h"
-#include "drizzled/item/outer_ref.h"
 #include "drizzled/table_list.h"
 #include "drizzled/function/math/real.h"
 #include "drizzled/alter_drop.h"
 #include "drizzled/alter_column.h"
-#include "drizzled/key.h"
-#include "drizzled/foreign_key.h"
-#include "drizzled/item/param.h"
+#include "drizzled/alter_info.h"
+#include "drizzled/key_part_spec.h"
 #include "drizzled/index_hint.h"
 #include "drizzled/statement.h"
+#include "drizzled/optimizer/explain_plan.h"
 
 #include <bitset>
+#include <string>
+
+namespace drizzled
+{
 
 class select_result_interceptor;
 
@@ -51,6 +53,8 @@ class Table_ident;
 class file_exchange;
 class Lex_Column;
 class Item_outer_ref;
+
+} /* namespace drizzled */
 
 /*
   The following hack is needed because mysql_yacc.cc does not define
@@ -64,6 +68,7 @@ class Item_outer_ref;
 #  define LEX_YYSTYPE void *
 # else
 #  if defined(DRIZZLE_LEX)
+#   include <drizzled/foreign_key.h>
 #   include <drizzled/lex_symbol.h>
 #   include <drizzled/sql_yacc.h>
 #   define LEX_YYSTYPE YYSTYPE *
@@ -81,6 +86,9 @@ class Item_outer_ref;
 
 #define DERIVED_NONE	0
 #define DERIVED_SUBQUERY	1
+
+namespace drizzled
+{
 
 typedef List<Item> List_item;
 
@@ -100,13 +108,6 @@ enum olap_type
   UNSPECIFIED_OLAP_TYPE,
   CUBE_TYPE,
   ROLLUP_TYPE
-};
-
-enum tablespace_op_type
-{
-  NO_TABLESPACE_OP,
-  DISCARD_TABLESPACE,
-  IMPORT_TABLESPACE
 };
 
 /*
@@ -254,13 +255,13 @@ public:
 
   static void *operator new(size_t size)
   {
-    return sql_alloc(size);
+    return memory::sql_alloc(size);
   }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
+  static void *operator new(size_t size, memory::Root *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
+  {  }
+  static void operator delete(void *, memory::Root *)
   {}
   Select_Lex_Node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~Select_Lex_Node() {}
@@ -432,7 +433,7 @@ public:
     by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
   TableList *leaf_tables;
-  const char *type;               /* type of select for EXPLAIN          */
+  enum drizzled::optimizer::select_type type; /* type of select for EXPLAIN */
 
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
@@ -640,82 +641,6 @@ inline bool Select_Lex_Unit::is_union ()
     first_select()->next_select()->linkage == UNION_TYPE;
 }
 
-enum enum_alter_info_flags
-{
-  ALTER_ADD_COLUMN= 0,
-  ALTER_DROP_COLUMN,
-  ALTER_CHANGE_COLUMN,
-  ALTER_COLUMN_STORAGE,
-  ALTER_COLUMN_FORMAT,
-  ALTER_COLUMN_ORDER,
-  ALTER_ADD_INDEX,
-  ALTER_DROP_INDEX,
-  ALTER_RENAME,
-  ALTER_ORDER,
-  ALTER_OPTIONS,
-  ALTER_COLUMN_DEFAULT,
-  ALTER_KEYS_ONOFF,
-  ALTER_STORAGE,
-  ALTER_ROW_FORMAT,
-  ALTER_CONVERT,
-  ALTER_FORCE,
-  ALTER_RECREATE,
-  ALTER_TABLE_REORG,
-  ALTER_FOREIGN_KEY
-};
-
-/**
-  @brief Parsing data for CREATE or ALTER Table.
-
-  This structure contains a list of columns or indexes to be created,
-  altered or dropped.
-*/
-
-class Alter_info
-{
-public:
-  List<Alter_drop> drop_list;
-  List<Alter_column> alter_list;
-  List<Key> key_list;
-  List<CreateField> create_list;
-  std::bitset<32> flags;
-  enum enum_enable_or_disable keys_onoff;
-  enum tablespace_op_type tablespace_op;
-  uint32_t no_parts;
-  enum ha_build_method build_method;
-  CreateField *datetime_field;
-  bool error_if_not_empty;
-
-  Alter_info() :
-    flags(),
-    keys_onoff(LEAVE_AS_IS),
-    tablespace_op(NO_TABLESPACE_OP),
-    no_parts(0),
-    build_method(HA_BUILD_DEFAULT),
-    datetime_field(NULL),
-    error_if_not_empty(false)
-  {}
-
-  void reset()
-  {
-    drop_list.empty();
-    alter_list.empty();
-    key_list.empty();
-    create_list.empty();
-    flags.reset();
-    keys_onoff= LEAVE_AS_IS;
-    tablespace_op= NO_TABLESPACE_OP;
-    no_parts= 0;
-    build_method= HA_BUILD_DEFAULT;
-    datetime_field= 0;
-    error_if_not_empty= false;
-  }
-  Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root);
-private:
-  Alter_info &operator=(const Alter_info &rhs); // not implemented
-  Alter_info(const Alter_info &rhs);            // not implemented
-};
-
 enum xa_option_words
 {
   XA_NONE
@@ -758,7 +683,7 @@ public:
     of Query_tables_list instances which are used as backup storage.
   */
   Query_tables_list() {}
-  ~Query_tables_list() {}
+  virtual ~Query_tables_list() {}
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
@@ -812,7 +737,12 @@ enum enum_comment_state
   DISCARD_COMMENT
 };
 
+} /* namespace drizzled */
+
 #include "drizzled/lex_input_stream.h"
+
+namespace drizzled
+{
 
 /* The state of the lex parsing. This is saved in the Session struct */
 class LEX : public Query_tables_list
@@ -829,8 +759,6 @@ public:
   char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
   char *dec;
-  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
-  char *change;
   
   /**
    * This is used kind of like the "ident" member variable below, as 
@@ -843,13 +771,6 @@ public:
   String *wild;
   file_exchange *exchange;
   select_result *result;
-
-  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
-  Item *default_value;
-  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
-  Item *on_update_value;
-  /* Not really sure what exactly goes in here... Comment text at beginning of statement? */
-  LEX_STRING comment;
 
   /**
    * This is current used to store the name of a named key cache
@@ -874,7 +795,6 @@ public:
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
   List<set_var_base>  var_list;
-  List<Item_param>    param_list;
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts
@@ -894,12 +814,7 @@ public:
   SQL_LIST save_list;
   CreateField *last_field;
   Item_sum *in_sum_func;
-  drizzled::plugin::Function *udf;
-  HA_CHECK_OPT check_opt;			// check/repair options
-  HA_CREATE_INFO create_info;
-  drizzled::message::Table *create_table_proto;
-  StorageEngine *show_engine;
-  KEY_CREATE_INFO key_create_info;
+  plugin::Function *udf;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -912,7 +827,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
-  drizzled::statement::Statement *statement;
+  statement::Statement *statement;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like
@@ -923,20 +838,12 @@ public:
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;
-  enum enum_tx_isolation tx_isolation;
-  enum enum_ha_read_modes ha_read_mode;
   union {
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
   };
-  enum enum_var_type option_type;
+  sql_var_t option_type;
 
-  enum column_format_type column_format;
-  enum Foreign_key::fk_match_opt fk_match_option;
-  enum Foreign_key::fk_option fk_update_opt;
-  enum Foreign_key::fk_option fk_delete_opt;
-  /* Options used in START TRANSACTION statement */
-  uint32_t start_transaction_opt;
   int nest_level;
   uint8_t describe;
   /*
@@ -945,29 +852,8 @@ public:
   */
   uint8_t derived_tables;
 
-  /* True if "IF EXISTS" used in DROP statement */
-  bool drop_if_exists;
-  /* True if "TEMPORARY" used in DROP/CREATE statement */
-  bool drop_temporary;
-  bool one_shot_set;
-
-  /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
-  bool verbose;
-  
-  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
-  bool tx_chain;
-  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
-  bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
-  Alter_info alter_info;
-
-  /*
-    Pointers to part of LOAD DATA statement that should be rewritten
-    during replication ("LOCAL 'filename' REPLACE INTO" part).
-  */
-  const char *fname_start;
-  const char *fname_end;
 
   /**
     During name resolution search only in the table list given by
@@ -1053,6 +939,8 @@ extern bool is_lex_native_function(const LEX_STRING *name);
 /**
   @} (End of group Semantic_Analysis)
 */
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLE_SERVER */
 #endif /* DRIZZLED_SQL_LEX_H */

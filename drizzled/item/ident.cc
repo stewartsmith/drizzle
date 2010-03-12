@@ -17,14 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/table.h>
 #include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
 using namespace std;
+
+namespace drizzled
+{
 
 const uint32_t NO_CACHED_FIELD_INDEX= UINT32_MAX;
 
@@ -62,14 +64,6 @@ Item_ident::Item_ident(Session *session, Item_ident *item)
 
 void Item_ident::cleanup()
 {
-#ifdef CANT_BE_USED_AS_MEMORY_IS_FREED
-                       db_name ? db_name : "(null)",
-                       orig_db_name ? orig_db_name : "(null)",
-                       table_name ? table_name : "(null)",
-                       orig_table_name ? orig_table_name : "(null)",
-                       field_name ? field_name : "(null)",
-                       orig_field_name ? orig_field_name : "(null)"));
-#endif
   Item::cleanup();
   db_name= orig_db_name;
   table_name= orig_table_name;
@@ -92,7 +86,7 @@ const char *Item_ident::full_name() const
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp=(char*) sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
+    tmp=(char*) memory::sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
                           (uint32_t) strlen(field_name)+3);
     sprintf(tmp,"%s.%s.%s",db_name,table_name,field_name);
   }
@@ -100,7 +94,7 @@ const char *Item_ident::full_name() const
   {
     if (table_name[0])
     {
-      tmp= (char*) sql_alloc((uint32_t) strlen(table_name) +
+      tmp= (char*) memory::sql_alloc((uint32_t) strlen(table_name) +
                              (uint32_t) strlen(field_name) + 2);
       sprintf(tmp, "%s.%s", table_name, field_name);
     }
@@ -199,3 +193,4 @@ void Item_ident_for_show::make_field(SendField *tmp_field)
   tmp_field->decimals= field->decimals();
 }
 
+} /* namespace drizzled */

@@ -13,12 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <string.h>
 
 	/* Read first record with the current key */
 
+using namespace drizzled;
 
 int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
 {
@@ -43,8 +44,8 @@ int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
     }
     else
     {
-      my_errno = HA_ERR_END_OF_FILE;
-      return(my_errno);
+      errno = HA_ERR_END_OF_FILE;
+      return(errno);
     }
     return(0);
   }

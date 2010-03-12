@@ -267,12 +267,12 @@ insert into t1 values ('킱킱킱');
 drop table t1;
 #
 # Bug 4531: unique key prefix interacts poorly with utf8
-# Check HEAP+HASH, case insensitive collation
+# Check MEMORY+HASH, case insensitive collation
 #
 create TEMPORARY table t1 (
 c char(10),
 unique key a using hash (c(2))
-) engine=heap;
+) engine=MEMORY;
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
 insert into t1 values ('a');
 insert into t1 values ('aa');
@@ -293,12 +293,12 @@ drop table t1;
 
 #
 # Bug 4531: unique key prefix interacts poorly with utf8
-# Check HEAP+BTREE, case insensitive collation
+# Check MEMORY+BTREE, case insensitive collation
 #
 create TEMPORARY table t1 (
 c char(10),
 unique key a using btree (c(2))
-) engine=heap;
+) engine=MEMORY;
 show create table t1;
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
 insert into t1 values ('a');
@@ -345,25 +345,25 @@ INSERT INTO t1 VALUES ('str2');
 select * from t1 where str='str';
 drop table t1;
 
-# the same for HEAP+BTREE
+# the same for MEMORY+BTREE
 #
 
 create temporary table t1 (
   str varchar(255) not null,
   key str using btree (str(2))
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES ('str');
 INSERT INTO t1 VALUES ('str2');
 select * from t1 where str='str';
 drop table t1;
 
-# the same for HEAP+HASH
+# the same for MEMORY+HASH
 #
 
 create temporary table t1 (
   str varchar(255) not null,
   key str using hash (str(2))
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES ('str');
 INSERT INTO t1 VALUES ('str2');
 select * from t1 where str='str';
@@ -386,7 +386,7 @@ drop table t1;
 #
 # Bug #5397: Crash with varchar binary and LIKE
 #
-CREATE TABLE t1 (a varchar(32) BINARY);
+CREATE TABLE t1 (a varchar(32));
 INSERT INTO t1 VALUES ('test');
 SELECT a FROM t1 WHERE a LIKE '%te';
 DROP TABLE t1;
@@ -967,12 +967,6 @@ SELECT predicted_order, hex(utf8_encoding) FROM t1 ORDER BY utf8_encoding COLLAT
 DROP TABLE t1;
 
 --echo End of 5.1 tests
-
---source include/weight_string.inc
---source include/weight_string_l1.inc
-
---source include/weight_string.inc
---source include/weight_string_l1.inc
 
 #
 # Check strnxfrm() with odd length

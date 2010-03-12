@@ -15,15 +15,19 @@
 
 /* Create a MyISAM table */
 
-#include "myisamdef.h"
-#include <mysys/my_tree.h>
-#include <mysys/my_bit.h>
+#include "myisam_priv.h"
+#include "drizzled/internal/my_bit.h"
+#include "drizzled/internal/my_sys.h"
 
-#include <drizzled/util/test.h>
+#include "drizzled/util/test.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/error.h"
 
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /*
   Old options is used when recreating database, from myisamchk
@@ -35,7 +39,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 	      MI_CREATE_INFO *ci,uint32_t flags)
 {
   register uint32_t i, j;
-  File dfile= 0, file= 0;
+  int dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
   uint32_t fields,length,max_key_length,packed,pointer,real_length_diff,
@@ -54,7 +58,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   HA_KEYSEG *keyseg,tmp_keyseg;
   MI_COLUMNDEF *rec;
   ulong *rec_per_key_part;
-  my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
+  internal::my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   MI_CREATE_INFO tmp_create_info;
 
   if (!ci)
@@ -65,7 +69,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   if (keys + uniques > MI_MAX_KEY || columns == 0)
   {
-    return(my_errno=HA_WRONG_CREATE_OPTION);
+    return(errno=HA_WRONG_CREATE_OPTION);
   }
   errpos= 0;
   options= 0;
@@ -88,7 +92,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   if (!(rec_per_key_part=
 	(ulong*) malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long))))
-    return(my_errno);
+    return(errno);
   memset(rec_per_key_part, 0, (keys + uniques)*MI_MAX_KEY_SEG*sizeof(long));
 
 	/* Start by checking fields and field-types used */
@@ -232,11 +236,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       /* Test if prefix compression */
       if (keydef->flag & HA_PACK_KEY)
       {
-	/* Can't use space_compression on number keys */
-	if ((keydef->seg[0].flag & HA_SPACE_PACK) &&
-	    keydef->seg[0].type == (int) HA_KEYTYPE_NUM)
-	  keydef->seg[0].flag&= ~HA_SPACE_PACK;
-
 	/* Only use HA_PACK_KEY when first segment is a variable length key */
 	if (!(keydef->seg[0].flag & (HA_SPACE_PACK | HA_BLOB_PART |
 				     HA_VAR_LENGTH_PART)))
@@ -261,17 +260,12 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       {
 	/* numbers are stored with high by first to make compression easier */
 	switch (keyseg->type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
-	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:
-	case HA_KEYTYPE_USHORT_INT:
 	case HA_KEYTYPE_ULONG_INT:
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:
-	case HA_KEYTYPE_INT24:
 	case HA_KEYTYPE_UINT24:
-	case HA_KEYTYPE_INT8:
 	  keyseg->flag|= HA_SWAP_KEY;
           break;
         case HA_KEYTYPE_VARTEXT1:
@@ -331,7 +325,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     key_segs+=keydef->keysegs;
     if (keydef->keysegs > MI_MAX_KEY_SEG)
     {
-      my_errno=HA_WRONG_CREATE_OPTION;
+      errno=HA_WRONG_CREATE_OPTION;
       goto err;
     }
     /*
@@ -356,7 +350,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     if (keydef->block_length > MI_MAX_KEY_BLOCK_LENGTH ||
         length >= MI_MAX_KEY_BUFF)
     {
-      my_errno=HA_WRONG_CREATE_OPTION;
+      errno=HA_WRONG_CREATE_OPTION;
       goto err;
     }
     set_if_bigger(max_key_block_length,(uint32_t)keydef->block_length);
@@ -401,8 +395,8 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   {
     my_printf_error(0, "MyISAM table '%s' has too many columns and/or "
                     "indexes and/or unique constraints.",
-                    MYF(0), name + dirname_length(name));
-    my_errno= HA_WRONG_CREATE_OPTION;
+                    MYF(0), name + internal::dirname_length(name));
+    errno= HA_WRONG_CREATE_OPTION;
     goto err;
   }
 
@@ -464,7 +458,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   /* max_data_file_length and max_key_file_length are recalculated on open */
   if (options & HA_OPTION_TMP_TABLE)
-    share.base.max_data_file_length=(my_off_t) ci->data_file_length;
+    share.base.max_data_file_length=(internal::my_off_t) ci->data_file_length;
 
   share.base.min_block_length=
     (share.base.pack_reclength+3 < MI_EXTEND_BLOCK_LENGTH &&
@@ -478,7 +472,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   /*
     NOTE: For test_if_reopen() we need a real path name. Hence we need
-    MY_RETURN_REAL_PATH for every fn_format(filename, ...).
+    MY_RETURN_REAL_PATH for every internal::fn_format(filename, ...).
   */
   if (ci->index_file_name)
   {
@@ -490,17 +484,17 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       /* chop off the table name, tempory tables use generated name */
       if ((path= strrchr((char *)ci->index_file_name, FN_LIBCHAR)))
         *path= '\0';
-      fn_format(filename, name, ci->index_file_name, MI_NAME_IEXT,
+      internal::fn_format(filename, name, ci->index_file_name, MI_NAME_IEXT,
                 MY_REPLACE_DIR | MY_UNPACK_FILENAME |
                 MY_RETURN_REAL_PATH | MY_APPEND_EXT);
     }
     else
     {
-      fn_format(filename, ci->index_file_name, "", MI_NAME_IEXT,
+      internal::fn_format(filename, ci->index_file_name, "", MI_NAME_IEXT,
                 MY_UNPACK_FILENAME | MY_RETURN_REAL_PATH |
                 (have_iext ? MY_REPLACE_EXT : MY_APPEND_EXT));
     }
-    fn_format(linkname, name, "", MI_NAME_IEXT,
+    internal::fn_format(linkname, name, "", MI_NAME_IEXT,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     linkname_ptr=linkname;
     /*
@@ -513,7 +507,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   {
     char *iext= strrchr((char *)name, '.');
     int have_iext= iext && !strcmp(iext, MI_NAME_IEXT);
-    fn_format(filename, name, "", MI_NAME_IEXT,
+    internal::fn_format(filename, name, "", MI_NAME_IEXT,
               MY_UNPACK_FILENAME | MY_RETURN_REAL_PATH |
               (have_iext ? MY_REPLACE_EXT : MY_APPEND_EXT));
     linkname_ptr=0;
@@ -535,13 +529,16 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   {
     my_printf_error(0, "MyISAM table '%s' is in use "
                     "(most likely by a MERGE table). Try FLUSH TABLES.",
-                    MYF(0), name + dirname_length(name));
-    my_errno= HA_ERR_TABLE_EXIST;
+                    MYF(0), name + internal::dirname_length(name));
+    errno= HA_ERR_TABLE_EXIST;
     goto err;
   }
 
-  if ((file= my_create_with_symlink(linkname_ptr, filename, 0, create_mode,
-				    MYF(MY_WME | create_flag))) < 0)
+  if ((file= internal::my_create_with_symlink(linkname_ptr,
+                                              filename,
+                                              0,
+                                              create_mode,
+				              MYF(MY_WME | create_flag))) < 0)
     goto err;
   errpos=1;
 
@@ -559,31 +556,31 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
           /* chop off the table name, tempory tables use generated name */
           if ((path= strrchr((char *)ci->data_file_name, FN_LIBCHAR)))
             *path= '\0';
-          fn_format(filename, name, ci->data_file_name, MI_NAME_DEXT,
+          internal::fn_format(filename, name, ci->data_file_name, MI_NAME_DEXT,
                     MY_REPLACE_DIR | MY_UNPACK_FILENAME | MY_APPEND_EXT);
         }
         else
         {
-          fn_format(filename, ci->data_file_name, "", MI_NAME_DEXT,
+          internal::fn_format(filename, ci->data_file_name, "", MI_NAME_DEXT,
                     MY_UNPACK_FILENAME |
                     (have_dext ? MY_REPLACE_EXT : MY_APPEND_EXT));
         }
 
-	fn_format(linkname, name, "",MI_NAME_DEXT,
+	internal::fn_format(linkname, name, "",MI_NAME_DEXT,
 	          MY_UNPACK_FILENAME | MY_APPEND_EXT);
 	linkname_ptr=linkname;
 	create_flag=0;
       }
       else
       {
-	fn_format(filename,name,"", MI_NAME_DEXT,
+	internal::fn_format(filename,name,"", MI_NAME_DEXT,
 	          MY_UNPACK_FILENAME | MY_APPEND_EXT);
 	linkname_ptr=0;
         create_flag=(flags & HA_CREATE_KEEP_FILES) ? 0 : MY_DELETE_OLD;
       }
-      if ((dfile=
-	   my_create_with_symlink(linkname_ptr, filename, 0, create_mode,
-				  MYF(MY_WME | create_flag))) < 0)
+      if ((dfile= internal::my_create_with_symlink(linkname_ptr,
+                                                   filename, 0, create_mode,
+                                                   MYF(MY_WME | create_flag))) < 0)
 	goto err;
     }
     errpos=3;
@@ -670,38 +667,38 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       goto err;
 #endif
     errpos=2;
-    if (my_close(dfile,MYF(0)))
+    if (internal::my_close(dfile,MYF(0)))
       goto err;
   }
   errpos=0;
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  if (my_close(file,MYF(0)))
+  if (internal::my_close(file,MYF(0)))
     goto err;
   free((char*) rec_per_key_part);
   return(0);
 
 err:
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  save_errno=my_errno;
+  save_errno=errno;
   switch (errpos) {
   case 3:
-    my_close(dfile,MYF(0));
+    internal::my_close(dfile,MYF(0));
     /* fall through */
   case 2:
   if (! (flags & HA_DONT_TOUCH_DATA))
-    my_delete_with_symlink(fn_format(filename,name,"",MI_NAME_DEXT,
+    internal::my_delete_with_symlink(internal::fn_format(filename,name,"",MI_NAME_DEXT,
                                      MY_UNPACK_FILENAME | MY_APPEND_EXT),
 			   MYF(0));
     /* fall through */
   case 1:
-    my_close(file,MYF(0));
+    internal::my_close(file,MYF(0));
     if (! (flags & HA_DONT_TOUCH_DATA))
-      my_delete_with_symlink(fn_format(filename,name,"",MI_NAME_IEXT,
+      internal::my_delete_with_symlink(internal::fn_format(filename,name,"",MI_NAME_IEXT,
                                        MY_UNPACK_FILENAME | MY_APPEND_EXT),
 			     MYF(0));
   }
   free((char*) rec_per_key_part);
-  return(my_errno=save_errno);		/* return the fatal errno */
+  return(errno=save_errno);		/* return the fatal errno */
 }
 
 

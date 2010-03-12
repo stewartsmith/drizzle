@@ -13,32 +13,42 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 #include <drizzled/unireg.h>
+#include "drizzled/sql_table.h"
+#include "drizzled/global_charset_info.h"
+#include "drizzled/message/statement_transform.h"
+
+#include "drizzled/internal/my_sys.h"
+
 
 /* For proto */
 #include <string>
 #include <fstream>
+#include <fcntl.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include <drizzled/table_proto.h>
+
 using namespace std;
 
-int fill_table_proto(drizzled::message::Table *table_proto,
-                     const char *table_name,
-                     List<CreateField> &create_fields,
-                     HA_CREATE_INFO *create_info,
-                     uint32_t keys,
-                     KEY *key_info)
+namespace drizzled {
+
+static int fill_table_proto(message::Table &table_proto,
+                            const char *table_name,
+                            List<CreateField> &create_fields,
+                            HA_CREATE_INFO *create_info,
+                            uint32_t keys,
+                            KEY *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
-  drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
+  message::Table::TableOptions *table_options= table_proto.mutable_options();
 
   if (create_fields.elements > MAX_FIELDS)
   {
@@ -46,83 +56,102 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     return(1);
   }
 
-  assert(strcmp(table_proto->engine().name().c_str(),
+  assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
 
-  assert(strcmp(table_proto->name().c_str(),table_name)==0);
+  assert(strcmp(table_proto.name().c_str(),table_name)==0);
 
+  int field_number= 0;
+  bool use_existing_fields= table_proto.field_size() > 0;
   while ((field_arg= it++))
   {
-    drizzled::message::Table::Field *attribute;
+    message::Table::Field *attribute;
 
-    attribute= table_proto->add_field();
-    attribute->set_name(field_arg->field_name);
+    /* some (one) code path for CREATE TABLE fills the proto
+       out more than the others, so we already have partially
+       filled out Field messages */
 
-    attribute->set_pack_flag(field_arg->pack_flag); /* TODO: MUST DIE */
-
-    if(f_maybe_null(field_arg->pack_flag))
+    if (use_existing_fields)
+      attribute= table_proto.mutable_field(field_number++);
+    else
     {
-      drizzled::message::Table::Field::FieldConstraints *constraints;
+      /* Other code paths still have to fill out the proto */
+      attribute= table_proto.add_field();
 
-      constraints= attribute->mutable_constraints();
-      constraints->set_is_nullable(true);
+      if(field_arg->flags & NOT_NULL_FLAG)
+      {
+        message::Table::Field::FieldConstraints *constraints;
+
+        constraints= attribute->mutable_constraints();
+        constraints->set_is_nullable(false);
+      }
+
+      attribute->set_name(field_arg->field_name);
     }
 
-    switch (field_arg->sql_type) {
-    case DRIZZLE_TYPE_TINY:
-      attribute->set_type(drizzled::message::Table::Field::TINYINT);
+    assert((!(field_arg->flags & NOT_NULL_FLAG)) == attribute->constraints().is_nullable());
+    assert(strcmp(attribute->name().c_str(), field_arg->field_name)==0);
+
+
+    message::Table::Field::FieldType parser_type= attribute->type();
+
+    attribute->set_type(message::internalFieldTypeToFieldProtoType(field_arg->sql_type));
+
+    switch (attribute->type()) {
+    default: /* Only deal with types that need extra information */
       break;
-    case DRIZZLE_TYPE_LONG:
-      attribute->set_type(drizzled::message::Table::Field::INTEGER);
-      break;
-    case DRIZZLE_TYPE_DOUBLE:
-      attribute->set_type(drizzled::message::Table::Field::DOUBLE);
-      break;
-    case DRIZZLE_TYPE_NULL  :
-      assert(1); /* Not a user definable type */
-    case DRIZZLE_TYPE_TIMESTAMP:
-      attribute->set_type(drizzled::message::Table::Field::TIMESTAMP);
-      break;
-    case DRIZZLE_TYPE_LONGLONG:
-      attribute->set_type(drizzled::message::Table::Field::BIGINT);
-      break;
-    case DRIZZLE_TYPE_DATETIME:
-      attribute->set_type(drizzled::message::Table::Field::DATETIME);
-      break;
-    case DRIZZLE_TYPE_DATE:
-      attribute->set_type(drizzled::message::Table::Field::DATE);
-      break;
-    case DRIZZLE_TYPE_VARCHAR:
+    case message::Table::Field::DOUBLE:
       {
-        drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+        /*
+         * For DOUBLE, we only add a specific scale and precision iff
+         * the fixed decimal point has been specified...
+         */
+        if (field_arg->decimals != NOT_FIXED_DEC)
+        {
+          message::Table::Field::NumericFieldOptions *numeric_field_options;
+
+          numeric_field_options= attribute->mutable_numeric_options();
+
+          numeric_field_options->set_precision(field_arg->length);
+          numeric_field_options->set_scale(field_arg->decimals);
+        }
+      }
+      break;
+    case message::Table::Field::VARCHAR:
+      {
+        message::Table::Field::StringFieldOptions *string_field_options;
 
         string_field_options= attribute->mutable_string_options();
-        attribute->set_type(drizzled::message::Table::Field::VARCHAR);
-        string_field_options->set_length(field_arg->length
-					 / field_arg->charset->mbmaxlen);
-        string_field_options->set_collation_id(field_arg->charset->number);
-        string_field_options->set_collation(field_arg->charset->name);
 
+        if (! use_existing_fields || string_field_options->length()==0)
+          string_field_options->set_length(field_arg->length
+                                           / field_arg->charset->mbmaxlen);
+        else
+          assert((uint32_t)string_field_options->length() == (uint32_t)(field_arg->length / field_arg->charset->mbmaxlen));
+
+        if (! string_field_options->has_collation())
+        {
+          string_field_options->set_collation_id(field_arg->charset->number);
+          string_field_options->set_collation(field_arg->charset->name);
+        }
         break;
       }
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case message::Table::Field::DECIMAL:
       {
-        drizzled::message::Table::Field::NumericFieldOptions *numeric_field_options;
+        message::Table::Field::NumericFieldOptions *numeric_field_options;
 
-        attribute->set_type(drizzled::message::Table::Field::DECIMAL);
         numeric_field_options= attribute->mutable_numeric_options();
         /* This is magic, I hate magic numbers -Brian */
         numeric_field_options->set_precision(field_arg->length + ( field_arg->decimals ? -2 : -1));
         numeric_field_options->set_scale(field_arg->decimals);
         break;
       }
-    case DRIZZLE_TYPE_ENUM:
+    case message::Table::Field::ENUM:
       {
-        drizzled::message::Table::Field::SetFieldOptions *set_field_options;
+        message::Table::Field::SetFieldOptions *set_field_options;
 
         assert(field_arg->interval);
 
-        attribute->set_type(drizzled::message::Table::Field::ENUM);
         set_field_options= attribute->mutable_set_options();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
@@ -136,11 +165,9 @@ int fill_table_proto(drizzled::message::Table *table_proto,
         set_field_options->set_collation(field_arg->charset->name);
         break;
       }
-    case DRIZZLE_TYPE_BLOB:
+    case message::Table::Field::BLOB:
       {
-	attribute->set_type(drizzled::message::Table::Field::BLOB);
-
-        drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+        message::Table::Field::StringFieldOptions *string_field_options;
 
         string_field_options= attribute->mutable_string_options();
         string_field_options->set_collation_id(field_arg->charset->number);
@@ -148,9 +175,9 @@ int fill_table_proto(drizzled::message::Table *table_proto,
       }
 
       break;
-    default:
-      assert(0); /* Tell us, since this shouldn't happend */
     }
+
+    assert (!use_existing_fields || parser_type == attribute->type());
 
 #ifdef NOTDONE
     field_constraints= attribute->mutable_constraints();
@@ -162,13 +189,13 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     case COLUMN_FORMAT_TYPE_NOT_USED:
       break;
     case COLUMN_FORMAT_TYPE_DEFAULT:
-      attribute->set_format(drizzled::message::Table::Field::DefaultFormat);
+      attribute->set_format(message::Table::Field::DefaultFormat);
       break;
     case COLUMN_FORMAT_TYPE_FIXED:
-      attribute->set_format(drizzled::message::Table::Field::FixedFormat);
+      attribute->set_format(message::Table::Field::FixedFormat);
       break;
     case COLUMN_FORMAT_TYPE_DYNAMIC:
-      attribute->set_format(drizzled::message::Table::Field::DynamicFormat);
+      attribute->set_format(message::Table::Field::DynamicFormat);
       break;
     default:
       assert(0); /* Tell us, since this shouldn't happend */
@@ -191,12 +218,15 @@ int fill_table_proto(drizzled::message::Table *table_proto,
 	return(1);
       }
 
-      attribute->set_comment(field_arg->comment.str);
+      if (! use_existing_fields)
+        attribute->set_comment(field_arg->comment.str);
+
+      assert(strcmp(attribute->comment().c_str(), field_arg->comment.str)==0);
     }
 
     if(field_arg->unireg_check == Field::NEXT_NUMBER)
     {
-      drizzled::message::Table::Field::NumericFieldOptions *field_options;
+      message::Table::Field::NumericFieldOptions *field_options;
       field_options= attribute->mutable_numeric_options();
       field_options->set_is_autoincrement(true);
     }
@@ -204,7 +234,7 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     if(field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
        || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
     {
-      drizzled::message::Table::Field::FieldOptions *field_options;
+      message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
       field_options->set_default_value("NOW()");
     }
@@ -212,16 +242,23 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     if(field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
        || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
     {
-      drizzled::message::Table::Field::FieldOptions *field_options;
+      message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
       field_options->set_update_value("NOW()");
     }
 
-    if(field_arg->def)
+    if (field_arg->def == NULL  && attribute->constraints().is_nullable())
     {
-      drizzled::message::Table::Field::FieldOptions *field_options;
+      message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
 
+      field_options->set_default_null(true);
+    }
+    if(field_arg->def)
+    {
+      message::Table::Field::FieldOptions *field_options;
+      field_options= attribute->mutable_options();
+ 
       if(field_arg->def->is_null())
       {
 	field_options->set_default_null(true);
@@ -259,13 +296,6 @@ int fill_table_proto(drizzled::message::Table *table_proto,
       }
     }
 
-    {
-      drizzled::message::Table::Field::FieldOptions *field_options;
-      field_options= attribute->mutable_options();
-
-      field_options->set_length(field_arg->length);
-    }
-
     assert(field_arg->unireg_check == Field::NONE
 	   || field_arg->unireg_check == Field::NEXT_NUMBER
 	   || field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
@@ -274,35 +304,37 @@ int fill_table_proto(drizzled::message::Table *table_proto,
 
   }
 
+  assert(! use_existing_fields || (field_number == table_proto.field_size()));
+
   switch(create_info->row_type)
   {
   case ROW_TYPE_DEFAULT:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_DEFAULT);
+    /* No use setting a default row type... just adds redundant info to message */
     break;
   case ROW_TYPE_FIXED:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_FIXED);
+    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
     break;
   case ROW_TYPE_DYNAMIC:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_DYNAMIC);
+    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DYNAMIC);
     break;
   case ROW_TYPE_COMPRESSED:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_COMPRESSED);
+    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPRESSED);
     break;
   case ROW_TYPE_REDUNDANT:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_REDUNDANT);
+    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_REDUNDANT);
     break;
   case ROW_TYPE_COMPACT:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_COMPACT);
+    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPACT);
     break;
   case ROW_TYPE_PAGE:
-    table_options->set_row_type(drizzled::message::Table::TableOptions::ROW_TYPE_PAGE);
+    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_PAGE);
     break;
   default:
     abort();
   }
 
-  table_options->set_pack_record(create_info->table_options
-				 & HA_OPTION_PACK_RECORD);
+  if (create_info->table_options & HA_OPTION_PACK_RECORD)
+    table_options->set_pack_record(true);
 
   if (table_options->has_comment())
   {
@@ -329,29 +361,14 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     table_options->set_collation(create_info->default_table_charset->name);
   }
 
-  if (create_info->connect_string.length)
-    table_options->set_connect_string(create_info->connect_string.str);
-
-  if (create_info->data_file_name)
-    table_options->set_data_file_name(create_info->data_file_name);
-
-  if (create_info->index_file_name)
-    table_options->set_index_file_name(create_info->index_file_name);
-
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
-  if (create_info->key_block_size)
-    table_options->set_key_block_size(create_info->key_block_size);
-
-  if (create_info->block_size)
-    table_options->set_block_size(create_info->block_size);
-
-  for (unsigned int i= 0; i < keys; i++)
+  for (uint32_t i= 0; i < keys; i++)
   {
-    drizzled::message::Table::Index *idx;
+    message::Table::Index *idx;
 
-    idx= table_proto->add_indexes();
+    idx= table_proto.add_indexes();
 
     assert(test(key_info[i].flags & HA_USES_COMMENT) ==
            (key_info[i].comment.length > 0));
@@ -368,19 +385,15 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     switch(key_info[i].algorithm)
     {
     case HA_KEY_ALG_HASH:
-      idx->set_type(drizzled::message::Table::Index::HASH);
+      idx->set_type(message::Table::Index::HASH);
       break;
 
     case HA_KEY_ALG_BTREE:
-      idx->set_type(drizzled::message::Table::Index::BTREE);
+      idx->set_type(message::Table::Index::BTREE);
       break;
 
-    case HA_KEY_ALG_RTREE:
-      idx->set_type(drizzled::message::Table::Index::RTREE);
-    case HA_KEY_ALG_FULLTEXT:
-      idx->set_type(drizzled::message::Table::Index::FULLTEXT);
     case HA_KEY_ALG_UNDEF:
-      idx->set_type(drizzled::message::Table::Index::UNKNOWN_INDEX);
+      idx->set_type(message::Table::Index::UNKNOWN_INDEX);
       break;
 
     default:
@@ -392,7 +405,7 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     else
       idx->set_is_unique(false);
 
-    drizzled::message::Table::Index::IndexOptions *index_options= idx->mutable_options();
+    message::Table::Index::IndexOptions *index_options= idx->mutable_options();
 
     if(key_info[i].flags & HA_USES_BLOCK_SIZE)
       index_options->set_key_block_size(key_info[i].block_size);
@@ -434,12 +447,15 @@ int fill_table_proto(drizzled::message::Table *table_proto,
 
       idx->set_comment(key_info[i].comment.str);
     }
-    if(key_info[i].flags & ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
+    if (key_info[i].flags & 
+        ~(HA_NOSAME | HA_PACK_KEY | HA_USES_BLOCK_SIZE | 
+          HA_BINARY_PACK_KEY | HA_VAR_LENGTH_PART | HA_NULL_PART_KEY | 
+          HA_KEY_HAS_PART_KEY_SEG | HA_GENERATED_KEY | HA_USES_COMMENT))
       abort(); // Invalid (unknown) index flag.
 
     for(unsigned int j=0; j< key_info[i].key_parts; j++)
     {
-      drizzled::message::Table::Index::IndexPart *idxpart;
+      message::Table::Index::IndexPart *idxpart;
 
       idxpart= idx->add_index_part();
 
@@ -464,7 +480,7 @@ int rename_table_proto_file(const char *from, const char* to)
   from_path.append(file_ext);
   to_path.append(file_ext);
 
-  return my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
+  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
 }
 
 int delete_table_proto_file(const char *file_name)
@@ -473,30 +489,7 @@ int delete_table_proto_file(const char *file_name)
   string file_ext = ".dfe";
 
   new_path.append(file_ext);
-  return my_delete(new_path.c_str(), MYF(0));
-}
-
-int drizzle_write_proto_file(const std::string file_name,
-                             drizzled::message::Table *table_proto)
-{
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
-
-  if (fd == -1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyOutputStream* output=
-    new google::protobuf::io::FileOutputStream(fd);
-
-  if (table_proto->SerializeToZeroCopyStream(output) == false)
-  {
-    delete output;
-    close(fd);
-    return errno;
-  }
-
-  delete output;
-  close(fd);
-  return 0;
+  return internal::my_delete(new_path.c_str(), MYF(0));
 }
 
 /*
@@ -512,58 +505,33 @@ int drizzle_write_proto_file(const std::string file_name,
     create_fields	Fields to create
     keys		number of keys to create
     key_info		Keys to create
-    file		Handler to use
-    is_like             is true for mysql_create_like_schema_frm
 
   RETURN
     0  ok
     1  error
 */
 
-int rea_create_table(Session *session, const char *path,
-                     const char *db, const char *table_name,
-		     drizzled::message::Table *table_proto,
+int rea_create_table(Session *session,
+                     TableIdentifier &identifier,
+		     message::Table &table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_fields,
                      uint32_t keys, KEY *key_info)
 {
-  /* Proto will blow up unless we give a name */
-  assert(table_name);
-
-  if (fill_table_proto(table_proto, table_name, create_fields, create_info,
+  if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
 		      keys, key_info))
     return 1;
 
-  string new_path(path);
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-
-  int err= 0;
-
-  StorageEngine* engine= ha_resolve_by_name(session,
-                                            table_proto->engine().name());
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    err= drizzle_write_proto_file(new_path, table_proto);
-
-  if (err != 0)
+  if (plugin::StorageEngine::createTable(*session,
+                                         identifier,
+                                         false, table_proto))
   {
-    if (err == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
-    else
-      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
-
-    goto err_handler;
+    return 1;
   }
 
-  if (ha_create_table(session, path, db, table_name,
-                      create_info,0, table_proto))
-    goto err_handler;
   return 0;
 
-err_handler:
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-    delete_table_proto_file(path);
-
-  return 1;
 } /* rea_create_table */
+
+} /* namespace drizzled */
+

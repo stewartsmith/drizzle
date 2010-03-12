@@ -17,11 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include "config.h"
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include PCRE_HEADER
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+using namespace drizzled;
 
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;
@@ -38,7 +46,6 @@ static unsigned long sysvar_logging_query_threshold_big_examined= 0;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)
@@ -165,7 +172,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 }
 
 
-class Logging_query: public Logging_handler
+class Logging_query: public drizzled::plugin::Logging
 {
   int fd;
   pcre *re;
@@ -173,7 +180,9 @@ class Logging_query: public Logging_handler
 
 public:
 
-  Logging_query() : Logging_handler("Logging_query"), fd(-1), re(NULL), pe(NULL)
+  Logging_query()
+    : drizzled::plugin::Logging("Logging_query"),
+      fd(-1), re(NULL), pe(NULL)
   {
 
     /* if there is no destination filename, dont bother doing anything */
@@ -267,7 +276,7 @@ public:
     if (re)
     {
       int this_pcre_rc;
-      this_pcre_rc = pcre_exec(re, pe, session->query, session->query_length, 0, 0, NULL, 0);
+      this_pcre_rc = pcre_exec(re, pe, session->query.c_str(), session->query.length(), 0, 0, NULL, 0);
       if (this_pcre_rc < 0)
         return false;
     }
@@ -276,24 +285,21 @@ public:
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= (session->db) ? session->db : "";
-    int dbl= 0;
-    if (dbs != NULL)
-      dbl= session->db_length;
+    const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
-               "%"PRIu32",%"PRIu32"\n",
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\"\n",
                t_mark,
                session->thread_id,
-               session->query_id,
+               session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               dbl, dbs,
+               (int)session->db.length(), dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->query,
-                       session->query_length, qs, sizeof(qs)),
+               quotify((unsigned char *)session->getQueryString().c_str(),
+                       session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,
@@ -305,7 +311,10 @@ public:
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
-               session->total_warn_count);
+               session->total_warn_count,
+               session->getServerId(),
+               glob_hostname
+               );
   
     // a single write has a kernel thread lock, thus no need mutex guard this
     wrv= write(fd, msgbuf, msgbuf_len);
@@ -396,7 +405,7 @@ static DRIZZLE_SYSVAR_ULONG(
   UINT32_MAX, /* max */
   0 /* blksiz */);
 
-static struct st_mysql_sys_var* logging_query_system_variables[]= {
+static drizzle_sys_var* logging_query_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(filename),
   DRIZZLE_SYSVAR(pcre),
@@ -406,8 +415,9 @@ static struct st_mysql_sys_var* logging_query_system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(logging_query)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "logging_query",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",
@@ -415,8 +425,7 @@ drizzle_declare_plugin(logging_query)
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
   logging_query_plugin_deinit,
-  NULL,   /* status variables */
   logging_query_system_variables,
   NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

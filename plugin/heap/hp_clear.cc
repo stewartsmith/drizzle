@@ -19,7 +19,11 @@
   database remains open.
 */
 
-#include "heapdef.h"
+#include "heap_priv.h"
+
+using namespace drizzled;
+
+static void hp_clear_keys(HP_SHARE *info);
 
 void heap_clear(HP_INFO *info)
 {
@@ -36,27 +40,6 @@ void hp_clear(HP_SHARE *info)
   return;
 }
 
-
-/*
-  Clear all keys.
-
-  SYNOPSIS
-    heap_clear_keys()
-    info      A pointer to the heap storage engine HP_INFO struct.
-
-  DESCRIPTION
-    Delete all trees of all indexes and leave them empty.
-
-  RETURN
-    void
-*/
-
-void heap_clear_keys(HP_INFO *info)
-{
-  hp_clear(info->s);
-}
-
-
 /*
   Clear all keys.
 
@@ -71,7 +54,7 @@ void heap_clear_keys(HP_INFO *info)
     void
 */
 
-void hp_clear_keys(HP_SHARE *info)
+static void hp_clear_keys(HP_SHARE *info)
 {
   uint32_t key;
 

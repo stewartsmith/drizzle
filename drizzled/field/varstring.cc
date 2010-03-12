@@ -19,14 +19,18 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/varstring.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "plugin/myisam/myisam.h"
 
 #include <string>
 
 using namespace std;
+
+namespace drizzled
+{
 
 /****************************************************************************
   VARCHAR type
@@ -47,49 +51,37 @@ using namespace std;
 const uint32_t Field_varstring::MAX_SIZE= UINT16_MAX;
 
 Field_varstring::Field_varstring(unsigned char *ptr_arg,
-                                 uint32_t len_arg, uint32_t length_bytes_arg,
+                                 uint32_t len_arg,
+                                 uint32_t length_bytes_arg,
                                  unsigned char *null_ptr_arg,
                                  unsigned char null_bit_arg,
-                                 enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-                 unireg_check_arg, field_name_arg, cs),
+  :Field_str(ptr_arg,
+             len_arg,
+             null_ptr_arg,
+             null_bit_arg,
+             field_name_arg, cs),
    length_bytes(length_bytes_arg)
 {
   share->varchar_fields++;
 }
 
-Field_varstring::Field_varstring(uint32_t len_arg,bool maybe_null_arg,
+Field_varstring::Field_varstring(uint32_t len_arg,
+                                 bool maybe_null_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) 0,len_arg,
-                 maybe_null_arg ? (unsigned char*) "": 0, 0,
-                 NONE, field_name_arg, cs),
+  :Field_str((unsigned char*) 0,
+             len_arg,
+             maybe_null_arg ? (unsigned char*) "": 0,
+             0,
+             field_name_arg,
+             cs),
    length_bytes(len_arg < 256 ? 1 :2)
 {
   share->varchar_fields++;
-}
-
-
-/**
-   Save the field metadata for varstring fields.
-
-   Saves the field length in the first byte. Note: may consume
-   2 bytes. Caller must ensure second byte is contiguous with
-   first byte (e.g. array index 0,1).
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_varstring::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  assert(field_length <= 65535);
-  int2store(metadata_ptr, field_length);
-  return 2;
 }
 
 int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO * const cs)
@@ -308,11 +300,6 @@ void Field_varstring::sql_type(String &res) const
 }
 
 
-uint32_t Field_varstring::data_length()
-{
-  return length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
-}
-
 uint32_t Field_varstring::used_length()
 {
   return length_bytes == 1 ? 1 + (uint32_t) (unsigned char) *ptr : 2 + uint2korr(ptr);
@@ -340,91 +327,6 @@ unsigned char *Field_varstring::pack(unsigned char *to, const unsigned char *fro
   /* Store bytes of string */
   if (length > 0)
     memcpy(to, from+length_bytes, length);
-  return to+length;
-}
-
-
-unsigned char *
-Field_varstring::pack_key(unsigned char *to, const unsigned char *key, uint32_t max_length,
-                          bool )
-{
-  uint32_t length=  length_bytes == 1 ? (uint32_t) *key : uint2korr(key);
-  uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
-                     max_length/field_charset->mbmaxlen : max_length);
-  key+= length_bytes;
-  if (length > local_char_length)
-  {
-    local_char_length= my_charpos(field_charset, key, key+length,
-                                  local_char_length);
-    set_if_smaller(length, local_char_length);
-  }
-  *to++= (char) (length & 255);
-  if (max_length > 255)
-    *to++= (char) (length >> 8);
-  if (length)
-    memcpy(to, key, length);
-  return to+length;
-}
-
-
-/**
-  Unpack a key into a record buffer.
-
-  A VARCHAR key has a maximum size of 64K-1.
-  In its packed form, the length field is one or two bytes long,
-  depending on 'max_length'.
-
-  @param to                          Pointer into the record buffer.
-  @param key                         Pointer to the packed key.
-  @param max_length                  Key length limit from key description.
-
-  @return
-    Pointer to end of 'key' (To the next key part if multi-segment key)
-*/
-
-const unsigned char *
-Field_varstring::unpack_key(unsigned char *,
-                            const unsigned char *key, uint32_t max_length,
-                            bool )
-{
-  /* get length of the blob key */
-  uint32_t length= *key++;
-  if (max_length > 255)
-    length+= (*key++) << 8;
-
-  /* put the length into the record buffer */
-  if (length_bytes == 1)
-    *ptr= (unsigned char) length;
-  else
-    int2store(ptr, length);
-  memcpy(ptr + length_bytes, key, length);
-  return key + length;
-}
-
-/**
-  Create a packed key that will be used for storage in the index tree.
-
-  @param to		Store packed key segment here
-  @param from		Key segment (as given to index_read())
-  @param max_length  	Max length of key
-
-  @return
-    end of key storage
-*/
-
-unsigned char *
-Field_varstring::pack_key_from_key_image(unsigned char *to, const unsigned char *from, uint32_t max_length,
-                                         bool )
-{
-  /* Key length is always stored as 2 bytes */
-  uint32_t length= uint2korr(from);
-  if (length > max_length)
-    length= max_length;
-  *to++= (char) (length & 255);
-  if (max_length > 255)
-    *to++= (char) (length >> 8);
-  if (length)
-    memcpy(to, from+HA_KEY_BLOB_LENGTH, length);
   return to+length;
 }
 
@@ -471,67 +373,6 @@ Field_varstring::unpack(unsigned char *to, const unsigned char *from,
 }
 
 
-int Field_varstring::pack_cmp(const unsigned char *a, const unsigned char *b,
-                              uint32_t key_length_arg,
-                              bool insert_or_update)
-{
-  uint32_t a_length, b_length;
-  if (key_length_arg > 255)
-  {
-    a_length=uint2korr(a); a+= 2;
-    b_length=uint2korr(b); b+= 2;
-  }
-  else
-  {
-    a_length= (uint32_t) *a++;
-    b_length= (uint32_t) *b++;
-  }
-  return field_charset->coll->strnncollsp(field_charset,
-                                          a, a_length,
-                                          b, b_length,
-                                          insert_or_update);
-}
-
-
-int Field_varstring::pack_cmp(const unsigned char *b, uint32_t key_length_arg,
-                              bool insert_or_update)
-{
-  unsigned char *a= ptr+ length_bytes;
-  uint32_t a_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
-  uint32_t b_length;
-  uint32_t local_char_length= ((field_charset->mbmaxlen > 1) ?
-                           key_length_arg / field_charset->mbmaxlen :
-                           key_length_arg);
-
-  if (key_length_arg > 255)
-  {
-    b_length=uint2korr(b); b+= HA_KEY_BLOB_LENGTH;
-  }
-  else
-    b_length= (uint32_t) *b++;
-
-  if (a_length > local_char_length)
-  {
-    local_char_length= my_charpos(field_charset, a, a+a_length,
-                                  local_char_length);
-    set_if_smaller(a_length, local_char_length);
-  }
-
-  return field_charset->coll->strnncollsp(field_charset,
-                                          a, a_length,
-                                          b, b_length,
-                                          insert_or_update);
-}
-
-
-uint32_t Field_varstring::packed_col_length(const unsigned char *data_ptr, uint32_t length)
-{
-  if (length > 255)
-    return uint2korr(data_ptr)+2;
-  return (uint32_t) *data_ptr + 1;
-}
-
-
 uint32_t Field_varstring::max_packed_col_length(uint32_t max_length)
 {
   return (max_length > 255 ? 2 : 1)+max_length;
@@ -554,7 +395,7 @@ uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff, uint3
   if (f_length < length)
   {
     /*
-      Must clear this as we do a memcmp in opt_range.cc to detect
+      Must clear this as we do a memcmp in optimizer/range.cc to detect
       identical keys
     */
     buff.append(length-f_length, 0);
@@ -577,7 +418,7 @@ uint32_t Field_varstring::get_key_image(unsigned char *buff, uint32_t length)
   if (f_length < length)
   {
     /*
-      Must clear this as we do a memcmp in opt_range.cc to detect
+      Must clear this as we do a memcmp in optimizer/range.cc to detect
       identical keys
     */
     memset(buff+HA_KEY_BLOB_LENGTH+f_length, 0, (length-f_length));
@@ -615,7 +456,7 @@ int Field_varstring::cmp_binary(const unsigned char *a_ptr,
 }
 
 
-Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
+Field *Field_varstring::new_field(memory::Root *root, Table *new_table, bool keep_type)
 {
   Field_varstring *res= (Field_varstring*) Field::new_field(root, new_table,
                                                             keep_type);
@@ -625,7 +466,7 @@ Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_ty
 }
 
 
-Field *Field_varstring::new_key_field(MEM_ROOT *root,
+Field *Field_varstring::new_key_field(memory::Root *root,
                                       Table *new_table,
                                       unsigned char *new_ptr, unsigned char *new_null_ptr,
                                       uint32_t new_null_bit)
@@ -643,35 +484,4 @@ Field *Field_varstring::new_key_field(MEM_ROOT *root,
   return res;
 }
 
-
-uint32_t Field_varstring::is_equal(CreateField *new_field_ptr)
-{
-  if (new_field_ptr->sql_type == real_type() &&
-      new_field_ptr->charset == field_charset)
-  {
-    if (new_field_ptr->length == max_display_length())
-      return IS_EQUAL_YES;
-    if (new_field_ptr->length > max_display_length() &&
-	((new_field_ptr->length <= 255 && max_display_length() <= 255) ||
-	 (new_field_ptr->length > 255 && max_display_length() > 255)))
-      return IS_EQUAL_PACK_LENGTH; // VARCHAR, longer variable length
-  }
-  return IS_EQUAL_NO;
-}
-
-
-void Field_varstring::hash(uint32_t *nr, uint32_t *nr2)
-{
-  if (is_null())
-  {
-    *nr^= (*nr << 1) | 1;
-  }
-  else
-  {
-    uint32_t len=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
-    const CHARSET_INFO * const cs= charset();
-    cs->coll->hash_sort(cs, ptr + length_bytes, len, nr, nr2);
-  }
-}
-
-
+} /* namespace drizzled */

@@ -41,13 +41,20 @@ This file contains the implementation of error and warnings related
 
 ***********************************************************************/
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include <stdarg.h>
+
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_int.h>
+#include <drizzled/plugin/client.h>
 
-using namespace drizzled;
+using namespace std;
+
+namespace drizzled
+{
 
 /*
   Store a new message in an error object
@@ -76,9 +83,9 @@ void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 
 void drizzle_reset_errors(Session *session, bool force)
 {
-  if (session->query_id != session->warn_id || force)
+  if (session->getQueryId() != session->getWarningQueryId() || force)
   {
-    session->warn_id= session->query_id;
+    session->setWarningQueryId(session->getQueryId());
     free_root(&session->warn_root,MYF(0));
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
@@ -113,7 +120,7 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
       !(session->options & OPTION_SQL_NOTES))
     return(0);
 
-  if (session->query_id != session->warn_id)
+  if (session->getQueryId() != session->getWarningQueryId())
     drizzle_reset_errors(session, 0);
   session->got_warning= 1;
 
@@ -206,14 +213,13 @@ bool mysqld_show_warnings(Session *session,
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
   DRIZZLE_ERROR *err;
   Select_Lex *sel= &session->lex->select_lex;
   Select_Lex_Unit *unit= &session->lex->unit;
   ha_rows idx= 0;
-  plugin::Protocol *protocol= session->protocol;
 
   unit->set_limit(sel);
 
@@ -227,14 +233,15 @@ bool mysqld_show_warnings(Session *session,
       continue;
     if (idx > unit->select_limit_cnt)
       break;
-    protocol->prepareForResend();
-    protocol->store(warning_level_names[err->level].str,
-		    warning_level_names[err->level].length);
-    protocol->store((uint32_t) err->code);
-    protocol->store(err->msg, strlen(err->msg));
-    if (protocol->write())
+    session->client->store(warning_level_names[err->level].str,
+		           warning_level_names[err->level].length);
+    session->client->store((uint32_t) err->code);
+    session->client->store(err->msg, strlen(err->msg));
+    if (session->client->flush())
       return(true);
   }
   session->my_eof();
   return(false);
 }
+
+} /* namespace drizzled */

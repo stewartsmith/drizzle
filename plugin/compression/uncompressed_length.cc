@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/function/math/int.h>
 #include "plugin/compression/uncompressed_length.h"
@@ -25,6 +25,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 
 int64_t Item_func_uncompressed_length::val_int()
@@ -34,7 +35,7 @@ int64_t Item_func_uncompressed_length::val_int()
   if (!res)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
   if (res->is_empty()) return 0;

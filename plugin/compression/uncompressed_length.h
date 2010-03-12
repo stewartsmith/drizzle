@@ -17,17 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
-#define DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
+#ifndef PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
+#define PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/function/math/int.h>
 
 
-class Item_func_uncompressed_length : public Item_int_func
+class Item_func_uncompressed_length : public drizzled::Item_int_func
 {
-  String value;
+  drizzled::String value;
 public:
   Item_func_uncompressed_length():Item_int_func(){}
   const char *func_name() const{return "uncompressed_length";}
@@ -37,4 +36,4 @@ public:
 };
 
 
-#endif /* DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H */
+#endif /* PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H */

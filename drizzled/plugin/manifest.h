@@ -22,8 +22,11 @@
 
 #include <drizzled/plugin/registry.h>
 
-struct st_mysql_show_var;
-struct st_mysql_sys_var;
+namespace drizzled
+{
+
+struct drizzle_show_var;
+struct drizzle_sys_var;
 
 /* We use the following strings to define licenses for plugins */
 enum plugin_license_type {
@@ -35,15 +38,8 @@ enum plugin_license_type {
 };
 
 
-namespace drizzled
-{
 namespace plugin
 {
-
-static const std::string LICENSE_GPL_STRING("GPL");
-static const std::string LICENSE_BSD_STRING("BSD");
-static const std::string LICENSE_LGPL_STRING("LGPL");
-static const std::string LICENSE_PROPRIETARY_STRING("PROPRIETARY");
 
 typedef int (*initialize_func_t)(Registry &);
 
@@ -57,6 +53,7 @@ typedef int (*initialize_func_t)(Registry &);
  */
 struct Manifest
 {
+  uint64_t drizzle_version;  /* Drizzle version the plugin was compiled for  */
   const char *name;          /* plugin name (for SHOW PLUGINS)               */
   const char *version;       /* plugin version (for SHOW PLUGINS)            */
   const char *author;        /* plugin author (for SHOW PLUGINS)             */
@@ -64,8 +61,7 @@ struct Manifest
   plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
   initialize_func_t init;     /* function to invoke when plugin is loaded     */
   initialize_func_t deinit;   /* function to invoke when plugin is unloaded   */
-  st_mysql_show_var *status_vars;
-  st_mysql_sys_var **system_vars;
+  drizzle_sys_var **system_vars;
   void *reserved1;           /* reserved for dependency checking             */
 };
 

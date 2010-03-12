@@ -17,12 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include "config.h"
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
 #include <libgearman/gearman.h>
+#include <limits.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+using namespace drizzled;
 
 
 /* TODO make this dynamic as needed */
@@ -37,7 +45,6 @@ static char* sysvar_logging_gearman_function= NULL;
    until the Session has a good utime "now" we can use
    will have to use this instead */
 
-#include <sys/time.h>
 static uint64_t get_microtime()
 {
 #if defined(HAVE_GETHRTIME)
@@ -162,7 +169,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-class LoggingGearman : public Logging_handler
+class LoggingGearman : public plugin::Logging
 {
 
   int gearman_client_ok;
@@ -170,7 +177,9 @@ class LoggingGearman : public Logging_handler
 
 public:
 
-  LoggingGearman() : Logging_handler("LoggingGearman"), gearman_client_ok(0)
+  LoggingGearman()
+    : plugin::Logging("LoggingGearman"),
+      gearman_client_ok(0)
   {
     gearman_return_t ret;
 
@@ -235,26 +244,21 @@ public:
     unsigned char qs[255];
   
     // to avoid trying to printf %s something that is potentially NULL
-    const char *dbs= (session->db) ? session->db : "";
-    int dbl= 0;
-    if (dbs != NULL)
-      dbl= session->db_length;
-  
-    // todo, add hostname, listener port, and server id to this
+    const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64
-               "%"PRIu32",%"PRIu32"",
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\"",
                t_mark,
                session->thread_id,
-               session->query_id,
+               session->getQueryId(),
                // dont need to quote the db name, always CSV safe
-               dbl, dbs,
+               (int)session->db.length(), dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->query,
-                       session->query_length, qs, sizeof(qs)),
+               quotify((const unsigned char *)session->getQueryString().c_str(),
+                       session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,
@@ -266,7 +270,10 @@ public:
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
-               session->total_warn_count);
+               session->total_warn_count,
+               session->getServerId(),
+               glob_hostname
+               );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
   
@@ -281,9 +288,9 @@ public:
   }
 };
 
-static Logging_handler *handler= NULL;
+static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
+static int logging_gearman_plugin_init(plugin::Registry &registry)
 {
   handler= new LoggingGearman();
   registry.add(handler);
@@ -291,10 +298,10 @@ static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
+static int logging_gearman_plugin_deinit(plugin::Registry &registry)
 {
   registry.remove(handler);
-  delete(handler);
+  delete handler;
 
   return 0;
 }
@@ -326,15 +333,16 @@ static DRIZZLE_SYSVAR_STR(
                           NULL, /* update func*/
                           "drizzlelog" /* default */);
 
-static struct st_mysql_sys_var* logging_gearman_system_variables[]= {
+static drizzle_sys_var* logging_gearman_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(host),
   DRIZZLE_SYSVAR(function),
   NULL
 };
 
-drizzle_declare_plugin(logging_gearman)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
     "logging_gearman",
     "0.1",
     "Mark Atwood <mark@fallenpegasus.com>",
@@ -342,8 +350,7 @@ drizzle_declare_plugin(logging_gearman)
     PLUGIN_LICENSE_GPL,
     logging_gearman_plugin_init,
     logging_gearman_plugin_deinit,
-    NULL,   /* status variables */
     logging_gearman_system_variables,
     NULL
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

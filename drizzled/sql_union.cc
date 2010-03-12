@@ -17,12 +17,15 @@
   UNION  of select's
   UNION's  were introduced by Monty and Sinisa <sinisa@mysql.com>
 */
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_union.h>
+
+namespace drizzled
+{
 
 bool drizzle_union(Session *session, LEX *, select_result *result,
 		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
@@ -56,14 +59,14 @@ bool select_union::send_data(List<Item> &values)
     unit->offset_limit_cnt--;
     return 0;
   }
-  fill_record(session, table->field, values, 1);
+  fill_record(session, table->field, values, true);
   if (session->is_error())
     return 1;
 
-  if ((error= table->file->ha_write_row(table->record[0])))
+  if ((error= table->cursor->ha_write_row(table->record[0])))
   {
     /* create_myisam_from_heap will generate error if needed */
-    if (table->file->is_fatal_error(error, HA_CHECK_DUP) &&
+    if (table->cursor->is_fatal_error(error, HA_CHECK_DUP) &&
         create_myisam_from_heap(session, table, tmp_table_param.start_recinfo,
                                 &tmp_table_param.recinfo, error, 1))
       return 1;
@@ -81,9 +84,9 @@ bool select_union::send_eof()
 bool select_union::flush()
 {
   int error;
-  if ((error=table->file->extra(HA_EXTRA_NO_CACHE)))
+  if ((error=table->cursor->extra(HA_EXTRA_NO_CACHE)))
   {
-    table->file->print_error(error, MYF(0));
+    table->print_error(error, MYF(0));
     return 1;
   }
   return 0;
@@ -101,7 +104,6 @@ bool select_union::flush()
                          duplicates on insert
       options            create options
       table_alias        name of the temporary table
-      bit_fields_as_long convert bit fields to uint64_t
 
   DESCRIPTION
     Create a temporary table that is used to store the result of a UNION,
@@ -115,20 +117,18 @@ bool select_union::flush()
 bool
 select_union::create_result_table(Session *session_arg, List<Item> *column_types,
                                   bool is_union_distinct, uint64_t options,
-                                  const char *table_alias,
-                                  bool bit_fields_as_long)
+                                  const char *table_alias)
 {
-  assert(table == 0);
+  assert(table == NULL);
   tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
-  tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
-                                 (order_st*) 0, is_union_distinct, 1,
+                                 (order_st*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
     return true;
-  table->file->extra(HA_EXTRA_WRITE_CACHE);
-  table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
+  table->cursor->extra(HA_EXTRA_WRITE_CACHE);
+  table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   return false;
 }
 
@@ -142,8 +142,8 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
 
 void select_union::cleanup()
 {
-  table->file->extra(HA_EXTRA_RESET_STATE);
-  table->file->ha_delete_all_rows();
+  table->cursor->extra(HA_EXTRA_RESET_STATE);
+  table->cursor->ha_delete_all_rows();
   table->free_io_cache();
   table->filesort_free_buffers();
 }
@@ -273,7 +273,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                                 sl->order_list.elements) +
                                sl->group_list.elements,
                                can_skip_order_by ?
-                               (order_st*) 0 : (order_st *)sl->order_list.first,
+                               (order_st*) NULL : (order_st *)sl->order_list.first,
                                (order_st*) sl->group_list.first,
                                sl->having,
                                sl, this);
@@ -353,7 +353,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
                      TMP_TABLE_ALL_COLUMNS);
 
     if (union_result->create_result_table(session, &types, test(union_distinct),
-                                          create_options, "", false))
+                                          create_options, ""))
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
     result_table_list.db= (char*) "";
@@ -409,10 +409,10 @@ bool Select_Lex_Unit::exec()
       {
         item->assigned(0); // We will reinit & rexecute unit
         item->reset();
-        table->file->ha_delete_all_rows();
+        table->cursor->ha_delete_all_rows();
       }
       /* re-enabling indexes for next subselect iteration */
-      if (union_distinct && table->file->ha_enable_indexes(HA_KEY_SWITCH_ALL))
+      if (union_distinct && table->cursor->ha_enable_indexes(HA_KEY_SWITCH_ALL))
       {
         assert(0);
       }
@@ -431,7 +431,7 @@ bool Select_Lex_Unit::exec()
 	{
 	  offset_limit_cnt= 0;
 	  /*
-	    We can't use LIMIT at this stage if we are using order_st BY for the
+	    We can't use LIMIT at this stage if we are using ORDER BY for the
 	    whole query
 	  */
 	  if (sl->order_list.first || describe)
@@ -451,11 +451,11 @@ bool Select_Lex_Unit::exec()
       }
       if (!saved_error)
       {
-	records_at_start= table->file->stats.records;
+	records_at_start= table->cursor->stats.records;
 	sl->join->exec();
         if (sl == union_distinct)
 	{
-	  if (table->file->ha_disable_indexes(HA_KEY_SWITCH_ALL))
+	  if (table->cursor->ha_disable_indexes(HA_KEY_SWITCH_ALL))
 	    return(true);
 	  table->no_keyread=1;
 	}
@@ -479,10 +479,10 @@ bool Select_Lex_Unit::exec()
 	return(saved_error);
       }
       /* Needed for the following test and for records_at_start in next loop */
-      int error= table->file->info(HA_STATUS_VARIABLE);
-      if(error)
+      int error= table->cursor->info(HA_STATUS_VARIABLE);
+      if (error)
       {
-        table->file->print_error(error, MYF(0));
+        table->print_error(error, MYF(0));
         return(1);
       }
       if (found_rows_for_union && !sl->braces &&
@@ -495,7 +495,7 @@ bool Select_Lex_Unit::exec()
 	  rows and actual rows added to the temporary table.
 	*/
 	add_rows+= (uint64_t) (session->limit_found_rows - (uint64_t)
-			      ((table->file->stats.records -  records_at_start)));
+			      ((table->cursor->stats.records -  records_at_start)));
       }
     }
   }
@@ -575,7 +575,7 @@ bool Select_Lex_Unit::exec()
       fake_select_lex->table_list.empty();
       if (!saved_error)
       {
-	session->limit_found_rows = (uint64_t)table->file->stats.records + add_rows;
+	session->limit_found_rows = (uint64_t)table->cursor->stats.records + add_rows;
         session->examined_row_count+= examined_rows;
       }
       /*
@@ -732,3 +732,5 @@ void Select_Lex::cleanup_all_joins(bool full)
     for (sl= unit->first_select(); sl; sl= sl->next_select())
       sl->cleanup_all_joins(full);
 }
+
+} /* namespace drizzled */

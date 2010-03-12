@@ -23,6 +23,9 @@
 
 #include "drizzled/field/str.h"
 
+namespace drizzled
+{
+
 class Field_enum :public Field_str 
 {
 protected:
@@ -36,19 +39,26 @@ public:
 
   /** Internal storage for the string values of the ENUM */
   TYPELIB *typelib;
-  Field_enum(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+  Field_enum(unsigned char *ptr_arg,
+             uint32_t len_arg,
+             unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
-             enum utype unireg_check_arg, const char *field_name_arg,
+             const char *field_name_arg,
              uint32_t packlength_arg,
              TYPELIB *typelib_arg,
              const CHARSET_INFO * const charset_arg)
-    :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, charset_arg),
-    packlength(packlength_arg),typelib(typelib_arg)
+    :Field_str(ptr_arg,
+               len_arg,
+               null_ptr_arg,
+               null_bit_arg,
+	             field_name_arg,
+               charset_arg),
+    packlength(packlength_arg),
+    typelib(typelib_arg)
   {
-      flags|=ENUM_FLAG;
+    flags|= ENUM_FLAG;
   }
-  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
+  Field *new_field(memory::Root *root, Table *new_table, bool keep_type);
   enum ha_base_keytype key_type() const;
   int  store(const char *to, uint32_t length, const CHARSET_INFO * const);
   int  store(double nr);
@@ -89,10 +99,6 @@ public:
   {
     return (field_metadata & 0x00ff);
   }
-  uint32_t row_pack_length()
-  { 
-    return pack_length();
-  }
   virtual bool zero_pack() const
   {
     return false;
@@ -107,8 +113,8 @@ public:
   }
   /* enum and set are sorted as integers */
   const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FIELD_ENUM_H */

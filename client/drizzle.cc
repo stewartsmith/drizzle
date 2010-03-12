@@ -35,13 +35,20 @@
 
 #include "client_priv.h"
 #include <string>
+#include <drizzled/gettext.h>
+#include <iostream>
+#include <map>
 #include <algorithm>
-#include <mystrings/m_ctype.h>
+#include <limits.h>
+#include <cassert>
+#include "drizzled/charset_info.h"
 #include <stdarg.h>
+#include <math.h>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
+#include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -99,27 +106,33 @@ extern int read_history ();
     /* no history */
 #endif /* HAVE_READLINE_HISTORY */
 
-#define DRIZZLE_DEFAULT_INPUT_LINE 65536
-
 /**
  Make the old readline interface look like the new one.
 */
-#ifndef USE_NEW_READLINE_INTERFACE
-typedef CPPFunction rl_completion_func_t;
-typedef Function rl_compentry_func_t;
+#ifndef HAVE_RL_COMPLETION
+typedef char **rl_completion_func_t(const char *, int, int);
 #define rl_completion_matches(str, func) \
   completion_matches((char *)str, (CPFunction *)func)
+#endif
+
+#ifdef HAVE_RL_COMPENTRY
+# ifdef HAVE_WORKING_RL_COMPENTRY
+typedef rl_compentry_func_t drizzle_compentry_func_t;
+# else
+/* Snow Leopard ships an rl_compentry which cannot be assigned to
+ * rl_completion_entry_function. We must undo the complete and total
+ * ass-bagery.
+ */
+typedef Function drizzle_compentry_func_t;
+# endif
+#else
+typedef Function drizzle_compentry_func_t;
 #endif
 
 #if defined(HAVE_LOCALE_H)
 #include <locale.h>
 #endif
 
-#include <drizzled/gettext.h>
-
-
-void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
-void sql_element_free(void *ptr);
 
 
 #if !defined(HAVE_VIDATTR)
@@ -127,9 +140,7 @@ void sql_element_free(void *ptr);
 #define vidattr(A) {}      // Can't get this to work
 #endif
 
-#include <iostream>
-#include <map>
-
+using namespace drizzled;
 using namespace std;
 
 const string VER("14.14");
@@ -175,15 +186,13 @@ static bool ignore_errors= false, quick= false,
   default_charset_used= false, opt_secure_auth= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
-  show_warnings= false, executing_query= false, interrupted_query= false;
+  show_warnings= false, executing_query= false, interrupted_query= false,
+  opt_mysql= false;
 static uint32_t  show_progress_size= 0;
-static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
 static bool preserve_comments= false;
 static uint32_t opt_max_input_line, opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
-static uint32_t my_end_arg;
-static char * opt_drizzle_unix_port= NULL;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *current_host, *current_db, *current_user= NULL,
   *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
@@ -224,8 +233,6 @@ void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
 static int get_options(int argc,char **argv);
-extern "C" bool get_one_option(int optid, const struct my_option *opt,
-                               char *argument);
 static int com_quit(string *str,const char*),
   com_go(string *str,const char*), com_ego(string *str,const char*),
   com_print(string *str,const char*),
@@ -725,7 +732,6 @@ static COMMANDS commands[] = {
   { "TIMESTAMP", 0, 0, 0, ""},
   { "TIMESTAMPADD", 0, 0, 0, ""},
   { "TIMESTAMPDIFF", 0, 0, 0, ""},
-  { "TINYINT", 0, 0, 0, ""},
   { "TINYTEXT", 0, 0, 0, ""},
   { "TO", 0, 0, 0, ""},
   { "TRAILING", 0, 0, 0, ""},
@@ -1017,13 +1023,6 @@ extern "C" void handle_sigint(int sig);
 static void window_resize(int sig);
 #endif
 
-static inline int is_prefix(const char *s, const char *t)
-{
-  while (*t)
-    if (*s++ != *t++) return 0;
-  return 1;                                     /* WRONG */
-}
-
 /**
   Shutdown the server that we are currently connected to.
 
@@ -1144,8 +1143,6 @@ static bool execute_commands(int *error)
 
 int main(int argc,char *argv[])
 {
-  char buff[80];
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1211,12 +1208,12 @@ int main(int argc,char *argv[])
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
 
-  load_defaults("drizzle",load_default_groups,&argc,&argv);
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
   defaults_argv=argv;
   if (get_options(argc, (char **) argv))
   {
-    free_defaults(defaults_argv);
-    my_end(0);
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
     exit(1);
   }
 
@@ -1233,8 +1230,8 @@ int main(int argc,char *argv[])
   if (execute_commands(&command_error) != false)
   {
     /* we've executed a command so exit before we go into readline mode */
-    free_defaults(defaults_argv);
-    my_end(0);
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
     exit(command_error);
   }
 
@@ -1243,8 +1240,8 @@ int main(int argc,char *argv[])
     status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line, stdin);
     if (status.line_buff == NULL)
     {
-      free_defaults(defaults_argv);
-      my_end(0);
+      internal::free_defaults(defaults_argv);
+      internal::my_end();
       exit(1);
     }
   }
@@ -1317,10 +1314,9 @@ int main(int argc,char *argv[])
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
-  sprintf(buff, "%s",
-          _("Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"));
 
-  put_info(buff,INFO_INFO,0,0);
+  put_info(_("Type 'help;' or '\\h' for help. "
+             "Type '\\c' to clear the buffer.\n"),INFO_INFO,0,0);
   status.exit_status= read_and_execute(!status.batch);
   if (opt_outfile)
     end_tee();
@@ -1339,7 +1335,7 @@ void drizzle_end(int sig)
     if (verbose)
       tee_fprintf(stdout, _("Writing history-file %s\n"),histfile);
     if (!write_history(histfile_tmp))
-      my_rename(histfile_tmp, histfile, MYF(MY_WME));
+      internal::my_rename(histfile_tmp, histfile, MYF(MY_WME));
   }
   delete status.line_buff;
   status.line_buff= 0;
@@ -1351,7 +1347,6 @@ void drizzle_end(int sig)
   if (processed_prompt)
     delete processed_prompt;
   free(opt_password);
-  free(opt_drizzle_unix_port);
   free(histfile);
   free(histfile_tmp);
   free(current_db);
@@ -1361,8 +1356,8 @@ void drizzle_end(int sig)
   free(part_username);
   free(default_prompt);
   free(current_prompt);
-  free_defaults(defaults_argv);
-  my_end(my_end_arg);
+  internal::free_defaults(defaults_argv);
+  internal::my_end();
   exit(status.exit_status);
 }
 
@@ -1387,7 +1382,7 @@ void handle_sigint(int sig)
 
   if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host,
                           opt_drizzle_port, current_user, opt_password, NULL,
-                          DRIZZLE_CON_NONE) == NULL)
+                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     goto err;
   }
@@ -1448,11 +1443,6 @@ static struct my_option my_long_options[] =
   {"compress", 'C', N_("Use compression in server/client protocol."),
    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, N_("Check memory and open file usage at exit ."),
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", 'T', N_("Print some debug info at exit."), (char**) &debug_info_flag,
-   (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"database", 'D', N_("Database to use."), (char**) &current_db,
    (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
@@ -1533,9 +1523,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_shutdown, (char**) &opt_shutdown, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Be more silent. Print results with a tab as separator, each row on new line."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"socket", 'S', N_("Socket file to use for connection."),
-   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"table", 't', N_("Output in table format."), (char**) &output_tables,
    (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"tee", OPT_TEE,
@@ -1587,6 +1574,9 @@ static struct my_option my_long_options[] =
    0, 0, 0, 0, 0, 0},
   {"ping", OPT_PING, N_("Ping the server to check if it's alive."),
    (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
+   0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -1596,7 +1586,7 @@ static void usage(int version)
   const char* readline= "readline";
 
   printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"),
-         my_progname, VER.c_str(), drizzle_version(),
+         internal::my_progname, VER.c_str(), drizzle_version(),
          HOST_VENDOR, HOST_OS, HOST_CPU,
          readline, rl_library_version);
 
@@ -1607,15 +1597,14 @@ static void usage(int version)
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
-  printf(_("Usage: %s [OPTIONS] [database]\n"), my_progname);
+  printf(_("Usage: %s [OPTIONS] [database]\n"), internal::my_progname);
   my_print_help(my_long_options);
-  print_defaults("drizzle", load_default_groups);
+  internal::print_defaults("drizzle", load_default_groups);
   my_print_variables(my_long_options);
 }
 
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *, char *argument)
+static bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -1698,7 +1687,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
       status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,NULL);
     if (status.line_buff == NULL)
     {
-      my_end(0);
+      internal::my_end();
       exit(1);
     }
     status.line_buff->addString(argument);
@@ -1832,10 +1821,7 @@ static int get_options(int argc, char **argv)
   }
   if (tty_password)
     opt_password= client_get_tty_password(NULL);
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
+
   return(0);
 }
 
@@ -1986,7 +1972,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
                         bool *ml_comment)
 {
   unsigned char inchar;
-  char buff[80], *pos, *out;
+  char *pos, *out;
   COMMANDS *com;
   bool need_space= 0;
   bool ss_comment= 0;
@@ -2076,8 +2062,12 @@ static bool add_line(string *buffer, char *line, char *in_string,
       }
       else
       {
-        sprintf(buff,_("Unknown command '\\%c'."),inchar);
-        if (put_info(buff,INFO_ERROR,0,0) > 0)
+        string buff(_("Unknown command: "));
+        buff.push_back('\'');
+        buff.push_back(inchar);
+        buff.push_back('\'');
+        buff.push_back('.');
+        if (put_info(buff.c_str(),INFO_ERROR,0,0) > 0)
           return(1);
         *out++='\\';
         *out++=(char) inchar;
@@ -2345,7 +2335,7 @@ static void initialize_readline (char *name)
 
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
-  rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
+  rl_completion_entry_function= (drizzle_compentry_func_t*)&no_completion;
 }
 
 
@@ -2546,44 +2536,18 @@ You can turn off this feature to get a quicker startup with -A\n\n"));
 
 /* for gnu readline */
 
-#ifndef HAVE_INDEX
-extern "C" {
-  extern char *index(const char *,int c),*rindex(const char *,int);
-
-  char *index(const char *s,int c)
-  {
-    for (;;)
-    {
-      if (*s == (char) c) return (char*) s;
-      if (!*s++) return NULL;
-    }
-  }
-
-  char *rindex(const char *s,int c)
-  {
-    register char *t;
-
-    t = NULL;
-    do if (*s == (char) c) t = (char*) s; while (*s++);
-    return (char*) t;
-  }
-}
-#endif
-
 
 static int reconnect(void)
 {
-  /* purecov: begin tested */
   if (opt_reconnect)
   {
     put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
     (void) com_connect((string *)0, 0);
-    if (opt_rehash)
+    if (opt_rehash && connected)
       com_rehash(NULL, NULL);
   }
-  if (!connected)
+  if (! connected)
     return put_info(_("Can't connect to the server\n"),INFO_ERROR,0,0);
-  /* purecov: end */
   return 0;
 }
 
@@ -2603,8 +2567,8 @@ static void get_current_db(void)
       drizzle_row_t row= drizzle_row_next(&res);
       if (row[0])
         current_db= strdup(row[0]);
+      drizzle_result_free(&res);
     }
-    drizzle_result_free(&res);
   }
 }
 
@@ -2947,8 +2911,6 @@ static const char *fieldtype2str(drizzle_column_type_t type)
     case DRIZZLE_COLUMN_TYPE_LONGLONG:    return "LONGLONG";
     case DRIZZLE_COLUMN_TYPE_NULL:        return "NULL";
     case DRIZZLE_COLUMN_TYPE_TIMESTAMP:   return "TIMESTAMP";
-    case DRIZZLE_COLUMN_TYPE_TINY:        return "TINY";
-    case DRIZZLE_COLUMN_TYPE_VIRTUAL:     return "VIRTUAL";
     default:                     return "?-unknown-?";
   }
 }
@@ -3624,7 +3586,7 @@ com_connect(string *buffer, const char *line)
     else
     {
       /* Quick re-connect */
-      opt_rehash= 0;                            /* purecov: tested */
+      opt_rehash= 0;
     }
     // command used
     assert(buffer!=NULL);
@@ -3670,7 +3632,7 @@ static int com_source(string *, const char *line)
                                my_iscntrl(charset_info,end[-1])))
     end--;
   end[0]=0;
-  unpack_filename(source_name,source_name);
+  internal::unpack_filename(source_name,source_name);
   /* open file name */
   if (!(sql_file = fopen(source_name, "r")))
   {
@@ -3915,7 +3877,7 @@ sql_connect(char *host,char *database,char *user,char *password,
   }
   drizzle_create(&drizzle);
   if (drizzle_con_add_tcp(&drizzle, &con, host, opt_drizzle_port, user,
-                          password, database, DRIZZLE_CON_NONE) == NULL)
+                          password, database, opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
@@ -3954,9 +3916,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     return -1;          // Retryable
   }
   connected=1;
-/* XXX hmm?
-  drizzle.reconnect= debug_info_flag; // We want to know if this happens
-*/
+
   build_completion_hash(opt_rehash, 1);
   return 0;
 }
@@ -4018,7 +3978,7 @@ com_status(string *, const char *)
   tee_fprintf(stdout, "Connection:\t\t%s\n", drizzle_con_host(&con));
 /* XXX need to save this from result
   if ((id= drizzleclient_insert_id(&drizzle)))
-    tee_fprintf(stdout, "Insert id:\t\t%s\n", llstr(id, buff));
+    tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
 */
 
   if (strcmp(drizzle_con_uds(&con), ""))

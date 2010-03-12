@@ -32,10 +32,10 @@
 #include "client_priv.h"
 #include <string>
 
-#include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
-#include <mysys/hash.h>
+#include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/hash.h"
 #include <stdarg.h>
 #include <algorithm>
 
@@ -44,9 +44,7 @@
 #include <drizzled/error.h>
 
 using namespace std;
-
-extern "C"
-bool get_one_option(int optid, const struct my_option *, char *argument);
+using namespace drizzled;
 
 /* Exit codes */
 
@@ -84,6 +82,7 @@ static void field_escape(string &in, const char *from);
 static bool  verbose= false;
 static bool opt_no_create_info= false;
 static bool opt_no_data= false;
+static bool opt_mysql= false;
 static bool quick= true;
 static bool extended_insert= true;
 static bool ignore_errors= false;
@@ -115,8 +114,6 @@ static bool opt_drop_database= false;
 static bool opt_replace_into= false;
 static bool opt_routines= false;
 static bool opt_alltspcs= false;
-static bool debug_info_flag= false;
-static bool debug_check_flag= false;
 static uint32_t show_progress_size= 0;
 static uint64_t total_rows= 0;
 static drizzle_st drizzle;
@@ -139,7 +136,6 @@ static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
 static uint32_t opt_compatible_mode= 0;
 static uint32_t opt_drizzle_port= 0;
-static uint32_t my_end_arg;
 static int first_error= 0;
 static string extended_row;
 FILE *md_result_file= 0;
@@ -147,26 +143,17 @@ FILE *stderror_file= 0;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
-const char *compatible_mode_names[]=
+static const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
   "MAXDB", "NO_KEY_OPTIONS", "NO_TABLE_OPTIONS", "NO_FIELD_OPTIONS",
   "ANSI",
   NULL
 };
-#define MASK_ANSI_QUOTES \
-(\
- (1<<2)  | /* POSTGRESQL */\
- (1<<3)  | /* ORACLE     */\
- (1<<4)  | /* MSSQL      */\
- (1<<5)  | /* DB2        */\
- (1<<6)  | /* MAXDB      */\
- (1<<10)   /* ANSI       */\
-)
-TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
+static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
                                   "", compatible_mode_names, NULL};
 
-HASH ignore_table;
+drizzled::hash_set<string> ignore_table;
 
 static struct my_option my_long_options[] =
 {
@@ -215,12 +202,6 @@ static struct my_option my_long_options[] =
    "To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output.",
    (char**) &opt_databases, (char**) &opt_databases, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (char**) &debug_info_flag, (char**) &debug_info_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-insert", OPT_DELAYED, "Insert rows with INSERT DELAYED; ",
    (char**) &opt_delayed, (char**) &opt_delayed, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -278,6 +259,9 @@ static struct my_option my_long_options[] =
    "dump. Automatically turns --single-transaction and --lock-tables off.",
    (char**) &opt_lock_all_tables, (char**) &opt_lock_all_tables, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
+  {"mysql", 'm', N_("Use MySQL Protocol."),
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
+   0, 0, 0},
   {"no-autocommit", OPT_AUTOCOMMIT,
    "Wrap tables with autocommit/commit statements.",
    (char**) &opt_autocommit, (char**) &opt_autocommit, 0, GET_BOOL, NO_ARG,
@@ -417,17 +401,17 @@ static void check_io(FILE *file)
 
 static void print_version(void)
 {
-  printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), my_progname,
+  printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
          VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
 } /* print_version */
 
 
 static void short_usage_sub(void)
 {
-  printf(_("Usage: %s [OPTIONS] database [tables]\n"), my_progname);
+  printf(_("Usage: %s [OPTIONS] database [tables]\n"), internal::my_progname);
   printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
-         my_progname);
-  printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), my_progname);
+         internal::my_progname);
+  printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), internal::my_progname);
 }
 
 
@@ -438,7 +422,7 @@ static void usage(void)
   puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
   puts(_("Dumps definitions and data from a Drizzle database server"));
   short_usage_sub();
-  print_defaults("drizzle",load_default_groups);
+  internal::print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 } /* usage */
@@ -447,7 +431,7 @@ static void usage(void)
 static void short_usage(void)
 {
   short_usage_sub();
-  printf(_("For more options, use %s --help\n"), my_progname);
+  printf(_("For more options, use %s --help\n"), internal::my_progname);
 }
 
 static void write_header(FILE *sql_file, char *db_name)
@@ -518,7 +502,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
       if (opt_dump_date)
       {
         char time_str[20];
-        get_date(time_str, GETDATE_DATE_TIME, 0);
+        internal::get_date(time_str, GETDATE_DATE_TIME, 0);
         fprintf(sql_file, "-- Dump completed on %s\n",
                 time_str);
       }
@@ -530,20 +514,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
 } /* write_footer */
 
 
-static void free_table_ent(char *key)
-{
-  free(key);
-}
-
-
-static unsigned char* get_table_key(const char *entry, size_t *length, bool)
-{
-  *length= strlen(entry);
-  return (unsigned char*) entry;
-}
-
-
-bool get_one_option(int optid, const struct my_option *, char *argument)
+static bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -656,9 +627,8 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       fprintf(stderr, _("Illegal use of option --ignore-table=<database>.<table>\n"));
       exit(1);
     }
-    char * tmpptr= strdup(argument);
-    if (!(tmpptr) || my_hash_insert(&ignore_table, (unsigned char*)tmpptr))
-      exit(EX_EOM);
+    string tmpptr(argument);
+    ignore_table.insert(tmpptr); 
     break;
   }
   case (int) OPT_COMPATIBLE:
@@ -703,46 +673,36 @@ static int get_options(int *argc, char ***argv)
   int ho_error;
 
   md_result_file= stdout;
-  load_defaults("drizzle",load_default_groups,argc,argv);
+  internal::load_defaults("drizzle",load_default_groups,argc,argv);
   defaults_argv= *argv;
-
-  if (hash_init(&ignore_table, charset_info, 16, 0, 0,
-                (hash_get_key) get_table_key,
-                (hash_free_key) free_table_ent, 0))
-    return(EX_EOM);
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     return(ho_error);
-
-  if (debug_info_flag)
-    my_end_arg= MY_CHECK_ERROR | MY_GIVE_INFO;
-  if (debug_check_flag)
-    my_end_arg= MY_CHECK_ERROR;
 
   if (!path && (enclosed || opt_enclosed || escaped || lines_terminated ||
                 fields_terminated))
   {
     fprintf(stderr,
-            _("%s: You must use option --tab with --fields-...\n"), my_progname);
+            _("%s: You must use option --tab with --fields-...\n"), internal::my_progname);
     return(EX_USAGE);
   }
 
   if (opt_single_transaction && opt_lock_all_tables)
   {
     fprintf(stderr, _("%s: You can't use --single-transaction and "
-            "--lock-all-tables at the same time.\n"), my_progname);
+            "--lock-all-tables at the same time.\n"), internal::my_progname);
     return(EX_USAGE);
   }
   if (enclosed && opt_enclosed)
   {
-    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), my_progname);
+    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), internal::my_progname);
     return(EX_USAGE);
   }
   if ((opt_databases || opt_alldbs) && path)
   {
     fprintf(stderr,
             _("%s: --databases or --all-databases can't be used with --tab.\n"),
-            my_progname);
+            internal::my_progname);
     return(EX_USAGE);
   }
   if ((*argc < 1 && !opt_alldbs) || (*argc > 0 && opt_alldbs))
@@ -799,7 +759,7 @@ static void die(int error_num, const char* fmt_reason, ...)
   vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", my_progname, buffer);
+  fprintf(stderr, "%s: %s\n", internal::my_progname, buffer);
   fflush(stderr);
 
   ignore_errors= 0; /* force the exit */
@@ -833,7 +793,7 @@ static void maybe_die(int error_num, const char* fmt_reason, ...)
   vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", my_progname, buffer);
+  fprintf(stderr, "%s: %s\n", internal::my_progname, buffer);
   fflush(stderr);
 
   maybe_exit(error_num);
@@ -912,8 +872,8 @@ static FILE* open_sql_file_for_table(const char* table)
 {
   FILE* res;
   char filename[FN_REFLEN], tmp_path[FN_REFLEN];
-  convert_dirname(tmp_path,path,NULL);
-  res= fopen(fn_format(filename, table, tmp_path, ".sql", 4), "w");
+  internal::convert_dirname(tmp_path,path,NULL);
+  res= fopen(internal::fn_format(filename, table, tmp_path, ".sql", 4), "w");
 
   return res;
 }
@@ -924,11 +884,9 @@ static void free_resources(void)
   if (md_result_file && md_result_file != stdout)
     fclose(md_result_file);
   free(opt_password);
-  if (hash_inited(&ignore_table))
-    hash_free(&ignore_table);
   if (defaults_argv)
-    free_defaults(defaults_argv);
-  my_end(my_end_arg);
+    internal::free_defaults(defaults_argv);
+  internal::my_end();
 }
 
 
@@ -958,6 +916,8 @@ static int connect_to_db(char *host, char *user,char *passwd)
   drizzle_con_create(&drizzle, &dcon);
   drizzle_con_set_tcp(&dcon, host, opt_drizzle_port);
   drizzle_con_set_auth(&dcon, user, passwd);
+  if (opt_mysql)
+    drizzle_con_add_options(&dcon, DRIZZLE_CON_MYSQL);
   ret= drizzle_con_connect(&dcon);
   if (ret != DRIZZLE_RETURN_OK)
   {
@@ -1458,7 +1418,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   else
   {
     verbose_msg(_("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"),
-                my_progname, drizzle_con_error(&dcon));
+                internal::my_progname, drizzle_con_error(&dcon));
 
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
@@ -1565,7 +1525,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       if (drizzleclient_query_with_error_report(&dcon, &result, buff, false))
       {
         fprintf(stderr, _("%s: Can't get keys for table %s\n"),
-                my_progname, result_table);
+                internal::my_progname, result_table);
         if (path)
           fclose(sql_file);
         return false;
@@ -1831,12 +1791,12 @@ static void dump_table(char *table, char *db)
       Convert the path to native os format
       and resolve to the full filepath.
     */
-    convert_dirname(tmp_path,path,NULL);
-    my_load_path(tmp_path, tmp_path, NULL);
-    fn_format(filename, table, tmp_path, ".txt", MYF(MY_UNPACK_FILENAME));
+    internal::convert_dirname(tmp_path,path,NULL);
+    internal::my_load_path(tmp_path, tmp_path, NULL);
+    internal::fn_format(filename, table, tmp_path, ".txt", MYF(MY_UNPACK_FILENAME));
 
     /* Must delete the file that 'INTO OUTFILE' will write to */
-    my_delete(filename, MYF(0));
+    internal::my_delete(filename, MYF(0));
 
     /* now build the query string */
 
@@ -1927,7 +1887,7 @@ static void dump_table(char *table, char *db)
     if (drizzle_result_column_count(&result) != num_fields)
     {
       fprintf(stderr,_("%s: Error in field count for table: %s !  Aborting.\n"),
-              my_progname, result_table);
+              internal::my_progname, result_table);
       error= EX_CONSCHECK;
       drizzle_result_free(&result);
       goto err;
@@ -1971,7 +1931,7 @@ static void dump_table(char *table, char *db)
         {
           fprintf(stderr,
                 _("%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"),
-                  my_progname, result_table, ret, drizzle_con_error(&dcon));
+                  internal::my_progname, result_table, ret, drizzle_con_error(&dcon));
           drizzle_result_free(&result);
           goto err;
         }
@@ -2382,9 +2342,11 @@ static int init_dumping(char *database, int init_func(char*))
 
 /* Return 1 if we should copy the table */
 
-static bool include_table(const unsigned char *hash_key, size_t len)
+static bool include_table(const char *hash_key, size_t key_size)
 {
-  return !hash_search(&ignore_table, hash_key, len);
+  string match(hash_key, key_size);
+  drizzled::hash_set<string>::iterator iter= ignore_table.find(match);
+  return (iter == ignore_table.end());
 }
 
 
@@ -2396,6 +2358,7 @@ static int dump_all_tables_in_db(char *database)
   drizzle_result_st result;
   drizzle_return_t ret;
 
+  memset(hash_key, 0, DRIZZLE_MAX_DB_SIZE+DRIZZLE_MAX_TABLE_SIZE+2);
   afterdot= strcpy(hash_key, database) + strlen(database);
   *afterdot++= '.';
 
@@ -2417,7 +2380,7 @@ static int dump_all_tables_in_db(char *database)
   while ((table= getTableName(0)))
   {
     char *end= strcpy(afterdot, table) + strlen(table);
-    if (include_table((unsigned char*) hash_key, end - hash_key))
+    if (include_table(hash_key, end - hash_key))
     {
       dump_table(table,database);
       free(order_by);
@@ -2445,7 +2408,8 @@ static int dump_all_tables_in_db(char *database)
     0 if error
 */
 
-static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
+static char *get_actual_table_name(const char *old_table_name,
+                                   drizzled::memory::Root *root)
 {
   char *name= 0;
   drizzle_result_st result;
@@ -2483,7 +2447,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 
 static int dump_selected_tables(char *db, char **table_names, int tables)
 {
-  MEM_ROOT root;
+  drizzled::memory::Root root;
   char **dump_tables, **pos, **end;
   drizzle_result_st result;
   drizzle_return_t ret;
@@ -2492,7 +2456,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   if (init_dumping(db, init_dumping_tables))
     return(1);
 
-  init_alloc_root(&root, 8192, 0);
+  init_alloc_root(&root, 8192);
   if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
      die(EX_EOM, _("alloc_root failure."));
 
@@ -2861,7 +2825,6 @@ int main(int argc, char **argv)
   drizzle_result_st result;
 
   compatible_mode_normal_str[0]= 0;
-  memset(&ignore_table, 0, sizeof(ignore_table));
 
   exit_code= get_options(&argc, &argv);
   if (exit_code)

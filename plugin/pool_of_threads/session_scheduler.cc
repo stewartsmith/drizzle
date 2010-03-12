@@ -18,25 +18,27 @@
   It's embedded in the Session class.
 */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/session.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/plugin/client.h>
 #include <event.h>
 #include "session_scheduler.h"
+#include "drizzled/internal/my_sys.h"
 
 /* Prototype */
 extern "C"
 void libevent_io_callback(int Fd, short Operation, void *ctx);
-bool libevent_should_close_connection(Session* session);
-void libevent_session_add(Session* session);
+bool libevent_should_close_connection(drizzled::Session* session);
+void libevent_session_add(drizzled::Session* session);
 
-session_scheduler::session_scheduler(Session *parent_session)
+session_scheduler::session_scheduler(drizzled::Session *parent_session)
   : logged_in(false), thread_attached(false)
 {
   memset(&io_event, 0, sizeof(struct event));
 
-  event_set(&io_event, parent_session->protocol->fileDescriptor(), EV_READ,
+  event_set(&io_event, parent_session->client->getFileDescriptor(), EV_READ,
             libevent_io_callback, (void*)parent_session);
 
   session= parent_session;
@@ -54,7 +56,7 @@ bool session_scheduler::thread_attach()
   {
     return true;
   }
-  my_errno= 0;
+  errno= 0;
   session->mysys_var->abort= 0;
   thread_attached= true;
 

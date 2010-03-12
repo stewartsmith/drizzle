@@ -15,14 +15,15 @@
 
 /* Return useful base information for an open table */
 
-#include "myisamdef.h"
-#ifdef	__WIN__
+#include "myisam_priv.h"
 #include <sys/stat.h>
-#endif
+#include "drizzled/error.h"
+
+using namespace drizzled;
 
 	/* Get position to last record */
 
-my_off_t mi_position(MI_INFO *info)
+internal::my_off_t mi_position(MI_INFO *info)
 {
   return info->lastpos;
 }

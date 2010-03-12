@@ -20,16 +20,18 @@
 #ifndef DRIZZLED_SQL_BASE_H
 #define DRIZZLED_SQL_BASE_H
 
-#include <stdint.h>
 #include <drizzled/table.h>
 
+namespace drizzled
+{
 class TableShare;
+class Name_resolution_context;
 
 void table_cache_free(void);
 bool table_cache_init(void);
-void assign_new_table_id(TableShare *share);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
+HASH *get_open_cache();
 
 void kill_drizzle(void);
 
@@ -56,10 +58,6 @@ bool push_new_name_resolution_context(Session *session,
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);
-
-SQL_SELECT *make_select(Table *head, table_map const_tables,
-			table_map read_tables, COND *conds,
-                        bool allow_null_cond,  int *error);
 extern Item **not_found_item;
 
 /**
@@ -129,9 +127,9 @@ TableList *find_table_in_list(TableList *table,
                                TableList *TableList::*link,
                                const char *db_name,
                                const char *table_name);
-TableList *unique_table(Session *session, TableList *table, TableList *table_list,
-                         bool check_alias);
-void remove_db_from_cache(const char *db);
+TableList *unique_table(TableList *table, TableList *table_list,
+                        bool check_alias= false);
+void remove_db_from_cache(const std::string schema_name);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000
@@ -141,21 +139,10 @@ void remove_db_from_cache(const char *db);
 bool remove_table_from_cache(Session *session, const char *db, const char *table,
                              uint32_t flags);
 
-#define NORMAL_PART_NAME 0
-#define TEMP_PART_NAME 1
-#define RENAMED_PART_NAME 2
-
 void mem_alloc_error(size_t size);
 
-#define WFRM_WRITE_SHADOW 1
-#define WFRM_INSTALL_SHADOW 2
-#define WFRM_PACK_FRM 4
-#define WFRM_KEEP_SHARE 8
-
-bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors);
-bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
-bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display);
-
+bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors= false);
+bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors= false);
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,
                                              const char *table_name)
@@ -163,4 +150,7 @@ inline TableList *find_table_in_global_list(TableList *table,
   return find_table_in_list(table, &TableList::next_global,
                             db_name, table_name);
 }
+
+} /* namespace drizzled */
+
 #endif /* DRIZZLED_SQL_BASE_H */

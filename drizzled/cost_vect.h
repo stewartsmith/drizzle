@@ -20,7 +20,8 @@
 #ifndef DRIZZLED_COST_VECT_H
 #define DRIZZLED_COST_VECT_H
 
-#include <stdint.h>
+namespace drizzled
+{
 
 class COST_VECT
 {
@@ -36,7 +37,13 @@ public:
   static const uint32_t MEM_COEFF=1;
   static const uint32_t IMPORT_COEFF=1;
 
-  COST_VECT() {}                              // keep gcc happy
+  COST_VECT() :
+    io_count(0.0),
+    avg_io_cost(1.0),
+    cpu_cost(0.0),
+    mem_cost(0.0),
+    import_cost(0.0)
+  {}
 
   double total_cost()
   {
@@ -74,7 +81,6 @@ public:
   }
 };
 
-void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
-                         COST_VECT *cost);
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_COST_VECT_H */

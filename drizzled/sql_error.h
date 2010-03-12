@@ -20,12 +20,15 @@
 #ifndef DRIZZLED_SQL_ERROR_H
 #define DRIZZLED_SQL_ERROR_H
 
-#include <drizzled/sql_alloc.h>
+#include "drizzled/memory/sql_alloc.h"
 #include "drizzled/lex_string.h"
 
 #include <bitset>
 
-class DRIZZLE_ERROR: public Sql_alloc
+namespace drizzled
+{
+
+class DRIZZLE_ERROR: public memory::SqlAlloc
 {
 public:
   static const uint32_t NUM_ERRORS= 4;
@@ -55,5 +58,7 @@ bool mysqld_show_warnings(Session *session,
                           std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
 extern const LEX_STRING warning_level_names[];
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_ERROR_H */

@@ -17,13 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
+#include <drizzled/plugin/client.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 /*
   When a user variable is updated (in a SET command or a query like
@@ -42,7 +44,7 @@ bool Item_func_set_user_var::fix_fields(Session *session, Item **ref)
      if this variable is a constant item in the query (it is if update_query_id
      is different from query_id).
   */
-  entry->update_query_id= session->query_id;
+  entry->update_query_id= session->getQueryId();
   /*
     As it is wrong and confusing to associate any
     character set with NULL, @a should be latin2
@@ -314,26 +316,15 @@ void Item_func_set_user_var::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
-
-void Item_func_set_user_var::print_as_stmt(String *str,
-                                           enum_query_type query_type)
-{
-  str->append(STRING_WITH_LEN("set @"));
-  str->append(name.str, name.length);
-  str->append(STRING_WITH_LEN(":="));
-  args[0]->print(str, query_type);
-  str->append(')');
-}
-
-bool Item_func_set_user_var::send(plugin::Protocol *protocol, String *str_arg)
+bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
 {
   if (result_field)
   {
     check(1);
     update();
-    return protocol->store(result_field);
+    return client->store(result_field);
   }
-  return Item::send(protocol, str_arg);
+  return Item::send(client, str_arg);
 }
 
 void Item_func_set_user_var::make_field(SendField *tmp_field)
@@ -448,3 +439,4 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
 }
 
 
+} /* namespace drizzled */

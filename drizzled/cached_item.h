@@ -20,13 +20,18 @@
 #ifndef DRIZZLED_CACHED_ITEM_H
 #define DRIZZLED_CACHED_ITEM_H
 
-#include <drizzled/sql_alloc.h>
-#include <drizzled/sql_string.h>
+#include "drizzled/memory/sql_alloc.h"
+#include "drizzled/sql_string.h"
+#include "drizzled/my_decimal.h"
+
+namespace drizzled
+{
 
 class Item;
 class Session;
+class Field;
 
-class Cached_item :public Sql_alloc
+class Cached_item :public memory::SqlAlloc
 {
 public:
   bool null_value;
@@ -81,16 +86,12 @@ class Cached_item_field :public Cached_item
   uint32_t length;
 
 public:
-  Cached_item_field(Field *arg_field) : field(arg_field)
-  {
-    field= arg_field;
-    /* TODO: take the memory allocation below out of the constructor. */
-    buff= (unsigned char*) sql_calloc(length=field->pack_length());
-  }
+  Cached_item_field(Field *arg_field);
   bool cmp(void);
 };
 
-Cached_item *new_Cached_item(Session *session, Item *item,
-                             bool use_result_field);
+Cached_item *new_Cached_item(Session *session, Item *item);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CACHED_ITEM_H */

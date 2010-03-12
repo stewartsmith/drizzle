@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/math/minus.h>
+
+namespace drizzled
+{
 
 /**
   The following function is here to allow the user to force
@@ -71,3 +74,4 @@ my_decimal *Item_func_minus::decimal_op(my_decimal *decimal_value)
   return 0;
 }
 
+} /* namespace drizzled */

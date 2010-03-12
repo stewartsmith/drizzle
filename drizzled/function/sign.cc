@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/sign.h>
+
+namespace drizzled
+{
 
 int64_t Item_func_sign::val_int()
 {
@@ -30,3 +33,4 @@ int64_t Item_func_sign::val_int()
 }
 
 
+} /* namespace drizzled */

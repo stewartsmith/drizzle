@@ -17,12 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/str/pad.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/alloc_buffer.h>
 #include <drizzled/session.h>
+
+namespace drizzled
+{
 
 void Item_func_rpad::fix_length_and_dec()
 {
@@ -226,3 +229,4 @@ err:
   return 0;
 }
 
+} /* namespace drizzled */

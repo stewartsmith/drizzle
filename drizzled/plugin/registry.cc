@@ -17,59 +17,72 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include "drizzled/plugin/registry.h"
-
-#include "drizzled/plugin.h"
-#include "drizzled/show.h"
-#include "drizzled/handler.h"
-#include "drizzled/errmsg.h"
-#include "drizzled/authentication.h"
-#include "drizzled/qcache.h"
-#include "drizzled/scheduling.h"
-#include "drizzled/logging.h"
-#include "drizzled/replication_services.h"
+#include "config.h"
 
 #include <string>
 #include <vector>
 #include <map>
 
+#include "drizzled/plugin/registry.h"
+
+#include "drizzled/plugin.h"
+#include "drizzled/plugin/library.h"
+#include "drizzled/show.h"
+#include "drizzled/cursor.h"
+
 using namespace std;
-using namespace drizzled;
 
-
-plugin::Handle *plugin::Registry::find(const LEX_STRING *name)
+namespace drizzled
 {
-  string find_str(name->str,name->length);
-  transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
-  map<string, plugin::Handle *>::iterator map_iter;
-  map_iter= plugin_map.find(find_str);
-  if (map_iter != plugin_map.end())
+plugin::Registry::~Registry()
+{
+  map<string, plugin::Library *>::iterator iter= library_map.begin();
+  while (iter != library_map.end())
+  {
+    delete (*iter).second;
+    ++iter;
+  }
+  library_map.clear();
+}
+
+void plugin::Registry::shutdown()
+{
+  plugin::Registry& registry= singleton();
+  delete &registry;
+}
+
+plugin::Module *plugin::Registry::find(string name)
+{
+  transform(name.begin(), name.end(), name.begin(), ::tolower);
+
+  map<string, plugin::Module *>::iterator map_iter;
+  map_iter= module_map.find(name);
+  if (map_iter != module_map.end())
     return (*map_iter).second;
   return(0);
 }
 
-void plugin::Registry::add(plugin::Handle *plugin)
+void plugin::Registry::add(plugin::Module *handle)
 {
-  string add_str(plugin->getName());
+  string add_str(handle->getName());
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
-  plugin_map[add_str]= plugin;
+  module_map[add_str]= handle;
 }
 
 
-vector<plugin::Handle *> plugin::Registry::get_list(bool active)
+vector<plugin::Module *> plugin::Registry::getList(bool active)
 {
-  plugin::Handle *plugin= NULL;
+  plugin::Module *plugin= NULL;
 
-  vector <plugin::Handle *> plugins;
-  plugins.reserve(plugin_map.size());
+  vector<plugin::Module *> plugins;
+  plugins.reserve(module_map.size());
 
-  map<string, plugin::Handle *>::iterator map_iter;
-  for (map_iter= plugin_map.begin();
-       map_iter != plugin_map.end();
+  map<string, plugin::Module *>::iterator map_iter;
+  for (map_iter= module_map.begin();
+       map_iter != module_map.end();
        map_iter++)
   {
     plugin= (*map_iter).second;
@@ -82,94 +95,44 @@ vector<plugin::Handle *> plugin::Registry::get_list(bool active)
   return plugins;
 }
 
-void plugin::Registry::add(StorageEngine *engine)
+plugin::Library *plugin::Registry::addLibrary(const string &plugin_name)
 {
-  add_storage_engine(engine);
+
+  /* If this dll is already loaded just return it */
+  plugin::Library *library= findLibrary(plugin_name);
+  if (library != NULL)
+  {
+    return library;
+  }
+
+  library= plugin::Library::loadLibrary(plugin_name);
+  if (library != NULL)
+  {
+    /* Add this dll to the map */
+    library_map.insert(make_pair(plugin_name, library));
+  }
+
+  return library;
 }
 
-void plugin::Registry::add(InfoSchemaTable *schema_table)
+void plugin::Registry::removeLibrary(const string &plugin_name)
 {
-  add_infoschema_table(schema_table);
+  map<string, plugin::Library *>::iterator iter=
+    library_map.find(plugin_name);
+  if (iter != library_map.end())
+  {
+    library_map.erase(iter);
+    delete (*iter).second;
+  }
 }
 
-void plugin::Registry::add(Logging_handler *handler)
+plugin::Library *plugin::Registry::findLibrary(const string &plugin_name) const
 {
-  add_logger(handler);
+  map<string, plugin::Library *>::const_iterator iter=
+    library_map.find(plugin_name);
+  if (iter != library_map.end())
+    return (*iter).second;
+  return NULL;
 }
 
-void plugin::Registry::add(Error_message_handler *handler)
-{
-  add_errmsg_handler(handler);
-}
-
-void plugin::Registry::add(Authentication *auth)
-{
-  add_authentication(auth);
-}
-
-void plugin::Registry::add(QueryCache *qcache)
-{
-  add_query_cache(qcache);
-}
-
-void plugin::Registry::add(plugin::SchedulerFactory *factory)
-{
-  add_scheduler_factory(factory);
-}
-
-
-void plugin::Registry::add(plugin::Replicator *replicator)
-{
-  add_replicator(replicator);
-}
-
-void plugin::Registry::add(plugin::Applier *applier)
-{
-  add_applier(applier);
-}
-
-void plugin::Registry::remove(StorageEngine *engine)
-{
-  remove_storage_engine(engine);
-}
-
-void plugin::Registry::remove(InfoSchemaTable *schema_table)
-{
-  remove_infoschema_table(schema_table);
-}
-
-void plugin::Registry::remove(Logging_handler *handler)
-{
-  remove_logger(handler);
-}
-
-void plugin::Registry::remove(Error_message_handler *handler)
-{
-  remove_errmsg_handler(handler);
-}
-
-void plugin::Registry::remove(Authentication *auth)
-{
-  remove_authentication(auth);
-}
-
-void plugin::Registry::remove(QueryCache *qcache)
-{
-  remove_query_cache(qcache);
-}
-
-void plugin::Registry::remove(plugin::SchedulerFactory *factory)
-{
-  remove_scheduler_factory(factory);
-}
-
-
-void plugin::Registry::remove(plugin::Replicator *replicator)
-{
-  remove_replicator(replicator);
-}
-
-void plugin::Registry::remove(plugin::Applier *applier)
-{
-  remove_applier(applier);
-}
+} /* namespace drizzled */

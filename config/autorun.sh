@@ -1,5 +1,32 @@
 #!/bin/sh
-# Taken from lighthttpd server (BSD). Thanks Jan!
+#
+#  Copyright (c) 2006 Jan Kneschke
+#  Copyright (c) 2009 Sun Microsystems
+#  All rights reserved.
+# 
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+# 
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#  3. The name of the author may not be used to endorse or promote products
+#     derived from this software without specific prior written permission.
+# 
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+#  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+#  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 # Run this to generate all the initial makefiles, etc.
 
 die() { echo "$@"; exit 1; }
@@ -41,12 +68,6 @@ then
   . config/pre_hook.sh
 fi
 
-# We need to some file here for the m4_sinclude, even if it's just empty
-if test ! -f config/plugin.ac
-then
-  touch config/plugin.ac
-fi
-
 # Try to detect the supported binaries if the user didn't
 # override that by pushing the environment variable
 if test x$LIBTOOLIZE = x; then
@@ -57,14 +78,14 @@ if test x$LIBTOOLIZE = x; then
 fi
 
 if test x$ACLOCAL = x; then
-  ACLOCAL=`locate_binary aclocal-1.10 aclocal-1.9 aclocal19 aclocal`
+  ACLOCAL=`locate_binary aclocal-1.11 aclocal-1.10 aclocal-1.9 aclocal19 aclocal`
   if test x$ACLOCAL = x; then
     die "Did not find a supported aclocal"
   fi
 fi
 
 if test x$AUTOMAKE = x; then
-  AUTOMAKE=`locate_binary automake-1.10 automake-1.9 automake19 automake`
+  AUTOMAKE=`locate_binary automake-1.11 automake-1.10 automake-1.9 automake19 automake`
   if test x$AUTOMAKE = x; then
     die "Did not find a supported automake"
   fi

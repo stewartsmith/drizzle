@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/min_max.h>
 #include <drizzled/item/cmpfunc.h>
+
+namespace drizzled
+{
 
 void Item_func_min_max::fix_length_and_dec()
 {
@@ -143,7 +146,7 @@ String *Item_func_min_max::val_str(String *str)
   {
     double nr= val_real();
     if (null_value)
-      return 0; /* purecov: inspected */
+      return 0;
     str->set_real(nr,decimals,&my_charset_bin);
     return str;
   }
@@ -276,3 +279,4 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
   return res;
 }
 
+} /* namespace drizzled */

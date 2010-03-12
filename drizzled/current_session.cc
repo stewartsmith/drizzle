@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/current_session.h>
 
 #include <pthread.h>
+
+namespace drizzled
+{
 
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
@@ -31,14 +34,9 @@ Session *_current_session(void)
 }
 
 
-MEM_ROOT *current_mem_root(void)
+memory::Root *current_mem_root(void)
 {
-  return *(static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root)));
+  return *(static_cast<memory::Root **>(pthread_getspecific(THR_Mem_root)));
 }
 
-
-MEM_ROOT **current_mem_root_ptr(void)
-{
-  return static_cast<MEM_ROOT **>(pthread_getspecific(THR_Mem_root));
-}
-
+} /* namespace drizzled */

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_EMPTRY_STRING_H
-#define DRIZZLED_ITEM_EMPTRY_STRING_H
+#ifndef DRIZZLED_ITEM_EMPTY_STRING_H
+#define DRIZZLED_ITEM_EMPTY_STRING_H
 
 /**
   Item_empty_string -- is a utility class to put an item into List<Item>
@@ -28,13 +28,18 @@
 
 #include <drizzled/item/string.h>
 
+namespace drizzled
+{
+
 class Item_empty_string :public Item_string
 {
 public:
   Item_empty_string(const char *header,uint32_t length, const CHARSET_INFO * cs= NULL) :
     Item_string("",0, cs ? cs : &my_charset_utf8_general_ci)
-    { name=(char*) header; max_length= cs ? length * cs->mbmaxlen : length; }
+    { name= const_cast<char*>(header); max_length= cs ? length * cs->mbmaxlen : length; }
   void make_field(SendField *field);
 };
+
+} /* namespace drizzled */
   
-#endif /* DRIZZLED_ITEM_EMPTRY_STRING_H */
+#endif /* DRIZZLED_ITEM_EMPTY_STRING_H */

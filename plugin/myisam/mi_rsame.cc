@@ -13,9 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <drizzled/util/test.h>
 
+using namespace drizzled;
 
 	/*
 	** Find current row with read on position or read on key
@@ -31,17 +32,17 @@ int mi_rsame(MI_INFO *info, unsigned char *record, int inx)
 {
   if (inx != -1 && ! mi_is_key_active(info->s->state.key_map, inx))
   {
-    return(my_errno=HA_ERR_WRONG_INDEX);
+    return(errno=HA_ERR_WRONG_INDEX);
   }
   if (info->lastpos == HA_OFFSET_ERROR || info->update & HA_STATE_DELETED)
   {
-    return(my_errno=HA_ERR_KEY_NOT_FOUND);	/* No current record */
+    return(errno=HA_ERR_KEY_NOT_FOUND);	/* No current record */
   }
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
 
   /* Read row from data file */
   if (fast_mi_readinfo(info))
-    return(my_errno);
+    return(errno);
 
   if (inx >= 0)
   {
@@ -59,7 +60,7 @@ int mi_rsame(MI_INFO *info, unsigned char *record, int inx)
 
   if (!(*info->read_record)(info,info->lastpos,record))
     return(0);
-  if (my_errno == HA_ERR_RECORD_DELETED)
-    my_errno=HA_ERR_KEY_NOT_FOUND;
-  return(my_errno);
+  if (errno == HA_ERR_RECORD_DELETED)
+    errno=HA_ERR_KEY_NOT_FOUND;
+  return(errno);
 } /* mi_rsame */

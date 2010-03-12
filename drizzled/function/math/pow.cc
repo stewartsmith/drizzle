@@ -17,8 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/function/math/pow.h>
+
+namespace drizzled
+{
 
 double Item_func_pow::val_real()
 {
@@ -26,7 +30,8 @@ double Item_func_pow::val_real()
   double value= args[0]->val_real();
   double val2= args[1]->val_real();
   if ((null_value=(args[0]->null_value || args[1]->null_value)))
-    return 0.0; /* purecov: inspected */
+    return 0.0;
   return fix_result(pow(value,val2));
 }
 
+} /* namespace drizzled */

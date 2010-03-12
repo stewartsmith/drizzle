@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -26,6 +26,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 String *Item_func_compress::val_str(String *str)
 {

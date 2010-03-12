@@ -37,13 +37,13 @@ update t1 set a = replace(a,'x','y');
 select * from t1;
 drop table t1;
 
-#
-# Bug #2077
-#
-create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
-show columns from t1;
-show create table t1;
-drop table t1;
+##
+## Bug #2077
+##
+#create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
+#show columns from t1;
+#show create table t1;
+#drop table t1;
 
 # Test currently turned off because of this bug:
 # Bug 308841 queries with German umlauts in insert statem
@@ -59,14 +59,6 @@ drop table t1;
 #show create table t1;
 #show columns from t1;
 #drop table t1;
-
-#
-# Bugs #6154, 6206: ENUMs are not case sensitive even if declared BINARY
-#
-CREATE TABLE t1 (c enum('a', 'A') BINARY);
-INSERT INTO t1 VALUES ('a'),('A');
-SELECT * FROM t1;
-DROP TABLE t1;
 
 # Test currently turned off because of this bug:
 # Bug 308841 queries with German umlauts in insert statem
@@ -121,38 +113,24 @@ drop table t1;
 # Bug#20922 mysql removes a name of first column in a table
 #
 create table t1 (f1 int);
-alter table t1 add f2 enum(0xFFFF);
+alter table t1 add f2 enum('Y','N');
 show create table t1;
 drop table t1;
 
 #
 # Bug#24660 "enum" field type definition problem
 #
-create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
-
-create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
-
-create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
-
-# ER_WRONG_FIELD_TERMINATORS
-create table t1(exhausting_charset enum('ABCDEFGHIJKLMNOPQRSTUVWXYZ','	
- !"','#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~','xx\','yy\€','zz‚ƒ„…†‡ˆ‰Š‹Œ‘’“”•–—˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ'));
-
-insert into t1 (exhausting_charset) values ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
-('	
- !"'),
-('#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~'),
-('xx\'),
-('yy\€'),
-('zz‚ƒ„…†‡ˆ‰Š‹Œ‘’“”•–—˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ');
-select count(*) from t1;
-drop table t1;
+#create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
+#show create table t1;
+#drop table t1;
+#
+#create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
+#show create table t1;
+#drop table t1;
+#
+#create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
+#show create table t1;
+#drop table t1;
 
 #
 # Bug #29251: MySQL coerces special 0 enum values to normal '' value

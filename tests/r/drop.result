@@ -46,6 +46,7 @@ unlock tables;
 create database mysqltest;
 show databases;
 Database
+data_dictionary
 information_schema
 mysql
 mysqltest
@@ -57,11 +58,12 @@ unlock tables;
 drop database mysqltest;
 show databases;
 Database
+data_dictionary
 information_schema
 mysql
 test
 drop database mysqltest;
-ERROR HY000: Can't drop database 'mysqltest'; database doesn't exist
+ERROR HY000: Can't drop database './mysqltest/'; database doesn't exist
 drop table t1;
 flush tables with read lock;
 create table t1(n int);
@@ -72,16 +74,6 @@ show tables;
 Tables_in_test
 t1
 drop table t1;
-drop database if exists mysqltest;
-drop table if exists t1;
-create table t1 (i int);
-create database mysqltest;
-drop table t1;
-show open tables;
-drop database mysqltest;
-select 1;
-1
-1
 End of 5.0 tests
 create database mysql_test;
 create table mysql_test.t1(f1 int);

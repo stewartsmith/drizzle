@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/definitions.h>
 #include <drizzled/query_id.h>
-#include <mysys/my_pthread.h>
+#include "drizzled/internal/my_pthread.h"
+
+namespace drizzled
+{
 
 Query_id::Query_id()
 {
@@ -38,7 +41,9 @@ uint64_t Query_id::value() const
 
 uint64_t Query_id::next()
 {
-  uint64_t ret= the_query_id++;
+  uint64_t ret= the_query_id.increment();
 
   return ret;
 }
+
+} /* namespace drizzled */

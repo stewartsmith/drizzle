@@ -22,6 +22,9 @@
 
 #include <drizzled/item/num.h>
 
+namespace drizzled
+{
+
 /* decimal (fixed point) constant */
 class Item_decimal :public Item_num
 {
@@ -38,7 +41,7 @@ public:
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DECIMAL; }
   int64_t val_int();
   double val_real();
   String *val_str(String*);
@@ -61,5 +64,7 @@ public:
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_DECIMAL_H */

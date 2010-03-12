@@ -1,0 +1,310 @@
+use data_dictionary;
+SELECT count(*) FROM columns;
+count(*)
+#
+SELECT count(*) FROM indexes;
+count(*)
+#
+SELECT count(*) FROM index_parts;
+count(*)
+#
+SELECT SCHEMA_NAME  FROM schemas;
+SCHEMA_NAME
+#
+#
+#
+#
+SELECT COLUMN_NAME  FROM columns;
+COLUMN_NAME
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
+count(*)
+#
+SELECT count(*) FROM TABLE_CONSTRAINTS;
+count(*)
+#
+show create table COLUMNS ;
+Table	Create Table
+COLUMNS	CREATE TABLE `columns` (
+  `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_TYPE` varchar(64) NOT NULL DEFAULT '',
+  `ORDINAL_POSITION` bigint NOT NULL DEFAULT '0',
+  `COLUMN_DEFAULT` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_DEFAULT_IS_NULL` varchar(5) NOT NULL DEFAULT '',
+  `COLUMN_DEFAULT_UPDATE` varchar(64) NOT NULL DEFAULT '',
+  `IS_NULLABLE` varchar(5) NOT NULL DEFAULT '',
+  `IS_INDEXED` varchar(5) NOT NULL DEFAULT '',
+  `IS_USED_IN_PRIMARY` varchar(5) NOT NULL DEFAULT '',
+  `IS_UNIQUE` varchar(5) NOT NULL DEFAULT '',
+  `IS_MULTI` varchar(5) NOT NULL DEFAULT '',
+  `IS_FIRST_IN_MULTI` varchar(5) NOT NULL DEFAULT '',
+  `INDEXES_FOUND_IN` bigint NOT NULL DEFAULT '0',
+  `DATA_TYPE` varchar(64) NOT NULL DEFAULT '',
+  `CHARACTER_MAXIMUM_LENGTH` bigint NOT NULL DEFAULT '0',
+  `CHARACTER_OCTET_LENGTH` bigint NOT NULL DEFAULT '0',
+  `NUMERIC_PRECISION` bigint NOT NULL DEFAULT '0',
+  `NUMERIC_SCALE` bigint NOT NULL DEFAULT '0',
+  `COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_COMMENT` varchar(1024) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table INDEXES ;
+Table	Create Table
+INDEXES	CREATE TABLE `indexes` (
+  `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `INDEX_NAME` varchar(64) NOT NULL DEFAULT '',
+  `IS_USED_IN_PRIMARY` varchar(5) NOT NULL DEFAULT '',
+  `IS_UNIQUE` varchar(5) NOT NULL DEFAULT '',
+  `IS_NULLABLE` varchar(5) NOT NULL DEFAULT '',
+  `KEY_LENGTH` bigint NOT NULL DEFAULT '0',
+  `INDEX_TYPE` varchar(64) NOT NULL DEFAULT '',
+  `INDEX_COMMENT` varchar(1024) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table INDEX_PARTS ;
+Table	Create Table
+INDEX_PARTS	CREATE TABLE `index_parts` (
+  `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `INDEX_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_NAME` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_NUMBER` bigint NOT NULL DEFAULT '0',
+  `SEQUENCE_IN_INDEX` bigint NOT NULL DEFAULT '0',
+  `COMPARE_LENGTH` bigint NOT NULL DEFAULT '0',
+  `IS_ORDER_REVERSE` varchar(5) NOT NULL DEFAULT '',
+  `IS_USED_IN_PRIMARY` varchar(5) NOT NULL DEFAULT '',
+  `IS_UNIQUE` varchar(5) NOT NULL DEFAULT '',
+  `IS_NULLABLE` varchar(5) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table REFERENTIAL_CONSTRAINTS ;
+Table	Create Table
+REFERENTIAL_CONSTRAINTS	CREATE TABLE `referential_constraints` (
+  `CONSTRAINT_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `CONSTRAINT_NAME` varchar(64) NOT NULL DEFAULT '',
+  `UNIQUE_CONSTRAINT_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `UNIQUE_CONSTRAINT_NAME` varchar(64) NOT NULL DEFAULT '',
+  `MATCH_OPTION` varchar(64) NOT NULL DEFAULT '',
+  `UPDATE_RULE` varchar(64) NOT NULL DEFAULT '',
+  `DELETE_RULE` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `REFERENCED_TABLE_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table SCHEMAS ;
+Table	Create Table
+SCHEMAS	CREATE TABLE `schemas` (
+  `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT '',
+  `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table SCHEMA_NAMES;
+Table	Create Table
+SCHEMA_NAMES	CREATE TABLE `schema_names` (
+  `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table TABLES ;
+Table	Create Table
+TABLES	CREATE TABLE `tables` (
+  `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_TYPE` varchar(64) NOT NULL DEFAULT '',
+  `ENGINE` varchar(64) NOT NULL DEFAULT '',
+  `ROW_FORMAT` varchar(10) NOT NULL DEFAULT '',
+  `TABLE_COLLATION` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_COMMENT` varchar(2048) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table TABLE_CONSTRAINTS ;
+Table	Create Table
+TABLE_CONSTRAINTS	CREATE TABLE `table_constraints` (
+  `CONSTRAINT_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `CONSTRAINT_NAME` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `CONSTRAINT_TYPE` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+CREATE SCHEMA A;
+use A;
+create table A (a int);
+SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
+COUNT(*)
+1
+DROP SCHEMA A;

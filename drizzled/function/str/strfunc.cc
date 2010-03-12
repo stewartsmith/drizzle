@@ -25,18 +25,19 @@
     (This shouldn't be needed)
 */
 
-#include <drizzled/server_includes.h>
-#include <mysys/sha1.h>
+#include "config.h"
 #include <zlib.h>
 #include <drizzled/query_id.h>
-#include <uuid/uuid.h>
 #include <drizzled/error.h>
 #include <drizzled/function/str/strfunc.h>
 
 // For soundex_map
-#include <mysys/my_static.h>
+#include "drizzled/internal/my_static.h"
 
 using namespace std;
+
+namespace drizzled
+{
 
 Item_str_func::~Item_str_func() {}
 
@@ -106,3 +107,4 @@ void Item_str_func::left_right_max_length()
 
 String my_empty_string("",default_charset_info);
 
+} /* namespace drizzled */

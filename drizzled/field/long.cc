@@ -19,16 +19,20 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/long.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <math.h>
+
 #include <algorithm>
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
 ** long int
@@ -284,3 +288,4 @@ const unsigned char *Field_long::unpack(unsigned char* to, const unsigned char *
   return from + sizeof(val);
 }
 
+} /* namespace drizzled */

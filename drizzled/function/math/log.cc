@@ -17,8 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/function/math/log.h>
+
+namespace drizzled
+{
 
 /**
   Extended but so slower LOG function.
@@ -81,3 +85,4 @@ double Item_func_log10::val_real()
   return log10(value);
 }
 
+} /* namespace drizzled */

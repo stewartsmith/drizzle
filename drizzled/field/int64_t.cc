@@ -19,16 +19,21 @@
  */
 
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/field/int64_t.h>
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/internal/my_sys.h"
+
+#include <math.h>
 
 #include <algorithm>
 
 using namespace std;
 
+namespace drizzled
+{
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
@@ -286,3 +291,4 @@ const unsigned char *Field_int64_t::unpack(unsigned char* to, const unsigned cha
   return from + sizeof(val);
 }
 
+} /* namespace drizzled */

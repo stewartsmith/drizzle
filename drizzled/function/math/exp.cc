@@ -17,17 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/math/exp.h>
 
+namespace drizzled
+{
 
 double Item_func_exp::val_real()
 {
   assert(fixed == 1);
   double value= args[0]->val_real();
   if ((null_value=args[0]->null_value))
-    return 0.0; /* purecov: inspected */
+    return 0.0;
   return fix_result(exp(value));
 }
 
+} /* namespace drizzled */

@@ -17,12 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 
-#include CSTDINT_H
 #include <cassert>
 
 #include <drizzled/function/num1.h>
+
+namespace drizzled
+{
 
 /**
   Set result type for a numeric function of one argument
@@ -56,4 +58,4 @@ void Item_func_num1::fix_num_length_and_dec()
 }
 
 
-
+} /* namespace drizzled */

@@ -17,14 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/error.h>
-#include <drizzled/session.h>
-#include <drizzled/server_includes.h>
-#include <drizzled/function/time/date.h>
-#include <drizzled/temporal_interval.h>
+#include "config.h"
+#include "drizzled/internal/m_string.h"
+#include "drizzled/error.h"
+#include "drizzled/session.h"
+#include "config.h"
+#include "drizzled/function/time/date.h"
+#include "drizzled/temporal_interval.h"
+#include "drizzled/time_functions.h"
 
-bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type, String *str_value)
+namespace drizzled
+{
+
+bool TemporalInterval::initFromItem(Item *args,
+                                    interval_type int_type,
+                                    String *str_value)
 {
   uint64_t array[MAX_STRING_ELEMENTS];
   int64_t value= 0;
@@ -172,14 +179,14 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
     second= array[0];
     second_part= array[1];
     break;
-  case INTERVAL_LAST: // purecov: begin deadcode
+  case INTERVAL_LAST:
     assert(0);
-    break;            // purecov: end
+    break;
   }
   return false;
 }
 
-bool drizzled::TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
+bool TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
 {
   long period, sign;
 
@@ -286,9 +293,11 @@ null_date:
   return 1;
 }
 
-bool drizzled::TemporalInterval::getIntervalFromString(const char *str,uint32_t length, const CHARSET_INFO * const cs,
-    uint32_t count, uint64_t *values,
-    bool transform_msec)
+bool TemporalInterval::getIntervalFromString(const char *str,
+                                             uint32_t length,
+                                             const CHARSET_INFO * const cs,
+                                             uint32_t count, uint64_t *values,
+                                             bool transform_msec)
 {
   const char *end= str+length;
   uint32_t x;
@@ -315,11 +324,14 @@ bool drizzled::TemporalInterval::getIntervalFromString(const char *str,uint32_t 
     {
       x++;
       /* Change values[0...x-1] -> values[0...count-1] */
-      bmove_upp((unsigned char*) (values+count), (unsigned char*) (values+x),
-          sizeof(*values)*x);
+      internal::bmove_upp((unsigned char*) (values+count),
+                          (unsigned char*) (values+x),
+                          sizeof(*values)*x);
       memset(values, 0, sizeof(*values)*(count-x));
       break;
     }
   }
   return (str != end);
 }
+
+} /* namespace drizzled */

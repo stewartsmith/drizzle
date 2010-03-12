@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/math/int.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/session.h>
@@ -72,19 +72,20 @@ static int initialize(plugin::Registry &registry)
 {
   connection_idudf=
     new plugin::Create_function<ConnectionIdFunction>("connection_id");
-  registry.function.add(connection_idudf);
+  registry.add(connection_idudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-   registry.function.remove(connection_idudf);
+   registry.remove(connection_idudf);
    delete connection_idudf;
    return 0;
 }
 
-drizzle_declare_plugin(connection_id)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "connection_id",
   "1.0",
   "Devananda van der Veen",
@@ -92,8 +93,7 @@ drizzle_declare_plugin(connection_id)
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

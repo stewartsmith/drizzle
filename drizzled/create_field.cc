@@ -21,8 +21,9 @@
  * @file Implementation of CreateField class
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include <errno.h>
+#include <float.h>
 #include "drizzled/sql_select.h"
 #include "drizzled/error.h"
 #include "drizzled/field.h"
@@ -48,6 +49,8 @@
 
 using namespace std;
 
+namespace drizzled
+{
 
 /** Create a field suitable for create of table. */
 CreateField::CreateField(Field *old_field, Field *orig_field)
@@ -84,7 +87,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       break;
   }
 
-  if (flags & (ENUM_FLAG | SET_FLAG))
+  if (flags & ENUM_FLAG)
     interval= ((Field_enum*) old_field)->typelib;
   else
     interval= 0;
@@ -107,7 +110,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       char buff[MAX_FIELD_WIDTH], *pos;
       String tmp(buff, sizeof(buff), charset), *res;
       res= orig_field->val_str(&tmp);
-      pos= (char*) sql_strmake(res->ptr(), res->length());
+      pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
     orig_field->move_field_offset(-diff);	// Back to record[0]
@@ -132,7 +135,7 @@ void CreateField::create_length_to_internal_length(void)
       length*= charset->mbmaxlen;
       key_length= pack_length;
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       key_length= pack_length=
         my_decimal_get_binary_size(my_decimal_length_to_precision(length,
                   decimals,
@@ -150,8 +153,9 @@ void CreateField::create_length_to_internal_length(void)
   Init for a tmp table field. To be extended if need be.
 */
 void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
-                                      uint32_t length_arg, uint32_t decimals_arg,
-                                      bool maybe_null, bool is_unsigned)
+                                     uint32_t length_arg,
+                                     uint32_t decimals_arg,
+                                     bool maybe_null)
 {
   field_name= "";
   sql_type= sql_type_arg;
@@ -159,10 +163,13 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   unireg_check= Field::NONE;
   interval= 0;
   charset= &my_charset_bin;
-  pack_flag= (FIELDFLAG_NUMBER |
-              ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
-              (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
-              (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
+  decimals= decimals_arg & FIELDFLAG_MAX_DEC;
+  pack_flag= 0;
+
+  if (! maybe_null)
+    flags= NOT_NULL_FLAG;
+  else
+    flags= 0;
 }
 
 bool CreateField::init(Session *,
@@ -219,16 +226,11 @@ bool CreateField::init(Session *,
     flags|= NO_DEFAULT_VALUE_FLAG;
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
-    fld_length= 0; /* purecov: inspected */
+    fld_length= 0;
   sign_len= fld_type_modifier & UNSIGNED_FLAG ? 0 : 1;
 
   switch (fld_type) 
   {
-    case DRIZZLE_TYPE_TINY:
-      if (!fld_length)
-        length= MAX_TINYINT_WIDTH+sign_len;
-      allowed_type_modifier= AUTO_INCREMENT_FLAG;
-      break;
     case DRIZZLE_TYPE_LONG:
       if (!fld_length)
         length= MAX_INT_WIDTH+sign_len;
@@ -241,7 +243,7 @@ bool CreateField::init(Session *,
       break;
     case DRIZZLE_TYPE_NULL:
       break;
-    case DRIZZLE_TYPE_NEWDECIMAL:
+    case DRIZZLE_TYPE_DECIMAL:
       my_decimal_trim(&length, &decimals);
       if (length > DECIMAL_MAX_PRECISION)
       {
@@ -296,14 +298,14 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_TIMESTAMP:
       if (!fld_length)
       {
-        length= drizzled::DateTime::MAX_STRING_LENGTH;
+        length= DateTime::MAX_STRING_LENGTH;
       }
 
       /* This assert() should be correct due to absence of length
          specifiers for timestamp. Previous manipulation also wasn't
          ever called (from examining lcov)
       */
-      assert(length == (uint32_t)drizzled::DateTime::MAX_STRING_LENGTH);
+      assert(length == (uint32_t)DateTime::MAX_STRING_LENGTH);
 
       flags|= UNSIGNED_FLAG;
       if (fld_default_value)
@@ -345,10 +347,10 @@ bool CreateField::init(Session *,
       }
       break;
     case DRIZZLE_TYPE_DATE:
-      length= drizzled::Date::MAX_STRING_LENGTH;
+      length= Date::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_DATETIME:
-      length= drizzled::DateTime::MAX_STRING_LENGTH;
+      length= DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
       {
@@ -374,7 +376,7 @@ bool CreateField::init(Session *,
   {
     my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
-              fld_name, max_field_charlength); /* purecov: inspected */
+              fld_name, max_field_charlength);
     return true;
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;
@@ -386,3 +388,5 @@ bool CreateField::init(Session *,
 
   return false; /* success */
 }
+
+} /* namespace drizzled */

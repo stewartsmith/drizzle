@@ -17,16 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+
+#include <float.h>
+
+#include <algorithm>
+
 #include <drizzled/error.h>
 #include <drizzled/function/func.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/field/enum.h>
 
-#include <algorithm>
-
 using namespace std;
+
+namespace drizzled
+{
 
 Item_type_holder::Item_type_holder(Session *session, Item *item)
   :Item(session, item), enum_set_typelib(0), fld_type(get_real_type(item))
@@ -92,7 +98,7 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
       case REAL_RESULT:
         return DRIZZLE_TYPE_DOUBLE;
       case DECIMAL_RESULT:
-        return DRIZZLE_TYPE_NEWDECIMAL;
+        return DRIZZLE_TYPE_DECIMAL;
       case ROW_RESULT:
       default:
         assert(0);
@@ -202,7 +208,7 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_VARCHAR:
-  case DRIZZLE_TYPE_NEWDECIMAL:
+  case DRIZZLE_TYPE_DECIMAL:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_BLOB:
     return 4;
@@ -232,10 +238,14 @@ Field *Item_type_holder::make_field_by_type(Table *table)
   switch (fld_type) {
   case DRIZZLE_TYPE_ENUM:
     assert(enum_set_typelib);
-    field= new Field_enum((unsigned char *) 0, max_length, null_ptr, 0,
-                          Field::NONE, name,
+    field= new Field_enum((unsigned char *) 0,
+                          max_length,
+                          null_ptr,
+                          0,
+                          name,
                           get_enum_pack_length(enum_set_typelib->count),
-                          enum_set_typelib, collation.collation);
+                          enum_set_typelib,
+                          collation.collation);
     if (field)
       field->init(table);
     return field;
@@ -306,3 +316,4 @@ void Item_result_field::cleanup()
   return;
 }
 
+} /* namespace drizzled */

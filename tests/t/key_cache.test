@@ -1,76 +1,74 @@
 #
-# Test of multiple key caches
+# Test of the MyISAM key cache
 #
 --disable_warnings
 drop table if exists t1, t2, t3;
 --enable_warnings
 
-SET @save_key_buffer=@@key_buffer_size;
+SET @save_myisam_key_cache_size=@@myisam_key_cache_size;
+SET @save_myisam_key_cache_block_size=@@myisam_key_cache_block_size;
+SET @save_myisam_key_cache_division_limit=@@myisam_key_cache_division_limit;
+SET @save_myisam_key_cache_age_threshold=@@myisam_key_cache_age_threshold;
 
-SELECT @@key_buffer_size;
+# Show default variables for MyISAM key cache
+SELECT @@myisam_key_cache_size;
+SELECT @@myisam_key_cache_block_size;
+SELECT @@myisam_key_cache_division_limit;
+SELECT @@myisam_key_cache_age_threshold;
 
 # Change default key cache size
-SET @@global.key_buffer_size=16*1024*1024;
+SET @@global.myisam_key_cache_size=16*1024*1024;
 
-# Drop buffer
-SET @@global.key_buffer_size=0;
+# Drop Key Cache (warning generated)
+SET @@global.myisam_key_cache_size=0;
 # Test double drop
-SET @@global.key_buffer_size=0;
+SET @@global.myisam_key_cache_size=0;
+
+# Change default key cache size
+SET @@global.myisam_key_cache_size=16*1024*1024;
 
 # Print key buffer with different syntaxes
-SHOW VARIABLES like "key_buffer_size";
-SELECT @@key_buffer_size;
-SELECT @@global.key_buffer_size;
-SELECT @@global.key_buffer_size;
-SELECT @@global.`key_buffer_size`;
-SELECT @@global.`key_buffer_size`;
-SELECT @@key_buffer_size;
+SHOW VARIABLES like "myisam_key_cache_size";
+SELECT @@myisam_key_cache_size;
+SELECT @@global.myisam_key_cache_size;
+SELECT @@global.myisam_key_cache_size;
+SELECT @@global.`myisam_key_cache_size`;
+SELECT @@global.`myisam_key_cache_size`;
+SELECT @@myisam_key_cache_size;
 
-SELECT @@key_buffer_size;
-SELECT @@key_buffer_size;
-
-SET @@global.key_buffer_size=@save_key_buffer;
+SET @@global.myisam_key_cache_size=@save_myisam_key_cache_size;
 
 #
 # Errors
 #
 
-SELECT @@key_buffer_size;
+SELECT @@myisam_key_cache_size;
 -- error 1272
 SELECT @@skr.storage_engine="test";
 
 -- error 1272
-select @@keycache1.key_cache_block_size;
+select @@keycache1.myisam_key_cache_block_size;
 
+--replace_column 2 #
 show status like 'key_blocks_used';
 
-# Cleanup
-# We don't reset keycache2 as we want to ensure that mysqld will reset it
-set global key_buffer_size=0;
-
 # Test to set up a too small size for a key cache (bug #2064)
-set global key_buffer_size=100;
-set global key_buffer_size=0;
-
-# Restore the changed variable value
--- error 1232
-set global key_cache_block_size= @my_key_cache_block_size;
+set global myisam_key_cache_size=100;
 
 #
-# Bug #19079: corrupted index when key_cache_block_size is not multiple of
+# Bug #19079: corrupted index when myisam_key_cache_block_size is not multiple of
 #             myisam_block_size
 
 CREATE temporary TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=MYISAM;
-SET @my_key_cache_block_size= @@global.key_cache_block_size;
-SET GLOBAL key_cache_block_size=1536;
+SET GLOBAL myisam_key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1);
-SELECT @@key_cache_block_size;
+SELECT @@myisam_key_cache_block_size;
 CHECK TABLE t1;
 DROP TABLE t1;
 
 CREATE TEMPORARY TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
 CREATE TEMPORARY TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
-SET GLOBAL key_cache_block_size=1536;
+SET GLOBAL myisam_key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1,0);
 INSERT INTO t2(b) SELECT b FROM t1;
 INSERT INTO t1(b) SELECT b FROM t2;
@@ -91,24 +89,16 @@ INSERT INTO t1(b) SELECT b FROM t2;
 INSERT INTO t2(b) SELECT b FROM t1;
 INSERT INTO t1(b) SELECT b FROM t2;
 SELECT COUNT(*) FROM t1;
-SELECT @@key_cache_block_size;
+SELECT @@myisam_key_cache_block_size;
 CHECK TABLE t1;
 DROP TABLE t1,t2;
 # Restore changed variables
-set global key_cache_block_size= @my_key_cache_block_size;
+set global myisam_key_cache_block_size= @save_myisam_key_cache_block_size;
 
 #
-# Bug#10473 - Can't set 'key_buffer_size' system variable to ZERO
-# (One cannot drop the default key cache.)
+# Bug#28478 - Improper myisam_key_cache_block_size corrupts MyISAM tables
 #
-set @@global.key_buffer_size=0;
-select @@global.key_buffer_size;
-
-#
-# Bug#28478 - Improper key_cache_block_size corrupts MyISAM tables
-#
-SET @bug28478_key_cache_block_size= @@global.key_cache_block_size;
-SET GLOBAL key_cache_block_size= 1536;
+SET GLOBAL myisam_key_cache_block_size= 1536;
 CREATE TEMPORARY TABLE t1 (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   c1 CHAR(50),
@@ -128,8 +118,26 @@ INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
 INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
 INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
 CHECK TABLE t1;
-SHOW VARIABLES LIKE 'key_cache_block_size';
-SET GLOBAL key_cache_block_size= @bug28478_key_cache_block_size;
+SHOW VARIABLES LIKE 'myisam_key_cache_block_size';
+SET GLOBAL myisam_key_cache_block_size= @save_myisam_key_cache_block_size;
 DROP TABLE t1,t2;
 
-# End of 4.1 tests
+# Check division limit and age threshold
+
+# Division Limit: Minimum 1, maximum 100
+SET GLOBAL myisam_key_cache_division_limit= 0;
+
+SELECT @@myisam_key_cache_division_limit;
+
+SET GLOBAL myisam_key_cache_division_limit= 101;
+
+SELECT @@myisam_key_cache_division_limit;
+
+# Age Threshold: Minimum 100, maximum UINT32_MAX
+SET GLOBAL myisam_key_cache_age_threshold= 98;
+
+SELECT @@myisam_key_cache_age_threshold;
+
+SET GLOBAL myisam_key_cache_age_threshold= 5000000000;
+
+SELECT @@myisam_key_cache_age_threshold;

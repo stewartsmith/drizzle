@@ -22,6 +22,9 @@
 
 #include <drizzled/item/cache.h>
 
+namespace drizzled
+{
+
 class Item_cache_int: public Item_cache
 {
 protected:
@@ -40,5 +43,7 @@ public:
   enum Item_result result_type() const { return INT_RESULT; }
   bool result_as_int64_t() { return true; }
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CACHE_INT_H */

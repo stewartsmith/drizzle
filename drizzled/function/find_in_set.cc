@@ -17,13 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/find_in_set.h>
 
 /* Search after a string in a string of strings separated by ',' */
 /* Returns number of found type >= 1 or 0 if not found */
 /* This optimizes searching in enums to bit testing! */
+
+namespace drizzled
+{
 
 void Item_func_find_in_set::fix_length_and_dec()
 {
@@ -53,7 +56,7 @@ int64_t Item_func_find_in_set::val_int()
   if (!find || !buffer)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
 
@@ -102,3 +105,4 @@ int64_t Item_func_find_in_set::val_int()
   return 0;
 }
 
+} /* namespace drizzled */

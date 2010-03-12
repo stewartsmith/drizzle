@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/function/math/int.h>
 #include <drizzled/plugin/function.h>
 
@@ -71,19 +71,20 @@ plugin::Create_function<AsciiFunction> *asciiudf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   asciiudf= new plugin::Create_function<AsciiFunction>("ascii");
-  registry.function.add(asciiudf);
+  registry.add(asciiudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-  registry.function.remove(asciiudf);
+  registry.remove(asciiudf);
   delete asciiudf;
   return 0;
 }
 
-drizzle_declare_plugin(ascii)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "ascii",
   "1.0",
   "Devananda van der Veen",
@@ -91,8 +92,7 @@ drizzle_declare_plugin(ascii)
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

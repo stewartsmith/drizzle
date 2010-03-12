@@ -21,7 +21,12 @@
 #ifndef DRIZZLED_SELECT_RESULT_H
 #define DRIZZLED_SELECT_RESULT_H
 
-class select_result :public Sql_alloc {
+namespace drizzled
+{
+
+class JOIN;
+
+class select_result :public memory::SqlAlloc {
 protected:
   Session *session;
   Select_Lex_Unit *unit;
@@ -57,10 +62,7 @@ public:
    ** Functions to provide a interface to select results
    *****************************************************************************/
 
-  virtual void send_error(uint32_t errcode, const char *err)
-  {
-    my_message(errcode, err, MYF(0));
-  }
+  virtual void send_error(uint32_t errcode, const char *err);
 
   /*
     Cleanup instance of this class for next execution of a prepared
@@ -72,5 +74,7 @@ public:
   }
 
 };
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_SELECT_RESULT_H */

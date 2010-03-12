@@ -17,10 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/function/time/date_add_interval.h>
-#include <drizzled/temporal_interval.h>
+#include "config.h"
+
+#include "drizzled/function/time/date_add_interval.h"
+#include "drizzled/temporal_interval.h"
+#include "drizzled/time_functions.h"
+
+namespace drizzled
+{
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.
@@ -44,7 +48,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
   collation.set(&my_charset_bin);
   maybe_null=1;
-  max_length=drizzled::DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   value.alloc(max_length);
 
   /*
@@ -77,7 +81,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
 {
-  drizzled::TemporalInterval interval;
+  TemporalInterval interval;
 
   if (args[0]->get_date(ltime, TIME_NO_ZERO_DATE))
     return (null_value= true);
@@ -107,8 +111,8 @@ String *Item_date_add_interval::val_str(String *str)
   else if (ltime.second_part)
   {
     /* Ensure we've got enough room for our timestamp string. */
-    str->length(drizzled::DateTime::MAX_STRING_LENGTH);
-    size_t length= snprintf(str->c_ptr(), drizzled::DateTime::MAX_STRING_LENGTH,
+    str->length(DateTime::MAX_STRING_LENGTH);
+    size_t length= snprintf(str->c_ptr(), DateTime::MAX_STRING_LENGTH,
                             "%04u-%02u-%02u %02u:%02u:%02u.%06u",
                             ltime.year,
                             ltime.month,
@@ -159,3 +163,5 @@ void Item_date_add_interval::print(String *str, enum_query_type query_type)
   str->append(interval_names[int_type]);
   str->append(')');
 }
+
+} /* namespace drizzled */

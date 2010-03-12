@@ -18,10 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_DOUBLE
-#define DRIZZLE_SERVER_FIELD_DOUBLE
+#ifndef DRIZZLED_FIELD_DOUBLE_H
+#define DRIZZLED_FIELD_DOUBLE_H
 
 #include <drizzled/field/real.h>
+
+namespace drizzled
+{
 
 class Field_double :public Field_real {
 public:
@@ -62,11 +65,10 @@ public:
   int cmp(const unsigned char *,const unsigned char *);
   void sort_string(unsigned char *buff,uint32_t length);
   uint32_t pack_length() const { return sizeof(double); }
-  uint32_t row_pack_length() { return pack_length(); }
   void sql_type(String &str) const;
-private:
-  int do_save_field_metadata(unsigned char *first_byte);
 };
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FIELD_DOUBLE_H */
 

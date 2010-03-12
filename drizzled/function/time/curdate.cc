@@ -17,18 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
+
 #include "drizzled/function/time/curdate.h"
 #include "drizzled/tztime.h"
 #include "drizzled/temporal.h"
 #include "drizzled/session.h"
 
+namespace drizzled
+{
+
 void Item_func_curdate::fix_length_and_dec()
 {
   collation.set(&my_charset_bin);
   decimals=0;
-  max_length=drizzled::Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
 
   store_now_in_TIME(&ltime);
 
@@ -83,8 +86,10 @@ void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
   now_time->second= 0;
 }
 
-bool Item_func_curdate::get_temporal(drizzled::Date &to)
+bool Item_func_curdate::get_temporal(Date &to)
 {
   to= cached_temporal;
   return true;
 }
+
+} /* namespace drizzled */

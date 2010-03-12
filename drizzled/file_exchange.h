@@ -21,7 +21,14 @@
 #ifndef DRIZZLED_FILE_EXCHANGE_H
 #define DRIZZLED_FILE_EXCHANGE_H
 
-#include <drizzled/server_includes.h>
+#include "drizzled/sql_string.h"
+#include "drizzled/memory/sql_alloc.h"
+#include "drizzled/enum.h"
+
+namespace drizzled
+{
+
+extern const CHARSET_INFO *default_charset_info;
 
 static String default_line_term("\n",default_charset_info);
 static String default_escaped("\\",default_charset_info);
@@ -33,7 +40,7 @@ static String default_field_term("\t",default_charset_info);
   XXX: We never call destructor for objects of this class.
 */
 
-class file_exchange :public Sql_alloc
+class file_exchange :public memory::SqlAlloc
 {
 public:
   enum enum_filetype filetype; /* load XML, Added by Arnold & Erik */
@@ -44,17 +51,10 @@ public:
   ulong skip_lines;
   const CHARSET_INFO *cs;
   file_exchange(char *name, bool flag,
-                enum_filetype filetype_arg= FILETYPE_CSV)
-    :file_name(name), opt_enclosed(0), dumpfile(flag), skip_lines(0)
-  {
-    filetype= filetype_arg;
-    field_term= &default_field_term;
-    enclosed=   line_start= &my_empty_string;
-    line_term=  &default_line_term;
-    escaped=    &default_escaped;
-    cs= NULL;
-  }
+                enum_filetype filetype_arg= FILETYPE_CSV);
 };
 
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_FILE_EXCHANGE_H */

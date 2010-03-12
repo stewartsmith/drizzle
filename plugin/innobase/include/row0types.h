@@ -16,7 +16,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/******************************************************
+/**************************************************//**
+@file include/row0types.h
 Row operation global types
 
 Created 12/27/1996 Heikki Tuuri
@@ -55,7 +56,7 @@ typedef struct row_ext_struct row_ext_t;
 /* MySQL data types */
 #if defined(BUILD_DRIZZLE)
 # if defined(__cplusplus)
-typedef class Table TABLE;
+typedef drizzled::Table TABLE;
 # else
 typedef void TABLE;
 # endif /* cplusplus */

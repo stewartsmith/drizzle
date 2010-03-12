@@ -29,7 +29,6 @@ create index it3i3 on t3i (c1, c2);
 insert into t1i select * from t1;
 insert into t2i select * from t2;
 insert into t3i select * from t3;
-set @@optimizer_switch=no_semijoin;
 /********************************************************************
 * Simple tests.
 ********************************************************************/
@@ -368,6 +367,7 @@ Warnings:
 Note	1276	Field or reference 'test.t1.a1' of SELECT #3 was resolved in SELECT #1
 Note	1276	Field or reference 'test.t1.a2' of SELECT #6 was resolved in SELECT #1
 Note	1003	select `test`.`t1`.`a1` AS `a1`,`test`.`t1`.`a2` AS `a2` from `test`.`t1` where (<in_optimizer>((`test`.`t1`.`a1`,`test`.`t1`.`a2`),<exists>(select `test`.`t2`.`b1` AS `b1`,`test`.`t2`.`b2` AS `b2` from `test`.`t2` where ((<in_optimizer>(`test`.`t2`.`b2`,<exists>(select 1 AS `Not_used` from `test`.`t3` `t3a` where ((`test`.`t3a`.`c1` = `test`.`t1`.`a1`) and (<cache>(`test`.`t2`.`b2`) = `test`.`t3a`.`c2`)))) or <in_optimizer>(`test`.`t2`.`b2`,`test`.`t2`.`b2` in ( <materialize> (select `test`.`t3b`.`c2` AS `c2` from `test`.`t3` `t3b` where (`test`.`t3b`.`c2` like '%03') ), <primary_index_lookup>(`test`.`t2`.`b2` in <temporary table> on distinct_key)))) and (<cache>(`test`.`t1`.`a1`) = `test`.`t2`.`b1`) and (<cache>(`test`.`t1`.`a2`) = `test`.`t2`.`b2`)))) and <in_optimizer>((`test`.`t1`.`a1`,`test`.`t1`.`a2`),<exists>(select `test`.`t3c`.`c1` AS `c1`,`test`.`t3c`.`c2` AS `c2` from `test`.`t3` `t3c` where (<in_optimizer>((`test`.`t3c`.`c1`,`test`.`t3c`.`c2`),<exists>(<index_lookup>(<cache>(`test`.`t3c`.`c1`) in t2i on it2i3 where (((`test`.`t2i`.`b2` > '0') or (`test`.`t2i`.`b2` = `test`.`t1`.`a2`)) and (<cache>(`test`.`t3c`.`c1`) = `test`.`t2i`.`b1`) and (<cache>(`test`.`t3c`.`c2`) = `test`.`t2i`.`b2`))))) and (<cache>(`test`.`t1`.`a1`) = `test`.`t3c`.`c1`) and (<cache>(`test`.`t1`.`a2`) = `test`.`t3c`.`c2`)))))
+DROP TABLE t1i, t2i, t3i;
 explain extended
 select * from t1 where (a1, a2) in (select '1 - 01', '2 - 01');
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
@@ -423,6 +423,7 @@ a1	a2
 1 - 00	2 - 00
 1 - 01	2 - 01
 1 - 02	2 - 02
+DROP TABLE columns;
 /******************************************************************************
 * Column types/sizes that affect materialization.
 ******************************************************************************/
@@ -430,7 +431,6 @@ a1	a2
 Test that BLOBs are not materialized (except when arguments of some functions).
 */
 # force materialization to be always considered
-set @@optimizer_switch=no_semijoin;
 set @prefix_len = 6;
 set @blob_len = 16;
 set @suffix_len = @blob_len - @prefix_len;
@@ -840,7 +840,7 @@ drop table t1, t2, t3;
 /******************************************************************************
 * Test the cache of the left operand of IN.
 ******************************************************************************/
-set @@optimizer_switch=no_semijoin;
+# Test that default values of Cached_item are not used for comparison
 create temporary table t1 (s1 int) ENGINE=MyISAM;
 create temporary table t2 (s2 int) ENGINE=MyISAM;
 insert into t1 values (5),(1),(0);

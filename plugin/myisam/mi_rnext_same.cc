@@ -13,7 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
+
+using namespace drizzled;
 
 	/*
 	   Read next row with the same key as previous read, but abort if
@@ -30,10 +32,10 @@ int mi_rnext_same(MI_INFO *info, unsigned char *buf)
   MI_KEYDEF *keyinfo;
 
   if ((int) (inx=info->lastinx) < 0 || info->lastpos == HA_OFFSET_ERROR)
-    return(my_errno=HA_ERR_WRONG_INDEX);
+    return(errno=HA_ERR_WRONG_INDEX);
   keyinfo=info->s->keyinfo+inx;
   if (fast_mi_readinfo(info))
-    return(my_errno);
+    return(errno);
 
   if (info->s->concurrent_insert)
     pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
@@ -57,7 +59,7 @@ int mi_rnext_same(MI_INFO *info, unsigned char *buf)
                        info->last_rkey_length, SEARCH_FIND, not_used))
         {
           error=1;
-          my_errno=HA_ERR_END_OF_FILE;
+          errno=HA_ERR_END_OF_FILE;
           info->lastpos= HA_OFFSET_ERROR;
           break;
         }
@@ -75,17 +77,17 @@ int mi_rnext_same(MI_INFO *info, unsigned char *buf)
 
   if (error)
   {
-    if (my_errno == HA_ERR_KEY_NOT_FOUND)
-      my_errno=HA_ERR_END_OF_FILE;
+    if (errno == HA_ERR_KEY_NOT_FOUND)
+      errno=HA_ERR_END_OF_FILE;
   }
   else if (!buf)
   {
-    return(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos==HA_OFFSET_ERROR ? errno : 0);
   }
   else if (!(*info->read_record)(info,info->lastpos,buf))
   {
     info->update|= HA_STATE_AKTIV;		/* Record is read */
     return(0);
   }
-  return(my_errno);
+  return(errno);
 } /* mi_rnext_same */

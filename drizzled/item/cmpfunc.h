@@ -31,6 +31,11 @@
 #include "drizzled/function/math/int.h"
 #include "drizzled/function/numhybrid.h"
 #include "drizzled/session.h"
+#include "drizzled/common.h"
+#include "drizzled/qsort_cmp.h"
+
+namespace drizzled
+{
 
 extern Item_result item_cmp_type(Item_result a,Item_result b);
 class Item_bool_func2;
@@ -42,7 +47,13 @@ typedef int (Arg_comparator::*arg_cmp_func)();
 
 typedef int (*Item_field_cmpfunc)(Item_field *f1, Item_field *f2, void *arg);
 
-class Arg_comparator: public Sql_alloc
+uint64_t get_datetime_value(Session *session, 
+                            Item ***item_arg, 
+                            Item **cache_arg,
+                            Item *warn_item, 
+                            bool *is_null);
+
+class Arg_comparator: public memory::SqlAlloc
 {
   Item **a, **b;
   arg_cmp_func func;
@@ -754,7 +765,7 @@ public:
 
 /* A vector of values of some type  */
 
-class in_vector :public Sql_alloc
+class in_vector :public memory::SqlAlloc
 {
 public:
   char *base;
@@ -766,16 +777,13 @@ public:
   in_vector() {}
   in_vector(uint32_t elements,uint32_t element_length,qsort2_cmp cmp_func,
   	    const CHARSET_INFO * const cmp_coll)
-    :base((char*) sql_calloc(elements*element_length)),
+    :base((char*) memory::sql_calloc(elements*element_length)),
      size(element_length), compare(cmp_func), collation(cmp_coll),
      count(elements), used_count(elements) {}
   virtual ~in_vector() {}
   virtual void set(uint32_t pos,Item *item)=0;
   virtual unsigned char *get_value(Item *item)=0;
-  void sort()
-  {
-    my_qsort2(base,used_count,size,compare, (void *) collation);
-  }
+  void sort();
   int find(Item *item);
 
   /*
@@ -935,7 +943,7 @@ public:
 ** Classes for easy comparing of non const items
 */
 
-class cmp_item :public Sql_alloc
+class cmp_item :public memory::SqlAlloc
 {
 public:
   const CHARSET_INFO *cmp_charset;
@@ -1572,7 +1580,7 @@ public:
   { return fields.head()->collation.collation; }
 };
 
-class COND_EQUAL: public Sql_alloc
+class COND_EQUAL: public memory::SqlAlloc
 {
 public:
   uint32_t max_members;               /* max number of members the current level
@@ -1686,6 +1694,8 @@ public:
   void top_level_item() {}
 };
 
+enum_field_types agg_field_type(Item **items, uint32_t nitems);
+
 
 /* Some useful inline functions */
 
@@ -1697,5 +1707,7 @@ inline Item *and_conds(Item *a, Item *b)
 }
 
 Item *and_expressions(Item *a, Item *b, Item **org_item);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_CMPFUNC_H */

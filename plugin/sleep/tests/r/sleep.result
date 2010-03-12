@@ -1,0 +1,36 @@
+select sleep();
+ERROR 42000: Incorrect parameter count in the call to native function 'sleep'
+select sleep(10,10);
+ERROR 42000: Incorrect parameter count in the call to native function 'sleep'
+select sleep('a');
+sleep('a')
+NULL
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
+show warnings;
+Level	Code	Message
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
+select sleep(0.001);
+sleep(0.001)
+0
+select sleep(0.01);
+sleep(0.01)
+0
+select sleep(0.02);
+sleep(0.02)
+0
+select sleep(0.02);
+sleep(0.02)
+0
+select sleep(0.13);
+sleep(0.13)
+0
+select sleep(0);
+sleep(0)
+NULL
+select sleep(1);
+sleep(1)
+0
+select sleep(1.5);
+sleep(1.5)
+0

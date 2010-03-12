@@ -16,7 +16,7 @@
 
 /* Implements various base record-related functions, such as encode and decode into chunks */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <drizzled/common.h>
 
@@ -24,6 +24,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /**
   Calculate size of the record for the purpose of storing in chunks

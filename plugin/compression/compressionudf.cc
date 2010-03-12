@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/plugin/function.h"
 
 #include "plugin/compression/compress.h"
@@ -35,25 +35,26 @@ static int compressionudf_plugin_init(plugin::Registry &registry)
     new plugin::Create_function<Item_func_uncompress>("uncompress");
   uncompressed_lengthudf=
     new plugin::Create_function<Item_func_uncompressed_length>("uncompressed_length");
-  registry.function.add(compressudf);
-  registry.function.add(uncompressudf);
-  registry.function.add(uncompressed_lengthudf);
+  registry.add(compressudf);
+  registry.add(uncompressudf);
+  registry.add(uncompressed_lengthudf);
   return 0;
 }
 
 static int compressionudf_plugin_deinit(plugin::Registry &registry)
 {
-  registry.function.remove(compressudf);
-  registry.function.remove(uncompressudf);
-  registry.function.remove(uncompressed_lengthudf);
+  registry.remove(compressudf);
+  registry.remove(uncompressudf);
+  registry.remove(uncompressed_lengthudf);
   delete compressudf;
   delete uncompressudf;
   delete uncompressed_lengthudf;
   return 0;
 }
 
-drizzle_declare_plugin(compression)
+DRIZZLE_DECLARE_PLUGIN
 {
+  DRIZZLE_VERSION_ID,
   "compression",
   "1.1",
   "Stewart Smith",
@@ -61,8 +62,7 @@ drizzle_declare_plugin(compression)
   PLUGIN_LICENSE_GPL,
   compressionudf_plugin_init, /* Plugin Init */
   compressionudf_plugin_deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
 }
-drizzle_declare_plugin_end;
+DRIZZLE_DECLARE_PLUGIN_END;

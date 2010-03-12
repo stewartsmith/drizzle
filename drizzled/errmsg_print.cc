@@ -22,13 +22,17 @@
    errmsg_printf()
 */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/errmsg.h>
+#include "config.h"
+#include <drizzled/plugin/registry.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/current_session.h>
+#include <drizzled/plugin/error_message.h>
 
-// need this for stderr
-#include <string.h>
+#include <cerrno>
+#include <cstring>
+
+namespace drizzled
+{
 
 void sql_perror(const char *message)
 {
@@ -41,7 +45,9 @@ bool errmsg_printf (int priority, char const *format, ...)
   bool rv;
   va_list args;
   va_start(args, format);
-  rv= errmsg_vprintf(current_session, priority, format, args);
+  rv= plugin::ErrorMessage::vprintf(current_session, priority, format, args);
   va_end(args);
   return rv;
 }
+
+} /* namespace drizzled */

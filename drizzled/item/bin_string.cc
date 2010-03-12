@@ -17,9 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
 #include <drizzled/item/bin_string.h>
+
+namespace drizzled
+{
 
 /*
   bin item.
@@ -34,7 +36,7 @@ Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
   uint32_t power= 1;
 
   max_length= (str_length + 7) >> 3;
-  char *ptr= (char*) sql_alloc(max_length + 1);
+  char *ptr= (char*) memory::sql_alloc(max_length + 1);
   if (!ptr)
     return;
   str_value.set(ptr, max_length, &my_charset_bin);
@@ -58,3 +60,4 @@ Item_bin_string::Item_bin_string(const char *str, uint32_t str_length)
 }
 
 
+} /* namespace drizzled */

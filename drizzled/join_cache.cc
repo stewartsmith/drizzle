@@ -27,13 +27,16 @@
  * @{
  */
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 static uint32_t used_blob_length(CACHE_FIELD **ptr);
 
@@ -79,17 +82,17 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     if (join_tab->rowid_keep_flags & JoinTable::KEEP_ROWID)
     {
       cache->fields++;
-      join_tab->used_fieldlength += join_tab->table->file->ref_length;
+      join_tab->used_fieldlength += join_tab->table->cursor->ref_length;
     }
   }
   if (!(cache->field=(CACHE_FIELD*)
-	sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
+	memory::sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
 
 		  sizeof(CACHE_FIELD*))))
   {
-    free((unsigned char*) cache->buff);		/* purecov: inspected */
-    cache->buff=0;				/* purecov: inspected */
-    return(1);				/* purecov: inspected */
+    free((unsigned char*) cache->buff);
+    cache->buff=0;
+    return(1);
   }
   copy=cache->field;
   blob_ptr=cache->blob_ptr=(CACHE_FIELD**)
@@ -142,8 +145,8 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     /* SemiJoinDuplicateElimination: Allocate space for rowid if needed */
     if (tables[i].rowid_keep_flags & JoinTable::KEEP_ROWID)
     {
-      copy->str= tables[i].table->file->ref;
-      copy->length= tables[i].table->file->ref_length;
+      copy->str= tables[i].table->cursor->ref;
+      copy->length= tables[i].table->cursor->ref_length;
       copy->strip=0;
       copy->blob_field=0;
       copy->get_rowid= NULL;
@@ -163,7 +166,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   *blob_ptr= NULL;					/* End sequentel */
   size= max((size_t) session->variables.join_buff_size, (size_t)cache->length);
   if (!(cache->buff= (unsigned char*) malloc(size)))
-    return 1;				/* Don't use cache */ /* purecov: inspected */
+    return 1;
   cache->end= cache->buff+size;
   reset_cache_write(cache);
   return 0;
@@ -209,7 +212,7 @@ bool store_record_in_cache(JOIN_CACHE *cache)
     {
       // SemiJoinDuplicateElimination: Get the rowid into table->ref:
       if (copy->get_rowid)
-        copy->get_rowid->file->position(copy->get_rowid->record[0]);
+        copy->get_rowid->cursor->position(copy->get_rowid->record[0]);
 
       if (copy->strip)
       {
@@ -248,3 +251,5 @@ void reset_cache_write(JOIN_CACHE *cache)
 /**
   @} (end of group Query_Optimizer)
 */
+
+} /* namespace drizzled */

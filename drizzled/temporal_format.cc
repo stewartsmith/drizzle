@@ -28,21 +28,23 @@
  * Implementation of the server's date and time string matching utility.
  */
 
-#include "drizzled/global.h"
+#include "config.h"
 
 #include "drizzled/temporal_format.h"
 #include "drizzled/temporal.h"
 
-#include <string> /** C++ string class used */
 #include <string.h>
-#include <vector>
 #include PCRE_HEADER
+
+#include <string>
+#include <vector>
+
+using namespace std;
 
 namespace drizzled
 {
 
-  TemporalFormat::TemporalFormat(const char *pattern)
-  :
+TemporalFormat::TemporalFormat(const char *pattern) :
   _pattern(pattern)
 , _error_offset(0)
 , _error(NULL)
@@ -55,9 +57,6 @@ namespace drizzled
 , _usecond_part_index(0)
 , _nsecond_part_index(0)
 {
-  /* Make sure we've got no junk in the match_vector. */
-  memset(_match_vector, 0, sizeof(_match_vector));
-
   /* Compile our regular expression */
   _re= pcre_compile(pattern
                     , 0 /* Default options */
@@ -71,7 +70,12 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
 {
   if (! is_valid()) 
     return false;
+
+  int32_t match_vector[OUT_VECTOR_SIZE]; /**< Stores match substring indexes */
   
+  /* Make sure we've got no junk in the match_vector. */
+  memset(match_vector, 0, sizeof(match_vector));
+
   /* Simply check the subject against the compiled regular expression */
   int32_t result= pcre_exec(_re
                             , NULL /* No extra data */
@@ -79,7 +83,7 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
                             , data_len
                             , 0 /* Start at offset 0 of subject...*/
                             , 0 /* Default options */
-                            , _match_vector
+                            , match_vector
                             , OUT_VECTOR_SIZE
                             );
   if (result < 0)
@@ -107,7 +111,7 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
     return false;
 
   /* C++ string class easy to use substr() method is very useful here */
-  std::string copy_data(data, data_len);
+  string copy_data(data, data_len);
   /* 
    * OK, we have the expected substring matches, so grab
    * the various temporal parts from the subject string
@@ -119,46 +123,46 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
    */
   if (_year_part_index > 1)
   {
-    size_t year_start= _match_vector[_year_part_index];
-    size_t year_len= _match_vector[_year_part_index + 1] - _match_vector[_year_part_index];
+    size_t year_start= match_vector[_year_part_index];
+    size_t year_len= match_vector[_year_part_index + 1] - match_vector[_year_part_index];
     to->_years= atoi(copy_data.substr(year_start, year_len).c_str());
     if (year_len == 2)
       to->_years+= (to->_years >= DRIZZLE_YY_PART_YEAR ? 1900 : 2000);
   }
   if (_month_part_index > 1)
   {
-    size_t month_start= _match_vector[_month_part_index];
-    size_t month_len= _match_vector[_month_part_index + 1] - _match_vector[_month_part_index];
+    size_t month_start= match_vector[_month_part_index];
+    size_t month_len= match_vector[_month_part_index + 1] - match_vector[_month_part_index];
     to->_months= atoi(copy_data.substr(month_start, month_len).c_str());
   }
   if (_day_part_index > 1)
   {
-    size_t day_start= _match_vector[_day_part_index];
-    size_t day_len= _match_vector[_day_part_index + 1] - _match_vector[_day_part_index];
+    size_t day_start= match_vector[_day_part_index];
+    size_t day_len= match_vector[_day_part_index + 1] - match_vector[_day_part_index];
     to->_days= atoi(copy_data.substr(day_start, day_len).c_str());
   }
   if (_hour_part_index > 1)
   {
-    size_t hour_start= _match_vector[_hour_part_index];
-    size_t hour_len= _match_vector[_hour_part_index + 1] - _match_vector[_hour_part_index];
+    size_t hour_start= match_vector[_hour_part_index];
+    size_t hour_len= match_vector[_hour_part_index + 1] - match_vector[_hour_part_index];
     to->_hours= atoi(copy_data.substr(hour_start, hour_len).c_str());
   }
   if (_minute_part_index > 1)
   {
-    size_t minute_start= _match_vector[_minute_part_index];
-    size_t minute_len= _match_vector[_minute_part_index + 1] - _match_vector[_minute_part_index];
+    size_t minute_start= match_vector[_minute_part_index];
+    size_t minute_len= match_vector[_minute_part_index + 1] - match_vector[_minute_part_index];
     to->_minutes= atoi(copy_data.substr(minute_start, minute_len).c_str());
   }
   if (_second_part_index > 1)
   {
-    size_t second_start= _match_vector[_second_part_index];
-    size_t second_len= _match_vector[_second_part_index + 1] - _match_vector[_second_part_index];
+    size_t second_start= match_vector[_second_part_index];
+    size_t second_len= match_vector[_second_part_index + 1] - match_vector[_second_part_index];
     to->_seconds= atoi(copy_data.substr(second_start, second_len).c_str());
   }
   if (_usecond_part_index > 1)
   {
-    size_t usecond_start= _match_vector[_usecond_part_index];
-    size_t usecond_len= _match_vector[_usecond_part_index + 1] - _match_vector[_usecond_part_index];
+    size_t usecond_start= match_vector[_usecond_part_index];
+    size_t usecond_len= match_vector[_usecond_part_index + 1] - match_vector[_usecond_part_index];
     /* 
      * For microseconds, which are millionth of 1 second, 
      * we must ensure that we produce a correct result, 
@@ -176,8 +180,8 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
   }
   if (_nsecond_part_index > 1)
   {
-    size_t nsecond_start= _match_vector[_nsecond_part_index];
-    size_t nsecond_len= _match_vector[_nsecond_part_index + 1] - _match_vector[_nsecond_part_index];
+    size_t nsecond_start= match_vector[_nsecond_part_index];
+    size_t nsecond_len= match_vector[_nsecond_part_index + 1] - match_vector[_nsecond_part_index];
     /* 
      * For nanoseconds, which are 1 billionth of a second, 
      * we must ensure that we produce a correct result, 
@@ -196,7 +200,6 @@ bool TemporalFormat::matches(const char *data, size_t data_len, Temporal *to)
   return true;
 }
 
-} /* end namespace drizzled */
 
 #define COUNT_KNOWN_FORMATS 19
 
@@ -248,10 +251,10 @@ static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]=
 , {"^(\\d{1,2})\\.(\\d{1,6})$", 0, 0, 0, 0, 0, 1, 2, 0} /* [S]S.uuuuuu */
 };
 
-std::vector<drizzled::TemporalFormat *> known_datetime_formats;
-std::vector<drizzled::TemporalFormat *> known_date_formats;
-std::vector<drizzled::TemporalFormat *> known_time_formats;
-std::vector<drizzled::TemporalFormat *> all_temporal_formats;
+vector<TemporalFormat *> known_datetime_formats;
+vector<TemporalFormat *> known_date_formats;
+vector<TemporalFormat *> known_time_formats;
+vector<TemporalFormat *> all_temporal_formats;
 
 /**
  * We allocate and initialize all known date/time formats.
@@ -261,14 +264,14 @@ std::vector<drizzled::TemporalFormat *> all_temporal_formats;
 bool init_temporal_formats()
 {
   /* Compile all the regular expressions for the datetime formats */
-  drizzled::TemporalFormat *tmp;
+  TemporalFormat *tmp;
   struct temporal_format_args current_format_args;
   int32_t x;
   
   for (x= 0; x<COUNT_KNOWN_FORMATS; ++x)
   {
     current_format_args= __format_args[x];
-    tmp= new drizzled::TemporalFormat(current_format_args.pattern);
+    tmp= new TemporalFormat(current_format_args.pattern);
     tmp->set_year_part_index(current_format_args.year_part_index);
     tmp->set_month_part_index(current_format_args.month_part_index);
     tmp->set_day_part_index(current_format_args.day_part_index);
@@ -300,7 +303,7 @@ bool init_temporal_formats()
 /** Free all allocated temporal formats */
 void deinit_temporal_formats()
 {
-  std::vector<drizzled::TemporalFormat *>::iterator p= all_temporal_formats.begin();
+  vector<TemporalFormat *>::iterator p= all_temporal_formats.begin();
   while (p != all_temporal_formats.end())
   {
     delete *p;
@@ -311,3 +314,5 @@ void deinit_temporal_formats()
   known_time_formats.clear();
   all_temporal_formats.clear();
 }
+
+} /* end namespace drizzled */

@@ -13,12 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#include "config.h"
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <mysys/my_getopt.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstdlib>
+#include "drizzled/my_getopt.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -58,8 +62,7 @@ int main(int argc, char *argv[])
   if (argc > 2)
     return 0;
 
-  my_init();
-
+  drizzled::internal::my_init();
   MY_INIT(argv[0]);
 
   for (method= AZ_METHOD_BLOCK; method < AZ_METHOD_MAX; method++)
@@ -96,7 +99,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  my_end(0);
+  drizzled::internal::my_end();
 
   return 0;
 }

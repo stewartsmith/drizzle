@@ -18,12 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/analyze.h>
+#include "drizzled/sql_table.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Analyze::execute()
 {
@@ -31,10 +33,13 @@ bool statement::Analyze::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &session->lex->select_lex;
-  bool res= mysql_analyze_table(session, first_table, &session->lex->check_opt);
+  bool res= mysql_analyze_table(session, first_table, &check_opt);
   /* ! we write after unlocking the table */
-  write_bin_log(session, true, session->query, session->query_length);
+  write_bin_log(session, session->query.c_str());
   select_lex->table_list.first= (unsigned char*) first_table;
   session->lex->query_tables= all_tables;
   return res;
 }
+
+} /* namespace drizzled */
+

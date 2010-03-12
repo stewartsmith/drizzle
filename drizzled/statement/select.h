@@ -23,27 +23,45 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
 class Select : public Statement
 {
+  /* These will move out once we have args for table functions */
+  std::string show_schema;
+  std::string show_table;
+
 public:
-  Select(enum enum_sql_command in_comm_type,
-         Session *in_session)
+  Select(Session *in_session)
     :
-      Statement(in_session, in_comm_type)
+      Statement(in_session)
   {}
+
+  void setShowPredicate(const std::string &schema_arg, const std::string &table_arg)
+  {
+    show_schema= schema_arg;
+    show_table= table_arg;
+  }
+
+  const std::string getShowSchema()
+  {
+    return show_schema;
+  }
+
+  const std::string getShowTable()
+  {
+    return show_table;
+  }
 
   bool execute();
 };
 
-} /* end namespace statement */
+} /* namespace statement */
+} /* namespace drizzled */
 
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_DEFAULT_SELECT_H */
+#endif /* DRIZZLED_STATEMENT_SELECT_H */

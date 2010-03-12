@@ -154,7 +154,7 @@ CREATE TABLE `t8` (
   `email` varchar(60) NOT NULL default '',
   PRIMARY KEY  (`pseudo`),
   UNIQUE KEY `email` (`email`)
-) ROW_FORMAT=DYNAMIC;
+);
 
 INSERT INTO t8 (pseudo,email) VALUES ('joce','test');
 INSERT INTO t8 (pseudo,email) VALUES ('joce1','test1');
@@ -199,7 +199,7 @@ CREATE TABLE `t1` (
   `maxnumrep` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
-) ROW_FORMAT=FIXED;
+);
 
 INSERT INTO t1 (numeropost,maxnumrep) VALUES (40143,1),(43506,2);
 
@@ -209,7 +209,7 @@ CREATE TABLE `t2` (
       `date` date NULL,
       `pseudo` varchar(35) NOT NULL default '',
        PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`)
-    ) ROW_FORMAT=DYNAMIC;
+    );
 
 INSERT INTO t2 (mot,topic,date,pseudo) VALUES ('joce','40143','2002-10-22','joce'), ('joce','43506','2002-10-22','joce');
 select numeropost as a FROM t1 GROUP BY (SELECT 1 FROM t1 HAVING a=1);
@@ -242,7 +242,7 @@ CREATE TABLE `t1` (
   `maxnumrep` int NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
-) ROW_FORMAT=FIXED;
+);
 
 INSERT INTO t1 (numeropost,maxnumrep) VALUES (1,0),(2,1);
 -- error 1242
@@ -334,7 +334,6 @@ INSERT INTO t1 (x) VALUES ((SELECT a FROM t2));
 select * from t1;
 insert into t2 values (1);
 INSERT INTO t1 (x) VALUES ((SELECT SUM(a) FROM t2));
--- sleep 1
 select * from t1;
 INSERT INTO t1 (x) select (SELECT SUM(a)+1 FROM t2) FROM t2;
 select * from t1;
@@ -344,7 +343,6 @@ select * from t1;
 -- error 1054
 INSERT INTO t1 (x) VALUES ((SELECT SUM(x) FROM t2));
 INSERT INTO t1 (x) VALUES ((SELECT SUM(a) FROM t2));
--- sleep 1
 select * from t1;
 --echo #
 --echo #TODO: should be uncommented after bug 380 fix pushed
@@ -368,11 +366,9 @@ select * from t1;
 replace into t1 (x, y) VALUES ((SELECT a FROM t2), (SELECT a+2 FROM t2));
 select * from t1;
 replace into t1 (x, y) VALUES ((SELECT a+3 FROM t2), (SELECT a FROM t2));
--- sleep 1
 --sorted_result
 select * from t1;
 replace into t1 (x, y) VALUES ((SELECT a+3 FROM t2), (SELECT a+1 FROM t2));
--- sleep 1
 select * from t1;
 replace into t1 (x, y) VALUES ((SELECT a+1 FROM t2), (SELECT a FROM t2));
 --sorted_result

@@ -18,10 +18,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_LONG
-#define DRIZZLE_SERVER_FIELD_LONG
+#ifndef DRIZZLED_FIELD_LONG_H
+#define DRIZZLED_FIELD_LONG_H
 
 #include <drizzled/field/num.h>
+
+namespace drizzled
+{
 
 class Field_long :public Field_num {
 public:
@@ -71,5 +74,7 @@ public:
                               bool low_byte_first);
 };
 
-#endif
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FIELD_LONG_H */
 

@@ -1132,20 +1132,20 @@ ROW_FORMAT = COMPACT;
 # - initial check;
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	Compact
+test	t1	COMPACT
 
 # - change ROW_FORMAT and check;
 
 ALTER TABLE t1 ROW_FORMAT = REDUNDANT;
 
 SELECT table_schema, table_name, row_format
-FROM INFORMATION_SCHEMA.TABLES
+FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	Redundant
+test	t1	REDUNDANT
 
 # - that's it, cleanup.
 
@@ -1153,9 +1153,9 @@ DROP TABLE t1;
 create table t1(a char(10) not null, unique key aa(a(1)),
 b char(4) not null, unique key bb(b(4))) engine=innodb;
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	varchar(10)	NO	UNI	NULL	
-b	varchar(4)	NO	PRI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	VARCHAR	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (

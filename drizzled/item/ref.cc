@@ -17,14 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <drizzled/session.h>
-#include <drizzled/error.h>
-#include <drizzled/show.h>
-#include <drizzled/item/ref.h>
+#include "config.h"
 
-using namespace drizzled;
+#include "drizzled/session.h"
+#include "drizzled/error.h"
+#include "drizzled/show.h"
+#include "drizzled/item/ref.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/item/sum.h"
+
+namespace drizzled
+{
 
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
@@ -380,11 +383,11 @@ void Item_ref::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_ref::send(plugin::Protocol *prot, String *tmp)
+bool Item_ref::send(plugin::Client *client, String *tmp)
 {
   if (result_field)
-    return prot->store(result_field);
-  return (*ref)->send(prot, tmp);
+    return client->store(result_field);
+  return (*ref)->send(client, tmp);
 }
 
 
@@ -573,3 +576,5 @@ void Item_ref::fix_after_pullout(Select_Lex *new_parent, Item **)
     depended_from= NULL;
   }
 }
+
+} /* namespace drizzled */

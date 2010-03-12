@@ -27,10 +27,14 @@
  *
  * Implementation of SQL index hints
  */
-#include "drizzled/global.h"
+#include "config.h"
 #include "drizzled/sql_string.h"
 #include "drizzled/session.h"
 #include "drizzled/index_hint.h"
+#include "drizzled/sql_table.h"
+
+namespace drizzled
+{
 
 /*
  * Names of the index hints (for error messages). Keep in sync with
@@ -64,3 +68,5 @@ void Index_hint::print(Session *session, String *str)
   }
   str->append(')');
 }
+
+} /* namespace drizzled */

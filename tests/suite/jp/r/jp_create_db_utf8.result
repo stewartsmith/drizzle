@@ -1,13 +1,13 @@
 drop database if exists `ﾆﾎﾝｺﾞ`;
 drop database if exists `日本語`;
 drop database if exists `龔龖龗`;
-SET NAMES utf8;
-SET character_set_database = utf8;
 CREATE DATABASE `ﾆﾎﾝｺﾞ`;
 CREATE DATABASE `日本語`;
 CREATE DATABASE `龔龖龗`;
 SHOW DATABASES;
 Database
+data_dictionary
+information_schema
 mysql
 test
 日本語

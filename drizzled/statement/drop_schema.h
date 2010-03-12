@@ -23,10 +23,10 @@
 
 #include <drizzled/statement.h>
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace statement
 {
 
@@ -35,14 +35,16 @@ class DropSchema : public Statement
 public:
   DropSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DROP_DB)
+      Statement(in_session)
   {}
 
   bool execute();
+  /* True if "IF EXISTS" */
+  bool drop_if_exists;
 };
 
-} /* end namespace statement */
+} /* namespace statement */
 
-} /* end namespace drizzled */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_STATEMENT_DROP_SCHEMA_H */

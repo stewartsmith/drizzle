@@ -21,15 +21,15 @@
 
 /**
  * @TODO Name this file something better and split it out if necessary.
- * base.h isn't descriptive, especially compared to global.h
  *
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
 
-#ifndef DRIZZLE_SERVER_BASE_H
-#define DRIZZLE_SERVER_BASE_H
+#ifndef DRIZZLED_BASE_H
+#define DRIZZLED_BASE_H
 
-#define CHSIZE_USED
+namespace drizzled
+{
 
 /* The following is bits in the flag parameter to ha_open() */
 
@@ -37,8 +37,6 @@
 #define HA_OPEN_WAIT_IF_LOCKED		1
 #define HA_OPEN_IGNORE_IF_LOCKED	2
 #define HA_OPEN_TMP_TABLE		4	/* Table is a temp table */
-#define HA_OPEN_ABORT_IF_CRASHED	16
-#define HA_OPEN_FOR_REPAIR		32	/* open even if crashed */
 /* Internal temp table, used for temporary results */
 #define HA_OPEN_INTERNAL_TABLE          512
 
@@ -84,9 +82,7 @@ enum ha_rkey_function {
 enum ha_key_alg {
   HA_KEY_ALG_UNDEF=	0,		/* Not specified (old file) */
   HA_KEY_ALG_BTREE=	1,		/* B-tree, default one          */
-  HA_KEY_ALG_RTREE=	2,		/* R-tree, for spatial searches */
-  HA_KEY_ALG_HASH=	3,		/* HASH keys (HEAP tables) */
-  HA_KEY_ALG_FULLTEXT=	4		/* FULLTEXT (MyISAM tables) */
+  HA_KEY_ALG_HASH=	3		/* HASH keys (HEAP tables) */
 };
 
 	/* Index and table build methods */
@@ -177,9 +173,6 @@ enum ha_extra_function {
   HA_EXTRA_PREPARE_FOR_RENAME
 };
 
-/* Compatible option, to be deleted in 6.0 */
-#define HA_EXTRA_PREPARE_FOR_DELETE HA_EXTRA_PREPARE_FOR_DROP
-
 	/* The following is parameter to ha_panic() */
 
 enum ha_panic_function {
@@ -194,28 +187,19 @@ enum ha_base_keytype {
   HA_KEYTYPE_END=0,
   HA_KEYTYPE_TEXT=1,			/* Key is sorted as letters */
   HA_KEYTYPE_BINARY=2,			/* Key is sorted as unsigned chars */
-  HA_KEYTYPE_SHORT_INT=3,
   HA_KEYTYPE_LONG_INT=4,
-  HA_KEYTYPE_FLOAT=5,
   HA_KEYTYPE_DOUBLE=6,
-  HA_KEYTYPE_NUM=7,			/* Not packed num with pre-space */
-  HA_KEYTYPE_USHORT_INT=8,
   HA_KEYTYPE_ULONG_INT=9,
   HA_KEYTYPE_LONGLONG=10,
   HA_KEYTYPE_ULONGLONG=11,
-  HA_KEYTYPE_INT24=12,
   HA_KEYTYPE_UINT24=13,
-  HA_KEYTYPE_INT8=14,
   /* Varchar (0-255 bytes) with length packed with 1 byte */
   HA_KEYTYPE_VARTEXT1=15,               /* Key is sorted as letters */
   HA_KEYTYPE_VARBINARY1=16,             /* Key is sorted as unsigned chars */
   /* Varchar (0-65535 bytes) with length packed with 2 bytes */
   HA_KEYTYPE_VARTEXT2=17,		/* Key is sorted as letters */
-  HA_KEYTYPE_VARBINARY2=18,		/* Key is sorted as unsigned chars */
-  HA_KEYTYPE_BIT=19
+  HA_KEYTYPE_VARBINARY2=18		/* Key is sorted as unsigned chars */
 };
-
-#define HA_MAX_KEYTYPE	31		/* Must be log2-1 */
 
 	/* These flags kan be OR:ed to key-flag */
 
@@ -226,11 +210,6 @@ enum ha_base_keytype {
 #define HA_UNIQUE_CHECK		256	/* Check the key for uniqueness */
 #define HA_NULL_ARE_EQUAL	2048	/* NULL in key are cmp as equal */
 #define HA_GENERATED_KEY	8192	/* Automaticly generated key */
-
-        /* The combination of the above can be used for key type comparison. */
-#define HA_KEYFLAG_MASK (HA_NOSAME | HA_PACK_KEY | HA_AUTO_KEY | \
-                         HA_BINARY_PACK_KEY | HA_UNIQUE_CHECK | \
-                         HA_NULL_ARE_EQUAL | HA_GENERATED_KEY)
 
 #define HA_KEY_HAS_PART_KEY_SEG 65536   /* Key contains partial segments */
 
@@ -266,9 +245,6 @@ enum ha_base_keytype {
 #define HA_OPTION_COMPRESS_RECORD	4
 #define HA_OPTION_TMP_TABLE		16
 #define HA_OPTION_NO_PACK_KEYS		128  /* Reserved for MySQL */
-#define HA_OPTION_CREATE_FROM_ENGINE    256
-#define HA_OPTION_NULL_FIELDS		1024
-#define HA_OPTION_PAGE_CHECKSUM		2048
 #define HA_OPTION_TEMP_COMPRESS_RECORD	((uint32_t) 16384)	/* set by isamchk */
 #define HA_OPTION_READ_ONLY_DATA	((uint32_t) 32768)	/* Set by isamchk */
 
@@ -325,7 +301,7 @@ enum ha_base_keytype {
 /*
   Errorcodes given by handler functions
 
-  opt_sum_query() assumes these codes are > 1
+  optimizer::sum_query() assumes these codes are > 1
   Do not add error numbers before HA_ERR_FIRST.
   If necessary to add lower numbers, change HA_ERR_FIRST accordingly.
 */
@@ -410,10 +386,7 @@ enum ha_base_keytype {
 
 	/* Other constants */
 
-#define HA_NAMELEN 64			/* Max length of saved filename */
-#define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
-
-typedef ulong key_part_map;
+typedef unsigned long key_part_map;
 #define HA_WHOLE_KEY  (~(key_part_map)0)
 
 	/* Intern constants in databases */
@@ -433,12 +406,10 @@ typedef ulong key_part_map;
 #define MBR_WITHIN      2048
 #define MBR_DISJOINT    4096
 #define MBR_EQUAL       8192
-#define MBR_DATA        16384
 #define SEARCH_NULL_ARE_EQUAL 32768	/* NULL in keys are equal */
 #define SEARCH_NULL_ARE_NOT_EQUAL 65536	/* NULL in keys are not equal */
 
 	/* bits in opt_flag */
-#define QUICK_USED	1
 #define READ_CACHE_USED	2
 #define READ_CHECK_USED 4
 #define KEY_READ_USED	8
@@ -452,10 +423,8 @@ typedef ulong key_part_map;
 #define HA_STATE_DELETED	8
 #define HA_STATE_NEXT_FOUND	16	/* Next found record (record before) */
 #define HA_STATE_PREV_FOUND	32	/* Prev found record (record after) */
-#define HA_STATE_NO_KEY		64	/* Last read didn't find record */
 #define HA_STATE_KEY_CHANGED	128
 #define HA_STATE_WRITE_AT_END	256	/* set in _ps_find_writepos */
-#define HA_STATE_BUFF_SAVED	512	/* If current keybuff is info->buff */
 #define HA_STATE_ROW_CHANGED	1024	/* To invalide ROW cache */
 #define HA_STATE_EXTEND_BLOCK	2048
 #define HA_STATE_RNEXT_SAME	4096	/* rnext_same occupied lastkey2 */
@@ -526,8 +495,8 @@ typedef struct st_key_multi_range
 typedef uint64_t	ha_rows;
 #define rows2double(A)	uint64_t2double(A)
 
-#define HA_POS_ERROR	(~ (ha_rows) 0)
-#define HA_OFFSET_ERROR	(~ (my_off_t) 0)
+#define HA_POS_ERROR	(~ (::drizzled::ha_rows) 0)
+#define HA_OFFSET_ERROR	(~ (::drizzled::internal::my_off_t) 0)
 
 #if SIZEOF_OFF_T == 4
 #define MAX_FILE_SIZE	INT32_MAX
@@ -537,4 +506,6 @@ typedef uint64_t	ha_rows;
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
 
-#endif /* DRIZZLE_SERVER_BASE_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_BASE_H */

@@ -17,9 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <math.h>
 #include <drizzled/function/math/ceiling.h>
 
+namespace drizzled
+{
 
 int64_t Item_func_ceiling::int_op()
 {
@@ -65,3 +68,4 @@ my_decimal *Item_func_ceiling::decimal_op(my_decimal *decimal_value)
   return 0;
 }
 
+} /* namespace drizzled */

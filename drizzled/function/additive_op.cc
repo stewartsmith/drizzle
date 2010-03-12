@@ -17,13 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
+#include "config.h"
+
 #include <drizzled/function/additive_op.h>
 
 #include <algorithm>
 
 using namespace std;
+
+namespace drizzled
+{
 
 /**
   Set precision of results for additive operations (+ and -)
@@ -45,3 +48,4 @@ void Item_func_additive_op::result_precision()
                                              unsigned_flag);
 }
 
+} /* namespace drizzled */

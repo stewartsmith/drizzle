@@ -17,13 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/item/direct_ref.h>
-
 #ifndef DRIZZLED_ITEM_OUTER_REF_H
 #define DRIZZLED_ITEM_OUTER_REF_H
 
-#include <drizzled/item/ref.h>
-#include <drizzled/item/direct_ref.h>
+#include "drizzled/item/ref.h"
+#include "drizzled/item/direct_ref.h"
+#include "drizzled/item/field.h"
 
 /*
   Class for outer fields.
@@ -34,6 +33,9 @@
   See also comments for the fix_inner_refs() and the
   Item_field::fix_outer_field() functions.
 */
+
+namespace drizzled
+{
 
 class Item_outer_ref :public Item_direct_ref
 {
@@ -77,5 +79,6 @@ public:
   virtual Ref_Type ref_type() { return OUTER_REF; }
 };
 
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_ITEM_OUTER_REF_H */

@@ -21,11 +21,17 @@
 #ifndef DRIZZLED_CURRENT_SESSION_H
 #define DRIZZLED_CURRENT_SESSION_H
 
+namespace drizzled
+{
+
 class Session;
 
+namespace memory { class Root; }
+
 Session *_current_session(void);
-#define current_session _current_session()
-MEM_ROOT *current_mem_root(void);
-MEM_ROOT **current_mem_root_ptr(void);
+#define current_session ::drizzled::_current_session()
+memory::Root *current_mem_root(void);
+
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_CURRENT_SESSION_H */

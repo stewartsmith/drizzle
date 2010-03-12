@@ -18,18 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
+#include "config.h"
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/checksum.h>
+#include "drizzled/sql_table.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Checksum::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  bool res= mysql_checksum_table(session, first_table, &session->lex->check_opt);
+  bool res= mysql_checksum_table(session, first_table, &check_opt);
   return res;
 }
+
+} /* namespace drizzled */
+

@@ -19,14 +19,18 @@
  */
 
 
-#include "drizzled/server_includes.h"
+#include "config.h"
 #include "drizzled/field/enum.h"
 #include "drizzled/error.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
+#include "drizzled/strfunc.h"
 
 #include <sstream>
 #include <string>
+
+namespace drizzled
+{
 
 /****************************************************************************
 ** enum type.
@@ -204,24 +208,6 @@ int64_t Field_enum::val_int(void)
   return 0;					// impossible
 }
 
-/**
-   Save the field metadata for enum fields.
-
-   Saves the real type in the first byte and the pack length in the
-   second byte of the field metadata array at index of *metadata_ptr and
-   *(metadata_ptr + 1).
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
-{
-  *metadata_ptr= real_type();
-  *(metadata_ptr + 1)= pack_length();
-  return 2;
-}
-
 String *Field_enum::val_str(String *, String *val_ptr)
 {
   uint32_t tmp=(uint32_t) Field_enum::val_int();
@@ -282,7 +268,7 @@ void Field_enum::sql_type(String &res) const
   res.append(')');
 }
 
-Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
+Field *Field_enum::new_field(memory::Root *root, Table *new_table,
                              bool keep_type)
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
@@ -290,3 +276,5 @@ Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
     res->typelib= copy_typelib(root, typelib);
   return res;
 }
+
+} /* namespace drizzled */

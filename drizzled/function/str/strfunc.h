@@ -17,11 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_H
-#define DRIZZLED_FUNCTION_STR_H
-
+#ifndef DRIZZLED_FUNCTION_STR_STRFUNC_H
+#define DRIZZLED_FUNCTION_STR_STRFUNC_H
 
 #include <drizzled/function/func.h>
+
+namespace drizzled
+{
 
 /* This file defines all string functions */
 
@@ -44,4 +46,6 @@ public:
   bool fix_fields(Session *session, Item **ref);
 };
 
-#endif /* DRIZZLED_FUNCTION_STR_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_FUNCTION_STR_STRFUNC_H */

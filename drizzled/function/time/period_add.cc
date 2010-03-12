@@ -17,10 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include CSTDINT_H
+#include "config.h"
+
 #include "drizzled/function/time/period_add.h"
 #include "drizzled/calendar.h"
+
+namespace drizzled
+{
 
 int64_t Item_func_period_add::val_int()
 {
@@ -30,7 +33,9 @@ int64_t Item_func_period_add::val_int()
 
   if ((null_value= args[0]->null_value || args[1]->null_value) ||
       period == 0L)
-    return 0; /* purecov: inspected */
+    return 0;
 
   return (int64_t) months_to_year_month(year_month_to_months(period) + months);
 }
+
+} /* namespace drizzled */
