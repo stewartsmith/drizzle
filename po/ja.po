@@ -732,7 +732,7 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "エラー: ORDER BY句を保持するためのメモリを確保することが出来ません。\n"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "シグナル %d がスレッド %<PRIu64> で発生しました。"
 
