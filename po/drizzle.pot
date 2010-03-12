@@ -1,3 +1,21 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Sun Microsystems
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: drizzle 2010.03.1218\n"
+"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
 msgid "Synonym for `help'."
 msgstr ""
 

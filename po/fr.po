@@ -749,7 +749,7 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Erreur : pas assez de mémoire pour stocker la clause ORDER BY\n"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Reçu un signal %d du thread %<PRIu64>"
 
