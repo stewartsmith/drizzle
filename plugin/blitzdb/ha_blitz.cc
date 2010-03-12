@@ -231,15 +231,23 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
     return HA_ERR_OUT_OF_MEM;
   }
 
+  if ((key_merge_buffer = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
+    free_share(share);
+    pthread_mutex_unlock(&blitz_utility_mutex);
+    return HA_ERR_OUT_OF_MEM;
+  }
+
   if ((held_key_buf = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
     free_share(share);
     free(key_buffer);
+    free(key_merge_buffer);
     pthread_mutex_unlock(&blitz_utility_mutex);
     return HA_ERR_OUT_OF_MEM;
   }
 
   secondary_row_buffer = NULL;
   secondary_row_buffer_size = 0;
+  key_merge_buffer_len = BLITZ_MAX_KEY_LEN;
 
   /* 'ref_length' determines the size of the buffer that the kernel
      will use to uniquely identify a row. The actual allocation is
@@ -256,6 +264,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
 
 int ha_blitz::close(void) {
   free(key_buffer);
+  free(key_merge_buffer);
   free(held_key_buf);
   free(secondary_row_buffer);
   return free_share(share);
@@ -631,34 +640,43 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
   /* We isolate this condition outside the key loop to avoid the CPU
      from going through unnecessary conditional branching on heavy
-     insertion load. */
+     insertion load. TODO: Optimize this block. PK should not need
+     to go through merge_key() since this information is redundant. */
   if (share->primary_key_exists) {
-    /* TODO: optimize this. */
-    rv = share->btrees[curr_key].write_unique(temp_pkbuf, pk_len,
-                                              temp_pkbuf, pk_len);
+    char *key;
+    size_t klen;
+
+    key = merge_key(temp_pkbuf, pk_len, temp_pkbuf, pk_len, &klen);
+
+    rv = share->btrees[curr_key].write_unique(key, klen);
     if (rv == HA_ERR_FOUND_DUPP_KEY) {
       errkey_id = curr_key;
       share->blitz_lock.slotted_unlock(lock_id);
       return rv;
     }
+
     curr_key = 1;
   }
 
   /* Loop over the keys and write them to it's exclusive tree. */
   while (curr_key < share->nkeys) {
-    size_t klen = make_index_key(key_buffer, curr_key, drizzle_row);
+    char *key;
+    size_t prefix_len, klen;
+
+    prefix_len = make_index_key(key_buffer, curr_key, drizzle_row);
+    key = merge_key(key_buffer, prefix_len, temp_pkbuf, pk_len, &klen);
 
     if (share->btrees[curr_key].unique) {
-      rv = share->btrees[curr_key].write_unique(key_buffer, klen,
-                                                temp_pkbuf, pk_len);
+      rv = share->btrees[curr_key].write_unique(key, klen);
+
       if (rv == HA_ERR_FOUND_DUPP_KEY) {
         errkey_id = curr_key;
         share->blitz_lock.slotted_unlock(lock_id);
         return rv;
       }
     } else {
-      rv = share->btrees[curr_key].write(key_buffer, klen,
-                                         temp_pkbuf, pk_len);
+      rv = share->btrees[curr_key].write(key, klen);
+
       if (rv != 0) {
         errkey_id = curr_key;
         share->blitz_lock.slotted_unlock(lock_id);
@@ -687,7 +705,6 @@ int ha_blitz::update_row(const unsigned char *old_row,
 
   /* Handle Indexes */
   if (share->nkeys > 0) {
-
     /* BlitzDB cannot update an indexed row on table scan. */
     if (table_scan)
       return HA_ERR_UNSUPPORTED;
@@ -702,34 +719,34 @@ int ha_blitz::update_row(const unsigned char *old_row,
        the existing key then write the new key. Something we should
        consider in the future is to take a diff of the keys and only
        update changed keys. */
-    int skip_len = btree_key_length(held_key, active_index);
-    char *key_suffix = held_key + skip_len; 
-    uint16_t suffix_len = uint2korr(key_suffix);
+    int skip = btree_key_length(held_key, active_index);
+    char *suffix = held_key + skip; 
+    uint16_t suffix_len = uint2korr(suffix);
+
+    suffix += sizeof(suffix_len);
 
     for (uint32_t i = 0; i < share->nkeys; i++) {
-      int klen = make_index_key(key_buffer, i, old_row);
+      char *key;
+      size_t prefix_len, klen;
 
-      /* Combine the key data from the row with our unique key. */
-      memcpy(key_buffer + klen, key_suffix,
-             sizeof(suffix_len) + suffix_len);
+      prefix_len = make_index_key(key_buffer, i, old_row);
+      key = merge_key(key_buffer, prefix_len, suffix, suffix_len, &klen);
 
-      /* Update klen to cover the entire key. */
-      klen = klen + sizeof(suffix_len) + suffix_len;
-
-      if (share->btrees[i].delete_key(key_buffer, klen) != 0) {
+      if (share->btrees[i].delete_key(key, klen) != 0) {
         errkey_id = i;
         share->blitz_lock.slotted_unlock(lock_id);
         return HA_ERR_KEY_NOT_FOUND;
       }
 
       /* Now write the new key. */
-      char *pk = key_suffix + sizeof(uint16_t);
-      klen = make_index_key(key_buffer, i, new_row);
+      prefix_len = make_index_key(key_buffer, i, new_row);
 
       if (i == table->s->primary_key) {
-        rv = share->btrees[i].write(key_buffer, klen, key_buffer, klen);
+        key = merge_key(key_buffer, prefix_len, key_buffer, prefix_len, &klen);
+        rv = share->btrees[i].write(key, klen);
       } else {
-        rv = share->btrees[i].write(key_buffer, klen, pk, suffix_len);
+        key = merge_key(key_buffer, prefix_len, suffix, suffix_len, &klen);
+        rv = share->btrees[i].write(key, klen);
       }
 
       if (rv != 0) {
@@ -902,6 +919,38 @@ size_t ha_blitz::make_index_key(char *pack_to, int key_num,
   }
 
   return ((char *)pos - pack_to);
+}
+
+char *ha_blitz::merge_key(const char *a, const size_t a_len, const char *b,
+                          const size_t b_len, size_t *merged_len) {
+
+  size_t total = a_len + sizeof(uint16_t) + b_len;
+
+  if (total > key_merge_buffer_len) {
+    key_merge_buffer = (char *)realloc(key_merge_buffer, total);
+
+    if (key_merge_buffer == NULL) {
+      errno = HA_ERR_OUT_OF_MEM;
+      return NULL;
+    }
+    key_merge_buffer_len = total;
+  }
+
+  char *pos = key_merge_buffer;
+
+  /* Copy the prefix. */
+  memcpy(pos, a, a_len);
+  pos += a_len;
+
+  /* Copy the length of b. */
+  int2store(pos, (uint16_t)b_len);
+  pos += sizeof(uint16_t);
+
+  /* Copy the suffix and we're done. */
+  memcpy(pos, b, b_len);
+
+  *merged_len = total;
+  return key_merge_buffer;
 }
 
 size_t ha_blitz::btree_key_length(const char *key, const int key_num) {

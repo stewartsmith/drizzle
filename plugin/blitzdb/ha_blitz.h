@@ -170,12 +170,10 @@ class BlitzTree {
 private:
   TCBDB *btree;
   BDBCUR *bt_cursor;
-  char *keybuf;
-  size_t keybuf_len;
 
 public:
-  BlitzTree() : bt_cursor(NULL), keybuf_len(BLITZ_MAX_KEY_LEN), length(0),
-                nparts(0), type(0), cursor_moved(false), unique(false) {}
+  BlitzTree() : bt_cursor(NULL), length(0), nparts(0), type(0),
+                cursor_moved(false), unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
@@ -199,10 +197,8 @@ public:
                     size_t *total_klen);
 
   /* BTREE INDEX WRITE RELATED */
-  int write(const char *key, const size_t klen, const char *val,
-            const size_t vlen);
-  int write_unique(const char *key, const size_t klen, const char *val,
-                   const size_t vlen);
+  int write(const char *key, const size_t klen);
+  int write_unique(const char *key, const size_t klen);
   int delete_key(const char *key, const int klen);
   int delete_cursor_pos(void);
   int delete_all(void);
@@ -260,8 +256,12 @@ private:
   int current_key_len;       /* Length of the current key */
   int current_row_len;       /* Length of the current row */
 
+  /* KEY PROCESSING BUFFERS */
+  char *key_buffer;          /* Key generation buffer */
+  char *key_merge_buffer;    /* Key Merge buffer for B+Tree */
+  size_t key_merge_buffer_len;  /* Size of the merge buffer */
+
   /* ROW PROCESSING VARIABLES */
-  char *key_buffer;                               /* Key generation buffer */
   unsigned char pack_buffer[BLITZ_MAX_ROW_STACK]; /* Pack Buffer */
   unsigned char *secondary_row_buffer;            /* For big rows */
   size_t secondary_row_buffer_size;               /* Reserved buffer size */
@@ -325,6 +325,8 @@ public:
   size_t btree_key_length(const char *key, const int key_num);
   char *native_to_blitz_key(const unsigned char *native_key,
                             const int key_num, int *return_key_length);
+  char *merge_key(const char *a, const size_t a_len, const char *b,
+                  const size_t b_len, size_t *merged_len);
   void keep_track_of_key(const char *key, const int klen);
 
   /* ROW RELATED FUNCTIONS (BLITZDB SPECIFIC) */
