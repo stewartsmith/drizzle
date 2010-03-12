@@ -939,25 +939,13 @@ const char *EmbeddedInnoDBCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-int EmbeddedInnoDBCursor::write_row(unsigned char *)
+
+static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 {
-  if (table->next_number_field)
-    update_auto_increment();
-
-  ib_err_t err;
   int colnr= 0;
-  int ret= 0;
+  ib_err_t err;
 
-  ib_trx_t transaction= *get_trx(ha_session());
-
-  tuple= ib_clust_read_tuple_create(cursor);
-
-  ib_cursor_attach_trx(cursor, transaction);
-
-  err= ib_cursor_first(cursor);
-  assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
-
-  for (Field **field= table->field; *field; field++, colnr++)
+  for (Field **field= fields; *field; field++, colnr++)
   {
     if ((**field).type() == DRIZZLE_TYPE_VARCHAR)
     {
@@ -978,6 +966,28 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
     assert (err == DB_SUCCESS);
   }
 
+  return err;
+}
+
+int EmbeddedInnoDBCursor::write_row(unsigned char *)
+{
+  if (table->next_number_field)
+    update_auto_increment();
+
+  ib_err_t err;
+  int ret= 0;
+
+  ib_trx_t transaction= *get_trx(ha_session());
+
+  tuple= ib_clust_read_tuple_create(cursor);
+
+  ib_cursor_attach_trx(cursor, transaction);
+
+  err= ib_cursor_first(cursor);
+  assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
+
+  write_row_to_innodb_tuple(table->field, tuple);
+
   err= ib_cursor_insert_row(cursor, tuple);
 
   if (err == DB_DUPLICATE_KEY)
@@ -988,6 +998,32 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   err= ib_cursor_reset(cursor);
 
   return ret;
+}
+
+int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
+                                     unsigned char * )
+{
+  ib_tpl_t update_tuple;
+  ib_err_t err;
+
+  err= ib_cursor_prev(cursor);
+  assert (err == DB_SUCCESS);
+
+  update_tuple= ib_clust_read_tuple_create(cursor);
+
+  err= ib_tuple_copy(update_tuple, tuple);
+  assert(err == DB_SUCCESS);
+
+  write_row_to_innodb_tuple(table->field, update_tuple);
+
+  err= ib_cursor_update_row(cursor, tuple, update_tuple);
+
+  ib_tuple_delete(update_tuple);
+
+  if (err == DB_SUCCESS)
+    return 0;
+  else
+    return -1;
 }
 
 int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
@@ -1109,8 +1145,6 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
     }
   }
 
-  tuple= ib_tuple_clear(tuple);
-
   return 0;
 }
 
@@ -1119,6 +1153,7 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
   ib_err_t err;
   int ret;
 
+  tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(cursor, tuple, table);
 
   err= ib_cursor_next(cursor);
@@ -1205,6 +1240,7 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
   if (err == DB_RECORD_NOT_FOUND || res != 0)
     return HA_ERR_END_OF_FILE;
 
+  tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(cursor, tuple, table);
   err= ib_cursor_next(cursor);
 
@@ -1218,6 +1254,7 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *)
 
   if (active_index == 0)
   {
+    tuple= ib_tuple_clear(tuple);
     ret= read_row_from_innodb(cursor, tuple, table);
     err= ib_cursor_next(cursor);
   }
@@ -1239,6 +1276,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 
   if (active_index == 0)
   {
+    tuple= ib_tuple_clear(tuple);
     ret= read_row_from_innodb(cursor, tuple, table);
     err= ib_cursor_prev(cursor);
   }
@@ -1263,6 +1301,7 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *)
 
   if (active_index == 0)
   {
+    tuple= ib_tuple_clear(tuple);
     ret= read_row_from_innodb(cursor, tuple, table);
     err= ib_cursor_next(cursor);
   }
@@ -1287,6 +1326,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
 
   if (active_index == 0)
   {
+    tuple= ib_tuple_clear(tuple);
     ret= read_row_from_innodb(cursor, tuple, table);
     err= ib_cursor_prev(cursor);
   }
