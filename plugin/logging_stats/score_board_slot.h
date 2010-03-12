@@ -40,7 +40,8 @@ class ScoreBoardSlot
 public:
   ScoreBoardSlot() 
     :
-      in_use(false)
+      in_use(false),
+      sessionId(0)
   {}
 
   ~ScoreBoardSlot() 

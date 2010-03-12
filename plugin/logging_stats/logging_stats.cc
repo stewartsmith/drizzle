@@ -46,7 +46,7 @@ using namespace std;
 
 static bool sysvar_logging_stats_enabled= false;
 
-static uint32_t sysvar_logging_stats_scoreboard_size= 1500;
+static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
 pthread_rwlock_t LOCK_scoreboard;
 
