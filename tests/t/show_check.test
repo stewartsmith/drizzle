@@ -46,6 +46,7 @@ drop table t1;
 show variables like "server_id%";
 show variables like "SERVER_id%";
 show variables like "this_doesn't_exists%";
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status from test like "this_doesn't_exists%";
 show databases;
 show databases like "test%";
@@ -209,37 +210,37 @@ CREATE TEMPORARY TABLE t3 (
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 truncate table t1;
 truncate table t2;
 truncate table t3;
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 
 drop table t1, t2, t3;

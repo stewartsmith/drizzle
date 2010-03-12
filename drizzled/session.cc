@@ -145,15 +145,15 @@ const char *get_session_proc_info(Session *session)
   return session->get_proc_info();
 }
 
-void **Session::getEngineData(const plugin::StorageEngine *engine)
+void **Session::getEngineData(const plugin::MonitoredInTransaction *monitored)
 {
-  return static_cast<void **>(&ha_data[engine->slot].ha_ptr);
+  return static_cast<void **>(&ha_data[monitored->getId()].ha_ptr);
 }
 
-ResourceContext *Session::getResourceContext(const plugin::StorageEngine *engine,
+ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransaction *monitored,
                                              size_t index)
 {
-  return &ha_data[engine->getSlot()].resource_context[index];
+  return &ha_data[monitored->getId()].resource_context[index];
 }
 
 extern "C"
@@ -185,6 +185,7 @@ Session::Session(plugin::Client *client_arg)
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
   user_time(0),
+  ha_data(plugin::num_trx_monitored_objects),
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
@@ -231,7 +232,6 @@ Session::Session(plugin::Client *client_arg)
   file_id = 0;
   query_id= 0;
   warn_query_id= 0;
-  memset(ha_data, 0, sizeof(ha_data));
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
@@ -673,23 +673,14 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  bool is_authenticated;
-
-  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
-  {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), getSecurityContext().getIp().c_str());
-    return false;
-  }
-
-  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
+  const string passwd_str(passwd, passwd_len);
+  bool is_authenticated=
+    plugin::Authentication::isAuthenticated(getSecurityContext(),
+                                            passwd_str);
 
   if (is_authenticated != true)
   {
-    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
-             getSecurityContext().getUser().c_str(),
-             getSecurityContext().getIp().c_str(),
-             passwd_len ? ER(ER_YES) : ER(ER_NO));
-
+    /* isAuthenticated has pushed the error message */
     return false;
   }
 
@@ -2040,22 +2031,17 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
+bool Session::rm_temporary_table(TableIdentifier &identifier)
 {
-  bool error= false;
-
-  assert(base);
-
-  if (plugin::StorageEngine::deleteDefinitionFromPath(identifier))
-    error= true;
-
-  if (base->doDropTable(*this, identifier.getPath()))
+  if (not plugin::StorageEngine::dropTable(*this, identifier))
   {
-    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getPath(), errno);
+
+    return true;
   }
-  return error;
+
+  return false;
 }
 
 bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)

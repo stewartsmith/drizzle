@@ -29,6 +29,7 @@
 #include <drizzled/gettext.h>
 
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/authorization.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -1338,11 +1339,11 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam->resetTable(session, share, db_stat);
 
 
-  if (!(outparam->alias= strdup(alias)))
+  if (not (outparam->alias= strdup(alias)))
     goto err;
 
   /* Allocate Cursor */
-  if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
+  if (not (outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
     goto err;
 
   error= 4;
@@ -1942,6 +1943,12 @@ bool check_db_name(LEX_STRING *org_name)
 {
   char *name= org_name->str;
   uint32_t name_length= org_name->length;
+
+  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                              string(name, name_length)))
+  {
+    return 1;
+  }
 
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
@@ -3355,7 +3362,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   share= *table->s;
   new_table.s= &share;
   new_table.s->storage_engine= myisam_engine;
-  if (!(new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
+  if (not (new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
     return true;				// End of memory
 
   save_proc_info=session->get_proc_info();

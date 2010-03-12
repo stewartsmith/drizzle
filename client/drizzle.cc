@@ -1575,7 +1575,7 @@ static struct my_option my_long_options[] =
   {"ping", OPT_PING, N_("Ping the server to check if it's alive."),
    (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"mysql", 'm', N_("Use MySQL Protocol."),
-   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
    0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };

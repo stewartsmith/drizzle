@@ -38,6 +38,9 @@
 
 using namespace std;
 
+namespace drizzle_protocol
+{
+
 /*
   The following handles the differences when this is linked between the
   client and the server.
@@ -888,3 +891,4 @@ void drizzleclient_drizzleclient_net_clear_error(NET *net)
   strcpy(net->sqlstate, not_error_sqlstate);
 }
 
+} /* namespace drizzle_protocol */
