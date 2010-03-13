@@ -30,9 +30,25 @@
 /**
  * @details
  *
+ * This tracks current user commands. It uses a scoreboard
+ * approach that initializes the scoreboard size to the 
+ * value set by logging_stats_scoreboard_size. 
+ * 
+ * Locking   
  *
- *
- *
+ * A RW lock is taken to locate a open slot for a session or to locate the
+ * slot that the current session has claimed. 
+ * 
+ * A read lock is taken when the table is queried in the data_dictionary.
+ * 
+ * TODO 
+ * 
+ * Save the statistics off into a vector so you can query by user/ip and get
+ * commands run based on those keys. 
+ * 
+ * Consider adding the scoreboard object to the Session class. This may become
+ * a more valid choice as more statistics are moved to using a scoreboard 
+ * approach.  
  */
 
 #include "config.h"
@@ -179,10 +195,6 @@ bool LoggingStats::post(Session *session)
 
   if (our_slot != -1)
   {
-    score_board_slot->setInUse(true);
-    score_board_slot->setSessionId(session->getSessionId());
-    score_board_slot->setUser(session->getSecurityContext().getUser());
-    score_board_slot->setIp(session->getSecurityContext().getIp());
     pthread_rwlock_unlock(&LOCK_scoreboard); 
   }
   else if (open_slot != -1)
@@ -302,6 +314,17 @@ static int deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_UINT(scoreboard_size,
+                           sysvar_logging_stats_scoreboard_size,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Max number of concurrent sessions that will be logged"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           2000, /* default */
+                           1000, /* minimum */
+                           50000, 
+                           0);
+
 static DRIZZLE_SYSVAR_BOOL(enable,
                            sysvar_logging_stats_enabled,
                            PLUGIN_VAR_NOCMDARG,
@@ -311,6 +334,7 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            false /* default */);
 
 static drizzle_sys_var* system_var[]= {
+  DRIZZLE_SYSVAR(scoreboard_size),
   DRIZZLE_SYSVAR(enable),
   NULL
 };
