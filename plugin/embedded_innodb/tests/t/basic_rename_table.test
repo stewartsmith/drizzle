@@ -1,0 +1,4 @@
+create table t1 (a int);
+rename table t1 to t2;
+show tables;
+drop table t2;

@@ -88,6 +88,8 @@ public:
                     drizzled::message::Table&);
 
   int doDropTable(Session&, const string& table_name);
+  int doRenameTable(Session* session,
+                    const char *from, const char *to);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -726,6 +728,102 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string& table_name
 
   return 0;
 }
+
+static ib_err_t rename_table_message(ib_trx_t transaction, const char* from, const char* to)
+{
+  ib_crsr_t cursor;
+  ib_tpl_t search_tuple;
+  ib_tpl_t read_tuple;
+  ib_tpl_t update_tuple;
+  int res;
+  ib_err_t err;
+  ib_err_t rollback_err;
+
+  err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
+  if (err != DB_SUCCESS)
+  {
+    rollback_err= ib_trx_rollback(transaction);
+    assert(rollback_err == DB_SUCCESS);
+    return err;
+  }
+
+  search_tuple= ib_clust_search_tuple_create(cursor);
+  read_tuple= ib_clust_read_tuple_create(cursor);
+
+  err= ib_col_set_value(search_tuple, 0, from, strlen(from));
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+//  ib_cursor_set_match_mode(cursor, IB_EXACT_MATCH);
+
+  err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  if (err == DB_RECORD_NOT_FOUND || res != 0)
+    goto rollback;
+
+  err= ib_cursor_read_row(cursor, read_tuple);
+  if (err == DB_RECORD_NOT_FOUND || res != 0)
+    goto rollback;
+
+  update_tuple= ib_clust_read_tuple_create(cursor);
+
+  err= ib_tuple_copy(update_tuple, read_tuple);
+  assert(err == DB_SUCCESS);
+
+  err= ib_col_set_value(update_tuple, 0, to, strlen(to));
+  err= ib_cursor_update_row(cursor, read_tuple, update_tuple);
+
+
+  ib_tuple_delete(update_tuple);
+  ib_tuple_delete(read_tuple);
+  ib_tuple_delete(search_tuple);
+
+  err= ib_cursor_close(cursor);
+
+rollback:
+  return err;
+}
+
+int EmbeddedInnoDBEngine::doRenameTable(Session* session,
+                                        const char *from, const char *to)
+{
+  ib_trx_t innodb_schema_transaction;
+  ib_err_t err;
+
+  innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  err= ib_schema_lock_exclusive(innodb_schema_transaction);
+  if (err != DB_SUCCESS)
+  {
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_DELETE_FILE,
+                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        err, ib_strerror(err));
+
+    goto rollback;
+  }
+
+  err= ib_table_rename(innodb_schema_transaction,
+                       from+2,
+                       to+2);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  err= rename_table_message(innodb_schema_transaction, from+2, to+2);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  err= ib_trx_commit(innodb_schema_transaction);
+  if (err != DB_SUCCESS)
+    goto rollback;
+
+  return 0;
+rollback:
+  ib_err_t rollback_err= ib_schema_unlock(innodb_schema_transaction);
+  assert(rollback_err == DB_SUCCESS);
+  rollback_err= ib_trx_rollback(innodb_schema_transaction);
+  assert(rollback_err == DB_SUCCESS);
+  return -1;
+}
+
 
 void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
                                            string& database_name,
