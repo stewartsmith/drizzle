@@ -1,4 +1,4 @@
-# Albanian translation for drizzle
+# Telugu translation for drizzle
 # Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-06-01 19:34+0000\n"
-"Last-Translator: heroid <heroid@ayih.org>\n"
-"Language-Team: Albanian <sq@li.org>\n"
+"PO-Revision-Date: 2009-10-13 03:37+0000\n"
+"Last-Translator: వీవెన్ (Veeven) <Unknown>\n"
+"Language-Team: Telugu <te@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,11 +20,11 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Sinonim për 'ndihmë'."
+msgstr ""
 
 #: client/drizzle.cc:274
 msgid "Clear command."
-msgstr "Fshije komanden"
+msgstr ""
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
@@ -41,7 +41,7 @@ msgstr ""
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
-msgstr "Largohu nga drizzle. E njejta si largim."
+msgstr ""
 
 #: client/drizzle.cc:282
 msgid "Send command to drizzle server."
@@ -49,7 +49,7 @@ msgstr ""
 
 #: client/drizzle.cc:283
 msgid "Display this help."
-msgstr "Shfaqe këtë ndihmë"
+msgstr "ఈ సహాయాన్ని చూపిస్తుంది."
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
@@ -57,7 +57,7 @@ msgstr ""
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
-msgstr "Mos shkruaj në skedarin e jashtëm"
+msgstr ""
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -65,19 +65,19 @@ msgstr ""
 
 #: client/drizzle.cc:288
 msgid "Print current command."
-msgstr "Shtype komandën e tanishme."
+msgstr ""
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
-msgstr "Ndrrysho kërkesat e drizzle."
+msgstr ""
 
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
-msgstr "Largohu nga drizzle."
+msgstr ""
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
-msgstr "Rikrijo hash-in e kompletuar"
+msgstr ""
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
