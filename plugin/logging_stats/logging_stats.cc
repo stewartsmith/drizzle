@@ -30,11 +30,15 @@
 /**
  * @details
  *
- * This tracks current user commands. It uses a scoreboard
- * approach that initializes the scoreboard size to the 
- * value set by logging_stats_scoreboard_size. 
- * 
- * Locking   
+ * This tracks current user commands. The commands are logged using
+ * the post() and postEnd() logging APIs. It uses a scoreboard
+ * approach that initializes the scoreboard size to the value set
+ * by logging_stats_scoreboard_size. Each ScoreBoardSlot wraps 
+ * a UserCommand object containing the statistics for a particular
+ * session. As other statistics are added they can then be added
+ * to the ScoreBoardSlot object. 
+ *
+ * Locking  
  *
  * A RW lock is taken to locate a open slot for a session or to locate the
  * slot that the current session has claimed. 
@@ -42,13 +46,14 @@
  * A read lock is taken when the table is queried in the data_dictionary.
  * 
  * TODO 
- * 
+ *
+ * To improve as more statistics are added, a pointer to the scoreboard
+ * slot should be added to the Session object. This will avoid the session
+ * having to do multiple lookups in the scoreboard.  
+ *  
  * Save the statistics off into a vector so you can query by user/ip and get
- * commands run based on those keys. 
+ * commands run based on those keys over time. 
  * 
- * Consider adding the scoreboard object to the Session class. This may become
- * a more valid choice as more statistics are moved to using a scoreboard 
- * approach.  
  */
 
 #include "config.h"
