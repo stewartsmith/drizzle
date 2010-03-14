@@ -581,7 +581,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_commit_count);
         }
@@ -593,7 +593,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_commit_count);
         }
@@ -659,7 +659,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_rollback_count);
         }
@@ -671,7 +671,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_rollback_count);
         }
