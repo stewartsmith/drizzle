@@ -82,35 +82,63 @@ bool LibInnoDBConfigTool::Generator::populate()
 {
   if (names_next < names_count)
   {
-    push(names[names_next]);
+    const char* config_name= names[names_next];
+
+    push(config_name);
 
     ib_cfg_type_t type;
-    ib_err_t err= ib_cfg_var_get_type(names[names_next], &type);
+    ib_err_t err= ib_cfg_var_get_type(config_name, &type);
+    assert(err == DB_SUCCESS);
+
+    void *value_ptr;
+    err= ib_cfg_get(config_name, &value_ptr);
     assert(err == DB_SUCCESS);
 
     switch(type)
     {
     case IB_CFG_IBOOL:
+    {
       push("BOOL");
+      ib_bool_t value= (ib_bool_t)value_ptr;
+      if (value == IB_FALSE)
+        push("false");
+      else
+        push("true");
       break;
+    }
     case IB_CFG_ULINT:
+    {
       push("ULINT");
+      push((uint64_t)value_ptr);
       break;
+    }
     case IB_CFG_ULONG:
+    {
       push("ULONG");
+      push((uint64_t)value_ptr);
       break;
+    }
     case IB_CFG_TEXT:
+    {
       push("TEXT");
+      if (value_ptr == NULL)
+        push();
+      else
+        push((char*)value_ptr);
       break;
+    }
     case IB_CFG_CB:
       push("CALLBACK");
+      if (value_ptr == NULL)
+        push();
+      else
+        push("Is set");
       break;
     default:
       push("UNKNOWN");
+      push("UNKNOWN");
       break;
     }
-
-    push("");
 
     names_next++;
     return true;
