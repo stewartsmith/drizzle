@@ -17,9 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include "ha_blitz.h"
 #include <sys/stat.h>
 
+using namespace std;
 using namespace drizzled;
 
 static int free_share(BlitzShare *share);
@@ -649,12 +651,12 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
     key = merge_key(temp_pkbuf, pk_len, temp_pkbuf, pk_len, &klen);
 
     rv = share->btrees[curr_key].write_unique(key, klen);
+
     if (rv == HA_ERR_FOUND_DUPP_KEY) {
       errkey_id = curr_key;
       share->blitz_lock.slotted_unlock(lock_id);
       return rv;
     }
-
     curr_key = 1;
   }
 
@@ -697,7 +699,6 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
 int ha_blitz::update_row(const unsigned char *old_row,
                          unsigned char *new_row) {
-
   int rv;
   uint32_t lock_id = 0;
 
