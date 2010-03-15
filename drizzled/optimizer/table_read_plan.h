@@ -23,7 +23,6 @@
 namespace drizzled
 {
 
-class SEL_TREE;
 struct st_ror_scan_info;
 
 namespace optimizer
@@ -31,6 +30,7 @@ namespace optimizer
 
 class Parameter;
 class SEL_ARG;
+class SEL_TREE;
 
 /*
   Table rows retrieval plan. Range optimizer creates QuickSelectInterface-derived
