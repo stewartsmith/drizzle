@@ -284,11 +284,6 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
 static
 optimizer::GroupMinMaxReadPlan *get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree);
 
-static void print_sel_tree(optimizer::Parameter *param,
-                           optimizer::SEL_TREE *tree,
-                           key_map *tree_map,
-                           const char *msg);
-
 static optimizer::SEL_TREE *tree_and(optimizer::RangeParameter *param, 
                                      optimizer::SEL_TREE *tree1, 
                                      optimizer::SEL_TREE *tree2);
@@ -983,7 +978,6 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
        ptree != imerge->trees_next;
        ptree++, cur_child++)
   {
-    print_sel_tree(param, *ptree, &(*ptree)->keys_map, "tree in optimizer::SEL_IMERGE");
     if (!(*cur_child= get_key_scans_params(param, *ptree, true, false, read_time)))
     {
       /*
@@ -2013,7 +2007,6 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
     key reads at all, e.g. tree for expression "key1 is not null" where key1
     is defined as "not null".
   */
-  print_sel_tree(param, tree, &tree->keys_map, "tree scans");
   tree->ror_scans_map.reset();
   tree->n_ror_scans= 0;
   for (idx= 0,key=tree->keys, end=key+param->keys; key != end; key++,idx++)
@@ -2052,7 +2045,6 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
     }
   }
 
-  print_sel_tree(param, tree, &tree->ror_scans_map, "ROR scans");
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
@@ -5585,32 +5577,6 @@ optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer:
     quick->read_time= read_cost;
   }
   return quick;
-}
-
-
-static void print_sel_tree(optimizer::Parameter *param, optimizer::SEL_TREE *tree, key_map *tree_map, const char *)
-{
-  optimizer::SEL_ARG **key= NULL;
-  optimizer::SEL_ARG **end= NULL;
-  int idx= 0;
-  char buff[1024];
-
-  String tmp(buff,sizeof(buff),&my_charset_bin);
-  tmp.length(0);
-  for (idx= 0, key=tree->keys, end= key + param->keys;
-       key != end;
-       key++, idx++)
-  {
-    if (tree_map->test(idx))
-    {
-      uint32_t keynr= param->real_keynr[idx];
-      if (tmp.length())
-        tmp.append(',');
-      tmp.append(param->table->key_info[keynr].name);
-    }
-  }
-  if (! tmp.length())
-    tmp.append(STRING_WITH_LEN("(empty)"));
 }
 
 
