@@ -2083,7 +2083,9 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
     true  error
 */
 
-bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+bool mysql_create_like_table(Session* session,
+                             TableIdentifier &destination_identifier,
+                             TableList* table, TableList* src_table,
                              message::Table& create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set)
@@ -2108,9 +2110,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   */
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
-
-  TableIdentifier destination_identifier(db, table_name,
-                                         lex_identified_temp_table ? TEMP_TABLE : STANDARD_TABLE);
 
   TableIdentifier src_identifier(src_table->table->s->db.str,
                                  src_table->table->s->table_name.str, src_table->table->s->tmp_table);
@@ -2186,8 +2185,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       }
       else
       {
-        TableIdentifier identifier(db, table_name, STANDARD_TABLE);
-        quick_rm_table(*session, identifier);
+        quick_rm_table(*session, destination_identifier);
       }
     } 
     else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
