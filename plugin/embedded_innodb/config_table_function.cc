@@ -19,6 +19,8 @@
 #include "config.h"
 #include "drizzled/plugin/table_function.h"
 
+#include "embedded_innodb-1.0/innodb.h"
+
 #include "config_table_function.h"
 
 using namespace std;
@@ -38,8 +40,13 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
+  private:
+    const char **names;
+    uint32_t names_count;
+    uint32_t names_next;
   public:
     Generator(drizzled::Field **arg);
+    ~Generator();
 
     bool populate();
   };
@@ -59,12 +66,29 @@ LibInnoDBConfigTool::LibInnoDBConfigTool() :
 }
 
 LibInnoDBConfigTool::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  names_next(0)
 {
+  ib_err_t err= ib_cfg_get_all(&names, &names_count);
+  assert(err == DB_SUCCESS);
+}
+
+LibInnoDBConfigTool::Generator::~Generator()
+{
+  free(names);
 }
 
 bool LibInnoDBConfigTool::Generator::populate()
 {
+  if (names_next < names_count)
+  {
+    push(names[names_next]);
+    push("");
+    push("");
+
+    names_next++;
+    return true;
+  }
   return false; // No more rows
 }
 
