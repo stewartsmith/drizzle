@@ -8,41 +8,41 @@ INNODB_CONFIGURATION	CREATE TABLE `innodb_configuration` (
 SELECT COUNT(*) FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
 COUNT(*)
 36
-SELECT NAME FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
-NAME
-adaptive_hash_index
-adaptive_flushing
-additional_mem_pool_size
-autoextend_increment
-buffer_pool_size
-checksums
-data_file_path
-data_home_dir
-doublewrite
-file_format
-file_io_threads
-file_per_table
-flush_log_at_trx_commit
-flush_method
-force_recovery
-io_capacity
-lock_wait_timeout
-log_buffer_size
-log_file_size
-log_files_in_group
-log_group_home_dir
-max_dirty_pages_pct
-max_purge_lag
-lru_old_blocks_pct
-lru_block_access_recency
-open_files
-read_io_threads
-write_io_threads
-pre_rollback_hook
-print_verbose_log
-rollback_on_timeout
-stats_sample_pages
-status_file
-sync_spin_loops
-use_sys_malloc
-version
+SELECT NAME,TYPE FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
+NAME	TYPE
+adaptive_hash_index	BOOL
+adaptive_flushing	BOOL
+additional_mem_pool_size	ULINT
+autoextend_increment	ULONG
+buffer_pool_size	ULINT
+checksums	BOOL
+data_file_path	TEXT
+data_home_dir	TEXT
+doublewrite	BOOL
+file_format	TEXT
+file_io_threads	ULINT
+file_per_table	BOOL
+flush_log_at_trx_commit	ULONG
+flush_method	TEXT
+force_recovery	ULINT
+io_capacity	ULONG
+lock_wait_timeout	ULINT
+log_buffer_size	ULINT
+log_file_size	ULINT
+log_files_in_group	ULINT
+log_group_home_dir	TEXT
+max_dirty_pages_pct	ULONG
+max_purge_lag	ULONG
+lru_old_blocks_pct	ULINT
+lru_block_access_recency	ULINT
+open_files	ULINT
+read_io_threads	ULINT
+write_io_threads	ULINT
+pre_rollback_hook	CALLBACK
+print_verbose_log	BOOL
+rollback_on_timeout	BOOL
+stats_sample_pages	ULINT
+status_file	BOOL
+sync_spin_loops	ULONG
+use_sys_malloc	BOOL
+version	TEXT

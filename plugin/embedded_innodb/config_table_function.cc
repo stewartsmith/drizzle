@@ -83,7 +83,33 @@ bool LibInnoDBConfigTool::Generator::populate()
   if (names_next < names_count)
   {
     push(names[names_next]);
-    push("");
+
+    ib_cfg_type_t type;
+    ib_err_t err= ib_cfg_var_get_type(names[names_next], &type);
+    assert(err == DB_SUCCESS);
+
+    switch(type)
+    {
+    case IB_CFG_IBOOL:
+      push("BOOL");
+      break;
+    case IB_CFG_ULINT:
+      push("ULINT");
+      break;
+    case IB_CFG_ULONG:
+      push("ULONG");
+      break;
+    case IB_CFG_TEXT:
+      push("TEXT");
+      break;
+    case IB_CFG_CB:
+      push("CALLBACK");
+      break;
+    default:
+      push("UNKNOWN");
+      break;
+    }
+
     push("");
 
     names_next++;
