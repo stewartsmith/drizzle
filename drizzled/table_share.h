@@ -36,6 +36,8 @@
 namespace drizzled
 {
 
+typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
+
 class TableShare
 {
 public:
@@ -210,7 +212,13 @@ public:
   }
 
   uint32_t   block_size;                   /* create information */
+
   uint64_t   version;
+  uint64_t getVersion()
+  {
+    return version;
+  }
+
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
   uint32_t   stored_rec_length;         /* Stored record length*/
@@ -309,6 +317,11 @@ public:
   enum tmp_table_type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
+  uint32_t getTableCount()
+  {
+    return ref_count;
+  }
+
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
@@ -343,9 +356,20 @@ public:
 
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
+
   bool name_lock;
+  bool isNameLock() const
+  {
+    return name_lock;
+  }
+
   bool replace_with_name_lock;
+
   bool waiting_on_cond;                 /* Protection against free */
+  bool isWaitingOnCondition()
+  {
+    return waiting_on_cond;
+  }
 
   /*
     Set of keys in use, implemented as a Bitmap.
@@ -561,6 +585,7 @@ public:
   static void cacheStop(void);
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
+  static TableDefinitionCache &getCache();
   static TableShare *getShare(const char *db, const char *table_name);
   static TableShare *getShare(Session *session, 
                               TableList *table_list, char *key,

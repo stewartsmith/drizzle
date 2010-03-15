@@ -1,0 +1,18 @@
+show create table data_dictionary.TABLE_CACHE;
+
+--replace_column 1 #
+select count(*) FROM data_dictionary.TABLE_CACHE;
+
+flush tables;
+
+--replace_column 1 #  6 # 8 # 9 # 10 # 11 #
+select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME, ARCHETYPE;
+
+create table a ( a int);
+create table b ( b int);
+--replace_column 1 #  6 # 8 # 9 # 10 # 11 #
+select * FROM a,b;
+--replace_column 1 #  6 # 8 # 9 # 10 # 11 #
+select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME, ARCHETYPE;
+
+DROP TABLES a,b;
