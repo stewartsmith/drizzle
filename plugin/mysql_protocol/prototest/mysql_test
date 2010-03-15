@@ -76,7 +76,11 @@ class TestHandshake(unittest.TestCase):
       if x == 1:
         self.s.send('\x00')
       elif x > 1:
-        self.s.send('\x00\x02' + '\x00' * (x - 2))
+        try:
+          self.s.send('\x00\x02' + '\x00' * (x - 2))
+        except IOError:
+          self.assertTrue(x >= 1024*1024)
+          return
 
       (packet, data) = self.verifyPacket(2)
 
@@ -100,7 +104,12 @@ class TestHandshake(unittest.TestCase):
       self.s.send(Packet(size=x, sequence=1).pack())
 
       if x > 0:
-        self.s.send('\xff' * x)
+        try:
+          self.s.send('\xff' * x)
+        except IOError:
+          self.assertTrue(x >= 1024*1024)
+          return
+
 
       (packet, data) = self.verifyPacket(2)
 
@@ -310,7 +319,11 @@ class TestCommand(unittest.TestCase):
     for x in common_range + range(1024*1024*2-20, 1024*1024*2+20):
       data = QueryCommand(query="SELECT '" + 'x' * x + "'").pack()
       self.s.send(Packet(size=len(data), sequence=0).pack())
-      self.s.send(data)
+      try:
+        self.s.send(data)
+      except IOError:
+        self.assertTrue(len(data) >= 1024*1024)
+        return
 
       packet = Packet(self.readData(4))
       self.assertEqual(packet.sequence, 1)
