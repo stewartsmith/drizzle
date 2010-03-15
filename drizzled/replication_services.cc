@@ -205,43 +205,6 @@ void ReplicationServices::cleanupTransaction(message::Transaction *in_transactio
   in_session->setTransactionMessage(NULL);
 }
 
-bool ReplicationServices::transactionContainsBulkSegment(const message::Transaction &transaction) const
-{
-  size_t num_statements= transaction.statement_size();
-  if (num_statements == 0)
-    return false;
-
-  /*
-   * Only INSERT, UPDATE, and DELETE statements can possibly
-   * have bulk segments.  So, we loop through the statements
-   * checking for segment_id > 1 in those specific submessages.
-   */
-  size_t x;
-  for (x= 0; x < num_statements; ++x)
-  {
-    const message::Statement &statement= transaction.statement(x);
-    message::Statement::Type type= statement.type();
-
-    switch (type)
-    {
-      case message::Statement::INSERT:
-        if (statement.insert_data().segment_id() > 1)
-          return true;
-        break;
-      case message::Statement::UPDATE:
-        if (statement.update_data().segment_id() > 1)
-          return true;
-        break;
-      case message::Statement::DELETE:
-        if (statement.delete_data().segment_id() > 1)
-          return true;
-        break;
-      default:
-        break;
-    }
-  }
-  return false;
-}
 void ReplicationServices::commitTransaction(Session *in_session)
 {
   if (! is_active)
@@ -306,7 +269,7 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
    *    ROLLBACK to indicate to replicators that previously-transmitted
    *    messages must be un-applied.
    */
-  if (unlikely(transactionContainsBulkSegment(*transaction)))
+  if (unlikely(message::transactionContainsBulkSegment(*transaction)))
   {
     /*
      * Clear the transaction, create a Rollback statement message, 
