@@ -79,6 +79,8 @@ public:
   }
 
 private:
+  static const int32_t UNINITIALIZED= -1;
+
   bool isBeingLogged(drizzled::Session *session);
 
   void updateScoreBoard(ScoreBoardSlot *score_board_slot, drizzled::Session *session);

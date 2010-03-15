@@ -41,7 +41,7 @@ public:
   ScoreBoardSlot() 
     :
       in_use(false),
-      sessionId(0)
+      session_id(0)
   {}
 
   ~ScoreBoardSlot() 
@@ -59,14 +59,14 @@ public:
     return user_commands;
   }
 
-  void setSessionId(uint64_t in_sessionId)
+  void setSessionId(uint64_t in_session_id)
   {
-    sessionId= in_sessionId;
+    session_id= in_session_id;
   }
 
   uint64_t getSessionId()
   {
-    return sessionId;
+    return session_id;
   }
 
   void setInUse(bool in_in_use)
@@ -102,7 +102,7 @@ public:
   void reset()
   {
     in_use= false;
-    sessionId= 0;
+    session_id= 0;
     if (user_commands)
     {
       user_commands->reset();
@@ -114,7 +114,7 @@ private:
   std::string user;
   std::string ip;
   bool in_use;
-  uint64_t sessionId;
+  uint64_t session_id;
 };
  
 #endif /* PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H */

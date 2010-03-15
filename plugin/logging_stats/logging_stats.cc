@@ -71,7 +71,7 @@ static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
 pthread_rwlock_t LOCK_scoreboard;
 
-LoggingStats::LoggingStats(std::string name_arg) : drizzled::plugin::Logging(name_arg)
+LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
   scoreboard_size= sysvar_logging_stats_scoreboard_size;
   score_board_slots= new ScoreBoardSlot[scoreboard_size];
@@ -167,8 +167,8 @@ bool LoggingStats::post(Session *session)
 
   pthread_rwlock_wrlock(&LOCK_scoreboard);
   ScoreBoardSlot *score_board_slot;
-  int our_slot= -1; 
-  int open_slot= -1;
+  int our_slot= UNINITIALIZED; 
+  int open_slot= UNINITIALIZED;
 
   for (uint32_t j=0; j < scoreboard_size; j++)
   {
@@ -198,11 +198,11 @@ bool LoggingStats::post(Session *session)
     }
   }
 
-  if (our_slot != -1)
+  if (our_slot != UNINITIALIZED)
   {
     pthread_rwlock_unlock(&LOCK_scoreboard); 
   }
-  else if (open_slot != -1)
+  else if (open_slot != UNINITIALIZED)
   {
     score_board_slot= &score_board_slots[open_slot];
     score_board_slot->setInUse(true);
@@ -276,7 +276,7 @@ static void enable(Session *,
 
 static bool initTable()
 {
-  commands_tool= new(std::nothrow)CommandsTool(logging_stats);
+  commands_tool= new(nothrow)CommandsTool(logging_stats);
 
   if (! commands_tool)
   {
@@ -286,7 +286,7 @@ static bool initTable()
   return false;
 }
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(Registry &registry)
 {
   logging_stats= new LoggingStats("logging_stats");
 
@@ -306,7 +306,7 @@ static int init(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static int deinit(drizzled::plugin::Registry &registry)
+static int deinit(Registry &registry)
 {
   if (logging_stats)
   {

@@ -30,8 +30,9 @@
 #include <config.h>          
 #include "stats_schema.h"
 
-using namespace std;
 using namespace drizzled;
+using namespace plugin;
+using namespace std;
 
 CommandsTool::CommandsTool(LoggingStats *logging_stats) :
   plugin::TableFunction("DATA_DICTIONARY", "SQL_COMMANDS_BY_USER")
@@ -40,16 +41,16 @@ CommandsTool::CommandsTool(LoggingStats *logging_stats) :
 
   add_field("USER");
   add_field("IP");
-  add_field("COUNT_SELECT", plugin::TableFunction::NUMBER);
-  add_field("COUNT_DELETE", plugin::TableFunction::NUMBER);
-  add_field("COUNT_UPDATE", plugin::TableFunction::NUMBER);
-  add_field("COUNT_INSERT", plugin::TableFunction::NUMBER);
-  add_field("COUNT_ROLLBACK", plugin::TableFunction::NUMBER);
-  add_field("COUNT_COMMIT", plugin::TableFunction::NUMBER);
-  add_field("COUNT_CREATE", plugin::TableFunction::NUMBER);
-  add_field("COUNT_ALTER", plugin::TableFunction::NUMBER);
-  add_field("COUNT_DROP", plugin::TableFunction::NUMBER);
-  add_field("COUNT_ADMIN", plugin::TableFunction::NUMBER);
+  add_field("COUNT_SELECT", TableFunction::NUMBER);
+  add_field("COUNT_DELETE", TableFunction::NUMBER);
+  add_field("COUNT_UPDATE", TableFunction::NUMBER);
+  add_field("COUNT_INSERT", TableFunction::NUMBER);
+  add_field("COUNT_ROLLBACK", TableFunction::NUMBER);
+  add_field("COUNT_COMMIT", TableFunction::NUMBER);
+  add_field("COUNT_CREATE", TableFunction::NUMBER);
+  add_field("COUNT_ALTER", TableFunction::NUMBER);
+  add_field("COUNT_DROP", TableFunction::NUMBER);
+  add_field("COUNT_ADMIN", TableFunction::NUMBER);
 }
 
 CommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
