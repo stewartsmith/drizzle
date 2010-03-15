@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 #define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 
+#include "drizzled/util/functors.h"
+
 namespace drizzled
 {
 
@@ -152,7 +154,13 @@ public:
       index_scan_costs(0.0)
   {}
 
-  virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
+  virtual ~RorIntersectReadPlan() 
+  {
+    for_each(ror_range_scans.begin(),
+             ror_range_scans.end(),
+             DeletePtr());
+    ror_range_scans.clear();
+  }
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,

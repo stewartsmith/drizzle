@@ -1696,24 +1696,24 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
                                                    double read_time,
                                                    bool *are_all_covering)
 {
-  uint32_t idx;
+  uint32_t idx= 0;
   double min_cost= DBL_MAX;
 
-  if ((tree->n_ror_scans < 2) || !param->table->cursor->stats.records)
+  if ((tree->n_ror_scans < 2) || ! param->table->cursor->stats.records)
     return NULL;
 
   /*
     Step1: Collect ROR-able SEL_ARGs and create ROR_SCAN_INFO for each of
     them. Also find and save clustered PK scan if there is one.
   */
-  ROR_SCAN_INFO **cur_ror_scan;
+  ROR_SCAN_INFO **cur_ror_scan= NULL;
   ROR_SCAN_INFO *cpk_scan= NULL;
-  uint32_t cpk_no;
+  uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  if (!(tree->ror_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                     sizeof(ROR_SCAN_INFO*)*
-                                                     param->keys)))
+  if (! (tree->ror_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
+                                                      sizeof(ROR_SCAN_INFO*)*
+                                                      param->keys)))
     return NULL;
   cpk_no= ((param->table->cursor->primary_key_is_clustered()) ?
            param->table->s->primary_key : MAX_KEY);
@@ -1743,22 +1743,23 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
                      (qsort_cmp)cmp_ror_scan_info);
 
-  ROR_SCAN_INFO **intersect_scans; /* ROR scans used in index intersection */
-  ROR_SCAN_INFO **intersect_scans_end;
-  if (!(intersect_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                     sizeof(ROR_SCAN_INFO*)*
-                                                     tree->n_ror_scans)))
+  ROR_SCAN_INFO **intersect_scans= NULL; /* ROR scans used in index intersection */
+  ROR_SCAN_INFO **intersect_scans_end= NULL;
+  if (! (intersect_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
+                                                      sizeof(ROR_SCAN_INFO*)*
+                                                      tree->n_ror_scans)))
     return NULL;
   intersect_scans_end= intersect_scans;
 
   /* Create and incrementally update ROR intersection. */
-  ROR_INTERSECT_INFO *intersect, *intersect_best;
-  if (!(intersect= ror_intersect_init(param)) ||
-      !(intersect_best= ror_intersect_init(param)))
+  ROR_INTERSECT_INFO *intersect= NULL;
+  ROR_INTERSECT_INFO *intersect_best= NULL;
+  if (! (intersect= ror_intersect_init(param)) ||
+      ! (intersect_best= ror_intersect_init(param)))
     return NULL;
 
   /* [intersect_scans,intersect_scans_best) will hold the best intersection */
-  ROR_SCAN_INFO **intersect_scans_best;
+  ROR_SCAN_INFO **intersect_scans_best= NULL;
   cur_ror_scan= tree->ror_scans;
   intersect_scans_best= intersect_scans;
   while (cur_ror_scan != tree->ror_scans_end && !intersect->is_covering)
@@ -1817,14 +1818,14 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     trp->read_cost= intersect_best->total_cost;
     /* Prevent divisons by zero */
     ha_rows best_rows = double2rows(intersect_best->out_rows);
-    if (!best_rows)
+    if (! best_rows)
       best_rows= 1;
     set_if_smaller(param->table->quick_condition_rows, best_rows);
     trp->records= best_rows;
     trp->setCostOfIndexScans(intersect_best->index_scan_costs);
     trp->cpk_scan= cpk_scan_used? cpk_scan: NULL;
   }
-  return(trp);
+  return trp;
 }
 
 
