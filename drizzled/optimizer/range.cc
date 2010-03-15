@@ -43,13 +43,6 @@
     All direct "users" of this module are located within this cursor, too.
 
 
-  PartitionPruningModule
-    A module that accepts a partitioned table, condition, and finds which
-    partitions we will need to use in query execution. Search down for
-    "PartitionPruningModule" for description.
-    The module has single entry point - prune_partitions() function.
-
-
   Range/index_merge/groupby-minmax optimizer module
     A module that accepts a table, condition, and returns
      - a QUICK_*_SELECT object that can be used to retrieve rows that match
