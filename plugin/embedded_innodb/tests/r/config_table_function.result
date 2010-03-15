@@ -1,0 +1,48 @@
+SHOW CREATE TABLE DATA_DICTIONARY.INNODB_CONFIGURATION;
+Table	Create Table
+INNODB_CONFIGURATION	CREATE TABLE `innodb_configuration` (
+  `NAME` varchar(64) NOT NULL DEFAULT '',
+  `TYPE` varchar(64) NOT NULL DEFAULT '',
+  `VALUE` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+SELECT COUNT(*) FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
+COUNT(*)
+36
+SELECT NAME FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
+NAME
+adaptive_hash_index
+adaptive_flushing
+additional_mem_pool_size
+autoextend_increment
+buffer_pool_size
+checksums
+data_file_path
+data_home_dir
+doublewrite
+file_format
+file_io_threads
+file_per_table
+flush_log_at_trx_commit
+flush_method
+force_recovery
+io_capacity
+lock_wait_timeout
+log_buffer_size
+log_file_size
+log_files_in_group
+log_group_home_dir
+max_dirty_pages_pct
+max_purge_lag
+lru_old_blocks_pct
+lru_block_access_recency
+open_files
+read_io_threads
+write_io_threads
+pre_rollback_hook
+print_verbose_log
+rollback_on_timeout
+stats_sample_pages
+status_file
+sync_spin_loops
+use_sys_malloc
+version
