@@ -18,6 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "drizzled/session.h"
+#include "drizzled/session_list.h"
+
 #ifndef PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
 #define PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
 
@@ -30,7 +33,7 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     time_t now;
-    std::vector<drizzled::Session*>::iterator it;
+    drizzled::SessionList::iterator it;
 
   public:
     Generator(drizzled::Field **arg);
@@ -45,4 +48,4 @@ public:
   }
 };
 
-#endif // PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H
+#endif /* PLUGIN_SESSION_DICTIONARY_PROCESSLIST_H */

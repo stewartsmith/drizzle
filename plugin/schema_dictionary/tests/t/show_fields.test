@@ -1,0 +1,23 @@
+# Testing information from show fields.
+
+create table a ( a serial);
+show fields from a;
+show create table a;
+
+create table b ( b int);
+show fields from b;
+show create table b;
+
+create table c ( b int NOT NULL);
+show fields from c;
+show create table c;
+
+create table d ( b int NOT NULL DEFAULT 10);
+show fields from d;
+show create table d;
+
+create table e ( b int DEFAULT NULL);
+show fields from e;
+show create table e;
+
+drop tables a,b,c,d,e;

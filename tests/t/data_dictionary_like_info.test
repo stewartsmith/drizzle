@@ -5,14 +5,13 @@
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
 DROP SCHEMA IF EXISTS data_dictionary;
 --enable_warnings
-CREATE SCHEMA data_dictionary;
 
 --replace_column 1 #
 select count(*) from data_dictionary.SCHEMAS where schema_name > 'm';
 --replace_column 1 #
 select count(*) from data_dictionary.schemas;
-#show databases like 't%';
-#show databases;
+show databases like 't%';
+show databases;
 
 # Test for data_dictionary.tables &
 # show tables
@@ -28,10 +27,10 @@ insert into t5 values (10);
 select table_name from data_dictionary.TABLES
 where table_schema = "mysqltest" and table_name like "t%";
 
-#show tables like 't%';
---replace_column 8 # 12 # 13 #
-#show table status;
-#show columns from t3 like "a%";
+show tables like 't%';
+--replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+show table status;
+show columns from t3 like "a%";
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
 
@@ -39,7 +38,7 @@ connect (user3,localhost,mysqltest_2,,);
 connection user3;
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
-#show columns from mysqltest.t1;
+show columns from mysqltest.t1;
 connect (user4,localhost,mysqltest_3,,mysqltest);
 connection user4;
 connection default;
@@ -149,7 +148,7 @@ use data_dictionary;
 select column_name, column_default from columns
   where table_schema='test' and table_name='t1';
 use test;
-#show columns from t1;
+show columns from t1;
 drop table t1;
 
 #
@@ -187,9 +186,9 @@ drop table t1;
 # Bug #12770 DESC cannot display the info. about temporary table
 #
 create temporary table t1(f1 int, index(f1));
-#show columns from t1;
-#describe t1;
-#show indexes from t1;
+show columns from t1;
+describe t1;
+show indexes from t1;
 drop table t1;
 
 #
@@ -334,7 +333,7 @@ create table t1 (
   f8 datetime default '2006-01-01'
 );
 select column_default from data_dictionary.columns where table_name= 't1';
-#show columns from t1;
+show columns from t1;
 drop table t1;
 
 #
@@ -460,7 +459,3 @@ SELECT table_schema, table_name FROM data_dictionary.tables WHERE ENGINE IS NULL
 #
 --replace_column 1 #
 SELECT count(*) FROM data_dictionary.plugins;
-
---disable_warnings
-DROP SCHEMA IF EXISTS data_dictionary;
---enable_warnings

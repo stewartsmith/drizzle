@@ -309,7 +309,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
   READ_INFO read_info(file, tot_length,
-                      ex->cs ? ex->cs : get_default_db_collation(session->db.c_str()),
+                      ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(session->db.c_str()),
 		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
 		      info.escape_char, is_fifo);
   if (read_info.error)
@@ -390,14 +390,14 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   sprintf(name, ER(ER_LOAD_INFO), (uint32_t) info.records, (uint32_t) info.deleted,
 	  (uint32_t) (info.records - info.copied), (uint32_t) session->cuted_fields);
 
-  if (session->transaction.stmt.modified_non_trans_table)
-    session->transaction.all.modified_non_trans_table= true;
+  if (session->transaction.stmt.hasModifiedNonTransData())
+    session->transaction.all.markModifiedNonTransData();
 
   /* ok to client sent only after binlog write and engine commit */
   session->my_ok(info.copied + info.deleted, 0, 0L, name);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
-              session->transaction.stmt.modified_non_trans_table);
+              session->transaction.stmt.hasModifiedNonTransData());
   table->cursor->ha_release_auto_increment();
   table->auto_increment_field_not_null= false;
   session->abort_on_warning= 0;

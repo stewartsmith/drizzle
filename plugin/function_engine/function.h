@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DATA_ENGINE_FUNCTION_H
-#define PLUGIN_DATA_ENGINE_FUNCTION_H
+#ifndef PLUGIN_FUNCTION_ENGINE_FUNCTION_H
+#define PLUGIN_FUNCTION_ENGINE_FUNCTION_H
 
 #include <assert.h>
 #include <drizzled/session.h>
@@ -51,7 +51,7 @@ public:
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, const std::string) 
+  int doDropTable(drizzled::Session&, const std::string&) 
   { 
     return EPERM; 
   }
@@ -69,6 +69,9 @@ public:
     return drizzled::plugin::TableFunction::getFunction(path);
   }
 
+  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+
+
   void doGetTableNames(drizzled::CachedDirectory&, 
                        std::string &db, 
                        std::set<std::string> &set_of_names);
@@ -79,6 +82,10 @@ public:
                            const char *table_name,
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
+
+  void doGetSchemaNames(std::set<std::string>& set_of_names);
+
+  bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &schema_message);
 };
 
-#endif /* PLUGIN_DATA_ENGINE_FUNCTION_H */
+#endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

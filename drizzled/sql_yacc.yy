@@ -301,6 +301,21 @@ static bool setup_select_in_parentheses(LEX *lex)
   return false;
 }
 
+static Item* reserved_keyword_function(const std::string &name, List<Item> *item_list)
+{
+  const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
+  Item *item= NULL;
+
+  if (udf)
+  {
+    item= Create_udf_func::s_singleton.create(current_session, udf, item_list);
+  } else {
+    my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
+  }
+
+  return item;
+}
+
 } /* namespace drizzled; */
 
 using namespace drizzled;
@@ -1022,13 +1037,13 @@ create:
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    message::Table *proto= &statement->create_table_proto;
+	    message::Table &proto= statement->create_table_proto;
 	   
-	    proto->set_name($5->table.str);
+	    proto.set_name($5->table.str);
 	    if($2)
-	      proto->set_type(message::Table::TEMPORARY);
+	      proto.set_type(message::Table::TEMPORARY);
 	    else
-	      proto->set_type(message::Table::STANDARD);
+	      proto.set_type(message::Table::STANDARD);
           }
           create2
           {
@@ -3074,13 +3089,51 @@ function_call_nonkeyword:
         | SUBDATE_SYM '(' expr ',' INTERVAL_SYM expr interval ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($3, $6, $7, 1); }
         | SUBSTRING '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5,$7); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            args->push_back($7);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr FROM expr FOR_SYM expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5,$7); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            args->push_back($7);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SUBSTRING '(' expr FROM expr ')'
-          { $$= new (YYSession->mem_root) Item_func_substr($3,$5); }
+          {
+            std::string reverse_str("substr");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            args->push_back($5);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | SYSDATE optional_braces
           { $$= new (YYSession->mem_root) Item_func_sysdate_local(); }
         | SYSDATE '(' expr ')'
@@ -3111,8 +3164,12 @@ function_call_conflict:
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
         | DATABASE '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_database();
-          }
+            std::string database_str("database");
+            if (! ($$= reserved_keyword_function(database_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
+	  }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
         | MICROSECOND_SYM '(' expr ')'
@@ -3126,7 +3183,15 @@ function_call_conflict:
         | REPLACE '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_replace($3,$5,$7); }
         | REVERSE_SYM '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_reverse($3); }
+          {
+            std::string reverse_str("reverse");
+            List<Item> *args= new (YYSession->mem_root) List<Item>;
+            args->push_back($3);
+            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            {
+              DRIZZLE_YYABORT;
+            }
+          }
         | TRUNCATE_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_round($3,$5,1); }
         ;
@@ -4208,16 +4273,6 @@ ulonglong_num:
         | FLOAT_NUM     { int error; $$= (uint64_t) internal::my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
-dec_num_error:
-          dec_num
-          { my_parse_error(ER(ER_ONLY_INTEGERS_ALLOWED)); }
-        ;
-
-dec_num:
-          DECIMAL_NUM
-        | FLOAT_NUM
-        ;
-
 select_var_list_init:
           {
             LEX *lex=Lex;
@@ -4656,7 +4711,7 @@ show_param:
              if (Lex->wild)
              {
                column_name.append(" (");
-               column_name.append(Lex->wild->c_str());
+               column_name.append(Lex->wild->ptr());
                column_name.append(")");
              }
 
@@ -4693,10 +4748,9 @@ show_param:
 
               if ($2)
               {
-                message::Schema schema_message;
                 column_name.append($2);
                 lex->select_lex.db= $2;
-                if (not plugin::StorageEngine::getSchemaDefinition($2, schema_message))
+                if (not plugin::StorageEngine::doesSchemaExist($2))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
@@ -4709,7 +4763,7 @@ show_param:
              if (Lex->wild)
              {
                column_name.append(" (");
-               column_name.append(Lex->wild->c_str());
+               column_name.append(Lex->wild->ptr());
                column_name.append(")");
              }
 
@@ -4720,7 +4774,7 @@ show_param:
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "LOCAL_TABLE_NAMES"))
+               if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4735,8 +4789,11 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+             statement::Select *select=
                new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
@@ -4746,16 +4803,21 @@ show_param:
 
              if ($3)
              {
-               message::Schema schema_message;
                lex->select_lex.db= $3;
 
-               if (not plugin::StorageEngine::getSchemaDefinition($3, schema_message))
+               if (not plugin::StorageEngine::doesSchemaExist($3))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }
+
+               select->setShowPredicate($3, "");
+             }
+             else
+             {
+               select->setShowPredicate(session->db, "");
              }
 
-             if (prepare_new_schema_table(session, lex, "LOCAL_TABLE_STATUS"))
+             if (prepare_new_schema_table(session, lex, "SHOW_TABLE_STATUS"))
                DRIZZLE_YYABORT;
 
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->
@@ -4766,28 +4828,86 @@ show_param:
            }
         | COLUMNS from_or_in table_ident opt_db show_wild
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->statement=
-              new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if ($4)
-              $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "OLD_COLUMNS"))
-              DRIZZLE_YYABORT;
+             LEX *lex= Lex;
+             Session *session= YYSession;
+             statement::Select *select;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             select= new(std::nothrow) statement::Select(session);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             if ($4)
+              select->setShowPredicate($4, $3->table.str);
+             else if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $3->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_COLUMNS"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
           }
         | keys_or_index from_or_in table_ident opt_db where_clause
           {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_KEYS;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            if ($4)
-              $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, "OLD_STATISTICS"))
-              DRIZZLE_YYABORT;
+             LEX *lex= Lex;
+             Session *session= YYSession;
+             statement::Select *select;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             select= new(std::nothrow) statement::Select(session);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             if ($4)
+              select->setShowPredicate($4, $3->table.str);
+             else if ($3->db.str)
+              select->setShowPredicate($3->db.str, $3->table.str);
+             else
+              select->setShowPredicate(session->db, $3->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $3->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $3->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "show_indexes"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
           {
@@ -4820,18 +4940,44 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | opt_var_type STATUS_SYM show_wild
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_SHOW_STATUS;
-            lex->statement=
-              new(std::nothrow) statement::ShowStatus(YYSession,
-                                                    &LOCK_status);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, "OLD_STATUS"))
-              DRIZZLE_YYABORT;
-          }
+           {
+             LEX *lex= Lex;
+             lex->sql_command= SQLCOM_SELECT;
+             lex->statement=
+               new(std::nothrow) statement::Select(YYSession);
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+             Session *session= YYSession;
+
+             if ($1 == OPT_GLOBAL)
+             {
+               if (prepare_new_schema_table(session, lex, "GLOBAL_STATUS"))
+                 DRIZZLE_YYABORT;
+             }
+             else
+             {
+               if (prepare_new_schema_table(session, lex, "SESSION_STATUS"))
+                 DRIZZLE_YYABORT;
+             }
+
+             std::string key("Variable_name");
+             std::string value("Value");
+
+             Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_NAME");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(key.c_str(), key.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+
+             my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "VARIABLE_VALUE");
+             my_field->is_autogenerated_name= false;
+             my_field->set_name(value.c_str(), value.length(), system_charset_info);
+
+             if (session->add_item_to_list(my_field))
+               DRIZZLE_YYABORT;
+           }
         | PROCESSLIST_SYM
           {
            {
@@ -4945,17 +5091,43 @@ show_wild:
 describe:
           describe_command table_ident
           {
+            Session *session= YYSession;
+            statement::Select *select;
             LEX *lex= Lex;
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->statement= new(std::nothrow) statement::Select(YYSession);
+            lex->sql_command= SQLCOM_SELECT;
+            select= new(std::nothrow) statement::Select(session);
+            lex->statement= select;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
-            if (prepare_schema_table(YYSession, lex, $2, "OLD_COLUMNS"))
-              DRIZZLE_YYABORT;
+
+             if ($2->db.str)
+              select->setShowPredicate($2->db.str, $2->table.str);
+             else
+              select->setShowPredicate(session->db, $2->table.str);
+
+             {
+               drizzled::TableIdentifier identifier(select->getShowSchema().c_str(), $2->table.str);
+               if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+               {
+                   my_error(ER_NO_SUCH_TABLE, MYF(0),
+                            select->getShowSchema().c_str(), 
+                            $2->table.str);
+               }
+             }
+
+             if (prepare_new_schema_table(session, lex, "SHOW_COLUMNS"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
           }
           opt_describe_column {}
         | describe_command opt_extended_describe
@@ -5012,14 +5184,26 @@ flush_options:
 
 flush_option:
           table_or_tables
-          { Lex->type|= REFRESH_TABLES; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTables(true);
+          }
           opt_table_list {}
         | TABLES WITH READ_SYM LOCK_SYM
-          { Lex->type|= REFRESH_TABLES | REFRESH_READ_LOCK; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushTablesWithReadLock(true);
+          }
         | LOGS_SYM
-          { Lex->type|= REFRESH_LOG; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushLog(true);
+          }
         | STATUS_SYM
-          { Lex->type|= REFRESH_STATUS; }
+          {
+            statement::Flush *statement= (statement::Flush*)Lex->statement;
+            statement->setFlushStatus(true);
+          }
         ;
 
 opt_table_list:

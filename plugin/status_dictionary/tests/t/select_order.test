@@ -1,0 +1,20 @@
+use data_dictionary;
+
+# Just to see output
+SELECT 1;
+
+#  This needs a bug filed against it.
+
+#--replace_column 1 # 2 #
+#SELECT *
+#FROM data_dictionary.session_variables
+#ORDER BY variable_name;
+
+#SELECT VARIABLE_NAME
+#FROM data_dictionary.session_variables
+#ORDER BY variable_name;
+
+#--replace_column 1 #
+#SELECT VARIABLE_VALUE
+#FROM data_dictionary.session_variables
+#ORDER BY variable_name;

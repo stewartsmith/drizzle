@@ -47,13 +47,12 @@
 #include "drizzled/xid.h"
 #include "drizzled/sql_table.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/plugin/authorization.h"
+#include "drizzled/charset.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/db.h"
 
-
 #include <drizzled/table_proto.h>
-
-#include "drizzled/hash.h"
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -62,67 +61,40 @@ using namespace std;
 namespace drizzled
 {
 
-typedef hash_map<std::string, plugin::StorageEngine *> EngineMap;
-typedef std::vector<plugin::StorageEngine *> EngineVector;
+namespace plugin
+{
 
 static EngineVector vector_of_engines;
-static EngineVector vector_of_transactional_engines;
+static EngineVector vector_of_schema_engines;
 
-const std::string plugin::UNKNOWN_STRING("UNKNOWN");
-const std::string plugin::DEFAULT_DEFINITION_FILE_EXT(".dfe");
+const std::string UNKNOWN_STRING("UNKNOWN");
+const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
 
 static std::set<std::string> set_of_table_definition_ext;
 
-plugin::StorageEngine::StorageEngine(const string name_arg,
-                                     const bitset<HTON_BIT_SIZE> &flags_arg,
-                                     bool support_2pc)
+StorageEngine::StorageEngine(const string name_arg,
+                             const bitset<HTON_BIT_SIZE> &flags_arg)
     : Plugin(name_arg, "StorageEngine"),
-      two_phase_commit(support_2pc),
-      enabled(true),
-      flags(flags_arg),
-      slot(0)
+      MonitoredInTransaction(), /* This gives the storage engine a "slot" or ID */
+      flags(flags_arg)
 {
-  if (enabled)
-  {
-    slot= total_ha++;
-    if (two_phase_commit)
-        total_ha_2pc++;
-  }
   pthread_mutex_init(&proto_cache_mutex, NULL);
 }
 
-
-plugin::StorageEngine::~StorageEngine()
+StorageEngine::~StorageEngine()
 {
   pthread_mutex_destroy(&proto_cache_mutex);
 }
 
-void plugin::StorageEngine::setTransactionReadWrite(Session& session)
+void StorageEngine::setTransactionReadWrite(Session& session)
 {
-  Ha_trx_info *ha_info= session.getEngineInfo(this);
-
-  /*
-    When a storage engine method is called, the transaction must
-    have been started, unless it's a DDL call, for which the
-    storage engine starts the transaction internally, and commits
-    it internally, without registering in the ha_list.
-    Unfortunately here we can't know know for sure if the engine
-    has registered the transaction or not, so we must check.
-  */
-  if (ha_info->is_started())
-  {
-    /*
-     * table_share can be NULL in plugin::StorageEngine::dropTable().
-     */
-    ha_info->set_trx_read_write();
-  }
+  TransactionContext &statement_ctx= session.transaction.stmt;
+  statement_ctx.markModifiedNonTransData();
 }
 
-
-
-int plugin::StorageEngine::doRenameTable(Session *,
-                                         const char *from,
-                                         const char *to)
+int StorageEngine::doRenameTable(Session *,
+                                 const char *from,
+                                 const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -153,8 +125,8 @@ int plugin::StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int plugin::StorageEngine::doDropTable(Session&,
-                                       const string table_path)
+int StorageEngine::doDropTable(Session&,
+                               const string &table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -176,7 +148,7 @@ int plugin::StorageEngine::doDropTable(Session&,
   return error;
 }
 
-const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
+const char *StorageEngine::checkLowercaseNames(const char *path,
                                                        char *tmp_path)
 {
   if (flags.test(HTON_BIT_FILE_BASED))
@@ -199,13 +171,10 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 }
 
 
-bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
+bool StorageEngine::addPlugin(StorageEngine *engine)
 {
 
   vector_of_engines.push_back(engine);
-
-  if (engine->check_flag(HTON_BIT_DOES_TRANSACTIONS))
-    vector_of_transactional_engines.push_back(engine);
 
   if (engine->getTableDefinitionFileExtension().length())
   {
@@ -213,22 +182,25 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
     set_of_table_definition_ext.insert(engine->getTableDefinitionFileExtension());
   }
 
+  if (engine->check_flag(HTON_BIT_SCHEMA_DICTIONARY))
+    vector_of_schema_engines.push_back(engine);
+
   return false;
 }
 
-void plugin::StorageEngine::removePlugin(plugin::StorageEngine *)
+void StorageEngine::removePlugin(StorageEngine *)
 {
   if (shutdown_has_begun == false)
   {
     vector_of_engines.clear();
-    vector_of_transactional_engines.clear();
+    vector_of_schema_engines.clear();
 
     shutdown_has_begun= true;
   }
 }
 
 class FindEngineByName
-  : public unary_function<plugin::StorageEngine *, bool>
+  : public unary_function<StorageEngine *, bool>
 {
   const string target;
 public:
@@ -245,7 +217,7 @@ public:
   }
 };
 
-plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
+StorageEngine *StorageEngine::findByName(string find_str)
 {
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
@@ -264,7 +236,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
   return NULL;
 }
 
-plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
+StorageEngine *StorageEngine::findByName(Session& session,
                                                          string find_str)
 {
   
@@ -288,7 +260,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
 }
 
 class StorageEngineCloseConnection
-: public unary_function<plugin::StorageEngine *, void>
+: public unary_function<StorageEngine *, void>
 {
   Session *session;
 public:
@@ -299,7 +271,7 @@ public:
   */
   inline result_type operator() (argument_type engine)
   {
-    if (engine->is_enabled() && (*session->getEngineData(engine)))
+    if (*session->getEngineData(engine))
       engine->close_connection(session);
   }
 };
@@ -308,248 +280,37 @@ public:
   @note
     don't bother to rollback here, it's done already
 */
-void plugin::StorageEngine::closeConnection(Session* session)
+void StorageEngine::closeConnection(Session* session)
 {
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            StorageEngineCloseConnection(session));
 }
 
-void plugin::StorageEngine::dropDatabase(char* path)
-{
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           bind2nd(mem_fun(&plugin::StorageEngine::drop_database),path));
-}
-
-int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
-{
-  vector<int> results;
-  
-  if (commit)
-    transform(vector_of_engines.begin(), vector_of_engines.end(), results.begin(),
-              bind2nd(mem_fun(&plugin::StorageEngine::commit_by_xid),xid));
-  else
-    transform(vector_of_engines.begin(), vector_of_engines.end(), results.begin(),
-              bind2nd(mem_fun(&plugin::StorageEngine::rollback_by_xid),xid));
-
-  if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
-         == results.end())
-    return 1;
-  return 0;
-}
-
-/**
-  @details
-  This function should be called when MySQL sends rows of a SELECT result set
-  or the EOF mark to the client. It releases a possible adaptive hash index
-  S-latch held by session in InnoDB and also releases a possible InnoDB query
-  FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
-  keep them over several calls of the InnoDB Cursor interface when a join
-  is executed. But when we let the control to pass to the client they have
-  to be released because if the application program uses mysql_use_result(),
-  it may deadlock on the S-latch if the application on another connection
-  performs another SQL query. In MySQL-4.1 this is even more important because
-  there a connection can have several SELECT queries open at the same time.
-
-  @param session           the thread handle of the current connection
-
-  @return
-    always 0
-*/
-int plugin::StorageEngine::releaseTemporaryLatches(Session *session)
-{
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
-           bind2nd(mem_fun(&plugin::StorageEngine::release_temporary_latches),session));
-  return 0;
-}
-
-bool plugin::StorageEngine::flushLogs(plugin::StorageEngine *engine)
+bool StorageEngine::flushLogs(StorageEngine *engine)
 {
   if (engine == NULL)
   {
     if (find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            mem_fun(&plugin::StorageEngine::flush_logs))
-          != vector_of_engines.begin())
+                mem_fun(&StorageEngine::flush_logs))
+        != vector_of_engines.begin())
       return true;
   }
   else
   {
-    if ((!engine->is_enabled()) ||
-        (engine->flush_logs()))
+    if (engine->flush_logs())
       return true;
   }
   return false;
 }
 
-/**
-  recover() step of xa.
-
-  @note
-    there are three modes of operation:
-    - automatic recover after a crash
-    in this case commit_list != 0, tc_heuristic_recover==0
-    all xids from commit_list are committed, others are rolled back
-    - manual (heuristic) recover
-    in this case commit_list==0, tc_heuristic_recover != 0
-    DBA has explicitly specified that all prepared transactions should
-    be committed (or rolled back).
-    - no recovery (MySQL did not detect a crash)
-    in this case commit_list==0, tc_heuristic_recover == 0
-    there should be no prepared transactions in this case.
-*/
-class XARecover : unary_function<plugin::StorageEngine *, void>
-{
-  int trans_len, found_foreign_xids, found_my_xids;
-  bool result;
-  XID *trans_list;
-  HASH *commit_list;
-  bool dry_run;
-public:
-  XARecover(XID *trans_list_arg, int trans_len_arg,
-            HASH *commit_list_arg, bool dry_run_arg) 
-    : trans_len(trans_len_arg), found_foreign_xids(0), found_my_xids(0),
-      result(false),
-      trans_list(trans_list_arg), commit_list(commit_list_arg),
-      dry_run(dry_run_arg)
-  {}
-  
-  int getForeignXIDs()
-  {
-    return found_foreign_xids; 
-  }
-
-  int getMyXIDs()
-  {
-    return found_my_xids; 
-  }
-
-  result_type operator() (argument_type engine)
-  {
-  
-    int got;
-  
-    if (engine->is_enabled())
-    {
-      while ((got= engine->recover(trans_list, trans_len)) > 0 )
-      {
-        errmsg_printf(ERRMSG_LVL_INFO,
-                      _("Found %d prepared transaction(s) in %s"),
-                      got, engine->getName().c_str());
-        for (int i=0; i < got; i ++)
-        {
-          my_xid x=trans_list[i].get_my_xid();
-          if (!x) // not "mine" - that is generated by external TM
-          {
-            xid_cache_insert(trans_list+i, XA_PREPARED);
-            found_foreign_xids++;
-            continue;
-          }
-          if (dry_run)
-          {
-            found_my_xids++;
-            continue;
-          }
-          // recovery mode
-          if (commit_list ?
-              hash_search(commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
-              tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
-          {
-            engine->commit_by_xid(trans_list+i);
-          }
-          else
-          {
-            engine->rollback_by_xid(trans_list+i);
-          }
-        }
-        if (got < trans_len)
-          break;
-      }
-    }
-  }
-};
-
-int plugin::StorageEngine::recover(HASH *commit_list)
-{
-  XID *trans_list= NULL;
-  int trans_len= 0;
-
-  bool dry_run= (commit_list==0 && tc_heuristic_recover==0);
-
-  /* commit_list and tc_heuristic_recover cannot be set both */
-  assert(commit_list==0 || tc_heuristic_recover==0);
-
-  /* if either is set, total_ha_2pc must be set too */
-  if (total_ha_2pc <= 1)
-    return 0;
-
-
-#ifndef WILL_BE_DELETED_LATER
-
-  /*
-    for now, only InnoDB supports 2pc. It means we can always safely
-    rollback all pending transactions, without risking inconsistent data
-  */
-
-  assert(total_ha_2pc == 2); // only InnoDB and binlog
-  tc_heuristic_recover= TC_HEURISTIC_RECOVER_ROLLBACK; // forcing ROLLBACK
-  dry_run=false;
-#endif
-  for (trans_len= MAX_XID_LIST_SIZE ;
-       trans_list==0 && trans_len > MIN_XID_LIST_SIZE; trans_len/=2)
-  {
-    trans_list=(XID *)malloc(trans_len*sizeof(XID));
-  }
-  if (!trans_list)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), trans_len*sizeof(XID));
-    return(1);
-  }
-
-  if (commit_list)
-    errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
-
-
-  XARecover recover_func(trans_list, trans_len, commit_list, dry_run);
-  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
-           recover_func);
-  free(trans_list);
- 
-  if (recover_func.getForeignXIDs())
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("Found %d prepared XA transactions"),
-                  recover_func.getForeignXIDs());
-  if (dry_run && recover_func.getMyXIDs())
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("Found %d prepared transactions! It means that drizzled "
-                    "was not shut down properly last time and critical "
-                    "recovery information (last binlog or %s file) was "
-                    "manually deleted after a crash. You have to start "
-                    "drizzled with the --tc-heuristic-recover switch to "
-                    "commit or rollback pending transactions."),
-                    recover_func.getMyXIDs(), opt_tc_log_file);
-    return(1);
-  }
-  if (commit_list)
-    errmsg_printf(ERRMSG_LVL_INFO, _("Crash recovery finished."));
-  return(0);
-}
-
-int plugin::StorageEngine::startConsistentSnapshot(Session *session)
-{
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           bind2nd(mem_fun(&plugin::StorageEngine::start_consistent_snapshot),
-                   session));
-  return 0;
-}
-
-class StorageEngineGetTableDefinition: public unary_function<plugin::StorageEngine *,bool>
+class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,bool>
 {
   Session& session;
   const char* path;
   const char *db;
   const char *table_name;
   const bool is_tmp;
-  message::Table *table_proto;
+  message::Table *table_message;
   int *err;
 
 public:
@@ -558,14 +319,14 @@ public:
                                   const char *db_arg,
                                   const char *table_name_arg,
                                   const bool is_tmp_arg,
-                                  message::Table *table_proto_arg,
+                                  message::Table *table_message_arg,
                                   int *err_arg) :
     session(session_arg), 
     path(path_arg), 
     db(db_arg),
     table_name(table_name_arg),
     is_tmp(is_tmp_arg),
-    table_proto(table_proto_arg), 
+    table_message(table_message_arg), 
     err(err_arg) {}
 
   result_type operator() (argument_type engine)
@@ -575,7 +336,7 @@ public:
                                           db,
                                           table_name,
                                           is_tmp,
-                                          table_proto);
+                                          table_message);
 
     if (ret != ENOENT)
       *err= ret;
@@ -584,26 +345,14 @@ public:
   }
 };
 
-static int drizzle_read_table_proto(const char* path, message::Table* table)
+/**
+  Utility method which hides some of the details of getTableDefinition()
+*/
+bool plugin::StorageEngine::doesTableExist(Session& session,
+                                           TableIdentifier &identifier,
+                                           bool include_temporary_tables)
 {
-  int fd= open(path, O_RDONLY);
-
-  if (fd == -1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (table->ParseFromZeroCopyStream(input) == false)
-  {
-    delete input;
-    close(fd);
-    return -1;
-  }
-
-  delete input;
-  close(fd);
-  return 0;
+  return (plugin::StorageEngine::getTableDefinition(session, identifier, NULL, include_temporary_tables) == EEXIST);
 }
 
 /**
@@ -611,49 +360,39 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
-int plugin::StorageEngine::getTableDefinition(Session& session,
-                                              TableIdentifier &identifier,
-                                              message::Table *table_proto)
+int StorageEngine::getTableDefinition(Session& session,
+                                      TableIdentifier &identifier,
+                                      message::Table *table_message,
+                                      bool include_temporary_tables)
 {
   return getTableDefinition(session,
                             identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            table_proto);
+                            table_message, include_temporary_tables);
 }
 
-int plugin::StorageEngine::getTableDefinition(Session& session,
+int StorageEngine::getTableDefinition(Session& session,
                                               const char* path,
-                                              const char *,
-                                              const char *,
+                                              const char *schema_name,
+                                              const char *table_name,
                                               const bool,
-                                              message::Table *table_proto)
+                                              message::Table *table_message,
+                                              bool include_temporary_tables)
 {
   int err= ENOENT;
 
-  vector<plugin::StorageEngine *>::iterator iter=
+  if (include_temporary_tables)
+  {
+    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_message) == EEXIST)
+      return EEXIST;
+  }
+
+  EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_proto, &err));
+            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_message, &err));
 
   if (iter == vector_of_engines.end())
   {
-    string proto_path(path);
-    string file_ext(".dfe");
-    proto_path.append(file_ext);
-
-    int error= access(proto_path.c_str(), F_OK);
-
-    if (error == 0)
-      err= EEXIST;
-    else
-      err= errno;
-
-    if (table_proto)
-    {
-      int read_proto_err= drizzle_read_table_proto(proto_path.c_str(),
-                                                   table_proto);
-
-      if (read_proto_err)
-        err= read_proto_err;
-    }
+    return ENOENT;
   }
 
   return err;
@@ -689,22 +428,48 @@ handle_error(uint32_t ,
   return true;
 }
 
+class DropTable : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  TableIdentifier &identifier;
+  Session &session;
+
+public:
+
+  DropTable(Session &session_arg, TableIdentifier &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    identifier(arg),
+    session(session_arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo someday check that at least one engine said "true"
+    std::string path(identifier.getPath());
+    bool success= engine->doDropTable(session, path);
+
+    if (success)
+      success_count++;
+  }
+};
+
 
 /**
    returns ENOENT if the file doesn't exists.
 */
-int plugin::StorageEngine::dropTable(Session& session,
-                                     TableIdentifier &identifier,
-                                     bool generate_warning)
+int StorageEngine::dropTable(Session& session,
+                             TableIdentifier &identifier)
 {
   int error= 0;
   int error_proto;
   message::Table src_proto;
-  plugin::StorageEngine* engine;
+  StorageEngine* engine;
 
-  error_proto= plugin::StorageEngine::getTableDefinition(session,
-                                                         identifier,
-                                                         &src_proto);
+  error_proto= StorageEngine::getTableDefinition(session,
+                                                 identifier,
+                                                 &src_proto);
 
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {
@@ -713,63 +478,28 @@ int plugin::StorageEngine::dropTable(Session& session,
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
-  engine= plugin::StorageEngine::findByName(session,
-                                            src_proto.engine().name());
+  engine= StorageEngine::findByName(session, src_proto.engine().name());
 
   if (engine)
   {
+    std::string path(identifier.getPath());
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier.getPath());
-  }
+    error= engine->doDropTable(session, path);
 
-  if (error != ENOENT)
-  {
-    if (error == 0)
+    if (not error)
     {
-      if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+      if (not engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
       {
-        deleteDefinitionFromPath(identifier);
-      }
-      else
-      {
-        error= deleteDefinitionFromPath(identifier);
+        uint64_t counter; // @todo We need to refactor to check that.
+
+        for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+                 DropTable(session, identifier, counter));
       }
     }
   }
 
   if (error_proto && error == 0)
     return 0;
-
-  if (((error_proto != EEXIST && error_proto != ENOENT)
-      && !engine && generate_warning)
-      | ( error && !engine && generate_warning))
-  {
-    my_error(ER_GET_ERRNO, MYF(0), error_proto);
-    return error_proto;
-  }
-
-  if (error && generate_warning)
-  {
-    /*
-      Because engine->print_error() use my_error() to generate the error message
-      we use an internal error Cursor to intercept it and store the text
-      in a temporary buffer. Later the message will be presented to user
-      as a warning.
-    */
-    Ha_delete_table_error_handler ha_delete_table_error_handler;
-
-    session.push_internal_handler(&ha_delete_table_error_handler);
-    engine->print_error(error, 0);
-
-    session.pop_internal_handler();
-
-    /*
-      XXX: should we convert *all* errors to warnings here?
-      What if the error is fatal?
-    */
-    push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
-                 ha_delete_table_error_handler.buff);
-  }
 
   return error;
 }
@@ -784,57 +514,39 @@ int plugin::StorageEngine::dropTable(Session& session,
 
    @todo refactor to remove goto
 */
-int plugin::StorageEngine::createTable(Session& session,
-                                       TableIdentifier &identifier,
-                                       bool update_create_info,
-                                       message::Table& table_proto, bool proto_used)
+int StorageEngine::createTable(Session& session,
+                               TableIdentifier &identifier,
+                               bool update_create_info,
+                               message::Table& table_message)
 {
   int error= 1;
   Table table;
   TableShare share(identifier.getDBName(), 0, identifier.getTableName(), identifier.getPath());
   message::Table tmp_proto;
 
-  if (proto_used)
-  {
-    if (parse_table_proto(session, table_proto, &share))
-      goto err;
-  }
-  else
-  {
-    if (open_table_def(session, &share))
-      goto err;
-  }
+  if (parse_table_proto(session, table_message, &share))
+    goto err;
 
   if (open_table_from_share(&session, &share, "", 0, 0,
                             &table))
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(&table_proto);
+    table.updateCreateInfo(&table_message);
 
   /* Check for legal operations against the Engine using the proto (if used) */
-  if (proto_used)
-  {
-    if (table_proto.type() == message::Table::TEMPORARY &&
-        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
-    else if (table_proto.type() != message::Table::TEMPORARY &&
-             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
-    {
-      error= HA_ERR_UNSUPPORTED;
-      goto err2;
-    }
-  }
-
-  if (! share.storage_engine->is_enabled())
+  if (table_message.type() == message::Table::TEMPORARY &&
+      share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
   {
     error= HA_ERR_UNSUPPORTED;
     goto err2;
   }
-
+  else if (table_message.type() != message::Table::TEMPORARY &&
+           share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
+  {
+    error= HA_ERR_UNSUPPORTED;
+    goto err2;
+  }
 
   {
     char name_buff[FN_REFLEN];
@@ -842,73 +554,58 @@ int plugin::StorageEngine::createTable(Session& session,
 
     table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
 
+    if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+    {
+      int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
+
+      if (protoerr)
+      {
+        error= protoerr;
+        goto err2;
+      }
+    }
+
     share.storage_engine->setTransactionReadWrite(session);
 
     error= share.storage_engine->doCreateTable(&session,
                                                table_name_arg,
                                                table,
-                                               table_proto);
+                                               table_message);
   }
 
 err2:
-  table.closefrm(false);
-
   if (error)
   {
-    char name_buff[FN_REFLEN];
-    sprintf(name_buff,"%s.%s", identifier.getDBName(), identifier.getTableName());
-    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
+    if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+      plugin::StorageEngine::deleteDefinitionFromPath(identifier);
+
+    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
   }
+
+  table.closefrm(false);
+
 err:
   share.free_table_share();
   return(error != 0);
 }
 
-Cursor *plugin::StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
+Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
 {
-  assert(enabled);
   return create(share, alloc);
 }
 
 /**
   TODO -> Remove this to force all engines to implement their own file. Solves the "we only looked at dfe" problem.
 */
-void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
-{
-  CachedDirectory::Entries entries= directory.getEntries();
-
-  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
-       entry_iter != entries.end(); ++entry_iter)
-  {
-    CachedDirectory::Entry *entry= *entry_iter;
-    const string *filename= &entry->filename;
-
-    assert(filename->size());
-
-    const char *ext= strchr(filename->c_str(), '.');
-
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_DEFINITION_FILE_EXT.c_str()) ||
-        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-    { }
-    else
-    {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
-
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(".dfe") + 1]= '\0'; // Subtract ending, place NULL 
-      set_of_names.insert(uname);
-    }
-  }
-}
+void StorageEngine::doGetTableNames(CachedDirectory&, string&, set<string>&)
+{ }
 
 class AddTableName : 
-  public unary_function<plugin::StorageEngine *, void>
+  public unary_function<StorageEngine *, void>
 {
   string db;
   CachedDirectory& directory;
-  set<string>& set_of_names;
+  TableNameList &set_of_names;
 
 public:
 
@@ -925,64 +622,222 @@ public:
   }
 };
 
-void plugin::StorageEngine::getSchemaNames(set<string>& set_of_names)
+class AddSchemaNames : 
+  public unary_function<StorageEngine *, void>
 {
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+  SchemaNameList &set_of_names;
 
-  CachedDirectory::Entries files= directory.getEntries();
+public:
 
-  for (CachedDirectory::Entries::iterator fileIter= files.begin();
-       fileIter != files.end(); fileIter++)
+  AddSchemaNames(set<string>& of_names) :
+    set_of_names(of_names)
   {
-    CachedDirectory::Entry *entry= *fileIter;
-    set_of_names.insert(entry->filename);
   }
 
-  set_of_names.insert("information_schema"); // special cases suck
+  result_type operator() (argument_type engine)
+  {
+    engine->doGetSchemaNames(set_of_names);
+  }
+};
 
+void StorageEngine::getSchemaNames(SchemaNameList &set_of_names)
+{
   // Add hook here for engines to register schema.
-#if 0
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
-#endif
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           AddSchemaNames(set_of_names));
+
+  plugin::Authorization::pruneSchemaNames(current_session->getSecurityContext(),
+                                          set_of_names);
 }
+
+class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
+{
+  const std::string &schema_name;
+  message::Schema &schema_proto;
+
+public:
+  StorageEngineGetSchemaDefinition(const std::string &schema_name_arg,
+                                  message::Schema &schema_proto_arg) :
+    schema_name(schema_name_arg),
+    schema_proto(schema_proto_arg) 
+  { }
+
+  result_type operator() (argument_type engine)
+  {
+    return engine->doGetSchemaDefinition(schema_name, schema_proto);
+  }
+};
 
 /*
   Return value is "if parsed"
 */
-bool plugin::StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
-  int ret;
+  proto.Clear();
 
-  if (schema_name.compare("information_schema") == 0)
+  EngineVector::iterator iter=
+    find_if(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+            StorageEngineGetSchemaDefinition(schema_name, proto));
+
+  if (iter != vector_of_schema_engines.end())
   {
-    proto.set_name("information_schema");
-    proto.set_collation("utf8_general_ci");
-    ret= 0;
-  }
-  else
-  {
-    ret= get_database_metadata(schema_name.c_str(), proto);
+    return true;
   }
 
-  return ret == 0 ? true : false;
+  return false;
 }
 
-void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_names)
+bool StorageEngine::doesSchemaExist(const std::string &schema_name)
+{
+  message::Schema proto;
+
+  return StorageEngine::getSchemaDefinition(schema_name, proto);
+}
+
+
+const CHARSET_INFO *StorageEngine::getSchemaCollation(const std::string &schema_name)
+{
+  message::Schema schmema_proto;
+  bool found;
+
+  found= StorageEngine::getSchemaDefinition(schema_name, schmema_proto);
+
+  if (found && schmema_proto.has_collation())
+  {
+    const string buffer= schmema_proto.collation();
+    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
+
+    if (not cs)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"), schema_name.c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+
+      return default_charset_info;
+    }
+
+    return cs;
+  }
+
+  return default_charset_info;
+}
+
+class CreateSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  const drizzled::message::Schema &schema_message;
+
+public:
+
+  CreateSchema(const drizzled::message::Schema &arg) :
+    schema_message(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    (void)engine->doCreateSchema(schema_message);
+  }
+};
+
+bool StorageEngine::createSchema(const drizzled::message::Schema &schema_message)
+{
+  // Add hook here for engines to register schema.
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           CreateSchema(schema_message));
+
+  return true;
+}
+
+class DropSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  const string &schema_name;
+
+public:
+
+  DropSchema(const string &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    schema_name(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo someday check that at least one engine said "true"
+    bool success= engine->doDropSchema(schema_name);
+
+    if (success)
+      success_count++;
+  }
+};
+
+bool StorageEngine::dropSchema(const string &schema_name)
+{
+  uint64_t counter= 0;
+  // Add hook here for engines to register schema.
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           DropSchema(schema_name, counter));
+
+  return counter ? true : false;
+}
+
+class AlterSchema : 
+  public unary_function<StorageEngine *, void>
+{
+  uint64_t &success_count;
+  const drizzled::message::Schema &schema_message;
+
+public:
+
+  AlterSchema(const drizzled::message::Schema &arg, uint64_t &count_arg) :
+    success_count(count_arg),
+    schema_message(arg)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    // @todo eomeday check that at least one engine said "true"
+    bool success= engine->doAlterSchema(schema_message);
+
+    if (success)
+      success_count++;
+  }
+};
+
+bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
+{
+  uint64_t success_count= 0;
+
+  for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+           AlterSchema(schema_message, success_count));
+
+  return success_count ? true : false;
+}
+
+
+void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_of_names)
 {
   char tmp_path[FN_REFLEN];
 
-  build_table_filename(tmp_path, sizeof(tmp_path), db.c_str(), "", false);
+  build_table_filename(tmp_path, sizeof(tmp_path), schema_name.c_str(), "", false);
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 
-  if (db.compare("information_schema"))
+  if (not schema_name.compare("information_schema"))
+  { }
+  else if (not schema_name.compare("data_dictionary"))
+  { }
+  else
   {
     if (directory.fail())
     {
       errno= directory.getError();
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_name.c_str());
       else
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;
@@ -990,14 +845,19 @@ void plugin::StorageEngine::getTableNames(const string& db, set<string>& set_of_
   }
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, db, set_of_names));
+           AddTableName(directory, schema_name, set_of_names));
+
+  Session *session= current_session;
+
+  session->doGetTableNames(directory, schema_name, set_of_names);
+
 }
 
 /* This will later be converted to TableIdentifiers */
-class DropTables: public unary_function<plugin::StorageEngine *, void>
+class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  set<string>& set_of_names;
+  TableNameList &set_of_names;
 
 public:
 
@@ -1009,7 +869,7 @@ public:
   result_type operator() (argument_type engine)
   {
 
-    for (set<string>::iterator iter= set_of_names.begin();
+    for (TableNameList::iterator iter= set_of_names.begin();
          iter != set_of_names.end();
          iter++)
     {
@@ -1017,7 +877,7 @@ public:
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.
-      if (! error)
+      if (not error)
         set_of_names.erase(iter);
     }
   }
@@ -1028,7 +888,7 @@ public:
 
   Note-> Unlike MySQL, we do not, on purpose, delete files that do not match any engines. 
 */
-void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
+void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
   set<string> set_of_table_names;
@@ -1071,7 +931,7 @@ void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const ch
   */
   set<string> all_exts= set_of_table_definition_ext;
 
-  for (vector<plugin::StorageEngine *>::iterator iter= vector_of_engines.begin();
+  for (EngineVector::iterator iter= vector_of_engines.begin();
        iter != vector_of_engines.end() ; iter++)
   {
     for (const char **ext= (*iter)->bas_ext(); *ext ; ext++)
@@ -1105,12 +965,12 @@ void plugin::StorageEngine::removeLostTemporaryTables(Session &session, const ch
     - table->s->path
     - table->alias
 */
-void plugin::StorageEngine::print_error(int error, myf errflag, Table &table)
+void StorageEngine::print_error(int error, myf errflag, Table &table)
 {
   print_error(error, errflag, &table);
 }
 
-void plugin::StorageEngine::print_error(int error, myf errflag, Table *table)
+void StorageEngine::print_error(int error, myf errflag, Table *table)
 {
   int textno= ER_GET_ERRNO;
   switch (error) {
@@ -1322,13 +1182,13 @@ void plugin::StorageEngine::print_error(int error, myf errflag, Table *table)
   @return
     Returns true if this is a temporary error
 */
-bool plugin::StorageEngine::get_error_message(int , String* )
+bool StorageEngine::get_error_message(int , String* )
 {
   return false;
 }
 
 
-void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &table)
+void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &table)
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];
@@ -1356,7 +1216,7 @@ void plugin::StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg,
 }
 
 
-int plugin::StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
+int StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
 {
   string path(identifier.getPath());
 
@@ -1365,7 +1225,7 @@ int plugin::StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
   return internal::my_delete(path.c_str(), MYF(0));
 }
 
-int plugin::StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
+int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
 {
   string src_path(src.getPath());
   string dest_path(dest.getPath());
@@ -1376,7 +1236,7 @@ int plugin::StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, Table
   return internal::my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
 }
 
-int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_proto)
+int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_message)
 {
   string file_name(identifier.getPath());
 
@@ -1390,7 +1250,7 @@ int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (table_proto.SerializeToZeroCopyStream(output) == false)
+  if (table_message.SerializeToZeroCopyStream(output) == false)
   {
     delete output;
     close(fd);
@@ -1402,5 +1262,38 @@ int plugin::StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, 
   return 0;
 }
 
+class CanCreateTable: public unary_function<StorageEngine *, bool>
+{
+  const TableIdentifier &identifier;
 
+public:
+  CanCreateTable(const TableIdentifier &identifier_arg) :
+    identifier(identifier_arg)
+  { }
+
+  result_type operator() (argument_type engine)
+  {
+    return not engine->doCanCreateTable(identifier);
+  }
+};
+
+
+/**
+  @note on success table can be created.
+*/
+bool StorageEngine::canCreateTable(drizzled::TableIdentifier &identifier)
+{
+  EngineVector::iterator iter=
+    find_if(vector_of_engines.begin(), vector_of_engines.end(),
+            CanCreateTable(identifier));
+
+  if (iter == vector_of_engines.end())
+  {
+    return true;
+  }
+
+  return false;
+}
+
+} /* namespace plugin */
 } /* namespace drizzled */

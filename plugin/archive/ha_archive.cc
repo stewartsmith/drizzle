@@ -166,7 +166,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 
 
 int ArchiveEngine::doDropTable(Session&,
-                               const string table_path)
+                               const string &table_path)
 {
   string new_path(table_path);
 
@@ -706,7 +706,7 @@ int ha_archive::write_row(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&SSV::ha_write_count);
+  ha_statistic_increment(&system_status_var::ha_write_count);
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)
@@ -940,7 +940,7 @@ int ha_archive::rnd_next(unsigned char *buf)
     return(HA_ERR_END_OF_FILE);
   scan_rows--;
 
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   current_position= aztell(&archive);
   rc= get_row(&archive, buf);
 
@@ -972,7 +972,7 @@ void ha_archive::position(const unsigned char *)
 
 int ha_archive::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
-  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   current_position= (internal::my_off_t)internal::my_get_ptr(pos, ref_length);
   if (azseek(&archive, (size_t)current_position, SEEK_SET) == (size_t)(-1L))
     return(HA_ERR_CRASHED_ON_USAGE);

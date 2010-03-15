@@ -34,9 +34,8 @@ namespace drizzled
 bool statement::ChangeSchema::execute()
 {
   Select_Lex *select_lex= &session->lex->select_lex;
-  LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
 
-  if (! mysql_change_db(session, &db_str, false))
+  if (not mysql_change_db(session, select_lex->db))
   {
     session->my_ok();
   }

@@ -25,7 +25,7 @@
 
 #include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
-#include <drizzled/ha_trx_info.h>
+#include "drizzled/resource_context.h"
 #include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
@@ -34,6 +34,7 @@
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
+#include "drizzled/transaction_context.h"
 
 #include <netdb.h>
 #include <map>
@@ -46,6 +47,8 @@
 
 #include <drizzled/internal_error_handler.h>
 #include <drizzled/diagnostics_area.h>
+
+#include <drizzled/plugin/authorization.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -71,7 +74,6 @@ class Lex_input_stream;
 class user_var_entry;
 class CopyField;
 class Table_ident;
-
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -177,8 +179,6 @@ struct system_variables
   bool log_warnings;
 
   uint32_t optimizer_search_depth;
-  /* A bitmap for switching optimizations on/off */
-  uint32_t optimizer_switch;
   uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
@@ -286,7 +286,7 @@ typedef struct system_status_var
     sense to add to the /global/ status variable counter.
   */
   double last_query_cost;
-} STATUS_VAR;
+} system_status_var;
 
 /*
   This is used for 'SHOW STATUS'. It must be updated to the last ulong
@@ -313,16 +313,24 @@ struct Ha_data
   */
   void *ha_ptr;
   /**
-    0: Life time: one statement within a transaction. If @@autocommit is
-    on, also represents the entire transaction.
-    @sa trans_register_ha()
-
-    1: Life time: one transaction within a connection.
-    If the storage engine does not participate in a transaction,
-    this should not be used.
-    @sa trans_register_ha()
-  */
-  Ha_trx_info ha_info[2];
+   * Resource contexts for both the "statement" and "normal"
+   * transactions.
+   *
+   * Resource context at index 0:
+   *
+   * Life time: one statement within a transaction. If @@autocommit is
+   * on, also represents the entire transaction.
+   *
+   * Resource context at index 1:
+   *
+   * Life time: one transaction within a connection. 
+   *
+   * @note
+   *
+   * If the storage engine does not participate in a transaction, 
+   * there will not be a resource context.
+   */
+  drizzled::ResourceContext resource_context[2];
 
   Ha_data() :ha_ptr(NULL) {}
 };
@@ -407,30 +415,8 @@ public:
    */
   uint32_t id;
   LEX *lex; /**< parse tree descriptor */
-  /**
-    Points to the query associated with this statement. It's const, but
-    we need to declare it char * because all table handlers are written
-    in C and need to point to it.
-
-    Note that (A) if we set query = NULL, we must at the same time set
-    query_length = 0, and protect the whole operation with the
-    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
-    non-NULL value if its previous value is NULL. We do not need to protect
-    operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that session->query cannot change at the moment, one should print
-    session->query like this:
-      (1) reserve the LOCK_thread_count mutex;
-      (2) check if session->query is NULL;
-      (3) if not NULL, then print at most session->query_length characters from
-      it. We will see the query_length field as either 0, or the right value
-      for it.
-    Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way.
-    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
-    STATUS.
-  */
-  char *query;
-  uint32_t query_length; /**< current query length */
+  /** query associated with this statement */
+  std::string query;
 
   /**
     Name of the current (default) database.
@@ -493,6 +479,16 @@ public:
   }
 
   /**
+   * Is this session viewable by the current user?
+   */
+  bool isViewable() const
+  {
+    return plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                               this,
+                                               false);
+  }
+
+  /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
     will know that the error was in having clause.
@@ -528,7 +524,7 @@ public:
 
 private:
   /* container for handler's private per-connection data */
-  Ha_data ha_data[MAX_HA];
+  std::vector<Ha_data> ha_data;
   /*
     Id of current query. Statement can be reused to execute several queries
     query_id is global in context of the whole MySQL server.
@@ -540,21 +536,16 @@ private:
   query_id_t query_id;
   query_id_t warn_query_id;
 public:
-  void **getEngineData(const plugin::StorageEngine *engine);
-  Ha_trx_info *getEngineInfo(const plugin::StorageEngine *engine,
-                             size_t index= 0);
+  void **getEngineData(const plugin::MonitoredInTransaction *monitored);
+  ResourceContext *getResourceContext(const plugin::MonitoredInTransaction *monitored,
+                                      size_t index= 0);
 
   struct st_transactions {
-    std::deque<drizzled::NamedSavepoint> savepoints;
-    Session_TRANS all;			// Trans since BEGIN WORK
-    Session_TRANS stmt;			// Trans for current statement
+    std::deque<NamedSavepoint> savepoints;
+    TransactionContext all; ///< Trans since BEGIN WORK
+    TransactionContext stmt; ///< Trans for current statement
     XID_STATE xid_state;
 
-    /*
-       Tables changed in transaction (that must be invalidated in query cache).
-       List contain only transactional tables, that not invalidated in query
-       cache (instead of full list of changed in transaction tables).
-    */
     void cleanup()
     {
       savepoints.clear();
@@ -566,6 +557,7 @@ public:
       xid_state()
     { }
   } transaction;
+
   Field *dup_field;
   sigset_t signals;
 
@@ -800,7 +792,7 @@ public:
   }
 
   /** Returns the current query text */
-  inline const char *getQueryString()  const
+  inline const std::string &getQueryString()  const
   {
     return query;
   }
@@ -808,8 +800,8 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    if (query != NULL)
-      return strlen(query);
+    if (! query.empty())
+      return query.length();
     else
       return 0;
   }
@@ -1430,6 +1422,14 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  void doGetTableNames(CachedDirectory &directory,
+                       const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+  int doGetTableDefinition(const char *path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           message::Table *table_proto);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);
@@ -1441,7 +1441,7 @@ public:
 
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
-  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
+  bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);
 
@@ -1552,10 +1552,10 @@ static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TAB
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
 /* Functions in sql_class.cc */
-void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
+void add_to_status(system_status_var *to_var, system_status_var *from_var);
 
-void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
-                        STATUS_VAR *dec_var);
+void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
+                        system_status_var *dec_var);
 
 } /* namespace drizzled */
 

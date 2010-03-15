@@ -5,6 +5,9 @@ ERROR 42000: Incorrect usage/placement of 'block_size'
 create temporary table t1 (a int not null, b int, c varchar(400), primary key (a), key (b)) engine=MEMORY comment="testing heaps" block_size=4;
 ERROR 42000: Incorrect usage/placement of 'block_size'
 create temporary table t1 (a int not null, b int, c varchar(400), d varchar(400), primary key (a), key (b)) engine=MEMORY comment="testing heaps" block_size=24;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 insert into t1 values (1,1,'012',NULL), (2,2,'0123456789',NULL), (3,3,'012345678901234567890123456789',NULL), (4,4,NULL,'0123456789012345678901234567890123456789012345678901234567890123456789');
 select * from t1;
 a	b	c	d
@@ -52,9 +55,21 @@ a	b	c	d
 4	4	NULL	0123456789012345678901234567890123456789012345678901234567890123456789
 7	7	0123	NULL
 8	8	0123	NULL
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 alter table t1 block_size = 0;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 alter table t1 row_format = dynamic;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 alter table t1 block_size = 128;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 select * from t1;
 a	b	c	d
 1	1	012	NULL
@@ -72,6 +87,9 @@ count(*)
 10001
 insert into t1 values (100000,100000,NULL,'0123'), (100000,100000,NULL,'0123');
 ERROR 23000: Duplicate entry '100000' for key 'PRIMARY'
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 select count(*) from t1;
 count(*)
 10002

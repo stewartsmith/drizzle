@@ -145,7 +145,7 @@ public:
   
     const char *dbs= session->db.empty() ? "" : session->db.c_str();
   
-    const char *qys= (session->getQueryString()) ? session->getQueryString() : "";
+    const char *qys= (! session->getQueryString().empty()) ? session->getQueryString().c_str() : "";
     int qyl= 0;
     if (qys)
       qyl= session->getQueryLength();
@@ -287,7 +287,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   logging_syslog_plugin_init,
   logging_syslog_plugin_deinit,
-  NULL,   /* status variables */
   logging_syslog_system_variables,
   NULL
 }
