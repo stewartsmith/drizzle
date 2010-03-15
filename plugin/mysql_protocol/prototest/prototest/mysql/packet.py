@@ -96,16 +96,17 @@ class TestPacket(unittest.TestCase):
     self.assertRaises(PacketException, Packet, size=4294967296)
     self.assertRaises(PacketException, Packet, size=4294967297)
 
-def parse_row(count, data, check_null=True):
+def parse_row(count, data):
   row = []
   while count > 0:
     count -= 1
-    (size, packed_size) = parse_encoded_size(data)
-    if check_null and size is 251:
+    if ord(data[0]) == 251:
       row.append(None)
+      data = data[1:]
     else:
+      (size, packed_size) = parse_encoded_size(data)
       row.append(data[packed_size:packed_size+size])
-    data = data[packed_size+size:]
+      data = data[packed_size+size:]
   return row
 
 class BadSize(Exception):
@@ -114,18 +115,18 @@ class BadSize(Exception):
 def parse_encoded_size(data):
   size = ord(data[0])
   packed_size = 1
-  if size is 252:
+  if size == 252:
     size = struct.unpack('<H', data[1:3])[0]
     packed_size = 3
-  elif size is 253:
+  elif size == 253:
     data = struct.unpack('<HB', data[1:4])
     size = data[0] | (data[1] << 16)
     packed_size = 4
-  elif size is 254:
+  elif size == 254:
     data = struct.unpack('<II', data[1:9])
     size = data[0] | (data[1] << 32)
     packed_size = 8
-  elif size is 255:
+  elif size == 255:
     raise BadSize(str(size))
 
   return (size, packed_size)

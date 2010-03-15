@@ -355,7 +355,7 @@ class TestCommand(unittest.TestCase):
 
         packet = Packet(self.readData(4))
         self.assertEqual(packet.sequence, 4)
-        row = parse_row(1, self.readData(packet.size), not column.flags.not_null)
+        row = parse_row(1, self.readData(packet.size))
         self.assertEqual(row[0], 'x' * x)
 
         packet = Packet(self.readData(4))
@@ -438,7 +438,6 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(packet.sequence, (5+x) % 256)
         result = EofResult(self.readData(packet.size))
       else:
-        print result
         self.assertTrue(isinstance(result, ErrorResult))
         self.assertEqual(result.error_code, PACKET_TOO_LARGE)
         return
