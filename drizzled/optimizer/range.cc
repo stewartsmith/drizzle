@@ -344,14 +344,6 @@ static void print_sel_tree(optimizer::Parameter *param,
                            key_map *tree_map,
                            const char *msg);
 
-static void print_ror_scans_arr(Table *table,
-                                const char *msg,
-                                struct st_ror_scan_info **start,
-                                struct st_ror_scan_info **end);
-static void print_ror_scans_vector(Table *table,
-                                   const char *msg,
-                                   vector<struct st_ror_scan_info *> &vec);
-
 static SEL_TREE *tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
 
 static SEL_TREE *tree_or(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
@@ -2003,9 +1995,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   }
 
   tree->ror_scans_end= cur_ror_scan;
-  print_ror_scans_arr(param->table, "original",
-                                          tree->ror_scans,
-                                          tree->ror_scans_end);
   /*
     Ok, [ror_scans, ror_scans_end) is array of ptrs to initialized
     ROR_SCAN_INFO's.
@@ -2013,9 +2002,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   */
   internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
                      (qsort_cmp)cmp_ror_scan_info);
-  print_ror_scans_arr(param->table, "ordered",
-                                          tree->ror_scans,
-                                          tree->ror_scans_end);
 
   ROR_SCAN_INFO **intersect_scans; /* ROR scans used in index intersection */
   ROR_SCAN_INFO **intersect_scans_end;
@@ -2059,11 +2045,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   {
     return NULL;
   }
-
-  print_ror_scans_arr(param->table,
-                                          "best ROR-intersection",
-                                          intersect_scans,
-                                          intersect_scans_best);
 
   *are_all_covering= intersect->is_covering;
   uint32_t best_num= intersect_scans_best - intersect_scans;
@@ -2177,9 +2158,6 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   ha_rows records=0;
   bool all_covered;
 
-  print_ror_scans_arr(param->table,
-                                           "building covering ROR-I",
-                                           ror_scan_mark, ror_scans_end);
   do
   {
     /*
@@ -2201,10 +2179,6 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
                        sizeof(ROR_SCAN_INFO*),
                        (qsort_cmp)cmp_ror_scan_info_covering);
 
-    print_ror_scans_arr(param->table,
-                                             "remaining scans",
-                                             ror_scan_mark, ror_scans_end);
-
     /* I=I-first(I) */
     total_cost += (*ror_scan_mark)->index_read_cost;
     records += (*ror_scan_mark)->records;
@@ -2222,10 +2196,6 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     Ok, [tree->ror_scans .. ror_scan) holds covering index_intersection with
     cost total_cost.
   */
-  print_ror_scans_arr(param->table,
-                                           "creating covering ROR-intersect",
-                                           tree->ror_scans, ror_scan_mark);
-
   /* Add priority queue use cost. */
   total_cost += rows2double(records)*
                 log((double)(ror_scan_mark - tree->ror_scans)) /
@@ -2396,9 +2366,6 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
                                                 (retrieve_full_rows? (! is_covering) : false),
                                                 parent_alloc)))
   {
-    print_ror_scans_vector(param->table,
-                           "creating ROR-intersect",
-                           ror_range_scans);
     alloc= parent_alloc ? parent_alloc : &quick_intersect->alloc;
     for (vector<struct st_ror_scan_info *>::iterator it= ror_range_scans.begin();
          it != ror_range_scans.end();
@@ -6385,42 +6352,5 @@ static void print_sel_tree(optimizer::Parameter *param, SEL_TREE *tree, key_map 
     tmp.append(STRING_WITH_LEN("(empty)"));
 }
 
-
-static void print_ror_scans_arr(Table *table,
-                                const char *,
-                                struct st_ror_scan_info **start,
-                                struct st_ror_scan_info **end)
-{
-  char buff[1024];
-  String tmp(buff,sizeof(buff),&my_charset_bin);
-  tmp.length(0);
-  for (; start != end; start++)
-  {
-    if (tmp.length())
-      tmp.append(',');
-    tmp.append(table->key_info[(*start)->keynr].name);
-  }
-  if (! tmp.length())
-    tmp.append(STRING_WITH_LEN("(empty)"));
-}
-
-static void print_ror_scans_vector(Table *table,
-                                   const char *,
-                                   vector<struct st_ror_scan_info *> &vec)
-{
-  char buff[1024];
-  String tmp(buff,sizeof(buff),&my_charset_bin);
-  tmp.length(0);
-  for (vector<struct st_ror_scan_info *>::iterator it= vec.begin();
-       it != vec.end();
-       ++it)
-  {
-    if (tmp.length())
-      tmp.append(',');
-    tmp.append(table->key_info[(*it)->keynr].name);
-  }
-  if (! tmp.length())
-    tmp.append(STRING_WITH_LEN("(empty)"));
-}
 
 } /* namespace drizzled */
