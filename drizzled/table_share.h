@@ -196,7 +196,9 @@ public:
     To ensure this one can use set_table_cache() methods.
   */
   LEX_STRING table_cache_key;
+private:
   LEX_STRING db;                        /* Pointer to db */
+public:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
