@@ -726,6 +726,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists);
 
 bool mysql_create_like_table(Session* session,
+                             TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,

@@ -130,19 +130,19 @@ bool statement::CreateTable::execute()
     select_lex->options|= SELECT_NO_UNLOCK;
     unit->set_limit(select_lex);
 
-    if (! lex_identified_temp_table)
+    if (not lex_identified_temp_table)
     {
       session->lex->link_first_table_back(create_table, link_to_local);
       create_table->create= true;
     }
 
-    if (! (res= session->openTablesLock(session->lex->query_tables)))
+    if (not (res= session->openTablesLock(session->lex->query_tables)))
     {
       /*
          Is table which we are changing used somewhere in other parts
          of query
        */
-      if (! lex_identified_temp_table)
+      if (not lex_identified_temp_table)
       {
         TableList *duplicate= NULL;
         create_table= session->lex->unlink_first_table(&link_to_local);
@@ -172,7 +172,8 @@ bool statement::CreateTable::execute()
                                      select_lex->item_list,
                                      session->lex->duplicates,
                                      session->lex->ignore,
-                                     select_tables)))
+                                     select_tables,
+                                     new_table_identifier)))
       {
         /*
            CREATE from SELECT give its Select_Lex for SELECT,
@@ -182,7 +183,7 @@ bool statement::CreateTable::execute()
         delete result;
       }
     }
-    else if (! lex_identified_temp_table)
+    else if (not lex_identified_temp_table)
     {
       create_table= session->lex->unlink_first_table(&link_to_local);
     }
@@ -193,6 +194,7 @@ bool statement::CreateTable::execute()
     if (is_create_table_like)
     {
       res= mysql_create_like_table(session, 
+                                   new_table_identifier,
                                    create_table, 
                                    select_tables,
                                    create_table_proto,
