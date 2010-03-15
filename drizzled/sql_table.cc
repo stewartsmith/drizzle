@@ -1665,7 +1665,7 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  remove_table_from_cache(session, table->s->db.str,
+  remove_table_from_cache(session, table->s->getSchemaName(),
                           table->s->table_name.str,
                           RTFC_WAIT_OTHER_THREAD_FLAG);
 }
@@ -1819,7 +1819,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      remove_table_from_cache(session, table->table->s->db.str,
+      remove_table_from_cache(session, table->table->s->getSchemaName(),
                               table->table->s->table_name.str,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -1919,7 +1919,7 @@ send_result:
         else
         {
           pthread_mutex_lock(&LOCK_open);
-          remove_table_from_cache(session, table->table->s->db.str,
+          remove_table_from_cache(session, table->table->s->getSchemaName(),
                                   table->table->s->table_name.str, RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
@@ -2111,7 +2111,7 @@ bool mysql_create_like_table(Session* session,
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier src_identifier(src_table->table->s->db.str,
+  TableIdentifier src_identifier(src_table->table->s->getSchemaName(),
                                  src_table->table->s->table_name.str, src_table->table->s->tmp_table);
 
 
