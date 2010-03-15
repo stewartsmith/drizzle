@@ -3,7 +3,7 @@ Table	Create Table
 INNODB_CONFIGURATION	CREATE TABLE `innodb_configuration` (
   `NAME` varchar(64) NOT NULL DEFAULT '',
   `TYPE` varchar(64) NOT NULL DEFAULT '',
-  `VALUE` varchar(64) NOT NULL DEFAULT ''
+  `VALUE` varchar(64) DEFAULT NULL
 ) ENGINE=FunctionEngine
 SELECT COUNT(*) FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
 COUNT(*)
@@ -54,7 +54,7 @@ additional_mem_pool_size	ULINT	4194304
 autoextend_increment	ULONG	8
 buffer_pool_size	ULINT	8388608
 checksums	BOOL	true
-data_file_path	TEXT	true
+data_file_path	TEXT	NULL
 data_home_dir	TEXT	./
 doublewrite	BOOL	true
 file_format	TEXT	Barracuda
@@ -68,7 +68,7 @@ lock_wait_timeout	ULINT	60
 log_buffer_size	ULINT	24
 log_file_size	ULINT	320
 log_files_in_group	ULINT	2
-log_group_home_dir	TEXT	2
+log_group_home_dir	TEXT	NULL
 max_dirty_pages_pct	ULONG	75
 max_purge_lag	ULONG	0
 lru_old_blocks_pct	ULINT	37

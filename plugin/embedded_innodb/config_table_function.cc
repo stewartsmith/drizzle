@@ -62,7 +62,7 @@ LibInnoDBConfigTool::LibInnoDBConfigTool() :
 {
   add_field("NAME");
   add_field("TYPE");
-  add_field("VALUE");
+  add_field("VALUE", plugin::TableFunction::STRING, 64, true);
 }
 
 LibInnoDBConfigTool::Generator::Generator(Field **arg) :
