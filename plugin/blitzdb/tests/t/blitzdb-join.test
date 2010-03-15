@@ -18,9 +18,9 @@ select * from t1 UNION select * from t2;
 drop table t1, t2;
 
 # Simple Expensive Multi Table JOIN - Unindexed
-create table t1 (id int, name varchar(32)); 
-create table t2 (id int, job_id int); 
-create table t3 (job_id int, job_name varchar(32)); 
+create table t1 (id int, name varchar(32)) engine = blitzdb; 
+create table t2 (id int, job_id int) engine = blitzdb; 
+create table t3 (job_id int, job_name varchar(32)) engine = blitzdb; 
 
 insert into t1 values (1, 'Alex'); 
 insert into t1 values (2, 'Bob'); 

@@ -363,3 +363,29 @@ select count(*) from t2;
 count(*)
 1
 drop table t1, t2;
+create table t1 (a int, b varchar(255)) engine = blitzdb;
+insert into t1 values (1, 'one'), (2, 'two'), (3, 'three'), (4, 'four');
+insert into t1 values (5, 'five'), (6, 'six'), (7, 'seven'), (8, 'eight');
+create table t2 (a int, b varchar(255), c double) engine = blitzdb;
+insert into t2 (a, b) select a, b from t1 where a > 4;
+insert into t2 (a) select a from t1 where a = 1;
+select * from t2;
+a	b	c
+5	five	NULL
+6	six	NULL
+7	seven	NULL
+8	eight	NULL
+1	NULL	NULL
+delete from t2;
+insert into t2 (a, b) select * from t1;
+select * from t2;
+a	b	c
+1	one	NULL
+2	two	NULL
+3	three	NULL
+4	four	NULL
+5	five	NULL
+6	six	NULL
+7	seven	NULL
+8	eight	NULL
+drop table t1;
