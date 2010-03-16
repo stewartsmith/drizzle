@@ -122,7 +122,8 @@ void table_cache_dictionary::TableCache::Generator::fill()
     push(static_cast<int64_t>(0));
 
   /* TABLE_SCHEMA 2 */
-  push(table->getShare()->getSchemaName());
+  string arg;
+  push(table->getShare()->getSchemaName(arg));
 
   /* TABLE_NAME  3 */
   push(table->getShare()->getTableName());

@@ -213,6 +213,14 @@ public:
     return db.str;
   }
 
+  const std::string &getSchemaName(std::string &schema_name_arg) const
+  {
+    schema_name_arg.clear();
+    schema_name_arg.append(db.str, db.length);
+
+    return schema_name_arg;
+  }
+
   uint32_t   block_size;                   /* create information */
 
   uint64_t   version;
