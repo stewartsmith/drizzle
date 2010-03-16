@@ -1323,7 +1323,7 @@ copy_data_between_tables(Table *from, Table *to,
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
       tables.alias= tables.table_name= from->s->table_name.str;
-      tables.db= from->s->db.str;
+      tables.db= const_cast<char *>(from->s->getSchemaName());
       error= 1;
 
       if (session->lex->select_lex.setup_ref_array(session, order_num) ||

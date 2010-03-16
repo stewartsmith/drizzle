@@ -99,10 +99,11 @@ void table_cache_dictionary::TableDefinitionCache::Generator::fill()
   */
 
   /* TABLE_SCHEMA 1 */
-  push(share->getSchemaName());
+  string arg;
+  push(share->getSchemaName(arg));
 
   /* TABLE_NAME  2 */
-  push(share->getTableName());
+  push(share->getTableName(arg));
 
   /* VERSION 3 */
   push(static_cast<int64_t>(share->getVersion()));

@@ -33,8 +33,6 @@ table_cache_dictionary::TableCache::TableCache() :
   add_field("SESSION_ID", plugin::TableFunction::NUMBER);
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
-  add_field("ARCHETYPE");
-  add_field("ENGINE");
   add_field("VERSION", plugin::TableFunction::NUMBER);
   add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN);
   add_field("ROWS", plugin::TableFunction::NUMBER);
@@ -112,7 +110,7 @@ void table_cache_dictionary::TableCache::Generator::fill()
 {
   /**
     For test cases use:
-    --replace_column 1 #  6 # 8 # 9 # 10 # 11 #
+    --replace_column 1 # 4 # 5 #  6 # 8 # 9 #
   */
 
   /* SESSION_ID 1 */
@@ -122,32 +120,27 @@ void table_cache_dictionary::TableCache::Generator::fill()
     push(static_cast<int64_t>(0));
 
   /* TABLE_SCHEMA 2 */
-  push(table->getShare()->getSchemaName());
+  string arg;
+  push(table->getShare()->getSchemaName(arg));
 
   /* TABLE_NAME  3 */
-  push(table->getShare()->getTableName());
+  push(table->getShare()->getTableName(arg));
 
-  /* ARCHETYPE  4 */
-  push(table->getShare()->getTableTypeAsString());
-
-  /* ENGINE 5 */
-  push(table->getEngine()->getName());
-
-  /* VERSION 6 */
+  /* VERSION 4 */
   push(static_cast<int64_t>(table->getShare()->version));
 
-  /* IS_NAME_LOCKED 7 */
+  /* IS_NAME_LOCKED 5 */
   push(table->getShare()->isNameLock());
 
-  /* ROWS 8 */
+  /* ROWS 6 */
   push(static_cast<uint64_t>(table->getCursor().records()));
 
-  /* AVG_ROW_LENGTH 9 */
+  /* AVG_ROW_LENGTH 7 */
   push(table->getCursor().rowSize());
 
-  /* TABLE_SIZE 10 */
+  /* TABLE_SIZE 8 */
   push(table->getCursor().tableSize());
 
-  /* AUTO_INCREMENT 11 */
+  /* AUTO_INCREMENT 9 */
   push(table->getCursor().getNextInsertId());
 }
