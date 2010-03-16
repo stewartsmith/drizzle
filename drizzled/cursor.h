@@ -682,8 +682,7 @@ private:
 extern const char *ha_row_type[];
 
 /* basic stuff */
-int ha_init_errors(void);
-int ha_end(void);
+void ha_init_errors(void);
 
 SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                    SORT_FIELD *sortorder);
