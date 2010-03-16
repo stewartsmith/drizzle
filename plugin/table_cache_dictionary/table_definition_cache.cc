@@ -103,7 +103,7 @@ void table_cache_dictionary::TableDefinitionCache::Generator::fill()
   push(share->getSchemaName(arg));
 
   /* TABLE_NAME  2 */
-  push(share->getTableName());
+  push(share->getTableName(arg));
 
   /* VERSION 3 */
   push(static_cast<int64_t>(share->getVersion()));

@@ -38,6 +38,11 @@ namespace drizzled
 
 typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
 
+const static std::string STANDARD_STRING("STANDARD");
+const static std::string TEMPORARY_STRING("TEMPORARY");
+const static std::string INTERNAL_STRING("INTERNAL");
+const static std::string FUNCTION_STRING("FUNCTION");
+
 class TableShare
 {
 public:
@@ -208,6 +213,14 @@ public:
     return table_name.str;
   }
 
+  const std::string &getTableName(std::string &name_arg) const
+  {
+    name_arg.clear();
+    name_arg.append(table_name.str, table_name.length);
+
+    return name_arg;
+  }
+
   const char *getSchemaName() const
   {
     return db.str;
@@ -246,19 +259,19 @@ private:
   message::Table *table_proto;
 public:
 
-  const char * getTableTypeAsString() const
+  const std::string &getTableTypeAsString() const
   {
     switch (table_proto->type())
     {
     default:
     case message::Table::STANDARD:
-      return "STANDARD";
+      return STANDARD_STRING;
     case message::Table::TEMPORARY:
-      return "TEMPORARY";
+      return TEMPORARY_STRING;
     case message::Table::INTERNAL:
-      return "INTERNAL";
+      return INTERNAL_STRING;
     case message::Table::FUNCTION:
-      return "FUNCTION";
+      return FUNCTION_STRING;
     }
   }
 
