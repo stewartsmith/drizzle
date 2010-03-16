@@ -348,7 +348,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
   session->server_status|= SERVER_STATUS_IN_TRANS;
 
-
   trans->registerResource(resource_context);
 
   assert(monitored->participatesInSqlTransaction());
@@ -360,6 +359,8 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
+
+  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
 
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
@@ -390,6 +391,8 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
+
+  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
 
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
   if (! session->getResourceContext(monitored, 0)->isStarted())
@@ -578,7 +581,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_commit_count);
         }
@@ -590,7 +593,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_commit_count);
         }
@@ -656,7 +659,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_rollback_count);
         }
@@ -668,7 +671,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_rollback_count);
         }
