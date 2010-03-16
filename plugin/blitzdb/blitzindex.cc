@@ -170,6 +170,46 @@ char *BlitzTree::find_key(const char *key, const int klen, int *rv_len) {
   return rv;
 }
 
+/* Search and position the cursor to the last occurrence of the
+   provided key. Returns true on success and otherwise false. */
+bool BlitzTree::jump_to_last_occurrence(const char *key, const int klen) {
+  char *fetched_key;
+  int fetched_klen, cmp;
+
+  fetched_key = this->find_key(key, klen, &fetched_klen);
+
+  if (fetched_key == NULL)
+    return false;
+
+  free(fetched_key);
+
+  /* If this index is unique, then there is no point in scanning
+     for duplicates. Thus we return. */
+  if (this->unique)
+    return true;
+
+  /* Keep traversing forward until we hit a different key or EOF. */
+  do {
+    fetched_key = this->next_key(&fetched_klen);
+
+    /* No more nodes to visit. */
+    if (fetched_key == NULL)
+      break;
+
+    cmp = blitz_keycmp_cb(fetched_key, fetched_klen, key, klen, this);
+
+    if (cmp != 0) {
+      free(fetched_key);
+      /* Step back one key since that's the last position of
+         the key that we're interested in. */
+      tcbdbcurprev(bt_cursor);
+      break;
+    }
+  } while(1);
+
+  return true;
+}
+
 int BlitzTree::delete_key(const char *key, const int klen) {
   return (tcbdbout(btree, key, klen)) ? 0 : -1;
 }
