@@ -22,10 +22,12 @@
 
 namespace drizzled
 {
-
+namespace optimizer
+{
 class COST_VECT
 {
-public:
+private:
+
   double io_count;     /* number of I/O                 */
   double avg_io_cost;  /* cost of an average I/O oper.  */
   double cpu_cost;     /* cost of operations in CPU     */
@@ -37,6 +39,7 @@ public:
   static const uint32_t MEM_COEFF=1;
   static const uint32_t IMPORT_COEFF=1;
 
+public:
   COST_VECT() :
     io_count(0.0),
     avg_io_cost(1.0),
@@ -79,8 +82,20 @@ public:
                   add_io_cnt * add_avg_cost) / io_count_sum;
     io_count= io_count_sum;
   }
-};
 
+  /* accessor methods*/
+  void setio_count(double m){io_count=m;}
+  double getio_count(){return io_count;}
+  void setavg_io_cost(double m){avg_io_cost=m;}
+  double getavg_io_cost(){return avg_io_cost;}
+  void setcpu_cost(double m){cpu_cost=m;}
+  double getcpu_cost(){return cpu_cost;}
+  void setmem_cost(double m){mem_cost=m;}
+  double getmem_cost(){return mem_cost;}
+  void setimport_cost(double m){import_cost=m;}
+  double getimport_cost(){return import_cost;}
+};
+} /* namespace optimizer */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_COST_VECT_H */

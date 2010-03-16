@@ -206,14 +206,14 @@ static unsigned char is_null_string[2]= {1,0};
 static void get_sweep_read_cost(Table *table,
                                 ha_rows nrows,
                                 bool interrupted,
-                                COST_VECT *cost)
+                                optimizer::COST_VECT *cost)
 {
   cost->zero();
   if (table->cursor->primary_key_is_clustered())
   {
-    cost->io_count= table->cursor->read_time(table->s->primary_key,
+    cost->setio_count(table->cursor->read_time(table->s->primary_key,
                                              static_cast<uint32_t>(nrows),
-                                             nrows);
+                                             nrows));
   }
   else
   {
@@ -224,13 +224,13 @@ static void get_sweep_read_cost(Table *table,
     if (busy_blocks < 1.0)
       busy_blocks= 1.0;
 
-    cost->io_count= busy_blocks;
+    cost->setio_count(busy_blocks);
 
     if (! interrupted)
     {
       /* Assume reading is done in one 'sweep' */
-      cost->avg_io_cost= (DISK_SEEK_BASE_COST +
-                          DISK_SEEK_PROP_COST*n_blocks/busy_blocks);
+      cost->setavg_io_cost((DISK_SEEK_BASE_COST +
+                          DISK_SEEK_PROP_COST*n_blocks/busy_blocks));
     }
   }
 }
@@ -312,7 +312,7 @@ static ha_rows check_quick_select(optimizer::Parameter *param,
                                   bool update_tbl_stats,
                                   uint32_t *mrr_flags,
                                   uint32_t *bufsize,
-                                  COST_VECT *cost);
+                                  optimizer::COST_VECT *cost);
 
 static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
                                                       SEL_TREE *tree,
@@ -1298,7 +1298,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
 
   /* Calculate cost(rowid_to_row_scan) */
   {
-    COST_VECT sweep_cost;
+    optimizer::COST_VECT sweep_cost;
     JOIN *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
@@ -1416,7 +1416,7 @@ skip_to_ror_scan:
   */
   double roru_total_cost;
   {
-    COST_VECT sweep_cost;
+    optimizer::COST_VECT sweep_cost;
     JOIN *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
@@ -1883,7 +1883,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   info->total_cost= info->index_scan_costs;
   if (!info->is_covering)
   {
-    COST_VECT sweep_cost;
+    optimizer::COST_VECT sweep_cost;
     JOIN *join= info->param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
@@ -2305,7 +2305,7 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
     if (*key)
     {
       ha_rows found_records;
-      COST_VECT cost;
+      optimizer::COST_VECT cost;
       double found_read_time= 0.0;
       uint32_t mrr_flags, buf_size;
       uint32_t keynr= param->real_keynr[idx];
@@ -4611,7 +4611,7 @@ ha_rows check_quick_select(optimizer::Parameter *param,
                            bool update_tbl_stats,
                            uint32_t *mrr_flags,
                            uint32_t *bufsize,
-                           COST_VECT *cost)
+                           optimizer::COST_VECT *cost)
 {
   SEL_ARG_RANGE_SEQ seq;
   RANGE_SEQ_IF seq_if = {sel_arg_range_seq_init, sel_arg_range_seq_next};
@@ -5037,7 +5037,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
   optimizer::QuickRange *range= NULL;
   uint32_t part;
   bool create_err= false;
-  COST_VECT cost;
+  optimizer::COST_VECT cost;
 
   old_root= session->mem_root;
   /* The following call may change session->mem_root */
@@ -5704,7 +5704,7 @@ get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
                                            param,
                                            &cur_param_idx);
       /* Check if this range tree can be used for prefix retrieval. */
-      COST_VECT dummy_cost;
+      optimizer::COST_VECT dummy_cost;
       uint32_t mrr_flags= HA_MRR_USE_DEFAULT_IMPL;
       uint32_t mrr_bufsize= 0;
       cur_quick_prefix_records= check_quick_select(param,
