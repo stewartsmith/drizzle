@@ -28,6 +28,8 @@
  * or more plugin::Plugin objects. 
  */
 
+#include <cassert>
+
 #include "drizzled/plugin/manifest.h"
 
 namespace drizzled
@@ -53,7 +55,7 @@ public:
       isInited(false),
       system_vars(NULL)
   {
-    assert(manfest != NULL);
+    assert(manifest != NULL);
   }
       
   Module(const Manifest *manifest_arg)
@@ -61,7 +63,7 @@ public:
       isInited(false),
       system_vars(NULL)
   {
-    assert(manfest != NULL);
+    assert(manifest != NULL);
   }
       
   const std::string& getName() const
