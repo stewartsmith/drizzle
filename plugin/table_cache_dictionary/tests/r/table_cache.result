@@ -19,14 +19,14 @@ count(*)
 flush tables;
 select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME, ARCHETYPE;
 SESSION_ID	TABLE_SCHEMA	TABLE_NAME	ARCHETYPE	ENGINE	VERSION	IS_NAME_LOCKED	ROWS	AVG_ROW_LENGTH	TABLE_SIZE	AUTO_INCREMENT
-#	data_dictionary	table_cache	FUNCTION	FunctionEngine	#	FALSE	#	#	#	#
+#	#	table_cache	FUNCTION	FunctionEngine	#	FALSE	#	#	#	#
 create table a ( a int);
 create table b ( b int);
 select * FROM a,b;
 a	b
 select * FROM data_dictionary.TABLE_CACHE ORDER BY TABLE_SCHEMA, TABLE_NAME, ARCHETYPE;
 SESSION_ID	TABLE_SCHEMA	TABLE_NAME	ARCHETYPE	ENGINE	VERSION	IS_NAME_LOCKED	ROWS	AVG_ROW_LENGTH	TABLE_SIZE	AUTO_INCREMENT
-#		table_cache	FUNCTION	FunctionEngine	#	FALSE	#	#	#	#
-#	test	a	STANDARD	InnoDB	#	FALSE	#	#	#	#
-#	test	b	STANDARD	InnoDB	#	FALSE	#	#	#	#
+#	#	table_cache	FUNCTION	FunctionEngine	#	FALSE	#	#	#	#
+#	#	a	STANDARD	InnoDB	#	FALSE	#	#	#	#
+#	#	b	STANDARD	InnoDB	#	FALSE	#	#	#	#
 DROP TABLES a,b;

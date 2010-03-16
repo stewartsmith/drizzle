@@ -1276,9 +1276,6 @@ int open_table_def(Session& session, TableShare *share)
 
   share->table_category= TABLE_CATEGORY_USER;
 
-  if (not error)
-    session.status_var.opened_shares++;
-
 err_not_open:
   if (error && !error_given)
   {
@@ -1507,9 +1504,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  session->status_var.opened_tables++;
-
-  return (0);
+  return 0;
 
  err:
   if (!error_reported)
