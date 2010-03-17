@@ -70,21 +70,29 @@ static const char *ha_myisam_exts[] = {
 class MyisamEngine : public plugin::StorageEngine
 {
 public:
-  MyisamEngine(string name_arg)
-   : plugin::StorageEngine(name_arg,
-                                     HTON_HAS_DATA_DICTIONARY |
-                                     HTON_CAN_INDEX_BLOBS |
-                                     HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_TEMPORARY_ONLY |
-                                     HTON_NULL_IN_KEY |
-                                     HTON_HAS_RECORDS |
-                                     HTON_DUPLICATE_POS |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED ) {}
+  explicit MyisamEngine(string name_arg) :
+    plugin::StorageEngine(name_arg,
+                          HTON_HAS_DATA_DICTIONARY |
+                          HTON_CAN_INDEX_BLOBS |
+                          HTON_STATS_RECORDS_IS_EXACT |
+                          HTON_TEMPORARY_ONLY |
+                          HTON_NULL_IN_KEY |
+                          HTON_HAS_RECORDS |
+                          HTON_DUPLICATE_POS |
+                          HTON_AUTO_PART_KEY |
+                          HTON_SKIP_STORE_LOCK |
+                          HTON_FILE_BASED )
+  {
+    pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
+  }
 
-  ~MyisamEngine()
-  { }
+  virtual ~MyisamEngine()
+  { 
+    pthread_mutex_destroy(&THR_LOCK_myisam);
+    end_key_cache(dflt_key_cache, 1);		// Can never fail
+
+    mi_panic(HA_PANIC_CLOSE);
+  }
 
   virtual Cursor *create(TableShare &table,
                          memory::Root *mem_root)
@@ -1497,41 +1505,19 @@ uint32_t ha_myisam::checksum() const
   return (uint)file->state->checksum;
 }
 
-class MyIsamCleanup :
-  public drizzled::plugin::Daemon
-{
-  MyIsamCleanup(const MyIsamCleanup &);
-  MyIsamCleanup& operator=(const MyIsamCleanup &);
-public:
-  MyIsamCleanup()
-    : drizzled::plugin::Daemon("MyISAM Cleanup Daemon")
-  { }
-
-  ~MyIsamCleanup()
-  {
-    pthread_mutex_destroy(&THR_LOCK_myisam);
-    end_key_cache(dflt_key_cache, 1);		// Can never fail
-
-    mi_panic(HA_PANIC_CLOSE);
-  }
-};
-
 static MyisamEngine *engine= NULL;
 
 static int myisam_init(plugin::Context &context)
 {
-  int error;
   engine= new MyisamEngine(engine_name);
   context.add(engine);
 
-  pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
-
   /* call ha_init_key_cache() on all key caches to init them */
-  error= init_key_cache(dflt_key_cache,
-                        myisam_key_cache_block_size,
-                        myisam_key_cache_size,
-                        myisam_key_cache_division_limit, 
-                        myisam_key_cache_age_threshold);
+  int error= init_key_cache(dflt_key_cache,
+                            myisam_key_cache_block_size,
+                            myisam_key_cache_size,
+                            myisam_key_cache_division_limit, 
+                            myisam_key_cache_age_threshold);
 
   if (error == 0)
     exit(1); /* Memory Allocation Failure */
