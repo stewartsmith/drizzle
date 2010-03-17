@@ -813,6 +813,8 @@ bool alter_table(Session *session,
     create_info->db_type= old_db_type;
   }
 
+  create_proto.set_schema(new_db);
+
   if (table->s->tmp_table != STANDARD_TABLE)
   {
     create_proto.set_type(message::Table::TEMPORARY);

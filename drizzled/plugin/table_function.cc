@@ -42,6 +42,7 @@ void plugin::TableFunction::init()
   drizzled::message::Table::TableOptions *table_options;
 
   proto.set_name(identifier.getTableName());
+  proto.set_schema(identifier.getSchemaName());
   proto.set_type(drizzled::message::Table::FUNCTION);
   proto.set_creation_timestamp(0);
   proto.set_update_timestamp(0);
