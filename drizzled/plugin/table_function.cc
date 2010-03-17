@@ -184,9 +184,6 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
   assert(arg);
   length= length ? length : strlen(arg);
 
-  if (not length)
-    return push();
-
   (*columns_iterator)->store(arg, length, scs);
   (*columns_iterator)->set_notnull();
   columns_iterator++;
