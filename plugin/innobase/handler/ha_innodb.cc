@@ -261,19 +261,43 @@ static void free_share(INNOBASE_SHARE *share);
 class InnobaseEngine : public plugin::XaStorageEngine
 {
 public:
-  InnobaseEngine(string name_arg) :
+  explicit InnobaseEngine(string name_arg) :
     plugin::XaStorageEngine(name_arg,
-                          HTON_NULL_IN_KEY |
-                          HTON_CAN_INDEX_BLOBS |
-                          HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-                          HTON_PRIMARY_KEY_IN_READ_INDEX |
-                          HTON_PARTIAL_COLUMN_READ |
-                          HTON_TABLE_SCAN_ON_INDEX |
-                          HTON_HAS_DOES_TRANSACTIONS)
+                            HTON_NULL_IN_KEY |
+                            HTON_CAN_INDEX_BLOBS |
+                            HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+                            HTON_PRIMARY_KEY_IN_READ_INDEX |
+                            HTON_PARTIAL_COLUMN_READ |
+                            HTON_TABLE_SCAN_ON_INDEX |
+                            HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
+
+  virtual ~InnobaseEngine()
+  {
+    int	err= 0;
+    if (innodb_inited) {
+
+      srv_fast_shutdown = (ulint) innobase_fast_shutdown;
+      innodb_inited = 0;
+      hash_table_free(innobase_open_tables);
+      innobase_open_tables = NULL;
+      if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
+        err = 1;
+      }
+      srv_free_paths_and_sizes();
+      if (internal_innobase_data_file_path)
+        free(internal_innobase_data_file_path);
+      pthread_mutex_destroy(&innobase_share_mutex);
+      pthread_mutex_destroy(&prepare_commit_mutex);
+      pthread_mutex_destroy(&commit_threads_m);
+      pthread_mutex_destroy(&commit_cond_m);
+      pthread_cond_destroy(&commit_cond);
+    }
+  }
+
 private:
   virtual int doStartTransaction(Session *session, start_transaction_option_t options);
   virtual void doStartStatement(Session *session);
@@ -1668,42 +1692,6 @@ reset_template(
 	prebuilt->read_just_key = 0;
 }
 
-class InnodbCleanup :
-  public plugin::Daemon
-{
-  InnodbCleanup(const InnodbCleanup &);
-  InnodbCleanup& operator=(const InnodbCleanup &);
-
-public:
-  InnodbCleanup()
-    : plugin::Daemon("InnoDB Cleanup Daemon")
-  { }
-
-  virtual ~InnodbCleanup()
-  {
-    int	err= 0;
-    if (innodb_inited) {
-
-      srv_fast_shutdown = (ulint) innobase_fast_shutdown;
-      innodb_inited = 0;
-      hash_table_free(innobase_open_tables);
-      innobase_open_tables = NULL;
-      if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
-        err = 1;
-      }
-      srv_free_paths_and_sizes();
-      if (internal_innobase_data_file_path)
-        free(internal_innobase_data_file_path);
-      pthread_mutex_destroy(&innobase_share_mutex);
-      pthread_mutex_destroy(&prepare_commit_mutex);
-      pthread_mutex_destroy(&commit_threads_m);
-      pthread_mutex_destroy(&commit_cond_m);
-      pthread_cond_destroy(&commit_cond);
-    }
-
-  }
-};
-
 /*********************************************************************//**
 Opens an InnoDB database.
 @return	0 on success, error code on failure */
@@ -1720,8 +1708,6 @@ innobase_init(
 	uint		format_id;
 
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
-        InnodbCleanup *cleanup= new InnodbCleanup;
-
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -1992,9 +1978,6 @@ innobase_change_buffering_inited_ok:
 	innodb_inited= 1;
 
         status_table_function_ptr= new InnodbStatusTool;
-
-        /* Register dummy plugin to do InnoDB cleanup functions */
-        context.add(cleanup);
 
 	context.add(innodb_engine_ptr);
 
