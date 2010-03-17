@@ -25,6 +25,8 @@
 #ifndef DRIZZLED_TRANSACTION_SERVICES_H
 #define DRIZZLED_TRANSACTION_SERVICES_H
 
+#include "drizzled/message/transaction.pb.h"
+
 namespace drizzled
 {
 
@@ -46,6 +48,7 @@ class NamedSavepoint;
 class TransactionServices
 {
 public:
+  static const size_t DEFAULT_RECORD_SIZE= 100;
   /**
    * Constructor
    */
@@ -60,6 +63,235 @@ public:
     static TransactionServices transaction_services;
     return transaction_services;
   }
+  /**
+   * Method which returns the active Transaction message
+   * for the supplied Session.  If one is not found, a new Transaction
+   * message is allocated, initialized, and returned.
+   *
+   * @param The session processing the transaction
+   */
+  message::Transaction *getActiveTransactionMessage(Session *in_session);
+  /** 
+   * Method which attaches a transaction context
+   * the supplied transaction based on the supplied Session's
+   * transaction information.  This method also ensure the
+   * transaction message is attached properly to the Session object
+   *
+   * @param The transaction message to initialize
+   * @param The Session processing this transaction
+   */
+  void initTransactionMessage(message::Transaction &in_transaction, Session *in_session);
+  /** 
+   * Helper method which finalizes data members for the 
+   * supplied transaction's context.
+   *
+   * @param The transaction message to finalize 
+   * @param The Session processing this transaction
+   */
+  void finalizeTransactionMessage(message::Transaction &in_transaction, Session *in_session);
+  /**
+   * Helper method which deletes transaction memory and
+   * unsets Session's transaction and statement messages.
+   */
+  void cleanupTransactionMessage(message::Transaction *in_transaction,
+                                 Session *in_session);
+  /**
+   * Helper method which initializes a Statement message
+   *
+   * @param The statement to initialize
+   * @param The type of the statement
+   * @param The session processing this statement
+   */
+  void initStatementMessage(message::Statement &statement,
+                            message::Statement::Type in_type,
+                            Session *in_session);
+  /**
+   * Finalizes a Statement message and sets the Session's statement
+   * message to NULL.
+   *
+   * @param The statement to initialize
+   * @param The session processing this statement
+   */
+  void finalizeStatementMessage(message::Statement &statement,
+                                Session *in_session);
+  /** Helper method which returns an initialized Statement message for methods
+   * doing insertion of data.
+   *
+   * @param[in] Pointer to the Session doing the processing
+   * @param[in] Pointer to the Table object being inserted into
+   */
+  message::Statement &getInsertStatement(Session *in_session,
+                                         Table *in_table);
+
+  /**
+   * Helper method which initializes the header message for
+   * insert operations.
+   *
+   * @param[inout] Statement message container to modify
+   * @param[in] Pointer to the Session doing the processing
+   * @param[in] Pointer to the Table being inserted into
+   */
+  void setInsertHeader(message::Statement &statement,
+                       Session *in_session,
+                       Table *in_table);
+  /**
+   * Helper method which returns an initialized Statement
+   * message for methods doing updates of data.
+   *
+   * @param[in] Pointer to the Session doing the processing
+   * @param[in] Pointer to the Table object being updated
+   * @param[in] Pointer to the old data in the record
+   * @param[in] Pointer to the new data in the record
+   */
+  message::Statement &getUpdateStatement(Session *in_session,
+                                         Table *in_table,
+                                         const unsigned char *old_record, 
+                                         const unsigned char *new_record);
+  /**
+   * Helper method which initializes the header message for
+   * update operations.
+   *
+   * @param[inout] Statement message container to modify
+   * @param[in] Pointer to the Session doing the processing
+   * @param[in] Pointer to the Table being updated
+   * @param[in] Pointer to the old data in the record
+   * @param[in] Pointer to the new data in the record
+   */
+  void setUpdateHeader(message::Statement &statement,
+                       Session *in_session,
+                       Table *in_table,
+                       const unsigned char *old_record, 
+                       const unsigned char *new_record);
+  /**
+   * Helper method which returns an initialized Statement
+   * message for methods doing deletion of data.
+   *
+   * @param[in] Pointer to the Session doing the processing
+   * @param[in] Pointer to the Table object being deleted from
+   */
+  message::Statement &getDeleteStatement(Session *in_session,
+                                         Table *in_table);
+
+  /**
+   * Helper method which initializes the header message for
+   * insert operations.
+   *
+   * @param[inout] Statement message container to modify
+   * @param[in] Pointer to the Session doing the processing
+   * @param[in] Pointer to the Table being deleted from
+   */
+  void setDeleteHeader(message::Statement &statement,
+                       Session *in_session,
+                       Table *in_table);
+  /** 
+   * Commits a normal transaction (see above) and pushes the transaction
+   * message out to the replicators.
+   *
+   * @param Pointer to the Session committing the transaction
+   */
+  void commitTransactionMessage(Session *in_session);
+  /** 
+   * Marks the current active transaction message as being rolled back and
+   * pushes the transaction message out to replicators.
+   *
+   * @param Pointer to the Session committing the transaction
+   */
+  void rollbackTransactionMessage(Session *in_session);
+  /**
+   * Creates a new InsertRecord GPB message and pushes it to
+   * replicators.
+   *
+   * @param Pointer to the Session which has inserted a record
+   * @param Pointer to the Table containing insert information
+   *
+   * Grr, returning "true" here on error because of the cursor
+   * reversed bool return crap...fix that.
+   */
+  bool insertRecord(Session *in_session, Table *in_table);
+  /**
+   * Creates a new UpdateRecord GPB message and pushes it to
+   * replicators.
+   *
+   * @param Pointer to the Session which has updated a record
+   * @param Pointer to the Table containing update information
+   * @param Pointer to the raw bytes representing the old record/row
+   * @param Pointer to the raw bytes representing the new record/row 
+   */
+  void updateRecord(Session *in_session, 
+                    Table *in_table, 
+                    const unsigned char *old_record, 
+                    const unsigned char *new_record);
+  /**
+   * Creates a new DeleteRecord GPB message and pushes it to
+   * replicators.
+   *
+   * @param Pointer to the Session which has deleted a record
+   * @param Pointer to the Table containing delete information
+   */
+  void deleteRecord(Session *in_session, Table *in_table);
+  /**
+   * Creates a CreateSchema Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] message::Schema message describing new schema
+   */
+  void createSchema(Session *in_session, const message::Schema &schema);
+  /**
+   * Creates a DropSchema Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] message::Schema message describing new schema
+   */
+  void dropSchema(Session *in_session, const std::string &schema_name);
+  /**
+   * Creates a CreateTable Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] message::Table message describing new schema
+   */
+  void createTable(Session *in_session, const message::Table &table);
+  /**
+   * Creates a DropTable Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] The schema of the table being dropped
+   * @param[in] The table name of the table being dropped
+   * @param[in] Did the user specify an IF EXISTS clause?
+   */
+  void dropTable(Session *in_session,
+                     const std::string &schema_name,
+                     const std::string &table_name,
+                     bool if_exists);
+  /**
+   * Creates a TruncateTable Statement GPB message and adds it
+   * to the Session's active Transaction GPB message for pushing
+   * out to the replicator streams.
+   *
+   * @param[in] Pointer to the Session which issued the statement
+   * @param[in] The Table being truncated
+   */
+  void truncateTable(Session *in_session, Table *in_table);
+  /**
+   * Creates a new RawSql GPB message and pushes it to 
+   * replicators.
+   *
+   * @TODO With a real data dictionary, this really shouldn't
+   * be needed.  CREATE TABLE would map to insertRecord call
+   * on the I_S, etc.  Not sure what to do with administrative
+   * commands like CHECK TABLE, though..
+   *
+   * @param Pointer to the Session which issued the statement
+   * @param Query string
+   */
+  void rawStatement(Session *in_session, const std::string &query);
   /* transactions: interface to plugin::StorageEngine functions */
   int ha_commit_one_phase(Session *session, bool all);
   int ha_rollback_trans(Session *session, bool all);
