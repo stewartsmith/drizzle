@@ -7,5 +7,5 @@ EXTRA_DIST+= \
 	plugin/mysql_protocol/prototest/prototest/mysql/handshake.py \
 	plugin/mysql_protocol/prototest/prototest/mysql/packet.py \
 	plugin/mysql_protocol/prototest/prototest/mysql/result.py \
-	plugin/mysql_protocol/prototest/mysql_flood \
-	plugin/mysql_protocol/prototest/mysql_test
+	plugin/mysql_protocol/prototest/drizzle_flood \
+	plugin/mysql_protocol/prototest/drizzle_prototest
