@@ -67,7 +67,7 @@ const char *Natural_join_column::db_name()
     ensure consistency. 
   */
   assert(!strcmp(table_ref->db,
-                      table_ref->table->s->db.str));
+                 table_ref->table->s->getSchemaName()));
   return table_ref->db;
 }
 
