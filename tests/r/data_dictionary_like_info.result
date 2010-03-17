@@ -247,12 +247,12 @@ AND t.table_name NOT LIKE 'falcon%'
 table_name	column_name
 SELECT MAX(table_name) FROM data_dictionary.tables;
 MAX(table_name)
-TABLE_DEFINITION_CACHE
+VIEW_TABLE_USAGE
 SELECT table_name from data_dictionary.tables
 WHERE table_name=(SELECT MAX(table_name)
 FROM data_dictionary.tables);
 table_name
-TABLE_DEFINITION_CACHE
+VIEW_TABLE_USAGE
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
 select table_name from data_dictionary.tables
