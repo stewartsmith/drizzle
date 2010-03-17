@@ -1256,7 +1256,7 @@
    Heap Engine panic issue
    Memcheck:Addr8
    fun:_Z8hp_panicN8drizzled17ha_panic_functionE
-   fun:_ZN11HeapCleanupD0Ev
+   fun:_ZN10HeapEngineD0Ev
    fun:_ZN8drizzled6plugin8RegistryD1Ev
    fun:_ZN8drizzled6plugin8Registry8shutdownEv
    fun:main
