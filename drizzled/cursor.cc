@@ -35,6 +35,7 @@
 #include "drizzled/cost_vect.h"
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
+#include "drizzled/transaction_services.h"
 #include "drizzled/replication_services.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
@@ -738,12 +739,12 @@ Cursor::ha_delete_all_rows()
     /** 
      * Trigger post-truncate notification to plugins... 
      *
-     * @todo Make ReplicationServices generic to AfterTriggerServices
+     * @todo Make TransactionServices generic to AfterTriggerServices
      * or similar...
      */
     Session *const session= table->in_use;
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.truncateTable(session, table);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.truncateTable(session, table);
   }
 
   return result;
@@ -1345,10 +1346,11 @@ static bool log_row_for_replication(Table* table,
                                     const unsigned char *before_record,
                                     const unsigned char *after_record)
 {
+  TransactionServices &transaction_services= TransactionServices::singleton();
   ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table || ! replication_services.isActive())
+  if (table->s->tmp_table || not replication_services.isActive())
     return false;
 
   bool result= false;
@@ -1365,7 +1367,7 @@ static bool log_row_for_replication(Table* table,
      * CREATE TABLE will commit the transaction containing
      * it).
      */
-    result= replication_services.insertRecord(session, table);
+    result= transaction_services.insertRecord(session, table);
     break;
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
@@ -1389,20 +1391,20 @@ static bool log_row_for_replication(Table* table,
      */
     if (after_record == NULL)
     {
-      replication_services.deleteRecord(session, table);
+      transaction_services.deleteRecord(session, table);
       /* 
        * We set the "current" statement message to NULL.  This triggers
        * the replication services component to generate a new statement
        * message for the inserted record which will come next.
        */
-      replication_services.finalizeStatement(*session->getStatementMessage(), session);
+      transaction_services.finalizeStatementMessage(*session->getStatementMessage(), session);
     }
     else
     {
       if (before_record == NULL)
-        result= replication_services.insertRecord(session, table);
+        result= transaction_services.insertRecord(session, table);
       else
-        replication_services.updateRecord(session, table, before_record, after_record);
+        transaction_services.updateRecord(session, table, before_record, after_record);
     }
     break;
   case SQLCOM_INSERT:
@@ -1414,17 +1416,17 @@ static bool log_row_for_replication(Table* table,
      * an update.
      */
     if (before_record == NULL)
-      result= replication_services.insertRecord(session, table);
+      result= transaction_services.insertRecord(session, table);
     else
-      replication_services.updateRecord(session, table, before_record, after_record);
+      transaction_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_UPDATE:
-    replication_services.updateRecord(session, table, before_record, after_record);
+    transaction_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
-    replication_services.deleteRecord(session, table);
+    transaction_services.deleteRecord(session, table);
     break;
   default:
     break;
