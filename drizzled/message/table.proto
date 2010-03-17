@@ -192,6 +192,8 @@ message Table {
   repeated ForeignKeyConstraint fk_constraint = 8;
   optional TableOptions options = 9;
   optional TableStats stats = 10;
+  required uint64 creation_timestamp= 11 [default = 0];
+  required uint64 update_timestamp= 12 [default = 0];
 }
 
 message AlterTable {

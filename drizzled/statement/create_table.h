@@ -42,10 +42,13 @@ public:
       is_engine_set(false)
   {
     memset(&create_info, 0, sizeof(create_info));
+
+    create_table_message.set_creation_timestamp(time(NULL));
+    create_table_message.set_update_timestamp(time(NULL));
   }
 
   bool execute();
-  message::Table create_table_proto;
+  message::Table create_table_message;
   message::Table::Field *current_proto_field;
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
