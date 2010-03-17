@@ -18,7 +18,6 @@ field {
     default_null: true
   }
   set_options {
-    count_elements: 2
     collation_id: 45
     collation: "utf8_general_ci"
     field_value: "foo"
