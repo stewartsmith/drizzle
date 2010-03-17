@@ -39,6 +39,8 @@ public:
       Statement(in_session),
       is_if_not_exists(false)
   {
+    schema_message.set_creation_timestamp(time(NULL));
+    schema_message.set_update_timestamp(time(NULL));
   }
 
   bool execute();
