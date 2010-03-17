@@ -608,7 +608,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_commit_count);
         }
@@ -620,7 +620,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
           my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_commit_count);
         }
@@ -685,7 +685,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_rollback_count);
         }
@@ -697,7 +697,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
           my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
           error= 1;
         }
-        else
+        else if (normal_transaction)
         {
           status_var_increment(session->status_var.ha_rollback_count);
         }
@@ -1165,11 +1165,13 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   message::InsertHeader *header= statement.mutable_insert_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
-  const char *table_name= in_table->getShare()->table_name.str;
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
   Field **table_fields= in_table->field;
@@ -1281,11 +1283,13 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   message::UpdateHeader *header= statement.mutable_update_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
-  const char *table_name= in_table->getShare()->table_name.str;
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
   Field **table_fields= in_table->field;
@@ -1458,11 +1462,13 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   message::DeleteHeader *header= statement.mutable_delete_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
-  const char *table_name= in_table->getShare()->table_name.str;
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
   Field **table_fields= in_table->field;
@@ -1664,11 +1670,13 @@ void TransactionServices::truncateTable(Session *in_session, Table *in_table)
   message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
   message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
-  const char *table_name= in_table->getShare()->table_name.str;
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
 
-  table_metadata->set_schema_name(schema_name);
-  table_metadata->set_table_name(table_name);
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   finalizeStatementMessage(*statement, in_session);
 

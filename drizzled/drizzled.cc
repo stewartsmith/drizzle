@@ -970,30 +970,9 @@ static int show_flushstatustime(drizzle_show_var *var, char *buff)
   return 0;
 }
 
-static int show_open_tables(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_open_tables();
-  return 0;
-}
+static st_show_var_func_container show_starttime_cont= { &show_starttime };
 
-static int show_table_definitions(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_table_definitions();
-  return 0;
-}
-
-static st_show_var_func_container
-show_open_tables_cont= { &show_open_tables };
-static st_show_var_func_container
-show_table_definitions_cont= { &show_table_definitions };
-static st_show_var_func_container
-show_starttime_cont= { &show_starttime };
-static st_show_var_func_container
-show_flushstatustime_cont= { &show_flushstatustime };
+static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatustime };
 
 /*
   Variables shown by SHOW STATUS in alphabetical order
@@ -1072,10 +1051,6 @@ static drizzle_show_var status_vars[]= {
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(system_status_var, last_query_cost), SHOW_DOUBLE_STATUS},
   {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
-  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_tables",            (char*) offsetof(system_status_var, opened_tables), SHOW_LONG_STATUS},
-  {"Opened_table_definitions", (char*) offsetof(system_status_var, opened_shares), SHOW_LONG_STATUS},
   {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONG_STATUS},
   {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONG_STATUS},
   {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONG_STATUS},

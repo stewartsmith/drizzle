@@ -1665,7 +1665,7 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  remove_table_from_cache(session, table->s->db.str,
+  remove_table_from_cache(session, table->s->getSchemaName(),
                           table->s->table_name.str,
                           RTFC_WAIT_OTHER_THREAD_FLAG);
 }
@@ -1819,7 +1819,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      remove_table_from_cache(session, table->table->s->db.str,
+      remove_table_from_cache(session, table->table->s->getSchemaName(),
                               table->table->s->table_name.str,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -1919,7 +1919,7 @@ send_result:
         else
         {
           pthread_mutex_lock(&LOCK_open);
-          remove_table_from_cache(session, table->table->s->db.str,
+          remove_table_from_cache(session, table->table->s->getSchemaName(),
                                   table->table->s->table_name.str, RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
@@ -2083,7 +2083,9 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
     true  error
 */
 
-bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+bool mysql_create_like_table(Session* session,
+                             TableIdentifier &destination_identifier,
+                             TableList* table, TableList* src_table,
                              message::Table& create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set)
@@ -2109,10 +2111,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier destination_identifier(db, table_name,
-                                         lex_identified_temp_table ? TEMP_TABLE : STANDARD_TABLE);
-
-  TableIdentifier src_identifier(src_table->table->s->db.str,
+  TableIdentifier src_identifier(src_table->table->s->getSchemaName(),
                                  src_table->table->s->table_name.str, src_table->table->s->tmp_table);
 
 
@@ -2186,8 +2185,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       }
       else
       {
-        TableIdentifier identifier(db, table_name, STANDARD_TABLE);
-        quick_rm_table(*session, identifier);
+        quick_rm_table(*session, destination_identifier);
       }
     } 
     else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
