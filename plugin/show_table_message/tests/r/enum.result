@@ -1,0 +1,35 @@
+CREATE TABLE t1 (a enum('foo','bar'));
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` enum('foo','bar') DEFAULT NULL
+) ENGINE=InnoDB
+SELECT SHOW_TABLE_MESSAGE("test","t1");
+SHOW_TABLE_MESSAGE("test","t1")
+name: "t1"
+engine {
+  name: "InnoDB"
+}
+field {
+  name: "a"
+  type: ENUM
+  format: DefaultFormat
+  options {
+    default_null: true
+  }
+  set_options {
+    count_elements: 2
+    collation_id: 45
+    collation: "utf8_general_ci"
+    field_value: "foo"
+    field_value: "bar"
+  }
+}
+type: STANDARD
+schema: "test"
+options {
+  collation: "utf8_general_ci"
+  collation_id: 45
+}
+
+DROP TABLE t1;

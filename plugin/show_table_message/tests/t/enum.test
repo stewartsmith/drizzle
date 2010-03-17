@@ -1,0 +1,4 @@
+CREATE TABLE t1 (a enum('foo','bar'));
+SHOW CREATE TABLE t1;
+SELECT SHOW_TABLE_MESSAGE("test","t1");
+DROP TABLE t1;
