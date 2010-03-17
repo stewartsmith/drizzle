@@ -32,6 +32,8 @@
 
 #include "transaction_log_entry.h"
 
+#include <drizzled/message/transaction.pb.h>
+
 #include <string>
 #include <map>
 

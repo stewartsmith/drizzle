@@ -192,7 +192,7 @@ table_schema='data_dictionary' and
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
 DATA_TYPE	group_concat(table_schema, '.', table_name)	num
-VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PART	133
+VARCHAR	data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.CHARACTER_SETS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLLATIONS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.COLUMNS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATEMENTS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_STATUS,data_dictionary.GLOBAL_VARIABLES,data_dictionary.GLOBAL_VARIABLES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEXES,data_dictionary.INDEX_PART	143
 Warnings:
 Warning	1260	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);
@@ -247,12 +247,12 @@ AND t.table_name NOT LIKE 'falcon%'
 table_name	column_name
 SELECT MAX(table_name) FROM data_dictionary.tables;
 MAX(table_name)
-TABLE_CONSTRAINTS
+TABLE_DEFINITION_CACHE
 SELECT table_name from data_dictionary.tables
 WHERE table_name=(SELECT MAX(table_name)
 FROM data_dictionary.tables);
 table_name
-TABLE_CONSTRAINTS
+TABLE_DEFINITION_CACHE
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
 select table_name from data_dictionary.tables
@@ -340,11 +340,11 @@ TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_
 select * from `data_dictionary`.`INDEXES` where `TABLE_NAME` = NULL;
 TABLE_SCHEMA	TABLE_NAME	INDEX_NAME	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_NULLABLE	KEY_LENGTH	INDEX_TYPE	INDEX_COMMENT
 select * from data_dictionary.schemas where schema_name = NULL;
-SCHEMA_NAME	DEFAULT_COLLATION_NAME
+SCHEMA_NAME	DEFAULT_COLLATION_NAME	SCHEMA_CREATION_TIME	SCHEMA_UPDATE_TIME
 select * from data_dictionary.tables where table_schema = NULL;
-TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_COMMENT
+TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_CREATION_TIME	TABLE_UPDATE_TIME	TABLE_COMMENT
 select * from data_dictionary.tables where table_name = NULL;
-TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_COMMENT
+TABLE_SCHEMA	TABLE_NAME	TABLE_TYPE	ENGINE	ROW_FORMAT	TABLE_COLLATION	TABLE_CREATION_TIME	TABLE_UPDATE_TIME	TABLE_COMMENT
 #
 # Test that the query is visible to self and others.
 #
