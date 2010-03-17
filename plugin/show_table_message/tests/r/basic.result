@@ -1,0 +1,38 @@
+CREATE TABLE t1 (a int PRIMARY KEY) ENGINE=BLACKHOLE;
+SELECT SHOW_TABLE_MESSAGE('test', 't1');
+SHOW_TABLE_MESSAGE('test', 't1')
+name: "t1"
+engine {
+  name: "BLACKHOLE"
+}
+field {
+  name: "a"
+  type: INTEGER
+  format: DefaultFormat
+  constraints {
+    is_nullable: false
+  }
+}
+indexes {
+  name: "PRIMARY"
+  is_primary: true
+  is_unique: true
+  type: UNKNOWN_INDEX
+  key_length: 4
+  index_part {
+    fieldnr: 0
+    compare_length: 4
+    key_type: 0
+  }
+  options {
+  }
+}
+type: STANDARD
+options {
+  collation: "utf8_general_ci"
+  collation_id: 45
+}
+
+SELECT SHOW_TABLE_MESSAGE('test', 'not_exists');
+ERROR 42S02: Table 'test.not_exists' doesn't exist
+DROP TABLE t1;
