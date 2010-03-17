@@ -51,6 +51,7 @@ common_range = range(0, 1024) + range(65520, 65550) + range(1024*1024-20, 1024*1
 class TestHandshake(unittest.TestCase):
   def setUp(self):
     self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1);
     self.s.connect((options.host, int(options.port)))
 
   def tearDown(self):
@@ -232,6 +233,7 @@ class TestCommand(unittest.TestCase):
   def setUp(self):
     # Read server handshake
     self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1);
     self.s.connect((options.host, int(options.port)))
     packet = Packet(self.s.recv(4))
     server_handshake = ServerHandshake(self.s.recv(packet.size))
