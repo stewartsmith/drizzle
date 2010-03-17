@@ -115,12 +115,24 @@ void plugin::TableFunction::add_field(const char *label,
     field_options->set_default_null(false);
     field_constraints->set_is_nullable(false);
   case TableFunction::STRING:
+  {
     drizzled::message::Table::Field::StringFieldOptions *string_field_options;
     field->set_type(drizzled::message::Table::Field::VARCHAR);
 
     string_field_options= field->mutable_string_options();
     string_field_options->set_length(field_length);
+  }
+    break;
+  case TableFunction::VARBINARY:
+  {
+    drizzled::message::Table::Field::StringFieldOptions *string_field_options;
+    field->set_type(drizzled::message::Table::Field::VARCHAR);
 
+    string_field_options= field->mutable_string_options();
+    string_field_options->set_length(field_length);
+    string_field_options->set_collation(my_charset_bin.csname);
+    string_field_options->set_collation_id(my_charset_bin.number);
+  }
     break;
   case TableFunction::NUMBER: // Currently NUMBER always has a value
     field->set_type(drizzled::message::Table::Field::BIGINT);
@@ -156,12 +168,14 @@ bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 void plugin::TableFunction::Generator::push(uint64_t arg)
 {
   (*columns_iterator)->store(static_cast<int64_t>(arg), true);
+  (*columns_iterator)->set_notnull();
   columns_iterator++;
 }
 
 void plugin::TableFunction::Generator::push(int64_t arg)
 {
   (*columns_iterator)->store(arg, false);
+  (*columns_iterator)->set_notnull();
   columns_iterator++;
 }
 
@@ -171,9 +185,6 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
   assert(*columns_iterator);
   assert(arg);
   length= length ? length : strlen(arg);
-
-  if (not length)
-    return push();
 
   (*columns_iterator)->store(arg, length, scs);
   (*columns_iterator)->set_notnull();

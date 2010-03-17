@@ -80,7 +80,8 @@ public:
   enum ColumnType {
     BOOLEAN,
     NUMBER,
-    STRING
+    STRING,
+    VARBINARY
   };
 
   class Generator 
