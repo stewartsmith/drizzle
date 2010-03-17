@@ -48,33 +48,41 @@ Warning	1071	Specified key was too long; max key length is 767 bytes
 set AUTOCOMMIT=OFF;
 select table_schema, 
 table_name, 
-'STANDARD',
-#       CASE WHEN table_type = 'STANDARD' THEN 'table' 
-#            WHEN table_type = 'VIEW' THEN 'view' 
-#            WHEN table_type = 'FUNCTION' then 'view' 
-#       ELSE 'misc' END, 
+CASE WHEN table_type = 'STANDARD' THEN 'table' 
+WHEN table_type = 'FUNCTION' then 'function' 
+ELSE 'misc' END, 
 column_name,
 CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
-#      WHEN column_key = 'MUL' THEN 'indexed' 
-#      WHEN column_key = 'UNI' THEN 'indexed' 
+WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
 ELSE 'indexed' END 
-FROM data_dictionary.index_parts;
-table_schema	table_name	STANDARD	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
-#      WHEN column_key = 'MUL' THEN 'indexed' 
-#      WHEN column_key = 'UNI' THEN 'indexed' 
+FROM data_dictionary.tables INNER JOIN
+data_dictionary.columns USING(table_schema, table_name) limit 20;
+table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table' 
+WHEN table_type = 'FUNCTION' then 'function' 
+ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
+WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
 ELSE 'indexed' END 
 
-test	t1	STANDARD	pk	primary
-test	t1	STANDARD	col_int_not_null_key	indexed
-test	t1	STANDARD	col_enum_not_null_key	indexed
-test	t1	STANDARD	col_int_key	indexed
-test	t1	STANDARD	col_char_key	indexed
-test	t1	STANDARD	col_text_not_null_key	indexed
-test	t1	STANDARD	col_bigint_key	indexed
-test	t1	STANDARD	col_bigint_not_null_key	indexed
-test	t1	STANDARD	col_char_not_null_key	indexed
-test	t1	STANDARD	col_text_key	indexed
-test	t1	STANDARD	col_enum_key	indexed
+data_dictionary	CHARACTER_SETS	function	CHARACTER_SET_NAME	indexed
+data_dictionary	CHARACTER_SETS	function	DEFAULT_COLLATE_NAME	indexed
+data_dictionary	CHARACTER_SETS	function	DESCRIPTION	indexed
+data_dictionary	CHARACTER_SETS	function	MAXLEN	indexed
+data_dictionary	COLLATIONS	function	CHARACTER_SET_NAME	indexed
+data_dictionary	COLLATIONS	function	COLLATION_NAME	indexed
+data_dictionary	COLLATIONS	function	DESCRIPTION	indexed
+data_dictionary	COLLATIONS	function	ID	indexed
+data_dictionary	COLLATIONS	function	IS_DEFAULT	indexed
+data_dictionary	COLLATIONS	function	IS_COMPILED	indexed
+data_dictionary	COLLATIONS	function	SORTLEN	indexed
+data_dictionary	COLUMNS	function	TABLE_SCHEMA	indexed
+data_dictionary	COLUMNS	function	TABLE_NAME	indexed
+data_dictionary	COLUMNS	function	COLUMN_NAME	indexed
+data_dictionary	COLUMNS	function	COLUMN_TYPE	indexed
+data_dictionary	COLUMNS	function	ORDINAL_POSITION	indexed
+data_dictionary	COLUMNS	function	COLUMN_DEFAULT	indexed
+data_dictionary	COLUMNS	function	COLUMN_DEFAULT_IS_NULL	indexed
+data_dictionary	COLUMNS	function	COLUMN_DEFAULT_UPDATE	indexed
+data_dictionary	COLUMNS	function	IS_NULLABLE	indexed
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
 (SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
 COUNT(*) AS count FROM t1;
@@ -107,4 +115,4 @@ utf8_sinhala_ci	utf8_general_ci
 binary	binary
 select COUNT(*) from data_dictionary.tables;
 COUNT(*)
-33
+####.##.####
