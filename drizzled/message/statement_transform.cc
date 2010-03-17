@@ -1274,5 +1274,43 @@ Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types 
   return Table::Field::INTEGER; /* unreachable */
 }
 
+bool transactionContainsBulkSegment(const Transaction &transaction)
+{
+  size_t num_statements= transaction.statement_size();
+  if (num_statements == 0)
+    return false;
+
+  /*
+   * Only INSERT, UPDATE, and DELETE statements can possibly
+   * have bulk segments.  So, we loop through the statements
+   * checking for segment_id > 1 in those specific submessages.
+   */
+  size_t x;
+  for (x= 0; x < num_statements; ++x)
+  {
+    const Statement &statement= transaction.statement(x);
+    Statement::Type type= statement.type();
+
+    switch (type)
+    {
+      case Statement::INSERT:
+        if (statement.insert_data().segment_id() > 1)
+          return true;
+        break;
+      case Statement::UPDATE:
+        if (statement.update_data().segment_id() > 1)
+          return true;
+        break;
+      case Statement::DELETE:
+        if (statement.delete_data().segment_id() > 1)
+          return true;
+        break;
+      default:
+        break;
+    }
+  }
+  return false;
+}
+
 } /* namespace message */
 } /* namespace drizzled */
