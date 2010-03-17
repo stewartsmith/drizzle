@@ -197,6 +197,24 @@ COLUMN_NAME
 #
 #
 #
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -274,7 +292,9 @@ show create table SCHEMAS ;
 Table	Create Table
 SCHEMAS	CREATE TABLE `schemas` (
   `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT ''
+  `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
+  `SCHEMA_CREATION_TIME` varchar(64) NOT NULL DEFAULT '',
+  `SCHEMA_UPDATE_TIME` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table SCHEMA_NAMES;
 Table	Create Table
@@ -290,6 +310,8 @@ TABLES	CREATE TABLE `tables` (
   `ENGINE` varchar(64) NOT NULL DEFAULT '',
   `ROW_FORMAT` varchar(10) NOT NULL DEFAULT '',
   `TABLE_COLLATION` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_CREATION_TIME` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_UPDATE_TIME` varchar(64) NOT NULL DEFAULT '',
   `TABLE_COMMENT` varchar(2048) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table TABLE_CONSTRAINTS ;
