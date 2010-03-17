@@ -154,12 +154,14 @@ bool plugin::TableFunction::Generator::sub_populate(uint32_t field_size)
 void plugin::TableFunction::Generator::push(uint64_t arg)
 {
   (*columns_iterator)->store(static_cast<int64_t>(arg), true);
+  (*columns_iterator)->set_notnull();
   columns_iterator++;
 }
 
 void plugin::TableFunction::Generator::push(int64_t arg)
 {
   (*columns_iterator)->store(arg, false);
+  (*columns_iterator)->set_notnull();
   columns_iterator++;
 }
 
