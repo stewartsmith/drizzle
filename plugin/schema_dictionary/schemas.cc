@@ -29,6 +29,8 @@ SchemasTool::SchemasTool() :
 {
   add_field("SCHEMA_NAME");
   add_field("DEFAULT_COLLATION_NAME");
+  add_field("SCHEMA_CREATION_TIME");
+  add_field("SCHEMA_UPDATE_TIME");
 }
 
 SchemasTool::Generator::Generator(Field **arg) :
@@ -119,4 +121,19 @@ void SchemasTool::Generator::fill()
     push(schema.collation());
   else
     push(scs->name);
+
+  /* SCHEMA_CREATION_TIME */
+  time_t time_arg= schema.creation_timestamp();
+  char buffer[40];
+  struct tm tm_buffer;
+
+  localtime_r(&time_arg, &tm_buffer);
+  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+  push(buffer);
+
+  /* SCHEMA_UPDATE_TIME */
+  time_arg= schema.update_timestamp();
+  localtime_r(&time_arg, &tm_buffer);
+  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+  push(buffer);
 }

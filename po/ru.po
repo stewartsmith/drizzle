@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-07-31 04:25+0000\n"
-"Last-Translator: mvolkov <maxim.volkov@gmail.com>\n"
+"PO-Revision-Date: 2010-01-28 11:59+0000\n"
+"Last-Translator: Ebaut <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
 "10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2009-09-23 09:47+0000\n"
+"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -353,7 +353,7 @@ msgstr ""
 
 msgid "User for login if not current user."
 msgstr ""
-"Имя пользование для подключения (если не совпадает с именем текущего "
+"Имя пользователя для подключения (если не совпадает с именем текущего "
 "пользователя)."
 
 msgid "Only allow UPDATE and DELETE that uses keys."
@@ -402,7 +402,7 @@ msgstr ""
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
+msgstr "%s Версия %s Дистрибутив %s, для %s-%s (%s) с использованием %s %s\n"
 
 #, c-format
 msgid ""
@@ -410,6 +410,11 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"Copyright (C) 2008 Sun Microsystems \n"
+"Это программное обеспечение поставляется АБСОЛЮТНО БЕЗ ГАРАНТИЙ. Это "
+"бесплатное программное обеспечение, \n"
+"и Вы можете модифицировать и распространять его в соответствии с лицензией "
+"GPL\n"
 
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
@@ -431,22 +436,24 @@ msgstr ""
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
+"ПРЕДУПРЕЖДЕНИЕ: опция --server-arg не поддерживается в этой конфигурации.\n"
 
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead."
 msgstr ""
+"В качестве номера порта задано нецелое число. Если вы пытаетесь ввести "
+"пароль, пожалуйста используйте --password."
 
 msgid "Value supplied for port is not valid."
-msgstr ""
+msgstr "Номер порта задан неверно."
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
 msgstr ""
 
-#, fuzzy
 msgid "Unknown command: "
-msgstr "Неизвестная команда '\\%c'."
+msgstr "Неизвестная команда. "
 
 msgid ""
 "Reading table information for completion of table and column names\n"
@@ -465,12 +472,14 @@ msgstr "Полный список комманд Drizzle:"
 
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
+"Обратите внимание, что все текстовые команды должны быть первыми в строке и "
+"заканчиваться символом ';'"
 
 msgid "No query specified\n"
-msgstr ""
+msgstr "Не указан запрос\n"
 
 msgid "Ignoring query to other database"
-msgstr ""
+msgstr "Игнорирование запросов к другим базам данных"
 
 msgid "Empty set"
 msgstr "Пустое множество"
@@ -592,7 +601,7 @@ msgid "-- Disconnecting from %s...\n"
 msgstr ""
 
 msgid "Couldn't allocate memory"
-msgstr ""
+msgstr "Не могу выделить память"
 
 #, c-format
 msgid ""
@@ -673,7 +682,7 @@ msgstr ""
 
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "Не найдена таблица: \"%s\""
 
 #, c-format
 msgid ""
@@ -682,10 +691,6 @@ msgstr ""
 
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
-msgstr ""
-
-#, c-format
-msgid "Error while loading database options: '%s':"
 msgstr ""
 
 #, c-format
@@ -767,23 +772,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"\n"
-"The '--memlock' argument, which was enabled, uses system calls that are\n"
-"unreliable and unstable on some operating systems and operating-system\n"
-"versions (notably, some versions of Linux).  This crash could be due to use\n"
-"of those buggy OS calls.  You should consider whether you really need the\n"
-"'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
-" bugs.\n"
-msgstr ""
-
-#, c-format
 msgid "Writing a core file\n"
-msgstr ""
-
-msgid ""
-"setrlimit could not change the size of core files to 'infinity';  We may not "
-"be able to generate a core file on signals"
 msgstr ""
 
 #, c-format
@@ -798,10 +787,10 @@ msgid "Can't create thread-keys"
 msgstr ""
 
 msgid "Out of memory"
-msgstr ""
+msgstr "Недостаточно памяти"
 
 msgid "Failed to initialize plugins."
-msgstr ""
+msgstr "Не удалось проинициализировать плагины."
 
 #, c-format
 msgid ""
@@ -812,24 +801,9 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr ""
 
-msgid "Can't init databases"
-msgstr ""
-
-#, c-format
-msgid "Unknown/unsupported table type: %s"
-msgstr ""
-
-#, c-format
-msgid "Default storage engine (%s) is not available"
-msgstr ""
-
-#, c-format
-msgid "Failed to lock memory. Errno: %d\n"
-msgstr ""
-
-#, c-format
-msgid "Data directory %s does not exist\n"
-msgstr ""
+#, fuzzy, c-format
+msgid "Unknown/unsupported storage engine: %s"
+msgstr "Неизвестный или неподдерживаемый тип таблицы: %s"
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -881,12 +855,9 @@ msgid "(IGNORED)"
 msgstr ""
 
 msgid "Set the language used for the month names and the days of the week."
-msgstr ""
+msgstr "Установить язык для вывода названий месяцев и дней недели."
 
 msgid "Log some not critical warnings to the log file."
-msgstr ""
-
-msgid "Lock drizzled in memory."
 msgstr ""
 
 msgid "Pid file used by safe_mysqld."
@@ -911,7 +882,7 @@ msgid "Don't print a stack trace on failure."
 msgstr ""
 
 msgid "Enable symbolic link support."
-msgstr ""
+msgstr "Включить поддержку символьных ссылок."
 
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
@@ -921,7 +892,7 @@ msgid "Path for temporary files."
 msgstr ""
 
 msgid "Default transaction isolation level."
-msgstr ""
+msgstr "Уровень изоляции транзакций, используемый по умолчанию."
 
 msgid "Run drizzled daemon as user."
 msgstr ""
@@ -1011,6 +982,12 @@ msgid ""
 msgstr ""
 
 msgid ""
+"Optional comma separated list of plugins to not load at startup. Effectively "
+"removes a plugin from the list of plugins to be loaded. [for example: --"
+"plugin_remove=crc32,logger_gearman]"
+msgstr ""
+
+msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
@@ -1064,12 +1041,6 @@ msgid ""
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
 
-msgid "Allocation block size for transactions to be stored in binary log"
-msgstr ""
-
-msgid "Persistent buffer for transactions to be stored in binary log"
-msgstr ""
-
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1092,6 +1063,15 @@ msgid "Can't start server: cannot resolve hostname!"
 msgstr ""
 
 msgid "Can't start server: bind-address refers to multiple interfaces!"
+msgstr ""
+
+msgid ""
+"setrlimit could not change the size of core files to 'infinity';  We may not "
+"be able to generate a core file on signals"
+msgstr ""
+
+#, c-format
+msgid "Data directory %s does not exist\n"
 msgstr ""
 
 msgid "UNUSED"
@@ -3802,6 +3782,148 @@ msgid "Tables which are replicated require a primary key."
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid table definition: %s"
+msgstr ""
+
+#, c-format
+msgid "Schema does not exist: %s"
+msgstr ""
+
+#, c-format
+msgid "Error altering schema: %s"
+msgstr ""
+
+#, c-format
+msgid "Error droppping Schema : %s"
+msgstr ""
+
+#, c-format
+msgid "Can't create/write to file '%s' (Errcode: %d)"
+msgstr "Ошибка при создании/записи файла '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "Ошибка при чтении файла '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "Ошибка при записи файла '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
+msgstr "Ошибка при закрытии файла '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Out of memory (Needed %u bytes)"
+msgstr "Нехватка памяти (Нужно %u байт)"
+
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr "Ошибка при удалении файла '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+msgstr "Ошибка при переименовании файла '%s' в '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+msgstr "Неожиданный конец файла при чтении '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't read dir of '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't get stat of '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't change size of file (Errcode: %d)"
+msgstr "Ошибка при изменении размера файла (Код ошибки: %d)"
+
+#, c-format
+msgid "Can't open stream from handle (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't get working dirctory (Errcode: %d)"
+msgstr "Ошибка при определении рабочей директории (Код ошибки: %d)"
+
+#, c-format
+msgid "Can't change dir to '%s' (Errcode: %d)"
+msgstr "Не могу перейти в директорию '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Warning: '%s' had %d links"
+msgstr "Предупреждение: '%s' имеет %d ссылок"
+
+#, c-format
+msgid "Warning: %d files and %d streams is left open\n"
+msgstr "Предупреждение: %d файлов и %d потоков остались открыты\n"
+
+#, c-format
+msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+msgstr ""
+"Закончилось место на диске при записи '%s'. Ожидаю пока кто-нибудь освободит "
+"место..."
+
+#, c-format
+msgid "Can't create directory '%s' (Errcode: %d)"
+msgstr "Ошибка при создании директории '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid ""
+"Character set '%s' is not a compiled character set and is not specified in "
+"the %s file"
+msgstr ""
+
+#, c-format
+msgid "Out of resources when opening file '%s' (Errcode: %d)"
+msgstr "Недостаточно ресурсов для открытия файла '%s' (Код ошибки: %d)"
+
+#, c-format
+msgid "Can't read value for symlink '%s' (Error %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
+msgstr ""
+
+#, c-format
+msgid "Error on realpath() on '%s' (Error %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't sync file '%s' to disk (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid ""
+"Collation '%s' is not a compiled collation and is not specified in the %s "
+"file"
+msgstr ""
+
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "Фйл '%s' не найден (Код ошибки: %d)"
+
+#, c-format
+msgid "File '%s' (fileno: %d) was not closed"
+msgstr ""
+
+#, c-format
+msgid "Unknown error %d"
+msgstr "Неизвестная ошибка %d"
+
+#, c-format
 msgid "error: could not open directory: %s\n"
 msgstr ""
 
@@ -3979,15 +4101,21 @@ msgid "Listening on %s:%s\n"
 msgstr ""
 
 #, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
 msgid "Plugin '%s' init function returned error.\n"
 msgstr ""
 
 #, c-format
-msgid "Couldn't load plugin library named '%s'."
+msgid "Couldn't load plugin library named '%s'.\n"
 msgstr ""
 
 #, c-format
-msgid "Couldn't load plugin named '%s'."
+msgid "Couldn't load plugin named '%s'.\n"
 msgstr ""
 
 msgid "Out of memory."
@@ -4036,6 +4164,10 @@ msgid "logging '%s' post() failed"
 msgstr ""
 
 #, c-format
+msgid "logging '%s' postEnd() failed"
+msgstr ""
+
+#, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
 msgstr ""
 
@@ -4059,9 +4191,9 @@ msgstr ""
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
 
-#, c-format
+#, fuzzy, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr ""
+msgstr "Не удалось проинициализировать плагины."
 
 #, c-format
 msgid ""
@@ -4074,7 +4206,11 @@ msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
 msgstr ""
 
 #, c-format
-msgid "Found %d prepared transaction(s) in %s"
+msgid "Error while loading database options: '%s':"
+msgstr ""
+
+#, c-format
+msgid "Found %d prepared transaction(s) in resource manager."
 msgstr ""
 
 msgid "Starting crash recovery..."
@@ -4103,22 +4239,12 @@ msgstr ""
 msgid "Variable named %s already exists!\n"
 msgstr ""
 
-#, c-format
+#, fuzzy, c-format
 msgid "Could not add Variable: %s\n"
-msgstr ""
+msgstr "Не найдена таблица: \"%s\""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
-msgstr ""
-
-msgid ""
-"Table name cannot be encoded and fit within filesystem name length "
-"restrictions."
-msgstr ""
-
-msgid ""
-"Schema name cannot be encoded and fit within filesystem name length "
-"restrictions."
 msgstr ""
 
 #, c-format
@@ -4213,10 +4339,46 @@ msgstr ""
 msgid "Turn on extra debugging."
 msgstr ""
 
+msgid "User to use for auth."
+msgstr ""
+
+msgid "Password to use for auth."
+msgstr ""
+
+#, fuzzy
+msgid "Default database to use."
+msgstr "База данных для использования."
+
 msgid "Enable default replicator"
 msgstr ""
 
 msgid "Default Replicator"
+msgstr ""
+
+#, fuzzy
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
+msgstr ""
+"Номер порта для соединения или 0 для порта по умолчанию, в порядке "
+"предпочтения, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+
+msgid "Connect Timeout."
+msgstr ""
+
+msgid "Read Timeout."
+msgstr ""
+
+msgid "Write Timeout."
+msgstr ""
+
+msgid "Retry Count."
+msgstr ""
+
+msgid "Buffer length."
+msgstr ""
+
+msgid "Address to bind to."
 msgstr ""
 
 msgid "Unknown Drizzle error"
@@ -4428,32 +4590,6 @@ msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
 "Команда была опосредованно прекращена в результате вызова предшедствующего %s"
 "() вызова."
-
-#, fuzzy
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
-msgstr ""
-"Номер порта для соединения или 0 для порта по умолчанию, в порядке "
-"предпочтения, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-
-msgid "Connect Timeout."
-msgstr ""
-
-msgid "Read Timeout."
-msgstr ""
-
-msgid "Write Timeout."
-msgstr ""
-
-msgid "Retry Count."
-msgstr ""
-
-msgid "Buffer length."
-msgstr ""
-
-msgid "Address to bind to."
-msgstr ""
 
 #, c-format
 msgid "Failed to send error message to libnotify\n"
@@ -4802,32 +4938,16 @@ msgstr "Прерывание не возможно (ошибка %d, No. оши�
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
 
-#, fuzzy
-msgid "Failed to open transaction log file "
-msgstr "UNIX сокет, используемый для соединения."
-
-#, c-format
-msgid ""
-"Failed to allocate enough memory to buffer header, transaction message, and "
-"trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Failed to write full size of transaction.  Tried to write %<PRId64> bytes at "
-"offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
-msgstr ""
-
-#, c-format
-msgid "Failed to sync log file. Got error: %s\n"
-msgstr ""
-
 #, c-format
 msgid "Failed to allocate the TransactionLog instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
 msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
+msgstr ""
+
+#, c-format
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
@@ -4857,6 +4977,25 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid ""
+"Failed to allocate enough memory to buffer header, transaction message, and "
+"trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
+msgstr ""
+
+msgid "Failed to open transaction log file "
+msgstr ""
+
+#, c-format
+msgid ""
+"Failed to write full size of log entry.  Tried to write %<PRId64> bytes at "
+"offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
+msgstr ""
+
+#, c-format
+msgid "Failed to sync log file. Got error: %s\n"
+msgstr ""
+
+#, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
 msgstr ""
 
@@ -4878,65 +5017,6 @@ msgstr ""
 #~ msgid "Print some debug info at exit."
 #~ msgstr "Отобразить отладочную информацию при выходе."
 
-#~ msgid "Socket file to use for connection."
-#~ msgstr "UNIX сокет, используемый для соединения."
-
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при создании/записи файла '%s' (Код ошибки: %d)"
-
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при чтении файла '%s' (Код ошибки: %d)"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при записи файла '%s' (Код ошибки: %d)"
-
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при закрытии файла '%s' (Код ошибки: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Нехватка памяти (Нужно %u байт)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при удалении файла '%s' (Код ошибки: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при переименовании файла '%s' в '%s' (Код ошибки: %d)"
-
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr "Неожиданный конец файла при чтении '%s' (Код ошибки: %d)"
-
-#~ msgid "Can't change size of file (Errcode: %d)"
-#~ msgstr "Ошибка при изменении размера файла (Код ошибки: %d)"
-
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Ошибка при определении рабочей директории (Код ошибки: %d)"
-
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "Не могу перейти в директорию '%s' (Код ошибки: %d)"
-
-#~ msgid "Warning: '%s' had %d links"
-#~ msgstr "Предупреждение: '%s' имеет %d ссылок"
-
-#~ msgid "Warning: %d files and %d streams is left open\n"
-#~ msgstr "Предупреждение: %d файлов и %d потоков остались открыты\n"
-
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Закончилось место на диске при записи '%s'. Ожидаю пока кто-нибудь "
-#~ "освободит место..."
-
-#~ msgid "Can't create directory '%s' (Errcode: %d)"
-#~ msgstr "Ошибка при создании директории '%s' (Код ошибки: %d)"
-
-#~ msgid "Out of resources when opening file '%s' (Errcode: %d)"
-#~ msgstr "Недостаточно ресурсов для открытия файла '%s' (Код ошибки: %d)"
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Фйл '%s' не найден (Код ошибки: %d)"
-
-#~ msgid "Unknown error %d"
-#~ msgstr "Неизвестная ошибка %d"
-
 #~ msgid "event_add error in libevent_add_session_callback\n"
 #~ msgstr "event_add error в libevent_add_session_callback\n"
 
@@ -4954,3 +5034,6 @@ msgstr ""
 
 #~ msgid "Set the default character set."
 #~ msgstr "Установить кодировку по-умолчанию."
+
+#~ msgid "Unknown command '\\%c'."
+#~ msgstr "Неизвестная команда '\\%c'."
