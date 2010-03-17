@@ -28,6 +28,7 @@ indexes {
   }
 }
 type: STANDARD
+schema: "test"
 options {
   collation: "utf8_general_ci"
   collation_id: 45
