@@ -143,7 +143,7 @@ const char *Field_iterator_table_ref::db_name()
     Test that TableList::db is the same as TableShare::db to
     ensure consistency. 
   */
-  assert(!strcmp(table_ref->db, table_ref->table->s->db.str));
+  assert(!strcmp(table_ref->db, table_ref->table->s->getSchemaName()));
   return table_ref->db;
 }
 
