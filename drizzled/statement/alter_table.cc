@@ -64,13 +64,13 @@ static int copy_data_between_tables(Table *from,Table *to,
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
-                                      message::Table *table_proto,
+                                      message::Table &table_message,
                                       AlterInfo *alter_info);
 
 static int create_temporary_table(Session *session,
                                   TableIdentifier &identifier,
                                   HA_CREATE_INFO *create_info,
-                                  message::Table &create_proto,
+                                  message::Table &create_message,
                                   AlterInfo *alter_info);
 
 static Table *open_alter_table(Session *session, Table *table, char *db, char *table_name);
@@ -86,12 +86,12 @@ bool statement::AlterTable::execute()
   if (is_engine_set)
   {
     create_info.db_type= 
-      plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
+      plugin::StorageEngine::findByName(*session, create_table_message.engine().name());
 
     if (create_info.db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_proto.name().c_str());
+               create_table_message.name().c_str());
 
       return true;
     }
@@ -115,7 +115,7 @@ bool statement::AlterTable::execute()
                         select_lex->db, 
                         session->lex->name.str,
                         &create_info,
-                        create_table_proto,
+                        create_table_message,
                         first_table,
                         &alter_info,
                         select_lex->order_list.elements,
@@ -173,7 +173,7 @@ bool statement::AlterTable::execute()
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
-                                      message::Table *table_proto,
+                                      message::Table &table_message,
                                       AlterInfo *alter_info)
 {
   /* New column definitions are added here */
@@ -193,7 +193,7 @@ static bool mysql_prepare_alter_table(Session *session,
 
   /* Let new create options override the old ones */
   message::Table::TableOptions *table_options;
-  table_options= table_proto->mutable_options();
+  table_options= table_message.mutable_options();
 
   if (! (used_fields & HA_CREATE_USED_BLOCK_SIZE))
     table_options->set_block_size(table->s->block_size);
@@ -514,14 +514,22 @@ static bool mysql_prepare_alter_table(Session *session,
     goto err;
   }
 
-  if (! table_proto->options().has_comment()
+  if (not table_message.options().has_comment()
       && table->s->hasComment())
     table_options->set_comment(table->s->getComment());
 
   if (table->s->tmp_table)
   {
-    table_proto->set_type(message::Table::TEMPORARY);
+    table_message.set_type(message::Table::TEMPORARY);
   }
+
+  table_message.set_creation_timestamp(table->getShare()->getTableProto()->creation_timestamp());
+
+  table_message.set_update_timestamp(time(NULL));
+
+  if (not table_message.options().has_comment()
+      && table->s->hasComment())
+    table_options->set_comment(table->s->getComment());
 
   rc= false;
   alter_info->create_list.swap(new_create_list);
@@ -967,8 +975,7 @@ bool alter_table(Session *session,
   /* We have to do full alter table. */
   new_db_type= create_info->db_type;
 
-  if (mysql_prepare_alter_table(session, table, create_info, &create_proto,
-                                alter_info))
+  if (mysql_prepare_alter_table(session, table, create_info, create_proto, alter_info))
       goto err;
 
   set_table_default_charset(create_info, db);
@@ -1323,7 +1330,7 @@ copy_data_between_tables(Table *from, Table *to,
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
       tables.alias= tables.table_name= from->s->table_name.str;
-      tables.db= from->s->db.str;
+      tables.db= const_cast<char *>(from->s->getSchemaName());
       error= 1;
 
       if (session->lex->select_lex.setup_ref_array(session, order_num) ||
