@@ -1,0 +1,39 @@
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (empty,localhost,,,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (password_ok,localhost,password_ok,,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (password_ok,localhost,password_ok,test,,);
+connection password_ok;
+SELECT 1;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (no_password_ok,localhost,no_password_ok,test,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (no_password_ok,localhost,no_password_ok,,,);
+connection no_password_ok;
+SELECT 1;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (scramble_ok,localhost,scramble_ok,,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (scramble_ok,localhost,scramble_ok,bad_scramble,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (scramble_ok,localhost,scramble_ok,scramble_password,,);
+connection scramble_ok;
+SELECT 1;
