@@ -49,6 +49,10 @@ static uint32_t write_timeout;
 static uint32_t retry_count;
 static uint32_t buffer_length;
 static char* bind_address;
+static uint32_t random_seed1;
+static uint32_t random_seed2;
+static const uint32_t random_max= 0x3FFFFFFF;
+static const double random_max_double= (double)0x3FFFFFFF;
 
 const char* ListenMySQLProtocol::getHost(void) const
 {
@@ -615,6 +619,9 @@ bool ClientMySQLProtocol::checkConnection(void)
 {
   uint32_t pkt_len= 0;
   char *end;
+  char scramble[SCRAMBLE_LENGTH];
+
+  makeScramble(scramble);
 
   // TCP/IP connection
   {
@@ -656,7 +663,7 @@ bool ClientMySQLProtocol::checkConnection(void)
     end+= 4;
 
     /* We don't use scramble anymore. */
-    memset(end, 'X', SCRAMBLE_LENGTH_323);
+    memcpy(end, scramble, SCRAMBLE_LENGTH_323);
     end+= SCRAMBLE_LENGTH_323;
     *end++= 0; /* an empty byte for some reason */
 
@@ -668,7 +675,7 @@ bool ClientMySQLProtocol::checkConnection(void)
     end+= 18;
 
     /* Write scramble tail. */
-    memset(end, 'X', SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
+    memcpy(end, scramble + SCRAMBLE_LENGTH_323, SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
     end+= (SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
     *end++= 0; /* an empty byte for some reason */
 
@@ -727,6 +734,12 @@ bool ClientMySQLProtocol::checkConnection(void)
   */
   uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
     (unsigned char)(*passwd++) : strlen(passwd);
+  if (passwd_len > 0)
+  {
+    session->getSecurityContext().setPasswordType(SecurityContext::MYSQL_HASH);
+    session->getSecurityContext().setPasswordContext(scramble, SCRAMBLE_LENGTH);
+  }
+
   l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
 
   /* strlen() can't be easily deleted without changing client */
@@ -832,11 +845,37 @@ unsigned char *ClientMySQLProtocol::storeLength(unsigned char *buffer, uint64_t 
   return buffer+8;
 }
 
+void ClientMySQLProtocol::makeScramble(char *scramble)
+{
+  /* This is the MySQL algorithm with minimal changes. */
+  random_seed1= (random_seed1 * 3 + random_seed2) % random_max;
+  random_seed2= (random_seed1 + random_seed2 + 33) % random_max;
+  uint32_t seed= static_cast<uint32_t>((static_cast<double>(random_seed1) / random_max_double) * 0xffffffff);
+
+  void *pointer= this;
+  uint32_t pointer_seed;
+  memcpy(&pointer_seed, &pointer, 4);
+  uint32_t random1= (seed + pointer_seed) % random_max;
+  uint32_t random2= (seed + global_thread_id + net.vio->sd) % random_max;
+
+  for (char *end= scramble + SCRAMBLE_LENGTH; scramble != end; scramble++)
+  {
+    random1= (random1 * 3 + random2) % random_max;
+    random2= (random1 + random2 + 33) % random_max;
+    *scramble= static_cast<char>((static_cast<double>(random1) / random_max_double) * 94 + 33);
+  }
+}
+
 static ListenMySQLProtocol *listen_obj= NULL;
 plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
+  /* Initialize random seeds for the MySQL algorithm with minimal changes. */
+  time_t seed_time= time(NULL);
+  random_seed1= seed_time % random_max;
+  random_seed2= (seed_time / 2) % random_max;
+
   mysql_password= new plugin::Create_function<MySQLPassword>(MySQLPasswordName);
   registry.add(mysql_password);
 
