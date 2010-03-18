@@ -1,10 +1,14 @@
+/*
+ * Copyright (C) 2010 nobody (this is public domain)
+ */
+
 /**
  * @file
  * @brief SHA1 Declarations
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_SHA1_H
-#define PLUGIN_MYSQL_PROTOCOL_SHA1_H
+#ifndef DRIZZLED_UTIL_SHA1_H
+#define DRIZZLED_UTIL_SHA1_H
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -39,4 +43,4 @@ void SHA1Final(uint8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *);
 
 } /* namespace drizzled */
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_SHA1_H */
+#endif /* DRIZZLED_UTIL_SHA1_H */

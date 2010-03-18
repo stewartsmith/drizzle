@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2010 nobody (this is public domain)
+ */
+
 /**
  * @file
  * @brief SHA1 Definitions
