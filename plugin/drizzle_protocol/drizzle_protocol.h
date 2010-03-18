@@ -25,8 +25,6 @@
 
 #include "net_serv.h"
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -92,7 +90,6 @@ public:
   virtual bool wasAborted(void);
 };
 
-}
-}
+} /* namespace drizzle_protocol */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_DRIZZLE_PROTOCOL_H */

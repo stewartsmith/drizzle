@@ -39,10 +39,11 @@ namespace statement
 class AlterTable : public CreateTable
 {
 public:
-  AlterTable(Session *in_session)
-    :
-      CreateTable(in_session)
-  { }
+  AlterTable(Session *in_session) :
+    CreateTable(in_session)
+  { 
+    create_table_message.set_update_timestamp(time(NULL));
+  }
 
   bool execute();
 };
@@ -52,7 +53,7 @@ public:
 
 bool alter_table(Session *session, char *new_db, char *new_name,
                  HA_CREATE_INFO *create_info,
-                 message::Table *create_proto,
+                 message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
                  uint32_t order_num, order_st *order, bool ignore);

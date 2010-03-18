@@ -1454,11 +1454,12 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
-				      message::Table *table_proto,
+				      message::Table &table_proto,
                                       AlterInfo *alter_info,
                                       List<Item> *items,
                                       bool is_if_not_exists,
-                                      DRIZZLE_LOCK **lock)
+                                      DRIZZLE_LOCK **lock,
+				      TableIdentifier &identifier)
 {
   Table tmp_table;		// Used during 'CreateField()'
   TableShare share;
@@ -1470,9 +1471,9 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  bool lex_identified_temp_table= (table_proto->type() == message::Table::TEMPORARY);
+  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
 
-  if (!(lex_identified_temp_table) &&
+  if (not (lex_identified_temp_table) &&
       create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
@@ -1495,9 +1496,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
-  tmp_table.s->db_low_byte_first=
-        test(create_info->db_type == myisam_engine ||
-             create_info->db_type == heap_engine);
+
+  if (not table_proto.engine().name().compare("MyISAM"))
+    tmp_table.s->db_low_byte_first= true;
+  else if (not table_proto.engine().name().compare("MEMORY"))
+    tmp_table.s->db_low_byte_first= true;
+
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
 
@@ -1524,12 +1528,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     alter_info->create_list.push_back(cr_field);
   }
 
-  TableIdentifier identifier(create_table->db,
-                             create_table->table_name,
-                             lex_identified_temp_table ?  TEMP_TABLE :
-                             STANDARD_TABLE);
-
-
   /*
     Create and lock table.
 
@@ -1538,14 +1536,14 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     should not cause deadlocks or races.
   */
   {
-    if (!mysql_create_table_no_lock(session,
-                                    identifier,
-                                    create_info,
-				    table_proto,
-				    alter_info,
-                                    false,
-                                    select_field_count,
-                                    is_if_not_exists))
+    if (not mysql_create_table_no_lock(session,
+				       identifier,
+				       create_info,
+				       table_proto,
+				       alter_info,
+				       false,
+				       select_field_count,
+				       is_if_not_exists))
     {
       if (create_info->table_existed &&
           !(lex_identified_temp_table))
@@ -1559,7 +1557,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         return NULL;
       }
 
-      if (!(lex_identified_temp_table))
+      if (not lex_identified_temp_table)
       {
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
@@ -1572,9 +1570,9 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       }
       else
       {
-        if (!(table= session->openTable(create_table, (bool*) 0,
-                                         DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
-            !create_info->table_existed)
+        if (not (table= session->openTable(create_table, (bool*) 0,
+                                           DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
+            not create_info->table_existed)
         {
           /*
             This shouldn't happen as creation of temporary table should make
@@ -1611,7 +1609,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
-  bool lex_identified_temp_table= (table_proto->type() == message::Table::TEMPORARY);
+  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
 
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
@@ -1626,11 +1624,11 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   unit= u;
 
-  if (!(table= create_table_from_items(session, create_info, create_table,
-				       table_proto,
-                                       alter_info, &values,
-                                       is_if_not_exists,
-                                       &extra_lock)))
+  if (not (table= create_table_from_items(session, create_info, create_table,
+					  table_proto,
+					  alter_info, &values,
+					  is_if_not_exists,
+					  &extra_lock, identifier)))
     return(-1);				// abort() deletes table
 
   if (extra_lock)

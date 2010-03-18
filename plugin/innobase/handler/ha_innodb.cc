@@ -50,7 +50,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 ***********************************************************************/
 
 /* TODO list for the InnoDB Cursor in 5.0:
-  - Remove the flag trx->active_trans and look at trx->conc_state
   - fix savepoint functions to use savepoint storage area
   - Find out what kind of problems the OS X case-insensitivity causes to
     table and database names; should we 'normalize' the names like we do
@@ -220,7 +219,6 @@ static char*	innobase_log_arch_dir			= NULL;
 #endif /* UNIV_LOG_ARCHIVE */
 static my_bool	innobase_use_doublewrite		= TRUE;
 static my_bool	innobase_use_checksums			= TRUE;
-static my_bool	innobase_locks_unsafe_for_binlog	= TRUE;
 static my_bool	innobase_rollback_on_timeout		= FALSE;
 static my_bool	innobase_create_status_file		= FALSE;
 static my_bool	innobase_stats_on_metadata		= TRUE;
@@ -294,6 +292,14 @@ public:
                                      drizzled::NamedSavepoint &savepoint);
   virtual int doReleaseSavepoint(Session* session,
                                      drizzled::NamedSavepoint &savepoint);
+  virtual int doXaCommit(Session* session, bool all)
+  {
+    return doCommit(session, all); /* XA commit just does a SQL COMMIT */
+  }
+  virtual int doXaRollback(Session *session, bool all)
+  {
+    return doRollback(session, all); /* XA rollback just does a SQL ROLLBACK */
+  }
   virtual int doCommit(Session* session, bool all);
   virtual int doRollback(Session* session, bool all);
 
@@ -301,7 +307,7 @@ public:
   This function is used to prepare X/Open XA distributed transaction   */
   virtual
   int
-  doPrepare(
+  doXaPrepare(
   /*================*/
   			/* out: 0 or error number */
   	Session*	session,	/* in: handle to the MySQL thread of the user
@@ -312,7 +318,7 @@ public:
   This function is used to recover X/Open XA distributed transactions   */
   virtual
   int
-  doRecover(
+  doXaRecover(
   /*================*/
   				/* out: number of prepared transactions
   				stored in xid_list */
@@ -323,7 +329,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  doCommitXid(
+  doXaCommitXid(
   /*===================*/
   			/* out: 0 or error number */
   	::drizzled::XID*	xid);	/* in: X/Open XA transaction identification */
@@ -332,7 +338,7 @@ public:
   which is in the prepared state */
   virtual
   int
-  doRollbackXid(
+  doXaRollbackXid(
   /*=====================*/
   			/* out: 0 or error number */
   	::drizzled::XID	*xid);	/* in: X/Open XA transaction identification */
@@ -1918,7 +1924,7 @@ innobase_change_buffering_inited_ok:
 
 	row_rollback_on_timeout = (ibool) innobase_rollback_on_timeout;
 
-	srv_locks_unsafe_for_binlog = (ibool) innobase_locks_unsafe_for_binlog;
+	srv_locks_unsafe_for_binlog = (ibool) TRUE;
 
 	srv_max_n_open_files = (ulint) innobase_open_files;
 	srv_innodb_status = (ibool) innobase_create_status_file;
@@ -2109,11 +2115,6 @@ InnobaseEngine::doStartTransaction(
   if (options == START_TRANS_OPT_WITH_CONS_SNAPSHOT)
 	  trx_assign_read_view(trx);
 
-	/* Set the Drizzle flag to mark that there is an active transaction */
-	if (trx->active_trans == 0) {
-		trx->active_trans= 1;
-	}
-
 	return 0;
 }
 
@@ -2142,24 +2143,6 @@ InnobaseEngine::doCommit(
 		trx_search_latch_release_if_reserved(trx);
 	}
 
-	/* The flag trx->active_trans is set to 1 in
-
-	1. ::external_lock()
-  2  InnobaseEngine::doStartStatement()
-	3. InnobaseEngine::setSavepoint()
-	4. InnobaseEngine::doStartTransaction()
-
-	and it is only set to 0 in a commit or a rollback. If it is 0 we know
-	there cannot be resources to be freed and we could return immediately.
-	For the time being, we play safe and do the cleanup though there should
-	be nothing to clean up. */
-
-	if (trx->active_trans == 0
-		&& trx->conc_state != TRX_NOT_STARTED) {
-
-		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
-			" trx->conc_state != TRX_NOT_STARTED");
-	}
 	if (all
 		|| (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
 
@@ -2206,14 +2189,13 @@ retry:
 			pthread_mutex_unlock(&commit_cond_m);
 		}
 
-		if (trx->active_trans == 2) {
+		if (trx->conc_state == TRX_PREPARED) {
 
 			pthread_mutex_unlock(&prepare_commit_mutex);
 		}
 
 		/* Now do a write + flush of logs. */
 		trx_commit_complete_for_mysql(trx);
-		trx->active_trans = 0;
 
 	} else {
 		/* We just mark the SQL statement ended and do not do a
@@ -2280,7 +2262,6 @@ InnobaseEngine::doRollback(
 		|| !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
 
 		error = trx_rollback_for_mysql(trx);
-		trx->active_trans = 0;
 	} else {
 		error = trx_rollback_last_sql_stat_for_mysql(trx);
 	}
@@ -2341,7 +2322,6 @@ InnobaseEngine::doRollbackToSavepoint(
 
 	innobase_release_stat_resources(trx);
 
-	/* TODO: use provided savepoint data area to store savepoint data */
 	error= (int)trx_rollback_to_savepoint_for_mysql(trx, named_savepoint.getName().c_str(),
                                                         &mysql_binlog_cache_pos);
 	return(convert_error_code_to_mysql(error, 0, NULL));
@@ -2365,7 +2345,6 @@ InnobaseEngine::doReleaseSavepoint(
 
 	trx = check_trx_exists(session);
 
-	/* TODO: use provided savepoint data area to store savepoint data */
 	error = (int) trx_release_savepoint_for_mysql(trx, named_savepoint.getName().c_str());
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
@@ -2400,9 +2379,8 @@ InnobaseEngine::doSetSavepoint(
 	innobase_release_stat_resources(trx);
 
 	/* cannot happen outside of transaction */
-	assert(trx->active_trans);
+	assert(trx->conc_state != TRX_NOT_STARTED);
 
-	/* TODO: use provided savepoint data area to store savepoint data */
 	error = (int) trx_savepoint_for_mysql(trx, named_savepoint.getName().c_str(), (ib_int64_t)0);
 
 	return(convert_error_code_to_mysql(error, 0, NULL));
@@ -2424,22 +2402,21 @@ InnobaseEngine::close_connection(
 
 	ut_a(trx);
 
-	if (trx->active_trans == 0
-		&& trx->conc_state != TRX_NOT_STARTED) {
+  assert(session->killed != Session::NOT_KILLED ||
+         trx->conc_state == TRX_NOT_STARTED);
 
-		errmsg_printf(ERRMSG_LVL_ERROR, "trx->active_trans == 0, but"
-			" trx->conc_state != TRX_NOT_STARTED");
-	}
-
-
-	if (trx->conc_state != TRX_NOT_STARTED &&
-		global_system_variables.log_warnings) {
-		errmsg_printf(ERRMSG_LVL_WARN, 
-			"MySQL is closing a connection that has an active "
-			"InnoDB transaction.  %lu row modifications will "
-			"roll back.",
-			(ulong) trx->undo_no.low);
-	}
+  /* Warn if rolling back some things... */
+	if (session->killed != Session::NOT_KILLED &&
+      trx->conc_state != TRX_NOT_STARTED &&
+      trx->undo_no.low > 0 &&
+      global_system_variables.log_warnings)
+  {
+      errmsg_printf(ERRMSG_LVL_WARN, 
+      "Drizzle is closing a connection during a KILL operation\n"
+      "that has an active InnoDB transaction.  %lu row modifications will "
+      "roll back.\n",
+      (ulong) trx->undo_no.low);
+  }
 
 	innobase_rollback_trx(trx);
 
@@ -3847,8 +3824,6 @@ no_commit:
 
 			/* Altering to InnoDB format */
 			getTransactionalEngine()->commit(user_session, 1);
-			/* Note that this transaction is still active. */
-			prebuilt->trx->active_trans = 1;
 			/* We will need an IX lock on the destination table. */
 			prebuilt->sql_stat_start = TRUE;
 		} else {
@@ -3863,8 +3838,6 @@ no_commit:
 			/* Commit the transaction.  This will release the table
 			locks, so they have to be acquired again. */
 			getTransactionalEngine()->commit(user_session, 1);
-			/* Note that this transaction is still active. */
-			prebuilt->trx->active_trans = 1;
 			/* Re-acquire the table lock on the source table. */
 			row_lock_table_for_mysql(prebuilt, src_table, mode);
 			/* We will need an IX lock on the destination table. */
@@ -7993,16 +7966,6 @@ InnobaseEngine::doStartStatement(
 
 	/* Set the isolation level of the transaction. */
   trx->isolation_level= innobase_map_isolation_level((enum_tx_isolation) session_tx_isolation(session));
-
-  /* 
-   * Set the Drizzle flag to mark that there is an active
-   * transaction.
-   *
-   * @todo this should go away
-   */
-  if (trx->active_trans == 0) {
-    trx->active_trans= 1;
-  }
 }
 
 void
@@ -8019,10 +7982,9 @@ InnobaseEngine::doEndStatement(
 
   if (! session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    if (trx->active_trans != 0)
+    if (trx->conc_state != TRX_NOT_STARTED)
     {
       commit(session, TRUE);
-      trx->active_trans= 0;
     }
   }
   else
@@ -8041,7 +8003,7 @@ InnobaseEngine::doEndStatement(
 This function is used to prepare an X/Open XA distributed transaction.
 @return	0 or error number */
 int
-InnobaseEngine::doPrepare(
+InnobaseEngine::doXaPrepare(
 /*================*/
 	Session*	session,/*!< in: handle to the MySQL thread of
 				the user whose XA transaction should
@@ -8071,20 +8033,13 @@ InnobaseEngine::doPrepare(
 
 	innobase_release_stat_resources(trx);
 
-	if (trx->active_trans == 0 && trx->conc_state != TRX_NOT_STARTED) {
-
-	  errmsg_printf(ERRMSG_LVL_ERROR,
-			"trx->active_trans == 0, but trx->conc_state != "
-			"TRX_NOT_STARTED");
-	}
-
 	if (all
 		|| (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) {
 
 		/* We were instructed to prepare the whole transaction, or
 		this is an SQL statement end and autocommit is on */
 
-		ut_ad(trx->active_trans);
+		ut_ad(trx->conc_state != TRX_NOT_STARTED);
 
 		error = (int) trx_prepare_for_mysql(trx);
 	} else {
@@ -8131,7 +8086,7 @@ InnobaseEngine::doPrepare(
 		to block for undefined period of time.
 		*/
 		pthread_mutex_lock(&prepare_commit_mutex);
-		trx->active_trans = 2;
+		trx->conc_state = TRX_PREPARED;
 	}
 	return(error);
 }
@@ -8140,7 +8095,7 @@ InnobaseEngine::doPrepare(
 This function is used to recover X/Open XA distributed transactions.
 @return	number of prepared transactions stored in xid_list */
 int
-InnobaseEngine::doRecover(
+InnobaseEngine::doXaRecover(
 /*================*/
 	::drizzled::XID*	xid_list,/*!< in/out: prepared transactions */
 	size_t len)	/*!< in: number of slots in xid_list */
@@ -8160,7 +8115,7 @@ This function is used to commit one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::doCommitXid(
+InnobaseEngine::doXaCommitXid(
 /*===================*/
 	::drizzled::XID*	xid)	/*!< in: X/Open XA transaction identification */
 {
@@ -8184,7 +8139,7 @@ This function is used to rollback one X/Open XA distributed transaction
 which is in the prepared state
 @return	0 or error number */
 int
-InnobaseEngine::doRollbackXid(
+InnobaseEngine::doXaRollbackXid(
 /*=====================*/
 	::drizzled::XID*		xid)	/*!< in: X/Open XA transaction
 				identification */
@@ -8628,11 +8583,6 @@ static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "With which method to flush data.", NULL, NULL, NULL);
 
-static DRIZZLE_SYSVAR_BOOL(locks_unsafe_for_binlog, innobase_locks_unsafe_for_binlog,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Force InnoDB to not use next-key locking, to use only row-level locking.",
-  NULL, NULL, TRUE);
-
 #ifdef UNIV_LOG_ARCHIVE
 static DRIZZLE_SYSVAR_STR(log_arch_dir, innobase_log_arch_dir,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -8843,7 +8793,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(flush_method),
   DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(locks_unsafe_for_binlog),
   DRIZZLE_SYSVAR(lock_wait_timeout),
 #ifdef UNIV_LOG_ARCHIVE
   DRIZZLE_SYSVAR(log_arch_dir),

@@ -136,11 +136,17 @@ Item_field::Item_field(Field *f)
   Item_field (this is important in prepared statements).
 */
 
-Item_field::Item_field(Session *, Name_resolution_context *context_arg,
-                       Field *f)
-  :Item_ident(context_arg, f->table->s->db.str, *f->table_name, f->field_name),
-   item_equal(0), no_const_subst(0),
-   have_privileges(0), any_privileges(0)
+Item_field::Item_field(Session *,
+                       Name_resolution_context *context_arg,
+                       Field *f) :
+  Item_ident(context_arg,
+             f->table->s->getSchemaName(),
+             *f->table_name,
+             f->field_name),
+   item_equal(0),
+   no_const_subst(0),
+   have_privileges(0),
+   any_privileges(0)
 {
   set_field(f);
 }
@@ -148,13 +154,18 @@ Item_field::Item_field(Session *, Name_resolution_context *context_arg,
 
 Item_field::Item_field(Name_resolution_context *context_arg,
                        const char *db_arg,const char *table_name_arg,
-                       const char *field_name_arg)
-  :Item_ident(context_arg, db_arg,table_name_arg,field_name_arg),
-   field(0), result_field(0), item_equal(0), no_const_subst(0),
-   have_privileges(0), any_privileges(0)
+                       const char *field_name_arg) :
+  Item_ident(context_arg, db_arg,table_name_arg,field_name_arg),
+   field(0),
+   result_field(0),
+   item_equal(0),
+   no_const_subst(0),
+   have_privileges(0),
+   any_privileges(0)
 {
   Select_Lex *select= current_session->lex->current_select;
   collation.set(DERIVATION_IMPLICIT);
+
   if (select && select->parsing_place != IN_HAVING)
       select->select_n_where_fields++;
 }
@@ -163,14 +174,14 @@ Item_field::Item_field(Name_resolution_context *context_arg,
   Constructor need to process subselect with temporary tables (see Item)
 */
 
-Item_field::Item_field(Session *session, Item_field *item)
-  :Item_ident(session, item),
-   field(item->field),
-   result_field(item->result_field),
-   item_equal(item->item_equal),
-   no_const_subst(item->no_const_subst),
-   have_privileges(item->have_privileges),
-   any_privileges(item->any_privileges)
+Item_field::Item_field(Session *session, Item_field *item) :
+  Item_ident(session, item),
+  field(item->field),
+  result_field(item->result_field),
+  item_equal(item->item_equal),
+  no_const_subst(item->no_const_subst),
+  have_privileges(item->have_privileges),
+  any_privileges(item->any_privileges)
 {
   collation.set(DERIVATION_IMPLICIT);
 }
@@ -183,11 +194,12 @@ void Item_field::set_field(Field *field_par)
   max_length= field_par->max_display_length();
   table_name= *field_par->table_name;
   field_name= field_par->field_name;
-  db_name= field_par->table->s->db.str;
+  db_name= field_par->table->s->getSchemaName();
   alias_name_used= field_par->table->alias_name_used;
   unsigned_flag=test(field_par->flags & UNSIGNED_FLAG);
   collation.set(field_par->charset(), field_par->derivation());
   fixed= 1;
+
   if (field->table->s->tmp_table == SYSTEM_TMP_TABLE)
     any_privileges= 0;
 }

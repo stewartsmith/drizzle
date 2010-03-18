@@ -23,8 +23,6 @@
 #include <drizzled/gettext.h>
 #include "errmsg.h"
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -120,4 +118,3 @@ drizzleclient_get_client_error(unsigned int err_index)
 } 
 
 } /* namespace drizzle_protocol */
-} /* namespace plugin */

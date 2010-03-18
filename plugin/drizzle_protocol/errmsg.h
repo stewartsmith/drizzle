@@ -20,8 +20,6 @@
 #ifndef PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H
 #define PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -105,7 +103,6 @@ enum CR_CLIENT_ERRORS {
   CR_ERROR_LAST    =2065 /*Copy last error nr:*/
 };
 
-}
-}
+} /* namespace drizzle_protocol */
 
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_ERRMSG_H */

@@ -34,8 +34,6 @@
 
 using namespace std;
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -125,8 +123,6 @@ void drizzleclient_vio_delete(Vio* vio)
 
 */
 void drizzleclient_vio_end(void)
-{
-}
+{ }
 
-}
-}
+} /* namespace drizzle_protocol */

@@ -5,6 +5,9 @@
 # that the size of the log file is 0 after truncation
 #
 
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+
 # Populate log with some records...
 --source ../plugin/transaction_log/tests/t/insert.inc
 

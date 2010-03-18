@@ -24,8 +24,6 @@
 
 #include "pack.h"
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -131,6 +129,4 @@ unsigned char *drizzleclient_net_store_length(unsigned char *packet, uint64_t le
   return packet+8;
 }
 
-}
-}
-
+} /* namespace drizzle_protocol */

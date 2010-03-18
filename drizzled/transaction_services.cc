@@ -2,7 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
- *  Copyright (c) Jay Pipes <jaypipes@gmail.com>
+ *  Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,31 @@
 
 /**
  * @file Transaction processing code
+ *
+ * @note
+ *
+ * The TransactionServices component takes internal events (for instance the start of a 
+ * transaction, the changing of a record, or the rollback of a transaction) 
+ * and constructs GPB Messages that are passed to the ReplicationServices
+ * component and used during replication.
+ *
+ * The reason for this functionality is to encapsulate all communication
+ * between the kernel and the replicator/applier plugins into GPB Messages.
+ * Instead of the plugin having to understand the (often fluidly changing)
+ * mechanics of the kernel, all the plugin needs to understand is the message
+ * format, and GPB messages provide a nice, clear, and versioned format for 
+ * these messages.
+ *
+ * @see /drizzled/message/transaction.proto
+ *
+ * @todo
+ *
+ * We really should store the raw bytes in the messages, not the
+ * String value of the Field.  But, to do that, the
+ * statement_transform library needs first to be updated
+ * to include the transformation code to convert raw
+ * Drizzle-internal Field byte representation into something
+ * plugins can understand.
  */
 
 #include "config.h"
@@ -33,13 +58,17 @@
 #include "drizzled/replication_services.h"
 #include "drizzled/transaction_services.h"
 #include "drizzled/transaction_context.h"
+#include "drizzled/message/transaction.pb.h"
+#include "drizzled/message/statement_transform.h"
 #include "drizzled/resource_context.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/client.h"
-#include "drizzled/plugin/xa_storage_engine.h"
+#include "drizzled/plugin/monitored_in_transaction.h"
+#include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/xa_resource_manager.h"
 #include "drizzled/internal/my_sys.h"
 
 using namespace std;
@@ -52,328 +81,224 @@ namespace drizzled
 {
 
 /**
-  Transaction handling in the server
-  ==================================
-
-  In each client connection, MySQL maintains two transactional
-  states:
-  - a statement transaction,
-  - a standard, also called normal transaction.
-
-  Historical note
-  ---------------
-  "Statement transaction" is a non-standard term that comes
-  from the times when MySQL supported BerkeleyDB storage engine.
-
-  First of all, it should be said that in BerkeleyDB auto-commit
-  mode auto-commits operations that are atomic to the storage
-  engine itself, such as a write of a record, and are too
-  high-granular to be atomic from the application perspective
-  (MySQL). One SQL statement could involve many BerkeleyDB
-  auto-committed operations and thus BerkeleyDB auto-commit was of
-  little use to MySQL.
-
-  Secondly, instead of SQL standard savepoints, BerkeleyDB
-  provided the concept of "nested transactions". In a nutshell,
-  transactions could be arbitrarily nested, but when the parent
-  transaction was committed or aborted, all its child (nested)
-  transactions were handled committed or aborted as well.
-  Commit of a nested transaction, in turn, made its changes
-  visible, but not durable: it destroyed the nested transaction,
-  all its changes would become available to the parent and
-  currently active nested transactions of this parent.
-
-  So the mechanism of nested transactions was employed to
-  provide "all or nothing" guarantee of SQL statements
-  required by the standard.
-  A nested transaction would be created at start of each SQL
-  statement, and destroyed (committed or aborted) at statement
-  end. Such nested transaction was internally referred to as
-  a "statement transaction" and gave birth to the term.
-
-  <Historical note ends>
-
-  Since then a statement transaction is started for each statement
-  that accesses transactional tables or uses the binary log.  If
-  the statement succeeds, the statement transaction is committed.
-  If the statement fails, the transaction is rolled back. Commits
-  of statement transactions are not durable -- each such
-  transaction is nested in the normal transaction, and if the
-  normal transaction is rolled back, the effects of all enclosed
-  statement transactions are undone as well.  Technically,
-  a statement transaction can be viewed as a savepoint which is
-  maintained automatically in order to make effects of one
-  statement atomic.
-
-  The normal transaction is started by the user and is ended
-  usually upon a user request as well. The normal transaction
-  encloses transactions of all statements issued between
-  its beginning and its end.
-  In autocommit mode, the normal transaction is equivalent
-  to the statement transaction.
-
-  Since MySQL supports PSEA (pluggable storage engine
-  architecture), more than one transactional engine can be
-  active at a time. Hence transactions, from the server
-  point of view, are always distributed. In particular,
-  transactional state is maintained independently for each
-  engine. In order to commit a transaction the two phase
-  commit protocol is employed.
-
-  Not all statements are executed in context of a transaction.
-  Administrative and status information statements do not modify
-  engine data, and thus do not start a statement transaction and
-  also have no effect on the normal transaction. Examples of such
-  statements are SHOW STATUS and RESET SLAVE.
-
-  Similarly DDL statements are not transactional,
-  and therefore a transaction is [almost] never started for a DDL
-  statement. The difference between a DDL statement and a purely
-  administrative statement though is that a DDL statement always
-  commits the current transaction before proceeding, if there is
-  any.
-
-  At last, SQL statements that work with non-transactional
-  engines also have no effect on the transaction state of the
-  connection. Even though they are written to the binary log,
-  and the binary log is, overall, transactional, the writes
-  are done in "write-through" mode, directly to the binlog
-  file, followed with a OS cache sync, in other words,
-  bypassing the binlog undo log (translog).
-  They do not commit the current normal transaction.
-  A failure of a statement that uses non-transactional tables
-  would cause a rollback of the statement transaction, but
-  in case there no non-transactional tables are used,
-  no statement transaction is started.
-
-  Data layout
-  -----------
-
-  The server stores its transaction-related data in
-  session->transaction. This structure has two members of type
-  TransactionContext. These members correspond to the statement and
-  normal transactions respectively:
-
-  - session->transaction.stmt contains a list of engines
-  that are participating in the given statement
-  - session->transaction.all contains a list of engines that
-  have participated in any of the statement transactions started
-  within the context of the normal transaction.
-  Each element of the list contains a pointer to the storage
-  engine, engine-specific transactional data, and engine-specific
-  transaction flags.
-
-  In autocommit mode session->transaction.all is empty.
-  Instead, data of session->transaction.stmt is
-  used to commit/rollback the normal transaction.
-
-  The list of registered engines has a few important properties:
-  - no engine is registered in the list twice
-  - engines are present in the list a reverse temporal order --
-  new participants are always added to the beginning of the list.
-
-  Transaction life cycle
-  ----------------------
-
-  When a new connection is established, session->transaction
-  members are initialized to an empty state.
-  If a statement uses any tables, all affected engines
-  are registered in the statement engine list. In
-  non-autocommit mode, the same engines are registered in
-  the normal transaction list.
-  At the end of the statement, the server issues a commit
-  or a roll back for all engines in the statement list.
-  At this point transaction flags of an engine, if any, are
-  propagated from the statement list to the list of the normal
-  transaction.
-  When commit/rollback is finished, the statement list is
-  cleared. It will be filled in again by the next statement,
-  and emptied again at the next statement's end.
-
-  The normal transaction is committed in a similar way
-  (by going over all engines in session->transaction.all list)
-  but at different times:
-  - upon COMMIT SQL statement is issued by the user
-  - implicitly, by the server, at the beginning of a DDL statement
-  or SET AUTOCOMMIT={0|1} statement.
-
-  The normal transaction can be rolled back as well:
-  - if the user has requested so, by issuing ROLLBACK SQL
-  statement
-  - if one of the storage engines requested a rollback
-  by setting session->transaction_rollback_request. This may
-  happen in case, e.g., when the transaction in the engine was
-  chosen a victim of the internal deadlock resolution algorithm
-  and rolled back internally. When such a situation happens, there
-  is little the server can do and the only option is to rollback
-  transactions in all other participating engines.  In this case
-  the rollback is accompanied by an error sent to the user.
-
-  As follows from the use cases above, the normal transaction
-  is never committed when there is an outstanding statement
-  transaction. In most cases there is no conflict, since
-  commits of the normal transaction are issued by a stand-alone
-  administrative or DDL statement, thus no outstanding statement
-  transaction of the previous statement exists. Besides,
-  all statements that manipulate with the normal transaction
-  are prohibited in stored functions and triggers, therefore
-  no conflicting situation can occur in a sub-statement either.
-  The remaining rare cases when the server explicitly has
-  to commit the statement transaction prior to committing the normal
-  one cover error-handling scenarios (see for example
-  ?).
-
-  When committing a statement or a normal transaction, the server
-  either uses the two-phase commit protocol, or issues a commit
-  in each engine independently. The two-phase commit protocol
-  is used only if:
-  - all participating engines support two-phase commit (provide
-    plugin::StorageEngine::prepare PSEA API call) and
-  - transactions in at least two engines modify data (i.e. are
-  not read-only).
-
-  Note that the two phase commit is used for
-  statement transactions, even though they are not durable anyway.
-  This is done to ensure logical consistency of data in a multiple-
-  engine transaction.
-  For example, imagine that some day MySQL supports unique
-  constraint checks deferred till the end of statement. In such
-  case a commit in one of the engines may yield ER_DUP_KEY,
-  and MySQL should be able to gracefully abort statement
-  transactions of other participants.
-
-  After the normal transaction has been committed,
-  session->transaction.all list is cleared.
-
-  When a connection is closed, the current normal transaction, if
-  any is currently active, is rolled back.
-
-  Roles and responsibilities
-  --------------------------
-
-  Beginning of SQL Statement (and Statement Transaction)
-  ------------------------------------------------------
-
-  At the start of each SQL statement, for each storage engine
-  <strong>that is involved in the SQL statement</strong>, the kernel 
-  calls the engine's plugin::StoragEngine::startStatement() method.  If the
-  engine needs to track some data for the statement, it should use
-  this method invocation to initialize this data.  This is the
-  beginning of what is called the "statement transaction".
-
-  <strong>For transaction storage engines (those storage engines
-  that inherit from plugin::TransactionalStorageEngine)</strong>, the
-  kernel automatically determines if the start of the SQL statement 
-  transaction should <em>also</em> begin the normal SQL transaction.
-  This occurs when the connection is in NOT in autocommit mode. If
-  the kernel detects this, then the kernel automatically starts the
-  normal transaction w/ plugin::TransactionalStorageEngine::startTransaction()
-  method and then calls plugin::StorageEngine::startStatement()
-  afterwards.
-
-  Beginning of an SQL "Normal" Transaction
-  ----------------------------------------
-
-  As noted above, a "normal SQL transaction" may be started when
-  an SQL statement is started in a connection and the connection is
-  NOT in AUTOCOMMIT mode.  This is automatically done by the kernel.
-
-  In addition, when a user executes a START TRANSACTION or
-  BEGIN WORK statement in a connection, the kernel explicitly
-  calls each transactional storage engine's startTransaction() method.
-
-  Ending of an SQL Statement (and Statement Transaction)
-  ------------------------------------------------------
-
-  At the end of each SQL statement, for each of the aforementioned
-  involved storage engines, the kernel calls the engine's
-  plugin::StorageEngine::endStatement() method.  If the engine
-  has initialized or modified some internal data about the
-  statement transaction, it should use this method to reset or destroy
-  this data appropriately.
-
-  Ending of an SQL "Normal" Transaction
-  -------------------------------------
-  
-  The end of a normal transaction is either a ROLLBACK or a COMMIT, 
-  depending on the success or failure of the statement transaction(s) 
-  it encloses.
-  
-  The end of a "normal transaction" occurs when any of the following
-  occurs:
-
-  1) If a statement transaction has completed and AUTOCOMMIT is ON,
-     then the normal transaction which encloses the statement
-     transaction ends
-  2) If a COMMIT or ROLLBACK statement occurs on the connection
-  3) Just before a DDL operation occurs, the kernel will implicitly
-     commit the active normal transaction
-  
-  Transactions and Non-transactional Storage Engines
-  --------------------------------------------------
-  
-  For non-transactional engines, this call can be safely ignored, and
-  the kernel tracks whether a non-transactional engine has changed
-  any data state, and warns the user appropriately if a transaction
-  (statement or normal) is rolled back after such non-transactional
-  data changes have been made.
-
-  XA Two-phase Commit Protocol
-  ----------------------------
-
-  During statement execution, whenever any of data-modifying
-  PSEA API methods is used, e.g. Cursor::write_row() or
-  Cursor::update_row(), the read-write flag is raised in the
-  statement transaction for the involved engine.
-  Currently All PSEA calls are "traced", and the data can not be
-  changed in a way other than issuing a PSEA call. Important:
-  unless this invariant is preserved the server will not know that
-  a transaction in a given engine is read-write and will not
-  involve the two-phase commit protocol!
-
-  At the end of a statement, server call
-  ha_autocommit_or_rollback() is invoked. This call in turn
-  invokes plugin::StorageEngine::prepare() for every involved engine.
-  Prepare is followed by a call to plugin::StorageEngine::commit_one_phase()
-  If a one-phase commit will suffice, plugin::StorageEngine::prepare() is not
-  invoked and the server only calls plugin::StorageEngine::commit_one_phase().
-  At statement commit, the statement-related read-write engine
-  flag is propagated to the corresponding flag in the normal
-  transaction.  When the commit is complete, the list of registered
-  engines is cleared.
-
-  Rollback is handled in a similar fashion.
-
-  Additional notes on DDL and the normal transaction.
-  ---------------------------------------------------
-
-  CREATE TABLE .. SELECT can start a *new* normal transaction
-  because of the fact that SELECTs on a transactional storage
-  engine participate in the normal SQL transaction (due to
-  isolation level issues and consistent read views).
-
-  Behaviour of the server in this case is currently badly
-  defined.
-
-  DDL statements use a form of "semantic" logging
-  to maintain atomicity: if CREATE TABLE .. SELECT failed,
-  the newly created table is deleted.
-
-  In addition, some DDL statements issue interim transaction
-  commits: e.g. ALTER TABLE issues a COMMIT after data is copied
-  from the original table to the internal temporary table. Other
-  statements, e.g. CREATE TABLE ... SELECT do not always commit
-  after itself.
-
-  And finally there is a group of DDL statements such as
-  RENAME/DROP TABLE that doesn't start a new transaction
-  and doesn't commit.
-
-  A consistent behaviour is perhaps to always commit the normal
-  transaction after all DDLs, just like the statement transaction
-  is always committed at the end of all statements.
-*/
+ * @defgroup Transactions
+ *
+ * @brief
+ *
+ * Transaction handling in the server
+ *
+ * @detail
+ *
+ * In each client connection, Drizzle maintains two transaction
+ * contexts representing the state of the:
+ *
+ * 1) Statement Transaction
+ * 2) Normal Transaction
+ *
+ * These two transaction contexts represent the transactional
+ * state of a Session's SQL and XA transactions for a single
+ * SQL statement or a series of SQL statements.
+ *
+ * When the Session's connection is in AUTOCOMMIT mode, there
+ * is no practical difference between the statement and the
+ * normal transaction, as each SQL statement is committed or
+ * rolled back depending on the success or failure of the
+ * indvidual SQL statement.
+ *
+ * When the Session's connection is NOT in AUTOCOMMIT mode, OR
+ * the Session has explicitly begun a normal SQL transaction using
+ * a BEGIN WORK/START TRANSACTION statement, then the normal
+ * transaction context tracks the aggregate transaction state of
+ * the SQL transaction's individual statements, and the SQL
+ * transaction's commit or rollback is done atomically for all of
+ * the SQL transaction's statement's data changes.
+ *
+ * Technically, a statement transaction can be viewed as a savepoint 
+ * which is maintained automatically in order to make effects of one
+ * statement atomic.
+ *
+ * The normal transaction is started by the user and is typically
+ * ended (COMMIT or ROLLBACK) upon an explicity user request as well.
+ * The exception to this is that DDL statements implicitly COMMIT
+ * any previously active normal transaction before they begin executing.
+ *
+ * In Drizzle, unlike MySQL, plugins other than a storage engine
+ * may participate in a transaction.  All plugin::TransactionalStorageEngine
+ * plugins will automatically be monitored by Drizzle's transaction 
+ * manager (implemented in this source file), as will all plugins which
+ * implement plugin::XaResourceManager and register with the transaction
+ * manager.
+ *
+ * If Drizzle's transaction manager sees that more than one resource
+ * manager (transactional storage engine or XA resource manager) has modified
+ * data state during a statement or normal transaction, the transaction
+ * manager will automatically use a two-phase commit protocol for all
+ * resources which support XA's distributed transaction protocol.  Unlike
+ * MySQL, storage engines need not manually register with the transaction
+ * manager during a statement's execution.  Previously, in MySQL, all
+ * handlertons would have to call trans_register_ha() at some point after
+ * modifying data state in order to have MySQL include that handler in
+ * an XA transaction.  Drizzle does all of this grunt work behind the
+ * scenes for the storage engine implementers.
+ *
+ * When a connection is closed, the current normal transaction, if
+ * any is currently active, is rolled back.
+ *
+ * Transaction life cycle
+ * ----------------------
+ *
+ * When a new connection is established, session->transaction
+ * members are initialized to an empty state. If a statement uses any tables, 
+ * all affected engines are registered in the statement engine list automatically
+ * in plugin::StorageEngine::startStatement() and 
+ * plugin::TransactionalStorageEngine::startTransaction().
+ *
+ * You can view the lifetime of a normal transaction in the following
+ * call-sequence:
+ *
+ * drizzled::statement::Statement::execute()
+ *   drizzled::plugin::TransactionalStorageEngine::startTransaction()
+ *     drizzled::TransactionServices::registerResourceForTransaction()
+ *     drizzled::TransactionServices::registerResourceForStatement()
+ *     drizzled::plugin::StorageEngine::startStatement()
+ *       drizzled::Cursor::write_row() <-- example...could be update_row(), etc
+ *     drizzled::plugin::StorageEngine::endStatement()
+ *   drizzled::TransactionServices::autocommitOrRollback()
+ *     drizzled::TransactionalStorageEngine::commit() <-- or ::rollback()
+ *     drizzled::XaResourceManager::xaCommit() <-- or rollback()
+ *
+ * Roles and responsibilities
+ * --------------------------
+ *
+ * Beginning of SQL Statement (and Statement Transaction)
+ * ------------------------------------------------------
+ *
+ * At the start of each SQL statement, for each storage engine
+ * <strong>that is involved in the SQL statement</strong>, the kernel 
+ * calls the engine's plugin::StoragEngine::startStatement() method.  If the
+ * engine needs to track some data for the statement, it should use
+ * this method invocation to initialize this data.  This is the
+ * beginning of what is called the "statement transaction".
+ *
+ * <strong>For transaction storage engines (those storage engines
+ * that inherit from plugin::TransactionalStorageEngine)</strong>, the
+ * kernel automatically determines if the start of the SQL statement 
+ * transaction should <em>also</em> begin the normal SQL transaction.
+ * This occurs when the connection is in NOT in autocommit mode. If
+ * the kernel detects this, then the kernel automatically starts the
+ * normal transaction w/ plugin::TransactionalStorageEngine::startTransaction()
+ * method and then calls plugin::StorageEngine::startStatement()
+ * afterwards.
+ *
+ * Beginning of an SQL "Normal" Transaction
+ * ----------------------------------------
+ *
+ * As noted above, a "normal SQL transaction" may be started when
+ * an SQL statement is started in a connection and the connection is
+ * NOT in AUTOCOMMIT mode.  This is automatically done by the kernel.
+ *
+ * In addition, when a user executes a START TRANSACTION or
+ * BEGIN WORK statement in a connection, the kernel explicitly
+ * calls each transactional storage engine's startTransaction() method.
+ *
+ * Ending of an SQL Statement (and Statement Transaction)
+ * ------------------------------------------------------
+ *
+ * At the end of each SQL statement, for each of the aforementioned
+ * involved storage engines, the kernel calls the engine's
+ * plugin::StorageEngine::endStatement() method.  If the engine
+ * has initialized or modified some internal data about the
+ * statement transaction, it should use this method to reset or destroy
+ * this data appropriately.
+ *
+ * Ending of an SQL "Normal" Transaction
+ * -------------------------------------
+ *
+ * The end of a normal transaction is either a ROLLBACK or a COMMIT, 
+ * depending on the success or failure of the statement transaction(s) 
+ * it encloses.
+ *
+ * The end of a "normal transaction" occurs when any of the following
+ * occurs:
+ *
+ * 1) If a statement transaction has completed and AUTOCOMMIT is ON,
+ *    then the normal transaction which encloses the statement
+ *    transaction ends
+ * 2) If a COMMIT or ROLLBACK statement occurs on the connection
+ * 3) Just before a DDL operation occurs, the kernel will implicitly
+ *    commit the active normal transaction
+ *
+ * Transactions and Non-transactional Storage Engines
+ * --------------------------------------------------
+ *
+ * For non-transactional engines, this call can be safely ignored, an
+ * the kernel tracks whether a non-transactional engine has changed
+ * any data state, and warns the user appropriately if a transaction
+ * (statement or normal) is rolled back after such non-transactional
+ * data changes have been made.
+ *
+ * XA Two-phase Commit Protocol
+ * ----------------------------
+ *
+ * During statement execution, whenever any of data-modifying
+ * PSEA API methods is used, e.g. Cursor::write_row() or
+ * Cursor::update_row(), the read-write flag is raised in the
+ * statement transaction for the involved engine.
+ * Currently All PSEA calls are "traced", and the data can not be
+ * changed in a way other than issuing a PSEA call. Important:
+ * unless this invariant is preserved the server will not know that
+ * a transaction in a given engine is read-write and will not
+ * involve the two-phase commit protocol!
+ *
+ * At the end of a statement, TransactionServices::autocommitOrRollback()
+ * is invoked. This call in turn
+ * invokes plugin::XaResourceManager::xapPepare() for every involved XA
+ * resource manager.
+ *
+ * Prepare is followed by a call to plugin::TransactionalStorageEngine::commit()
+ * or plugin::XaResourceManager::xaCommit() (depending on what the resource
+ * is...)
+ * 
+ * If a one-phase commit will suffice, plugin::StorageEngine::prepare() is not
+ * invoked and the server only calls plugin::StorageEngine::commit_one_phase().
+ * At statement commit, the statement-related read-write engine
+ * flag is propagated to the corresponding flag in the normal
+ * transaction.  When the commit is complete, the list of registered
+ * engines is cleared.
+ *
+ * Rollback is handled in a similar fashion.
+ *
+ * Additional notes on DDL and the normal transaction.
+ * ---------------------------------------------------
+ *
+ * CREATE TABLE .. SELECT can start a *new* normal transaction
+ * because of the fact that SELECTs on a transactional storage
+ * engine participate in the normal SQL transaction (due to
+ * isolation level issues and consistent read views).
+ *
+ * Behaviour of the server in this case is currently badly
+ * defined.
+ *
+ * DDL statements use a form of "semantic" logging
+ * to maintain atomicity: if CREATE TABLE .. SELECT failed,
+ * the newly created table is deleted.
+ * 
+ * In addition, some DDL statements issue interim transaction
+ * commits: e.g. ALTER TABLE issues a COMMIT after data is copied
+ * from the original table to the internal temporary table. Other
+ * statements, e.g. CREATE TABLE ... SELECT do not always commit
+ * after itself.
+ *
+ * And finally there is a group of DDL statements such as
+ * RENAME/DROP TABLE that doesn't start a new transaction
+ * and doesn't commit.
+ *
+ * A consistent behaviour is perhaps to always commit the normal
+ * transaction after all DDLs, just like the statement transaction
+ * is always committed at the end of all statements.
+ */
 void TransactionServices::registerResourceForStatement(Session *session,
+                                                       plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
 {
   if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
@@ -385,43 +310,120 @@ void TransactionServices::registerResourceForStatement(Session *session,
      * in the normal transaction which contains the statement
      * transaction.
      */
-    registerResourceForTransaction(session, engine);
+    registerResourceForTransaction(session, monitored, engine);
   }
 
   TransactionContext *trans= &session->transaction.stmt;
-  ResourceContext *resource_context= session->getResourceContext(engine, 0);
+  ResourceContext *resource_context= session->getResourceContext(monitored, 0);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
 
-  resource_context->setResource(engine);
+  assert(monitored->participatesInSqlTransaction());
+  assert(not monitored->participatesInXaTransaction());
+
+  resource_context->setMonitored(monitored);
+  resource_context->setTransactionalStorageEngine(engine);
   trans->registerResource(resource_context);
 
-  trans->no_2pc|= not engine->hasTwoPhaseCommit();
+  trans->no_2pc|= true;
+}
+
+void TransactionServices::registerResourceForStatement(Session *session,
+                                                       plugin::MonitoredInTransaction *monitored,
+                                                       plugin::TransactionalStorageEngine *engine,
+                                                       plugin::XaResourceManager *resource_manager)
+{
+  if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    /* 
+     * Now we automatically register this resource manager for the
+     * normal transaction.  This is fine because a statement
+     * transaction registration should always enlist the resource
+     * in the normal transaction which contains the statement
+     * transaction.
+     */
+    registerResourceForTransaction(session, monitored, engine, resource_manager);
+  }
+
+  TransactionContext *trans= &session->transaction.stmt;
+  ResourceContext *resource_context= session->getResourceContext(monitored, 0);
+
+  if (resource_context->isStarted())
+    return; /* already registered, return */
+
+  assert(monitored->participatesInXaTransaction());
+  assert(monitored->participatesInSqlTransaction());
+
+  resource_context->setMonitored(monitored);
+  resource_context->setTransactionalStorageEngine(engine);
+  resource_context->setXaResourceManager(resource_manager);
+  trans->registerResource(resource_context);
+
+  trans->no_2pc|= false;
 }
 
 void TransactionServices::registerResourceForTransaction(Session *session,
+                                                         plugin::MonitoredInTransaction *monitored,
                                                          plugin::TransactionalStorageEngine *engine)
 {
   TransactionContext *trans= &session->transaction.all;
-  ResourceContext *resource_context= session->getResourceContext(engine, 1);
+  ResourceContext *resource_context= session->getResourceContext(monitored, 1);
 
   if (resource_context->isStarted())
     return; /* already registered, return */
 
   session->server_status|= SERVER_STATUS_IN_TRANS;
 
-  resource_context->setResource(engine);
   trans->registerResource(resource_context);
 
-  trans->no_2pc|= not engine->hasTwoPhaseCommit();
+  assert(monitored->participatesInSqlTransaction());
+  assert(not monitored->participatesInXaTransaction());
+
+  resource_context->setMonitored(monitored);
+  resource_context->setTransactionalStorageEngine(engine);
+  trans->no_2pc|= true;
 
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->getQueryId());
 
+  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
+
   /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
-  if (! session->getResourceContext(engine, 0)->isStarted())
-    registerResourceForStatement(session, engine);
+  if (! session->getResourceContext(monitored, 0)->isStarted())
+    registerResourceForStatement(session, monitored, engine);
+}
+
+void TransactionServices::registerResourceForTransaction(Session *session,
+                                                         plugin::MonitoredInTransaction *monitored,
+                                                         plugin::TransactionalStorageEngine *engine,
+                                                         plugin::XaResourceManager *resource_manager)
+{
+  TransactionContext *trans= &session->transaction.all;
+  ResourceContext *resource_context= session->getResourceContext(monitored, 1);
+
+  if (resource_context->isStarted())
+    return; /* already registered, return */
+
+  session->server_status|= SERVER_STATUS_IN_TRANS;
+
+  trans->registerResource(resource_context);
+
+  assert(monitored->participatesInSqlTransaction());
+
+  resource_context->setMonitored(monitored);
+  resource_context->setXaResourceManager(resource_manager);
+  resource_context->setTransactionalStorageEngine(engine);
+  trans->no_2pc|= true;
+
+  if (session->transaction.xid_state.xid.is_null())
+    session->transaction.xid_state.xid.set(session->getQueryId());
+
+  engine->startTransaction(session, START_TRANS_NO_OPTIONS);
+
+  /* Only true if user is executing a BEGIN WORK/START TRANSACTION */
+  if (! session->getResourceContext(monitored, 0)->isStarted())
+    registerResourceForStatement(session, monitored, engine, resource_manager);
 }
 
 /**
@@ -457,7 +459,7 @@ ha_check_and_coalesce_trx_read_only(Session *session,
 
     if (! normal_transaction)
     {
-      ResourceContext *resource_context_normal= session->getResourceContext(resource_context->getResource(), true);
+      ResourceContext *resource_context_normal= session->getResourceContext(resource_context->getMonitored(), true);
       assert(resource_context != resource_context_normal);
       /*
         Merge read-only/read-write information about statement
@@ -546,13 +548,20 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
         if (! resource_context->hasModifiedData())
           continue;
 
-        plugin::StorageEngine *engine= resource_context->getResource();
-        if ((err= static_cast<plugin::XaStorageEngine *>(engine)->prepare(session, normal_transaction)))
+        plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+        if (resource->participatesInXaTransaction())
         {
-          my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-          error= 1;
+          if ((err= resource_context->getXaResourceManager()->xaPrepare(session, normal_transaction)))
+          {
+            my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
+            error= 1;
+          }
+          else
+          {
+            status_var_increment(session->status_var.ha_prepare_count);
+          }
         }
-        status_var_increment(session->status_var.ha_prepare_count);
       }
       if (error)
       {
@@ -590,13 +599,32 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
       int err;
       ResourceContext *resource_context= *it;
 
-      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
-      if ((err= engine->commit(session, normal_transaction)))
+      plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+      if (resource->participatesInXaTransaction())
       {
-        my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-        error= 1;
+        if ((err= resource_context->getXaResourceManager()->xaCommit(session, normal_transaction)))
+        {
+          my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
+          error= 1;
+        }
+        else if (normal_transaction)
+        {
+          status_var_increment(session->status_var.ha_commit_count);
+        }
       }
-      status_var_increment(session->status_var.ha_commit_count);
+      else if (resource->participatesInSqlTransaction())
+      {
+        if ((err= resource_context->getTransactionalStorageEngine()->commit(session, normal_transaction)))
+        {
+          my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
+          error= 1;
+        }
+        else if (normal_transaction)
+        {
+          status_var_increment(session->status_var.ha_commit_count);
+        }
+      }
       resource_context->reset(); /* keep it conveniently zero-filled */
     }
 
@@ -618,8 +646,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
        * We commit the normal transaction by finalizing the transaction message
        * and propogating the message to all registered replicators.
        */
-      ReplicationServices &replication_services= ReplicationServices::singleton();
-      replication_services.commitTransaction(session);
+      commitTransactionMessage(session);
     }
   }
   return error;
@@ -649,13 +676,32 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
       int err;
       ResourceContext *resource_context= *it;
 
-      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
-      if ((err= engine->rollback(session, normal_transaction)))
+      plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+      if (resource->participatesInXaTransaction())
       {
-        my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
-        error=1;
+        if ((err= resource_context->getXaResourceManager()->xaRollback(session, normal_transaction)))
+        {
+          my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
+          error= 1;
+        }
+        else if (normal_transaction)
+        {
+          status_var_increment(session->status_var.ha_rollback_count);
+        }
       }
-      status_var_increment(session->status_var.ha_rollback_count);
+      else if (resource->participatesInSqlTransaction())
+      {
+        if ((err= resource_context->getTransactionalStorageEngine()->rollback(session, normal_transaction)))
+        {
+          my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
+          error= 1;
+        }
+        else if (normal_transaction)
+        {
+          status_var_increment(session->status_var.ha_rollback_count);
+        }
+      }
       resource_context->reset(); /* keep it conveniently zero-filled */
     }
     
@@ -666,8 +712,7 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
      * a rollback statement with the corresponding transaction ID
      * to rollback.
      */
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.rollbackTransaction(session);
+    rollbackTransactionMessage(session);
 
     if (is_real_trans)
       session->transaction.xid_state.xid.null();
@@ -776,7 +821,9 @@ struct ResourceContextCompare : public std::binary_function<ResourceContext *, R
 {
   result_type operator()(const ResourceContext *lhs, const ResourceContext *rhs) const
   {
-    return lhs->getResource()->getSlot() < rhs->getResource()->getSlot();
+    /* The below is perfectly fine, since we're simply comparing addresses for the underlying
+     * resources aren't the same... */
+    return reinterpret_cast<uint64_t>(lhs->getMonitored()) < reinterpret_cast<uint64_t>(rhs->getMonitored());
   }
 };
 
@@ -798,15 +845,22 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
   {
     int err;
     ResourceContext *resource_context= *it;
-    plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
-    assert(engine != NULL);
-    if ((err= engine->rollbackToSavepoint(session, sv)))
-    { // cannot happen
-      my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
-      error= 1;
+
+    plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+    if (resource->participatesInSqlTransaction())
+    {
+      if ((err= resource_context->getTransactionalStorageEngine()->rollbackToSavepoint(session, sv)))
+      {
+        my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
+        error= 1;
+      }
+      else
+      {
+        status_var_increment(session->status_var.ha_savepoint_rollback_count);
+      }
     }
-    status_var_increment(session->status_var.ha_savepoint_rollback_count);
-    trans->no_2pc|= not engine->hasTwoPhaseCommit();
+    trans->no_2pc|= not resource->participatesInXaTransaction();
   }
   /*
     rolling back the transaction in all storage engines that were not part of
@@ -841,13 +895,21 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
     {
       ResourceContext *resource_context= *it;
       int err;
-      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
-      if ((err= engine->rollback(session, !(0))))
-      { // cannot happen
-        my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
-        error= 1;
+
+      plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+      if (resource->participatesInSqlTransaction())
+      {
+        if ((err= resource_context->getTransactionalStorageEngine()->rollback(session, !(0))))
+        {
+          my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
+          error= 1;
+        }
+        else
+        {
+          status_var_increment(session->status_var.ha_rollback_count);
+        }
       }
-      status_var_increment(session->status_var.ha_rollback_count);
       resource_context->reset(); /* keep it conveniently zero-filled */
     }
   }
@@ -875,14 +937,21 @@ int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
     {
       ResourceContext *resource_context= *it;
       int err;
-      plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
-      assert(engine);
-      if ((err= engine->setSavepoint(session, sv)))
-      { // cannot happen
-        my_error(ER_GET_ERRNO, MYF(0), err);
-        error= 1;
+
+      plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+      if (resource->participatesInSqlTransaction())
+      {
+        if ((err= resource_context->getTransactionalStorageEngine()->setSavepoint(session, sv)))
+        {
+          my_error(ER_GET_ERRNO, MYF(0), err);
+          error= 1;
+        }
+        else
+        {
+          status_var_increment(session->status_var.ha_savepoint_count);
+        }
       }
-      status_var_increment(session->status_var.ha_savepoint_count);
     }
   }
   /*
@@ -904,15 +973,738 @@ int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &
   {
     int err;
     ResourceContext *resource_context= *it;
-    plugin::TransactionalStorageEngine *engine= static_cast<plugin::TransactionalStorageEngine *>(resource_context->getResource());
-    assert(engine);
-    if ((err= engine->releaseSavepoint(session, sv)))
-    { // cannot happen
-      my_error(ER_GET_ERRNO, MYF(0), err);
-      error= 1;
+
+    plugin::MonitoredInTransaction *resource= resource_context->getMonitored();
+
+    if (resource->participatesInSqlTransaction())
+    {
+      if ((err= resource_context->getTransactionalStorageEngine()->releaseSavepoint(session, sv)))
+      {
+        my_error(ER_GET_ERRNO, MYF(0), err);
+        error= 1;
+      }
     }
   }
   return error;
+}
+
+message::Transaction *TransactionServices::getActiveTransactionMessage(Session *in_session)
+{
+  message::Transaction *transaction= in_session->getTransactionMessage();
+
+  if (unlikely(transaction == NULL))
+  {
+    /* 
+     * Allocate and initialize a new transaction message 
+     * for this Session object.  Session is responsible for
+     * deleting transaction message when done with it.
+     */
+    transaction= new (nothrow) message::Transaction();
+    initTransactionMessage(*transaction, in_session);
+    in_session->setTransactionMessage(transaction);
+    return transaction;
+  }
+  else
+    return transaction;
+}
+
+void TransactionServices::initTransactionMessage(message::Transaction &in_transaction,
+                                          Session *in_session)
+{
+  message::TransactionContext *trx= in_transaction.mutable_transaction_context();
+  trx->set_server_id(in_session->getServerId());
+  trx->set_transaction_id(in_session->getQueryId());
+  trx->set_start_timestamp(in_session->getCurrentTimestamp());
+}
+
+void TransactionServices::finalizeTransactionMessage(message::Transaction &in_transaction,
+                                              Session *in_session)
+{
+  message::TransactionContext *trx= in_transaction.mutable_transaction_context();
+  trx->set_end_timestamp(in_session->getCurrentTimestamp());
+}
+
+void TransactionServices::cleanupTransactionMessage(message::Transaction *in_transaction,
+                                             Session *in_session)
+{
+  delete in_transaction;
+  in_session->setStatementMessage(NULL);
+  in_session->setTransactionMessage(NULL);
+}
+
+void TransactionServices::commitTransactionMessage(Session *in_session)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+
+  /* If there is an active statement message, finalize it */
+  message::Statement *statement= in_session->getStatementMessage();
+
+  if (statement != NULL)
+  {
+    finalizeStatementMessage(*statement, in_session);
+  }
+  else
+    return; /* No data modification occurred inside the transaction */
+  
+  message::Transaction* transaction= getActiveTransactionMessage(in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+}
+
+void TransactionServices::initStatementMessage(message::Statement &statement,
+                                        message::Statement::Type in_type,
+                                        Session *in_session)
+{
+  statement.set_type(in_type);
+  statement.set_start_timestamp(in_session->getCurrentTimestamp());
+  /** @TODO Set sql string optionally */
+}
+
+void TransactionServices::finalizeStatementMessage(message::Statement &statement,
+                                            Session *in_session)
+{
+  statement.set_end_timestamp(in_session->getCurrentTimestamp());
+  in_session->setStatementMessage(NULL);
+}
+
+void TransactionServices::rollbackTransactionMessage(Session *in_session)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+
+  /*
+   * OK, so there are two situations that we need to deal with here:
+   *
+   * 1) We receive an instruction to ROLLBACK the current transaction
+   *    and the currently-stored Transaction message is *self-contained*, 
+   *    meaning that no Statement messages in the Transaction message
+   *    contain a message having its segment_id member greater than 1.  If
+   *    no non-segment ID 1 members are found, we can simply clear the
+   *    current Transaction message and remove it from memory.
+   *
+   * 2) If the Transaction message does indeed have a non-end segment, that
+   *    means that a bulk update/delete/insert Transaction message segment
+   *    has previously been sent over the wire to replicators.  In this case, 
+   *    we need to package a Transaction with a Statement message of type
+   *    ROLLBACK to indicate to replicators that previously-transmitted
+   *    messages must be un-applied.
+   */
+  if (unlikely(message::transactionContainsBulkSegment(*transaction)))
+  {
+    /*
+     * Clear the transaction, create a Rollback statement message, 
+     * attach it to the transaction, and push it to replicators.
+     */
+    transaction->Clear();
+    initTransactionMessage(*transaction, in_session);
+
+    message::Statement *statement= transaction->add_statement();
+
+    initStatementMessage(*statement, message::Statement::ROLLBACK, in_session);
+    finalizeStatementMessage(*statement, in_session);
+
+    finalizeTransactionMessage(*transaction, in_session);
+    
+    replication_services.pushTransactionMessage(*transaction);
+  }
+  cleanupTransactionMessage(transaction, in_session);
+}
+
+message::Statement &TransactionServices::getInsertStatement(Session *in_session,
+                                                                 Table *in_table)
+{
+  message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type INSERT.
+   * If it is not, we finalize the current Statement and ensure a new
+   * InsertStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::INSERT)
+  {
+    finalizeStatementMessage(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
+
+  if (statement == NULL)
+  {
+    message::Transaction *transaction= getActiveTransactionMessage(in_session);
+    /* 
+     * Transaction message initialized and set, but no statement created
+     * yet.  We construct one and initialize it, here, then return the
+     * message after attaching the new Statement message pointer to the 
+     * Session for easy retrieval later...
+     */
+    statement= transaction->add_statement();
+    setInsertHeader(*statement, in_session, in_table);
+    in_session->setStatementMessage(statement);
+  }
+  return *statement;
+}
+
+void TransactionServices::setInsertHeader(message::Statement &statement,
+                                          Session *in_session,
+                                          Table *in_table)
+{
+  initStatementMessage(statement, message::Statement::INSERT, in_session);
+
+  /* 
+   * Now we construct the specialized InsertHeader message inside
+   * the generalized message::Statement container...
+   */
+  /* Set up the insert header */
+  message::InsertHeader *header= statement.mutable_insert_header();
+  message::TableMetadata *table_metadata= header->mutable_table_metadata();
+
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
+
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+
+  message::FieldMetadata *field_metadata;
+
+  /* We will read all the table's fields... */
+  in_table->setReadSet();
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    field_metadata= header->add_field_metadata();
+    field_metadata->set_name(current_field->field_name);
+    field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
+  }
+}
+
+bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return false;
+  /**
+   * We do this check here because we don't want to even create a 
+   * statement if there isn't a primary key on the table...
+   *
+   * @todo
+   *
+   * Multi-column primary keys are handled how exactly?
+   */
+  if (in_table->s->primary_key == MAX_KEY)
+  {
+    my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
+    return true;
+  }
+
+  message::Statement &statement= getInsertStatement(in_session, in_table);
+
+  message::InsertData *data= statement.mutable_insert_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+  message::InsertRecord *record= data->add_record();
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+
+  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  string_value->set_charset(system_charset_info);
+
+  /* We will read all the table's fields... */
+  in_table->setReadSet();
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    string_value= current_field->val_str(string_value);
+    record->add_insert_value(string_value->c_ptr(), string_value->length());
+    string_value->free();
+  }
+  return false;
+}
+
+message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
+                                                            Table *in_table,
+                                                            const unsigned char *old_record, 
+                                                            const unsigned char *new_record)
+{
+  message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type UPDATE.
+   * If it is not, we finalize the current Statement and ensure a new
+   * UpdateStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::UPDATE)
+  {
+    finalizeStatementMessage(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
+
+  if (statement == NULL)
+  {
+    message::Transaction *transaction= getActiveTransactionMessage(in_session);
+    /* 
+     * Transaction message initialized and set, but no statement created
+     * yet.  We construct one and initialize it, here, then return the
+     * message after attaching the new Statement message pointer to the 
+     * Session for easy retrieval later...
+     */
+    statement= transaction->add_statement();
+    setUpdateHeader(*statement, in_session, in_table, old_record, new_record);
+    in_session->setStatementMessage(statement);
+  }
+  return *statement;
+}
+
+void TransactionServices::setUpdateHeader(message::Statement &statement,
+                                          Session *in_session,
+                                          Table *in_table,
+                                          const unsigned char *old_record, 
+                                          const unsigned char *new_record)
+{
+  initStatementMessage(statement, message::Statement::UPDATE, in_session);
+
+  /* 
+   * Now we construct the specialized UpdateHeader message inside
+   * the generalized message::Statement container...
+   */
+  /* Set up the update header */
+  message::UpdateHeader *header= statement.mutable_update_header();
+  message::TableMetadata *table_metadata= header->mutable_table_metadata();
+
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
+
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+
+  message::FieldMetadata *field_metadata;
+
+  /* We will read all the table's fields... */
+  in_table->setReadSet();
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    /*
+     * We add the "key field metadata" -- i.e. the fields which is
+     * the primary key for the table.
+     */
+    if (in_table->s->fieldInPrimaryKey(current_field))
+    {
+      field_metadata= header->add_key_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
+    }
+
+    /*
+     * The below really should be moved into the Field API and Record API.  But for now
+     * we do this crazy pointer fiddling to figure out if the current field
+     * has been updated in the supplied record raw byte pointers.
+     */
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+
+    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      /* Field is changed from old to new */
+      field_metadata= header->add_set_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
+    }
+  }
+}
+void TransactionServices::updateRecord(Session *in_session,
+                                       Table *in_table, 
+                                       const unsigned char *old_record, 
+                                       const unsigned char *new_record)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+
+  message::Statement &statement= getUpdateStatement(in_session, in_table, old_record, new_record);
+
+  message::UpdateData *data= statement.mutable_update_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+  message::UpdateRecord *record= data->add_record();
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  string_value->set_charset(system_charset_info);
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    /*
+     * Here, we add the SET field values.  We used to do this in the setUpdateHeader() method, 
+     * but then realized that an UPDATE statement could potentially have different values for
+     * the SET field.  For instance, imagine this SQL scenario:
+     *
+     * CREATE TABLE t1 (id INT NOT NULL PRIMARY KEY, count INT NOT NULL);
+     * INSERT INTO t1 (id, counter) VALUES (1,1),(2,2),(3,3);
+     * UPDATE t1 SET counter = counter + 1 WHERE id IN (1,2);
+     *
+     * We will generate two UpdateRecord messages with different set_value byte arrays.
+     *
+     * The below really should be moved into the Field API and Record API.  But for now
+     * we do this crazy pointer fiddling to figure out if the current field
+     * has been updated in the supplied record raw byte pointers.
+     */
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+
+    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      /* Store the original "read bit" for this field */
+      bool is_read_set= current_field->isReadSet();
+
+      /* We need to mark that we will "read" this field... */
+      in_table->setReadSet(current_field->field_index);
+
+      /* Read the string value of this field's contents */
+      string_value= current_field->val_str(string_value);
+
+      /* 
+       * Reset the read bit after reading field to its original state.  This 
+       * prevents the field from being included in the WHERE clause
+       */
+      current_field->setReadSet(is_read_set);
+
+      record->add_after_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
+
+    /* 
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
+     */
+    if (in_table->s->fieldInPrimaryKey(current_field))
+    {
+      /**
+       * To say the below is ugly is an understatement. But it works.
+       * 
+       * @todo Move this crap into a real Record API.
+       */
+      string_value= current_field->val_str(string_value,
+                                           old_record + 
+                                           current_field->offset(const_cast<unsigned char *>(new_record)));
+      record->add_key_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
+
+  }
+}
+
+message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
+                                                            Table *in_table)
+{
+  message::Statement *statement= in_session->getStatementMessage();
+  /*
+   * We check to see if the current Statement message is of type DELETE.
+   * If it is not, we finalize the current Statement and ensure a new
+   * DeleteStatement is created.
+   */
+  if (statement != NULL &&
+      statement->type() != message::Statement::DELETE)
+  {
+    finalizeStatementMessage(*statement, in_session);
+    statement= in_session->getStatementMessage();
+  }
+
+  if (statement == NULL)
+  {
+    message::Transaction *transaction= getActiveTransactionMessage(in_session);
+    /* 
+     * Transaction message initialized and set, but no statement created
+     * yet.  We construct one and initialize it, here, then return the
+     * message after attaching the new Statement message pointer to the 
+     * Session for easy retrieval later...
+     */
+    statement= transaction->add_statement();
+    setDeleteHeader(*statement, in_session, in_table);
+    in_session->setStatementMessage(statement);
+  }
+  return *statement;
+}
+
+void TransactionServices::setDeleteHeader(message::Statement &statement,
+                                          Session *in_session,
+                                          Table *in_table)
+{
+  initStatementMessage(statement, message::Statement::DELETE, in_session);
+
+  /* 
+   * Now we construct the specialized DeleteHeader message inside
+   * the generalized message::Statement container...
+   */
+  message::DeleteHeader *header= statement.mutable_delete_header();
+  message::TableMetadata *table_metadata= header->mutable_table_metadata();
+
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
+
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+
+  message::FieldMetadata *field_metadata;
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    /* 
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
+     */
+    if (in_table->s->fieldInPrimaryKey(current_field))
+    {
+      field_metadata= header->add_key_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(message::internalFieldTypeToFieldProtoType(current_field->type()));
+    }
+  }
+}
+
+void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+
+  message::Statement &statement= getDeleteStatement(in_session, in_table);
+
+  message::DeleteData *data= statement.mutable_delete_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+  message::DeleteRecord *record= data->add_record();
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  string_value->set_charset(system_charset_info);
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    /* 
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
+     */
+    if (in_table->s->fieldInPrimaryKey(current_field))
+    {
+      string_value= current_field->val_str(string_value);
+      record->add_key_value(string_value->c_ptr(), string_value->length());
+      /**
+       * @TODO Store optional old record value in the before data member
+       */
+      string_value->free();
+    }
+  }
+}
+
+void TransactionServices::createTable(Session *in_session,
+                                      const message::Table &table)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::CREATE_TABLE, in_session);
+
+  /* 
+   * Construct the specialized CreateTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::CreateTableStatement *create_table_statement= statement->mutable_create_table_statement();
+  message::Table *new_table_message= create_table_statement->mutable_table();
+  *new_table_message= table;
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+
+}
+
+void TransactionServices::createSchema(Session *in_session,
+                                       const message::Schema &schema)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::CREATE_SCHEMA, in_session);
+
+  /* 
+   * Construct the specialized CreateSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::CreateSchemaStatement *create_schema_statement= statement->mutable_create_schema_statement();
+  message::Schema *new_schema_message= create_schema_statement->mutable_schema();
+  *new_schema_message= schema;
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+
+}
+
+void TransactionServices::dropSchema(Session *in_session, const string &schema_name)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::DROP_SCHEMA, in_session);
+
+  /* 
+   * Construct the specialized DropSchemaStatement message and attach
+   * it to the generic Statement message
+   */
+  message::DropSchemaStatement *drop_schema_statement= statement->mutable_drop_schema_statement();
+
+  drop_schema_statement->set_schema_name(schema_name);
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+}
+
+void TransactionServices::dropTable(Session *in_session,
+                                    const string &schema_name,
+                                    const string &table_name,
+                                    bool if_exists)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::DROP_TABLE, in_session);
+
+  /* 
+   * Construct the specialized DropTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::DropTableStatement *drop_table_statement= statement->mutable_drop_table_statement();
+
+  drop_table_statement->set_if_exists_clause(if_exists);
+
+  message::TableMetadata *table_metadata= drop_table_statement->mutable_table_metadata();
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+}
+
+void TransactionServices::truncateTable(Session *in_session, Table *in_table)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::TRUNCATE_TABLE, in_session);
+
+  /* 
+   * Construct the specialized TruncateTableStatement message and attach
+   * it to the generic Statement message
+   */
+  message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
+  message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
+
+  string schema_name;
+  (void) in_table->getShare()->getSchemaName(schema_name);
+  string table_name;
+  (void) in_table->getShare()->getTableName(table_name);
+
+  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
+  table_metadata->set_table_name(table_name.c_str(), table_name.length());
+
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
+}
+
+void TransactionServices::rawStatement(Session *in_session, const string &query)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (! replication_services.isActive())
+    return;
+  
+  message::Transaction *transaction= getActiveTransactionMessage(in_session);
+  message::Statement *statement= transaction->add_statement();
+
+  initStatementMessage(*statement, message::Statement::RAW_SQL, in_session);
+  statement->set_sql(query);
+  finalizeStatementMessage(*statement, in_session);
+
+  finalizeTransactionMessage(*transaction, in_session);
+  
+  replication_services.pushTransactionMessage(*transaction);
+
+  cleanupTransactionMessage(transaction, in_session);
 }
 
 } /* namespace drizzled */

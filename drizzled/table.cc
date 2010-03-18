@@ -29,6 +29,7 @@
 #include <drizzled/gettext.h>
 
 #include "drizzled/plugin/transactional_storage_engine.h"
+#include "drizzled/plugin/authorization.h"
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -78,14 +79,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
   *length= (uint32_t) strlen((*buff)->field_name);
   return (unsigned char*) (*buff)->field_name;
 }
-
-static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
-{
-  assert(db != NULL);
-
-  return TABLE_CATEGORY_USER;
-}
-
 
 /*
   Allocate a setup TableShare structure
@@ -1257,7 +1250,7 @@ int open_table_def(Session& session, TableShare *share)
   message::Table table;
 
   error= plugin::StorageEngine::getTableDefinition(session, share->normalized_path.str,
-                                                   share->db.str,
+                                                   share->getSchemaName(),
                                                    share->table_name.str,
                                                    false,
                                                    &table);
@@ -1281,10 +1274,7 @@ int open_table_def(Session& session, TableShare *share)
 
   error= parse_table_proto(session, table, share);
 
-  share->table_category= get_table_category(& share->db);
-
-  if (not error)
-    session.status_var.opened_shares++;
+  share->table_category= TABLE_CATEGORY_USER;
 
 err_not_open:
   if (error && !error_given)
@@ -1338,11 +1328,11 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam->resetTable(session, share, db_stat);
 
 
-  if (!(outparam->alias= strdup(alias)))
+  if (not (outparam->alias= strdup(alias)))
     goto err;
 
   /* Allocate Cursor */
-  if (!(outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
+  if (not (outparam->cursor= share->db_type()->getCursor(*share, &outparam->mem_root)))
     goto err;
 
   error= 4;
@@ -1514,9 +1504,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  session->status_var.opened_tables++;
-
-  return (0);
+  return 0;
 
  err:
   if (!error_reported)
@@ -1942,6 +1930,12 @@ bool check_db_name(LEX_STRING *org_name)
 {
   char *name= org_name->str;
   uint32_t name_length= org_name->length;
+
+  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
+                                              string(name, name_length)))
+  {
+    return 1;
+  }
 
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
@@ -3355,7 +3349,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   share= *table->s;
   new_table.s= &share;
   new_table.s->storage_engine= myisam_engine;
-  if (!(new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
+  if (not (new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
     return true;				// End of memory
 
   save_proc_info=session->get_proc_info();

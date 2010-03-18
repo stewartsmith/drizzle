@@ -44,8 +44,6 @@
 
 using namespace std;
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -323,5 +321,4 @@ void drizzleclient_vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
   }
 }
 
-}
-}
+} /* namespace drizzle_protcol */

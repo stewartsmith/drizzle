@@ -27,7 +27,7 @@ NULL	ｱｱｱｱｱ	NULL	NULL
 NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ｶｶ	VARCHAR	TRUE		TRUE	
 ｷｷｷ	VARCHAR	FALSE		FALSE	
 ｸｸｸ	VARCHAR	TRUE		TRUE	
@@ -55,7 +55,7 @@ SELECT * FROM `ｱｱｱ`;
 ｲｲｲｲｲ
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ｷｷｷ	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
@@ -76,7 +76,7 @@ NULL	あああああ	NULL	NULL
 NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 かか	VARCHAR	TRUE		TRUE	
 ききき	VARCHAR	FALSE		FALSE	
 くくく	VARCHAR	TRUE		TRUE	
@@ -104,7 +104,7 @@ SELECT * FROM `あああ`;
 いいいいい
 ううううう
 DESC `あああ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ききき	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
@@ -125,7 +125,7 @@ NULL	丂丂丂丂丂	NULL	NULL
 NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 丄丄	VARCHAR	TRUE		TRUE	
 丂丂丂	VARCHAR	FALSE		FALSE	
 丅丅丅	VARCHAR	TRUE		TRUE	
@@ -153,7 +153,7 @@ SELECT * FROM `龖龖龖`;
 丄丄丄丄丄
 丅丅丅丅丅
 DESC `龖龖龖`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 丂丂丂	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
@@ -189,7 +189,7 @@ NULL	ｱｱｱｱｱ	NULL	NULL
 NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ｶｶ	VARCHAR	TRUE		TRUE	
 ｷｷｷ	VARCHAR	FALSE		FALSE	
 ｸｸｸ	VARCHAR	TRUE		TRUE	
@@ -217,7 +217,7 @@ SELECT * FROM `ｱｱｱ`;
 ｲｲｲｲｲ
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ｷｷｷ	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
@@ -238,7 +238,7 @@ NULL	あああああ	NULL	NULL
 NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 かか	VARCHAR	TRUE		TRUE	
 ききき	VARCHAR	FALSE		FALSE	
 くくく	VARCHAR	TRUE		TRUE	
@@ -266,7 +266,7 @@ SELECT * FROM `あああ`;
 いいいいい
 ううううう
 DESC `あああ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ききき	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
@@ -287,7 +287,7 @@ NULL	丂丂丂丂丂	NULL	NULL
 NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 丄丄	VARCHAR	TRUE		TRUE	
 丂丂丂	VARCHAR	FALSE		FALSE	
 丅丅丅	VARCHAR	TRUE		TRUE	
@@ -315,7 +315,7 @@ SELECT * FROM `龖龖龖`;
 丄丄丄丄丄
 丅丅丅丅丅
 DESC `龖龖龖`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 丂丂丂	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
@@ -351,7 +351,7 @@ NULL	ｱｱｱｱｱ	NULL	NULL
 NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ｶｶ	VARCHAR	TRUE		TRUE	
 ｷｷｷ	VARCHAR	FALSE		FALSE	
 ｸｸｸ	VARCHAR	TRUE		TRUE	
@@ -379,7 +379,7 @@ SELECT * FROM `ｱｱｱ`;
 ｲｲｲｲｲ
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ｷｷｷ	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
@@ -400,7 +400,7 @@ NULL	あああああ	NULL	NULL
 NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 かか	VARCHAR	TRUE		TRUE	
 ききき	VARCHAR	FALSE		FALSE	
 くくく	VARCHAR	TRUE		TRUE	
@@ -428,7 +428,7 @@ SELECT * FROM `あああ`;
 いいいいい
 ううううう
 DESC `あああ`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 ききき	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
@@ -449,7 +449,7 @@ NULL	丂丂丂丂丂	NULL	NULL
 NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 丄丄	VARCHAR	TRUE		TRUE	
 丂丂丂	VARCHAR	FALSE		FALSE	
 丅丅丅	VARCHAR	TRUE		TRUE	
@@ -477,7 +477,7 @@ SELECT * FROM `龖龖龖`;
 丄丄丄丄丄
 丅丅丅丅丅
 DESC `龖龖龖`;
-Field	Type	Null	Default	Default is NULL	On Update
+Field	Type	Null	Default	Default_is_NULL	On_Update
 丂丂丂	VARCHAR	FALSE		FALSE	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table

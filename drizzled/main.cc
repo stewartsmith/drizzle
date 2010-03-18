@@ -251,6 +251,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
+  assert(plugin::num_trx_monitored_objects > 0);
   if (drizzle_rm_tmp_tables() ||
       my_tz_init((Session *)0, default_tz_name))
   {

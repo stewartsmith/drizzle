@@ -35,10 +35,11 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/replication_services.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/plugin/storage_engine.h"
+#include "drizzled/plugin/authorization.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
@@ -80,7 +81,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
+  TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
 
   /*
@@ -129,7 +130,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   }
   else // Created !
   {
-    replication_services.createSchema(session, schema_message);
+    transaction_services.createSchema(session, schema_message);
     session->my_ok(1);
   }
 
@@ -144,7 +145,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
 
 bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -174,7 +175,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 
   if (success)
   {
-    replication_services.rawStatement(session, session->getQueryString());
+    transaction_services.rawStatement(session, session->getQueryString());
     session->my_ok(1);
   }
   else
@@ -274,8 +275,8 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   {
     assert(! session->query.empty());
 
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.dropSchema(session, schema_name);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.dropSchema(session, schema_name);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -292,7 +293,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= schema_name.length();
 
-    ReplicationServices &replication_services= ReplicationServices::singleton();
+    TransactionServices &transaction_services= TransactionServices::singleton();
     for (plugin::TableNameList::iterator it= dropped_tables.begin();
          it != dropped_tables.end();
          it++)
@@ -304,7 +305,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
-        replication_services.rawStatement(session, query);
+        transaction_services.rawStatement(session, query);
         query_pos= query_data_start;
       }
 
@@ -317,7 +318,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_create_db */
-      replication_services.rawStatement(session, query);
+      transaction_services.rawStatement(session, query);
     }
   }
 
@@ -604,10 +605,16 @@ static long mysql_rm_known_files(Session *session,
 
 bool mysql_change_db(Session *session, const std::string &new_db_name)
 {
-  LEX_STRING new_db_file_name;
-  const CHARSET_INFO *db_default_cl;
 
   assert(not new_db_name.empty());
+
+  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(),
+                                              new_db_name))
+  {
+    /* Error message is set in isAuthorized */
+    return true;
+  }
+
 
   /*
     Now we need to make a copy because check_db_name requires a
@@ -616,6 +623,7 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
     TODO: fix check_db_name().
   */
 
+  LEX_STRING new_db_file_name;
   new_db_file_name.length= new_db_name.length();
   new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
   if (new_db_file_name.str == NULL)
@@ -652,8 +660,6 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
 
     return true;
   }
-
-  db_default_cl= plugin::StorageEngine::getSchemaCollation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name);
   free(new_db_file_name.str);

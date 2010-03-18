@@ -21,95 +21,32 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H
 #define PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H
 
-class ShowTableStatus : public ShowTables
+class ShowTableStatus : public  drizzled::plugin::TableFunction
 {
 public:
-  ShowTableStatus() :
-    ShowTables("SHOW_TABLE_STATUS")
+  ShowTableStatus();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    add_field("Name");
-    add_field("Engine");
-    add_field("Version");
-    add_field("Row_format");
-    add_field("Rows");
-    add_field("Avg_row_length");
-    add_field("Data_length");
-    add_field("Max_data_length");
-    add_field("Index_length");
-    add_field("Data_free");
-    add_field("Auto_increment");
-    add_field("Create_time");
-    add_field("Update_time");
-    add_field("Check_time");
-    add_field("Collation");
-    add_field("Checksum");
-    add_field("Create_options");
-    add_field("Comment");
-  }
+    bool is_primed;
+    drizzled::Table *table;
+    std::string schema_predicate;
+    std::vector<drizzled::Table *> table_list;
+    std::vector<drizzled::Table *>::iterator table_list_iterator;
 
-  class Generator : public ShowTables::Generator 
-  {
-    void fill()
-    {
-      /* Name */
-      push(table_name());
+    void fill();
 
-      /* Engine */
-      push(getTableProto().engine().name());
+    const char *schema_name();
+    bool checkSchemaName();
 
-      /* Version */
-      push(static_cast<int64_t>(0));
-
-      /* Row_format */
-      pushRow(getTableProto().options().row_type());
-
-      /* Rows */
-      push(static_cast<int64_t>(0));
-
-      /* Avg_row_length */
-      push(static_cast<int64_t>(0));
-
-      /* Data_length */
-      push(static_cast<int64_t>(0));
-
-      /* Max_data_length */
-      push(static_cast<int64_t>(0));
-
-      /* Index_length */
-      push(static_cast<int64_t>(0));
-
-      /* Data_free */
-      push(static_cast<int64_t>(0));
-
-      /* Auto_increment */
-      push(static_cast<int64_t>(0));
-
-      /* Create_time */
-      push(static_cast<int64_t>(0));
-
-      /* Update_time */
-      push(static_cast<int64_t>(0));
-
-      /* Check_time */
-      push(static_cast<int64_t>(0));
-
-      /* Collation */
-      push(getTableProto().options().collation());
-
-      /* Checksum */
-      push(static_cast<int64_t>(0));
-
-      /* Create_options */
-      push("");
-
-      /* Comment */
-      push("");
-    }
+    bool nextCore();
+    bool next();
 
   public:
-    Generator(drizzled::Field **arg) :
-      ShowTables::Generator(arg)
-    { }
+    bool populate();
+
+    Generator(drizzled::Field **arg);
+    ~Generator();
   };
 
   Generator *generator(drizzled::Field **arg)

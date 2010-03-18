@@ -20,8 +20,6 @@
 #ifndef PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H
 #define PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -122,6 +120,6 @@ struct st_drizzleclient_options {
                                                & ~CLIENT_COMPRESS) \
                                                & ~CLIENT_SSL_VERIFY_SERVER_CERT)
 
-}
-}
+} /* namespace drizzle_protocol */
+
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_OPTIONS_H */

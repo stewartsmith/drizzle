@@ -280,19 +280,19 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
 
 const char *TableIdentifier::getPath()
 {
-  if (! path_inited)
+  if (not path_inited)
   {
     size_t path_length= 0;
 
     switch (type) {
     case STANDARD_TABLE:
       path_length= build_table_filename(path, sizeof(path),
-                                        db, table_name,
+                                        db.c_str(), table_name.c_str(),
                                         false);
       break;
     case INTERNAL_TMP_TABLE:
       path_length= build_table_filename(path, sizeof(path),
-                                        db, table_name,
+                                        db.c_str(), table_name.c_str(),
                                         true);
       break;
     case TEMP_TABLE:

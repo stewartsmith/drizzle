@@ -38,8 +38,6 @@
 
 using namespace std;
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -893,5 +891,4 @@ void drizzleclient_drizzleclient_net_clear_error(NET *net)
   strcpy(net->sqlstate, not_error_sqlstate);
 }
 
-}
-}
+} /* namespace drizzle_protocol */

@@ -24,8 +24,6 @@
 #include <sys/socket.h>
 #include <errno.h>
 
-namespace plugin
-{
 namespace drizzle_protocol
 {
 
@@ -138,6 +136,6 @@ struct st_vio
   char                  *read_buffer;   /* buffer for drizzleclient_vio_read_buff */
 };
 
-}
-}
+} /* namespace drizzle_procotol */
+
 #endif /* PLUGIN_DRIZZLE_PROTOCOL_VIO_H */
