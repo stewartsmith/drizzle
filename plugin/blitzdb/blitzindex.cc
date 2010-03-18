@@ -172,7 +172,8 @@ char *BlitzTree::find_key(const char *key, const int klen, int *rv_len) {
 
 /* Search and position the cursor to the last occurrence of the
    provided key. Returns true on success and otherwise false. */
-bool BlitzTree::jump_to_last_occurrence(const char *key, const int klen) {
+bool BlitzTree::move_cursor(const char *key, const int klen,
+                            const int search_mode) {
   char *fetched_key;
   int fetched_klen, cmp;
 
@@ -186,6 +187,10 @@ bool BlitzTree::jump_to_last_occurrence(const char *key, const int klen) {
   /* If this index is unique, then there is no point in scanning
      for duplicates. Thus we return. */
   if (this->unique)
+    return true;
+
+  /* This mode means find the first possible key in the tree. */
+  if (search_mode == drizzled::HA_READ_KEY_EXACT)
     return true;
 
   /* Keep traversing forward until we hit a different key or EOF. */
@@ -205,6 +210,8 @@ bool BlitzTree::jump_to_last_occurrence(const char *key, const int klen) {
       tcbdbcurprev(bt_cursor);
       break;
     }
+
+    free(fetched_key);
   } while(1);
 
   return true;

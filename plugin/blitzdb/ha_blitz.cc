@@ -594,6 +594,14 @@ int ha_blitz::index_end(void) {
   return 0;
 }
 
+/* Find the estimated number of rows between min_key and max_key. */
+ha_rows ha_blitz::records_in_range(uint32_t key_num,
+                                   drizzled::key_range *min_key,
+                                   drizzled::key_range *max_key) {
+  if (key_num && min_key && max_key) {}
+  return BLITZ_WORST_CASE_RANGE;
+}
+
 int ha_blitz::write_row(unsigned char *drizzle_row) {
   int rv;
   

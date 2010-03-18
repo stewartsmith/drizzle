@@ -35,14 +35,15 @@
 
 #include <string>
 
-#define BLITZ_DATA_EXT        ".bzd"
-#define BLITZ_INDEX_EXT       ".bzx"
-#define BLITZ_SYSTEM_EXT      ".bzs"
-#define BLITZ_LOCK_SLOTS      16
-#define BLITZ_MAX_INDEX       1
-#define BLITZ_MAX_META_LEN    128
-#define BLITZ_MAX_ROW_STACK   2048
-#define BLITZ_MAX_KEY_LEN     1024 
+#define BLITZ_DATA_EXT         ".bzd"
+#define BLITZ_INDEX_EXT        ".bzx"
+#define BLITZ_SYSTEM_EXT       ".bzs"
+#define BLITZ_LOCK_SLOTS       16
+#define BLITZ_MAX_INDEX        1
+#define BLITZ_MAX_META_LEN     128
+#define BLITZ_MAX_ROW_STACK    2048
+#define BLITZ_MAX_KEY_LEN      1024 
+#define BLITZ_WORST_CASE_RANGE 10
 
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
@@ -209,7 +210,7 @@ public:
   char *find_key(const char *key, const int klen, int *rv_len);
 
   //int count_to_last_occurrence(const char *key, const int klen);
-  bool jump_to_last_occurrence(const char *key, const int klen);
+  bool move_cursor(const char *key, const int klen, const int search_mode);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
@@ -301,6 +302,10 @@ public:
                      enum drizzled::ha_rkey_function find_flag);
   int index_end(void);
 
+  drizzled::ha_rows records_in_range(uint32_t key_num,
+                                     drizzled::key_range *min_key,
+                                     drizzled::key_range *max_key);
+
   /* UPDATE RELATED FUNCTIONS */
   int write_row(unsigned char *buf);
   int update_row(const unsigned char *old_data, unsigned char *new_data);
@@ -329,6 +334,8 @@ public:
   char *merge_key(const char *a, const size_t a_len, const char *b,
                   const size_t b_len, size_t *merged_len);
   void keep_track_of_key(const char *key, const int klen);
+  int packed_key_cmp(const int key_num, const char *a, const int a_len,
+                     const char *b, const int b_len);
 
   /* ROW RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);

@@ -278,3 +278,13 @@ int blitz_keycmp_cb(const char *a, int,
 
   return rv;
 }
+
+/* General purpose comparison function for BlitzDB. We cannot reuse
+   blitz_keycmp_cb() for this purpose because the 'exact match' only
+   applies to BlitzDB's unique B+Tree key format in blitz_keycmp_cb().
+   Here we are comparing packed Drizzle keys. */
+int ha_blitz::packed_key_cmp(const int ,
+                             const char *, const int ,
+                             const char *, const int) {
+  return 0;
+}
