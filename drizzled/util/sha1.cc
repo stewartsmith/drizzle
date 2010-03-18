@@ -36,6 +36,8 @@ namespace drizzled
 # define BIG_ENDIAN 4321
 # if defined(sparc) || defined(__sparc) || defined(__sparc__)
 #  define BYTE_ORDER BIG_ENDIAN
+# else
+#  define BYTE_ORDER LITTLE_ENDIAN
 # endif
 #endif /* BYTE_ORDER */
 
