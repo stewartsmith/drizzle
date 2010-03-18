@@ -1253,7 +1253,7 @@ int open_table_def(Session& session, TableShare *share)
                                                    share->getSchemaName(),
                                                    share->table_name.str,
                                                    false,
-                                                   &table);
+                                                   table);
 
   if (error != EEXIST)
   {

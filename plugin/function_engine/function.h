@@ -81,7 +81,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::message::Table &table_message);
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);
 

@@ -85,7 +85,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
                        std::string &db_name,

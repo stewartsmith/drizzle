@@ -310,7 +310,7 @@ class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,boo
   const char *db;
   const char *table_name;
   const bool is_tmp;
-  message::Table *table_message;
+  message::Table &table_message;
   int *err;
 
 public:
@@ -319,7 +319,7 @@ public:
                                   const char *db_arg,
                                   const char *table_name_arg,
                                   const bool is_tmp_arg,
-                                  message::Table *table_message_arg,
+                                  message::Table &table_message_arg,
                                   int *err_arg) :
     session(session_arg), 
     path(path_arg), 
@@ -352,7 +352,8 @@ bool plugin::StorageEngine::doesTableExist(Session& session,
                                            TableIdentifier &identifier,
                                            bool include_temporary_tables)
 {
-  return (plugin::StorageEngine::getTableDefinition(session, identifier, NULL, include_temporary_tables) == EEXIST);
+  message::Table unused;
+  return (plugin::StorageEngine::getTableDefinition(session, identifier, unused, include_temporary_tables) == EEXIST);
 }
 
 /**
@@ -362,7 +363,7 @@ bool plugin::StorageEngine::doesTableExist(Session& session,
 */
 int StorageEngine::getTableDefinition(Session& session,
                                       TableIdentifier &identifier,
-                                      message::Table *table_message,
+                                      message::Table &table_message,
                                       bool include_temporary_tables)
 {
   return getTableDefinition(session,
@@ -371,12 +372,12 @@ int StorageEngine::getTableDefinition(Session& session,
 }
 
 int StorageEngine::getTableDefinition(Session& session,
-                                              const char* path,
-                                              const char *schema_name,
-                                              const char *table_name,
-                                              const bool,
-                                              message::Table *table_message,
-                                              bool include_temporary_tables)
+                                      const char* path,
+                                      const char *schema_name,
+                                      const char *table_name,
+                                      const bool,
+                                      message::Table &table_message,
+                                      bool include_temporary_tables)
 {
   int err= ENOENT;
 
@@ -469,7 +470,7 @@ int StorageEngine::dropTable(Session& session,
 
   error_proto= StorageEngine::getTableDefinition(session,
                                                  identifier,
-                                                 &src_proto);
+                                                 src_proto);
 
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {

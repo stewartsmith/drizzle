@@ -216,14 +216,14 @@ public:
                                    const char *db,
                                    const char *table_name,
                                    const bool is_tmp,
-                                   message::Table *table_proto)
+                                   message::Table &table_message)
   {
     (void)session;
     (void)path;
     (void)db;
     (void)table_name;
     (void)is_tmp;
-    (void)table_proto;
+    (void)table_message;
 
     return ENOENT;
   }
@@ -318,14 +318,14 @@ public:
 
   static int getTableDefinition(Session& session,
                                 TableIdentifier &identifier,
-                                message::Table *table_proto= NULL,
+                                message::Table &table_proto,
                                 bool include_temporary_tables= true);
   static int getTableDefinition(Session& session,
                                 const char* path,
                                 const char *db,
                                 const char *table_name,
                                 const bool is_tmp,
-                                message::Table *table_proto= NULL,
+                                message::Table &table_proto,
                                 bool include_temporary_tables= true);
   static bool doesTableExist(Session& session,
                              TableIdentifier &identifier,

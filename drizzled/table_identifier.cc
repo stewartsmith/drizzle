@@ -41,6 +41,8 @@ extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
 
+static bool tablename_to_filename(const char *from, char *to, size_t to_length);
+
 /*
   Translate a cursor name to a table name (WL #1324).
 
@@ -234,7 +236,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
   RETURN
     true if errors happen. false on success.
 */
-bool tablename_to_filename(const char *from, char *to, size_t to_length)
+static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 {
   
   size_t length= 0;

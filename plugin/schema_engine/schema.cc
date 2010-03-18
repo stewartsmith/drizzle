@@ -78,7 +78,7 @@ int Schema::doGetTableDefinition(Session &,
                                  const char *,
                                  const char *,
                                  const bool,
-                                 message::Table *table_proto)
+                                 message::Table &table_proto)
 {
   string proto_path(path);
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -88,15 +88,10 @@ int Schema::doGetTableDefinition(Session &,
     return errno;
   }
 
-  if (table_proto)
-  {
-    if (readTableFile(proto_path, *table_proto))
-      return EEXIST;
+  if (readTableFile(proto_path, table_proto))
+    return EEXIST;
 
-    return -1;
-  }
-
-  return EEXIST;
+  return -1;
 }
 
 void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)

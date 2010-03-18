@@ -86,7 +86,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
                        string&, set<string>& set_of_names)
@@ -235,7 +235,7 @@ int BlackholeEngine::doGetTableDefinition(Session&,
                                           const char *,
                                           const char *,
                                           const bool,
-                                          drizzled::message::Table *table_proto)
+                                          drizzled::message::Table &table_proto)
 {
   string new_path;
 
@@ -252,17 +252,17 @@ int BlackholeEngine::doGetTableDefinition(Session&,
   google::protobuf::io::ZeroCopyInputStream* input=
     new google::protobuf::io::FileInputStream(fd);
 
-  if (! input)
+  if (not input)
     return HA_ERR_CRASHED_ON_USAGE;
 
-  if (table_proto && ! table_proto->ParseFromZeroCopyStream(input))
+  if (not table_proto.ParseFromZeroCopyStream(input))
   {
     close(fd);
     delete input;
-    if (! table_proto->IsInitialized())
+    if (not table_proto.IsInitialized())
     {
       my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-               table_proto->InitializationErrorString().c_str());
+               table_proto.InitializationErrorString().c_str());
       return ER_CORRUPT_TABLE_DEFINITION;
     }
 
@@ -270,6 +270,7 @@ int BlackholeEngine::doGetTableDefinition(Session&,
   }
 
   delete input;
+
   return EEXIST;
 }
 

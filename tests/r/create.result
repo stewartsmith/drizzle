@@ -76,7 +76,7 @@ create table t1 (t1.index int);
 drop table t1;
 drop database if exists mysqltest;
 Warnings:
-Note	1008	Can't drop database './mysqltest/'; database doesn't exist
+Note	1008	Can't drop database 'mysqltest'; database doesn't exist
 create database mysqltest;
 create table mysqltest.$test1 (a$1 int, $b int, c$ int);
 insert into mysqltest.$test1 values (1,2,3);
