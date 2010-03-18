@@ -79,7 +79,7 @@ class TestHandshake(unittest.TestCase):
       elif x > 1:
         try:
           self.s.send('\x00\x02' + '\x00' * (x - 2))
-        except IOError:
+        except socket.error:
           self.assertTrue(x >= 1024*1024)
           return
 
@@ -107,7 +107,7 @@ class TestHandshake(unittest.TestCase):
       if x > 0:
         try:
           self.s.send('\xff' * x)
-        except IOError:
+        except socket.error:
           self.assertTrue(x >= 1024*1024)
           return
 
@@ -323,7 +323,7 @@ class TestCommand(unittest.TestCase):
       self.s.send(Packet(size=len(data), sequence=0).pack())
       try:
         self.s.send(data)
-      except IOError:
+      except socket.error:
         self.assertTrue(len(data) >= 1024*1024)
         return
 
