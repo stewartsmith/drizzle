@@ -421,4 +421,15 @@ bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
   return true;
 }
 
+bool Schema::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
 
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}

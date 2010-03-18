@@ -133,6 +133,7 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
 
@@ -227,6 +228,21 @@ int BlackholeEngine::doDropTable(Session&, const string &path)
   }
 
   return error;
+}
+
+
+bool BlackholeEngine::doDoesTableExist(Session&,
+                                       TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(BLACKHOLE_EXT);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
 }
 
 

@@ -104,16 +104,26 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
+
+bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  if (strcmp(identifier.getPath(), "./test/t1") == 0)
+    return true;
+
+  return false;
+}
+
 TableProtoTesterCursor::TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+                           TableShare &table_arg) :
+  Cursor(engine_arg, table_arg)
 { }
 
 int TableProtoTesterCursor::open(const char *, int, uint32_t)
 {
-  return(0);
+  return 0;
 }
 
 int TableProtoTesterCursor::close(void)
@@ -122,8 +132,8 @@ int TableProtoTesterCursor::close(void)
 }
 
 int TableProtoTesterEngine::doCreateTable(Session*, const char *,
-                                   Table&,
-                                   drizzled::message::Table&)
+                                          Table&,
+                                          drizzled::message::Table&)
 {
   return EEXIST;
 }

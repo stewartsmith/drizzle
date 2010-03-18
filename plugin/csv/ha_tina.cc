@@ -158,10 +158,29 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
+
+bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(identifier.getPath());
+
+  if (iter != proto_cache.end())
+  {
+    return true;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return false;
+}
+
+
 int Tina::doDropTable(Session&,
-                        const string &table_path)
+                      const string &table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted

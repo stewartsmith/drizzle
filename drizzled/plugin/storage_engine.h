@@ -327,9 +327,11 @@ public:
                                 const bool is_tmp,
                                 message::Table &table_proto,
                                 bool include_temporary_tables= true);
-  static bool doesTableExist(Session& session,
+  static bool doesTableExist(Session &session,
                              TableIdentifier &identifier,
                              bool include_temporary_tables= true);
+
+  virtual bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 
   static plugin::StorageEngine *findByName(std::string find_str);
   static plugin::StorageEngine *findByName(Session& session,

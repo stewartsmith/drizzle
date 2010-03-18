@@ -1324,3 +1324,17 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   free((char*) r);
   return;
 }
+
+bool ArchiveEngine::doDoesTableExist(Session&,
+                                     TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(ARZ);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}

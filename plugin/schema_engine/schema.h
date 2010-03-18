@@ -91,6 +91,8 @@ public:
                        std::string &db_name,
                        std::set<std::string> &set_of_names);
 
+  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+
   const char **bas_ext() const 
   {
     return schema_exts;

@@ -85,6 +85,8 @@ public:
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);
 
+  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+
   bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &schema_message);
 };
 

@@ -70,17 +70,17 @@ class MyisamEngine : public plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : plugin::StorageEngine(name_arg,
-                                     HTON_HAS_DATA_DICTIONARY |
-                                     HTON_CAN_INDEX_BLOBS |
-                                     HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_TEMPORARY_ONLY |
-                                     HTON_NULL_IN_KEY |
-                                     HTON_HAS_RECORDS |
-                                     HTON_DUPLICATE_POS |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED ) {}
+    : plugin::StorageEngine(name_arg,
+                            HTON_HAS_DATA_DICTIONARY |
+                            HTON_CAN_INDEX_BLOBS |
+                            HTON_STATS_RECORDS_IS_EXACT |
+                            HTON_TEMPORARY_ONLY |
+                            HTON_NULL_IN_KEY |
+                            HTON_HAS_RECORDS |
+                            HTON_DUPLICATE_POS |
+                            HTON_AUTO_PART_KEY |
+                            HTON_SKIP_STORE_LOCK |
+                            HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
   { }
@@ -125,7 +125,24 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
+
+bool MyisamEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(identifier.getPath());
+
+  if (iter != proto_cache.end())
+  {
+    return true;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return false;
+}
 
 int MyisamEngine::doGetTableDefinition(Session&,
                                        const char* path,
