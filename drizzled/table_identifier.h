@@ -73,6 +73,21 @@ public:
     sql_path.append(table_name);
   }
 
+  /**
+    This is only used in scavenging lost tables. Once the temp schema engine goes in, this should go away.
+  */
+  TableIdentifier( const char *path_arg ) :
+    path_inited(true),
+    type(TEMP_TABLE),
+    db(path_arg),
+    table_name(path_arg),
+    sql_path(db)
+  { 
+    sql_path.append(".");
+    sql_path.append(table_name);
+    strncpy(path, path_arg, FN_REFLEN);
+  }
+
   bool isTmp() const
   {
     return type == STANDARD_TABLE ? false  : true;

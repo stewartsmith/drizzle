@@ -395,11 +395,12 @@ public:
   UNIV_INTERN int doCreateTable(Session *session,
                                 const char *table_name,
                                 Table& form,
+                                drizzled::TableIdentifier &identifier,
                                 message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session& session, const string &table_path);
+  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier, const string &table_path);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -5483,8 +5484,8 @@ InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
 	const char*	table_name,	/*!< in: table name */
-	Table&		form,		/*!< in: information on table
-					columns and indexes */
+	Table&		form,		/*!< in: information on table columns and indexes */
+        drizzled::TableIdentifier &,
         message::Table& create_proto)
 {
 	int		error;
@@ -5910,6 +5911,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session& session,
+        TableIdentifier &,
 	const string &table_path)	/* in: table name */
 {
 	int	error;

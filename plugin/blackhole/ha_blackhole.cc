@@ -73,9 +73,12 @@ public:
   int doCreateTable(Session*,
                     const char *,
                     Table&,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&,
+                  TableIdentifier &identifier,
+                  const string &table_name);
 
   BlackholeShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, BlackholeShare *);
@@ -86,6 +89,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
+                           TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
@@ -133,6 +137,7 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
 
@@ -189,6 +194,7 @@ int ha_blackhole::close(void)
 
 int BlackholeEngine::doCreateTable(Session*, const char *path,
                                    Table&,
+                                   drizzled::TableIdentifier &,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
@@ -213,7 +219,9 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
 }
 
 
-int BlackholeEngine::doDropTable(Session&, const string &path)
+int BlackholeEngine::doDropTable(Session&,
+                                 TableIdentifier&,
+                                 const string &path)
 {
   string new_path(path);
 
@@ -230,11 +238,27 @@ int BlackholeEngine::doDropTable(Session&, const string &path)
 }
 
 
+bool BlackholeEngine::doDoesTableExist(Session&,
+                                       TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(BLACKHOLE_EXT);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
 int BlackholeEngine::doGetTableDefinition(Session&,
                                           const char* path,
                                           const char *,
                                           const char *,
                                           const bool,
+                                          TableIdentifier &,
                                           drizzled::message::Table &table_proto)
 {
   string new_path;

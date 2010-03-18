@@ -599,6 +599,25 @@ void Session::doGetTableNames(CachedDirectory &,
   }
 }
 
+bool Session::doDoesTableExist(TableIdentifier &identifier)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (table->s->tmp_table == TEMP_TABLE)
+    {
+      if (not strcmp(identifier.getSchemaName(), table->s->getSchemaName()))
+      {
+        if (not strcmp(identifier.getTableName(), table->s->table_name.str))
+        {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 int Session::doGetTableDefinition(const char *,
                                   const char *db_arg,
                                   const char *table_name_arg,
