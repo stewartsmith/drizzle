@@ -166,6 +166,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 
 
 int ArchiveEngine::doDropTable(Session&,
+                               TableIdentifier &,
                                const string &table_path)
 {
   string new_path(table_path);
@@ -187,6 +188,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
                                         const char *,
                                         const char *,
                                         const bool,
+                                        TableIdentifier &,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -533,6 +535,7 @@ int ha_archive::close(void)
 int ArchiveEngine::doCreateTable(Session *,
                                  const char *table_name,
                                  Table& table_arg,
+                                 drizzled::TableIdentifier &,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];

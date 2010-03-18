@@ -46,12 +46,13 @@ public:
   int doCreateTable(drizzled::Session *,
                     const char *,
                     drizzled::Table&,
+                    drizzled::TableIdentifier &,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, const std::string&) 
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier&, const std::string&) 
   { 
     return EPERM; 
   }
@@ -81,6 +82,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
+                           drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);

@@ -49,6 +49,7 @@ int Function::doGetTableDefinition(Session &,
                                    const char *,
                                    const char *,
                                    const bool,
+                                   TableIdentifier &,
                                    message::Table &table_proto)
 {
   string tab_name(path);

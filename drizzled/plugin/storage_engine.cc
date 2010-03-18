@@ -127,6 +127,7 @@ int StorageEngine::doRenameTable(Session *,
     !0  Error
 */
 int StorageEngine::doDropTable(Session&,
+                               TableIdentifier &,
                                const string &table_path)
 {
   int error= 0;
@@ -315,6 +316,7 @@ class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,boo
   const char *db;
   const char *table_name;
   const bool is_tmp;
+  TableIdentifier &identifier;
   message::Table &table_message;
   int *err;
 
@@ -324,6 +326,7 @@ public:
                                   const char *db_arg,
                                   const char *table_name_arg,
                                   const bool is_tmp_arg,
+                                  TableIdentifier &identifier_arg,
                                   message::Table &table_message_arg,
                                   int *err_arg) :
     session(session_arg), 
@@ -331,6 +334,7 @@ public:
     db(db_arg),
     table_name(table_name_arg),
     is_tmp(is_tmp_arg),
+    identifier(identifier_arg),
     table_message(table_message_arg), 
     err(err_arg) {}
 
@@ -341,6 +345,7 @@ public:
                                           db,
                                           table_name,
                                           is_tmp,
+                                          identifier,
                                           table_message);
 
     if (ret != ENOENT)
@@ -411,7 +416,9 @@ int StorageEngine::getTableDefinition(Session& session,
 {
   return getTableDefinition(session,
                             identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            table_message, include_temporary_tables);
+                            identifier,
+                            table_message,
+                            include_temporary_tables);
 }
 
 int StorageEngine::getTableDefinition(Session& session,
@@ -419,6 +426,7 @@ int StorageEngine::getTableDefinition(Session& session,
                                       const char *schema_name,
                                       const char *table_name,
                                       const bool,
+                                      TableIdentifier &identifier,
                                       message::Table &table_message,
                                       bool include_temporary_tables)
 {
@@ -432,7 +440,7 @@ int StorageEngine::getTableDefinition(Session& session,
 
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, table_message, &err));
+            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, identifier, table_message, &err));
 
   if (iter == vector_of_engines.end())
   {
@@ -492,7 +500,7 @@ public:
   {
     // @todo someday check that at least one engine said "true"
     std::string path(identifier.getPath());
-    bool success= engine->doDropTable(session, path);
+    bool success= engine->doDropTable(session, identifier, path);
 
     if (success)
       success_count++;
@@ -511,9 +519,7 @@ int StorageEngine::dropTable(Session& session,
   message::Table src_proto;
   StorageEngine* engine;
 
-  error_proto= StorageEngine::getTableDefinition(session,
-                                                 identifier,
-                                                 src_proto);
+  error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
 
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {
@@ -528,7 +534,7 @@ int StorageEngine::dropTable(Session& session,
   {
     std::string path(identifier.getPath());
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, path);
+    error= engine->doDropTable(session, identifier, path);
 
     if (not error)
     {
@@ -614,6 +620,7 @@ int StorageEngine::createTable(Session& session,
     error= share.storage_engine->doCreateTable(&session,
                                                table_name_arg,
                                                table,
+                                               identifier,
                                                table_message);
   }
 
@@ -912,12 +919,12 @@ public:
 
   result_type operator() (argument_type engine)
   {
-
     for (TableNameList::iterator iter= set_of_names.begin();
          iter != set_of_names.end();
          iter++)
     {
-      int error= engine->doDropTable(session, *iter);
+      TableIdentifier dummy((*iter).c_str());
+      int error= engine->doDropTable(session, dummy, *iter);
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.

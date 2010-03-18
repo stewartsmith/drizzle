@@ -97,17 +97,19 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
+                           drizzled::TableIdentifier &identifier,
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
@@ -149,6 +151,7 @@ int MyisamEngine::doGetTableDefinition(Session&,
                                        const char *,
                                        const char *,
                                        const bool,
+                                       drizzled::TableIdentifier&,
                                        message::Table &table_proto)
 {
   int error= ENOENT;
@@ -1346,7 +1349,9 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session&, const string &table_path)
+int MyisamEngine::doDropTable(Session&,
+                              drizzled::TableIdentifier &,
+                              const string &table_path)
 {
   ProtoCache::iterator iter;
 
@@ -1372,6 +1377,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
+                                drizzled::TableIdentifier &,
                                 message::Table& create_proto)
 {
   int error;

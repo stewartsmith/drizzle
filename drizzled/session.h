@@ -1417,6 +1417,14 @@ public:
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
+  typedef std::map <std::string, message::Table> TableMessageCache;
+  TableMessageCache table_message_cache;
+
+  bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
+  bool removeTableMessage(TableIdentifier &identifier);
+  bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
+  bool doesTableMessageExist(TableIdentifier &identifier);
+
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);

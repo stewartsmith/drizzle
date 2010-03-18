@@ -71,15 +71,17 @@ public:
   int doCreateTable(Session*,
                     const char *,
                     Table&,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &identifier, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
+                           drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
@@ -133,13 +135,14 @@ int TableProtoTesterCursor::close(void)
 
 int TableProtoTesterEngine::doCreateTable(Session*, const char *,
                                           Table&,
+                                          drizzled::TableIdentifier &,
                                           drizzled::message::Table&)
 {
   return EEXIST;
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, const string&)
+int TableProtoTesterEngine::doDropTable(Session&, drizzled::TableIdentifier&, const string&)
 {
   return EPERM;
 }
@@ -167,6 +170,7 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                           const char *,
                                           const char *,
                                           const bool,
+                                          drizzled::TableIdentifier &,
                                           drizzled::message::Table &table_proto)
 {
   if (strcmp(path, "./test/t1") == 0)

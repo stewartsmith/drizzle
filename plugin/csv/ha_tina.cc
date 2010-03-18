@@ -137,6 +137,7 @@ public:
   int doCreateTable(Session *,
                     const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
@@ -144,12 +145,13 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
+                           TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
-  int doDropTable(Session&, const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier, const string &table_path);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -180,6 +182,7 @@ bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
 
 
 int Tina::doDropTable(Session&,
+                      TableIdentifier &,
                       const string &table_path)
 {
   int error= 0;
@@ -238,6 +241,7 @@ int Tina::doGetTableDefinition(Session&,
                                const char *,
                                const char *,
                                const bool,
+                               drizzled::TableIdentifier &,
                                drizzled::message::Table &table_message)
 {
   int error= ENOENT;
@@ -1405,6 +1409,7 @@ int ha_tina::delete_all_rows()
 
 int Tina::doCreateTable(Session *, const char *table_name,
                         Table& table_arg,
+                        drizzled::TableIdentifier &,
                         drizzled::message::Table& create_proto)
 {
   char name_buff[FN_REFLEN];

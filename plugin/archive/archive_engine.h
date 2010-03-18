@@ -85,6 +85,7 @@ public:
 
   int doCreateTable(drizzled::Session *session, const char *table_name,
                     drizzled::Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(drizzled::Session& session,
@@ -92,11 +93,13 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
+                           drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory, std::string& , std::set<std::string>& set_of_names);
 
-  int doDropTable(drizzled::Session&, const std::string &table_path);
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier, const std::string &table_path);
+
   ArchiveShare *findOpenTable(const std::string table_name);
   void addOpenTable(const std::string &table_name, ArchiveShare *);
   void deleteOpenTable(const std::string &table_name);
