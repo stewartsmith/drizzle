@@ -16,10 +16,10 @@ AC_DEFUN([_PANDORA_SEARCH_LIBCASSANDRA],[
     [ac_enable_libcassandra="$enableval"],
     [ac_enable_libcassandra="yes"])
 
-  AS_IF([test "x$ac_enable_libcassandra " = "xyes"],[
+  AS_IF([test "x$ac_enable_libcassandra" = "xyes"],[
     AC_LANG_PUSH([C++])
-    AC_LIB_HAVE_LINKFLAGS(cassandra,,[
-      #include <libcassandra/cassandra.h>
+    AC_LIB_HAVE_LINKFLAGS(cassandra,[thrift],[
+      #include <libcassandra/cassandra_factory.h>
     ],[
        libcassandra::CassandraFactory fact("localhost", 9306);
     ])
@@ -38,6 +38,7 @@ AC_DEFUN([PANDORA_HAVE_LIBCASSANDRA],[
 
 AC_DEFUN([PANDORA_REQUIRE_LIBCASSANDRA],[
   AC_REQUIRE([PANDORA_HAVE_LIBCASSANDRA])
-  AS_IF([test x$ac_cv_libcassandra = xno],
-      AC_MSG_ERROR([libcassandra is required for ${PACKAGE}]))
+  AS_IF([test "x$ac_cv_libcassandra" = "xno"],[
+      AC_MSG_ERROR([libcassandra is required for ${PACKAGE}])
+  ])
 ])
