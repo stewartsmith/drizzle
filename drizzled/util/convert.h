@@ -48,6 +48,7 @@ void bytesToHexdumpFormat(std::string &s, const unsigned char *from, size_t from
 
 uint64_t drizzled_string_to_hex(char *to, const char *from,
                                 uint64_t from_size);
+void drizzled_hex_to_string(char *to, const char *from, uint64_t from_size);
 
 } /* namespace drizzled */
 
