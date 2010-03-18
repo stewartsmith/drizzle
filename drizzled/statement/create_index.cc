@@ -54,7 +54,7 @@ bool statement::CreateIndex::execute()
                         first_table->db, 
                         first_table->table_name,
                         &create_info, 
-                        create_table_proto, 
+                        create_table_message, 
                         first_table,
                         &alter_info,
                         0, (order_st*) 0, 0);
