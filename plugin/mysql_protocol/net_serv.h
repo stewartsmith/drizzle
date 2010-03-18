@@ -79,8 +79,7 @@ typedef struct st_net {
                          const unsigned char *packet, size_t len);
   uint32_t drizzleclient_net_read(NET *net);
   void drizzleclient_net_close(NET *net);
-  bool drizzleclient_net_init_sock(NET * net, int sock, int flags,
-                                   uint32_t buffer_length);
+  bool drizzleclient_net_init_sock(NET * net, int sock, uint32_t buffer_length);
   bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen);
   void drizzleclient_net_keepalive(NET *net, bool flag);
   int drizzleclient_net_get_sd(NET *net);
