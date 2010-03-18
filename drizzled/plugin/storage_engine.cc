@@ -126,9 +126,8 @@ int StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int StorageEngine::doDropTable(Session&,
-                               TableIdentifier &,
-                               const string &table_path)
+int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
+                               
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -136,7 +135,7 @@ int StorageEngine::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, table_path.c_str(), "", *ext,
+    internal::fn_format(buff, identifier.getPath(), "", *ext,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {

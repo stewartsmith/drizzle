@@ -273,9 +273,9 @@ bool Schema::doDropSchema(const std::string &schema_name)
   return true;
 }
 
-int Schema::doDropTable(Session&, TableIdentifier &, const string &table_path)
+int Schema::doDropTable(Session&, TableIdentifier &identifier)
 {
-  string path(table_path);
+  string path(identifier.getPath());
 
   path.append(DEFAULT_FILE_EXTENSION);
 

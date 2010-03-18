@@ -74,7 +74,7 @@ public:
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &identifier, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -142,7 +142,7 @@ int TableProtoTesterEngine::doCreateTable(Session*, const char *,
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, drizzled::TableIdentifier&, const string&)
+int TableProtoTesterEngine::doDropTable(Session&, drizzled::TableIdentifier&)
 {
   return EPERM;
 }
@@ -166,12 +166,12 @@ static void fill_table1(message::Table &table)
 
 }
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
-                                          const char* path,
-                                          const char *,
-                                          const char *,
-                                          const bool,
-                                          drizzled::TableIdentifier &,
-                                          drizzled::message::Table &table_proto)
+                                                 const char* path,
+                                                 const char *,
+                                                 const char *,
+                                                 const bool,
+                                                 drizzled::TableIdentifier &,
+                                                 drizzled::message::Table &table_proto)
 {
   if (strcmp(path, "./test/t1") == 0)
   {

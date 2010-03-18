@@ -151,7 +151,7 @@ public:
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
-  int doDropTable(Session&, TableIdentifier &identifier, const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -182,8 +182,7 @@ bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
 
 
 int Tina::doDropTable(Session&,
-                      TableIdentifier &,
-                      const string &table_path)
+                      TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -192,7 +191,7 @@ int Tina::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, table_path.c_str(), "", *ext,
+    internal::fn_format(buff, identifier.getPath(), "", *ext,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
@@ -205,7 +204,7 @@ int Tina::doDropTable(Session&,
   }
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
     proto_cache.erase(iter);

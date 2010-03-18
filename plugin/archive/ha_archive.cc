@@ -165,11 +165,9 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 }
 
 
-int ArchiveEngine::doDropTable(Session&,
-                               TableIdentifier &,
-                               const string &table_path)
+int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 {
-  string new_path(table_path);
+  string new_path(identifier.getPath());
 
   new_path+= ARZ;
 

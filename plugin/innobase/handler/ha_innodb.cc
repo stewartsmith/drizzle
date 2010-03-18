@@ -400,7 +400,7 @@ public:
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier, const string &table_path);
+  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -5910,20 +5910,19 @@ UNIV_INTERN
 int
 InnobaseEngine::doDropTable(
 /*======================*/
-        Session& session,
-        TableIdentifier &,
-	const string &table_path)	/* in: table name */
+        Session &session,
+        TableIdentifier &identifier)
 {
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
 	char	norm_name[1000];
 
-	ut_a(table_path.length() < 1000);
+	ut_a(strlen(identifier.getPath()) < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, table_path.c_str());
+	normalize_table_name(norm_name, identifier.getPath());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */

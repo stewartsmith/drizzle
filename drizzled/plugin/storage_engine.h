@@ -310,9 +310,16 @@ public:
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
+  int doDropTable(Session &session,
+                  TableIdentifier &identifier,
+                  const std::string &table_path)
+  {
+    assert(not table_path.compare(identifier.getPath()));
+    return doDropTable(session, identifier);
+  }
+
   virtual int doDropTable(Session &session,
-                          TableIdentifier &identifier,
-                          const std::string &table_path)= 0;
+                          TableIdentifier &identifier)= 0;
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
