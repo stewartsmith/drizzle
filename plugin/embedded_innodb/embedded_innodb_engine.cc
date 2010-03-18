@@ -599,8 +599,10 @@ rollback_close_err:
   {
     message::Table::StorageEngine *engine= table_message->mutable_engine();
     engine->set_name("InnoDB");
-    table_message->set_name("innodb_table_message");
+    table_message->set_name("innodb_table_definitions");
     table_message->set_type(message::Table::STANDARD);
+    table_message->set_creation_timestamp(0);
+    table_message->set_update_timestamp(0);
 
     message::Table::TableOptions *options= table_message->mutable_options();
     options->set_collation_id(my_charset_bin.number);
