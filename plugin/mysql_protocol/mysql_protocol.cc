@@ -28,6 +28,7 @@
 
 #include "errmsg.h"
 #include "mysql_protocol.h"
+#include "mysql_password.h"
 #include "options.h"
 
 using namespace std;
@@ -832,11 +833,16 @@ unsigned char *ClientMySQLProtocol::storeLength(unsigned char *buffer, uint64_t 
 }
 
 static ListenMySQLProtocol *listen_obj= NULL;
+plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
+  mysql_password= new plugin::Create_function<MySQLPassword>(MySQLPasswordName);
+  registry.add(mysql_password);
+
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
   registry.add(listen_obj); 
+
   return 0;
 }
 
