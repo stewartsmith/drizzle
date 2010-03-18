@@ -34,8 +34,8 @@ using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
-CommandsTool::CommandsTool(LoggingStats *logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "SQL_COMMANDS_BY_USER")
+CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "CURRENT_SQL_COMMANDS")
 {
   outer_logging_stats= logging_stats;  
 
@@ -53,7 +53,7 @@ CommandsTool::CommandsTool(LoggingStats *logging_stats) :
   add_field("COUNT_ADMIN", TableFunction::NUMBER);
 }
 
-CommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
+CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
   pthread_rwlock_rdlock(&LOCK_scoreboard);
@@ -69,12 +69,12 @@ CommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) 
   }
 }
 
-CommandsTool::Generator::~Generator()
+CurrentCommandsTool::Generator::~Generator()
 {
   pthread_rwlock_unlock(&LOCK_scoreboard);
 }
 
-bool CommandsTool::Generator::populate()
+bool CurrentCommandsTool::Generator::populate()
 {
   if (record_number == logging_stats->getScoreBoardSize())
   {
@@ -112,3 +112,64 @@ bool CommandsTool::Generator::populate()
 
   return false;
 }
+
+CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "CUMULATIVE_SQL_COMMANDS")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("USER");
+  add_field("COUNT_SELECT", TableFunction::NUMBER);
+  add_field("COUNT_DELETE", TableFunction::NUMBER);
+  add_field("COUNT_UPDATE", TableFunction::NUMBER);
+  add_field("COUNT_INSERT", TableFunction::NUMBER);
+  add_field("COUNT_ROLLBACK", TableFunction::NUMBER);
+  add_field("COUNT_COMMIT", TableFunction::NUMBER);
+  add_field("COUNT_CREATE", TableFunction::NUMBER);
+  add_field("COUNT_ALTER", TableFunction::NUMBER);
+  add_field("COUNT_DROP", TableFunction::NUMBER);
+  add_field("COUNT_ADMIN", TableFunction::NUMBER);
+}
+
+CumulativeCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  logging_stats= in_logging_stats;
+  record_number= 0;
+
+  if (logging_stats->isEnabled())
+  {
+    total_records= logging_stats->getCumulativeScoreboardIndex();
+  }
+  else
+  {
+    total_records= 0; 
+  }
+}
+
+bool CumulativeCommandsTool::Generator::populate()
+{
+  if (record_number == total_records)
+  {
+    return false;
+  }
+
+  ScoreBoardSlot *cumulative_score_board_slot= 
+    logging_stats->getCumulativeScoreBoardVector()->at(record_number);
+
+  push(cumulative_score_board_slot->getUser());
+  push(cumulative_score_board_slot->getUserCommands()->getSelectCount());
+  push(cumulative_score_board_slot->getUserCommands()->getDeleteCount());
+  push(cumulative_score_board_slot->getUserCommands()->getUpdateCount());
+  push(cumulative_score_board_slot->getUserCommands()->getInsertCount());
+  push(cumulative_score_board_slot->getUserCommands()->getRollbackCount());
+  push(cumulative_score_board_slot->getUserCommands()->getCommitCount());
+  push(cumulative_score_board_slot->getUserCommands()->getCreateCount());
+  push(cumulative_score_board_slot->getUserCommands()->getAlterCount());
+  push(cumulative_score_board_slot->getUserCommands()->getDropCount());
+  push(cumulative_score_board_slot->getUserCommands()->getAdminCount());
+
+  record_number++;
+  return true;
+}
+

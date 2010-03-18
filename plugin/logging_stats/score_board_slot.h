@@ -38,76 +38,31 @@
 class ScoreBoardSlot
 {
 public:
-  ScoreBoardSlot() 
-    :
-      in_use(false),
-      session_id(0)
-  {}
+  ScoreBoardSlot(); 
 
-  ~ScoreBoardSlot() 
-  {
-    delete user_commands;
-  }
+  ~ScoreBoardSlot(); 
 
-  void setUserCommands(UserCommands *in_user_commands)
-  {
-    user_commands= in_user_commands;
-  }
+  UserCommands* getUserCommands();
 
-  UserCommands* getUserCommands()
-  {
-    return user_commands;
-  }
+  void setSessionId(uint64_t in_session_id);
 
-  void setSessionId(uint64_t in_session_id)
-  {
-    session_id= in_session_id;
-  }
+  uint64_t getSessionId();
 
-  uint64_t getSessionId()
-  {
-    return session_id;
-  }
+  void setInUse(bool in_in_use);
 
-  void setInUse(bool in_in_use)
-  {
-    in_use= in_in_use;
-  }
+  bool isInUse();
 
-  bool isInUse()
-  {
-    return in_use;
-  }
+  void setUser(std::string in_user);
 
-  void setUser(std::string in_user)
-  {
-    user= in_user;
-  }
+  const std::string& getUser();
 
-  const std::string& getUser()
-  {
-    return user; 
-  }
+  void setIp(std::string in_ip);
 
-  void setIp(std::string in_ip)
-  {
-    ip= in_ip;
-  }
+  const std::string& getIp();
 
-  const std::string& getIp()
-  {
-    return ip;
-  }
+  void reset();
 
-  void reset()
-  {
-    in_use= false;
-    session_id= 0;
-    if (user_commands)
-    {
-      user_commands->reset();
-    }
-  }
+  void merge(ScoreBoardSlot *score_board_slot);
 
 private:
   UserCommands *user_commands;

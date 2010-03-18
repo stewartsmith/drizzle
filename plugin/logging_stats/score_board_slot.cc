@@ -25,85 +25,79 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_USER_COMMANDS_H
-#define PLUGIN_LOGGING_STATS_USER_COMMANDS_H
+#include "score_board_slot.h"
 
-#include <drizzled/common.h>
+using namespace std;
 
-#include <string>
-
-class UserCommands
+ScoreBoardSlot::ScoreBoardSlot()
+  :
+    in_use(false),
+    session_id(0)
 {
-public:
+  user_commands= new UserCommands();
+}
 
-  UserCommands();
+ScoreBoardSlot::~ScoreBoardSlot()
+{
+  delete user_commands;
+}
 
-  uint64_t getSelectCount();
+UserCommands* ScoreBoardSlot::getUserCommands()
+{
+  return user_commands;
+}
 
-  void incrementSelectCount(int i= 1);
+void ScoreBoardSlot::setSessionId(uint64_t in_session_id)
+{
+  session_id= in_session_id;
+}
 
+uint64_t ScoreBoardSlot::getSessionId()
+{
+  return session_id;
+}
 
-  uint64_t getUpdateCount();
+void ScoreBoardSlot::setInUse(bool in_in_use)
+{
+  in_use= in_in_use;
+}
 
-  void incrementUpdateCount(int i= 1);
+bool ScoreBoardSlot::isInUse()
+{
+  return in_use;
+}
 
+void ScoreBoardSlot::setUser(string in_user)
+{
+  user= in_user;
+}
 
-  uint64_t getDeleteCount();
+const string& ScoreBoardSlot::getUser()
+{
+  return user;
+}
 
-  void incrementDeleteCount(int i= 1);
+void ScoreBoardSlot::setIp(string in_ip)
+{
+  ip= in_ip;
+}
 
+const string& ScoreBoardSlot::getIp()
+{
+  return ip;
+}
 
-  uint64_t getInsertCount();
+void ScoreBoardSlot::merge(ScoreBoardSlot *score_board_slot)
+{
+  user_commands->merge(score_board_slot->getUserCommands());
+}
 
-  void incrementInsertCount(int i= 1);
-
-
-  uint64_t getRollbackCount();
-
-  void incrementRollbackCount(int i= 1);
-
-
-  uint64_t getCommitCount();
-
-  void incrementCommitCount(int i= 1);
-
-
-  uint64_t getCreateCount();
-
-  void incrementCreateCount(int i= 1);
-
-
-  uint64_t getAlterCount();
-
-  void incrementAlterCount(int i= 1);
-
-
-  uint64_t getDropCount();
-
-  void incrementDropCount(int i= 1);
-
-
-  uint64_t getAdminCount();
-
-  void incrementAdminCount(int i= 1);
-
-  void merge(UserCommands *user_commands);
-
-  void reset();
-
-private:
-  uint64_t update_count;
-  uint64_t delete_count;
-  uint64_t insert_count;
-  uint64_t select_count;
-  uint64_t rollback_count;
-  uint64_t commit_count;
-  uint64_t create_count;
-  uint64_t alter_count;
-  uint64_t drop_count;
-  uint64_t admin_count;
-};
-
-#endif /* PLUGIN_LOGGING_STATS_USER_COMMANDS_H */
+void ScoreBoardSlot::reset()
+{
+  in_use= false;
+  session_id= 0;
+  user_commands->reset();
+}

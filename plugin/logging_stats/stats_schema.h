@@ -35,14 +35,14 @@
 
 #include "logging_stats.h"
 
-class CommandsTool : public drizzled::plugin::TableFunction
+class CurrentCommandsTool : public drizzled::plugin::TableFunction
 {
 private:
   LoggingStats *outer_logging_stats;
 
 public:
 
-  CommandsTool(LoggingStats *logging_stats);
+  CurrentCommandsTool(LoggingStats *logging_stats);
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
@@ -55,6 +55,33 @@ public:
   private:
     LoggingStats *logging_stats;
     uint32_t record_number;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_logging_stats);
+  }
+};
+
+class CumulativeCommandsTool : public drizzled::plugin::TableFunction
+{
+private:
+  LoggingStats *outer_logging_stats;
+
+public:
+
+  CumulativeCommandsTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
+
+    bool populate();
+  private:
+    LoggingStats *logging_stats;
+    uint32_t record_number;
+    uint32_t total_records;
   };
 
   Generator *generator(drizzled::Field **arg)

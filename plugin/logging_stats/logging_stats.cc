@@ -69,23 +69,40 @@ static bool sysvar_logging_stats_enabled= false;
 
 static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
+static uint32_t sysvar_logging_stats_max_user_count= 10000;
+
 pthread_rwlock_t LOCK_scoreboard;
+
+pthread_rwlock_t LOCK_cumulative_scoreboard_index;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
+  cumulative_scoreboard_index= 0;
   scoreboard_size= sysvar_logging_stats_scoreboard_size;
   score_board_slots= new ScoreBoardSlot[scoreboard_size];
-  for (uint32_t j=0; j < scoreboard_size; j++)
-  { 
-    UserCommands *user_commands= new UserCommands();
-    ScoreBoardSlot *score_board_slot= &score_board_slots[j];
-    score_board_slot->setUserCommands(user_commands); 
-  } 
+
+  cumulative_scoreboard_vector= new vector<ScoreBoardSlot *>(sysvar_logging_stats_max_user_count);
+
+  vector<ScoreBoardSlot *>::iterator it= cumulative_scoreboard_vector->begin();
+  for (uint32_t j=0; j < sysvar_logging_stats_max_user_count; j++)
+  {
+    ScoreBoardSlot *score_board_slot= new ScoreBoardSlot();
+    it= cumulative_scoreboard_vector->insert(it, score_board_slot);  
+  }
+  cumulative_scoreboard_vector->resize(sysvar_logging_stats_max_user_count);
 }
 
 LoggingStats::~LoggingStats()
 {
   delete[] score_board_slots;
+
+  vector<ScoreBoardSlot *>::iterator it= cumulative_scoreboard_vector->begin();
+  for (; it < cumulative_scoreboard_vector->end(); it++)
+  {
+    delete *it;
+  }
+  cumulative_scoreboard_vector->clear();
+  delete cumulative_scoreboard_vector;
 }
 
 bool LoggingStats::isBeingLogged(Session *session)
@@ -152,7 +169,7 @@ void LoggingStats::updateScoreBoard(ScoreBoardSlot *score_board_slot,
 
 bool LoggingStats::post(Session *session)
 {
-  if (! isEnabled())
+  if (! isEnabled() || (session->getSessionId() == 0))
   {
     return false;
   }
@@ -225,7 +242,7 @@ bool LoggingStats::post(Session *session)
 
 bool LoggingStats::postEnd(Session *session)
 {
-  if (! isEnabled())
+  if (! isEnabled() || (session->getSessionId() == 0))
   {
     return false;
   }
@@ -241,6 +258,36 @@ bool LoggingStats::postEnd(Session *session)
 
     if (score_board_slot->getSessionId() == session->getSessionId())
     {
+      /* copy over statistics to the cumulative_scoreboard_vector */
+
+      vector<ScoreBoardSlot *>::iterator it;
+      it= cumulative_scoreboard_vector->begin();
+      bool found= false;
+      for (uint32_t h= 0; h < cumulative_scoreboard_index; h++)
+      {
+        ScoreBoardSlot *cumulative_score_board_slot= *it;
+        string user= cumulative_score_board_slot->getUser();
+        if (user.compare(score_board_slot->getUser()) == 0)
+        {
+          found= true;
+          cumulative_score_board_slot->merge(score_board_slot);
+          break;
+        }
+        it++; 
+      }
+
+      if (! found)
+      {
+        pthread_rwlock_wrlock(&LOCK_cumulative_scoreboard_index);        
+        ScoreBoardSlot *cumulative_score_board_slot= 
+          cumulative_scoreboard_vector->at(cumulative_scoreboard_index);
+        string cumulative_score_board_user(score_board_slot->getUser());
+        cumulative_score_board_slot->setUser(cumulative_score_board_user);
+        cumulative_score_board_slot->merge(score_board_slot); 
+        cumulative_scoreboard_index++;
+        pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);
+      }
+
       score_board_slot->reset();
       break;
     }
@@ -252,7 +299,9 @@ bool LoggingStats::postEnd(Session *session)
 
 static LoggingStats *logging_stats= NULL;
 
-static CommandsTool *commands_tool= NULL;
+static CurrentCommandsTool *current_commands_tool= NULL;
+
+static CumulativeCommandsTool *cumulative_commands_tool= NULL;
 
 static void enable(Session *,
                    drizzle_sys_var *,
@@ -276,9 +325,16 @@ static void enable(Session *,
 
 static bool initTable()
 {
-  commands_tool= new(nothrow)CommandsTool(logging_stats);
+  current_commands_tool= new(nothrow)CurrentCommandsTool(logging_stats);
 
-  if (! commands_tool)
+  if (! current_commands_tool)
+  {
+    return true;
+  }
+
+  cumulative_commands_tool= new(nothrow)CumulativeCommandsTool(logging_stats);
+
+  if (! cumulative_commands_tool)
   {
     return true;
   }
@@ -296,7 +352,8 @@ static int init(Registry &registry)
   }
 
   registry.add(logging_stats);
-  registry.add(commands_tool);
+  registry.add(current_commands_tool);
+  registry.add(cumulative_commands_tool);
 
   if (sysvar_logging_stats_enabled)
   {
@@ -310,14 +367,27 @@ static int deinit(Registry &registry)
 {
   if (logging_stats)
   {
-    registry.remove(commands_tool);
+    registry.remove(current_commands_tool);
+    registry.remove(cumulative_commands_tool);
     registry.remove(logging_stats);
 
-    delete commands_tool;
+    delete current_commands_tool;
+    delete cumulative_commands_tool;
     delete logging_stats;
   }
   return 0;
 }
+
+static DRIZZLE_SYSVAR_UINT(max_user_count,
+                           sysvar_logging_stats_max_user_count,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Max number of users that will be logged"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           10000, /* default */
+                           500, /* minimum */
+                           50000,
+                           0);
 
 static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            sysvar_logging_stats_scoreboard_size,
@@ -339,6 +409,7 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            false /* default */);
 
 static drizzle_sys_var* system_var[]= {
+  DRIZZLE_SYSVAR(max_user_count),
   DRIZZLE_SYSVAR(scoreboard_size),
   DRIZZLE_SYSVAR(enable),
   NULL

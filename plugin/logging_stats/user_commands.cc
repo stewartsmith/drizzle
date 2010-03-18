@@ -57,6 +57,20 @@ void UserCommands::reset()
   admin_count= 0;
 }
 
+void UserCommands::merge(UserCommands *user_commands)
+{
+  incrementUpdateCount(user_commands->getUpdateCount());
+  incrementDeleteCount(user_commands->getDeleteCount());
+  incrementInsertCount(user_commands->getInsertCount());
+  incrementSelectCount(user_commands->getSelectCount());
+  incrementRollbackCount(user_commands->getRollbackCount());
+  incrementCommitCount(user_commands->getCommitCount());
+  incrementCreateCount(user_commands->getCreateCount());
+  incrementAlterCount(user_commands->getAlterCount());
+  incrementDropCount(user_commands->getDropCount());
+  incrementAdminCount(user_commands->getAdminCount());
+}
+
 uint64_t UserCommands::getSelectCount()
 {
   return select_count;

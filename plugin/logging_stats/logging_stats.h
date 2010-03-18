@@ -31,13 +31,14 @@
 #define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 
 #include "score_board_slot.h"
-
+#include "user_commands.h"
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/logging.h>
 
 #include <string>
+#include <vector>
 
 extern pthread_rwlock_t LOCK_scoreboard;
 
@@ -78,8 +79,22 @@ public:
     return score_board_slots;
   }
 
+  std::vector<ScoreBoardSlot* > *getCumulativeScoreBoardVector()
+  {
+    return cumulative_scoreboard_vector; 
+  }
+
+  uint32_t getCumulativeScoreboardIndex()
+  {
+    return cumulative_scoreboard_index;
+  }
+
 private:
   static const int32_t UNINITIALIZED= -1;
+
+  std::vector<ScoreBoardSlot* > *cumulative_scoreboard_vector;
+
+  uint32_t cumulative_scoreboard_index;
 
   bool isBeingLogged(drizzled::Session *session);
 
