@@ -149,29 +149,6 @@ int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
   return error;
 }
 
-const char *StorageEngine::checkLowercaseNames(const char *path,
-                                                       char *tmp_path)
-{
-  if (flags.test(HTON_BIT_FILE_BASED))
-    return path;
-
-  /* Ensure that table Cursor get path in lower case */
-  if (tmp_path != path)
-    strcpy(tmp_path, path);
-
-  /*
-    we only should turn into lowercase database/table part
-    so start the process after homedirectory
-  */
-  if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
-    my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
-  else
-    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
-
-  return tmp_path;
-}
-
-
 bool StorageEngine::addPlugin(StorageEngine *engine)
 {
 
@@ -598,11 +575,6 @@ int StorageEngine::createTable(Session& session,
   }
 
   {
-    char name_buff[FN_REFLEN];
-    const char *table_name_arg;
-
-    table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
-
     if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
       int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
@@ -617,7 +589,7 @@ int StorageEngine::createTable(Session& session,
     share.storage_engine->setTransactionReadWrite(session);
 
     error= share.storage_engine->doCreateTable(&session,
-                                               table_name_arg,
+                                               identifier.getPath(),
                                                table,
                                                identifier,
                                                table_message);

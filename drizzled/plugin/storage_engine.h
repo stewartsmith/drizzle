@@ -321,8 +321,6 @@ public:
   virtual int doDropTable(Session &session,
                           TableIdentifier &identifier)= 0;
 
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
-
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
