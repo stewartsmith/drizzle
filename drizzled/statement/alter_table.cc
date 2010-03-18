@@ -934,7 +934,8 @@ bool alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (plugin::StorageEngine::getTableDefinition(*session, new_name, db, table_name, false) == EEXIST)
+      message::Table unused;
+      if (plugin::StorageEngine::getTableDefinition(*session, new_name, db, table_name, false, unused) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

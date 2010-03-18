@@ -1427,7 +1427,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           message::Table *table_proto);
+                           message::Table &table_proto);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);

@@ -99,7 +99,7 @@ bool TablesTool::Generator::nextTableCore()
                                              schema_name().c_str(),
                                              table_name().c_str(),
                                              false,
-                                             &table_proto);
+                                             table_proto);
   }
 
   if (checkTableName())

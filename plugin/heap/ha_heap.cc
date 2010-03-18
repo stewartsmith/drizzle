@@ -87,7 +87,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           message::Table *table_proto);
+                           message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
@@ -113,7 +113,7 @@ int HeapEngine::doGetTableDefinition(Session&,
                                      const char *,
                                      const char *,
                                      const bool,
-                                     message::Table *table_proto)
+                                     message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -123,8 +123,7 @@ int HeapEngine::doGetTableDefinition(Session&,
 
   if (iter!= proto_cache.end())
   {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+    table_proto.CopyFrom(((*iter).second));
     error= EEXIST;
   }
   pthread_mutex_unlock(&proto_cache_mutex);

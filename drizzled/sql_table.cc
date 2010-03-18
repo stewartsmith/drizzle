@@ -2026,7 +2026,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
-                                                      &src_proto);
+                                                      src_proto);
   new_proto.CopyFrom(src_proto);
 
   if (lex_identified_temp_table)

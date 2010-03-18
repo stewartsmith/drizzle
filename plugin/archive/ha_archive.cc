@@ -187,7 +187,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
                                         const char *,
                                         const char *,
                                         const bool,
-                                        drizzled::message::Table *table_proto)
+                                        drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
   int error= ENOENT;
@@ -203,7 +203,6 @@ int ArchiveEngine::doGetTableDefinition(Session&,
   else
     error= EEXIST;
 
-  if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
@@ -219,7 +218,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
     azread_frm(&proto_stream, proto_string);
 
-    if (table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto.ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);

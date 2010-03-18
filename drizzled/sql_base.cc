@@ -603,7 +603,7 @@ int Session::doGetTableDefinition(const char *,
                                   const char *db_arg,
                                   const char *table_name_arg,
                                   const bool ,
-                                  message::Table *table_proto)
+                                  message::Table &table_proto)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
@@ -613,8 +613,7 @@ int Session::doGetTableDefinition(const char *,
       {
         if (not strcmp(table_name_arg, table->s->table_name.str))
         {
-          if (table_proto)
-            table_proto->CopyFrom(*(table->s->getTableProto()));
+          table_proto.CopyFrom(*(table->s->getTableProto()));
 
           return EEXIST;
         }

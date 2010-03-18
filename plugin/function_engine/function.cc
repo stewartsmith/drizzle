@@ -49,7 +49,7 @@ int Function::doGetTableDefinition(Session &,
                                      const char *,
                                      const char *,
                                      const bool,
-                                     message::Table *table_proto)
+                                     message::Table &table_proto)
 {
   string tab_name(path);
   transform(tab_name.begin(), tab_name.end(),
@@ -62,10 +62,7 @@ int Function::doGetTableDefinition(Session &,
     return ENOENT;
   }
 
-  if (table_proto)
-  {
-    function->define(*table_proto);
-  }
+  function->define(table_proto);
 
   return EEXIST;
 }

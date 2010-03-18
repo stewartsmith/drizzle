@@ -144,7 +144,7 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
@@ -219,7 +219,7 @@ int Tina::doGetTableDefinition(Session&,
                                const char *,
                                const char *,
                                const bool,
-                               drizzled::message::Table *table_proto)
+                               drizzled::message::Table &table_message)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -229,8 +229,7 @@ int Tina::doGetTableDefinition(Session&,
 
   if (iter!= proto_cache.end())
   {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+    table_message.CopyFrom(((*iter).second));
     error= EEXIST;
   }
   pthread_mutex_unlock(&proto_cache_mutex);

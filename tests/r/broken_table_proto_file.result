@@ -4,3 +4,5 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 show create table t1;
 ERROR HY000: Incorrect information in file: './test/t1'
 drop table if exists t1;
+Warnings:
+Note	1051	Unknown table 't1'
