@@ -219,7 +219,6 @@ static char*	innobase_log_arch_dir			= NULL;
 #endif /* UNIV_LOG_ARCHIVE */
 static my_bool	innobase_use_doublewrite		= TRUE;
 static my_bool	innobase_use_checksums			= TRUE;
-static my_bool	innobase_locks_unsafe_for_binlog	= TRUE;
 static my_bool	innobase_rollback_on_timeout		= FALSE;
 static my_bool	innobase_create_status_file		= FALSE;
 static my_bool	innobase_stats_on_metadata		= TRUE;
@@ -1925,7 +1924,7 @@ innobase_change_buffering_inited_ok:
 
 	row_rollback_on_timeout = (ibool) innobase_rollback_on_timeout;
 
-	srv_locks_unsafe_for_binlog = (ibool) innobase_locks_unsafe_for_binlog;
+	srv_locks_unsafe_for_binlog = (ibool) TRUE;
 
 	srv_max_n_open_files = (ulint) innobase_open_files;
 	srv_innodb_status = (ibool) innobase_create_status_file;
@@ -8584,11 +8583,6 @@ static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "With which method to flush data.", NULL, NULL, NULL);
 
-static DRIZZLE_SYSVAR_BOOL(locks_unsafe_for_binlog, innobase_locks_unsafe_for_binlog,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Force InnoDB to not use next-key locking, to use only row-level locking.",
-  NULL, NULL, TRUE);
-
 #ifdef UNIV_LOG_ARCHIVE
 static DRIZZLE_SYSVAR_STR(log_arch_dir, innobase_log_arch_dir,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -8799,7 +8793,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(flush_method),
   DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(locks_unsafe_for_binlog),
   DRIZZLE_SYSVAR(lock_wait_timeout),
 #ifdef UNIV_LOG_ARCHIVE
   DRIZZLE_SYSVAR(log_arch_dir),
