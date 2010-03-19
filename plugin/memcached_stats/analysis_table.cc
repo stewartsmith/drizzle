@@ -91,14 +91,14 @@ bool AnalysisTableTool::Generator::populate()
   {
     memcached_analysis_st *report= memcached_analyze(serv, stats, &rc);
 
-    push(server_count);
-    push(report->average_item_size);
+    push(static_cast<uint64_t>(server_count));
+    push(static_cast<uint64_t>(report->average_item_size));
     push(memcached_server_name(serv, servers[report->most_consumed_server]));
     push(report->most_used_bytes);
     push(memcached_server_name(serv, servers[report->least_free_server]));
     push(report->least_remaining_bytes);
     push(memcached_server_name(serv, servers[report->oldest_server]));
-    push(report->longest_uptime);
+    push(static_cast<uint64_t>(report->longest_uptime));
     push(static_cast<int64_t>(report->pool_hit_ratio));
     free(report);
   } 
