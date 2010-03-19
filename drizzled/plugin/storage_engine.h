@@ -320,14 +320,6 @@ public:
                                 TableIdentifier &identifier,
                                 message::Table &table_proto,
                                 bool include_temporary_tables= true);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
-                                TableIdentifier &identifier,
-                                message::Table &table_proto,
-                                bool include_temporary_tables= true);
   static bool doesTableExist(Session &session,
                              TableIdentifier &identifier,
                              bool include_temporary_tables= true);

@@ -96,10 +96,6 @@ bool TablesTool::Generator::nextTableCore()
     build_table_filename(path, schema_name().c_str(), table_name().c_str(), false);
     TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
     plugin::StorageEngine::getTableDefinition(*session,
-                                             path.c_str(),
-                                             schema_name().c_str(),
-                                             table_name().c_str(),
-                                             false,
                                              identifier,
                                              table_proto);
   }

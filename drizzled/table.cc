@@ -1249,12 +1249,7 @@ int open_table_def(Session& session, TableShare *share)
 
   message::Table table;
 
-  error= plugin::StorageEngine::getTableDefinition(session, share->normalized_path.str,
-                                                   share->getSchemaName(),
-                                                   share->table_name.str,
-                                                   false,
-                                                   identifier,
-                                                   table);
+  error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
   if (error != EEXIST)
   {

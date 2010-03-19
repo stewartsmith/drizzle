@@ -1431,10 +1431,7 @@ public:
   void doGetTableNames(CachedDirectory &directory,
                        const std::string& db_name,
                        std::set<std::string>& set_of_names);
-  int doGetTableDefinition(const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
+  int doGetTableDefinition(drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
   bool doDoesTableExist(TableIdentifier &identifier);
 

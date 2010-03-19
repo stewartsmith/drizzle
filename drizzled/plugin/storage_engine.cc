@@ -288,28 +288,16 @@ bool StorageEngine::flushLogs(StorageEngine *engine)
 class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,bool>
 {
   Session& session;
-  const char* path;
-  const char *db;
-  const char *table_name;
-  const bool is_tmp;
   TableIdentifier &identifier;
   message::Table &table_message;
   int *err;
 
 public:
   StorageEngineGetTableDefinition(Session& session_arg,
-                                  const char* path_arg,
-                                  const char *db_arg,
-                                  const char *table_name_arg,
-                                  const bool is_tmp_arg,
                                   TableIdentifier &identifier_arg,
                                   message::Table &table_message_arg,
                                   int *err_arg) :
     session(session_arg), 
-    path(path_arg), 
-    db(db_arg),
-    table_name(table_name_arg),
-    is_tmp(is_tmp_arg),
     identifier(identifier_arg),
     table_message(table_message_arg), 
     err(err_arg) {}
@@ -386,33 +374,17 @@ int StorageEngine::getTableDefinition(Session& session,
                                       message::Table &table_message,
                                       bool include_temporary_tables)
 {
-  return getTableDefinition(session,
-                            identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            identifier,
-                            table_message,
-                            include_temporary_tables);
-}
-
-int StorageEngine::getTableDefinition(Session& session,
-                                      const char* path,
-                                      const char *schema_name,
-                                      const char *table_name,
-                                      const bool,
-                                      TableIdentifier &identifier,
-                                      message::Table &table_message,
-                                      bool include_temporary_tables)
-{
   int err= ENOENT;
 
   if (include_temporary_tables)
   {
-    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_message) == EEXIST)
+    if (session.doGetTableDefinition(identifier, table_message) == EEXIST)
       return EEXIST;
   }
 
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, identifier, table_message, &err));
+            StorageEngineGetTableDefinition(session, identifier, table_message, &err));
 
   if (iter == vector_of_engines.end())
   {
