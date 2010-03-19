@@ -1367,7 +1367,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (not internal_tmp_table && not lex_identified_temp_table)
   {
-    if (plugin::StorageEngine::doesTableExist(*session, identifier, false)==EEXIST)
+    if (plugin::StorageEngine::doesTableExist(*session, identifier, false))
     {
       if (is_if_not_exists)
       {
