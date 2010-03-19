@@ -62,7 +62,7 @@ public:
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier, const std::string &table_path);
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
 
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 

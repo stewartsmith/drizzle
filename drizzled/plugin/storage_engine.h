@@ -310,11 +310,16 @@ public:
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  virtual int doDropTable(Session &session,
-                          TableIdentifier &identifier,
-                          const std::string &table_path)= 0;
+  int doDropTable(Session &session,
+                  TableIdentifier &identifier,
+                  const std::string &table_path)
+  {
+    assert(not table_path.compare(identifier.getPath()));
+    return doDropTable(session, identifier);
+  }
 
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
+  virtual int doDropTable(Session &session,
+                          TableIdentifier &identifier)= 0;
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);

@@ -126,9 +126,8 @@ int StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int StorageEngine::doDropTable(Session&,
-                               TableIdentifier &,
-                               const string &table_path)
+int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
+                               
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -136,7 +135,7 @@ int StorageEngine::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, table_path.c_str(), "", *ext,
+    internal::fn_format(buff, identifier.getPath(), "", *ext,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
@@ -149,29 +148,6 @@ int StorageEngine::doDropTable(Session&,
   }
   return error;
 }
-
-const char *StorageEngine::checkLowercaseNames(const char *path,
-                                                       char *tmp_path)
-{
-  if (flags.test(HTON_BIT_FILE_BASED))
-    return path;
-
-  /* Ensure that table Cursor get path in lower case */
-  if (tmp_path != path)
-    strcpy(tmp_path, path);
-
-  /*
-    we only should turn into lowercase database/table part
-    so start the process after homedirectory
-  */
-  if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
-    my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
-  else
-    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
-
-  return tmp_path;
-}
-
 
 bool StorageEngine::addPlugin(StorageEngine *engine)
 {
@@ -599,11 +575,6 @@ int StorageEngine::createTable(Session& session,
   }
 
   {
-    char name_buff[FN_REFLEN];
-    const char *table_name_arg;
-
-    table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
-
     if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
       int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
@@ -618,7 +589,7 @@ int StorageEngine::createTable(Session& session,
     share.storage_engine->setTransactionReadWrite(session);
 
     error= share.storage_engine->doCreateTable(&session,
-                                               table_name_arg,
+                                               identifier.getPath(),
                                                table,
                                                identifier,
                                                table_message);
@@ -872,9 +843,9 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 
 void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_of_names)
 {
-  char tmp_path[FN_REFLEN];
+  string tmp_path;
 
-  build_table_filename(tmp_path, sizeof(tmp_path), schema_name.c_str(), "", false);
+  build_table_filename(tmp_path, schema_name.c_str(), "", false);
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 

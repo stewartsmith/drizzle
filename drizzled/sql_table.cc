@@ -1606,31 +1606,32 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
                    const char *new_name, uint32_t flags)
 {
   Session *session= current_session;
-  char from[FN_REFLEN], to[FN_REFLEN];
-  char *from_base= from, *to_base= to;
+  string from;
+  string to;
   int error= 0;
 
   assert(base);
 
-  build_table_filename(from, sizeof(from), old_db, old_name,
+  build_table_filename(from, old_db, old_name,
                        flags & FN_FROM_IS_TMP);
-  build_table_filename(to, sizeof(to), new_db, new_name,
+  build_table_filename(to, new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
-  if (!(error= base->renameTable(session, from_base, to_base)))
+  if (!(error= base->renameTable(session, from.c_str(), to.c_str())))
   {
     if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
-       && rename_table_proto_file(from_base, to_base))
+       && rename_table_proto_file(from.c_str(), to.c_str()))
     {
       error= errno;
-      base->renameTable(session, to_base, from_base);
+      base->renameTable(session, to.c_str(), from.c_str());
     }
   }
 
   if (error == HA_ERR_WRONG_COMMAND)
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
   else if (error)
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from, to, error);
+    my_error(ER_ERROR_ON_RENAME, MYF(0), from.c_str(), to.c_str(), error);
+
   return(error != 0);
 }
 

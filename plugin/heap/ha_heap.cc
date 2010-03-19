@@ -81,8 +81,7 @@ public:
 
   int doRenameTable(Session*, const char * from, const char * to);
 
-  int doDropTable(Session&, TableIdentifier &identifier,
-                  const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -138,18 +137,18 @@ int HeapEngine::doGetTableDefinition(Session&,
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session&, TableIdentifier &, const string &table_path)
+int HeapEngine::doDropTable(Session&, TableIdentifier &identifier)
 {
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
     proto_cache.erase(iter);
   pthread_mutex_unlock(&proto_cache_mutex);
 
-  return heap_delete_table(table_path.c_str());
+  return heap_delete_table(identifier.getPath());
 }
 
 static HeapEngine *heap_storage_engine= NULL;

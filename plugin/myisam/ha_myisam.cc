@@ -102,7 +102,7 @@ public:
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
@@ -1350,20 +1350,19 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session&,
-                              drizzled::TableIdentifier &,
-                              const string &table_path)
+                              drizzled::TableIdentifier &identifier)
 {
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
     proto_cache.erase(iter);
 
   pthread_mutex_unlock(&proto_cache_mutex);
 
-  return mi_delete_table(table_path.c_str());
+  return mi_delete_table(identifier.getPath());
 }
 
 

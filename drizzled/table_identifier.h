@@ -40,12 +40,13 @@
 
 #include <ostream>
 #include <set>
+#include <algorithm>
+#include <functional>
 
 namespace drizzled {
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
 
 class TableIdentifier
@@ -54,21 +55,31 @@ private:
   bool path_inited;
 
   tmp_table_type type;
-  char path[FN_REFLEN];
+  std::string path;
   std::string db;
   std::string table_name;
+  std::string lower_db;
+  std::string lower_table_name;
   std::string sql_path;
 
 public:
-  TableIdentifier( const char *db_arg,
-                   const char *table_name_arg,
+  TableIdentifier( const std::string &db_arg,
+                   const std::string &table_name_arg,
                    tmp_table_type tmp_arg= STANDARD_TABLE) :
     path_inited(false),
     type(tmp_arg),
     db(db_arg),
     table_name(table_name_arg),
-    sql_path(db)
+    lower_db(db_arg),
+    lower_table_name(table_name_arg),
+    sql_path(db_arg)
   { 
+    std::transform(lower_table_name.begin(), lower_table_name.end(),
+                   lower_table_name.begin(), ::tolower);
+
+    std::transform(lower_db.begin(), lower_db.end(),
+                   lower_db.begin(), ::tolower);
+
     sql_path.append(".");
     sql_path.append(table_name);
   }
@@ -79,13 +90,13 @@ public:
   TableIdentifier( const char *path_arg ) :
     path_inited(true),
     type(TEMP_TABLE),
+    path(path_arg),
     db(path_arg),
     table_name(path_arg),
     sql_path(db)
   { 
     sql_path.append(".");
     sql_path.append(table_name);
-    strncpy(path, path_arg, FN_REFLEN);
   }
 
   bool isTmp() const
@@ -149,9 +160,9 @@ public:
   {
     if (left.type == right.type)
     {
-      if (not strcmp(left.db.c_str(), right.db.c_str()))
+      if (left.db == right.db)
       {
-        if (not strcmp(left.table_name.c_str(), right.table_name.c_str()))
+        if (left.table_name == right.table_name)
         {
           return true;
         }
