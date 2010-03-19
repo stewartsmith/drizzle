@@ -843,9 +843,9 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 
 void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_of_names)
 {
-  char tmp_path[FN_REFLEN];
+  string tmp_path;
 
-  build_table_filename(tmp_path, sizeof(tmp_path), schema_name.c_str(), "", false);
+  build_table_filename(tmp_path, schema_name.c_str(), "", false);
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 

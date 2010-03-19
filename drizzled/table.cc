@@ -100,28 +100,26 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
   memory::Root mem_root;
   TableShare *share;
   char *key_buff, *path_buff;
-  char path[FN_REFLEN];
-  uint32_t path_length;
+  std::string path;
 
-  path_length= build_table_filename(path, sizeof(path) - 1,
-                                    table_list->db,
-                                    table_list->table_name, false);
+  build_table_filename(path, table_list->db, table_list->table_name, false);
+
   memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
-                       &path_buff, path_length + 1,
+                       &path_buff, path.length() + 1,
                        NULL))
   {
     memset(share, 0, sizeof(*share));
 
     share->set_table_cache_key(key_buff, key, key_length);
 
-    share->path.str= path_buff;
-    share->path.length= path_length;
-    strcpy(share->path.str, path);
+    share->path.str= path_buff,
+    share->path.length= path.length();
+    strcpy(share->path.str, path.c_str());
     share->normalized_path.str=    share->path.str;
-    share->normalized_path.length= path_length;
+    share->normalized_path.length= path.length();
 
     share->version=       refresh_version;
 
