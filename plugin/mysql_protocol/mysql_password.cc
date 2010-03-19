@@ -15,7 +15,7 @@
 
 #include "config.h"
 #include "mysql_password.h"
-#include "drizzled/util/sha1.h"
+#include "drizzled/algorithm/sha1.h"
 #include "drizzled/util/convert.h"
 
 using namespace std;

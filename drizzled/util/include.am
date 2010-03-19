@@ -16,10 +16,9 @@
 nobase_dist_include_HEADERS+= \
                               drizzled/util/convert.h \
                               drizzled/util/functors.h \
-                              drizzled/util/sha1.h \
                               drizzled/util/test.h \
                               drizzled/util/tokenize.h
 
 noinst_LTLIBRARIES+= drizzled/util/libutil.la
-drizzled_util_libutil_la_SOURCES= drizzled/util/convert.cc drizzled/util/sha1.cc
+drizzled_util_libutil_la_SOURCES= drizzled/util/convert.cc
 

@@ -58,6 +58,8 @@ TablesTool::TablesTool() :
   add_field("ENGINE");
   add_field("ROW_FORMAT", 10);
   add_field("TABLE_COLLATION");
+  add_field("TABLE_CREATION_TIME");
+  add_field("TABLE_UPDATE_TIME");
   add_field("TABLE_COMMENT", 2048);
 }
 
@@ -90,14 +92,12 @@ bool TablesTool::Generator::nextTableCore()
   table_proto.Clear();
   {
     Session *session= current_session;
-    char path[FN_REFLEN];
-    build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
+    string path;
+    build_table_filename(path, schema_name().c_str(), table_name().c_str(), false);
+    TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
     plugin::StorageEngine::getTableDefinition(*session,
-                                             path,
-                                             schema_name().c_str(),
-                                             table_name().c_str(),
-                                             false,
-                                             &table_proto);
+                                             identifier,
+                                             table_proto);
   }
 
   if (checkTableName())
@@ -213,6 +213,10 @@ void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
 void TablesTool::Generator::fill()
 {
 
+  /**
+    @note use --replace-column
+  */
+
   /* TABLE_SCHEMA */
   push(schema_name());
 
@@ -247,6 +251,21 @@ void TablesTool::Generator::fill()
 
   /* TABLE_COLLATION */
   push(table_proto.options().collation());
+
+  /* TABLE_CREATION_TIME */
+  time_t time_arg= table_proto.creation_timestamp();
+  char buffer[40];
+  struct tm tm_buffer;
+
+  localtime_r(&time_arg, &tm_buffer);
+  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+  push(buffer);
+
+  /* TABLE_UPDATE_TIME */
+  time_arg= table_proto.update_timestamp();
+  localtime_r(&time_arg, &tm_buffer);
+  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+  push(buffer);
 
   /* TABLE_COMMENT */
   push(table_proto.options().comment());

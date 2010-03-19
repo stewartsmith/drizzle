@@ -115,4 +115,4 @@ utf8_sinhala_ci	utf8_general_ci
 binary	binary
 select COUNT(*) from data_dictionary.tables;
 COUNT(*)
-33
+####.##.####

@@ -181,7 +181,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
   {
     /* Check if we can continue without closing the connection */
 
-    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
+    if(net.last_errno== ER_NET_PACKET_TOO_LARGE)
       my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
     if (session->main_da.status() == Diagnostics_area::DA_ERROR)
       sendError(session->main_da.sql_errno(), session->main_da.message());
@@ -234,8 +234,8 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 
 
     default:
-      /* Just drop connection for MySQL commands we don't support. */
-      (*l_packet)[0]= (unsigned char) COM_QUIT;
+      /* Respond with unknown command for MySQL commands we don't support. */
+      (*l_packet)[0]= (unsigned char) COM_END;
       *packet_length= 1;
       break;
     }
@@ -697,7 +697,11 @@ bool ClientMySQLProtocol::checkConnection(void)
     return false; /* The error is set by alloc(). */
 
   client_capabilities= uint2korr(net.read_pos);
-
+  if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+    return false;
+  }
 
   client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
   session->max_client_packet_length= uint4korr(net.read_pos + 4);

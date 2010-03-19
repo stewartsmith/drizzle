@@ -24,7 +24,7 @@
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/security_context.h"
 #include "drizzled/util/convert.h"
-#include "drizzled/util/sha1.h"
+#include "drizzled/algorithm/sha1.h"
 
 using namespace std;
 using namespace drizzled;
