@@ -117,7 +117,7 @@ public:
     userinfo.name= sctx.getUser().c_str();
     userinfo.password= password.c_str();
 
-    retval= pam_start("check_user", userinfo.name, &conv_info, &pamh);
+    retval= pam_start("drizzle", userinfo.name, &conv_info, &pamh);
 
     if (retval == PAM_SUCCESS)
       retval= pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK);
