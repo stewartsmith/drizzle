@@ -301,13 +301,6 @@ public:
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  int doDropTable(Session &session,
-                  TableIdentifier &identifier,
-                  const std::string &table_path)
-  {
-    assert(not table_path.compare(identifier.getPath()));
-    return doDropTable(session, identifier);
-  }
 
   virtual int doDropTable(Session &session,
                           TableIdentifier &identifier)= 0;

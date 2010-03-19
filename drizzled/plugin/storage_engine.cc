@@ -442,9 +442,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    // @todo someday check that at least one engine said "true"
-    std::string path(identifier.getPath());
-    bool success= engine->doDropTable(session, identifier, path);
+    bool success= engine->doDropTable(session, identifier);
 
     if (success)
       success_count++;
@@ -478,7 +476,7 @@ int StorageEngine::dropTable(Session& session,
   {
     std::string path(identifier.getPath());
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier, path);
+    error= engine->doDropTable(session, identifier);
 
     if (not error)
     {
@@ -862,7 +860,7 @@ public:
          iter++)
     {
       TableIdentifier dummy((*iter).c_str());
-      int error= engine->doDropTable(session, dummy, *iter);
+      int error= engine->doDropTable(session, dummy);
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.

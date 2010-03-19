@@ -3303,7 +3303,7 @@ void Table::free_tmp_table(Session *session)
       cursor->closeMarkForDelete(s->table_name.str);
 
     TableIdentifier identifier(s->table_name.str);
-    s->db_type()->doDropTable(*session, identifier, s->table_name.str);
+    s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
   }
@@ -3418,7 +3418,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
  err1:
   {
     TableIdentifier identifier(new_table.s->table_name.str);
-    new_table.s->db_type()->doDropTable(*session, identifier, new_table.s->table_name.str);
+    new_table.s->db_type()->doDropTable(*session, identifier);
   }
 
  err2:
