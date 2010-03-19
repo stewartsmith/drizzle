@@ -1306,6 +1306,7 @@ int EmbeddedInnoDBCursor::index_init(uint32_t keynr, bool)
   ib_trx_t transaction= *get_trx(ha_session());
 
   active_index= keynr;
+  next_innodb_error= DB_SUCCESS;
 
   ib_cursor_attach_trx(cursor, transaction);
 
@@ -1315,7 +1316,22 @@ int EmbeddedInnoDBCursor::index_init(uint32_t keynr, bool)
   }
   else
   {
-    /* Open 2ndary index */
+    ib_err_t err;
+    ib_id_t index_id;
+    err= ib_index_get_id(table_share->path.str+2,
+                         table_share->key_info[keynr].name,
+                         &index_id);
+    if (err != DB_SUCCESS)
+      return -1;
+
+    err= ib_cursor_close(cursor);
+    err= ib_cursor_open_index_using_id(index_id, transaction, &cursor);
+
+    if (err != DB_SUCCESS)
+      return -1;
+
+    tuple= ib_clust_read_tuple_create(cursor);
+    ib_cursor_set_cluster_access(cursor);
   }
 
   return 0;
@@ -1352,14 +1368,13 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
 int EmbeddedInnoDBCursor::index_next(unsigned char *)
 {
   int ret= HA_ERR_END_OF_FILE;
-  ib_err_t err;
 
-  if (active_index == 0)
-  {
-    tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(cursor, tuple, table);
-    err= ib_cursor_next(cursor);
-  }
+  if (next_innodb_error == DB_END_OF_INDEX)
+    return HA_ERR_END_OF_FILE;
+
+  tuple= ib_tuple_clear(tuple);
+  ret= read_row_from_innodb(cursor, tuple, table);
+  next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
 }
@@ -1401,12 +1416,9 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *)
       return -1; // FIXME
   }
 
-  if (active_index == 0)
-  {
-    tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(cursor, tuple, table);
-    err= ib_cursor_next(cursor);
-  }
+  tuple= ib_tuple_clear(tuple);
+  ret= read_row_from_innodb(cursor, tuple, table);
+  next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
 }
