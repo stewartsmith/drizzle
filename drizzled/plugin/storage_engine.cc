@@ -135,8 +135,8 @@ int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, identifier.getPath(), "", *ext,
-              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    internal::fn_format(buff, identifier.getPath().c_str(), "", *ext,
+                        MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
@@ -515,7 +515,7 @@ int StorageEngine::createTable(Session& session,
 {
   int error= 1;
   Table table;
-  TableShare share(identifier.getDBName(), 0, identifier.getTableName(), identifier.getPath());
+  TableShare share(identifier.getDBName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
   message::Table tmp_proto;
 
   if (parse_table_proto(session, table_message, &share))

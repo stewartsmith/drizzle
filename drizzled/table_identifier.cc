@@ -275,9 +275,9 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 
 
 
-const char *TableIdentifier::getPath()
+const std::string &TableIdentifier::getPath()
 {
-  if (not path_inited)
+  if (path.empty())
   {
     switch (type) {
     case STANDARD_TABLE:
@@ -292,11 +292,10 @@ const char *TableIdentifier::getPath()
     case SYSTEM_TMP_TABLE:
       assert(0);
     }
-    path_inited= true;
     assert(path.length()); // TODO throw exception, this is a possibility
   }
 
-  return path.c_str();
+  return path;
 }
 
 } /* namespace drizzled */

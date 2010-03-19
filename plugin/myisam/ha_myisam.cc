@@ -1354,7 +1354,7 @@ int MyisamEngine::doDropTable(Session&,
 
   pthread_mutex_unlock(&proto_cache_mutex);
 
-  return mi_delete_table(identifier.getPath());
+  return mi_delete_table(identifier.getPath().c_str());
 }
 
 
@@ -1400,8 +1400,8 @@ int MyisamEngine::doCreateTable(Session *,
     create_flags|= HA_PACK_RECORD;
 
   /* TODO: Check that the following internal::fn_format is really needed */
-  error= mi_create(internal::fn_format(buff, identifier.getPath(), "", "",
-                             MY_UNPACK_FILENAME|MY_APPEND_EXT),
+  error= mi_create(internal::fn_format(buff, identifier.getPath().c_str(), "", "",
+                                       MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,
                    0, (MI_UNIQUEDEF*) 0,

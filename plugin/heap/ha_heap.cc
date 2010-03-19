@@ -139,7 +139,7 @@ int HeapEngine::doDropTable(Session&, TableIdentifier &identifier)
     proto_cache.erase(iter);
   pthread_mutex_unlock(&proto_cache_mutex);
 
-  return heap_delete_table(identifier.getPath());
+  return heap_delete_table(identifier.getPath().c_str());
 }
 
 static HeapEngine *heap_storage_engine= NULL;
@@ -689,7 +689,7 @@ int HeapEngine::doCreateTable(Session *session,
 {
   int error;
   HP_SHARE *internal_share;
-  const char *table_name= identifier.getPath();
+  const char *table_name= identifier.getPath().c_str();
 
   error= heap_create_table(session, table_name, &table_arg,
                            false, 

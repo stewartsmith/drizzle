@@ -560,7 +560,7 @@ int ArchiveEngine::doCreateTable(Session *,
   /*
     We reuse name_buff since it is available.
   */
-  internal::fn_format(name_buff, identifier.getPath(), "", ARZ,
+  internal::fn_format(name_buff, identifier.getPath().c_str(), "", ARZ,
                       MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   errno= 0;

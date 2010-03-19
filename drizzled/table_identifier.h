@@ -51,9 +51,6 @@ size_t build_table_filename(std::string &buff, const char *db, const char *table
 
 class TableIdentifier
 {
-private:
-  bool path_inited;
-
   tmp_table_type type;
   std::string path;
   std::string db;
@@ -66,7 +63,6 @@ public:
   TableIdentifier( const std::string &db_arg,
                    const std::string &table_name_arg,
                    tmp_table_type tmp_arg= STANDARD_TABLE) :
-    path_inited(false),
     type(tmp_arg),
     db(db_arg),
     table_name(table_name_arg),
@@ -88,7 +84,6 @@ public:
     This is only used in scavenging lost tables. Once the temp schema engine goes in, this should go away.
   */
   TableIdentifier( const char *path_arg ) :
-    path_inited(true),
     type(TEMP_TABLE),
     path(path_arg),
     db(path_arg),
@@ -109,21 +104,21 @@ public:
     return sql_path;
   }
 
-  const char *getPath();
+  const std::string &getPath();
 
-  const char *getDBName() const
+  const std::string &getDBName() const
   {
-    return db.c_str();
+    return db;
   }
 
-  const char *getSchemaName() const
+  const std::string &getSchemaName() const
   {
-    return db.c_str();
+    return db;
   }
 
-  const char *getTableName() const
+  const std::string getTableName() const
   {
-    return table_name.c_str();
+    return table_name;
   }
 
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
