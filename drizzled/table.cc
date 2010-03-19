@@ -3685,7 +3685,7 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   uint32_t key_length;
   TableShare *share= s;
 
-  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+  if (not (key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;
 
   key_length= TableShare::createKey(key, db, table_name);

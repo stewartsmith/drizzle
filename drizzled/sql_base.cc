@@ -662,6 +662,11 @@ Table *Session::find_temporary_table(TableList *table_list)
   return find_temporary_table(table_list->db, table_list->table_name);
 }
 
+Table *Session::find_temporary_table(TableIdentifier &identifier)
+{
+  return find_temporary_table(identifier.getSchemaName().c_str(), identifier.getTableName().c_str());
+}
+
 
 /**
   Drop a temporary table.
@@ -693,7 +698,7 @@ int Session::drop_temporary_table(TableList *table_list)
 {
   Table *table;
 
-  if (!(table= find_temporary_table(table_list)))
+  if (not (table= find_temporary_table(table_list)))
     return 1;
 
   /* Table might be in use by some outer statement. */

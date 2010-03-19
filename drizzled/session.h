@@ -1429,6 +1429,7 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  Table *find_temporary_table(TableIdentifier &identifier);
   void doGetTableNames(CachedDirectory &directory,
                        const std::string& db_name,
                        std::set<std::string>& set_of_names);

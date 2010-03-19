@@ -1348,8 +1348,7 @@ bool mysql_create_table_no_lock(Session *session,
     goto err;
 
   /* Check if table already exists */
-  if (lex_identified_temp_table &&
-      session->find_temporary_table(identifier.getDBName().c_str(), identifier.getTableName().c_str()))
+  if (lex_identified_temp_table && session->find_temporary_table(identifier))
   {
     if (is_if_not_exists)
     {
