@@ -28,19 +28,19 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
-#define PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
+#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
+#define PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
 
 #include "user_commands.h"
 
 #include <string>
 
-class ScoreBoardSlot
+class ScoreboardSlot
 {
 public:
-  ScoreBoardSlot(); 
+  ScoreboardSlot(); 
 
-  ~ScoreBoardSlot(); 
+  ~ScoreboardSlot(); 
 
   UserCommands* getUserCommands();
 
@@ -62,7 +62,7 @@ public:
 
   void reset();
 
-  void merge(ScoreBoardSlot *score_board_slot);
+  void merge(ScoreboardSlot *score_board_slot);
 
 private:
   UserCommands *user_commands;
@@ -72,4 +72,4 @@ private:
   uint64_t session_id;
 };
  
-#endif /* PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H */
+#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H */

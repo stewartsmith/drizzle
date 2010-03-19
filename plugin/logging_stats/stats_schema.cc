@@ -56,7 +56,7 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
 CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
-  pthread_rwlock_rdlock(&LOCK_scoreboard);
+  pthread_rwlock_rdlock(&LOCK_current_scoreboard_vector);
   logging_stats= in_logging_stats;
 
   if (logging_stats->isEnabled())
@@ -65,27 +65,28 @@ CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_
   } 
   else 
   {
-    record_number= logging_stats->getScoreBoardSize(); 
+    record_number= logging_stats->getCurrentScoreboardVector()->size(); 
   }
 }
 
 CurrentCommandsTool::Generator::~Generator()
 {
-  pthread_rwlock_unlock(&LOCK_scoreboard);
+  pthread_rwlock_unlock(&LOCK_current_scoreboard_vector);
 }
 
 bool CurrentCommandsTool::Generator::populate()
 {
-  if (record_number == logging_stats->getScoreBoardSize())
+  uint32_t current_scoreboard_vector_size= 
+    logging_stats->getCurrentScoreboardVector()->size();
+
+  if (record_number == current_scoreboard_vector_size)
   {
     return false;
   }
   
-  ScoreBoardSlot *score_board_slots= logging_stats->getScoreBoardSlots();
-
-  while (record_number < logging_stats->getScoreBoardSize())
+  while (record_number < current_scoreboard_vector_size)
   {
-    ScoreBoardSlot *score_board_slot= &score_board_slots[record_number];
+    ScoreboardSlot *score_board_slot= logging_stats->getCurrentScoreboardVector()->at(record_number);
     if (score_board_slot->isInUse())
     {
       UserCommands *user_commands= score_board_slot->getUserCommands();
@@ -154,20 +155,20 @@ bool CumulativeCommandsTool::Generator::populate()
     return false;
   }
 
-  ScoreBoardSlot *cumulative_score_board_slot= 
-    logging_stats->getCumulativeScoreBoardVector()->at(record_number);
+  ScoreboardSlot *cumulative_scoreboard_slot= 
+    logging_stats->getCumulativeScoreboardVector()->at(record_number);
 
-  push(cumulative_score_board_slot->getUser());
-  push(cumulative_score_board_slot->getUserCommands()->getSelectCount());
-  push(cumulative_score_board_slot->getUserCommands()->getDeleteCount());
-  push(cumulative_score_board_slot->getUserCommands()->getUpdateCount());
-  push(cumulative_score_board_slot->getUserCommands()->getInsertCount());
-  push(cumulative_score_board_slot->getUserCommands()->getRollbackCount());
-  push(cumulative_score_board_slot->getUserCommands()->getCommitCount());
-  push(cumulative_score_board_slot->getUserCommands()->getCreateCount());
-  push(cumulative_score_board_slot->getUserCommands()->getAlterCount());
-  push(cumulative_score_board_slot->getUserCommands()->getDropCount());
-  push(cumulative_score_board_slot->getUserCommands()->getAdminCount());
+  push(cumulative_scoreboard_slot->getUser());
+  push(cumulative_scoreboard_slot->getUserCommands()->getSelectCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getDeleteCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getUpdateCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getInsertCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getRollbackCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getCommitCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getCreateCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getAlterCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getDropCount());
+  push(cumulative_scoreboard_slot->getUserCommands()->getAdminCount());
 
   record_number++;
   return true;

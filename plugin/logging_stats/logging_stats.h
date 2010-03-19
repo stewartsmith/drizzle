@@ -30,7 +30,7 @@
 #ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 #define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 
-#include "score_board_slot.h"
+#include "scoreboard_slot.h"
 #include "user_commands.h"
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
@@ -40,7 +40,7 @@
 #include <string>
 #include <vector>
 
-extern pthread_rwlock_t LOCK_scoreboard;
+extern pthread_rwlock_t LOCK_current_scoreboard_vector;
 
 class LoggingStats: public drizzled::plugin::Logging
 {
@@ -69,17 +69,12 @@ public:
     is_enabled= false;
   }
 
-  uint32_t getScoreBoardSize()
-  {
-    return scoreboard_size;
+  std::vector<ScoreboardSlot* > *getCurrentScoreboardVector()
+  {          
+    return current_scoreboard_vector;
   }
 
-  ScoreBoardSlot *getScoreBoardSlots()
-  {
-    return score_board_slots;
-  }
-
-  std::vector<ScoreBoardSlot* > *getCumulativeScoreBoardVector()
+  std::vector<ScoreboardSlot* > *getCumulativeScoreboardVector()
   {
     return cumulative_scoreboard_vector; 
   }
@@ -92,18 +87,24 @@ public:
 private:
   static const int32_t UNINITIALIZED= -1;
 
-  std::vector<ScoreBoardSlot* > *cumulative_scoreboard_vector;
+  std::vector<ScoreboardSlot* > *current_scoreboard_vector;
+
+  std::vector<ScoreboardSlot* > *cumulative_scoreboard_vector;
 
   uint32_t cumulative_scoreboard_index;
 
   bool isBeingLogged(drizzled::Session *session);
 
-  void updateScoreBoard(ScoreBoardSlot *score_board_slot, drizzled::Session *session);
+  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
+
+  void updateCumulativeScoreboard(ScoreboardSlot *current_scoreboard_slot);
+
+  void preAllocateScoreboardVector(uint32_t size,
+                                   std::vector<ScoreboardSlot *> *scoreboard_vector);
+
+  void deleteScoreboardVector(std::vector<ScoreboardSlot *> *scoreboard_vector);
 
   drizzled::atomic<bool> is_enabled;
 
-  ScoreBoardSlot *score_board_slots;
-
-  uint32_t scoreboard_size;
 };
 #endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */

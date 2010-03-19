@@ -33,10 +33,10 @@
  * This tracks current user commands. The commands are logged using
  * the post() and postEnd() logging APIs. It uses a scoreboard
  * approach that initializes the scoreboard size to the value set
- * by logging_stats_scoreboard_size. Each ScoreBoardSlot wraps 
+ * by logging_stats_scoreboard_size. Each ScoreboardSlot wraps 
  * a UserCommand object containing the statistics for a particular
  * session. As other statistics are added they can then be added
- * to the ScoreBoardSlot object. 
+ * to the ScoreboardSlot object. 
  *
  * Locking  
  *
@@ -71,38 +71,50 @@ static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
 static uint32_t sysvar_logging_stats_max_user_count= 10000;
 
-pthread_rwlock_t LOCK_scoreboard;
+pthread_rwlock_t LOCK_current_scoreboard_vector;
 
 pthread_rwlock_t LOCK_cumulative_scoreboard_index;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
   cumulative_scoreboard_index= 0;
-  scoreboard_size= sysvar_logging_stats_scoreboard_size;
-  score_board_slots= new ScoreBoardSlot[scoreboard_size];
 
-  cumulative_scoreboard_vector= new vector<ScoreBoardSlot *>(sysvar_logging_stats_max_user_count);
+  current_scoreboard_vector= new vector<ScoreboardSlot *>(sysvar_logging_stats_scoreboard_size);
+  preAllocateScoreboardVector(sysvar_logging_stats_scoreboard_size, 
+                              current_scoreboard_vector);
 
-  vector<ScoreBoardSlot *>::iterator it= cumulative_scoreboard_vector->begin();
-  for (uint32_t j=0; j < sysvar_logging_stats_max_user_count; j++)
-  {
-    ScoreBoardSlot *score_board_slot= new ScoreBoardSlot();
-    it= cumulative_scoreboard_vector->insert(it, score_board_slot);  
-  }
-  cumulative_scoreboard_vector->resize(sysvar_logging_stats_max_user_count);
+  cumulative_scoreboard_vector= new vector<ScoreboardSlot *>(sysvar_logging_stats_max_user_count);
+  preAllocateScoreboardVector(sysvar_logging_stats_max_user_count, 
+                              cumulative_scoreboard_vector);
 }
 
 LoggingStats::~LoggingStats()
 {
-  delete[] score_board_slots;
+  deleteScoreboardVector(current_scoreboard_vector);
+  deleteScoreboardVector(cumulative_scoreboard_vector);
+}
 
-  vector<ScoreBoardSlot *>::iterator it= cumulative_scoreboard_vector->begin();
-  for (; it < cumulative_scoreboard_vector->end(); it++)
+void LoggingStats::preAllocateScoreboardVector(uint32_t size, 
+                                               vector<ScoreboardSlot *> *scoreboard_vector)
+{
+  vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+  for (uint32_t j=0; j < size; j++)
+  {
+    ScoreboardSlot *scoreboard_slot= new ScoreboardSlot();
+    it= scoreboard_vector->insert(it, scoreboard_slot);
+  }
+  scoreboard_vector->resize(size);
+}
+
+void LoggingStats::deleteScoreboardVector(vector<ScoreboardSlot *> *scoreboard_vector)
+{
+  vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+  for (; it < scoreboard_vector->end(); it++)
   {
     delete *it;
   }
-  cumulative_scoreboard_vector->clear();
-  delete cumulative_scoreboard_vector;
+  scoreboard_vector->clear();
+  delete scoreboard_vector;
 }
 
 bool LoggingStats::isBeingLogged(Session *session)
@@ -126,12 +138,12 @@ bool LoggingStats::isBeingLogged(Session *session)
   }
 } 
 
-void LoggingStats::updateScoreBoard(ScoreBoardSlot *score_board_slot,
-                                    Session *session)
+void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
+                                           Session *session)
 {
   enum_sql_command sql_command= session->lex->sql_command;
 
-  UserCommands *user_commands= score_board_slot->getUserCommands();
+  UserCommands *user_commands= scoreboard_slot->getUserCommands();
 
   switch(sql_command)
   {
@@ -182,60 +194,62 @@ bool LoggingStats::post(Session *session)
 
   /* Find a slot that is unused */
 
-  pthread_rwlock_wrlock(&LOCK_scoreboard);
-  ScoreBoardSlot *score_board_slot;
-  int our_slot= UNINITIALIZED; 
-  int open_slot= UNINITIALIZED;
+  pthread_rwlock_wrlock(&LOCK_current_scoreboard_vector);
+  ScoreboardSlot *scoreboard_slot;
+  int32_t our_slot= UNINITIALIZED; 
+  int32_t open_slot= UNINITIALIZED;
 
-  for (uint32_t j=0; j < scoreboard_size; j++)
+  uint32_t current_slot= 0;
+  for (vector<ScoreboardSlot *>::iterator it= current_scoreboard_vector->begin();
+       it != current_scoreboard_vector->end(); ++it, current_slot++)
   {
-    score_board_slot= &score_board_slots[j];
+    scoreboard_slot= *it;
 
-    if (score_board_slot->isInUse() == true)
+    if (scoreboard_slot->isInUse() == true) 
     {
       /* Check if this session is the one using this slot */
-      if (score_board_slot->getSessionId() == session->getSessionId())
+      if (scoreboard_slot->getSessionId() == session->getSessionId())
       {
-        our_slot= j;
-        break; 
-      } 
-      else 
+        our_slot= current_slot;
+        break;
+      }
+      else
       {
-        continue; 
+        continue;
       }
     }
-    else 
+    else
     {
-      /* save off the open slot */ 
-      if (open_slot == -1)
+      /* save off the open slot */
+      if (open_slot == UNINITIALIZED)
       {
-        open_slot= j;
-      } 
+        open_slot= current_slot;
+      }
       continue;
     }
   }
 
   if (our_slot != UNINITIALIZED)
   {
-    pthread_rwlock_unlock(&LOCK_scoreboard); 
+    pthread_rwlock_unlock(&LOCK_current_scoreboard_vector); 
   }
   else if (open_slot != UNINITIALIZED)
   {
-    score_board_slot= &score_board_slots[open_slot];
-    score_board_slot->setInUse(true);
-    score_board_slot->setSessionId(session->getSessionId());
-    score_board_slot->setUser(session->getSecurityContext().getUser());
-    score_board_slot->setIp(session->getSecurityContext().getIp());
-    pthread_rwlock_unlock(&LOCK_scoreboard);
+    scoreboard_slot= current_scoreboard_vector->at(open_slot);  
+    scoreboard_slot->setInUse(true);
+    scoreboard_slot->setSessionId(session->getSessionId());
+    scoreboard_slot->setUser(session->getSecurityContext().getUser());
+    scoreboard_slot->setIp(session->getSecurityContext().getIp());
+    pthread_rwlock_unlock(&LOCK_current_scoreboard_vector);
   }
   else 
   {
-    pthread_rwlock_unlock(&LOCK_scoreboard);
+    pthread_rwlock_unlock(&LOCK_current_scoreboard_vector);
     /* there was no available slot for this session */
     return false;
   }
 
-  updateScoreBoard(score_board_slot, session);
+  updateCurrentScoreboard(scoreboard_slot, session);
 
   return false;
 }
@@ -250,50 +264,56 @@ bool LoggingStats::postEnd(Session *session)
   /* do not pull a lock when we write this is the only thread that
      can write to a particular sessions slot. */
 
-  ScoreBoardSlot *score_board_slot;
+  ScoreboardSlot *scoreboard_slot;
 
-  for (uint32_t j=0; j < scoreboard_size; j++)
+  for (vector<ScoreboardSlot *>::iterator it= current_scoreboard_vector->begin();
+       it != current_scoreboard_vector->end(); ++it)
   {
-    score_board_slot= &score_board_slots[j];
+    scoreboard_slot= *it; 
 
-    if (score_board_slot->getSessionId() == session->getSessionId())
+    if (scoreboard_slot->getSessionId() == session->getSessionId())
     {
       /* copy over statistics to the cumulative_scoreboard_vector */
-
-      vector<ScoreBoardSlot *>::iterator it;
-      it= cumulative_scoreboard_vector->begin();
+      vector<ScoreboardSlot *>::iterator cumulative_it= cumulative_scoreboard_vector->begin();
       bool found= false;
       for (uint32_t h= 0; h < cumulative_scoreboard_index; h++)
       {
-        ScoreBoardSlot *cumulative_score_board_slot= *it;
-        string user= cumulative_score_board_slot->getUser();
-        if (user.compare(score_board_slot->getUser()) == 0)
+        ScoreboardSlot *cumulative_scoreboard_slot= *cumulative_it;
+        string user= cumulative_scoreboard_slot->getUser();
+        if (user.compare(scoreboard_slot->getUser()) == 0)
         {
           found= true;
-          cumulative_score_board_slot->merge(score_board_slot);
+          cumulative_scoreboard_slot->merge(scoreboard_slot);
           break;
         }
-        it++; 
+        cumulative_it++;
       }
 
       if (! found)
       {
-        pthread_rwlock_wrlock(&LOCK_cumulative_scoreboard_index);        
-        ScoreBoardSlot *cumulative_score_board_slot= 
-          cumulative_scoreboard_vector->at(cumulative_scoreboard_index);
-        string cumulative_score_board_user(score_board_slot->getUser());
-        cumulative_score_board_slot->setUser(cumulative_score_board_user);
-        cumulative_score_board_slot->merge(score_board_slot); 
-        cumulative_scoreboard_index++;
-        pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);
+        updateCumulativeScoreboard(scoreboard_slot);
       }
 
-      score_board_slot->reset();
+      scoreboard_slot->reset();
       break;
     }
   }
+
   return false;
 }
+
+void LoggingStats::updateCumulativeScoreboard(ScoreboardSlot *current_scoreboard_slot)
+{
+  pthread_rwlock_wrlock(&LOCK_cumulative_scoreboard_index);
+  ScoreboardSlot *cumulative_scoreboard_slot=
+    cumulative_scoreboard_vector->at(cumulative_scoreboard_index);
+  string cumulative_scoreboard_user(current_scoreboard_slot->getUser());
+  cumulative_scoreboard_slot->setUser(cumulative_scoreboard_user);
+  cumulative_scoreboard_slot->merge(current_scoreboard_slot);
+  cumulative_scoreboard_index++;
+  pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);
+}
+
 
 /* Plugin initialization and system variables */
 

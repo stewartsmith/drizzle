@@ -28,11 +28,11 @@
  *
  */
 
-#include "score_board_slot.h"
+#include "scoreboard_slot.h"
 
 using namespace std;
 
-ScoreBoardSlot::ScoreBoardSlot()
+ScoreboardSlot::ScoreboardSlot()
   :
     in_use(false),
     session_id(0)
@@ -40,62 +40,62 @@ ScoreBoardSlot::ScoreBoardSlot()
   user_commands= new UserCommands();
 }
 
-ScoreBoardSlot::~ScoreBoardSlot()
+ScoreboardSlot::~ScoreboardSlot()
 {
   delete user_commands;
 }
 
-UserCommands* ScoreBoardSlot::getUserCommands()
+UserCommands* ScoreboardSlot::getUserCommands()
 {
   return user_commands;
 }
 
-void ScoreBoardSlot::setSessionId(uint64_t in_session_id)
+void ScoreboardSlot::setSessionId(uint64_t in_session_id)
 {
   session_id= in_session_id;
 }
 
-uint64_t ScoreBoardSlot::getSessionId()
+uint64_t ScoreboardSlot::getSessionId()
 {
   return session_id;
 }
 
-void ScoreBoardSlot::setInUse(bool in_in_use)
+void ScoreboardSlot::setInUse(bool in_in_use)
 {
   in_use= in_in_use;
 }
 
-bool ScoreBoardSlot::isInUse()
+bool ScoreboardSlot::isInUse()
 {
   return in_use;
 }
 
-void ScoreBoardSlot::setUser(string in_user)
+void ScoreboardSlot::setUser(string in_user)
 {
   user= in_user;
 }
 
-const string& ScoreBoardSlot::getUser()
+const string& ScoreboardSlot::getUser()
 {
   return user;
 }
 
-void ScoreBoardSlot::setIp(string in_ip)
+void ScoreboardSlot::setIp(string in_ip)
 {
   ip= in_ip;
 }
 
-const string& ScoreBoardSlot::getIp()
+const string& ScoreboardSlot::getIp()
 {
   return ip;
 }
 
-void ScoreBoardSlot::merge(ScoreBoardSlot *score_board_slot)
+void ScoreboardSlot::merge(ScoreboardSlot *score_board_slot)
 {
   user_commands->merge(score_board_slot->getUserCommands());
 }
 
-void ScoreBoardSlot::reset()
+void ScoreboardSlot::reset()
 {
   in_use= false;
   session_id= 0;
