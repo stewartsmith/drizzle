@@ -100,12 +100,12 @@ bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Sc
 
 bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName(), "information_schema"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "information_schema"))
   {
     return false;
   }
 
-  if (not strcasecmp(identifier.getSchemaName(), "data_dictionary"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "data_dictionary"))
   {
     return false;
   }

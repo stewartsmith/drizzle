@@ -5501,7 +5501,7 @@ InnobaseEngine::doCreateTable(
 	const ulint	file_format = srv_file_format;
         bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
 
-	const char *table_name= identifier.getPath();
+	const char *table_name= identifier.getPath().c_str();
 
 	assert(session != NULL);
 
@@ -5918,11 +5918,11 @@ InnobaseEngine::doDropTable(
 	trx_t*	trx;
 	char	norm_name[1000];
 
-	ut_a(strlen(identifier.getPath()) < 1000);
+	ut_a(identifier.getPath().length() < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, identifier.getPath());
+	normalize_table_name(norm_name, identifier.getPath().c_str());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */

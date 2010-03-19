@@ -1595,7 +1595,7 @@ bool create_table_precheck(TableIdentifier &identifier)
 {
   if (not plugin::StorageEngine::canCreateTable(identifier))
   {
-    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName());
+    my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
     return true;
   }
 

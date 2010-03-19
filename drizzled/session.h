@@ -1414,6 +1414,7 @@ public:
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 

@@ -107,7 +107,7 @@ public:
 
 bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getPath(), "./test/t1") == 0)
+  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
     return true;
 
   return false;
@@ -164,7 +164,7 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  drizzled::TableIdentifier &identifier,
                                                  drizzled::message::Table &table_proto)
 {
-  if (strcmp(identifier.getPath(), "./test/t1") == 0)
+  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
   {
     fill_table1(table_proto);
     return EEXIST;

@@ -186,8 +186,8 @@ int Tina::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, identifier.getPath(), "", *ext,
-              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    internal::fn_format(buff, identifier.getPath().c_str(), "", *ext,
+                        MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
@@ -1418,17 +1418,17 @@ int Tina::doCreateTable(Session *,
   }
 
 
-  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath(), "", CSM_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
-                              O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath().c_str(), "", CSM_EXT,
+                                                            MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
+                                        O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
   write_meta_file(create_file, 0, false);
   internal::my_close(create_file, MYF(0));
 
-  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath(), "", CSV_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
-                              O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath().c_str(), "", CSV_EXT,
+                                                            MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
+                                        O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
   internal::my_close(create_file, MYF(0));
