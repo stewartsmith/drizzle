@@ -63,7 +63,6 @@ public:
   }
 
   int doCreateTable(Session *session,
-                    const char *table_name,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table &create_proto);
@@ -692,13 +691,13 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 }
 
 int HeapEngine::doCreateTable(Session *session,
-                              const char *table_name,
                               Table &table_arg,
-                              drizzled::TableIdentifier &,
+                              drizzled::TableIdentifier &identifier,
                               message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
+  const char *table_name= identifier.getPath();
 
   error= heap_create_table(session, table_name, &table_arg,
                            false, 

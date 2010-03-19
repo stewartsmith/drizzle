@@ -589,7 +589,6 @@ int StorageEngine::createTable(Session& session,
     share.storage_engine->setTransactionReadWrite(session);
 
     error= share.storage_engine->doCreateTable(&session,
-                                               identifier.getPath(),
                                                table,
                                                identifier,
                                                table_message);

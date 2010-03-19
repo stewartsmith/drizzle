@@ -69,7 +69,6 @@ public:
   }
 
   int doCreateTable(Session*,
-                    const char *,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
@@ -133,7 +132,7 @@ int TableProtoTesterCursor::close(void)
   return 0;
 }
 
-int TableProtoTesterEngine::doCreateTable(Session*, const char *,
+int TableProtoTesterEngine::doCreateTable(Session*,
                                           Table&,
                                           drizzled::TableIdentifier &,
                                           drizzled::message::Table&)

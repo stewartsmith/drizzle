@@ -95,7 +95,7 @@ public:
     return ha_myisam_exts;
   }
 
-  int doCreateTable(Session *, const char *table_name,
+  int doCreateTable(Session *,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table&);
@@ -1374,9 +1374,9 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-int MyisamEngine::doCreateTable(Session *, const char *table_name,
+int MyisamEngine::doCreateTable(Session *,
                                 Table& table_arg,
-                                drizzled::TableIdentifier &,
+                                drizzled::TableIdentifier &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1408,7 +1408,7 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
     create_flags|= HA_PACK_RECORD;
 
   /* TODO: Check that the following internal::fn_format is really needed */
-  error= mi_create(internal::fn_format(buff, table_name, "", "",
+  error= mi_create(internal::fn_format(buff, identifier.getPath(), "", "",
                              MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,
@@ -1417,7 +1417,7 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   free((unsigned char*) recinfo);
 
   pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
+  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
   pthread_mutex_unlock(&proto_cache_mutex);
 
   return error;

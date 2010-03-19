@@ -71,7 +71,6 @@ public:
   }
 
   int doCreateTable(Session*,
-                    const char *,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
@@ -190,15 +189,15 @@ int ha_blackhole::close(void)
   return 0;
 }
 
-int BlackholeEngine::doCreateTable(Session*, const char *path,
+int BlackholeEngine::doCreateTable(Session*,
                                    Table&,
-                                   drizzled::TableIdentifier &,
+                                   drizzled::TableIdentifier &identifier,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
   string new_path;
 
-  new_path= path;
+  new_path= identifier.getPath();
   new_path+= BLACKHOLE_EXT;
   fstream output(new_path.c_str(), ios::out | ios::binary);
 

@@ -289,7 +289,6 @@ public:
 
 protected:
   virtual int doCreateTable(Session *session,
-                            const char *table_name,
                             Table& table_arg,
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;

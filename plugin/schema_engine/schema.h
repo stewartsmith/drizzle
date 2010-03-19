@@ -54,7 +54,6 @@ public:
   ~Schema();
 
   int doCreateTable(drizzled::Session *,
-                    const char *,
                     drizzled::Table&,
                     drizzled::TableIdentifier &,
                     drizzled::message::Table&)
