@@ -45,14 +45,10 @@ Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                   const char *path,
-                                   const char *,
-                                   const char *,
-                                   const bool,
-                                   TableIdentifier &,
+                                   TableIdentifier &identifier,
                                    message::Table &table_proto)
 {
-  string tab_name(path);
+  string tab_name(identifier.getPath());
   transform(tab_name.begin(), tab_name.end(),
             tab_name.begin(), ::tolower);
 

@@ -89,10 +89,6 @@ public:
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 

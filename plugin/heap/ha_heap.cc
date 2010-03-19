@@ -83,10 +83,6 @@ public:
   int doDropTable(Session&, TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            TableIdentifier &identifier,
                            message::Table &table_message);
 
@@ -110,18 +106,14 @@ public:
 };
 
 int HeapEngine::doGetTableDefinition(Session&,
-                                     const char* path,
-                                     const char *,
-                                     const char *,
-                                     const bool,
-                                     TableIdentifier &,
+                                     TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
   {

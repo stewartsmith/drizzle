@@ -140,10 +140,6 @@ public:
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
@@ -235,18 +231,14 @@ void Tina::deleteOpenTable(const string &table_name)
 
 
 int Tina::doGetTableDefinition(Session&,
-                               const char* path,
-                               const char *,
-                               const char *,
-                               const bool,
-                               drizzled::TableIdentifier &,
+                               drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
   {

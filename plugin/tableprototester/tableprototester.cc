@@ -76,10 +76,6 @@ public:
   int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
@@ -165,14 +161,10 @@ static void fill_table1(message::Table &table)
 
 }
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
-                                                 const char* path,
-                                                 const char *,
-                                                 const char *,
-                                                 const bool,
-                                                 drizzled::TableIdentifier &,
+                                                 drizzled::TableIdentifier &identifier,
                                                  drizzled::message::Table &table_proto)
 {
-  if (strcmp(path, "./test/t1") == 0)
+  if (strcmp(identifier.getPath(), "./test/t1") == 0)
   {
     fill_table1(table_proto);
     return EEXIST;

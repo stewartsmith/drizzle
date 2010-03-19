@@ -182,11 +182,7 @@ int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        const char* path,
-                                        const char *,
-                                        const char *,
-                                        const bool,
-                                        TableIdentifier &,
+                                        TableIdentifier &identifier,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -194,7 +190,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
   string proto_path;
 
   proto_path.reserve(FN_REFLEN);
-  proto_path.assign(path);
+  proto_path.assign(identifier.getPath());
 
   proto_path.append(ARZ);
 

@@ -317,10 +317,6 @@ public:
   result_type operator() (argument_type engine)
   {
     int ret= engine->doGetTableDefinition(session,
-                                          path, 
-                                          db,
-                                          table_name,
-                                          is_tmp,
                                           identifier,
                                           table_message);
 

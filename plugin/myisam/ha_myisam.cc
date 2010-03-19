@@ -105,10 +105,6 @@ public:
   int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            message::Table &table_message);
 
@@ -147,20 +143,16 @@ bool MyisamEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
 }
 
 int MyisamEngine::doGetTableDefinition(Session&,
-                                       const char* path,
-                                       const char *,
-                                       const char *,
-                                       const bool,
-                                       drizzled::TableIdentifier&,
+                                       drizzled::TableIdentifier &identifier,
                                        message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+  iter= proto_cache.find(identifier.getPath());
 
-  if (iter!= proto_cache.end())
+  if (iter != proto_cache.end())
   {
     table_proto.CopyFrom(((*iter).second));
     error= EEXIST;
