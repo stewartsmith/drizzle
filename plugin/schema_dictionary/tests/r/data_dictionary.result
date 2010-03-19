@@ -197,6 +197,273 @@ COLUMN_NAME
 #
 #
 #
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -211,7 +478,7 @@ COLUMNS	CREATE TABLE `columns` (
   `COLUMN_NAME` varchar(64) NOT NULL DEFAULT '',
   `COLUMN_TYPE` varchar(64) NOT NULL DEFAULT '',
   `ORDINAL_POSITION` bigint NOT NULL DEFAULT '0',
-  `COLUMN_DEFAULT` varchar(64) NOT NULL DEFAULT '',
+  `COLUMN_DEFAULT` varbinary(65535) DEFAULT NULL,
   `COLUMN_DEFAULT_IS_NULL` varchar(5) NOT NULL DEFAULT '',
   `COLUMN_DEFAULT_UPDATE` varchar(64) NOT NULL DEFAULT '',
   `IS_NULLABLE` varchar(5) NOT NULL DEFAULT '',
@@ -274,7 +541,9 @@ show create table SCHEMAS ;
 Table	Create Table
 SCHEMAS	CREATE TABLE `schemas` (
   `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT ''
+  `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
+  `SCHEMA_CREATION_TIME` varchar(64) NOT NULL DEFAULT '',
+  `SCHEMA_UPDATE_TIME` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table SCHEMA_NAMES;
 Table	Create Table
@@ -290,6 +559,8 @@ TABLES	CREATE TABLE `tables` (
   `ENGINE` varchar(64) NOT NULL DEFAULT '',
   `ROW_FORMAT` varchar(10) NOT NULL DEFAULT '',
   `TABLE_COLLATION` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_CREATION_TIME` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_UPDATE_TIME` varchar(64) NOT NULL DEFAULT '',
   `TABLE_COMMENT` varchar(2048) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table TABLE_CONSTRAINTS ;

@@ -219,7 +219,6 @@ static char*	innobase_log_arch_dir			= NULL;
 #endif /* UNIV_LOG_ARCHIVE */
 static my_bool	innobase_use_doublewrite		= TRUE;
 static my_bool	innobase_use_checksums			= TRUE;
-static my_bool	innobase_locks_unsafe_for_binlog	= TRUE;
 static my_bool	innobase_rollback_on_timeout		= FALSE;
 static my_bool	innobase_create_status_file		= FALSE;
 static my_bool	innobase_stats_on_metadata		= TRUE;
@@ -394,13 +393,13 @@ public:
   }
 
   UNIV_INTERN int doCreateTable(Session *session,
-                                const char *table_name,
                                 Table& form,
+                                drizzled::TableIdentifier &identifier,
                                 message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session& session, const string &table_path);
+  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -1925,7 +1924,7 @@ innobase_change_buffering_inited_ok:
 
 	row_rollback_on_timeout = (ibool) innobase_rollback_on_timeout;
 
-	srv_locks_unsafe_for_binlog = (ibool) innobase_locks_unsafe_for_binlog;
+	srv_locks_unsafe_for_binlog = (ibool) TRUE;
 
 	srv_max_n_open_files = (ulint) innobase_open_files;
 	srv_innodb_status = (ibool) innobase_create_status_file;
@@ -5483,9 +5482,8 @@ int
 InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
-	const char*	table_name,	/*!< in: table name */
-	Table&		form,		/*!< in: information on table
-					columns and indexes */
+	Table&		form,		/*!< in: information on table columns and indexes */
+        drizzled::TableIdentifier &identifier,
         message::Table& create_proto)
 {
 	int		error;
@@ -5502,6 +5500,8 @@ InnobaseEngine::doCreateTable(
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
         bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
+
+	const char *table_name= identifier.getPath().c_str();
 
 	assert(session != NULL);
 
@@ -5910,19 +5910,19 @@ UNIV_INTERN
 int
 InnobaseEngine::doDropTable(
 /*======================*/
-        Session& session,
-	const string &table_path)	/* in: table name */
+        Session &session,
+        TableIdentifier &identifier)
 {
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
 	char	norm_name[1000];
 
-	ut_a(table_path.length() < 1000);
+	ut_a(identifier.getPath().length() < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, table_path.c_str());
+	normalize_table_name(norm_name, identifier.getPath().c_str());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
@@ -8584,11 +8584,6 @@ static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "With which method to flush data.", NULL, NULL, NULL);
 
-static DRIZZLE_SYSVAR_BOOL(locks_unsafe_for_binlog, innobase_locks_unsafe_for_binlog,
-  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Force InnoDB to not use next-key locking, to use only row-level locking.",
-  NULL, NULL, TRUE);
-
 #ifdef UNIV_LOG_ARCHIVE
 static DRIZZLE_SYSVAR_STR(log_arch_dir, innobase_log_arch_dir,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -8799,7 +8794,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(flush_method),
   DRIZZLE_SYSVAR(force_recovery),
-  DRIZZLE_SYSVAR(locks_unsafe_for_binlog),
   DRIZZLE_SYSVAR(lock_wait_timeout),
 #ifdef UNIV_LOG_ARCHIVE
   DRIZZLE_SYSVAR(log_arch_dir),

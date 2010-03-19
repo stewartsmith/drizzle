@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include <drizzled/session.h>
+#include <drizzled/error.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -37,6 +38,7 @@
 #include "net_serv.h"
 
 using namespace std;
+using namespace drizzled;
 
 /*
   The following handles the differences when this is linked between the
@@ -157,7 +159,8 @@ static bool drizzleclient_net_realloc(NET *net, size_t length)
   {
     /* @todo: 1 and 2 codes are identical. */
     net->error= 1;
-    net->last_errno= CR_NET_PACKET_TOO_LARGE;
+    net->last_errno= ER_NET_PACKET_TOO_LARGE;
+    my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
     return(1);
   }
   pkt_length = (length+IO_SIZE-1) & ~(IO_SIZE-1);
@@ -549,7 +552,8 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
           if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
             continue;
           net->error= 2;                     /* Close socket */
-          net->last_errno= CR_NET_PACKET_TOO_LARGE;
+          net->last_errno= ER_NET_PACKET_TOO_LARGE;
+          my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
           goto end;
         }
         retry_count=0;
@@ -646,6 +650,7 @@ my_real_read(NET *net, size_t *complen)
       {
         len= packet_error;
         /* Not a NET error on the client. XXX: why? */
+        my_error(ER_NET_PACKETS_OUT_OF_ORDER, MYF(0));
         goto end;
       }
       net->compress_pkt_nr= ++net->pkt_nr;
