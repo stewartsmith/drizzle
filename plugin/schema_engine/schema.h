@@ -54,7 +54,6 @@ public:
   ~Schema();
 
   int doCreateTable(drizzled::Session *,
-                    const char *,
                     drizzled::Table&,
                     drizzled::TableIdentifier &,
                     drizzled::message::Table&)
@@ -82,10 +81,6 @@ public:
   bool doDropSchema(const std::string &schema_name);
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 

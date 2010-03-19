@@ -393,7 +393,6 @@ public:
   }
 
   UNIV_INTERN int doCreateTable(Session *session,
-                                const char *table_name,
                                 Table& form,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table&);
@@ -5483,9 +5482,8 @@ int
 InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
-	const char*	table_name,	/*!< in: table name */
 	Table&		form,		/*!< in: information on table columns and indexes */
-        drizzled::TableIdentifier &,
+        drizzled::TableIdentifier &identifier,
         message::Table& create_proto)
 {
 	int		error;
@@ -5502,6 +5500,8 @@ InnobaseEngine::doCreateTable(
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
         bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
+
+	const char *table_name= identifier.getPath();
 
 	assert(session != NULL);
 

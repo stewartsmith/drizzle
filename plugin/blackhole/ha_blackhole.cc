@@ -71,7 +71,6 @@ public:
   }
 
   int doCreateTable(Session*,
-                    const char *,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
@@ -83,10 +82,6 @@ public:
   void deleteOpenTable(const string &table_name);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
@@ -190,15 +185,15 @@ int ha_blackhole::close(void)
   return 0;
 }
 
-int BlackholeEngine::doCreateTable(Session*, const char *path,
+int BlackholeEngine::doCreateTable(Session*,
                                    Table&,
-                                   drizzled::TableIdentifier &,
+                                   drizzled::TableIdentifier &identifier,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
   string new_path;
 
-  new_path= path;
+  new_path= identifier.getPath();
   new_path+= BLACKHOLE_EXT;
   fstream output(new_path.c_str(), ios::out | ios::binary);
 
@@ -251,16 +246,12 @@ bool BlackholeEngine::doDoesTableExist(Session&,
 
 
 int BlackholeEngine::doGetTableDefinition(Session&,
-                                          const char* path,
-                                          const char *,
-                                          const char *,
-                                          const bool,
-                                          TableIdentifier &,
+                                          TableIdentifier &identifier,
                                           drizzled::message::Table &table_proto)
 {
   string new_path;
 
-  new_path= path;
+  new_path= identifier.getPath();
   new_path+= BLACKHOLE_EXT;
 
   int fd= open(new_path.c_str(), O_RDONLY);

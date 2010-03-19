@@ -135,16 +135,11 @@ public:
   }
 
   int doCreateTable(Session *,
-                    const char *table_name,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
@@ -236,18 +231,14 @@ void Tina::deleteOpenTable(const string &table_name)
 
 
 int Tina::doGetTableDefinition(Session&,
-                               const char* path,
-                               const char *,
-                               const char *,
-                               const bool,
-                               drizzled::TableIdentifier &,
+                               drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
   {
@@ -1406,9 +1397,9 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *, const char *table_name,
+int Tina::doCreateTable(Session *,
                         Table& table_arg,
-                        drizzled::TableIdentifier &,
+                        drizzled::TableIdentifier &identifier,
                         drizzled::message::Table& create_proto)
 {
   char name_buff[FN_REFLEN];
@@ -1427,7 +1418,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
   }
 
 
-  if ((create_file= internal::my_create(internal::fn_format(name_buff, table_name, "", CSM_EXT,
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath(), "", CSM_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
@@ -1435,7 +1426,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
   write_meta_file(create_file, 0, false);
   internal::my_close(create_file, MYF(0));
 
-  if ((create_file= internal::my_create(internal::fn_format(name_buff, table_name, "", CSV_EXT,
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath(), "", CSV_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
@@ -1443,7 +1434,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
   internal::my_close(create_file, MYF(0));
 
   pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
+  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
   pthread_mutex_unlock(&proto_cache_mutex);
 
   return 0;

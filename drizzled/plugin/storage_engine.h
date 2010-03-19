@@ -212,18 +212,10 @@ public:
   virtual ~StorageEngine();
 
   virtual int doGetTableDefinition(Session &session,
-                                   const char *path,
-                                   const char *db,
-                                   const char *table_name,
-                                   const bool is_tmp,
                                    TableIdentifier &identifier,
                                    message::Table &table_message)
   {
     (void)session;
-    (void)path;
-    (void)db;
-    (void)table_name;
-    (void)is_tmp;
     (void)identifier;
     (void)table_message;
 
@@ -289,7 +281,6 @@ public:
 
 protected:
   virtual int doCreateTable(Session *session,
-                            const char *table_name,
                             Table& table_arg,
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;
@@ -326,14 +317,6 @@ public:
   static void removePlugin(plugin::StorageEngine *engine);
 
   static int getTableDefinition(Session& session,
-                                TableIdentifier &identifier,
-                                message::Table &table_proto,
-                                bool include_temporary_tables= true);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
                                 TableIdentifier &identifier,
                                 message::Table &table_proto,
                                 bool include_temporary_tables= true);

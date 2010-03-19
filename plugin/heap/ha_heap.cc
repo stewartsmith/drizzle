@@ -63,7 +63,6 @@ public:
   }
 
   int doCreateTable(Session *session,
-                    const char *table_name,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table &create_proto);
@@ -84,10 +83,6 @@ public:
   int doDropTable(Session&, TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            TableIdentifier &identifier,
                            message::Table &table_message);
 
@@ -111,18 +106,14 @@ public:
 };
 
 int HeapEngine::doGetTableDefinition(Session&,
-                                     const char* path,
-                                     const char *,
-                                     const char *,
-                                     const bool,
-                                     TableIdentifier &,
+                                     TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
   {
@@ -692,13 +683,13 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 }
 
 int HeapEngine::doCreateTable(Session *session,
-                              const char *table_name,
                               Table &table_arg,
-                              drizzled::TableIdentifier &,
+                              drizzled::TableIdentifier &identifier,
                               message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
+  const char *table_name= identifier.getPath();
 
   error= heap_create_table(session, table_name, &table_arg,
                            false, 

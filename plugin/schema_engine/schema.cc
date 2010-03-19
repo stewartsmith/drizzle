@@ -74,14 +74,10 @@ Schema::~Schema()
 }
 
 int Schema::doGetTableDefinition(Session &,
-                                 const char *path,
-                                 const char *,
-                                 const char *,
-                                 const bool,
-                                 drizzled::TableIdentifier &,
+                                 drizzled::TableIdentifier &identifier,
                                  message::Table &table_proto)
 {
-  string proto_path(path);
+  string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
 
   if (access(proto_path.c_str(), F_OK))

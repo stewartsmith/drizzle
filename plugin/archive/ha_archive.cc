@@ -182,11 +182,7 @@ int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        const char* path,
-                                        const char *,
-                                        const char *,
-                                        const bool,
-                                        TableIdentifier &,
+                                        TableIdentifier &identifier,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -194,7 +190,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
   string proto_path;
 
   proto_path.reserve(FN_REFLEN);
-  proto_path.assign(path);
+  proto_path.assign(identifier.getPath());
 
   proto_path.append(ARZ);
 
@@ -531,9 +527,8 @@ int ha_archive::close(void)
 */
 
 int ArchiveEngine::doCreateTable(Session *,
-                                 const char *table_name,
                                  Table& table_arg,
-                                 drizzled::TableIdentifier &,
+                                 drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -565,8 +560,8 @@ int ArchiveEngine::doCreateTable(Session *,
   /*
     We reuse name_buff since it is available.
   */
-  internal::fn_format(name_buff, table_name, "", ARZ,
-            MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+  internal::fn_format(name_buff, identifier.getPath(), "", ARZ,
+                      MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,

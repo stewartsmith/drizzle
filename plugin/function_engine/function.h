@@ -44,7 +44,6 @@ public:
   drizzled::plugin::TableFunction *getTool(const char *name_arg);
 
   int doCreateTable(drizzled::Session *,
-                    const char *,
                     drizzled::Table&,
                     drizzled::TableIdentifier &,
                     drizzled::message::Table&)
@@ -78,10 +77,6 @@ public:
                        std::set<std::string> &set_of_names);
 
   int doGetTableDefinition(drizzled::Session &session,
-                           const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 

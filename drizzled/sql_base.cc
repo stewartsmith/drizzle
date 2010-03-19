@@ -618,19 +618,16 @@ bool Session::doDoesTableExist(TableIdentifier &identifier)
   return false;
 }
 
-int Session::doGetTableDefinition(const char *,
-                                  const char *db_arg,
-                                  const char *table_name_arg,
-                                  const bool ,
+int Session::doGetTableDefinition(TableIdentifier &identifier,
                                   message::Table &table_proto)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
     if (table->s->tmp_table == TEMP_TABLE)
     {
-      if (not strcmp(db_arg, table->s->getSchemaName()))
+      if (not strcmp(identifier.getSchemaName(), table->s->getSchemaName()))
       {
-        if (not strcmp(table_name_arg, table->s->table_name.str))
+        if (not strcmp(identifier.getTableName(), table->s->table_name.str))
         {
           table_proto.CopyFrom(*(table->s->getTableProto()));
 
