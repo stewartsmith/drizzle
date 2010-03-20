@@ -21,6 +21,7 @@
 #define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 
 #include "drizzled/util/functors.h"
+#include <algorithm>
 
 namespace drizzled
 {
@@ -156,9 +157,9 @@ public:
 
   virtual ~RorIntersectReadPlan() 
   {
-    for_each(ror_range_scans.begin(),
-             ror_range_scans.end(),
-             DeletePtr());
+    std::for_each(ror_range_scans.begin(),
+                  ror_range_scans.end(),
+                  DeletePtr());
     ror_range_scans.clear();
   }
 
