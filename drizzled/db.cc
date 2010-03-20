@@ -348,10 +348,13 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   for (table= tables; table; table= table->next_local)
   {
+    TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
     table->db_type= NULL;
-    if ((share= TableShare::getShare(table->db, table->table_name)))
+    if ((share= TableShare::getShare(identifier)))
+    {
       table->db_type= share->db_type();
+    }
   }
 
   if (lock_table_names_exclusively(session, tables))

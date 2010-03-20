@@ -203,7 +203,7 @@ TableShare *TableShare::getShare(Session *session,
     return foundTableShare(share);
   }
 
-  if (!(share= alloc_table_share(table_list, key, key_length)))
+  if (not (share= alloc_table_share(table_list, key, key_length)))
   {
     return NULL;
   }
@@ -234,8 +234,8 @@ TableShare *TableShare::getShare(Session *session,
   }
   share->ref_count++;				// Mark in use
   (void) pthread_mutex_unlock(&share->mutex);
-  return share;
 
+  return share;
 }
 
 
@@ -253,18 +253,14 @@ TableShare *TableShare::getShare(Session *session,
 */
 TableShare *TableShare::getShare(TableIdentifier &identifier)
 {
-  return TableShare::getShare(identifier.getSchemaName().c_str(), identifier.getTableName().c_str());
-}
-
-TableShare *TableShare::getShare(const char *db, const char *table_name)
-{
-  char key[NAME_LEN*2+2];
+  char key[MAX_DBKEY_LENGTH];
   uint32_t key_length;
   safe_mutex_assert_owner(&LOCK_open);
 
-  key_length= TableShare::createKey(key, db, table_name);
+  key_length= TableShare::createKey(key, identifier);
 
   const string key_string(key, key_length);
+
   TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
   if (iter != table_def_cache.end())
   {

@@ -875,7 +875,7 @@ int parse_table_proto(Session& session,
 
       message::Table::Field::SetFieldOptions fo= pfield.set_options();
 
-      for(int valnr= 0; valnr < fo.field_value_size(); valnr++)
+      for (int valnr= 0; valnr < fo.field_value_size(); valnr++)
       {
         if (fo.field_value(valnr).length() > field_length)
           field_length= charset->cset->numchars(charset,
@@ -3679,7 +3679,7 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   session->slave_proxy_id, separated by '\0'.
 */
 
-bool Table::rename_temporary_table(const char *db, const char *table_name)
+bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
 {
   char *key;
   uint32_t key_length;
@@ -3688,7 +3688,7 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   if (not (key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;
 
-  key_length= TableShare::createKey(key, db, table_name);
+  key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
 
   return false;

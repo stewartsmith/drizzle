@@ -773,7 +773,9 @@ bool alter_table(Session *session,
     {
       if (table->s->tmp_table != STANDARD_TABLE)
       {
-        if (session->find_temporary_table(new_db, lower_case_table_name))
+        TableIdentifier identifier(new_db, lower_case_table_name);
+
+        if (session->find_temporary_table(identifier))
         {
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), lower_case_table_name);
           return true;
@@ -1056,7 +1058,8 @@ bool alter_table(Session *session,
     session->close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (new_table->rename_temporary_table(new_db, new_name))
+    TableIdentifier alter_identifier(new_db, new_name);
+    if (new_table->renameAlterTemporaryTable(alter_identifier))
       goto err1;
 
     goto end_temporary;
