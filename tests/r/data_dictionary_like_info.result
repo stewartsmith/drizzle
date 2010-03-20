@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
-DROP SCHEMA IF EXISTS data_dictionary;
 select count(*) from data_dictionary.SCHEMAS where schema_name > 'm';
 count(*)
 #
@@ -41,7 +40,7 @@ a	INTEGER	TRUE		TRUE
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	IS_INDEXED	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_MULTI	IS_FIRST_IN_MULTI	INDEXES_FOUND_IN	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
-mysqltest	t1	a	INTEGER	0		TRUE		TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	0	INTEGER	0	0	0	0		
+mysqltest	t1	a	INTEGER	0	NULL	TRUE		TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	0	INTEGER	0	0	0	0		
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name
@@ -138,11 +137,11 @@ f7	0	0
 drop table t1;
 create table t1 (a int not null, b int);
 use data_dictionary;
-select column_name, column_default from columns
+select column_name, column_default,column_default_is_null from columns
 where table_schema='test' and table_name='t1';
-column_name	column_default
-a	
-b	
+column_name	column_default	column_default_is_null
+a	NULL	FALSE
+b	NULL	TRUE
 use test;
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -247,12 +246,12 @@ AND t.table_name NOT LIKE 'falcon%'
 table_name	column_name
 SELECT MAX(table_name) FROM data_dictionary.tables;
 MAX(table_name)
-TABLE_DEFINITION_CACHE
+VIEW_TABLE_USAGE
 SELECT table_name from data_dictionary.tables
 WHERE table_name=(SELECT MAX(table_name)
 FROM data_dictionary.tables);
 table_name
-TABLE_DEFINITION_CACHE
+VIEW_TABLE_USAGE
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int);
 select table_name from data_dictionary.tables
@@ -300,16 +299,16 @@ f6 bigint not null default 10,
 f7 datetime not null,
 f8 datetime default '2006-01-01'
 );
-select column_default from data_dictionary.columns where table_name= 't1';
-column_default
-
-
-
-
-
-10
-10
-2006-01-01
+select column_name,column_default,column_default_is_null from data_dictionary.columns where table_name= 't1';
+column_name	column_default	column_default_is_null
+f1	NULL	TRUE
+f2	NULL	FALSE
+f3		FALSE
+f4	NULL	TRUE
+f5	NULL	FALSE
+f6	10	FALSE
+f7	NULL	FALSE
+f8	2006-01-01	FALSE
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 f1	VARCHAR	TRUE		TRUE	
@@ -318,7 +317,7 @@ f3	VARCHAR	TRUE		FALSE
 f4	VARCHAR	TRUE		TRUE	
 f5	BIGINT	FALSE		FALSE	
 f6	BIGINT	FALSE	10	FALSE	
-f7	DATETIME	FALSE	10	FALSE	
+f7	DATETIME	FALSE		FALSE	
 f8	DATETIME	TRUE	2006-01-01	FALSE	
 drop table t1;
 SET max_heap_table_size = DEFAULT;

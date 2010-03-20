@@ -100,28 +100,26 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
   memory::Root mem_root;
   TableShare *share;
   char *key_buff, *path_buff;
-  char path[FN_REFLEN];
-  uint32_t path_length;
+  std::string path;
 
-  path_length= build_table_filename(path, sizeof(path) - 1,
-                                    table_list->db,
-                                    table_list->table_name, false);
+  build_table_filename(path, table_list->db, table_list->table_name, false);
+
   memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
-                       &path_buff, path_length + 1,
+                       &path_buff, path.length() + 1,
                        NULL))
   {
     memset(share, 0, sizeof(*share));
 
     share->set_table_cache_key(key_buff, key, key_length);
 
-    share->path.str= path_buff;
-    share->path.length= path_length;
-    strcpy(share->path.str, path);
+    share->path.str= path_buff,
+    share->path.length= path.length();
+    strcpy(share->path.str, path.c_str());
     share->normalized_path.str=    share->path.str;
-    share->normalized_path.length= path_length;
+    share->normalized_path.length= path.length();
 
     share->version=       refresh_version;
 
@@ -1244,16 +1242,14 @@ int open_table_def(Session& session, TableShare *share)
   int error;
   bool error_given;
 
+  TableIdentifier identifier(share->normalized_path.str);
+
   error= 1;
   error_given= 0;
 
   message::Table table;
 
-  error= plugin::StorageEngine::getTableDefinition(session, share->normalized_path.str,
-                                                   share->getSchemaName(),
-                                                   share->table_name.str,
-                                                   false,
-                                                   &table);
+  error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
   if (error != EEXIST)
   {
@@ -3306,7 +3302,8 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       cursor->closeMarkForDelete(s->table_name.str);
 
-    s->db_type()->doDropTable(*session, s->table_name.str);
+    TableIdentifier identifier(s->table_name.str);
+    s->db_type()->doDropTable(*session, identifier, s->table_name.str);
 
     delete cursor;
   }
@@ -3417,8 +3414,13 @@ bool create_myisam_from_heap(Session *session, Table *table,
   table->print_error(write_err, MYF(0));
   (void) table->cursor->ha_rnd_end();
   (void) new_table.cursor->close();
+
  err1:
-  new_table.s->db_type()->doDropTable(*session, new_table.s->table_name.str);
+  {
+    TableIdentifier identifier(new_table.s->table_name.str);
+    new_table.s->db_type()->doDropTable(*session, identifier, new_table.s->table_name.str);
+  }
+
  err2:
   delete new_table.cursor;
   session->set_proc_info(save_proc_info);
