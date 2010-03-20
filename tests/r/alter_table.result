@@ -54,7 +54,7 @@ show COLUMNS FROM t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 GROUP_ID	INTEGER	FALSE	0	FALSE	
 LANG_ID	INTEGER	FALSE	0	FALSE	
-NAME	VARCHAR	FALSE	0	FALSE	
+NAME	VARCHAR	FALSE		FALSE	
 DROP TABLE t1;
 create table t1 (n int);
 insert into t1 values(9),(3),(12),(10);
@@ -177,7 +177,7 @@ alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 i	INTEGER	FALSE	0	FALSE	
-c	VARCHAR	TRUE	0	TRUE	
+c	VARCHAR	TRUE		TRUE	
 drop table t1;
 create table t1 (a int, b int);
 set autocommit=0;

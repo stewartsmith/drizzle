@@ -37,17 +37,10 @@
     The entry point for the range analysis module is get_mm_tree() function.
 
     The lists are returned in form of complicated structure of interlinked
-    SEL_TREE/SEL_IMERGE/SEL_ARG objects.
+    optimizer::SEL_TREE/optimizer::SEL_IMERGE/SEL_ARG objects.
     See quick_range_seq_next, find_used_partitions for examples of how to walk
     this structure.
     All direct "users" of this module are located within this cursor, too.
-
-
-  PartitionPruningModule
-    A module that accepts a partitioned table, condition, and finds which
-    partitions we will need to use in query execution. Search down for
-    "PartitionPruningModule" for description.
-    The module has single entry point - prune_partitions() function.
 
 
   Range/index_merge/groupby-minmax optimizer module
@@ -133,6 +126,8 @@
 #include "drizzled/optimizer/quick_ror_union_select.h"
 #include "drizzled/optimizer/table_read_plan.h"
 #include "drizzled/optimizer/sel_arg.h"
+#include "drizzled/optimizer/sel_imerge.h"
+#include "drizzled/optimizer/sel_tree.h"
 #include "drizzled/optimizer/range_param.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/my_sys.h"
@@ -235,59 +230,9 @@ static void get_sweep_read_cost(Table *table,
   }
 }
 
-class SEL_IMERGE;
-
-
-class SEL_TREE :public memory::SqlAlloc
-{
-public:
-  /*
-    Starting an effort to document this field:
-    (for some i, keys[i]->type == optimizer::SEL_ARG::IMPOSSIBLE) =>
-       (type == SEL_TREE::IMPOSSIBLE)
-  */
-  enum Type
-  {
-    IMPOSSIBLE,
-    ALWAYS,
-    MAYBE,
-    KEY,
-    KEY_SMALLER
-  } type;
-
-  SEL_TREE(enum Type type_arg) :type(type_arg) {}
-  SEL_TREE() :type(KEY)
-  {
-    keys_map.reset();
-    memset(keys, 0, sizeof(keys));
-  }
-  /*
-    Note: there may exist SEL_TREE objects with sel_tree->type=KEY and
-    keys[i]=0 for all i. (SergeyP: it is not clear whether there is any
-    merit in range analyzer functions (e.g. get_mm_parts) returning a
-    pointer to such SEL_TREE instead of NULL)
-  */
-  optimizer::SEL_ARG *keys[MAX_KEY];
-  key_map keys_map;        /* bitmask of non-NULL elements in keys */
-
-  /*
-    Possible ways to read rows using index_merge. The list is non-empty only
-    if type==KEY. Currently can be non empty only if keys_map.none().
-  */
-  List<SEL_IMERGE> merges;
-
-  /* The members below are filled/used only after get_mm_tree is done */
-  key_map ror_scans_map;   /* bitmask of ROR scan-able elements in keys */
-  uint32_t n_ror_scans;     /* number of set bits in ror_scans_map */
-
-  struct st_ror_scan_info **ror_scans;     /* list of ROR key scans */
-  struct st_ror_scan_info **ror_scans_end; /* last ROR scan */
-  /* Note that #records for each key scan is stored in table->quick_rows */
-};
-
 struct st_ror_scan_info;
 
-static SEL_TREE * get_mm_parts(optimizer::RangeParameter *param,
+static optimizer::SEL_TREE * get_mm_parts(optimizer::RangeParameter *param,
                                COND *cond_func,
                                Field *field,
 			                         Item_func::Functype type,
@@ -301,7 +246,7 @@ static optimizer::SEL_ARG *get_mm_leaf(optimizer::RangeParameter *param,
 			                                 Item_func::Functype type,
                                        Item *value);
 
-static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond);
+static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond);
 
 static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts);
 
@@ -315,50 +260,35 @@ static ha_rows check_quick_select(optimizer::Parameter *param,
                                   COST_VECT *cost);
 
 static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
-                                                      SEL_TREE *tree,
+                                                      optimizer::SEL_TREE *tree,
                                                       bool index_read_must_be_used,
                                                       bool update_tbl_stats,
                                                       double read_time);
 
 static
 optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Parameter *param,
-                                                        SEL_TREE *tree,
+                                                        optimizer::SEL_TREE *tree,
                                                         double read_time,
                                                         bool *are_all_covering);
 
 static
 optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                                 SEL_TREE *tree,
+                                                                 optimizer::SEL_TREE *tree,
                                                                  double read_time);
 
 static
 optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
-                                                  SEL_IMERGE *imerge,
+                                                  optimizer::SEL_IMERGE *imerge,
                                                   double read_time);
 
 static
-optimizer::GroupMinMaxReadPlan *get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree);
+optimizer::GroupMinMaxReadPlan *get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree);
 
-static void print_sel_tree(optimizer::Parameter *param,
-                           SEL_TREE *tree,
-                           key_map *tree_map,
-                           const char *msg);
-
-static void print_ror_scans_arr(Table *table,
-                                const char *msg,
-                                struct st_ror_scan_info **start,
-                                struct st_ror_scan_info **end);
-static void print_ror_scans_vector(Table *table,
-                                   const char *msg,
-                                   vector<struct st_ror_scan_info *> &vec);
-
-static SEL_TREE *tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
-
-static SEL_TREE *tree_or(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2);
+static optimizer::SEL_TREE *tree_and(optimizer::RangeParameter *param, 
+                                     optimizer::SEL_TREE *tree1, 
+                                     optimizer::SEL_TREE *tree2);
 
 static optimizer::SEL_ARG *sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
-
-static optimizer::SEL_ARG *key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2);
 
 static optimizer::SEL_ARG *key_and(optimizer::RangeParameter *param,
                                    optimizer::SEL_ARG *key1,
@@ -367,225 +297,28 @@ static optimizer::SEL_ARG *key_and(optimizer::RangeParameter *param,
 
 static bool get_range(optimizer::SEL_ARG **e1, optimizer::SEL_ARG **e2, optimizer::SEL_ARG *root1);
 
-static bool eq_tree(optimizer::SEL_ARG* a, optimizer::SEL_ARG *b);
-
 optimizer::SEL_ARG optimizer::null_element(optimizer::SEL_ARG::IMPOSSIBLE);
 
 static bool null_part_in_key(KEY_PART *key_part,
                              const unsigned char *key,
                              uint32_t length);
 
-bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2, optimizer::RangeParameter *param);
+bool sel_trees_can_be_ored(optimizer::SEL_TREE *tree1, 
+                           optimizer::SEL_TREE *tree2, 
+                           optimizer::RangeParameter *param);
 
 
-/*
-  SEL_IMERGE is a list of possible ways to do index merge, i.e. it is
-  a condition in the following form:
-   (t_1||t_2||...||t_N) && (next)
-
-  where all t_i are SEL_TREEs, next is another SEL_IMERGE and no pair
-  (t_i,t_j) contains SEL_ARGS for the same index.
-
-  SEL_TREE contained in SEL_IMERGE always has merges=NULL.
-
-  This class relies on memory manager to do the cleanup.
-*/
-
-class SEL_IMERGE : public memory::SqlAlloc
-{
-  enum { PREALLOCED_TREES= 10};
-public:
-  SEL_TREE *trees_prealloced[PREALLOCED_TREES];
-  SEL_TREE **trees;             /* trees used to do index_merge   */
-  SEL_TREE **trees_next;        /* last of these trees            */
-  SEL_TREE **trees_end;         /* end of allocated space         */
-
-  optimizer::SEL_ARG  ***best_keys;        /* best keys to read in SEL_TREEs */
-
-  SEL_IMERGE() :
-    trees(&trees_prealloced[0]),
-    trees_next(trees),
-    trees_end(trees + PREALLOCED_TREES)
-  {}
-  int or_sel_tree(optimizer::RangeParameter *param, SEL_TREE *tree);
-  int or_sel_tree_with_checks(optimizer::RangeParameter *param, SEL_TREE *new_tree);
-  int or_sel_imerge_with_checks(optimizer::RangeParameter *param, SEL_IMERGE* imerge);
-};
 
 
-/*
-  Add SEL_TREE to this index_merge without any checks,
-
-  NOTES
-    This function implements the following:
-      (x_1||...||x_N) || t = (x_1||...||x_N||t), where x_i, t are SEL_TREEs
-
-  RETURN
-     0 - OK
-    -1 - Out of memory.
-*/
-int SEL_IMERGE::or_sel_tree(optimizer::RangeParameter *param, SEL_TREE *tree)
-{
-  if (trees_next == trees_end)
-  {
-    const int realloc_ratio= 2;		/* Double size for next round */
-    uint32_t old_elements= (trees_end - trees);
-    uint32_t old_size= sizeof(SEL_TREE**) * old_elements;
-    uint32_t new_size= old_size * realloc_ratio;
-    SEL_TREE **new_trees;
-    if (!(new_trees= (SEL_TREE**)alloc_root(param->mem_root, new_size)))
-      return -1;
-    memcpy(new_trees, trees, old_size);
-    trees= new_trees;
-    trees_next= trees + old_elements;
-    trees_end= trees + old_elements * realloc_ratio;
-  }
-  *(trees_next++)= tree;
-  return 0;
-}
-
-
-/*
-  Perform OR operation on this SEL_IMERGE and supplied SEL_TREE new_tree,
-  combining new_tree with one of the trees in this SEL_IMERGE if they both
-  have SEL_ARGs for the same key.
-
-  SYNOPSIS
-    or_sel_tree_with_checks()
-      param    Parameter from SqlSelect::test_quick_select
-      new_tree SEL_TREE with type KEY or KEY_SMALLER.
-
-  NOTES
-    This does the following:
-    (t_1||...||t_k)||new_tree =
-     either
-       = (t_1||...||t_k||new_tree)
-     or
-       = (t_1||....||(t_j|| new_tree)||...||t_k),
-
-     where t_i, y are SEL_TREEs.
-    new_tree is combined with the first t_j it has a SEL_ARG on common
-    key with. As a consequence of this, choice of keys to do index_merge
-    read may depend on the order of conditions in WHERE part of the query.
-
-  RETURN
-    0  OK
-    1  One of the trees was combined with new_tree to SEL_TREE::ALWAYS,
-       and (*this) should be discarded.
-   -1  An error occurred.
-*/
-int SEL_IMERGE::or_sel_tree_with_checks(optimizer::RangeParameter *param, SEL_TREE *new_tree)
-{
-  for (SEL_TREE** tree = trees;
-       tree != trees_next;
-       tree++)
-  {
-    if (sel_trees_can_be_ored(*tree, new_tree, param))
-    {
-      *tree = tree_or(param, *tree, new_tree);
-      if (!*tree)
-        return 1;
-      if (((*tree)->type == SEL_TREE::MAYBE) ||
-          ((*tree)->type == SEL_TREE::ALWAYS))
-        return 1;
-      /* SEL_TREE::IMPOSSIBLE is impossible here */
-      return 0;
-    }
-  }
-
-  /* New tree cannot be combined with any of existing trees. */
-  return or_sel_tree(param, new_tree);
-}
-
-
-/*
-  Perform OR operation on this index_merge and supplied index_merge list.
-
-  RETURN
-    0 - OK
-    1 - One of conditions in result is always true and this SEL_IMERGE
-        should be discarded.
-   -1 - An error occurred
-*/
-
-int SEL_IMERGE::or_sel_imerge_with_checks(optimizer::RangeParameter *param, SEL_IMERGE* imerge)
-{
-  for (SEL_TREE** tree= imerge->trees;
-       tree != imerge->trees_next;
-       tree++)
-  {
-    if (or_sel_tree_with_checks(param, *tree))
-      return 1;
-  }
-  return 0;
-}
 
 
 /*
   Perform AND operation on two index_merge lists and store result in *im1.
 */
 
-inline void imerge_list_and_list(List<SEL_IMERGE> *im1, List<SEL_IMERGE> *im2)
+inline void imerge_list_and_list(List<optimizer::SEL_IMERGE> *im1, List<optimizer::SEL_IMERGE> *im2)
 {
   im1->concat(im2);
-}
-
-
-/*
-  Perform OR operation on 2 index_merge lists, storing result in first list.
-
-  NOTES
-    The following conversion is implemented:
-     (a_1 &&...&& a_N)||(b_1 &&...&& b_K) = AND_i,j(a_i || b_j) =>
-      => (a_1||b_1).
-
-    i.e. all conjuncts except the first one are currently dropped.
-    This is done to avoid producing N*K ways to do index_merge.
-
-    If (a_1||b_1) produce a condition that is always true, NULL is returned
-    and index_merge is discarded (while it is actually possible to try
-    harder).
-
-    As a consequence of this, choice of keys to do index_merge read may depend
-    on the order of conditions in WHERE part of the query.
-
-  RETURN
-    0     OK, result is stored in *im1
-    other Error, both passed lists are unusable
-*/
-
-static int imerge_list_or_list(optimizer::RangeParameter *param,
-                               List<SEL_IMERGE> *im1,
-                               List<SEL_IMERGE> *im2)
-{
-  SEL_IMERGE *imerge= im1->head();
-  im1->empty();
-  im1->push_back(imerge);
-
-  return imerge->or_sel_imerge_with_checks(param, im2->head());
-}
-
-
-/*
-  Perform OR operation on index_merge list and key tree.
-
-  RETURN
-     0     OK, result is stored in *im1.
-     other Error
- */
-
-static int imerge_list_or_tree(optimizer::RangeParameter *param,
-                               List<SEL_IMERGE> *im1,
-                               SEL_TREE *tree)
-{
-  SEL_IMERGE *imerge;
-  List_iterator<SEL_IMERGE> it(*im1);
-  while ((imerge= it++))
-  {
-    if (imerge->or_sel_tree_with_checks(param, tree))
-      it.remove();
-  }
-  return im1->is_empty();
 }
 
 
@@ -928,7 +661,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
   if (keys_to_use.any())
   {
     memory::Root alloc;
-    SEL_TREE *tree= NULL;
+    optimizer::SEL_TREE *tree= NULL;
     KEY_PART *key_parts;
     KEY *key_info;
     optimizer::Parameter param;
@@ -1016,7 +749,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     {
       if ((tree= get_mm_tree(&param,cond)))
       {
-        if (tree->type == SEL_TREE::IMPOSSIBLE)
+        if (tree->type == optimizer::SEL_TREE::IMPOSSIBLE)
         {
           records=0L;                      /* Return -1 from this function. */
           read_time= (double) HA_POS_ERROR;
@@ -1026,7 +759,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
           If the tree can't be used for range scans, proceed anyway, as we
           can construct a group-min-max quick select
         */
-        if (tree->type != SEL_TREE::KEY && tree->type != SEL_TREE::KEY_SMALLER)
+        if (tree->type != optimizer::SEL_TREE::KEY && tree->type != optimizer::SEL_TREE::KEY_SMALLER)
           tree= NULL;
       }
     }
@@ -1097,10 +830,10 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       else
       {
         /* Try creating index_merge/ROR-union scan. */
-        SEL_IMERGE *imerge= NULL;
+        optimizer::SEL_IMERGE *imerge= NULL;
         optimizer::TableReadPlan *best_conj_trp= NULL;
         optimizer::TableReadPlan *new_conj_trp= NULL;
-        List_iterator_fast<SEL_IMERGE> it(tree->merges);
+        List_iterator_fast<optimizer::SEL_IMERGE> it(tree->merges);
         while ((imerge= it++))
         {
           new_conj_trp= get_best_disjunct_quick(&param, imerge, best_read_time);
@@ -1143,7 +876,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 }
 
 /*
-  Get best plan for a SEL_IMERGE disjunctive expression.
+  Get best plan for a optimizer::SEL_IMERGE disjunctive expression.
   SYNOPSIS
     get_best_disjunct_quick()
       param     Parameter from check_quick_select function
@@ -1209,10 +942,10 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 
 static
 optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
-                                                  SEL_IMERGE *imerge,
+                                                  optimizer::SEL_IMERGE *imerge,
                                                   double read_time)
 {
-  SEL_TREE **ptree;
+  optimizer::SEL_TREE **ptree= NULL;
   optimizer::IndexMergeReadPlan *imerge_trp= NULL;
   uint32_t n_child_scans= imerge->trees_next - imerge->trees;
   optimizer::RangeReadPlan **range_scans= NULL;
@@ -1245,7 +978,6 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
        ptree != imerge->trees_next;
        ptree++, cur_child++)
   {
-    print_sel_tree(param, *ptree, &(*ptree)->keys_map, "tree in SEL_IMERGE");
     if (!(*cur_child= get_key_scans_params(param, *ptree, true, false, read_time)))
     {
       /*
@@ -1960,28 +1692,28 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
 
 static
 optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Parameter *param,
-                                                   SEL_TREE *tree,
+                                                   optimizer::SEL_TREE *tree,
                                                    double read_time,
                                                    bool *are_all_covering)
 {
-  uint32_t idx;
+  uint32_t idx= 0;
   double min_cost= DBL_MAX;
 
-  if ((tree->n_ror_scans < 2) || !param->table->cursor->stats.records)
+  if ((tree->n_ror_scans < 2) || ! param->table->cursor->stats.records)
     return NULL;
 
   /*
     Step1: Collect ROR-able SEL_ARGs and create ROR_SCAN_INFO for each of
     them. Also find and save clustered PK scan if there is one.
   */
-  ROR_SCAN_INFO **cur_ror_scan;
+  ROR_SCAN_INFO **cur_ror_scan= NULL;
   ROR_SCAN_INFO *cpk_scan= NULL;
-  uint32_t cpk_no;
+  uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  if (!(tree->ror_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                     sizeof(ROR_SCAN_INFO*)*
-                                                     param->keys)))
+  if (! (tree->ror_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
+                                                      sizeof(ROR_SCAN_INFO*)*
+                                                      param->keys)))
     return NULL;
   cpk_no= ((param->table->cursor->primary_key_is_clustered()) ?
            param->table->s->primary_key : MAX_KEY);
@@ -2003,9 +1735,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   }
 
   tree->ror_scans_end= cur_ror_scan;
-  print_ror_scans_arr(param->table, "original",
-                                          tree->ror_scans,
-                                          tree->ror_scans_end);
   /*
     Ok, [ror_scans, ror_scans_end) is array of ptrs to initialized
     ROR_SCAN_INFO's.
@@ -2013,26 +1742,24 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   */
   internal::my_qsort(tree->ror_scans, tree->n_ror_scans, sizeof(ROR_SCAN_INFO*),
                      (qsort_cmp)cmp_ror_scan_info);
-  print_ror_scans_arr(param->table, "ordered",
-                                          tree->ror_scans,
-                                          tree->ror_scans_end);
 
-  ROR_SCAN_INFO **intersect_scans; /* ROR scans used in index intersection */
-  ROR_SCAN_INFO **intersect_scans_end;
-  if (!(intersect_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                     sizeof(ROR_SCAN_INFO*)*
-                                                     tree->n_ror_scans)))
+  ROR_SCAN_INFO **intersect_scans= NULL; /* ROR scans used in index intersection */
+  ROR_SCAN_INFO **intersect_scans_end= NULL;
+  if (! (intersect_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
+                                                      sizeof(ROR_SCAN_INFO*)*
+                                                      tree->n_ror_scans)))
     return NULL;
   intersect_scans_end= intersect_scans;
 
   /* Create and incrementally update ROR intersection. */
-  ROR_INTERSECT_INFO *intersect, *intersect_best;
-  if (!(intersect= ror_intersect_init(param)) ||
-      !(intersect_best= ror_intersect_init(param)))
+  ROR_INTERSECT_INFO *intersect= NULL;
+  ROR_INTERSECT_INFO *intersect_best= NULL;
+  if (! (intersect= ror_intersect_init(param)) ||
+      ! (intersect_best= ror_intersect_init(param)))
     return NULL;
 
   /* [intersect_scans,intersect_scans_best) will hold the best intersection */
-  ROR_SCAN_INFO **intersect_scans_best;
+  ROR_SCAN_INFO **intersect_scans_best= NULL;
   cur_ror_scan= tree->ror_scans;
   intersect_scans_best= intersect_scans;
   while (cur_ror_scan != tree->ror_scans_end && !intersect->is_covering)
@@ -2059,11 +1786,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   {
     return NULL;
   }
-
-  print_ror_scans_arr(param->table,
-                                          "best ROR-intersection",
-                                          intersect_scans,
-                                          intersect_scans_best);
 
   *are_all_covering= intersect->is_covering;
   uint32_t best_num= intersect_scans_best - intersect_scans;
@@ -2096,14 +1818,14 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     trp->read_cost= intersect_best->total_cost;
     /* Prevent divisons by zero */
     ha_rows best_rows = double2rows(intersect_best->out_rows);
-    if (!best_rows)
+    if (! best_rows)
       best_rows= 1;
     set_if_smaller(param->table->quick_condition_rows, best_rows);
     trp->records= best_rows;
     trp->setCostOfIndexScans(intersect_best->index_scan_costs);
     trp->cpk_scan= cpk_scan_used? cpk_scan: NULL;
   }
-  return(trp);
+  return trp;
 }
 
 
@@ -2112,7 +1834,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   SYNOPSIS
     get_best_covering_ror_intersect()
       param     Parameter from test_quick_select function.
-      tree      SEL_TREE with sets of intervals for different keys.
+      tree      optimizer::SEL_TREE with sets of intervals for different keys.
       read_time Don't return table read plans with cost > read_time.
 
   RETURN
@@ -2142,7 +1864,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
 
 static
 optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                            SEL_TREE *tree,
+                                                            optimizer::SEL_TREE *tree,
                                                             double read_time)
 {
   ROR_SCAN_INFO **ror_scan_mark;
@@ -2177,9 +1899,6 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   ha_rows records=0;
   bool all_covered;
 
-  print_ror_scans_arr(param->table,
-                                           "building covering ROR-I",
-                                           ror_scan_mark, ror_scans_end);
   do
   {
     /*
@@ -2201,10 +1920,6 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
                        sizeof(ROR_SCAN_INFO*),
                        (qsort_cmp)cmp_ror_scan_info_covering);
 
-    print_ror_scans_arr(param->table,
-                                             "remaining scans",
-                                             ror_scan_mark, ror_scans_end);
-
     /* I=I-first(I) */
     total_cost += (*ror_scan_mark)->index_read_cost;
     records += (*ror_scan_mark)->records;
@@ -2222,10 +1937,6 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
     Ok, [tree->ror_scans .. ror_scan) holds covering index_intersection with
     cost total_cost.
   */
-  print_ror_scans_arr(param->table,
-                                           "creating covering ROR-intersect",
-                                           tree->ror_scans, ror_scan_mark);
-
   /* Add priority queue use cost. */
   total_cost += rows2double(records)*
                 log((double)(ror_scan_mark - tree->ror_scans)) /
@@ -2253,12 +1964,12 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
 
 
 /*
-  Get best "range" table read plan for given SEL_TREE, also update some info
+  Get best "range" table read plan for given optimizer::SEL_TREE, also update some info
 
   SYNOPSIS
     get_key_scans_params()
       param                    Parameters from test_quick_select
-      tree                     Make range select for this SEL_TREE
+      tree                     Make range select for this optimizer::SEL_TREE
       index_read_must_be_used  true <=> assume 'index only' option will be set
                                (except for clustered PK indexes)
       update_tbl_stats         true <=> update table->quick_* with information
@@ -2267,7 +1978,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
                                cost > read_time.
 
   DESCRIPTION
-    Find the best "range" table read plan for given SEL_TREE.
+    Find the best "range" table read plan for given optimizer::SEL_TREE.
     The side effects are
      - tree->ror_scans is updated to indicate which scans are ROR scans.
      - if update_tbl_stats=true then table->quick_* is updated with info
@@ -2279,7 +1990,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
 */
 
 static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
-                                                      SEL_TREE *tree,
+                                                      optimizer::SEL_TREE *tree,
                                                       bool index_read_must_be_used,
                                                       bool update_tbl_stats,
                                                       double read_time)
@@ -2293,11 +2004,10 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
   uint32_t best_buf_size= 0;
   optimizer::RangeReadPlan *read_plan= NULL;
   /*
-    Note that there may be trees that have type SEL_TREE::KEY but contain no
+    Note that there may be trees that have type optimizer::SEL_TREE::KEY but contain no
     key reads at all, e.g. tree for expression "key1 is not null" where key1
     is defined as "not null".
   */
-  print_sel_tree(param, tree, &tree->keys_map, "tree scans");
   tree->ror_scans_map.reset();
   tree->n_ror_scans= 0;
   for (idx= 0,key=tree->keys, end=key+param->keys; key != end; key++,idx++)
@@ -2336,7 +2046,6 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
     }
   }
 
-  print_sel_tree(param, tree, &tree->ror_scans_map, "ROR scans");
   if (key_to_read)
   {
     idx= key_to_read - tree->keys;
@@ -2396,9 +2105,6 @@ optimizer::QuickSelectInterface *optimizer::RorIntersectReadPlan::make_quick(opt
                                                 (retrieve_full_rows? (! is_covering) : false),
                                                 parent_alloc)))
   {
-    print_ror_scans_vector(param->table,
-                           "creating ROR-intersect",
-                           ror_range_scans);
     alloc= parent_alloc ? parent_alloc : &quick_intersect->alloc;
     for (vector<struct st_ror_scan_info *>::iterator it= ror_range_scans.begin();
          it != ror_range_scans.end();
@@ -2466,7 +2172,7 @@ optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimiz
 
 
 /*
-  Build a SEL_TREE for <> or NOT BETWEEN predicate
+  Build a optimizer::SEL_TREE for <> or NOT BETWEEN predicate
 
   SYNOPSIS
     get_ne_mm_tree()
@@ -2481,13 +2187,13 @@ optimizer::QuickSelectInterface *optimizer::RorUnionReadPlan::make_quick(optimiz
     #  Pointer to tree built tree
     0  on error
 */
-static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
+static optimizer::SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
                                 Item_func *cond_func,
                                 Field *field,
                                 Item *lt_value, Item *gt_value,
                                 Item_result cmp_type)
 {
-  SEL_TREE *tree;
+  optimizer::SEL_TREE *tree= NULL;
   tree= get_mm_parts(param, cond_func, field, Item_func::LT_FUNC,
                      lt_value, cmp_type);
   if (tree)
@@ -2504,7 +2210,7 @@ static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
 
 
 /*
-  Build a SEL_TREE for a simple predicate
+  Build a optimizer::SEL_TREE for a simple predicate
 
   SYNOPSIS
     get_func_mm_tree()
@@ -2519,14 +2225,14 @@ static SEL_TREE *get_ne_mm_tree(optimizer::RangeParameter *param,
   RETURN
     Pointer to the tree built tree
 */
-static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
+static optimizer::SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
                                   Item_func *cond_func,
                                   Field *field, 
                                   Item *value,
                                   Item_result cmp_type, 
                                   bool inv)
 {
-  SEL_TREE *tree= NULL;
+  optimizer::SEL_TREE *tree= NULL;
 
   switch (cond_func->functype()) 
   {
@@ -2598,7 +2304,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
       {
         /*
           We get here for conditions in form "t.key NOT IN (c1, c2, ...)",
-          where c{i} are constants. Our goal is to produce a SEL_TREE that
+          where c{i} are constants. Our goal is to produce a optimizer::SEL_TREE that
           represents intervals:
 
           ($MIN<t.key<c1) OR (c1<t.key<c2) OR (c2<t.key<c3) OR ...    (*)
@@ -2607,7 +2313,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
 
           The most straightforward way to produce it is to convert NOT IN
           into "(t.key != c1) AND (t.key != c2) AND ... " and let the range
-          analyzer to build SEL_TREE from that. The problem is that the
+          analyzer to build optimizer::SEL_TREE from that. The problem is that the
           range analyzer will use O(N^2) memory (which is probably a bug),
           and people do use big NOT IN lists (e.g. see BUG#15872, BUG#21282),
           will run out of memory.
@@ -2620,8 +2326,8 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
 
           Considering the above, we'll handle NOT IN as follows:
           * if the number of entries in the NOT IN list is less than
-            NOT_IN_IGNORE_THRESHOLD, construct the SEL_TREE (*) manually.
-          * Otherwise, don't produce a SEL_TREE.
+            NOT_IN_IGNORE_THRESHOLD, construct the optimizer::SEL_TREE (*) manually.
+          * Otherwise, don't produce a optimizer::SEL_TREE.
         */
 #define NOT_IN_IGNORE_THRESHOLD 1000
         memory::Root *tmp_root= param->mem_root;
@@ -2640,7 +2346,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
         if (func->array->count > NOT_IN_IGNORE_THRESHOLD || ! value_item)
           break;
 
-        /* Get a SEL_TREE for "(-inf|NULL) < X < c_0" interval.  */
+        /* Get a optimizer::SEL_TREE for "(-inf|NULL) < X < c_0" interval.  */
         uint32_t i=0;
         do
         {
@@ -2653,20 +2359,20 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
           if (! tree)
             break;
           i++;
-        } while (i < func->array->count && tree->type == SEL_TREE::IMPOSSIBLE);
+        } while (i < func->array->count && tree->type == optimizer::SEL_TREE::IMPOSSIBLE);
 
-        if (!tree || tree->type == SEL_TREE::IMPOSSIBLE)
+        if (!tree || tree->type == optimizer::SEL_TREE::IMPOSSIBLE)
         {
           /* We get here in cases like "t.unsigned NOT IN (-1,-2,-3) */
           tree= NULL;
           break;
         }
-        SEL_TREE *tree2;
+        optimizer::SEL_TREE *tree2= NULL;
         for (; i < func->array->count; i++)
         {
           if (func->array->compare_elems(i, i-1))
           {
-            /* Get a SEL_TREE for "-inf < X < c_i" interval */
+            /* Get a optimizer::SEL_TREE for "-inf < X < c_i" interval */
             func->array->value_to_item(i, value_item);
             tree2= get_mm_parts(param, cond_func, field, Item_func::LT_FUNC,
                                 value_item, cmp_type);
@@ -2696,10 +2402,10 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
           }
         }
 
-        if (tree && tree->type != SEL_TREE::IMPOSSIBLE)
+        if (tree && tree->type != optimizer::SEL_TREE::IMPOSSIBLE)
         {
           /*
-            Get the SEL_TREE for the last "c_last < X < +inf" interval
+            Get the optimizer::SEL_TREE for the last "c_last < X < +inf" interval
             (value_item cotains c_last already)
           */
           tree2= get_mm_parts(param, cond_func, field, Item_func::GT_FUNC,
@@ -2763,7 +2469,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
 
 
 /*
-  Build conjunction of all SEL_TREEs for a simple predicate applying equalities
+  Build conjunction of all optimizer::SEL_TREEs for a simple predicate applying equalities
 
   SYNOPSIS
     get_full_func_mm_tree()
@@ -2778,7 +2484,7 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
 
   DESCRIPTION
     For a simple SARGable predicate of the form (f op c), where f is a field and
-    c is a constant, the function builds a conjunction of all SEL_TREES that can
+    c is a constant, the function builds a conjunction of all optimizer::SEL_TREES that can
     be obtained by the substitution of f for all different fields equal to f.
 
   NOTES
@@ -2788,9 +2494,9 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
     each fj belonging to the same multiple equality as fi
     are built as well.
     E.g. for WHERE t1.a=t2.a AND t2.a > 10
-    a SEL_TREE for t2.a > 10 will be built for quick select from t2
+    a optimizer::SEL_TREE for t2.a > 10 will be built for quick select from t2
     and
-    a SEL_TREE for t1.a > 10 will be built for quick select from t1.
+    a optimizer::SEL_TREE for t1.a > 10 will be built for quick select from t1.
 
     A BETWEEN predicate of the form (fi [NOT] BETWEEN c1 AND c2) is treated
     in a similar way: we build a conjuction of trees for the results
@@ -2829,16 +2535,16 @@ static SEL_TREE *get_func_mm_tree(optimizer::RangeParameter *param,
     the form (c IN (c1,...,f,...,cn)).
 
   RETURN
-    Pointer to the tree representing the built conjunction of SEL_TREEs
+    Pointer to the tree representing the built conjunction of optimizer::SEL_TREEs
 */
 
-static SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *param,
+static optimizer::SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *param,
                                        Item_func *cond_func,
                                        Item_field *field_item, Item *value,
                                        bool inv)
 {
-  SEL_TREE *tree= 0;
-  SEL_TREE *ftree= 0;
+  optimizer::SEL_TREE *tree= 0;
+  optimizer::SEL_TREE *ftree= 0;
   table_map ref_tables= 0;
   table_map param_comp= ~(param->prev_tables | param->read_tables |
 		          param->current_table);
@@ -2880,10 +2586,10 @@ static SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *param,
 
 	/* make a select tree of all keys in condition */
 
-static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
+static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
 {
-  SEL_TREE *tree=0;
-  SEL_TREE *ftree= 0;
+  optimizer::SEL_TREE *tree=0;
+  optimizer::SEL_TREE *ftree= 0;
   Item_field *field_item= 0;
   bool inv= false;
   Item *value= 0;
@@ -2898,12 +2604,12 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
       Item *item;
       while ((item=li++))
       {
-	SEL_TREE *new_tree= get_mm_tree(param,item);
+	optimizer::SEL_TREE *new_tree= get_mm_tree(param,item);
 	if (param->session->is_fatal_error ||
             param->alloced_sel_args > optimizer::SEL_ARG::MAX_SEL_ARGS)
 	  return 0;	// out of memory
 	tree=tree_and(param,tree,new_tree);
-	if (tree && tree->type == SEL_TREE::IMPOSSIBLE)
+	if (tree && tree->type == optimizer::SEL_TREE::IMPOSSIBLE)
 	  break;
       }
     }
@@ -2915,11 +2621,11 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
 	Item *item;
 	while ((item=li++))
 	{
-	  SEL_TREE *new_tree= get_mm_tree(param,item);
+	  optimizer::SEL_TREE *new_tree= get_mm_tree(param,item);
 	  if (!new_tree)
 	    return 0;	// out of memory
 	  tree=tree_or(param,tree,new_tree);
-	  if (!tree || tree->type == SEL_TREE::ALWAYS)
+	  if (!tree || tree->type == optimizer::SEL_TREE::ALWAYS)
 	    break;
 	}
       }
@@ -2937,8 +2643,8 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
     */
     memory::Root *tmp_root= param->mem_root;
     param->session->mem_root= param->old_root;
-    tree= cond->val_int() ? new(tmp_root) SEL_TREE(SEL_TREE::ALWAYS) :
-                            new(tmp_root) SEL_TREE(SEL_TREE::IMPOSSIBLE);
+    tree= cond->val_int() ? new(tmp_root) optimizer::SEL_TREE(optimizer::SEL_TREE::ALWAYS) :
+                            new(tmp_root) optimizer::SEL_TREE(optimizer::SEL_TREE::IMPOSSIBLE);
     param->session->mem_root= tmp_root;
     return(tree);
   }
@@ -2952,7 +2658,7 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
     if ((ref_tables & param->current_table) ||
 	(ref_tables & ~(param->prev_tables | param->read_tables)))
       return 0;
-    return(new SEL_TREE(SEL_TREE::MAYBE));
+    return(new optimizer::SEL_TREE(optimizer::SEL_TREE::MAYBE));
   }
 
   Item_func *cond_func= (Item_func*) cond;
@@ -2981,7 +2687,7 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
       if (cond_func->arguments()[i]->real_item()->type() == Item::FIELD_ITEM)
       {
         field_item= (Item_field*) (cond_func->arguments()[i]->real_item());
-        SEL_TREE *tmp= get_full_func_mm_tree(param, cond_func,
+        optimizer::SEL_TREE *tmp= get_full_func_mm_tree(param, cond_func,
                                     field_item, (Item*)(intptr_t)i, inv);
         if (inv)
           tree= !tree ? tmp : tree_or(param, tree, tmp);
@@ -3051,7 +2757,7 @@ static SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *cond)
 }
 
 
-static SEL_TREE *
+static optimizer::SEL_TREE *
 get_mm_parts(optimizer::RangeParameter *param,
              COND *cond_func,
              Field *field,
@@ -3063,7 +2769,7 @@ get_mm_parts(optimizer::RangeParameter *param,
 
   KEY_PART *key_part = param->key_parts;
   KEY_PART *end = param->key_parts_end;
-  SEL_TREE *tree=0;
+  optimizer::SEL_TREE *tree=0;
   if (value &&
       value->used_tables() & ~(param->prev_tables | param->read_tables))
     return 0;
@@ -3072,7 +2778,7 @@ get_mm_parts(optimizer::RangeParameter *param,
     if (field->eq(key_part->field))
     {
       optimizer::SEL_ARG *sel_arg=0;
-      if (!tree && !(tree=new SEL_TREE()))
+      if (!tree && !(tree=new optimizer::SEL_TREE()))
         return 0;				// OOM
       if (!value || !(value->used_tables() & ~param->read_tables))
       {
@@ -3082,7 +2788,7 @@ get_mm_parts(optimizer::RangeParameter *param,
           continue;
         if (sel_arg->type == optimizer::SEL_ARG::IMPOSSIBLE)
         {
-          tree->type=SEL_TREE::IMPOSSIBLE;
+          tree->type=optimizer::SEL_TREE::IMPOSSIBLE;
           return(tree);
         }
       }
@@ -3569,26 +3275,26 @@ sel_add(optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
 #define swap_clone_flag(A) ((A & 1) << 1) | ((A & 2) >> 1)
 
 
-static SEL_TREE *
-tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2)
+static optimizer::SEL_TREE *
+tree_and(optimizer::RangeParameter *param, optimizer::SEL_TREE *tree1, optimizer::SEL_TREE *tree2)
 {
   if (!tree1)
     return(tree2);
   if (!tree2)
     return(tree1);
-  if (tree1->type == SEL_TREE::IMPOSSIBLE || tree2->type == SEL_TREE::ALWAYS)
+  if (tree1->type == optimizer::SEL_TREE::IMPOSSIBLE || tree2->type == optimizer::SEL_TREE::ALWAYS)
     return(tree1);
-  if (tree2->type == SEL_TREE::IMPOSSIBLE || tree1->type == SEL_TREE::ALWAYS)
+  if (tree2->type == optimizer::SEL_TREE::IMPOSSIBLE || tree1->type == optimizer::SEL_TREE::ALWAYS)
     return(tree2);
-  if (tree1->type == SEL_TREE::MAYBE)
+  if (tree1->type == optimizer::SEL_TREE::MAYBE)
   {
-    if (tree2->type == SEL_TREE::KEY)
-      tree2->type=SEL_TREE::KEY_SMALLER;
+    if (tree2->type == optimizer::SEL_TREE::KEY)
+      tree2->type=optimizer::SEL_TREE::KEY_SMALLER;
     return(tree2);
   }
-  if (tree2->type == SEL_TREE::MAYBE)
+  if (tree2->type == optimizer::SEL_TREE::MAYBE)
   {
-    tree1->type=SEL_TREE::KEY_SMALLER;
+    tree1->type=optimizer::SEL_TREE::KEY_SMALLER;
     return(tree1);
   }
   key_map  result_keys;
@@ -3609,7 +3315,7 @@ tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2)
       *key1=key_and(param, *key1, *key2, flag);
       if (*key1 && (*key1)->type == optimizer::SEL_ARG::IMPOSSIBLE)
       {
-        tree1->type= SEL_TREE::IMPOSSIBLE;
+        tree1->type= optimizer::SEL_TREE::IMPOSSIBLE;
         return(tree1);
       }
       result_keys.set(key1 - tree1->keys);
@@ -3628,195 +3334,6 @@ tree_and(optimizer::RangeParameter *param, SEL_TREE *tree1, SEL_TREE *tree2)
   return(tree1);
 }
 
-
-/*
-  Check if two SEL_TREES can be combined into one (i.e. a single key range
-  read can be constructed for "cond_of_tree1 OR cond_of_tree2" ) without
-  using index_merge.
-*/
-
-bool sel_trees_can_be_ored(SEL_TREE *tree1, SEL_TREE *tree2,
-                           optimizer::RangeParameter* param)
-{
-  key_map common_keys= tree1->keys_map;
-  common_keys&= tree2->keys_map;
-
-  if (common_keys.none())
-    return false;
-
-  /* trees have a common key, check if they refer to same key part */
-  optimizer::SEL_ARG **key1,**key2;
-  for (uint32_t key_no=0; key_no < param->keys; key_no++)
-  {
-    if (common_keys.test(key_no))
-    {
-      key1= tree1->keys + key_no;
-      key2= tree2->keys + key_no;
-      if ((*key1)->part == (*key2)->part)
-      {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-
-/*
-  Remove the trees that are not suitable for record retrieval.
-  SYNOPSIS
-    param  Range analysis parameter
-    tree   Tree to be processed, tree->type is KEY or KEY_SMALLER
-
-  DESCRIPTION
-    This function walks through tree->keys[] and removes the SEL_ARG* trees
-    that are not "maybe" trees (*) and cannot be used to construct quick range
-    selects.
-    (*) - have type MAYBE or MAYBE_KEY. Perhaps we should remove trees of
-          these types here as well.
-
-    A SEL_ARG* tree cannot be used to construct quick select if it has
-    tree->part != 0. (e.g. it could represent "keypart2 < const").
-
-    WHY THIS FUNCTION IS NEEDED
-
-    Normally we allow construction of SEL_TREE objects that have SEL_ARG
-    trees that do not allow quick range select construction. For example for
-    " keypart1=1 AND keypart2=2 " the execution will proceed as follows:
-    tree1= SEL_TREE { SEL_ARG{keypart1=1} }
-    tree2= SEL_TREE { SEL_ARG{keypart2=2} } -- can't make quick range select
-                                               from this
-    call tree_and(tree1, tree2) -- this joins SEL_ARGs into a usable SEL_ARG
-                                   tree.
-
-    There is an exception though: when we construct index_merge SEL_TREE,
-    any SEL_ARG* tree that cannot be used to construct quick range select can
-    be removed, because current range analysis code doesn't provide any way
-    that tree could be later combined with another tree.
-    Consider an example: we should not construct
-    st1 = SEL_TREE {
-      merges = SEL_IMERGE {
-                            SEL_TREE(t.key1part1 = 1),
-                            SEL_TREE(t.key2part2 = 2)   -- (*)
-                          }
-                   };
-    because
-     - (*) cannot be used to construct quick range select,
-     - There is no execution path that would cause (*) to be converted to
-       a tree that could be used.
-
-    The latter is easy to verify: first, notice that the only way to convert
-    (*) into a usable tree is to call tree_and(something, (*)).
-
-    Second look at what tree_and/tree_or function would do when passed a
-    SEL_TREE that has the structure like st1 tree has, and conlcude that
-    tree_and(something, (*)) will not be called.
-
-  RETURN
-    0  Ok, some suitable trees left
-    1  No tree->keys[] left.
-*/
-
-static bool remove_nonrange_trees(optimizer::RangeParameter *param, SEL_TREE *tree)
-{
-  bool res= false;
-  for (uint32_t i=0; i < param->keys; i++)
-  {
-    if (tree->keys[i])
-    {
-      if (tree->keys[i]->part)
-      {
-        tree->keys[i]= NULL;
-        tree->keys_map.reset(i);
-      }
-      else
-        res= true;
-    }
-  }
-  return !res;
-}
-
-
-static SEL_TREE *
-tree_or(optimizer::RangeParameter *param,SEL_TREE *tree1,SEL_TREE *tree2)
-{
-  if (!tree1 || !tree2)
-    return 0;
-  if (tree1->type == SEL_TREE::IMPOSSIBLE || tree2->type == SEL_TREE::ALWAYS)
-    return(tree2);
-  if (tree2->type == SEL_TREE::IMPOSSIBLE || tree1->type == SEL_TREE::ALWAYS)
-    return(tree1);
-  if (tree1->type == SEL_TREE::MAYBE)
-    return(tree1);				// Can't use this
-  if (tree2->type == SEL_TREE::MAYBE)
-    return(tree2);
-
-  SEL_TREE *result= 0;
-  key_map  result_keys;
-  result_keys.reset();
-  if (sel_trees_can_be_ored(tree1, tree2, param))
-  {
-    /* Join the trees key per key */
-    optimizer::SEL_ARG **key1,**key2,**end;
-    for (key1= tree1->keys,key2= tree2->keys,end= key1+param->keys ;
-         key1 != end ; key1++,key2++)
-    {
-      *key1=key_or(param, *key1, *key2);
-      if (*key1)
-      {
-        result=tree1;				// Added to tree1
-        result_keys.set(key1 - tree1->keys);
-      }
-    }
-    if (result)
-      result->keys_map= result_keys;
-  }
-  else
-  {
-    /* ok, two trees have KEY type but cannot be used without index merge */
-    if (tree1->merges.is_empty() && tree2->merges.is_empty())
-    {
-      if (param->remove_jump_scans)
-      {
-        bool no_trees= remove_nonrange_trees(param, tree1);
-        no_trees= no_trees || remove_nonrange_trees(param, tree2);
-        if (no_trees)
-          return(new SEL_TREE(SEL_TREE::ALWAYS));
-      }
-      SEL_IMERGE *merge;
-      /* both trees are "range" trees, produce new index merge structure */
-      if (!(result= new SEL_TREE()) || !(merge= new SEL_IMERGE()) ||
-          (result->merges.push_back(merge)) ||
-          (merge->or_sel_tree(param, tree1)) ||
-          (merge->or_sel_tree(param, tree2)))
-        result= NULL;
-      else
-        result->type= tree1->type;
-    }
-    else if (!tree1->merges.is_empty() && !tree2->merges.is_empty())
-    {
-      if (imerge_list_or_list(param, &tree1->merges, &tree2->merges))
-        result= new SEL_TREE(SEL_TREE::ALWAYS);
-      else
-        result= tree1;
-    }
-    else
-    {
-      /* one tree is index merge tree and another is range tree */
-      if (tree1->merges.is_empty())
-        std::swap(tree1, tree2);
-
-      if (param->remove_jump_scans && remove_nonrange_trees(param, tree2))
-         return(new SEL_TREE(SEL_TREE::ALWAYS));
-      /* add tree2 to tree1->merges, checking if it collapses to ALWAYS */
-      if (imerge_list_or_tree(param, &tree1->merges, tree2))
-        result= new SEL_TREE(SEL_TREE::ALWAYS);
-      else
-        result= tree1;
-    }
-  }
-  return result;
-}
 
 
 /* And key trees where key1->part < key2 -> part */
@@ -4014,302 +3531,6 @@ get_range(optimizer::SEL_ARG **e1, optimizer::SEL_ARG **e2, optimizer::SEL_ARG *
 }
 
 
-static optimizer::SEL_ARG *
-key_or(optimizer::RangeParameter *param, optimizer::SEL_ARG *key1, optimizer::SEL_ARG *key2)
-{
-  if (! key1)
-  {
-    if (key2)
-    {
-      key2->use_count--;
-      key2->free_tree();
-    }
-    return 0;
-  }
-  if (! key2)
-  {
-    key1->use_count--;
-    key1->free_tree();
-    return 0;
-  }
-  key1->use_count--;
-  key2->use_count--;
-
-  if (key1->part != key2->part)
-  {
-    key1->free_tree();
-    key2->free_tree();
-    return 0;					// Can't optimize this
-  }
-
-  // If one of the key is MAYBE_KEY then the found region may be bigger
-  if (key1->type == optimizer::SEL_ARG::MAYBE_KEY)
-  {
-    key2->free_tree();
-    key1->use_count++;
-    return key1;
-  }
-  if (key2->type == optimizer::SEL_ARG::MAYBE_KEY)
-  {
-    key1->free_tree();
-    key2->use_count++;
-    return key2;
-  }
-
-  if (key1->use_count > 0)
-  {
-    if (key2->use_count == 0 || key1->elements > key2->elements)
-    {
-      std::swap(key1,key2);
-    }
-    if (key1->use_count > 0 || !(key1=key1->clone_tree(param)))
-      return 0;					// OOM
-  }
-
-  // Add tree at key2 to tree at key1
-  bool key2_shared= key2->use_count != 0;
-  key1->maybe_flag|= key2->maybe_flag;
-
-  for (key2=key2->first(); key2; )
-  {
-    optimizer::SEL_ARG *tmp= key1->find_range(key2); // Find key1.min <= key2.min
-    int cmp;
-
-    if (! tmp)
-    {
-      tmp=key1->first(); // tmp.min > key2.min
-      cmp= -1;
-    }
-    else if ((cmp=tmp->cmp_max_to_min(key2)) < 0)
-    {						// Found tmp.max < key2.min
-      optimizer::SEL_ARG *next= tmp->next;
-      if (cmp == -2 && eq_tree(tmp->next_key_part,key2->next_key_part))
-      {
-        // Join near ranges like tmp.max < 0 and key2.min >= 0
-        optimizer::SEL_ARG *key2_next=key2->next;
-        if (key2_shared)
-        {
-          if (! (key2=new optimizer::SEL_ARG(*key2)))
-            return 0;		// out of memory
-          key2->increment_use_count(key1->use_count+1);
-          key2->next= key2_next; // New copy of key2
-        }
-        key2->copy_min(tmp);
-        if (! (key1=key1->tree_delete(tmp)))
-        {					// Only one key in tree
-          key1= key2;
-          key1->make_root();
-          key2= key2_next;
-          break;
-        }
-      }
-      if (! (tmp= next)) // tmp.min > key2.min
-        break; // Copy rest of key2
-    }
-    if (cmp < 0)
-    {						// tmp.min > key2.min
-      int tmp_cmp;
-      if ((tmp_cmp= tmp->cmp_min_to_max(key2)) > 0) // if tmp.min > key2.max
-      {
-        if (tmp_cmp == 2 && eq_tree(tmp->next_key_part,key2->next_key_part))
-        {					// ranges are connected
-          tmp->copy_min_to_min(key2);
-          key1->merge_flags(key2);
-          if (tmp->min_flag & NO_MIN_RANGE &&
-              tmp->max_flag & NO_MAX_RANGE)
-          {
-            if (key1->maybe_flag)
-              return new optimizer::SEL_ARG(optimizer::SEL_ARG::MAYBE_KEY);
-            return 0;
-          }
-          key2->increment_use_count(-1);	// Free not used tree
-          key2= key2->next;
-          continue;
-        }
-        else
-        {
-          optimizer::SEL_ARG *next= key2->next; // Keys are not overlapping
-          if (key2_shared)
-          {
-            optimizer::SEL_ARG *cpy= new optimizer::SEL_ARG(*key2); // Must make copy
-            if (! cpy)
-              return 0; // OOM
-            key1= key1->insert(cpy);
-            key2->increment_use_count(key1->use_count+1);
-          }
-          else
-            key1= key1->insert(key2);		// Will destroy key2_root
-          key2= next;
-          continue;
-        }
-      }
-    }
-
-    // tmp.max >= key2.min && tmp.min <= key.cmax(overlapping ranges)
-    if (eq_tree(tmp->next_key_part,key2->next_key_part))
-    {
-      if (tmp->is_same(key2))
-      {
-        tmp->merge_flags(key2);			// Copy maybe flags
-        key2->increment_use_count(-1);		// Free not used tree
-      }
-      else
-      {
-        optimizer::SEL_ARG *last= tmp;
-        while (last->next && last->next->cmp_min_to_max(key2) <= 0 &&
-               eq_tree(last->next->next_key_part,key2->next_key_part))
-        {
-          optimizer::SEL_ARG *save= last;
-          last= last->next;
-          key1= key1->tree_delete(save);
-        }
-        last->copy_min(tmp);
-        if (last->copy_min(key2) || last->copy_max(key2))
-        {					// Full range
-          key1->free_tree();
-          for (; key2; key2= key2->next)
-            key2->increment_use_count(-1);	// Free not used tree
-          if (key1->maybe_flag)
-            return new optimizer::SEL_ARG(optimizer::SEL_ARG::MAYBE_KEY);
-          return 0;
-        }
-      }
-      key2= key2->next;
-      continue;
-    }
-
-    if (cmp >= 0 && tmp->cmp_min_to_min(key2) < 0)
-    {						// tmp.min <= x < key2.min
-      optimizer::SEL_ARG *new_arg= tmp->clone_first(key2);
-      if (! new_arg)
-        return 0;				// OOM
-      if ((new_arg->next_key_part= key1->next_key_part))
-        new_arg->increment_use_count(key1->use_count+1);
-      tmp->copy_min_to_min(key2);
-      key1= key1->insert(new_arg);
-    }
-
-    // tmp.min >= key2.min && tmp.min <= key2.max
-    optimizer::SEL_ARG key(*key2); // Get copy we can modify
-    for (;;)
-    {
-      if (tmp->cmp_min_to_min(&key) > 0)
-      {						// key.min <= x < tmp.min
-        optimizer::SEL_ARG *new_arg= key.clone_first(tmp);
-        if (! new_arg)
-          return 0;				// OOM
-        if ((new_arg->next_key_part=key.next_key_part))
-          new_arg->increment_use_count(key1->use_count+1);
-        key1= key1->insert(new_arg);
-      }
-      if ((cmp=tmp->cmp_max_to_max(&key)) <= 0)
-      {						// tmp.min. <= x <= tmp.max
-        tmp->maybe_flag|= key.maybe_flag;
-        key.increment_use_count(key1->use_count+1);
-        tmp->next_key_part= key_or(param, tmp->next_key_part, key.next_key_part);
-        if (! cmp)				// Key2 is ready
-          break;
-        key.copy_max_to_min(tmp);
-        if (! (tmp= tmp->next))
-        {
-          optimizer::SEL_ARG *tmp2= new optimizer::SEL_ARG(key);
-          if (! tmp2)
-            return 0;				// OOM
-          key1= key1->insert(tmp2);
-          key2= key2->next;
-          goto end;
-        }
-        if (tmp->cmp_min_to_max(&key) > 0)
-        {
-          optimizer::SEL_ARG *tmp2= new optimizer::SEL_ARG(key);
-          if (! tmp2)
-            return 0;				// OOM
-          key1= key1->insert(tmp2);
-          break;
-        }
-      }
-      else
-      {
-        optimizer::SEL_ARG *new_arg= tmp->clone_last(&key); // tmp.min <= x <= key.max
-        if (! new_arg)
-          return 0;				// OOM
-        tmp->copy_max_to_min(&key);
-        tmp->increment_use_count(key1->use_count+1);
-        /* Increment key count as it may be used for next loop */
-        key.increment_use_count(1);
-        new_arg->next_key_part= key_or(param, tmp->next_key_part, key.next_key_part);
-        key1= key1->insert(new_arg);
-        break;
-      }
-    }
-    key2= key2->next;
-  }
-
-end:
-  while (key2)
-  {
-    optimizer::SEL_ARG *next= key2->next;
-    if (key2_shared)
-    {
-      optimizer::SEL_ARG *tmp= new optimizer::SEL_ARG(*key2);		// Must make copy
-      if (! tmp)
-        return 0;
-      key2->increment_use_count(key1->use_count+1);
-      key1= key1->insert(tmp);
-    }
-    else
-      key1= key1->insert(key2);			// Will destroy key2_root
-    key2= next;
-  }
-  key1->use_count++;
-  return key1;
-}
-
-
-/* Compare if two trees are equal */
-static bool eq_tree(optimizer::SEL_ARG *a, optimizer::SEL_ARG *b)
-{
-  if (a == b)
-  {
-    return true;
-  }
-
-  if (! a || ! b || ! a->is_same(b))
-  {
-    return false;
-  }
-
-  if (a->left != &optimizer::null_element && b->left != &optimizer::null_element)
-  {
-    if (! eq_tree(a->left,b->left))
-      return false;
-  }
-  else if (a->left != &optimizer::null_element || b->left != &optimizer::null_element)
-  {
-    return false;
-  }
-
-  if (a->right != &optimizer::null_element && b->right != &optimizer::null_element)
-  {
-    if (! eq_tree(a->right,b->right))
-      return false;
-  }
-  else if (a->right != &optimizer::null_element || b->right != &optimizer::null_element)
-  {
-    return false;
-  }
-
-  if (a->next_key_part != b->next_key_part)
-  {						// Sub range
-    if (! a->next_key_part != ! b->next_key_part ||
-	      ! eq_tree(a->next_key_part, b->next_key_part))
-      return false;
-  }
-
-  return true;
-}
-
-
 /****************************************************************************
   MRR Range Sequence Interface implementation that walks a SEL_ARG* tree.
  ****************************************************************************/
@@ -4340,7 +3561,7 @@ typedef struct st_range_seq_entry
 */
 typedef struct st_sel_arg_range_seq
 {
-  uint32_t keyno;      /* index of used tree in SEL_TREE structure */
+  uint32_t keyno;      /* index of used tree in optimizer::SEL_TREE structure */
   uint32_t real_keyno; /* Number of the index in tables */
   optimizer::Parameter *param;
   optimizer::SEL_ARG *start; /* Root node of the traversed SEL_ARG* graph */
@@ -4582,7 +3803,7 @@ walk_up_n_right:
   SYNOPSIS
     check_quick_select()
       param             Parameter from test_quick_select
-      idx               Number of index to use in Parameter::key SEL_TREE::key
+      idx               Number of index to use in Parameter::key optimizer::SEL_TREE::key
       index_only        true  - assume only index tuples will be accessed
                         false - assume full table rows will be read
       tree              Transformed selection condition, tree->key[idx] holds
@@ -5196,7 +4417,7 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
 static inline uint32_t get_field_keypart(KEY *index, Field *field);
 
 static inline optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
-                                                        SEL_TREE *range_tree,
+                                                        optimizer::SEL_TREE *range_tree,
                                                         optimizer::Parameter *param,
                                                         uint32_t *param_idx);
 
@@ -5217,7 +4438,7 @@ cost_group_min_max(Table* table,
                    KEY *index_info,
                    uint32_t used_key_parts,
                    uint32_t group_key_parts,
-                   SEL_TREE *range_tree,
+                   optimizer::SEL_TREE *range_tree,
                    optimizer::SEL_ARG *index_tree,
                    ha_rows quick_prefix_records,
                    bool have_min,
@@ -5354,7 +4575,7 @@ cost_group_min_max(Table* table,
     - NULL
 */
 static optimizer::GroupMinMaxReadPlan *
-get_best_group_min_max(optimizer::Parameter *param, SEL_TREE *tree)
+get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
 {
   Session *session= param->session;
   JOIN *join= session->lex->current_select->join;
@@ -6068,8 +5289,8 @@ get_field_keypart(KEY *index, Field *field)
 
   DESCRIPTION
 
-    A SEL_TREE contains range trees for all usable indexes. This procedure
-    finds the SEL_ARG sub-tree for 'index'. The members of a SEL_TREE are
+    A optimizer::SEL_TREE contains range trees for all usable indexes. This procedure
+    finds the SEL_ARG sub-tree for 'index'. The members of a optimizer::SEL_TREE are
     ordered in the same way as the members of Parameter::key, thus we first find
     the corresponding index in the array Parameter::key. This index is returned
     through the variable param_idx, to be used later as argument of
@@ -6079,7 +5300,7 @@ get_field_keypart(KEY *index, Field *field)
     Pointer to the SEL_ARG subtree that corresponds to index.
 */
 optimizer::SEL_ARG *get_index_range_tree(uint32_t index,
-                                         SEL_TREE* range_tree,
+                                         optimizer::SEL_TREE* range_tree,
                                          optimizer::Parameter *param,
                                          uint32_t *param_idx)
 {
@@ -6158,7 +5379,7 @@ void cost_group_min_max(Table* table,
                         KEY *index_info,
                         uint32_t used_key_parts,
                         uint32_t group_key_parts,
-                        SEL_TREE *range_tree,
+                        optimizer::SEL_TREE *range_tree,
                         optimizer::SEL_ARG *,
                         ha_rows quick_prefix_records,
                         bool have_min,
@@ -6359,68 +5580,5 @@ optimizer::QuickSelectInterface *optimizer::RangeReadPlan::make_quick(optimizer:
   return quick;
 }
 
-
-static void print_sel_tree(optimizer::Parameter *param, SEL_TREE *tree, key_map *tree_map, const char *)
-{
-  optimizer::SEL_ARG **key= NULL;
-  optimizer::SEL_ARG **end= NULL;
-  int idx= 0;
-  char buff[1024];
-
-  String tmp(buff,sizeof(buff),&my_charset_bin);
-  tmp.length(0);
-  for (idx= 0, key=tree->keys, end= key + param->keys;
-       key != end;
-       key++, idx++)
-  {
-    if (tree_map->test(idx))
-    {
-      uint32_t keynr= param->real_keynr[idx];
-      if (tmp.length())
-        tmp.append(',');
-      tmp.append(param->table->key_info[keynr].name);
-    }
-  }
-  if (! tmp.length())
-    tmp.append(STRING_WITH_LEN("(empty)"));
-}
-
-
-static void print_ror_scans_arr(Table *table,
-                                const char *,
-                                struct st_ror_scan_info **start,
-                                struct st_ror_scan_info **end)
-{
-  char buff[1024];
-  String tmp(buff,sizeof(buff),&my_charset_bin);
-  tmp.length(0);
-  for (; start != end; start++)
-  {
-    if (tmp.length())
-      tmp.append(',');
-    tmp.append(table->key_info[(*start)->keynr].name);
-  }
-  if (! tmp.length())
-    tmp.append(STRING_WITH_LEN("(empty)"));
-}
-
-static void print_ror_scans_vector(Table *table,
-                                   const char *,
-                                   vector<struct st_ror_scan_info *> &vec)
-{
-  char buff[1024];
-  String tmp(buff,sizeof(buff),&my_charset_bin);
-  tmp.length(0);
-  for (vector<struct st_ror_scan_info *>::iterator it= vec.begin();
-       it != vec.end();
-       ++it)
-  {
-    if (tmp.length())
-      tmp.append(',');
-    tmp.append(table->key_info[(*it)->keynr].name);
-  }
-  if (! tmp.length())
-    tmp.append(STRING_WITH_LEN("(empty)"));
-}
 
 } /* namespace drizzled */

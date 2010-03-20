@@ -35,7 +35,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/replication_services.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/message/schema.pb.h>
 #include "drizzled/sql_table.h"
 #include "drizzled/plugin/storage_engine.h"
@@ -54,7 +54,7 @@ namespace drizzled
 {
 
 static long mysql_rm_known_files(Session *session,
-                                 const string &db, const char *path,
+                                 const string &db,
                                  plugin::TableNameList &dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
@@ -81,7 +81,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 bool mysql_create_db(Session *session, const message::Schema &schema_message, const bool is_if_not_exists)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
+  TransactionServices &transaction_services= TransactionServices::singleton();
   bool error= false;
 
   /*
@@ -130,7 +130,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   }
   else // Created !
   {
-    replication_services.createSchema(session, schema_message);
+    transaction_services.createSchema(session, schema_message);
     session->my_ok(1);
   }
 
@@ -145,7 +145,7 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
 
 bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
+  TransactionServices &transaction_services= TransactionServices::singleton();
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -175,7 +175,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 
   if (success)
   {
-    replication_services.rawStatement(session, session->getQueryString());
+    transaction_services.rawStatement(session, session->getQueryString());
     session->my_ok(1);
   }
   else
@@ -211,8 +211,6 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 {
   long deleted=0;
   int error= false;
-  char	path[FN_REFLEN+16];
-  uint32_t length;
   plugin::TableNameList dropped_tables;
   message::Schema schema_proto;
 
@@ -236,10 +234,6 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   pthread_mutex_lock(&LOCK_create_db);
 
 
-  length= build_table_filename(path, sizeof(path),
-                               schema_name.c_str(), "", false);
-  path[length]= '\0';				// Remove file name
-
   /* See if the schema exists */
   if (not plugin::StorageEngine::doesSchemaExist(schema_name))
   {
@@ -247,12 +241,12 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     {
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                          path);
+                          schema_name.c_str());
     }
     else
     {
       error= -1;
-      my_error(ER_DB_DROP_EXISTS, MYF(0), path);
+      my_error(ER_DB_DROP_EXISTS, MYF(0), schema_name.c_str());
       goto exit;
     }
   }
@@ -264,8 +258,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, schema_name,
-                                  path, dropped_tables);
+    deleted= mysql_rm_known_files(session, schema_name, dropped_tables);
     if (deleted >= 0)
     {
       error= 0;
@@ -275,8 +268,8 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   {
     assert(! session->query.empty());
 
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.dropSchema(session, schema_name);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.dropSchema(session, schema_name);
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -293,7 +286,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= schema_name.length();
 
-    ReplicationServices &replication_services= ReplicationServices::singleton();
+    TransactionServices &transaction_services= TransactionServices::singleton();
     for (plugin::TableNameList::iterator it= dropped_tables.begin();
          it != dropped_tables.end();
          it++)
@@ -305,7 +298,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
-        replication_services.rawStatement(session, query);
+        transaction_services.rawStatement(session, query);
         query_pos= query_data_start;
       }
 
@@ -318,7 +311,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_create_db */
-      replication_services.rawStatement(session, query);
+      transaction_services.rawStatement(session, query);
     }
   }
 
@@ -481,13 +474,8 @@ err_with_placeholders:
 
 static long mysql_rm_known_files(Session *session,
                                  const string &db,
-				 const char *org_path,
                                  plugin::TableNameList &dropped_tables)
 {
-  CachedDirectory dirp(org_path);
-  if (dirp.fail())
-    return 0;
-
   long deleted= 0;
   TableList *tot_list= NULL, **tot_list_next;
 

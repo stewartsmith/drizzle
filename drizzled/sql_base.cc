@@ -592,29 +592,44 @@ void Session::doGetTableNames(CachedDirectory &,
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (not db_name.compare(table->s->db.str))
+    if (not db_name.compare(table->s->getSchemaName()))
     {
       set_of_names.insert(table->s->table_name.str);
     }
   }
 }
 
-int Session::doGetTableDefinition(const char *,
-                                  const char *db_arg,
-                                  const char *table_name_arg,
-                                  const bool ,
-                                  message::Table *table_proto)
+bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
     if (table->s->tmp_table == TEMP_TABLE)
     {
-      if (not strcmp(db_arg, table->s->db.str))
+      if (not strcmp(identifier.getSchemaName().c_str(), table->s->getSchemaName()))
       {
-        if (not strcmp(table_name_arg, table->s->table_name.str))
+        if (not strcmp(identifier.getTableName().c_str(), table->s->table_name.str))
         {
-          if (table_proto)
-            table_proto->CopyFrom(*(table->s->getTableProto()));
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+int Session::doGetTableDefinition(TableIdentifier &identifier,
+                                  message::Table &table_proto)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (table->s->tmp_table == TEMP_TABLE)
+    {
+      if (not strcmp(identifier.getSchemaName().c_str(), table->s->getSchemaName()))
+      {
+        if (not strcmp(identifier.getTableName().c_str(), table->s->table_name.str))
+        {
+          table_proto.CopyFrom(*(table->s->getTableProto()));
 
           return EEXIST;
         }
@@ -1002,6 +1017,10 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
   @retval  true   Error occured (OOM)
   @retval  false  Success. 'table' parameter set according to above rules.
 */
+bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table)
+{
+  return lock_table_name_if_not_cached(identifier.getSchemaName().c_str(), identifier.getTableName().c_str(), table);
+}
 
 bool Session::lock_table_name_if_not_cached(const char *new_db,
                                             const char *table_name, Table **table)
@@ -1411,7 +1430,7 @@ bool reopen_table(Table *table)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data Cursor in reopen_table"),
                   table->alias);
 #endif
-  table_list.db=         table->s->db.str;
+  table_list.db=         const_cast<char *>(table->s->getSchemaName());
   table_list.table_name= table->s->table_name.str;
   table_list.table=      table;
 
@@ -1508,7 +1527,7 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
   for (table= open_tables; table ; table=table->next)
   {
     if (!strcmp(table->s->table_name.str, new_table_name) &&
-        !strcmp(table->s->db.str, new_db))
+        !strcmp(table->s->getSchemaName(), new_db))
     {
       table->open_placeholder= true;
       close_handle_and_leave_table_as_lock(table);
@@ -1824,7 +1843,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
   {
     next=table->next;
     if (!strcmp(table->s->table_name.str, table_name) &&
-        !strcmp(table->s->db.str, db))
+        !strcmp(table->s->getSchemaName(), db))
     {
       mysql_lock_remove(session, table);
 
@@ -1870,7 +1889,7 @@ void abort_locked_tables(Session *session,const char *db, const char *table_name
   for (table= session->open_tables; table ; table= table->next)
   {
     if (!strcmp(table->s->table_name.str, table_name) &&
-        !strcmp(table->s->db.str, db))
+        !strcmp(table->s->getSchemaName(), db))
     {
       /* If MERGE child, forward lock handling to parent. */
       mysql_lock_abort(session, table);
@@ -2252,11 +2271,11 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   uint32_t key_length, path_length;
   TableList table_list;
 
-  table_list.db=         (char*) identifier.getDBName();
-  table_list.table_name= (char*) identifier.getTableName();
+  table_list.db=         (char*) identifier.getDBName().c_str();
+  table_list.table_name= (char*) identifier.getTableName().c_str();
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
-  path_length= strlen(identifier.getPath());
+  path_length= identifier.getPath().length();
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
                                        path_length + 1 + key_length)))
@@ -2264,7 +2283,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
 
   share= (TableShare*) (new_tmp_table+1);
   tmp_path= (char*) (share+1);
-  saved_cache_key= strcpy(tmp_path, identifier.getPath())+path_length+1;
+  saved_cache_key= strcpy(tmp_path, identifier.getPath().c_str())+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
   share->init(saved_cache_key, key_length, strchr(saved_cache_key, '\0')+1, tmp_path);
@@ -2273,7 +2292,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
     First open the share, and then open the table from the share we just opened.
   */
   if (open_table_def(*this, share) ||
-      open_table_from_share(this, share, identifier.getTableName(),
+      open_table_from_share(this, share, identifier.getTableName().c_str(),
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
                             ha_open_options,
@@ -4403,7 +4422,7 @@ void remove_db_from_cache(const std::string schema_name)
   for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
   {
     Table *table=(Table*) hash_element(&open_cache,idx);
-    if (not strcmp(table->s->db.str, schema_name.c_str()))
+    if (not strcmp(table->s->getSchemaName(), schema_name.c_str()))
     {
       table->s->version= 0L;			/* Free when thread is ready */
       if (not table->in_use)
