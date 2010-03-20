@@ -1237,12 +1237,10 @@ err:
    6    Unknown .frm version
 */
 
-int open_table_def(Session& session, TableShare *share)
+int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share)
 {
   int error;
   bool error_given;
-
-  TableIdentifier identifier(share->normalized_path.str);
 
   error= 1;
   error_given= 0;

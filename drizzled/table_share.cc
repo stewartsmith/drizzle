@@ -225,7 +225,8 @@ TableShare *TableShare::getShare(Session *session,
     return NULL;
   }
   
-  if (open_table_def(*session, share))
+  TableIdentifier identifier(share->normalized_path.str);
+  if (open_table_def(*session, identifier, share))
   {
     *error= share->error;
     table_def_cache.erase(key_string);

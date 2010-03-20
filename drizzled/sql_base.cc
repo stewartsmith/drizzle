@@ -2310,7 +2310,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (open_table_def(*this, share) ||
+  if (open_table_def(*this, identifier, share) ||
       open_table_from_share(this, share, identifier.getTableName().c_str(),
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
