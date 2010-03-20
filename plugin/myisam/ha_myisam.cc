@@ -69,6 +69,9 @@ static const char *ha_myisam_exts[] = {
 
 class MyisamEngine : public plugin::StorageEngine
 {
+  MyisamEngine();
+  MyisamEngine(const MyisamEngine&);
+  MyisamEngine& operator=(const MyisamEngine&);
 public:
   explicit MyisamEngine(string name_arg) :
     plugin::StorageEngine(name_arg,
@@ -81,7 +84,7 @@ public:
                           HTON_DUPLICATE_POS |
                           HTON_AUTO_PART_KEY |
                           HTON_SKIP_STORE_LOCK |
-                          HTON_FILE_BASED ) {}
+                          HTON_FILE_BASED )
   {
     pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
   }
