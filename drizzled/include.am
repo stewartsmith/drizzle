@@ -282,12 +282,15 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/optimizer/range_param.h \
 			      drizzled/optimizer/sargable_param.h \
 			      drizzled/optimizer/sel_arg.h \
+			      drizzled/optimizer/sel_imerge.h \
+			      drizzled/optimizer/sel_tree.h \
 			      drizzled/optimizer/sum.h \
 			      drizzled/optimizer/table_read_plan.h \
 			      drizzled/order.h \
 			      drizzled/parser.h \
 			      drizzled/plugin.h \
 			      drizzled/plugin/authentication.h \
+			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/client.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/function.h \
@@ -297,6 +300,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/logging.h \
 			      drizzled/plugin/manifest.h \
 			      drizzled/plugin/module.h \
+			      drizzled/plugin/monitored_in_transaction.h \
 			      drizzled/plugin/null_client.h \
 			      drizzled/plugin/plugin.h \
 			      drizzled/plugin/query_cache.h \
@@ -639,8 +643,11 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/optimizer/quick_ror_union_select.cc \
 				 drizzled/optimizer/range.cc \
 				 drizzled/optimizer/sel_arg.cc \
+				 drizzled/optimizer/sel_imerge.cc \
+				 drizzled/optimizer/sel_tree.cc \
 				 drizzled/optimizer/sum.cc \
 				 drizzled/plugin/authentication.cc \
+				 drizzled/plugin/authorization.cc \
 				 drizzled/plugin/client.cc \
 				 drizzled/plugin/error_message.cc \
 				 drizzled/plugin/function.cc \
@@ -649,6 +656,7 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/plugin/listen_tcp.cc \
 				 drizzled/plugin/loader.cc \
 				 drizzled/plugin/logging.cc \
+				 drizzled/plugin/monitored_in_transaction.cc \
 				 drizzled/plugin/plugin.cc \
 				 drizzled/plugin/query_cache.cc \
 				 drizzled/plugin/query_rewrite.cc \
@@ -741,6 +749,7 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/uniques.cc \
 				 drizzled/user_var_entry.cc \
 				 drizzled/version.cc \
+				 drizzled/plugin/xa_resource_manager.cc \
 				 drizzled/xid.cc
 
 sbin_PROGRAMS+= drizzled/drizzled
