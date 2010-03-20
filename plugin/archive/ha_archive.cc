@@ -165,10 +165,9 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 }
 
 
-int ArchiveEngine::doDropTable(Session&,
-                               const string &table_path)
+int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 {
-  string new_path(table_path);
+  string new_path(identifier.getPath());
 
   new_path+= ARZ;
 
@@ -183,18 +182,15 @@ int ArchiveEngine::doDropTable(Session&,
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        const char* path,
-                                        const char *,
-                                        const char *,
-                                        const bool,
-                                        drizzled::message::Table *table_proto)
+                                        TableIdentifier &identifier,
+                                        drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
   int error= ENOENT;
   string proto_path;
 
   proto_path.reserve(FN_REFLEN);
-  proto_path.assign(path);
+  proto_path.assign(identifier.getPath());
 
   proto_path.append(ARZ);
 
@@ -203,7 +199,6 @@ int ArchiveEngine::doGetTableDefinition(Session&,
   else
     error= EEXIST;
 
-  if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
@@ -219,7 +214,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
     azread_frm(&proto_stream, proto_string);
 
-    if (table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto.ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);
@@ -533,8 +528,8 @@ int ha_archive::close(void)
 */
 
 int ArchiveEngine::doCreateTable(Session *,
-                                 const char *table_name,
                                  Table& table_arg,
+                                 drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -566,8 +561,8 @@ int ArchiveEngine::doCreateTable(Session *,
   /*
     We reuse name_buff since it is available.
   */
-  internal::fn_format(name_buff, table_name, "", ARZ,
-            MY_REPLACE_EXT | MY_UNPACK_FILENAME);
+  internal::fn_format(name_buff, identifier.getPath().c_str(), "", ARZ,
+                      MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
@@ -1325,4 +1320,18 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   free((char*) r->buffer);
   free((char*) r);
   return;
+}
+
+bool ArchiveEngine::doDoesTableExist(Session&,
+                                     TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(ARZ);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
 }

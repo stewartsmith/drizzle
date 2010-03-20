@@ -418,13 +418,13 @@ public:
   }
 
   UNIV_INTERN int doCreateTable(Session *session,
-                                const char *table_name,
                                 Table& form,
+                                drizzled::TableIdentifier &identifier,
                                 message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from,
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session& session, const string &table_path);
+  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -5443,9 +5443,8 @@ int
 InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
-	const char*	table_name,	/*!< in: table name */
-	Table&		form,		/*!< in: information on table
-					columns and indexes */
+	Table&		form,		/*!< in: information on table columns and indexes */
+        drizzled::TableIdentifier &identifier,
         message::Table& create_proto)
 {
 	int		error;
@@ -5462,6 +5461,8 @@ InnobaseEngine::doCreateTable(
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
         bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
+
+	const char *table_name= identifier.getPath().c_str();
 
 	assert(session != NULL);
 
@@ -5870,19 +5871,19 @@ UNIV_INTERN
 int
 InnobaseEngine::doDropTable(
 /*======================*/
-        Session& session,
-	const string &table_path)	/* in: table name */
+        Session &session,
+        TableIdentifier &identifier)
 {
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
 	char	norm_name[1000];
 
-	ut_a(table_path.length() < 1000);
+	ut_a(identifier.getPath().length() < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, table_path.c_str());
+	normalize_table_name(norm_name, identifier.getPath().c_str());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
