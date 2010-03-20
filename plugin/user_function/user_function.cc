@@ -97,18 +97,11 @@ bool UserFunction::fix_fields(Session *session, Item **ref)
 
 plugin::Create_function<UserFunction> *user_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   user_function= new plugin::Create_function<UserFunction>("user");
-  registry.add(user_function);
+  context.add(user_function);
   return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-   registry.remove(user_function);
-   delete user_function;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -120,7 +113,6 @@ DRIZZLE_DECLARE_PLUGIN
   "USER() and CURRENT_USER()",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

@@ -44,7 +44,7 @@ static ViewColumnUsage *view_column_usage;
 static ViewTableUsage *view_table_usage;
 static Views *views;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   check_constraints = new(std::nothrow)CheckConstraints;
   column_domain_usage = new(std::nothrow)ColumnDomainUsage;
@@ -67,73 +67,26 @@ static int init(drizzled::plugin::Registry &registry)
   view_table_usage = new(std::nothrow)ViewTableUsage;
   views = new(std::nothrow)Views;
 
-  registry.add(check_constraints);
-  registry.add(column_domain_usage);
-  registry.add(column_privileges);
-  registry.add(columns);
-  registry.add(constraint_column_usage);
-  registry.add(constraint_table_usage);
-  registry.add(domain_constraints);
-  registry.add(domains);
-  registry.add(key_column_usage);
-  registry.add(parameters);
-  registry.add(referential_constraints);
-  registry.add(routines);
-  registry.add(routine_columns);
-  registry.add(schemata);
-  registry.add(table_constraints);
-  registry.add(table_privileges);
-  registry.add(tables);
-  registry.add(view_column_usage);
-  registry.add(view_table_usage);
-  registry.add(views);
-
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(check_constraints);
-  registry.remove(column_domain_usage);
-  registry.remove(column_privileges);
-  registry.remove(columns);
-  registry.remove(constraint_column_usage);
-  registry.remove(constraint_table_usage);
-  registry.remove(domain_constraints);
-  registry.remove(domains);
-  registry.remove(key_column_usage);
-  registry.remove(parameters);
-  registry.remove(referential_constraints);
-  registry.remove(routines);
-  registry.remove(routine_columns);
-  registry.remove(schemata);
-  registry.remove(table_constraints);
-  registry.remove(table_privileges);
-  registry.remove(tables);
-  registry.remove(view_column_usage);
-  registry.remove(view_table_usage);
-  registry.remove(views);
-
-  delete check_constraints;
-  delete column_domain_usage;
-  delete column_privileges;
-  delete columns;
-  delete constraint_column_usage;
-  delete constraint_table_usage;
-  delete domain_constraints;
-  delete domains;
-  delete key_column_usage;
-  delete parameters;
-  delete referential_constraints;
-  delete routines;
-  delete routine_columns;
-  delete schemata;
-  delete table_constraints;
-  delete table_privileges;
-  delete tables;
-  delete view_column_usage;
-  delete view_table_usage;
-  delete views;
+  context.add(check_constraints);
+  context.add(column_domain_usage);
+  context.add(column_privileges);
+  context.add(columns);
+  context.add(constraint_column_usage);
+  context.add(constraint_table_usage);
+  context.add(domain_constraints);
+  context.add(domains);
+  context.add(key_column_usage);
+  context.add(parameters);
+  context.add(referential_constraints);
+  context.add(routines);
+  context.add(routine_columns);
+  context.add(schemata);
+  context.add(table_constraints);
+  context.add(table_privileges);
+  context.add(tables);
+  context.add(view_column_usage);
+  context.add(view_table_usage);
+  context.add(views);
 
   return 0;
 }
@@ -147,7 +100,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for ANSI information schema, etc",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }
