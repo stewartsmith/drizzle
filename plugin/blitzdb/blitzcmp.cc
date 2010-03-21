@@ -106,18 +106,60 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
 int blitz_keycmp_cb(const char *a, int,
                     const char *b, int, void *opaque) {
   BlitzTree *tree = (BlitzTree *)opaque;
+  int a_compared_len, b_compared_len, rv;
+
+  a_compared_len = b_compared_len = 0;
+  rv = packed_key_cmp(tree, a, b, &a_compared_len, &b_compared_len);
+
+  if (rv != 0)
+    return rv;
+
+  /* Getting here means that the keys are identical. However,
+     unless this is a unique index, don't return 0 just yet.     
+     Our final job here is to check whether the PK part of the
+     keys are identical or not. If so, it's safe to conclude
+     that the keys are identical. */
+  if (tree->unique)
+    return 0;
+
+  char *a_pos = (char *)a + a_compared_len;
+  char *b_pos = (char *)b + b_compared_len;
+
+  uint16_t a_pk_len = uint2korr(a_pos);
+  uint16_t b_pk_len = uint2korr(b_pos);
+
+  a_pos += sizeof(a_pk_len);
+  b_pos += sizeof(b_pk_len);
+
+  if (a_pk_len == b_pk_len)
+    rv = memcmp(a_pos, b_pos, a_pk_len);
+  else if (a_pk_len < b_pk_len)
+    rv = -1;
+  else
+    rv = 1;
+
+  return rv;
+}
+
+/* General purpose comparison function for BlitzDB. We cannot reuse
+   blitz_keycmp_cb() for this purpose because the 'exact match' only
+   applies to BlitzDB's unique B+Tree key format in blitz_keycmp_cb().
+   Here we are comparing packed Drizzle keys. */
+int packed_key_cmp(BlitzTree *tree, const char *a, const char *b,
+                   int *a_compared_len, int *b_compared_len) {
   BlitzKeyPart *curr_part;
-
-  int a_next_offset = 0;
-  int b_next_offset = 0;
-
   char *a_pos = (char *)a;
   char *b_pos = (char *)b;
+  int a_next_offset = 0;
+  int b_next_offset = 0;
 
   for (int i = 0; i < tree->nparts; i++) {
     curr_part = &tree->parts[i];
 
     if (curr_part->null_bitmask) {
+      *a_compared_len += 1;
+      *b_compared_len += 1;
+
       if (*a_pos != *b_pos)
         return ((int)*a_pos - (int)*b_pos);
 
@@ -134,6 +176,9 @@ int blitz_keycmp_cb(const char *a, int,
       int32_t a_int_val = sint4korr(a_pos);
       int32_t b_int_val = sint4korr(b_pos);
 
+      *a_compared_len += curr_part->length;
+      *b_compared_len += curr_part->length;
+
       if (a_int_val < b_int_val)
         return -1;
       else if (a_int_val > b_int_val)
@@ -145,6 +190,9 @@ int blitz_keycmp_cb(const char *a, int,
     case HA_KEYTYPE_ULONG_INT: {
       uint32_t a_int_val = uint4korr(a_pos);
       uint32_t b_int_val = uint4korr(b_pos);
+
+      *a_compared_len += curr_part->length;
+      *b_compared_len += curr_part->length;
 
       if (a_int_val < b_int_val)
         return -1;
@@ -158,6 +206,9 @@ int blitz_keycmp_cb(const char *a, int,
       int64_t a_int_val = sint8korr(a_pos);
       int64_t b_int_val = sint8korr(b_pos);
 
+      *a_compared_len += curr_part->length;
+      *b_compared_len += curr_part->length;
+
       if (a_int_val < b_int_val)
         return -1;
       else if (a_int_val > b_int_val)
@@ -169,6 +220,9 @@ int blitz_keycmp_cb(const char *a, int,
     case HA_KEYTYPE_ULONGLONG: {
       uint64_t a_int_val = uint8korr(a_pos);
       uint64_t b_int_val = uint8korr(b_pos);
+
+      *a_compared_len += curr_part->length;
+      *b_compared_len += curr_part->length;
 
       if (a_int_val < b_int_val)
         return -1;
@@ -182,6 +236,9 @@ int blitz_keycmp_cb(const char *a, int,
       uint32_t a_int_val = uint3korr(a_pos);
       uint32_t b_int_val = uint3korr(b_pos);
 
+      *a_compared_len += curr_part->length;
+      *b_compared_len += curr_part->length;
+
       if (a_int_val < b_int_val)
         return -1;
       else if (a_int_val > b_int_val)
@@ -194,6 +251,9 @@ int blitz_keycmp_cb(const char *a, int,
       double a_double_val, b_double_val;
       float8get(a_double_val, a_pos);
       float8get(b_double_val, b_pos);
+
+      *a_compared_len += curr_part->length;
+      *b_compared_len += curr_part->length;
 
       if (a_double_val < b_double_val)
         return -1;
@@ -210,6 +270,9 @@ int blitz_keycmp_cb(const char *a, int,
 
       a_pos++;
       b_pos++;
+
+      *a_compared_len += a_varchar_len + sizeof(a_varchar_len);
+      *b_compared_len += b_varchar_len + sizeof(b_varchar_len);
 
       /* Compare the texts by respecting collation. */
       key_changed = my_strnncoll(&my_charset_utf8_general_ci,
@@ -231,6 +294,9 @@ int blitz_keycmp_cb(const char *a, int,
 
       a_pos += sizeof(a_varchar_len);
       b_pos += sizeof(b_varchar_len);
+
+      *a_compared_len += a_varchar_len + sizeof(a_varchar_len);
+      *b_compared_len += b_varchar_len + sizeof(b_varchar_len);
 
       /* Compare the texts by respecting collation. */
       key_changed = my_strnncoll(&my_charset_utf8_general_ci,
@@ -254,37 +320,5 @@ int blitz_keycmp_cb(const char *a, int,
     curr_part++;
   }
 
-  /* Getting here means that the keys are identical. However,
-     unless this is a unique index, don't return 0 just yet.     
-     Our final job here is to check whether the PK part of the
-     keys are identical or not. If so, it's safe to conclude
-     that the keys are identical. */
-  if (tree->unique)
-    return 0;
-
-  uint16_t a_pk_len = uint2korr(a_pos);
-  uint16_t b_pk_len = uint2korr(b_pos);
-  int rv = 0;
-
-  a_pos += sizeof(a_pk_len);
-  b_pos += sizeof(b_pk_len);
-
-  if (a_pk_len == b_pk_len)
-    rv = memcmp(a_pos, b_pos, a_pk_len);
-  else if (a_pk_len < b_pk_len)
-    rv = -1;
-  else
-    rv = 1;
-
-  return rv;
-}
-
-/* General purpose comparison function for BlitzDB. We cannot reuse
-   blitz_keycmp_cb() for this purpose because the 'exact match' only
-   applies to BlitzDB's unique B+Tree key format in blitz_keycmp_cb().
-   Here we are comparing packed Drizzle keys. */
-int ha_blitz::packed_key_cmp(const int ,
-                             const char *, const int ,
-                             const char *, const int) {
   return 0;
 }

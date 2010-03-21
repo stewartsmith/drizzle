@@ -48,10 +48,6 @@
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
-/* Callback function for TC's B+Tree key comparison. */
-extern int blitz_keycmp_cb(const char *a, int alen,
-                           const char *b, int blen, void *opaque);
-
 static const char *ha_blitz_exts[] = {
   BLITZ_DATA_EXT,
   BLITZ_INDEX_EXT,
@@ -216,6 +212,13 @@ public:
   uint64_t records(void); 
 };
 
+/* Callback function for TC's B+Tree key comparison. */
+extern int blitz_keycmp_cb(const char *a, int alen,
+                           const char *b, int blen, void *opaque);
+/* Comparison function for Drizzle types. */
+extern int packed_key_cmp(BlitzTree *, const char *a, const char *b,
+                          int *a_real_len, int *b_real_len);
+
 /* Object shared among all worker threads. Try to only add
    data that will not be updated at runtime or those that
    do not require locking. */
@@ -334,8 +337,6 @@ public:
   char *merge_key(const char *a, const size_t a_len, const char *b,
                   const size_t b_len, size_t *merged_len);
   void keep_track_of_key(const char *key, const int klen);
-  int packed_key_cmp(const int key_num, const char *a, const int a_len,
-                     const char *b, const int b_len);
 
   /* ROW RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   size_t pack_row(unsigned char *row_buffer, unsigned char *row_to_pack);
