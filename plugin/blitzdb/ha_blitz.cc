@@ -459,14 +459,17 @@ int ha_blitz::index_next(unsigned char *buf) {
 
   bt_key = share->btrees[active_index].next_key(&bt_klen);
 
-  if (bt_key == NULL)
+  if (bt_key == NULL) {
+    table->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
+  }
   
   prefix_len = btree_key_length(bt_key, active_index);
   dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
 
   if ((row = share->dict.get_row(dict_key, dict_klen, &rlen)) == NULL) {
     free(bt_key);
+    table->status = STATUS_NOT_FOUND;
     return HA_ERR_KEY_NOT_FOUND;
   }
 
@@ -598,7 +601,48 @@ int ha_blitz::index_end(void) {
 ha_rows ha_blitz::records_in_range(uint32_t key_num,
                                    drizzled::key_range *min_key,
                                    drizzled::key_range *max_key) {
-  if (key_num && min_key && max_key) {}
+  uint64_t rv = 0;
+
+  /* This is a simple case where an explicit range is given. */
+  if (min_key && max_key) {
+    char *packed, *key;
+    int packed_len, klen;
+    int cmp, a_compared_len, b_compared_len;
+
+    packed = native_to_blitz_key(min_key->key, key_num, &packed_len);
+
+    /* Position the cursor at the beginning of the range. */
+    if (!share->btrees[key_num].move_cursor(packed, packed_len, min_key->flag))
+      return BLITZ_WORST_CASE_RANGE;
+
+    rv++;
+
+    /* Count and Traverse the tree until we hit max_key. */
+    packed = native_to_blitz_key(max_key->key, key_num, &packed_len);
+
+    do {
+      if ((key = share->btrees[key_num].next_key(&klen)) == NULL)
+        break;
+
+      cmp = packed_key_cmp(&share->btrees[key_num], key, packed,
+                           &a_compared_len, &b_compared_len);
+      rv++;
+      free(key);
+
+      /* Means we've hit max_key. Now check if drizzle wants us to
+         count the duplicate keys as well. */
+      if (cmp == 0) {
+        if (max_key->flag == HA_READ_AFTER_KEY) {
+          int dups = share->btrees[key_num].count_duplicates_from_cursor();
+          rv += dups;
+        }
+        break;
+      }
+    } while (1);
+
+    return rv;
+  }
+
   return BLITZ_WORST_CASE_RANGE;
 }
 
@@ -729,7 +773,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
        consider in the future is to take a diff of the keys and only
        update changed keys. */
     int skip = btree_key_length(held_key, active_index);
-    char *suffix = held_key + skip; 
+    char *suffix = held_key + skip;
     uint16_t suffix_len = uint2korr(suffix);
 
     suffix += sizeof(suffix_len);

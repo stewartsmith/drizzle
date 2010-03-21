@@ -108,7 +108,6 @@ int blitz_keycmp_cb(const char *a, int,
   BlitzTree *tree = (BlitzTree *)opaque;
   int a_compared_len, b_compared_len, rv;
 
-  a_compared_len = b_compared_len = 0;
   rv = packed_key_cmp(tree, a, b, &a_compared_len, &b_compared_len);
 
   if (rv != 0)
@@ -152,6 +151,9 @@ int packed_key_cmp(BlitzTree *tree, const char *a, const char *b,
   char *b_pos = (char *)b;
   int a_next_offset = 0;
   int b_next_offset = 0;
+
+  *a_compared_len = 0;
+  *b_compared_len = 0;
 
   for (int i = 0; i < tree->nparts; i++) {
     curr_part = &tree->parts[i];

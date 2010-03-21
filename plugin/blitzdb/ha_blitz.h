@@ -207,6 +207,7 @@ public:
 
   //int count_to_last_occurrence(const char *key, const int klen);
   bool move_cursor(const char *key, const int klen, const int search_mode);
+  int count_duplicates_from_cursor(void);
   
   /* BTREE METADATA RELATED */
   uint64_t records(void); 

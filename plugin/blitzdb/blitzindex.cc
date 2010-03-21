@@ -170,8 +170,8 @@ char *BlitzTree::find_key(const char *key, const int klen, int *rv_len) {
   return rv;
 }
 
-/* Search and position the cursor to the last occurrence of the
-   provided key. Returns true on success and otherwise false. */
+/* Search and position the cursor at the specified key.
+   Returns true on success and otherwise false. */
 bool BlitzTree::move_cursor(const char *key, const int klen,
                             const int search_mode) {
   char *fetched_key;
@@ -215,6 +215,35 @@ bool BlitzTree::move_cursor(const char *key, const int klen,
   } while(1);
 
   return true;
+}
+
+/* This function will count the number of duplicate keys from the
+   current cursor position. */
+int BlitzTree::count_duplicates_from_cursor(void) {
+  int found_len, a_compared_len, b_compared_len;
+  int target_len, cmp, rv = 0;
+
+  char *target = (char *)tcbdbcurkey(bt_cursor, &target_len);
+  char *found;
+
+  do {
+    if ((found = this->next_key(&found_len)) == NULL)
+      break;
+
+    cmp = packed_key_cmp(this, target, found, &a_compared_len, &b_compared_len);
+
+    /* Found a different key. We can now stop counting. */
+    if (cmp != 0) {
+      free(found);
+      break;
+    }
+
+    rv++;
+    free(found);
+  } while (1);
+
+  free(target);
+  return rv;
 }
 
 int BlitzTree::delete_key(const char *key, const int klen) {
