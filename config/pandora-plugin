@@ -27,6 +27,14 @@ plugin_ini_fname='plugin.ini'
 plugin_list=[]
 plugin_am_file=None
 plugin_ac_file=None
+plugin_prefix=''
+plugin_suffix='_plugin'
+extra_cflags=''
+extra_cppflags=''
+extra_cxxflags=''
+root_plugin_dir='plugin'
+pkgplugindir='$(libdir)/drizzle'
+default_install='True'
 
 class ChangeProtectedFile(object):
 
@@ -80,8 +88,6 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT([%(name)s],[%(version)s],[%(url)s])
 AC_CONFIG_SRCDIR([%(main_source)s])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42,skip-visibility)
 
@@ -131,7 +137,7 @@ def write_external_makefile(plugin, plugin_file):
 ACLOCAL_AMFLAGS = -I m4 --force
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-pkgplugindir=$(libdir)/drizzle/plugin
+pkgplugindir=%(pkgplugindir)s
 EXTRA_DIST = plugin.ini
 
 """ % plugin)
@@ -141,15 +147,15 @@ EXTRA_DIST = plugin.ini
     if plugin.has_key('testsuitedir') and plugin['testsuitedir'] != "":
       plugin_file.write("EXTRA_DIST += %(testsuitedir)s\n" % plugin)
   plugin_file.write("""
-pkgplugin_LTLIBRARIES=lib%(name)s_plugin.la
-lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
-lib%(name)s_plugin_la_LIBADD=%(libs)s
-lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
-lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
-lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
+pkgplugin_LTLIBRARIES=%(pname)s.la
+%(pname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
+%(pname)s_la_LIBADD=%(libs)s
+%(pname)s_la_DEPENDENCIES=%(libs)s
+%(pname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
+%(pname)s_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
+%(pname)s_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
-lib%(name)s_plugin_la_SOURCES=%(sources)s
+%(pname)s_la_SOURCES=%(sources)s
 
 """ % plugin)
   plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
@@ -200,7 +206,7 @@ dnl This plugin is staticly built, which means we cannot live without and it is 
 dnl possible to disable it. Once it is disableable, we will make it non-static.
 with_%(name)s_plugin=yes
 pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
-pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
+pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(pname)s.la"
 PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
 
 """ % plugin)
@@ -216,7 +222,11 @@ AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@defaul
 AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],[
     with_%(name)s_plugin="$withval"
-    requested_%(name)s_plugin="yes"
+    AS_IF([test "x$with_%(name)s_plugin" = "xyes"],[
+      requested_%(name)s_plugin="yes"
+    ],[
+      requested_%(name)s_plugin="no"
+    ])
   ],[
     with_%(name)s_plugin="%(enabled)s"
     requested_%(name)s_plugin="no"
@@ -272,6 +282,10 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
 
 
 def expand_plugin_ini(plugin, plugin_dir):
+    if plugin['name'] == "**OUT-OF-TREE**":
+      print "Out of tree plugins require the name field to be specified in plugin.ini"
+      sys.exit(1)
+
     if plugin_dir == ".":
       plugin['rel_path']= plugin_dir
       plugin['unconditional']=True
@@ -288,16 +302,21 @@ def expand_plugin_ini(plugin, plugin_dir):
         if not src.startswith(plugin['rel_path']):
           src= os.path.join(plugin['rel_path'], src)
           new_sources= "%s %s" % (new_sources, src)
-      if new_sources != "":
-        plugin['sources']= new_sources
+    else:
+      new_sources= " ".join(plugin['sources'].split())
+    if new_sources != "":
+      plugin['sources']= new_sources
     plugin['main_source']= plugin['sources'].split()[0]
     
+    new_headers=""
     if plugin_dir != ".":
-      new_headers=""
       for header in plugin['headers'].split():
         if not header.startswith(plugin['rel_path']):
           header= os.path.join(plugin['rel_path'], header)
           new_headers= "%s %s" % (new_headers, header)
+    else:
+      new_headers= " ".join(plugin['headers'].split())
+    if new_headers != "":
       plugin['headers']= new_headers
     
     # Make a yes/no version for autoconf help messages
@@ -316,6 +335,11 @@ def expand_plugin_ini(plugin, plugin_dir):
       plugin['has_build_conditional']=False
       plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
 
+    if plugin['install']:
+      plugin['library_type']= 'pkgplugin';
+    else:
+      plugin['library_type']= 'noinst';
+
 def find_testsuite(plugin_dir):
   for testdir in ['drizzle-tests','tests']:
     if os.path.isdir(os.path.join(plugin_dir,testdir)):
@@ -325,6 +349,11 @@ def find_testsuite(plugin_dir):
   return None
 
 def read_plugin_ini(plugin_dir):
+    if plugin_dir == ".":
+      plugin_name="**OUT-OF-TREE**"
+    else:
+      plugin_name=os.path.basename(plugin_dir)
+
     plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
     plugin_defaults= dict(sources="",
                           headers="",
@@ -337,10 +366,11 @@ def read_plugin_ini(plugin_dir):
                           title="",
                           description="",
                           license="PLUGIN_LICENSE_GPL",
-                          name=os.path.basename(plugin_dir),
+                          name=plugin_name,
                           load_by_default="False",
                           disabled="False",
-                          static="False")
+                          static="False",
+                          install=default_install)
     parser=ConfigParser.ConfigParser(defaults= plugin_defaults)
     parser.read(plugin_file)
     plugin=dict(parser.items('plugin'))
@@ -365,6 +395,8 @@ def read_plugin_ini(plugin_dir):
       plugin['enabled']="yes"
     if plugin.has_key('static'):
       plugin['static']= parser.getboolean('plugin','static')
+    if plugin.has_key('install'):
+      plugin['install']= parser.getboolean('plugin','install')
     if plugin.has_key('testsuite'):
       if plugin['testsuite'] == 'disable':
         plugin['testsuite']= False
@@ -375,6 +407,16 @@ def read_plugin_ini(plugin_dir):
         plugin['testsuite']=True
       else:
         plugin['testsuite']=False
+
+    plugin['cflags']+= extra_cflags
+    plugin['cppflags']+= extra_cppflags
+    plugin['cxxflags']+= extra_cxxflags
+
+    plugin['pname']= "lib%s%s%s" % (plugin_prefix, plugin['name'], plugin_suffix)
+    plugin['root_plugin_dir']= root_plugin_dir
+    plugin['plugin_prefix']= plugin_prefix
+    plugin['plugin_suffix']= plugin_suffix
+    plugin['pkgplugindir']= pkgplugindir
 
     return plugin
 
@@ -401,35 +443,35 @@ EXTRA_DIST += %(rel_path)s/plugin.ini
       plugin_am.write("EXTRA_DIST += %(rel_path)s/%(testsuitedir)s\n" % plugin)
   if plugin['static']:
     plugin_am.write("""
-plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
+%(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
-  noinst_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
-  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-  plugin_lib%(name)s_plugin_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)  
-  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
-  plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
-  plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
+  noinst_LTLIBRARIES+=%(root_plugin_dir)s/%(pname)s.la
+  %(root_plugin_dir)s_%(pname)s_la_LIBADD=%(libs)s
+  %(root_plugin_dir)s_%(pname)s_la_DEPENDENCIES=%(libs)s
+  %(root_plugin_dir)s_%(pname)s_la_LDFLAGS=$(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
+  %(root_plugin_dir)s_%(pname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
+  %(root_plugin_dir)s_%(pname)s_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
+  %(root_plugin_dir)s_%(pname)s_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
-  plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
-  PANDORA_DYNAMIC_LDADDS+=${top_builddir}/plugin/lib%(name)s_plugin.la
+  %(root_plugin_dir)s_%(pname)s_la_SOURCES=%(sources)s
+  PANDORA_DYNAMIC_LDADDS+=${top_builddir}/%(root_plugin_dir)s/%(pname)s.la
 endif
 """ % plugin)
   else:
     plugin_am.write("""
-plugin_lib%(name)s_dir=${top_srcdir}/%(rel_path)s
+%(root_plugin_dir)s_%(plugin_prefix)s%(name)s_dir=${top_srcdir}/%(rel_path)s
 EXTRA_DIST += %(rel_path)s/plugin.ini
 if %(build_conditional_tag)s
-  pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
-  plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
-  plugin_lib%(name)s_plugin_la_LIBADD=%(libs)s
-  plugin_lib%(name)s_plugin_la_DEPENDENCIES=%(libs)s
-  plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
-  plugin_lib%(name)s_plugin_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
-  plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
+  %(library_type)s_LTLIBRARIES+=%(root_plugin_dir)s/%(pname)s.la
+  %(root_plugin_dir)s_%(pname)s_la_LDFLAGS=-avoid-version -rpath $(pkgplugindir) $(AM_LDFLAGS) %(ldflags)s $(GCOV_LIBS)
+  %(root_plugin_dir)s_%(pname)s_la_LIBADD=%(libs)s
+  %(root_plugin_dir)s_%(pname)s_la_DEPENDENCIES=%(libs)s
+  %(root_plugin_dir)s_%(pname)s_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN -DPANDORA_MODULE_NAME=%(name)s -DPANDORA_MODULE_AUTHOR="%(author)s" -DPANDORA_MODULE_TITLE="%(title)s" -DPANDORA_MODULE_VERSION="%(version)s" -DPANDORA_MODULE_LICENSE=%(license)s %(cppflags)s
+  %(root_plugin_dir)s_%(pname)s_la_CXXFLAGS=$(AM_CXXFLAGS) %(cxxflags)s
+  %(root_plugin_dir)s_%(pname)s_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
-  plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
+  %(root_plugin_dir)s_%(pname)s_la_SOURCES=%(sources)s
 endif
 """ % plugin)
   plugin_am_file=os.path.join(plugin['rel_path'],'plugin.am')
@@ -456,7 +498,7 @@ def accumulate_plugins(arg, dirname, fnames):
   # plugin_ini_fname is a name in dirname indicating dirname is a plugin.
   if plugin_ini_fname in fnames:
     arg.append(dirname)
-os.path.walk(os.path.join(top_srcdir,"plugin"),accumulate_plugins,plugin_list)
+os.path.walk(os.path.join(top_srcdir,root_plugin_dir),accumulate_plugins,plugin_list)
 
 
 if not os.path.exists("config/pandora-plugin.am") or "write" in actions:
