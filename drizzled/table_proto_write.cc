@@ -40,7 +40,7 @@ using namespace std;
 namespace drizzled {
 
 static int fill_table_proto(message::Table &table_proto,
-                            const char *table_name,
+                            const std::string &table_name,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
@@ -59,7 +59,7 @@ static int fill_table_proto(message::Table &table_proto,
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
 
-  assert(strcmp(table_proto.name().c_str(),table_name)==0);
+  assert(table_proto.name() == table_name);
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -160,7 +160,6 @@ static int fill_table_proto(message::Table &table_proto,
 
           set_field_options->add_field_value(src);
         }
-        set_field_options->set_count_elements(set_field_options->field_value_size());
 	set_field_options->set_collation_id(field_arg->charset->number);
         set_field_options->set_collation(field_arg->charset->name);
         break;
