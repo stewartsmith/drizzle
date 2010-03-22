@@ -83,6 +83,8 @@ public:
 private:
   ib_crsr_t cursor;
   ib_tpl_t tuple;
+
+  ib_err_t next_innodb_error;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */
