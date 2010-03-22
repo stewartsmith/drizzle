@@ -21,22 +21,6 @@
 #define PLUGIN_MYSQL_PROTOCOL_ERRMSG_H
 
 /* Error messages for MySQL clients */
-/* (Error messages for the daemon are in sql/share/errmsg.txt) */
-
-#ifdef  __cplusplus
-extern "C"
-#endif
-const char * drizzleclient_get_client_error(unsigned int err_index);
-
-#define CR_MIN_ERROR    2000  /* For easier client code */
-#define CR_MAX_ERROR    2999
-#if !defined(ER)
-#define ER(X) drizzleclient_get_client_error((X)-CR_MIN_ERROR)
-#endif
-#define CLIENT_ERRMAP    2  /* Errormap used by my_error() */
-
-/* Do not add error numbers before CR_ERROR_FIRST. */
-/* If necessary to add lower numbers, change CR_ERROR_FIRST accordingly. */
 enum CR_CLIENT_ERRORS {
   CR_ERROR_FIRST    =2000, /*Copy first error nr.*/
   CR_UNKNOWN_ERROR  =2000,
