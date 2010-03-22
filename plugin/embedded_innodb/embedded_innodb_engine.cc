@@ -961,6 +961,13 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
   for (Field **field= table->field; *field; field++, colnr++)
   {
+    if ((**field).is_null())
+    {
+      err= ib_col_set_value(tuple, colnr, NULL, IB_SQL_NULL);
+      assert(err == DB_SUCCESS);
+      continue;
+    }
+
     if ((**field).type() == DRIZZLE_TYPE_VARCHAR)
     {
       /* To get around the length bytes (1 or 2) at (**field).ptr
