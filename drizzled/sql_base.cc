@@ -416,7 +416,7 @@ bool Session::free_cached_table()
       Open placeholders have Table::db_stat set to 0, so they should be
       handled by the first alternative.
     */
-    assert(!table->open_placeholder);
+    assert(not table->open_placeholder);
 
     /* Free memory and reset for next loop */
     table->cursor->ha_reset();
@@ -812,8 +812,7 @@ void Session::unlink_open_table(Table *find)
   table that was locked with LOCK TABLES.
 */
 
-void Session::drop_open_table(Table *table, const char *db_name,
-                              const char *table_name)
+void Session::drop_open_table(Table *table, TableIdentifier &identifier)
 {
   if (table->s->tmp_table)
   {
@@ -827,7 +826,6 @@ void Session::drop_open_table(Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(table);
-    TableIdentifier identifier(db_name, table_name, STANDARD_TABLE);
     quick_rm_table(*this, identifier);
     pthread_mutex_unlock(&LOCK_open);
   }

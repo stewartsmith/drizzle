@@ -1408,8 +1408,7 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const char *db_name,
-                       const char *table_name);
+  void drop_open_table(Table *table, TableIdentifier &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
