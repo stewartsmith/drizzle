@@ -1347,10 +1347,10 @@ static bool locked_create_event(Session *session,
 
   create_info->table_options= db_options;
 
-  if (rea_create_table(session, identifier,
-                       table_proto,
-                       create_info, alter_info->create_list,
-                       key_count, key_info_buffer))
+  if (not rea_create_table(session, identifier,
+                           table_proto,
+                           create_info, alter_info->create_list,
+                           key_count, key_info_buffer))
   {
     return error;
   }
