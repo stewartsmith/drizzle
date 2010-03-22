@@ -72,18 +72,15 @@ public:
   }
 
   int doCreateTable(Session*,
-                    const char *,
                     Table&,
+                    drizzled::TableIdentifier &,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string& table_name);
+  int doDropTable(Session&, TableIdentifier &identifier);
 
-  int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+  int doGetTableDefinition(Session&,
+                           TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &,
                        string&, set<string>& )
@@ -121,25 +118,23 @@ int EmbeddedInnoDBCursor::close(void)
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doCreateTable(Session*, const char *,
-                                   Table&,
-                                   drizzled::message::Table&)
+int EmbeddedInnoDBEngine::doCreateTable(Session *,
+                                        Table& ,
+                                        drizzled::TableIdentifier &,
+                                        drizzled::message::Table&)
 {
   return EEXIST;
 }
 
 
-int EmbeddedInnoDBEngine::doDropTable(Session&, const string&)
+int EmbeddedInnoDBEngine::doDropTable(Session&, TableIdentifier &)
 {
   return EPERM;
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
-                                          const char* ,
-                                          const char *,
-                                          const char *,
-                                          const bool,
-                                          drizzled::message::Table *)
+                                               TableIdentifier &,
+                                               drizzled::message::Table &)
 {
   return ENOENT;
 }
