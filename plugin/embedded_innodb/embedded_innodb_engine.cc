@@ -1237,7 +1237,10 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
 
     uint32_t length= ib_col_get_len(tuple, colnr);
     if (length == IB_SQL_NULL)
+    {
       (**field).set_null();
+      continue;
+    }
     else
       (**field).set_notnull();
 
