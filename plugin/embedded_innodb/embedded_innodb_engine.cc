@@ -1337,6 +1337,37 @@ int EmbeddedInnoDBCursor::index_init(uint32_t keynr, bool)
   return 0;
 }
 
+static ib_srch_mode_t ha_rkey_function_to_ib_srch_mode(drizzled::ha_rkey_function find_flag)
+{
+  switch (find_flag)
+  {
+  case HA_READ_KEY_EXACT:
+    return IB_CUR_GE;
+  case HA_READ_KEY_OR_NEXT:
+    return IB_CUR_GE;
+  case HA_READ_KEY_OR_PREV:
+    return IB_CUR_LE;
+  case HA_READ_AFTER_KEY:
+    return IB_CUR_G;
+  case HA_READ_BEFORE_KEY:
+    return IB_CUR_L;
+  case HA_READ_PREFIX:
+    return IB_CUR_GE;
+  case HA_READ_PREFIX_LAST:
+    return IB_CUR_LE;
+  case HA_READ_PREFIX_LAST_OR_PREV:
+    return IB_CUR_LE;
+  case HA_READ_MBR_CONTAIN:
+  case HA_READ_MBR_INTERSECT:
+  case HA_READ_MBR_WITHIN:
+  case HA_READ_MBR_DISJOINT:
+  case HA_READ_MBR_EQUAL:
+    assert(false); /* these just exist in the enum, not used. */
+  }
+
+  assert(false);
+}
+
 int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
                                      const unsigned char *key_ptr,
                                      uint32_t key_len,
@@ -1346,15 +1377,18 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
   int res;
   ib_err_t err;
   int ret;
+  ib_srch_mode_t search_mode;
   (void)buf;
   (void)find_flag;
+
+  search_mode= ha_rkey_function_to_ib_srch_mode(find_flag);
 
   search_tuple= ib_clust_search_tuple_create(cursor);
 
   err= ib_col_set_value(search_tuple, 0, key_ptr, key_len);
   assert(err == DB_SUCCESS);
 
-  err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+  err= ib_cursor_moveto(cursor, search_tuple, search_mode, &res);
   if (err == DB_RECORD_NOT_FOUND || res != 0)
     return HA_ERR_END_OF_FILE;
 
