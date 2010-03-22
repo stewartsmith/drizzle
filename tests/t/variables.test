@@ -3,7 +3,6 @@
 #
 --disable_warnings
 drop table if exists t1,t2;
-drop schema if exists data_dictionary;
 --enable_warnings
 
 #

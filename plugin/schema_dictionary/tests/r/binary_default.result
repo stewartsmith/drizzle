@@ -1,0 +1,11 @@
+create table t1 (a varbinary(10) default '\0\0hi', b int default 42, c varchar(10) default "hello");
+insert into t1 values ();
+select hex(a) from t1;
+hex(a)
+00006869
+select COLUMN_NAME,HEX(COLUMN_DEFAULT) from data_dictionary.columns where table_schema="test" and table_name="t1";
+COLUMN_NAME	HEX(COLUMN_DEFAULT)
+a	00006869
+b	3432
+c	68656C6C6F
+drop table t1;
