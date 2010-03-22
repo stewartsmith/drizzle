@@ -404,6 +404,11 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   share= get_share(name, &rc);
   thr_lock_data_init(&share->lock, &lock, NULL);
 
+  if (table->s->primary_key != MAX_KEY)
+    ref_length= table->key_info[table->s->primary_key].key_length;
+  else
+    ref_length= 0;
+
   return(0);
 }
 

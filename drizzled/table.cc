@@ -1242,7 +1242,7 @@ int open_table_def(Session& session, TableShare *share)
   int error;
   bool error_given;
 
-  TableIdentifier identifier(share->normalized_path.str);
+  TableIdentifier identifier(share->getSchemaName(), share->getTableName());
 
   error= 1;
   error_given= 0;
