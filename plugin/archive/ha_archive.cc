@@ -285,6 +285,7 @@ ArchiveShare::~ArchiveShare()
   */
   if (archive_write_open == true)
     (void)azclose(&archive_write);
+  pthread_mutex_destroy(&archive_mutex);
 }
 
 bool ArchiveShare::prime(uint64_t *auto_increment)

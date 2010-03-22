@@ -134,22 +134,10 @@ public:
 
 static Auth_pam *auth= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   auth= new Auth_pam("auth_pam");
-  registry.add(auth);
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-
-  if (auth)
-  {
-    registry.remove(auth);
-    delete auth;
-  }
-
+  context.add(auth);
   return 0;
 }
 
@@ -162,7 +150,6 @@ DRIZZLE_DECLARE_PLUGIN
   "PAM based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize, /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

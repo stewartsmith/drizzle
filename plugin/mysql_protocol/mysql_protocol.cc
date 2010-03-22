@@ -837,17 +837,10 @@ unsigned char *ClientMySQLProtocol::storeLength(unsigned char *buffer, uint64_t 
 
 static ListenMySQLProtocol *listen_obj= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
-  registry.add(listen_obj); 
-  return 0;
-}
-
-static int deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(listen_obj);
-  delete listen_obj;
+  context.add(listen_obj); 
   return 0;
 }
 
@@ -890,7 +883,6 @@ DRIZZLE_DECLARE_PLUGIN
   "MySQL Protocol Module",
   PLUGIN_LICENSE_GPL,
   init,             /* Plugin Init */
-  deinit,           /* Plugin Deinit */
   sys_variables, /* system variables */
   NULL              /* config options */
 }

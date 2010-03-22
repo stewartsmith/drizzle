@@ -20,6 +20,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
+#include "drizzled/plugin/daemon.h"
 
 #include "heap.h"
 #include "ha_heap.h"
@@ -41,16 +42,25 @@ static const char *ha_heap_exts[] = {
 class HeapEngine : public plugin::StorageEngine
 {
 public:
-  HeapEngine(string name_arg)
-   : plugin::StorageEngine(name_arg,
-                                     HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_NULL_IN_KEY |
-                                     HTON_FAST_KEY_READ |
-                                     HTON_NO_BLOBS |
-                                     HTON_HAS_RECORDS |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_TEMPORARY_ONLY)
-  { }
+  explicit HeapEngine(string name_arg) :
+    plugin::StorageEngine(name_arg,
+                          HTON_STATS_RECORDS_IS_EXACT |
+                          HTON_NULL_IN_KEY |
+                          HTON_FAST_KEY_READ |
+                          HTON_NO_BLOBS |
+                          HTON_HAS_RECORDS |
+                          HTON_SKIP_STORE_LOCK |
+                          HTON_TEMPORARY_ONLY)
+  {
+    pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
+  }
+
+  virtual ~HeapEngine()
+  {
+    hp_panic(HA_PANIC_CLOSE);
+
+    pthread_mutex_destroy(&THR_LOCK_heap);
+  }
 
   virtual Cursor *create(TableShare &table,
                           memory::Root *mem_root)
@@ -144,26 +154,12 @@ int HeapEngine::doDropTable(Session&, TableIdentifier &identifier)
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(plugin::Registry &registry)
+static int heap_init(plugin::Context &context)
 {
   heap_storage_engine= new HeapEngine(engine_name);
-  registry.add(heap_storage_engine);
-  pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
+  context.add(heap_storage_engine);
   return 0;
 }
-
-static int heap_deinit(plugin::Registry &registry)
-{
-  registry.remove(heap_storage_engine);
-  delete heap_storage_engine;
-
-  int ret= hp_panic(HA_PANIC_CLOSE);
-
-  pthread_mutex_destroy(&THR_LOCK_heap);
-
-  return ret;
-}
-
 
 
 /*****************************************************************************
@@ -931,7 +927,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  heap_deinit,
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

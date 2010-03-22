@@ -875,7 +875,7 @@
    Memcheck:Leak
    ...
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
    fun:plugin_init
    fun:main
 }
@@ -1028,7 +1028,7 @@
    fun:dlopen
    ...
    fun:plugin_init
-   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:_ZL22init_server_componentsRN8drizzled6plugin7ContextE
    fun:main
 }
 
@@ -1076,7 +1076,7 @@
    fun:dlopen
    ...
    fun:plugin_init
-   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:_ZL22init_server_componentsRN8drizzled6plugin7ContextE
    fun:main
 }
 
@@ -1256,15 +1256,10 @@
    Heap Engine panic issue
    Memcheck:Addr8
    fun:_Z8hp_panicN8drizzled17ha_panic_functionE
-   fun:_ZL11heap_deinitRN8drizzled6plugin8RegistryE
-   fun:_ZN8drizzledL13delete_moduleERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:plugin_shutdown
-   fun:_ZN8drizzledL8clean_upEb
-   fun:_ZN8drizzled10unireg_endEv
-   fun:_ZL11kill_serverPv
-   fun:signal_hand
-   fun:start_thread
-   fun:clone
+   fun:_ZN10HeapEngineD0Ev
+   fun:_ZN8drizzled6plugin8RegistryD1Ev
+   fun:_ZN8drizzled6plugin8Registry8shutdownEv
+   fun:main
 }
 
 {

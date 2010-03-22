@@ -286,7 +286,7 @@ static bool initTable()
   return false;
 }
 
-static int init(Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   logging_stats= new LoggingStats("logging_stats");
 
@@ -295,27 +295,14 @@ static int init(Registry &registry)
     return 1;
   }
 
-  registry.add(logging_stats);
-  registry.add(commands_tool);
+  context.add(logging_stats);
+  context.add(commands_tool);
 
   if (sysvar_logging_stats_enabled)
   {
     logging_stats->enable();
   }
 
-  return 0;
-}
-
-static int deinit(Registry &registry)
-{
-  if (logging_stats)
-  {
-    registry.remove(commands_tool);
-    registry.remove(logging_stats);
-
-    delete commands_tool;
-    delete logging_stats;
-  }
   return 0;
 }
 
@@ -353,7 +340,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("User Statistics as DATA_DICTIONARY tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  deinit, /* Plugin Deinit    */
   system_var, /* system variables */
   NULL    /* config options   */
 }
