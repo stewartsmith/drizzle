@@ -211,19 +211,13 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int doGetTableDefinition(Session& session,
-                                   const char *path,
-                                   const char *db,
-                                   const char *table_name,
-                                   const bool is_tmp,
-                                   message::Table *table_proto)
+  virtual int doGetTableDefinition(Session &session,
+                                   TableIdentifier &identifier,
+                                   message::Table &table_message)
   {
     (void)session;
-    (void)path;
-    (void)db;
-    (void)table_name;
-    (void)is_tmp;
-    (void)table_proto;
+    (void)identifier;
+    (void)table_message;
 
     return ENOENT;
   }
@@ -287,8 +281,8 @@ public:
 
 protected:
   virtual int doCreateTable(Session *session,
-                            const char *table_name,
                             Table& table_arg,
+                            TableIdentifier &identifier,
                             message::Table& proto)= 0;
 
   virtual int doRenameTable(Session* session,
@@ -307,10 +301,16 @@ public:
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  virtual int doDropTable(Session& session,
-                          const std::string &table_path)= 0;
+  int doDropTable(Session &session,
+                  TableIdentifier &identifier,
+                  const std::string &table_path)
+  {
+    assert(not table_path.compare(identifier.getPath()));
+    return doDropTable(session, identifier);
+  }
 
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
+  virtual int doDropTable(Session &session,
+                          TableIdentifier &identifier)= 0;
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
@@ -318,18 +318,13 @@ public:
 
   static int getTableDefinition(Session& session,
                                 TableIdentifier &identifier,
-                                message::Table *table_proto= NULL,
+                                message::Table &table_proto,
                                 bool include_temporary_tables= true);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
-                                message::Table *table_proto= NULL,
-                                bool include_temporary_tables= true);
-  static bool doesTableExist(Session& session,
+  static bool doesTableExist(Session &session,
                              TableIdentifier &identifier,
                              bool include_temporary_tables= true);
+
+  virtual bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 
   static plugin::StorageEngine *findByName(std::string find_str);
   static plugin::StorageEngine *findByName(Session& session,

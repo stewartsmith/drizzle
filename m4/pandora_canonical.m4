@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.108])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.114])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -94,6 +94,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   m4_if(PCT_VERSION_FROM_VC,yes,[
     PANDORA_VC_VERSION
+  ],[
+    PANDORA_TEST_VC_DIR
   ])
   PANDORA_VERSION
 
