@@ -597,52 +597,12 @@ int ha_blitz::index_end(void) {
   return 0;
 }
 
-/* Find the estimated number of rows between min_key and max_key. */
-ha_rows ha_blitz::records_in_range(uint32_t key_num,
-                                   drizzled::key_range *min_key,
-                                   drizzled::key_range *max_key) {
-  uint64_t rv = 0;
-
-  /* This is a simple case where an explicit range is given. */
-  if (min_key && max_key) {
-    char *packed, *key;
-    int packed_len, klen;
-    int cmp, a_compared_len, b_compared_len;
-
-    packed = native_to_blitz_key(min_key->key, key_num, &packed_len);
-
-    /* Position the cursor at the beginning of the range. */
-    if (!share->btrees[key_num].move_cursor(packed, packed_len, min_key->flag))
-      return BLITZ_WORST_CASE_RANGE;
-
-    rv++;
-
-    /* Count and Traverse the tree until we hit max_key. */
-    packed = native_to_blitz_key(max_key->key, key_num, &packed_len);
-
-    do {
-      if ((key = share->btrees[key_num].next_key(&klen)) == NULL)
-        break;
-
-      cmp = packed_key_cmp(&share->btrees[key_num], key, packed,
-                           &a_compared_len, &b_compared_len);
-      rv++;
-      free(key);
-
-      /* Means we've hit max_key. Now check if drizzle wants us to
-         count the duplicate keys as well. */
-      if (cmp == 0) {
-        if (max_key->flag == HA_READ_AFTER_KEY) {
-          int dups = share->btrees[key_num].count_duplicates_from_cursor();
-          rv += dups;
-        }
-        break;
-      }
-    } while (1);
-
-    return rv;
-  }
-
+/* Find the estimated number of rows between min_key and max_key.
+   Leave the proper implementation of this for now since there are
+   too many exceptions to cover. */
+ha_rows ha_blitz::records_in_range(uint32_t /*key_num*/,
+                                   drizzled::key_range * /*min_key*/,
+                                   drizzled::key_range * /*max_key*/) {
   return BLITZ_WORST_CASE_RANGE;
 }
 
