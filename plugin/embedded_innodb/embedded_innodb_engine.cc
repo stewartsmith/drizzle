@@ -1483,7 +1483,6 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
   int ret;
   ib_srch_mode_t search_mode;
   (void)buf;
-  (void)find_flag;
 
   search_mode= ha_rkey_function_to_ib_srch_mode(find_flag);
 
