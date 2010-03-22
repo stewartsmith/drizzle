@@ -73,18 +73,17 @@ public:
   }
 
   int doCreateTable(Session*,
-                    const char *,
-                    Table&,
-                    drizzled::message::Table&);
+                    Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
+                    drizzled::message::Table& proto);
 
-  int doDropTable(Session&, const string& table_name);
+  int doDropTable(Session&, TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
+
+  bool doDoesTableExist(Session&, TableIdentifier &identifier);
 
   void doGetTableNames(drizzled::CachedDirectory &,
                        string& database_name, set<string>& set_of_names);
@@ -104,6 +103,14 @@ public:
   }
 
 };
+
+static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
+{
+  str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
+  str->assign(identifier.getSchemaName());
+  str->append("/");
+  str->append(identifier.getTableName());
+}
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
@@ -152,28 +159,32 @@ static int create_table_add_field(ib_tbl_sch_t schema,
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
-                                   Table& table_obj,
-                                   drizzled::message::Table& table_message)
+int EmbeddedInnoDBEngine::doCreateTable(Session* session,
+                                        Table& table_obj,
+                                        drizzled::TableIdentifier &identifier,
+                                        drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t innodb_table_schema= NULL;
 //  ib_idx_sch_t innodb_pkey= NULL;
   ib_trx_t innodb_schema_transaction;
   ib_id_t innodb_table_id;
   ib_err_t innodb_err= DB_SUCCESS;
-
+  string innodb_table_name;
   (void)session;
   (void)table_obj;
   (void)table_message;
 
-  innodb_err= ib_table_schema_create(path+2, &innodb_table_schema, IB_TBL_COMPACT, 0);
+  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+
+  innodb_err= ib_table_schema_create(innodb_table_name.c_str(),
+                                     &innodb_table_schema, IB_TBL_COMPACT, 0);
 
   if (innodb_err != DB_SUCCESS)
   {
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
-                        path, innodb_err, ib_strerror(innodb_err));
+                        innodb_table_name.c_str(), innodb_err, ib_strerror(innodb_err));
     return HA_ERR_GENERIC;
   }
 
@@ -193,7 +204,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
                           ER_CANT_CREATE_TABLE,
                           _("Cannot create field %s on table %s."
                             " InnoDB Error %d (%s)\n"),
-                          field.name().c_str(), path,
+                          field.name().c_str(), innodb_table_name.c_str(),
                           innodb_err, ib_strerror(innodb_err));
       return HA_ERR_GENERIC;
     }
@@ -239,7 +250,8 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
-                        path, innodb_err, ib_strerror(innodb_err));
+                        innodb_table_name.c_str(),
+                        innodb_err, ib_strerror(innodb_err));
 
     assert (rollback_err == DB_SUCCESS);
     return HA_ERR_GENERIC;
@@ -254,19 +266,22 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session, const char *path,
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
-                        path, innodb_err, ib_strerror(innodb_err));
+                        innodb_table_name.c_str(),
+                        innodb_err, ib_strerror(innodb_err));
     return HA_ERR_GENERIC;
   }
 
   return 0;
 }
 
-
-
-int EmbeddedInnoDBEngine::doDropTable(Session& session, const string& table_name)
+int EmbeddedInnoDBEngine::doDropTable(Session &session,
+                                      TableIdentifier &identifier)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t innodb_err;
+  string innodb_table_name;
+
+  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   innodb_err= ib_schema_lock_exclusive(innodb_schema_transaction);
@@ -284,7 +299,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string& table_name
     return HA_ERR_GENERIC;
   }
 
-  innodb_err= ib_table_drop(innodb_schema_transaction, table_name.c_str()+2);
+  innodb_err= ib_table_drop(innodb_schema_transaction, innodb_table_name.c_str());
 
   if (innodb_err == DB_TABLE_NOT_FOUND)
   {
@@ -299,7 +314,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string& table_name
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
                         _("Cannot DROP table %s. InnoDB Error %d (%s)\n"),
-                        table_name.c_str(),
+                        innodb_table_name.c_str(),
                         innodb_err, ib_strerror(innodb_err));
 
     assert(rollback_err == DB_SUCCESS);
@@ -315,7 +330,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session& session, const string& table_name
     push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
                         _("Cannot DROP table %s. InnoDB Error %d (%s)\n"),
-                        table_name.c_str(),
+                        innodb_table_name.c_str(),
                         innodb_err, ib_strerror(innodb_err));
 
     assert(rollback_err == DB_SUCCESS);
@@ -393,28 +408,42 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
-                                          const char* path,
-                                          const char *,
-                                          const char *,
-                                          const bool,
-                                          drizzled::message::Table *table)
+                                               TableIdentifier &identifier,
+                                               drizzled::message::Table &table)
 {
   ib_crsr_t innodb_cursor= NULL;
+  string innodb_table_name;
 
-  if (ib_cursor_open_table(path+2, NULL, &innodb_cursor) != DB_SUCCESS)
+  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+
+  if (ib_cursor_open_table(innodb_table_name.c_str(), NULL, &innodb_cursor) != DB_SUCCESS)
     return ENOENT;
 
-  if (table)
-  {
-    message::Table::StorageEngine *engine= table->mutable_engine();
-    engine->set_name("innodb");
-  }
+  message::Table::StorageEngine *engine= table.mutable_engine();
+  engine->set_name("innodb");
 
   ib_err_t err= ib_cursor_close(innodb_cursor);
 
   assert (err == DB_SUCCESS);
 
   return EEXIST;
+}
+
+bool EmbeddedInnoDBEngine::doDoesTableExist(Session &,
+                                            TableIdentifier& identifier)
+{
+  ib_crsr_t innodb_cursor;
+  string innodb_table_name;
+
+  TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
+
+  if (ib_cursor_open_table(innodb_table_name.c_str(), NULL, &innodb_cursor) != DB_SUCCESS)
+    return false;
+
+  ib_err_t err= ib_cursor_close(innodb_cursor);
+  assert(err == DB_SUCCESS);
+
+  return true;
 }
 
 const char *EmbeddedInnoDBCursor::index_type(uint32_t)
