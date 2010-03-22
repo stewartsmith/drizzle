@@ -556,7 +556,7 @@ primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(112) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(112) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
 drop table t1;
@@ -571,7 +571,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -589,7 +589,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `b` int DEFAULT NULL,
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `c` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -601,7 +601,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -613,7 +613,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -1490,7 +1490,7 @@ t1	CREATE TABLE `t1` (
   `c2` int DEFAULT NULL COMMENT 'column2',
   `c3` int NOT NULL COMMENT 'column3',
   `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
   `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 
@@ -1502,9 +1502,9 @@ t2	CREATE TABLE `t2` (
   `c1` int DEFAULT '12' COMMENT 'column1',
   `c2` int DEFAULT NULL COMMENT 'column2',
   `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
-  `c6` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
+  `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 
 DROP TABLE t2;

@@ -491,7 +491,7 @@ bool rea_create_table(Session *session,
                       uint32_t keys, KEY *key_info)
 {
   if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
-		      keys, key_info))
+                       keys, key_info))
     return false;
 
   if (plugin::StorageEngine::createTable(*session,
