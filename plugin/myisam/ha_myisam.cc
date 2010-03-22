@@ -138,40 +138,18 @@ public:
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
-bool MyisamEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
-  {
-    return true;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return false;
+  return session.doesTableMessageExist(identifier);
 }
 
-int MyisamEngine::doGetTableDefinition(Session&,
+int MyisamEngine::doGetTableDefinition(Session &session,
                                        drizzled::TableIdentifier &identifier,
-                                       message::Table &table_proto)
+                                       message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
-  {
-    table_proto.CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
+  return ENOENT;
 }
 
 /* 
@@ -1353,18 +1331,10 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session&,
+int MyisamEngine::doDropTable(Session &session,
                               drizzled::TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return mi_delete_table(identifier.getPath().c_str());
 }
@@ -1378,7 +1348,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-int MyisamEngine::doCreateTable(Session *,
+int MyisamEngine::doCreateTable(Session *session,
                                 Table& table_arg,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table& create_proto)
@@ -1420,9 +1390,7 @@ int MyisamEngine::doCreateTable(Session *,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session->storeTableMessage(identifier, create_proto);
 
   return error;
 }

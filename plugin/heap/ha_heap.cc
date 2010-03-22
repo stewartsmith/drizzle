@@ -113,41 +113,30 @@ public:
             HA_KEY_SCAN_NOT_ROR);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
-int HeapEngine::doGetTableDefinition(Session&,
+bool HeapEngine::doDoesTableExist(Session& session, TableIdentifier &identifier)
+{
+  return session.doesTableMessageExist(identifier);
+}
+
+int HeapEngine::doGetTableDefinition(Session &session,
                                      TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  if (session.getTableMessage(identifier, table_proto))
+    return EEXIST;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-  {
-    table_proto.CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 /*
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session&, TableIdentifier &identifier)
+int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return heap_delete_table(identifier.getPath().c_str());
 }
@@ -694,9 +683,7 @@ int HeapEngine::doCreateTable(Session *session,
 
   if (error == 0)
   {
-    pthread_mutex_lock(&proto_cache_mutex);
-    proto_cache.insert(make_pair(table_name, create_proto));
-    pthread_mutex_unlock(&proto_cache_mutex);
+    session->storeTableMessage(identifier, create_proto);
   }
 
   return error;

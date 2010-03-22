@@ -164,30 +164,18 @@ public:
 };
 
 
-bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
-  {
-    return true;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return false;
+  return session.doesTableMessageExist(identifier);
 }
 
 
-int Tina::doDropTable(Session&,
+int Tina::doDropTable(Session &session,
                       TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
   char buff[FN_REFLEN];
-  ProtoCache::iterator iter;
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
@@ -203,12 +191,7 @@ int Tina::doDropTable(Session&,
     error= enoent_or_zero;
   }
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return error;
 }
@@ -235,24 +218,14 @@ void Tina::deleteOpenTable(const string &table_name)
 }
 
 
-int Tina::doGetTableDefinition(Session&,
+int Tina::doGetTableDefinition(Session &session,
                                drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-  {
-    table_message.CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 
 
@@ -1393,10 +1366,10 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *,
+int Tina::doCreateTable(Session *session,
                         Table& table_arg,
                         drizzled::TableIdentifier &identifier,
-                        drizzled::message::Table& create_proto)
+                        drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
   int create_file;
@@ -1429,9 +1402,7 @@ int Tina::doCreateTable(Session *,
 
   internal::my_close(create_file, MYF(0));
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session->storeTableMessage(identifier, create_proto);
 
   return 0;
 }
