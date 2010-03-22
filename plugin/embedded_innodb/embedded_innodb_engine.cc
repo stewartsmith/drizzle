@@ -762,7 +762,10 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
 
     uint32_t length= ib_col_get_len(tuple, colnr);
     if (length == IB_SQL_NULL)
+    {
       (**field).set_null();
+      continue;
+    }
     else
       (**field).set_notnull();
 
