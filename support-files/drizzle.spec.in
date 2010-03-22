@@ -5,7 +5,7 @@ Release:   1
 License:   GPL/BSD
 Group:     System Environment/Libraries
 URL:       http://launchpad.net/drizzle
-Source0:   http://launchpad.net/drizzle/trunk/aloha/+download/drizzle-%{version}.tar.gz
+Source0:   http://launchpad.net/drizzle/+download/drizzle-%{version}.tar.gz
 
 # For test suite
 #BuildRequires:
@@ -480,70 +480,70 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/version.h
 %{_includedir}/drizzled/visibility.h
 %{_includedir}/drizzled/xid.h
-%{_libdir}/drizzle/plugin/libarchive_plugin.la
-%{_libdir}/drizzle/plugin/libarchive_plugin.so
-%{_libdir}/drizzle/plugin/libascii_plugin.la
-%{_libdir}/drizzle/plugin/libascii_plugin.so
-%{_libdir}/drizzle/plugin/libauth_pam_plugin.la
-%{_libdir}/drizzle/plugin/libauth_pam_plugin.so
-%{_libdir}/drizzle/plugin/libbenchmark_plugin.la
-%{_libdir}/drizzle/plugin/libbenchmark_plugin.so
-%{_libdir}/drizzle/plugin/libblackhole_plugin.la
-%{_libdir}/drizzle/plugin/libblackhole_plugin.so
-%{_libdir}/drizzle/plugin/libcharlength_plugin.la
-%{_libdir}/drizzle/plugin/libcharlength_plugin.so
-%{_libdir}/drizzle/plugin/libcompression_plugin.la
-%{_libdir}/drizzle/plugin/libcompression_plugin.so
-%{_libdir}/drizzle/plugin/libconnection_id_plugin.la
-%{_libdir}/drizzle/plugin/libconnection_id_plugin.so
-%{_libdir}/drizzle/plugin/libconsole_plugin.la
-%{_libdir}/drizzle/plugin/libconsole_plugin.so
-%{_libdir}/drizzle/plugin/libcrc32_plugin.la
-%{_libdir}/drizzle/plugin/libcrc32_plugin.so
-%{_libdir}/drizzle/plugin/libcsv_plugin.la
-%{_libdir}/drizzle/plugin/libcsv_plugin.so
-%{_libdir}/drizzle/plugin/libdefault_replicator_plugin.la
-%{_libdir}/drizzle/plugin/libdefault_replicator_plugin.so
-%{_libdir}/drizzle/plugin/liberrmsg_stderr_plugin.la
-%{_libdir}/drizzle/plugin/liberrmsg_stderr_plugin.so
-%{_libdir}/drizzle/plugin/libfiltered_replicator_plugin.la
-%{_libdir}/drizzle/plugin/libfiltered_replicator_plugin.so
-%{_libdir}/drizzle/plugin/libhello_world_plugin.la
-%{_libdir}/drizzle/plugin/libhello_world_plugin.so
-%{_libdir}/drizzle/plugin/libinfo_schema_plugin.la
-%{_libdir}/drizzle/plugin/libinfo_schema_plugin.so
-%{_libdir}/drizzle/plugin/libinformation_engine_plugin.la
-%{_libdir}/drizzle/plugin/libinformation_engine_plugin.so
-%{_libdir}/drizzle/plugin/liblength_plugin.la
-%{_libdir}/drizzle/plugin/liblength_plugin.so
-%{_libdir}/drizzle/plugin/liblogging_query_plugin.la
-%{_libdir}/drizzle/plugin/liblogging_query_plugin.so
-%{_libdir}/drizzle/plugin/liblogging_syslog_plugin.la
-%{_libdir}/drizzle/plugin/liblogging_syslog_plugin.so
-%{_libdir}/drizzle/plugin/libmd5_plugin.la
-%{_libdir}/drizzle/plugin/libmd5_plugin.so
-%{_libdir}/drizzle/plugin/libmemcached_functions_plugin.la
-%{_libdir}/drizzle/plugin/libmemcached_functions_plugin.so
-%{_libdir}/drizzle/plugin/libmemcached_stats_plugin.la
-%{_libdir}/drizzle/plugin/libmemcached_stats_plugin.so
-%{_libdir}/drizzle/plugin/libmulti_thread_plugin.la
-%{_libdir}/drizzle/plugin/libmulti_thread_plugin.so
-%{_libdir}/drizzle/plugin/libpool_of_threads_plugin.la
-%{_libdir}/drizzle/plugin/libpool_of_threads_plugin.so
-%{_libdir}/drizzle/plugin/librot13_plugin.la
-%{_libdir}/drizzle/plugin/librot13_plugin.so
-%{_libdir}/drizzle/plugin/libshow_schema_proto_plugin.la
-%{_libdir}/drizzle/plugin/libshow_schema_proto_plugin.so
-%{_libdir}/drizzle/plugin/libsingle_thread_plugin.la
-%{_libdir}/drizzle/plugin/libsingle_thread_plugin.so
-%{_libdir}/drizzle/plugin/libsleep_plugin.la
-%{_libdir}/drizzle/plugin/libsleep_plugin.so
-%{_libdir}/drizzle/plugin/libtableprototester_plugin.la
-%{_libdir}/drizzle/plugin/libtableprototester_plugin.so
-%{_libdir}/drizzle/plugin/libtransaction_log_plugin.la
-%{_libdir}/drizzle/plugin/libtransaction_log_plugin.so
-%{_libdir}/drizzle/plugin/libversion_plugin.la
-%{_libdir}/drizzle/plugin/libversion_plugin.so
+%{_libdir}/drizzle/libarchive_plugin.la
+%{_libdir}/drizzle/libarchive_plugin.so
+%{_libdir}/drizzle/libascii_plugin.la
+%{_libdir}/drizzle/libascii_plugin.so
+%{_libdir}/drizzle/libauth_pam_plugin.la
+%{_libdir}/drizzle/libauth_pam_plugin.so
+%{_libdir}/drizzle/libbenchmark_plugin.la
+%{_libdir}/drizzle/libbenchmark_plugin.so
+%{_libdir}/drizzle/libblackhole_plugin.la
+%{_libdir}/drizzle/libblackhole_plugin.so
+%{_libdir}/drizzle/libcharlength_plugin.la
+%{_libdir}/drizzle/libcharlength_plugin.so
+%{_libdir}/drizzle/libcompression_plugin.la
+%{_libdir}/drizzle/libcompression_plugin.so
+%{_libdir}/drizzle/libconnection_id_plugin.la
+%{_libdir}/drizzle/libconnection_id_plugin.so
+%{_libdir}/drizzle/libconsole_plugin.la
+%{_libdir}/drizzle/libconsole_plugin.so
+%{_libdir}/drizzle/libcrc32_plugin.la
+%{_libdir}/drizzle/libcrc32_plugin.so
+%{_libdir}/drizzle/libcsv_plugin.la
+%{_libdir}/drizzle/libcsv_plugin.so
+%{_libdir}/drizzle/libdefault_replicator_plugin.la
+%{_libdir}/drizzle/libdefault_replicator_plugin.so
+%{_libdir}/drizzle/liberrmsg_stderr_plugin.la
+%{_libdir}/drizzle/liberrmsg_stderr_plugin.so
+%{_libdir}/drizzle/libfiltered_replicator_plugin.la
+%{_libdir}/drizzle/libfiltered_replicator_plugin.so
+%{_libdir}/drizzle/libhello_world_plugin.la
+%{_libdir}/drizzle/libhello_world_plugin.so
+%{_libdir}/drizzle/libinfo_schema_plugin.la
+%{_libdir}/drizzle/libinfo_schema_plugin.so
+%{_libdir}/drizzle/libinformation_engine_plugin.la
+%{_libdir}/drizzle/libinformation_engine_plugin.so
+%{_libdir}/drizzle/liblength_plugin.la
+%{_libdir}/drizzle/liblength_plugin.so
+%{_libdir}/drizzle/liblogging_query_plugin.la
+%{_libdir}/drizzle/liblogging_query_plugin.so
+%{_libdir}/drizzle/liblogging_syslog_plugin.la
+%{_libdir}/drizzle/liblogging_syslog_plugin.so
+%{_libdir}/drizzle/libmd5_plugin.la
+%{_libdir}/drizzle/libmd5_plugin.so
+%{_libdir}/drizzle/libmemcached_functions_plugin.la
+%{_libdir}/drizzle/libmemcached_functions_plugin.so
+%{_libdir}/drizzle/libmemcached_stats_plugin.la
+%{_libdir}/drizzle/libmemcached_stats_plugin.so
+%{_libdir}/drizzle/libmulti_thread_plugin.la
+%{_libdir}/drizzle/libmulti_thread_plugin.so
+%{_libdir}/drizzle/libpool_of_threads_plugin.la
+%{_libdir}/drizzle/libpool_of_threads_plugin.so
+%{_libdir}/drizzle/librot13_plugin.la
+%{_libdir}/drizzle/librot13_plugin.so
+%{_libdir}/drizzle/libshow_schema_proto_plugin.la
+%{_libdir}/drizzle/libshow_schema_proto_plugin.so
+%{_libdir}/drizzle/libsingle_thread_plugin.la
+%{_libdir}/drizzle/libsingle_thread_plugin.so
+%{_libdir}/drizzle/libsleep_plugin.la
+%{_libdir}/drizzle/libsleep_plugin.so
+%{_libdir}/drizzle/libtableprototester_plugin.la
+%{_libdir}/drizzle/libtableprototester_plugin.so
+%{_libdir}/drizzle/libtransaction_log_plugin.la
+%{_libdir}/drizzle/libtransaction_log_plugin.so
+%{_libdir}/drizzle/libversion_plugin.la
+%{_libdir}/drizzle/libversion_plugin.so
 %{_sbindir}/drizzled
 %{_datadir}/drizzle/drizzle-log-rotate
 %{_datadir}/drizzle/drizzle.server
@@ -588,5 +588,7 @@ you will need to install %{name}-devel.
 
 
 %changelog
+* Fri Feb 12 2010 Monty Taylor <mordred@inaugust.com> - 0.2
+- Removed an extraneous extra dir from the plugin install path
 * Tue Feb 9 2010 Brian Aker <brian@tangent.org> - 0.1
 - Added basic RPM file

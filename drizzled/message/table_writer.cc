@@ -151,7 +151,6 @@ static void fill_table(message::Table *table, const char *name)
     set_field_options->add_field_value("red");
     set_field_options->add_field_value("blue");
     set_field_options->add_field_value("green");
-    set_field_options->set_count_elements(set_field_options->field_value_size());
   }
   /* Write out a BLOB */
   {

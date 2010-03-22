@@ -3,7 +3,7 @@ dnl This file is free software; Sun Microsystems
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
-AC_DEFUN([_PANDORA_BUILDING_FROM_VC],[
+AC_DEFUN([PANDORA_TEST_VC_DIR],[
   pandora_building_from_vc=no
 
   if test -d ".bzr" ; then
@@ -36,7 +36,7 @@ AC_DEFUN([_PANDORA_BUILDING_FROM_VC],[
 ])
 
 AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
-  m4_syscmd(_PANDORA_BUILDING_FROM_VC [
+  m4_syscmd(PANDORA_TEST_VC_DIR [
 
     PANDORA_RELEASE_DATE=`date +%Y.%m`
     PANDORA_RELEASE_NODOTS_DATE=`date +%Y%m`
@@ -81,7 +81,7 @@ AC_DEFUN([_PANDORA_READ_FROM_FILE],[
 AC_DEFUN([PANDORA_VC_VERSION],[
   AC_REQUIRE([PANDORA_BUILDING_FROM_VC])
 
-  _PANDORA_BUILDING_FROM_VC
+  PANDORA_TEST_VC_DIR
 
   AS_IF([test -f ${srcdir}/config/pandora_vc_revinfo],[
     _PANDORA_READ_FROM_FILE([PANDORA_VC_REVNO],${srcdir}/config/pandora_vc_revinfo)
