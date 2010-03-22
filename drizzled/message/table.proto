@@ -194,6 +194,7 @@ message Table {
   optional TableStats stats = 10;
   required uint64 creation_timestamp= 11 [default = 0];
   required uint64 update_timestamp= 12 [default = 0];
+  optional string catalog = 13;
 }
 
 message AlterTable {
