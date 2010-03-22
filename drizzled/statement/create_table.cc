@@ -90,6 +90,9 @@ bool statement::CreateTable::execute()
     Now that we have the engine, we can figure out the table identifier. We need the engine in order
     to determine if the table is transactional or not if it is temp.
   */
+
+  create_table_message.set_schema(create_table->db);
+
   TableIdentifier new_table_identifier(create_table->db,
                                        create_table->table_name,
                                        create_table_message.type() != message::Table::TEMPORARY ? STANDARD_TABLE : TEMP_TABLE);
