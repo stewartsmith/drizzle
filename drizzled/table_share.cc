@@ -251,6 +251,10 @@ TableShare *TableShare::getShare(Session *session,
   0  Not cached
 #  TableShare for table
 */
+TableShare *TableShare::getShare(TableIdentifier &identifier)
+{
+  return TableShare::getShare(identifier.getSchemaName().c_str(), identifier.getTableName().c_str());
+}
 
 TableShare *TableShare::getShare(const char *db, const char *table_name)
 {
