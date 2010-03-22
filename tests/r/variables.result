@@ -1,5 +1,4 @@
 drop table if exists t1,t2;
-drop schema if exists data_dictionary;
 set @my_myisam_key_cache_size           =@@global.myisam_key_cache_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
