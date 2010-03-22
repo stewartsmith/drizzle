@@ -2979,7 +2979,11 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_char(*$3); }
         | CURRENT_USER optional_braces
           {
-            $$= new (YYSession->mem_root) Item_func_current_user(Lex->current_context());
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -3036,7 +3040,11 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_trim($5,$3); }
         | USER '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_user();
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }
