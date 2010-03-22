@@ -74,17 +74,15 @@ const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
 static std::set<std::string> set_of_table_definition_ext;
 
 StorageEngine::StorageEngine(const string name_arg,
-                             const bitset<HTON_BIT_SIZE> &flags_arg)
-    : Plugin(name_arg, "StorageEngine"),
-      MonitoredInTransaction(), /* This gives the storage engine a "slot" or ID */
-      flags(flags_arg)
+                             const bitset<HTON_BIT_SIZE> &flags_arg) :
+  Plugin(name_arg, "StorageEngine"),
+  MonitoredInTransaction(), /* This gives the storage engine a "slot" or ID */
+  flags(flags_arg)
 {
-  pthread_mutex_init(&proto_cache_mutex, NULL);
 }
 
 StorageEngine::~StorageEngine()
 {
-  pthread_mutex_destroy(&proto_cache_mutex);
 }
 
 void StorageEngine::setTransactionReadWrite(Session& session)
@@ -186,8 +184,8 @@ class FindEngineByName
 {
   const string target;
 public:
-  explicit FindEngineByName(const string target_arg)
-    : target(target_arg)
+  explicit FindEngineByName(const string target_arg) :
+    target(target_arg)
   {}
   result_type operator() (argument_type engine)
   {
@@ -219,7 +217,7 @@ StorageEngine *StorageEngine::findByName(string find_str)
 }
 
 StorageEngine *StorageEngine::findByName(Session& session,
-                                                         string find_str)
+                                         string find_str)
 {
   
   transform(find_str.begin(), find_str.end(),
@@ -503,10 +501,8 @@ int StorageEngine::dropTable(Session& session,
    0  ok
   @retval
    1  error
-
-   @todo refactor to remove goto
 */
-int StorageEngine::createTable(Session& session,
+int StorageEngine::createTable(Session &session,
                                TableIdentifier &identifier,
                                bool update_create_info,
                                message::Table& table_message)
@@ -516,62 +512,62 @@ int StorageEngine::createTable(Session& session,
   TableShare share(identifier.getDBName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
   message::Table tmp_proto;
 
-  if (parse_table_proto(session, table_message, &share))
-    goto err;
-
-  if (open_table_from_share(&session, &share, "", 0, 0,
-                            &table))
-    goto err;
-
-  if (update_create_info)
-    table.updateCreateInfo(&table_message);
-
-  /* Check for legal operations against the Engine using the proto (if used) */
-  if (table_message.type() == message::Table::TEMPORARY &&
-      share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
-  {
-    error= HA_ERR_UNSUPPORTED;
-    goto err2;
+  if (parse_table_proto(session, table_message, &share) || open_table_from_share(&session, &share, "", 0, 0, &table))
+  { 
+    // @note Error occured, we should probably do a little more here.
   }
-  else if (table_message.type() != message::Table::TEMPORARY &&
-           share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
+  else
   {
-    error= HA_ERR_UNSUPPORTED;
-    goto err2;
-  }
+    if (update_create_info)
+      table.updateCreateInfo(&table_message);
 
-  {
-    if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+    /* Check for legal operations against the Engine using the proto (if used) */
+    if (table_message.type() == message::Table::TEMPORARY &&
+        share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
     {
-      int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
-
-      if (protoerr)
+      error= HA_ERR_UNSUPPORTED;
+    }
+    else if (table_message.type() != message::Table::TEMPORARY &&
+             share.storage_engine->check_flag(HTON_BIT_TEMPORARY_ONLY) == true)
+    {
+      error= HA_ERR_UNSUPPORTED;
+    }
+    else
+    {
+      bool do_create= true;
+      if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
       {
-        error= protoerr;
-        goto err2;
+        int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
+
+        if (protoerr)
+        {
+          error= protoerr;
+          do_create= false;
+        }
+      }
+
+      if (do_create)
+      {
+        share.storage_engine->setTransactionReadWrite(session);
+
+        error= share.storage_engine->doCreateTable(&session,
+                                                   table,
+                                                   identifier,
+                                                   table_message);
       }
     }
 
-    share.storage_engine->setTransactionReadWrite(session);
+    if (error)
+    {
+      if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+        plugin::StorageEngine::deleteDefinitionFromPath(identifier);
 
-    error= share.storage_engine->doCreateTable(&session,
-                                               table,
-                                               identifier,
-                                               table_message);
+      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
+    }
+
+    table.closefrm(false);
   }
 
-err2:
-  if (error)
-  {
-    if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-      plugin::StorageEngine::deleteDefinitionFromPath(identifier);
-
-    my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
-  }
-
-  table.closefrm(false);
-
-err:
   share.free_table_share();
   return(error != 0);
 }
