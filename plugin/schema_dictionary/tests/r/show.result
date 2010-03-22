@@ -687,8 +687,8 @@ doctext	BLOB	TRUE		TRUE
 show columns from genstats_attributes;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 genstats_attributes_id	INTEGER	FALSE	0	FALSE	
-predicates	BLOB	FALSE	0	FALSE	
-attributes	BLOB	FALSE	0	FALSE	
+predicates	BLOB	FALSE		FALSE	
+attributes	BLOB	FALSE		FALSE	
 show columns from htmlcode;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 htmlcode_id	INTEGER	FALSE		FALSE	
@@ -713,13 +713,13 @@ description	BLOB	TRUE		TRUE
 show columns from javascript;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 javascript_id	INTEGER	FALSE	0	FALSE	
-code	BLOB	FALSE	0	FALSE	
-comment	BLOB	FALSE	0	FALSE	
+code	BLOB	FALSE		FALSE	
+comment	BLOB	FALSE		FALSE	
 dynamic	INTEGER	FALSE	0	FALSE	
 show columns from knowledge_item;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 knowledge_item_id	INTEGER	FALSE	0	FALSE	
-item	BLOB	FALSE	0	FALSE	
+item	BLOB	FALSE		FALSE	
 question	INTEGER	FALSE	0	FALSE	
 show columns from links;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -731,21 +731,21 @@ food	INTEGER	TRUE	0	FALSE
 show columns from mail;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 mail_id	INTEGER	FALSE	0	FALSE	
-from_address	VARCHAR	FALSE	0	FALSE	
+from_address	VARCHAR	FALSE		FALSE	
 attachment_file	INTEGER	FALSE	0	FALSE	
 show columns from node;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 node_id	INTEGER	FALSE		FALSE	
 type_nodetype	INTEGER	FALSE	0	FALSE	
-title	VARCHAR	FALSE	0	FALSE	
+title	VARCHAR	FALSE		FALSE	
 author_user	INTEGER	FALSE	0	FALSE	
-createtime	DATETIME	FALSE	0	FALSE	
-modified	DATETIME	FALSE	0	FALSE	
+createtime	DATETIME	FALSE		FALSE	
+modified	DATETIME	FALSE		FALSE	
 hits	INTEGER	TRUE	0	FALSE	
 loc_location	INTEGER	TRUE	0	FALSE	
 reputation	INTEGER	FALSE	0	FALSE	
 lockedby_user	INTEGER	FALSE	0	FALSE	
-locktime	DATETIME	FALSE	0	FALSE	
+locktime	DATETIME	FALSE		FALSE	
 authoraccess	VARCHAR	FALSE	iiii	FALSE	
 groupaccess	VARCHAR	FALSE	iiiii	FALSE	
 otheraccess	VARCHAR	FALSE	iiiii	FALSE	
@@ -760,7 +760,7 @@ Field	Type	Null	Default	Default_is_NULL	On_Update
 nodegroup_id	INTEGER	FALSE		FALSE	
 rank	INTEGER	FALSE	0	FALSE	
 node_id	INTEGER	FALSE	0	FALSE	
-orderby	INTEGER	TRUE	0	TRUE	
+orderby	INTEGER	TRUE		TRUE	
 show columns from nodelet;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 nodelet_id	INTEGER	FALSE		FALSE	
@@ -775,15 +775,15 @@ show columns from nodemethod;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 nodemethod_id	INTEGER	FALSE	0	FALSE	
 supports_nodetype	INTEGER	FALSE	0	FALSE	
-code	BLOB	FALSE	0	FALSE	
+code	BLOB	FALSE		FALSE	
 show columns from nodetype;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 nodetype_id	INTEGER	FALSE		FALSE	
 restrict_nodetype	INTEGER	TRUE	0	FALSE	
 extends_nodetype	INTEGER	TRUE	0	FALSE	
 restrictdupes	INTEGER	TRUE	0	FALSE	
-sqltable	VARCHAR	TRUE	0	TRUE	
-grouptable	VARCHAR	TRUE	0	FALSE	
+sqltable	VARCHAR	TRUE		TRUE	
+grouptable	VARCHAR	TRUE		FALSE	
 defaultauthoraccess	VARCHAR	FALSE	iiii	FALSE	
 defaultgroupaccess	VARCHAR	FALSE	iiiii	FALSE	
 defaultotheraccess	VARCHAR	FALSE	iiiii	FALSE	
@@ -798,12 +798,12 @@ canworkspace	INTEGER	FALSE	-1	FALSE
 show columns from project;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 project_id	INTEGER	FALSE	0	FALSE	
-description	BLOB	FALSE	0	FALSE	
+description	BLOB	FALSE		FALSE	
 last_update	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
-short_description	VARCHAR	FALSE	NOW()	FALSE	NOW()
-url_cvs	VARCHAR	FALSE	NOW()	FALSE	NOW()
-url_faq	VARCHAR	FALSE	NOW()	FALSE	NOW()
-long_description	BLOB	FALSE	NOW()	FALSE	NOW()
+short_description	VARCHAR	FALSE		FALSE	
+url_cvs	VARCHAR	FALSE		FALSE	
+url_faq	VARCHAR	FALSE		FALSE	
+long_description	BLOB	FALSE		FALSE	
 show columns from project_document;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 project_document_id	INTEGER	FALSE	0	FALSE	
@@ -815,29 +815,29 @@ faq_id	INTEGER	FALSE	0	FALSE
 project_id	INTEGER	FALSE	0	FALSE	
 rank	INTEGER	FALSE	0	FALSE	
 orderby	INTEGER	FALSE	0	FALSE	
-description	BLOB	FALSE	0	FALSE	
+description	BLOB	FALSE		FALSE	
 show columns from redirects;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 redirects_id	INTEGER	FALSE	0	FALSE	
-url	BLOB	FALSE	0	FALSE	
+url	BLOB	FALSE		FALSE	
 show columns from releases;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 releases_id	INTEGER	FALSE	0	FALSE	
 branch_id	INTEGER	FALSE	0	FALSE	
-description	BLOB	TRUE	0	TRUE	
-url_targz	VARCHAR	FALSE	0	FALSE	
-url_osx	VARCHAR	FALSE	0	FALSE	
-url_rpm	VARCHAR	FALSE	0	FALSE	
+description	BLOB	TRUE		TRUE	
+url_targz	VARCHAR	FALSE		FALSE	
+url_osx	VARCHAR	FALSE		FALSE	
+url_rpm	VARCHAR	FALSE		FALSE	
 project_id	INTEGER	FALSE	0	FALSE	
 version	VARCHAR	FALSE	latest	FALSE	
 created	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
-url_source_rpm	VARCHAR	FALSE	NOW()	FALSE	NOW()
+url_source_rpm	VARCHAR	FALSE		FALSE	
 show columns from revision;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 node_id	INTEGER	FALSE	0	FALSE	
 inside_workspace	INTEGER	FALSE	0	FALSE	
 revision_id	INTEGER	FALSE	0	FALSE	
-xml	BLOB	FALSE	0	FALSE	
+xml	BLOB	FALSE		FALSE	
 tstamp	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
 show columns from setting;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -872,12 +872,12 @@ version	INTEGER	FALSE	1	FALSE
 show columns from weblog;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 tstamp	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
-linkedby_user	INTEGER	FALSE	0	FALSE	NOW()
-removedby_user	INTEGER	FALSE	0	FALSE	NOW()
-linkedtime	DATETIME	FALSE	0	FALSE	NOW()
-weblog_id	INTEGER	FALSE	0	FALSE	NOW()
-to_node	INTEGER	FALSE	0	FALSE	NOW()
-entry_id	INTEGER	FALSE	0	FALSE	NOW()
+linkedby_user	INTEGER	FALSE	0	FALSE	
+removedby_user	INTEGER	FALSE	0	FALSE	
+linkedtime	DATETIME	FALSE		FALSE	
+weblog_id	INTEGER	FALSE	0	FALSE	
+to_node	INTEGER	FALSE	0	FALSE	
+entry_id	INTEGER	FALSE		FALSE	
 show columns from workspace;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 workspace_id	INTEGER	FALSE	0	FALSE	

@@ -609,6 +609,7 @@ public:
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
   static TableDefinitionCache &getCache();
+  static TableShare *getShare(TableIdentifier &identifier);
   static TableShare *getShare(const char *db, const char *table_name);
   static TableShare *getShare(Session *session, 
                               TableList *table_list, char *key,
