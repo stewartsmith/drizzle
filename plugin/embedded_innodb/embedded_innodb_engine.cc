@@ -1328,10 +1328,67 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *, unsigned char *)
   return(0);
 }
 
-
-void EmbeddedInnoDBCursor::position(const unsigned char *)
+static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int ref_len, const unsigned char *record)
 {
-  assert(0);
+  KEY_PART_INFO* key_part= key_info->key_part;
+  KEY_PART_INFO* end= key_info->key_part + key_info->key_parts;
+  unsigned char* ref_start= ref;
+
+  memset(ref, 0, ref_len);
+
+  for (; key_part != end; key_part++)
+  {
+    char is_null= 0;
+
+    if(key_part->null_bit)
+    {
+      *ref= is_null= record[key_part->null_offset] & key_part->null_bit;
+      ref++;
+    }
+
+    Field *field= key_part->field;
+
+    if (field->type() == DRIZZLE_TYPE_VARCHAR)
+    {
+      if (is_null)
+      {
+        ref+= key_part->length + 2; /* 2 bytes for length */
+        continue;
+      }
+
+      String str;
+      field->val_str(&str);
+
+      *ref++= (char)(str.length() & 0x000000ff);
+      *ref++= (char)((str.length()>>8) & 0x000000ff);
+
+      memcpy(ref, str.ptr(), str.length());
+      ref+= str.length();
+    }
+    // FIXME: blobs.
+    else
+    {
+      if (is_null)
+      {
+        ref+= key_part->length;
+        continue;
+      }
+
+      memcpy(ref, record+key_part->offset, key_part->length);
+      ref+= key_part->length;
+    }
+
+  }
+
+  assert(ref == ref_start + ref_len);
+}
+
+void EmbeddedInnoDBCursor::position(const unsigned char *record)
+{
+  assert(table->s->primary_key != MAX_KEY); /* must have pkey */
+
+  store_key_value_from_innodb(table->key_info + table->s->primary_key,
+                              ref, ref_length, record);
   return;
 }
 
