@@ -103,7 +103,7 @@ int StorageEngine::doRenameTable(Session *,
     if (rename_file_ext(from, to, *ext))
     {
       if ((error=errno) != ENOENT)
-	break;
+        break;
       error= 0;
     }
   }
@@ -140,7 +140,7 @@ int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
-	break;
+        break;
     }
     else
       enoent_or_zero= 0;                        // No error for ENOENT
@@ -218,8 +218,7 @@ StorageEngine *StorageEngine::findByName(string find_str)
   return NULL;
 }
 
-StorageEngine *StorageEngine::findByName(Session& session,
-                                                         string find_str)
+StorageEngine *StorageEngine::findByName(Session& session, string find_str)
 {
   
   transform(find_str.begin(), find_str.end(),
@@ -290,13 +289,13 @@ class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,boo
   Session& session;
   TableIdentifier &identifier;
   message::Table &table_message;
-  int *err;
+  int &err;
 
 public:
   StorageEngineGetTableDefinition(Session& session_arg,
                                   TableIdentifier &identifier_arg,
                                   message::Table &table_message_arg,
-                                  int *err_arg) :
+                                  int &err_arg) :
     session(session_arg), 
     identifier(identifier_arg),
     table_message(table_message_arg), 
@@ -309,9 +308,9 @@ public:
                                           table_message);
 
     if (ret != ENOENT)
-      *err= ret;
+      err= ret;
 
-    return *err == EEXIST || *err != ENOENT;
+    return err == EEXIST || err != ENOENT;
   }
 };
 
@@ -384,7 +383,7 @@ int StorageEngine::getTableDefinition(Session& session,
 
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, identifier, table_message, &err));
+            StorageEngineGetTableDefinition(session, identifier, table_message, err));
 
   if (iter == vector_of_engines.end())
   {
@@ -442,9 +441,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    // @todo someday check that at least one engine said "true"
-    std::string path(identifier.getPath());
-    bool success= engine->doDropTable(session, identifier, path);
+    bool success= engine->doDropTable(session, identifier);
 
     if (success)
       success_count++;
@@ -478,7 +475,7 @@ int StorageEngine::dropTable(Session& session,
   {
     std::string path(identifier.getPath());
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier, path);
+    error= engine->doDropTable(session, identifier);
 
     if (not error)
     {
@@ -862,7 +859,7 @@ public:
          iter++)
     {
       TableIdentifier dummy((*iter).c_str());
-      int error= engine->doDropTable(session, dummy, *iter);
+      int error= engine->doDropTable(session, dummy);
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.
