@@ -154,7 +154,7 @@ static void plugin_prune_list(vector<string> &plugin_list,
                               const vector<string> &plugins_to_remove);
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             const vector<string> &plugin_list);
+                             const set<string> &plugin_list);
 static int test_plugin_options(memory::Root *, plugin::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
@@ -456,10 +456,13 @@ bool plugin_init(plugin::Registry &registry,
     tokenize(opt_plugin_remove, plugins_to_remove, ",", true);
     plugin_prune_list(plugin_list, plugins_to_remove);
   }
+
+  /* Uniquify the list */
+  const set<string> plugin_list_set(plugin_list.begin(), plugin_list.end());
   
   /* Register all dynamic plugins */
   load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                plugin_list);
+                                plugin_list_set);
   if (load_failed)
   {
     free_root(&tmp_root, MYF(0));
@@ -533,11 +536,11 @@ static void plugin_prune_list(vector<string> &plugin_list,
 */
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             const vector<string> &plugin_list)
+                             const set<string> &plugin_list)
 {
   plugin::Library *library= NULL;
 
-  for (vector<string>::const_iterator iter= plugin_list.begin();
+  for (set<string>::const_iterator iter= plugin_list.begin();
        iter != plugin_list.end();
        ++iter)
   {
