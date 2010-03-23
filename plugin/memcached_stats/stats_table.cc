@@ -80,7 +80,7 @@ memcached_return  server_function(const memcached_st *memc,
   char **ptr= NULL;
  
   ctx->generator->push(server_name);
-  ctx->generator->push(server_port);
+  ctx->generator->push(static_cast<uint64_t>(server_port));
 
   for (ptr= list; *ptr; ptr++)
   {
