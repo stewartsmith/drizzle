@@ -482,12 +482,14 @@ endif
 
 #MAIN STARTS HERE:
 
-#@TODO replace this with a modular bit
+# I'm 3 seconds away from writing a comprehensive build solution
 if not os.path.exists('config/pandora_vc_revinfo'):
-  # I'm 3 seconds away from writing a comprehensive build solution
-  bzr_revno= subprocess.Popen(["bzr", "revno"], stdout=subprocess.PIPE).communicate()[0].strip()
-  rev_date= datetime.date.fromtimestamp(time.time())
-  default_plugin_version = "%d.%02d.%s" % (rev_date.year, rev_date.month, bzr_revno)
+  if os.path.exists('.bzr'):
+    bzr_revno= subprocess.Popen(["bzr", "revno"], stdout=subprocess.PIPE).communicate()[0].strip()
+    rev_date= datetime.date.fromtimestamp(time.time())
+    default_plugin_version = "%d.%02d.%s" % (rev_date.year, rev_date.month, bzr_revno)
+  else:
+    default_plugin_version=datetime.date.fromtimestamp(time.time()).isoformat()
 else:
   # need to read config/pandora_vc_revno
   pandora_vc_revno=open('config/pandora_vc_revinfo','r').read().split()
