@@ -270,14 +270,3 @@ void TablesTool::Generator::fill()
   /* TABLE_COMMENT */
   push(table_proto.options().comment());
 }
-
-bool ShowTables::Generator::checkSchema()
-{
-  Session *session= current_session;
-
-  if (session->lex->select_lex.db)
-  {
-    return schema_name().compare(session->lex->select_lex.db);
-  }
-  return session->db.compare(schema_name());
-}
