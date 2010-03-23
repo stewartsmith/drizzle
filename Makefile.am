@@ -43,12 +43,12 @@ BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST= \
 	    Doxyfile \
 	    config/config.rpath \
-	    config/make-lint.py
+	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
 	    extra/clean_source.sh \
 	    extra/cpplint.py \
 	    extra/run_cpplint.sh  \
-	    m4/gnulib-cache.m4 \
+	    m4/gnulib-cache.m4
 
 
 CLEANFILES=		${BUILT_SOURCES}

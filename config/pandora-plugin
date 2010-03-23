@@ -20,6 +20,7 @@
 
 import ConfigParser, os, sys
 import datetime, time
+import subprocess
 
 top_srcdir='.'
 top_builddir='.'
@@ -35,6 +36,7 @@ extra_cxxflags=''
 root_plugin_dir='plugin'
 pkgplugindir='$(libdir)/drizzle'
 default_install='True'
+default_plugin_version=''
 
 class ChangeProtectedFile(object):
 
@@ -383,7 +385,7 @@ def read_plugin_ini(plugin_dir):
         print "External Plugins are required to specifiy a version"
         sys.exit(1)
     if not plugin.has_key('version'):
-      plugin['version']=datetime.date.fromtimestamp(time.time()).isoformat()
+      plugin['version'] = default_plugin_version
    
     if plugin.has_key('load_by_default'):
       plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
@@ -480,6 +482,15 @@ endif
 
 #MAIN STARTS HERE:
 
+#@TODO replace this with a modular bit
+if not os.path.exists('config/pandora_vc_revno'):
+  # I'm 3 seconds away from writing a comprehensive build solution
+  bzr_revno= subprocess.Popen(["bzr", "revno"], stdout=subprocess.PIPE).communicate()[0].strip()
+  rev_date= datetime.date.fromtimestamp(time.time())
+  default_plugin_version = "%d.%02d.%s" % (rev_date.year, rev_date.month, bzr_revno)
+else:
+  # need to read config/pandora_vc_revno
+  default_plugin_version = datetime.date.fromtimestamp(time.time()).isoformat()
 actions=[]
 for arg in sys.argv:
   if arg.startswith('--top_srcdir='):
