@@ -440,7 +440,7 @@ public:
     memset(null_flags, 255, s->null_bytes);
   }
 
-  bool rename_temporary_table(const char *db, const char *table_name);
+  bool renameAlterTemporaryTable(TableIdentifier &identifier);
   void free_io_cache();
   void filesort_free_buffers(bool full= false);
   void intern_close_table();
@@ -554,7 +554,7 @@ struct open_table_list_st
 
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length);
-int open_table_def(Session& session, TableShare *share);
+int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share);
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t ha_open_flags,
