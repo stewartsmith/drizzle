@@ -5,5 +5,5 @@ AC_LIB_HAVE_LINKFLAGS(gcrypt,,[
     gcry_md_hash_buffer(GCRY_MD_MD5, digest, source, 0);
   ])
 AS_IF([test "x$ac_cv_libgcrypt" = "xno"],[
-    AC_MSG_WARN([MD5 not found in libgcrypt: not building md5 plugin. On Debian this is found in libgcrypt11-dev. On RedHat it is in gcrypt-devel.])
+    AC_MSG_WARN([MD5 not found in libgcrypt: not building md5 plugin. On Debian this is found in libgcrypt11-dev. On RedHat it is in libgcrypt-devel.])
 ])
