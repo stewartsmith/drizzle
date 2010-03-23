@@ -875,7 +875,7 @@ int parse_table_proto(Session& session,
 
       message::Table::Field::SetFieldOptions fo= pfield.set_options();
 
-      for(int valnr= 0; valnr < fo.field_value_size(); valnr++)
+      for (int valnr= 0; valnr < fo.field_value_size(); valnr++)
       {
         if (fo.field_value(valnr).length() > field_length)
           field_length= charset->cset->numchars(charset,
@@ -1237,12 +1237,10 @@ err:
    6    Unknown .frm version
 */
 
-int open_table_def(Session& session, TableShare *share)
+int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share)
 {
   int error;
   bool error_given;
-
-  TableIdentifier identifier(share->normalized_path.str);
 
   error= 1;
   error_given= 0;
@@ -3303,7 +3301,7 @@ void Table::free_tmp_table(Session *session)
       cursor->closeMarkForDelete(s->table_name.str);
 
     TableIdentifier identifier(s->table_name.str);
-    s->db_type()->doDropTable(*session, identifier, s->table_name.str);
+    s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
   }
@@ -3418,7 +3416,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
  err1:
   {
     TableIdentifier identifier(new_table.s->table_name.str);
-    new_table.s->db_type()->doDropTable(*session, identifier, new_table.s->table_name.str);
+    new_table.s->db_type()->doDropTable(*session, identifier);
   }
 
  err2:
@@ -3679,16 +3677,16 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   session->slave_proxy_id, separated by '\0'.
 */
 
-bool Table::rename_temporary_table(const char *db, const char *table_name)
+bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
 {
   char *key;
   uint32_t key_length;
   TableShare *share= s;
 
-  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+  if (not (key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;
 
-  key_length= TableShare::createKey(key, db, table_name);
+  key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
 
   return false;

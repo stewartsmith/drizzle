@@ -301,13 +301,6 @@ public:
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  int doDropTable(Session &session,
-                  TableIdentifier &identifier,
-                  const std::string &table_path)
-  {
-    assert(not table_path.compare(identifier.getPath()));
-    return doDropTable(session, identifier);
-  }
 
   virtual int doDropTable(Session &session,
                           TableIdentifier &identifier)= 0;
@@ -404,7 +397,6 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
-  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
