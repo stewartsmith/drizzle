@@ -370,9 +370,12 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
 static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
 {
   str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
+  str->append(identifier.getPath().c_str()+2);
+/*
   str->assign(identifier.getSchemaName());
   str->append("/");
   str->append(identifier.getTableName());
+*/
 }
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
