@@ -150,22 +150,37 @@ char *BlitzTree::prev_key(int *key_len) {
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
-char *BlitzTree::find_key(const char *key, const int klen, int *rv_len) {
+/* A cursor based lookup on a B+Tree doesn't guarantee that the
+   returned key is identical. This is because it would return the
+   next logical key if one exists. */
+char *BlitzTree::find_key(const int search_mode, const char *key,
+                          const int klen, int *rv_len) {
   if (!tcbdbcurjump(bt_cursor, (void *)key, klen))
     return NULL;
 
   char *rv = (char *)tcbdbcurkey(bt_cursor, rv_len);
 
-  /* A cursor based lookup on a B+Tree doesn't guarantee that the
-     returned key is identical. This is because it would return the
-     next logical key if one exists. Therefore we must check the
-     lowerbound of the returned key for it's validity. */
-  int cmp_len = (*rv_len < klen) ? *rv_len : klen;
+  int cmp, a_cmp_len, b_cmp_len;
+  cmp = packed_key_cmp(this, rv, key, &a_cmp_len, &b_cmp_len);
 
-  if (memcmp(rv, key, cmp_len) != 0) {
-    free(rv);
-    rv = NULL;
+  switch (search_mode) {
+  case drizzled::HA_READ_KEY_EXACT:
+    if (cmp != 0) {
+      free(rv);
+      rv = NULL;
+    }
+    break;
+  //case drizzled::HA_READ_KEY_OR_NEXT:
+  //case drizzled::HA_READ_AFTER_KEY:
+  //case drizzled::HA_READ_BEFORE_KEY:
+  //case drizzled::HA_READ_KEY_OR_PREV:
+  //case drizzled::HA_READ_PREFIX:
+  //case drizzled::HA_READ_PREFIX_LAST:
+  //case drizzled::HA_READ_PREFIX_LAST_OR_PREV:
+  default:
+     break;
   }
+
 
   return rv;
 }
@@ -177,7 +192,7 @@ bool BlitzTree::move_cursor(const char *key, const int klen,
   char *fetched_key;
   int fetched_klen, cmp;
 
-  fetched_key = this->find_key(key, klen, &fetched_klen);
+  fetched_key = this->find_key(search_mode, key, klen, &fetched_klen);
 
   if (fetched_key == NULL)
     return false;

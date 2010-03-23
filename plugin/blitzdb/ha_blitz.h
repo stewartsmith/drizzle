@@ -203,7 +203,8 @@ public:
   char *final_key(int *key_len);
   char *next_key(int *key_len);
   char *prev_key(int *key_key);
-  char *find_key(const char *key, const int klen, int *rv_len);
+  char *find_key(const int search_mode, const char *key,
+                 const int klen, int *rv_len);
 
   //int count_to_last_occurrence(const char *key, const int klen);
   bool move_cursor(const char *key, const int klen, const int search_mode);
@@ -393,6 +394,7 @@ public:
     return (HA_READ_NEXT |
             HA_READ_PREV |
             HA_READ_ORDER |
+            HA_ONLY_WHOLE_INDEX |
             HA_KEYREAD_ONLY);
   }
 };

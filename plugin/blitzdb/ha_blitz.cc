@@ -541,7 +541,7 @@ int ha_blitz::index_read(unsigned char *buf, const unsigned char *key,
    BlitzDB and the Database Kernel (specifically, by the optimizer). */
 int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
                              const unsigned char *key, uint32_t,
-                             enum ha_rkey_function /*find_flag*/) {
+                             enum ha_rkey_function search_mode) {
 
   /* If the provided key is NULL, we are required to return the first
      row in the active_index. */
@@ -554,9 +554,8 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 
   /* Lookup the tree and get the master key. */
   int unique_klen;
-  char *unique_key = share->btrees[key_num].find_key((char *)packed_key,
-                                                     packed_klen,
-                                                     &unique_klen);
+  char *unique_key = share->btrees[key_num].find_key(search_mode, packed_key,
+                                                     packed_klen, &unique_klen);
   if (unique_key == NULL) {
     errkey_id = key_num;
     return HA_ERR_KEY_NOT_FOUND;
