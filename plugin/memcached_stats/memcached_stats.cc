@@ -30,7 +30,6 @@
 #include "config.h"
 #include "drizzled/show.h"
 #include "drizzled/gettext.h"
-#include "drizzled/plugin/info_schema_table.h"
 
 #include "stats_table.h"
 #include "analysis_table.h"
