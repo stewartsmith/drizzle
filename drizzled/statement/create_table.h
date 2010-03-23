@@ -49,6 +49,10 @@ public:
 
   bool execute();
   message::Table create_table_message;
+  message::Table &createTableMessage()
+  {
+    return create_table_message;
+  };
   message::Table::Field *current_proto_field;
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
